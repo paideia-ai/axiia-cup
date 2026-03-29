@@ -1,0 +1,22 @@
+[
+  {
+    "id": 2,
+    "display_name": "张伟",
+    "anonymous": 0,
+    "total_matches": 1,
+    "wins": 1,
+    "rank": 1,
+    "win_rate": 100.0,
+    "model": "qwen-plus"
+  },
+  {
+    "id": 1,
+    "display_name": "林墨涵",
+    "anonymous": 0,
+    "total_matches": 1,
+    "wins": 0,
+    "rank": 2,
+    "win_rate": 0.0,
+    "model": "qwen-plus"
+  }
+]

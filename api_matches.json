@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "status": "scored",
+    "winner": "B",
+    "current_turn": 20,
+    "created_at": 1774774099.0,
+    "finished_at": 1774774266.723854,
+    "player_a": "林墨涵",
+    "a_anon": 0,
+    "a_model": "qwen-plus",
+    "player_b": "张伟",
+    "b_anon": 0,
+    "b_model": "qwen-plus"
+  }
+]

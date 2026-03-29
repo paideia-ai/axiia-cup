@@ -3,82 +3,80 @@
 ## Product Context
 - **What this is:** AI 智能体对抗赛平台，选手编写提示词打造智能体参加人文学科辩论
 - **Who it's for:** 中国高中与大学学生
-- **Space/industry:** AI 教育竞赛，介于学术与电竞之间的第三条路线
+- **Space/industry:** AI 教育竞赛
 - **Project type:** Web app (competition platform)
 - **Language:** 中文为主，界面全中文
 
 ## Aesthetic Direction
-- **Direction:** Editorial/Magazine — 学术刊物风格
-- **Decoration level:** Intentional — 纸质纹理、细线分隔符、偶尔的水墨书法元素
-- **Mood:** 锐利、沉稳、智识性但不沉闷。像一本会跑 AI 比赛的文学杂志。
-- **Reference sites:** Lichess (功能性棋类平台), The Browser Company (现代但有性格), Monocle (编辑排版)
-- **Anti-patterns:** 不用紫色渐变、不用电竞暗黑风、不用三栏图标网格、不用居中泡泡布局
+- **Direction:** Clean Dashboard — 简洁电竞仪表盘风格，暗色调为主
+- **Decoration level:** Minimal — 无装饰，数据和功能说话
+- **Mood:** 干净、专注、竞技感。像一个简化版的电竞数据面板。
+- **Reference sites:** Lichess dark mode, Linear (简洁工具感), op.gg (电竞数据)
+- **Anti-patterns:** 不用纸质纹理、不用衬线字体、不用水墨元素、不用过度装饰
 
 ## Typography
-- **Display/Hero:** Fraunces — 光学尺寸衬线体，有温度和性格，在满是无衬线的 AI 竞赛空间中独树一帜
-- **Body (English):** Instrument Sans — 干净、现代、优秀的可读性
-- **Body (Chinese):** Noto Sans SC (思源黑体) — 标准 CJK 字体，与 Instrument Sans 风格统一
-- **Data/Tables:** Geist Mono — 等宽字体，用于排行榜数字、提示词编辑器、数据展示
+- **Display/Hero:** Satoshi — 几何无衬线，干净有力，竞技感
+- **Body (English):** Satoshi — 统一字体栈，简化
+- **Body (Chinese):** Noto Sans SC (思源黑体) — 标准 CJK 字体
+- **Data/Tables:** Geist Mono — 等宽字体，数据展示
 - **Code:** Geist Mono
-- **Loading:** Google Fonts CDN (`family=Fraunces:opsz,wght@9..144,300..800&family=Instrument+Sans:wght@400..700&family=Noto+Sans+SC:wght@400..700`)
+- **Loading:** `family=Noto+Sans+SC:wght@400;500;600;700` + Satoshi via Fontshare CDN
 - **Scale:**
-  - Hero: 72px / 4.5rem
-  - H1: 42px / 2.625rem
-  - H2: 28px / 1.75rem
-  - H3: 22px / 1.375rem
-  - Body: 16px / 1rem
-  - Small: 14px / 0.875rem
-  - Caption: 13px / 0.8125rem
-  - Micro: 12px / 0.75rem
-  - Mono: 14px / 0.875rem
+  - Hero: 48px / 3rem
+  - H1: 32px / 2rem
+  - H2: 24px / 1.5rem
+  - H3: 18px / 1.125rem
+  - Body: 14px / 0.875rem
+  - Small: 13px / 0.8125rem
+  - Caption: 12px / 0.75rem
+  - Mono: 13px / 0.8125rem
 
 ## Color
-- **Approach:** Restrained — 单一强调色 + 暖中性色
-- **Background:** #FAFAF7 — 暖白，像优质纸张
-- **Surface:** #F2F1EC — 面板、侧边栏背景
-- **Elevated:** #FFFFFF — 卡片、弹出层
-- **Primary Text:** #1A1A1A — 近墨黑
-- **Secondary Text:** #5C5C5C
-- **Muted Text:** #8A8A8A
-- **Accent (朱砂红):** #C23B22 — 来自中国印章传统，在暖中性色上极具视觉冲击
-- **Accent Hover:** #A83220
-- **Accent Light:** #FDF0EE
-- **Border:** #E0DED8
-- **Border Light:** #EBE9E4
+- **Approach:** Dark-first, restrained — 暗底 + 单一强调色
+- **Background:** #0C0C0C — 纯暗底
+- **Surface:** #161616 — 卡片、面板
+- **Elevated:** #1E1E1E — 弹出层、活跃区域
+- **Primary Text:** #E8E8E8
+- **Secondary Text:** #888888
+- **Muted Text:** #555555
+- **Accent (朱砂红):** #E04A2F — 在暗底上更亮的朱砂红
+- **Accent Hover:** #F25A3F
+- **Accent Subtle:** rgba(224, 74, 47, 0.12)
+- **Border:** #2A2A2A
+- **Border Light:** #222222
 - **Semantic:**
-  - Success: #2D7A4F
-  - Warning: #B8860B
-  - Error: #C23B22
-  - Info: #3B6EA5
-- **Dark mode strategy:**
-  - Background: #141413
-  - Surface: #1E1E1C
-  - Elevated: #282826
-  - Primary Text: #EDEDEB
-  - Secondary: #A8A8A3
-  - Accent: #E0553E (提亮10-15%)
-  - Borders: #333330 / #2A2A28
-  - Semantic badges: 降低饱和度，深底浅字
+  - Success: #34D399
+  - Warning: #FBBF24
+  - Error: #F87171
+  - Info: #60A5FA
+- **Light mode (optional toggle):**
+  - Background: #FFFFFF
+  - Surface: #F5F5F5
+  - Elevated: #FFFFFF
+  - Primary Text: #111111
+  - Secondary: #666666
+  - Accent: #C23B22
+  - Borders: #E5E5E5 / #EEEEEE
 
 ## Spacing
-- **Base unit:** 8px
-- **Density:** Comfortable — 不像仪表盘那样密集，也不像营销页那样空旷
-- **Scale:** 2xs(2px) xs(4px) sm(8px) md(16px) lg(24px) xl(32px) 2xl(48px) 3xl(64px)
+- **Base unit:** 4px
+- **Density:** Compact — 仪表盘密度，信息优先
+- **Scale:** 2xs(2px) xs(4px) sm(8px) md(12px) lg(16px) xl(24px) 2xl(32px) 3xl(48px)
 
 ## Layout
-- **Approach:** Hybrid — 应用页面用网格规范，着陆页/营销页用编辑排版
+- **Approach:** Grid-disciplined — 纯网格，无编辑排版
 - **Grid:** 12 columns, responsive
-  - Desktop (>1200px): 12col, max-width 1200px
+  - Desktop (>1200px): 12col, max-width 1280px
   - Tablet (768-1200px): 8col
   - Mobile (<768px): 4col
-- **Max content width:** 1200px
-- **Border radius:** sm: 4px, md: 8px, lg: 12px, full: 9999px (badges/pills)
+- **Max content width:** 1280px
+- **Border radius:** sm: 4px, md: 6px, lg: 8px, full: 9999px
 
 ## Motion
-- **Approach:** Minimal-functional — 仅服务于理解的过渡动画
-- **Easing:** enter(ease-out) exit(ease-in) move(ease-in-out)
-- **Duration:** micro(50-100ms) short(150-250ms) medium(250-400ms)
-- **Usage:** 页面过渡、卡片悬停状态、对战结果揭晓。无弹跳动画。
+- **Approach:** Minimal-functional — 快速、无弹跳
+- **Easing:** ease-out for all
+- **Duration:** micro(80ms) short(150ms) medium(200ms)
+- **Usage:** hover 状态变化、页面切换淡入。无华丽动画。
 
 ## Key Screen Names (中文)
 | Screen | 中文名称 | Primary Action |
@@ -113,9 +111,9 @@
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-03-29 | 初始设计系统创建 | 基于竞品研究 (AgentX, Toornament, Devpost) 与产品定位分析 |
-| 2026-03-29 | Fraunces 衬线标题字体 | 在无衬线主导的 AI 竞赛空间中差异化，传达学术气质 |
-| 2026-03-29 | 朱砂红 #C23B22 强调色 | 锚定中国文化语境（印章传统），避开泛滥的蓝紫色 |
-| 2026-03-29 | 浅色模式优先 | 传达"清晰与智识"而非"电竞与游戏" |
-| 2026-03-29 | Noto Sans SC 中文正文 | 标准 CJK 字体，可从 Google Fonts 加载，与 Instrument Sans 风格统一 |
-| 2026-03-29 | 字数限制改为 1000 字 | 中文按字符计数，300词对中文约等于1000字 |
+| 2026-03-29 | 初始设计系统创建 | 基于竞品研究与产品定位 |
+| 2026-03-29 | v2: 改为暗色仪表盘风格 | 用户反馈：偏好电竞仪表盘风格而非学术刊物风格 |
+| 2026-03-29 | Satoshi 替换 Fraunces | 几何无衬线更符合仪表盘风格 |
+| 2026-03-29 | 暗色模式优先 | 电竞/竞技平台标准 |
+| 2026-03-29 | 4px 基准间距 | 仪表盘需要更紧凑的布局 |
+| 2026-03-29 | 保留朱砂红强调色 | 在暗底上更醒目，保持文化锚点 |
