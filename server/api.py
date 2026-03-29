@@ -19,7 +19,6 @@ async def match_worker():
         queued = db.get_queued_matches(limit=1)
         if queued:
             match_id = queued[0]["id"]
-            # run in thread pool to avoid blocking the event loop
             await asyncio.to_thread(run_match, match_id)
         await asyncio.sleep(2)
 
@@ -27,6 +26,10 @@ async def match_worker():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    # Auto-seed if no scenarios exist
+    if not db.list_scenarios():
+        from server.seed import seed
+        seed()
     task = asyncio.create_task(match_worker())
     yield
     task.cancel()

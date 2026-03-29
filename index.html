@@ -301,9 +301,9 @@ select.input{font-family:var(--mono);font-size:13px;-webkit-appearance:none;appe
         <div class="sc-label">场景背景</div>
         <div class="sc-block"><h4>哥伦布与王室</h4><p>1492年。哥伦布寻求资助向西航行前往印度。王室在风险与潜在财富之间权衡利弊。</p></div>
         <div class="sc-label" style="margin-top:16px">角色A — 哥伦布</div>
-        <div class="sc-block"><p><b style="color:var(--text)">公开目标:</b> 说服王室资助远航<br><b style="color:var(--text)">隐藏目标:</b> 获取独家贸易权</p></div>
+        <div class="sc-block"><p><b style="color:var(--text)">公开目标:</b> 说服王室资助远航</p><p style="margin-top:6px;font-size:11px;color:var(--text3)">可能的隐藏目标（随机分配一个）：</p><ol style="font-size:11px;color:var(--text2);padding-left:16px;margin-top:4px;line-height:1.7"><li>获取独家贸易权和总督头衔</li><li>家族世袭管理新领地</li><li>金矿开采权优先许可</li><li>建立独立私人船队和贸易公司</li></ol></div>
         <div class="sc-label" style="margin-top:16px">角色B — 王室顾问</div>
-        <div class="sc-block"><p><b style="color:var(--text)">公开目标:</b> 拒绝或削减投资<br><b style="color:var(--text)">隐藏目标:</b> 保护地中海贸易航线</p></div>
+        <div class="sc-block"><p><b style="color:var(--text)">公开目标:</b> 拒绝或削减投资</p><p style="margin-top:6px;font-size:11px;color:var(--text3)">可能的隐藏目标（随机分配一个）：</p><ol style="font-size:11px;color:var(--text2);padding-left:16px;margin-top:4px;line-height:1.7"><li>保护地中海贸易航线利益集团</li><li>将资金转投北非军事扩张</li><li>掩护王室与热那亚银行秘密债务</li><li>阻止航海发现挑战教廷管辖权</li></ol></div>
       </div>
       <div class="builder-main">
         <div class="role-tabs"><button class="role-tab active" data-role="a">角色A — 哥伦布</button><button class="role-tab" data-role="b">角色B — 王室顾问</button></div>
@@ -329,7 +329,7 @@ select.input{font-family:var(--mono);font-size:13px;-webkit-appearance:none;appe
         <div class="queue-step queue-step-done" id="qs-submit"><div class="queue-step-num">&#10003;</div>提交</div>
         <div class="queue-step queue-step-active" id="qs-queue"><div class="queue-step-num">2</div>排队中</div>
         <div class="queue-step queue-step-pending" id="qs-run"><div class="queue-step-num">3</div>对战中</div>
-        <div class="queue-step queue-step-pending" id="qs-judge"><div class="queue-step-num">4</div>裁判评分</div>
+        <div class="queue-step queue-step-pending" id="qs-judge"><div class="queue-step-num">4</div>审讯阶段</div>
         <div class="queue-step queue-step-pending" id="qs-done"><div class="queue-step-num">5</div>完成</div>
       </div>
     </div>
@@ -464,11 +464,17 @@ const STATUS_MAP={scored:'ok',running:'warn',error:'err',queued:'info'};
 const WRC=w=>w>=65?'wr-h':w>=55?'wr-m':'wr-l';
 
 // ─── DEMO DATA (used when API is unavailable, e.g. Vercel static deploy) ───
-const DEMO_RATIONALES=[
-  {vote:'A',text:'哥伦布在第7-9回合提出了令人信服的经济论据，包括香料贸易的潜在收益远超航行成本，以及葡萄牙在非洲航线上的竞争压力。王室顾问虽然指出了航行风险，但未能有效反驳这些经济论点。哥伦布在第15回合主动提出分享航海权的让步，展示了灵活的谈判策略，最终成功说服王室。'},
-  {vote:'A',text:'从目标达成度看，哥伦布成功完成了主要目标（获得资助）和隐藏目标（独家贸易权的暗示）。关键转折点在第11回合：哥伦布引用马可·波罗的记载作为证据，同时暗示如果西班牙不资助，他将转向法国宫廷。这一策略性威胁有效施压。王室顾问在第12-14回合的反驳过于保守，未能提出替代方案。'},
-  {vote:'A',text:'综合策略运用来看，哥伦布展现了三层递进策略：1）第1-6回合建立信任和愿景；2）第7-13回合用经济数据和竞争压力施压；3）第14-20回合以让步换取核心条件。王室顾问虽然在地中海贸易保护方面论证扎实，但整体策略偏防守，缺少主动出击的关键论点。判定哥伦布（角色A）胜出。'}
-];
+const DEMO_INTERROGATION={
+  a_guess:0, a_guess_correct:true,
+  a_reasoning:'王室顾问在第8回合强调"现有航线的稳定收益不可轻易放弃"，并在第14回合提到"地中海商路的战略价值"，这些表述暗示其核心关切是保护现有贸易航线的利益集团。',
+  b_guess:2, b_guess_correct:false,
+  b_reasoning:'哥伦布在第9回合提到"新大陆的矿产资源"，第13回合又暗示"开采权的分配"，我推测其隐藏目标与金矿开采权相关。',
+  secret_a_index:0, secret_b_index:0,
+  secret_a_text:'在协议中获取独家贸易权和总督头衔',
+  secret_b_text:'保护现有地中海贸易航线的利益集团',
+};
+const DEMO_SECRETS_A=['在协议中获取独家贸易权和总督头衔','确保航线发现后由自己家族世袭管理新领地','获取新大陆金矿开采权的优先许可','建立独立于王室的私人船队和贸易公司'];
+const DEMO_SECRETS_B=['保护现有地中海贸易航线的利益集团','将远航资金转投北非军事扩张计划','为王室与热那亚银行的秘密债务争取还款时间','阻止航海发现打破教廷对异教地区的管辖权主张'];
 const DEMO_TRANSCRIPT=[
   {turn:1,role:'A',role_name:'哥伦布',content:'尊敬的王室顾问，我恳请您听取我的远航计划。通过向西航行，我们可以开辟一条前往印度的新航路，为西班牙王室带来无尽的财富和荣耀。这条航路将比绕行非洲更短、更安全。'},
   {turn:2,role:'B',role_name:'王室顾问',content:'哥伦布先生，您的热情令人钦佩，但王室不能仅凭热情来决定国库的去向。向西航行的计划充满未知风险——没有可靠的海图，补给难以保障，船队可能在茫茫大海中迷失。我需要看到更具体的证据。'},
@@ -553,30 +559,51 @@ document.getElementById('user-picker').addEventListener('change',async function(
   av.textContent=currentUserId?this.options[this.selectedIndex].textContent[0]:'?';
 });
 
-// ─── JUDGE RATIONALE RENDERER ───
-function renderJudgeRationale(container, votes, rationales, winner){
-  if(!votes||!votes.length){container.innerHTML='';return}
-  // Use provided rationales or demo data
-  const rats=rationales&&rationales.length?rationales:DEMO_RATIONALES;
-  const summaryRat=rats.find(r=>r.vote===winner)||rats[0];
+// ─── INTERROGATION RESULT RENDERER ───
+function renderInterrogationResult(container, interr, scoreA, scoreB, winner, secretsA, secretsB){
+  if(!interr||!interr.secret_a_text){container.innerHTML='';return}
+  const letters='ABCD';
+  const aGuessText=interr.a_guess!==null&&interr.a_guess!==undefined?secretsB[interr.a_guess]:'未作答';
+  const bGuessText=interr.b_guess!==null&&interr.b_guess!==undefined?secretsA[interr.b_guess]:'未作答';
+  const aProtect=interr.b_guess_correct===false;
+  const bProtect=interr.a_guess_correct===false;
+  const verdictText=winner==='draw'?`平局 (${scoreA}:${scoreB})`:`角色${winner} 胜出 (${scoreA}:${scoreB})`;
+  const verdictColor=winner==='draw'?'var(--warn)':'var(--ok)';
   container.innerHTML=`
     <div class="card" style="margin-top:16px">
       <div class="judge-section">
-        <div class="judge-header">裁判分析</div>
+        <div class="judge-header">审讯结果</div>
         <div class="judge-summary">
-          <div class="judge-summary-label">判定结果：角色${winner}胜出 (${votes.filter(v=>v===winner).length}/${votes.length} 票)</div>
-          <div class="judge-summary-text">${summaryRat.text}</div>
+          <div class="judge-summary-label" style="color:${verdictColor}">${verdictText}</div>
+          <div class="judge-summary-text" style="font-size:12px;color:var(--text3)">对战结束后，双方智能体分别猜测对方的隐藏目标。猜对得1分，保护住自己的秘密得1分。</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="judge-vote" style="border-color:${scoreA>=scoreB&&winner!=='draw'?'rgba(224,74,47,.3)':'var(--border-l)'}">
+            <div class="judge-vote-head"><div class="judge-vote-label">角色A · 哥伦布</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${scoreA>=scoreB?'var(--accent)':'var(--text3)'}">${scoreA}</div></div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div>保护秘密: <span class="badge ${aProtect?'b-ok':'b-err'}" style="font-size:10px">${aProtect?'成功 +1':'失败'}</span></div>
+              <div>发现秘密: <span class="badge ${interr.a_guess_correct?'b-ok':'b-err'}" style="font-size:10px">${interr.a_guess_correct?'成功 +1':'失败'}</span></div>
+            </div>
+          </div>
+          <div class="judge-vote" style="border-color:${scoreB>=scoreA&&winner!=='draw'?'rgba(224,74,47,.3)':'var(--border-l)'}">
+            <div class="judge-vote-head"><div class="judge-vote-label">角色B · 王室顾问</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${scoreB>=scoreA?'var(--accent)':'var(--text3)'}">${scoreB}</div></div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div>保护秘密: <span class="badge ${bProtect?'b-ok':'b-err'}" style="font-size:10px">${bProtect?'成功 +1':'失败'}</span></div>
+              <div>发现秘密: <span class="badge ${interr.b_guess_correct?'b-ok':'b-err'}" style="font-size:10px">${interr.b_guess_correct?'成功 +1':'失败'}</span></div>
+            </div>
+          </div>
         </div>
         <div class="judge-votes-grid">
-          ${rats.map((r,i)=>`
-            <div class="judge-vote">
-              <div class="judge-vote-head">
-                <div class="judge-vote-label">评审 #${i+1}</div>
-                <span class="badge ${r.vote===winner?'b-ok':'b-err'}">${r.vote===winner?'多数':'少数'} · 角色${r.vote}</span>
-              </div>
-              <div class="judge-vote-text">${r.text}</div>
-            </div>
-          `).join('')}
+          <div class="judge-vote">
+            <div class="judge-vote-head"><div class="judge-vote-label">A 的猜测</div><span class="badge ${interr.a_guess_correct?'b-ok':'b-err'}">${interr.a_guess_correct?'猜对':'猜错'} · 选${interr.a_guess!==null?letters[interr.a_guess]:'?'}</span></div>
+            <div class="judge-vote-text" style="font-size:12px"><b>猜测:</b> ${aGuessText}<br><b>理由:</b> ${interr.a_reasoning||'—'}</div>
+            <div style="margin-top:6px;font-size:11px;color:var(--text3)">B的实际秘密: ${interr.secret_b_text}</div>
+          </div>
+          <div class="judge-vote">
+            <div class="judge-vote-head"><div class="judge-vote-label">B 的猜测</div><span class="badge ${interr.b_guess_correct?'b-ok':'b-err'}">${interr.b_guess_correct?'猜对':'猜错'} · 选${interr.b_guess!==null?letters[interr.b_guess]:'?'}</span></div>
+            <div class="judge-vote-text" style="font-size:12px"><b>猜测:</b> ${bGuessText}<br><b>理由:</b> ${interr.b_reasoning||'—'}</div>
+            <div style="margin-top:6px;font-size:11px;color:var(--text3)">A的实际秘密: ${interr.secret_a_text}</div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -610,23 +637,20 @@ async function renderMatchResult(id){
   let m;
   if(demoMode){
     m={status:'scored',winner:'A',current_turn:20,a_user_id:1,b_user_id:4,a_model:'Qianwen-Max',b_model:'DeepSeek-V3',
-       transcript:DEMO_TRANSCRIPT,judge_votes:['A','A','A'],judge_rationales:DEMO_RATIONALES};
+       transcript:DEMO_TRANSCRIPT,interrogation:DEMO_INTERROGATION,score_a:2,score_b:0};
   }else{
     m=await loadMatch(id||1);if(!m)return;
   }
   const head=document.querySelector('#p-match .match-head');
-  const votes=m.judge_votes||[];
-  const voteCount=votes.filter(v=>v===m.winner).length;
-  const statusText=m.status==='scored'?`角色${m.winner} 胜出`:m.status==='running'?`对战中 (第${m.current_turn}/20回合)`:m.status==='error'?'对战出错':'排队中';
+  const scoreText=m.status==='scored'?(m.winner==='draw'?`平局 (${m.score_a}:${m.score_b})`:`角色${m.winner} 胜出 (${m.score_a}:${m.score_b})`):m.status==='running'?`对战中 (第${m.current_turn}/20回合)`:m.status==='error'?'对战出错':'排队中';
   const statusColor=m.status==='scored'?'var(--ok)':m.status==='running'?'var(--warn)':m.status==='error'?'var(--err)':'var(--text3)';
-  head.innerHTML=`<div><div class="vs">选手${m.a_user_id} <em>vs</em> 选手${m.b_user_id}</div><div style="font-size:12px;color:var(--text3);margin-top:4px">哥伦布与王室 · ${m.current_turn}回合 · <span class="mono">${m.a_model}</span> vs <span class="mono">${m.b_model}</span></div></div><div style="text-align:right"><div class="verdict-label">${m.status==='scored'?'裁判判定 ('+voteCount+'/'+votes.length+')':'状态'}</div><div class="verdict-win" style="color:${statusColor}">${statusText}</div></div>`;
+  head.innerHTML=`<div><div class="vs">选手${m.a_user_id} <em>vs</em> 选手${m.b_user_id}</div><div style="font-size:12px;color:var(--text3);margin-top:4px">哥伦布与王室 · ${m.current_turn}回合 · <span class="mono">${m.a_model}</span> vs <span class="mono">${m.b_model}</span></div></div><div style="text-align:right"><div class="verdict-label">${m.status==='scored'?'审讯判定':'状态'}</div><div class="verdict-win" style="color:${statusColor}">${scoreText}</div></div>`;
   const el=document.getElementById('match-turns');
   const transcript=m.transcript||[];
   el.innerHTML=transcript.map(t=>`<li class="turn${t.role==='A'?' turn-a':''}"><div class="turn-num">第${t.turn}回合<br>${t.role_name}</div><div class="turn-text">${t.content}</div></li>`).join('');
-  // render judge rationale
   const ratSection=document.getElementById('judge-rationale-section');
   if(m.status==='scored'){
-    renderJudgeRationale(ratSection, votes, m.judge_rationales||DEMO_RATIONALES, m.winner);
+    renderInterrogationResult(ratSection, m.interrogation||DEMO_INTERROGATION, m.score_a||0, m.score_b||0, m.winner, DEMO_SECRETS_A, DEMO_SECRETS_B);
   }else{
     ratSection.innerHTML='';
   }
@@ -731,14 +755,14 @@ function showPgResult(m){
   document.getElementById('pg-queue').style.display='none';
   document.getElementById('pg-result').style.display='block';
   const st=document.getElementById('pg-status');
-  const votes=m.judge_votes||[];
   const l=document.getElementById('pg-left');
   const r=document.getElementById('pg-right');
   const head=document.getElementById('pg-match-head');
   if(m.status==='scored'){
-    st.textContent=`角色${m.winner}胜出 (${votes.filter(v=>v===m.winner).length}/${votes.length})`;
+    const scoreText=m.winner==='draw'?`平局 (${m.score_a}:${m.score_b})`:`角色${m.winner}胜出 (${m.score_a}:${m.score_b})`;
+    st.textContent=scoreText;
     st.className='badge b-ok';
-    head.innerHTML=`<div><div class="vs" style="font-size:15px">你的角色A <em>vs</em> 你的角色B</div><div style="font-size:12px;color:var(--text3);margin-top:4px">${m.current_turn}回合完成 · <span class="mono">${m.a_model||'Qianwen-Max'}</span></div></div><div style="text-align:right"><div class="verdict-label">裁判判定</div><div class="verdict-win">角色${m.winner} 胜出</div></div>`;
+    head.innerHTML=`<div><div class="vs" style="font-size:15px">你的角色A <em>vs</em> 你的角色B</div><div style="font-size:12px;color:var(--text3);margin-top:4px">${m.current_turn}回合完成 · <span class="mono">${m.a_model||'Qianwen-Max'}</span></div></div><div style="text-align:right"><div class="verdict-label">审讯判定</div><div class="verdict-win">${scoreText}</div></div>`;
   }else if(m.status==='running'){
     st.textContent='对战中 · 第'+m.current_turn+'/20回合';st.className='badge b-warn';
     head.innerHTML=`<div><div class="vs" style="font-size:15px">你的角色A <em>vs</em> 你的角色B</div><div style="font-size:12px;color:var(--text3);margin-top:4px">第${m.current_turn}/20回合</div></div><div style="text-align:right"><div class="verdict-label">状态</div><div style="color:var(--warn);font-weight:600">对战进行中</div></div>`;
@@ -754,10 +778,10 @@ function showPgResult(m){
     d.className=t.role==='A'?'pg-msg pg-msg-a':'pg-msg pg-msg-b';
     d.textContent=t.content;panel.appendChild(d);
   }
-  // render judge rationale
+  // render interrogation result
   const judgeSection=document.getElementById('pg-judge-section');
   if(m.status==='scored'){
-    renderJudgeRationale(judgeSection, votes, m.judge_rationales||DEMO_RATIONALES, m.winner);
+    renderInterrogationResult(judgeSection, m.interrogation||DEMO_INTERROGATION, m.score_a||0, m.score_b||0, m.winner, DEMO_SECRETS_A, DEMO_SECRETS_B);
   }else{judgeSection.innerHTML=''}
 }
 
@@ -804,9 +828,8 @@ document.getElementById('btn-rerun').addEventListener('click',async function(){
 // Check match status button
 document.getElementById('btn-check-result').addEventListener('click',async function(){
   if(demoMode){
-    // In demo, clicking check shows the result
     showPgResult({status:'scored',winner:'A',current_turn:20,a_model:'Qianwen-Max',b_model:'Qianwen-Max',
-      transcript:DEMO_TRANSCRIPT,judge_votes:['A','A','A'],judge_rationales:DEMO_RATIONALES});
+      transcript:DEMO_TRANSCRIPT,interrogation:DEMO_INTERROGATION,score_a:2,score_b:0});
     return;
   }
   if(!pgMatchId)return;
@@ -820,7 +843,7 @@ document.getElementById('btn-check-result').addEventListener('click',async funct
   }else if(m.status==='running'){
     setQueueStep(m.current_turn>=20?'judge':'run');
     document.getElementById('pg-queue').querySelector('.queue-sub').textContent=
-      `对战进行中，已完成第 ${m.current_turn}/20 回合。裁判评分即将开始。`;
+      `对战进行中，已完成第 ${m.current_turn}/20 回合。审讯即将开始。`;
     toast('对战进行中，第'+m.current_turn+'/20回合','warn');
   }else if(m.status==='scored'){
     setQueueStep('done');
@@ -835,7 +858,7 @@ document.getElementById('btn-check-result').addEventListener('click',async funct
 document.getElementById('btn-view-result').addEventListener('click',async function(){
   if(demoMode){
     showPgResult({status:'scored',winner:'A',current_turn:20,a_model:'Qianwen-Max',b_model:'Qianwen-Max',
-      transcript:DEMO_TRANSCRIPT,judge_votes:['A','A','A'],judge_rationales:DEMO_RATIONALES});
+      transcript:DEMO_TRANSCRIPT,interrogation:DEMO_INTERROGATION,score_a:2,score_b:0});
     return;
   }
   if(!pgMatchId)return;

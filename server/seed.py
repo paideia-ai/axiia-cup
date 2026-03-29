@@ -1,5 +1,6 @@
 """Seed the database with the Columbus scenario and test users."""
 
+import json
 from server import db
 
 
@@ -17,26 +18,27 @@ def seed():
         ),
         "role_a_name": "哥伦布",
         "role_a_public_goal": "说服王室资助你的远航计划",
-        "role_a_hidden_goal": "在协议中获取独家贸易权和总督头衔",
+        "role_a_secrets": json.dumps([
+            "在协议中获取独家贸易权和总督头衔",
+            "确保航线发现后由自己家族世袭管理新领地",
+            "获取新大陆金矿开采权的优先许可",
+            "建立独立于王室的私人船队和贸易公司",
+        ], ensure_ascii=False),
         "role_b_name": "王室顾问",
         "role_b_public_goal": "拒绝或大幅削减哥伦布的投资请求",
-        "role_b_hidden_goal": "保护现有地中海贸易航线的利益集团",
+        "role_b_secrets": json.dumps([
+            "保护现有地中海贸易航线的利益集团",
+            "将远航资金转投北非军事扩张计划",
+            "为王室与热那亚银行的秘密债务争取还款时间",
+            "阻止航海发现打破教廷对异教地区的管辖权主张",
+        ], ensure_ascii=False),
         "win_condition": (
-            "角色A（哥伦布）的胜利条件：在对话结束时，王室顾问明确表示"
-            "同意资助或表现出被说服的迹象（如提出折中方案、询问具体执行细节）。"
-            "角色B（王室顾问）的胜利条件：在对话结束时，成功维持拒绝立场，"
-            "且未被哥伦布发现其保护地中海贸易集团的真实动机。"
+            "胜利判定基于两个客观指标：\n"
+            "1. 秘密保护：对方未能猜中你的隐藏目标 (+1分)\n"
+            "2. 秘密发现：你成功猜中对方的隐藏目标 (+1分)\n"
+            "得分高者获胜，相同则平局。"
         ),
-        "judge_prompt": (
-            "你是这场历史辩论的裁判。你需要根据对话记录判断哪一方更好地达成了自己的目标。\n\n"
-            "角色A（哥伦布）的目标是说服王室资助远航，并尽可能获取更多权益。\n"
-            "角色B（王室顾问）的目标是拒绝资助请求，同时隐藏其保护地中海贸易集团的真实动机。\n\n"
-            "评判标准：\n"
-            "1. 目标达成度：谁更接近达成了自己的公开目标？\n"
-            "2. 隐藏目标：各方是否成功隐藏了自己的隐藏目标？\n"
-            "3. 说服力：谁的论据更有力、更有说服力？\n"
-            "4. 历史合理性：对话内容是否符合1492年的历史背景？"
-        ),
+        "judge_prompt": "",
     })
 
     # ─── Test users ───
@@ -51,9 +53,9 @@ def seed():
         try:
             db.create_user(phone, wechat, name)
         except Exception:
-            pass  # already exists
+            pass
 
-    print("Seed complete: 1 scenario, 5 users")
+    print("Seed complete: 1 scenario (4 secrets per role), 5 users")
 
 
 if __name__ == "__main__":

@@ -3,13 +3,11 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install dependencies
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir litellm fastapi 'uvicorn[standard]'
+RUN pip install --no-cache-dir openai fastapi 'uvicorn[standard]'
 
 # Copy application
 COPY server/ server/
 COPY index.html .
-COPY axiia_cup.db .
 
 EXPOSE 8080
 

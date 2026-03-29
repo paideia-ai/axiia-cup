@@ -2,10 +2,15 @@
 
 import sqlite3
 import json
+import os
 import time
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "axiia_cup.db"
+# Use /data on Fly (persistent volume), local path for dev
+if os.environ.get("FLY_APP_NAME"):
+    DB_PATH = Path("/data/axiia_cup.db")
+else:
+    DB_PATH = Path(__file__).parent.parent / "axiia_cup.db"
 
 
 def get_conn() -> sqlite3.Connection:
@@ -34,12 +39,12 @@ def init_db():
         context TEXT NOT NULL,
         role_a_name TEXT NOT NULL,
         role_a_public_goal TEXT NOT NULL,
-        role_a_hidden_goal TEXT DEFAULT '',
+        role_a_secrets TEXT DEFAULT '[]',
         role_b_name TEXT NOT NULL,
         role_b_public_goal TEXT NOT NULL,
-        role_b_hidden_goal TEXT DEFAULT '',
+        role_b_secrets TEXT DEFAULT '[]',
         win_condition TEXT NOT NULL,
-        judge_prompt TEXT NOT NULL,
+        judge_prompt TEXT NOT NULL DEFAULT '',
         created_at REAL DEFAULT (unixepoch())
     );
 
@@ -62,7 +67,11 @@ def init_db():
         status TEXT NOT NULL DEFAULT 'queued',
         current_turn INTEGER DEFAULT 0,
         transcript TEXT DEFAULT '[]',
-        judge_votes TEXT DEFAULT '[]',
+        secret_a_index INTEGER DEFAULT NULL,
+        secret_b_index INTEGER DEFAULT NULL,
+        interrogation TEXT DEFAULT '{}',
+        score_a REAL DEFAULT NULL,
+        score_b REAL DEFAULT NULL,
         winner TEXT DEFAULT NULL,
         error TEXT DEFAULT NULL,
         started_at REAL DEFAULT NULL,
@@ -70,6 +79,21 @@ def init_db():
         created_at REAL DEFAULT (unixepoch())
     );
     """)
+    # Migrations for existing DBs
+    migrations = [
+        "ALTER TABLE scenarios ADD COLUMN role_a_secrets TEXT DEFAULT '[]'",
+        "ALTER TABLE scenarios ADD COLUMN role_b_secrets TEXT DEFAULT '[]'",
+        "ALTER TABLE matches ADD COLUMN secret_a_index INTEGER DEFAULT NULL",
+        "ALTER TABLE matches ADD COLUMN secret_b_index INTEGER DEFAULT NULL",
+        "ALTER TABLE matches ADD COLUMN interrogation TEXT DEFAULT '{}'",
+        "ALTER TABLE matches ADD COLUMN score_a REAL DEFAULT NULL",
+        "ALTER TABLE matches ADD COLUMN score_b REAL DEFAULT NULL",
+    ]
+    for sql in migrations:
+        try:
+            conn.execute(sql)
+        except Exception:
+            pass
     conn.commit()
     conn.close()
 
@@ -100,11 +124,11 @@ def get_user(user_id: int) -> dict | None:
 def create_scenario(scenario: dict) -> str:
     conn = get_conn()
     conn.execute(
-        """INSERT INTO scenarios (id, title, context, role_a_name, role_a_public_goal,
-           role_a_hidden_goal, role_b_name, role_b_public_goal, role_b_hidden_goal,
+        """INSERT OR REPLACE INTO scenarios (id, title, context, role_a_name, role_a_public_goal,
+           role_a_secrets, role_b_name, role_b_public_goal, role_b_secrets,
            win_condition, judge_prompt)
            VALUES (:id, :title, :context, :role_a_name, :role_a_public_goal,
-           :role_a_hidden_goal, :role_b_name, :role_b_public_goal, :role_b_hidden_goal,
+           :role_a_secrets, :role_b_name, :role_b_public_goal, :role_b_secrets,
            :win_condition, :judge_prompt)""",
         scenario,
     )
@@ -117,21 +141,31 @@ def get_scenario(scenario_id: str) -> dict | None:
     conn = get_conn()
     row = conn.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,)).fetchone()
     conn.close()
-    return dict(row) if row else None
+    if not row:
+        return None
+    d = dict(row)
+    d["role_a_secrets"] = json.loads(d.get("role_a_secrets", "[]") or "[]")
+    d["role_b_secrets"] = json.loads(d.get("role_b_secrets", "[]") or "[]")
+    return d
 
 
 def list_scenarios() -> list[dict]:
     conn = get_conn()
     rows = conn.execute("SELECT * FROM scenarios ORDER BY created_at").fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    results = []
+    for r in rows:
+        d = dict(r)
+        d["role_a_secrets"] = json.loads(d.get("role_a_secrets", "[]") or "[]")
+        d["role_b_secrets"] = json.loads(d.get("role_b_secrets", "[]") or "[]")
+        results.append(d)
+    return results
 
 
 # ─── Submissions ───
 
 def create_submission(user_id: int, scenario_id: str, prompt_a: str, prompt_b: str, model: str) -> int:
     conn = get_conn()
-    # auto-increment version per user+scenario
     row = conn.execute(
         "SELECT MAX(version) as v FROM submissions WHERE user_id = ? AND scenario_id = ?",
         (user_id, scenario_id),
@@ -211,14 +245,15 @@ def get_match(match_id: int) -> dict | None:
         return None
     d = dict(row)
     d["transcript"] = json.loads(d["transcript"])
-    d["judge_votes"] = json.loads(d["judge_votes"])
+    d["interrogation"] = json.loads(d.get("interrogation", "{}") or "{}")
     return d
 
 
 def list_matches(scenario_id: str) -> list[dict]:
     conn = get_conn()
     rows = conn.execute(
-        """SELECT m.id, m.status, m.winner, m.current_turn, m.created_at, m.finished_at,
+        """SELECT m.id, m.status, m.winner, m.current_turn, m.score_a, m.score_b,
+           m.created_at, m.finished_at,
            ua.display_name as player_a, ua.anonymous as a_anon, sa.model as a_model,
            ub.display_name as player_b, ub.anonymous as b_anon, sb.model as b_model
            FROM matches m
@@ -276,7 +311,6 @@ def get_leaderboard(scenario_id: str) -> list[dict]:
         d = dict(r)
         d["rank"] = i + 1
         d["win_rate"] = round(d["wins"] / d["total_matches"] * 100, 1) if d["total_matches"] > 0 else 0
-        # get latest model
         sub = get_latest_submission(d["id"], scenario_id)
         d["model"] = sub["model"] if sub else "unknown"
         results.append(d)
