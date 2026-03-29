@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axiia Cup — Design System Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,400&family=Instrument+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --bg-surface: #F2F1EC;
+    --bg-elevated: #FFFFFF;
+    --text-primary: #1A1A1A;
+    --text-secondary: #5C5C5C;
+    --text-muted: #8A8A8A;
+    --accent: #C23B22;
+    --accent-hover: #A83220;
+    --accent-light: #FDF0EE;
+    --border: #E0DED8;
+    --border-light: #EBE9E4;
+    --success: #2D7A4F;
+    --warning: #B8860B;
+    --error: #C23B22;
+    --info: #3B6EA5;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Instrument Sans', 'Noto Sans SC', -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', 'SF Mono', 'Consolas', monospace;
+    --space-2xs: 2px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #141413;
+    --bg-surface: #1E1E1C;
+    --bg-elevated: #282826;
+    --text-primary: #EDEDEB;
+    --text-secondary: #A8A8A3;
+    --text-muted: #6E6E69;
+    --accent: #E0553E;
+    --accent-hover: #F06A54;
+    --accent-light: #2A1F1D;
+    --border: #333330;
+    --border-light: #2A2A28;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    position: fixed;
+    top: var(--space-md);
+    right: var(--space-md);
+    z-index: 100;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Section labels */
+  .section-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+  }
+
+  /* Hero */
+  .hero {
+    padding: var(--space-3xl) 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: var(--space-md);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 700;
+    line-height: 1.05;
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+    font-optical-sizing: auto;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 580px;
+    line-height: 1.7;
+  }
+  .hero-accent {
+    display: inline-block;
+    width: 48px;
+    height: 4px;
+    background: var(--accent);
+    margin-bottom: var(--space-lg);
+    border-radius: 2px;
+  }
+
+  /* Section */
+  .section {
+    padding: var(--space-2xl) 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .section:last-child { border-bottom: none; }
+  .section h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: var(--space-lg);
+    line-height: 1.2;
+  }
+
+  /* Font specimens */
+  .font-specimen {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    margin-bottom: var(--space-md);
+  }
+  .font-specimen-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--space-sm);
+  }
+  .font-specimen-sample {
+    margin-bottom: var(--space-sm);
+  }
+  .specimen-display {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-primary);
+  }
+  .specimen-body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 600px;
+  }
+  .specimen-mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    padding: var(--space-md);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+  }
+
+  /* Color palette */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-md);
+  }
+  .swatch {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+  .swatch-color {
+    height: 80px;
+  }
+  .swatch-info {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-elevated);
+    font-size: 13px;
+  }
+  .swatch-name { font-weight: 600; color: var(--text-primary); }
+  .swatch-hex { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
+
+  /* Components */
+  .components-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+  }
+  .component-group h3 {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-md);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 10px 20px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    margin-right: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--accent);
+    padding: 10px 12px;
+  }
+  .btn-ghost:hover { background: var(--accent-light); }
+
+  /* Form inputs */
+  .input-group { margin-bottom: var(--space-md); }
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+  }
+  .input {
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: border-color 0.15s;
+  }
+  .input:focus { outline: none; border-color: var(--accent); }
+  .input-mono {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .badge-success { background: #E8F5EE; color: var(--success); }
+  .badge-warning { background: #FFF8E6; color: var(--warning); }
+  .badge-error { background: var(--accent-light); color: var(--error); }
+  .badge-info { background: #EBF2F8; color: var(--info); }
+  [data-theme="dark"] .badge-success { background: #1A2E22; }
+  [data-theme="dark"] .badge-warning { background: #2E2810; }
+  [data-theme="dark"] .badge-error { background: #2A1F1D; }
+  [data-theme="dark"] .badge-info { background: #1A2430; }
+
+  /* Cards */
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--border); }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+  }
+  .card-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* Alerts */
+  .alert {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    margin-bottom: var(--space-sm);
+    border-left: 3px solid;
+  }
+  .alert-success { background: #E8F5EE; border-color: var(--success); color: #1A4A30; }
+  .alert-warning { background: #FFF8E6; border-color: var(--warning); color: #5A4206; }
+  .alert-error { background: var(--accent-light); border-color: var(--error); color: #7A2218; }
+  .alert-info { background: #EBF2F8; border-color: var(--info); color: #1E3F5E; }
+  [data-theme="dark"] .alert-success { background: #1A2E22; color: #7DD8A0; }
+  [data-theme="dark"] .alert-warning { background: #2E2810; color: #D4A840; }
+  [data-theme="dark"] .alert-error { background: #2A1F1D; color: #F08070; }
+  [data-theme="dark"] .alert-info { background: #1A2430; color: #7CB5E0; }
+
+  /* Mockup: Leaderboard */
+  .leaderboard-mockup {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .leaderboard-header {
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .leaderboard-header h3 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .leaderboard-table th {
+    padding: var(--space-sm) var(--space-xl);
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-surface);
+  }
+  .leaderboard-table td {
+    padding: var(--space-md) var(--space-xl);
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  .leaderboard-table tr:last-child td { border-bottom: none; }
+  .leaderboard-table tr:hover td { background: var(--bg-surface); }
+  .rank-num {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+  .rank-1 { color: var(--accent); }
+  .player-name { font-weight: 600; }
+  .model-tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--bg-surface);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+  }
+  .win-rate {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .win-rate-high { color: var(--success); }
+  .win-rate-mid { color: var(--warning); }
+
+  /* Mockup: Agent Builder */
+  .builder-mockup {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .builder-topbar {
+    padding: var(--space-md) var(--space-xl);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .builder-topbar h3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .builder-body {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+  }
+  .builder-sidebar {
+    padding: var(--space-xl);
+    border-right: 1px solid var(--border-light);
+    background: var(--bg-surface);
+  }
+  .builder-sidebar h4 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-md);
+  }
+  .scenario-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+  .scenario-card-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+  }
+  .scenario-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .builder-main {
+    padding: var(--space-xl);
+  }
+  .role-tabs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+  }
+  .role-tab {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .role-tab.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .word-count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: var(--space-xs);
+  }
+  .word-count-warn { color: var(--warning); }
+  .builder-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+    justify-content: flex-end;
+  }
+
+  /* Mockup: Match Result */
+  .match-mockup {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+  .match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .match-vs {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .match-vs span { color: var(--text-muted); font-weight: 400; font-size: 16px; }
+  .match-verdict {
+    text-align: right;
+  }
+  .verdict-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-xs);
+  }
+  .verdict-result {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--success);
+  }
+  .verdict-loss { color: var(--error); }
+  .turn-list { list-style: none; }
+  .turn {
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border-light);
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: var(--space-md);
+  }
+  .turn:last-child { border-bottom: none; }
+  .turn-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-top: 2px;
+  }
+  .turn-role-a .turn-label { color: var(--accent); }
+  .turn-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 768px) {
+    .builder-body { grid-template-columns: 1fr; }
+    .builder-sidebar { border-right: none; border-bottom: 1px solid var(--border-light); }
+    .palette-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">明 / 暗</button>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">设计系统预览</div>
+    <div class="hero-accent"></div>
+    <h1>Axiia Cup</h1>
+    <p>锋锐思辨，策略交锋。面向人文学科学生的 AI 智能体对抗赛平台，涵盖历史、法律、戏剧与哲学。</p>
+  </section>
+
+  <!-- TYPOGRAPHY -->
+  <section class="section">
+    <div class="section-label">字体排印</div>
+    <h2>字体样本</h2>
+
+    <div class="font-specimen">
+      <div class="font-specimen-label">标题字体 — Fraunces</div>
+      <div class="font-specimen-sample">
+        <div class="specimen-display">The Art of Persuasion</div>
+      </div>
+      <div class="font-specimen-sample">
+        <div class="specimen-display" style="font-size:28px; font-weight:500; font-style:italic;">Round 3 — Columbus vs The Royal Court</div>
+      </div>
+    </div>
+
+    <div class="font-specimen">
+      <div class="font-specimen-label">正文字体 — Instrument Sans + Noto Sans SC</div>
+      <div class="font-specimen-sample">
+        <p class="specimen-body">你的智能体在20轮对话中的第14轮成功说服王室资助远航。对方智能体保持了历史准确性，但未能有效反驳第7至9轮中提出的经济论据。裁判判定：角色A达成主要目标，胜出。</p>
+      </div>
+    </div>
+
+    <div class="font-specimen">
+      <div class="font-specimen-label">数据/代码字体 — Geist Mono</div>
+      <div class="font-specimen-sample">
+        <div class="specimen-mono">你是哥伦布，一位热情而坚定的探险家。你的目标是说服
+西班牙王室资助你的远航计划。你相信向西航行可以到达
+印度，这将为王室带来巨大的财富和荣耀。
+
+胜率: 73.2%  |  对局: 41  |  模型: DeepSeek-V3</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLOR PALETTE -->
+  <section class="section">
+    <div class="section-label">色彩</div>
+    <h2>调色板</h2>
+
+    <div class="palette-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#FAFAF7"></div>
+        <div class="swatch-info"><div class="swatch-name">底色</div><div class="swatch-hex">#FAFAF7</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#F2F1EC"></div>
+        <div class="swatch-info"><div class="swatch-name">面板</div><div class="swatch-hex">#F2F1EC</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#FFFFFF"></div>
+        <div class="swatch-info"><div class="swatch-name">浮层</div><div class="swatch-hex">#FFFFFF</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#1A1A1A"></div>
+        <div class="swatch-info"><div class="swatch-name">主文字</div><div class="swatch-hex">#1A1A1A</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#5C5C5C"></div>
+        <div class="swatch-info"><div class="swatch-name">次文字</div><div class="swatch-hex">#5C5C5C</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#C23B22"></div>
+        <div class="swatch-info"><div class="swatch-name">朱砂红</div><div class="swatch-hex">#C23B22</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#2D7A4F"></div>
+        <div class="swatch-info"><div class="swatch-name">成功</div><div class="swatch-hex">#2D7A4F</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#B8860B"></div>
+        <div class="swatch-info"><div class="swatch-name">警告</div><div class="swatch-hex">#B8860B</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section class="section">
+    <div class="section-label">组件</div>
+    <h2>界面元素</h2>
+
+    <div class="components-grid">
+      <div class="component-group">
+        <h3>按钮</h3>
+        <button class="btn btn-primary">提交智能体</button>
+        <button class="btn btn-secondary">在试炼场测试</button>
+        <button class="btn btn-ghost">查看对话记录</button>
+      </div>
+      <div class="component-group">
+        <h3>状态标签</h3>
+        <span class="badge badge-success">胜出</span>
+        <span class="badge badge-error">落败</span>
+        <span class="badge badge-warning">对战中</span>
+        <span class="badge badge-info">排队中</span>
+      </div>
+      <div class="component-group">
+        <h3>提示信息</h3>
+        <div class="alert alert-success">你的智能体在第二轮中4场赢了3场。</div>
+        <div class="alert alert-warning">对战进行中 — 第 12 / 20 轮。</div>
+        <div class="alert alert-error">模型接口异常，正在从第8轮重试。</div>
+        <div class="alert alert-info">新场景已上线：马关条约谈判。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOCKUP: LEADERBOARD -->
+  <section class="section">
+    <div class="section-label">页面模型</div>
+    <h2>排行榜</h2>
+
+    <div class="leaderboard-mockup">
+      <div class="leaderboard-header">
+        <h3>第一赛季排名</h3>
+        <span class="badge badge-info">瑞士轮 第4/5轮</span>
+      </div>
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>排名</th>
+            <th>选手</th>
+            <th>模型</th>
+            <th>胜率</th>
+            <th>对局数</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-num rank-1">1</span></td>
+            <td><span class="player-name">选手 7291</span></td>
+            <td><span class="model-tag">DeepSeek-V3</span></td>
+            <td><span class="win-rate win-rate-high">78.6%</span></td>
+            <td style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">14</td>
+            <td><span class="badge badge-success">胜出</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">2</span></td>
+            <td><span class="player-name">林墨涵</span></td>
+            <td><span class="model-tag">Qianwen-Max</span></td>
+            <td><span class="win-rate win-rate-high">71.4%</span></td>
+            <td style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">14</td>
+            <td><span class="badge badge-warning">对战中</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">3</span></td>
+            <td><span class="player-name">张伟</span></td>
+            <td><span class="model-tag">Kimi-1.5</span></td>
+            <td><span class="win-rate win-rate-mid">64.3%</span></td>
+            <td style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">14</td>
+            <td><span class="badge badge-success">胜出</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">4</span></td>
+            <td><span class="player-name">陈宇欣</span></td>
+            <td><span class="model-tag">DeepSeek-V3</span></td>
+            <td><span class="win-rate win-rate-mid">57.1%</span></td>
+            <td style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">14</td>
+            <td><span class="badge badge-info">排队中</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">5</span></td>
+            <td><span class="player-name">王思远</span></td>
+            <td><span class="model-tag">MiniMax-01</span></td>
+            <td><span class="win-rate" style="color:var(--text-secondary)">50.0%</span></td>
+            <td style="font-family:var(--font-mono);font-size:14px;color:var(--text-secondary)">12</td>
+            <td><span class="badge badge-error">落败</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MOCKUP: AGENT BUILDER -->
+  <section class="section">
+    <div class="section-label">页面模型</div>
+    <h2>智能体工坊</h2>
+
+    <div class="builder-mockup">
+      <div class="builder-topbar">
+        <h3>搭建你的智能体</h3>
+        <span class="badge badge-info">场景：哥伦布与王室</span>
+      </div>
+      <div class="builder-body">
+        <div class="builder-sidebar">
+          <h4>场景背景</h4>
+          <div class="scenario-card">
+            <div class="scenario-card-title">哥伦布与王室</div>
+            <div class="scenario-card-desc">1492年。哥伦布寻求资助向西航行前往印度。王室在风险与潜在财富之间权衡利弊。</div>
+          </div>
+          <h4 style="margin-top:var(--space-lg)">角色 A — 哥伦布</h4>
+          <div class="scenario-card">
+            <div class="scenario-card-desc"><strong>公开目标：</strong>说服王室资助远航。<br><strong>隐藏目标：</strong>获取独家贸易权。</div>
+          </div>
+          <h4 style="margin-top:var(--space-lg)">角色 B — 王室顾问</h4>
+          <div class="scenario-card">
+            <div class="scenario-card-desc"><strong>公开目标：</strong>拒绝或削减投资。<br><strong>隐藏目标：</strong>保护现有地中海贸易航线。</div>
+          </div>
+        </div>
+        <div class="builder-main">
+          <div class="role-tabs">
+            <button class="role-tab active">角色 A — 哥伦布</button>
+            <button class="role-tab">角色 B — 王室顾问</button>
+          </div>
+          <div class="input-group">
+            <label>系统提示词</label>
+            <textarea class="input input-mono" placeholder="在此编写你的智能体提示词。描述它的性格、策略、知识储备，以及它应如何参与对话..."></textarea>
+            <div class="word-count">0 / 1000 字</div>
+          </div>
+          <div class="input-group">
+            <label>选择模型</label>
+            <select class="input" style="font-family:var(--font-mono);font-size:14px;">
+              <option>DeepSeek-V3</option>
+              <option>Qianwen-Max</option>
+              <option>Kimi-1.5</option>
+              <option>MiniMax-01</option>
+            </select>
+          </div>
+          <div class="builder-actions">
+            <button class="btn btn-secondary">在试炼场测试</button>
+            <button class="btn btn-primary">提交参赛</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOCKUP: MATCH RESULT -->
+  <section class="section">
+    <div class="section-label">页面模型</div>
+    <h2>对战结果</h2>
+
+    <div class="match-mockup">
+      <div class="match-header">
+        <div>
+          <div class="match-vs">选手 7291 <span>对阵</span> 林墨涵</div>
+          <div class="card-meta" style="margin-top:var(--space-xs)">哥伦布与王室 — 瑞士轮第3轮 — 20回合</div>
+        </div>
+        <div class="match-verdict">
+          <div class="verdict-label">裁判判定 (3/3)</div>
+          <div class="verdict-result">角色A 胜出</div>
+        </div>
+      </div>
+      <ul class="turn-list">
+        <li class="turn turn-role-a">
+          <div class="turn-label">第1回合<br>哥伦布</div>
+          <div class="turn-content">陛下，臣并非空想之人，而是花了二十年研究大西洋的风向与洋流。葡萄牙人已经控制了东方的香料航线，但臣可以为陛下开辟一条更伟大的通路……</div>
+        </li>
+        <li class="turn">
+          <div class="turn-label">第2回合<br>顾问</div>
+          <div class="turn-content">二十年的研究，却无一次远航。萨拉曼卡的学者们已审查了你的计算，发现你将地球的周长低估了近一半……</div>
+        </li>
+        <li class="turn turn-role-a">
+          <div class="turn-label">第3回合<br>哥伦布</div>
+          <div class="turn-content">恕臣直言，萨拉曼卡的学者们从未离开过他们的书斋。臣曾航行至冰岛、非洲黄金海岸和马德拉群岛。臣亲眼目睹了向西流动的洋流，也曾与水手交谈，他们发现了从西方漂来的雕花木材……</div>
+        </li>
+      </ul>
+      <div style="text-align:center; padding:var(--space-lg) 0; color:var(--text-muted); font-size:14px;">
+        … 还有 17 个回合 …
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="padding-bottom:var(--space-3xl);">
+    <div class="section-label">设计系统</div>
+    <h2>总览</h2>
+    <div class="card">
+      <p class="specimen-body" style="max-width:none">
+        <strong>美学方向：</strong>编辑刊物风格 — 学术而不沉闷<br>
+        <strong>字体：</strong>Fraunces（标题）+ Instrument Sans / Noto Sans SC（正文）+ Geist Mono（数据）<br>
+        <strong>色彩：</strong>暖白底色 #FAFAF7、墨黑文字 #1A1A1A、朱砂红强调色 #C23B22<br>
+        <strong>间距：</strong>8px 基准，舒适密度<br>
+        <strong>布局：</strong>混合 — 应用页面用网格、营销页面用编辑排版<br>
+        <strong>动效：</strong>功能性为主 — 仅过渡动画与悬停状态<br>
+        <strong>差异化选择：</strong>衬线标题字体、朱砂红强调色、浅色模式优先
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? '' : 'dark');
+}
+</script>
+
+</body>
+</html>

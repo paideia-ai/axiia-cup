@@ -1,3 +1,4 @@
+<!-- /autoplan restore point: /Users/yihan/.gstack/projects/axiia-cup/master-autoplan-restore-20260329-112455.md -->
 # Axiia Cup — Agent Competition Platform PRD v1
 
 > Source: Meeting transcript 2026-03-25 + Yihan's design decisions 2026-03-29
@@ -242,3 +243,142 @@ vs. **OpenClaw / workflow agent competitions:**
 | 金晓彤 (Liberty) | Tournament rules drafting |
 | 安娜 (Anna) | Engineering (not in meeting) |
 | 米正 (Mizheng) | Engineering (not in meeting) |
+
+---
+
+## /autoplan CEO Review (Phase 1)
+
+**Mode:** SELECTIVE EXPANSION | **Expansion accepted:** Judge 3x majority vote
+
+### NOT in Scope (Deferred)
+
+| Item | Rationale |
+|---|---|
+| Live match spectating | Streaming complexity, not needed for MVP demo |
+| Match replay viewer | Raw transcript suffices for internal test |
+| Prompt version diff view | Needs usage data first |
+| Social sharing cards | Premature before format validated |
+| Scenario SDK / creation framework | Important for moat but post-MVP concern |
+| PIPL-compliant data protection | Only 15 internal users for MVP |
+| Retention loop / between-competition engagement | Post-MVP product decision |
+| Model parity testing / normalization | User decision: model choice is strategy |
+| Intermediate prompt tiers (conditional logic) | User decided: single system prompt only |
+
+### What Already Exists
+
+| Sub-problem | Existing Code/Patterns |
+|---|---|
+| Prompt playground | Qijia's coach prompt playground (design reference only, no code reuse) |
+| Multi-model API gateway | Common pattern; LiteLLM or custom adapters |
+| Tournament bracket logic | Open-source bracket libraries exist |
+| LLM-as-judge | Established pattern in eval frameworks (OpenAI evals, etc.) |
+
+### Dream State Delta
+
+This plan takes us from 0 → 1 (working demo). The gap from 1 → 12-month ideal requires: production backend rebuild, multiple scenarios across subjects, validated judging methodology, community/retention features, sponsorship deals, and ambassador program. The demo provides proof-of-concept for advisor/sponsor conversations.
+
+### Error & Rescue Registry (Plan Stage)
+
+| Codepath | What Can Go Wrong | Rescued? | User Sees |
+|---|---|---|---|
+| Model API call (match turn) | Timeout / rate limit / 5xx | Yes (retry from failure) | Match continues from last turn |
+| Model API call (judge) | Timeout / malformed / ambiguous verdict | GAP | Undefined |
+| User registration | Duplicate phone | GAP | Undefined |
+| Prompt submission | Empty / over 300 words | GAP | Undefined |
+| Match pairing | Odd participants / no opponent | GAP | Undefined |
+| Model content moderation | Role-play scenario rejected by model | GAP | Undefined |
+
+### Failure Modes Registry
+
+| Codepath | Failure Mode | Rescued? | Test? | User Sees | Logged? |
+|---|---|---|---|---|---|
+| Judge LLM call | Returns neither win nor loss | N | N | Silent | N — **CRITICAL GAP** |
+| Judge LLM call | Inconsistent across runs | MITIGATED (3x vote) | N | Majority result | N |
+| Match dialogue | Agents loop identical responses | N | N | 20 turns of nonsense | N |
+| Match dialogue | Model refuses role-play (safety filter) | N | N | Match fails | N |
+| Playground | Backend stubbed, results don't match competition | By design | N/A | Misleading feedback | N/A |
+
+### Accepted Scope Expansion
+
+- **Judge 3x majority vote:** Run judge LLM 3 times per match, take majority verdict. Near-zero cost, mitigates single-call unreliability (Premise P3). If all 3 disagree, flag for manual review.
+
+### CEO Completion Summary
+
+```
++====================================================================+
+|            MEGA PLAN REVIEW — COMPLETION SUMMARY                   |
++====================================================================+
+| Mode selected        | SELECTIVE EXPANSION                         |
+| System Audit         | Greenfield repo, 1 commit, no code          |
+| Step 0               | 6 premises evaluated, P3 (judge) weakest    |
+| Section 1  (Arch)    | 0 issues — MVP monolith is fine              |
+| Section 2  (Errors)  | 5 error paths mapped, 5 GAPS (plan stage)   |
+| Section 3  (Security)| 1 issue (PIPL) — deferred, MVP-internal only |
+| Section 4  (Data/UX) | 4 edge cases noted, deferred to impl         |
+| Section 5  (Quality) | N/A — no code                               |
+| Section 6  (Tests)   | Internal competition IS the test             |
+| Section 7  (Perf)    | 0 issues — async design handles rate limits  |
+| Section 8  (Observ)  | Match logging needed — impl detail           |
+| Section 9  (Deploy)  | MVP deploy unspecified, acceptable            |
+| Section 10 (Future)  | Retention loop gap flagged by both voices    |
+| Section 11 (Design)  | 5 missing interaction states noted            |
++--------------------------------------------------------------------+
+| NOT in scope         | written (9 items)                            |
+| What already exists  | written (4 references)                       |
+| Dream state delta    | written                                      |
+| Error/rescue registry| 6 codepaths, 5 GAPS (plan-stage)             |
+| Failure modes        | 5 total, 1 CRITICAL GAP (judge no-verdict)   |
+| TODOS.md updates     | deferred to Phase 4 (collected across phases)|
+| Scope proposals      | 5 proposed, 1 accepted (judge 3x)            |
+| CEO plan             | N/A — not persisting for SELECTIVE+MVP       |
+| Outside voice        | ran (codex + claude subagent)                |
+| Dual voices          | 6/6 confirmed, 0 disagreements               |
+| Diagrams produced    | 0 (no code to diagram)                       |
+| Unresolved decisions | 0                                            |
++====================================================================+
+```
+
+<!-- AUTONOMOUS DECISION LOG -->
+## Decision Audit Trail
+
+| # | Phase | Decision | Principle | Classification | Rationale | Rejected |
+|---|-------|----------|-----------|----------------|-----------|----------|
+| 1 | CEO | Mode: SELECTIVE EXPANSION | P1+P6 | Mechanical | User said "MVP only" — hold scope, cherry-pick | EXPANSION (too ambitious for throwaway MVP) |
+| 2 | CEO | Approach A: full-stack web app | P1 | Mechanical | User explicitly wants "full UX demo" | Approach B (script-based), C (playground-only) |
+| 3 | CEO | Accept judge 3x expansion | P1+P5 | Mechanical | Near-zero cost, directly mitigates biggest risk | Deferring judge reliability |
+| 4 | CEO | Defer live spectating | P3 | Mechanical | Streaming complexity, not MVP | Adding to scope |
+| 5 | CEO | Defer match replay viewer | P3 | Mechanical | Raw transcript suffices | Adding to scope |
+| 6 | CEO | Defer social sharing | P6 | Mechanical | Premature before format validated | Adding to scope |
+| 7 | CEO | Defer PIPL compliance | P6 | Mechanical | 15 internal users only | Adding to scope |
+| 8 | CEO | Section 2 error gaps: log, don't expand | P5 | Mechanical | Implementation details for eng team | Expanding scope to specify all error handling |
+| 9 | CEO | Section 4 edge cases: note, don't expand | P3 | Mechanical | Implementation details | Expanding scope |
+| 10 | CEO | Section 11 UI states: note for frontend | P5 | Mechanical | Useful guidance, not scope expansion | Ignoring |
+| 11 | Design | Define 5 named screens | P1 | Mechanical | Near-zero cost, prevents implementer guessing | Leaving undefined |
+| 12 | Design | Specify match lifecycle states | P1 | Mechanical | Core async UX, must be defined | Leaving undefined |
+| 13 | Design | Post-submission WeChat notification | P1 vs P3 | Taste | Adds engagement but adds integration complexity | — |
+| 14 | Design | Agent Builder UI guidance (scenario context alongside editor) | P1 | Mechanical | Core creative surface needs minimum spec | Generic textarea |
+| 15 | Design | Skip subject selection for MVP, hardcode scenario | P5 | Mechanical | One scenario = no selection needed | Building empty selector |
+| 16 | Design | Anonymous users show as "Player [4-digit ID]" | P5 | Mechanical | Simple, trackable, no ambiguity | Undefined anonymous display |
+| 17 | Design | MVP pairing format: Swiss-system (user override) | P3 | Taste — USER OVERRIDE | Swiss reduces 420 matches to ~60, saves 80% API cost | Round-robin (too expensive) |
+| 18 | Design | Defer responsive/a11y specs | P6 | Mechanical | Internal test with 15 people | Full a11y spec |
+| 19 | Eng | Define match protocol: A's Role-A vs B's Role-B AND A's Role-B vs B's Role-A | P5 | Mechanical | Both-role submission creates 2 matches per pairing, must be explicit | Leaving undefined |
+| 20 | Eng | Add combinatorial math to PRD (~60 matches for 15 participants, Swiss-system) | P5 | Mechanical | Cost/feasibility must be visible to stakeholders | Hiding complexity |
+| 21 | Eng | Distinguish transient vs permanent model API failures | P5 | Mechanical | Content moderation refusals != timeouts | Treating all failures as retryable |
+| 22 | Eng | Define MatchTranscript schema (scenario_id, turns, metadata) | P5 | Mechanical | Judge + match engine need a contract | Ad-hoc serialization |
+| 23 | Eng | Tag matches as playground vs competition | P5 | Mechanical | Prevent playground data leaking into rankings | No separation |
+| 24 | Eng | Prompt injection mitigation: never show raw transcripts | P1 vs P5 | Taste | Security vs transparency for learning loop | — |
+| 25 | Eng | "300 words" → "1000 characters" for Chinese text | P5 | Mechanical | Unambiguous metric | Language-dependent counting |
+| 26 | Eng | Judge prompt validation: 10-20 ground-truth corpus before internal test | P1 | Mechanical | Single most impactful action per both voices | Skipping validation |
+| 27 | Eng | Lock versions at round start, no mid-round submission | P5 | Mechanical | Prevents gaming and zombie version conflicts | Open submission during matches |
+| 28 | Eng | Judge 3x at temp=0 may be identical — add prompt perturbation | P1 | Mechanical | If same prompt → same output, 3x vote is meaningless | Identical 3x calls |
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | DONE (via /autoplan) | 6 premises, 1 expansion accepted (judge 3x), 5 error gaps, 1 critical failure mode |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | DONE (via /autoplan) | 7 dimensions scored (avg 2.4/10), 4 critical + 9 high findings |
+| Eng Review | `/plan-eng-review` | Architecture & tests | 1 | DONE (via /autoplan) | 4 critical + 8 high findings, test plan written |
+| Codex Review | `/codex review` | Independent 2nd opinion | 3 | DONE (via /autoplan) | CEO: 6 blind spots. Design: 7 concerns. Eng: 12 findings |
+
+**VERDICT:** REVIEWED — 3 phases complete. 2 taste decisions + cross-phase themes surfaced at gate.
