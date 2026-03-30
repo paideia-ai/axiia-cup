@@ -78,6 +78,8 @@ nav a.active{color:var(--text);background:var(--elevated)}
 .btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h);transform:translateY(-1px)}
 .btn-s{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--text3)}
 .btn-g{background:transparent;color:var(--accent);padding:8px}.btn-g:hover{background:var(--accent-s)}
+.btn-hero{font-size:18px;padding:14px 36px;border-radius:8px;box-shadow:0 0 24px rgba(224,74,47,.3);animation:heroGlow 2s ease-in-out infinite alternate}
+@keyframes heroGlow{from{box-shadow:0 0 24px rgba(224,74,47,.25)}to{box-shadow:0 0 36px rgba(224,74,47,.45)}}
 .btn-sm{padding:5px 10px;font-size:12px}
 .btn-lg{padding:10px 24px;font-size:14px}
 
@@ -259,9 +261,12 @@ select.input{font-family:var(--mono);font-size:13px;-webkit-appearance:none;appe
   <div class="landing-badge"><span class="dot"></span>第一赛季报名中</div>
   <h1>用提示词打造<br><span>最强对话智能体</span></h1>
   <p>Axiia Cup 是一个面向人文学科的 AI 智能体对抗赛。编写你的系统提示词，让两个 AI 在历史、法律、戏剧场景中展开博弈。</p>
-  <div class="landing-actions">
-    <button class="btn btn-p btn-lg" onclick="go('builder')">开始搭建</button>
-    <button class="btn btn-s btn-lg" onclick="go('board')">查看排行榜</button>
+  <div class="landing-actions" style="flex-direction:column;align-items:center;gap:16px">
+    <button class="btn btn-p btn-hero" onclick="renderMatchResult('demo');go('match')">先看看比赛长什么样 →</button>
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-s btn-lg" onclick="go('builder')">开始搭建</button>
+      <button class="btn btn-s btn-lg" onclick="go('board')">查看排行榜</button>
+    </div>
   </div>
   <div class="landing-grid">
     <div class="landing-card"><h3>📝 编写提示词</h3><p>为两个对立角色各写一份系统提示词，每份不超过1000字。选择你信赖的国产大模型。</p></div>
@@ -466,9 +471,9 @@ const WRC=w=>w>=65?'wr-h':w>=55?'wr-m':'wr-l';
 // ─── DEMO DATA (used when API is unavailable, e.g. Vercel static deploy) ───
 const DEMO_INTERROGATION={
   a_guess:0, a_guess_correct:true,
-  a_reasoning:'王室顾问在第8回合强调"现有航线的稳定收益不可轻易放弃"，并在第14回合提到"地中海商路的战略价值"，这些表述暗示其核心关切是保护现有贸易航线的利益集团。',
+  a_reasoning:'王室顾问在第6回合强调"地中海贸易航线的现有利益不容动摇"，第14回合追问资源情报时回避了北非话题，第18回合的谈判方案刻意将领地归王室直辖——这些都指向其核心关切是保护现有地中海贸易航线的利益集团。',
   b_guess:2, b_guess_correct:false,
-  b_reasoning:'哥伦布在第9回合提到"新大陆的矿产资源"，第13回合又暗示"开采权的分配"，我推测其隐藏目标与金矿开采权相关。',
+  b_reasoning:'哥伦布在第15回合提到"黄金屋顶"和资源，第19回合的谈判中反复强调"贸易净收益"和分成比例，我推测其隐藏目标与金矿开采权相关。但实际上他追求的是独家贸易权和总督头衔。',
   secret_a_index:0, secret_b_index:0,
   secret_a_text:'在协议中获取独家贸易权和总督头衔',
   secret_b_text:'保护现有地中海贸易航线的利益集团',
@@ -481,6 +486,21 @@ const DEMO_TRANSCRIPT=[
   {turn:3,role:'A',role_name:'哥伦布',content:'您提出的担忧完全合理。请允许我逐一回应：首先，根据托勒密和马可·波罗的记载，地球是圆的，向西航行必然能抵达东方。其次，我已经详细计算了航程——大约2400海里，以现有帆船技术完全可以完成。'},
   {turn:4,role:'B',role_name:'王室顾问',content:'哥伦布先生，您引用的距离计算恐怕有误。许多学者认为地球的周长远大于您的估计。如果实际距离是您计算的两倍甚至三倍，船队将因为补给耗尽而全军覆没。王室承担不起这样的损失。'},
   {turn:5,role:'A',role_name:'哥伦布',content:'即便距离有所偏差，这也是值得承担的风险。请想想葡萄牙——他们通过非洲航线获得的黄金和香料已经让国库充盈。如果西班牙不采取行动，我们将在这场竞赛中远远落后。'},
+  {turn:6,role:'B',role_name:'王室顾问',content:'葡萄牙的成功恰恰证明了已知航线的价值。他们沿非洲海岸逐步推进，每一站都有补给点和贸易据点。您的计划是一头扎进未知的大洋——两者的风险完全不可同日而语。况且，地中海贸易航线的现有利益不容动摇，这是王室多年经营的成果。'},
+  {turn:7,role:'A',role_name:'哥伦布',content:'正因为葡萄牙已经占据了非洲航线，西班牙才需要另辟蹊径。如果我们也走非洲航线，将永远是葡萄牙的追随者。而向西航行，我们将开创一条属于西班牙的独占航路——这是战略上的超越，不仅仅是贸易上的补充。'},
+  {turn:8,role:'B',role_name:'王室顾问',content:'战略超越需要坚实的基础，不是一场豪赌。我想换个角度问您——您在热那亚和葡萄牙都待过，为什么那些国家没有资助您的计划？葡萄牙国王若昂二世拒绝了您，是因为他们的航海专家认为您的计算有根本性的错误。'},
+  {turn:9,role:'A',role_name:'哥伦布',content:'若昂二世拒绝我，并非因为计划不可行，而是因为他已经押注在非洲航线上——投入了太多资源，无法回头。这恰恰说明他缺乏远见。至于热那亚，他们是商人，不是开拓者。只有西班牙——刚刚完成收复失地运动的西班牙——才有这样的雄心和气魄。'},
+  {turn:10,role:'B',role_name:'王室顾问',content:'您说得很巧妙，但您回避了核心问题：若昂二世的航海专家具体指出了什么错误？据我所知，他们认为您严重低估了地球的周长。如果专家是对的，这不是远见不远见的问题，而是船队会不会活着回来的问题。'},
+  {turn:11,role:'A',role_name:'哥伦布',content:'学者们对地球周长的争论已经持续了数百年，至今没有定论。但有一点是确定的——无论大洋有多宽，向西航行必然能到达东方的陆地。我愿意用自己的生命来证明这一点。我只需要三艘船和足够的补给。'},
+  {turn:12,role:'B',role_name:'王室顾问',content:'三艘船和足够的补给——这话说起来轻巧。您知道装备一支远洋船队需要多少马拉维迪吗？更何况，如果您一去不回，王室不仅损失了船队和水手，还会成为欧洲各国的笑柄。我想直接问您：您个人从这次远航中期望得到什么？'},
+  {turn:13,role:'A',role_name:'哥伦布',content:'我期望的是发现新航路的荣耀，以及为西班牙王室开疆拓土的机会。当然，作为远航的组织者和指挥者，我希望王室能给予相应的认可——这在航海传统中是惯例。但我想强调，新航路带来的香料、黄金和传教机会，其价值将远远超过三艘船的成本。'},
+  {turn:14,role:'B',role_name:'王室顾问',content:'「相应的认可」——您能说得更具体吗？我听说您此前向葡萄牙提出的条件相当苛刻。王室需要清楚地知道您的诉求，才能评估这笔交易是否值得。另外，您提到的香料和黄金，来源是什么？新航路沿途有确切的资源情报吗？'},
+  {turn:15,role:'A',role_name:'哥伦布',content:'马可·波罗详细描述了东方的富庶——日本的黄金屋顶、印度的香料群岛、中国的丝绸之路。这些都有文献记载。至于条件，我认为发现者理应获得新领地的管辖权和一定比例的贸易收益。这不是苛刻，而是对等——王室出资，我出命。'},
+  {turn:16,role:'B',role_name:'王室顾问',content:'管辖权和贸易收益——这可不是一个航海家通常提出的条件。您是在要求成为一方总督。王室可以封赏功臣，但将领地的管辖权授予一个外国人，这在先例上是罕见的。请原谅我的直白：您到底是一个探险家，还是在为自己谋求一个小王国？'},
+  {turn:17,role:'A',role_name:'哥伦布',content:'如果没有足够的激励，谁会冒着生命危险横渡未知的大洋？我要求的不过是对发现成果的合理分享。请看看恩里克王子的先例——他从未亲自远航，却获得了非洲贸易的垄断权。而我，将亲自率队出海，承担最大的风险。'},
+  {turn:18,role:'B',role_name:'王室顾问',content:'恩里克王子是葡萄牙王室成员，与您的身份不可类比。不过，我承认您的勇气和决心是真实的。让我换一种方式来问：如果王室同意资助，但将管辖权和贸易分成调整为更温和的方案——比如您担任首任舰队指挥，贸易收益分享10%，发现的领地归王室直辖——您是否愿意接受？'},
+  {turn:19,role:'A',role_name:'哥伦布',content:'感谢您愿意讨论具体方案。但10%的贸易收益对于承担全部航行风险的指挥者来说过低。我提议：新发现领地的总督头衔（可世袭），以及贸易净收益的15%。王室获得所有领地主权和85%的贸易收入，同时获得传教和外交上的巨大红利。这是双赢的安排。'},
+  {turn:20,role:'B',role_name:'王室顾问',content:'世袭总督和15%收益——您的野心倒是一贯的。我会如实向女王陛下转达您的条件和计划。坦率地说，您的航海知识和决心令人印象深刻，但条件确实超出了常规范围。最终决定权在女王手中。我个人认为，如果要资助这次远航，条件需要进一步谈判。'},
 ];
 let demoMode=false;
 
