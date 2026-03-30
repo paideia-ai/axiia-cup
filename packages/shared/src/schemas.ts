@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { modelIds } from "./constants";
 
+export const modelIdSchema = z.enum(modelIds);
+export const tournamentStatusSchema = z.enum(["open", "running", "finished"]);
+export const roundStatusSchema = z.enum(["pairing", "running", "done"]);
+export const matchStatusSchema = z.enum(["queued", "running", "judging", "scored", "error"]);
+export const matchWinnerSchema = z.enum(["a", "b", "draw"]);
+
 export const userSchema = z.object({
   id: z.number().int().positive(),
   email: z.string().email(),
@@ -25,7 +31,7 @@ export const scenarioSchema = z.object({
 });
 
 export const modelOptionSchema = z.object({
-  id: z.enum(modelIds),
+  id: modelIdSchema,
   label: z.string(),
   provider: z.string(),
   description: z.string(),
@@ -43,6 +49,7 @@ export const scenarioSummarySchema = z.object({
 });
 
 export const leaderboardEntrySchema = z.object({
+  submissionId: z.number().int().positive(),
   rank: z.number().int().positive(),
   playerName: z.string(),
   modelLabel: z.string(),
@@ -75,7 +82,7 @@ export const judgeQASchema = z.object({
 export const judgeScoringSchema = z.object({
   score_a: z.number(),
   score_b: z.number(),
-  winner: z.enum(["a", "b", "draw"]),
+  winner: matchWinnerSchema,
   reasoning: z.string(),
 });
 
@@ -84,7 +91,7 @@ export const submissionSchema = z.object({
   scenarioId: z.string(),
   promptA: z.string(),
   promptB: z.string(),
-  model: z.enum(modelIds),
+  model: modelIdSchema,
   version: z.number().int().positive(),
   createdAt: z.string(),
 });
@@ -93,7 +100,7 @@ export const createSubmissionSchema = z.object({
   scenarioId: z.string().min(1),
   promptA: z.string().trim().min(1).max(1000),
   promptB: z.string().trim().min(1).max(1000),
-  model: z.enum(modelIds),
+  model: modelIdSchema,
 });
 
 export const matchSchema = z.object({
@@ -102,19 +109,95 @@ export const matchSchema = z.object({
   scenarioId: z.string(),
   subAId: z.number().int().positive(),
   subBId: z.number().int().positive(),
-  status: z.enum(["queued", "running", "judging", "scored", "error"]),
+  status: matchStatusSchema,
   currentTurn: z.number().int().nonnegative(),
   transcript: z.array(transcriptTurnSchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
   scoreA: z.number().nullable(),
   scoreB: z.number().nullable(),
-  winner: z.enum(["a", "b", "draw"]).nullable(),
+  winner: matchWinnerSchema.nullable(),
   reasoning: z.string().nullable(),
   error: z.string().nullable(),
   startedAt: z.string().nullable(),
   finishedAt: z.string().nullable(),
   createdAt: z.string(),
+});
+
+export const adminPlayerSchema = z.object({
+  userId: z.number().int().positive(),
+  submissionId: z.number().int().positive(),
+  email: z.string().email(),
+  displayName: z.string(),
+  model: modelIdSchema,
+  version: z.number().int().positive(),
+  submittedAt: z.string(),
+});
+
+export const tournamentListItemSchema = z.object({
+  id: z.number().int().positive(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  status: tournamentStatusSchema,
+  currentRound: z.number().int().nonnegative(),
+  roundCount: z.number().int().nonnegative(),
+  createdAt: z.string(),
+});
+
+export const tournamentMatchSummarySchema = z.object({
+  id: z.number().int().positive(),
+  roundId: z.number().int().positive(),
+  scenarioId: z.string(),
+  subAId: z.number().int().positive(),
+  subBId: z.number().int().positive(),
+  status: matchStatusSchema,
+  currentTurn: z.number().int().nonnegative(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const tournamentRoundSchema = z.object({
+  id: z.number().int().positive(),
+  tournamentId: z.number().int().positive(),
+  roundNumber: z.number().int().positive(),
+  status: roundStatusSchema,
+  byeSubmissions: z.array(z.number().int().positive()),
+  matches: z.array(tournamentMatchSummarySchema),
+});
+
+export const tournamentSchema = z.object({
+  id: z.number().int().positive(),
+  scenarioId: z.string(),
+  status: tournamentStatusSchema,
+  currentRound: z.number().int().nonnegative(),
+  createdAt: z.string(),
+});
+
+export const tournamentDetailSchema = tournamentSchema.extend({
+  rounds: z.array(tournamentRoundSchema),
+});
+
+export const matchDetailSchema = matchSchema.extend({
+  tournamentId: z.number().int().positive(),
+  roundNumber: z.number().int().positive(),
+  playerADisplayName: z.string(),
+  playerAModel: modelIdSchema,
+  playerBDisplayName: z.string(),
+  playerBModel: modelIdSchema,
+});
+
+export const playgroundResultSchema = z.object({
+  transcript: z.array(transcriptTurnSchema),
+  judgeTranscriptA: z.array(judgeQASchema),
+  judgeTranscriptB: z.array(judgeQASchema),
+  scoreA: z.number(),
+  scoreB: z.number(),
+  winner: matchWinnerSchema,
+  reasoning: z.string(),
 });
 
 export const appMetaSchema = z.object({
@@ -133,6 +216,14 @@ export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>;
 export type JudgeQA = z.infer<typeof judgeQASchema>;
 export type JudgeScoring = z.infer<typeof judgeScoringSchema>;
 export type Submission = z.infer<typeof submissionSchema>;
+export type AdminPlayer = z.infer<typeof adminPlayerSchema>;
+export type TournamentListItem = z.infer<typeof tournamentListItemSchema>;
+export type TournamentMatchSummary = z.infer<typeof tournamentMatchSummarySchema>;
+export type TournamentRound = z.infer<typeof tournamentRoundSchema>;
+export type Tournament = z.infer<typeof tournamentSchema>;
+export type TournamentDetail = z.infer<typeof tournamentDetailSchema>;
+export type MatchDetail = z.infer<typeof matchDetailSchema>;
+export type PlaygroundResult = z.infer<typeof playgroundResultSchema>;
 export type Match = z.infer<typeof matchSchema>;
 export type AppMeta = z.infer<typeof appMetaSchema>;
 export type User = z.infer<typeof userSchema>;

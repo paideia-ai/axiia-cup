@@ -4,9 +4,9 @@ import { modelOptions, scenarios } from "@axiia/shared";
 export const primaryScenario = scenarios[0];
 
 export const leaderboard: LeaderboardEntry[] = [
-  { rank: 1, playerName: "选手 2048", modelLabel: "DeepSeek V3", wins: 6, losses: 2, buchholz: 11.5, winRate: 75, status: "done" },
-  { rank: 2, playerName: "选手 7311", modelLabel: "通义千问 Max", wins: 5, losses: 3, buchholz: 10.2, winRate: 62.5, status: "running" },
-  { rank: 3, playerName: "选手 1190", modelLabel: "Kimi K2", wins: 5, losses: 3, buchholz: 9.8, winRate: 62.5, status: "queued" },
+  { submissionId: 101, rank: 1, playerName: "选手 2048", modelLabel: "DeepSeek V3", wins: 6, losses: 2, buchholz: 11.5, winRate: 75, status: "done" },
+  { submissionId: 102, rank: 2, playerName: "选手 7311", modelLabel: "通义千问 Max", wins: 5, losses: 3, buchholz: 10.2, winRate: 62.5, status: "running" },
+  { submissionId: 103, rank: 3, playerName: "选手 1190", modelLabel: "Kimi K2", wins: 5, losses: 3, buchholz: 9.8, winRate: 62.5, status: "queued" },
 ];
 
 export const recentMatches = [

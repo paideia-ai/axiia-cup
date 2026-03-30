@@ -4,8 +4,10 @@ import { cors } from "hono/cors";
 import { startWorker } from "./engine/worker";
 import { authRouter } from "./routes/auth";
 import { appMetaSchema, modelOptions } from "@axiia/shared";
+import { playgroundRouter } from "./routes/playground";
 import { scenariosRouter } from "./routes/scenarios";
 import { submissionsRouter } from "./routes/submissions";
+import { tournamentRouter } from "./routes/tournaments";
 import { db } from "./db/client";
 import { scenarios } from "./db/schema";
 
@@ -59,8 +61,10 @@ app.get("/api/meta", (context) => {
 
 app.get("/api/models", (context) => context.json({ items: modelOptions }));
 app.route("/", authRouter);
+app.route("/", playgroundRouter);
 app.route("/", scenariosRouter);
 app.route("/", submissionsRouter);
+app.route("/", tournamentRouter);
 
 const port = Number(process.env.PORT ?? 3001);
 

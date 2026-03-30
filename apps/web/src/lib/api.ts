@@ -1,10 +1,20 @@
 import {
   createSubmissionSchema,
+  leaderboardEntrySchema,
+  matchDetailSchema,
+  playgroundResultSchema,
   scenarioSchema,
   submissionSchema,
+  tournamentDetailSchema,
+  tournamentListItemSchema,
   userSchema,
+  type LeaderboardEntry,
+  type MatchDetail,
+  type PlaygroundResult,
   type Scenario,
   type Submission,
+  type TournamentDetail,
+  type TournamentListItem,
   type User,
 } from "@axiia/shared";
 import { z } from "zod";
@@ -20,6 +30,8 @@ const authResponseSchema = z.object({
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 const scenariosResponseSchema = z.array(scenarioSchema);
 const submissionsResponseSchema = z.array(submissionSchema);
+const leaderboardResponseSchema = z.array(leaderboardEntrySchema);
+const tournamentsResponseSchema = z.array(tournamentListItemSchema);
 
 function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -121,4 +133,33 @@ export async function createSubmission(input: z.input<typeof createSubmissionSch
     },
     submissionSchema,
   );
+}
+
+export async function runPlayground(input: z.input<typeof createSubmissionSchema>): Promise<PlaygroundResult> {
+  const body = createSubmissionSchema.parse(input);
+
+  return apiFetch(
+    "/api/playground/run",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+    playgroundResultSchema,
+  );
+}
+
+export async function getMatch(id: number | string): Promise<MatchDetail> {
+  return apiFetch(`/api/matches/${id}`, { method: "GET" }, matchDetailSchema);
+}
+
+export async function getTournament(id: number | string): Promise<TournamentDetail> {
+  return apiFetch(`/api/tournaments/${id}`, { method: "GET" }, tournamentDetailSchema);
+}
+
+export async function getTournaments(): Promise<TournamentListItem[]> {
+  return apiFetch("/api/tournaments", { method: "GET" }, tournamentsResponseSchema);
+}
+
+export async function getLeaderboard(tournamentId: number | string): Promise<LeaderboardEntry[]> {
+  return apiFetch(`/api/tournaments/${tournamentId}/leaderboard`, { method: "GET" }, leaderboardResponseSchema);
 }
