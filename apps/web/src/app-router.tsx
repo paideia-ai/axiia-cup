@@ -9,8 +9,8 @@ import { LoginPage } from "./pages/Login";
 import { MatchDetailPage } from "./pages/match-detail-page";
 import { PlaygroundPage } from "./pages/playground-page";
 import { RegisterPage } from "./pages/Register";
-import { ScenarioBuilderPage } from "./pages/scenario-builder-page";
-import { ScenariosPage } from "./pages/scenarios-page";
+import { ScenarioDetailPage } from "./pages/ScenarioDetail";
+import { ScenariosPage } from "./pages/Scenarios";
 import { SettingsPage } from "./pages/settings-page";
 
 function ProtectedShell() {
@@ -34,7 +34,7 @@ function ProtectedShell() {
         <Route path="/" element={<Navigate replace to="/scenarios" />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/scenarios" element={<ScenariosPage />} />
-        <Route path="/scenarios/:scenarioId" element={<ScenarioBuilderPage />} />
+        <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
         <Route path="/playground" element={<PlaygroundPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/matches/:matchId" element={<MatchDetailPage />} />

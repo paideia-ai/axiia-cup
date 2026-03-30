@@ -2,7 +2,11 @@ import { app } from "./app";
 import { cors } from "hono/cors";
 
 import { authRouter } from "./routes/auth";
-import { appMetaSchema, modelOptions, scenarios } from "@axiia/shared";
+import { appMetaSchema, modelOptions } from "@axiia/shared";
+import { scenariosRouter } from "./routes/scenarios";
+import { submissionsRouter } from "./routes/submissions";
+import { db } from "./db/client";
+import { scenarios } from "./db/schema";
 
 app.use(
   "*",
@@ -28,19 +32,34 @@ app.get("/health", (context) =>
 );
 
 app.get("/api/meta", (context) => {
+  const scenarioSummaries = db
+    .select({
+      id: scenarios.id,
+      judgeRounds: scenarios.judgeRounds,
+      roleAName: scenarios.roleAName,
+      roleBName: scenarios.roleBName,
+      subject: scenarios.subject,
+      summary: scenarios.context,
+      title: scenarios.title,
+      turnCount: scenarios.turnCount,
+    })
+    .from(scenarios)
+    .all();
+
   const payload = appMetaSchema.parse({
     name: "Axiia Cup",
     stage: "mvp",
     models: modelOptions,
-    scenarios,
+    scenarios: scenarioSummaries,
   });
 
   return context.json(payload);
 });
 
-app.get("/api/scenarios", (context) => context.json({ items: scenarios }));
 app.get("/api/models", (context) => context.json({ items: modelOptions }));
 app.route("/", authRouter);
+app.route("/", scenariosRouter);
+app.route("/", submissionsRouter);
 
 const port = Number(process.env.PORT ?? 3001);
 

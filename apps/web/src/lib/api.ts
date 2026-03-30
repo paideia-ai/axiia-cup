@@ -1,4 +1,12 @@
-import { userSchema, type User } from "@axiia/shared";
+import {
+  createSubmissionSchema,
+  scenarioSchema,
+  submissionSchema,
+  userSchema,
+  type Scenario,
+  type Submission,
+  type User,
+} from "@axiia/shared";
 import { z } from "zod";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
@@ -10,6 +18,8 @@ const authResponseSchema = z.object({
 });
 
 export type AuthResponse = z.infer<typeof authResponseSchema>;
+const scenariosResponseSchema = z.array(scenarioSchema);
+const submissionsResponseSchema = z.array(submissionSchema);
 
 function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -82,4 +92,33 @@ export async function register(input: {
 
 export async function getMe(): Promise<User> {
   return apiFetch("/api/auth/me", { method: "GET" }, userSchema);
+}
+
+export async function getScenarios(): Promise<Scenario[]> {
+  return apiFetch("/api/scenarios", { method: "GET" }, scenariosResponseSchema);
+}
+
+export async function getScenario(id: string): Promise<Scenario> {
+  return apiFetch(`/api/scenarios/${id}`, { method: "GET" }, scenarioSchema);
+}
+
+export async function getMySubmissions(scenarioId?: string): Promise<Submission[]> {
+  return apiFetch(
+    scenarioId ? `/api/submissions/my/${scenarioId}` : "/api/submissions/my",
+    { method: "GET" },
+    submissionsResponseSchema,
+  );
+}
+
+export async function createSubmission(input: z.input<typeof createSubmissionSchema>): Promise<Submission> {
+  const body = createSubmissionSchema.parse(input);
+
+  return apiFetch(
+    "/api/submissions",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+    submissionSchema,
+  );
 }
