@@ -6,6 +6,7 @@ Competition design: product requirements, problem scenarios, judging criteria, a
 
 - [PRD_v1.md](PRD_v1.md) — Product requirements document v1: full MVP spec, user flow, decision log
 - [judge-design-discussion.md](judge-design-discussion.md) — 裁判系统设计讨论：公开裁判prompt、角色人设裁判、统计收敛替代机械验证
+- [tournament-format.md](tournament-format.md) — 赛制设计：多轮瑞士制 + Elo rating，3 block 迭代赛程
 - [meta-criteria.md](meta-criteria.md) — Meta-criteria for precise winning conditions in strategic language games (47 scenarios analyzed)
 - [classic-strategic-scenarios.md](classic-strategic-scenarios.md) — 47 classic strategic scenarios catalog with winning conditions
 - [problems/](problems/) — Specific game designs and background materials:
