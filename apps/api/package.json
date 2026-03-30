@@ -16,6 +16,7 @@
     "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.44.5",
     "hono": "^4.7.0",
+    "openai": "^6.7.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 import { app } from "./app";
 import { cors } from "hono/cors";
 
+import { startWorker } from "./engine/worker";
 import { authRouter } from "./routes/auth";
 import { appMetaSchema, modelOptions } from "@axiia/shared";
 import { scenariosRouter } from "./routes/scenarios";
@@ -69,3 +70,7 @@ Bun.serve({
 });
 
 console.log(`[api] listening on http://localhost:${port}`);
+
+if (process.env.ENABLE_WORKER !== "false") {
+  startWorker();
+}

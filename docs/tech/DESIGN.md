@@ -81,7 +81,7 @@
 ## Key Screen Names (中文)
 | Screen | 中文名称 | Primary Action |
 |--------|---------|----------------|
-| Registration | 注册 | 手机号 + 微信注册 |
+| Registration | 注册 | 邮箱 + OTP 注册 |
 | Dashboard | 控制台 | 查看对战状态与历史 |
 | Agent Builder | 智能体工坊 | 编写提示词 + 选择模型 |
 | Playground | 试炼场 | 测试提示词效果 |

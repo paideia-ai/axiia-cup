@@ -60,6 +60,25 @@ export const matchTranscriptTurnSchema = z.object({
   content: z.string(),
 });
 
+export const transcriptTurnSchema = z.object({
+  speaker: z.enum(["a", "b"]),
+  role: z.string(),
+  content: z.string(),
+});
+
+export const judgeQASchema = z.object({
+  round: z.number().int().positive(),
+  question: z.string(),
+  answer: z.string(),
+});
+
+export const judgeScoringSchema = z.object({
+  score_a: z.number(),
+  score_b: z.number(),
+  winner: z.enum(["a", "b", "draw"]),
+  reasoning: z.string(),
+});
+
 export const submissionSchema = z.object({
   id: z.number().int().positive(),
   scenarioId: z.string(),
@@ -77,6 +96,27 @@ export const createSubmissionSchema = z.object({
   model: z.enum(modelIds),
 });
 
+export const matchSchema = z.object({
+  id: z.number().int().positive(),
+  roundId: z.number().int().positive(),
+  scenarioId: z.string(),
+  subAId: z.number().int().positive(),
+  subBId: z.number().int().positive(),
+  status: z.enum(["queued", "running", "judging", "scored", "error"]),
+  currentTurn: z.number().int().nonnegative(),
+  transcript: z.array(transcriptTurnSchema),
+  judgeTranscriptA: z.array(judgeQASchema),
+  judgeTranscriptB: z.array(judgeQASchema),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: z.enum(["a", "b", "draw"]).nullable(),
+  reasoning: z.string().nullable(),
+  error: z.string().nullable(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
 export const appMetaSchema = z.object({
   name: z.string(),
   stage: z.literal("mvp"),
@@ -89,6 +129,10 @@ export type Scenario = z.infer<typeof scenarioSchema>;
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>;
+export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>;
+export type JudgeQA = z.infer<typeof judgeQASchema>;
+export type JudgeScoring = z.infer<typeof judgeScoringSchema>;
 export type Submission = z.infer<typeof submissionSchema>;
+export type Match = z.infer<typeof matchSchema>;
 export type AppMeta = z.infer<typeof appMetaSchema>;
 export type User = z.infer<typeof userSchema>;
