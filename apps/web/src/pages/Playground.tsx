@@ -4,28 +4,98 @@ import { useEffect, useState } from "react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getMySubmissions, getScenarios, runPlayground } from "../lib/api";
+import { getMySubmissions, getScenarios } from "../lib/api";
+import {
+  clearPlaygroundSession,
+  getPlaygroundSessionState,
+  startPlaygroundSession,
+  subscribePlaygroundSession,
+} from "../lib/playground-session";
 
 function countText(value: string) {
   return [...value].length;
 }
 
+const runningStages = [
+  {
+    key: "submitted",
+    label: "提交任务",
+    hint: "已锁定本次试炼场配置，正在向引擎发送请求。",
+    threshold: 0,
+  },
+  {
+    key: "dialogue",
+    label: "对话阶段",
+    hint: "双方按场景设定展开多轮对话，逐步积累 transcript。",
+    threshold: 6,
+  },
+  {
+    key: "judge-a",
+    label: "审问 A",
+    hint: "裁判正在围绕完整 transcript 追问角色 A。",
+    threshold: 70,
+  },
+  {
+    key: "judge-b",
+    label: "审问 B",
+    hint: "裁判切换到角色 B，继续进行多轮追问。",
+    threshold: 120,
+  },
+  {
+    key: "scoring",
+    label: "裁判评分",
+    hint: "汇总双方问答，生成最终分数、胜负和 reasoning。",
+    threshold: 170,
+  },
+] as const;
+
+function formatElapsed(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function getStageIndex(elapsedSeconds: number) {
+  let activeIndex = 0;
+
+  for (let index = 0; index < runningStages.length; index += 1) {
+    if (elapsedSeconds >= runningStages[index].threshold) {
+      activeIndex = index;
+    }
+  }
+
+  return activeIndex;
+}
+
 export function PlaygroundPage() {
+  const initialSession = getPlaygroundSessionState();
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [selectedScenarioId, setSelectedScenarioId] = useState("");
-  const [promptA, setPromptA] = useState("");
-  const [promptB, setPromptB] = useState("");
-  const [model, setModel] = useState(modelOptions[0]?.id ?? "kimi-k2");
-  const [result, setResult] = useState<PlaygroundResult | null>(null);
+  const [selectedScenarioId, setSelectedScenarioId] = useState(initialSession.draft?.scenarioId ?? "");
+  const [promptA, setPromptA] = useState(initialSession.draft?.promptA ?? "");
+  const [promptB, setPromptB] = useState(initialSession.draft?.promptB ?? "");
+  const [model, setModel] = useState(initialSession.draft?.model ?? modelOptions[0]!.id);
+  const [result, setResult] = useState<PlaygroundResult | null>(initialSession.result);
   const [latestSubmission, setLatestSubmission] = useState<Submission | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(initialSession.status === "running");
   const [isAutoFilling, setIsAutoFilling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialSession.error);
+  const [runStartedAt, setRunStartedAt] = useState<number | null>(initialSession.startedAt);
+  const [elapsedSeconds, setElapsedSeconds] = useState(
+    initialSession.startedAt ? Math.max(0, Math.floor((Date.now() - initialSession.startedAt) / 1000)) : 0,
+  );
 
   const selectedScenario = scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? null;
   const promptALength = countText(promptA);
   const promptBLength = countText(promptB);
+  const activeStageIndex = getStageIndex(elapsedSeconds);
+  const activeStage = runningStages[activeStageIndex];
+  const progressPercent = isRunning
+    ? Math.min(96, ((activeStageIndex + 1) / runningStages.length) * 100)
+    : result
+      ? 100
+      : 0;
 
   useEffect(() => {
     const loadScenarios = async () => {
@@ -45,13 +115,45 @@ export function PlaygroundPage() {
   }, []);
 
   useEffect(() => {
+    return subscribePlaygroundSession((session) => {
+      setIsRunning(session.status === "running");
+      setResult(session.result);
+      setError(session.error);
+      setRunStartedAt(session.startedAt);
+
+      if (session.draft) {
+        setSelectedScenarioId(session.draft.scenarioId);
+        setPromptA(session.draft.promptA);
+        setPromptB(session.draft.promptB);
+        setModel(session.draft.model as (typeof modelOptions)[number]["id"]);
+      }
+
+      if (session.startedAt) {
+        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     if (!selectedScenarioId) {
       return;
     }
 
     setLatestSubmission(null);
-    setResult(null);
   }, [selectedScenarioId]);
+
+  useEffect(() => {
+    if (!isRunning || !runStartedAt) {
+      return;
+    }
+
+    setElapsedSeconds(Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000)));
+    const timer = window.setInterval(() => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000)));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [isRunning, runStartedAt]);
 
   const handleAutoFill = async () => {
     if (!selectedScenarioId) {
@@ -96,16 +198,8 @@ export function PlaygroundPage() {
       return;
     }
 
-    try {
-      setIsRunning(true);
-      setResult(null);
-      const nextResult = await runPlayground(parsed.data);
-      setResult(nextResult);
-    } catch (runError) {
-      setError(runError instanceof Error ? runError.message : "试炼场运行失败");
-    } finally {
-      setIsRunning(false);
-    }
+    setError(null);
+    void startPlaygroundSession(parsed.data);
   };
 
   if (isLoading) {
@@ -184,6 +278,25 @@ export function PlaygroundPage() {
                 <Button type="submit" disabled={isRunning}>
                   {isRunning ? "对战进行中，请耐心等待..." : "Run Test"}
                 </Button>
+                {(result || error) && !isRunning ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      clearPlaygroundSession({
+                        model,
+                        promptA,
+                        promptB,
+                        scenarioId: selectedScenarioId,
+                      });
+                      setError(null);
+                      setResult(null);
+                      setElapsedSeconds(0);
+                    }}
+                  >
+                    清空结果
+                  </Button>
+                ) : null}
               </div>
             </form>
           </CardContent>
@@ -196,7 +309,71 @@ export function PlaygroundPage() {
               {result ? <Badge tone="success">已完成</Badge> : <Badge tone="warning">{isRunning ? "运行中" : "等待执行"}</Badge>}
             </CardHeader>
             <CardContent className="space-y-3">
-              {isRunning ? <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">对战进行中，请耐心等待...</div> : null}
+              {isRunning ? (
+                <div className="rounded-2xl border border-[rgba(224,74,47,0.18)] bg-[linear-gradient(180deg,rgba(224,74,47,0.08),rgba(255,255,255,0.02))] p-5">
+                  <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Trial Running</p>
+                      <h3 className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{activeStage.label}</h3>
+                      <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--foreground-subtle)]">{activeStage.hint}</p>
+                    </div>
+                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(0,0,0,0.18)] px-4 py-3 text-right">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">Elapsed</p>
+                      <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{formatElapsed(elapsedSeconds)}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+                      <div
+                        className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),#f97316)] transition-[width] duration-700"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--foreground-muted)]">当前进度为前端估算阶段，用于反馈引擎正在执行，不代表精确实时百分比。</p>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-5">
+                    {runningStages.map((stage, index) => {
+                      const isDone = index < activeStageIndex;
+                      const isCurrent = index === activeStageIndex;
+
+                      return (
+                        <div
+                          key={stage.key}
+                          className={`rounded-xl border px-3 py-4 transition ${
+                            isCurrent
+                              ? "border-[rgba(224,74,47,0.3)] bg-[rgba(224,74,47,0.12)]"
+                              : isDone
+                                ? "border-[rgba(52,211,153,0.24)] bg-[rgba(52,211,153,0.08)]"
+                                : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                                isCurrent
+                                  ? "bg-[var(--accent)] text-black"
+                                  : isDone
+                                    ? "bg-[var(--success)] text-black"
+                                    : "bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]"
+                              }`}
+                            >
+                              {isDone ? "✓" : index + 1}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[var(--foreground)]">{stage.label}</p>
+                              <p className="text-xs text-[var(--foreground-muted)]">
+                                {isCurrent ? "进行中" : isDone ? "已完成" : "等待中"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
               {!isRunning && !result ? (
                 <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
                   运行后会在这里显示完整 transcript。

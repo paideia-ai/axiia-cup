@@ -6,6 +6,7 @@ import { authRouter } from "./routes/auth";
 import { appMetaSchema, modelOptions } from "@axiia/shared";
 import { playgroundRouter } from "./routes/playground";
 import { scenariosRouter } from "./routes/scenarios";
+import { statsRouter } from "./routes/stats";
 import { submissionsRouter } from "./routes/submissions";
 import { tournamentRouter } from "./routes/tournaments";
 import { db } from "./db/client";
@@ -63,6 +64,7 @@ app.get("/api/models", (context) => context.json({ items: modelOptions }));
 app.route("/", authRouter);
 app.route("/", playgroundRouter);
 app.route("/", scenariosRouter);
+app.route("/", statsRouter);
 app.route("/", submissionsRouter);
 app.route("/", tournamentRouter);
 

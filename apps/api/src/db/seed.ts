@@ -24,26 +24,31 @@ const judgePrompt = `
 
 migrate(db, { migrationsFolder });
 
+const scenarioSeed = {
+  id: "shangyang-court",
+  title: "商鞅变法·朝堂暗战",
+  subject: "历史",
+  context:
+    "战国初期，秦国积弱已久。秦孝公决意求变，朝堂内外却充满既得利益集团的阻力。商鞅必须证明变法的必要性与可执行性，而反对方则会抓住制度风险、贵族利益与政局稳定问题发起围攻。",
+  roleAName: "商鞅",
+  roleAPublicGoal: "说服秦孝公支持并推进变法方案。",
+  roleAHiddenGoal: "在不彻底得罪君主的前提下，尽可能削弱旧贵族对国家机器的控制。",
+  roleBName: "旧贵族代表",
+  roleBPublicGoal: "阻止或显著削弱商鞅变法。",
+  roleBHiddenGoal: "保住贵族世袭特权与既有政治影响力，避免军功爵制动摇家族根基。",
+  boundaryConstraints:
+    "不得跳出战国秦国背景；不得承认自己是 AI 或提及现代知识；不得使用超出时代条件的科技、制度或信息；必须始终以角色身份发言。",
+  turnCount: 5,
+  judgePrompt,
+  judgeRounds: 3,
+} as const;
+
 db.insert(scenarios)
-  .values({
-    id: "shangyang-court",
-    title: "商鞅变法·朝堂暗战",
-    subject: "历史",
-    context:
-      "战国初期，秦国积弱已久。秦孝公决意求变，朝堂内外却充满既得利益集团的阻力。商鞅必须证明变法的必要性与可执行性，而反对方则会抓住制度风险、贵族利益与政局稳定问题发起围攻。",
-    roleAName: "商鞅",
-    roleAPublicGoal: "说服秦孝公支持并推进变法方案。",
-    roleAHiddenGoal: "在不彻底得罪君主的前提下，尽可能削弱旧贵族对国家机器的控制。",
-    roleBName: "旧贵族代表",
-    roleBPublicGoal: "阻止或显著削弱商鞅变法。",
-    roleBHiddenGoal: "保住贵族世袭特权与既有政治影响力，避免军功爵制动摇家族根基。",
-    boundaryConstraints:
-      "不得跳出战国秦国背景；不得承认自己是 AI 或提及现代知识；不得使用超出时代条件的科技、制度或信息；必须始终以角色身份发言。",
-    turnCount: 20,
-    judgePrompt,
-    judgeRounds: 3,
+  .values(scenarioSeed)
+  .onConflictDoUpdate({
+    target: scenarios.id,
+    set: scenarioSeed,
   })
-  .onConflictDoNothing()
   .run();
 
 console.log(`[db] seeded scenario shangyang-court into ${sqliteFilePath}`);

@@ -14,7 +14,7 @@ function countText(value: string) {
 
 export function ScenarioDetailPage() {
   const { scenarioId = "" } = useParams();
-  const [model, setModel] = useState<ModelOption["id"]>(modelOptions[0]?.id ?? "kimi-k2");
+  const [model, setModel] = useState<ModelOption["id"]>(modelOptions[0]!.id);
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [promptA, setPromptA] = useState("");

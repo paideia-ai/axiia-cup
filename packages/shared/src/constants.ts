@@ -1,43 +1,16 @@
-import type { ModelOption, ScenarioSummary } from "./schemas";
+export const modelOptions = [
+  { id: "kimi-k2.5",    label: "Kimi K2.5",    apiModel: "Pro/moonshotai/Kimi-K2.5"   },
+  { id: "deepseek-v3.2", label: "DeepSeek V3.2", apiModel: "deepseek-ai/DeepSeek-V3.2"  },
+  { id: "qwen3.5-9b",   label: "Qwen3.5",    apiModel: "Qwen/Qwen3.5-9B"            },
+  { id: "minimax-m2.5", label: "MiniMax M2.5",  apiModel: "Pro/MiniMaxAI/MiniMax-M2.5" },
+] as const satisfies readonly { id: string; label: string; apiModel: string }[];
 
-export const modelIds = ["kimi-k2", "deepseek-v3", "qwen-max", "minimax-m1"] as const;
+export type ModelId = typeof modelOptions[number]["id"];
+export type ModelOption = typeof modelOptions[number];
 
-export const modelOptions: ModelOption[] = [
-  {
-    id: modelIds[0],
-    label: "Kimi K2",
-    provider: "Moonshot",
-    description: "偏稳健，适合长上下文与克制型博弈。",
-  },
-  {
-    id: modelIds[1],
-    label: "DeepSeek V3",
-    provider: "DeepSeek",
-    description: "推理密度高，适合结构化论证。",
-  },
-  {
-    id: modelIds[2],
-    label: "通义千问 Max",
-    provider: "Alibaba",
-    description: "语言张力更强，适合说服与对抗。",
-  },
-  {
-    id: modelIds[3],
-    label: "MiniMax M1",
-    provider: "MiniMax",
-    description: "表达锋利，适合快速交锋。",
-  },
-];
-
-export const scenarios: ScenarioSummary[] = [
-  {
-    id: "shangyang-court",
-    title: "商鞅变法·朝堂暗战",
-    subject: "历史",
-    summary: "在秦国宫廷中围绕变法正当性、利益重构与君主意志展开对抗。",
-    turnCount: 20,
-    judgeRounds: 3,
-    roleAName: "商鞅",
-    roleBName: "旧贵族",
-  },
-];
+export const modelIds = [
+  modelOptions[0].id,
+  modelOptions[1].id,
+  modelOptions[2].id,
+  modelOptions[3].id,
+] as const;

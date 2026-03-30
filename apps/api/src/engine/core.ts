@@ -5,6 +5,7 @@ import {
   transcriptTurnSchema,
   type JudgeQA,
   type JudgeScoring,
+  type ModelId,
   type TranscriptTurn,
 } from "@axiia/shared";
 
@@ -14,7 +15,7 @@ import { chatCompletion } from "./llm";
 const RETRY_COUNT = 3;
 const RETRY_DELAY_MS = 2000;
 
-export const JUDGE_MODEL = "deepseek-v3" as const;
+export const JUDGE_MODEL = "deepseek-v3.2" as const satisfies ModelId;
 
 type ScenarioRecord = typeof scenarios.$inferSelect;
 

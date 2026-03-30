@@ -33,8 +33,6 @@ export const scenarioSchema = z.object({
 export const modelOptionSchema = z.object({
   id: modelIdSchema,
   label: z.string(),
-  provider: z.string(),
-  description: z.string(),
 });
 
 export const scenarioSummarySchema = z.object({
@@ -200,6 +198,28 @@ export const playgroundResultSchema = z.object({
   reasoning: z.string(),
 });
 
+export const personalStatsSchema = z.object({
+  rank: z.number().int().positive().nullable(),
+  winRate: z.number().min(0).max(100).nullable(),
+  submissionCount: z.number().int().nonnegative(),
+  pendingMatchCount: z.number().int().nonnegative(),
+});
+
+export const adminStatsSchema = z.object({
+  queued: z.number().int().nonnegative(),
+  running: z.number().int().nonnegative(),
+  scored: z.number().int().nonnegative(),
+});
+
+export const recentMatchSchema = z.object({
+  id: z.number().int().positive(),
+  status: matchStatusSchema,
+  scenarioTitle: z.string(),
+  roleALabel: z.string(),
+  roleBLabel: z.string(),
+  winner: matchWinnerSchema.nullable(),
+});
+
 export const appMetaSchema = z.object({
   name: z.string(),
   stage: z.literal("mvp"),
@@ -207,7 +227,6 @@ export const appMetaSchema = z.object({
   scenarios: z.array(scenarioSummarySchema),
 });
 
-export type ModelOption = z.infer<typeof modelOptionSchema>;
 export type Scenario = z.infer<typeof scenarioSchema>;
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
@@ -224,6 +243,9 @@ export type Tournament = z.infer<typeof tournamentSchema>;
 export type TournamentDetail = z.infer<typeof tournamentDetailSchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
 export type PlaygroundResult = z.infer<typeof playgroundResultSchema>;
+export type PersonalStats = z.infer<typeof personalStatsSchema>;
+export type AdminStats = z.infer<typeof adminStatsSchema>;
+export type RecentMatch = z.infer<typeof recentMatchSchema>;
 export type Match = z.infer<typeof matchSchema>;
 export type AppMeta = z.infer<typeof appMetaSchema>;
 export type User = z.infer<typeof userSchema>;

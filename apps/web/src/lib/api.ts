@@ -1,16 +1,22 @@
 import {
+  adminStatsSchema,
   createSubmissionSchema,
   leaderboardEntrySchema,
   matchDetailSchema,
   playgroundResultSchema,
+  personalStatsSchema,
+  recentMatchSchema,
   scenarioSchema,
   submissionSchema,
   tournamentDetailSchema,
   tournamentListItemSchema,
   userSchema,
+  type AdminStats,
   type LeaderboardEntry,
   type MatchDetail,
+  type PersonalStats,
   type PlaygroundResult,
+  type RecentMatch,
   type Scenario,
   type Submission,
   type TournamentDetail,
@@ -32,6 +38,7 @@ const scenariosResponseSchema = z.array(scenarioSchema);
 const submissionsResponseSchema = z.array(submissionSchema);
 const leaderboardResponseSchema = z.array(leaderboardEntrySchema);
 const tournamentsResponseSchema = z.array(tournamentListItemSchema);
+const recentMatchesResponseSchema = z.array(recentMatchSchema);
 
 function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -162,4 +169,16 @@ export async function getTournaments(): Promise<TournamentListItem[]> {
 
 export async function getLeaderboard(tournamentId: number | string): Promise<LeaderboardEntry[]> {
   return apiFetch(`/api/tournaments/${tournamentId}/leaderboard`, { method: "GET" }, leaderboardResponseSchema);
+}
+
+export async function getMyStats(): Promise<PersonalStats> {
+  return apiFetch("/api/stats/me", { method: "GET" }, personalStatsSchema);
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  return apiFetch("/api/admin/stats", { method: "GET" }, adminStatsSchema);
+}
+
+export async function getMyRecentMatches(): Promise<RecentMatch[]> {
+  return apiFetch("/api/matches/my", { method: "GET" }, recentMatchesResponseSchema);
 }

@@ -1,14 +1,7 @@
-import { modelIds } from "@axiia/shared";
+import { modelOptions, type ModelId } from "@axiia/shared";
 import OpenAI from "openai";
 
 const SILICONFLOW_BASE_URL = "https://api.siliconflow.cn/v1";
-
-const modelMapping = {
-  [modelIds[0]]: "Kimi/K2",
-  [modelIds[1]]: "deepseek-ai/DeepSeek-V3",
-  [modelIds[2]]: "Qwen/Qwen2.5-72B-Instruct",
-  [modelIds[3]]: "MiniMax/MiniMax-M1",
-} as const;
 
 type ChatMessage = {
   role: "assistant" | "user";
@@ -29,7 +22,7 @@ function getClient() {
 }
 
 export async function chatCompletion(params: {
-  model: (typeof modelIds)[number];
+  model: ModelId;
   systemPrompt: string;
   messages: ChatMessage[];
   temperature?: number;
@@ -39,7 +32,7 @@ export async function chatCompletion(params: {
 
   try {
     const response = await client.chat.completions.create({
-      model: modelMapping[params.model],
+      model: modelOptions.find((m) => m.id === params.model)!.apiModel,
       messages: [
         { role: "system", content: params.systemPrompt },
         ...params.messages,
