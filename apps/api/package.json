@@ -1,0 +1,25 @@
+{
+  "name": "@axiia/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./src/index.ts --outfile ./dist/index.js --target bun",
+    "dev": "bun --watch ./src/index.ts",
+    "db:migrate": "bun run ./src/db/migrate.ts",
+    "start": "bun ./dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "bun run typecheck"
+  },
+  "dependencies": {
+    "@axiia/shared": "workspace:*",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.44.5",
+    "hono": "^4.7.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "drizzle-kit": "^0.31.4"
+  }
+}

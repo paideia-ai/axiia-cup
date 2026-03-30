@@ -1,0 +1,20 @@
+{
+  "name": "@axiia/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "axiia": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build ./src/index.ts --outfile ./dist/index.js --target bun",
+    "dev": "bun run ./src/index.ts --help",
+    "start": "bun ./dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "bun run typecheck"
+  },
+  "dependencies": {
+    "@axiia/shared": "workspace:*",
+    "commander": "^13.1.0"
+  }
+}
