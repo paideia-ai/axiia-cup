@@ -83,6 +83,12 @@ The playground lets participants test their prompts before formal submission.
 - View the full conversation transcript
 - See preliminary judge evaluation of the test run
 
+**Single-player practice mode (TBD):**
+- Possibility: player vs fixed NPC (e.g., 商鞅 Game 1 pattern — player controls one role, system controls the other with a fixed prompt)
+- Would provide onboarding + separate leaderboard (everyone faces the same "boss")
+- Whether to implement, and turn count / format, is up to scenario authors — not a platform-level decision
+- Decision deferred to scenario design phase
+
 **Open design questions for playground:**
 - Can participants run unlimited playground tests, or is there a quota?
 - Does playground consume the same model API as competition, or a lighter model?
@@ -90,37 +96,44 @@ The playground lets participants test their prompts before formal submission.
 
 ### F5. Judging & Scoring
 
-**Primary mechanism:** A single LLM call acts as judge.
+**Primary mechanism:** LLM judge with public persona prompt.
 
-- After each match (20-turn dialogue), the judge LLM receives the full conversation transcript plus the scenario's win condition specification.
-- The judge outputs a binary win/loss determination per the scenario's win condition.
-- Simon (咳嗽) designs the judge prompt alongside each scenario's win condition.
+- The **judge prompt is public** — all participants can read it. Since competition is symmetric (both sides can optimize for it), transparency doesn't break fairness. It reduces complaints and lets players reason about the scoring.
+- The judge has a **scenario persona** (e.g., Queen Isabella for Columbus, Emperor for 商鞅). After the dialogue ends, the judge persona asks each agent several questions. The final score is determined by key answers.
+- Simon (咳嗽) designs the judge persona and questions alongside each scenario.
+- **Statistical stability over mechanical precision:** Individual LLM judgments have variance, but over many matches (Swiss-system), skill converges statistically. This is the poker model — variance per hand, skill over volume.
+- The judge prompt is **versioned** — updated openly based on player feedback, like competitive game balance patches.
 
-**Deferred decisions:**
-- Post-conversation agent interrogation (asking agents "were you persuaded?") — will experiment later
+**Resolved (from deferred):**
+- ~~Post-conversation agent interrogation~~ → This IS the judge now. The persona asks questions post-conversation. (was D1)
+- ~~Multi-dimensional rubric scoring~~ → Judge persona questions naturally create multi-dimensional scoring. (was D4)
+
+**Still deferred:**
 - Historical accuracy penalties — deferred
-- Multi-dimensional rubric scoring — deferred
-- Relative win rate computation method (Elo, Glicko, raw %) — deferred
+- Relative win rate computation method (Elo, Glicko, raw %) — Swiss standings + Buchholz tiebreaker for MVP; persistent rating system deferred to post-MVP
 
 ### F6. Match Engine
 
 - **Execution model:** Fully asynchronous. Matches run in background; participants check results later.
 - **Pacing:** No real-time pressure. Even at scale, matches can run slowly to generate results.
-- **Turn count:** 20 turns per match (fixed for MVP).
+- **Turn count:** Customizable per scenario (default 20, scenario authors may set 10–20).
 - **Temperature:** 0 (deterministic output).
 - **API failure handling:** Retry from the point of failure (resume mid-conversation, don't restart).
 - **Opponent prompt visibility:** Participants cannot see their opponent's prompt.
 
 ### F7. Tournament System
 
-**MVP:** Use a placeholder tournament format. The system must show rounds and results, but the exact format will iterate.
+**Format: Swiss-system.** Each round pairs players with similar records. No one is eliminated — everyone plays all rounds.
+
+- **15 players, 4 rounds ≈ 56 matches** (vs 210 for round-robin). Saves ~73% token cost.
+- Each round: same-record players paired; no rematches allowed; odd-count tiers borrow from adjacent tier.
+- Final ranking: wins → Buchholz tiebreaker (average opponent strength).
 
 **Competition window:** Option A — open window. Anyone can submit at any time within the competition period. No synchronized sessions.
 
-**Round structure (starting design):**
-- Preliminary rounds: single match per pairing
-- Final round: best of 3
-- Exact bracket/group format: TBD (placeholder for MVP)
+**Round structure:**
+- All rounds: single match per pairing (each pairing plays both role assignments: A's Role-A vs B's Role-B AND A's Role-B vs B's Role-A)
+- 4 Swiss rounds for MVP (15 players)
 
 **Leaderboard displays:**
 - Rank
@@ -149,7 +162,7 @@ The playground lets participants test their prompts before formal submission.
 | Backend API | Minimal: user CRUD, prompt submission, match results |
 | Match Engine | Async job runner: pair agents → run dialogue via model API → store transcript |
 | Model Gateway | Adapter pattern for domestic model APIs (Kimi, DeepSeek, Qianwen, MiniMax) |
-| Judge | Single LLM call per match with judge prompt |
+| Judge | Public persona-based LLM judge; versioned prompt per scenario |
 | Database | Users, submissions (versioned), match transcripts, results |
 | Playground | Frontend-functional; backend can be stubbed |
 
@@ -163,7 +176,7 @@ The playground lets participants test their prompts before formal submission.
    - Turn 2: Role B agent generates response
    - ... alternating for 20 turns
    - On API failure: retry from last successful turn
-4. Judge LLM evaluates transcript → binary win/loss
+4. Judge persona asks each agent post-dialogue questions → scores on key answers
 5. Results written to leaderboard
 ```
 
@@ -179,26 +192,26 @@ All decisions made by Yihan on 2026-03-29, resolving ambiguities from the 2026-0
 |---|---|---|---|
 | A1 | Win condition format | Simon designs per-scenario; LLM judge for now | Win conditions are scenario-specific, not platform-level |
 | A2 | Submit one role or both? | Both roles required | Enables fair relative win rate comparison |
-| A3 | Tournament format | Placeholder for MVP, iterate later | Not worth locking in before testing |
-| A4 | Turns per match | 20 | Fixed for MVP |
+| A3 | Tournament format | **Swiss-system**, 4 rounds for 15 players (~56 matches) | Saves ~73% token cost vs round-robin; confirmed 2026-03-30 |
+| A4 | Turns per match | **Customizable per scenario** (default 20, scenario authors may set 10–20) | 商鞅 designs use 10 turns; updated 2026-03-30 |
 | A5 | Playground scope | Frontend UI required; backend can be incomplete | MVP is about showing the UX |
-| A6 | Judge: single call or pipeline? | Single LLM call | Simplicity for MVP |
+| A6 | Judge design | **Public persona-based LLM judge**; judge prompt is public + versioned, judge has scenario persona (e.g. Emperor), asks each agent questions post-dialogue, scores on key answers; statistical convergence over many matches | Eliminates subjective black-box judging; confirmed 2026-03-30 |
 | A7 | Submission window | Option A: open window, anyone anytime | No synchronized sessions needed |
 | B1 | Can participants see opponent prompts? | No | Prompts are hidden |
 | B3 | Prompt length limit? | 300 words | MVP constraint |
 | B4 | Tool calling / RAG / multi-turn chains? | No — strictly single system prompt | Keeps competition about prompt craft |
 | B6 | API failure handling? | Retry from point of failure | Don't restart entire match |
 | B7 | Match determinism? | Temperature = 0 | Ensures reproducibility |
-| B8 | Scoring method for rounds? | Single match in prelims; best-of-3 in finals | Balance token cost vs fairness |
+| B8 | Scoring method for rounds? | Single match per pairing per Swiss round (both role assignments) | Swiss-system handles fairness through volume; best-of-3 unnecessary |
 
 ### Deferred (Post-MVP)
 
 | # | Question | Status |
 |---|---|---|
-| D1 | Post-conversation interrogation ("were you persuaded?") | Will experiment later to see how it performs |
+| D1 | ~~Post-conversation interrogation~~ | **Resolved 2026-03-30**: This IS the judge now — persona asks questions post-dialogue |
 | D2 | Historical accuracy penalties | Deferred |
-| D3 | Relative win rate computation (Elo / Glicko / raw %) | Deferred |
-| D4 | Multi-dimensional rubric scoring | Deferred |
+| D3 | Relative win rate computation (Elo / Glicko / raw %) | Swiss standings + Buchholz for MVP; persistent rating system deferred |
+| D4 | ~~Multi-dimensional rubric scoring~~ | **Resolved 2026-03-30**: Judge persona questions create multi-dimensional scoring naturally |
 | D5 | Prize structure (internships, cash, titles) | Deferred |
 | D6 | Offline finals format | Deferred |
 | D7 | International expansion | Deferred |
@@ -211,9 +224,8 @@ All decisions made by Yihan on 2026-03-29, resolving ambiguities from the 2026-0
 
 ### Not Discussing Now
 
-- Judging products (rubric details beyond binary win/loss)
 - Timeline risks
-- Post-conversation interrogation design (experiment first)
+- Specific judge persona question design per scenario (Simon owns)
 
 ---
 
