@@ -44,7 +44,9 @@ function Collapsible({
         {title}
       </button>
       {isOpen ? (
-        <div className="border-t border-[var(--border-soft)] px-3 py-3">{children}</div>
+        <div className="border-t border-[var(--border-soft)] px-3 py-3">
+          {children}
+        </div>
       ) : null}
     </div>
   )
@@ -71,7 +73,9 @@ function RoleCard({
         <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
           角色卡 {side.toUpperCase()}
         </span>
-        <span className="text-sm font-semibold text-[var(--foreground)]">{roleName}</span>
+        <span className="text-sm font-semibold text-[var(--foreground)]">
+          {roleName}
+        </span>
       </div>
       <div className="whitespace-pre-wrap text-xs leading-5 text-[var(--foreground-subtle)]">
         {roleCard}
@@ -117,7 +121,9 @@ export function ScenarioDetailPage() {
           setModel(latest.model as ModelOption['id'])
         }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : '加载场景失败')
+        setError(
+          loadError instanceof Error ? loadError.message : '加载场景失败',
+        )
       } finally {
         setIsLoading(false)
       }
@@ -138,7 +144,12 @@ export function ScenarioDetailPage() {
     event.preventDefault()
     setError(null)
 
-    const parsed = createSubmissionSchema.safeParse({ model, promptA, promptB, scenarioId })
+    const parsed = createSubmissionSchema.safeParse({
+      model,
+      promptA,
+      promptB,
+      scenarioId,
+    })
 
     if (!parsed.success) {
       setError('请检查提示词字数、模型选择和必填项')
@@ -152,7 +163,9 @@ export function ScenarioDetailPage() {
       setSubmissions(history)
       setToast(`v${created.version} 已保存`)
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : '保存失败')
+      setError(
+        submissionError instanceof Error ? submissionError.message : '保存失败',
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -271,7 +284,9 @@ export function ScenarioDetailPage() {
                     <span>模型选择</span>
                     <select
                       className="app-input"
-                      onChange={(event) => setModel(event.target.value as ModelOption['id'])}
+                      onChange={(event) =>
+                        setModel(event.target.value as ModelOption['id'])
+                      }
                       value={model}
                     >
                       {modelOptions.map((option) => (
@@ -307,8 +322,8 @@ export function ScenarioDetailPage() {
                           v{submission.version}
                         </p>
                         <Badge tone="info">
-                          {modelOptions.find((o) => o.id === submission.model)?.label ??
-                            submission.model}
+                          {modelOptions.find((o) => o.id === submission.model)
+                            ?.label ?? submission.model}
                         </Badge>
                         <span className="text-xs text-[var(--foreground-muted)]">
                           {submission.createdAt}

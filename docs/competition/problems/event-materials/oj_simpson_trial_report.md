@@ -41,7 +41,7 @@ Selected as the first overall pick in the 1969 NFL Draft by the Buffalo Bills, S
 
 ### Acting and Broadcasting Career
 
-Simpson transitioned into acting, broadcasting, and commercial endorsements after football. Notably, he became a professional actor before even playing professional football, appearing in the first episode of *Medical Center* while still negotiating his contract with the Bills. He accumulated nearly 40 acting credits, appearing in films such as *The Towering Inferno* (1974) and the *Naked Gun* comedy franchise (1988, 1991, 1994). He became widely known to the general public as the spokesman for Hertz car rental company in a series of popular television ads beginning in 1975. He also worked as a sports commentator for ABC's *Monday Night Football* and NBC.
+Simpson transitioned into acting, broadcasting, and commercial endorsements after football. Notably, he became a professional actor before even playing professional football, appearing in the first episode of _Medical Center_ while still negotiating his contract with the Bills. He accumulated nearly 40 acting credits, appearing in films such as _The Towering Inferno_ (1974) and the _Naked Gun_ comedy franchise (1988, 1991, 1994). He became widely known to the general public as the spokesman for Hertz car rental company in a series of popular television ads beginning in 1975. He also worked as a sports commentator for ABC's _Monday Night Football_ and NBC.
 
 By the early 1990s, O.J. Simpson was one of the most famous, beloved, and commercially successful athletes in America -- a status that would make his fall all the more dramatic.
 
@@ -90,6 +90,7 @@ Nicole's two children, Sydney (age 8) and Justin (age 5), were asleep upstairs i
 ### Crime Scene Evidence
 
 At the Bundy Drive crime scene, investigators found:
+
 - A trail of bloody shoe prints leading away from the bodies
 - A dark knit cap
 - A left-hand leather glove soaked in blood
@@ -182,40 +183,40 @@ After about two hours, the Bronco pulled into the driveway of Simpson's Brentwoo
 
 ### Pre-Trial (1994)
 
-| Date | Event |
-|------|-------|
-| June 12, 1994 | Nicole Brown Simpson and Ron Goldman are murdered |
-| June 13, 1994 | Bodies discovered; Simpson notified in Chicago, returns to LA |
-| June 15, 1994 | Simpson attends Nicole's funeral |
-| June 17, 1994 | Simpson charged with murder; fails to surrender; the Bronco chase; arrested at his estate |
-| June 20, 1994 | Simpson enters a plea of "absolutely, 100 percent not guilty" |
-| July 22, 1994 | Simpson pleads not guilty at arraignment in Superior Court |
-| September 26, 1994 | Jury selection begins |
-| November 3, 1994 | Jury of 12 (with 12 alternates) is seated |
+| Date               | Event                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| June 12, 1994      | Nicole Brown Simpson and Ron Goldman are murdered                                         |
+| June 13, 1994      | Bodies discovered; Simpson notified in Chicago, returns to LA                             |
+| June 15, 1994      | Simpson attends Nicole's funeral                                                          |
+| June 17, 1994      | Simpson charged with murder; fails to surrender; the Bronco chase; arrested at his estate |
+| June 20, 1994      | Simpson enters a plea of "absolutely, 100 percent not guilty"                             |
+| July 22, 1994      | Simpson pleads not guilty at arraignment in Superior Court                                |
+| September 26, 1994 | Jury selection begins                                                                     |
+| November 3, 1994   | Jury of 12 (with 12 alternates) is seated                                                 |
 
 ### The Trial (1995)
 
-| Date | Event |
-|------|-------|
-| January 24, 1995 | Opening statements begin; prosecution's case opens |
-| January 25, 1995 | Cochran delivers defense opening statement |
-| February 12, 1995 | Jurors visit crime scene at Bundy Drive and Simpson's Rockingham estate |
-| March 9-10, 1995 | Mark Fuhrman testifies for the prosecution |
-| March 21, 1995 | Fuhrman denies using racial slurs in the past ten years |
-| March 28-29, 1995 | Allan Park (limo driver) testifies |
-| April-May, 1995 | Extensive DNA evidence presented; prosecution witnesses testify |
-| June 15, 1995 | The glove demonstration -- Simpson tries on the bloody gloves; they appear not to fit |
-| June 20, 1995 | Prosecution drops domestic violence portion of their case |
-| July 6, 1995 | Prosecution rests its case after 92 days of testimony |
-| July 10, 1995 | Defense begins presenting its case |
-| August 29, 1995 | Excerpts of the Fuhrman tapes played in court (outside the jury's presence) |
-| September 5-6, 1995 | Fuhrman takes the stand; invokes Fifth Amendment when asked if he planted evidence |
-| September 6, 1995 | Two excerpts from the Fuhrman tapes played for the jury |
-| September 22, 1995 | Defense rests |
-| September 26-27, 1995 | Prosecution closing arguments (Clark and Darden) |
-| September 28-29, 1995 | Defense closing arguments (Cochran and Scheck) |
-| October 2, 1995 | Jury begins deliberations; reaches verdict in less than 4 hours |
-| October 3, 1995 | Verdict announced: NOT GUILTY on both counts |
+| Date                  | Event                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| January 24, 1995      | Opening statements begin; prosecution's case opens                                    |
+| January 25, 1995      | Cochran delivers defense opening statement                                            |
+| February 12, 1995     | Jurors visit crime scene at Bundy Drive and Simpson's Rockingham estate               |
+| March 9-10, 1995      | Mark Fuhrman testifies for the prosecution                                            |
+| March 21, 1995        | Fuhrman denies using racial slurs in the past ten years                               |
+| March 28-29, 1995     | Allan Park (limo driver) testifies                                                    |
+| April-May, 1995       | Extensive DNA evidence presented; prosecution witnesses testify                       |
+| June 15, 1995         | The glove demonstration -- Simpson tries on the bloody gloves; they appear not to fit |
+| June 20, 1995         | Prosecution drops domestic violence portion of their case                             |
+| July 6, 1995          | Prosecution rests its case after 92 days of testimony                                 |
+| July 10, 1995         | Defense begins presenting its case                                                    |
+| August 29, 1995       | Excerpts of the Fuhrman tapes played in court (outside the jury's presence)           |
+| September 5-6, 1995   | Fuhrman takes the stand; invokes Fifth Amendment when asked if he planted evidence    |
+| September 6, 1995     | Two excerpts from the Fuhrman tapes played for the jury                               |
+| September 22, 1995    | Defense rests                                                                         |
+| September 26-27, 1995 | Prosecution closing arguments (Clark and Darden)                                      |
+| September 28-29, 1995 | Defense closing arguments (Cochran and Scheck)                                        |
+| October 2, 1995       | Jury begins deliberations; reaches verdict in less than 4 hours                       |
+| October 3, 1995       | Verdict announced: NOT GUILTY on both counts                                          |
 
 ---
 
@@ -280,6 +281,7 @@ During the criminal trial, Simpson denied ever owning Bruno Magli shoes, calling
 ### The Gloves
 
 Two Aris Leather Light gloves (extra-large, style number 70263, in brown) were key pieces of evidence:
+
 - A left-hand glove was found at the Bundy crime scene
 - A matching right-hand glove was found behind the guest house at Simpson's Rockingham estate
 
@@ -327,7 +329,7 @@ The defense's strategy rested on two interrelated arguments:
 
 ### Internal Conflicts
 
-The Dream Team was not without internal discord. Robert Shapiro later publicly criticized Cochran and Bailey for "playing the race card" and said he disagreed with the trial's racial direction. Cochran denied playing the "race card," maintaining that the LAPD's racism was a legitimate factual issue. In his 1996 book *Journey to Justice*, Cochran wrote that the defense simply followed the evidence of police bias wherever it led.
+The Dream Team was not without internal discord. Robert Shapiro later publicly criticized Cochran and Bailey for "playing the race card" and said he disagreed with the trial's racial direction. Cochran denied playing the "race card," maintaining that the LAPD's racism was a legitimate factual issue. In his 1996 book _Journey to Justice_, Cochran wrote that the defense simply followed the evidence of police bias wherever it led.
 
 ---
 
@@ -362,11 +364,13 @@ The DNA evidence presented by the prosecution was statistically overwhelming, bu
 ### Closing Arguments
 
 **Prosecution (September 26-27, 1995):**
+
 - Marcia Clark and Christopher Darden spent five hours reviewing the evidence and debunking defense theories. Darden argued that with each domestic abuse incident, "the fuse was burning" and finally resulted in Simpson murdering his ex-wife and Goldman.
 - Darden stated plainly: "We know the truth, and the truth that we know is that he killed these two people."
 - Clark urged the jurors to use logic and common sense rather than emotion.
 
 **Defense (September 28-29, 1995):**
+
 - Johnnie Cochran delivered his famous closing, weaving together the evidence-contamination argument with the police-conspiracy narrative. He told the jurors: "If it doesn't fit, you must acquit."
 - Cochran argued: "Because of their vanity, they very soon pretended to solve this crime and we think implicated an innocent man, and they never, never ever looked for anyone else."
 - He quoted Frederick Douglass: "In a composite nation like ours as before the law, there should be no rich, no poor, no high, no low, no white, no black, but common country, common citizenship, equal rights and a common destiny."
@@ -382,7 +386,7 @@ The jury -- which had been sequestered for 265 days (the longest jury sequestrat
 
 ### The Jury
 
-The final jury consisted of nine African Americans, two whites, and one Hispanic -- eight women and four men. Several jurors later co-authored the book *Madame Foreman* (1995), in which they stated that they believed Simpson was probably guilty but that the prosecution had failed to prove its case beyond a reasonable doubt.
+The final jury consisted of nine African Americans, two whites, and one Hispanic -- eight women and four men. Several jurors later co-authored the book _Madame Foreman_ (1995), in which they stated that they believed Simpson was probably guilty but that the prosecution had failed to prove its case beyond a reasonable doubt.
 
 ### The Verdict
 
@@ -391,6 +395,7 @@ At 10:07 a.m. on October 3, 1995, the verdict was announced: **Not Guilty** on b
 ### Viewership
 
 An estimated 150 million Americans -- approximately 57% of the nation's population -- watched or listened to the verdict live. The global audience reached approximately 100 million. The announcement had measurable effects on daily life:
+
 - Long-distance telephone call volume dropped by 58%
 - Trading volume on the New York Stock Exchange decreased by 41%
 - Water usage in some cities spiked during commercial breaks as millions simultaneously used their bathrooms
@@ -412,6 +417,7 @@ Polling immediately after the verdict showed that approximately 77% of white Ame
 ### Filing
 
 In 1996, the families of both victims filed civil wrongful death lawsuits against Simpson:
+
 - Fred Goldman and Sharon Rufo (Ron Goldman's parents) sued for wrongful death
 - Lou Brown (Nicole Brown Simpson's father) filed a survival action
 
@@ -419,17 +425,18 @@ In 1996, the families of both victims filed civil wrongful death lawsuits agains
 
 The civil trial differed from the criminal trial in several critical ways:
 
-| Criminal Trial | Civil Trial |
-|---------------|-------------|
-| Burden of proof: Beyond a reasonable doubt | Burden of proof: Preponderance of the evidence |
-| Unanimous jury required | 9 of 12 jurors required |
-| Simpson could not be compelled to testify | Simpson was forced to testify and was cross-examined |
-| Judge Ito allowed cameras in the courtroom | Judge Hiroshi Fujisaki banned all cameras |
-| Downtown Los Angeles (predominantly Black area) | Santa Monica (predominantly white area) |
+| Criminal Trial                                  | Civil Trial                                          |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| Burden of proof: Beyond a reasonable doubt      | Burden of proof: Preponderance of the evidence       |
+| Unanimous jury required                         | 9 of 12 jurors required                              |
+| Simpson could not be compelled to testify       | Simpson was forced to testify and was cross-examined |
+| Judge Ito allowed cameras in the courtroom      | Judge Hiroshi Fujisaki banned all cameras            |
+| Downtown Los Angeles (predominantly Black area) | Santa Monica (predominantly white area)              |
 
 ### New Evidence
 
 The civil trial introduced evidence not seen in the criminal trial:
+
 - 31 photographs of Simpson wearing Bruno Magli shoes (he had denied ever owning them)
 - Simpson's own testimony under oath, during which he made statements that contradicted earlier claims
 - Additional domestic violence evidence
@@ -437,6 +444,7 @@ The civil trial introduced evidence not seen in the criminal trial:
 ### The Verdict
 
 On February 4, 1997, the jury unanimously found O.J. Simpson liable for the wrongful deaths of Ron Goldman and Nicole Brown Simpson. He was ordered to pay:
+
 - $8.5 million in compensatory damages to the Goldman family
 - $25 million in punitive damages ($12.5 million to each family)
 - **Total: approximately $33.5 million** (which has grown with interest to over $58 million)
@@ -451,7 +459,7 @@ Simpson largely avoided paying the judgment. He moved to Florida, which has stro
 
 ### "If I Did It" (2006-2007)
 
-In November 2006, HarperCollins announced the publication of *If I Did It*, a book ghostwritten by Pablo Fenjves in which Simpson presented a "hypothetical" account of how the murders would have been committed -- "if he were the one responsible." Fox planned to air a companion two-part interview with Simpson. The announcement sparked massive public outrage. Under intense pressure, HarperCollins canceled the book and Fox scrapped the interview.
+In November 2006, HarperCollins announced the publication of _If I Did It_, a book ghostwritten by Pablo Fenjves in which Simpson presented a "hypothetical" account of how the murders would have been committed -- "if he were the one responsible." Fox planned to air a companion two-part interview with Simpson. The announcement sparked massive public outrage. Under intense pressure, HarperCollins canceled the book and Fox scrapped the interview.
 
 In August 2007, a Florida bankruptcy court awarded the publishing rights to the Goldman family to partially satisfy the unpaid civil judgment. The Goldmans published the book through Beaufort Books in September 2007, with the title redesigned so that "If" appeared tiny and "I Did It" appeared in large letters, with the subtitle "Confessions of the Killer."
 
@@ -500,8 +508,9 @@ The trial fundamentally transformed American media:
 ### Cultural Representations
 
 The trial has been the subject of numerous cultural works:
-- **FX's *American Crime Story: The People v. O.J. Simpson*** (2016) -- Emmy-winning miniseries dramatizing the trial
-- **ESPN's *O.J.: Made in America*** (2016) -- Academy Award-winning documentary
+
+- **FX's _American Crime Story: The People v. O.J. Simpson_** (2016) -- Emmy-winning miniseries dramatizing the trial
+- **ESPN's _O.J.: Made in America_** (2016) -- Academy Award-winning documentary
 - Multiple books, documentaries, and podcasts
 - The trial inadvertently launched the Kardashian family into public consciousness through Robert Kardashian's prominent role
 
@@ -527,7 +536,7 @@ The case remains, three decades later, one of the most analyzed, debated, and re
 - [The Trial of O. J. Simpson: The Incriminating Evidence - Famous Trials](https://famous-trials.com/simpson/1857-evidence)
 - [Mark Fuhrman - Wikipedia](https://en.wikipedia.org/wiki/Mark_Fuhrman)
 - [Fuhrman tapes - Wikipedia](https://en.wikipedia.org/wiki/Fuhrman_tapes)
-- [Dream Team (law) - Wikipedia](https://en.wikipedia.org/wiki/Dream_Team_(law))
+- [Dream Team (law) - Wikipedia](<https://en.wikipedia.org/wiki/Dream_Team_(law)>)
 - [O.J. Simpson: The Key Players in His Murder Trial - Biography](https://www.biography.com/crime/oj-simpson-trial-key-players)
 - [O.J. Simpson's Trial: A Timeline - Biography](https://www.biography.com/crime/a433800160/oj-simpson-trial-timeline)
 - [Ron Goldman - Wikipedia](https://en.wikipedia.org/wiki/Ron_Goldman)

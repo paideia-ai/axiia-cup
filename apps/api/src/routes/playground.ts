@@ -1,56 +1,53 @@
-import {
-  playgroundRunSchema,
-  playgroundRunSummarySchema,
-} from "@axiia/shared";
-import { desc, eq } from "drizzle-orm";
-import { Hono } from "hono";
-import { z } from "zod";
+import { playgroundRunSchema, playgroundRunSummarySchema } from '@axiia/shared'
+import { desc, eq } from 'drizzle-orm'
+import { Hono } from 'hono'
+import { z } from 'zod'
 
-import { db } from "../db/client";
-import { playgroundRuns, scenarios, submissions } from "../db/schema";
-import { executeMatchSession } from "../engine/core";
-import { requireAuth } from "../middleware/requireAuth";
+import { db } from '../db/client'
+import { playgroundRuns, scenarios, submissions } from '../db/schema'
+import { executeMatchSession } from '../engine/core'
+import { requireAuth } from '../middleware/requireAuth'
 
 function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
-  if (!value) return fallback;
+  if (!value) return fallback
   try {
-    return JSON.parse(value) as T;
+    return JSON.parse(value) as T
   } catch {
-    return fallback;
+    return fallback
   }
 }
 
-const runRequestSchema = z.object({ submissionId: z.number().int().positive() });
+const runRequestSchema = z.object({ submissionId: z.number().int().positive() })
 
-const playgroundRouter = new Hono();
+const playgroundRouter = new Hono()
 
-playgroundRouter.post("/api/playground/run", requireAuth, async (context) => {
-  const json = await context.req.json().catch(() => null);
-  const parsed = runRequestSchema.safeParse(json);
+playgroundRouter.post('/api/playground/run', requireAuth, async (context) => {
+  const json = await context.req.json().catch(() => null)
+  const parsed = runRequestSchema.safeParse(json)
 
   if (!parsed.success) {
-    return context.json({ error: "Invalid request body" }, 400);
+    return context.json({ error: 'Invalid request body' }, 400)
   }
 
-  const userId = context.get("userId");
+  const userId = context.get('userId')
   const submission = db
     .select()
     .from(submissions)
     .where(eq(submissions.id, parsed.data.submissionId))
-    .get();
+    .get()
 
   if (!submission || submission.userId !== userId) {
-    return context.json({ error: "Submission not found" }, 404);
+    return context.json({ error: 'Submission not found' }, 404)
   }
 
   const scenario = db
     .select()
     .from(scenarios)
     .where(eq(scenarios.id, submission.scenarioId))
-    .get();
+    .get()
 
   if (!scenario) {
-    return context.json({ error: "Scenario not found" }, 404);
+    return context.json({ error: 'Scenario not found' }, 404)
   }
 
   // Create a placeholder run record
@@ -61,14 +58,16 @@ playgroundRouter.post("/api/playground/run", requireAuth, async (context) => {
       submissionId: submission.id,
     })
     .returning()
-    .get();
+    .get()
 
-  const persistRunProgress = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
+  const persistRunProgress = (
+    values: Partial<typeof playgroundRuns.$inferInsert>,
+  ) =>
     db
       .update(playgroundRuns)
       .set(values)
       .where(eq(playgroundRuns.id, run.id))
-      .run();
+      .run()
 
   try {
     const result = await executeMatchSession({
@@ -77,22 +76,22 @@ playgroundRouter.post("/api/playground/run", requireAuth, async (context) => {
       onDialogueTurn: (transcript) => {
         persistRunProgress({
           transcript: JSON.stringify(transcript),
-        });
+        })
       },
       onJudgeTranscriptA: (judgeTranscriptA) => {
         persistRunProgress({
           judgeTranscriptA: JSON.stringify(judgeTranscriptA),
-        });
+        })
       },
       onJudgeTranscriptB: (judgeTranscriptB) => {
         persistRunProgress({
           judgeTranscriptB: JSON.stringify(judgeTranscriptB),
-        });
+        })
       },
       promptA: submission.promptA,
       promptB: submission.promptB,
       scenario,
-    });
+    })
 
     const updated = db
       .update(playgroundRuns)
@@ -107,7 +106,7 @@ playgroundRouter.post("/api/playground/run", requireAuth, async (context) => {
       })
       .where(eq(playgroundRuns.id, run.id))
       .returning()
-      .get();
+      .get()
 
     return context.json(
       playgroundRunSchema.parse({
@@ -116,90 +115,102 @@ playgroundRouter.post("/api/playground/run", requireAuth, async (context) => {
         judgeTranscriptB: parseJsonField(updated.judgeTranscriptB, []),
         transcript: parseJsonField(updated.transcript, []),
       }),
-    );
+    )
   } catch (error) {
     db.update(playgroundRuns)
-      .set({ error: error instanceof Error ? error.message : "Run failed" })
+      .set({ error: error instanceof Error ? error.message : 'Run failed' })
       .where(eq(playgroundRuns.id, run.id))
-      .run();
+      .run()
 
     return context.json(
-      { error: error instanceof Error ? error.message : "Playground run failed" },
+      {
+        error: error instanceof Error ? error.message : 'Playground run failed',
+      },
       500,
-    );
+    )
   }
-});
+})
 
-playgroundRouter.get("/api/playground/runs/:submissionId", requireAuth, async (context) => {
-  const userId = context.get("userId");
-  const submissionId = Number(context.req.param("submissionId"));
+playgroundRouter.get(
+  '/api/playground/runs/:submissionId',
+  requireAuth,
+  async (context) => {
+    const userId = context.get('userId')
+    const submissionId = Number(context.req.param('submissionId'))
 
-  if (!Number.isInteger(submissionId) || submissionId <= 0) {
-    return context.json({ error: "Invalid submission ID" }, 400);
-  }
+    if (!Number.isInteger(submissionId) || submissionId <= 0) {
+      return context.json({ error: 'Invalid submission ID' }, 400)
+    }
 
-  // Verify ownership
-  const submission = db
-    .select({ id: submissions.id, userId: submissions.userId })
-    .from(submissions)
-    .where(eq(submissions.id, submissionId))
-    .get();
+    // Verify ownership
+    const submission = db
+      .select({ id: submissions.id, userId: submissions.userId })
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .get()
 
-  if (!submission || submission.userId !== userId) {
-    return context.json({ error: "Submission not found" }, 404);
-  }
+    if (!submission || submission.userId !== userId) {
+      return context.json({ error: 'Submission not found' }, 404)
+    }
 
-  const rows = db
-    .select({
-      createdAt: playgroundRuns.createdAt,
-      error: playgroundRuns.error,
-      id: playgroundRuns.id,
-      scoreA: playgroundRuns.scoreA,
-      scoreB: playgroundRuns.scoreB,
-      submissionId: playgroundRuns.submissionId,
-      winner: playgroundRuns.winner,
-    })
-    .from(playgroundRuns)
-    .where(eq(playgroundRuns.submissionId, submissionId))
-    .orderBy(desc(playgroundRuns.createdAt))
-    .all();
+    const rows = db
+      .select({
+        createdAt: playgroundRuns.createdAt,
+        error: playgroundRuns.error,
+        id: playgroundRuns.id,
+        scoreA: playgroundRuns.scoreA,
+        scoreB: playgroundRuns.scoreB,
+        submissionId: playgroundRuns.submissionId,
+        winner: playgroundRuns.winner,
+      })
+      .from(playgroundRuns)
+      .where(eq(playgroundRuns.submissionId, submissionId))
+      .orderBy(desc(playgroundRuns.createdAt))
+      .all()
 
-  return context.json(rows.map((row) => playgroundRunSummarySchema.parse(row)));
-});
+    return context.json(
+      rows.map((row) => playgroundRunSummarySchema.parse(row)),
+    )
+  },
+)
 
-playgroundRouter.get("/api/playground/runs/:submissionId/:runId", requireAuth, async (context) => {
-  const userId = context.get("userId");
-  const submissionId = Number(context.req.param("submissionId"));
-  const runId = Number(context.req.param("runId"));
+playgroundRouter.get(
+  '/api/playground/runs/:submissionId/:runId',
+  requireAuth,
+  async (context) => {
+    const userId = context.get('userId')
+    const submissionId = Number(context.req.param('submissionId'))
+    const runId = Number(context.req.param('runId'))
 
-  const submission = db
-    .select({ id: submissions.id, userId: submissions.userId })
-    .from(submissions)
-    .where(eq(submissions.id, submissionId))
-    .get();
+    const submission = db
+      .select({ id: submissions.id, userId: submissions.userId })
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .get()
 
-  if (!submission || submission.userId !== userId) {
-    return context.json({ error: "Submission not found" }, 404);
-  }
+    if (!submission || submission.userId !== userId) {
+      return context.json({ error: 'Submission not found' }, 404)
+    }
 
-  const row = db
-    .select()
-    .from(playgroundRuns)
-    .where(eq(playgroundRuns.id, runId))
-    .get();
+    const row = db
+      .select()
+      .from(playgroundRuns)
+      .where(eq(playgroundRuns.id, runId))
+      .get()
 
-  if (!row || row.submissionId !== submissionId) {
-    return context.json({ error: "Run not found" }, 404);
-  }
+    if (!row || row.submissionId !== submissionId) {
+      return context.json({ error: 'Run not found' }, 404)
+    }
 
-  return context.json(
-    playgroundRunSchema.parse({
-      ...row,
-      judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
-      judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
-      transcript: parseJsonField(row.transcript, []),
-    }),
-  );
-});
+    return context.json(
+      playgroundRunSchema.parse({
+        ...row,
+        judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
+        judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
+        transcript: parseJsonField(row.transcript, []),
+      }),
+    )
+  },
+)
 
-export { playgroundRouter };
+export { playgroundRouter }

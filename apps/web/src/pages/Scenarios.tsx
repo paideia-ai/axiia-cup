@@ -1,18 +1,18 @@
-import type { Scenario } from "@axiia/shared";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type { Scenario } from '@axiia/shared'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { Badge } from "../components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getScenarios } from "../lib/api";
+import { Badge } from '../components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { getScenarios } from '../lib/api'
 
 function summarizeRoleCard(roleCard: string) {
   const lines = roleCard
-    .split("\n")
+    .split('\n')
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean)
 
-  return lines.slice(0, 2).join(" ");
+  return lines.slice(0, 2).join(' ')
 }
 
 function ScenarioCardSkeleton() {
@@ -30,30 +30,32 @@ function ScenarioCardSkeleton() {
         <div className="app-panel h-28 bg-white/3" />
       </CardContent>
     </Card>
-  );
+  )
 }
 
 export function ScenariosPage() {
-  const navigate = useNavigate();
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate()
+  const [scenarios, setScenarios] = useState<Scenario[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
       try {
-        setError(null);
-        setIsLoading(true);
-        setScenarios(await getScenarios());
+        setError(null)
+        setIsLoading(true)
+        setScenarios(await getScenarios())
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "加载场景失败");
+        setError(
+          loadError instanceof Error ? loadError.message : '加载场景失败',
+        )
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    void load();
-  }, []);
+    void load()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -61,16 +63,26 @@ export function ScenariosPage() {
         <div>
           <p className="page-eyebrow">Scenarios</p>
           <h1 className="page-title">场景列表</h1>
-          <p className="page-subtitle">裁判规则对所有选手公开可见。列表页只展示比赛前可知的固定材料。</p>
+          <p className="page-subtitle">
+            裁判规则对所有选手公开可见。列表页只展示比赛前可知的固定材料。
+          </p>
         </div>
-        <Badge tone="info">{isLoading ? "加载中..." : `${scenarios.length} 个场景`}</Badge>
+        <Badge tone="info">
+          {isLoading ? '加载中...' : `${scenarios.length} 个场景`}
+        </Badge>
       </div>
 
-      {error ? <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">{error}</div> : null}
+      {error ? (
+        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
+          {error}
+        </div>
+      ) : null}
 
       <div className="space-y-4">
         {isLoading
-          ? Array.from({ length: 1 }).map((_, index) => <ScenarioCardSkeleton key={index} />)
+          ? Array.from({ length: 1 }).map((_, index) => (
+              <ScenarioCardSkeleton key={index} />
+            ))
           : scenarios.map((scenario) => (
               <Card
                 key={scenario.id}
@@ -90,22 +102,28 @@ export function ScenariosPage() {
                     <div className="app-panel">
                       <p className="panel-label">角色 A</p>
                       <p className="panel-title">{scenario.roleAName}</p>
-                      <p className="panel-copy">{summarizeRoleCard(scenario.roleAPublicGoal)}</p>
+                      <p className="panel-copy">
+                        {summarizeRoleCard(scenario.roleAPublicGoal)}
+                      </p>
                     </div>
                     <div className="app-panel">
                       <p className="panel-label">角色 B</p>
                       <p className="panel-title">{scenario.roleBName}</p>
-                      <p className="panel-copy">{summarizeRoleCard(scenario.roleBPublicGoal)}</p>
+                      <p className="panel-copy">
+                        {summarizeRoleCard(scenario.roleBPublicGoal)}
+                      </p>
                     </div>
                   </div>
                   <div className="app-panel">
                     <p className="panel-label">场景背景</p>
-                    <p className="panel-copy line-clamp-4">{scenario.context}</p>
+                    <p className="panel-copy line-clamp-4">
+                      {scenario.context}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             ))}
       </div>
     </div>
-  );
+  )
 }

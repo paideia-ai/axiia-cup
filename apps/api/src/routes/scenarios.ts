@@ -1,9 +1,9 @@
-import { scenarioSchema } from "@axiia/shared";
-import { asc, eq } from "drizzle-orm";
-import { Hono } from "hono";
+import { scenarioSchema } from '@axiia/shared'
+import { asc, eq } from 'drizzle-orm'
+import { Hono } from 'hono'
 
-import { db } from "../db/client";
-import { scenarios } from "../db/schema";
+import { db } from '../db/client'
+import { scenarios } from '../db/schema'
 
 const publicScenarioSelection = {
   boundaryConstraints: scenarios.boundaryConstraints,
@@ -18,25 +18,33 @@ const publicScenarioSelection = {
   subject: scenarios.subject,
   title: scenarios.title,
   turnCount: scenarios.turnCount,
-};
+}
 
-const scenariosRouter = new Hono();
+const scenariosRouter = new Hono()
 
-scenariosRouter.get("/api/scenarios", (context) => {
-  const rows = db.select(publicScenarioSelection).from(scenarios).orderBy(asc(scenarios.createdAt)).all();
+scenariosRouter.get('/api/scenarios', (context) => {
+  const rows = db
+    .select(publicScenarioSelection)
+    .from(scenarios)
+    .orderBy(asc(scenarios.createdAt))
+    .all()
 
-  return context.json(rows.map((row) => scenarioSchema.parse(row)));
-});
+  return context.json(rows.map((row) => scenarioSchema.parse(row)))
+})
 
-scenariosRouter.get("/api/scenarios/:id", (context) => {
-  const id = context.req.param("id");
-  const row = db.select(publicScenarioSelection).from(scenarios).where(eq(scenarios.id, id)).get();
+scenariosRouter.get('/api/scenarios/:id', (context) => {
+  const id = context.req.param('id')
+  const row = db
+    .select(publicScenarioSelection)
+    .from(scenarios)
+    .where(eq(scenarios.id, id))
+    .get()
 
   if (!row) {
-    return context.json({ error: "Scenario not found" }, 404);
+    return context.json({ error: 'Scenario not found' }, 404)
   }
 
-  return context.json(scenarioSchema.parse(row));
-});
+  return context.json(scenarioSchema.parse(row))
+})
 
-export { scenariosRouter };
+export { scenariosRouter }

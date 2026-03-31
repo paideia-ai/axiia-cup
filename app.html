@@ -1,428 +1,951 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Axiia Cup — 智能体对抗赛</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0C0C0C;--surface:#161616;--elevated:#1E1E1E;
-  --text:#E8E8E8;--text2:#888;--text3:#555;
-  --accent:#E04A2F;--accent-h:#F25A3F;--accent-s:rgba(224,74,47,.12);
-  --border:#2A2A2A;--border-l:#222;
-  --ok:#34D399;--warn:#FBBF24;--err:#F87171;--info:#60A5FA;
-  --sans:'Satoshi','Noto Sans SC',-apple-system,sans-serif;
-  --mono:'Geist Mono','SF Mono','Consolas',monospace;
-  --r:6px;
-}
-body{background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
-.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Axiia Cup — 智能体对抗赛</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      :root{
+        --bg:#0C0C0C;--surface:#161616;--elevated:#1E1E1E;
+        --text:#E8E8E8;--text2:#888;--text3:#555;
+        --accent:#E04A2F;--accent-h:#F25A3F;--accent-s:rgba(224,74,47,.12);
+        --border:#2A2A2A;--border-l:#222;
+        --ok:#34D399;--warn:#FBBF24;--err:#F87171;--info:#60A5FA;
+        --sans:'Satoshi','Noto Sans SC',-apple-system,sans-serif;
+        --mono:'Geist Mono','SF Mono','Consolas',monospace;
+        --r:6px;
+      }
+      body{background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+      .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
 
-nav{position:sticky;top:0;z-index:50;background:rgba(12,12,12,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-l)}
-nav .inner{display:flex;align-items:center;gap:8px;height:48px;max-width:1280px;margin:0 auto;padding:0 24px}
-nav .logo{font-weight:700;font-size:15px;color:var(--accent);letter-spacing:-.02em;margin-right:24px;cursor:pointer}
-nav a{color:var(--text2);font-size:13px;font-weight:500;text-decoration:none;padding:6px 10px;border-radius:var(--r);transition:color .15s,background .15s;cursor:pointer}
-nav a:hover,nav a.active{color:var(--text);background:var(--elevated)}
-nav .spacer{flex:1}
-nav .user{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
-nav .avatar{width:24px;height:24px;border-radius:50%;background:var(--accent-s);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);font-weight:600}
+      nav{position:sticky;top:0;z-index:50;background:rgba(12,12,12,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-l)}
+      nav .inner{display:flex;align-items:center;gap:8px;height:48px;max-width:1280px;margin:0 auto;padding:0 24px}
+      nav .logo{font-weight:700;font-size:15px;color:var(--accent);letter-spacing:-.02em;margin-right:24px;cursor:pointer}
+      nav a{color:var(--text2);font-size:13px;font-weight:500;text-decoration:none;padding:6px 10px;border-radius:var(--r);transition:color .15s,background .15s;cursor:pointer}
+      nav a:hover,nav a.active{color:var(--text);background:var(--elevated)}
+      nav .spacer{flex:1}
+      nav .user{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px}
+      nav .avatar{width:24px;height:24px;border-radius:50%;background:var(--accent-s);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--accent);font-weight:600}
 
-.page{display:none;padding:32px 0 64px;animation:fadeIn .2s ease-out}
-.page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.page-head{margin-bottom:24px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.page-head h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
-.page-head .sub{font-size:13px;color:var(--text2)}
+      .page{display:none;padding:32px 0 64px;animation:fadeIn .2s ease-out}
+      .page.active{display:block}
+      @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+      .page-head{margin-bottom:24px;display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
+      .page-head h1{font-size:24px;font-weight:700;letter-spacing:-.02em}
+      .page-head .sub{font-size:13px;color:var(--text2)}
 
-.card{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);overflow:hidden}
-.card-head{padding:12px 16px;border-bottom:1px solid var(--border-l);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text2)}
+      .card{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);overflow:hidden}
+      .card-head{padding:12px 16px;border-bottom:1px solid var(--border-l);display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:var(--text2)}
 
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;border-radius:9999px;line-height:1.6}
-.badge-ok{background:rgba(52,211,153,.12);color:var(--ok)}
-.badge-warn{background:rgba(251,191,36,.12);color:var(--warn)}
-.badge-err{background:rgba(248,113,113,.12);color:var(--err)}
-.badge-info{background:rgba(96,165,250,.12);color:var(--info)}
-.badge-accent{background:var(--accent-s);color:var(--accent)}
+      .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;font-weight:600;border-radius:9999px;line-height:1.6}
+      .badge-ok{background:rgba(52,211,153,.12);color:var(--ok)}
+      .badge-warn{background:rgba(251,191,36,.12);color:var(--warn)}
+      .badge-err{background:rgba(248,113,113,.12);color:var(--err)}
+      .badge-info{background:rgba(96,165,250,.12);color:var(--info)}
+      .badge-accent{background:var(--accent-s);color:var(--accent)}
 
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font:13px/1 var(--sans);font-weight:600;border-radius:var(--r);border:none;cursor:pointer;transition:all .15s}
-.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
-.btn-s{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--text2)}
-.btn-g{background:transparent;color:var(--accent);padding:7px 8px}.btn-g:hover{background:var(--accent-s)}
-.btn-sm{padding:5px 10px;font-size:12px}
+      .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font:13px/1 var(--sans);font-weight:600;border-radius:var(--r);border:none;cursor:pointer;transition:all .15s}
+      .btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
+      .btn-s{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-s:hover{border-color:var(--text2)}
+      .btn-g{background:transparent;color:var(--accent);padding:7px 8px}.btn-g:hover{background:var(--accent-s)}
+      .btn-sm{padding:5px 10px;font-size:12px}
 
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:8px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);background:var(--bg);border-bottom:1px solid var(--border-l)}
-td{padding:10px 16px;border-bottom:1px solid var(--border-l);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-.mono{font-family:var(--mono);font-size:13px}
-.rank{font-family:var(--mono);font-weight:700;font-size:14px}
-.rank-1{color:var(--accent)}
-.name{font-weight:600}
-.model{font-family:var(--mono);font-size:11px;background:var(--elevated);padding:2px 6px;border-radius:4px;color:var(--text2)}
-.wr-h{color:var(--ok)}.wr-m{color:var(--warn)}.wr-l{color:var(--text2)}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      th{padding:8px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);background:var(--bg);border-bottom:1px solid var(--border-l)}
+      td{padding:10px 16px;border-bottom:1px solid var(--border-l);vertical-align:middle}
+      tr:last-child td{border-bottom:none}
+      tr:hover td{background:rgba(255,255,255,.02)}
+      .mono{font-family:var(--mono);font-size:13px}
+      .rank{font-family:var(--mono);font-weight:700;font-size:14px}
+      .rank-1{color:var(--accent)}
+      .name{font-weight:600}
+      .model{font-family:var(--mono);font-size:11px;background:var(--elevated);padding:2px 6px;border-radius:4px;color:var(--text2)}
+      .wr-h{color:var(--ok)}.wr-m{color:var(--warn)}.wr-l{color:var(--text2)}
 
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
-.input{width:100%;padding:8px 12px;font:14px var(--sans);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);transition:border-color .15s}
-.input:focus{outline:none;border-color:var(--accent)}
-textarea.input{font-family:var(--mono);font-size:13px;line-height:1.6;min-height:200px;resize:vertical}
-select.input{font-family:var(--mono);font-size:13px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-.wc{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;margin-top:4px}
+      .field{margin-bottom:16px}
+      .field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
+      .input{width:100%;padding:8px 12px;font:14px var(--sans);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);transition:border-color .15s}
+      .input:focus{outline:none;border-color:var(--accent)}
+      textarea.input{font-family:var(--mono);font-size:13px;line-height:1.6;min-height:200px;resize:vertical}
+      select.input{font-family:var(--mono);font-size:13px;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+      .wc{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right;margin-top:4px}
 
-.builder{display:grid;grid-template-columns:280px 1fr;gap:0}
-.builder-side{padding:16px;border-right:1px solid var(--border-l);background:var(--bg)}
-.builder-main{padding:20px}
-.scenario-block{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);padding:12px;margin-bottom:12px}
-.scenario-block h4{font-size:13px;font-weight:600;margin-bottom:4px}
-.scenario-block p{font-size:12px;color:var(--text2);line-height:1.5}
-.role-tabs{display:flex;gap:4px;margin-bottom:16px}
-.role-tab{padding:6px 12px;font-size:12px;font-weight:600;border-radius:var(--r);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text2);transition:all .15s;font-family:var(--sans)}
-.role-tab.active{background:var(--accent-s);color:var(--accent);border-color:rgba(224,74,47,.25)}
-.builder-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+      .builder{display:grid;grid-template-columns:280px 1fr;gap:0}
+      .builder-side{padding:16px;border-right:1px solid var(--border-l);background:var(--bg)}
+      .builder-main{padding:20px}
+      .scenario-block{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);padding:12px;margin-bottom:12px}
+      .scenario-block h4{font-size:13px;font-weight:600;margin-bottom:4px}
+      .scenario-block p{font-size:12px;color:var(--text2);line-height:1.5}
+      .role-tabs{display:flex;gap:4px;margin-bottom:16px}
+      .role-tab{padding:6px 12px;font-size:12px;font-weight:600;border-radius:var(--r);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text2);transition:all .15s;font-family:var(--sans)}
+      .role-tab.active{background:var(--accent-s);color:var(--accent);border-color:rgba(224,74,47,.25)}
+      .builder-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 
-.match-head{display:flex;justify-content:space-between;align-items:flex-start;padding:16px;border-bottom:1px solid var(--border-l)}
-.vs{font-size:18px;font-weight:700;letter-spacing:-.01em}
-.vs span{color:var(--text3);font-weight:400;font-size:14px;margin:0 6px}
-.verdict-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:2px}
-.verdict-win{font-size:16px;font-weight:700;color:var(--ok)}
-.turns{list-style:none}
-.turn{padding:12px 16px;border-bottom:1px solid var(--border-l);display:grid;grid-template-columns:72px 1fr;gap:12px}
-.turn:last-child{border-bottom:none}
-.turn-label{font-family:var(--mono);font-size:11px;color:var(--text3);padding-top:1px}
-.turn-a .turn-label{color:var(--accent)}
-.turn-content{font-size:13px;line-height:1.7;color:var(--text2)}
+      .match-head{display:flex;justify-content:space-between;align-items:flex-start;padding:16px;border-bottom:1px solid var(--border-l)}
+      .vs{font-size:18px;font-weight:700;letter-spacing:-.01em}
+      .vs span{color:var(--text3);font-weight:400;font-size:14px;margin:0 6px}
+      .verdict-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:2px}
+      .verdict-win{font-size:16px;font-weight:700;color:var(--ok)}
+      .turns{list-style:none}
+      .turn{padding:12px 16px;border-bottom:1px solid var(--border-l);display:grid;grid-template-columns:72px 1fr;gap:12px}
+      .turn:last-child{border-bottom:none}
+      .turn-label{font-family:var(--mono);font-size:11px;color:var(--text3);padding-top:1px}
+      .turn-a .turn-label{color:var(--accent)}
+      .turn-content{font-size:13px;line-height:1.7;color:var(--text2)}
 
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.stat{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);padding:16px}
-.stat-val{font-family:var(--mono);font-size:24px;font-weight:700;margin-bottom:2px}
-.stat-label{font-size:12px;color:var(--text3)}
+      .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+      .stat{background:var(--surface);border:1px solid var(--border-l);border-radius:var(--r);padding:16px}
+      .stat-val{font-family:var(--mono);font-size:24px;font-weight:700;margin-bottom:2px}
+      .stat-label{font-size:12px;color:var(--text3)}
 
-.pg-split{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.pg-panel{padding:16px;min-height:400px}
-.pg-panel:first-child{border-right:1px solid var(--border-l)}
-.pg-msg{margin-bottom:8px;padding:8px 12px;border-radius:var(--r);font-size:13px;line-height:1.6;max-width:90%}
-.pg-msg-a{background:var(--accent-s);color:var(--text);margin-right:auto}
-.pg-msg-b{background:var(--elevated);color:var(--text2);margin-left:auto;text-align:right}
+      .pg-split{display:grid;grid-template-columns:1fr 1fr;gap:0}
+      .pg-panel{padding:16px;min-height:400px}
+      .pg-panel:first-child{border-right:1px solid var(--border-l)}
+      .pg-msg{margin-bottom:8px;padding:8px 12px;border-radius:var(--r);font-size:13px;line-height:1.6;max-width:90%}
+      .pg-msg-a{background:var(--accent-s);color:var(--text);margin-right:auto}
+      .pg-msg-b{background:var(--elevated);color:var(--text2);margin-left:auto;text-align:right}
 
-.match-row{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-l);font-size:13px}
-.match-row:last-child{border-bottom:none}
-.match-row:hover{background:rgba(255,255,255,.02)}
-.match-players{font-weight:600}
-.match-players span{color:var(--text3);font-weight:400}
-.match-scenario{color:var(--text2);font-size:12px}
+      .match-row{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-l);font-size:13px}
+      .match-row:last-child{border-bottom:none}
+      .match-row:hover{background:rgba(255,255,255,.02)}
+      .match-players{font-weight:600}
+      .match-players span{color:var(--text3);font-weight:400}
+      .match-scenario{color:var(--text2);font-size:12px}
 
-@media(max-width:768px){
-  .builder{grid-template-columns:1fr}
-  .builder-side{border-right:none;border-bottom:1px solid var(--border-l)}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .pg-split{grid-template-columns:1fr}
-  .pg-panel:first-child{border-right:none;border-bottom:1px solid var(--border-l)}
-  .match-row{grid-template-columns:1fr;gap:8px}
-}
-</style>
-</head>
-<body>
-
-<nav>
-  <div class="inner">
-    <div class="logo" onclick="go('dash')">AXIIA CUP</div>
-    <a onclick="go('dash')" id="nav-dash">控制台</a>
-    <a onclick="go('builder')" id="nav-builder">智能体工坊</a>
-    <a onclick="go('playground')" id="nav-playground">试炼场</a>
-    <a onclick="go('board')" id="nav-board">排行榜</a>
-    <a onclick="go('match')" id="nav-match">对战记录</a>
-    <a onclick="go('design')" id="nav-design" style="margin-left:auto;color:var(--text3);font-size:12px">设计系统</a>
-    <div class="spacer"></div>
-    <div class="user"><div class="avatar">林</div>林墨涵</div>
-  </div>
-</nav>
-
-<div class="wrap">
-
-<!-- DASHBOARD -->
-<div class="page active" id="p-dash">
-  <div class="page-head">
-    <div><h1>控制台</h1><div class="sub">哥伦布与王室 · 瑞士轮第3轮</div></div>
-    <span class="badge badge-info">排队中: 2场对局</span>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-val" style="color:var(--ok)">71.4%</div><div class="stat-label">总胜率</div></div>
-    <div class="stat"><div class="stat-val">14</div><div class="stat-label">已完成对局</div></div>
-    <div class="stat"><div class="stat-val">2</div><div class="stat-label">排行榜名次</div></div>
-    <div class="stat"><div class="stat-val mono" style="font-size:16px">v3</div><div class="stat-label">当前提示词版本</div></div>
-  </div>
-  <div class="card">
-    <div class="card-head">最近对局<button class="btn btn-g btn-sm" onclick="go('match')">查看全部</button></div>
-    <div class="match-row"><div><div class="match-players">林墨涵 <span>对阵</span> 选手 7291</div><div class="match-scenario">哥伦布与王室 · 你扮演角色B</div></div><span class="model">Qianwen-Max</span><span class="badge badge-ok">胜出</span><span class="mono" style="color:var(--text3)">12分钟前</span></div>
-    <div class="match-row"><div><div class="match-players">林墨涵 <span>对阵</span> 张伟</div><div class="match-scenario">哥伦布与王室 · 你扮演角色A</div></div><span class="model">Qianwen-Max</span><span class="badge badge-err">落败</span><span class="mono" style="color:var(--text3)">1小时前</span></div>
-    <div class="match-row"><div><div class="match-players">林墨涵 <span>对阵</span> 陈宇欣</div><div class="match-scenario">哥伦布与王室 · 你扮演角色A</div></div><span class="model">Qianwen-Max</span><span class="badge badge-ok">胜出</span><span class="mono" style="color:var(--text3)">3小时前</span></div>
-    <div class="match-row"><div><div class="match-players">林墨涵 <span>对阵</span> 王思远</div><div class="match-scenario">哥伦布与王室 · 你扮演角色B</div></div><span class="model">Qianwen-Max</span><span class="badge badge-warn">对战中</span><span class="mono" style="color:var(--text3)">进行中</span></div>
-  </div>
-</div>
-
-<!-- AGENT BUILDER -->
-<div class="page" id="p-builder">
-  <div class="page-head">
-    <div><h1>智能体工坊</h1><div class="sub">编写你的智能体提示词</div></div>
-    <span class="badge badge-accent">场景: 哥伦布与王室</span>
-  </div>
-  <div class="card">
-    <div class="builder">
-      <div class="builder-side">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:8px">场景背景</div>
-        <div class="scenario-block"><h4>哥伦布与王室</h4><p>1492年。哥伦布寻求资助向西航行前往印度。王室在风险与潜在财富之间权衡利弊。</p></div>
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin:12px 0 8px">角色A — 哥伦布</div>
-        <div class="scenario-block"><p><b style="color:var(--text)">公开目标:</b> 说服王室资助远航<br><b style="color:var(--text)">隐藏目标:</b> 获取独家贸易权</p></div>
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin:12px 0 8px">角色B — 王室顾问</div>
-        <div class="scenario-block"><p><b style="color:var(--text)">公开目标:</b> 拒绝或削减投资<br><b style="color:var(--text)">隐藏目标:</b> 保护地中海贸易航线</p></div>
-      </div>
-      <div class="builder-main">
-        <div class="role-tabs">
-          <button class="role-tab active">角色A — 哥伦布</button>
-          <button class="role-tab">角色B — 王室顾问</button>
+      @media(max-width:768px){
+        .builder{grid-template-columns:1fr}
+        .builder-side{border-right:none;border-bottom:1px solid var(--border-l)}
+        .stats{grid-template-columns:repeat(2,1fr)}
+        .pg-split{grid-template-columns:1fr}
+        .pg-panel:first-child{border-right:none;border-bottom:1px solid var(--border-l)}
+        .match-row{grid-template-columns:1fr;gap:8px}
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="inner">
+        <div class="logo" onclick="go('dash')">AXIIA CUP</div>
+        <a onclick="go('dash')" id="nav-dash">控制台</a>
+        <a onclick="go('builder')" id="nav-builder">智能体工坊</a>
+        <a onclick="go('playground')" id="nav-playground">试炼场</a>
+        <a onclick="go('board')" id="nav-board">排行榜</a>
+        <a onclick="go('match')" id="nav-match">对战记录</a>
+        <a
+          onclick="go('design')"
+          id="nav-design"
+          style="margin-left:auto;color:var(--text3);font-size:12px"
+          >设计系统</a
+        >
+        <div class="spacer"></div>
+        <div class="user">
+          <div class="avatar">林</div>
+          林墨涵
         </div>
-        <div class="field"><label>系统提示词</label><textarea class="input" placeholder="在此编写你的智能体提示词。描述它的性格、策略、知识储备，以及它应如何参与对话..."></textarea><div class="wc">0 / 1000 字</div></div>
-        <div class="field"><label>选择模型</label><select class="input"><option>DeepSeek-V3</option><option selected>Qianwen-Max</option><option>Kimi-1.5</option><option>MiniMax-01</option></select></div>
-        <div class="builder-actions"><button class="btn btn-s" onclick="go('playground')">在试炼场测试</button><button class="btn btn-p">提交参赛</button></div>
+      </div>
+    </nav>
+
+    <div class="wrap">
+      <!-- DASHBOARD -->
+      <div class="page active" id="p-dash">
+        <div class="page-head">
+          <div>
+            <h1>控制台</h1>
+            <div class="sub">哥伦布与王室 · 瑞士轮第3轮</div>
+          </div>
+          <span class="badge badge-info">排队中: 2场对局</span>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-val" style="color:var(--ok)">71.4%</div>
+            <div class="stat-label">总胜率</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val">14</div>
+            <div class="stat-label">已完成对局</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val">2</div>
+            <div class="stat-label">排行榜名次</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val mono" style="font-size:16px">v3</div>
+            <div class="stat-label">当前提示词版本</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            最近对局<button class="btn btn-g btn-sm" onclick="go('match')">
+              查看全部
+            </button>
+          </div>
+          <div class="match-row">
+            <div>
+              <div class="match-players">
+                林墨涵 <span>对阵</span> 选手 7291
+              </div>
+              <div class="match-scenario">哥伦布与王室 · 你扮演角色B</div>
+            </div>
+            <span class="model">Qianwen-Max</span
+            ><span class="badge badge-ok">胜出</span
+            ><span class="mono" style="color:var(--text3)">12分钟前</span>
+          </div>
+          <div class="match-row">
+            <div>
+              <div class="match-players">林墨涵 <span>对阵</span> 张伟</div>
+              <div class="match-scenario">哥伦布与王室 · 你扮演角色A</div>
+            </div>
+            <span class="model">Qianwen-Max</span
+            ><span class="badge badge-err">落败</span
+            ><span class="mono" style="color:var(--text3)">1小时前</span>
+          </div>
+          <div class="match-row">
+            <div>
+              <div class="match-players">林墨涵 <span>对阵</span> 陈宇欣</div>
+              <div class="match-scenario">哥伦布与王室 · 你扮演角色A</div>
+            </div>
+            <span class="model">Qianwen-Max</span
+            ><span class="badge badge-ok">胜出</span
+            ><span class="mono" style="color:var(--text3)">3小时前</span>
+          </div>
+          <div class="match-row">
+            <div>
+              <div class="match-players">林墨涵 <span>对阵</span> 王思远</div>
+              <div class="match-scenario">哥伦布与王室 · 你扮演角色B</div>
+            </div>
+            <span class="model">Qianwen-Max</span
+            ><span class="badge badge-warn">对战中</span
+            ><span class="mono" style="color:var(--text3)">进行中</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT BUILDER -->
+      <div class="page" id="p-builder">
+        <div class="page-head">
+          <div>
+            <h1>智能体工坊</h1>
+            <div class="sub">编写你的智能体提示词</div>
+          </div>
+          <span class="badge badge-accent">场景: 哥伦布与王室</span>
+        </div>
+        <div class="card">
+          <div class="builder">
+            <div class="builder-side">
+              <div
+                style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:8px"
+              >
+                场景背景
+              </div>
+              <div class="scenario-block">
+                <h4>哥伦布与王室</h4>
+                <p>
+                  1492年。哥伦布寻求资助向西航行前往印度。王室在风险与潜在财富之间权衡利弊。
+                </p>
+              </div>
+              <div
+                style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin:12px 0 8px"
+              >
+                角色A — 哥伦布
+              </div>
+              <div class="scenario-block">
+                <p>
+                  <b style="color:var(--text)">公开目标:</b>
+                  说服王室资助远航<br /><b style="color:var(--text)"
+                    >隐藏目标:</b
+                  >
+                  获取独家贸易权
+                </p>
+              </div>
+              <div
+                style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin:12px 0 8px"
+              >
+                角色B — 王室顾问
+              </div>
+              <div class="scenario-block">
+                <p>
+                  <b style="color:var(--text)">公开目标:</b>
+                  拒绝或削减投资<br /><b style="color:var(--text)">隐藏目标:</b>
+                  保护地中海贸易航线
+                </p>
+              </div>
+            </div>
+            <div class="builder-main">
+              <div class="role-tabs">
+                <button class="role-tab active">角色A — 哥伦布</button>
+                <button class="role-tab">角色B — 王室顾问</button>
+              </div>
+              <div class="field">
+                <label>系统提示词</label
+                ><textarea
+                  class="input"
+                  placeholder="在此编写你的智能体提示词。描述它的性格、策略、知识储备，以及它应如何参与对话..."
+                ></textarea>
+                <div class="wc">0 / 1000 字</div>
+              </div>
+              <div class="field">
+                <label>选择模型</label
+                ><select class="input">
+                  <option>DeepSeek-V3</option>
+                  <option selected>Qianwen-Max</option>
+                  <option>Kimi-1.5</option>
+                  <option>MiniMax-01</option>
+                </select>
+              </div>
+              <div class="builder-actions">
+                <button class="btn btn-s" onclick="go('playground')">
+                  在试炼场测试</button
+                ><button class="btn btn-p">提交参赛</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAYGROUND -->
+      <div class="page" id="p-playground">
+        <div class="page-head">
+          <div>
+            <h1>试炼场</h1>
+            <div class="sub">测试你的提示词效果 · 模拟对战不计入排名</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-s btn-sm">重新运行</button
+            ><button class="btn btn-p btn-sm">提交参赛</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span>模拟对战 · 你的角色A vs 你的角色B · 20回合</span
+            ><span class="badge badge-ok">模拟完成 · 角色A胜出</span>
+          </div>
+          <div class="pg-split">
+            <div class="pg-panel">
+              <div
+                style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:12px"
+              >
+                角色A — 哥伦布 (你的提示词)
+              </div>
+              <div class="pg-msg pg-msg-a">
+                陛下，臣并非空想之人，而是花了二十年研究大西洋的风向与洋流。葡萄牙人已经控制了东方的香料航线，但臣可以为陛下开辟一条更伟大的通路……
+              </div>
+              <div class="pg-msg pg-msg-a">
+                恕臣直言，萨拉曼卡的学者们从未离开过他们的书斋。臣曾航行至冰岛、非洲黄金海岸和马德拉群岛。
+              </div>
+              <div class="pg-msg pg-msg-a">
+                臣愿以性命担保此次远航。若失败，臣将一无所有。但若成功，陛下将获得超越葡萄牙的贸易帝国。
+              </div>
+            </div>
+            <div class="pg-panel">
+              <div
+                style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:12px"
+              >
+                角色B — 王室顾问 (你的提示词)
+              </div>
+              <div class="pg-msg pg-msg-b">
+                二十年的研究，却无一次远航。萨拉曼卡的学者们已审查了你的计算，发现你将地球的周长低估了近一半。
+              </div>
+              <div class="pg-msg pg-msg-b">
+                航海探险耗资巨大。我们刚结束与摩尔人的战争，国库需要恢复，而非投入一场豪赌。
+              </div>
+              <div class="pg-msg pg-msg-b">
+                即便你所言属实，我们现有的地中海贸易已足够繁荣。为何要冒险？
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="page" id="p-board">
+        <div class="page-head">
+          <div>
+            <h1>排行榜</h1>
+            <div class="sub">第一赛季 · 哥伦布与王室</div>
+          </div>
+          <span class="badge badge-info">瑞士轮 第3/5轮</span>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>选手</th>
+                <th>模型</th>
+                <th>胜率</th>
+                <th>对局</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank rank-1">1</span></td>
+                <td><span class="name">选手 7291</span></td>
+                <td><span class="model">DeepSeek-V3</span></td>
+                <td><span class="mono wr-h">78.6%</span></td>
+                <td class="mono" style="color:var(--text2)">14</td>
+                <td><span class="badge badge-ok">胜出</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">2</span></td>
+                <td><span class="name">林墨涵</span></td>
+                <td><span class="model">Qianwen-Max</span></td>
+                <td><span class="mono wr-h">71.4%</span></td>
+                <td class="mono" style="color:var(--text2)">14</td>
+                <td><span class="badge badge-warn">对战中</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">3</span></td>
+                <td><span class="name">张伟</span></td>
+                <td><span class="model">Kimi-1.5</span></td>
+                <td><span class="mono wr-m">64.3%</span></td>
+                <td class="mono" style="color:var(--text2)">14</td>
+                <td><span class="badge badge-ok">胜出</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">4</span></td>
+                <td><span class="name">陈宇欣</span></td>
+                <td><span class="model">DeepSeek-V3</span></td>
+                <td><span class="mono wr-m">57.1%</span></td>
+                <td class="mono" style="color:var(--text2)">14</td>
+                <td><span class="badge badge-info">排队中</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">5</span></td>
+                <td><span class="name">王思远</span></td>
+                <td><span class="model">MiniMax-01</span></td>
+                <td><span class="mono wr-l">50.0%</span></td>
+                <td class="mono" style="color:var(--text2)">12</td>
+                <td><span class="badge badge-err">落败</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">6</span></td>
+                <td><span class="name">赵晨</span></td>
+                <td><span class="model">DeepSeek-V3</span></td>
+                <td><span class="mono wr-l">46.2%</span></td>
+                <td class="mono" style="color:var(--text2)">13</td>
+                <td><span class="badge badge-ok">胜出</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">7</span></td>
+                <td><span class="name">选手 4018</span></td>
+                <td><span class="model">Kimi-1.5</span></td>
+                <td><span class="mono wr-l">42.9%</span></td>
+                <td class="mono" style="color:var(--text2)">14</td>
+                <td><span class="badge badge-info">排队中</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank">8</span></td>
+                <td><span class="name">刘雨萱</span></td>
+                <td><span class="model">Qianwen-Max</span></td>
+                <td><span class="mono wr-l">38.5%</span></td>
+                <td class="mono" style="color:var(--text2)">13</td>
+                <td><span class="badge badge-err">落败</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MATCH RESULT -->
+      <div class="page" id="p-match">
+        <div class="page-head">
+          <div>
+            <h1>对战结果</h1>
+            <div class="sub">瑞士轮第3轮 · 20回合</div>
+          </div>
+          <button class="btn btn-s btn-sm" onclick="go('dash')">
+            返回控制台
+          </button>
+        </div>
+        <div class="card">
+          <div class="match-head">
+            <div>
+              <div class="vs">选手 7291 <span>vs</span> 林墨涵</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px">
+                哥伦布与王室 · 20回合 · <span class="mono">DeepSeek-V3</span> vs
+                <span class="mono">Qianwen-Max</span>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div class="verdict-label">裁判判定 (3/3)</div>
+              <div class="verdict-win">角色A 胜出</div>
+            </div>
+          </div>
+          <ul class="turns">
+            <li class="turn turn-a">
+              <div class="turn-label">第1回合<br />哥伦布</div>
+              <div class="turn-content">
+                陛下，臣并非空想之人，而是花了二十年研究大西洋的风向与洋流。葡萄牙人已经控制了东方的香料航线，但臣可以为陛下开辟一条更伟大的通路……
+              </div>
+            </li>
+            <li class="turn">
+              <div class="turn-label">第2回合<br />顾问</div>
+              <div class="turn-content">
+                二十年的研究，却无一次远航。萨拉曼卡的学者们已审查了你的计算，发现你将地球的周长低估了近一半……
+              </div>
+            </li>
+            <li class="turn turn-a">
+              <div class="turn-label">第3回合<br />哥伦布</div>
+              <div class="turn-content">
+                恕臣直言，萨拉曼卡的学者们从未离开过他们的书斋。臣曾航行至冰岛、非洲黄金海岸和马德拉群岛。臣亲眼目睹了向西流动的洋流，也曾与水手交谈，他们发现了从西方漂来的雕花木材……
+              </div>
+            </li>
+            <li class="turn">
+              <div class="turn-label">第4回合<br />顾问</div>
+              <div class="turn-content">
+                雕花木材？这些水手的传言岂能作为拿王室财富冒险的依据？况且，我们刚结束对格拉纳达的战争，国库需要时间恢复。
+              </div>
+            </li>
+            <li class="turn turn-a">
+              <div class="turn-label">第5回合<br />哥伦布</div>
+              <div class="turn-content">
+                正因战争刚结束，西班牙更需要新的财富来源。葡萄牙已通过东方航线获得了巨大收益。若我们不向西探索，西班牙将永远落后于邻国。臣只需三艘船、九十名水手，这对王室而言不过九牛一毛。
+              </div>
+            </li>
+          </ul>
+          <div
+            style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px"
+          >
+            … 还有 15 个回合 …
+          </div>
+        </div>
+      </div>
+
+      <!-- DESIGN SYSTEM SHOWCASE -->
+      <div class="page" id="p-design">
+        <div class="page-head">
+          <div>
+            <h1>设计系统</h1>
+            <div class="sub">Axiia Cup · 视觉规范与组件库</div>
+          </div>
+          <span class="badge badge-accent">v2 — 暗色仪表盘风格</span>
+        </div>
+
+        <!-- TYPOGRAPHY -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          字体排印
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head">标题字体 — Satoshi</div>
+          <div style="padding:20px">
+            <div
+              style="font-size:48px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px"
+            >
+              Axiia Cup 智能体对抗赛
+            </div>
+            <div
+              style="font-size:24px;font-weight:600;color:var(--text2);margin-bottom:4px"
+            >
+              第三轮 · 哥伦布与王室
+            </div>
+            <div style="font-size:18px;font-weight:500;color:var(--text3)">
+              Satoshi 400 / 500 / 600 / 700
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head">正文字体 — Noto Sans SC (思源黑体)</div>
+          <div style="padding:20px">
+            <p
+              style="font-size:14px;line-height:1.7;color:var(--text2);max-width:640px"
+            >
+              你的智能体在20轮对话中的第14轮成功说服王室资助远航。对方智能体保持了历史准确性，但未能有效反驳第7至9轮中提出的经济论据。裁判判定：角色A达成主要目标，胜出。
+            </p>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:32px">
+          <div class="card-head">数据字体 — Geist Mono</div>
+          <div style="padding:20px">
+            <div
+              style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text2);background:var(--bg);padding:16px;border-radius:var(--r);border:1px solid var(--border-l)"
+            >
+              你是哥伦布，一位热情而坚定的探险家。你的目标是说服<br />西班牙王室资助你的远航计划。你相信向西航行可以到达<br />印度，这将为王室带来巨大的财富和荣耀。<br /><br /><span
+                style="color:var(--ok)"
+                >胜率: 73.2%</span
+              >
+              | 对局: 41 | 模型: DeepSeek-V3
+            </div>
+          </div>
+        </div>
+
+        <!-- COLOR PALETTE -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          色彩
+        </div>
+        <div
+          style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:32px"
+        >
+          <div class="card">
+            <div
+              style="height:64px;background:#0C0C0C;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">底色</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #0C0C0C
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#161616;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">面板</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #161616
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#1E1E1E;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">浮层</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #1E1E1E
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#E8E8E8;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">主文字</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #E8E8E8
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#888;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">次文字</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #888888
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#E04A2F;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">朱砂红</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #E04A2F
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#34D399;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">成功</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #34D399
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#FBBF24;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">警告</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #FBBF24
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#F87171;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">错误</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #F87171
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div
+              style="height:64px;background:#60A5FA;border-bottom:1px solid var(--border-l)"
+            ></div>
+            <div style="padding:8px 12px">
+              <div style="font-weight:600;font-size:12px">信息</div>
+              <div class="mono" style="font-size:11px;color:var(--text3)">
+                #60A5FA
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPONENTS -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          组件
+        </div>
+        <div
+          style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:32px"
+        >
+          <div class="card">
+            <div class="card-head">按钮</div>
+            <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
+              <button class="btn btn-p">提交参赛</button>
+              <button class="btn btn-s">在试炼场测试</button>
+              <button class="btn btn-g">查看对话记录</button>
+              <button class="btn btn-p btn-sm">小按钮</button>
+              <button class="btn btn-s btn-sm">小按钮</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">状态标签</div>
+            <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
+              <span class="badge badge-ok">胜出</span>
+              <span class="badge badge-err">落败</span>
+              <span class="badge badge-warn">对战中</span>
+              <span class="badge badge-info">排队中</span>
+              <span class="badge badge-accent">场景</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">模型标签</div>
+            <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
+              <span class="model">DeepSeek-V3</span>
+              <span class="model">Qianwen-Max</span>
+              <span class="model">Kimi-1.5</span>
+              <span class="model">MiniMax-01</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">表单控件</div>
+            <div style="padding:16px">
+              <div class="field">
+                <label>文本输入</label
+                ><input class="input" placeholder="请输入手机号" />
+              </div>
+              <div class="field">
+                <label>选择器</label
+                ><select class="input">
+                  <option>DeepSeek-V3</option>
+                  <option>Qianwen-Max</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          提示信息
+        </div>
+        <div style="display:grid;gap:8px;margin-bottom:32px">
+          <div
+            style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--ok);background:rgba(52,211,153,.08);color:var(--ok)"
+          >
+            你的智能体在第二轮中4场赢了3场。
+          </div>
+          <div
+            style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--warn);background:rgba(251,191,36,.08);color:var(--warn)"
+          >
+            对战进行中 — 第 12 / 20 轮。
+          </div>
+          <div
+            style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--err);background:rgba(248,113,113,.08);color:var(--err)"
+          >
+            模型接口异常，正在从第8轮重试。
+          </div>
+          <div
+            style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--info);background:rgba(96,165,250,.08);color:var(--info)"
+          >
+            新场景已上线：马关条约谈判。
+          </div>
+        </div>
+
+        <!-- SPACING -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          间距比例 (4px 基准)
+        </div>
+        <div class="card" style="margin-bottom:32px">
+          <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                2xs
+              </div>
+              <div
+                style="height:8px;width:2px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">2px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                xs
+              </div>
+              <div
+                style="height:8px;width:4px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">4px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                sm
+              </div>
+              <div
+                style="height:8px;width:8px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">8px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                md
+              </div>
+              <div
+                style="height:8px;width:12px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">12px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                lg
+              </div>
+              <div
+                style="height:8px;width:16px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">16px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                xl
+              </div>
+              <div
+                style="height:8px;width:24px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">24px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                2xl
+              </div>
+              <div
+                style="height:8px;width:32px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">32px</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div
+                class="mono"
+                style="width:48px;font-size:11px;color:var(--text3)"
+              >
+                3xl
+              </div>
+              <div
+                style="height:8px;width:48px;background:var(--accent);border-radius:1px"
+              ></div>
+              <span style="font-size:11px;color:var(--text3)">48px</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div
+          style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px"
+        >
+          总览
+        </div>
+        <div class="card">
+          <div
+            style="padding:16px;font-size:13px;line-height:1.8;color:var(--text2)"
+          >
+            <b style="color:var(--text)">美学方向:</b> 简洁暗色仪表盘<br />
+            <b style="color:var(--text)">字体:</b> Satoshi (标题/正文英文) +
+            Noto Sans SC (中文) + Geist Mono (数据)<br />
+            <b style="color:var(--text)">色彩:</b> 暗底 #0C0C0C · 面板 #161616 ·
+            朱砂红强调 #E04A2F<br />
+            <b style="color:var(--text)">间距:</b> 4px 基准 · 紧凑密度<br />
+            <b style="color:var(--text)">布局:</b> 网格规范 · 最大宽度 1280px<br />
+            <b style="color:var(--text)">动效:</b> 功能性为主 · 快速过渡
+            (80-200ms)<br />
+            <b style="color:var(--text)">圆角:</b> sm:4px · md:6px · lg:8px ·
+            pill:9999px
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- PLAYGROUND -->
-<div class="page" id="p-playground">
-  <div class="page-head">
-    <div><h1>试炼场</h1><div class="sub">测试你的提示词效果 · 模拟对战不计入排名</div></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-s btn-sm">重新运行</button><button class="btn btn-p btn-sm">提交参赛</button></div>
-  </div>
-  <div class="card">
-    <div class="card-head"><span>模拟对战 · 你的角色A vs 你的角色B · 20回合</span><span class="badge badge-ok">模拟完成 · 角色A胜出</span></div>
-    <div class="pg-split">
-      <div class="pg-panel">
-        <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:12px">角色A — 哥伦布 (你的提示词)</div>
-        <div class="pg-msg pg-msg-a">陛下，臣并非空想之人，而是花了二十年研究大西洋的风向与洋流。葡萄牙人已经控制了东方的香料航线，但臣可以为陛下开辟一条更伟大的通路……</div>
-        <div class="pg-msg pg-msg-a">恕臣直言，萨拉曼卡的学者们从未离开过他们的书斋。臣曾航行至冰岛、非洲黄金海岸和马德拉群岛。</div>
-        <div class="pg-msg pg-msg-a">臣愿以性命担保此次远航。若失败，臣将一无所有。但若成功，陛下将获得超越葡萄牙的贸易帝国。</div>
-      </div>
-      <div class="pg-panel">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:12px">角色B — 王室顾问 (你的提示词)</div>
-        <div class="pg-msg pg-msg-b">二十年的研究，却无一次远航。萨拉曼卡的学者们已审查了你的计算，发现你将地球的周长低估了近一半。</div>
-        <div class="pg-msg pg-msg-b">航海探险耗资巨大。我们刚结束与摩尔人的战争，国库需要恢复，而非投入一场豪赌。</div>
-        <div class="pg-msg pg-msg-b">即便你所言属实，我们现有的地中海贸易已足够繁荣。为何要冒险？</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- LEADERBOARD -->
-<div class="page" id="p-board">
-  <div class="page-head">
-    <div><h1>排行榜</h1><div class="sub">第一赛季 · 哥伦布与王室</div></div>
-    <span class="badge badge-info">瑞士轮 第3/5轮</span>
-  </div>
-  <div class="card">
-    <table>
-      <thead><tr><th>排名</th><th>选手</th><th>模型</th><th>胜率</th><th>对局</th><th>状态</th></tr></thead>
-      <tbody>
-        <tr><td><span class="rank rank-1">1</span></td><td><span class="name">选手 7291</span></td><td><span class="model">DeepSeek-V3</span></td><td><span class="mono wr-h">78.6%</span></td><td class="mono" style="color:var(--text2)">14</td><td><span class="badge badge-ok">胜出</span></td></tr>
-        <tr><td><span class="rank">2</span></td><td><span class="name">林墨涵</span></td><td><span class="model">Qianwen-Max</span></td><td><span class="mono wr-h">71.4%</span></td><td class="mono" style="color:var(--text2)">14</td><td><span class="badge badge-warn">对战中</span></td></tr>
-        <tr><td><span class="rank">3</span></td><td><span class="name">张伟</span></td><td><span class="model">Kimi-1.5</span></td><td><span class="mono wr-m">64.3%</span></td><td class="mono" style="color:var(--text2)">14</td><td><span class="badge badge-ok">胜出</span></td></tr>
-        <tr><td><span class="rank">4</span></td><td><span class="name">陈宇欣</span></td><td><span class="model">DeepSeek-V3</span></td><td><span class="mono wr-m">57.1%</span></td><td class="mono" style="color:var(--text2)">14</td><td><span class="badge badge-info">排队中</span></td></tr>
-        <tr><td><span class="rank">5</span></td><td><span class="name">王思远</span></td><td><span class="model">MiniMax-01</span></td><td><span class="mono wr-l">50.0%</span></td><td class="mono" style="color:var(--text2)">12</td><td><span class="badge badge-err">落败</span></td></tr>
-        <tr><td><span class="rank">6</span></td><td><span class="name">赵晨</span></td><td><span class="model">DeepSeek-V3</span></td><td><span class="mono wr-l">46.2%</span></td><td class="mono" style="color:var(--text2)">13</td><td><span class="badge badge-ok">胜出</span></td></tr>
-        <tr><td><span class="rank">7</span></td><td><span class="name">选手 4018</span></td><td><span class="model">Kimi-1.5</span></td><td><span class="mono wr-l">42.9%</span></td><td class="mono" style="color:var(--text2)">14</td><td><span class="badge badge-info">排队中</span></td></tr>
-        <tr><td><span class="rank">8</span></td><td><span class="name">刘雨萱</span></td><td><span class="model">Qianwen-Max</span></td><td><span class="mono wr-l">38.5%</span></td><td class="mono" style="color:var(--text2)">13</td><td><span class="badge badge-err">落败</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- MATCH RESULT -->
-<div class="page" id="p-match">
-  <div class="page-head">
-    <div><h1>对战结果</h1><div class="sub">瑞士轮第3轮 · 20回合</div></div>
-    <button class="btn btn-s btn-sm" onclick="go('dash')">返回控制台</button>
-  </div>
-  <div class="card">
-    <div class="match-head">
-      <div>
-        <div class="vs">选手 7291 <span>vs</span> 林墨涵</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:4px">哥伦布与王室 · 20回合 · <span class="mono">DeepSeek-V3</span> vs <span class="mono">Qianwen-Max</span></div>
-      </div>
-      <div style="text-align:right">
-        <div class="verdict-label">裁判判定 (3/3)</div>
-        <div class="verdict-win">角色A 胜出</div>
-      </div>
-    </div>
-    <ul class="turns">
-      <li class="turn turn-a"><div class="turn-label">第1回合<br>哥伦布</div><div class="turn-content">陛下，臣并非空想之人，而是花了二十年研究大西洋的风向与洋流。葡萄牙人已经控制了东方的香料航线，但臣可以为陛下开辟一条更伟大的通路……</div></li>
-      <li class="turn"><div class="turn-label">第2回合<br>顾问</div><div class="turn-content">二十年的研究，却无一次远航。萨拉曼卡的学者们已审查了你的计算，发现你将地球的周长低估了近一半……</div></li>
-      <li class="turn turn-a"><div class="turn-label">第3回合<br>哥伦布</div><div class="turn-content">恕臣直言，萨拉曼卡的学者们从未离开过他们的书斋。臣曾航行至冰岛、非洲黄金海岸和马德拉群岛。臣亲眼目睹了向西流动的洋流，也曾与水手交谈，他们发现了从西方漂来的雕花木材……</div></li>
-      <li class="turn"><div class="turn-label">第4回合<br>顾问</div><div class="turn-content">雕花木材？这些水手的传言岂能作为拿王室财富冒险的依据？况且，我们刚结束对格拉纳达的战争，国库需要时间恢复。</div></li>
-      <li class="turn turn-a"><div class="turn-label">第5回合<br>哥伦布</div><div class="turn-content">正因战争刚结束，西班牙更需要新的财富来源。葡萄牙已通过东方航线获得了巨大收益。若我们不向西探索，西班牙将永远落后于邻国。臣只需三艘船、九十名水手，这对王室而言不过九牛一毛。</div></li>
-    </ul>
-    <div style="text-align:center;padding:16px 0;color:var(--text3);font-size:12px">… 还有 15 个回合 …</div>
-  </div>
-</div>
-
-<!-- DESIGN SYSTEM SHOWCASE -->
-<div class="page" id="p-design">
-  <div class="page-head">
-    <div><h1>设计系统</h1><div class="sub">Axiia Cup · 视觉规范与组件库</div></div>
-    <span class="badge badge-accent">v2 — 暗色仪表盘风格</span>
-  </div>
-
-  <!-- TYPOGRAPHY -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">字体排印</div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-head">标题字体 — Satoshi</div>
-    <div style="padding:20px">
-      <div style="font-size:48px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px">Axiia Cup 智能体对抗赛</div>
-      <div style="font-size:24px;font-weight:600;color:var(--text2);margin-bottom:4px">第三轮 · 哥伦布与王室</div>
-      <div style="font-size:18px;font-weight:500;color:var(--text3)">Satoshi 400 / 500 / 600 / 700</div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-head">正文字体 — Noto Sans SC (思源黑体)</div>
-    <div style="padding:20px">
-      <p style="font-size:14px;line-height:1.7;color:var(--text2);max-width:640px">你的智能体在20轮对话中的第14轮成功说服王室资助远航。对方智能体保持了历史准确性，但未能有效反驳第7至9轮中提出的经济论据。裁判判定：角色A达成主要目标，胜出。</p>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:32px">
-    <div class="card-head">数据字体 — Geist Mono</div>
-    <div style="padding:20px">
-      <div style="font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text2);background:var(--bg);padding:16px;border-radius:var(--r);border:1px solid var(--border-l)">你是哥伦布，一位热情而坚定的探险家。你的目标是说服<br>西班牙王室资助你的远航计划。你相信向西航行可以到达<br>印度，这将为王室带来巨大的财富和荣耀。<br><br><span style="color:var(--ok)">胜率: 73.2%</span>  |  对局: 41  |  模型: DeepSeek-V3</div>
-    </div>
-  </div>
-
-  <!-- COLOR PALETTE -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">色彩</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:32px">
-    <div class="card"><div style="height:64px;background:#0C0C0C;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">底色</div><div class="mono" style="font-size:11px;color:var(--text3)">#0C0C0C</div></div></div>
-    <div class="card"><div style="height:64px;background:#161616;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">面板</div><div class="mono" style="font-size:11px;color:var(--text3)">#161616</div></div></div>
-    <div class="card"><div style="height:64px;background:#1E1E1E;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">浮层</div><div class="mono" style="font-size:11px;color:var(--text3)">#1E1E1E</div></div></div>
-    <div class="card"><div style="height:64px;background:#E8E8E8;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">主文字</div><div class="mono" style="font-size:11px;color:var(--text3)">#E8E8E8</div></div></div>
-    <div class="card"><div style="height:64px;background:#888;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">次文字</div><div class="mono" style="font-size:11px;color:var(--text3)">#888888</div></div></div>
-    <div class="card"><div style="height:64px;background:#E04A2F;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">朱砂红</div><div class="mono" style="font-size:11px;color:var(--text3)">#E04A2F</div></div></div>
-    <div class="card"><div style="height:64px;background:#34D399;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">成功</div><div class="mono" style="font-size:11px;color:var(--text3)">#34D399</div></div></div>
-    <div class="card"><div style="height:64px;background:#FBBF24;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">警告</div><div class="mono" style="font-size:11px;color:var(--text3)">#FBBF24</div></div></div>
-    <div class="card"><div style="height:64px;background:#F87171;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">错误</div><div class="mono" style="font-size:11px;color:var(--text3)">#F87171</div></div></div>
-    <div class="card"><div style="height:64px;background:#60A5FA;border-bottom:1px solid var(--border-l)"></div><div style="padding:8px 12px"><div style="font-weight:600;font-size:12px">信息</div><div class="mono" style="font-size:11px;color:var(--text3)">#60A5FA</div></div></div>
-  </div>
-
-  <!-- COMPONENTS -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">组件</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:32px">
-    <div class="card">
-      <div class="card-head">按钮</div>
-      <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
-        <button class="btn btn-p">提交参赛</button>
-        <button class="btn btn-s">在试炼场测试</button>
-        <button class="btn btn-g">查看对话记录</button>
-        <button class="btn btn-p btn-sm">小按钮</button>
-        <button class="btn btn-s btn-sm">小按钮</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head">状态标签</div>
-      <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
-        <span class="badge badge-ok">胜出</span>
-        <span class="badge badge-err">落败</span>
-        <span class="badge badge-warn">对战中</span>
-        <span class="badge badge-info">排队中</span>
-        <span class="badge badge-accent">场景</span>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head">模型标签</div>
-      <div style="padding:16px;display:flex;flex-wrap:wrap;gap:8px">
-        <span class="model">DeepSeek-V3</span>
-        <span class="model">Qianwen-Max</span>
-        <span class="model">Kimi-1.5</span>
-        <span class="model">MiniMax-01</span>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head">表单控件</div>
-      <div style="padding:16px">
-        <div class="field"><label>文本输入</label><input class="input" placeholder="请输入手机号" /></div>
-        <div class="field"><label>选择器</label><select class="input"><option>DeepSeek-V3</option><option>Qianwen-Max</option></select></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ALERTS -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">提示信息</div>
-  <div style="display:grid;gap:8px;margin-bottom:32px">
-    <div style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--ok);background:rgba(52,211,153,.08);color:var(--ok)">你的智能体在第二轮中4场赢了3场。</div>
-    <div style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--warn);background:rgba(251,191,36,.08);color:var(--warn)">对战进行中 — 第 12 / 20 轮。</div>
-    <div style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--err);background:rgba(248,113,113,.08);color:var(--err)">模型接口异常，正在从第8轮重试。</div>
-    <div style="padding:10px 16px;border-radius:var(--r);font-size:13px;border-left:3px solid var(--info);background:rgba(96,165,250,.08);color:var(--info)">新场景已上线：马关条约谈判。</div>
-  </div>
-
-  <!-- SPACING -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">间距比例 (4px 基准)</div>
-  <div class="card" style="margin-bottom:32px">
-    <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">2xs</div><div style="height:8px;width:2px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">2px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">xs</div><div style="height:8px;width:4px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">4px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">sm</div><div style="height:8px;width:8px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">8px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">md</div><div style="height:8px;width:12px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">12px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">lg</div><div style="height:8px;width:16px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">16px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">xl</div><div style="height:8px;width:24px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">24px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">2xl</div><div style="height:8px;width:32px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">32px</span></div>
-      <div style="display:flex;align-items:center;gap:12px"><div class="mono" style="width:48px;font-size:11px;color:var(--text3)">3xl</div><div style="height:8px;width:48px;background:var(--accent);border-radius:1px"></div><span style="font-size:11px;color:var(--text3)">48px</span></div>
-    </div>
-  </div>
-
-  <!-- SUMMARY -->
-  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px">总览</div>
-  <div class="card">
-    <div style="padding:16px;font-size:13px;line-height:1.8;color:var(--text2)">
-      <b style="color:var(--text)">美学方向:</b> 简洁暗色仪表盘<br>
-      <b style="color:var(--text)">字体:</b> Satoshi (标题/正文英文) + Noto Sans SC (中文) + Geist Mono (数据)<br>
-      <b style="color:var(--text)">色彩:</b> 暗底 #0C0C0C · 面板 #161616 · 朱砂红强调 #E04A2F<br>
-      <b style="color:var(--text)">间距:</b> 4px 基准 · 紧凑密度<br>
-      <b style="color:var(--text)">布局:</b> 网格规范 · 最大宽度 1280px<br>
-      <b style="color:var(--text)">动效:</b> 功能性为主 · 快速过渡 (80-200ms)<br>
-      <b style="color:var(--text)">圆角:</b> sm:4px · md:6px · lg:8px · pill:9999px
-    </div>
-  </div>
-</div>
-
-</div>
-
-<script>
-function go(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
-  document.getElementById('p-'+id).classList.add('active');
-  const n=document.getElementById('nav-'+id);
-  if(n)n.classList.add('active');
-  window.scrollTo(0,0);
-}
-document.getElementById('nav-dash').classList.add('active');
-document.querySelectorAll('.role-tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    tab.parentElement.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
-    tab.classList.add('active');
-  });
-});
-document.querySelectorAll('textarea.input').forEach(ta=>{
-  const wc=ta.parentElement.querySelector('.wc');
-  if(!wc)return;
-  ta.addEventListener('input',()=>{
-    const len=ta.value.length;
-    wc.textContent=len+' / 1000 字';
-    wc.style.color=len>900?'var(--warn)':len>1000?'var(--err)':'var(--text3)';
-  });
-});
-</script>
-</body>
+    <script>
+      function go(id){
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+        document.getElementById('p-'+id).classList.add('active');
+        const n=document.getElementById('nav-'+id);
+        if(n)n.classList.add('active');
+        window.scrollTo(0,0);
+      }
+      document.getElementById('nav-dash').classList.add('active');
+      document.querySelectorAll('.role-tab').forEach(tab=>{
+        tab.addEventListener('click',()=>{
+          tab.parentElement.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+          tab.classList.add('active');
+        });
+      });
+      document.querySelectorAll('textarea.input').forEach(ta=>{
+        const wc=ta.parentElement.querySelector('.wc');
+        if(!wc)return;
+        ta.addEventListener('input',()=>{
+          const len=ta.value.length;
+          wc.textContent=len+' / 1000 字';
+          wc.style.color=len>900?'var(--warn)':len>1000?'var(--err)':'var(--text3)';
+        });
+      });
+    </script>
+  </body>
 </html>

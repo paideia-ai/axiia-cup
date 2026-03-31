@@ -1,6 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap");
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
+@import 'tailwindcss';
 
 :root {
   --background: #0c0c0c;
@@ -16,7 +16,7 @@
   --success: #34d399;
   --warning: #fbbf24;
   --info: #60a5fa;
-  font-family: "Satoshi", "Noto Sans SC", sans-serif;
+  font-family: 'Satoshi', 'Noto Sans SC', sans-serif;
   color: var(--foreground);
   background: var(--background);
 }
@@ -36,7 +36,7 @@ body {
     radial-gradient(circle at top, rgba(224, 74, 47, 0.08), transparent 24%),
     linear-gradient(180deg, #0c0c0c 0%, #090909 100%);
   color: var(--foreground);
-  font-family: "Satoshi", "Noto Sans SC", sans-serif;
+  font-family: 'Satoshi', 'Noto Sans SC', sans-serif;
 }
 
 a {

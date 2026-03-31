@@ -6,34 +6,47 @@ import {
   tournamentListItemSchema,
   tournamentMatchSummarySchema,
   tournamentRoundSchema,
-} from "@axiia/shared";
-import { and, asc, desc, eq, lte } from "drizzle-orm";
+} from '@axiia/shared'
+import { and, asc, desc, eq, lte } from 'drizzle-orm'
 
-import { db } from "../db/client";
-import { matches, rounds, scenarios, submissions, tournaments, users } from "../db/schema";
-import { swissPair } from "../engine/swiss";
-import { kickWorker } from "../engine/worker";
+import { db } from '../db/client'
+import {
+  matches,
+  rounds,
+  scenarios,
+  submissions,
+  tournaments,
+  users,
+} from '../db/schema'
+import { swissPair } from '../engine/swiss'
+import { kickWorker } from '../engine/worker'
 
-type TournamentRecord = typeof tournaments.$inferSelect;
+type TournamentRecord = typeof tournaments.$inferSelect
 
-type TournamentPlayer = ReturnType<typeof adminPlayerSchema.parse>;
+type TournamentPlayer = ReturnType<typeof adminPlayerSchema.parse>
 
 function pairKey(a: number, b: number) {
-  return a < b ? `${a}-${b}` : `${b}-${a}`;
+  return a < b ? `${a}-${b}` : `${b}-${a}`
 }
 
 function parseJsonArray<T>(value: string, fallback: T[]): T[] {
   try {
-    return JSON.parse(value) as T[];
+    return JSON.parse(value) as T[]
   } catch {
-    return fallback;
+    return fallback
   }
 }
 
-export function getLatestScenarioPlayers(scenarioId: string, beforeCreatedAt?: string) {
+export function getLatestScenarioPlayers(
+  scenarioId: string,
+  beforeCreatedAt?: string,
+) {
   const whereClause = beforeCreatedAt
-    ? and(eq(submissions.scenarioId, scenarioId), lte(submissions.createdAt, beforeCreatedAt))
-    : eq(submissions.scenarioId, scenarioId);
+    ? and(
+        eq(submissions.scenarioId, scenarioId),
+        lte(submissions.createdAt, beforeCreatedAt),
+      )
+    : eq(submissions.scenarioId, scenarioId)
 
   const rows = db
     .select({
@@ -48,22 +61,28 @@ export function getLatestScenarioPlayers(scenarioId: string, beforeCreatedAt?: s
     .from(submissions)
     .innerJoin(users, eq(users.id, submissions.userId))
     .where(whereClause)
-    .orderBy(desc(submissions.createdAt), desc(submissions.version), desc(submissions.id))
-    .all();
+    .orderBy(
+      desc(submissions.createdAt),
+      desc(submissions.version),
+      desc(submissions.id),
+    )
+    .all()
 
-  const latestByUser = new Map<number, TournamentPlayer>();
+  const latestByUser = new Map<number, TournamentPlayer>()
 
   for (const row of rows) {
     if (!latestByUser.has(row.userId)) {
-      latestByUser.set(row.userId, adminPlayerSchema.parse(row));
+      latestByUser.set(row.userId, adminPlayerSchema.parse(row))
     }
   }
 
-  return [...latestByUser.values()].sort((left, right) => left.userId - right.userId);
+  return [...latestByUser.values()].sort(
+    (left, right) => left.userId - right.userId,
+  )
 }
 
 export function getTournamentPlayers(tournament: TournamentRecord) {
-  return getLatestScenarioPlayers(tournament.scenarioId, tournament.createdAt);
+  return getLatestScenarioPlayers(tournament.scenarioId, tournament.createdAt)
 }
 
 export function buildPreviousPairings(tournamentId: number) {
@@ -75,32 +94,35 @@ export function buildPreviousPairings(tournamentId: number) {
     .from(matches)
     .innerJoin(rounds, eq(matches.roundId, rounds.id))
     .where(eq(rounds.tournamentId, tournamentId))
-    .all();
+    .all()
 
-  return new Set(rows.map((row) => pairKey(row.subAId, row.subBId)));
+  return new Set(rows.map((row) => pairKey(row.subAId, row.subBId)))
 }
 
-export function extractByeSubmissionIds(playerIds: number[], pairs: Array<[number, number]>) {
-  const paired = new Set(pairs.flatMap(([left, right]) => [left, right]));
-  return playerIds.filter((playerId) => !paired.has(playerId));
+export function extractByeSubmissionIds(
+  playerIds: number[],
+  pairs: Array<[number, number]>,
+) {
+  const paired = new Set(pairs.flatMap(([left, right]) => [left, right]))
+  return playerIds.filter((playerId) => !paired.has(playerId))
 }
 
 export function createRoundWithMatches(params: {
-  pairs: Array<[number, number]>;
-  roundNumber: number;
-  scenarioId: string;
-  tournamentId: number;
+  pairs: Array<[number, number]>
+  roundNumber: number
+  scenarioId: string
+  tournamentId: number
 }) {
-  const now = new Date().toISOString();
+  const now = new Date().toISOString()
   const round = db
     .insert(rounds)
     .values({
       roundNumber: params.roundNumber,
-      status: "running",
+      status: 'running',
       tournamentId: params.tournamentId,
     })
     .returning()
-    .get();
+    .get()
 
   const matchRows =
     params.pairs.length === 0
@@ -112,7 +134,7 @@ export function createRoundWithMatches(params: {
               {
                 roundId: round.id,
                 scenarioId: params.scenarioId,
-                status: "queued" as const,
+                status: 'queued' as const,
                 subAId,
                 subBId,
                 updatedAt: now,
@@ -120,7 +142,7 @@ export function createRoundWithMatches(params: {
               {
                 roundId: round.id,
                 scenarioId: params.scenarioId,
-                status: "queued" as const,
+                status: 'queued' as const,
                 subAId: subBId,
                 subBId: subAId,
                 updatedAt: now,
@@ -142,38 +164,45 @@ export function createRoundWithMatches(params: {
             subBId: matches.subBId,
             winner: matches.winner,
           })
-          .all();
+          .all()
 
   return {
     matches: matchRows.map((row) => tournamentMatchSummarySchema.parse(row)),
     round,
-  };
+  }
 }
 
 export function syncRoundStatus(roundId: number) {
-  const round = db.select().from(rounds).where(eq(rounds.id, roundId)).get();
+  const round = db.select().from(rounds).where(eq(rounds.id, roundId)).get()
 
   if (!round) {
-    return null;
+    return null
   }
 
-  const roundMatches = db.select({ status: matches.status }).from(matches).where(eq(matches.roundId, roundId)).all();
+  const roundMatches = db
+    .select({ status: matches.status })
+    .from(matches)
+    .where(eq(matches.roundId, roundId))
+    .all()
 
-  let nextStatus = round.status;
+  let nextStatus = round.status
 
   if (roundMatches.length === 0) {
-    nextStatus = "pairing";
-  } else if (roundMatches.every((match) => match.status === "scored")) {
-    nextStatus = "done";
+    nextStatus = 'pairing'
+  } else if (roundMatches.every((match) => match.status === 'scored')) {
+    nextStatus = 'done'
   } else {
-    nextStatus = "running";
+    nextStatus = 'running'
   }
 
   if (nextStatus !== round.status) {
-    db.update(rounds).set({ status: nextStatus }).where(eq(rounds.id, roundId)).run();
+    db.update(rounds)
+      .set({ status: nextStatus })
+      .where(eq(rounds.id, roundId))
+      .run()
   }
 
-  return nextStatus;
+  return nextStatus
 }
 
 export function listTournaments() {
@@ -190,13 +219,19 @@ export function listTournaments() {
     .from(tournaments)
     .innerJoin(scenarios, eq(scenarios.id, tournaments.scenarioId))
     .orderBy(desc(tournaments.createdAt))
-    .all();
+    .all()
 
-  const roundRows = db.select({ tournamentId: rounds.tournamentId }).from(rounds).all();
-  const roundCountByTournament = new Map<number, number>();
+  const roundRows = db
+    .select({ tournamentId: rounds.tournamentId })
+    .from(rounds)
+    .all()
+  const roundCountByTournament = new Map<number, number>()
 
   for (const round of roundRows) {
-    roundCountByTournament.set(round.tournamentId, (roundCountByTournament.get(round.tournamentId) ?? 0) + 1);
+    roundCountByTournament.set(
+      round.tournamentId,
+      (roundCountByTournament.get(round.tournamentId) ?? 0) + 1,
+    )
   }
 
   return tournamentRows.map((row) =>
@@ -204,18 +239,29 @@ export function listTournaments() {
       ...row,
       roundCount: roundCountByTournament.get(row.id) ?? 0,
     }),
-  );
+  )
 }
 
 export function getTournamentDetail(tournamentId: number) {
-  const tournament = db.select().from(tournaments).where(eq(tournaments.id, tournamentId)).get();
+  const tournament = db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get()
 
   if (!tournament) {
-    return null;
+    return null
   }
 
-  const participants = getTournamentPlayers(tournament).map((player) => player.submissionId);
-  const roundRows = db.select().from(rounds).where(eq(rounds.tournamentId, tournamentId)).orderBy(asc(rounds.roundNumber)).all();
+  const participants = getTournamentPlayers(tournament).map(
+    (player) => player.submissionId,
+  )
+  const roundRows = db
+    .select()
+    .from(rounds)
+    .where(eq(rounds.tournamentId, tournamentId))
+    .orderBy(asc(rounds.roundNumber))
+    .all()
   const matchRows = db
     .select({
       createdAt: matches.createdAt,
@@ -236,21 +282,28 @@ export function getTournamentDetail(tournamentId: number) {
     .innerJoin(rounds, eq(matches.roundId, rounds.id))
     .where(eq(rounds.tournamentId, tournamentId))
     .orderBy(asc(rounds.roundNumber), asc(matches.createdAt), asc(matches.id))
-    .all();
+    .all()
 
-  const matchesByRound = new Map<number, ReturnType<typeof tournamentMatchSummarySchema.parse>[]>();
+  const matchesByRound = new Map<
+    number,
+    ReturnType<typeof tournamentMatchSummarySchema.parse>[]
+  >()
 
   for (const row of matchRows) {
-    const parsed = tournamentMatchSummarySchema.parse(row);
-    const items = matchesByRound.get(parsed.roundId) ?? [];
-    items.push(parsed);
-    matchesByRound.set(parsed.roundId, items);
+    const parsed = tournamentMatchSummarySchema.parse(row)
+    const items = matchesByRound.get(parsed.roundId) ?? []
+    items.push(parsed)
+    matchesByRound.set(parsed.roundId, items)
   }
 
   const parsedRounds = roundRows.map((round) => {
-    const roundMatches = matchesByRound.get(round.id) ?? [];
-    const pairedPlayers = new Set(roundMatches.flatMap((match) => [match.subAId, match.subBId]));
-    const byeSubmissions = participants.filter((submissionId) => !pairedPlayers.has(submissionId));
+    const roundMatches = matchesByRound.get(round.id) ?? []
+    const pairedPlayers = new Set(
+      roundMatches.flatMap((match) => [match.subAId, match.subBId]),
+    )
+    const byeSubmissions = participants.filter(
+      (submissionId) => !pairedPlayers.has(submissionId),
+    )
 
     return tournamentRoundSchema.parse({
       byeSubmissions,
@@ -259,8 +312,8 @@ export function getTournamentDetail(tournamentId: number) {
       roundNumber: round.roundNumber,
       status: round.status,
       tournamentId: round.tournamentId,
-    });
-  });
+    })
+  })
 
   return tournamentDetailSchema.parse({
     createdAt: tournament.createdAt,
@@ -270,60 +323,67 @@ export function getTournamentDetail(tournamentId: number) {
     scenarioId: tournament.scenarioId,
     status: tournament.status,
     totalRounds: tournament.totalRounds,
-  });
+  })
 }
 
 export function getLeaderboard(tournamentId: number) {
-  const tournament = db.select().from(tournaments).where(eq(tournaments.id, tournamentId)).get();
+  const tournament = db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get()
 
   if (!tournament) {
-    return null;
+    return null
   }
 
-  const participants = getTournamentPlayers(tournament);
-  const participantIds = participants.map((player) => player.submissionId);
-  const detail = getTournamentDetail(tournamentId);
+  const participants = getTournamentPlayers(tournament)
+  const participantIds = participants.map((player) => player.submissionId)
+  const detail = getTournamentDetail(tournamentId)
 
   if (!detail) {
-    return null;
+    return null
   }
 
-  const wins = new Map<number, number>(participantIds.map((id) => [id, 0]));
-  const losses = new Map<number, number>(participantIds.map((id) => [id, 0]));
-  const opponents = new Map<number, Set<number>>(participantIds.map((id) => [id, new Set<number>()]));
+  const wins = new Map<number, number>(participantIds.map((id) => [id, 0]))
+  const losses = new Map<number, number>(participantIds.map((id) => [id, 0]))
+  const opponents = new Map<number, Set<number>>(
+    participantIds.map((id) => [id, new Set<number>()]),
+  )
 
   for (const round of detail.rounds) {
     for (const byeSubmissionId of round.byeSubmissions) {
-      wins.set(byeSubmissionId, (wins.get(byeSubmissionId) ?? 0) + 1);
+      wins.set(byeSubmissionId, (wins.get(byeSubmissionId) ?? 0) + 1)
     }
 
     for (const match of round.matches) {
-      if (match.status !== "scored") {
-        continue;
+      if (match.status !== 'scored') {
+        continue
       }
 
-      opponents.get(match.subAId)?.add(match.subBId);
-      opponents.get(match.subBId)?.add(match.subAId);
+      opponents.get(match.subAId)?.add(match.subBId)
+      opponents.get(match.subBId)?.add(match.subAId)
 
-      if (match.winner === "a") {
-        wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1);
-        losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1);
-      } else if (match.winner === "b") {
-        wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1);
-        losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1);
+      if (match.winner === 'a') {
+        wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
+        losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1)
+      } else if (match.winner === 'b') {
+        wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1)
+        losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1)
       }
     }
   }
 
   const entries = participants.map((player) => {
-    const playerWins = wins.get(player.submissionId) ?? 0;
-    const playerLosses = losses.get(player.submissionId) ?? 0;
-    const totalPlayed = playerWins + playerLosses;
-    const buchholz = [...(opponents.get(player.submissionId) ?? new Set<number>())].reduce(
-      (sum, opponentId) => sum + (wins.get(opponentId) ?? 0),
-      0,
-    );
-    const modelLabel = modelOptions.find((option) => option.id === player.model)?.label ?? player.model;
+    const playerWins = wins.get(player.submissionId) ?? 0
+    const playerLosses = losses.get(player.submissionId) ?? 0
+    const totalPlayed = playerWins + playerLosses
+    const buchholz = [
+      ...(opponents.get(player.submissionId) ?? new Set<number>()),
+    ].reduce((sum, opponentId) => sum + (wins.get(opponentId) ?? 0), 0)
+    const modelLabel =
+      modelOptions.find((option) => option.id === player.model)?.label ??
+      player.model
 
     return {
       buchholz,
@@ -331,60 +391,83 @@ export function getLeaderboard(tournamentId: number) {
       modelLabel,
       playerName: player.displayName,
       rank: 0,
-      status: tournament.status === "finished" ? "done" : tournament.status === "open" ? "queued" : "running",
+      status:
+        tournament.status === 'finished'
+          ? 'done'
+          : tournament.status === 'open'
+            ? 'queued'
+            : 'running',
       submissionId: player.submissionId,
       winRate: totalPlayed === 0 ? 0 : (playerWins / totalPlayed) * 100,
       wins: playerWins,
-    };
-  });
+    }
+  })
 
   entries.sort((left, right) => {
     if (right.wins !== left.wins) {
-      return right.wins - left.wins;
+      return right.wins - left.wins
     }
 
     if (right.buchholz !== left.buchholz) {
-      return right.buchholz - left.buchholz;
+      return right.buchholz - left.buchholz
     }
 
-    return left.submissionId - right.submissionId;
-  });
+    return left.submissionId - right.submissionId
+  })
 
   return entries.map((entry, index) =>
     leaderboardEntrySchema.parse({
       ...entry,
       rank: index + 1,
     }),
-  );
+  )
 }
 
 export function getRoundTerminalState(roundId: number) {
-  const roundMatches = db.select().from(matches).where(eq(matches.roundId, roundId)).all();
+  const roundMatches = db
+    .select()
+    .from(matches)
+    .where(eq(matches.roundId, roundId))
+    .all()
 
   return {
-    hasErrors: roundMatches.some((match) => match.status === "error"),
-    isDone: roundMatches.length > 0 && roundMatches.every((match) => match.status === "scored"),
-    queuedCount: roundMatches.filter((match) => match.status === "queued").length,
-    runningCount: roundMatches.filter((match) => match.status === "running" || match.status === "judging").length,
-    scoredCount: roundMatches.filter((match) => match.status === "scored").length,
-  };
+    hasErrors: roundMatches.some((match) => match.status === 'error'),
+    isDone:
+      roundMatches.length > 0 &&
+      roundMatches.every((match) => match.status === 'scored'),
+    queuedCount: roundMatches.filter((match) => match.status === 'queued')
+      .length,
+    runningCount: roundMatches.filter(
+      (match) => match.status === 'running' || match.status === 'judging',
+    ).length,
+    scoredCount: roundMatches.filter((match) => match.status === 'scored')
+      .length,
+  }
 }
 
 export function getMatchTranscriptCount(matchId: number) {
-  const match = db.select({ transcript: matches.transcript }).from(matches).where(eq(matches.id, matchId)).get();
+  const match = db
+    .select({ transcript: matches.transcript })
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .get()
 
   if (!match) {
-    return 0;
+    return 0
   }
 
-  return parseJsonArray(match.transcript, []).length;
+  return parseJsonArray(match.transcript, []).length
 }
 
 export function advanceToNextRound(tournamentId: number) {
-  const tournament = db.select().from(tournaments).where(eq(tournaments.id, tournamentId)).get();
+  const tournament = db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, tournamentId))
+    .get()
 
   if (!tournament) {
-    return null;
+    return null
   }
 
   const currentRound = db
@@ -393,45 +476,55 @@ export function advanceToNextRound(tournamentId: number) {
     .where(eq(rounds.tournamentId, tournamentId))
     .orderBy(rounds.roundNumber)
     .all()
-    .at(-1);
+    .at(-1)
 
   if (!currentRound) {
-    return null;
+    return null
   }
 
-  const roundState = getRoundTerminalState(currentRound.id);
+  const roundState = getRoundTerminalState(currentRound.id)
 
   if (!roundState.isDone || roundState.hasErrors) {
-    return null;
+    return null
   }
 
-  const players = getLatestScenarioPlayers(tournament.scenarioId, tournament.createdAt);
-  const leaderboard = getLeaderboard(tournamentId);
+  const players = getLatestScenarioPlayers(
+    tournament.scenarioId,
+    tournament.createdAt,
+  )
+  const leaderboard = getLeaderboard(tournamentId)
 
   if (!leaderboard) {
-    return null;
+    return null
   }
 
-  const standings = new Map(leaderboard.map((entry) => [entry.submissionId, entry.wins]));
-  const playerIds = players.map((player) => player.submissionId);
+  const standings = new Map(
+    leaderboard.map((entry) => [entry.submissionId, entry.wins]),
+  )
+  const playerIds = players.map((player) => player.submissionId)
   const pairs = swissPair({
     playerIds,
     previousPairings: buildPreviousPairings(tournamentId),
     standings,
-  });
-  const byeSubmissions = extractByeSubmissionIds(playerIds, pairs);
-  const nextRoundNumber = currentRound.roundNumber + 1;
+  })
+  const byeSubmissions = extractByeSubmissionIds(playerIds, pairs)
+  const nextRoundNumber = currentRound.roundNumber + 1
 
   // Optimistic lock: only advance if currentRound hasn't changed
   const updated = db
     .update(tournaments)
-    .set({ currentRound: nextRoundNumber, status: "running" })
-    .where(and(eq(tournaments.id, tournamentId), eq(tournaments.currentRound, currentRound.roundNumber)))
+    .set({ currentRound: nextRoundNumber, status: 'running' })
+    .where(
+      and(
+        eq(tournaments.id, tournamentId),
+        eq(tournaments.currentRound, currentRound.roundNumber),
+      ),
+    )
     .returning()
-    .get();
+    .get()
 
   if (!updated) {
-    return null;
+    return null
   }
 
   const { matches: createdMatches, round } = createRoundWithMatches({
@@ -439,46 +532,52 @@ export function advanceToNextRound(tournamentId: number) {
     roundNumber: nextRoundNumber,
     scenarioId: tournament.scenarioId,
     tournamentId,
-  });
+  })
 
-  kickWorker();
+  kickWorker()
 
-  return { byeSubmissions, matches: createdMatches, round, tournament: updated };
+  return { byeSubmissions, matches: createdMatches, round, tournament: updated }
 }
 
 export function maybeAdvanceRound(roundId: number) {
-  const round = db.select().from(rounds).where(eq(rounds.id, roundId)).get();
+  const round = db.select().from(rounds).where(eq(rounds.id, roundId)).get()
 
-  if (!round || round.status !== "done") {
-    return;
+  if (!round || round.status !== 'done') {
+    return
   }
 
-  const tournament = db.select().from(tournaments).where(eq(tournaments.id, round.tournamentId)).get();
+  const tournament = db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.id, round.tournamentId))
+    .get()
 
-  if (!tournament || tournament.status !== "running") {
-    return;
+  if (!tournament || tournament.status !== 'running') {
+    return
   }
 
-  const roundState = getRoundTerminalState(roundId);
+  const roundState = getRoundTerminalState(roundId)
 
   if (roundState.hasErrors) {
-    return;
+    return
   }
 
   if (tournament.currentRound >= tournament.totalRounds) {
     db.update(tournaments)
-      .set({ status: "finished" })
+      .set({ status: 'finished' })
       .where(eq(tournaments.id, tournament.id))
-      .run();
-    console.log(`[tournament] finished (${tournament.currentRound}/${tournament.totalRounds} rounds complete)`);
-    return;
+      .run()
+    console.log(
+      `[tournament] finished (${tournament.currentRound}/${tournament.totalRounds} rounds complete)`,
+    )
+    return
   }
 
-  const result = advanceToNextRound(tournament.id);
+  const result = advanceToNextRound(tournament.id)
 
   if (result) {
     console.log(
       `[tournament] advancing to round ${result.round.roundNumber} (${result.matches.length} matches created)`,
-    );
+    )
   }
 }

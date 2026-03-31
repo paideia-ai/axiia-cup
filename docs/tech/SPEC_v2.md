@@ -5,23 +5,28 @@
 ### Infrastructure Bugs (3)
 
 **Bug 1: OOM Kill (CRITICAL)** - Fly VM has 256MB RAM. litellm is heavy (~100MB deps). Match engine gets OOM-killed at turn 0-1.
+
 - Fix: Replace litellm with lightweight `openai` SDK. Bump VM to 512MB.
 
 **Bug 2: Two Machines, Two DBs** - Fly spawned a second machine with its own baked-in SQLite. Match created on machine A returns 404 on machine B.
+
 - Fix: Single machine + auto-seed on boot (no baked DB).
 
 **Bug 3: DB Reset on Deploy** - `COPY axiia_cup.db .` in Dockerfile wipes data every deploy.
+
 - Fix: Auto-seed on empty DB at startup. Consider Fly Volume for persistence (deferred).
 
 ### Judge Redesign
 
 The current judge is a naive LLM that subjectively votes "who persuaded better." Two problems:
+
 1. **Subjectivity** - inconsistent, unverifiable results
 2. **Cheat vulnerability** - users write prompts for both roles and know the single hidden goal, so they can hardcode the opponent's secret
 
 **New system: Randomized Secrets + Post-Match Interrogation**
 
 Each role has **4 possible hidden secrets** instead of 1. At match time, one is picked at random for each role. After 20 turns, each agent must guess the opponent's secret from a multiple-choice list and explain their reasoning. Scoring is objective:
+
 - **Protect your secret**: +1 if opponent guessed wrong
 - **Discover opponent's secret**: +1 if you guessed right
 - Higher score wins. Ties (1-1) are draws. No tiebreaker needed.
@@ -32,12 +37,12 @@ This eliminates both subjectivity and the cheat vector (can't hardcode a strateg
 
 ## Design Decisions (Confirmed)
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Tiebreaker | Draws are fine | Only 4 outcomes: A wins 2-0, B wins 0-2, draw 1-1 x2 |
-| Interrogation format | Guess + explain reasoning | "选择：A 理由：..." replaces old judge rationale |
-| Secret visibility | Show all 4 to prompt writer | They see the pool but not which will be picked |
-| Columbus secrets | Approved as proposed | 4 per role, historically plausible, balanced |
+| Decision             | Choice                      | Rationale                                            |
+| -------------------- | --------------------------- | ---------------------------------------------------- |
+| Tiebreaker           | Draws are fine              | Only 4 outcomes: A wins 2-0, B wins 0-2, draw 1-1 x2 |
+| Interrogation format | Guess + explain reasoning   | "选择：A 理由：..." replaces old judge rationale     |
+| Secret visibility    | Show all 4 to prompt writer | They see the pool but not which will be picked       |
+| Columbus secrets     | Approved as proposed        | 4 per role, historically plausible, balanced         |
 
 ---
 
@@ -46,6 +51,7 @@ This eliminates both subjectivity and the cheat vector (can't hardcode a strateg
 ### scenarios table
 
 Replace single hidden_goal with 4-secret arrays:
+
 ```sql
 -- OLD:
 role_a_hidden_goal TEXT DEFAULT ''
@@ -59,6 +65,7 @@ role_b_secrets TEXT DEFAULT '[]'   -- JSON array of 4 strings
 ### matches table
 
 Add columns for secret selection and interrogation:
+
 ```sql
 secret_a_index INTEGER DEFAULT NULL,   -- 0-3: which secret was randomly picked
 secret_b_index INTEGER DEFAULT NULL,
@@ -68,6 +75,7 @@ score_b REAL DEFAULT NULL,
 ```
 
 `interrogation` JSON structure:
+
 ```json
 {
   "a_guess": 2,
@@ -109,6 +117,7 @@ Passes `active_secret` through to `build_messages`.
 ### New: `run_interrogation(scenario, system_prompt, model, role, transcript, own_secret, opponent_secrets)`
 
 After 20 turns, asks the agent to guess opponent's secret. Prompt:
+
 ```
 对话已结束。请根据对话内容，推测对方的隐藏目标是什么。
 
@@ -151,6 +160,7 @@ The 3x LLM judge voting is fully replaced by the interrogation system. Net LLM c
 ### Rewritten: `run_match(match_id)`
 
 New flow:
+
 1. Select random secrets → store indices in DB
 2. Run 20 turns (pass selected secret to each agent's system prompt)
 3. Run interrogation for agent A (guess B's secret)
@@ -164,12 +174,14 @@ New flow:
 Columbus scenario with 4 secrets per role:
 
 **Role A (哥伦布):**
+
 - A. 在协议中获取独家贸易权和总督头衔
 - B. 确保航线发现后由自己家族世袭管理新领地
 - C. 获取新大陆金矿开采权的优先许可
 - D. 建立独立于王室的私人船队和贸易公司
 
 **Role B (王室顾问):**
+
 - A. 保护现有地中海贸易航线的利益集团
 - B. 将远航资金转投北非军事扩张计划
 - C. 为王室与热那亚银行的秘密债务争取还款时间
@@ -184,6 +196,7 @@ Win condition updated to describe the objective scoring system.
 ### Builder UI: Show 4 Possible Secrets
 
 In the scenario sidebar, under each role, show:
+
 ```
 你的智能体可能被分配以下隐藏目标之一（随机选取，你无法控制）：
 1. 在协议中获取独家贸易权和总督头衔
@@ -233,12 +246,15 @@ Update `DEMO_RATIONALES` to new interrogation format with guess + reasoning.
 ## Infrastructure Changes
 
 ### Dockerfile
+
 ```dockerfile
 RUN pip install --no-cache-dir openai fastapi 'uvicorn[standard]'
 ```
+
 Remove `COPY axiia_cup.db .`.
 
 ### fly.toml
+
 ```toml
 [[vm]]
   memory = '512mb'
@@ -247,9 +263,11 @@ Remove `COPY axiia_cup.db .`.
 ```
 
 ### server/api.py
+
 Auto-seed on startup if scenarios table is empty.
 
 ### server/db.py
+
 Detect Fly environment via `FLY_APP_NAME` env var → use `/data/axiia_cup.db` path.
 
 ---
@@ -284,6 +302,7 @@ Detect Fly environment via `FLY_APP_NAME` env var → use `/data/axiia_cup.db` p
 The web UI works for browsing and demos, but the actual competition workflow (15 internal participants submitting prompts, running matches, viewing results) needs a CLI interface for power users and batch operations.
 
 **Planned CLI commands:**
+
 - `axiia submit --scenario columbus --prompt-a @file_a.txt --prompt-b @file_b.txt --model qwen-plus` — submit prompts from files
 - `axiia match --scenario columbus --sub-a 1 --sub-b 2` — create a match between two submissions
 - `axiia status <match_id>` — check match status and results

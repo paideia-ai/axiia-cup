@@ -1,81 +1,101 @@
-import type { LeaderboardEntry, Scenario, TournamentDetail } from "@axiia/shared";
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import type {
+  LeaderboardEntry,
+  Scenario,
+  TournamentDetail,
+} from '@axiia/shared'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 
-import { Badge } from "../components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getLeaderboard, getScenario, getTournament } from "../lib/api";
+import { Badge } from '../components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { getLeaderboard, getScenario, getTournament } from '../lib/api'
 
-type PlayerMatchView = NonNullable<TournamentDetail["rounds"][number]["matches"][number]> & {
-  roundNumber: number;
-};
+type PlayerMatchView = NonNullable<
+  TournamentDetail['rounds'][number]['matches'][number]
+> & {
+  roundNumber: number
+}
 
 export function TournamentPlayerDetailPage() {
-  const { submissionId = "", tournamentId = "" } = useParams();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [scenario, setScenario] = useState<Scenario | null>(null);
-  const [tournamentDetail, setTournamentDetail] = useState<TournamentDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { submissionId = '', tournamentId = '' } = useParams()
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [scenario, setScenario] = useState<Scenario | null>(null)
+  const [tournamentDetail, setTournamentDetail] =
+    useState<TournamentDetail | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const numericTournamentId = Number(tournamentId);
-  const numericSubmissionId = Number(submissionId);
+  const numericTournamentId = Number(tournamentId)
+  const numericSubmissionId = Number(submissionId)
   const playersBySubmissionId = useMemo(
     () => new Map(leaderboard.map((entry) => [entry.submissionId, entry])),
     [leaderboard],
-  );
-  const player = playersBySubmissionId.get(numericSubmissionId) ?? null;
+  )
+  const player = playersBySubmissionId.get(numericSubmissionId) ?? null
   const playerMatches: PlayerMatchView[] =
     tournamentDetail?.rounds.flatMap((round) =>
       round.matches
-        .filter((match) => match.subAId === numericSubmissionId || match.subBId === numericSubmissionId)
+        .filter(
+          (match) =>
+            match.subAId === numericSubmissionId ||
+            match.subBId === numericSubmissionId,
+        )
         .map((match) => ({
           ...match,
           roundNumber: round.roundNumber,
         })),
-    ) ?? [];
-  const roleACount = playerMatches.filter((match) => match.subAId === numericSubmissionId).length;
-  const roleBCount = playerMatches.filter((match) => match.subBId === numericSubmissionId).length;
+    ) ?? []
+  const roleACount = playerMatches.filter(
+    (match) => match.subAId === numericSubmissionId,
+  ).length
+  const roleBCount = playerMatches.filter(
+    (match) => match.subBId === numericSubmissionId,
+  ).length
 
-  const getPlayerName = (id: number) => playersBySubmissionId.get(id)?.playerName ?? `submission #${id}`;
-  const roleALabel = scenario ? `角色 A · ${scenario.roleAName}` : "角色 A";
-  const roleBLabel = scenario ? `角色 B · ${scenario.roleBName}` : "角色 B";
+  const getPlayerName = (id: number) =>
+    playersBySubmissionId.get(id)?.playerName ?? `submission #${id}`
+  const roleALabel = scenario ? `角色 A · ${scenario.roleAName}` : '角色 A'
+  const roleBLabel = scenario ? `角色 B · ${scenario.roleBName}` : '角色 B'
 
   useEffect(() => {
     if (!Number.isInteger(numericTournamentId) || numericTournamentId <= 0) {
-      setError("无效的赛事 ID");
-      setIsLoading(false);
-      return;
+      setError('无效的赛事 ID')
+      setIsLoading(false)
+      return
     }
 
     if (!Number.isInteger(numericSubmissionId) || numericSubmissionId <= 0) {
-      setError("无效的选手 ID");
-      setIsLoading(false);
-      return;
+      setError('无效的选手 ID')
+      setIsLoading(false)
+      return
     }
 
     const load = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoading(true)
+        setError(null)
         const [leaderboardResponse, tournamentResponse] = await Promise.all([
           getLeaderboard(numericTournamentId),
           getTournament(numericTournamentId),
-        ]);
-        const scenarioResponse = await getScenario(tournamentResponse.scenarioId);
+        ])
+        const scenarioResponse = await getScenario(
+          tournamentResponse.scenarioId,
+        )
 
-        setLeaderboard(leaderboardResponse);
-        setTournamentDetail(tournamentResponse);
-        setScenario(scenarioResponse);
+        setLeaderboard(leaderboardResponse)
+        setTournamentDetail(tournamentResponse)
+        setScenario(scenarioResponse)
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "加载选手详情失败");
+        setError(
+          loadError instanceof Error ? loadError.message : '加载选手详情失败',
+        )
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    void load();
-  }, [numericSubmissionId, numericTournamentId]);
+    void load()
+  }, [numericSubmissionId, numericTournamentId])
 
   if (isLoading) {
     return (
@@ -83,16 +103,23 @@ export function TournamentPlayerDetailPage() {
         <div className="h-10 w-56 animate-pulse rounded bg-white/8" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-28 animate-pulse rounded-xl bg-white/5" />
+            <div
+              key={index}
+              className="h-28 animate-pulse rounded-xl bg-white/5"
+            />
           ))}
         </div>
         <div className="h-[420px] animate-pulse rounded-xl bg-white/5" />
       </div>
-    );
+    )
   }
 
   if (error || !tournamentDetail || !player) {
-    return <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">{error ?? "选手详情不存在"}</div>;
+    return (
+      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
+        {error ?? '选手详情不存在'}
+      </div>
+    )
   }
 
   return (
@@ -102,7 +129,8 @@ export function TournamentPlayerDetailPage() {
           <p className="page-eyebrow">Player Detail</p>
           <h1 className="page-title">{player.playerName}</h1>
           <p className="page-subtitle">
-            {scenario?.title ?? "当前赛事"} · 第 {player.rank} 名 · {player.modelLabel}
+            {scenario?.title ?? '当前赛事'} · 第 {player.rank} 名 ·{' '}
+            {player.modelLabel}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -127,20 +155,30 @@ export function TournamentPlayerDetailPage() {
         </Card>
         <Card>
           <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">{player.winRate.toFixed(1)}%</p>
+            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
+              {player.winRate.toFixed(1)}%
+            </p>
             <p className="text-xs text-[var(--foreground-muted)]">胜率</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">{roleACount}</p>
-            <p className="text-xs text-[var(--foreground-muted)]">{roleALabel} 出场次数</p>
+            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
+              {roleACount}
+            </p>
+            <p className="text-xs text-[var(--foreground-muted)]">
+              {roleALabel} 出场次数
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">{roleBCount}</p>
-            <p className="text-xs text-[var(--foreground-muted)]">{roleBLabel} 出场次数</p>
+            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
+              {roleBCount}
+            </p>
+            <p className="text-xs text-[var(--foreground-muted)]">
+              {roleBLabel} 出场次数
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -156,10 +194,10 @@ export function TournamentPlayerDetailPage() {
             </div>
           ) : (
             playerMatches.map((match) => {
-              const isRoleA = match.subAId === numericSubmissionId;
-              const myRoleLabel = isRoleA ? roleALabel : roleBLabel;
-              const opponentId = isRoleA ? match.subBId : match.subAId;
-              const opponentRoleLabel = isRoleA ? roleBLabel : roleALabel;
+              const isRoleA = match.subAId === numericSubmissionId
+              const myRoleLabel = isRoleA ? roleALabel : roleBLabel
+              const opponentId = isRoleA ? match.subBId : match.subAId
+              const opponentRoleLabel = isRoleA ? roleBLabel : roleALabel
 
               return (
                 <Link
@@ -169,7 +207,9 @@ export function TournamentPlayerDetailPage() {
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-2">
-                      <p className="font-semibold text-[var(--foreground)]">Round {match.roundNumber} · Match #{match.id}</p>
+                      <p className="font-semibold text-[var(--foreground)]">
+                        Round {match.roundNumber} · Match #{match.id}
+                      </p>
                       <p className="text-sm text-[var(--foreground-subtle)]">
                         {player.playerName} · {myRoleLabel}
                       </p>
@@ -178,21 +218,31 @@ export function TournamentPlayerDetailPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Badge tone={isRoleA ? "accent" : "warning"}>{myRoleLabel}</Badge>
-                      <Badge tone={match.status === "scored" ? "success" : match.status === "error" ? "warning" : "info"}>
+                      <Badge tone={isRoleA ? 'accent' : 'warning'}>
+                        {myRoleLabel}
+                      </Badge>
+                      <Badge
+                        tone={
+                          match.status === 'scored'
+                            ? 'success'
+                            : match.status === 'error'
+                              ? 'warning'
+                              : 'info'
+                        }
+                      >
                         {match.status}
                       </Badge>
                       <span className="font-mono text-sm text-[var(--foreground-subtle)]">
-                        {match.scoreA ?? "--"} : {match.scoreB ?? "--"}
+                        {match.scoreA ?? '--'} : {match.scoreB ?? '--'}
                       </span>
                     </div>
                   </div>
                 </Link>
-              );
+              )
             })
           )}
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

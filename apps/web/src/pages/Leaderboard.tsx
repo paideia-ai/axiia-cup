@@ -9,7 +9,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { getLeaderboard, getScenario, getTournament, getTournaments } from '../lib/api'
+import {
+  getLeaderboard,
+  getScenario,
+  getTournament,
+  getTournaments,
+} from '../lib/api'
 
 export function LeaderboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -17,14 +22,18 @@ export function LeaderboardPage() {
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [scenario, setScenario] = useState<Scenario | null>(null)
-  const [tournamentDetail, setTournamentDetail] = useState<TournamentDetail | null>(null)
+  const [tournamentDetail, setTournamentDetail] =
+    useState<TournamentDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const latestLoadIdRef = useRef(0)
 
-  const selectedTournamentId = Number(searchParams.get('tournament') ?? 0) || null
+  const selectedTournamentId =
+    Number(searchParams.get('tournament') ?? 0) || null
   const activeRound =
-    tournamentDetail?.rounds.find((round) => round.roundNumber === tournamentDetail.currentRound) ??
+    tournamentDetail?.rounds.find(
+      (round) => round.roundNumber === tournamentDetail.currentRound,
+    ) ??
     tournamentDetail?.rounds.at(-1) ??
     null
   const activeRoundPairings = activeRound
@@ -56,10 +65,13 @@ export function LeaderboardPage() {
         return items
       }, [])
     : []
-  const playersBySubmissionId = new Map(leaderboard.map((entry) => [entry.submissionId, entry]))
+  const playersBySubmissionId = new Map(
+    leaderboard.map((entry) => [entry.submissionId, entry]),
+  )
 
   const getPlayerName = (submissionId: number) =>
-    playersBySubmissionId.get(submissionId)?.playerName ?? `submission #${submissionId}`
+    playersBySubmissionId.get(submissionId)?.playerName ??
+    `submission #${submissionId}`
 
   const getRoleLabel = (side: 'a' | 'b') => {
     if (side === 'a') {
@@ -77,7 +89,9 @@ export function LeaderboardPage() {
       return
     }
 
-    void navigate(`/leaderboard/tournaments/${selectedTournamentId}/players/${submissionId}`)
+    void navigate(
+      `/leaderboard/tournaments/${selectedTournamentId}/players/${submissionId}`,
+    )
   }
 
   useEffect(() => {
@@ -87,12 +101,17 @@ export function LeaderboardPage() {
         setTournaments(tournamentList)
 
         if (!selectedTournamentId && tournamentList[0]) {
-          setSearchParams({ tournament: String(tournamentList[0].id) }, { replace: true })
+          setSearchParams(
+            { tournament: String(tournamentList[0].id) },
+            { replace: true },
+          )
         } else if (tournamentList.length === 0) {
           setIsLoading(false)
         }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : '加载赛事失败')
+        setError(
+          loadError instanceof Error ? loadError.message : '加载赛事失败',
+        )
         setIsLoading(false)
       }
     }
@@ -126,7 +145,9 @@ export function LeaderboardPage() {
         if (cancelled || loadId !== latestLoadIdRef.current) return
 
         if (!hasLoadedScenario) {
-          const scenarioResponse = await getScenario(tournamentResponse.scenarioId)
+          const scenarioResponse = await getScenario(
+            tournamentResponse.scenarioId,
+          )
           if (cancelled || loadId !== latestLoadIdRef.current) return
           setScenario(scenarioResponse)
           hasLoadedScenario = true
@@ -139,7 +160,9 @@ export function LeaderboardPage() {
         if (cancelled || loadId !== latestLoadIdRef.current) return
         if (isInitial) {
           setScenario(null)
-          setError(loadError instanceof Error ? loadError.message : '加载排行榜失败')
+          setError(
+            loadError instanceof Error ? loadError.message : '加载排行榜失败',
+          )
         }
       } finally {
         if (!cancelled && loadId === latestLoadIdRef.current && isInitial) {
@@ -175,12 +198,15 @@ export function LeaderboardPage() {
           <p className="page-eyebrow">Leaderboard</p>
           <h1 className="page-title">排行榜</h1>
           <p className="page-subtitle">
-            按胜场和 Buchholz 小分排序。点击选手行进入该选手的赛事详情页，查看全部对局与角色分配。
+            按胜场和 Buchholz
+            小分排序。点击选手行进入该选手的赛事详情页，查看全部对局与角色分配。
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {tournamentDetail ? (
-            <Badge tone={tournamentDetail.status === 'finished' ? 'success' : 'info'}>
+            <Badge
+              tone={tournamentDetail.status === 'finished' ? 'success' : 'info'}
+            >
               {tournamentDetail.status === 'finished'
                 ? `已结束 · ${tournamentDetail.totalRounds} 轮`
                 : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
@@ -189,7 +215,9 @@ export function LeaderboardPage() {
           <select
             className="app-input min-w-[220px]"
             value={selectedTournamentId ?? ''}
-            onChange={(event) => setSearchParams({ tournament: event.target.value })}
+            onChange={(event) =>
+              setSearchParams({ tournament: event.target.value })
+            }
           >
             {tournaments.map((tournament) => (
               <option key={tournament.id} value={tournament.id}>
@@ -214,7 +242,10 @@ export function LeaderboardPage() {
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="h-14 animate-pulse rounded bg-white/6" />
+                <div
+                  key={index}
+                  className="h-14 animate-pulse rounded bg-white/6"
+                />
               ))}
             </div>
           ) : leaderboard.length === 0 ? (
@@ -254,9 +285,15 @@ export function LeaderboardPage() {
                     <td className="py-4 font-semibold text-[var(--foreground)]">
                       {entry.playerName}
                     </td>
-                    <td className="py-4 text-[var(--foreground-subtle)]">{entry.modelLabel}</td>
-                    <td className="py-4 font-mono text-[var(--foreground)]">{entry.wins}</td>
-                    <td className="py-4 font-mono text-[var(--foreground)]">{entry.losses}</td>
+                    <td className="py-4 text-[var(--foreground-subtle)]">
+                      {entry.modelLabel}
+                    </td>
+                    <td className="py-4 font-mono text-[var(--foreground)]">
+                      {entry.wins}
+                    </td>
+                    <td className="py-4 font-mono text-[var(--foreground)]">
+                      {entry.losses}
+                    </td>
                     <td className="py-4 font-mono text-[var(--foreground-subtle)]">
                       {entry.buchholz.toFixed(1)}
                     </td>
@@ -274,7 +311,9 @@ export function LeaderboardPage() {
       <Card>
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <CardTitle>当前轮次</CardTitle>
-          {activeRound ? <Badge tone="info">Round {activeRound.roundNumber}</Badge> : null}
+          {activeRound ? (
+            <Badge tone="info">Round {activeRound.roundNumber}</Badge>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-3">
           {!activeRound ? (
