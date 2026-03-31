@@ -3,7 +3,7 @@ import type { JudgeQA, TranscriptTurn } from "@axiia/shared";
 
 import { db } from "../db/client";
 import { matches, scenarios, submissions } from "../db/schema";
-import { syncRoundStatus } from "../lib/tournaments";
+import { maybeAdvanceRound, syncRoundStatus } from "../lib/tournaments";
 import { executeMatchSession } from "./core";
 
 function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
@@ -120,6 +120,7 @@ export async function runMatch(matchId: number, leaseToken: string): Promise<voi
     });
 
     syncRoundStatus(match.roundId);
+    maybeAdvanceRound(match.roundId);
   } catch (error) {
     await updateLeasedMatch(matchId, leaseToken, {
       error: error instanceof Error ? error.message : "Unknown engine failure",

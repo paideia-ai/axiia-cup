@@ -14,3 +14,10 @@ export const modelIds = [
   modelOptions[2].id,
   modelOptions[3].id,
 ] as const;
+
+export const MIN_SWISS_ROUNDS = 2;
+
+export function computeSwissRounds(playerCount: number): number {
+  if (playerCount < 2) return 0;
+  return Math.max(MIN_SWISS_ROUNDS, Math.ceil(Math.log2(playerCount)));
+}

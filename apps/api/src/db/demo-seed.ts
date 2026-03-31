@@ -119,23 +119,23 @@ function resetDatabase() {
   sqlite.exec(`
     PRAGMA foreign_keys = OFF;
     BEGIN;
-    DELETE FROM matches;
-    DELETE FROM rounds;
-    DELETE FROM tournaments;
-    DELETE FROM playground_runs;
-    DELETE FROM submissions;
-    DELETE FROM users;
-    DELETE FROM scenarios;
-    DELETE FROM sqlite_sequence
-    WHERE name IN ('matches', 'rounds', 'tournaments', 'playground_runs', 'submissions', 'users');
+    DROP TABLE IF EXISTS matches;
+    DROP TABLE IF EXISTS rounds;
+    DROP TABLE IF EXISTS tournaments;
+    DROP TABLE IF EXISTS playground_runs;
+    DROP TABLE IF EXISTS submissions;
+    DROP TABLE IF EXISTS users;
+    DROP TABLE IF EXISTS scenarios;
+    DELETE FROM sqlite_sequence;
+    DROP TABLE IF EXISTS __drizzle_migrations;
     COMMIT;
     PRAGMA foreign_keys = ON;
   `);
 }
 
 async function main() {
-  migrate(db, { migrationsFolder });
   resetDatabase();
+  migrate(db, { migrationsFolder });
 
   db.insert(scenarios).values(scenarioSeed).run();
 

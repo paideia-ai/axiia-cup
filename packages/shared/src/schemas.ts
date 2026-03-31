@@ -150,6 +150,7 @@ export const tournamentListItemSchema = z.object({
   scenarioTitle: z.string(),
   status: tournamentStatusSchema,
   currentRound: z.number().int().nonnegative(),
+  totalRounds: z.number().int().positive(),
   roundCount: z.number().int().nonnegative(),
   createdAt: z.string(),
 });
@@ -184,6 +185,7 @@ export const tournamentSchema = z.object({
   scenarioId: z.string(),
   status: tournamentStatusSchema,
   currentRound: z.number().int().nonnegative(),
+  totalRounds: z.number().int().positive(),
   createdAt: z.string(),
 });
 

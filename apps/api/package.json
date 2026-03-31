@@ -9,6 +9,7 @@
     "db:migrate": "bun run ./src/db/migrate.ts",
     "db:seed:demo": "bun run ./src/db/demo-seed.ts",
     "start": "bun ./dist/index.js",
+    "test": "bun test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "bun run typecheck"
   },
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
-    "drizzle-kit": "^0.31.4"
+    "drizzle-kit": "^0.31.4",
+    "vitest": "^4.1.2"
   }
 }

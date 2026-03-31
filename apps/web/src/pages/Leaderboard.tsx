@@ -132,7 +132,13 @@ export function LeaderboardPage() {
           <p className="page-subtitle">按胜场和 Buchholz 小分排序。点击选手行进入该选手的赛事详情页，查看全部对局与角色分配。</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {tournamentDetail ? <Badge tone="info">Round {tournamentDetail.currentRound}</Badge> : null}
+          {tournamentDetail ? (
+            <Badge tone={tournamentDetail.status === "finished" ? "success" : "info"}>
+              {tournamentDetail.status === "finished"
+                ? `已结束 · ${tournamentDetail.totalRounds} 轮`
+                : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
+            </Badge>
+          ) : null}
           <select
             className="app-input min-w-[220px]"
             value={selectedTournamentId ?? ""}

@@ -76,6 +76,7 @@ export const tournaments = sqliteTable(
       .references(() => scenarios.id),
     status: text("status", { enum: tournamentStatuses }).notNull().default("open"),
     currentRound: integer("current_round").notNull().default(0),
+    totalRounds: integer("total_rounds").notNull().default(4),
     createdAt: text("created_at").notNull().default(currentTimestamp),
   },
   (table) => ({

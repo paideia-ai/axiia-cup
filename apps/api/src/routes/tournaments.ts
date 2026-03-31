@@ -1,4 +1,5 @@
 import {
+  computeSwissRounds,
   matchDetailSchema,
   okResponseSchema,
   tournamentDetailSchema,
@@ -9,17 +10,15 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { swissPair } from "../engine/swiss";
 import { kickWorker } from "../engine/worker";
 import { db } from "../db/client";
 import { matches, rounds, scenarios, submissions, tournaments, users } from "../db/schema";
 import {
-  buildPreviousPairings,
+  advanceToNextRound,
   createRoundWithMatches,
   extractByeSubmissionIds,
   getLatestScenarioPlayers,
   getLeaderboard,
-  getRoundTerminalState,
   getTournamentDetail,
   listTournaments,
   syncRoundStatus,
@@ -29,6 +28,7 @@ import { requireAuth } from "../middleware/requireAuth";
 
 const startTournamentSchema = z.object({
   scenarioId: z.string().min(1),
+  totalRounds: z.number().int().positive().optional(),
 });
 
 const tournamentRouter = new Hono();
@@ -94,6 +94,7 @@ tournamentRouter.post("/api/admin/tournaments/start", requireAuth, requireAdmin,
       currentRound: 0,
       scenarioId: parsed.data.scenarioId,
       status: "running",
+      totalRounds: parsed.data.totalRounds ?? computeSwissRounds(players.length),
     })
     .returning()
     .get();
@@ -150,70 +151,24 @@ tournamentRouter.post("/api/admin/tournaments/:id/next-round", requireAuth, requ
     return context.json({ error: "Tournament not found" }, 404);
   }
 
-  const currentRound = db
-    .select()
-    .from(rounds)
-    .where(eq(rounds.tournamentId, tournamentId))
-    .orderBy(rounds.roundNumber)
-    .all()
-    .at(-1);
+  const result = advanceToNextRound(tournamentId);
 
-  if (!currentRound) {
-    return context.json({ error: "Tournament has no rounds" }, 400);
+  if (!result) {
+    return context.json({ error: "Cannot advance: round not fully scored, has errors, or already advanced" }, 400);
   }
-
-  syncRoundStatus(currentRound.id);
-
-  const roundState = getRoundTerminalState(currentRound.id);
-
-  if (!roundState.isDone || roundState.hasErrors) {
-    return context.json({ error: "Current round is not fully scored" }, 400);
-  }
-
-  const players = getLatestScenarioPlayers(tournament.scenarioId, tournament.createdAt);
-  const leaderboard = getLeaderboard(tournamentId);
-
-  if (!leaderboard) {
-    return context.json({ error: "Unable to calculate leaderboard" }, 500);
-  }
-
-  const standings = new Map(leaderboard.map((entry) => [entry.submissionId, entry.wins]));
-  const playerIds = players.map((player) => player.submissionId);
-  const pairs = swissPair({
-    playerIds,
-    previousPairings: buildPreviousPairings(tournamentId),
-    standings,
-  });
-  const byeSubmissions = extractByeSubmissionIds(playerIds, pairs);
-  const nextRoundNumber = currentRound.roundNumber + 1;
-  const { matches: createdMatches, round } = createRoundWithMatches({
-    pairs,
-    roundNumber: nextRoundNumber,
-    scenarioId: tournament.scenarioId,
-    tournamentId,
-  });
-
-  const updatedTournament = db
-    .update(tournaments)
-    .set({ currentRound: nextRoundNumber, status: "running" })
-    .where(eq(tournaments.id, tournamentId))
-    .returning()
-    .get();
-
-  kickWorker();
 
   return context.json({
-    byeSubmissions,
-    matches: createdMatches,
+    byeSubmissions: result.byeSubmissions,
+    matches: result.matches,
     round: tournamentRoundSchema.parse({
-      byeSubmissions,
-      id: round.id,
-      matches: createdMatches,
-      roundNumber: round.roundNumber,
-      status: round.status,
-      tournamentId: round.tournamentId,
+      byeSubmissions: result.byeSubmissions,
+      id: result.round.id,
+      matches: result.matches,
+      roundNumber: result.round.roundNumber,
+      status: result.round.status,
+      tournamentId: result.round.tournamentId,
     }),
-    tournament: tournamentSchema.parse(updatedTournament),
+    tournament: tournamentSchema.parse(result.tournament),
   });
 });
 

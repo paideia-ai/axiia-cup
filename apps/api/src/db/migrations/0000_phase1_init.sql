@@ -60,6 +60,7 @@ CREATE TABLE `tournaments` (
 	`scenario_id` text NOT NULL,
 	`status` text DEFAULT 'open' NOT NULL,
 	`current_round` integer DEFAULT 0 NOT NULL,
+	`total_rounds` integer DEFAULT 4 NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`scenario_id`) REFERENCES `scenarios`(`id`) ON UPDATE no action ON DELETE no action,
 	CONSTRAINT `tournaments_status_check` CHECK(`status` in ('open', 'running', 'finished'))

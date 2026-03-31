@@ -11,6 +11,8 @@ import { and, asc, desc, eq, lte } from "drizzle-orm";
 
 import { db } from "../db/client";
 import { matches, rounds, scenarios, submissions, tournaments, users } from "../db/schema";
+import { swissPair } from "../engine/swiss";
+import { kickWorker } from "../engine/worker";
 
 type TournamentRecord = typeof tournaments.$inferSelect;
 
@@ -183,6 +185,7 @@ export function listTournaments() {
       scenarioId: tournaments.scenarioId,
       scenarioTitle: scenarios.title,
       status: tournaments.status,
+      totalRounds: tournaments.totalRounds,
     })
     .from(tournaments)
     .innerJoin(scenarios, eq(scenarios.id, tournaments.scenarioId))
@@ -266,6 +269,7 @@ export function getTournamentDetail(tournamentId: number) {
     rounds: parsedRounds,
     scenarioId: tournament.scenarioId,
     status: tournament.status,
+    totalRounds: tournament.totalRounds,
   });
 }
 
@@ -374,4 +378,107 @@ export function getMatchTranscriptCount(matchId: number) {
   }
 
   return parseJsonArray(match.transcript, []).length;
+}
+
+export function advanceToNextRound(tournamentId: number) {
+  const tournament = db.select().from(tournaments).where(eq(tournaments.id, tournamentId)).get();
+
+  if (!tournament) {
+    return null;
+  }
+
+  const currentRound = db
+    .select()
+    .from(rounds)
+    .where(eq(rounds.tournamentId, tournamentId))
+    .orderBy(rounds.roundNumber)
+    .all()
+    .at(-1);
+
+  if (!currentRound) {
+    return null;
+  }
+
+  const roundState = getRoundTerminalState(currentRound.id);
+
+  if (!roundState.isDone || roundState.hasErrors) {
+    return null;
+  }
+
+  const players = getLatestScenarioPlayers(tournament.scenarioId, tournament.createdAt);
+  const leaderboard = getLeaderboard(tournamentId);
+
+  if (!leaderboard) {
+    return null;
+  }
+
+  const standings = new Map(leaderboard.map((entry) => [entry.submissionId, entry.wins]));
+  const playerIds = players.map((player) => player.submissionId);
+  const pairs = swissPair({
+    playerIds,
+    previousPairings: buildPreviousPairings(tournamentId),
+    standings,
+  });
+  const byeSubmissions = extractByeSubmissionIds(playerIds, pairs);
+  const nextRoundNumber = currentRound.roundNumber + 1;
+
+  // Optimistic lock: only advance if currentRound hasn't changed
+  const updated = db
+    .update(tournaments)
+    .set({ currentRound: nextRoundNumber, status: "running" })
+    .where(and(eq(tournaments.id, tournamentId), eq(tournaments.currentRound, currentRound.roundNumber)))
+    .returning()
+    .get();
+
+  if (!updated) {
+    return null;
+  }
+
+  const { matches: createdMatches, round } = createRoundWithMatches({
+    pairs,
+    roundNumber: nextRoundNumber,
+    scenarioId: tournament.scenarioId,
+    tournamentId,
+  });
+
+  kickWorker();
+
+  return { byeSubmissions, matches: createdMatches, round, tournament: updated };
+}
+
+export function maybeAdvanceRound(roundId: number) {
+  const round = db.select().from(rounds).where(eq(rounds.id, roundId)).get();
+
+  if (!round || round.status !== "done") {
+    return;
+  }
+
+  const tournament = db.select().from(tournaments).where(eq(tournaments.id, round.tournamentId)).get();
+
+  if (!tournament || tournament.status !== "running") {
+    return;
+  }
+
+  const roundState = getRoundTerminalState(roundId);
+
+  if (roundState.hasErrors) {
+    return;
+  }
+
+  if (tournament.currentRound >= tournament.totalRounds) {
+    db.update(tournaments)
+      .set({ status: "finished" })
+      .where(eq(tournaments.id, tournament.id))
+      .run();
+    console.log(`[tournament] finished (${tournament.currentRound}/${tournament.totalRounds} rounds complete)`);
+    return;
+  }
+
+  const result = advanceToNextRound(tournament.id);
+
+  if (result) {
+    console.log(
+      `[tournament] advancing to round ${result.round.roundNumber} (${result.matches.length} matches created)`,
+    );
+  }
 }

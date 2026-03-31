@@ -154,8 +154,10 @@ export function AdminPage() {
                   <Badge>{scenario.subject}</Badge>
                   <Badge tone="info">{players.length} 人已提交</Badge>
                   {latestTournament ? (
-                    <Badge tone="warning">
-                      Tournament #{latestTournament.id} · 第 {latestTournament.currentRound} 轮
+                    <Badge tone={latestTournament.status === "finished" ? "success" : "warning"}>
+                      Tournament #{latestTournament.id} · {latestTournament.status === "finished"
+                        ? `已结束 (${latestTournament.totalRounds} 轮)`
+                        : `第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮`}
                     </Badge>
                   ) : null}
                 </div>
