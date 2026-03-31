@@ -1,4 +1,5 @@
 import {
+  adminPlayerSchema,
   adminStatsSchema,
   changePasswordSchema,
   createSubmissionSchema,
@@ -13,8 +14,12 @@ import {
   submissionSchema,
   tournamentDetailSchema,
   tournamentListItemSchema,
+  tournamentMatchSummarySchema,
+  tournamentRoundSchema,
+  tournamentSchema,
   updateProfileSchema,
   userSchema,
+  type AdminPlayer,
   type AdminStats,
   type LeaderboardEntry,
   type MatchDetail,
@@ -45,6 +50,13 @@ const leaderboardResponseSchema = z.array(leaderboardEntrySchema);
 const tournamentsResponseSchema = z.array(tournamentListItemSchema);
 const recentMatchesResponseSchema = z.array(recentMatchSchema);
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema);
+const adminPlayersResponseSchema = z.array(adminPlayerSchema);
+const startTournamentResponseSchema = z.object({
+  byeSubmissions: z.array(z.number().int().positive()),
+  matches: z.array(tournamentMatchSummarySchema),
+  round: tournamentRoundSchema,
+  tournament: tournamentSchema,
+});
 
 function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -220,6 +232,33 @@ export async function getMyStats(): Promise<PersonalStats> {
 
 export async function getAdminStats(): Promise<AdminStats> {
   return apiFetch("/api/admin/stats", { method: "GET" }, adminStatsSchema);
+}
+
+export async function getAdminTournamentPlayers(scenarioId: string): Promise<AdminPlayer[]> {
+  return apiFetch(
+    `/api/admin/tournaments/players?scenarioId=${encodeURIComponent(scenarioId)}`,
+    { method: "GET" },
+    adminPlayersResponseSchema,
+  );
+}
+
+export async function startTournament(scenarioId: string) {
+  return apiFetch(
+    "/api/admin/tournaments/start",
+    {
+      method: "POST",
+      body: JSON.stringify({ scenarioId }),
+    },
+    startTournamentResponseSchema,
+  );
+}
+
+export async function retryAdminMatch(matchId: number | string): Promise<{ ok: true }> {
+  return apiFetch(
+    `/api/admin/matches/${matchId}/retry`,
+    { method: "POST" },
+    okResponseSchema,
+  );
 }
 
 export async function getMyRecentMatches(): Promise<RecentMatch[]> {

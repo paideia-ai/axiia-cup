@@ -89,6 +89,7 @@ export function createRoundWithMatches(params: {
   scenarioId: string;
   tournamentId: number;
 }) {
+  const now = new Date().toISOString();
   const round = db
     .insert(rounds)
     .values({
@@ -112,6 +113,7 @@ export function createRoundWithMatches(params: {
                 status: "queued" as const,
                 subAId,
                 subBId,
+                updatedAt: now,
               },
               {
                 roundId: round.id,
@@ -119,6 +121,7 @@ export function createRoundWithMatches(params: {
                 status: "queued" as const,
                 subAId: subBId,
                 subBId: subAId,
+                updatedAt: now,
               },
             ]),
           )

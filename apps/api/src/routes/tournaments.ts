@@ -1,5 +1,6 @@
 import {
   matchDetailSchema,
+  okResponseSchema,
   tournamentDetailSchema,
   tournamentRoundSchema,
   tournamentSchema,
@@ -9,6 +10,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { swissPair } from "../engine/swiss";
+import { kickWorker } from "../engine/worker";
 import { db } from "../db/client";
 import { matches, rounds, scenarios, submissions, tournaments, users } from "../db/schema";
 import {
@@ -118,6 +120,8 @@ tournamentRouter.post("/api/admin/tournaments/start", requireAuth, requireAdmin,
     .returning()
     .get();
 
+  kickWorker();
+
   return context.json({
     byeSubmissions,
     matches: createdMatches,
@@ -195,6 +199,8 @@ tournamentRouter.post("/api/admin/tournaments/:id/next-round", requireAuth, requ
     .where(eq(tournaments.id, tournamentId))
     .returning()
     .get();
+
+  kickWorker();
 
   return context.json({
     byeSubmissions,
@@ -303,6 +309,48 @@ tournamentRouter.get("/api/matches/:id", (context) => {
       winner: match.winner,
     }),
   );
+});
+
+tournamentRouter.post("/api/admin/matches/:id/retry", requireAuth, requireAdmin, (context) => {
+  const matchId = parseId(context.req.param("id"));
+
+  if (!matchId) {
+    return context.json({ error: "Invalid match id" }, 400);
+  }
+
+  const match = db.select().from(matches).where(eq(matches.id, matchId)).get();
+
+  if (!match) {
+    return context.json({ error: "Match not found" }, 404);
+  }
+
+  if (match.status !== "error") {
+    return context.json({ error: "Only errored matches can be retried" }, 400);
+  }
+
+  const round = db.select().from(rounds).where(eq(rounds.id, match.roundId)).get();
+
+  if (!round) {
+    return context.json({ error: "Round not found" }, 404);
+  }
+
+  db.update(matches)
+    .set({
+      error: null,
+      finishedAt: null,
+      leaseToken: null,
+      status: "queued",
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(matches.id, matchId))
+    .run();
+
+  db.update(rounds).set({ status: "running" }).where(eq(rounds.id, round.id)).run();
+  db.update(tournaments).set({ status: "running" }).where(eq(tournaments.id, round.tournamentId)).run();
+
+  kickWorker();
+
+  return context.json(okResponseSchema.parse({ ok: true }));
 });
 
 export { tournamentRouter };

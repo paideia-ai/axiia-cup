@@ -1,32 +1,78 @@
-import type { LeaderboardEntry, TournamentDetail, TournamentListItem } from "@axiia/shared";
+import type { LeaderboardEntry, Scenario, TournamentDetail, TournamentListItem } from "@axiia/shared";
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getLeaderboard, getTournament, getTournaments } from "../lib/api";
+import { getLeaderboard, getScenario, getTournament, getTournaments } from "../lib/api";
 
 export function LeaderboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [tournamentDetail, setTournamentDetail] = useState<TournamentDetail | null>(null);
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const selectedTournamentId = Number(searchParams.get("tournament") ?? 0) || null;
-  const selectedPlayerMatches =
-    selectedSubmissionId && tournamentDetail
-      ? tournamentDetail.rounds.flatMap((round) =>
-          round.matches
-            .filter((match) => match.subAId === selectedSubmissionId || match.subBId === selectedSubmissionId)
-            .map((match) => ({
-              ...match,
-              roundNumber: round.roundNumber,
-            })),
-        )
-      : [];
+  const activeRound =
+    tournamentDetail?.rounds.find((round) => round.roundNumber === tournamentDetail.currentRound) ??
+    tournamentDetail?.rounds.at(-1) ??
+    null;
+  const activeRoundPairings = activeRound
+    ? [...activeRound.matches].reduce<
+        Array<{
+          leftSubmissionId: number;
+          matches: Array<(typeof activeRound.matches)[number]>;
+          pairKey: string;
+          rightSubmissionId: number;
+        }>
+      >((items, match) => {
+        const leftSubmissionId = Math.min(match.subAId, match.subBId);
+        const rightSubmissionId = Math.max(match.subAId, match.subBId);
+        const pairKey = `${leftSubmissionId}-${rightSubmissionId}`;
+        const existing = items.find((item) => item.pairKey === pairKey);
+
+        if (existing) {
+          existing.matches.push(match);
+          return items;
+        }
+
+        items.push({
+          leftSubmissionId,
+          matches: [match],
+          pairKey,
+          rightSubmissionId,
+        });
+
+        return items;
+      }, [])
+    : [];
+  const playersBySubmissionId = new Map(leaderboard.map((entry) => [entry.submissionId, entry]));
+
+  const getPlayerName = (submissionId: number) =>
+    playersBySubmissionId.get(submissionId)?.playerName ?? `submission #${submissionId}`;
+
+  const getRoleLabel = (side: "a" | "b") => {
+    if (side === "a") {
+      return scenario ? `角色 A · ${scenario.roleAName}` : "角色 A";
+    }
+
+    return scenario ? `角色 B · ${scenario.roleBName}` : "角色 B";
+  };
+
+  const formatMatchSide = (submissionId: number, side: "a" | "b") =>
+    `${getPlayerName(submissionId)} · ${getRoleLabel(side)}`;
+
+  const openPlayerDetail = (submissionId: number) => {
+    if (!selectedTournamentId) {
+      return;
+    }
+
+    void navigate(`/leaderboard/tournaments/${selectedTournamentId}/players/${submissionId}`);
+  };
 
   useEffect(() => {
     const loadTournamentList = async () => {
@@ -61,11 +107,13 @@ export function LeaderboardPage() {
           getLeaderboard(selectedTournamentId),
           getTournament(selectedTournamentId),
         ]);
+        const scenarioResponse = await getScenario(tournamentResponse.scenarioId);
 
         setLeaderboard(leaderboardResponse);
+        setScenario(scenarioResponse);
         setTournamentDetail(tournamentResponse);
-        setSelectedSubmissionId(leaderboardResponse[0]?.submissionId ?? null);
       } catch (loadError) {
+        setScenario(null);
         setError(loadError instanceof Error ? loadError.message : "加载排行榜失败");
       } finally {
         setIsLoading(false);
@@ -81,7 +129,7 @@ export function LeaderboardPage() {
         <div>
           <p className="page-eyebrow">Leaderboard</p>
           <h1 className="page-title">排行榜</h1>
-          <p className="page-subtitle">按胜场和 Buchholz 小分排序。点击选手行可查看该选手在当前赛事里的所有对局。</p>
+          <p className="page-subtitle">按胜场和 Buchholz 小分排序。点击选手行进入该选手的赛事详情页，查看全部对局与角色分配。</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {tournamentDetail ? <Badge tone="info">Round {tournamentDetail.currentRound}</Badge> : null}
@@ -133,10 +181,15 @@ export function LeaderboardPage() {
                 {leaderboard.map((entry) => (
                   <tr
                     key={entry.submissionId}
-                    className={`cursor-pointer border-b border-[var(--border-soft)] transition last:border-b-0 hover:bg-white/3 ${
-                      selectedSubmissionId === entry.submissionId ? "bg-white/5" : ""
-                    }`}
-                    onClick={() => setSelectedSubmissionId(entry.submissionId)}
+                    className="cursor-pointer border-b border-[var(--border-soft)] transition last:border-b-0 hover:bg-white/3"
+                    onClick={() => openPlayerDetail(entry.submissionId)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openPlayerDetail(entry.submissionId);
+                      }
+                    }}
+                    tabIndex={0}
                   >
                     <td className="py-4 font-mono text-base font-bold text-[var(--foreground)]">#{entry.rank}</td>
                     <td className="py-4 font-semibold text-[var(--foreground)]">{entry.playerName}</td>
@@ -155,42 +208,50 @@ export function LeaderboardPage() {
 
       <Card>
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <CardTitle>选手对局</CardTitle>
-          {selectedSubmissionId ? <Badge tone="warning">submission #{selectedSubmissionId}</Badge> : null}
+          <CardTitle>当前轮次全部 Pairing</CardTitle>
+          {activeRound ? <Badge tone="info">Round {activeRound.roundNumber}</Badge> : null}
         </CardHeader>
         <CardContent className="space-y-3">
-          {!selectedSubmissionId ? (
+          {!activeRound ? (
             <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-              点击上方选手行查看对应对局。
+              当前赛事还没有轮次数据。
             </div>
-          ) : selectedPlayerMatches.length === 0 ? (
+          ) : activeRoundPairings.length === 0 ? (
             <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-              当前选手还没有对局记录。
+              当前轮次还没有生成 pairing。
             </div>
           ) : (
-            selectedPlayerMatches.map((match) => (
-              <Link
-                key={match.id}
-                className="block rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-4 transition hover:border-[rgba(224,74,47,0.28)] hover:bg-[rgba(224,74,47,0.06)]"
-                to={`/matches/${match.id}`}
+            activeRoundPairings.map((pairing) => (
+              <div
+                key={pairing.pairKey}
+                className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-4"
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <p className="font-semibold text-[var(--foreground)]">Round {match.roundNumber} · Match #{match.id}</p>
+                    <p className="font-semibold text-[var(--foreground)]">{getPlayerName(pairing.leftSubmissionId)} vs {getPlayerName(pairing.rightSubmissionId)}</p>
                     <p className="text-sm text-[var(--foreground-subtle)]">
-                      {match.subAId} vs {match.subBId}
+                      本轮共 {pairing.matches.length} 场正反手对局
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge tone={match.status === "scored" ? "success" : match.status === "error" ? "warning" : "info"}>
-                      {match.status}
-                    </Badge>
-                    <span className="font-mono text-sm text-[var(--foreground-subtle)]">
-                      {match.scoreA ?? "--"} : {match.scoreB ?? "--"}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {pairing.matches.map((match) => (
+                      <Link
+                        key={match.id}
+                        className="inline-flex flex-col items-start gap-2 rounded-2xl border border-[var(--border-soft)] px-4 py-3 text-xs text-[var(--foreground-subtle)] transition hover:border-[rgba(224,74,47,0.28)] hover:bg-[rgba(224,74,47,0.06)] hover:text-[var(--foreground)]"
+                        to={`/matches/${match.id}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>Match #{match.id}</span>
+                          <Badge tone={match.status === "scored" ? "success" : match.status === "error" ? "warning" : "info"}>
+                            {match.status}
+                          </Badge>
+                        </div>
+                        <span>{formatMatchSide(match.subAId, "a")} vs {formatMatchSide(match.subBId, "b")}</span>
+                      </Link>
+                    ))}
                   </div>
                 </div>
-              </Link>
+              </div>
             ))
           )}
         </CardContent>

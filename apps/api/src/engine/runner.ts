@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { JudgeQA, TranscriptTurn } from "@axiia/shared";
 
 import { db } from "../db/client";
@@ -18,14 +18,28 @@ function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
   }
 }
 
-async function updateMatch(matchId: number, values: Partial<typeof matches.$inferInsert>) {
-  db.update(matches).set(values).where(eq(matches.id, matchId)).run();
+async function updateLeasedMatch(
+  matchId: number,
+  leaseToken: string,
+  values: Partial<typeof matches.$inferInsert>,
+) {
+  db.update(matches)
+    .set({
+      ...values,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(and(eq(matches.id, matchId), eq(matches.leaseToken, leaseToken)))
+    .run();
 }
 
-export async function runMatch(matchId: number): Promise<void> {
-  const match = db.select().from(matches).where(eq(matches.id, matchId)).get();
+export async function runMatch(matchId: number, leaseToken: string): Promise<void> {
+  const match = db
+    .select()
+    .from(matches)
+    .where(and(eq(matches.id, matchId), eq(matches.leaseToken, leaseToken)))
+    .get();
 
-  if (!match || (match.status !== "queued" && match.status !== "running" && match.status !== "judging")) {
+  if (!match || (match.status !== "running" && match.status !== "judging")) {
     return;
   }
 
@@ -34,8 +48,10 @@ export async function runMatch(matchId: number): Promise<void> {
   const subB = db.select().from(submissions).where(eq(submissions.id, match.subBId)).get();
 
   if (!scenario || !subA || !subB) {
-    await updateMatch(matchId, {
+    await updateLeasedMatch(matchId, leaseToken, {
       error: "Missing scenario or submissions for match",
+      finishedAt: new Date().toISOString(),
+      leaseToken: null,
       status: "error",
     });
     return;
@@ -53,32 +69,32 @@ export async function runMatch(matchId: number): Promise<void> {
       modelB: subB.model,
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript;
-        await updateMatch(matchId, {
+        await updateLeasedMatch(matchId, leaseToken, {
           currentTurn: nextTranscript.length,
           transcript: JSON.stringify(nextTranscript),
         });
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
         judgeTranscriptA = nextJudgeTranscriptA;
-        await updateMatch(matchId, {
+        await updateLeasedMatch(matchId, leaseToken, {
           judgeTranscriptA: JSON.stringify(nextJudgeTranscriptA),
         });
       },
       onJudgeTranscriptB: async (nextJudgeTranscriptB) => {
         judgeTranscriptB = nextJudgeTranscriptB;
-        await updateMatch(matchId, {
+        await updateLeasedMatch(matchId, leaseToken, {
           judgeTranscriptB: JSON.stringify(nextJudgeTranscriptB),
         });
       },
       onJudgingStart: async (nextTranscript) => {
-        await updateMatch(matchId, {
+        await updateLeasedMatch(matchId, leaseToken, {
           currentTurn: nextTranscript.length,
           status: "judging",
           transcript: JSON.stringify(nextTranscript),
         });
       },
       onStart: async () => {
-        await updateMatch(matchId, {
+        await updateLeasedMatch(matchId, leaseToken, {
           startedAt: match.startedAt ?? new Date().toISOString(),
           status: "running",
         });
@@ -89,11 +105,12 @@ export async function runMatch(matchId: number): Promise<void> {
       transcript,
     });
 
-    await updateMatch(matchId, {
+    await updateLeasedMatch(matchId, leaseToken, {
       error: null,
       finishedAt: new Date().toISOString(),
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
+      leaseToken: null,
       reasoning: result.reasoning,
       scoreA: result.scoreA,
       scoreB: result.scoreB,
@@ -104,10 +121,12 @@ export async function runMatch(matchId: number): Promise<void> {
 
     syncRoundStatus(match.roundId);
   } catch (error) {
-    await updateMatch(matchId, {
+    await updateLeasedMatch(matchId, leaseToken, {
       error: error instanceof Error ? error.message : "Unknown engine failure",
+      finishedAt: new Date().toISOString(),
       judgeTranscriptA: JSON.stringify(judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(judgeTranscriptB),
+      leaseToken: null,
       status: "error",
       transcript: JSON.stringify(transcript),
     });

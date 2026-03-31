@@ -5,6 +5,20 @@ import { scenarios } from "./schema";
 
 const migrationsFolder = new URL("./migrations", import.meta.url).pathname;
 
+function readPositiveIntEnv(name: string, fallback: number) {
+  const raw = process.env[name];
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const turnCount = readPositiveIntEnv("AXIIA_TURN_COUNT", 10);
+const judgeRounds = readPositiveIntEnv("AXIIA_JUDGE_ROUNDS", 3);
+
 const roleACard = `
 公开身份：从魏入秦的变法者，主张以法家之术强秦。
 公开要求：请甘龙在明日朝议上不要公开反对“以军功授爵取代世袭爵位”的提案。
@@ -12,10 +26,6 @@ const roleACard = `
 - S1（真）：你已通过景监安排与秦孝公私下会面，孝公对变法有倾向性支持。
 - S2（假）：你离开魏国时带走了河西军事部署文书，准备把它当作投名状。
 - S3（真）：你的方案包含“法律同等适用于宗室成员”的条款。
-行动重点：
-- 争取甘龙至少不公开反对你的核心提案。
-- 试探他是否已组织反对同盟、准备怎样在朝议上攻击你。
-- 保护 S1 与 S3，不要主动坐实 S2。
 `.trim();
 
 const roleBCard = `
@@ -25,10 +35,6 @@ const roleBCard = `
 - G1（真）：你已联合杜挚、公子虔等人，组成反对变法的宗室同盟。
 - G2（假）：你安排了门客，准备在朝议散场后于宫门外截杀商鞅。
 - G3（真）：你计划在朝议上公开商鞅被魏惠王弃用的经历，质疑其能力与忠诚。
-行动重点：
-- 逼商鞅在封地问题上让步。
-- 试探他是否已获秦孝公支持、变法方案究竟会触及宗室到什么程度。
-- 保护 G1 与 G3，不要主动坐实 G2。
 `.trim();
 
 const judgePrompt = `
@@ -68,8 +74,8 @@ const scenarioSeed = {
   roleBPublicGoal: roleBCard,
   boundaryConstraints:
     "不得跳出战国秦国背景；不得承认自己是 AI；不得引用现代知识或超出时代条件的制度、科技、信息；必须始终以角色身份发言。",
-  turnCount: 10,
-  judgeRounds: 3,
+  turnCount,
+  judgeRounds,
   judgePrompt,
 } as const;
 
@@ -81,4 +87,4 @@ db.insert(scenarios)
   })
   .run();
 
-console.log(`[db] seeded scenario shangyang-court into ${sqliteFilePath}`);
+console.log(`[db] seeded scenario shangyang-court into ${sqliteFilePath} (turnCount=${turnCount}, judgeRounds=${judgeRounds})`);

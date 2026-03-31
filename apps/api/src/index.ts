@@ -76,6 +76,4 @@ Bun.serve({
 
 console.log(`[api] listening on http://localhost:${port}`);
 
-if (process.env.ENABLE_WORKER !== "false") {
-  startWorker();
-}
+startWorker();

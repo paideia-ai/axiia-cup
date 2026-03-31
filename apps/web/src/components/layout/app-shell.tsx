@@ -10,11 +10,13 @@ const navigation = [
   { to: "/dashboard", label: "控制台", icon: Gauge },
   { to: "/scenarios/shangyang-court", label: "工坊", icon: LayoutDashboard },
   { to: "/leaderboard", label: "排行榜", icon: Trophy },
-  { to: "/admin", label: "Admin", icon: Shield },
 ];
 
 export function AppShell({ children }: PropsWithChildren) {
   const { logout, user } = useAuth();
+  const navigationItems = user?.isAdmin
+    ? [...navigation, { to: "/admin", label: "Admin", icon: Shield }]
+    : navigation;
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -24,7 +26,7 @@ export function AppShell({ children }: PropsWithChildren) {
             AXIIA CUP
           </NavLink>
           <nav className="hidden items-center gap-1 md:flex">
-            {navigation.map((item) => (
+            {navigationItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}

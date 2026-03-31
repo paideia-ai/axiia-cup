@@ -12,6 +12,7 @@ import { RegisterPage } from "./pages/Register";
 import { ScenarioDetailPage } from "./pages/ScenarioDetail";
 import { ScenariosPage } from "./pages/Scenarios";
 import { SettingsPage } from "./pages/settings-page";
+import { TournamentPlayerDetailPage } from "./pages/TournamentPlayerDetail";
 
 function ProtectedShell() {
   const { isLoading, user } = useAuth();
@@ -37,9 +38,10 @@ function ProtectedShell() {
         <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
         <Route path="/playground/:submissionId" element={<PlaygroundPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/leaderboard/tournaments/:tournamentId/players/:submissionId" element={<TournamentPlayerDetailPage />} />
         <Route path="/matches/:matchId" element={<MatchDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin" element={user?.isAdmin ? <AdminPage /> : <Navigate replace to="/dashboard" />} />
       </Routes>
     </AppShell>
   );

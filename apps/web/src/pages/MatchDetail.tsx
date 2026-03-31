@@ -1,15 +1,21 @@
-import type { MatchDetail } from "@axiia/shared";
+import type { MatchDetail, Scenario } from "@axiia/shared";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getMatch } from "../lib/api";
+import { useAuth } from "../context/auth";
+import { getMatch, getScenario, retryAdminMatch } from "../lib/api";
 
 export function MatchDetailPage() {
   const { matchId = "" } = useParams();
+  const { user } = useAuth();
   const [match, setMatch] = useState<MatchDetail | null>(null);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,8 +32,11 @@ export function MatchDetailPage() {
         setIsLoading(true);
         setError(null);
         const detail = await getMatch(numericId);
+        const scenarioDetail = await getScenario(detail.scenarioId);
         setMatch(detail);
+        setScenario(scenarioDetail);
       } catch (loadError) {
+        setScenario(null);
         setError(loadError instanceof Error ? loadError.message : "加载对局失败");
       } finally {
         setIsLoading(false);
@@ -36,6 +45,15 @@ export function MatchDetailPage() {
 
     void loadMatch();
   }, [matchId]);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   if (isLoading) {
     return (
@@ -50,20 +68,60 @@ export function MatchDetailPage() {
     return <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">{error ?? "对局不存在"}</div>;
   }
 
+  const roleALabel = scenario ? `角色 A · ${scenario.roleAName}` : "角色 A";
+  const roleBLabel = scenario ? `角色 B · ${scenario.roleBName}` : "角色 B";
+  const playerALabel = `${match.playerADisplayName} · ${roleALabel}`;
+  const playerBLabel = `${match.playerBDisplayName} · ${roleBLabel}`;
+  const winnerLabel =
+    match.winner === "a"
+      ? playerALabel
+      : match.winner === "b"
+        ? playerBLabel
+        : match.winner === "draw"
+          ? "平局"
+          : "--";
+
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
+      {toast ? (
+        <div className="fixed right-6 top-20 z-50 rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.12)] px-4 py-3 text-sm text-[var(--success)] shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          {toast}
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="page-eyebrow">Match</p>
           <h1 className="page-title">对战结果 #{match.id}</h1>
           <p className="page-subtitle">
-            Round {match.roundNumber} · submission {match.subAId} vs submission {match.subBId}
+            Round {match.roundNumber} · {playerALabel} vs {playerBLabel}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge tone={match.status === "scored" ? "success" : match.status === "error" ? "warning" : "info"}>
             {match.status}
           </Badge>
+          {user?.isAdmin && match.status === "error" ? (
+            <Button
+              disabled={isRetrying}
+              onClick={async () => {
+                try {
+                  setIsRetrying(true);
+                  setError(null);
+                  await retryAdminMatch(match.id);
+                  const detail = await getMatch(match.id);
+                  setMatch(detail);
+                  setToast("已将异常对局重新加入队列");
+                } catch (retryError) {
+                  setError(retryError instanceof Error ? retryError.message : "重试对局失败");
+                } finally {
+                  setIsRetrying(false);
+                }
+              }}
+            >
+              {isRetrying ? "重试中..." : "管理员重试"}
+            </Button>
+          ) : null}
           <Link className="inline-flex items-center rounded-md border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]" to={`/leaderboard?tournament=${match.tournamentId}`}>
             返回排行榜
           </Link>
@@ -73,9 +131,7 @@ export function MatchDetailPage() {
       <Card>
         <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <CardTitle>
-              {match.playerADisplayName} vs {match.playerBDisplayName}
-            </CardTitle>
+            <CardTitle>{playerALabel} vs {playerBLabel}</CardTitle>
             <p className="mt-2 text-sm text-[var(--foreground-subtle)]">
               {match.playerAModel} vs {match.playerBModel}
             </p>
@@ -89,7 +145,7 @@ export function MatchDetailPage() {
             </div>
             <div className="rounded-xl border border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)] px-4 py-3">
               <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">Winner</p>
-              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">{match.winner?.toUpperCase() ?? "--"}</p>
+              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">{winnerLabel}</p>
             </div>
           </div>
         </CardHeader>
@@ -102,7 +158,7 @@ export function MatchDetailPage() {
         <CardContent className="space-y-3">
           {match.transcript.map((turn, index) => {
             const isA = turn.speaker === "a";
-            const roleName = isA ? match.playerADisplayName : match.playerBDisplayName;
+            const roleName = isA ? playerALabel : playerBLabel;
 
             return (
               <div key={`${turn.speaker}-${index}`} className={`flex ${isA ? "justify-start" : "justify-end"}`}>
@@ -121,7 +177,7 @@ export function MatchDetailPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>裁判追问 · A</CardTitle>
+            <CardTitle>裁判追问 · {playerALabel}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {match.judgeTranscriptA.map((item) => (
@@ -137,7 +193,7 @@ export function MatchDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>裁判追问 · B</CardTitle>
+            <CardTitle>裁判追问 · {playerBLabel}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {match.judgeTranscriptB.map((item) => (

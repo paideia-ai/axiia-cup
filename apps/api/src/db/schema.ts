@@ -130,8 +130,10 @@ export const matches = sqliteTable(
     winner: text("winner", { enum: matchWinners }),
     reasoning: text("reasoning"),
     error: text("error"),
+    leaseToken: text("lease_token"),
     startedAt: text("started_at"),
     finishedAt: text("finished_at"),
+    updatedAt: text("updated_at"),
     createdAt: text("created_at").notNull().default(currentTimestamp),
   },
   (table) => ({
