@@ -241,9 +241,15 @@ export function LeaderboardPage() {
         <CardContent className="overflow-x-auto">
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, index) => (
+              {[
+                'leaderboard-skeleton-1',
+                'leaderboard-skeleton-2',
+                'leaderboard-skeleton-3',
+                'leaderboard-skeleton-4',
+                'leaderboard-skeleton-5',
+              ].map((key) => (
                 <div
-                  key={index}
+                  key={key}
                   className="h-14 animate-pulse rounded bg-white/6"
                 />
               ))}

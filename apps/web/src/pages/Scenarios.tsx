@@ -80,8 +80,8 @@ export function ScenariosPage() {
 
       <div className="space-y-4">
         {isLoading
-          ? Array.from({ length: 1 }).map((_, index) => (
-              <ScenarioCardSkeleton key={index} />
+          ? ['scenario-skeleton'].map((key) => (
+              <ScenarioCardSkeleton key={key} />
             ))
           : scenarios.map((scenario) => (
               <Card

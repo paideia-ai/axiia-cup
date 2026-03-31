@@ -6,7 +6,7 @@ import {
   type Submission,
 } from '@axiia/shared'
 import { ArrowLeft, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
@@ -257,32 +257,39 @@ function RunResult({
         </CardHeader>
         <CardContent className="space-y-3">
           {run.transcript.length ? (
-            run.transcript.map((turn, index) => {
-              const isA = turn.speaker === 'a'
-              const roleName = isA ? scenario.roleAName : scenario.roleBName
+            (() => {
+              const turnKeyCounts = new Map<string, number>()
 
-              return (
-                <div
-                  key={`${turn.speaker}-${index}`}
-                  className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
-                >
+              return run.transcript.map((turn, index) => {
+                const baseKey = `${turn.speaker}:${turn.content}`
+                const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+                turnKeyCounts.set(baseKey, occurrence)
+                const isA = turn.speaker === 'a'
+                const roleName = isA ? scenario.roleAName : scenario.roleBName
+
+                return (
                   <div
-                    className={`max-w-[85%] rounded-2xl border px-4 py-3 ${
-                      isA
-                        ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]'
-                        : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'
-                    }`}
+                    key={`${baseKey}:${occurrence}`}
+                    className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
                   >
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-                      Turn {index + 1} · {roleName}
-                    </p>
-                    <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
-                      {turn.content}
-                    </p>
+                    <div
+                      className={`max-w-[85%] rounded-2xl border px-4 py-3 ${
+                        isA
+                          ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]'
+                          : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'
+                      }`}
+                    >
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
+                        Turn {index + 1} · {roleName}
+                      </p>
+                      <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
+                        {turn.content}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )
-            })
+                )
+              })
+            })()
           ) : (
             <p className="text-sm text-[var(--foreground-subtle)]">
               对话尚未开始。
@@ -671,13 +678,9 @@ export function PlaygroundPage() {
     }, 1000)
 
     return () => window.clearInterval(timer)
-  }, [
-    activeSession?.requestId,
-    activeSession?.startedAt,
-    activeSession?.status,
-  ])
+  }, [activeSession])
 
-  async function refreshActiveRun() {
+  const refreshActiveRun = useCallback(async () => {
     if (!activeSession || activeSession.status !== 'running') {
       return
     }
@@ -710,7 +713,7 @@ export function PlaygroundPage() {
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [activeSession, submissionId])
 
   useEffect(() => {
     if (!activeSession || activeSession.status !== 'running') {
@@ -736,7 +739,7 @@ export function PlaygroundPage() {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [activeSession?.requestId, activeSession?.status, submissionId])
+  }, [activeSession, refreshActiveRun])
 
   const handleRun = () => {
     if (!submission || !scenario) {

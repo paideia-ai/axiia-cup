@@ -32,19 +32,43 @@ export function TournamentPlayerDetailPage() {
     [leaderboard],
   )
   const player = playersBySubmissionId.get(numericSubmissionId) ?? null
-  const playerMatches: PlayerMatchView[] =
-    tournamentDetail?.rounds.flatMap((round) =>
-      round.matches
-        .filter(
-          (match) =>
-            match.subAId === numericSubmissionId ||
-            match.subBId === numericSubmissionId,
-        )
-        .map((match) => ({
-          ...match,
+  const playerMatches: PlayerMatchView[] = useMemo(() => {
+    if (!tournamentDetail) {
+      return []
+    }
+
+    const nextMatches: PlayerMatchView[] = []
+
+    for (const round of tournamentDetail.rounds) {
+      for (const match of round.matches) {
+        if (
+          match.subAId !== numericSubmissionId &&
+          match.subBId !== numericSubmissionId
+        ) {
+          continue
+        }
+
+        nextMatches.push({
+          createdAt: match.createdAt,
+          currentTurn: match.currentTurn,
+          finishedAt: match.finishedAt,
+          id: match.id,
+          roundId: match.roundId,
           roundNumber: round.roundNumber,
-        })),
-    ) ?? []
+          scenarioId: match.scenarioId,
+          scoreA: match.scoreA,
+          scoreB: match.scoreB,
+          startedAt: match.startedAt,
+          status: match.status,
+          subAId: match.subAId,
+          subBId: match.subBId,
+          winner: match.winner,
+        })
+      }
+    }
+
+    return nextMatches
+  }, [numericSubmissionId, tournamentDetail])
   const roleACount = playerMatches.filter(
     (match) => match.subAId === numericSubmissionId,
   ).length
@@ -102,9 +126,14 @@ export function TournamentPlayerDetailPage() {
       <div className="space-y-6">
         <div className="h-10 w-56 animate-pulse rounded bg-white/8" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {[
+            'player-stat-skeleton-1',
+            'player-stat-skeleton-2',
+            'player-stat-skeleton-3',
+            'player-stat-skeleton-4',
+          ].map((key) => (
             <div
-              key={index}
+              key={key}
               className="h-28 animate-pulse rounded-xl bg-white/5"
             />
           ))}

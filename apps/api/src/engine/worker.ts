@@ -3,6 +3,7 @@ import { and, asc, eq, or } from 'drizzle-orm'
 import { db } from '../db/client'
 import { matches } from '../db/schema'
 import { runMatch } from './runner'
+import { registerWorkerKickHandler } from './worker-signal'
 
 const MAX_CONCURRENT_MATCHES = 4
 const WORKER_POLL_INTERVAL_MS = 5_000
@@ -158,3 +159,8 @@ export function kickWorker() {
   startWorker()
   void pollOnce()
 }
+
+registerWorkerKickHandler(() => {
+  startWorker()
+  void pollOnce()
+})

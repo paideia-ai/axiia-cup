@@ -45,6 +45,8 @@ export const scenarios = sqliteTable('scenarios', {
   createdAt: text('created_at').notNull().default(currentTimestamp),
 })
 
+export type ScenarioRecord = typeof scenarios.$inferSelect
+
 export const submissions = sqliteTable('submissions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id')

@@ -56,6 +56,7 @@ export async function chatCompletion(params: {
           : 'unknown'
       throw new Error(
         `SiliconFlow request failed (${status}): ${error.message}`,
+        { cause: error },
       )
     }
 

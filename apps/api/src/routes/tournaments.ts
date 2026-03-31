@@ -10,7 +10,6 @@ import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 
-import { kickWorker } from '../engine/worker'
 import { db } from '../db/client'
 import {
   matches,
@@ -20,6 +19,7 @@ import {
   tournaments,
   users,
 } from '../db/schema'
+import { kickWorker } from '../engine/worker-signal'
 import {
   advanceToNextRound,
   createRoundWithMatches,
@@ -28,7 +28,6 @@ import {
   getLeaderboard,
   getTournamentDetail,
   listTournaments,
-  syncRoundStatus,
 } from '../lib/tournaments'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'

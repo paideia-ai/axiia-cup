@@ -9,7 +9,6 @@ import { Hono } from 'hono'
 import { db } from '../db/client'
 import {
   matches,
-  rounds,
   scenarios,
   submissions,
   tournaments,

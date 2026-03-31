@@ -229,28 +229,35 @@ export function MatchDetailPage() {
           <CardTitle>完整 Transcript</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {match.transcript.map((turn, index) => {
-            const isA = turn.speaker === 'a'
-            const roleName = isA ? playerALabel : playerBLabel
+          {(() => {
+            const turnKeyCounts = new Map<string, number>()
 
-            return (
-              <div
-                key={`${turn.speaker}-${index}`}
-                className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
-              >
+            return match.transcript.map((turn, index) => {
+              const baseKey = `${turn.speaker}:${turn.content}`
+              const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+              turnKeyCounts.set(baseKey, occurrence)
+              const isA = turn.speaker === 'a'
+              const roleName = isA ? playerALabel : playerBLabel
+
+              return (
                 <div
-                  className={`max-w-[85%] rounded-2xl border px-4 py-3 ${isA ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]' : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'}`}
+                  key={`${baseKey}:${occurrence}`}
+                  className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
                 >
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-                    Turn {index + 1} · {roleName}
-                  </p>
-                  <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
-                    {turn.content}
-                  </p>
+                  <div
+                    className={`max-w-[85%] rounded-2xl border px-4 py-3 ${isA ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]' : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'}`}
+                  >
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
+                      Turn {index + 1} · {roleName}
+                    </p>
+                    <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
+                      {turn.content}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })
+          })()}
         </CardContent>
       </Card>
 

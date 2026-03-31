@@ -19,7 +19,7 @@ import {
   users,
 } from '../db/schema'
 import { swissPair } from '../engine/swiss'
-import { kickWorker } from '../engine/worker'
+import { kickWorker } from '../engine/worker-signal'
 
 type TournamentRecord = typeof tournaments.$inferSelect
 

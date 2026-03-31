@@ -10,15 +10,13 @@ import {
   type TranscriptTurn,
 } from '@axiia/shared'
 
-import { scenarios } from '../db/schema'
+import type { ScenarioRecord } from '../db/schema'
 import { chatCompletion } from './llm'
 
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
 
 export const JUDGE_MODEL = 'deepseek-v3.2' as const satisfies ModelId
-
-type ScenarioRecord = typeof scenarios.$inferSelect
 
 type MatchExecutionParams = {
   judgeTranscriptA?: JudgeQA[]

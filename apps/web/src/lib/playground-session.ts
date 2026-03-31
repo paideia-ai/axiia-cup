@@ -209,7 +209,7 @@ export function startTrackedPlaygroundRun(params: {
 
   void runPlayground(params.submissionId)
     .then((run) => {
-      syncPlaygroundRun(params.submissionId, requestId, run)
+      return syncPlaygroundRun(params.submissionId, requestId, run)
     })
     .catch((error) => {
       failPlaygroundRun(
