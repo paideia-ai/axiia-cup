@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
     allowHeaders: ["Authorization", "Content-Type"],
-    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PATCH", "OPTIONS"],
   }),
 );
 
@@ -39,7 +39,6 @@ app.get("/api/meta", (context) => {
   const scenarioSummaries = db
     .select({
       id: scenarios.id,
-      judgeRounds: scenarios.judgeRounds,
       roleAName: scenarios.roleAName,
       roleBName: scenarios.roleBName,
       subject: scenarios.subject,

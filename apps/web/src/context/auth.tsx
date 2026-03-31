@@ -8,6 +8,7 @@ type AuthContextValue = {
   login: (payload: { token: string; user: User }) => void;
   logout: () => void;
   token: null | string;
+  updateUser: (user: User) => void;
   user: null | User;
 };
 
@@ -54,6 +55,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(null);
       },
       token,
+      updateUser: (nextUser) => {
+        setUser(nextUser);
+      },
       user,
     }),
     [isLoading, token, user],

@@ -1,4 +1,4 @@
-import { LayoutDashboard, ScrollText, Settings, Shield, Swords, Trophy } from "lucide-react";
+import { LayoutDashboard, ScrollText, Shield, Trophy } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -9,9 +9,7 @@ import { Button } from "../ui/button";
 const navigation = [
   { to: "/scenarios", label: "场景", icon: ScrollText },
   { to: "/scenarios/shangyang-court", label: "工坊", icon: LayoutDashboard },
-  { to: "/playground", label: "试炼场", icon: Swords },
   { to: "/leaderboard", label: "排行榜", icon: Trophy },
-  { to: "/settings", label: "设置", icon: Settings },
   { to: "/admin", label: "Admin", icon: Shield },
 ];
 
@@ -43,13 +41,23 @@ export function AppShell({ children }: PropsWithChildren) {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <div className="hidden text-right sm:block">
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--foreground-muted)]">MVP</p>
-              <p className="text-sm font-semibold text-[var(--foreground)]">{user?.displayName ?? "momo"}</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(224,74,47,0.2)] bg-[rgba(224,74,47,0.12)] font-mono text-xs text-[var(--accent)]">
-              {(user?.displayName ?? "momo").slice(0, 2).toUpperCase()}
-            </div>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-full border border-transparent px-2 py-1.5 transition hover:border-[var(--border-soft)] hover:bg-white/4",
+                  isActive && "border-[var(--border-soft)] bg-white/6",
+                )
+              }
+            >
+              <div className="hidden text-right sm:block">
+                <p className="text-xs uppercase tracking-[0.16em] text-[var(--foreground-muted)]">MVP</p>
+                <p className="text-sm font-semibold text-[var(--foreground)]">{user?.displayName ?? "momo"}</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(224,74,47,0.2)] bg-[rgba(224,74,47,0.12)] font-mono text-xs text-[var(--accent)]">
+                {(user?.displayName ?? "momo").slice(0, 2).toUpperCase()}
+              </div>
+            </NavLink>
             <Button size="sm" variant="secondary" onClick={logout}>
               退出
             </Button>

@@ -1,4 +1,4 @@
-import { userSchema } from "@axiia/shared";
+import { changePasswordSchema, okResponseSchema, updateProfileSchema, userSchema } from "@axiia/shared";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -106,6 +106,61 @@ authRouter.get("/api/auth/me", requireAuth, async (context) => {
   }
 
   return context.json(userSchema.parse(userRecord));
+});
+
+authRouter.patch("/api/auth/me", requireAuth, async (context) => {
+  const json = await context.req.json().catch(() => null);
+  const parsed = updateProfileSchema.safeParse(json);
+
+  if (!parsed.success) {
+    return context.json({ error: "Invalid request body" }, 400);
+  }
+
+  const userId = context.get("userId");
+  const displayName = parsed.data.displayName.trim();
+  const updatedUser = db
+    .update(users)
+    .set({ displayName })
+    .where(eq(users.id, userId))
+    .returning(publicUserSelection)
+    .get();
+
+  if (!updatedUser) {
+    return context.json({ error: "User not found" }, 404);
+  }
+
+  return context.json(userSchema.parse(updatedUser));
+});
+
+authRouter.post("/api/auth/password", requireAuth, async (context) => {
+  const json = await context.req.json().catch(() => null);
+  const parsed = changePasswordSchema.safeParse(json);
+
+  if (!parsed.success) {
+    return context.json({ error: "Invalid request body" }, 400);
+  }
+
+  const userId = context.get("userId");
+  const userRecord = db.select().from(users).where(eq(users.id, userId)).get();
+
+  if (!userRecord) {
+    return context.json({ error: "User not found" }, 404);
+  }
+
+  const passwordMatched = await verifyPassword(parsed.data.currentPassword, userRecord.passwordHash);
+
+  if (!passwordMatched) {
+    return context.json({ error: "Current password is incorrect" }, 401);
+  }
+
+  const passwordHash = await hashPassword(parsed.data.newPassword);
+  db
+    .update(users)
+    .set({ passwordHash })
+    .where(eq(users.id, userId))
+    .run();
+
+  return context.json(okResponseSchema.parse({ ok: true }));
 });
 
 export { authRouter };

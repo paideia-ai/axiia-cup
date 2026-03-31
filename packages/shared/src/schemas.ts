@@ -15,6 +15,25 @@ export const userSchema = z.object({
   isAdmin: z.boolean(),
 });
 
+export const updateProfileSchema = z.object({
+  displayName: z.string().trim().min(1),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(1),
+});
+
+export const okResponseSchema = z.object({
+  ok: z.literal(true),
+});
+
+export const hiddenInfoItemSchema = z.object({
+  id: z.string(),      // e.g. "S1", "S2", "G1"
+  claim: z.string(),   // the factual statement
+  isTrue: z.boolean(), // ground truth — visible to the player who owns it
+});
+
 export const scenarioSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -22,12 +41,15 @@ export const scenarioSchema = z.object({
   context: z.string(),
   roleAName: z.string(),
   roleAPublicGoal: z.string(),
+  publicDemandA: z.string(),
+  hiddenInfoA: z.array(hiddenInfoItemSchema),
   roleBName: z.string(),
   roleBPublicGoal: z.string(),
+  publicDemandB: z.string(),
+  hiddenInfoB: z.array(hiddenInfoItemSchema),
   boundaryConstraints: z.string(),
   turnCount: z.number().int().positive(),
   judgePrompt: z.string(),
-  judgeRounds: z.number().int().positive(),
 });
 
 export const modelOptionSchema = z.object({
@@ -41,7 +63,6 @@ export const scenarioSummarySchema = z.object({
   subject: z.string(),
   summary: z.string(),
   turnCount: z.number().int().positive(),
-  judgeRounds: z.number().int().positive(),
   roleAName: z.string(),
   roleBName: z.string(),
 });
@@ -75,6 +96,28 @@ export const judgeQASchema = z.object({
   round: z.number().int().positive(),
   question: z.string(),
   answer: z.string(),
+});
+
+// Structured yes/no answers from each player after dialogue
+// Keys are question IDs: D1/D2 (demand) + the hidden info IDs of the opponent
+export const structuredAnswersSchema = z.record(z.string(), z.string());
+
+// Per-item score breakdown for one player
+export const scoreBreakdownSchema = z.object({
+  demandAccepted: z.boolean(),             // opponent agreed to your demand (+2)
+  guesses: z.array(z.object({
+    id: z.string(),
+    myAnswer: z.string(),
+    truth: z.string(),
+    correct: z.boolean(),
+  })),                                      // guesses about opponent's info (+1 each)
+  protections: z.array(z.object({
+    id: z.string(),
+    theirAnswer: z.string(),
+    truth: z.string(),
+    protected: z.boolean(),
+  })),                                      // own info opponent got wrong (+1 each)
+  total: z.number().int().nonnegative(),
 });
 
 export const judgeScoringSchema = z.object({
@@ -112,6 +155,8 @@ export const matchSchema = z.object({
   transcript: z.array(transcriptTurnSchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
+  answersA: structuredAnswersSchema.nullable(),
+  answersB: structuredAnswersSchema.nullable(),
   scoreA: z.number().nullable(),
   scoreB: z.number().nullable(),
   winner: matchWinnerSchema.nullable(),
@@ -192,10 +237,43 @@ export const playgroundResultSchema = z.object({
   transcript: z.array(transcriptTurnSchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
+  answersA: structuredAnswersSchema,
+  answersB: structuredAnswersSchema,
+  scoreBreakdownA: scoreBreakdownSchema,
+  scoreBreakdownB: scoreBreakdownSchema,
   scoreA: z.number(),
   scoreB: z.number(),
   winner: matchWinnerSchema,
   reasoning: z.string(),
+});
+
+export const playgroundRunSchema = z.object({
+  id: z.number().int().positive(),
+  submissionId: z.number().int().positive(),
+  scenarioId: z.string(),
+  transcript: z.array(transcriptTurnSchema),
+  judgeTranscriptA: z.array(judgeQASchema),
+  judgeTranscriptB: z.array(judgeQASchema),
+  answersA: structuredAnswersSchema.nullable(),
+  answersB: structuredAnswersSchema.nullable(),
+  scoreBreakdownA: scoreBreakdownSchema.nullable(),
+  scoreBreakdownB: scoreBreakdownSchema.nullable(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
+  reasoning: z.string().nullable(),
+  error: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const playgroundRunSummarySchema = z.object({
+  id: z.number().int().positive(),
+  submissionId: z.number().int().positive(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
+  error: z.string().nullable(),
+  createdAt: z.string(),
 });
 
 export const personalStatsSchema = z.object({
@@ -228,6 +306,9 @@ export const appMetaSchema = z.object({
 });
 
 export type Scenario = z.infer<typeof scenarioSchema>;
+export type HiddenInfoItem = z.infer<typeof hiddenInfoItemSchema>;
+export type StructuredAnswers = z.infer<typeof structuredAnswersSchema>;
+export type ScoreBreakdown = z.infer<typeof scoreBreakdownSchema>;
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>;
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>;
@@ -243,9 +324,13 @@ export type Tournament = z.infer<typeof tournamentSchema>;
 export type TournamentDetail = z.infer<typeof tournamentDetailSchema>;
 export type MatchDetail = z.infer<typeof matchDetailSchema>;
 export type PlaygroundResult = z.infer<typeof playgroundResultSchema>;
+export type PlaygroundRun = z.infer<typeof playgroundRunSchema>;
+export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>;
 export type PersonalStats = z.infer<typeof personalStatsSchema>;
 export type AdminStats = z.infer<typeof adminStatsSchema>;
 export type RecentMatch = z.infer<typeof recentMatchSchema>;
 export type Match = z.infer<typeof matchSchema>;
 export type AppMeta = z.infer<typeof appMetaSchema>;
 export type User = z.infer<typeof userSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

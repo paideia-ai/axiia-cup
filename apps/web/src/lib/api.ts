@@ -1,21 +1,26 @@
 import {
   adminStatsSchema,
+  changePasswordSchema,
   createSubmissionSchema,
   leaderboardEntrySchema,
   matchDetailSchema,
-  playgroundResultSchema,
+  okResponseSchema,
+  playgroundRunSchema,
+  playgroundRunSummarySchema,
   personalStatsSchema,
   recentMatchSchema,
   scenarioSchema,
   submissionSchema,
   tournamentDetailSchema,
   tournamentListItemSchema,
+  updateProfileSchema,
   userSchema,
   type AdminStats,
   type LeaderboardEntry,
   type MatchDetail,
   type PersonalStats,
-  type PlaygroundResult,
+  type PlaygroundRun,
+  type PlaygroundRunSummary,
   type RecentMatch,
   type Scenario,
   type Submission,
@@ -39,6 +44,7 @@ const submissionsResponseSchema = z.array(submissionSchema);
 const leaderboardResponseSchema = z.array(leaderboardEntrySchema);
 const tournamentsResponseSchema = z.array(tournamentListItemSchema);
 const recentMatchesResponseSchema = z.array(recentMatchSchema);
+const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema);
 
 function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -113,6 +119,32 @@ export async function getMe(): Promise<User> {
   return apiFetch("/api/auth/me", { method: "GET" }, userSchema);
 }
 
+export async function updateProfile(input: z.input<typeof updateProfileSchema>): Promise<User> {
+  const body = updateProfileSchema.parse(input);
+
+  return apiFetch(
+    "/api/auth/me",
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    },
+    userSchema,
+  );
+}
+
+export async function changePassword(input: z.input<typeof changePasswordSchema>): Promise<{ ok: true }> {
+  const body = changePasswordSchema.parse(input);
+
+  return apiFetch(
+    "/api/auth/password",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+    okResponseSchema,
+  );
+}
+
 export async function getScenarios(): Promise<Scenario[]> {
   return apiFetch("/api/scenarios", { method: "GET" }, scenariosResponseSchema);
 }
@@ -142,16 +174,27 @@ export async function createSubmission(input: z.input<typeof createSubmissionSch
   );
 }
 
-export async function runPlayground(input: z.input<typeof createSubmissionSchema>): Promise<PlaygroundResult> {
-  const body = createSubmissionSchema.parse(input);
-
+export async function runPlayground(submissionId: number): Promise<PlaygroundRun> {
   return apiFetch(
     "/api/playground/run",
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    },
-    playgroundResultSchema,
+    { method: "POST", body: JSON.stringify({ submissionId }) },
+    playgroundRunSchema,
+  );
+}
+
+export async function getPlaygroundRuns(submissionId: number): Promise<PlaygroundRunSummary[]> {
+  return apiFetch(
+    `/api/playground/runs/${submissionId}`,
+    { method: "GET" },
+    playgroundRunSummariesSchema,
+  );
+}
+
+export async function getPlaygroundRun(submissionId: number, runId: number): Promise<PlaygroundRun> {
+  return apiFetch(
+    `/api/playground/runs/${submissionId}/${runId}`,
+    { method: "GET" },
+    playgroundRunSchema,
   );
 }
 
