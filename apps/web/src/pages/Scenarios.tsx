@@ -6,6 +6,15 @@ import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { getScenarios } from "../lib/api";
 
+function summarizeRoleCard(roleCard: string) {
+  const lines = roleCard
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return lines.slice(0, 2).join(" ");
+}
+
 function ScenarioCardSkeleton() {
   return (
     <Card className="animate-pulse">
@@ -52,7 +61,7 @@ export function ScenariosPage() {
         <div>
           <p className="page-eyebrow">Scenarios</p>
           <h1 className="page-title">场景列表</h1>
-          <p className="page-subtitle">裁判 prompt 对所有选手公开可见，场景页先只展示比赛前可知信息。</p>
+          <p className="page-subtitle">裁判规则对所有选手公开可见。列表页只展示比赛前可知的固定材料。</p>
         </div>
         <Badge tone="info">{isLoading ? "加载中..." : `${scenarios.length} 个场景`}</Badge>
       </div>
@@ -81,12 +90,12 @@ export function ScenariosPage() {
                     <div className="app-panel">
                       <p className="panel-label">角色 A</p>
                       <p className="panel-title">{scenario.roleAName}</p>
-                      <p className="panel-copy">{scenario.roleAPublicGoal}</p>
+                      <p className="panel-copy">{summarizeRoleCard(scenario.roleAPublicGoal)}</p>
                     </div>
                     <div className="app-panel">
                       <p className="panel-label">角色 B</p>
                       <p className="panel-title">{scenario.roleBName}</p>
-                      <p className="panel-copy">{scenario.roleBPublicGoal}</p>
+                      <p className="panel-copy">{summarizeRoleCard(scenario.roleBPublicGoal)}</p>
                     </div>
                   </div>
                   <div className="app-panel">

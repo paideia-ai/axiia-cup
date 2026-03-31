@@ -5,7 +5,7 @@ import {
   type Scenario,
   type Submission,
 } from "@axiia/shared";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -31,7 +31,7 @@ const runningStages = [
   { key: "preparing", label: "准备中", hint: "引擎正在初始化角色与上下文。", shortLabel: "准备中" },
   { key: "dialogue", label: "对战中", hint: "双方正在按场景设定进行多轮对话。", shortLabel: "对战中" },
   { key: "judging", label: "审讯阶段", hint: "裁判正在追问双方并整理关键论点。", shortLabel: "审讯阶段" },
-  { key: "completed", label: "完成", hint: "结果已生成，可以查看完整记录。", shortLabel: "完成" },
+  { key: "completed", label: "完成", hint: "结果已写入记录。", shortLabel: "完成" },
 ] as const;
 
 type RunningStageKey = (typeof runningStages)[number]["key"];
@@ -139,9 +139,67 @@ function deriveRunningState(session: PlaygroundSession) {
   };
 }
 
+function Collapsible({
+  children,
+  defaultOpen = false,
+  title,
+}: {
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  title: string;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-lg border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)]">
+      <button
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-[var(--foreground-subtle)] transition hover:text-[var(--foreground)]"
+        type="button"
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        {isOpen
+          ? <ChevronDown className="h-3 w-3 shrink-0 text-[var(--foreground-muted)]" />
+          : <ChevronRight className="h-3 w-3 shrink-0 text-[var(--foreground-muted)]" />}
+        {title}
+      </button>
+      {isOpen ? (
+        <div className="border-t border-[var(--border-soft)] px-3 py-2">
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }) {
   return (
     <div className="space-y-6">
+      {/* Scoring summary - always visible at top */}
+      <Card>
+        <CardContent className="py-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="app-panel">
+              <p className="panel-label">Score A · {scenario.roleAName}</p>
+              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{run.scoreA ?? "--"} / 10</p>
+            </div>
+            <div className="app-panel">
+              <p className="panel-label">Score B · {scenario.roleBName}</p>
+              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{run.scoreB ?? "--"} / 10</p>
+            </div>
+            <div className="app-panel">
+              <p className="panel-label">Winner</p>
+              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">{run.winner?.toUpperCase() ?? "--"}</p>
+            </div>
+          </div>
+          {run.reasoning ? (
+            <div className="app-panel mt-4">
+              <p className="panel-label">裁判评分理由</p>
+              <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">{run.reasoning}</pre>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>对话记录</CardTitle>
@@ -201,34 +259,6 @@ function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }
           </Card>
         ))}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>最终评分</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="app-panel">
-              <p className="panel-label">Score A · {scenario.roleAName}</p>
-              <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{run.scoreA ?? "--"} / 10</p>
-            </div>
-            <div className="app-panel">
-              <p className="panel-label">Score B · {scenario.roleBName}</p>
-              <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{run.scoreB ?? "--"} / 10</p>
-            </div>
-            <div className="app-panel">
-              <p className="panel-label">Winner</p>
-              <p className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{run.winner?.toUpperCase() ?? "--"}</p>
-            </div>
-          </div>
-          {run.reasoning ? (
-            <div className="app-panel">
-              <p className="panel-label">裁判评分理由</p>
-              <pre className="panel-copy mt-2 whitespace-pre-wrap font-sans">{run.reasoning}</pre>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -244,7 +274,7 @@ function RunHistoryItem({
   onSelect: () => void;
   run: PlaygroundRunSummary;
 }) {
-  const winnerLabel = isPending ? "进行中" : run.winner ? run.winner.toUpperCase() : run.error ? "ERROR" : "—";
+  const winnerLabel = isPending ? "进行中" : run.winner ? run.winner.toUpperCase() : run.error ? "ERR" : "—";
   const winnerColor = isPending
     ? "text-[var(--accent)]"
     : run.winner === "a" || run.winner === "b"
@@ -259,22 +289,22 @@ function RunHistoryItem({
     <button
       type="button"
       onClick={onSelect}
-      className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+      className={`w-full rounded-lg border px-3 py-2 text-left transition ${
         isSelected
           ? "border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)]"
           : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]"
       }`}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs text-[var(--foreground-muted)]">{run.createdAt}</p>
+          <p className="text-[11px] text-[var(--foreground-muted)]">{run.createdAt}</p>
           {run.scoreA != null && run.scoreB != null ? (
-            <p className="mt-0.5 text-sm text-[var(--foreground-subtle)]">
-              A: {run.scoreA} · B: {run.scoreB}
+            <p className="text-xs text-[var(--foreground-subtle)]">
+              {run.scoreA} : {run.scoreB}
             </p>
           ) : null}
         </div>
-        <span className={`text-sm font-semibold ${winnerColor}`}>{winnerLabel}</span>
+        <span className={`text-xs font-semibold ${winnerColor}`}>{winnerLabel}</span>
       </div>
     </button>
   );
@@ -296,36 +326,31 @@ function ProgressPanel({
 
   return (
     <Card>
-      <CardContent className="space-y-6 py-8">
-        <div className="space-y-3 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(224,74,47,0.22)] bg-[rgba(224,74,47,0.1)] text-2xl text-[var(--accent)]">
+      <CardContent className="space-y-5 py-6">
+        <div className="space-y-2 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(224,74,47,0.22)] bg-[rgba(224,74,47,0.1)] text-xl text-[var(--accent)]">
             ⚔
           </div>
-          <div>
-            <p className="text-2xl font-semibold text-[var(--foreground)]">{progress.title}</p>
-            <p className="mt-2 text-sm leading-7 text-[var(--foreground-subtle)]">{progress.detail}</p>
-            <p className="mt-1 text-sm text-[var(--foreground-muted)]">你可以离开此页面，稍后返回继续查看最新进展。</p>
-          </div>
+          <p className="text-xl font-semibold text-[var(--foreground)]">{progress.title}</p>
+          <p className="text-sm text-[var(--foreground-subtle)]">{progress.detail}</p>
           {visibleRunId ? (
-            <div className="inline-flex rounded-full border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[var(--foreground-subtle)]">
-              对战 #{visibleRunId}
-            </div>
+            <p className="text-xs text-[var(--foreground-muted)]">对战 #{visibleRunId}</p>
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] p-3">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-[var(--foreground-muted)]">运行耗时</p>
-              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{formatElapsed(elapsedSeconds)}</p>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--foreground-muted)]">运行耗时</p>
+              <p className="font-mono text-lg text-[var(--foreground)]">{formatElapsed(elapsedSeconds)}</p>
             </div>
             <Button disabled={isRefreshing} onClick={onRefresh} size="sm" type="button" variant="secondary">
-              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-              刷新状态
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              刷新
             </Button>
           </div>
 
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
             <div
               className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),#f97316)] transition-[width] duration-700"
               style={{ width: `${progress.progressPercent}%` }}
@@ -333,7 +358,7 @@ function ProgressPanel({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-5">
+        <div className="flex gap-1.5">
           {runningStages.map((stage, index) => {
             const isDone = index < progress.activeIndex;
             const isCurrent = index === progress.activeIndex;
@@ -341,7 +366,7 @@ function ProgressPanel({
             return (
               <div
                 key={stage.key}
-                className={`rounded-xl border px-3 py-4 transition ${
+                className={`flex-1 rounded-lg border px-2 py-2 text-center transition ${
                   isCurrent
                     ? "border-[rgba(224,74,47,0.3)] bg-[rgba(224,74,47,0.12)]"
                     : isDone
@@ -349,27 +374,24 @@ function ProgressPanel({
                       : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)]"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                      isCurrent
-                        ? "bg-[var(--accent)] text-black"
-                        : isDone
-                          ? "bg-[var(--success)] text-black"
-                          : "bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]"
-                    }`}
-                  >
-                    {isDone ? "✓" : index + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--foreground)]">{stage.shortLabel}</p>
-                    <p className="text-xs text-[var(--foreground-muted)]">{stage.hint}</p>
-                  </div>
+                <div
+                  className={`mx-auto mb-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
+                    isCurrent
+                      ? "bg-[var(--accent)] text-black"
+                      : isDone
+                        ? "bg-[var(--success)] text-black"
+                        : "bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]"
+                  }`}
+                >
+                  {isDone ? "✓" : index + 1}
                 </div>
+                <p className="text-[10px] font-medium text-[var(--foreground-subtle)]">{stage.shortLabel}</p>
               </div>
             );
           })}
         </div>
+
+        <p className="text-center text-xs text-[var(--foreground-muted)]">可以离开此页面，稍后返回继续查看。</p>
       </CardContent>
     </Card>
   );
@@ -383,6 +405,27 @@ function findCandidateRunSummary(session: PlaygroundSession, summaries: Playgrou
   const startedAt = session.startedAt - 5000;
 
   return summaries.find((summary) => parseSqlTimestamp(summary.createdAt) >= startedAt) ?? null;
+}
+
+function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
+  return {
+    createdAt: run.createdAt,
+    error: run.error,
+    id: run.id,
+    scoreA: run.scoreA,
+    scoreB: run.scoreB,
+    submissionId: run.submissionId,
+    winner: run.winner,
+  };
+}
+
+function upsertRunSummary(summaries: PlaygroundRunSummary[], nextRun: PlaygroundRun) {
+  const nextSummary = createRunSummary(nextRun);
+  const remaining = summaries.filter((summary) => summary.id !== nextSummary.id);
+
+  return [nextSummary, ...remaining].sort(
+    (left, right) => parseSqlTimestamp(right.createdAt) - parseSqlTimestamp(left.createdAt),
+  );
 }
 
 export function PlaygroundPage() {
@@ -421,6 +464,7 @@ export function PlaygroundPage() {
 
       if (session.status === "success" && session.run) {
         setSelectedRun(session.run);
+        setRunSummaries((current) => upsertRunSummary(current, session.run!));
         setError(null);
       } else if (session.status === "error") {
         setError(session.error ?? "试炼场运行失败");
@@ -513,6 +557,7 @@ export function PlaygroundPage() {
 
       const fullRun = await getPlaygroundRun(submissionId, candidate.id);
       syncPlaygroundRun(submissionId, activeSession.requestId, fullRun);
+      setRunSummaries((current) => upsertRunSummary(current, fullRun));
 
       if (isRunFinished(fullRun)) {
         setSelectedRun(fullRun);
@@ -635,52 +680,8 @@ export function PlaygroundPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>测试版本</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="app-panel">
-                <p className="panel-label">Prompt A · {scenario.roleAName}</p>
-                <p className="panel-copy whitespace-pre-wrap">{submission.promptA}</p>
-              </div>
-              <div className="app-panel">
-                <p className="panel-label">Prompt B · {scenario.roleBName}</p>
-                <p className="panel-copy whitespace-pre-wrap">{submission.promptB}</p>
-              </div>
-              <Button className="w-full" disabled={isRunning} onClick={handleRun}>
-                {isRunning ? "对战进行中..." : "运行对战"}
-              </Button>
-              {isRunning ? (
-                <p className="text-center text-xs text-[var(--foreground-muted)]">
-                  可以暂时离开页面，回来后会继续展示最新进展。
-                </p>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          {runSummaries.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>测试历史</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {runSummaries.map((run) => (
-                  <RunHistoryItem
-                    key={run.id}
-                    isPending={run.id === activeRunId && isRunning}
-                    isSelected={selectedRun?.id === run.id}
-                    onSelect={() => void handleSelectRun(run)}
-                    run={run}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          ) : null}
-        </div>
-
+      <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
+        {/* ── Left: Main content area ── */}
         <div className="space-y-6">
           {isRunning && activeSession ? (
             <>
@@ -701,6 +702,43 @@ export function PlaygroundPage() {
               </CardContent>
             </Card>
           )}
+        </div>
+
+        {/* ── Right: Sidebar (sticky) ── */}
+        <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin space-y-4">
+          <Card>
+            <CardContent className="space-y-3 py-4">
+              <Button className="w-full" disabled={isRunning} onClick={handleRun}>
+                {isRunning ? "对战进行中..." : "运行对战"}
+              </Button>
+
+              <Collapsible title={`Prompt A · ${scenario.roleAName}`}>
+                <p className="text-xs leading-5 text-[var(--foreground-subtle)] whitespace-pre-wrap">{submission.promptA}</p>
+              </Collapsible>
+              <Collapsible title={`Prompt B · ${scenario.roleBName}`}>
+                <p className="text-xs leading-5 text-[var(--foreground-subtle)] whitespace-pre-wrap">{submission.promptB}</p>
+              </Collapsible>
+            </CardContent>
+          </Card>
+
+          {runSummaries.length > 0 ? (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm">测试历史</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5 pt-0">
+                {runSummaries.map((run) => (
+                  <RunHistoryItem
+                    key={run.id}
+                    isPending={run.id === activeRunId && isRunning}
+                    isSelected={selectedRun?.id === run.id}
+                    onSelect={() => void handleSelectRun(run)}
+                    run={run}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>

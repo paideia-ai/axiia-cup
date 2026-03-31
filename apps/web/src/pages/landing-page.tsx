@@ -8,12 +8,12 @@ import { Card, CardContent } from "../components/ui/card";
 const highlights = [
   {
     title: "双角色提交",
-    description: "每个场景必须同时提交角色 A / B 两份系统提示词，保证真正的对称博弈。",
+    description: "每个场景必须同时提交角色 A / B 两份策略提示词，保证真正的对称博弈。",
     icon: Shield,
   },
   {
     title: "裁判公开",
-    description: "裁判 prompt 和角色人设可见，选手围绕可见规则持续优化策略。",
+    description: "裁判规则和角色人设可见，选手围绕公开规则持续优化策略。",
     icon: Swords,
   },
   {
@@ -49,7 +49,7 @@ export function LandingPage() {
               <span className="block text-[var(--accent)]">设计会赢的 AI 对手</span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--foreground-subtle)] md:text-lg">
-              选手不拼工具链，不拼外挂工作流，只拼系统提示词设计、角色理解与对抗策略。平台先搭骨架，流程先跑通。
+              选手不拼工具链，不拼外挂工作流，只拼策略提示词设计、角色理解与对抗策略。平台先搭骨架，流程先跑通。
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link to="/scenarios">

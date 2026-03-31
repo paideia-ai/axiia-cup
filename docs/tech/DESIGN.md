@@ -92,7 +92,7 @@
 | English | 中文 |
 |---------|------|
 | Submit | 提交参赛 |
-| System Prompt | 系统提示词 |
+| System Prompt | 策略提示词 |
 | Win Rate | 胜率 |
 | Match | 对局 |
 | Turn | 回合 |
