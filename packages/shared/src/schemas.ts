@@ -230,6 +230,10 @@ export const personalStatsSchema = z.object({
   winRate: z.number().min(0).max(100).nullable(),
   submissionCount: z.number().int().nonnegative(),
   pendingMatchCount: z.number().int().nonnegative(),
+  completedMatchCount: z.number().int().nonnegative(),
+  currentVersion: z.number().int().positive().nullable(),
+  scenarioTitle: z.string().nullable(),
+  tournamentRound: z.number().int().nonnegative().nullable(),
 });
 
 export const adminStatsSchema = z.object({
@@ -242,9 +246,14 @@ export const recentMatchSchema = z.object({
   id: z.number().int().positive(),
   status: matchStatusSchema,
   scenarioTitle: z.string(),
+  scenarioId: z.string(),
   roleALabel: z.string(),
   roleBLabel: z.string(),
   winner: matchWinnerSchema.nullable(),
+  opponentName: z.string(),
+  model: z.string(),
+  mySide: z.enum(["a", "b"]),
+  createdAt: z.string(),
 });
 
 export const appMetaSchema = z.object({

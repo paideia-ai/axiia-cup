@@ -1,4 +1,4 @@
-import { LayoutDashboard, ScrollText, Shield, Trophy, UserRound } from "lucide-react";
+import { Gauge, LayoutDashboard, Shield, Trophy, UserRound } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -7,7 +7,7 @@ import { cn } from "../../lib/cn";
 import { Button } from "../ui/button";
 
 const navigation = [
-  { to: "/scenarios", label: "场景", icon: ScrollText },
+  { to: "/dashboard", label: "控制台", icon: Gauge },
   { to: "/scenarios/shangyang-court", label: "工坊", icon: LayoutDashboard },
   { to: "/leaderboard", label: "排行榜", icon: Trophy },
   { to: "/admin", label: "Admin", icon: Shield },

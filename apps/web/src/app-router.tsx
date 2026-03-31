@@ -31,7 +31,7 @@ function ProtectedShell() {
   return (
     <AppShell>
       <Routes>
-        <Route path="/" element={<Navigate replace to="/scenarios" />} />
+        <Route path="/" element={<Navigate replace to="/dashboard" />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/scenarios" element={<ScenariosPage />} />
         <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
@@ -52,8 +52,8 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate replace to={user ? "/scenarios" : "/login"} />} />
-        <Route path="/login" element={isLoading ? <div /> : user ? <Navigate replace to="/scenarios" /> : <LoginPage />} />
-        <Route path="/register" element={isLoading ? <div /> : user ? <Navigate replace to="/scenarios" /> : <RegisterPage />} />
+        <Route path="/login" element={isLoading ? <div /> : user ? <Navigate replace to="/dashboard" /> : <LoginPage />} />
+        <Route path="/register" element={isLoading ? <div /> : user ? <Navigate replace to="/dashboard" /> : <RegisterPage />} />
         <Route path="/*" element={<ProtectedShell />} />
       </Routes>
     </BrowserRouter>
