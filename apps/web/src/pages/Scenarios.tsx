@@ -73,7 +73,7 @@ export function ScenariosPage() {
                   <div className="flex flex-wrap gap-2">
                     <Badge>{scenario.subject}</Badge>
                     <Badge tone="info">{scenario.turnCount} 回合</Badge>
-                    <Badge tone="warning">{scenario.judgeRounds} 轮裁判提问</Badge>
+                    <Badge tone="warning">结构化评分</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">

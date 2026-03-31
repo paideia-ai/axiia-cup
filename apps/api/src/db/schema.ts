@@ -24,14 +24,12 @@ export const scenarios = sqliteTable("scenarios", {
   context: text("context").notNull(),
   roleAName: text("role_a_name").notNull(),
   roleAPublicGoal: text("role_a_public_goal").notNull(),
-  roleAHiddenGoal: text("role_a_hidden_goal").notNull(),
   roleBName: text("role_b_name").notNull(),
   roleBPublicGoal: text("role_b_public_goal").notNull(),
-  roleBHiddenGoal: text("role_b_hidden_goal").notNull(),
   boundaryConstraints: text("boundary_constraints").notNull(),
-  turnCount: integer("turn_count").notNull().default(20),
-  judgePrompt: text("judge_prompt").notNull(),
+  turnCount: integer("turn_count").notNull().default(10),
   judgeRounds: integer("judge_rounds").notNull().default(3),
+  judgePrompt: text("judge_prompt").notNull(),
   createdAt: text("created_at").notNull().default(currentTimestamp),
 });
 
@@ -47,6 +45,25 @@ export const submissions = sqliteTable("submissions", {
   promptB: text("prompt_b").notNull(),
   model: text("model").notNull(),
   version: integer("version").notNull(),
+  createdAt: text("created_at").notNull().default(currentTimestamp),
+});
+
+export const playgroundRuns = sqliteTable("playground_runs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  submissionId: integer("submission_id")
+    .notNull()
+    .references(() => submissions.id),
+  scenarioId: text("scenario_id")
+    .notNull()
+    .references(() => scenarios.id),
+  transcript: text("transcript").notNull().default("[]"),
+  judgeTranscriptA: text("judge_transcript_a").notNull().default("[]"),
+  judgeTranscriptB: text("judge_transcript_b").notNull().default("[]"),
+  scoreA: real("score_a"),
+  scoreB: real("score_b"),
+  winner: text("winner", { enum: matchWinners }),
+  reasoning: text("reasoning"),
+  error: text("error"),
   createdAt: text("created_at").notNull().default(currentTimestamp),
 });
 
@@ -133,6 +150,7 @@ export const schema = {
   users,
   scenarios,
   submissions,
+  playgroundRuns,
   tournaments,
   rounds,
   matches,

@@ -16,14 +16,12 @@ CREATE TABLE `scenarios` (
 	`context` text NOT NULL,
 	`role_a_name` text NOT NULL,
 	`role_a_public_goal` text NOT NULL,
-	`role_a_hidden_goal` text NOT NULL,
 	`role_b_name` text NOT NULL,
 	`role_b_public_goal` text NOT NULL,
-	`role_b_hidden_goal` text NOT NULL,
 	`boundary_constraints` text NOT NULL,
-	`turn_count` integer DEFAULT 20 NOT NULL,
-	`judge_prompt` text NOT NULL,
+	`turn_count` integer DEFAULT 10 NOT NULL,
 	`judge_rounds` integer DEFAULT 3 NOT NULL,
+	`judge_prompt` text NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
@@ -37,6 +35,23 @@ CREATE TABLE `submissions` (
 	`version` integer NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`scenario_id`) REFERENCES `scenarios`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `playground_runs` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`submission_id` integer NOT NULL,
+	`scenario_id` text NOT NULL,
+	`transcript` text DEFAULT '[]' NOT NULL,
+	`judge_transcript_a` text DEFAULT '[]' NOT NULL,
+	`judge_transcript_b` text DEFAULT '[]' NOT NULL,
+	`score_a` real,
+	`score_b` real,
+	`winner` text,
+	`reasoning` text,
+	`error` text,
+	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	FOREIGN KEY (`submission_id`) REFERENCES `submissions`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`scenario_id`) REFERENCES `scenarios`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint

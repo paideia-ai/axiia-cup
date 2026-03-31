@@ -1,53 +1,40 @@
-import { createSubmissionSchema, modelOptions, type PlaygroundResult, type Scenario, type Submission } from "@axiia/shared";
-import { useEffect, useState } from "react";
+import {
+  modelOptions,
+  type PlaygroundRun,
+  type PlaygroundRunSummary,
+  type Scenario,
+  type Submission,
+} from "@axiia/shared";
+import { ArrowLeft, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { getMySubmissions, getScenarios } from "../lib/api";
 import {
-  clearPlaygroundSession,
-  getPlaygroundSessionState,
-  startPlaygroundSession,
+  getMySubmissions,
+  getPlaygroundRun,
+  getPlaygroundRuns,
+  getScenario,
+} from "../lib/api";
+import {
+  getPlaygroundSession,
+  startTrackedPlaygroundRun,
   subscribePlaygroundSession,
+  syncPlaygroundRun,
+  type PlaygroundSession,
 } from "../lib/playground-session";
 
-function countText(value: string) {
-  return [...value].length;
-}
-
 const runningStages = [
-  {
-    key: "submitted",
-    label: "提交任务",
-    hint: "已锁定本次试炼场配置，正在向引擎发送请求。",
-    threshold: 0,
-  },
-  {
-    key: "dialogue",
-    label: "对话阶段",
-    hint: "双方按场景设定展开多轮对话，逐步积累 transcript。",
-    threshold: 6,
-  },
-  {
-    key: "judge-a",
-    label: "审问 A",
-    hint: "裁判正在围绕完整 transcript 追问角色 A。",
-    threshold: 70,
-  },
-  {
-    key: "judge-b",
-    label: "审问 B",
-    hint: "裁判切换到角色 B，继续进行多轮追问。",
-    threshold: 120,
-  },
-  {
-    key: "scoring",
-    label: "裁判评分",
-    hint: "汇总双方问答，生成最终分数、胜负和 reasoning。",
-    threshold: 170,
-  },
+  { key: "submitted", label: "提交", hint: "本次试炼场任务已创建。", shortLabel: "提交" },
+  { key: "preparing", label: "准备中", hint: "引擎正在初始化角色与上下文。", shortLabel: "准备中" },
+  { key: "dialogue", label: "对战中", hint: "双方正在按场景设定进行多轮对话。", shortLabel: "对战中" },
+  { key: "judging", label: "审讯阶段", hint: "裁判正在追问双方并整理关键论点。", shortLabel: "审讯阶段" },
+  { key: "completed", label: "完成", hint: "结果已生成，可以查看完整记录。", shortLabel: "完成" },
 ] as const;
+
+type RunningStageKey = (typeof runningStages)[number]["key"];
 
 function formatElapsed(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -56,160 +43,565 @@ function formatElapsed(seconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
-function getStageIndex(elapsedSeconds: number) {
-  let activeIndex = 0;
+function parseSqlTimestamp(value: string) {
+  const normalized = value.includes("T") ? value : `${value.replace(" ", "T")}Z`;
+  const timestamp = Date.parse(normalized);
 
-  for (let index = 0; index < runningStages.length; index += 1) {
-    if (elapsedSeconds >= runningStages[index].threshold) {
-      activeIndex = index;
-    }
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function isRunFinished(run: PlaygroundRun | null) {
+  if (!run) {
+    return false;
   }
 
-  return activeIndex;
+  return run.error != null || run.scoreA != null || run.scoreB != null || run.winner != null;
+}
+
+function hasRunOutput(run: PlaygroundRun | null) {
+  if (!run) {
+    return false;
+  }
+
+  return run.transcript.length > 0 || run.judgeTranscriptA.length > 0 || run.judgeTranscriptB.length > 0;
+}
+
+function deriveRunningState(session: PlaygroundSession) {
+  if (session.status === "error") {
+    return {
+      activeIndex: 4,
+      detail: session.error ?? "试炼场运行失败。",
+      progressPercent: 100,
+      stageKey: "completed" as RunningStageKey,
+      title: "运行失败",
+    };
+  }
+
+  if (session.status === "success" || isRunFinished(session.run)) {
+    return {
+      activeIndex: 4,
+      detail: "结果已写入记录，可以查看完整 transcript 与裁判评分。",
+      progressPercent: 100,
+      stageKey: "completed" as RunningStageKey,
+      title: "对战已完成",
+    };
+  }
+
+  if (!session.run) {
+    return {
+      activeIndex: 1,
+      detail: "任务已经提交，正在等待首轮对话开始。",
+      progressPercent: 18,
+      stageKey: "preparing" as RunningStageKey,
+      title: "正在准备对战",
+    };
+  }
+
+  const turns = session.run.transcript.length;
+  const judgeRoundsA = session.run.judgeTranscriptA.length;
+  const judgeRoundsB = session.run.judgeTranscriptB.length;
+
+  if (judgeRoundsA > 0 || judgeRoundsB > 0) {
+    const totalJudgeProgress = judgeRoundsA + judgeRoundsB;
+    const totalJudgeRounds = Math.max(1, session.judgeRounds * 2);
+    const completedJudging = Math.min(1, totalJudgeProgress / totalJudgeRounds);
+    const judgingComplete = judgeRoundsA >= session.judgeRounds && judgeRoundsB >= session.judgeRounds;
+
+    return {
+      activeIndex: 3,
+      detail: judgingComplete
+        ? "双方裁判问答已完成，正在汇总最终评分。"
+        : `裁判追问进度：A ${judgeRoundsA}/${session.judgeRounds} · B ${judgeRoundsB}/${session.judgeRounds}`,
+      progressPercent: 70 + completedJudging * 22,
+      stageKey: "judging" as RunningStageKey,
+      title: judgingComplete ? "正在生成最终评分" : "进入审讯阶段",
+    };
+  }
+
+  if (turns > 0) {
+    const dialogueProgress = Math.min(1, turns / Math.max(1, session.turnCount));
+
+    return {
+      activeIndex: 2,
+      detail: `对话进度：已完成 ${turns}/${session.turnCount} 回合`,
+      progressPercent: 28 + dialogueProgress * 38,
+      stageKey: "dialogue" as RunningStageKey,
+      title: "双方正在对战",
+    };
+  }
+
+  return {
+    activeIndex: 1,
+    detail: "引擎已启动，正在准备首轮发言。",
+    progressPercent: 22,
+    stageKey: "preparing" as RunningStageKey,
+    title: "正在准备对战",
+  };
+}
+
+function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }) {
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>对话记录</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {run.transcript.length ? (
+            run.transcript.map((turn, index) => {
+              const isA = turn.speaker === "a";
+              const roleName = isA ? scenario.roleAName : scenario.roleBName;
+
+              return (
+                <div key={`${turn.speaker}-${index}`} className={`flex ${isA ? "justify-start" : "justify-end"}`}>
+                  <div
+                    className={`max-w-[85%] rounded-2xl border px-4 py-3 ${
+                      isA
+                        ? "border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]"
+                        : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]"
+                    }`}
+                  >
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
+                      Turn {index + 1} · {roleName}
+                    </p>
+                    <p className="text-sm leading-7 text-[var(--foreground-subtle)]">{turn.content}</p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-[var(--foreground-subtle)]">对话尚未开始。</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        {[
+          { transcript: run.judgeTranscriptA, label: `裁判追问 · ${scenario.roleAName}` },
+          { transcript: run.judgeTranscriptB, label: `裁判追问 · ${scenario.roleBName}` },
+        ].map(({ transcript, label }) => (
+          <Card key={label}>
+            <CardHeader>
+              <CardTitle>{label}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {transcript.length ? (
+                transcript.map((item) => (
+                  <div key={item.round} className="app-panel">
+                    <p className="panel-label">第 {item.round} 轮问题</p>
+                    <p className="panel-copy whitespace-pre-wrap">{item.question}</p>
+                    <p className="mt-3 panel-label">回答</p>
+                    <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-[var(--foreground-subtle)]">暂无问答。</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>最终评分</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="app-panel">
+              <p className="panel-label">Score A · {scenario.roleAName}</p>
+              <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{run.scoreA ?? "--"} / 10</p>
+            </div>
+            <div className="app-panel">
+              <p className="panel-label">Score B · {scenario.roleBName}</p>
+              <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{run.scoreB ?? "--"} / 10</p>
+            </div>
+            <div className="app-panel">
+              <p className="panel-label">Winner</p>
+              <p className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{run.winner?.toUpperCase() ?? "--"}</p>
+            </div>
+          </div>
+          {run.reasoning ? (
+            <div className="app-panel">
+              <p className="panel-label">裁判评分理由</p>
+              <pre className="panel-copy mt-2 whitespace-pre-wrap font-sans">{run.reasoning}</pre>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function RunHistoryItem({
+  isPending,
+  isSelected,
+  onSelect,
+  run,
+}: {
+  isPending: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  run: PlaygroundRunSummary;
+}) {
+  const winnerLabel = isPending ? "进行中" : run.winner ? run.winner.toUpperCase() : run.error ? "ERROR" : "—";
+  const winnerColor = isPending
+    ? "text-[var(--accent)]"
+    : run.winner === "a" || run.winner === "b"
+      ? "text-[var(--success)]"
+      : run.winner === "draw"
+        ? "text-[var(--foreground-subtle)]"
+        : run.error
+          ? "text-[#f87171]"
+          : "text-[var(--foreground-muted)]";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+        isSelected
+          ? "border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)]"
+          : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-[var(--foreground-muted)]">{run.createdAt}</p>
+          {run.scoreA != null && run.scoreB != null ? (
+            <p className="mt-0.5 text-sm text-[var(--foreground-subtle)]">
+              A: {run.scoreA} · B: {run.scoreB}
+            </p>
+          ) : null}
+        </div>
+        <span className={`text-sm font-semibold ${winnerColor}`}>{winnerLabel}</span>
+      </div>
+    </button>
+  );
+}
+
+function ProgressPanel({
+  elapsedSeconds,
+  isRefreshing,
+  onRefresh,
+  session,
+}: {
+  elapsedSeconds: number;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+  session: PlaygroundSession;
+}) {
+  const progress = deriveRunningState(session);
+  const visibleRunId = session.runId ?? session.run?.id ?? null;
+
+  return (
+    <Card>
+      <CardContent className="space-y-6 py-8">
+        <div className="space-y-3 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(224,74,47,0.22)] bg-[rgba(224,74,47,0.1)] text-2xl text-[var(--accent)]">
+            ⚔
+          </div>
+          <div>
+            <p className="text-2xl font-semibold text-[var(--foreground)]">{progress.title}</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--foreground-subtle)]">{progress.detail}</p>
+            <p className="mt-1 text-sm text-[var(--foreground-muted)]">你可以离开此页面，稍后返回继续查看最新进展。</p>
+          </div>
+          {visibleRunId ? (
+            <div className="inline-flex rounded-full border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm text-[var(--foreground-subtle)]">
+              对战 #{visibleRunId}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-[var(--foreground-muted)]">运行耗时</p>
+              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{formatElapsed(elapsedSeconds)}</p>
+            </div>
+            <Button disabled={isRefreshing} onClick={onRefresh} size="sm" type="button" variant="secondary">
+              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              刷新状态
+            </Button>
+          </div>
+
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
+            <div
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),#f97316)] transition-[width] duration-700"
+              style={{ width: `${progress.progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-5">
+          {runningStages.map((stage, index) => {
+            const isDone = index < progress.activeIndex;
+            const isCurrent = index === progress.activeIndex;
+
+            return (
+              <div
+                key={stage.key}
+                className={`rounded-xl border px-3 py-4 transition ${
+                  isCurrent
+                    ? "border-[rgba(224,74,47,0.3)] bg-[rgba(224,74,47,0.12)]"
+                    : isDone
+                      ? "border-[rgba(52,211,153,0.24)] bg-[rgba(52,211,153,0.08)]"
+                      : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                      isCurrent
+                        ? "bg-[var(--accent)] text-black"
+                        : isDone
+                          ? "bg-[var(--success)] text-black"
+                          : "bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]"
+                    }`}
+                  >
+                    {isDone ? "✓" : index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--foreground)]">{stage.shortLabel}</p>
+                    <p className="text-xs text-[var(--foreground-muted)]">{stage.hint}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function findCandidateRunSummary(session: PlaygroundSession, summaries: PlaygroundRunSummary[]) {
+  if (session.runId) {
+    return summaries.find((summary) => summary.id === session.runId) ?? null;
+  }
+
+  const startedAt = session.startedAt - 5000;
+
+  return summaries.find((summary) => parseSqlTimestamp(summary.createdAt) >= startedAt) ?? null;
 }
 
 export function PlaygroundPage() {
-  const initialSession = getPlaygroundSessionState();
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [selectedScenarioId, setSelectedScenarioId] = useState(initialSession.draft?.scenarioId ?? "");
-  const [promptA, setPromptA] = useState(initialSession.draft?.promptA ?? "");
-  const [promptB, setPromptB] = useState(initialSession.draft?.promptB ?? "");
-  const [model, setModel] = useState(initialSession.draft?.model ?? modelOptions[0]!.id);
-  const [result, setResult] = useState<PlaygroundResult | null>(initialSession.result);
-  const [latestSubmission, setLatestSubmission] = useState<Submission | null>(null);
+  const { submissionId: submissionIdParam } = useParams<{ submissionId: string }>();
+  const submissionId = Number(submissionIdParam);
+  const navigate = useNavigate();
+
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [runSummaries, setRunSummaries] = useState<PlaygroundRunSummary[]>([]);
+  const [selectedRun, setSelectedRun] = useState<PlaygroundRun | null>(null);
+  const [activeSession, setActiveSession] = useState<PlaygroundSession | null>(() =>
+    Number.isInteger(submissionId) && submissionId > 0 ? getPlaygroundSession(submissionId) : null,
+  );
   const [isLoading, setIsLoading] = useState(true);
-  const [isRunning, setIsRunning] = useState(initialSession.status === "running");
-  const [isAutoFilling, setIsAutoFilling] = useState(false);
-  const [error, setError] = useState<string | null>(initialSession.error);
-  const [runStartedAt, setRunStartedAt] = useState<number | null>(initialSession.startedAt);
-  const [elapsedSeconds, setElapsedSeconds] = useState(
-    initialSession.startedAt ? Math.max(0, Math.floor((Date.now() - initialSession.startedAt) / 1000)) : 0,
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() =>
+    activeSession ? Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)) : 0,
   );
 
-  const selectedScenario = scenarios.find((scenario) => scenario.id === selectedScenarioId) ?? null;
-  const promptALength = countText(promptA);
-  const promptBLength = countText(promptB);
-  const activeStageIndex = getStageIndex(elapsedSeconds);
-  const activeStage = runningStages[activeStageIndex];
-  const progressPercent = isRunning
-    ? Math.min(96, ((activeStageIndex + 1) / runningStages.length) * 100)
-    : result
-      ? 100
-      : 0;
+  useEffect(() => {
+    if (!Number.isInteger(submissionId) || submissionId <= 0) {
+      return;
+    }
+
+    return subscribePlaygroundSession(submissionId, (session) => {
+      setActiveSession(session);
+
+      if (!session) {
+        setElapsedSeconds(0);
+        return;
+      }
+
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)));
+
+      if (session.status === "success" && session.run) {
+        setSelectedRun(session.run);
+        setError(null);
+      } else if (session.status === "error") {
+        setError(session.error ?? "试炼场运行失败");
+      }
+    });
+  }, [submissionId]);
 
   useEffect(() => {
-    const loadScenarios = async () => {
+    if (!submissionId) {
+      return;
+    }
+
+    const load = async () => {
       try {
         setIsLoading(true);
-        const scenarioList = await getScenarios();
-        setScenarios(scenarioList);
-        setSelectedScenarioId((current) => current || scenarioList[0]?.id || "");
+        setError(null);
+
+        const allSubmissions = await getMySubmissions();
+        const sub = allSubmissions.find((item) => item.id === submissionId) ?? null;
+        setSubmission(sub);
+
+        if (!sub) {
+          setError("找不到该版本");
+          return;
+        }
+
+        const [scenarioData, runs] = await Promise.all([
+          getScenario(sub.scenarioId),
+          getPlaygroundRuns(submissionId),
+        ]);
+
+        setScenario(scenarioData);
+        setRunSummaries(runs);
+
+        const session = getPlaygroundSession(submissionId);
+
+        if (session?.run) {
+          setSelectedRun(session.run);
+          return;
+        }
+
+        const latestFinishedRun = runs.find(
+          (run) => run.error != null || run.scoreA != null || run.scoreB != null || run.winner != null,
+        );
+
+        if (latestFinishedRun) {
+          const fullRun = await getPlaygroundRun(submissionId, latestFinishedRun.id);
+          setSelectedRun(fullRun);
+        } else {
+          setSelectedRun(null);
+        }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : "加载试炼场失败");
+        setError(loadError instanceof Error ? loadError.message : "加载失败");
       } finally {
         setIsLoading(false);
       }
     };
 
-    void loadScenarios();
-  }, []);
+    void load();
+  }, [submissionId]);
 
   useEffect(() => {
-    return subscribePlaygroundSession((session) => {
-      setIsRunning(session.status === "running");
-      setResult(session.result);
-      setError(session.error);
-      setRunStartedAt(session.startedAt);
-
-      if (session.draft) {
-        setSelectedScenarioId(session.draft.scenarioId);
-        setPromptA(session.draft.promptA);
-        setPromptB(session.draft.promptB);
-        setModel(session.draft.model as (typeof modelOptions)[number]["id"]);
-      }
-
-      if (session.startedAt) {
-        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)));
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!selectedScenarioId) {
+    if (!activeSession || activeSession.status !== "running") {
       return;
     }
 
-    setLatestSubmission(null);
-  }, [selectedScenarioId]);
-
-  useEffect(() => {
-    if (!isRunning || !runStartedAt) {
-      return;
-    }
-
-    setElapsedSeconds(Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000)));
+    setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)));
     const timer = window.setInterval(() => {
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - runStartedAt) / 1000)));
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)));
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [isRunning, runStartedAt]);
+  }, [activeSession?.requestId, activeSession?.startedAt, activeSession?.status]);
 
-  const handleAutoFill = async () => {
-    if (!selectedScenarioId) {
+  async function refreshActiveRun() {
+    if (!activeSession || activeSession.status !== "running") {
       return;
     }
 
     try {
-      setIsAutoFilling(true);
-      setError(null);
-      const submissions = await getMySubmissions(selectedScenarioId);
-      const latest = submissions[0] ?? null;
+      setIsRefreshing(true);
+      const summaries = await getPlaygroundRuns(submissionId);
+      setRunSummaries(summaries);
 
-      if (!latest) {
-        setError("当前场景还没有提交记录");
+      const candidate = findCandidateRunSummary(activeSession, summaries);
+
+      if (!candidate) {
         return;
       }
 
-      setLatestSubmission(latest);
-      setPromptA(latest.promptA);
-      setPromptB(latest.promptB);
-      setModel(latest.model);
-    } catch (fillError) {
-      setError(fillError instanceof Error ? fillError.message : "自动填充失败");
+      const fullRun = await getPlaygroundRun(submissionId, candidate.id);
+      syncPlaygroundRun(submissionId, activeSession.requestId, fullRun);
+
+      if (isRunFinished(fullRun)) {
+        setSelectedRun(fullRun);
+        setError(fullRun.error ?? null);
+      }
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "刷新试炼场状态失败");
     } finally {
-      setIsAutoFilling(false);
+      setIsRefreshing(false);
     }
-  };
+  }
 
-  const handleRun = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
+  useEffect(() => {
+    if (!activeSession || activeSession.status !== "running") {
+      return;
+    }
 
-    const parsed = createSubmissionSchema.safeParse({
-      model,
-      promptA,
-      promptB,
-      scenarioId: selectedScenarioId,
-    });
+    let cancelled = false;
 
-    if (!parsed.success) {
-      setError("请检查场景、模型和提示词字数限制");
+    const sync = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      await refreshActiveRun();
+    };
+
+    void sync();
+    const timer = window.setInterval(() => {
+      void sync();
+    }, 4000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [activeSession?.requestId, activeSession?.status, submissionId]);
+
+  const handleRun = () => {
+    if (!submission || !scenario) {
       return;
     }
 
     setError(null);
-    void startPlaygroundSession(parsed.data);
+    setSelectedRun(null);
+
+    startTrackedPlaygroundRun({
+      judgeRounds: scenario.judgeRounds,
+      scenarioId: scenario.id,
+      submissionId,
+      turnCount: scenario.turnCount,
+    });
   };
+
+  const handleSelectRun = async (summary: PlaygroundRunSummary) => {
+    if (selectedRun?.id === summary.id) {
+      return;
+    }
+
+    try {
+      const fullRun = await getPlaygroundRun(submissionId, summary.id);
+      setSelectedRun(fullRun);
+    } catch (selectError) {
+      setError(selectError instanceof Error ? selectError.message : "加载测试记录失败");
+    }
+  };
+
+  const modelLabel = useMemo(
+    () => (submission ? modelOptions.find((option) => option.id === submission.model)?.label ?? submission.model : null),
+    [submission],
+  );
+
+  const activeRunId = activeSession?.runId ?? activeSession?.run?.id ?? null;
+  const isRunning = activeSession?.status === "running";
+  const visibleRun = isRunning ? activeSession?.run ?? null : selectedRun;
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-10 w-48 animate-pulse rounded bg-white/8" />
-        <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-          <div className="h-[520px] animate-pulse rounded-xl bg-white/5" />
-          <div className="h-[520px] animate-pulse rounded-xl bg-white/5" />
-        </div>
+        <div className="h-10 w-64 animate-pulse rounded bg-white/8" />
+        <div className="h-[520px] animate-pulse rounded-xl bg-white/5" />
+      </div>
+    );
+  }
+
+  if (!submission || !scenario) {
+    return (
+      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
+        {error ?? "找不到该版本"}
       </div>
     );
   }
@@ -218,254 +610,97 @@ export function PlaygroundPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="page-eyebrow">Playground</p>
-          <h1 className="page-title">试炼场</h1>
-          <p className="page-subtitle">自己 A 打自己 B，完整跑对话、裁判追问和最终评分，不会写入正式赛事表。</p>
+          <button
+            type="button"
+            onClick={() => navigate(`/scenarios/${submission.scenarioId}`)}
+            className="mb-2 flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground-subtle)]"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            返回工坊
+          </button>
+          <p className="page-eyebrow">试炼场</p>
+          <h1 className="page-title">{scenario.title}</h1>
+          <p className="page-subtitle">测试结果与版本绑定，不写入正式赛事。</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {selectedScenario ? <Badge>{selectedScenario.title}</Badge> : null}
-          {latestSubmission ? <Badge tone="info">已载入 v{latestSubmission.version}</Badge> : null}
+          <Badge>{scenario.subject}</Badge>
+          <Badge tone="info">v{submission.version}</Badge>
+          {modelLabel ? <Badge tone="warning">{modelLabel}</Badge> : null}
         </div>
       </div>
 
-      {error ? <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">{error}</div> : null}
+      {error ? (
+        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
+          {error}
+        </div>
+      ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>测试配置</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleRun}>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>场景</span>
-                <select className="app-input" value={selectedScenarioId} onChange={(event) => setSelectedScenarioId(event.target.value)}>
-                  {scenarios.map((scenario) => (
-                    <option key={scenario.id} value={scenario.id}>
-                      {scenario.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>角色 A 提示词</span>
-                <textarea className="app-textarea" maxLength={1000} value={promptA} onChange={(event) => setPromptA(event.target.value)} />
-                <div className="text-right text-xs text-[var(--foreground-muted)]">{promptALength} / 1000</div>
-              </label>
-
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>角色 B 提示词</span>
-                <textarea className="app-textarea" maxLength={1000} value={promptB} onChange={(event) => setPromptB(event.target.value)} />
-                <div className="text-right text-xs text-[var(--foreground-muted)]">{promptBLength} / 1000</div>
-              </label>
-
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>模型</span>
-                <select className="app-input" value={model} onChange={(event) => setModel(event.target.value as (typeof modelOptions)[number]["id"])}>
-                  {modelOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="flex flex-wrap gap-3">
-                <Button type="button" variant="secondary" disabled={isAutoFilling || !selectedScenarioId} onClick={handleAutoFill}>
-                  {isAutoFilling ? "读取中..." : "Auto-fill from latest submission"}
-                </Button>
-                <Button type="submit" disabled={isRunning}>
-                  {isRunning ? "对战进行中，请耐心等待..." : "Run Test"}
-                </Button>
-                {(result || error) && !isRunning ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      clearPlaygroundSession({
-                        model,
-                        promptA,
-                        promptB,
-                        scenarioId: selectedScenarioId,
-                      });
-                      setError(null);
-                      setResult(null);
-                      setElapsedSeconds(0);
-                    }}
-                  >
-                    清空结果
-                  </Button>
-                ) : null}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <CardTitle>对话记录</CardTitle>
-              {result ? <Badge tone="success">已完成</Badge> : <Badge tone="warning">{isRunning ? "运行中" : "等待执行"}</Badge>}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {isRunning ? (
-                <div className="rounded-2xl border border-[rgba(224,74,47,0.18)] bg-[linear-gradient(180deg,rgba(224,74,47,0.08),rgba(255,255,255,0.02))] p-5">
-                  <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">Trial Running</p>
-                      <h3 className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{activeStage.label}</h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-7 text-[var(--foreground-subtle)]">{activeStage.hint}</p>
-                    </div>
-                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(0,0,0,0.18)] px-4 py-3 text-right">
-                      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">Elapsed</p>
-                      <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">{formatElapsed(elapsedSeconds)}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <div className="h-2 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
-                      <div
-                        className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),#f97316)] transition-[width] duration-700"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-[var(--foreground-muted)]">当前进度为前端估算阶段，用于反馈引擎正在执行，不代表精确实时百分比。</p>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 md:grid-cols-5">
-                    {runningStages.map((stage, index) => {
-                      const isDone = index < activeStageIndex;
-                      const isCurrent = index === activeStageIndex;
-
-                      return (
-                        <div
-                          key={stage.key}
-                          className={`rounded-xl border px-3 py-4 transition ${
-                            isCurrent
-                              ? "border-[rgba(224,74,47,0.3)] bg-[rgba(224,74,47,0.12)]"
-                              : isDone
-                                ? "border-[rgba(52,211,153,0.24)] bg-[rgba(52,211,153,0.08)]"
-                                : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                                isCurrent
-                                  ? "bg-[var(--accent)] text-black"
-                                  : isDone
-                                    ? "bg-[var(--success)] text-black"
-                                    : "bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]"
-                              }`}
-                            >
-                              {isDone ? "✓" : index + 1}
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-[var(--foreground)]">{stage.label}</p>
-                              <p className="text-xs text-[var(--foreground-muted)]">
-                                {isCurrent ? "进行中" : isDone ? "已完成" : "等待中"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-              {!isRunning && !result ? (
-                <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-                  运行后会在这里显示完整 transcript。
-                </div>
-              ) : null}
-              {result?.transcript.map((turn, index) => {
-                const isA = turn.speaker === "a";
-                const roleName = isA ? selectedScenario?.roleAName ?? "角色 A" : selectedScenario?.roleBName ?? "角色 B";
-
-                return (
-                  <div key={`${turn.speaker}-${index}`} className={`flex ${isA ? "justify-start" : "justify-end"}`}>
-                    <div className={`max-w-[85%] rounded-2xl border px-4 py-3 ${isA ? "border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]" : "border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]"}`}>
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-                        Turn {index + 1} · {roleName}
-                      </p>
-                      <p className="text-sm leading-7 text-[var(--foreground-subtle)]">{turn.content}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>裁判追问 · A</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {result?.judgeTranscriptA.length ? (
-                  result.judgeTranscriptA.map((item) => (
-                    <div key={`a-${item.round}`} className="app-panel">
-                      <p className="panel-label">第 {item.round} 轮问题</p>
-                      <p className="panel-copy whitespace-pre-wrap">{item.question}</p>
-                      <p className="mt-3 panel-label">回答</p>
-                      <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-                    暂无裁判问答。
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>裁判追问 · B</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {result?.judgeTranscriptB.length ? (
-                  result.judgeTranscriptB.map((item) => (
-                    <div key={`b-${item.round}`} className="app-panel">
-                      <p className="panel-label">第 {item.round} 轮问题</p>
-                      <p className="panel-copy whitespace-pre-wrap">{item.question}</p>
-                      <p className="mt-3 panel-label">回答</p>
-                      <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-                    暂无裁判问答。
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>最终评分</CardTitle>
+              <CardTitle>测试版本</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
+            <CardContent className="space-y-4">
               <div className="app-panel">
-                <p className="panel-label">Score A</p>
-                <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{result ? result.scoreA.toFixed(2) : "--"}</p>
-              </div>
-              <div className="app-panel">
-                <p className="panel-label">Score B</p>
-                <p className="mt-2 font-mono text-3xl text-[var(--foreground)]">{result ? result.scoreB.toFixed(2) : "--"}</p>
+                <p className="panel-label">Prompt A · {scenario.roleAName}</p>
+                <p className="panel-copy whitespace-pre-wrap">{submission.promptA}</p>
               </div>
               <div className="app-panel">
-                <p className="panel-label">Winner</p>
-                <p className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{result ? result.winner.toUpperCase() : "--"}</p>
+                <p className="panel-label">Prompt B · {scenario.roleBName}</p>
+                <p className="panel-copy whitespace-pre-wrap">{submission.promptB}</p>
               </div>
-              <div className="app-panel md:col-span-3">
-                <p className="panel-label">Reasoning</p>
-                <p className="panel-copy mt-2 whitespace-pre-wrap">{result?.reasoning ?? "运行完成后显示裁判解释。"}</p>
-              </div>
+              <Button className="w-full" disabled={isRunning} onClick={handleRun}>
+                {isRunning ? "对战进行中..." : "运行对战"}
+              </Button>
+              {isRunning ? (
+                <p className="text-center text-xs text-[var(--foreground-muted)]">
+                  可以暂时离开页面，回来后会继续展示最新进展。
+                </p>
+              ) : null}
             </CardContent>
           </Card>
+
+          {runSummaries.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>测试历史</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {runSummaries.map((run) => (
+                  <RunHistoryItem
+                    key={run.id}
+                    isPending={run.id === activeRunId && isRunning}
+                    isSelected={selectedRun?.id === run.id}
+                    onSelect={() => void handleSelectRun(run)}
+                    run={run}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+
+        <div className="space-y-6">
+          {isRunning && activeSession ? (
+            <>
+              <ProgressPanel
+                elapsedSeconds={elapsedSeconds}
+                isRefreshing={isRefreshing}
+                onRefresh={() => void refreshActiveRun()}
+                session={activeSession}
+              />
+              {hasRunOutput(activeSession.run) ? <RunResult run={activeSession.run!} scenario={scenario} /> : null}
+            </>
+          ) : visibleRun ? (
+            <RunResult run={visibleRun} scenario={scenario} />
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center py-24">
+                <p className="text-sm text-[var(--foreground-subtle)]">点击「运行对战」开始一次新的试炼场测试。</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

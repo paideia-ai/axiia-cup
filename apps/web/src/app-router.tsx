@@ -35,7 +35,7 @@ function ProtectedShell() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/scenarios" element={<ScenariosPage />} />
         <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
-        <Route path="/playground" element={<PlaygroundPage />} />
+        <Route path="/playground/:submissionId" element={<PlaygroundPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/matches/:matchId" element={<MatchDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
