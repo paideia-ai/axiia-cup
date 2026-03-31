@@ -59,9 +59,8 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="page-eyebrow">Settings</p>
+        <p className="page-eyebrow">账户</p>
         <h1 className="page-title">设置</h1>
-        <p className="page-subtitle">这里可以修改 Display Name。邮箱只读，密码单独更新。</p>
       </div>
 
       <Card className="max-w-3xl">
@@ -71,7 +70,7 @@ export function SettingsPage() {
         <CardContent>
           <form className="grid gap-4 md:grid-cols-2" onSubmit={handleProfileSubmit}>
             <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>Display Name</span>
+              <span>显示名称</span>
               <input className="app-input" onChange={(event) => setDisplayName(event.target.value)} value={displayName} />
             </label>
             <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
@@ -85,7 +84,7 @@ export function SettingsPage() {
             )}
             <div className="md:col-span-2">
               <Button disabled={isSavingProfile} type="submit">
-                {isSavingProfile ? "保存中..." : "保存 Display Name"}
+                {isSavingProfile ? "保存中..." : "保存"}
               </Button>
             </div>
           </form>

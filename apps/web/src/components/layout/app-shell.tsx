@@ -1,4 +1,4 @@
-import { LayoutDashboard, ScrollText, Shield, Trophy } from "lucide-react";
+import { LayoutDashboard, ScrollText, Shield, Trophy, UserRound } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -45,18 +45,13 @@ export function AppShell({ children }: PropsWithChildren) {
               to="/settings"
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-full border border-transparent px-2 py-1.5 transition hover:border-[var(--border-soft)] hover:bg-white/4",
-                  isActive && "border-[var(--border-soft)] bg-white/6",
+                  "inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[var(--foreground-subtle)] transition hover:bg-white/6 hover:text-[var(--foreground)]",
+                  isActive && "bg-white/8 text-[var(--foreground)]",
                 )
               }
             >
-              <div className="hidden text-right sm:block">
-                <p className="text-xs uppercase tracking-[0.16em] text-[var(--foreground-muted)]">MVP</p>
-                <p className="text-sm font-semibold text-[var(--foreground)]">{user?.displayName ?? "momo"}</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(224,74,47,0.2)] bg-[rgba(224,74,47,0.12)] font-mono text-xs text-[var(--accent)]">
-                {(user?.displayName ?? "momo").slice(0, 2).toUpperCase()}
-              </div>
+              <UserRound className="h-4 w-4" />
+              <span>{user?.displayName ?? "momo"}</span>
             </NavLink>
             <Button size="sm" variant="secondary" onClick={logout}>
               退出
