@@ -1,5 +1,5 @@
 import type { AdminPlayer, AdminStats, Scenario, TournamentListItem } from "@axiia/shared";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -33,6 +33,7 @@ export function AdminPage() {
   const [startingScenarioId, setStartingScenarioId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const latestLoadIdRef = useRef(0);
 
   const latestTournamentByScenario = useMemo(
     () => buildLatestTournamentMap(tournaments),
@@ -48,9 +49,13 @@ export function AdminPage() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  async function loadAdminData() {
-    setIsLoading(true);
-    setError(null);
+  async function loadAdminData(isInitial: boolean) {
+    const loadId = ++latestLoadIdRef.current;
+
+    if (isInitial) {
+      setIsLoading(true);
+      setError(null);
+    }
 
     try {
       const [statsResponse, scenariosResponse, tournamentsResponse] = await Promise.all([
@@ -63,19 +68,52 @@ export function AdminPage() {
         scenariosResponse.map(async (scenario) => [scenario.id, await getAdminTournamentPlayers(scenario.id)] as const),
       );
 
+      if (loadId !== latestLoadIdRef.current) {
+        return;
+      }
+
+      setError(null);
       setStats(statsResponse);
       setScenarios(scenariosResponse);
       setTournaments(tournamentsResponse);
       setPlayersByScenario(Object.fromEntries(playerEntries));
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "加载管理面板失败");
+      if (loadId !== latestLoadIdRef.current) {
+        return;
+      }
+
+      if (isInitial) {
+        setError(loadError instanceof Error ? loadError.message : "加载管理面板失败");
+      }
     } finally {
-      setIsLoading(false);
+      if (isInitial && loadId === latestLoadIdRef.current) {
+        setIsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    void loadAdminData();
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const poll = async (isInitial: boolean) => {
+      await loadAdminData(isInitial);
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(() => {
+          void poll(false);
+        }, 5_000);
+      }
+    };
+
+    void poll(true);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   async function handleStartTournament(scenarioId: string) {
@@ -89,7 +127,7 @@ export function AdminPage() {
         : "";
 
       setToast(`Tournament #${result.tournament.id} 已创建，第 1 轮已生成${byeCopy}`);
-      await loadAdminData();
+      await loadAdminData(true);
     } catch (startError) {
       setError(startError instanceof Error ? startError.message : "开始比赛失败");
     } finally {

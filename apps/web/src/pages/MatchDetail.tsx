@@ -1,5 +1,5 @@
 import type { MatchDetail, Scenario } from "@axiia/shared";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { Badge } from "../components/ui/badge";
@@ -17,6 +17,7 @@ export function MatchDetailPage() {
   const [isRetrying, setIsRetrying] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const latestLoadIdRef = useRef(0);
 
   useEffect(() => {
     const numericId = Number(matchId);
@@ -27,23 +28,62 @@ export function MatchDetailPage() {
       return;
     }
 
-    const loadMatch = async () => {
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    let hasLoadedScenario = false;
+
+    const loadMatch = async (isInitial: boolean) => {
+      const loadId = ++latestLoadIdRef.current;
+
       try {
-        setIsLoading(true);
-        setError(null);
+        if (isInitial) {
+          setIsLoading(true);
+          setError(null);
+        }
+
         const detail = await getMatch(numericId);
-        const scenarioDetail = await getScenario(detail.scenarioId);
+        if (cancelled || loadId !== latestLoadIdRef.current) return;
+
+        if (!hasLoadedScenario) {
+          const scenarioDetail = await getScenario(detail.scenarioId);
+          if (cancelled || loadId !== latestLoadIdRef.current) return;
+          setScenario(scenarioDetail);
+          hasLoadedScenario = true;
+        }
+
+        setError(null);
         setMatch(detail);
-        setScenario(scenarioDetail);
       } catch (loadError) {
-        setScenario(null);
-        setError(loadError instanceof Error ? loadError.message : "加载对局失败");
+        if (cancelled || loadId !== latestLoadIdRef.current) return;
+        if (isInitial) {
+          setScenario(null);
+          setError(loadError instanceof Error ? loadError.message : "加载对局失败");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled && loadId === latestLoadIdRef.current && isInitial) {
+          setIsLoading(false);
+        }
       }
     };
 
-    void loadMatch();
+    const poll = async (isInitial: boolean) => {
+      await loadMatch(isInitial);
+
+      if (!cancelled) {
+        timeoutId = window.setTimeout(() => {
+          void poll(false);
+        }, 3_000);
+      }
+    };
+
+    void poll(true);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, [matchId]);
 
   useEffect(() => {
@@ -82,7 +122,7 @@ export function MatchDetailPage() {
           : "--";
 
   return (
-      <div className="space-y-6">
+    <div className="space-y-6">
       {toast ? (
         <div className="fixed right-6 top-20 z-50 rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.12)] px-4 py-3 text-sm text-[var(--success)] shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
           {toast}
@@ -109,7 +149,11 @@ export function MatchDetailPage() {
                   setIsRetrying(true);
                   setError(null);
                   await retryAdminMatch(match.id);
+                  const loadId = ++latestLoadIdRef.current;
                   const detail = await getMatch(match.id);
+                  if (loadId !== latestLoadIdRef.current) {
+                    return;
+                  }
                   setMatch(detail);
                   setToast("已将异常对局重新加入队列");
                 } catch (retryError) {
