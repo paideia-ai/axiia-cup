@@ -11,7 +11,7 @@
     "start": "bun ./dist/index.js",
     "test": "bun test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "bun run typecheck"
+    "lint": "oxlint src"
   },
   "dependencies": {
     "@axiia/shared": "workspace:*",

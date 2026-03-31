@@ -13,12 +13,8 @@
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
-      "@axiia/shared": [
-        "packages/shared/src/index.ts"
-      ],
-      "@axiia/shared/*": [
-        "packages/shared/src/*"
-      ]
+      "@axiia/shared": ["packages/shared/src/index.ts"],
+      "@axiia/shared/*": ["packages/shared/src/*"]
     }
   }
 }
