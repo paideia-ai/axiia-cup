@@ -20,6 +20,7 @@ import {
   users,
 } from '../db/schema'
 import { kickWorker } from '../engine/worker-signal'
+import { parseJsonField } from '../lib/json'
 import {
   advanceToNextRound,
   createRoundWithMatches,
@@ -208,11 +209,11 @@ tournamentRouter.post(
   },
 )
 
-tournamentRouter.get('/api/tournaments', (context) => {
+tournamentRouter.get('/api/tournaments', requireAuth, (context) => {
   return context.json(listTournaments())
 })
 
-tournamentRouter.get('/api/tournaments/:id', (context) => {
+tournamentRouter.get('/api/tournaments/:id', requireAuth, (context) => {
   const tournamentId = parseId(context.req.param('id'))
 
   if (!tournamentId) {
@@ -228,7 +229,7 @@ tournamentRouter.get('/api/tournaments/:id', (context) => {
   return context.json(tournamentDetailSchema.parse(detail))
 })
 
-tournamentRouter.get('/api/tournaments/:id/leaderboard', (context) => {
+tournamentRouter.get('/api/tournaments/:id/leaderboard', requireAuth, (context) => {
   const tournamentId = parseId(context.req.param('id'))
 
   if (!tournamentId) {
@@ -244,7 +245,7 @@ tournamentRouter.get('/api/tournaments/:id/leaderboard', (context) => {
   return context.json(leaderboard)
 })
 
-tournamentRouter.get('/api/matches/:id', (context) => {
+tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
   const matchId = parseId(context.req.param('id'))
 
   if (!matchId) {
@@ -291,8 +292,8 @@ tournamentRouter.get('/api/matches/:id', (context) => {
       error: match.error,
       finishedAt: match.finishedAt,
       id: match.id,
-      judgeTranscriptA: JSON.parse(match.judgeTranscriptA),
-      judgeTranscriptB: JSON.parse(match.judgeTranscriptB),
+      judgeTranscriptA: parseJsonField(match.judgeTranscriptA, []),
+      judgeTranscriptB: parseJsonField(match.judgeTranscriptB, []),
       playerADisplayName: userA.displayName,
       playerAModel: subA.model,
       playerBDisplayName: userB.displayName,
@@ -308,7 +309,7 @@ tournamentRouter.get('/api/matches/:id', (context) => {
       subAId: match.subAId,
       subBId: match.subBId,
       tournamentId: round.tournamentId,
-      transcript: JSON.parse(match.transcript),
+      transcript: parseJsonField(match.transcript, []),
       winner: match.winner,
     }),
   )
