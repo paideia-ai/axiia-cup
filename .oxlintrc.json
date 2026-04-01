@@ -46,6 +46,8 @@
     "vendor",
     "packages/prisma/generated",
     "*.min.js",
+    "*.config.ts",
+    "*.config.js",
     "dist",
     "build",
     ".react-router"
