@@ -44,4 +44,5 @@ jobs:
         run: bun run build
 
       - name: Test
-        run: bun test --filter @axiia/api
+        run: bun test
+        working-directory: apps/api
