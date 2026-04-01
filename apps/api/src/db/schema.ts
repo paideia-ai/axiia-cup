@@ -5,6 +5,7 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 
 const tournamentStatuses = ['open', 'running', 'finished'] as const
@@ -47,20 +48,30 @@ export const scenarios = sqliteTable('scenarios', {
 
 export type ScenarioRecord = typeof scenarios.$inferSelect
 
-export const submissions = sqliteTable('submissions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id),
-  scenarioId: text('scenario_id')
-    .notNull()
-    .references(() => scenarios.id),
-  promptA: text('prompt_a').notNull(),
-  promptB: text('prompt_b').notNull(),
-  model: text('model').notNull(),
-  version: integer('version').notNull(),
-  createdAt: text('created_at').notNull().default(currentTimestamp),
-})
+export const submissions = sqliteTable(
+  'submissions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    scenarioId: text('scenario_id')
+      .notNull()
+      .references(() => scenarios.id),
+    promptA: text('prompt_a').notNull(),
+    promptB: text('prompt_b').notNull(),
+    model: text('model').notNull(),
+    version: integer('version').notNull(),
+    createdAt: text('created_at').notNull().default(currentTimestamp),
+  },
+  (table) => ({
+    userScenarioVersion: uniqueIndex('submissions_user_scenario_version').on(
+      table.userId,
+      table.scenarioId,
+      table.version,
+    ),
+  }),
+)
 
 export const playgroundRuns = sqliteTable('playground_runs', {
   id: integer('id').primaryKey({ autoIncrement: true }),

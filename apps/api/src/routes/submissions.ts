@@ -2,7 +2,7 @@ import { createSubmissionSchema, submissionSchema } from '@axiia/shared'
 import { and, desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 
-import { db } from '../db/client'
+import { db, sqlite } from '../db/client'
 import { scenarios, submissions } from '../db/schema'
 import { requireAuth } from '../middleware/requireAuth'
 
@@ -14,6 +14,14 @@ const submissionSelection = {
   promptB: submissions.promptB,
   scenarioId: submissions.scenarioId,
   version: submissions.version,
+}
+
+function isUniqueConstraintError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.message.includes('SQLITE_CONSTRAINT_UNIQUE') ||
+      error.message.includes('UNIQUE constraint failed'))
+  )
 }
 
 const submissionsRouter = new Hono()
@@ -73,33 +81,50 @@ submissionsRouter.post('/api/submissions', requireAuth, async (context) => {
     return context.json({ error: 'Scenario not found' }, 404)
   }
 
-  const latestSubmission = db
-    .select({ version: submissions.version })
-    .from(submissions)
-    .where(
-      and(
-        eq(submissions.userId, userId),
-        eq(submissions.scenarioId, scenarioId),
-      ),
-    )
-    .orderBy(desc(submissions.version))
-    .get()
+  sqlite.exec('BEGIN IMMEDIATE')
 
-  const version = (latestSubmission?.version ?? 0) + 1
-  const createdSubmission = db
-    .insert(submissions)
-    .values({
-      model,
-      promptA,
-      promptB,
-      scenarioId,
-      userId,
-      version,
-    })
-    .returning(submissionSelection)
-    .get()
+  try {
+    const latestSubmission = db
+      .select({ version: submissions.version })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.userId, userId),
+          eq(submissions.scenarioId, scenarioId),
+        ),
+      )
+      .orderBy(desc(submissions.version))
+      .get()
 
-  return context.json(submissionSchema.parse(createdSubmission), 201)
+    const version = (latestSubmission?.version ?? 0) + 1
+    const createdSubmission = db
+      .insert(submissions)
+      .values({
+        model,
+        promptA,
+        promptB,
+        scenarioId,
+        userId,
+        version,
+      })
+      .returning(submissionSelection)
+      .get()
+
+    sqlite.exec('COMMIT')
+
+    return context.json(submissionSchema.parse(createdSubmission), 201)
+  } catch (error) {
+    sqlite.exec('ROLLBACK')
+
+    if (isUniqueConstraintError(error)) {
+      return context.json(
+        { error: 'Submission version already exists for this scenario' },
+        409,
+      )
+    }
+
+    throw error
+  }
 })
 
 export { submissionsRouter }
