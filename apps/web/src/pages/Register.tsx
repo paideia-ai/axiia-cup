@@ -21,7 +21,7 @@ export function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!isLoading && user) {
-    return <Navigate replace to="/scenarios" />
+    return <Navigate replace to="/dashboard" />
   }
 
   const handleContinue = (event: React.FormEvent<HTMLFormElement>) => {
@@ -49,7 +49,7 @@ export function RegisterPage() {
         password,
       })
       login(response)
-      navigate('/scenarios', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '注册失败',

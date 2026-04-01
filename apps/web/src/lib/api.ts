@@ -168,10 +168,6 @@ export async function changePassword(
   )
 }
 
-export async function getScenarios(): Promise<Scenario[]> {
-  return apiFetch('/api/scenarios', { method: 'GET' }, scenariosResponseSchema)
-}
-
 export async function getScenario(id: string): Promise<Scenario> {
   return apiFetch(`/api/scenarios/${id}`, { method: 'GET' }, scenarioSchema)
 }
@@ -270,6 +266,14 @@ export async function getMyStats(): Promise<PersonalStats> {
 
 export async function getAdminStats(): Promise<AdminStats> {
   return apiFetch('/api/admin/stats', { method: 'GET' }, adminStatsSchema)
+}
+
+export async function getAdminScenarios(): Promise<Scenario[]> {
+  return apiFetch(
+    '/api/admin/scenarios',
+    { method: 'GET' },
+    scenariosResponseSchema,
+  )
 }
 
 export async function getAdminTournamentPlayers(

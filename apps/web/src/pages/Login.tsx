@@ -15,7 +15,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!isLoading && user) {
-    return <Navigate replace to="/scenarios" />
+    return <Navigate replace to="/dashboard" />
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -26,7 +26,7 @@ export function LoginPage() {
     try {
       const response = await loginRequest({ email, password })
       login(response)
-      navigate('/scenarios', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '登录失败',

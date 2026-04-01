@@ -10,9 +10,9 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import {
+  getAdminScenarios,
   getAdminStats,
   getAdminTournamentPlayers,
-  getScenarios,
   getTournaments,
   startTournament,
 } from '../lib/api'
@@ -68,7 +68,11 @@ export function AdminPage() {
 
     try {
       const [statsResponse, scenariosResponse, tournamentsResponse] =
-        await Promise.all([getAdminStats(), getScenarios(), getTournaments()])
+        await Promise.all([
+          getAdminStats(),
+          getAdminScenarios(),
+          getTournaments(),
+        ])
 
       const playerEntries = await Promise.all(
         scenariosResponse.map(

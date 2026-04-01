@@ -5,12 +5,12 @@ import { useAuth } from './context/auth'
 import { AdminPage } from './pages/admin-page'
 import { DashboardPage } from './pages/dashboard-page'
 import { LeaderboardPage } from './pages/Leaderboard'
+import { LandingPage } from './pages/landing-page'
 import { LoginPage } from './pages/Login'
 import { MatchDetailPage } from './pages/MatchDetail'
 import { PlaygroundPage } from './pages/Playground'
 import { RegisterPage } from './pages/Register'
 import { ScenarioDetailPage } from './pages/ScenarioDetail'
-import { ScenariosPage } from './pages/Scenarios'
 import { SettingsPage } from './pages/settings-page'
 import { TournamentPlayerDetailPage } from './pages/TournamentPlayerDetail'
 
@@ -26,15 +26,17 @@ function ProtectedShell() {
   }
 
   if (!user) {
-    return <Navigate replace to="/login" />
+    return <Navigate replace to="/" />
   }
 
   return (
     <AppShell>
       <Routes>
-        <Route path="/" element={<Navigate replace to="/dashboard" />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/scenarios" element={<ScenariosPage />} />
+        <Route
+          path="/scenarios"
+          element={<Navigate replace to="/scenarios/shangyang-court" />}
+        />
         <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
         <Route path="/playground/:submissionId" element={<PlaygroundPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
@@ -50,6 +52,7 @@ function ProtectedShell() {
             user?.isAdmin ? <AdminPage /> : <Navigate replace to="/dashboard" />
           }
         />
+        <Route path="*" element={<Navigate replace to="/dashboard" />} />
       </Routes>
     </AppShell>
   )
@@ -61,10 +64,7 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate replace to={user ? '/scenarios' : '/login'} />}
-        />
+        <Route path="/" element={<LandingPage />} />
         <Route
           path="/login"
           element={

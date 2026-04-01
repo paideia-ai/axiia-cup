@@ -4,6 +4,8 @@ import { Hono } from 'hono'
 
 import { db } from '../db/client'
 import { scenarios } from '../db/schema'
+import { requireAdmin } from '../middleware/requireAdmin'
+import { requireAuth } from '../middleware/requireAuth'
 
 const publicScenarioSelection = {
   boundaryConstraints: scenarios.boundaryConstraints,
@@ -22,7 +24,7 @@ const publicScenarioSelection = {
 
 const scenariosRouter = new Hono()
 
-scenariosRouter.get('/api/scenarios', (context) => {
+scenariosRouter.get('/api/admin/scenarios', requireAuth, requireAdmin, (context) => {
   const rows = db
     .select(publicScenarioSelection)
     .from(scenarios)
