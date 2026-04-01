@@ -11,8 +11,8 @@
     "dev:api": "bun run --filter @axiia/api dev",
     "dev:web": "bun run --filter @axiia/web dev",
     "dev:cli": "bun run --filter @axiia/cli dev",
-    "fmt": "oxfmt .",
-    "fmt:check": "oxfmt --check .",
+    "fmt": "oxfmt apps packages",
+    "fmt:check": "oxfmt --check apps packages",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "lint:fix": "oxlint . --fix"
