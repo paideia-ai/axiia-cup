@@ -146,7 +146,7 @@ authRouter.patch('/api/auth/me', requireAuth, async (context) => {
     .get()
 
   if (!updatedUser) {
-    return context.json({ error: 'User not found' }, 404)
+    return context.json({ error: 'User not found' }, 401)
   }
 
   return context.json(userSchema.parse(updatedUser))
@@ -164,7 +164,7 @@ authRouter.post('/api/auth/password', requireAuth, async (context) => {
   const userRecord = db.select().from(users).where(eq(users.id, userId)).get()
 
   if (!userRecord) {
-    return context.json({ error: 'User not found' }, 404)
+    return context.json({ error: 'User not found' }, 401)
   }
 
   const passwordMatched = await verifyPassword(

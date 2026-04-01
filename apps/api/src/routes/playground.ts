@@ -13,6 +13,16 @@ const runRequestSchema = z.object({ submissionId: z.number().int().positive() })
 
 const playgroundRouter = new Hono()
 
+function parseId(value: string) {
+  const parsed = Number(value)
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null
+  }
+
+  return parsed
+}
+
 playgroundRouter.post('/api/playground/run', requireAuth, async (context) => {
   const json = await context.req.json().catch(() => null)
   const parsed = runRequestSchema.safeParse(json)
@@ -128,9 +138,9 @@ playgroundRouter.get(
   requireAuth,
   async (context) => {
     const userId = context.get('userId')
-    const submissionId = Number(context.req.param('submissionId'))
+    const submissionId = parseId(context.req.param('submissionId'))
 
-    if (!Number.isInteger(submissionId) || submissionId <= 0) {
+    if (!submissionId) {
       return context.json({ error: 'Invalid submission ID' }, 400)
     }
 
@@ -171,8 +181,16 @@ playgroundRouter.get(
   requireAuth,
   async (context) => {
     const userId = context.get('userId')
-    const submissionId = Number(context.req.param('submissionId'))
-    const runId = Number(context.req.param('runId'))
+    const submissionId = parseId(context.req.param('submissionId'))
+    const runId = parseId(context.req.param('runId'))
+
+    if (!submissionId) {
+      return context.json({ error: 'Invalid submission ID' }, 400)
+    }
+
+    if (!runId) {
+      return context.json({ error: 'Invalid run ID' }, 400)
+    }
 
     const submission = db
       .select({ id: submissions.id, userId: submissions.userId })
