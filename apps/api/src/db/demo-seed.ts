@@ -126,11 +126,16 @@ function resetDatabase() {
     DROP TABLE IF EXISTS submissions;
     DROP TABLE IF EXISTS users;
     DROP TABLE IF EXISTS scenarios;
-    DELETE FROM sqlite_sequence;
     DROP TABLE IF EXISTS __drizzle_migrations;
     COMMIT;
     PRAGMA foreign_keys = ON;
   `)
+
+  // sqlite_sequence is auto-created by AUTOINCREMENT and cannot be dropped,
+  // but may not exist on a fresh database
+  try {
+    sqlite.exec('DELETE FROM sqlite_sequence')
+  } catch {}
 }
 
 async function main() {
