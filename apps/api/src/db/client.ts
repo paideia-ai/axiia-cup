@@ -31,3 +31,5 @@ sqlite.exec('PRAGMA journal_mode = WAL;')
 sqlite.exec('PRAGMA foreign_keys = ON;')
 
 export const db = drizzle(sqlite, { schema })
+
+export type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]

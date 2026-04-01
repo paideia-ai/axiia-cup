@@ -9,7 +9,7 @@ import {
 } from '@axiia/shared'
 import { and, asc, desc, eq, lte } from 'drizzle-orm'
 
-import { db } from '../db/client'
+import { db, type DbTransaction } from '../db/client'
 import {
   matches,
   rounds,
@@ -100,14 +100,17 @@ export function extractByeSubmissionIds(
   return playerIds.filter((playerId) => !paired.has(playerId))
 }
 
-export function createRoundWithMatches(params: {
-  pairs: Array<[number, number]>
-  roundNumber: number
-  scenarioId: string
-  tournamentId: number
-}) {
+export function createRoundWithMatches(
+  params: {
+    pairs: Array<[number, number]>
+    roundNumber: number
+    scenarioId: string
+    tournamentId: number
+  },
+  executor: typeof db | DbTransaction = db,
+) {
   const now = new Date().toISOString()
-  const round = db
+  const round = executor
     .insert(rounds)
     .values({
       roundNumber: params.roundNumber,
@@ -120,7 +123,7 @@ export function createRoundWithMatches(params: {
   const matchRows =
     params.pairs.length === 0
       ? []
-      : db
+      : executor
           .insert(matches)
           .values(
             params.pairs.flatMap(([subAId, subBId]) => [
@@ -373,14 +376,16 @@ export function getLeaderboard(tournamentId: number) {
   const pairedPlayersByRound = new Map<number, Set<number>>()
 
   for (const row of roundMatchRows) {
-    const pairedPlayers = pairedPlayersByRound.get(row.roundId) ?? new Set<number>()
+    const pairedPlayers =
+      pairedPlayersByRound.get(row.roundId) ?? new Set<number>()
     pairedPlayers.add(row.subAId)
     pairedPlayers.add(row.subBId)
     pairedPlayersByRound.set(row.roundId, pairedPlayers)
   }
 
   for (const round of roundRows) {
-    const pairedPlayers = pairedPlayersByRound.get(round.id) ?? new Set<number>()
+    const pairedPlayers =
+      pairedPlayersByRound.get(round.id) ?? new Set<number>()
 
     for (const participantId of participantIds) {
       if (pairedPlayers.has(participantId)) {
@@ -398,8 +403,14 @@ export function getLeaderboard(tournamentId: number) {
   for (const match of scoredMatchRows) {
     opponents.get(match.subAId)?.add(match.subBId)
     opponents.get(match.subBId)?.add(match.subAId)
-    completedResults.set(match.subAId, (completedResults.get(match.subAId) ?? 0) + 1)
-    completedResults.set(match.subBId, (completedResults.get(match.subBId) ?? 0) + 1)
+    completedResults.set(
+      match.subAId,
+      (completedResults.get(match.subAId) ?? 0) + 1,
+    )
+    completedResults.set(
+      match.subBId,
+      (completedResults.get(match.subBId) ?? 0) + 1,
+    )
 
     if (match.winner === 'a') {
       wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
@@ -549,33 +560,48 @@ export function advanceToNextRound(tournamentId: number) {
   const byeSubmissions = extractByeSubmissionIds(playerIds, pairs)
   const nextRoundNumber = currentRound.roundNumber + 1
 
-  // Optimistic lock: only advance if currentRound hasn't changed
-  const updated = db
-    .update(tournaments)
-    .set({ currentRound: nextRoundNumber, status: 'running' })
-    .where(
-      and(
-        eq(tournaments.id, tournamentId),
-        eq(tournaments.currentRound, currentRound.roundNumber),
-      ),
-    )
-    .returning()
-    .get()
+  const result = db.transaction((tx) => {
+    const updated = tx
+      .update(tournaments)
+      .set({ currentRound: nextRoundNumber, status: 'running' })
+      .where(
+        and(
+          eq(tournaments.id, tournamentId),
+          eq(tournaments.currentRound, currentRound.roundNumber),
+        ),
+      )
+      .returning()
+      .get()
 
-  if (!updated) {
+    if (!updated) {
+      return null
+    }
+
+    const { matches: createdMatches, round } = createRoundWithMatches(
+      {
+        pairs,
+        roundNumber: nextRoundNumber,
+        scenarioId: tournament.scenarioId,
+        tournamentId,
+      },
+      tx,
+    )
+
+    return {
+      byeSubmissions,
+      matches: createdMatches,
+      round,
+      tournament: updated,
+    }
+  })
+
+  if (!result) {
     return null
   }
 
-  const { matches: createdMatches, round } = createRoundWithMatches({
-    pairs,
-    roundNumber: nextRoundNumber,
-    scenarioId: tournament.scenarioId,
-    tournamentId,
-  })
-
   kickWorker()
 
-  return { byeSubmissions, matches: createdMatches, round, tournament: updated }
+  return result
 }
 
 export function maybeAdvanceRound(roundId: number) {

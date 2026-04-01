@@ -113,18 +113,6 @@ tournamentRouter.post(
       return context.json({ error: 'At least 2 submissions are required' }, 400)
     }
 
-    const tournament = db
-      .insert(tournaments)
-      .values({
-        currentRound: 0,
-        scenarioId: parsed.data.scenarioId,
-        status: 'running',
-        totalRounds:
-          parsed.data.totalRounds ?? computeSwissRounds(players.length),
-      })
-      .returning()
-      .get()
-
     const playerIds = shuffle(players.map((player) => player.submissionId))
     const pairs: Array<[number, number]> = []
 
@@ -133,19 +121,46 @@ tournamentRouter.post(
     }
 
     const byeSubmissions = extractByeSubmissionIds(playerIds, pairs)
-    const { matches: createdMatches, round } = createRoundWithMatches({
-      pairs,
-      roundNumber: 1,
-      scenarioId: parsed.data.scenarioId,
-      tournamentId: tournament.id,
-    })
+    const {
+      matches: createdMatches,
+      round,
+      tournament: updatedTournament,
+    } = db.transaction((tx) => {
+      const tournament = tx
+        .insert(tournaments)
+        .values({
+          currentRound: 0,
+          scenarioId: parsed.data.scenarioId,
+          status: 'running',
+          totalRounds:
+            parsed.data.totalRounds ?? computeSwissRounds(players.length),
+        })
+        .returning()
+        .get()
 
-    const updatedTournament = db
-      .update(tournaments)
-      .set({ currentRound: 1 })
-      .where(eq(tournaments.id, tournament.id))
-      .returning()
-      .get()
+      const { matches: createdMatches, round } = createRoundWithMatches(
+        {
+          pairs,
+          roundNumber: 1,
+          scenarioId: parsed.data.scenarioId,
+          tournamentId: tournament.id,
+        },
+        tx,
+      )
+
+      const updatedTournament = tx
+        .update(tournaments)
+        .set({ currentRound: 1 })
+        .where(eq(tournaments.id, tournament.id))
+        .returning()
+        .get()
+
+      return {
+        matches: createdMatches,
+        round,
+        tournament: updatedTournament,
+      }
+    })
 
     kickWorker()
 
@@ -234,21 +249,25 @@ tournamentRouter.get('/api/tournaments/:id', requireAuth, (context) => {
   return context.json(tournamentDetailSchema.parse(detail))
 })
 
-tournamentRouter.get('/api/tournaments/:id/leaderboard', requireAuth, (context) => {
-  const tournamentId = parseId(context.req.param('id'))
+tournamentRouter.get(
+  '/api/tournaments/:id/leaderboard',
+  requireAuth,
+  (context) => {
+    const tournamentId = parseId(context.req.param('id'))
 
-  if (!tournamentId) {
-    return context.json({ error: 'Invalid tournament id' }, 400)
-  }
+    if (!tournamentId) {
+      return context.json({ error: 'Invalid tournament id' }, 400)
+    }
 
-  const leaderboard = getLeaderboard(tournamentId)
+    const leaderboard = getLeaderboard(tournamentId)
 
-  if (!leaderboard) {
-    return context.json({ error: 'Tournament not found' }, 404)
-  }
+    if (!leaderboard) {
+      return context.json({ error: 'Tournament not found' }, 404)
+    }
 
-  return context.json(leaderboard)
-})
+    return context.json(leaderboard)
+  },
+)
 
 tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
   const matchId = parseId(context.req.param('id'))
@@ -382,25 +401,28 @@ tournamentRouter.post(
       return context.json({ error: 'Round not found' }, 404)
     }
 
-    db.update(matches)
-      .set({
-        error: null,
-        finishedAt: null,
-        leaseToken: null,
-        status: 'queued',
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(matches.id, matchId))
-      .run()
+    db.transaction((tx) => {
+      tx.update(matches)
+        .set({
+          error: null,
+          finishedAt: null,
+          leaseToken: null,
+          status: 'queued',
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(matches.id, matchId))
+        .run()
 
-    db.update(rounds)
-      .set({ status: 'running' })
-      .where(eq(rounds.id, round.id))
-      .run()
-    db.update(tournaments)
-      .set({ status: 'running' })
-      .where(eq(tournaments.id, round.tournamentId))
-      .run()
+      tx.update(rounds)
+        .set({ status: 'running' })
+        .where(eq(rounds.id, round.id))
+        .run()
+
+      tx.update(tournaments)
+        .set({ status: 'running' })
+        .where(eq(tournaments.id, round.tournamentId))
+        .run()
+    })
 
     kickWorker()
 
