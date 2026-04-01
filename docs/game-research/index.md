@@ -4,8 +4,8 @@ Game design research exploring historical great games for mechanisms and insight
 
 ## Files
 
-| File | Description |
-|------|-------------|
+| File                       | Description                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------ |
 | [progress.md](progress.md) | Main research document: game analyses, design principles, and research backlog |
 
 ```mermaid

@@ -24,15 +24,20 @@ const publicScenarioSelection = {
 
 const scenariosRouter = new Hono()
 
-scenariosRouter.get('/api/admin/scenarios', requireAuth, requireAdmin, (context) => {
-  const rows = db
-    .select(publicScenarioSelection)
-    .from(scenarios)
-    .orderBy(asc(scenarios.createdAt))
-    .all()
+scenariosRouter.get(
+  '/api/admin/scenarios',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const rows = db
+      .select(publicScenarioSelection)
+      .from(scenarios)
+      .orderBy(asc(scenarios.createdAt))
+      .all()
 
-  return context.json(rows.map((row) => scenarioSchema.parse(row)))
-})
+    return context.json(rows.map((row) => scenarioSchema.parse(row)))
+  },
+)
 
 scenariosRouter.get('/api/scenarios/:id', (context) => {
   const id = context.req.param('id')

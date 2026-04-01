@@ -36,9 +36,9 @@ describe('sanitizeJsonResponse', () => {
   })
 
   it('extracts JSON from markdown json code fences', () => {
-    expect(
-      sanitizeJsonResponse('```json\n{"winner":"b","score":7}\n```'),
-    ).toBe('{"winner":"b","score":7}')
+    expect(sanitizeJsonResponse('```json\n{"winner":"b","score":7}\n```')).toBe(
+      '{"winner":"b","score":7}',
+    )
   })
 
   it('extracts JSON from plain code fences', () => {

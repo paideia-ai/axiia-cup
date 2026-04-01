@@ -171,7 +171,12 @@ export function DashboardPage() {
         </div>
         <CardContent className="space-y-1 pt-2">
           {isLoading ? (
-            ['match-skeleton-1', 'match-skeleton-2', 'match-skeleton-3', 'match-skeleton-4'].map((key) => (
+            [
+              'match-skeleton-1',
+              'match-skeleton-2',
+              'match-skeleton-3',
+              'match-skeleton-4',
+            ].map((key) => (
               <div
                 key={key}
                 className="h-16 animate-pulse rounded-xl bg-white/5"

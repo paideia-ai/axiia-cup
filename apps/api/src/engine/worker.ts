@@ -219,7 +219,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
 
     const persist = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
-      db.update(playgroundRuns)
+      db
+        .update(playgroundRuns)
         .set(values)
         .where(
           and(

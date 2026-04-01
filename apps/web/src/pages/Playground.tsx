@@ -12,7 +12,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { getMySubmissions, getPlaygroundRun, getPlaygroundRuns, getScenario } from '../lib/api'
+import {
+  getMySubmissions,
+  getPlaygroundRun,
+  getPlaygroundRuns,
+  getScenario,
+} from '../lib/api'
 import {
   getPlaygroundSession,
   startTrackedPlaygroundRun,
@@ -75,7 +80,12 @@ function isRunFinished(run: PlaygroundRun | null) {
     return false
   }
 
-  return run.error != null || run.scoreA != null || run.scoreB != null || run.winner != null
+  return (
+    run.error != null ||
+    run.scoreA != null ||
+    run.scoreB != null ||
+    run.winner != null
+  )
 }
 
 function hasRunOutput(run: PlaygroundRun | null) {
@@ -84,7 +94,9 @@ function hasRunOutput(run: PlaygroundRun | null) {
   }
 
   return (
-    run.transcript.length > 0 || run.judgeTranscriptA.length > 0 || run.judgeTranscriptB.length > 0
+    run.transcript.length > 0 ||
+    run.judgeTranscriptA.length > 0 ||
+    run.judgeTranscriptB.length > 0
   )
 }
 
@@ -188,13 +200,21 @@ function Collapsible({
         {title}
       </button>
       {isOpen ? (
-        <div className="border-t border-[var(--border-soft)] px-3 py-2">{children}</div>
+        <div className="border-t border-[var(--border-soft)] px-3 py-2">
+          {children}
+        </div>
       ) : null}
     </div>
   )
 }
 
-function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }) {
+function RunResult({
+  run,
+  scenario,
+}: {
+  run: PlaygroundRun
+  scenario: Scenario
+}) {
   return (
     <div className="space-y-6">
       {/* Scoring summary - always visible at top */}
@@ -271,7 +291,9 @@ function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }
               })
             })()
           ) : (
-            <p className="text-sm text-[var(--foreground-subtle)]">对话尚未开始。</p>
+            <p className="text-sm text-[var(--foreground-subtle)]">
+              对话尚未开始。
+            </p>
           )}
         </CardContent>
       </Card>
@@ -296,13 +318,19 @@ function RunResult({ run, scenario }: { run: PlaygroundRun; scenario: Scenario }
                 transcript.map((item) => (
                   <div key={item.round} className="app-panel">
                     <p className="panel-label">第 {item.round} 轮问题</p>
-                    <p className="panel-copy whitespace-pre-wrap">{item.question}</p>
+                    <p className="panel-copy whitespace-pre-wrap">
+                      {item.question}
+                    </p>
                     <p className="mt-3 panel-label">回答</p>
-                    <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
+                    <p className="panel-copy whitespace-pre-wrap">
+                      {item.answer}
+                    </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[var(--foreground-subtle)]">暂无问答。</p>
+                <p className="text-sm text-[var(--foreground-subtle)]">
+                  暂无问答。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -352,14 +380,18 @@ function RunHistoryItem({
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] text-[var(--foreground-muted)]">{run.createdAt}</p>
+          <p className="text-[11px] text-[var(--foreground-muted)]">
+            {run.createdAt}
+          </p>
           {run.scoreA != null && run.scoreB != null ? (
             <p className="text-xs text-[var(--foreground-subtle)]">
               {run.scoreA} : {run.scoreB}
             </p>
           ) : null}
         </div>
-        <span className={`text-xs font-semibold ${winnerColor}`}>{winnerLabel}</span>
+        <span className={`text-xs font-semibold ${winnerColor}`}>
+          {winnerLabel}
+        </span>
       </div>
     </button>
   )
@@ -386,10 +418,16 @@ function ProgressPanel({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(224,74,47,0.22)] bg-[rgba(224,74,47,0.1)] text-xl text-[var(--accent)]">
             ⚔
           </div>
-          <p className="text-xl font-semibold text-[var(--foreground)]">{progress.title}</p>
-          <p className="text-sm text-[var(--foreground-subtle)]">{progress.detail}</p>
+          <p className="text-xl font-semibold text-[var(--foreground)]">
+            {progress.title}
+          </p>
+          <p className="text-sm text-[var(--foreground-subtle)]">
+            {progress.detail}
+          </p>
           {visibleRunId ? (
-            <p className="text-xs text-[var(--foreground-muted)]">对战 #{visibleRunId}</p>
+            <p className="text-xs text-[var(--foreground-muted)]">
+              对战 #{visibleRunId}
+            </p>
           ) : null}
         </div>
 
@@ -456,14 +494,21 @@ function ProgressPanel({
   )
 }
 
-function findCandidateRunSummary(session: PlaygroundSession, summaries: PlaygroundRunSummary[]) {
+function findCandidateRunSummary(
+  session: PlaygroundSession,
+  summaries: PlaygroundRunSummary[],
+) {
   if (session.runId) {
     return summaries.find((summary) => summary.id === session.runId) ?? null
   }
 
   const startedAt = session.startedAt - 5000
 
-  return summaries.find((summary) => parseSqlTimestamp(summary.createdAt) >= startedAt) ?? null
+  return (
+    summaries.find(
+      (summary) => parseSqlTimestamp(summary.createdAt) >= startedAt,
+    ) ?? null
+  )
 }
 
 function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
@@ -478,12 +523,16 @@ function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
   }
 }
 
-function upsertRunSummary(summaries: PlaygroundRunSummary[], nextRun: PlaygroundRun) {
+function upsertRunSummary(
+  summaries: PlaygroundRunSummary[],
+  nextRun: PlaygroundRun,
+) {
   const nextSummary = createRunSummary(nextRun)
   const remaining = summaries.filter((summary) => summary.id !== nextSummary.id)
 
   return [nextSummary, ...remaining].sort(
-    (left, right) => parseSqlTimestamp(right.createdAt) - parseSqlTimestamp(left.createdAt),
+    (left, right) =>
+      parseSqlTimestamp(right.createdAt) - parseSqlTimestamp(left.createdAt),
   )
 }
 
@@ -498,14 +547,19 @@ export function PlaygroundPage() {
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [runSummaries, setRunSummaries] = useState<PlaygroundRunSummary[]>([])
   const [selectedRun, setSelectedRun] = useState<PlaygroundRun | null>(null)
-  const [activeSession, setActiveSession] = useState<PlaygroundSession | null>(() =>
-    Number.isInteger(submissionId) && submissionId > 0 ? getPlaygroundSession(submissionId) : null,
+  const [activeSession, setActiveSession] = useState<PlaygroundSession | null>(
+    () =>
+      Number.isInteger(submissionId) && submissionId > 0
+        ? getPlaygroundSession(submissionId)
+        : null,
   )
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(() =>
-    activeSession ? Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)) : 0,
+    activeSession
+      ? Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000))
+      : 0,
   )
 
   useEffect(() => {
@@ -521,7 +575,9 @@ export function PlaygroundPage() {
         return
       }
 
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)))
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)),
+      )
 
       if (session.status === 'success' && session.run) {
         setSelectedRun(session.run)
@@ -544,7 +600,8 @@ export function PlaygroundPage() {
         setError(null)
 
         const allSubmissions = await getMySubmissions()
-        const sub = allSubmissions.find((item) => item.id === submissionId) ?? null
+        const sub =
+          allSubmissions.find((item) => item.id === submissionId) ?? null
         setSubmission(sub)
 
         if (!sub) {
@@ -569,11 +626,17 @@ export function PlaygroundPage() {
 
         const latestFinishedRun = runs.find(
           (run) =>
-            run.error != null || run.scoreA != null || run.scoreB != null || run.winner != null,
+            run.error != null ||
+            run.scoreA != null ||
+            run.scoreB != null ||
+            run.winner != null,
         )
 
         if (latestFinishedRun) {
-          const fullRun = await getPlaygroundRun(submissionId, latestFinishedRun.id)
+          const fullRun = await getPlaygroundRun(
+            submissionId,
+            latestFinishedRun.id,
+          )
           setSelectedRun(fullRun)
         } else {
           setSelectedRun(null)
@@ -593,9 +656,13 @@ export function PlaygroundPage() {
       return
     }
 
-    setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)))
+    setElapsedSeconds(
+      Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)),
+    )
     const timer = window.setInterval(() => {
-      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)))
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000)),
+      )
     }, 1000)
 
     return () => window.clearInterval(timer)
@@ -626,7 +693,11 @@ export function PlaygroundPage() {
         setError(fullRun.error ?? null)
       }
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : '刷新试炼场状态失败')
+      setError(
+        refreshError instanceof Error
+          ? refreshError.message
+          : '刷新试炼场状态失败',
+      )
     } finally {
       setIsRefreshing(false)
     }
@@ -683,14 +754,17 @@ export function PlaygroundPage() {
       const fullRun = await getPlaygroundRun(submissionId, summary.id)
       setSelectedRun(fullRun)
     } catch (selectError) {
-      setError(selectError instanceof Error ? selectError.message : '加载测试记录失败')
+      setError(
+        selectError instanceof Error ? selectError.message : '加载测试记录失败',
+      )
     }
   }
 
   const modelLabel = useMemo(
     () =>
       submission
-        ? (modelOptions.find((option) => option.id === submission.model)?.label ?? submission.model)
+        ? (modelOptions.find((option) => option.id === submission.model)
+            ?.label ?? submission.model)
         : null,
     [submission],
   )
@@ -776,7 +850,11 @@ export function PlaygroundPage() {
         <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin space-y-4">
           <Card>
             <CardContent className="space-y-3 py-4">
-              <Button className="w-full" disabled={isRunning} onClick={handleRun}>
+              <Button
+                className="w-full"
+                disabled={isRunning}
+                onClick={handleRun}
+              >
                 {isRunning ? '对战进行中...' : '运行对战'}
               </Button>
 

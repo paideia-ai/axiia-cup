@@ -84,7 +84,9 @@ export function LandingPage() {
               <span className="block text-[var(--accent)]">最强对话智能体</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--foreground-subtle)] md:text-lg">
-              Axiia Cup 是一个面向人文学科的 AI 智能体对抗赛。编写你的系统提示词，让两个 AI 在历史、法律、戏剧场景中展开博弈。
+              Axiia Cup 是一个面向人文学科的 AI
+              智能体对抗赛。编写你的系统提示词，让两个 AI
+              在历史、法律、戏剧场景中展开博弈。
             </p>
             {user ? (
               <div className="mt-10 flex justify-center">
