@@ -223,6 +223,11 @@ export const playgroundRunSchema = z.object({
   createdAt: z.string(),
 })
 
+export const playgroundRunStartSchema = z.object({
+  id: z.number().int().positive(),
+  status: z.literal('queued'),
+})
+
 export const playgroundRunSummarySchema = z.object({
   id: z.number().int().positive(),
   submissionId: z.number().int().positive(),
@@ -289,6 +294,7 @@ export type Tournament = z.infer<typeof tournamentSchema>
 export type TournamentDetail = z.infer<typeof tournamentDetailSchema>
 export type MatchDetail = z.infer<typeof matchDetailSchema>
 export type PlaygroundRun = z.infer<typeof playgroundRunSchema>
+export type PlaygroundRunStart = z.infer<typeof playgroundRunStartSchema>
 export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>

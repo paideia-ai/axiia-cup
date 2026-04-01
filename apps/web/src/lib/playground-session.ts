@@ -181,6 +181,18 @@ export function syncPlaygroundRun(
   }))
 }
 
+export function queuePlaygroundRun(
+  submissionId: number,
+  requestId: string,
+  run: { id: number },
+) {
+  updateSession(submissionId, requestId, (current) => ({
+    ...current,
+    runId: run.id,
+    status: 'running',
+  }))
+}
+
 export function failPlaygroundRun(
   submissionId: number,
   requestId: string,
@@ -209,7 +221,7 @@ export function startTrackedPlaygroundRun(params: {
 
   void runPlayground(params.submissionId)
     .then((run) => {
-      return syncPlaygroundRun(params.submissionId, requestId, run)
+      return queuePlaygroundRun(params.submissionId, requestId, run)
     })
     .catch((error) => {
       failPlaygroundRun(

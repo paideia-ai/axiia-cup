@@ -8,6 +8,13 @@
       "when": 1774846800000,
       "tag": "0000_phase1_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1775032674580,
+      "tag": "0001_lowly_aaron_stack",
+      "breakpoints": true
     }
   ]
 }

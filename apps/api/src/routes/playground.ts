@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 import { db } from '../db/client'
 import { playgroundRuns, scenarios, submissions } from '../db/schema'
-import { executeMatchSession } from '../engine/core'
+import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
 import { requireAuth } from '../middleware/requireAuth'
 
@@ -52,85 +52,19 @@ playgroundRouter.post('/api/playground/run', requireAuth, async (context) => {
     return context.json({ error: 'Scenario not found' }, 404)
   }
 
-  // Create a placeholder run record
   const run = db
     .insert(playgroundRuns)
     .values({
+      status: 'queued',
       scenarioId: scenario.id,
       submissionId: submission.id,
     })
     .returning()
     .get()
 
-  const persistRunProgress = (
-    values: Partial<typeof playgroundRuns.$inferInsert>,
-  ) =>
-    db
-      .update(playgroundRuns)
-      .set(values)
-      .where(eq(playgroundRuns.id, run.id))
-      .run()
+  kickWorker()
 
-  try {
-    const result = await executeMatchSession({
-      modelA: submission.model,
-      modelB: submission.model,
-      onDialogueTurn: (transcript) => {
-        persistRunProgress({
-          transcript: JSON.stringify(transcript),
-        })
-      },
-      onJudgeTranscriptA: (judgeTranscriptA) => {
-        persistRunProgress({
-          judgeTranscriptA: JSON.stringify(judgeTranscriptA),
-        })
-      },
-      onJudgeTranscriptB: (judgeTranscriptB) => {
-        persistRunProgress({
-          judgeTranscriptB: JSON.stringify(judgeTranscriptB),
-        })
-      },
-      promptA: submission.promptA,
-      promptB: submission.promptB,
-      scenario,
-    })
-
-    const updated = db
-      .update(playgroundRuns)
-      .set({
-        judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
-        judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
-        reasoning: result.reasoning,
-        scoreA: result.scoreA,
-        scoreB: result.scoreB,
-        transcript: JSON.stringify(result.transcript),
-        winner: result.winner,
-      })
-      .where(eq(playgroundRuns.id, run.id))
-      .returning()
-      .get()
-
-    return context.json(
-      playgroundRunSchema.parse({
-        ...updated,
-        judgeTranscriptA: parseJsonField(updated.judgeTranscriptA, []),
-        judgeTranscriptB: parseJsonField(updated.judgeTranscriptB, []),
-        transcript: parseJsonField(updated.transcript, []),
-      }),
-    )
-  } catch (error) {
-    db.update(playgroundRuns)
-      .set({ error: error instanceof Error ? error.message : 'Run failed' })
-      .where(eq(playgroundRuns.id, run.id))
-      .run()
-
-    return context.json(
-      {
-        error: error instanceof Error ? error.message : 'Playground run failed',
-      },
-      500,
-    )
-  }
+  return context.json({ id: run.id, status: 'queued' }, 202)
 })
 
 playgroundRouter.get(

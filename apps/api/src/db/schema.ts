@@ -67,6 +67,12 @@ export const playgroundRuns = sqliteTable('playground_runs', {
   submissionId: integer('submission_id')
     .notNull()
     .references(() => submissions.id),
+  status: text('status', {
+    enum: ['queued', 'running', 'scored', 'error'] as const,
+  })
+    .notNull()
+    .default('queued'),
+  leaseToken: text('lease_token'),
   scenarioId: text('scenario_id')
     .notNull()
     .references(() => scenarios.id),

@@ -7,6 +7,7 @@ import {
   matchDetailSchema,
   okResponseSchema,
   playgroundRunSchema,
+  playgroundRunStartSchema,
   playgroundRunSummarySchema,
   personalStatsSchema,
   recentMatchSchema,
@@ -25,6 +26,7 @@ import {
   type MatchDetail,
   type PersonalStats,
   type PlaygroundRun,
+  type PlaygroundRunStart,
   type PlaygroundRunSummary,
   type RecentMatch,
   type Scenario,
@@ -199,11 +201,11 @@ export async function createSubmission(
 
 export async function runPlayground(
   submissionId: number,
-): Promise<PlaygroundRun> {
+): Promise<PlaygroundRunStart> {
   return apiFetch(
     '/api/playground/run',
     { method: 'POST', body: JSON.stringify({ submissionId }) },
-    playgroundRunSchema,
+    playgroundRunStartSchema,
   )
 }
 
