@@ -6,16 +6,8 @@ import { z } from 'zod'
 import { db } from '../db/client'
 import { playgroundRuns, scenarios, submissions } from '../db/schema'
 import { executeMatchSession } from '../engine/core'
+import { parseJsonField } from '../lib/json'
 import { requireAuth } from '../middleware/requireAuth'
-
-function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
-  if (!value) return fallback
-  try {
-    return JSON.parse(value) as T
-  } catch {
-    return fallback
-  }
-}
 
 const runRequestSchema = z.object({ submissionId: z.number().int().positive() })
 

@@ -3,20 +3,9 @@ import type { JudgeQA, TranscriptTurn } from '@axiia/shared'
 
 import { db } from '../db/client'
 import { matches, scenarios, submissions } from '../db/schema'
+import { parseJsonField } from '../lib/json'
 import { maybeAdvanceRound, syncRoundStatus } from '../lib/tournaments'
 import { executeMatchSession } from './core'
-
-function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
-  if (!value) {
-    return fallback
-  }
-
-  try {
-    return JSON.parse(value) as T
-  } catch {
-    return fallback
-  }
-}
 
 async function updateLeasedMatch(
   matchId: number,

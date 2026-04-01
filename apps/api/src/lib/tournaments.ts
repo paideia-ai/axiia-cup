@@ -20,6 +20,7 @@ import {
 } from '../db/schema'
 import { swissPair } from '../engine/swiss'
 import { kickWorker } from '../engine/worker-signal'
+import { parseJsonField } from './json'
 
 type TournamentRecord = typeof tournaments.$inferSelect
 
@@ -27,14 +28,6 @@ type TournamentPlayer = ReturnType<typeof adminPlayerSchema.parse>
 
 function pairKey(a: number, b: number) {
   return a < b ? `${a}-${b}` : `${b}-${a}`
-}
-
-function parseJsonArray<T>(value: string, fallback: T[]): T[] {
-  try {
-    return JSON.parse(value) as T[]
-  } catch {
-    return fallback
-  }
 }
 
 export function getLatestScenarioPlayers(
@@ -456,7 +449,7 @@ export function getMatchTranscriptCount(matchId: number) {
     return 0
   }
 
-  return parseJsonArray(match.transcript, []).length
+  return parseJsonField(match.transcript, []).length
 }
 
 export function advanceToNextRound(tournamentId: number) {
