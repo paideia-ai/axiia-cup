@@ -1,4 +1,13 @@
 .vercel
 *.db
+*.db-shm
+*.db-wal
 __pycache__/
 .python-version
+node_modules/
+.turbo/
+dist/
+build/
+.DS_Store
+coverage/
+.env*

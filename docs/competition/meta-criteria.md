@@ -10,61 +10,61 @@ Across the 47 scenarios in `classic-strategic-scenarios.md`, most have clearly d
 
 ### Group A: Mechanically precise — zero human judgment needed
 
-| Scenario | Winning condition | Structure |
-|---|---|---|
-| Werewolf (#1) | All wolves dead / wolves ≥ villagers | Population state check |
-| Avalon (#2) | 3 quests succeed; Assassin names Merlin | Counter threshold + identification match |
-| Spyfall (#3) | Spy identified by vote / spy names location / timer expires | Vote result + match + clock |
-| Secret Hitler (#4) | 5 liberal policies / 6 fascist / Hitler elected chancellor | Counter + compound event |
-| 谁是卧底 (#5) | Spy eliminated / spy survives to final N / spy guesses word | Elimination + match |
-| Blood on the Clocktower (#6) | Demon executed / only 2 players remain | Elimination + state |
-| Coup (#8) | Last player with influence cards | Survival |
-| Cockroach Poker (#9) | Opponent has 4 of one type face-up | Counter threshold |
-| Diplomacy (#11) | Control 18 supply centers | Counter threshold |
-| The Resistance (#12, #37) | 3 missions succeed or fail; 5 rejections = spy win | Counter |
-| One Night Werewolf (#13) | Werewolf is/isn't the player voted out | Match |
-| Two Rooms and a Boom (#30) | Bomber in same room as President at end | Spatial + temporal |
-| Prisoner's Dilemma (#22) | Payoff matrix resolves based on choices | Payoff lookup |
-| Ultimatum Game (#23) | Accept → both get shares; reject → both get 0 | Binary event → payoff |
-| Trust Game (#26) | Amounts sent and returned | Numerical |
-| Stag Hunt (#25) | Payoff matrix resolves based on choices | Payoff lookup |
-| Chicken (#24) | Payoff matrix resolves based on choices | Payoff lookup |
-| Dead of Winter (#15) | Main objective complete AND personal objective met | Compound state check |
-| Everyone is John (#42) | Points scored for completed Obsessions | Numerical |
-| Deception: MiHK (#7) | Investigators correctly name Means + Evidence | Match |
-| Fake Artist (#36) | Identified by vote; if caught, guesses word | Vote + match |
-| Minority Rule / Genius (#27) | In the minority = safe | Count check |
-| The Mole (#28) | Lowest quiz score = eliminated | Numerical comparison |
-| Sheriff of Nottingham (#10) | Most gold/points at game end | Numerical comparison |
-| BSG (#14, #44) | Resources > 0 AND reach destination; OR any resource = 0 | Threshold |
-| Harborco (#39) | Points from confidential scoring sheet | Numerical |
-| Sally Soprano (#20) | Points from confidential scoring sheet | Numerical |
-| Ugli Orange (#19) | Got the part of the orange you need | Binary resource check |
-| Liar Game (#29) | Survive rounds + avoid debt | Survival + numerical |
-| 剧本杀 faction (#38) | Faction's pre-stated objective achieved | Varies but pre-specified |
-| 剧本杀 blizzard (#46) | Correctly identify killer | Match |
-| Coffee shop (user's example) | Proposal accepted + secret not discovered | Event + information preservation |
+| Scenario                     | Winning condition                                           | Structure                                |
+| ---------------------------- | ----------------------------------------------------------- | ---------------------------------------- |
+| Werewolf (#1)                | All wolves dead / wolves ≥ villagers                        | Population state check                   |
+| Avalon (#2)                  | 3 quests succeed; Assassin names Merlin                     | Counter threshold + identification match |
+| Spyfall (#3)                 | Spy identified by vote / spy names location / timer expires | Vote result + match + clock              |
+| Secret Hitler (#4)           | 5 liberal policies / 6 fascist / Hitler elected chancellor  | Counter + compound event                 |
+| 谁是卧底 (#5)                | Spy eliminated / spy survives to final N / spy guesses word | Elimination + match                      |
+| Blood on the Clocktower (#6) | Demon executed / only 2 players remain                      | Elimination + state                      |
+| Coup (#8)                    | Last player with influence cards                            | Survival                                 |
+| Cockroach Poker (#9)         | Opponent has 4 of one type face-up                          | Counter threshold                        |
+| Diplomacy (#11)              | Control 18 supply centers                                   | Counter threshold                        |
+| The Resistance (#12, #37)    | 3 missions succeed or fail; 5 rejections = spy win          | Counter                                  |
+| One Night Werewolf (#13)     | Werewolf is/isn't the player voted out                      | Match                                    |
+| Two Rooms and a Boom (#30)   | Bomber in same room as President at end                     | Spatial + temporal                       |
+| Prisoner's Dilemma (#22)     | Payoff matrix resolves based on choices                     | Payoff lookup                            |
+| Ultimatum Game (#23)         | Accept → both get shares; reject → both get 0               | Binary event → payoff                    |
+| Trust Game (#26)             | Amounts sent and returned                                   | Numerical                                |
+| Stag Hunt (#25)              | Payoff matrix resolves based on choices                     | Payoff lookup                            |
+| Chicken (#24)                | Payoff matrix resolves based on choices                     | Payoff lookup                            |
+| Dead of Winter (#15)         | Main objective complete AND personal objective met          | Compound state check                     |
+| Everyone is John (#42)       | Points scored for completed Obsessions                      | Numerical                                |
+| Deception: MiHK (#7)         | Investigators correctly name Means + Evidence               | Match                                    |
+| Fake Artist (#36)            | Identified by vote; if caught, guesses word                 | Vote + match                             |
+| Minority Rule / Genius (#27) | In the minority = safe                                      | Count check                              |
+| The Mole (#28)               | Lowest quiz score = eliminated                              | Numerical comparison                     |
+| Sheriff of Nottingham (#10)  | Most gold/points at game end                                | Numerical comparison                     |
+| BSG (#14, #44)               | Resources > 0 AND reach destination; OR any resource = 0    | Threshold                                |
+| Harborco (#39)               | Points from confidential scoring sheet                      | Numerical                                |
+| Sally Soprano (#20)          | Points from confidential scoring sheet                      | Numerical                                |
+| Ugli Orange (#19)            | Got the part of the orange you need                         | Binary resource check                    |
+| Liar Game (#29)              | Survive rounds + avoid debt                                 | Survival + numerical                     |
+| 剧本杀 faction (#38)         | Faction's pre-stated objective achieved                     | Varies but pre-specified                 |
+| 剧本杀 blizzard (#46)        | Correctly identify killer                                   | Match                                    |
+| Coffee shop (user's example) | Proposal accepted + secret not discovered                   | Event + information preservation         |
 
 ### Group B: Procedurally precise — outcome determined by a defined procedure involving human choice
 
-| Scenario | Winning condition | Structure |
-|---|---|---|
-| Baron Munchausen (#43) | Most votes for "best story" (cannot vote for self) | Voting result (but WHAT voters evaluate is subjective) |
-| Arctic Survival (#41) | Ranking closest to expert answer | Numerical distance (precise, but the "expert answer" is external) |
-| Texoil (#40) | Deal reached vs. no deal; terms vs. reservation price | Binary event + numerical comparison |
+| Scenario               | Winning condition                                     | Structure                                                         |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
+| Baron Munchausen (#43) | Most votes for "best story" (cannot vote for self)    | Voting result (but WHAT voters evaluate is subjective)            |
+| Arctic Survival (#41)  | Ranking closest to expert answer                      | Numerical distance (precise, but the "expert answer" is external) |
+| Texoil (#40)           | Deal reached vs. no deal; terms vs. reservation price | Binary event + numerical comparison                               |
 
 ### Group C: Imprecise or absent — require subjective judgment or have no formal win condition
 
-| Scenario | Issue |
-|---|---|
-| British Parliamentary Debate (#31) | Judges rank teams by quality of argument — expert evaluation |
-| Courtroom Cross-Examination (#32) | Jury decides — subjective collective judgment |
-| Socratic Elenchus (#35) | No formal win condition; "did the contradiction land?" is a judgment call |
-| Hostage Negotiation (#21) | "Peaceful resolution" is somewhat binary but real-world fuzzy |
-| Fiasco (#17) | Dice determine ending; no "winner" — the game is about narrative |
-| Vampire LARP (#18) | Multiple goals of varying formality; some precise (win an election), some vague (gain influence) |
-| Status Game (#33) | Audience guesses your number — actually precise (match), but status communication itself is evaluated impressionistically |
-| Improv Hidden Objective (#34) | Did the other person perform the action? — actually fairly precise (event occurrence) |
+| Scenario                           | Issue                                                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| British Parliamentary Debate (#31) | Judges rank teams by quality of argument — expert evaluation                                                              |
+| Courtroom Cross-Examination (#32)  | Jury decides — subjective collective judgment                                                                             |
+| Socratic Elenchus (#35)            | No formal win condition; "did the contradiction land?" is a judgment call                                                 |
+| Hostage Negotiation (#21)          | "Peaceful resolution" is somewhat binary but real-world fuzzy                                                             |
+| Fiasco (#17)                       | Dice determine ending; no "winner" — the game is about narrative                                                          |
+| Vampire LARP (#18)                 | Multiple goals of varying formality; some precise (win an election), some vague (gain influence)                          |
+| Status Game (#33)                  | Audience guesses your number — actually precise (match), but status communication itself is evaluated impressionistically |
+| Improv Hidden Objective (#34)      | Did the other person perform the action? — actually fairly precise (event occurrence)                                     |
 
 ---
 
@@ -92,7 +92,7 @@ Any competent observer, given the same record of what happened in the game, woul
 - IMPRECISE: "The best story" — different observers may disagree.
 - IMPRECISE: "A compelling argument" — subjective.
 
-**Test:** If two independent observers check the condition, will they *necessarily* reach the same answer? If yes, the condition is observer-independent.
+**Test:** If two independent observers check the condition, will they _necessarily_ reach the same answer? If yes, the condition is observer-independent.
 
 ### Property 3: Grounded in Events and States, Not in Quality of Performance (基于事件而非表现质量)
 
@@ -101,7 +101,7 @@ The condition references **what happened** (discrete events, game states, facts)
 - PRECISE: "The Queen said 'I fund the expedition'" — an event that either occurred or didn't.
 - IMPRECISE: "Columbus delivered a compelling argument" — a quality assessment of how an event was performed.
 
-This is the **core distinction**. Performance quality is the *means* by which a player achieves their goal; the *condition* must be the outcome of that performance, not a rating of the performance itself.
+This is the **core distinction**. Performance quality is the _means_ by which a player achieves their goal; the _condition_ must be the outcome of that performance, not a rating of the performance itself.
 
 **Test:** Does the condition contain any adjective or adverb that could reasonably be disputed (persuasive, eloquent, convincing, effective, skillful)? If yes, it is grounded in quality rather than event.
 
@@ -138,7 +138,7 @@ Properties 1–5 are sufficient for conditions about observable game states (cou
 
 Example: Avalon's Assassin gets one guess at Merlin's identity. Binary, mechanical, observer-independent. This is the **gold standard** for information-preservation conditions.
 
-**(b) Explicit verbal trigger** — The secret is "discovered" if and only if the opponent *explicitly states* the hidden fact during the game. ("Your ring is fake!")
+**(b) Explicit verbal trigger** — The secret is "discovered" if and only if the opponent _explicitly states_ the hidden fact during the game. ("Your ring is fake!")
 
 Problem: This incentivizes the opponent to spam guesses mid-game ("Is the ring fake? Is the ring stolen? Is the ring borrowed?"), which breaks naturalistic roleplay.
 
@@ -163,63 +163,75 @@ When a winning condition involves information preservation (keeping a secret) or
 Every precise winning condition in the 47 scenarios can be decomposed into combinations of these atomic types:
 
 ### Type 1: State-Threshold (状态阈值)
+
 A countable game variable reaches or exceeds a specific value.
 
 > COUNT(X) ≥ N at time T
 
 Examples:
+
 - "18 supply centers" (Diplomacy)
 - "5 Liberal policies enacted" (Secret Hitler)
 - "4 cockroaches face-up in front of a player" (Cockroach Poker)
 - "3 quests succeeded" (Avalon)
 
 ### Type 2: Elimination/Survival (淘汰/存活)
+
 A specific entity is or isn't in the game at a specific point.
 
 > ALIVE(X) = true/false at time T
 
 Examples:
+
 - "All werewolves are dead" (Werewolf)
 - "Spy survives to the final 3" (谁是卧底)
 - "Last player with influence cards" (Coup)
 - "Only 2 players remain alive" (Blood on the Clocktower)
 
 ### Type 3: Identification/Match (识别/匹配)
+
 A player's guess matches a hidden ground truth.
 
 > GUESS(player, category) = TRUTH(category)
 
 Examples:
+
 - "Assassin correctly names Merlin" (Avalon)
 - "Spy correctly names the location" (Spyfall)
 - "Investigators identify the correct Means and Evidence" (Deception)
 - "Players correctly identify the killer" (剧本杀)
 
 ### Type 4: Discrete Event Occurrence (离散事件发生)
+
 A specific, observable event happens or doesn't happen during play.
 
 > EVENT(X) occurred = true/false [before time T]
 
 Examples:
+
 - "She says yes to the proposal" (coffee shop)
 - "Hitler is elected Chancellor after 3 Fascist policies" (Secret Hitler)
 - "Agreement reached before the deadline" (negotiation exercises)
 - "The hostage-taker surrenders" (crisis negotiation)
 
 ### Type 5: Spatial/Positional Check (空间/位置检查)
+
 Game elements are in specific positions at evaluation time.
 
 > POSITION(X) = POSITION(Y) at time T
 
 Examples:
+
 - "Bomber is in the same room as the President at game end" (Two Rooms and a Boom)
 
 ### Type 6: Information Preservation (信息保全)
+
 A piece of hidden information was NOT successfully extracted by the opposing party, as verified by a specified procedure.
 
 > VERIFIED_KNOWS(opponent, secret, procedure) = false at time T
 
 Examples:
+
 - "The ring's falseness is not discovered" — verified by: opponent gets one guess at end (coffee shop)
 - "The affair is not discovered" — verified by: opponent gets one guess at end (coffee shop)
 - "Merlin's identity is not discovered" — verified by: Assassin names one player (Avalon)
@@ -228,11 +240,13 @@ Examples:
 **This type REQUIRES a specified verification procedure** (Property 6). Without it, the condition is imprecise.
 
 ### Type 7: Numerical Payoff (数值收益)
+
 A measurable quantity is maximized, minimized, or compared against a benchmark.
 
 > SCORE(player) [operator] VALUE
 
 Examples:
+
 - Payoff matrices (Prisoner's Dilemma, Ultimatum Game, Chicken, Stag Hunt)
 - Negotiation scoring sheets (Sally Soprano, Harborco)
 - Points from completed Obsessions (Everyone is John)
@@ -254,25 +268,29 @@ Complex winning conditions are composed from these atomics using **AND, OR, NOT*
 Not all "winning conditions" are equally precise. There is a spectrum:
 
 ### Level 1: Mechanical (最强)
+
 The condition can be checked by counting, matching, or verifying states. Zero human judgment. A computer could adjudicate.
 
 > "All werewolves are dead." "18 supply centers." "Bomber in same room as President."
 
 ### Level 2: Procedural (中等)
-The condition is checked through a defined procedure that involves human *choice* (not human *judgment*). The human element is a player's strategic decision, not an evaluator's taste.
+
+The condition is checked through a defined procedure that involves human _choice_ (not human _judgment_). The human element is a player's strategic decision, not an evaluator's taste.
 
 > "She says yes to the proposal." (Her decision is a player's strategic choice, not a judge's evaluation.) "The Assassin names Merlin." (The Assassin's guess is a strategic choice.)
 
-This is the level of the coffee shop example. The man's success depends on the woman player's *decision* — which is a strategic act within the game, not a subjective assessment.
+This is the level of the coffee shop example. The man's success depends on the woman player's _decision_ — which is a strategic act within the game, not a subjective assessment.
 
 ### Level 3: Vote-Aggregated Subjective (较弱)
-The condition is mechanically precise (count votes), but the *criterion* voters use is subjective.
+
+The condition is mechanically precise (count votes), but the _criterion_ voters use is subjective.
 
 > "Most votes for best story" (Baron Munchausen). "Judges rank teams" (BP Debate).
 
 The outcome is reproducible given the same voters, but not reproducible across different voter panels.
 
 ### Level 4: Evaluative (最弱)
+
 The condition requires an arbiter to assess quality, and reasonable arbiters may disagree.
 
 > "Persuasive speech." "Eloquent rhetoric." "Effective negotiation."
@@ -293,12 +311,12 @@ The quality of Columbus's performance is already captured — implicitly and per
 
 This principle converts every imprecise condition into a precise one:
 
-| Imprecise (quality) | Precise (decision) |
-|---|---|
-| "Columbus is persuasive" | "The Queen player says 'I approve the expedition'" |
+| Imprecise (quality)                      | Precise (decision)                                       |
+| ---------------------------------------- | -------------------------------------------------------- |
+| "Columbus is persuasive"                 | "The Queen player says 'I approve the expedition'"       |
 | "The negotiator calms the hostage-taker" | "The hostage-taker player releases at least one hostage" |
-| "The defendant makes a convincing case" | "Fewer than N juror-players vote 'guilty'" |
-| "The spy blends in well" | "The spy is not identified by majority vote" |
+| "The defendant makes a convincing case"  | "Fewer than N juror-players vote 'guilty'"               |
+| "The spy blends in well"                 | "The spy is not identified by majority vote"             |
 
 In every case, the other player (or players) serves as the "measuring instrument" for performance quality. Their strategic decision is the condition. The performance is the means.
 
@@ -325,6 +343,7 @@ Fails: Property 2 (observer-dependent), Property 3 (quality assessment). Who dec
 > **Queen Isabella's hidden goal:** She is secretly nearly bankrupt and cannot afford the expedition without seizing Church assets — a politically explosive move she wants to hide. Verified by: at game end, Columbus is asked "What, if anything, was the Queen hiding?" Same procedure. (Type 6.)
 
 Now every condition is:
+
 - Binary (approved or not; secret guessed correctly or not)
 - Observer-independent (anyone can check)
 - Grounded in events and states, not quality
@@ -332,7 +351,7 @@ Now every condition is:
 - Evaluated at a clear moment (session end)
 - Verified by a specified procedure (formal guess)
 
-The quality of Columbus's rhetoric, the beauty of his language, his emotional delivery — none of these appear in the conditions. Yet they are all implicitly captured: if his rhetoric is good enough to make the Queen-player decide to approve, he wins. The other player's agency *is* the measuring instrument.
+The quality of Columbus's rhetoric, the beauty of his language, his emotional delivery — none of these appear in the conditions. Yet they are all implicitly captured: if his rhetoric is good enough to make the Queen-player decide to approve, he wins. The other player's agency _is_ the measuring instrument.
 
 ---
 

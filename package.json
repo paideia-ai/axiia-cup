@@ -1,0 +1,28 @@
+{
+  "name": "axiia-cup",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel --filter=@axiia/web --filter=@axiia/api",
+    "dev:api": "bun run --filter @axiia/api dev",
+    "dev:web": "bun run --filter @axiia/web dev",
+    "dev:cli": "bun run --filter @axiia/cli dev",
+    "fmt": "oxfmt apps packages",
+    "fmt:check": "oxfmt --check apps packages",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "oxlint . --fix"
+  },
+  "devDependencies": {
+    "bun-types": "^1.2.0",
+    "oxfmt": "^0.20.0",
+    "oxlint": "^1.35.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  },
+  "packageManager": "bun@1.3.11"
+}

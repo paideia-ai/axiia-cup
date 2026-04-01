@@ -1,14 +1,22 @@
-FROM python:3.12-slim
+FROM oven/bun:1.2 AS builder
 
 WORKDIR /app
 
-# Install dependencies
-RUN pip install --no-cache-dir openai fastapi 'uvicorn[standard]'
+COPY package.json bun.lock turbo.json tsconfig.base.json ./
+COPY apps ./apps
+COPY packages ./packages
 
-# Copy application
-COPY server/ server/
-COPY index.html .
+RUN bun install
+RUN bun run build
 
-EXPOSE 8080
+FROM oven/bun:1.2-slim
 
-CMD ["python", "-m", "uvicorn", "server.api:app", "--host", "0.0.0.0", "--port", "8080"]
+WORKDIR /app
+
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+
+EXPOSE 3001
+
+CMD ["bun", "apps/api/dist/index.js"]
