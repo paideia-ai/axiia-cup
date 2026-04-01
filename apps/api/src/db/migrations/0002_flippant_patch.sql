@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `submissions_user_scenario_version` ON `submissions` (`user_id`,`scenario_id`,`version`);

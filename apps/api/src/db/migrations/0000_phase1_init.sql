@@ -38,9 +38,13 @@ CREATE TABLE `submissions` (
 	FOREIGN KEY (`scenario_id`) REFERENCES `scenarios`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `submissions_user_scenario_version` ON `submissions` (`user_id`,`scenario_id`,`version`);
+--> statement-breakpoint
 CREATE TABLE `playground_runs` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`submission_id` integer NOT NULL,
+	`status` text DEFAULT 'queued' NOT NULL,
+	`lease_token` text,
 	`scenario_id` text NOT NULL,
 	`transcript` text DEFAULT '[]' NOT NULL,
 	`judge_transcript_a` text DEFAULT '[]' NOT NULL,
