@@ -12,10 +12,15 @@ import { tournamentRouter } from './routes/tournaments'
 import { db } from './db/client'
 import { scenarios } from './db/schema'
 
+const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
 app.use(
   '*',
   cors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+    origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
   }),
