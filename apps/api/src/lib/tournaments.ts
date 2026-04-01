@@ -332,45 +332,91 @@ export function getLeaderboard(tournamentId: number) {
 
   const participants = getTournamentPlayers(tournament)
   const participantIds = participants.map((player) => player.submissionId)
-  const detail = getTournamentDetail(tournamentId)
-
-  if (!detail) {
-    return null
-  }
+  const scoredMatchRows = db
+    .select({
+      roundId: matches.roundId,
+      status: matches.status,
+      subAId: matches.subAId,
+      subBId: matches.subBId,
+      winner: matches.winner,
+    })
+    .from(matches)
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(
+      and(eq(rounds.tournamentId, tournamentId), eq(matches.status, 'scored')),
+    )
+    .all()
+  const roundRows = db
+    .select({ id: rounds.id })
+    .from(rounds)
+    .where(eq(rounds.tournamentId, tournamentId))
+    .all()
+  const roundMatchRows = db
+    .select({
+      roundId: matches.roundId,
+      subAId: matches.subAId,
+      subBId: matches.subBId,
+    })
+    .from(matches)
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(eq(rounds.tournamentId, tournamentId))
+    .all()
 
   const wins = new Map<number, number>(participantIds.map((id) => [id, 0]))
   const losses = new Map<number, number>(participantIds.map((id) => [id, 0]))
+  const completedResults = new Map<number, number>(
+    participantIds.map((id) => [id, 0]),
+  )
   const opponents = new Map<number, Set<number>>(
     participantIds.map((id) => [id, new Set<number>()]),
   )
+  const pairedPlayersByRound = new Map<number, Set<number>>()
 
-  for (const round of detail.rounds) {
-    for (const byeSubmissionId of round.byeSubmissions) {
-      wins.set(byeSubmissionId, (wins.get(byeSubmissionId) ?? 0) + 1)
-    }
+  for (const row of roundMatchRows) {
+    const pairedPlayers = pairedPlayersByRound.get(row.roundId) ?? new Set<number>()
+    pairedPlayers.add(row.subAId)
+    pairedPlayers.add(row.subBId)
+    pairedPlayersByRound.set(row.roundId, pairedPlayers)
+  }
 
-    for (const match of round.matches) {
-      if (match.status !== 'scored') {
+  for (const round of roundRows) {
+    const pairedPlayers = pairedPlayersByRound.get(round.id) ?? new Set<number>()
+
+    for (const participantId of participantIds) {
+      if (pairedPlayers.has(participantId)) {
         continue
       }
 
-      opponents.get(match.subAId)?.add(match.subBId)
-      opponents.get(match.subBId)?.add(match.subAId)
+      wins.set(participantId, (wins.get(participantId) ?? 0) + 1)
+      completedResults.set(
+        participantId,
+        (completedResults.get(participantId) ?? 0) + 1,
+      )
+    }
+  }
 
-      if (match.winner === 'a') {
-        wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
-        losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1)
-      } else if (match.winner === 'b') {
-        wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1)
-        losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1)
-      }
+  for (const match of scoredMatchRows) {
+    opponents.get(match.subAId)?.add(match.subBId)
+    opponents.get(match.subBId)?.add(match.subAId)
+    completedResults.set(match.subAId, (completedResults.get(match.subAId) ?? 0) + 1)
+    completedResults.set(match.subBId, (completedResults.get(match.subBId) ?? 0) + 1)
+
+    if (match.winner === 'a') {
+      wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
+      losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1)
+    } else if (match.winner === 'b') {
+      wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1)
+      losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1)
+    } else if (match.winner === 'draw') {
+      wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 0.5)
+      wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 0.5)
     }
   }
 
   const entries = participants.map((player) => {
     const playerWins = wins.get(player.submissionId) ?? 0
     const playerLosses = losses.get(player.submissionId) ?? 0
-    const totalPlayed = playerWins + playerLosses
+    const totalPlayed = completedResults.get(player.submissionId) ?? 0
     const buchholz = [
       ...(opponents.get(player.submissionId) ?? new Set<number>()),
     ].reduce((sum, opponentId) => sum + (wins.get(opponentId) ?? 0), 0)

@@ -69,7 +69,7 @@ export const leaderboardEntrySchema = z.object({
   rank: z.number().int().positive(),
   playerName: z.string(),
   modelLabel: z.string(),
-  wins: z.number().int().nonnegative(),
+  wins: z.number().nonnegative(),
   losses: z.number().int().nonnegative(),
   buchholz: z.number().nonnegative(),
   winRate: z.number().min(0).max(100),
