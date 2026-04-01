@@ -3,22 +3,28 @@ import OpenAI from 'openai'
 
 const SILICONFLOW_BASE_URL = 'https://api.siliconflow.cn/v1'
 
+let _client: OpenAI | null = null
+
 type ChatMessage = {
   role: 'assistant' | 'user'
   content: string
 }
 
 function getClient() {
-  const apiKey = process.env.SILICONFLOW_API_KEY
+  if (!_client) {
+    const apiKey = process.env.SILICONFLOW_API_KEY
 
-  if (!apiKey) {
-    throw new Error('Missing SILICONFLOW_API_KEY')
+    if (!apiKey) {
+      throw new Error('Missing SILICONFLOW_API_KEY')
+    }
+
+    _client = new OpenAI({
+      apiKey,
+      baseURL: SILICONFLOW_BASE_URL,
+    })
   }
 
-  return new OpenAI({
-    apiKey,
-    baseURL: SILICONFLOW_BASE_URL,
-  })
+  return _client
 }
 
 export async function chatCompletion(params: {
