@@ -16,7 +16,7 @@ import { requireAuth } from '../middleware/requireAuth'
 const registerBodySchema = z.object({
   email: z.string().email(),
   otp: z.string(),
-  password: z.string().min(1),
+  password: z.string().min(6),
   displayName: z.string().min(1).optional(),
 })
 
