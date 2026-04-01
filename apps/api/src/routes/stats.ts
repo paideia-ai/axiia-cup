@@ -4,6 +4,7 @@ import {
   recentMatchSchema,
 } from '@axiia/shared'
 import { desc, eq, inArray, or, sql } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 
 import { db } from '../db/client'
@@ -19,6 +20,10 @@ import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
 
 const statsRouter = new Hono()
+const matchSubA = alias(submissions, 'match_sub_a')
+const matchSubB = alias(submissions, 'match_sub_b')
+const matchUserA = alias(users, 'match_user_a')
+const matchUserB = alias(users, 'match_user_b')
 
 statsRouter.get('/api/stats/me', requireAuth, (context) => {
   const userId = context.get('userId')
@@ -153,19 +158,9 @@ statsRouter.get('/api/admin/stats', requireAuth, requireAdmin, (context) => {
 
 statsRouter.get('/api/matches/my', requireAuth, (context) => {
   const userId = context.get('userId')
-  const userSubmissions = db
-    .select({ id: submissions.id })
-    .from(submissions)
-    .where(eq(submissions.userId, userId))
-    .all()
-  const submissionIds = userSubmissions.map((submission) => submission.id)
-
-  if (submissionIds.length === 0) {
-    return context.json([])
-  }
-
   const recentMatchRows = db
     .select({
+      createdAt: matches.createdAt,
       id: matches.id,
       roleALabel: scenarios.roleAName,
       roleBLabel: scenarios.roleBName,
@@ -173,44 +168,30 @@ statsRouter.get('/api/matches/my', requireAuth, (context) => {
       scenarioTitle: scenarios.title,
       status: matches.status,
       subAId: matches.subAId,
+      subAModel: matchSubA.model,
+      subAUserDisplayName: matchUserA.displayName,
+      subAUserId: matchSubA.userId,
       subBId: matches.subBId,
+      subBModel: matchSubB.model,
+      subBUserDisplayName: matchUserB.displayName,
+      subBUserId: matchSubB.userId,
       winner: matches.winner,
-      createdAt: matches.createdAt,
     })
     .from(matches)
     .innerJoin(scenarios, eq(matches.scenarioId, scenarios.id))
-    .where(
-      or(
-        inArray(matches.subAId, submissionIds),
-        inArray(matches.subBId, submissionIds),
-      ),
-    )
+    .innerJoin(matchSubA, eq(matches.subAId, matchSubA.id))
+    .innerJoin(matchSubB, eq(matches.subBId, matchSubB.id))
+    .innerJoin(matchUserA, eq(matchSubA.userId, matchUserA.id))
+    .innerJoin(matchUserB, eq(matchSubB.userId, matchUserB.id))
+    .where(or(eq(matchSubA.userId, userId), eq(matchSubB.userId, userId)))
     .orderBy(desc(matches.createdAt))
     .limit(10)
     .all()
 
   const enriched = recentMatchRows.map((match) => {
-    const isA = submissionIds.includes(match.subAId)
+    const isA = match.subAUserId === userId
     const mySide = isA ? ('a' as const) : ('b' as const)
     const opponentSubId = isA ? match.subBId : match.subAId
-
-    const opponentSub = db
-      .select({ userId: submissions.userId, model: submissions.model })
-      .from(submissions)
-      .where(eq(submissions.id, opponentSubId))
-      .get()
-    const opponentUser = opponentSub
-      ? db
-          .select({ displayName: users.displayName })
-          .from(users)
-          .where(eq(users.id, opponentSub.userId))
-          .get()
-      : null
-    const mySub = db
-      .select({ model: submissions.model })
-      .from(submissions)
-      .where(eq(submissions.id, isA ? match.subAId : match.subBId))
-      .get()
 
     return recentMatchSchema.parse({
       id: match.id,
@@ -220,8 +201,10 @@ statsRouter.get('/api/matches/my', requireAuth, (context) => {
       roleALabel: match.roleALabel,
       roleBLabel: match.roleBLabel,
       winner: match.winner,
-      opponentName: opponentUser?.displayName ?? `选手 ${opponentSubId}`,
-      model: mySub?.model ?? 'unknown',
+      opponentName:
+        (isA ? match.subBUserDisplayName : match.subAUserDisplayName) ??
+        `选手 ${opponentSubId}`,
+      model: isA ? match.subAModel : match.subBModel,
       mySide,
       createdAt: match.createdAt,
     })

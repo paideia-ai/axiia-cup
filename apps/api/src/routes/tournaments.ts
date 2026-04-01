@@ -7,6 +7,7 @@ import {
   tournamentSchema,
 } from '@axiia/shared'
 import { eq } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 import { z } from 'zod'
 
@@ -39,6 +40,10 @@ const startTournamentSchema = z.object({
 })
 
 const tournamentRouter = new Hono()
+const detailSubA = alias(submissions, 'detail_sub_a')
+const detailSubB = alias(submissions, 'detail_sub_b')
+const detailUserA = alias(users, 'detail_user_a')
+const detailUserB = alias(users, 'detail_user_b')
 
 function parseId(value: string) {
   const parsed = Number(value)
@@ -252,36 +257,67 @@ tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
     return context.json({ error: 'Invalid match id' }, 400)
   }
 
-  const match = db.select().from(matches).where(eq(matches.id, matchId)).get()
+  const match = db
+    .select({
+      createdAt: matches.createdAt,
+      currentTurn: matches.currentTurn,
+      error: matches.error,
+      finishedAt: matches.finishedAt,
+      id: matches.id,
+      judgeTranscriptA: matches.judgeTranscriptA,
+      judgeTranscriptB: matches.judgeTranscriptB,
+      joinedSubAId: detailSubA.id,
+      joinedSubBId: detailSubB.id,
+      joinedUserAId: detailUserA.id,
+      joinedUserBId: detailUserB.id,
+      playerADisplayName: detailUserA.displayName,
+      playerAModel: detailSubA.model,
+      playerBDisplayName: detailUserB.displayName,
+      playerBModel: detailSubB.model,
+      reasoning: matches.reasoning,
+      roundId: matches.roundId,
+      roundNumber: rounds.roundNumber,
+      scenarioId: matches.scenarioId,
+      scoreA: matches.scoreA,
+      scoreB: matches.scoreB,
+      startedAt: matches.startedAt,
+      status: matches.status,
+      subAId: matches.subAId,
+      subBId: matches.subBId,
+      tournamentId: rounds.tournamentId,
+      transcript: matches.transcript,
+      winner: matches.winner,
+    })
+    .from(matches)
+    .leftJoin(rounds, eq(rounds.id, matches.roundId))
+    .leftJoin(detailSubA, eq(detailSubA.id, matches.subAId))
+    .leftJoin(detailSubB, eq(detailSubB.id, matches.subBId))
+    .leftJoin(detailUserA, eq(detailUserA.id, detailSubA.userId))
+    .leftJoin(detailUserB, eq(detailUserB.id, detailSubB.userId))
+    .where(eq(matches.id, matchId))
+    .get()
 
   if (!match) {
     return context.json({ error: 'Match not found' }, 404)
   }
 
-  const round = db
-    .select()
-    .from(rounds)
-    .where(eq(rounds.id, match.roundId))
-    .get()
-  const subA = db
-    .select()
-    .from(submissions)
-    .where(eq(submissions.id, match.subAId))
-    .get()
-  const subB = db
-    .select()
-    .from(submissions)
-    .where(eq(submissions.id, match.subBId))
-    .get()
-
-  if (!round || !subA || !subB) {
+  if (
+    match.roundNumber === null ||
+    match.tournamentId === null ||
+    match.joinedSubAId === null ||
+    match.joinedSubBId === null
+  ) {
     return context.json({ error: 'Match dependencies missing' }, 500)
   }
 
-  const userA = db.select().from(users).where(eq(users.id, subA.userId)).get()
-  const userB = db.select().from(users).where(eq(users.id, subB.userId)).get()
-
-  if (!userA || !userB) {
+  if (
+    match.joinedUserAId === null ||
+    match.joinedUserBId === null ||
+    match.playerADisplayName === null ||
+    match.playerAModel === null ||
+    match.playerBDisplayName === null ||
+    match.playerBModel === null
+  ) {
     return context.json({ error: 'Match users missing' }, 500)
   }
 
@@ -294,13 +330,13 @@ tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
       id: match.id,
       judgeTranscriptA: parseJsonField(match.judgeTranscriptA, []),
       judgeTranscriptB: parseJsonField(match.judgeTranscriptB, []),
-      playerADisplayName: userA.displayName,
-      playerAModel: subA.model,
-      playerBDisplayName: userB.displayName,
-      playerBModel: subB.model,
+      playerADisplayName: match.playerADisplayName,
+      playerAModel: match.playerAModel,
+      playerBDisplayName: match.playerBDisplayName,
+      playerBModel: match.playerBModel,
       reasoning: match.reasoning,
       roundId: match.roundId,
-      roundNumber: round.roundNumber,
+      roundNumber: match.roundNumber,
       scenarioId: match.scenarioId,
       scoreA: match.scoreA,
       scoreB: match.scoreB,
@@ -308,7 +344,7 @@ tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
       status: match.status,
       subAId: match.subAId,
       subBId: match.subBId,
-      tournamentId: round.tournamentId,
+      tournamentId: match.tournamentId,
       transcript: parseJsonField(match.transcript, []),
       winner: match.winner,
     }),
