@@ -44,7 +44,7 @@ authRouter.post('/api/auth/register', async (context) => {
 
   const { displayName, email, otp, password } = parsed.data
 
-  if (otp !== '123456') {
+  if (otp !== (process.env.REGISTRATION_CODE ?? '123456')) {
     return context.json({ error: 'Invalid OTP' }, 400)
   }
 

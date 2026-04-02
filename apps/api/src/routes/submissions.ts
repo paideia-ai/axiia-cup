@@ -1,9 +1,9 @@
 import { createSubmissionSchema, submissionSchema } from '@axiia/shared'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { Hono } from 'hono'
 
 import { db, sqlite } from '../db/client'
-import { scenarios, submissions } from '../db/schema'
+import { scenarios, submissions, tournaments } from '../db/schema'
 import { requireAuth } from '../middleware/requireAuth'
 
 const submissionSelection = {
@@ -79,6 +79,21 @@ submissionsRouter.post('/api/submissions', requireAuth, async (context) => {
 
   if (!scenario) {
     return context.json({ error: 'Scenario not found' }, 404)
+  }
+
+  const activeTournament = db
+    .select({ id: tournaments.id })
+    .from(tournaments)
+    .where(
+      and(
+        eq(tournaments.scenarioId, scenarioId),
+        inArray(tournaments.status, ['running', 'open']),
+      ),
+    )
+    .get()
+
+  if (activeTournament) {
+    return context.json({ error: '比赛进行中，无法提交新版本' }, 403)
   }
 
   sqlite.exec('BEGIN IMMEDIATE')

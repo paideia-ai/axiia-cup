@@ -12,6 +12,7 @@ import {
 import { db } from '../db/client'
 import {
   matches,
+  playgroundRuns,
   rounds,
   scenarios,
   submissions,
@@ -37,6 +38,7 @@ function cleanupTestData() {
   db.delete(matches).run()
   db.delete(rounds).run()
   db.delete(tournaments).run()
+  db.delete(playgroundRuns).run()
   db.delete(submissions).run()
   db.delete(users).run()
   db.delete(scenarios).where(eq(scenarios.id, TEST_SCENARIO_ID)).run()

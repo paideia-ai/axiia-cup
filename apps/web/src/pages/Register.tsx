@@ -51,9 +51,7 @@ export function RegisterPage() {
       login(response)
       navigate('/dashboard', { replace: true })
     } catch (submissionError) {
-      setError(
-        submissionError instanceof Error ? submissionError.message : '注册失败',
-      )
+      setError(submissionError instanceof Error ? submissionError.message : '注册失败')
     } finally {
       setIsSubmitting(false)
     }
@@ -64,7 +62,6 @@ export function RegisterPage() {
       <Card className="w-full max-w-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>注册</CardTitle>
-          <Badge>固定 OTP: 123456</Badge>
         </CardHeader>
         <CardContent>
           {step === 'email' ? (
@@ -91,11 +88,11 @@ export function RegisterPage() {
                 <input className="app-input" readOnly value={email} />
               </label>
               <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>验证码</span>
+                <span>邀请码</span>
                 <input
                   className="app-input"
                   onChange={(event) => setOtp(event.target.value)}
-                  placeholder="123456"
+                  placeholder="请输入邀请码"
                   value={otp}
                 />
               </label>
@@ -118,9 +115,7 @@ export function RegisterPage() {
                   value={password}
                 />
               </label>
-              {error ? (
-                <p className="text-sm text-[#f87171] md:col-span-2">{error}</p>
-              ) : null}
+              {error ? <p className="text-sm text-[#f87171] md:col-span-2">{error}</p> : null}
               <div className="flex gap-3 md:col-span-2">
                 <Button
                   disabled={isSubmitting}
@@ -130,11 +125,7 @@ export function RegisterPage() {
                 >
                   返回
                 </Button>
-                <Button
-                  className="flex-1"
-                  disabled={isSubmitting}
-                  type="submit"
-                >
+                <Button className="flex-1" disabled={isSubmitting} type="submit">
                   {isSubmitting ? '创建中...' : '创建账户'}
                 </Button>
               </div>

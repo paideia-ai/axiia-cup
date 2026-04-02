@@ -17,7 +17,13 @@ describe('auth utilities', () => {
 
   it('returns null for a tampered token', async () => {
     const token = await signToken({ userId: 7, isAdmin: false })
-    const tamperedToken = `${token.slice(0, -1)}${token.endsWith('a') ? 'b' : 'a'}`
+    const parts = token.split('.')
+    // Flip a character in the middle of the signature to reliably break it
+    const sig = parts[2]
+    const mid = Math.floor(sig.length / 2)
+    const flipped = sig[mid] === 'A' ? 'B' : 'A'
+    parts[2] = sig.slice(0, mid) + flipped + sig.slice(mid + 1)
+    const tamperedToken = parts.join('.')
 
     const verified = await verifyToken(tamperedToken)
 

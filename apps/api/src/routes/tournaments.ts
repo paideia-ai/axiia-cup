@@ -107,76 +107,98 @@ tournamentRouter.post(
       return context.json({ error: 'Scenario not found' }, 404)
     }
 
-    const players = getLatestScenarioPlayers(parsed.data.scenarioId)
-
-    if (players.length < 2) {
-      return context.json({ error: 'At least 2 submissions are required' }, 400)
-    }
-
-    const playerIds = shuffle(players.map((player) => player.submissionId))
-    const pairs: Array<[number, number]> = []
-
-    for (let index = 0; index + 1 < playerIds.length; index += 2) {
-      pairs.push([playerIds[index], playerIds[index + 1]])
-    }
-
-    const byeSubmissions = extractByeSubmissionIds(playerIds, pairs)
-    const {
-      matches: createdMatches,
-      round,
-      tournament: updatedTournament,
-    } = db.transaction((tx) => {
-      const tournament = tx
-        .insert(tournaments)
-        .values({
-          currentRound: 0,
-          scenarioId: parsed.data.scenarioId,
-          status: 'running',
-          totalRounds:
-            parsed.data.totalRounds ?? computeSwissRounds(players.length),
-        })
-        .returning()
-        .get()
-
-      const { matches: createdMatches, round } = createRoundWithMatches(
-        {
-          pairs,
-          roundNumber: 1,
-          scenarioId: parsed.data.scenarioId,
-          tournamentId: tournament.id,
-        },
-        tx,
-      )
-
-      const updatedTournament = tx
-        .update(tournaments)
-        .set({ currentRound: 1 })
-        .where(eq(tournaments.id, tournament.id))
-        .returning()
-        .get()
-
-      return {
+    try {
+      const {
+        byeSubmissions,
         matches: createdMatches,
         round,
         tournament: updatedTournament,
-      }
-    })
+      } = db.transaction((tx) => {
+        const tournament = tx
+          .insert(tournaments)
+          .values({
+            currentRound: 0,
+            scenarioId: parsed.data.scenarioId,
+            status: 'running',
+            ...(parsed.data.totalRounds
+              ? { totalRounds: parsed.data.totalRounds }
+              : {}),
+          })
+          .returning()
+          .get()
 
-    kickWorker()
+        const players = getLatestScenarioPlayers(
+          parsed.data.scenarioId,
+          tournament.createdAt,
+        )
 
-    return context.json({
-      byeSubmissions,
-      matches: createdMatches,
-      round: tournamentRoundSchema.parse({
+        if (players.length < 2) {
+          throw new Error('At least 2 submissions are required')
+        }
+
+        const playerIds = shuffle(players.map((player) => player.submissionId))
+        const pairs: Array<[number, number]> = []
+
+        for (let index = 0; index + 1 < playerIds.length; index += 2) {
+          pairs.push([playerIds[index], playerIds[index + 1]])
+        }
+
+        const computedByeSubmissions = extractByeSubmissionIds(playerIds, pairs)
+        const { matches: roundMatches, round: createdRound } = createRoundWithMatches(
+          {
+            pairs,
+            roundNumber: 1,
+            scenarioId: parsed.data.scenarioId,
+            tournamentId: tournament.id,
+          },
+          tx,
+        )
+
+        const finalizedTournament = tx
+          .update(tournaments)
+          .set({
+            currentRound: 1,
+            ...(parsed.data.totalRounds
+              ? {}
+              : { totalRounds: computeSwissRounds(players.length) }),
+          })
+          .where(eq(tournaments.id, tournament.id))
+          .returning()
+          .get()
+
+        return {
+          byeSubmissions: computedByeSubmissions,
+          matches: roundMatches,
+          round: createdRound,
+          tournament: finalizedTournament,
+        }
+      })
+
+      kickWorker()
+
+      return context.json({
         byeSubmissions,
-        id: round.id,
         matches: createdMatches,
-        roundNumber: round.roundNumber,
-        status: round.status,
-        tournamentId: round.tournamentId,
-      }),
-      tournament: tournamentSchema.parse(updatedTournament),
-    })
+        round: tournamentRoundSchema.parse({
+          byeSubmissions,
+          id: round.id,
+          matches: createdMatches,
+          roundNumber: round.roundNumber,
+          status: round.status,
+          tournamentId: round.tournamentId,
+        }),
+        tournament: tournamentSchema.parse(updatedTournament),
+      })
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === 'At least 2 submissions are required'
+      ) {
+        return context.json({ error: error.message }, 400)
+      }
+
+      throw error
+    }
   },
 )
 
