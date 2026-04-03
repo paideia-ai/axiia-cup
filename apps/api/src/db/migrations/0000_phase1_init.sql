@@ -4,6 +4,7 @@ CREATE TABLE `users` (
 	`password_hash` text NOT NULL,
 	`display_name` text DEFAULT 'momo' NOT NULL,
 	`is_admin` integer DEFAULT 0 NOT NULL,
+	`disabled` integer DEFAULT 0 NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint

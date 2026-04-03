@@ -21,6 +21,11 @@ export const userSchema = z.object({
   isAdmin: z.boolean(),
 })
 
+export const adminUserSchema = userSchema.extend({
+  createdAt: z.string(),
+  disabled: z.boolean(),
+})
+
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().min(1),
 })
@@ -28,6 +33,10 @@ export const updateProfileSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: z.string().min(1),
+})
+
+export const resetPasswordSchema = z.object({
+  password: z.string().min(6),
 })
 
 export const okResponseSchema = z.object({
@@ -323,6 +332,7 @@ export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
 export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
+export type AdminUser = z.infer<typeof adminUserSchema>
 export type RecentMatch = z.infer<typeof recentMatchSchema>
 export type Match = z.infer<typeof matchSchema>
 export type AppMeta = z.infer<typeof appMetaSchema>
@@ -332,3 +342,4 @@ export type RegistrationCodeResponse = z.infer<
 export type User = z.infer<typeof userSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>

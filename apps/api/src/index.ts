@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 
 import { startWorker } from './engine/worker'
 import { adminSettingsRouter } from './routes/admin-settings'
+import { adminUsersRouter } from './routes/admin-users'
 import { authRouter } from './routes/auth'
 import { appMetaSchema, modelOptions } from '@axiia/shared'
 import { playgroundRouter } from './routes/playground'
@@ -67,6 +68,7 @@ app.get('/api/meta', (context) => {
 
 app.get('/api/models', (context) => context.json({ items: modelOptions }))
 app.route('/', adminSettingsRouter)
+app.route('/', adminUsersRouter)
 app.route('/', authRouter)
 app.route('/', playgroundRouter)
 app.route('/', scenariosRouter)

@@ -2,6 +2,7 @@ import {
   adminErroredMatchSchema,
   adminPlayerSchema,
   adminStatsSchema,
+  adminUserSchema,
   changePasswordSchema,
   createSubmissionSchema,
   leaderboardEntrySchema,
@@ -13,6 +14,7 @@ import {
   personalStatsSchema,
   recentMatchSchema,
   registrationCodeResponseSchema,
+  resetPasswordSchema,
   scenarioSchema,
   submissionSchema,
   tournamentDetailSchema,
@@ -26,6 +28,7 @@ import {
   type AdminPlayer,
   type AdminErroredMatch,
   type AdminStats,
+  type AdminUser,
   type LeaderboardEntry,
   type MatchDetail,
   type PersonalStats,
@@ -59,6 +62,7 @@ const recentMatchesResponseSchema = z.array(recentMatchSchema)
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema)
 const adminPlayersResponseSchema = z.array(adminPlayerSchema)
 const adminErroredMatchesResponseSchema = z.array(adminErroredMatchSchema)
+const adminUsersResponseSchema = z.array(adminUserSchema)
 const startTournamentResponseSchema = z.object({
   byeSubmissions: z.array(z.number().int().positive()),
   matches: z.array(tournamentMatchSummarySchema),
@@ -302,6 +306,10 @@ export async function getAdminErroredMatches(): Promise<AdminErroredMatch[]> {
   )
 }
 
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  return apiFetch('/api/admin/users', { method: 'GET' }, adminUsersResponseSchema)
+}
+
 export async function getAdminRegistrationCode(): Promise<RegistrationCodeResponse> {
   return apiFetch(
     '/api/admin/settings/registration-code',
@@ -342,6 +350,34 @@ export async function retryAdminMatch(
   return apiFetch(
     `/api/admin/matches/${matchId}/retry`,
     { method: 'POST' },
+    okResponseSchema,
+  )
+}
+
+export async function toggleAdminUserDisabled(
+  userId: number | string,
+): Promise<AdminUser> {
+  return apiFetch(
+    `/api/admin/users/${userId}/disable`,
+    {
+      method: 'PATCH',
+    },
+    adminUserSchema,
+  )
+}
+
+export async function resetAdminUserPassword(
+  userId: number | string,
+  input: z.input<typeof resetPasswordSchema>,
+): Promise<{ ok: true }> {
+  const body = resetPasswordSchema.parse(input)
+
+  return apiFetch(
+    `/api/admin/users/${userId}/reset-password`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
     okResponseSchema,
   )
 }

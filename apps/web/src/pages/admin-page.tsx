@@ -2,6 +2,7 @@ import type {
   AdminErroredMatch,
   AdminPlayer,
   AdminStats,
+  AdminUser,
   Scenario,
   TournamentDetail,
   TournamentListItem,
@@ -18,10 +19,13 @@ import {
   getAdminScenarios,
   getAdminStats,
   getAdminTournamentPlayers,
+  getAdminUsers,
   getTournament,
   getTournaments,
+  resetAdminUserPassword,
   retryAdminMatch,
   startTournament,
+  toggleAdminUserDisabled,
   updateAdminRegistrationCode,
 } from '../lib/api'
 
@@ -85,6 +89,23 @@ function getTournamentCurrentRound(
   )
 }
 
+function formatDateTime(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleString('zh-CN', {
+    day: '2-digit',
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [scenarios, setScenarios] = useState<Scenario[]>([])
@@ -96,17 +117,24 @@ export function AdminPage() {
   const [tournamentDetailsById, setTournamentDetailsById] = useState<
     Record<number, TournamentDetail>
   >({})
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
   const [registrationCode, setRegistrationCode] = useState<string | null>(null)
   const [registrationCodeDraft, setRegistrationCodeDraft] = useState('')
   const [isEditingRegistrationCode, setIsEditingRegistrationCode] =
     useState(false)
   const [isSavingRegistrationCode, setIsSavingRegistrationCode] =
     useState(false)
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<number | null>(
+    null,
+  )
+  const [resetPasswordDraft, setResetPasswordDraft] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [startingScenarioId, setStartingScenarioId] = useState<string | null>(
     null,
   )
   const [retryingMatchIds, setRetryingMatchIds] = useState<number[]>([])
+  const [togglingUserIds, setTogglingUserIds] = useState<number[]>([])
+  const [resettingUserIds, setResettingUserIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const isEditingRegistrationCodeRef = useRef(false)
@@ -162,12 +190,14 @@ export function AdminPage() {
         scenariosResponse,
         tournamentsResponse,
         erroredMatchesResponse,
+        adminUsersResponse,
       ] = await Promise.all([
         getAdminRegistrationCode(),
         getAdminStats(),
         getAdminScenarios(),
         getTournaments(),
         getAdminErroredMatches(),
+        getAdminUsers(),
       ])
 
       const [monitoredTournamentEntries, playerEntries] = await Promise.all([
@@ -208,6 +238,7 @@ export function AdminPage() {
       setStats(statsResponse)
       setScenarios(scenariosResponse)
       setErroredMatches(nextErroredMatches)
+      setAdminUsers(adminUsersResponse)
       setTournaments(tournamentsResponse)
       setTournamentDetailsById(
         Object.fromEntries(
@@ -328,6 +359,77 @@ export function AdminPage() {
     }
   }
 
+  function handleOpenResetPassword(userId: number) {
+    setResetPasswordUserId(userId)
+    setResetPasswordDraft('')
+  }
+
+  function handleCancelResetPassword() {
+    setResetPasswordUserId(null)
+    setResetPasswordDraft('')
+  }
+
+  async function handleToggleUserDisabled(user: AdminUser) {
+    if (user.isAdmin) {
+      return
+    }
+
+    try {
+      setTogglingUserIds((current) =>
+        current.includes(user.id) ? current : [...current, user.id],
+      )
+      setError(null)
+
+      const updatedUser = await toggleAdminUserDisabled(user.id)
+
+      setAdminUsers((current) =>
+        current.map((currentUser) =>
+          currentUser.id === updatedUser.id ? updatedUser : currentUser,
+        ),
+      )
+      setToast(
+        `${updatedUser.displayName} 已${updatedUser.disabled ? '禁用' : '启用'}`,
+      )
+    } catch (toggleError) {
+      setError(
+        toggleError instanceof Error ? toggleError.message : '更新用户状态失败',
+      )
+    } finally {
+      setTogglingUserIds((current) =>
+        current.filter((currentUserId) => currentUserId !== user.id),
+      )
+    }
+  }
+
+  async function handleResetPassword(user: AdminUser) {
+    if (resetPasswordDraft.length < 6) {
+      setError('新密码至少需要 6 位')
+      return
+    }
+
+    try {
+      setResettingUserIds((current) =>
+        current.includes(user.id) ? current : [...current, user.id],
+      )
+      setError(null)
+
+      await resetAdminUserPassword(user.id, {
+        password: resetPasswordDraft,
+      })
+
+      handleCancelResetPassword()
+      setToast(`${user.displayName} 的密码已重置`)
+    } catch (resetError) {
+      setError(
+        resetError instanceof Error ? resetError.message : '重置密码失败',
+      )
+    } finally {
+      setResettingUserIds((current) =>
+        current.filter((currentUserId) => currentUserId !== user.id),
+      )
+    }
+  }
+
   const summaryCards = [
     {
       label: '排队中',
@@ -424,6 +526,134 @@ export function AdminPage() {
               </Button>
             )}
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>选手管理</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+              查看用户状态、禁用普通账号，并为指定账号重置密码。
+            </p>
+          </div>
+          <Badge tone="info">
+            {isLoading ? '同步中...' : `${adminUsers.length} 位用户`}
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            ['users-skeleton-1', 'users-skeleton-2', 'users-skeleton-3'].map(
+              (key) => (
+                <div
+                  key={key}
+                  className="h-[132px] animate-pulse rounded-xl bg-white/6"
+                />
+              ),
+            )
+          ) : adminUsers.length > 0 ? (
+            adminUsers.map((user) => {
+              const isEditingResetPassword = resetPasswordUserId === user.id
+              const isResettingPassword = resettingUserIds.includes(user.id)
+              const isTogglingUser = togglingUserIds.includes(user.id)
+
+              return (
+                <div key={user.id} className="app-panel space-y-4">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="panel-title">{user.displayName}</p>
+                        {user.isAdmin ? (
+                          <Badge tone="warning">管理员</Badge>
+                        ) : null}
+                        <Badge tone={user.disabled ? 'warning' : 'success'}>
+                          {user.disabled ? '已禁用' : '启用中'}
+                        </Badge>
+                      </div>
+                      <p className="panel-copy">{user.email}</p>
+                      <p className="text-xs text-[var(--foreground-subtle)]">
+                        创建时间 · {formatDateTime(user.createdAt)}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                      {!user.isAdmin ? (
+                        <Button
+                          disabled={isResettingPassword || isTogglingUser}
+                          onClick={() => void handleToggleUserDisabled(user)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          {isTogglingUser
+                            ? '处理中...'
+                            : user.disabled
+                              ? '启用'
+                              : '禁用'}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-[var(--foreground-subtle)]">
+                          管理员账号不可禁用
+                        </span>
+                      )}
+
+                      {!isEditingResetPassword ? (
+                        <Button
+                          disabled={isResettingPassword || isTogglingUser}
+                          onClick={() => handleOpenResetPassword(user.id)}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          重置密码
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {isEditingResetPassword ? (
+                    <form
+                      className="flex flex-col gap-3 md:flex-row md:items-center"
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        void handleResetPassword(user)
+                      }}
+                    >
+                      <input
+                        className="app-input md:max-w-sm"
+                        onChange={(event) =>
+                          setResetPasswordDraft(event.target.value)
+                        }
+                        placeholder="输入不少于 6 位的新密码"
+                        type="password"
+                        value={resetPasswordDraft}
+                      />
+                      <Button
+                        disabled={
+                          isResettingPassword || resetPasswordDraft.length < 6
+                        }
+                        size="sm"
+                        type="submit"
+                      >
+                        {isResettingPassword ? '确认中...' : '确认'}
+                      </Button>
+                      <Button
+                        disabled={isResettingPassword}
+                        onClick={handleCancelResetPassword}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        取消
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
+              )
+            })
+          ) : (
+            <div className="app-panel">
+              <p className="panel-copy">暂无用户数据。</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -103,6 +103,10 @@ authRouter.post('/api/auth/login', async (context) => {
     return context.json({ error: 'Invalid email or password' }, 401)
   }
 
+  if (userRecord.disabled) {
+    return context.json({ error: 'User account is disabled' }, 403)
+  }
+
   const user = userSchema.parse({
     id: userRecord.id,
     email: userRecord.email,
