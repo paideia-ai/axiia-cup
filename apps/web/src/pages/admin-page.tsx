@@ -3,6 +3,7 @@ import type {
   AdminPlayer,
   AdminStats,
   Scenario,
+  TournamentDetail,
   TournamentListItem,
 } from '@axiia/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -17,6 +18,7 @@ import {
   getAdminScenarios,
   getAdminStats,
   getAdminTournamentPlayers,
+  getTournament,
   getTournaments,
   retryAdminMatch,
   startTournament,
@@ -35,6 +37,54 @@ function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
   return latest
 }
 
+function buildMonitoredTournaments(tournaments: TournamentListItem[]) {
+  const active = tournaments.filter(
+    (tournament) => tournament.status !== 'finished',
+  )
+  const recentFinished = tournaments.filter(
+    (tournament) => tournament.status === 'finished',
+  )
+
+  return [...active, ...recentFinished.slice(0, 3)]
+}
+
+function getTournamentStatusMeta(status: TournamentListItem['status']) {
+  switch (status) {
+    case 'open':
+      return { label: '已开放', tone: 'info' as const }
+    case 'running':
+      return { label: '进行中', tone: 'warning' as const }
+    case 'finished':
+      return { label: '已结束', tone: 'success' as const }
+  }
+}
+
+function getRoundStatusLabel(
+  status: TournamentDetail['rounds'][number]['status'],
+) {
+  switch (status) {
+    case 'pairing':
+      return '配对中'
+    case 'running':
+      return '进行中'
+    case 'done':
+      return '已结束'
+  }
+}
+
+function getTournamentCurrentRound(
+  tournament: TournamentListItem,
+  detail: TournamentDetail | null | undefined,
+) {
+  const currentRoundNumber = detail?.currentRound ?? tournament.currentRound
+
+  return (
+    detail?.rounds.find((round) => round.roundNumber === currentRoundNumber) ??
+    detail?.rounds.at(-1) ??
+    null
+  )
+}
+
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [scenarios, setScenarios] = useState<Scenario[]>([])
@@ -43,6 +93,9 @@ export function AdminPage() {
     Record<string, AdminPlayer[]>
   >({})
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
+  const [tournamentDetailsById, setTournamentDetailsById] = useState<
+    Record<number, TournamentDetail>
+  >({})
   const [registrationCode, setRegistrationCode] = useState<string | null>(null)
   const [registrationCodeDraft, setRegistrationCodeDraft] = useState('')
   const [isEditingRegistrationCode, setIsEditingRegistrationCode] =
@@ -63,10 +116,23 @@ export function AdminPage() {
     () => buildLatestTournamentMap(tournaments),
     [tournaments],
   )
+  const monitoredTournaments = useMemo(
+    () => buildMonitoredTournaments(tournaments),
+    [tournaments],
+  )
   const scenarioTitleById = useMemo(
     () => new Map(scenarios.map((scenario) => [scenario.id, scenario.title])),
     [scenarios],
   )
+  const erroredMatchCountByTournament = useMemo(() => {
+    const counts = new Map<number, number>()
+
+    for (const match of erroredMatches) {
+      counts.set(match.tournamentId, (counts.get(match.tournamentId) ?? 0) + 1)
+    }
+
+    return counts
+  }, [erroredMatches])
 
   useEffect(() => {
     if (!toast) {
@@ -104,15 +170,26 @@ export function AdminPage() {
         getAdminErroredMatches(),
       ])
 
-      const playerEntries = await Promise.all(
-        scenariosResponse.map(
-          async (scenario) =>
-            [
-              scenario.id,
-              await getAdminTournamentPlayers(scenario.id),
-            ] as const,
+      const [monitoredTournamentEntries, playerEntries] = await Promise.all([
+        Promise.allSettled(
+          buildMonitoredTournaments(tournamentsResponse).map(
+            async (tournament) => {
+              const detail = await getTournament(tournament.id)
+
+              return [tournament.id, detail] as const
+            },
+          ),
         ),
-      )
+        Promise.all(
+          scenariosResponse.map(
+            async (scenario) =>
+              [
+                scenario.id,
+                await getAdminTournamentPlayers(scenario.id),
+              ] as const,
+          ),
+        ),
+      ])
 
       if (loadId !== latestLoadIdRef.current) {
         return
@@ -132,6 +209,13 @@ export function AdminPage() {
       setScenarios(scenariosResponse)
       setErroredMatches(nextErroredMatches)
       setTournaments(tournamentsResponse)
+      setTournamentDetailsById(
+        Object.fromEntries(
+          monitoredTournamentEntries.flatMap((entry) =>
+            entry.status === 'fulfilled' ? [entry.value] : [],
+          ),
+        ),
+      )
       setPlayersByScenario(Object.fromEntries(playerEntries))
     } catch (loadError) {
       if (loadId !== latestLoadIdRef.current) {
@@ -245,9 +329,21 @@ export function AdminPage() {
   }
 
   const summaryCards = [
-    { label: 'queued', value: stats?.queued ?? 0, copy: '等待 worker 拉取。' },
-    { label: 'running', value: stats?.running ?? 0, copy: '后台异步执行中。' },
-    { label: 'scored', value: stats?.scored ?? 0, copy: '可进入排行榜统计。' },
+    {
+      label: '排队中',
+      value: stats?.queued ?? 0,
+      copy: '全局等待 worker 拉取。',
+    },
+    {
+      label: '进行中',
+      value: stats?.running ?? 0,
+      copy: '全局异步执行或裁判评分中。',
+    },
+    {
+      label: '已评分',
+      value: stats?.scored ?? 0,
+      copy: '全局已完成，可进入排行榜统计。',
+    },
   ]
 
   return (
@@ -333,7 +429,10 @@ export function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>任务队列</CardTitle>
+          <CardTitle>全局任务队列</CardTitle>
+          <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+            汇总所有 Tournament 的 worker 状态；下方赛事监控会展示具体轮次进度。
+          </p>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
           {summaryCards.map((stat) => (
@@ -349,6 +448,122 @@ export function AdminPage() {
       </Card>
 
       <Card>
+        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>赛事监控</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+              展示当前进行中的 Tournament，以及最近结束的赛事，便于查看第 N
+              轮进度与异常情况。
+            </p>
+          </div>
+          <Badge
+            tone={
+              isLoading
+                ? 'info'
+                : monitoredTournaments.some(
+                      (tournament) => tournament.status !== 'finished',
+                    )
+                  ? 'warning'
+                  : 'info'
+            }
+          >
+            {isLoading
+              ? '同步中...'
+              : `${monitoredTournaments.length} 个 Tournament`}
+          </Badge>
+        </CardHeader>
+        <CardContent className="grid gap-4 xl:grid-cols-2">
+          {isLoading ? (
+            ['monitoring-skeleton-1', 'monitoring-skeleton-2'].map((key) => (
+              <div
+                key={key}
+                className="h-[180px] animate-pulse rounded-xl bg-white/6"
+              />
+            ))
+          ) : monitoredTournaments.length > 0 ? (
+            monitoredTournaments.map((tournament) => {
+              const detail = tournamentDetailsById[tournament.id]
+              const currentRound = getTournamentCurrentRound(tournament, detail)
+              const roundMatches = currentRound?.matches ?? []
+              const completedMatches = roundMatches.filter(
+                (match) => match.status === 'scored',
+              ).length
+              const runningMatches = roundMatches.filter(
+                (match) =>
+                  match.status === 'running' || match.status === 'judging',
+              ).length
+              const queuedMatches = roundMatches.filter(
+                (match) => match.status === 'queued',
+              ).length
+              const erroredMatchCount =
+                erroredMatchCountByTournament.get(tournament.id) ?? 0
+              const statusMeta = getTournamentStatusMeta(tournament.status)
+
+              return (
+                <div key={tournament.id} className="app-panel space-y-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="panel-title">{tournament.scenarioTitle}</p>
+                      <p className="panel-copy">Tournament #{tournament.id}</p>
+                    </div>
+                    <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                      <p className="panel-label">当前轮次</p>
+                      <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                        第 {tournament.currentRound} / {tournament.totalRounds}{' '}
+                        轮
+                      </p>
+                      <p className="panel-copy">
+                        {tournament.status === 'finished'
+                          ? '全部轮次已结束。'
+                          : currentRound
+                            ? `当前轮状态：${getRoundStatusLabel(currentRound.status)}`
+                            : '等待当前轮详情同步。'}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                      <p className="panel-label">进度</p>
+                      <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                        {completedMatches}/{roundMatches.length}
+                      </p>
+                      <p className="panel-copy">
+                        {roundMatches.length > 0
+                          ? `已完成 ${completedMatches} 场 · 排队 ${queuedMatches} 场 · 进行中 ${runningMatches} 场`
+                          : currentRound
+                            ? '当前轮暂无对局数据。'
+                            : tournament.currentRound > 0
+                              ? '等待当前轮详情同步。'
+                              : '等待生成第 1 轮对局。'}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                      <p className="panel-label">失败比赛</p>
+                      <a
+                        className="mt-2 inline-flex text-base font-semibold text-[var(--warning)] transition hover:text-[var(--foreground)]"
+                        href="#errored-matches"
+                      >
+                        {erroredMatchCount} 场失败
+                      </a>
+                      <p className="panel-copy">点击跳转到下方失败比赛列表。</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div className="app-panel xl:col-span-2">
+              <p className="panel-copy">当前没有可监控的 Tournament。</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card id="errored-matches">
         <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <CardTitle>失败的比赛</CardTitle>
