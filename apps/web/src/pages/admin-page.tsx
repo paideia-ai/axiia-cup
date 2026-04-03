@@ -1,19 +1,23 @@
 import type {
+  AdminErroredMatch,
   AdminPlayer,
   AdminStats,
   Scenario,
   TournamentListItem,
 } from '@axiia/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import {
+  getAdminErroredMatches,
   getAdminScenarios,
   getAdminStats,
   getAdminTournamentPlayers,
   getTournaments,
+  retryAdminMatch,
   startTournament,
 } from '../lib/api'
 
@@ -32,6 +36,7 @@ function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [scenarios, setScenarios] = useState<Scenario[]>([])
+  const [erroredMatches, setErroredMatches] = useState<AdminErroredMatch[]>([])
   const [playersByScenario, setPlayersByScenario] = useState<
     Record<string, AdminPlayer[]>
   >({})
@@ -40,6 +45,7 @@ export function AdminPage() {
   const [startingScenarioId, setStartingScenarioId] = useState<string | null>(
     null,
   )
+  const [retryingMatchIds, setRetryingMatchIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const latestLoadIdRef = useRef(0)
@@ -47,6 +53,10 @@ export function AdminPage() {
   const latestTournamentByScenario = useMemo(
     () => buildLatestTournamentMap(tournaments),
     [tournaments],
+  )
+  const scenarioTitleById = useMemo(
+    () => new Map(scenarios.map((scenario) => [scenario.id, scenario.title])),
+    [scenarios],
   )
 
   useEffect(() => {
@@ -67,12 +77,17 @@ export function AdminPage() {
     }
 
     try {
-      const [statsResponse, scenariosResponse, tournamentsResponse] =
-        await Promise.all([
-          getAdminStats(),
-          getAdminScenarios(),
-          getTournaments(),
-        ])
+      const [
+        statsResponse,
+        scenariosResponse,
+        tournamentsResponse,
+        erroredMatchesResponse,
+      ] = await Promise.all([
+        getAdminStats(),
+        getAdminScenarios(),
+        getTournaments(),
+        getAdminErroredMatches(),
+      ])
 
       const playerEntries = await Promise.all(
         scenariosResponse.map(
@@ -88,9 +103,15 @@ export function AdminPage() {
         return
       }
 
+      const nextErroredMatches = [...erroredMatchesResponse].sort(
+        (left, right) =>
+          right.createdAt.localeCompare(left.createdAt) || right.id - left.id,
+      )
+
       setError(null)
       setStats(statsResponse)
       setScenarios(scenariosResponse)
+      setErroredMatches(nextErroredMatches)
       setTournaments(tournamentsResponse)
       setPlayersByScenario(Object.fromEntries(playerEntries))
     } catch (loadError) {
@@ -158,6 +179,25 @@ export function AdminPage() {
     }
   }
 
+  async function handleRetryMatch(matchId: number) {
+    try {
+      setRetryingMatchIds((current) => [...current, matchId])
+      setError(null)
+
+      await retryAdminMatch(matchId)
+      setToast(`已将异常对局 #${matchId} 重新加入队列`)
+      await loadAdminData(false)
+    } catch (retryError) {
+      setError(
+        retryError instanceof Error ? retryError.message : '重试对局失败',
+      )
+    } finally {
+      setRetryingMatchIds((current) =>
+        current.filter((currentMatchId) => currentMatchId !== matchId),
+      )
+    }
+  }
+
   const summaryCards = [
     { label: 'queued', value: stats?.queued ?? 0, copy: '等待 worker 拉取。' },
     { label: 'running', value: stats?.running ?? 0, copy: '后台异步执行中。' },
@@ -203,6 +243,81 @@ export function AdminPage() {
               <p className="panel-copy">{stat.copy}</p>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <CardTitle>失败的比赛</CardTitle>
+            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+              展示当前所有状态为 error 的对局，可直接重新入队。
+            </p>
+          </div>
+          <Badge tone={erroredMatches.length > 0 ? 'warning' : 'success'}>
+            {erroredMatches.length} 场失败
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {erroredMatches.length > 0 ? (
+            erroredMatches.map((match) => {
+              const isRetrying = retryingMatchIds.includes(match.id)
+
+              return (
+                <div
+                  key={match.id}
+                  className="app-panel flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge tone="warning">对局 #{match.id}</Badge>
+                      <Badge tone="info">
+                        {match.scenarioTitle ||
+                          scenarioTitleById.get(match.scenarioId) ||
+                          match.scenarioId}
+                      </Badge>
+                      <Badge>
+                        Tournament #{match.tournamentId} · 第{' '}
+                        {match.roundNumber} 轮
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="panel-title">
+                        {match.playerADisplayName} vs {match.playerBDisplayName}
+                      </p>
+                      <p className="panel-copy">
+                        {match.playerAModel} vs {match.playerBModel}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-[var(--foreground-subtle)]">
+                      <p className="panel-label">错误信息</p>
+                      <p>{match.error ?? '未记录错误信息'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <Link
+                      className="inline-flex h-8 items-center rounded-md border border-[var(--border-soft)] px-3 text-xs font-semibold text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
+                      to={`/matches/${match.id}`}
+                    >
+                      查看详情
+                    </Link>
+                    <Button
+                      disabled={isRetrying}
+                      onClick={() => void handleRetryMatch(match.id)}
+                      size="sm"
+                    >
+                      {isRetrying ? '重试中...' : '重试'}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <div className="app-panel">
+              <p className="panel-copy">当前没有失败的比赛。</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

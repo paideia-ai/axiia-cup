@@ -1,4 +1,5 @@
 import {
+  adminErroredMatchSchema,
   adminPlayerSchema,
   adminStatsSchema,
   changePasswordSchema,
@@ -21,6 +22,7 @@ import {
   updateProfileSchema,
   userSchema,
   type AdminPlayer,
+  type AdminErroredMatch,
   type AdminStats,
   type LeaderboardEntry,
   type MatchDetail,
@@ -53,6 +55,7 @@ const tournamentsResponseSchema = z.array(tournamentListItemSchema)
 const recentMatchesResponseSchema = z.array(recentMatchSchema)
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema)
 const adminPlayersResponseSchema = z.array(adminPlayerSchema)
+const adminErroredMatchesResponseSchema = z.array(adminErroredMatchSchema)
 const startTournamentResponseSchema = z.object({
   byeSubmissions: z.array(z.number().int().positive()),
   matches: z.array(tournamentMatchSummarySchema),
@@ -285,6 +288,14 @@ export async function getAdminTournamentPlayers(
     `/api/admin/tournaments/players?scenarioId=${encodeURIComponent(scenarioId)}`,
     { method: 'GET' },
     adminPlayersResponseSchema,
+  )
+}
+
+export async function getAdminErroredMatches(): Promise<AdminErroredMatch[]> {
+  return apiFetch(
+    '/api/admin/matches/errors',
+    { method: 'GET' },
+    adminErroredMatchesResponseSchema,
   )
 }
 

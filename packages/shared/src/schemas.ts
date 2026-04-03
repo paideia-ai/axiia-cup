@@ -255,6 +255,22 @@ export const adminStatsSchema = z.object({
   scored: z.number().int().nonnegative(),
 })
 
+export const adminErroredMatchSchema = z.object({
+  id: z.number().int().positive(),
+  tournamentId: z.number().int().positive(),
+  roundId: z.number().int().positive(),
+  roundNumber: z.number().int().positive(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  status: z.literal('error'),
+  playerADisplayName: z.string(),
+  playerAModel: modelIdSchema,
+  playerBDisplayName: z.string(),
+  playerBModel: modelIdSchema,
+  error: z.string().nullable(),
+  createdAt: z.string(),
+})
+
 export const recentMatchSchema = z.object({
   id: z.number().int().positive(),
   status: matchStatusSchema,
@@ -298,6 +314,7 @@ export type PlaygroundRunStart = z.infer<typeof playgroundRunStartSchema>
 export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
+export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
 export type RecentMatch = z.infer<typeof recentMatchSchema>
 export type Match = z.infer<typeof matchSchema>
 export type AppMeta = z.infer<typeof appMetaSchema>

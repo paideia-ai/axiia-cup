@@ -1,4 +1,5 @@
 import {
+  adminErroredMatchSchema,
   computeSwissRounds,
   matchDetailSchema,
   okResponseSchema,
@@ -6,7 +7,7 @@ import {
   tournamentRoundSchema,
   tournamentSchema,
 } from '@axiia/shared'
-import { eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -44,6 +45,44 @@ const detailSubA = alias(submissions, 'detail_sub_a')
 const detailSubB = alias(submissions, 'detail_sub_b')
 const detailUserA = alias(users, 'detail_user_a')
 const detailUserB = alias(users, 'detail_user_b')
+
+function listErroredMatches(tournamentId?: number) {
+  const erroredMatches = db
+    .select({
+      createdAt: matches.createdAt,
+      error: matches.error,
+      id: matches.id,
+      playerADisplayName: detailUserA.displayName,
+      playerAModel: detailSubA.model,
+      playerBDisplayName: detailUserB.displayName,
+      playerBModel: detailSubB.model,
+      roundId: matches.roundId,
+      roundNumber: rounds.roundNumber,
+      scenarioId: matches.scenarioId,
+      scenarioTitle: scenarios.title,
+      status: matches.status,
+      tournamentId: rounds.tournamentId,
+    })
+    .from(matches)
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .innerJoin(scenarios, eq(matches.scenarioId, scenarios.id))
+    .innerJoin(detailSubA, eq(matches.subAId, detailSubA.id))
+    .innerJoin(detailSubB, eq(matches.subBId, detailSubB.id))
+    .innerJoin(detailUserA, eq(detailSubA.userId, detailUserA.id))
+    .innerJoin(detailUserB, eq(detailSubB.userId, detailUserB.id))
+    .where(
+      tournamentId
+        ? and(
+            eq(rounds.tournamentId, tournamentId),
+            eq(matches.status, 'error'),
+          )
+        : eq(matches.status, 'error'),
+    )
+    .orderBy(desc(matches.createdAt), desc(matches.id))
+    .all()
+
+  return erroredMatches.map((match) => adminErroredMatchSchema.parse(match))
+}
 
 function parseId(value: string) {
   const parsed = Number(value)
@@ -144,15 +183,16 @@ tournamentRouter.post(
         }
 
         const computedByeSubmissions = extractByeSubmissionIds(playerIds, pairs)
-        const { matches: roundMatches, round: createdRound } = createRoundWithMatches(
-          {
-            pairs,
-            roundNumber: 1,
-            scenarioId: parsed.data.scenarioId,
-            tournamentId: tournament.id,
-          },
-          tx,
-        )
+        const { matches: roundMatches, round: createdRound } =
+          createRoundWithMatches(
+            {
+              pairs,
+              roundNumber: 1,
+              scenarioId: parsed.data.scenarioId,
+              tournamentId: tournament.id,
+            },
+            tx,
+          )
 
         const finalizedTournament = tx
           .update(tournaments)
@@ -248,6 +288,40 @@ tournamentRouter.post(
       }),
       tournament: tournamentSchema.parse(result.tournament),
     })
+  },
+)
+
+tournamentRouter.get(
+  '/api/admin/tournaments/:id/error-matches',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const tournamentId = parseId(context.req.param('id'))
+
+    if (!tournamentId) {
+      return context.json({ error: 'Invalid tournament id' }, 400)
+    }
+
+    const tournament = db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .get()
+
+    if (!tournament) {
+      return context.json({ error: 'Tournament not found' }, 404)
+    }
+
+    return context.json(listErroredMatches(tournamentId))
+  },
+)
+
+tournamentRouter.get(
+  '/api/admin/matches/errors',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    return context.json(listErroredMatches())
   },
 )
 
