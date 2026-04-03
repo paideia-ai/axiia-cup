@@ -18,7 +18,16 @@ bun install
 bun run dev
 ```
 
-If you run backend-only commands from `apps/api`, first copy `apps/api/.env.example` to `apps/api/.env`.
+For local development, use the repo root `.env` as the single source of truth and run commands from the repo root:
+
+```bash
+bun run dev
+bun run dev:api
+bun run db:migrate
+bun run db:seed:demo
+```
+
+Avoid maintaining a separate `apps/api/.env`, or the API and workspace commands can drift.
 
 ## Production Deployment
 
