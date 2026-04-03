@@ -22,6 +22,7 @@ import {
 import {
   advanceToNextRound,
   createRoundWithMatches,
+  getLatestScenarioPlayers,
   maybeAdvanceRound,
   syncRoundStatus,
 } from './tournaments'
@@ -159,6 +160,47 @@ function scoreAllMatchesInRound(roundId: number) {
     .where(eq(matches.roundId, roundId))
     .run()
 }
+
+describe('getLatestScenarioPlayers', () => {
+  beforeEach(() => {
+    cleanupTestData()
+    seedTestData()
+  })
+
+  afterEach(() => {
+    cleanupTestData()
+  })
+
+  it('excludes admin submissions from tournament pairings', () => {
+    db.insert(users)
+      .values({
+        id: 5,
+        email: 'admin@test.com',
+        passwordHash: 'x',
+        displayName: 'Admin Tester',
+        isAdmin: true,
+      })
+      .run()
+
+    db.insert(submissions)
+      .values({
+        id: 5,
+        userId: 5,
+        scenarioId: TEST_SCENARIO_ID,
+        promptA: 'admin-a',
+        promptB: 'admin-b',
+        model: 'kimi-k2.5',
+        version: 1,
+      })
+      .run()
+
+    const players = getLatestScenarioPlayers(TEST_SCENARIO_ID)
+
+    expect(players).toHaveLength(4)
+    expect(players.map((player) => player.userId)).toEqual([1, 2, 3, 4])
+    expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3, 4])
+  })
+})
 
 describe('maybeAdvanceRound', () => {
   beforeEach(() => {
