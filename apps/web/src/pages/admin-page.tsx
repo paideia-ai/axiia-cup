@@ -498,13 +498,7 @@ export function AdminPage() {
               <CardTitle>邀请码</CardTitle>
             </CardHeader>
             <CardContent>
-              <form
-                className="app-panel flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  void handleSaveRegistrationCode()
-                }}
-              >
+              <div className="app-panel flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="panel-label">当前邀请码</p>
                   {isEditingRegistrationCode ? (
@@ -515,6 +509,11 @@ export function AdminPage() {
                         onChange={(event) =>
                           setRegistrationCodeDraft(event.target.value)
                         }
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' && registrationCodeDraft.trim().length > 0) {
+                            void handleSaveRegistrationCode()
+                          }
+                        }}
                         placeholder="输入新的邀请码"
                         value={registrationCodeDraft}
                       />
@@ -537,8 +536,8 @@ export function AdminPage() {
                           isSavingRegistrationCode ||
                           registrationCodeDraft.trim().length === 0
                         }
+                        onClick={() => void handleSaveRegistrationCode()}
                         size="sm"
-                        type="submit"
                       >
                         {isSavingRegistrationCode ? '保存中...' : '保存'}
                       </Button>
@@ -546,7 +545,6 @@ export function AdminPage() {
                         disabled={isSavingRegistrationCode}
                         onClick={handleCancelRegistrationCodeEdit}
                         size="sm"
-                        type="button"
                         variant="secondary"
                       >
                         取消
@@ -557,14 +555,13 @@ export function AdminPage() {
                       disabled={isLoading}
                       onClick={handleEditRegistrationCode}
                       size="sm"
-                      type="button"
                       variant="secondary"
                     >
                       修改
                     </Button>
                   )}
                 </div>
-              </form>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
