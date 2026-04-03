@@ -8,7 +8,7 @@ import { executeMatchSession } from './core'
 import { runMatch } from './runner'
 import { registerWorkerKickHandler } from './worker-signal'
 
-const MAX_CONCURRENT = 4
+const MAX_CONCURRENT = Number(process.env.WORKER_CONCURRENCY) || 8
 const WORKER_POLL_INTERVAL_MS = 5_000
 const MATCH_STALE_TIMEOUT_MS = 10 * 60_000
 const MATCH_TIMEOUT_ERROR = 'Worker timed out waiting for match progress'
@@ -300,46 +300,50 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
 }
 
 async function pollOnce() {
-  let capacity = MAX_CONCURRENT - inFlightJobKeys.size
+  try {
+    let capacity = MAX_CONCURRENT - inFlightJobKeys.size
 
-  if (capacity <= 0) {
-    return
-  }
-
-  const queuedMatches = listQueuedMatches()
-    .filter((match) => !inFlightJobKeys.has(`match:${match.id}`))
-    .slice(0, capacity)
-
-  for (const match of queuedMatches) {
-    const claimed = claimQueuedMatch(match.id)
-
-    if (!claimed) {
-      continue
+    if (capacity <= 0) {
+      return
     }
 
-    inFlightJobKeys.add(`match:${match.id}`)
-    void runClaimedMatch(match.id, claimed.leaseToken)
-  }
+    const queuedMatches = listQueuedMatches()
+      .filter((match) => !inFlightJobKeys.has(`match:${match.id}`))
+      .slice(0, capacity)
 
-  capacity = MAX_CONCURRENT - inFlightJobKeys.size
+    for (const match of queuedMatches) {
+      const claimed = claimQueuedMatch(match.id)
 
-  if (capacity <= 0) {
-    return
-  }
+      if (!claimed) {
+        continue
+      }
 
-  const queuedPlaygroundRuns = listQueuedPlaygroundRuns()
-    .filter((run) => !inFlightJobKeys.has(`playground:${run.id}`))
-    .slice(0, capacity)
-
-  for (const run of queuedPlaygroundRuns) {
-    const claimed = claimPlaygroundRun(run.id)
-
-    if (!claimed) {
-      continue
+      inFlightJobKeys.add(`match:${match.id}`)
+      void runClaimedMatch(match.id, claimed.leaseToken)
     }
 
-    inFlightJobKeys.add(`playground:${run.id}`)
-    void runClaimedPlaygroundRun(run.id, claimed.leaseToken)
+    capacity = MAX_CONCURRENT - inFlightJobKeys.size
+
+    if (capacity <= 0) {
+      return
+    }
+
+    const queuedPlaygroundRuns = listQueuedPlaygroundRuns()
+      .filter((run) => !inFlightJobKeys.has(`playground:${run.id}`))
+      .slice(0, capacity)
+
+    for (const run of queuedPlaygroundRuns) {
+      const claimed = claimPlaygroundRun(run.id)
+
+      if (!claimed) {
+        continue
+      }
+
+      inFlightJobKeys.add(`playground:${run.id}`)
+      void runClaimedPlaygroundRun(run.id, claimed.leaseToken)
+    }
+  } catch (error) {
+    console.error('[worker] poll error, will retry next interval:', error)
   }
 }
 
@@ -356,11 +360,6 @@ export function startWorker() {
 
   void pollOnce()
   console.log('[worker] started')
-}
-
-export function kickWorker() {
-  startWorker()
-  void pollOnce()
 }
 
 registerWorkerKickHandler(() => {

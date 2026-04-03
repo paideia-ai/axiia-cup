@@ -9,8 +9,6 @@
     "db:migrate": "bun run ./src/db/migrate.ts",
     "db:seed:demo": "bun run ./src/db/demo-seed.ts",
     "start": "bun ./dist/index.js",
-    "worker": "bun --watch ./src/worker-entry.ts",
-    "worker:start": "bun ./src/worker-entry.ts",
     "test": "bun test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint src"

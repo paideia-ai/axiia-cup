@@ -4,7 +4,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 
 import { db } from '../db/client'
-import { playgroundRuns, scenarios, submissions } from '../db/schema'
+import { playgroundRuns, scenarios, submissions, tournaments } from '../db/schema'
 import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
 import { requireAuth } from '../middleware/requireAuth'
@@ -32,6 +32,20 @@ playgroundRouter.post('/api/playground/run', requireAuth, async (context) => {
   }
 
   const userId = context.get('userId')
+
+  const runningTournament = db
+    .select({ id: tournaments.id })
+    .from(tournaments)
+    .where(eq(tournaments.status, 'running'))
+    .get()
+
+  if (runningTournament) {
+    return context.json(
+      { error: '比赛进行中，试炼场暂停使用' },
+      409,
+    )
+  }
+
   const submission = db
     .select()
     .from(submissions)

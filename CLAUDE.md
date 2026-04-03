@@ -49,7 +49,7 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - `src/engine/core.ts` — Match execution: dialogue phase → judge QA rounds → scoring
 - `src/engine/swiss.ts` — Swiss pairing algorithm (sort by wins, avoid repeat pairings)
 - `src/engine/llm.ts` — SiliconFlow API (OpenAI-compatible) for Chinese LLM models
-- `src/engine/worker.ts` — Polling worker (5s interval, max 4 concurrent matches, lease tokens)
+- `src/engine/worker.ts` — Polling worker (5s interval, configurable concurrency, lease tokens)
 - `src/lib/settings.ts` — App settings helpers (registration code stored in DB, falls back to env var)
 - `src/db/schema.ts` — Drizzle schema (users, scenarios, submissions, tournaments, rounds, matches, playgroundRuns, appSettings)
 - `src/db/migrations/` — SQL migrations run by Drizzle migrator
@@ -82,3 +82,4 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `123456`; DB value takes priority)
 - `AXIIA_API_URL` — API base URL for CLI (default `http://localhost:3001`)
 - `AXIIA_ADMIN_TOKEN` — Admin bearer token for CLI
+- `WORKER_CONCURRENCY` — Worker max concurrent jobs (API, default 8)
