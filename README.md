@@ -1,26 +1,51 @@
 # Axiia Cup
 
-选手编写策略提示词，打造 AI 智能体，在人文学科场景中进行对抗性对话比赛。
+Entrants write strategy prompts to build AI agents that compete in adversarial dialogue matches set in humanities-themed scenarios.
 
 ## Workspace
 
 - `apps/web` — React Router v7 SPA + Vite + Tailwind v4 + shadcn/ui
 - `apps/api` — Hono + Bun + SQLite (Drizzle)
-- `apps/cli` — Commander.js 管理 CLI
-- `packages/shared` — Zod schema 与共享类型
+- `apps/cli` — Commander.js admin CLI
+- `packages/shared` — Zod schemas and shared types
 
 ## Quick Start
 
 ```bash
 cp .env.example .env
+# Fill in SILICONFLOW_API_KEY and JWT_SECRET in .env
 bun install
-bun run dev          # 同时启动 web + api
+bun run dev
 ```
 
-如果单独在 `apps/api` 目录运行后端命令，可先复制 `apps/api/.env.example` 为 `apps/api/.env`。
+If you run backend-only commands from `apps/api`, first copy `apps/api/.env.example` to `apps/api/.env`.
+
+## Production Deployment
+
+Production deployment assets live in `deploy/`.
+
+- `deploy/docker-compose.prod.yml` runs the `web` and `api` services
+- `deploy/Dockerfile.web` builds the Vite SPA and serves it with nginx
+- `deploy/Dockerfile.api` builds the Bun API and runs DB migrations on startup
+- `deploy/nginx.web.conf` provides SPA fallback and proxies `/api` and `/health`
+- `deploy/angie.cup.axiia.ai.conf` is an example host-level reverse proxy for `cup.axiia.ai`
+
+Typical single-server deployment flow:
+
+```bash
+cp deploy/production.env.example deploy/production.env
+# edit deploy/production.env
+
+docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml build
+docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml up -d
+docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml exec api bun run ./apps/api/src/db/seed.ts
+```
+
+The web container listens on `127.0.0.1:${WEB_HOST_PORT}` and is intended to sit behind a host-level reverse proxy such as Angie or nginx.
 
 ## Docs
 
-- [设计规范](docs/competition/DESIGN_SPEC.md) — 产品规则与决策（唯一标准文档）
-- [技术架构](docs/tech/ARCHITECTURE.md) — 技术栈、数据模型、部署方案
-- [设计系统](docs/tech/DESIGN.md) — 视觉风格、字体、配色
+- [Design Spec](docs/competition/DESIGN_SPEC.md) — product rules and decisions
+- [Architecture](docs/tech/ARCHITECTURE.md) — technical stack, data model, and deployment notes
+- [Server Deployment Checklist](docs/tech/DEPLOYMENT_SERVER.md) — step-by-step single-server production rollout
+- [Design System](docs/tech/DESIGN.md) — visual direction, typography, and color

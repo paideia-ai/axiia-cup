@@ -2,7 +2,17 @@ import { compare, hash } from 'bcryptjs'
 import { sign, verify } from 'hono/jwt'
 import { z } from 'zod'
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret'
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET
+
+  if (!secret) {
+    throw new Error('JWT_SECRET is required')
+  }
+
+  return secret
+}
+
+const JWT_SECRET = getJwtSecret()
 const JWT_ALGORITHM = 'HS256' as const
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60
 

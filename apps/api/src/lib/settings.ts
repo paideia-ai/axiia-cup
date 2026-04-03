@@ -28,7 +28,7 @@ function setSetting(key: string, value: string) {
 }
 
 export function getRegistrationCode() {
-  return getSetting(REGISTRATION_CODE_KEY) ?? process.env.REGISTRATION_CODE ?? '123456'
+  return getSetting(REGISTRATION_CODE_KEY) ?? process.env.REGISTRATION_CODE ?? 'axiia_cup'
 }
 
 export function setRegistrationCode(code: string) {

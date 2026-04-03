@@ -5,6 +5,18 @@ const SILICONFLOW_BASE_URL = 'https://api.siliconflow.cn/v1'
 
 let _client: OpenAI | null = null
 
+function getSiliconFlowApiKey() {
+  const apiKey = process.env.SILICONFLOW_API_KEY
+
+  if (!apiKey) {
+    throw new Error('SILICONFLOW_API_KEY is required')
+  }
+
+  return apiKey
+}
+
+const SILICONFLOW_API_KEY = getSiliconFlowApiKey()
+
 type ChatMessage = {
   role: 'assistant' | 'user'
   content: string
@@ -12,14 +24,8 @@ type ChatMessage = {
 
 function getClient() {
   if (!_client) {
-    const apiKey = process.env.SILICONFLOW_API_KEY
-
-    if (!apiKey) {
-      throw new Error('Missing SILICONFLOW_API_KEY')
-    }
-
     _client = new OpenAI({
-      apiKey,
+      apiKey: SILICONFLOW_API_KEY,
       baseURL: SILICONFLOW_BASE_URL,
     })
   }

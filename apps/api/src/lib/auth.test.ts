@@ -1,9 +1,17 @@
-import { describe, expect, it } from 'bun:test'
+import { beforeAll, describe, expect, it } from 'bun:test'
 import { verify } from 'hono/jwt'
 
-import { signToken, verifyToken } from './auth'
+const JWT_SECRET = 'test-jwt-secret'
+process.env.JWT_SECRET = JWT_SECRET
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret'
+let signToken: (typeof import('./auth'))['signToken']
+let verifyToken: (typeof import('./auth'))['verifyToken']
+
+beforeAll(async () => {
+  const auth = await import('./auth')
+  signToken = auth.signToken
+  verifyToken = auth.verifyToken
+})
 
 describe('auth utilities', () => {
   it('signs and verifies a token round-trip', async () => {

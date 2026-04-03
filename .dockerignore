@@ -1,0 +1,15 @@
+.git
+.github
+.turbo
+.DS_Store
+node_modules
+coverage
+dist
+build
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.local
+.env.production
+deploy/production.env

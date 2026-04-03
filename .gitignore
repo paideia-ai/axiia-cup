@@ -13,3 +13,5 @@ coverage/
 .env*
 !.env.example
 !apps/api/.env.example
+deploy/production.env
+deploy/data/

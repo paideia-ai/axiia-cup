@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'bun:test'
+import { beforeAll, describe, expect, it } from 'bun:test'
 
 import type { ScenarioRecord } from '../db/schema'
-import { buildAgentContextMessage, sanitizeJsonResponse } from './core'
+
+process.env.SILICONFLOW_API_KEY = 'test-siliconflow-api-key'
+
+let sanitizeJsonResponse: (typeof import('./core'))['sanitizeJsonResponse']
+let buildAgentContextMessage: (typeof import('./core'))['buildAgentContextMessage']
+
+beforeAll(async () => {
+  const core = await import('./core')
+  sanitizeJsonResponse = core.sanitizeJsonResponse
+  buildAgentContextMessage = core.buildAgentContextMessage
+})
 
 const scenario: ScenarioRecord = {
   id: 'scenario-1',
