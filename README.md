@@ -12,9 +12,12 @@
 ## Quick Start
 
 ```bash
+cp .env.example .env
 bun install
 bun run dev          # 同时启动 web + api
 ```
+
+如果单独在 `apps/api` 目录运行后端命令，可先复制 `apps/api/.env.example` 为 `apps/api/.env`。
 
 ## Docs
 
