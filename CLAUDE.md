@@ -44,13 +44,14 @@ Monorepo (Turborepo + Bun workspaces) with four packages:
 ### API structure
 
 Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
-- `src/routes/` — auth, scenarios, submissions, playground, tournaments, stats
-- `src/middleware/` — `requireAuth` and `requireAdmin` Hono middleware
+- `src/routes/` — auth, scenarios, submissions, playground, tournaments, stats, admin-settings, admin-users
+- `src/middleware/` — `requireAuth` (checks JWT + disabled status) and `requireAdmin` Hono middleware
 - `src/engine/core.ts` — Match execution: dialogue phase → judge QA rounds → scoring
 - `src/engine/swiss.ts` — Swiss pairing algorithm (sort by wins, avoid repeat pairings)
 - `src/engine/llm.ts` — SiliconFlow API (OpenAI-compatible) for Chinese LLM models
 - `src/engine/worker.ts` — Polling worker (5s interval, max 4 concurrent matches, lease tokens)
-- `src/db/schema.ts` — Drizzle schema (users, scenarios, submissions, tournaments, rounds, matches, playgroundRuns)
+- `src/lib/settings.ts` — App settings helpers (registration code stored in DB, falls back to env var)
+- `src/db/schema.ts` — Drizzle schema (users, scenarios, submissions, tournaments, rounds, matches, playgroundRuns, appSettings)
 - `src/db/migrations/` — SQL migrations run by Drizzle migrator
 
 ### Web structure
@@ -78,5 +79,6 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - `AXIIA_DB_PATH` — SQLite database path (API)
 - `SILICONFLOW_API_KEY` — LLM API key (API)
 - `JWT_SECRET` — JWT signing secret (API)
+- `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `123456`; DB value takes priority)
 - `AXIIA_API_URL` — API base URL for CLI (default `http://localhost:3001`)
 - `AXIIA_ADMIN_TOKEN` — Admin bearer token for CLI
