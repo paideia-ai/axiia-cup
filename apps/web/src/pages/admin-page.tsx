@@ -510,7 +510,10 @@ export function AdminPage() {
                           setRegistrationCodeDraft(event.target.value)
                         }
                         onKeyDown={(event) => {
-                          if (event.key === 'Enter' && registrationCodeDraft.trim().length > 0) {
+                          if (
+                            event.key === 'Enter' &&
+                            registrationCodeDraft.trim().length > 0
+                          ) {
                             void handleSaveRegistrationCode()
                           }
                         }}

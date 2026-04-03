@@ -307,7 +307,11 @@ export async function getAdminErroredMatches(): Promise<AdminErroredMatch[]> {
 }
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
-  return apiFetch('/api/admin/users', { method: 'GET' }, adminUsersResponseSchema)
+  return apiFetch(
+    '/api/admin/users',
+    { method: 'GET' },
+    adminUsersResponseSchema,
+  )
 }
 
 export async function getAdminRegistrationCode(): Promise<RegistrationCodeResponse> {

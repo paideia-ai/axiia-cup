@@ -51,7 +51,9 @@ export function RegisterPage() {
       login(response)
       navigate('/dashboard', { replace: true })
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : '注册失败')
+      setError(
+        submissionError instanceof Error ? submissionError.message : '注册失败',
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -115,7 +117,9 @@ export function RegisterPage() {
                   value={password}
                 />
               </label>
-              {error ? <p className="text-sm text-[#f87171] md:col-span-2">{error}</p> : null}
+              {error ? (
+                <p className="text-sm text-[#f87171] md:col-span-2">{error}</p>
+              ) : null}
               <div className="flex gap-3 md:col-span-2">
                 <Button
                   disabled={isSubmitting}
@@ -125,7 +129,11 @@ export function RegisterPage() {
                 >
                   返回
                 </Button>
-                <Button className="flex-1" disabled={isSubmitting} type="submit">
+                <Button
+                  className="flex-1"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? '创建中...' : '创建账户'}
                 </Button>
               </div>

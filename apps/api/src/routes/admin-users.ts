@@ -26,15 +26,20 @@ const adminUserSelection = {
   isAdmin: users.isAdmin,
 }
 
-adminUsersRouter.get('/api/admin/users', requireAuth, requireAdmin, (context) => {
-  const rows = db
-    .select(adminUserSelection)
-    .from(users)
-    .orderBy(desc(users.createdAt), desc(users.id))
-    .all()
+adminUsersRouter.get(
+  '/api/admin/users',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const rows = db
+      .select(adminUserSelection)
+      .from(users)
+      .orderBy(desc(users.createdAt), desc(users.id))
+      .all()
 
-  return context.json(rows.map((row) => adminUserSchema.parse(row)))
-})
+    return context.json(rows.map((row) => adminUserSchema.parse(row)))
+  },
+)
 
 adminUsersRouter.patch(
   '/api/admin/users/:id/disable',
