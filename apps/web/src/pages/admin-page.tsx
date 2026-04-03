@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import {
   getAdminErroredMatches,
   getAdminRegistrationCode,
@@ -106,6 +107,8 @@ function formatDateTime(value: string) {
   })
 }
 
+type AdminTab = 'tournaments' | 'players' | 'settings'
+
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [scenarios, setScenarios] = useState<Scenario[]>([])
@@ -137,6 +140,7 @@ export function AdminPage() {
   const [resettingUserIds, setResettingUserIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<AdminTab>('tournaments')
   const isEditingRegistrationCodeRef = useRef(false)
   const latestLoadIdRef = useRef(0)
 
@@ -337,6 +341,11 @@ export function AdminPage() {
     setIsEditingRegistrationCode(true)
   }
 
+  function handleCancelRegistrationCodeEdit() {
+    setRegistrationCodeDraft(registrationCode ?? '')
+    setIsEditingRegistrationCode(false)
+  }
+
   async function handleSaveRegistrationCode() {
     try {
       setIsSavingRegistrationCode(true)
@@ -473,492 +482,548 @@ export function AdminPage() {
         </div>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>邀请码</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="app-panel flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void handleSaveRegistrationCode()
-            }}
-          >
-            <div className="space-y-2">
-              <p className="panel-label">当前邀请码</p>
-              {isEditingRegistrationCode ? (
-                <input
-                  autoFocus
-                  className="app-input w-full min-w-[220px] font-mono tracking-[0.2em]"
-                  onChange={(event) =>
-                    setRegistrationCodeDraft(event.target.value)
-                  }
-                  value={registrationCodeDraft}
-                />
-              ) : (
-                <p className="panel-title font-mono tracking-[0.2em]">
-                  {isLoading ? '--' : (registrationCode ?? '--')}
-                </p>
-              )}
-            </div>
+      <Tabs
+        onValueChange={(value) => setActiveTab(value as AdminTab)}
+        value={activeTab}
+      >
+        <TabsList>
+          <TabsTrigger value="tournaments">赛事</TabsTrigger>
+          <TabsTrigger value="players">选手</TabsTrigger>
+          <TabsTrigger value="settings">设置</TabsTrigger>
+        </TabsList>
 
-            {isEditingRegistrationCode ? (
-              <Button
-                disabled={
-                  isSavingRegistrationCode ||
-                  registrationCodeDraft.trim().length === 0
-                }
-                size="sm"
-                type="submit"
+        <TabsContent className="space-y-6" value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>邀请码</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="app-panel flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void handleSaveRegistrationCode()
+                }}
               >
-                {isSavingRegistrationCode ? '保存中...' : '保存'}
-              </Button>
-            ) : (
-              <Button
-                disabled={isLoading}
-                onClick={handleEditRegistrationCode}
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                修改
-              </Button>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <CardTitle>选手管理</CardTitle>
-            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
-              查看用户状态、禁用普通账号，并为指定账号重置密码。
-            </p>
-          </div>
-          <Badge tone="info">
-            {isLoading ? '同步中...' : `${adminUsers.length} 位用户`}
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading ? (
-            ['users-skeleton-1', 'users-skeleton-2', 'users-skeleton-3'].map(
-              (key) => (
-                <div
-                  key={key}
-                  className="h-[132px] animate-pulse rounded-xl bg-white/6"
-                />
-              ),
-            )
-          ) : adminUsers.length > 0 ? (
-            adminUsers.map((user) => {
-              const isEditingResetPassword = resetPasswordUserId === user.id
-              const isResettingPassword = resettingUserIds.includes(user.id)
-              const isTogglingUser = togglingUserIds.includes(user.id)
-
-              return (
-                <div key={user.id} className="app-panel space-y-4">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="panel-title">{user.displayName}</p>
-                        {user.isAdmin ? (
-                          <Badge tone="warning">管理员</Badge>
-                        ) : null}
-                        <Badge tone={user.disabled ? 'warning' : 'success'}>
-                          {user.disabled ? '已禁用' : '启用中'}
-                        </Badge>
-                      </div>
-                      <p className="panel-copy">{user.email}</p>
-                      <p className="text-xs text-[var(--foreground-subtle)]">
-                        创建时间 · {formatDateTime(user.createdAt)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                      {!user.isAdmin ? (
-                        <Button
-                          disabled={isResettingPassword || isTogglingUser}
-                          onClick={() => void handleToggleUserDisabled(user)}
-                          size="sm"
-                          variant="secondary"
-                        >
-                          {isTogglingUser
-                            ? '处理中...'
-                            : user.disabled
-                              ? '启用'
-                              : '禁用'}
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-[var(--foreground-subtle)]">
-                          管理员账号不可禁用
-                        </span>
-                      )}
-
-                      {!isEditingResetPassword ? (
-                        <Button
-                          disabled={isResettingPassword || isTogglingUser}
-                          onClick={() => handleOpenResetPassword(user.id)}
-                          size="sm"
-                          variant="ghost"
-                        >
-                          重置密码
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {isEditingResetPassword ? (
-                    <form
-                      className="flex flex-col gap-3 md:flex-row md:items-center"
-                      onSubmit={(event) => {
-                        event.preventDefault()
-                        void handleResetPassword(user)
-                      }}
-                    >
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="panel-label">当前邀请码</p>
+                  {isEditingRegistrationCode ? (
+                    <>
                       <input
-                        className="app-input md:max-w-sm"
+                        autoFocus
+                        className="app-input w-full bg-[rgba(255,255,255,0.04)] font-mono tracking-[0.2em] placeholder:text-[var(--foreground-subtle)] md:max-w-md"
                         onChange={(event) =>
-                          setResetPasswordDraft(event.target.value)
+                          setRegistrationCodeDraft(event.target.value)
                         }
-                        placeholder="输入不少于 6 位的新密码"
-                        type="password"
-                        value={resetPasswordDraft}
+                        placeholder="输入新的邀请码"
+                        value={registrationCodeDraft}
                       />
+                      <p className="text-xs text-[var(--foreground-subtle)]">
+                        修改后点击保存立即生效。
+                      </p>
+                    </>
+                  ) : (
+                    <p className="panel-title break-all font-mono tracking-[0.2em]">
+                      {isLoading ? '--' : (registrationCode ?? '--')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                  {isEditingRegistrationCode ? (
+                    <>
                       <Button
                         disabled={
-                          isResettingPassword || resetPasswordDraft.length < 6
+                          isSavingRegistrationCode ||
+                          registrationCodeDraft.trim().length === 0
                         }
                         size="sm"
                         type="submit"
                       >
-                        {isResettingPassword ? '确认中...' : '确认'}
+                        {isSavingRegistrationCode ? '保存中...' : '保存'}
                       </Button>
                       <Button
-                        disabled={isResettingPassword}
-                        onClick={handleCancelResetPassword}
+                        disabled={isSavingRegistrationCode}
+                        onClick={handleCancelRegistrationCodeEdit}
                         size="sm"
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                       >
                         取消
                       </Button>
-                    </form>
-                  ) : null}
-                </div>
-              )
-            })
-          ) : (
-            <div className="app-panel">
-              <p className="panel-copy">暂无用户数据。</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>全局任务队列</CardTitle>
-          <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
-            汇总所有 Tournament 的 worker 状态；下方赛事监控会展示具体轮次进度。
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-3">
-          {summaryCards.map((stat) => (
-            <div key={stat.label} className="app-panel">
-              <p className="panel-label">{stat.label}</p>
-              <p className="panel-title">
-                {isLoading ? '--' : String(stat.value).padStart(2, '0')}
-              </p>
-              <p className="panel-copy">{stat.copy}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <CardTitle>赛事监控</CardTitle>
-            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
-              展示当前进行中的 Tournament，以及最近结束的赛事，便于查看第 N
-              轮进度与异常情况。
-            </p>
-          </div>
-          <Badge
-            tone={
-              isLoading
-                ? 'info'
-                : monitoredTournaments.some(
-                      (tournament) => tournament.status !== 'finished',
-                    )
-                  ? 'warning'
-                  : 'info'
-            }
-          >
-            {isLoading
-              ? '同步中...'
-              : `${monitoredTournaments.length} 个 Tournament`}
-          </Badge>
-        </CardHeader>
-        <CardContent className="grid gap-4 xl:grid-cols-2">
-          {isLoading ? (
-            ['monitoring-skeleton-1', 'monitoring-skeleton-2'].map((key) => (
-              <div
-                key={key}
-                className="h-[180px] animate-pulse rounded-xl bg-white/6"
-              />
-            ))
-          ) : monitoredTournaments.length > 0 ? (
-            monitoredTournaments.map((tournament) => {
-              const detail = tournamentDetailsById[tournament.id]
-              const currentRound = getTournamentCurrentRound(tournament, detail)
-              const roundMatches = currentRound?.matches ?? []
-              const completedMatches = roundMatches.filter(
-                (match) => match.status === 'scored',
-              ).length
-              const runningMatches = roundMatches.filter(
-                (match) =>
-                  match.status === 'running' || match.status === 'judging',
-              ).length
-              const queuedMatches = roundMatches.filter(
-                (match) => match.status === 'queued',
-              ).length
-              const erroredMatchCount =
-                erroredMatchCountByTournament.get(tournament.id) ?? 0
-              const statusMeta = getTournamentStatusMeta(tournament.status)
-
-              return (
-                <div key={tournament.id} className="app-panel space-y-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <p className="panel-title">{tournament.scenarioTitle}</p>
-                      <p className="panel-copy">Tournament #{tournament.id}</p>
-                    </div>
-                    <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
-                      <p className="panel-label">当前轮次</p>
-                      <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
-                        第 {tournament.currentRound} / {tournament.totalRounds}{' '}
-                        轮
-                      </p>
-                      <p className="panel-copy">
-                        {tournament.status === 'finished'
-                          ? '全部轮次已结束。'
-                          : currentRound
-                            ? `当前轮状态：${getRoundStatusLabel(currentRound.status)}`
-                            : '等待当前轮详情同步。'}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
-                      <p className="panel-label">进度</p>
-                      <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
-                        {completedMatches}/{roundMatches.length}
-                      </p>
-                      <p className="panel-copy">
-                        {roundMatches.length > 0
-                          ? `已完成 ${completedMatches} 场 · 排队 ${queuedMatches} 场 · 进行中 ${runningMatches} 场`
-                          : currentRound
-                            ? '当前轮暂无对局数据。'
-                            : tournament.currentRound > 0
-                              ? '等待当前轮详情同步。'
-                              : '等待生成第 1 轮对局。'}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
-                      <p className="panel-label">失败比赛</p>
-                      <a
-                        className="mt-2 inline-flex text-base font-semibold text-[var(--warning)] transition hover:text-[var(--foreground)]"
-                        href="#errored-matches"
-                      >
-                        {erroredMatchCount} 场失败
-                      </a>
-                      <p className="panel-copy">点击跳转到下方失败比赛列表。</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          ) : (
-            <div className="app-panel xl:col-span-2">
-              <p className="panel-copy">当前没有可监控的 Tournament。</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card id="errored-matches">
-        <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <CardTitle>失败的比赛</CardTitle>
-            <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
-              展示当前所有状态为 error 的对局，可直接重新入队。
-            </p>
-          </div>
-          <Badge tone={erroredMatches.length > 0 ? 'warning' : 'success'}>
-            {erroredMatches.length} 场失败
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {erroredMatches.length > 0 ? (
-            erroredMatches.map((match) => {
-              const isRetrying = retryingMatchIds.includes(match.id)
-
-              return (
-                <div
-                  key={match.id}
-                  className="app-panel flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Badge tone="warning">对局 #{match.id}</Badge>
-                      <Badge tone="info">
-                        {match.scenarioTitle ||
-                          scenarioTitleById.get(match.scenarioId) ||
-                          match.scenarioId}
-                      </Badge>
-                      <Badge>
-                        Tournament #{match.tournamentId} · 第{' '}
-                        {match.roundNumber} 轮
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="panel-title">
-                        {match.playerADisplayName} vs {match.playerBDisplayName}
-                      </p>
-                      <p className="panel-copy">
-                        {match.playerAModel} vs {match.playerBModel}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-[var(--foreground-subtle)]">
-                      <p className="panel-label">错误信息</p>
-                      <p>{match.error ?? '未记录错误信息'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                    <Link
-                      className="inline-flex h-8 items-center rounded-md border border-[var(--border-soft)] px-3 text-xs font-semibold text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
-                      to={`/matches/${match.id}`}
-                    >
-                      查看详情
-                    </Link>
+                    </>
+                  ) : (
                     <Button
-                      disabled={isRetrying}
-                      onClick={() => void handleRetryMatch(match.id)}
+                      disabled={isLoading}
+                      onClick={handleEditRegistrationCode}
                       size="sm"
+                      type="button"
+                      variant="secondary"
                     >
-                      {isRetrying ? '重试中...' : '重试'}
+                      修改
                     </Button>
-                  </div>
+                  )}
                 </div>
-              )
-            })
-          ) : (
-            <div className="app-panel">
-              <p className="panel-copy">当前没有失败的比赛。</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <div className="space-y-4">
-        {scenarios.map((scenario) => {
-          const players = playersByScenario[scenario.id] ?? []
-          const latestTournament =
-            latestTournamentByScenario.get(scenario.id) ?? null
-          const canStart = players.length >= 2 && startingScenarioId == null
+        <TabsContent className="space-y-6" value="players">
+          <Card>
+            <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>选手管理</CardTitle>
+                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                  查看用户状态、禁用普通账号，并为指定账号重置密码。
+                </p>
+              </div>
+              <Badge tone="info">
+                {isLoading ? '同步中...' : `${adminUsers.length} 位用户`}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {isLoading ? (
+                [
+                  'users-skeleton-1',
+                  'users-skeleton-2',
+                  'users-skeleton-3',
+                ].map((key) => (
+                  <div
+                    key={key}
+                    className="h-[132px] animate-pulse rounded-xl bg-white/6"
+                  />
+                ))
+              ) : adminUsers.length > 0 ? (
+                adminUsers.map((user) => {
+                  const isEditingResetPassword = resetPasswordUserId === user.id
+                  const isResettingPassword = resettingUserIds.includes(user.id)
+                  const isTogglingUser = togglingUserIds.includes(user.id)
 
-          return (
-            <Card key={scenario.id}>
-              <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <CardTitle>{scenario.title}</CardTitle>
-                  <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
-                    {scenario.context}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge>{scenario.subject}</Badge>
-                  <Badge tone="info">{players.length} 人已提交</Badge>
-                  {latestTournament ? (
-                    <Badge
-                      tone={
-                        latestTournament.status === 'finished'
-                          ? 'success'
-                          : 'warning'
-                      }
-                    >
-                      Tournament #{latestTournament.id} ·{' '}
-                      {latestTournament.status === 'finished'
-                        ? `已结束 (${latestTournament.totalRounds} 轮)`
-                        : `第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮`}
-                    </Badge>
-                  ) : null}
-                </div>
-              </CardHeader>
-
-              <CardContent className="grid gap-6 lg:grid-cols-[1fr_220px]">
-                <div className="space-y-3">
-                  <p className="panel-label">最新参赛版本</p>
-                  {players.length > 0 ? (
-                    players.map((player) => (
-                      <div
-                        key={player.submissionId}
-                        className="app-panel flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <p className="panel-title">{player.displayName}</p>
-                          <p className="panel-copy">{player.email}</p>
+                  return (
+                    <div key={user.id} className="app-panel space-y-4">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="panel-title">{user.displayName}</p>
+                            {user.isAdmin ? (
+                              <Badge tone="warning">管理员</Badge>
+                            ) : null}
+                            <Badge tone={user.disabled ? 'warning' : 'success'}>
+                              {user.disabled ? '已禁用' : '启用中'}
+                            </Badge>
+                          </div>
+                          <p className="panel-copy">{user.email}</p>
+                          <p className="text-xs text-[var(--foreground-subtle)]">
+                            创建时间 · {formatDateTime(user.createdAt)}
+                          </p>
                         </div>
-                        <div className="text-right text-xs text-[var(--foreground-subtle)]">
-                          <p>{player.model}</p>
-                          <p>
-                            v{player.version} · sub #{player.submissionId}
+
+                        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                          {!user.isAdmin ? (
+                            <Button
+                              disabled={isResettingPassword || isTogglingUser}
+                              onClick={() =>
+                                void handleToggleUserDisabled(user)
+                              }
+                              size="sm"
+                              variant="secondary"
+                            >
+                              {isTogglingUser
+                                ? '处理中...'
+                                : user.disabled
+                                  ? '启用'
+                                  : '禁用'}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-[var(--foreground-subtle)]">
+                              管理员账号不可禁用
+                            </span>
+                          )}
+
+                          {!isEditingResetPassword ? (
+                            <Button
+                              disabled={isResettingPassword || isTogglingUser}
+                              onClick={() => handleOpenResetPassword(user.id)}
+                              size="sm"
+                              variant="ghost"
+                            >
+                              重置密码
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {isEditingResetPassword ? (
+                        <form
+                          className="flex flex-col gap-3 md:flex-row md:items-center"
+                          onSubmit={(event) => {
+                            event.preventDefault()
+                            void handleResetPassword(user)
+                          }}
+                        >
+                          <input
+                            className="app-input md:max-w-sm"
+                            onChange={(event) =>
+                              setResetPasswordDraft(event.target.value)
+                            }
+                            placeholder="输入不少于 6 位的新密码"
+                            type="password"
+                            value={resetPasswordDraft}
+                          />
+                          <Button
+                            disabled={
+                              isResettingPassword ||
+                              resetPasswordDraft.length < 6
+                            }
+                            size="sm"
+                            type="submit"
+                          >
+                            {isResettingPassword ? '确认中...' : '确认'}
+                          </Button>
+                          <Button
+                            disabled={isResettingPassword}
+                            onClick={handleCancelResetPassword}
+                            size="sm"
+                            type="button"
+                            variant="ghost"
+                          >
+                            取消
+                          </Button>
+                        </form>
+                      ) : null}
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="app-panel">
+                  <p className="panel-copy">暂无用户数据。</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent className="space-y-6" value="tournaments">
+          <Card>
+            <CardHeader>
+              <CardTitle>全局任务队列</CardTitle>
+              <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                汇总所有 Tournament 的 worker
+                状态；下方赛事监控会展示具体轮次进度。
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-4 lg:grid-cols-3">
+              {summaryCards.map((stat) => (
+                <div key={stat.label} className="app-panel">
+                  <p className="panel-label">{stat.label}</p>
+                  <p className="panel-title">
+                    {isLoading ? '--' : String(stat.value).padStart(2, '0')}
+                  </p>
+                  <p className="panel-copy">{stat.copy}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>赛事监控</CardTitle>
+                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                  展示当前进行中的 Tournament，以及最近结束的赛事，便于查看第 N
+                  轮进度与异常情况。
+                </p>
+              </div>
+              <Badge
+                tone={
+                  isLoading
+                    ? 'info'
+                    : monitoredTournaments.some(
+                          (tournament) => tournament.status !== 'finished',
+                        )
+                      ? 'warning'
+                      : 'info'
+                }
+              >
+                {isLoading
+                  ? '同步中...'
+                  : `${monitoredTournaments.length} 个 Tournament`}
+              </Badge>
+            </CardHeader>
+            <CardContent className="grid gap-4 xl:grid-cols-2">
+              {isLoading ? (
+                ['monitoring-skeleton-1', 'monitoring-skeleton-2'].map(
+                  (key) => (
+                    <div
+                      key={key}
+                      className="h-[180px] animate-pulse rounded-xl bg-white/6"
+                    />
+                  ),
+                )
+              ) : monitoredTournaments.length > 0 ? (
+                monitoredTournaments.map((tournament) => {
+                  const detail = tournamentDetailsById[tournament.id]
+                  const currentRound = getTournamentCurrentRound(
+                    tournament,
+                    detail,
+                  )
+                  const roundMatches = currentRound?.matches ?? []
+                  const completedMatches = roundMatches.filter(
+                    (match) => match.status === 'scored',
+                  ).length
+                  const runningMatches = roundMatches.filter(
+                    (match) =>
+                      match.status === 'running' || match.status === 'judging',
+                  ).length
+                  const queuedMatches = roundMatches.filter(
+                    (match) => match.status === 'queued',
+                  ).length
+                  const erroredMatchCount =
+                    erroredMatchCountByTournament.get(tournament.id) ?? 0
+                  const statusMeta = getTournamentStatusMeta(tournament.status)
+
+                  return (
+                    <div key={tournament.id} className="app-panel space-y-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="panel-title">
+                            {tournament.scenarioTitle}
+                          </p>
+                          <p className="panel-copy">
+                            Tournament #{tournament.id}
+                          </p>
+                        </div>
+                        <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                          <p className="panel-label">当前轮次</p>
+                          <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                            第 {tournament.currentRound} /{' '}
+                            {tournament.totalRounds} 轮
+                          </p>
+                          <p className="panel-copy">
+                            {tournament.status === 'finished'
+                              ? '全部轮次已结束。'
+                              : currentRound
+                                ? `当前轮状态：${getRoundStatusLabel(currentRound.status)}`
+                                : '等待当前轮详情同步。'}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                          <p className="panel-label">进度</p>
+                          <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                            {completedMatches}/{roundMatches.length}
+                          </p>
+                          <p className="panel-copy">
+                            {roundMatches.length > 0
+                              ? `已完成 ${completedMatches} 场 · 排队 ${queuedMatches} 场 · 进行中 ${runningMatches} 场`
+                              : currentRound
+                                ? '当前轮暂无对局数据。'
+                                : tournament.currentRound > 0
+                                  ? '等待当前轮详情同步。'
+                                  : '等待生成第 1 轮对局。'}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                          <p className="panel-label">失败比赛</p>
+                          <a
+                            className="mt-2 inline-flex text-base font-semibold text-[var(--warning)] transition hover:text-[var(--foreground)]"
+                            href="#errored-matches"
+                          >
+                            {erroredMatchCount} 场失败
+                          </a>
+                          <p className="panel-copy">
+                            点击跳转到下方失败比赛列表。
                           </p>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="app-panel">
-                      <p className="panel-copy">暂无有效提交。</p>
                     </div>
-                  )}
+                  )
+                })
+              ) : (
+                <div className="app-panel xl:col-span-2">
+                  <p className="panel-copy">当前没有可监控的 Tournament。</p>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                <div className="space-y-3">
-                  <div className="app-panel">
-                    <p className="panel-label">比赛操作</p>
-                    <p className="panel-copy">
-                      {players.length < 2
-                        ? '至少需要 2 个有效提交版本。'
-                        : latestTournament
-                          ? `上次 Tournament #${latestTournament.id} 已记录，可再次开始新比赛。`
-                          : '将创建新的 Tournament，并生成第 1 轮配对。'}
-                    </p>
-                  </div>
+          <Card id="errored-matches">
+            <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>失败的比赛</CardTitle>
+                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                  展示当前所有状态为 error 的对局，可直接重新入队。
+                </p>
+              </div>
+              <Badge tone={erroredMatches.length > 0 ? 'warning' : 'success'}>
+                {erroredMatches.length} 场失败
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {erroredMatches.length > 0 ? (
+                erroredMatches.map((match) => {
+                  const isRetrying = retryingMatchIds.includes(match.id)
 
-                  <Button
-                    className="w-full"
-                    disabled={!canStart}
-                    onClick={() => void handleStartTournament(scenario.id)}
-                  >
-                    {startingScenarioId === scenario.id
-                      ? '启动中...'
-                      : '开始比赛'}
-                  </Button>
+                  return (
+                    <div
+                      key={match.id}
+                      className="app-panel flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge tone="warning">对局 #{match.id}</Badge>
+                          <Badge tone="info">
+                            {match.scenarioTitle ||
+                              scenarioTitleById.get(match.scenarioId) ||
+                              match.scenarioId}
+                          </Badge>
+                          <Badge>
+                            Tournament #{match.tournamentId} · 第{' '}
+                            {match.roundNumber} 轮
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="panel-title">
+                            {match.playerADisplayName} vs{' '}
+                            {match.playerBDisplayName}
+                          </p>
+                          <p className="panel-copy">
+                            {match.playerAModel} vs {match.playerBModel}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-[var(--foreground-subtle)]">
+                          <p className="panel-label">错误信息</p>
+                          <p>{match.error ?? '未记录错误信息'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                        <Link
+                          className="inline-flex h-8 items-center rounded-md border border-[var(--border-soft)] px-3 text-xs font-semibold text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
+                          to={`/matches/${match.id}`}
+                        >
+                          查看详情
+                        </Link>
+                        <Button
+                          disabled={isRetrying}
+                          onClick={() => void handleRetryMatch(match.id)}
+                          size="sm"
+                        >
+                          {isRetrying ? '重试中...' : '重试'}
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="app-panel">
+                  <p className="panel-copy">当前没有失败的比赛。</p>
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            {scenarios.map((scenario) => {
+              const players = playersByScenario[scenario.id] ?? []
+              const latestTournament =
+                latestTournamentByScenario.get(scenario.id) ?? null
+              const canStart = players.length >= 2 && startingScenarioId == null
+
+              return (
+                <Card key={scenario.id}>
+                  <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <CardTitle>{scenario.title}</CardTitle>
+                      <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                        {scenario.context}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge>{scenario.subject}</Badge>
+                      <Badge tone="info">{players.length} 人已提交</Badge>
+                      {latestTournament ? (
+                        <Badge
+                          tone={
+                            latestTournament.status === 'finished'
+                              ? 'success'
+                              : 'warning'
+                          }
+                        >
+                          Tournament #{latestTournament.id} ·{' '}
+                          {latestTournament.status === 'finished'
+                            ? `已结束 (${latestTournament.totalRounds} 轮)`
+                            : `第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮`}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="grid gap-6 lg:grid-cols-[1fr_220px]">
+                    <div className="space-y-3">
+                      <p className="panel-label">最新参赛版本</p>
+                      {players.length > 0 ? (
+                        players.map((player) => (
+                          <div
+                            key={player.submissionId}
+                            className="app-panel flex items-center justify-between gap-3"
+                          >
+                            <div>
+                              <p className="panel-title">
+                                {player.displayName}
+                              </p>
+                              <p className="panel-copy">{player.email}</p>
+                            </div>
+                            <div className="text-right text-xs text-[var(--foreground-subtle)]">
+                              <p>{player.model}</p>
+                              <p>
+                                v{player.version} · sub #{player.submissionId}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="app-panel">
+                          <p className="panel-copy">暂无有效提交。</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="app-panel">
+                        <p className="panel-label">比赛操作</p>
+                        <p className="panel-copy">
+                          {players.length < 2
+                            ? '至少需要 2 个有效提交版本。'
+                            : latestTournament
+                              ? `上次 Tournament #${latestTournament.id} 已记录，可再次开始新比赛。`
+                              : '将创建新的 Tournament，并生成第 1 轮配对。'}
+                        </p>
+                      </div>
+
+                      <Button
+                        className="w-full"
+                        disabled={!canStart}
+                        onClick={() => void handleStartTournament(scenario.id)}
+                      >
+                        {startingScenarioId === scenario.id
+                          ? '启动中...'
+                          : '开始比赛'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
