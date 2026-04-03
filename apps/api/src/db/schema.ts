@@ -30,6 +30,11 @@ export const users = sqliteTable('users', {
   createdAt: text('created_at').notNull().default(currentTimestamp),
 })
 
+export const appSettings = sqliteTable('appSettings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+})
+
 export const scenarios = sqliteTable('scenarios', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
@@ -184,6 +189,7 @@ export const matches = sqliteTable(
 
 export const schema = {
   users,
+  appSettings,
   scenarios,
   submissions,
   playgroundRuns,

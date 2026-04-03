@@ -34,6 +34,14 @@ export const okResponseSchema = z.object({
   ok: z.literal(true),
 })
 
+export const registrationCodeResponseSchema = z.object({
+  code: z.string(),
+})
+
+export const updateRegistrationCodeSchema = z.object({
+  code: z.string().trim().min(1),
+})
+
 export const scenarioSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -318,6 +326,9 @@ export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
 export type RecentMatch = z.infer<typeof recentMatchSchema>
 export type Match = z.infer<typeof matchSchema>
 export type AppMeta = z.infer<typeof appMetaSchema>
+export type RegistrationCodeResponse = z.infer<
+  typeof registrationCodeResponseSchema
+>
 export type User = z.infer<typeof userSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>

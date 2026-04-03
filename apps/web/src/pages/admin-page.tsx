@@ -13,12 +13,14 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import {
   getAdminErroredMatches,
+  getAdminRegistrationCode,
   getAdminScenarios,
   getAdminStats,
   getAdminTournamentPlayers,
   getTournaments,
   retryAdminMatch,
   startTournament,
+  updateAdminRegistrationCode,
 } from '../lib/api'
 
 function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
@@ -41,6 +43,12 @@ export function AdminPage() {
     Record<string, AdminPlayer[]>
   >({})
   const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
+  const [registrationCode, setRegistrationCode] = useState<string | null>(null)
+  const [registrationCodeDraft, setRegistrationCodeDraft] = useState('')
+  const [isEditingRegistrationCode, setIsEditingRegistrationCode] =
+    useState(false)
+  const [isSavingRegistrationCode, setIsSavingRegistrationCode] =
+    useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [startingScenarioId, setStartingScenarioId] = useState<string | null>(
     null,
@@ -48,6 +56,7 @@ export function AdminPage() {
   const [retryingMatchIds, setRetryingMatchIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const isEditingRegistrationCodeRef = useRef(false)
   const latestLoadIdRef = useRef(0)
 
   const latestTournamentByScenario = useMemo(
@@ -68,6 +77,10 @@ export function AdminPage() {
     return () => window.clearTimeout(timer)
   }, [toast])
 
+  useEffect(() => {
+    isEditingRegistrationCodeRef.current = isEditingRegistrationCode
+  }, [isEditingRegistrationCode])
+
   async function loadAdminData(isInitial: boolean) {
     const loadId = ++latestLoadIdRef.current
 
@@ -78,11 +91,13 @@ export function AdminPage() {
 
     try {
       const [
+        registrationCodeResponse,
         statsResponse,
         scenariosResponse,
         tournamentsResponse,
         erroredMatchesResponse,
       ] = await Promise.all([
+        getAdminRegistrationCode(),
         getAdminStats(),
         getAdminScenarios(),
         getTournaments(),
@@ -109,6 +124,10 @@ export function AdminPage() {
       )
 
       setError(null)
+      setRegistrationCode(registrationCodeResponse.code)
+      if (!isEditingRegistrationCodeRef.current) {
+        setRegistrationCodeDraft(registrationCodeResponse.code)
+      }
       setStats(statsResponse)
       setScenarios(scenariosResponse)
       setErroredMatches(nextErroredMatches)
@@ -198,6 +217,33 @@ export function AdminPage() {
     }
   }
 
+  function handleEditRegistrationCode() {
+    setRegistrationCodeDraft(registrationCode ?? '')
+    setIsEditingRegistrationCode(true)
+  }
+
+  async function handleSaveRegistrationCode() {
+    try {
+      setIsSavingRegistrationCode(true)
+      setError(null)
+
+      const result = await updateAdminRegistrationCode({
+        code: registrationCodeDraft,
+      })
+
+      setRegistrationCode(result.code)
+      setRegistrationCodeDraft(result.code)
+      setIsEditingRegistrationCode(false)
+      setToast('邀请码已更新')
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error ? saveError.message : '保存邀请码失败',
+      )
+    } finally {
+      setIsSavingRegistrationCode(false)
+    }
+  }
+
   const summaryCards = [
     { label: 'queued', value: stats?.queued ?? 0, copy: '等待 worker 拉取。' },
     { label: 'running', value: stats?.running ?? 0, copy: '后台异步执行中。' },
@@ -228,6 +274,62 @@ export function AdminPage() {
           {error}
         </div>
       ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>邀请码</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="app-panel flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleSaveRegistrationCode()
+            }}
+          >
+            <div className="space-y-2">
+              <p className="panel-label">当前邀请码</p>
+              {isEditingRegistrationCode ? (
+                <input
+                  autoFocus
+                  className="app-input w-full min-w-[220px] font-mono tracking-[0.2em]"
+                  onChange={(event) =>
+                    setRegistrationCodeDraft(event.target.value)
+                  }
+                  value={registrationCodeDraft}
+                />
+              ) : (
+                <p className="panel-title font-mono tracking-[0.2em]">
+                  {isLoading ? '--' : (registrationCode ?? '--')}
+                </p>
+              )}
+            </div>
+
+            {isEditingRegistrationCode ? (
+              <Button
+                disabled={
+                  isSavingRegistrationCode ||
+                  registrationCodeDraft.trim().length === 0
+                }
+                size="sm"
+                type="submit"
+              >
+                {isSavingRegistrationCode ? '保存中...' : '保存'}
+              </Button>
+            ) : (
+              <Button
+                disabled={isLoading}
+                onClick={handleEditRegistrationCode}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                修改
+              </Button>
+            )}
+          </form>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

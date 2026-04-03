@@ -107,3 +107,8 @@ CREATE TABLE `matches` (
 	CONSTRAINT `matches_status_check` CHECK(`status` in ('queued', 'running', 'judging', 'scored', 'error')),
 	CONSTRAINT `matches_winner_check` CHECK(`winner` in ('a', 'b', 'draw') or `winner` is null)
 );
+--> statement-breakpoint
+CREATE TABLE `appSettings` (
+	`key` text PRIMARY KEY NOT NULL,
+	`value` text NOT NULL
+);

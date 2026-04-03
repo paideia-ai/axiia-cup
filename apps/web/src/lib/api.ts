@@ -12,6 +12,7 @@ import {
   playgroundRunSummarySchema,
   personalStatsSchema,
   recentMatchSchema,
+  registrationCodeResponseSchema,
   scenarioSchema,
   submissionSchema,
   tournamentDetailSchema,
@@ -19,6 +20,7 @@ import {
   tournamentMatchSummarySchema,
   tournamentRoundSchema,
   tournamentSchema,
+  updateRegistrationCodeSchema,
   updateProfileSchema,
   userSchema,
   type AdminPlayer,
@@ -30,6 +32,7 @@ import {
   type PlaygroundRun,
   type PlaygroundRunStart,
   type PlaygroundRunSummary,
+  type RegistrationCodeResponse,
   type RecentMatch,
   type Scenario,
   type Submission,
@@ -296,6 +299,29 @@ export async function getAdminErroredMatches(): Promise<AdminErroredMatch[]> {
     '/api/admin/matches/errors',
     { method: 'GET' },
     adminErroredMatchesResponseSchema,
+  )
+}
+
+export async function getAdminRegistrationCode(): Promise<RegistrationCodeResponse> {
+  return apiFetch(
+    '/api/admin/settings/registration-code',
+    { method: 'GET' },
+    registrationCodeResponseSchema,
+  )
+}
+
+export async function updateAdminRegistrationCode(
+  input: z.input<typeof updateRegistrationCodeSchema>,
+): Promise<RegistrationCodeResponse> {
+  const body = updateRegistrationCodeSchema.parse(input)
+
+  return apiFetch(
+    '/api/admin/settings/registration-code',
+    {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    },
+    registrationCodeResponseSchema,
   )
 }
 

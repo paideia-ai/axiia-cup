@@ -2,6 +2,7 @@ import { app } from './app'
 import { cors } from 'hono/cors'
 
 import { startWorker } from './engine/worker'
+import { adminSettingsRouter } from './routes/admin-settings'
 import { authRouter } from './routes/auth'
 import { appMetaSchema, modelOptions } from '@axiia/shared'
 import { playgroundRouter } from './routes/playground'
@@ -22,7 +23,7 @@ app.use(
   cors({
     origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
     allowHeaders: ['Authorization', 'Content-Type'],
-    allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'],
   }),
 )
 
@@ -65,6 +66,7 @@ app.get('/api/meta', (context) => {
 })
 
 app.get('/api/models', (context) => context.json({ items: modelOptions }))
+app.route('/', adminSettingsRouter)
 app.route('/', authRouter)
 app.route('/', playgroundRouter)
 app.route('/', scenariosRouter)

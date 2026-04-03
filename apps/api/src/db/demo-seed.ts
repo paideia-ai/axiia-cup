@@ -126,6 +126,7 @@ function resetDatabase() {
     DROP TABLE IF EXISTS submissions;
     DROP TABLE IF EXISTS users;
     DROP TABLE IF EXISTS scenarios;
+    DROP TABLE IF EXISTS appSettings;
     DROP TABLE IF EXISTS __drizzle_migrations;
     COMMIT;
     PRAGMA foreign_keys = ON;

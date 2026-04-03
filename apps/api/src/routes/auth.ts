@@ -11,6 +11,7 @@ import { z } from 'zod'
 import { db } from '../db/client'
 import { users } from '../db/schema'
 import { hashPassword, signToken, verifyPassword } from '../lib/auth'
+import { getRegistrationCode } from '../lib/settings'
 import { requireAuth } from '../middleware/requireAuth'
 
 const registerBodySchema = z.object({
@@ -44,7 +45,7 @@ authRouter.post('/api/auth/register', async (context) => {
 
   const { displayName, email, otp, password } = parsed.data
 
-  if (otp !== (process.env.REGISTRATION_CODE ?? '123456')) {
+  if (otp !== getRegistrationCode()) {
     return context.json({ error: 'Invalid OTP' }, 400)
   }
 
