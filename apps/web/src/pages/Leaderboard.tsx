@@ -15,6 +15,7 @@ import {
   getTournament,
   getTournaments,
 } from '../lib/api'
+import { Select, SelectItem } from '../components/ui/select'
 
 export function LeaderboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -49,46 +50,34 @@ export function LeaderboardPage() {
         const rightSubmissionId = Math.max(match.subAId, match.subBId)
         const pairKey = `${leftSubmissionId}-${rightSubmissionId}`
         const existing = items.find((item) => item.pairKey === pairKey)
-
         if (existing) {
           existing.matches.push(match)
           return items
         }
-
         items.push({
           leftSubmissionId,
           matches: [match],
           pairKey,
           rightSubmissionId,
         })
-
         return items
       }, [])
     : []
+
   const playersBySubmissionId = new Map(
     leaderboard.map((entry) => [entry.submissionId, entry]),
   )
-
   const getPlayerName = (submissionId: number) =>
     playersBySubmissionId.get(submissionId)?.playerName ??
     `submission #${submissionId}`
-
   const getRoleLabel = (side: 'a' | 'b') => {
-    if (side === 'a') {
-      return scenario ? `角色 A · ${scenario.roleAName}` : '角色 A'
-    }
-
-    return scenario ? `角色 B · ${scenario.roleBName}` : '角色 B'
+    if (side === 'a') return scenario ? scenario.roleAName : '—'
+    return scenario ? scenario.roleBName : '—'
   }
-
   const formatMatchSide = (submissionId: number, side: 'a' | 'b') =>
     `${getPlayerName(submissionId)} · ${getRoleLabel(side)}`
-
   const openPlayerDetail = (submissionId: number) => {
-    if (!selectedTournamentId) {
-      return
-    }
-
+    if (!selectedTournamentId) return
     void navigate(
       `/leaderboard/tournaments/${selectedTournamentId}/players/${submissionId}`,
     )
@@ -99,7 +88,6 @@ export function LeaderboardPage() {
       try {
         const tournamentList = await getTournaments()
         setTournaments(tournamentList)
-
         if (!selectedTournamentId && tournamentList[0]) {
           setSearchParams(
             { tournament: String(tournamentList[0].id) },
@@ -115,14 +103,11 @@ export function LeaderboardPage() {
         setIsLoading(false)
       }
     }
-
     void loadTournamentList()
   }, [selectedTournamentId, setSearchParams])
 
   useEffect(() => {
-    if (!selectedTournamentId) {
-      return
-    }
+    if (!selectedTournamentId) return
 
     let cancelled = false
     let timeoutId: number | null = null
@@ -130,20 +115,16 @@ export function LeaderboardPage() {
 
     const loadData = async (isInitial: boolean) => {
       const loadId = ++latestLoadIdRef.current
-
       try {
         if (isInitial) {
           setIsLoading(true)
           setError(null)
         }
-
         const [leaderboardResponse, tournamentResponse] = await Promise.all([
           getLeaderboard(selectedTournamentId),
           getTournament(selectedTournamentId),
         ])
-
         if (cancelled || loadId !== latestLoadIdRef.current) return
-
         if (!hasLoadedScenario) {
           const scenarioResponse = await getScenario(
             tournamentResponse.scenarioId,
@@ -152,7 +133,6 @@ export function LeaderboardPage() {
           setScenario(scenarioResponse)
           hasLoadedScenario = true
         }
-
         setError(null)
         setLeaderboard(leaderboardResponse)
         setTournamentDetail(tournamentResponse)
@@ -173,7 +153,6 @@ export function LeaderboardPage() {
 
     const poll = async (isInitial: boolean) => {
       await loadData(isInitial)
-
       if (!cancelled) {
         timeoutId = window.setTimeout(() => {
           void poll(false)
@@ -182,12 +161,9 @@ export function LeaderboardPage() {
     }
 
     void poll(true)
-
     return () => {
       cancelled = true
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId)
-      }
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
   }, [selectedTournamentId])
 
@@ -198,7 +174,7 @@ export function LeaderboardPage() {
           <p className="page-eyebrow">Leaderboard</p>
           <h1 className="page-title">排行榜</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           {tournamentDetail ? (
             <Badge
               tone={tournamentDetail.status === 'finished' ? 'success' : 'info'}
@@ -208,27 +184,23 @@ export function LeaderboardPage() {
                 : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
             </Badge>
           ) : null}
-          <select
-            className="app-input min-w-[220px]"
-            value={selectedTournamentId ?? ''}
-            onChange={(event) =>
-              setSearchParams({ tournament: event.target.value })
-            }
+          {/* <Select
+            value={selectedTournamentId ? String(selectedTournamentId) : ''}
+            onValueChange={(v) => {
+              if (v) setSearchParams({ tournament: v })
+            }}
+            placeholder="选择赛事…"
           >
-            {tournaments.map((tournament) => (
-              <option key={tournament.id} value={tournament.id}>
-                #{tournament.id} · {tournament.scenarioTitle}
-              </option>
+            {tournaments.map((t) => (
+              <SelectItem key={t.id} value={String(t.id)}>
+                #{t.id} · {t.scenarioTitle}
+              </SelectItem>
             ))}
-          </select>
+          </Select> */}
         </div>
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-          {error}
-        </div>
-      ) : null}
+      {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
       <Card>
         <CardHeader>
@@ -237,33 +209,27 @@ export function LeaderboardPage() {
         <CardContent className="overflow-x-auto">
           {isLoading ? (
             <div className="space-y-3">
-              {[
-                'leaderboard-skeleton-1',
-                'leaderboard-skeleton-2',
-                'leaderboard-skeleton-3',
-                'leaderboard-skeleton-4',
-                'leaderboard-skeleton-5',
-              ].map((key) => (
+              {['a', 'b', 'c', 'd', 'e'].map((k) => (
                 <div
-                  key={key}
+                  key={k}
                   className="h-14 animate-pulse rounded bg-white/6"
                 />
               ))}
             </div>
           ) : leaderboard.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
+            <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
               暂无排行榜数据。
-            </div>
+            </p>
           ) : (
             <table className="min-w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">
-                <tr className="border-b border-[var(--border-soft)]">
-                  <th className="pb-3">排名</th>
-                  <th className="pb-3">选手</th>
-                  <th className="pb-3">模型</th>
-                  <th className="pb-3">胜</th>
-                  <th className="pb-3">负</th>
-                  <th className="pb-3">Buchholz</th>
+              <thead className="text-[11px] uppercase tracking-[0.14em] text-(--foreground-muted)">
+                <tr className="border-b border-(--border-soft)">
+                  <th className="pb-3 pr-6">排名</th>
+                  <th className="pb-3 pr-6">选手</th>
+                  <th className="pb-3 pr-6">模型</th>
+                  <th className="pb-3 pr-4">胜</th>
+                  <th className="pb-3 pr-4">负</th>
+                  <th className="pb-3 pr-4">Buchholz</th>
                   <th className="pb-3">胜率</th>
                 </tr>
               </thead>
@@ -271,35 +237,35 @@ export function LeaderboardPage() {
                 {leaderboard.map((entry) => (
                   <tr
                     key={entry.submissionId}
-                    className="cursor-pointer border-b border-[var(--border-soft)] transition last:border-b-0 hover:bg-white/3"
+                    className="cursor-pointer border-b border-(--border-soft) transition last:border-b-0 hover:bg-white/3"
                     onClick={() => openPlayerDetail(entry.submissionId)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
                         openPlayerDetail(entry.submissionId)
                       }
                     }}
                     tabIndex={0}
                   >
-                    <td className="py-4 font-mono text-base font-bold text-[var(--foreground)]">
+                    <td className="py-4 pr-6 tabular-nums text-base font-black text-(--foreground)">
                       #{entry.rank}
                     </td>
-                    <td className="py-4 font-semibold text-[var(--foreground)]">
+                    <td className="py-4 pr-6 font-semibold text-(--foreground)">
                       {entry.playerName}
                     </td>
-                    <td className="py-4 text-[var(--foreground-subtle)]">
+                    <td className="py-4 pr-6 text-(--foreground-subtle)">
                       {entry.modelLabel}
                     </td>
-                    <td className="py-4 font-mono text-[var(--foreground)]">
+                    <td className="py-4 pr-4 tabular-nums text-(--foreground)">
                       {entry.wins}
                     </td>
-                    <td className="py-4 font-mono text-[var(--foreground)]">
+                    <td className="py-4 pr-4 tabular-nums text-(--foreground)">
                       {entry.losses}
                     </td>
-                    <td className="py-4 font-mono text-[var(--foreground-subtle)]">
+                    <td className="py-4 pr-4 tabular-nums text-(--foreground-subtle)">
                       {entry.buchholz.toFixed(1)}
                     </td>
-                    <td className="py-4 font-mono text-[var(--foreground-subtle)]">
+                    <td className="py-4 tabular-nums text-(--foreground-subtle)">
                       {entry.winRate.toFixed(1)}%
                     </td>
                   </tr>
@@ -311,68 +277,98 @@ export function LeaderboardPage() {
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <CardTitle>当前轮次</CardTitle>
-          {activeRound ? (
-            <Badge tone="info">Round {activeRound.roundNumber}</Badge>
-          ) : null}
+        <CardHeader>
+          <CardTitle>
+            当前轮次
+            {activeRound ? (
+              <span className="ml-3 text-sm font-normal text-(--foreground-muted)">
+                R{activeRound.roundNumber}
+              </span>
+            ) : null}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {!activeRound ? (
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-              当前赛事还没有轮次数据。
-            </div>
-          ) : activeRoundPairings.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
-              当前轮次还没有生成 pairing。
-            </div>
+        <CardContent>
+          {!activeRound || activeRoundPairings.length === 0 ? (
+            <p className="text-sm text-(--foreground-subtle)">暂无对阵数据。</p>
           ) : (
-            activeRoundPairings.map((pairing) => (
-              <div
-                key={pairing.pairKey}
-                className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-4"
-              >
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-semibold text-[var(--foreground)]">
-                      {getPlayerName(pairing.leftSubmissionId)} vs{' '}
+            <div className="space-y-3">
+              {activeRoundPairings.map((pairing) => (
+                <div
+                  key={pairing.pairKey}
+                  className="overflow-hidden rounded-xl border border-(--border-soft)"
+                >
+                  {/* Pairing header */}
+                  <div className="flex items-center justify-between border-b border-(--border-soft) bg-white/2 px-4 py-2.5">
+                    <span className="text-sm font-semibold text-(--foreground)">
+                      {getPlayerName(pairing.leftSubmissionId)}
+                      <span className="mx-2 font-normal text-(--foreground-muted)">
+                        vs
+                      </span>
                       {getPlayerName(pairing.rightSubmissionId)}
-                    </p>
-                    <p className="text-sm text-[var(--foreground-subtle)]">
-                      本轮共 {pairing.matches.length} 场正反手对局
-                    </p>
+                    </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {pairing.matches.map((match) => (
-                      <Link
-                        key={match.id}
-                        className="inline-flex flex-col items-start gap-2 rounded-2xl border border-[var(--border-soft)] px-4 py-3 text-xs text-[var(--foreground-subtle)] transition hover:border-[rgba(224,74,47,0.28)] hover:bg-[rgba(224,74,47,0.06)] hover:text-[var(--foreground)]"
-                        to={`/matches/${match.id}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>Match #{match.id}</span>
-                          <Badge
-                            tone={
-                              match.status === 'scored'
-                                ? 'success'
-                                : match.status === 'error'
-                                  ? 'warning'
-                                  : 'info'
-                            }
-                          >
-                            {match.status}
-                          </Badge>
-                        </div>
-                        <span>
-                          {formatMatchSide(match.subAId, 'a')} vs{' '}
-                          {formatMatchSide(match.subBId, 'b')}
-                        </span>
-                      </Link>
-                    ))}
+                  {/* Individual matches — two columns */}
+                  <div className="grid grid-cols-2 divide-x divide-(--border-soft)">
+                    {pairing.matches.map((match) => {
+                      const scored =
+                        match.status === 'scored' &&
+                        match.scoreA != null &&
+                        match.scoreB != null
+                      const errored = match.status === 'error'
+                      return (
+                        <Link
+                          key={match.id}
+                          to={`/matches/${match.id}`}
+                          className="group flex flex-col gap-2 px-4 py-3 transition hover:bg-[rgba(224,74,47,0.04)]"
+                        >
+                          {/* Matchup */}
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="font-medium text-(--foreground)">
+                              {scenario?.roleAName}
+                            </span>
+                            <span className="text-(--foreground-muted)">
+                              （{getPlayerName(match.subAId)}）
+                            </span>
+                            <span className="mx-1 text-xs text-(--foreground-muted)">
+                              vs
+                            </span>
+                            <span className="font-medium text-(--foreground)">
+                              {scenario?.roleBName}
+                            </span>
+                            <span className="text-(--foreground-muted)">
+                              （{getPlayerName(match.subBId)}）
+                            </span>
+                          </div>
+                          {/* Score + arrow */}
+                          <div className="flex items-center gap-2">
+                            {scored ? (
+                              <span className="tabular-nums text-base font-black tracking-tight text-(--foreground)">
+                                {match.scoreA}{' '}
+                                <span className="font-normal text-(--foreground-muted)">
+                                  :
+                                </span>{' '}
+                                {match.scoreB}
+                              </span>
+                            ) : errored ? (
+                              <span className="text-sm font-semibold text-(--accent)">
+                                ERR
+                              </span>
+                            ) : (
+                              <span className="text-xs text-(--foreground-muted)">
+                                进行中
+                              </span>
+                            )}
+                            <span className="text-xs text-(--foreground-muted) opacity-0 transition-opacity group-hover:opacity-100">
+                              →
+                            </span>
+                          </div>
+                        </Link>
+                      )
+                    })}
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

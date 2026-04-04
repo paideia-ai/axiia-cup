@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
 import { AdminPage } from './pages/admin-page'
+import ComponentPlaygroundPage from './pages/component-playground-page'
 import { DashboardPage } from './pages/dashboard-page'
 import { LeaderboardPage } from './pages/Leaderboard'
 import { LandingPage } from './pages/landing-page'
@@ -19,7 +20,7 @@ function ProtectedShell() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--background)] text-sm text-[var(--foreground-subtle)]">
+      <div className="flex min-h-screen items-center justify-center bg-(--background) text-sm text-(--foreground-subtle)">
         正在恢复会话...
       </div>
     )
@@ -46,6 +47,7 @@ function ProtectedShell() {
         />
         <Route path="/matches/:matchId" element={<MatchDetailPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/components" element={<ComponentPlaygroundPage />} />
         <Route
           path="/admin"
           element={

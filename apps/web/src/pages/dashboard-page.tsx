@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/auth'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
+import { cn } from '../lib/cn'
 import { getMyRecentMatches, getMyStats } from '../lib/api'
 
 type ConsoleStats = {
@@ -91,20 +92,20 @@ export function DashboardPage() {
   const statCards = [
     {
       label: '总胜率',
-      value: stats?.winRate != null ? `${stats.winRate.toFixed(1)}%` : '--',
+      value: stats?.winRate != null ? `${stats.winRate.toFixed(1)}%` : '—',
       highlight: true,
     },
     {
       label: '已完成对局',
-      value: stats ? String(stats.completedMatchCount) : '--',
+      value: stats ? String(stats.completedMatchCount) : '—',
     },
     {
       label: '排行榜名次',
-      value: stats?.rank != null ? String(stats.rank) : '--',
+      value: stats?.rank != null ? `#${stats.rank}` : '—',
     },
     {
-      label: '当前提示词版本',
-      value: stats?.currentVersion != null ? `v${stats.currentVersion}` : '--',
+      label: '提示词版本',
+      value: stats?.currentVersion != null ? `v${stats.currentVersion}` : '—',
     },
   ]
 
@@ -115,75 +116,67 @@ export function DashboardPage() {
         <div>
           <h1 className="page-title">控制台</h1>
           {stats?.scenarioTitle ? (
-            <p className="mt-1 text-sm text-[var(--foreground-subtle)]">
+            <p className="mt-1 text-sm text-(--foreground-subtle)">
               {stats.scenarioTitle}
               {stats.tournamentRound != null && stats.tournamentRound > 0
-                ? ` · 瑞士轮第${stats.tournamentRound}轮`
+                ? ` · 瑞士轮第 ${stats.tournamentRound} 轮`
                 : null}
             </p>
           ) : null}
         </div>
         {stats && stats.pendingMatchCount > 0 ? (
-          <Badge tone="success">排队中: {stats.pendingMatchCount}场对局</Badge>
+          <Badge tone="success">排队中：{stats.pendingMatchCount} 场对局</Badge>
         ) : null}
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-          {error}
-        </div>
-      ) : null}
+      {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
-      {/* Stat Cards */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stat strip — unified container instead of 4 isolated cards */}
+      <div className="grid grid-cols-2 divide-x divide-y divide-(--border-soft) rounded-xl border border-(--border-soft) xl:grid-cols-4 xl:divide-y-0">
         {statCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="space-y-2">
-              <p
-                className={`font-mono text-3xl font-bold ${
-                  stat.highlight && stats?.winRate != null
-                    ? 'text-[var(--success)]'
-                    : 'text-[var(--foreground)]'
-                }`}
-              >
-                {isLoading ? '...' : stat.value}
-              </p>
-              <p className="text-xs text-[var(--foreground-muted)]">
-                {stat.label}
-              </p>
-            </CardContent>
-          </Card>
+          <div key={stat.label} className="px-6 py-5">
+            <p className="panel-label">{stat.label}</p>
+            <p
+              className={cn(
+                'mt-2 text-[2.25rem] font-black tabular-nums leading-none tracking-tight',
+                stat.highlight && stats?.winRate != null
+                  ? 'text-(--success)'
+                  : 'text-(--foreground)',
+              )}
+            >
+              {isLoading ? (
+                <span className="animate-pulse text-(--foreground-muted)">
+                  —
+                </span>
+              ) : (
+                stat.value
+              )}
+            </p>
+          </div>
         ))}
       </div>
 
       {/* Recent Matches */}
       <Card>
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <p className="text-sm font-semibold text-[var(--foreground)]">
-            最近对局
-          </p>
+        <div className="flex items-center justify-between px-6 pt-5 pb-2">
+          <p className="text-sm font-semibold text-(--foreground)">最近对局</p>
           <Link
             to="/leaderboard"
-            className="text-sm font-medium text-[var(--accent)] transition hover:opacity-80"
+            className="text-sm font-medium text-(--accent) transition hover:opacity-80"
           >
             查看全部 →
           </Link>
         </div>
-        <CardContent className="space-y-1 pt-2">
+        <CardContent className="space-y-0.5 pt-2">
           {isLoading ? (
-            [
-              'match-skeleton-1',
-              'match-skeleton-2',
-              'match-skeleton-3',
-              'match-skeleton-4',
-            ].map((key) => (
+            ['a', 'b', 'c', 'd'].map((k) => (
               <div
-                key={key}
+                key={k}
                 className="h-16 animate-pulse rounded-xl bg-white/5"
               />
             ))
           ) : recentMatches.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] p-4 text-sm text-[var(--foreground-subtle)]">
+            <div className="rounded-xl border border-(--border-soft) bg-white/2 px-4 py-5 text-sm text-(--foreground-subtle)">
               暂无最近对局。
             </div>
           ) : (
@@ -194,26 +187,23 @@ export function DashboardPage() {
                 className="flex items-center justify-between rounded-xl px-4 py-3.5 transition hover:bg-white/4"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-[var(--foreground)]">
+                  <p className="text-sm text-(--foreground)">
                     <span className="font-semibold">
                       {user?.displayName ?? '我'}
                     </span>
-                    <span className="mx-2 text-[var(--foreground-muted)]">
-                      vs
-                    </span>
+                    <span className="mx-2 text-(--foreground-muted)">vs</span>
                     <span className="font-semibold">{match.opponentName}</span>
                   </p>
-                  <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
-                    {match.scenarioTitle} · 你扮演角色
-                    {match.mySide.toUpperCase()}
+                  <p className="mt-0.5 text-xs text-(--foreground-muted)">
+                    {match.scenarioTitle} · 角色 {match.mySide.toUpperCase()}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 ml-4">
-                  <span className="hidden text-xs text-[var(--foreground-muted)] sm:inline">
+                <div className="ml-4 flex shrink-0 items-center gap-3">
+                  <span className="hidden text-xs text-(--foreground-muted) sm:inline">
                     {modelLabel(match.model)}
                   </span>
                   {resultBadge(match)}
-                  <span className="hidden text-xs text-[var(--foreground-muted)] min-w-[4.5rem] text-right lg:inline">
+                  <span className="hidden min-w-[4.5rem] text-right text-xs text-(--foreground-muted) lg:inline">
                     {match.status === 'running' ||
                     match.status === 'queued' ||
                     match.status === 'judging'

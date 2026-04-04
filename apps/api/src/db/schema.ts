@@ -47,6 +47,7 @@ export const scenarios = sqliteTable('scenarios', {
   roleBPublicGoal: text('role_b_public_goal').notNull(),
   boundaryConstraints: text('boundary_constraints').notNull(),
   turnCount: integer('turn_count').notNull().default(10),
+  judgeName: text('judge_name').notNull().default('裁判'),
   judgeRounds: integer('judge_rounds').notNull().default(3),
   judgePrompt: text('judge_prompt').notNull(),
   createdAt: text('created_at').notNull().default(currentTimestamp),

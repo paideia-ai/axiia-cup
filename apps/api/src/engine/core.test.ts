@@ -33,6 +33,7 @@ const scenario: ScenarioRecord = {
   ].join('\n'),
   boundaryConstraints: '不得承诺不存在的外部资金，不得跳出校园治理场景。',
   turnCount: 8,
+  judgeName: '裁判',
   judgeRounds: 3,
   judgePrompt: '请根据说服力、策略性和角色一致性评分。',
   createdAt: '2025-01-01T00:00:00.000Z',

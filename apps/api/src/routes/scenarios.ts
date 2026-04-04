@@ -11,6 +11,7 @@ const publicScenarioSelection = {
   boundaryConstraints: scenarios.boundaryConstraints,
   context: scenarios.context,
   id: scenarios.id,
+  judgeName: scenarios.judgeName,
   judgePrompt: scenarios.judgePrompt,
   judgeRounds: scenarios.judgeRounds,
   roleAName: scenarios.roleAName,

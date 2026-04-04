@@ -5,51 +5,21 @@ import {
   type Scenario,
   type Submission,
 } from '@axiia/shared'
-import { ChevronDown, ChevronRight, FlaskConical } from 'lucide-react'
+import { FlaskConical } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Select, SelectItem } from '../components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import { Textarea } from '../components/ui/textarea'
 import { createSubmission, getMySubmissions, getScenario } from '../lib/api'
 
 function countText(value: string) {
   return [...value].length
-}
-
-function Collapsible({
-  children,
-  defaultOpen = false,
-  title,
-}: {
-  children: React.ReactNode
-  defaultOpen?: boolean
-  title: string
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-
-  return (
-    <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)]">
-      <button
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-[var(--foreground-subtle)] transition hover:text-[var(--foreground)]"
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-      >
-        {isOpen ? (
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--foreground-muted)]" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--foreground-muted)]" />
-        )}
-        {title}
-      </button>
-      {isOpen ? (
-        <div className="border-t border-[var(--border-soft)] px-3 py-3">
-          {children}
-        </div>
-      ) : null}
-    </div>
-  )
 }
 
 function RoleCard({
@@ -61,25 +31,12 @@ function RoleCard({
   roleCard: string
   side: 'a' | 'b'
 }) {
-  const accent = side === 'a' ? 'rgba(224,74,47,0.15)' : 'rgba(99,102,241,0.15)'
-  const border = side === 'a' ? 'rgba(224,74,47,0.22)' : 'rgba(99,102,241,0.22)'
-
   return (
-    <div
-      className="rounded-lg border p-3 space-y-2"
-      style={{ background: accent, borderColor: border }}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-          角色卡 {side.toUpperCase()}
-        </span>
-        <span className="text-sm font-semibold text-[var(--foreground)]">
-          {roleName}
-        </span>
-      </div>
-      <div className="whitespace-pre-wrap text-xs leading-5 text-[var(--foreground-subtle)]">
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-(--foreground)">{roleName}</p>
+      <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
         {roleCard}
-      </div>
+      </p>
     </div>
   )
 }
@@ -184,31 +141,25 @@ export function ScenarioDetailPage() {
   }
 
   if (error && !scenario) {
-    return (
-      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-        {error}
-      </div>
-    )
+    return <p className="text-sm text-(--accent)">{error}</p>
   }
 
   if (!scenario) {
-    return (
-      <div className="rounded-xl border border-[var(--border-soft)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground-subtle)]">
-        场景不存在。
-      </div>
-    )
+    return <p className="text-sm text-(--foreground-subtle)">场景不存在。</p>
   }
 
   return (
     <div className="space-y-6">
       {toast ? (
-        <div className="fixed right-6 top-20 z-50 rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.12)] px-4 py-3 text-sm text-[var(--success)] shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+        <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
           {toast}
         </div>
       ) : null}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
+          <p className="page-eyebrow">Scenario</p>
           <h1 className="page-title">{scenario.title}</h1>
           <p className="page-subtitle">
             你只需编写每个角色的策略提示词。系统会自动拼接场景背景、角色卡、对手公开信息与边界约束。
@@ -221,83 +172,110 @@ export function ScenarioDetailPage() {
         </div>
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-          {error}
-        </div>
-      ) : null}
+      {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        {/* ── Left: Prompt Editor (primary) + Version History ── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* ── Left: Scene Materials (reference, sticky) ── */}
+        <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin">
+          <Card>
+            <CardContent className="space-y-3">
+              <Accordion defaultValue={['context']}>
+                <AccordionItem value="context" title="场景背景">
+                  <p className="text-xs leading-5 text-(--foreground-subtle)">
+                    {scenario.context}
+                  </p>
+                </AccordionItem>
+                <AccordionItem value="boundary" title="边界约束">
+                  <p className="text-xs leading-5 text-(--foreground-subtle)">
+                    {scenario.boundaryConstraints}
+                  </p>
+                </AccordionItem>
+                <AccordionItem value="judge" title="裁判规则">
+                  <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                    {scenario.judgePrompt}
+                  </p>
+                </AccordionItem>
+              </Accordion>
+
+              <RoleCard
+                side="a"
+                roleName={scenario.roleAName}
+                roleCard={scenario.roleAPublicGoal}
+              />
+              <RoleCard
+                side="b"
+                roleName={scenario.roleBName}
+                roleCard={scenario.roleBPublicGoal}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Right: Prompt Editor + Version History ── */}
         <div className="space-y-6">
           <Card>
             <CardHeader className="flex flex-col gap-3 border-none pb-0">
               <CardTitle>编写策略提示词</CardTitle>
-              <p className="text-sm leading-6 text-[var(--foreground-subtle)]">
+              <p className="text-sm leading-6 text-(--foreground-subtle)">
                 每次保存会创建一个新版本。比赛由管理员开启，届时将自动使用你的最新版本参赛。
               </p>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSave}>
-                <div className="grid gap-4 xl:grid-cols-2">
-                  <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                    <span>
-                      角色 A 策略提示词
-                      <span className="ml-1 text-[var(--foreground-muted)]">
-                        · {scenario.roleAName}
-                      </span>
-                    </span>
-                    <textarea
-                      className="app-textarea min-h-[180px]"
+                <Tabs defaultValue="a" className="space-y-0">
+                  <TabsList>
+                    <TabsTrigger value="a">{scenario.roleAName}</TabsTrigger>
+                    <TabsTrigger value="b">{scenario.roleBName}</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="a" className="pt-4 space-y-1.5">
+                    <Textarea
+                      className="min-h-55"
                       maxLength={1000}
                       onChange={(event) => setPromptA(event.target.value)}
+                      placeholder={`为 ${scenario.roleAName} 编写策略提示词…`}
                       value={promptA}
                     />
-                    <div
-                      className={`text-right text-xs ${promptALength > 1000 ? 'text-[#f87171]' : 'text-[var(--foreground-muted)]'}`}
+                    <p
+                      className={`text-right text-xs tabular-nums ${promptALength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
                     >
                       {promptALength} / 1000
-                    </div>
-                  </label>
-                  <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                    <span>
-                      角色 B 策略提示词
-                      <span className="ml-1 text-[var(--foreground-muted)]">
-                        · {scenario.roleBName}
-                      </span>
-                    </span>
-                    <textarea
-                      className="app-textarea min-h-[180px]"
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="b" className="pt-4 space-y-1.5">
+                    <Textarea
+                      className="min-h-55"
                       maxLength={1000}
                       onChange={(event) => setPromptB(event.target.value)}
+                      placeholder={`为 ${scenario.roleBName} 编写策略提示词…`}
                       value={promptB}
                     />
-                    <div
-                      className={`text-right text-xs ${promptBLength > 1000 ? 'text-[#f87171]' : 'text-[var(--foreground-muted)]'}`}
+                    <p
+                      className={`text-right text-xs tabular-nums ${promptBLength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
                     >
                       {promptBLength} / 1000
-                    </div>
-                  </label>
-                </div>
+                    </p>
+                  </TabsContent>
+                </Tabs>
+
                 <div className="flex items-end justify-between gap-4">
-                  <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
+                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>模型选择</span>
-                    <select
-                      className="app-input"
-                      onChange={(event) =>
-                        setModel(event.target.value as ModelOption['id'])
-                      }
+                    <Select
                       value={model}
+                      onValueChange={(v) => {
+                        if (v) setModel(v as ModelOption['id'])
+                      }}
+                      className="w-full"
                     >
                       {modelOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
+                        <SelectItem key={option.id} value={option.id}>
                           {option.label}
-                        </option>
+                        </SelectItem>
                       ))}
-                    </select>
+                    </Select>
                   </label>
                   <Button disabled={isSubmitting} type="submit">
-                    {isSubmitting ? '保存中...' : '保存版本'}
+                    {isSubmitting ? '保存中…' : '保存版本'}
                   </Button>
                 </div>
               </form>
@@ -314,18 +292,18 @@ export function ScenarioDetailPage() {
                 {submissions.map((submission) => (
                   <div
                     key={submission.id}
-                    className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3"
+                    className="rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <p className="font-semibold text-[var(--foreground)]">
+                        <p className="font-semibold text-(--foreground)">
                           v{submission.version}
                         </p>
                         <Badge tone="info">
                           {modelOptions.find((o) => o.id === submission.model)
                             ?.label ?? submission.model}
                         </Badge>
-                        <span className="text-xs text-[var(--foreground-muted)]">
+                        <span className="text-xs text-(--foreground-muted)">
                           {submission.createdAt}
                         </span>
                       </div>
@@ -344,45 +322,6 @@ export function ScenarioDetailPage() {
               </CardContent>
             </Card>
           ) : null}
-        </div>
-
-        {/* ── Right: Scene Materials (reference sidebar, sticky) ── */}
-        <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin">
-          <Card>
-            <CardHeader>
-              <CardTitle>场景材料</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Collapsible title="场景背景" defaultOpen>
-                <p className="text-xs leading-5 text-[var(--foreground-subtle)]">
-                  {scenario.context}
-                </p>
-              </Collapsible>
-
-              <RoleCard
-                side="a"
-                roleName={scenario.roleAName}
-                roleCard={scenario.roleAPublicGoal}
-              />
-              <RoleCard
-                side="b"
-                roleName={scenario.roleBName}
-                roleCard={scenario.roleBPublicGoal}
-              />
-
-              <Collapsible title="边界约束">
-                <p className="text-xs leading-5 text-[var(--foreground-subtle)]">
-                  {scenario.boundaryConstraints}
-                </p>
-              </Collapsible>
-
-              <Collapsible title="裁判规则">
-                <p className="text-xs leading-5 text-[var(--foreground-subtle)] whitespace-pre-wrap">
-                  {scenario.judgePrompt}
-                </p>
-              </Collapsible>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

@@ -2,8 +2,17 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 import { useAuth } from '../context/auth'
 import { changePassword, updateProfile } from '../lib/api'
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-xs font-medium uppercase tracking-[0.1em] text-(--foreground-muted)">
+      {children}
+    </span>
+  )
+}
 
 export function SettingsPage() {
   const { updateUser, user } = useAuth()
@@ -65,88 +74,75 @@ export function SettingsPage() {
         <h1 className="page-title">设置</h1>
       </div>
 
-      <Card className="max-w-3xl">
+      <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>账户信息</CardTitle>
         </CardHeader>
         <CardContent>
-          <form
-            className="grid gap-4 md:grid-cols-2"
-            onSubmit={handleProfileSubmit}
-          >
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>显示名称</span>
-              <input
-                className="app-input"
-                onChange={(event) => setDisplayName(event.target.value)}
-                value={displayName}
-              />
-            </label>
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>邮箱</span>
-              <input
-                className="app-input cursor-not-allowed opacity-70"
-                disabled
-                value={user?.email ?? ''}
-              />
-            </label>
+          <form className="space-y-5" onSubmit={handleProfileSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <FieldLabel>显示名称</FieldLabel>
+                <Input
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  value={displayName}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <FieldLabel>邮箱</FieldLabel>
+                <Input disabled value={user?.email ?? ''} />
+              </label>
+            </div>
             {(profileError || profileNotice) && (
               <p
-                className={`md:col-span-2 text-sm ${profileError ? 'text-[var(--accent)]' : 'text-emerald-300'}`}
+                className={`text-sm ${profileError ? 'text-(--accent)' : 'text-(--success)'}`}
               >
                 {profileError || profileNotice}
               </p>
             )}
-            <div className="md:col-span-2">
-              <Button disabled={isSavingProfile} type="submit">
-                {isSavingProfile ? '保存中...' : '保存'}
-              </Button>
-            </div>
+            <Button disabled={isSavingProfile} type="submit">
+              {isSavingProfile ? '保存中…' : '保存'}
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      <Card className="max-w-3xl">
+      <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>修改密码</CardTitle>
         </CardHeader>
         <CardContent>
-          <form
-            className="grid gap-4 md:grid-cols-2"
-            onSubmit={handlePasswordSubmit}
-          >
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>当前密码</span>
-              <input
-                className="app-input"
-                onChange={(event) => setCurrentPassword(event.target.value)}
-                placeholder="输入当前密码"
-                type="password"
-                value={currentPassword}
-              />
-            </label>
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>新密码</span>
-              <input
-                className="app-input"
-                onChange={(event) => setNewPassword(event.target.value)}
-                placeholder="输入新密码"
-                type="password"
-                value={newPassword}
-              />
-            </label>
+          <form className="space-y-5" onSubmit={handlePasswordSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-1.5">
+                <FieldLabel>当前密码</FieldLabel>
+                <Input
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="输入当前密码"
+                  type="password"
+                  value={currentPassword}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <FieldLabel>新密码</FieldLabel>
+                <Input
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="输入新密码"
+                  type="password"
+                  value={newPassword}
+                />
+              </label>
+            </div>
             {(passwordError || passwordNotice) && (
               <p
-                className={`md:col-span-2 text-sm ${passwordError ? 'text-[var(--accent)]' : 'text-emerald-300'}`}
+                className={`text-sm ${passwordError ? 'text-(--accent)' : 'text-(--success)'}`}
               >
                 {passwordError || passwordNotice}
               </p>
             )}
-            <div className="md:col-span-2">
-              <Button disabled={isChangingPassword} type="submit">
-                {isChangingPassword ? '更新中...' : '更新密码'}
-              </Button>
-            </div>
+            <Button disabled={isChangingPassword} type="submit">
+              {isChangingPassword ? '更新中…' : '更新密码'}
+            </Button>
           </form>
         </CardContent>
       </Card>

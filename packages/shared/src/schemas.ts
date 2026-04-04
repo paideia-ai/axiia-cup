@@ -62,6 +62,7 @@ export const scenarioSchema = z.object({
   roleBPublicGoal: z.string(),
   boundaryConstraints: z.string(),
   turnCount: z.number().int().positive(),
+  judgeName: z.string(),
   judgeRounds: z.number().int().positive(),
   judgePrompt: z.string(),
 })

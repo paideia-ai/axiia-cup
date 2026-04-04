@@ -77,7 +77,7 @@ export function TabsList({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 overflow-x-auto border-b border-[var(--border-soft)]',
+        'flex items-center gap-2 overflow-x-auto border-b border-(--border-soft)',
         className,
       )}
       role="tablist"
@@ -106,8 +106,8 @@ export function TabsTrigger({
       aria-controls={contentId}
       aria-selected={isActive}
       className={cn(
-        'relative -mb-px inline-flex h-11 items-center justify-center whitespace-nowrap border-b-2 border-transparent px-4 text-sm font-semibold text-[var(--foreground-subtle)] transition-colors duration-150 hover:text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(224,74,47,0.35)] disabled:pointer-events-none disabled:opacity-50',
-        isActive && 'border-[var(--accent)] text-[var(--foreground)]',
+        'relative -mb-px inline-flex h-11 items-center justify-center whitespace-nowrap border-b-2 border-transparent px-4 text-sm font-semibold text-(--foreground-subtle) transition-colors duration-150 hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(224,74,47,0.35)] disabled:pointer-events-none disabled:opacity-50',
+        isActive && 'border-(--accent) text-(--foreground)',
         className,
       )}
       data-state={isActive ? 'active' : 'inactive'}

@@ -5,10 +5,11 @@ import {
   type Scenario,
   type Submission,
 } from '@axiia/shared'
-import { ArrowLeft, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -174,40 +175,6 @@ function deriveRunningState(session: PlaygroundSession) {
   }
 }
 
-function Collapsible({
-  children,
-  defaultOpen = false,
-  title,
-}: {
-  children: React.ReactNode
-  defaultOpen?: boolean
-  title: string
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-
-  return (
-    <div className="rounded-lg border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)]">
-      <button
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-[var(--foreground-subtle)] transition hover:text-[var(--foreground)]"
-        type="button"
-        onClick={() => setIsOpen((v) => !v)}
-      >
-        {isOpen ? (
-          <ChevronDown className="h-3 w-3 shrink-0 text-[var(--foreground-muted)]" />
-        ) : (
-          <ChevronRight className="h-3 w-3 shrink-0 text-[var(--foreground-muted)]" />
-        )}
-        {title}
-      </button>
-      {isOpen ? (
-        <div className="border-t border-[var(--border-soft)] px-3 py-2">
-          {children}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 function RunResult({
   run,
   scenario,
@@ -220,28 +187,28 @@ function RunResult({
       {/* Scoring summary - always visible at top */}
       <Card>
         <CardContent className="py-5">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="app-panel">
-              <p className="panel-label">Score A · {scenario.roleAName}</p>
-              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">
-                {run.scoreA ?? '--'} / 10
+          <div className="grid grid-cols-3 divide-x divide-(--border-soft) rounded-xl border border-(--border-soft)">
+            <div className="px-5 py-4">
+              <p className="panel-label">{scenario.roleAName}</p>
+              <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
+                {run.scoreA ?? '—'} / 10
               </p>
             </div>
-            <div className="app-panel">
-              <p className="panel-label">Score B · {scenario.roleBName}</p>
-              <p className="mt-1 font-mono text-2xl text-[var(--foreground)]">
-                {run.scoreB ?? '--'} / 10
+            <div className="px-5 py-4">
+              <p className="panel-label">{scenario.roleBName}</p>
+              <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
+                {run.scoreB ?? '—'} / 10
               </p>
             </div>
-            <div className="app-panel">
+            <div className="px-5 py-4">
               <p className="panel-label">Winner</p>
-              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">
-                {run.winner?.toUpperCase() ?? '--'}
+              <p className="mt-2 text-xl font-semibold text-(--foreground)">
+                {run.winner?.toUpperCase() ?? '—'}
               </p>
             </div>
           </div>
           {run.reasoning ? (
-            <div className="app-panel mt-4">
+            <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
               <p className="panel-label">裁判评分理由</p>
               <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
                 {run.reasoning}
@@ -255,7 +222,7 @@ function RunResult({
         <CardHeader>
           <CardTitle>对话记录</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {run.transcript.length ? (
             (() => {
               const turnKeyCounts = new Map<string, number>()
@@ -270,67 +237,106 @@ function RunResult({
                 return (
                   <div
                     key={`${baseKey}:${occurrence}`}
-                    className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
+                    className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
                   >
-                    <div
-                      className={`max-w-[85%] rounded-2xl border px-4 py-3 ${
-                        isA
-                          ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]'
-                          : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'
-                      }`}
+                    <p
+                      className="px-1 text-xs font-semibold"
+                      style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
                     >
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-                        Turn {index + 1} · {roleName}
-                      </p>
-                      <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
-                        {turn.content}
-                      </p>
+                      {roleName}
+                      <span className="ml-1.5 font-normal opacity-60">
+                        #{index + 1}
+                      </span>
+                    </p>
+                    <div
+                      className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+                      style={
+                        isA
+                          ? {
+                              background: 'rgba(224,74,47,0.1)',
+                              border: '1px solid rgba(224,74,47,0.2)',
+                            }
+                          : {
+                              background: 'rgba(96,165,250,0.08)',
+                              border: '1px solid rgba(96,165,250,0.18)',
+                            }
+                      }
+                    >
+                      {turn.content}
                     </div>
                   </div>
                 )
               })
             })()
           ) : (
-            <p className="text-sm text-[var(--foreground-subtle)]">
-              对话尚未开始。
-            </p>
+            <p className="text-sm text-(--foreground-subtle)">对话尚未开始。</p>
           )}
         </CardContent>
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        {[
-          {
-            transcript: run.judgeTranscriptA,
-            label: `裁判追问 · ${scenario.roleAName}`,
-          },
-          {
-            transcript: run.judgeTranscriptB,
-            label: `裁判追问 · ${scenario.roleBName}`,
-          },
-        ].map(({ transcript, label }) => (
-          <Card key={label}>
+        {(
+          [
+            {
+              transcript: run.judgeTranscriptA,
+              roleName: scenario.roleAName,
+              side: 'a' as const,
+            },
+            {
+              transcript: run.judgeTranscriptB,
+              roleName: scenario.roleBName,
+              side: 'b' as const,
+            },
+          ] as const
+        ).map(({ transcript, roleName, side }) => (
+          <Card key={side}>
             <CardHeader>
-              <CardTitle>{label}</CardTitle>
+              <CardTitle>裁判追问 · {roleName}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {transcript.length ? (
                 transcript.map((item) => (
-                  <div key={item.round} className="app-panel">
-                    <p className="panel-label">第 {item.round} 轮问题</p>
-                    <p className="panel-copy whitespace-pre-wrap">
-                      {item.question}
-                    </p>
-                    <p className="mt-3 panel-label">回答</p>
-                    <p className="panel-copy whitespace-pre-wrap">
-                      {item.answer}
-                    </p>
+                  <div
+                    key={item.round}
+                    className="overflow-hidden rounded-xl border border-(--border-soft)"
+                  >
+                    {/* Judge question */}
+                    <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                          {scenario.judgeName} · 第 {item.round} 轮
+                        </p>
+                        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                          {item.question}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Role answer */}
+                    <div
+                      className="px-4 py-3"
+                      style={{
+                        background:
+                          side === 'a'
+                            ? 'rgba(224,74,47,0.05)'
+                            : 'rgba(96,165,250,0.05)',
+                      }}
+                    >
+                      <p
+                        className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                        style={{
+                          color: side === 'a' ? 'var(--accent)' : 'var(--info)',
+                        }}
+                      >
+                        {roleName} 回答
+                      </p>
+                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                        {item.answer}
+                      </p>
+                    </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[var(--foreground-subtle)]">
-                  暂无问答。
-                </p>
+                <p className="text-sm text-(--foreground-subtle)">暂无问答。</p>
               )}
             </CardContent>
           </Card>
@@ -359,14 +365,14 @@ function RunHistoryItem({
         ? 'ERR'
         : '—'
   const winnerColor = isPending
-    ? 'text-[var(--accent)]'
+    ? 'text-(--accent)'
     : run.winner === 'a' || run.winner === 'b'
-      ? 'text-[var(--success)]'
+      ? 'text-(--success)'
       : run.winner === 'draw'
-        ? 'text-[var(--foreground-subtle)]'
+        ? 'text-(--foreground-subtle)'
         : run.error
-          ? 'text-[#f87171]'
-          : 'text-[var(--foreground-muted)]'
+          ? 'text-(--accent)'
+          : 'text-(--foreground-muted)'
 
   return (
     <button
@@ -375,16 +381,16 @@ function RunHistoryItem({
       className={`w-full rounded-lg border px-3 py-2 text-left transition ${
         isSelected
           ? 'border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)]'
-          : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]'
+          : 'border-(--border-soft) bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] text-[var(--foreground-muted)]">
+          <p className="text-[11px] text-(--foreground-muted)">
             {run.createdAt}
           </p>
           {run.scoreA != null && run.scoreB != null ? (
-            <p className="text-xs text-[var(--foreground-subtle)]">
+            <p className="text-xs text-(--foreground-subtle)">
               {run.scoreA} : {run.scoreB}
             </p>
           ) : null}
@@ -399,8 +405,6 @@ function RunHistoryItem({
 
 function ProgressPanel({
   elapsedSeconds,
-  isRefreshing,
-  onRefresh,
   session,
 }: {
   elapsedSeconds: number
@@ -413,80 +417,103 @@ function ProgressPanel({
 
   return (
     <Card>
-      <CardContent className="space-y-5 py-6">
-        <div className="space-y-2 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[rgba(224,74,47,0.22)] bg-[rgba(224,74,47,0.1)] text-xl text-[var(--accent)]">
-            ⚔
+      <CardContent className="py-5">
+        {/* Live indicator row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-(--accent) opacity-50" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-(--accent)" />
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-(--accent)">
+              对战进行中
+            </span>
           </div>
-          <p className="text-xl font-semibold text-[var(--foreground)]">
-            {progress.title}
-          </p>
-          <p className="text-sm text-[var(--foreground-subtle)]">
-            {progress.detail}
-          </p>
-          {visibleRunId ? (
-            <p className="text-xs text-[var(--foreground-muted)]">
-              对战 #{visibleRunId}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--foreground-muted)]">
-                运行耗时
-              </p>
-              <p className="font-mono text-lg text-[var(--foreground)]">
-                {formatElapsed(elapsedSeconds)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),#f97316)] transition-[width] duration-700"
-              style={{ width: `${progress.progressPercent}%` }}
-            />
+          <div className="flex items-center gap-2.5 text-xs text-(--foreground-muted)">
+            {visibleRunId ? <span>#{visibleRunId}</span> : null}
+            <span className="font-mono tabular-nums text-(--foreground)">
+              {formatElapsed(elapsedSeconds)}
+            </span>
           </div>
         </div>
 
-        <div className="flex gap-1.5">
+        {/* Vertical stage timeline */}
+        <div className="mt-5">
           {runningStages.map((stage, index) => {
             const isDone = index < progress.activeIndex
             const isCurrent = index === progress.activeIndex
+            const isLast = index === runningStages.length - 1
 
             return (
-              <div
-                key={stage.key}
-                className={`flex-1 rounded-lg border px-2 py-2 text-center transition ${
-                  isCurrent
-                    ? 'border-[rgba(224,74,47,0.3)] bg-[rgba(224,74,47,0.12)]'
-                    : isDone
-                      ? 'border-[rgba(52,211,153,0.24)] bg-[rgba(52,211,153,0.08)]'
-                      : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)]'
-                }`}
-              >
-                <div
-                  className={`mx-auto mb-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
-                    isCurrent
-                      ? 'bg-[var(--accent)] text-black'
-                      : isDone
-                        ? 'bg-[var(--success)] text-black'
-                        : 'bg-[rgba(255,255,255,0.08)] text-[var(--foreground-muted)]'
-                  }`}
-                >
-                  {isDone ? '✓' : index + 1}
+              <div key={stage.key} className="flex gap-3">
+                {/* Dot + connector line */}
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`mt-[3px] flex h-3 w-3 shrink-0 items-center justify-center rounded-full transition-colors ${
+                      isCurrent
+                        ? 'ring-[3px] ring-[rgba(224,74,47,0.25)] ring-offset-1 ring-offset-(--surface) bg-(--accent)'
+                        : isDone
+                          ? 'bg-(--foreground-muted)'
+                          : 'border border-(--border-soft) bg-transparent'
+                    }`}
+                  >
+                    {isDone ? (
+                      <svg
+                        className="h-1.5 w-1.5"
+                        viewBox="0 0 6 6"
+                        fill="none"
+                        stroke="var(--background)"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      >
+                        <path d="M1 3l1.5 1.5L5 1.5" />
+                      </svg>
+                    ) : null}
+                  </div>
+                  {!isLast ? (
+                    <div
+                      className={`my-1 min-h-4 w-px flex-1 transition-colors ${
+                        isDone
+                          ? 'bg-(--foreground-muted)'
+                          : 'bg-(--border-soft)'
+                      }`}
+                    />
+                  ) : null}
                 </div>
-                <p className="text-[10px] font-medium text-[var(--foreground-subtle)]">
-                  {stage.shortLabel}
-                </p>
+
+                {/* Stage label + detail */}
+                <div className={`min-w-0 ${isLast ? 'pb-0' : 'pb-3'}`}>
+                  <p
+                    className={`text-sm transition-colors ${
+                      isCurrent
+                        ? 'font-semibold text-(--foreground)'
+                        : isDone
+                          ? 'text-(--foreground-muted)'
+                          : 'text-(--border)'
+                    }`}
+                  >
+                    {stage.label}
+                  </p>
+                  {isCurrent ? (
+                    <p className="mt-1 text-xs leading-5 text-(--foreground-subtle)">
+                      {progress.detail}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             )
           })}
         </div>
 
-        <p className="text-center text-xs text-[var(--foreground-muted)]">
+        {/* Overall progress line */}
+        <div className="relative mt-4 h-px bg-(--border-soft)">
+          <div
+            className="absolute inset-y-0 left-0 bg-(--accent) transition-[width] duration-700"
+            style={{ width: `${progress.progressPercent}%` }}
+          />
+        </div>
+
+        <p className="mt-3 text-xs text-(--foreground-muted)">
           可以离开此页面，稍后返回继续查看。
         </p>
       </CardContent>
@@ -783,11 +810,7 @@ export function PlaygroundPage() {
   }
 
   if (!submission || !scenario) {
-    return (
-      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-        {error ?? '找不到该版本'}
-      </div>
-    )
+    return <p className="text-sm text-(--accent)">{error ?? '找不到该版本'}</p>
   }
 
   return (
@@ -797,7 +820,7 @@ export function PlaygroundPage() {
           <button
             type="button"
             onClick={() => navigate(`/scenarios/${submission.scenarioId}`)}
-            className="mb-2 flex items-center gap-1 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground-subtle)]"
+            className="mb-2 flex items-center gap-1 text-xs text-(--foreground-muted) hover:text-(--foreground-subtle)"
           >
             <ArrowLeft className="h-3 w-3" />
             返回工坊
@@ -812,11 +835,7 @@ export function PlaygroundPage() {
         </div>
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-          {error}
-        </div>
-      ) : null}
+      {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
         {/* ── Left: Main content area ── */}
@@ -838,7 +857,7 @@ export function PlaygroundPage() {
           ) : (
             <Card>
               <CardContent className="flex items-center justify-center py-24">
-                <p className="text-sm text-[var(--foreground-subtle)]">
+                <p className="text-sm text-(--foreground-subtle)">
                   点击「运行对战」开始一次新的试炼场测试。
                 </p>
               </CardContent>
@@ -858,16 +877,26 @@ export function PlaygroundPage() {
                 {isRunning ? '对战进行中...' : '运行对战'}
               </Button>
 
-              <Collapsible title={`Prompt A · ${scenario.roleAName}`}>
-                <p className="text-xs leading-5 text-[var(--foreground-subtle)] whitespace-pre-wrap">
-                  {submission.promptA}
-                </p>
-              </Collapsible>
-              <Collapsible title={`Prompt B · ${scenario.roleBName}`}>
-                <p className="text-xs leading-5 text-[var(--foreground-subtle)] whitespace-pre-wrap">
-                  {submission.promptB}
-                </p>
-              </Collapsible>
+              <Accordion className="rounded-xl border border-(--border-soft) px-3">
+                <AccordionItem
+                  value="promptA"
+                  title={scenario.roleAName}
+                  triggerClassName="text-xs"
+                >
+                  <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                    {submission.promptA}
+                  </p>
+                </AccordionItem>
+                <AccordionItem
+                  value="promptB"
+                  title={scenario.roleBName}
+                  triggerClassName="text-xs"
+                >
+                  <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                    {submission.promptB}
+                  </p>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
 

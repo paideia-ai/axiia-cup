@@ -3,9 +3,9 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../context/auth'
 import { register as registerRequest } from '../lib/api'
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 
 type RegisterStep = 'email' | 'credentials'
 
@@ -60,93 +60,112 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>注册</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {step === 'email' ? (
-            <form className="space-y-4" onSubmit={handleContinue}>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>邮箱</span>
-                <input
-                  className="app-input"
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  type="email"
-                  value={email}
-                />
-              </label>
-              {error ? <p className="text-sm text-[#f87171]">{error}</p> : null}
-              <Button className="w-full" type="submit">
-                下一步
-              </Button>
-            </form>
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <p className="mb-8 text-xs font-black tracking-[0.24em] text-(--accent)">
+        AXIIA CUP
+      </p>
+
+      <div className="w-full max-w-sm space-y-5">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-black tracking-tight text-(--foreground)">
+            注册
+          </h1>
+          {step === 'credentials' ? (
+            <span className="text-xs text-(--foreground-muted)">
+              第 2 步，共 2 步
+            </span>
           ) : (
-            <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)] md:col-span-2">
-                <span>邮箱</span>
-                <input className="app-input" readOnly value={email} />
-              </label>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>邀请码</span>
-                <input
-                  className="app-input"
-                  onChange={(event) => setOtp(event.target.value)}
-                  placeholder="请输入邀请码"
-                  value={otp}
-                />
-              </label>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-                <span>显示名称</span>
-                <input
-                  className="app-input"
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder="momo"
-                  value={displayName}
-                />
-              </label>
-              <label className="block space-y-2 text-sm text-[var(--foreground-subtle)] md:col-span-2">
-                <span>密码</span>
-                <input
-                  className="app-input"
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="设置密码"
-                  type="password"
-                  value={password}
-                />
-              </label>
-              {error ? (
-                <p className="text-sm text-[#f87171] md:col-span-2">{error}</p>
-              ) : null}
-              <div className="flex gap-3 md:col-span-2">
-                <Button
-                  disabled={isSubmitting}
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setStep('email')}
-                >
-                  返回
-                </Button>
-                <Button
-                  className="flex-1"
-                  disabled={isSubmitting}
-                  type="submit"
-                >
-                  {isSubmitting ? '创建中...' : '创建账户'}
-                </Button>
-              </div>
-            </form>
+            <span className="text-xs text-(--foreground-muted)">
+              第 1 步，共 2 步
+            </span>
           )}
-          <p className="mt-4 text-sm text-[var(--foreground-muted)]">
-            已有账户？{' '}
-            <Link to="/login" className="text-[var(--accent)]">
-              返回登录
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+
+        <Card>
+          <CardContent className="pt-5">
+            {step === 'email' ? (
+              <form className="space-y-4" onSubmit={handleContinue}>
+                <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                  <span>邮箱</span>
+                  <Input
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    type="email"
+                    value={email}
+                  />
+                </label>
+                {error ? (
+                  <p className="text-sm text-(--accent)">{error}</p>
+                ) : null}
+                <Button className="w-full" type="submit">
+                  下一步
+                </Button>
+              </form>
+            ) : (
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                  <span>邮箱</span>
+                  <Input readOnly value={email} />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                    <span>邀请码</span>
+                    <Input
+                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="邀请码"
+                      value={otp}
+                    />
+                  </label>
+                  <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                    <span>显示名称</span>
+                    <Input
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="momo"
+                      value={displayName}
+                    />
+                  </label>
+                </div>
+                <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                  <span>密码</span>
+                  <Input
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="设置密码"
+                    type="password"
+                    value={password}
+                  />
+                </label>
+                {error ? (
+                  <p className="text-sm text-(--accent)">{error}</p>
+                ) : null}
+                <div className="flex gap-3">
+                  <Button
+                    disabled={isSubmitting}
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setStep('email')}
+                  >
+                    返回
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {isSubmitting ? '创建中…' : '创建账户'}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-sm text-(--foreground-muted)">
+          已有账户？{' '}
+          <Link to="/login" className="text-(--accent)">
+            返回登录
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

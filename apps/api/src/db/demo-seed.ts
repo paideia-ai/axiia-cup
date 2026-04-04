@@ -75,6 +75,7 @@ const scenarioSeed = {
   roleBPublicGoal: roleBCard,
   boundaryConstraints:
     '不得跳出战国秦国背景；不得承认自己是 AI；不得引用现代知识或超出时代条件的制度、科技、信息；必须始终以角色身份发言。',
+  judgeName: '秦孝公',
   turnCount,
   judgeRounds,
   judgePrompt,

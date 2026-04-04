@@ -4,7 +4,8 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/auth'
 import { login as loginRequest } from '../lib/api'
 import { Button } from '../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -37,46 +38,50 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--background)] px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>登录</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>邮箱</span>
-              <input
-                className="app-input"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                type="email"
-                value={email}
-              />
-            </label>
-            <label className="block space-y-2 text-sm text-[var(--foreground-subtle)]">
-              <span>密码</span>
-              <input
-                className="app-input"
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••"
-                type="password"
-                value={password}
-              />
-            </label>
-            {error ? <p className="text-sm text-[#f87171]">{error}</p> : null}
-            <Button className="w-full" disabled={isSubmitting} type="submit">
-              {isSubmitting ? '登录中...' : '进入控制台'}
-            </Button>
-          </form>
-          <p className="mt-4 text-sm text-[var(--foreground-muted)]">
-            还没有账户？{' '}
-            <Link to="/register" className="text-[var(--accent)]">
-              去注册
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <div className="w-full max-w-sm space-y-5">
+        <h1 className="flex justify-center text-3xl font-black tracking-tight text-(--foreground)">
+          登录
+        </h1>
+
+        <Card>
+          <CardContent className="pt-5">
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                <span>邮箱</span>
+                <Input
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  type="email"
+                  value={email}
+                />
+              </label>
+              <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
+                <span>密码</span>
+                <Input
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  type="password"
+                  value={password}
+                />
+              </label>
+              {error ? (
+                <p className="text-sm text-(--accent)">{error}</p>
+              ) : null}
+              <Button className="w-full" disabled={isSubmitting} type="submit">
+                {isSubmitting ? '登录中…' : '进入控制台'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-sm text-(--foreground-muted)">
+          还没有账户？{' '}
+          <Link to="/register" className="text-(--accent)">
+            去注册
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

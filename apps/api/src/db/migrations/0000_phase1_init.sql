@@ -21,6 +21,7 @@ CREATE TABLE `scenarios` (
 	`role_b_public_goal` text NOT NULL,
 	`boundary_constraints` text NOT NULL,
 	`turn_count` integer DEFAULT 10 NOT NULL,
+	`judge_name` text DEFAULT '裁判' NOT NULL,
 	`judge_rounds` integer DEFAULT 3 NOT NULL,
 	`judge_prompt` text NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL

@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import {
   getAdminErroredMatches,
@@ -460,7 +461,8 @@ export function AdminPage() {
   return (
     <div className="space-y-6">
       {toast ? (
-        <div className="fixed right-6 top-20 z-50 rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.12)] px-4 py-3 text-sm text-[var(--success)] shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+        <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
           {toast}
         </div>
       ) : null}
@@ -476,11 +478,7 @@ export function AdminPage() {
         <Badge tone="warning">admin only</Badge>
       </div>
 
-      {error ? (
-        <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-          {error}
-        </div>
-      ) : null}
+      {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
       <Tabs
         onValueChange={(value) => setActiveTab(value as AdminTab)}
@@ -498,14 +496,14 @@ export function AdminPage() {
               <CardTitle>邀请码</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="app-panel flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="panel-label">当前邀请码</p>
                   {isEditingRegistrationCode ? (
                     <>
-                      <input
+                      <Input
                         autoFocus
-                        className="app-input w-full bg-[rgba(255,255,255,0.04)] font-mono tracking-[0.2em] placeholder:text-[var(--foreground-subtle)] md:max-w-md"
+                        className="font-mono tracking-[0.2em] md:max-w-md"
                         onChange={(event) =>
                           setRegistrationCodeDraft(event.target.value)
                         }
@@ -520,7 +518,7 @@ export function AdminPage() {
                         placeholder="输入新的邀请码"
                         value={registrationCodeDraft}
                       />
-                      <p className="text-xs text-[var(--foreground-subtle)]">
+                      <p className="text-xs text-(--foreground-subtle)">
                         修改后点击保存立即生效。
                       </p>
                     </>
@@ -574,7 +572,7 @@ export function AdminPage() {
             <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle>选手管理</CardTitle>
-                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                   查看用户状态、禁用普通账号，并为指定账号重置密码。
                 </p>
               </div>
@@ -601,7 +599,10 @@ export function AdminPage() {
                   const isTogglingUser = togglingUserIds.includes(user.id)
 
                   return (
-                    <div key={user.id} className="app-panel space-y-4">
+                    <div
+                      key={user.id}
+                      className="rounded-xl border border-(--border-soft) bg-white/2 p-4 space-y-4"
+                    >
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
@@ -614,7 +615,7 @@ export function AdminPage() {
                             </Badge>
                           </div>
                           <p className="panel-copy">{user.email}</p>
-                          <p className="text-xs text-[var(--foreground-subtle)]">
+                          <p className="text-xs text-(--foreground-subtle)">
                             创建时间 · {formatDateTime(user.createdAt)}
                           </p>
                         </div>
@@ -636,7 +637,7 @@ export function AdminPage() {
                                   : '禁用'}
                             </Button>
                           ) : (
-                            <span className="text-xs text-[var(--foreground-subtle)]">
+                            <span className="text-xs text-(--foreground-subtle)">
                               管理员账号不可禁用
                             </span>
                           )}
@@ -662,8 +663,8 @@ export function AdminPage() {
                             void handleResetPassword(user)
                           }}
                         >
-                          <input
-                            className="app-input md:max-w-sm"
+                          <Input
+                            className="md:max-w-sm"
                             onChange={(event) =>
                               setResetPasswordDraft(event.target.value)
                             }
@@ -696,9 +697,9 @@ export function AdminPage() {
                   )
                 })
               ) : (
-                <div className="app-panel">
-                  <p className="panel-copy">暂无用户数据。</p>
-                </div>
+                <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
+                  暂无用户数据。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -708,21 +709,29 @@ export function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle>全局任务队列</CardTitle>
-              <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+              <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                 汇总所有 Tournament 的 worker
                 状态；下方赛事监控会展示具体轮次进度。
               </p>
             </CardHeader>
-            <CardContent className="grid gap-4 lg:grid-cols-3">
-              {summaryCards.map((stat) => (
-                <div key={stat.label} className="app-panel">
-                  <p className="panel-label">{stat.label}</p>
-                  <p className="panel-title">
-                    {isLoading ? '--' : String(stat.value).padStart(2, '0')}
-                  </p>
-                  <p className="panel-copy">{stat.copy}</p>
-                </div>
-              ))}
+            <CardContent>
+              <div className="grid grid-cols-1 divide-y divide-(--border-soft) rounded-xl border border-(--border-soft) sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                {summaryCards.map((stat) => (
+                  <div key={stat.label} className="px-5 py-4">
+                    <p className="panel-label">{stat.label}</p>
+                    <p className="mt-2 tabular-nums text-[2rem] font-black leading-none tracking-tight text-(--foreground)">
+                      {isLoading ? (
+                        <span className="text-(--foreground-muted)">—</span>
+                      ) : (
+                        String(stat.value).padStart(2, '0')
+                      )}
+                    </p>
+                    <p className="mt-1.5 text-xs text-(--foreground-muted)">
+                      {stat.copy}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -730,7 +739,7 @@ export function AdminPage() {
             <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle>赛事监控</CardTitle>
-                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                   展示当前进行中的 Tournament，以及最近结束的赛事，便于查看第 N
                   轮进度与异常情况。
                 </p>
@@ -784,7 +793,10 @@ export function AdminPage() {
                   const statusMeta = getTournamentStatusMeta(tournament.status)
 
                   return (
-                    <div key={tournament.id} className="app-panel space-y-4">
+                    <div
+                      key={tournament.id}
+                      className="rounded-xl border border-(--border-soft) bg-white/2 p-4 space-y-4"
+                    >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div>
                           <p className="panel-title">
@@ -798,9 +810,9 @@ export function AdminPage() {
                       </div>
 
                       <div className="grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                        <div className="rounded-xl border border-(--border-soft) bg-[rgba(255,255,255,0.02)] px-4 py-3">
                           <p className="panel-label">当前轮次</p>
-                          <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                          <p className="mt-2 text-base font-semibold text-(--foreground)">
                             第 {tournament.currentRound} /{' '}
                             {tournament.totalRounds} 轮
                           </p>
@@ -813,9 +825,9 @@ export function AdminPage() {
                           </p>
                         </div>
 
-                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                        <div className="rounded-xl border border-(--border-soft) bg-[rgba(255,255,255,0.02)] px-4 py-3">
                           <p className="panel-label">进度</p>
-                          <p className="mt-2 text-base font-semibold text-[var(--foreground)]">
+                          <p className="mt-2 text-base font-semibold text-(--foreground)">
                             {completedMatches}/{roundMatches.length}
                           </p>
                           <p className="panel-copy">
@@ -829,10 +841,10 @@ export function AdminPage() {
                           </p>
                         </div>
 
-                        <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.02)] px-4 py-3">
+                        <div className="rounded-xl border border-(--border-soft) bg-[rgba(255,255,255,0.02)] px-4 py-3">
                           <p className="panel-label">失败比赛</p>
                           <a
-                            className="mt-2 inline-flex text-base font-semibold text-[var(--warning)] transition hover:text-[var(--foreground)]"
+                            className="mt-2 inline-flex text-base font-semibold text-(--warning) transition hover:text-(--foreground)"
                             href="#errored-matches"
                           >
                             {erroredMatchCount} 场失败
@@ -846,9 +858,9 @@ export function AdminPage() {
                   )
                 })
               ) : (
-                <div className="app-panel xl:col-span-2">
-                  <p className="panel-copy">当前没有可监控的 Tournament。</p>
-                </div>
+                <p className="xl:col-span-2 rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
+                  当前没有可监控的 Tournament。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -857,7 +869,7 @@ export function AdminPage() {
             <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle>失败的比赛</CardTitle>
-                <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                   展示当前所有状态为 error 的对局，可直接重新入队。
                 </p>
               </div>
@@ -873,7 +885,7 @@ export function AdminPage() {
                   return (
                     <div
                       key={match.id}
-                      className="app-panel flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+                      className="rounded-xl border border-(--border-soft) bg-white/2 p-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
                     >
                       <div className="space-y-3">
                         <div className="flex flex-wrap gap-2">
@@ -897,18 +909,17 @@ export function AdminPage() {
                             {match.playerAModel} vs {match.playerBModel}
                           </p>
                         </div>
-                        <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-[var(--foreground-subtle)]">
+                        <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-(--foreground-subtle)">
                           <p className="panel-label">错误信息</p>
                           <p>{match.error ?? '未记录错误信息'}</p>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                        <Link
-                          className="inline-flex h-8 items-center rounded-md border border-[var(--border-soft)] px-3 text-xs font-semibold text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
-                          to={`/matches/${match.id}`}
-                        >
-                          查看详情
+                        <Link to={`/matches/${match.id}`}>
+                          <Button size="sm" variant="secondary">
+                            查看详情
+                          </Button>
                         </Link>
                         <Button
                           disabled={isRetrying}
@@ -922,9 +933,9 @@ export function AdminPage() {
                   )
                 })
               ) : (
-                <div className="app-panel">
-                  <p className="panel-copy">当前没有失败的比赛。</p>
-                </div>
+                <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
+                  当前没有失败的比赛。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -941,7 +952,7 @@ export function AdminPage() {
                   <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <CardTitle>{scenario.title}</CardTitle>
-                      <p className="mt-2 text-sm leading-6 text-[var(--foreground-subtle)]">
+                      <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                         {scenario.context}
                       </p>
                     </div>
@@ -972,7 +983,7 @@ export function AdminPage() {
                         players.map((player) => (
                           <div
                             key={player.submissionId}
-                            className="app-panel flex items-center justify-between gap-3"
+                            className="rounded-xl border border-(--border-soft) bg-white/2 p-4 flex items-center justify-between gap-3"
                           >
                             <div>
                               <p className="panel-title">
@@ -980,7 +991,7 @@ export function AdminPage() {
                               </p>
                               <p className="panel-copy">{player.email}</p>
                             </div>
-                            <div className="text-right text-xs text-[var(--foreground-subtle)]">
+                            <div className="text-right text-xs text-(--foreground-subtle)">
                               <p>{player.model}</p>
                               <p>
                                 v{player.version} · sub #{player.submissionId}
@@ -989,14 +1000,14 @@ export function AdminPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="app-panel">
-                          <p className="panel-copy">暂无有效提交。</p>
-                        </div>
+                        <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
+                          暂无有效提交。
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-3">
-                      <div className="app-panel">
+                      <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
                         <p className="panel-label">比赛操作</p>
                         <p className="panel-copy">
                           {players.length < 2

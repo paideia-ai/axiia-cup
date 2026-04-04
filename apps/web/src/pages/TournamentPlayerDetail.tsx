@@ -7,7 +7,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { cn } from '../lib/cn'
 import { getLeaderboard, getScenario, getTournament } from '../lib/api'
 
 type PlayerMatchView = NonNullable<
@@ -33,20 +35,16 @@ export function TournamentPlayerDetailPage() {
   )
   const player = playersBySubmissionId.get(numericSubmissionId) ?? null
   const playerMatches: PlayerMatchView[] = useMemo(() => {
-    if (!tournamentDetail) {
-      return []
-    }
+    if (!tournamentDetail) return []
 
     const nextMatches: PlayerMatchView[] = []
-
     for (const round of tournamentDetail.rounds) {
       for (const match of round.matches) {
         if (
           match.subAId !== numericSubmissionId &&
           match.subBId !== numericSubmissionId
-        ) {
+        )
           continue
-        }
 
         nextMatches.push({
           createdAt: match.createdAt,
@@ -66,20 +64,20 @@ export function TournamentPlayerDetailPage() {
         })
       }
     }
-
     return nextMatches
   }, [numericSubmissionId, tournamentDetail])
+
   const roleACount = playerMatches.filter(
-    (match) => match.subAId === numericSubmissionId,
+    (m) => m.subAId === numericSubmissionId,
   ).length
   const roleBCount = playerMatches.filter(
-    (match) => match.subBId === numericSubmissionId,
+    (m) => m.subBId === numericSubmissionId,
   ).length
 
   const getPlayerName = (id: number) =>
     playersBySubmissionId.get(id)?.playerName ?? `submission #${id}`
-  const roleALabel = scenario ? `角色 A · ${scenario.roleAName}` : '角色 A'
-  const roleBLabel = scenario ? `角色 B · ${scenario.roleBName}` : '角色 B'
+  const roleALabel = scenario ? scenario.roleAName : '—'
+  const roleBLabel = scenario ? scenario.roleBName : '—'
 
   useEffect(() => {
     if (!Number.isInteger(numericTournamentId) || numericTournamentId <= 0) {
@@ -87,7 +85,6 @@ export function TournamentPlayerDetailPage() {
       setIsLoading(false)
       return
     }
-
     if (!Number.isInteger(numericSubmissionId) || numericSubmissionId <= 0) {
       setError('无效的选手 ID')
       setIsLoading(false)
@@ -105,7 +102,6 @@ export function TournamentPlayerDetailPage() {
         const scenarioResponse = await getScenario(
           tournamentResponse.scenarioId,
         )
-
         setLeaderboard(leaderboardResponse)
         setTournamentDetail(tournamentResponse)
         setScenario(scenarioResponse)
@@ -125,19 +121,7 @@ export function TournamentPlayerDetailPage() {
     return (
       <div className="space-y-6">
         <div className="h-10 w-56 animate-pulse rounded bg-white/8" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            'player-stat-skeleton-1',
-            'player-stat-skeleton-2',
-            'player-stat-skeleton-3',
-            'player-stat-skeleton-4',
-          ].map((key) => (
-            <div
-              key={key}
-              className="h-28 animate-pulse rounded-xl bg-white/5"
-            />
-          ))}
-        </div>
+        <div className="h-[100px] animate-pulse rounded-xl bg-white/5" />
         <div className="h-[420px] animate-pulse rounded-xl bg-white/5" />
       </div>
     )
@@ -145,11 +129,16 @@ export function TournamentPlayerDetailPage() {
 
   if (error || !tournamentDetail || !player) {
     return (
-      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-        {error ?? '选手详情不存在'}
-      </div>
+      <p className="text-sm text-(--accent)">{error ?? '选手详情不存在'}</p>
     )
   }
+
+  const statCells = [
+    { label: '当前战绩', value: `${player.wins} / ${player.losses}` },
+    { label: '胜率', value: `${player.winRate.toFixed(1)}%` },
+    { label: `${roleALabel} 出场`, value: String(roleACount) },
+    { label: `${roleBLabel} 出场`, value: String(roleBCount) },
+  ]
 
   return (
     <div className="space-y-6">
@@ -162,94 +151,72 @@ export function TournamentPlayerDetailPage() {
             {player.modelLabel}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge tone="info">Round {tournamentDetail.currentRound}</Badge>
-          <Link
-            className="inline-flex items-center rounded-md border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
-            to={`/leaderboard?tournament=${tournamentDetail.id}`}
-          >
-            返回排行榜
+          <Link to={`/leaderboard?tournament=${tournamentDetail.id}`}>
+            <Button variant="secondary" size="sm">
+              返回排行榜
+            </Button>
           </Link>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
-              {player.wins} / {player.losses}
+      {/* Stat strip */}
+      <div className="grid grid-cols-2 divide-x divide-y divide-(--border-soft) rounded-xl border border-(--border-soft) xl:grid-cols-4 xl:divide-y-0">
+        {statCells.map((cell) => (
+          <div key={cell.label} className="px-6 py-5">
+            <p className="panel-label">{cell.label}</p>
+            <p className="mt-2 text-[2.25rem] font-black tabular-nums leading-none tracking-tight text-(--foreground)">
+              {cell.value}
             </p>
-            <p className="text-xs text-[var(--foreground-muted)]">当前战绩</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
-              {player.winRate.toFixed(1)}%
-            </p>
-            <p className="text-xs text-[var(--foreground-muted)]">胜率</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
-              {roleACount}
-            </p>
-            <p className="text-xs text-[var(--foreground-muted)]">
-              {roleALabel} 出场次数
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-2">
-            <p className="font-mono text-3xl font-bold text-[var(--foreground)]">
-              {roleBCount}
-            </p>
-            <p className="text-xs text-[var(--foreground-muted)]">
-              {roleBLabel} 出场次数
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        ))}
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>本赛事全部对局</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {playerMatches.length === 0 ? (
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-5 text-sm text-[var(--foreground-subtle)]">
+            <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
               该选手在当前赛事还没有对局记录。
-            </div>
+            </p>
           ) : (
             playerMatches.map((match) => {
               const isRoleA = match.subAId === numericSubmissionId
               const myRoleLabel = isRoleA ? roleALabel : roleBLabel
               const opponentId = isRoleA ? match.subBId : match.subAId
               const opponentRoleLabel = isRoleA ? roleBLabel : roleALabel
+              const won =
+                match.winner === (isRoleA ? 'a' : 'b')
+                  ? true
+                  : match.winner === null || match.winner === 'draw'
+                    ? null
+                    : false
 
               return (
                 <Link
                   key={match.id}
-                  className="block rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-4 transition hover:border-[rgba(224,74,47,0.28)] hover:bg-[rgba(224,74,47,0.06)]"
+                  className="block rounded-xl border border-(--border-soft) bg-white/3 px-4 py-4 transition hover:border-[rgba(224,74,47,0.28)] hover:bg-[rgba(224,74,47,0.06)]"
                   to={`/matches/${match.id}`}
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-2">
-                      <p className="font-semibold text-[var(--foreground)]">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-(--foreground)">
                         Round {match.roundNumber} · Match #{match.id}
                       </p>
-                      <p className="text-sm text-[var(--foreground-subtle)]">
+                      <p className="text-sm text-(--foreground-subtle)">
                         {player.playerName} · {myRoleLabel}
                       </p>
-                      <p className="text-sm text-[var(--foreground-subtle)]">
+                      <p className="text-sm text-(--foreground-subtle)">
                         {getPlayerName(opponentId)} · {opponentRoleLabel}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Badge tone={isRoleA ? 'accent' : 'warning'}>
-                        {myRoleLabel}
-                      </Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="tabular-nums text-sm text-(--foreground-subtle)">
+                        {match.scoreA ?? '—'} : {match.scoreB ?? '—'}
+                      </span>
                       <Badge
                         tone={
                           match.status === 'scored'
@@ -261,9 +228,11 @@ export function TournamentPlayerDetailPage() {
                       >
                         {match.status}
                       </Badge>
-                      <span className="font-mono text-sm text-[var(--foreground-subtle)]">
-                        {match.scoreA ?? '--'} : {match.scoreB ?? '--'}
-                      </span>
+                      {won !== null && (
+                        <Badge tone={won ? 'success' : 'warning'}>
+                          {won ? '胜' : '负'}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </Link>

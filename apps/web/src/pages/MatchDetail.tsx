@@ -21,7 +21,6 @@ export function MatchDetailPage() {
 
   useEffect(() => {
     const numericId = Number(matchId)
-
     if (!Number.isInteger(numericId) || numericId <= 0) {
       setError('无效的对局 ID')
       setIsLoading(false)
@@ -34,23 +33,19 @@ export function MatchDetailPage() {
 
     const loadMatch = async (isInitial: boolean) => {
       const loadId = ++latestLoadIdRef.current
-
       try {
         if (isInitial) {
           setIsLoading(true)
           setError(null)
         }
-
         const detail = await getMatch(numericId)
         if (cancelled || loadId !== latestLoadIdRef.current) return
-
         if (!hasLoadedScenario) {
           const scenarioDetail = await getScenario(detail.scenarioId)
           if (cancelled || loadId !== latestLoadIdRef.current) return
           setScenario(scenarioDetail)
           hasLoadedScenario = true
         }
-
         setError(null)
         setMatch(detail)
       } catch (loadError) {
@@ -70,7 +65,6 @@ export function MatchDetailPage() {
 
     const poll = async (isInitial: boolean) => {
       await loadMatch(isInitial)
-
       if (!cancelled) {
         timeoutId = window.setTimeout(() => {
           void poll(false)
@@ -79,20 +73,14 @@ export function MatchDetailPage() {
     }
 
     void poll(true)
-
     return () => {
       cancelled = true
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId)
-      }
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
   }, [matchId])
 
   useEffect(() => {
-    if (!toast) {
-      return
-    }
-
+    if (!toast) return
     const timer = window.setTimeout(() => setToast(null), 3000)
     return () => window.clearTimeout(timer)
   }, [toast])
@@ -107,17 +95,13 @@ export function MatchDetailPage() {
   }
 
   if (error || !match) {
-    return (
-      <div className="rounded-xl border border-[rgba(248,113,113,0.3)] bg-[rgba(248,113,113,0.08)] px-4 py-3 text-sm text-[#f87171]">
-        {error ?? '对局不存在'}
-      </div>
-    )
+    return <p className="text-sm text-(--accent)">{error ?? '对局不存在'}</p>
   }
 
-  const roleALabel = scenario ? `角色 A · ${scenario.roleAName}` : '角色 A'
-  const roleBLabel = scenario ? `角色 B · ${scenario.roleBName}` : '角色 B'
-  const playerALabel = `${match.playerADisplayName} · ${roleALabel}`
-  const playerBLabel = `${match.playerBDisplayName} · ${roleBLabel}`
+  const roleAName = scenario?.roleAName ?? '—'
+  const roleBName = scenario?.roleBName ?? '—'
+  const playerALabel = `${roleAName}（${match.playerADisplayName}）`
+  const playerBLabel = `${roleBName}（${match.playerBDisplayName}）`
   const winnerLabel =
     match.winner === 'a'
       ? playerALabel
@@ -125,12 +109,13 @@ export function MatchDetailPage() {
         ? playerBLabel
         : match.winner === 'draw'
           ? '平局'
-          : '--'
+          : '—'
 
   return (
     <div className="space-y-6">
       {toast ? (
-        <div className="fixed right-6 top-20 z-50 rounded-xl border border-[rgba(52,211,153,0.25)] bg-[rgba(52,211,153,0.12)] px-4 py-3 text-sm text-[var(--success)] shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+        <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
           {toast}
         </div>
       ) : null}
@@ -143,7 +128,7 @@ export function MatchDetailPage() {
             Round {match.roundNumber} · {playerALabel} vs {playerBLabel}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge
             tone={
               match.status === 'scored'
@@ -158,6 +143,8 @@ export function MatchDetailPage() {
           {user?.isAdmin && match.status === 'error' ? (
             <Button
               disabled={isRetrying}
+              size="sm"
+              variant="secondary"
               onClick={async () => {
                 try {
                   setIsRetrying(true)
@@ -165,9 +152,7 @@ export function MatchDetailPage() {
                   await retryAdminMatch(match.id)
                   const loadId = ++latestLoadIdRef.current
                   const detail = await getMatch(match.id)
-                  if (loadId !== latestLoadIdRef.current) {
-                    return
-                  }
+                  if (loadId !== latestLoadIdRef.current) return
                   setMatch(detail)
                   setToast('已将异常对局重新加入队列')
                 } catch (retryError) {
@@ -181,42 +166,38 @@ export function MatchDetailPage() {
                 }
               }}
             >
-              {isRetrying ? '重试中...' : '管理员重试'}
+              {isRetrying ? '重试中…' : '管理员重试'}
             </Button>
           ) : null}
-          <Link
-            className="inline-flex items-center rounded-md border border-[var(--border-soft)] px-3 py-2 text-sm text-[var(--foreground-subtle)] transition hover:bg-white/4 hover:text-[var(--foreground)]"
-            to={`/leaderboard?tournament=${match.tournamentId}`}
-          >
-            返回排行榜
+          <Link to={`/leaderboard?tournament=${match.tournamentId}`}>
+            <Button variant="secondary" size="sm">
+              返回排行榜
+            </Button>
           </Link>
         </div>
       </div>
 
+      {/* Score summary */}
       <Card>
-        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <CardTitle>
               {playerALabel} vs {playerBLabel}
             </CardTitle>
-            <p className="mt-2 text-sm text-[var(--foreground-subtle)]">
+            <p className="mt-1.5 text-sm text-(--foreground-subtle)">
               {match.playerAModel} vs {match.playerBModel}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl border border-[var(--border-soft)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">
-                Score
-              </p>
-              <p className="mt-1 font-mono text-xl text-[var(--foreground)]">
-                {match.scoreA ?? '--'} : {match.scoreB ?? '--'}
+          <div className="flex items-stretch gap-3">
+            <div className="rounded-xl border border-(--border-soft) bg-white/3 px-5 py-3">
+              <p className="panel-label">比分</p>
+              <p className="mt-1 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
+                {match.scoreA ?? '—'} : {match.scoreB ?? '—'}
               </p>
             </div>
-            <div className="rounded-xl border border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--foreground-muted)]">
-                Winner
-              </p>
-              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">
+            <div className="rounded-xl border border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.1)] px-5 py-3">
+              <p className="panel-label">胜者</p>
+              <p className="mt-1 text-lg font-semibold text-(--foreground)">
                 {winnerLabel}
               </p>
             </div>
@@ -224,35 +205,49 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
+      {/* Transcript */}
       <Card>
         <CardHeader>
           <CardTitle>完整 Transcript</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {(() => {
             const turnKeyCounts = new Map<string, number>()
-
             return match.transcript.map((turn, index) => {
               const baseKey = `${turn.speaker}:${turn.content}`
               const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
               turnKeyCounts.set(baseKey, occurrence)
               const isA = turn.speaker === 'a'
-              const roleName = isA ? playerALabel : playerBLabel
 
               return (
                 <div
                   key={`${baseKey}:${occurrence}`}
-                  className={`flex ${isA ? 'justify-start' : 'justify-end'}`}
+                  className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
                 >
-                  <div
-                    className={`max-w-[85%] rounded-2xl border px-4 py-3 ${isA ? 'border-[rgba(224,74,47,0.25)] bg-[rgba(224,74,47,0.12)]' : 'border-[var(--border-soft)] bg-[rgba(255,255,255,0.04)]'}`}
+                  <p
+                    className="px-1 text-xs font-semibold"
+                    style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
                   >
-                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--foreground-muted)]">
-                      Turn {index + 1} · {roleName}
-                    </p>
-                    <p className="text-sm leading-7 text-[var(--foreground-subtle)]">
-                      {turn.content}
-                    </p>
+                    {isA ? playerALabel : playerBLabel}
+                    <span className="ml-1.5 font-normal opacity-60">
+                      #{index + 1}
+                    </span>
+                  </p>
+                  <div
+                    className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+                    style={
+                      isA
+                        ? {
+                            background: 'rgba(224,74,47,0.1)',
+                            border: '1px solid rgba(224,74,47,0.2)',
+                          }
+                        : {
+                            background: 'rgba(96,165,250,0.08)',
+                            border: '1px solid rgba(96,165,250,0.18)',
+                          }
+                    }
+                  >
+                    {turn.content}
                   </div>
                 </div>
               )
@@ -261,55 +256,84 @@ export function MatchDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Judge QA */}
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>裁判追问 · {playerALabel}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {match.judgeTranscriptA.map((item) => (
-              <div key={`a-${item.round}`} className="app-panel">
-                <p className="panel-label">第 {item.round} 轮问题</p>
-                <p className="panel-copy whitespace-pre-wrap">
-                  {item.question}
-                </p>
-                <p className="mt-3 panel-label">回答</p>
-                <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>裁判追问 · {playerBLabel}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {match.judgeTranscriptB.map((item) => (
-              <div key={`b-${item.round}`} className="app-panel">
-                <p className="panel-label">第 {item.round} 轮问题</p>
-                <p className="panel-copy whitespace-pre-wrap">
-                  {item.question}
-                </p>
-                <p className="mt-3 panel-label">回答</p>
-                <p className="panel-copy whitespace-pre-wrap">{item.answer}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        {(
+          [
+            {
+              playerLabel: playerALabel,
+              items: match.judgeTranscriptA,
+              side: 'a' as const,
+            },
+            {
+              playerLabel: playerBLabel,
+              items: match.judgeTranscriptB,
+              side: 'b' as const,
+            },
+          ] as const
+        ).map(({ playerLabel, items, side }) => (
+          <Card key={side}>
+            <CardHeader>
+              <CardTitle>
+                {scenario?.judgeName ?? '裁判'}追问 · {playerLabel}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {items.map((item) => (
+                <div
+                  key={`${side}-${item.round}`}
+                  className="overflow-hidden rounded-xl border border-(--border-soft)"
+                >
+                  <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                        {scenario?.judgeName ?? '裁判'} · 第 {item.round} 轮
+                      </p>
+                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                        {item.question}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className="px-4 py-3"
+                    style={{
+                      background:
+                        side === 'a'
+                          ? 'rgba(224,74,47,0.05)'
+                          : 'rgba(96,165,250,0.05)',
+                    }}
+                  >
+                    <p
+                      className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                      style={{
+                        color: side === 'a' ? 'var(--accent)' : 'var(--info)',
+                      }}
+                    >
+                      {playerLabel} 回答
+                    </p>
+                    <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                      {item.answer}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
+      {/* Reasoning */}
       <Card>
         <CardHeader>
-          <CardTitle>裁判理由</CardTitle>
+          <CardTitle>{scenario?.judgeName ?? '裁判'}评分理由</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="app-panel">
+          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
             <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无裁判解释。'}
+              {match.reasoning ?? '暂无评分理由。'}
             </p>
             {match.error ? (
-              <p className="mt-4 text-sm text-[#f87171]">
+              <p className="mt-4 text-sm text-(--accent)">
                 错误信息：{match.error}
               </p>
             ) : null}
