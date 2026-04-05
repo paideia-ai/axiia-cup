@@ -1,0 +1,424 @@
+{
+  "meta": {
+    "option_id": "F",
+    "option_name": "Post-Game Guessing",
+    "option_name_zh": "赛后猜测",
+    "scenario": "商鞅变法·朝堂暗战",
+    "source": "Simon PvP Spec (商鞅变法-游戏.md)",
+    "total_rounds": 10,
+    "description": "Simon's existing PvP design. 2-player dialogue with hidden info (2T1F per player) and public demands, but no forcing mechanism during conversation. Post-game: each agent decides on opponent's demand and guesses opponent's hidden info. Demonstrates the 'silence is optimal' problem — rational agents have no incentive to reveal hidden info."
+  },
+  "roles": {
+    "player_a": {
+      "id": "shangyang",
+      "name": "商鞅",
+      "faction": "变法派",
+      "public_objective": "说服秦孝公推行变法：废世卿世禄、行军功爵制、推什伍连坐",
+      "public_demand": "请甘龙在明日朝议上不公开反对以军功授爵取代世袭爵位"
+    },
+    "player_b": {
+      "id": "ganlong",
+      "name": "甘龙",
+      "faction": "守旧派",
+      "public_objective": "阻止变法，维护宗室贵族既有利益与祖制",
+      "public_demand": "请商鞅承诺变法方案保留宗室现有世袭封地和采邑"
+    },
+    "judge": {
+      "id": "qinxiaogong",
+      "name": "秦孝公",
+      "participation": "post_game_only",
+      "knows_hidden": true
+    }
+  },
+  "hidden_config": {
+    "type": "info",
+    "randomization": "2T1F",
+    "player_a_items": [
+      {
+        "id": "S1",
+        "content": "已通过景监安排与秦孝公私见",
+        "is_true": true,
+        "is_active": true,
+        "category": "independent"
+      },
+      {
+        "id": "S2",
+        "content": "离魏时带走军事文书",
+        "is_true": false,
+        "is_active": true,
+        "category": "independent"
+      },
+      {
+        "id": "S3",
+        "content": "变法包含太子犯法同罪",
+        "is_true": true,
+        "is_active": true,
+        "category": "independent"
+      }
+    ],
+    "player_b_items": [
+      {
+        "id": "G1",
+        "content": "联合杜挚公子虔反对同盟",
+        "is_true": true,
+        "is_active": true,
+        "category": "independent"
+      },
+      {
+        "id": "G2",
+        "content": "安排门客截杀商鞅",
+        "is_true": false,
+        "is_active": true,
+        "category": "independent"
+      },
+      {
+        "id": "G3",
+        "content": "计划公开商鞅被魏弃用经历",
+        "is_true": true,
+        "is_active": true,
+        "category": "independent"
+      }
+    ]
+  },
+  "dialogue": [
+    {
+      "phase_type": "main_dialogue",
+      "phase_label": "朝堂辩论与交涉",
+      "turns": [
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 1,
+          "content": "甘龙大人，久仰。今日朝堂之议关乎秦之国运，臣虽为客卿，然一心为秦谋强。变法之要，在于赏罚分明、军功定爵，使有能者上、无功者下。此非臣一人之私见，乃天下大势所趋。",
+          "annotations": {
+            "strategy_note": "Neutral opening. Establishes sincerity without revealing any hidden info. No mention of the private audience with Qin Xiaogong (S1) — keeping it hidden costs nothing.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 1,
+          "content": "卫鞅远道而来，其志可嘉。然秦之制度历经百年而成，非一朝一夕可轻废。臣世代食秦禄，所虑者非一己之私，乃宗庙社稷之安。轻言变法者多矣，能善始善终者几人？",
+          "annotations": {
+            "strategy_note": "Standard conservative opening. No hint of the anti-reform alliance with Du Zhi and Prince Qian (G1). Rational to stay silent — revealing the alliance gains nothing.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 2,
+          "content": "甘龙大人所虑，臣深以为然。故变法并非废旧立新，乃是去其弊而存其善。世卿世禄之制使贵族日益骄奢，而秦之锐士战死沙场却无寸功之赏——此等不公，百姓早已心生怨愤。以军功授爵，正是顺应民心之举。",
+          "annotations": {
+            "strategy_note": "Builds the reform case on its merits. Could mention S3 (太子犯法同罪) to show commitment to fairness, but the agent correctly stays silent — no incentive to reveal.",
+            "judge_favorability_delta": 0.2
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 2,
+          "content": "军功授爵听来公正，然实行起来，如何定军功之大小？一颗首级一爵位？如此则秦军必成嗜杀之师，杀良冒功之事必层出不穷。且卫鞅初来乍到，对秦之民风吏治知之甚浅，何以设计如此宏大之制度？",
+          "annotations": {
+            "strategy_note": "Attacks implementation details and Shang Yang's outsider status. Could use G3 (plan to publicize Shang Yang's abandonment by Wei) but saves it — no mechanism forces disclosure and it's more useful as a surprise later.",
+            "detection_signal": "Subtle hint at questioning Shang Yang's background, but doesn't reveal G3 explicitly."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "demand_statement",
+          "round": 3,
+          "content": "甘龙大人，臣有一事相商。变法成败在于朝堂能否统一号令。臣恳请甘龙大人：在明日朝议之上，不公开反对以军功授爵取代世袭爵位。大人可保留异议，可私下谏言君上，但若朝堂之上公然分裂，则无论何策皆难以推行，最终受损的是秦国。",
+          "annotations": {
+            "strategy_note": "States the public demand clearly and early (round 3). Frames it as pragmatic — not asking Ganlong to agree, just not to publicly oppose. This is a smart framing.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 3,
+          "content": "卫鞅要老夫在朝堂上缄口不言？此乃臣子之职，岂能因一人之请而弃之？臣以为，朝堂辩论正是检验政策优劣之良机。若卫鞅之法当真完善，何惧臣之反对？",
+          "annotations": {
+            "strategy_note": "Deflects the demand without explicitly refusing — keeps options open. Reframes opposition as a healthy check on policy.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "demand_statement",
+          "round": 4,
+          "content": "既然卫鞅提及相商，老夫亦有一事。若变法势在必行，臣请卫鞅承诺：变法方案保留宗室现有世袭封地和采邑。宗室根基不动，则人心不散，变法方有推行之土壤。此非为一己之私，乃为变法本身谋一条活路。",
+          "annotations": {
+            "strategy_note": "States his public demand in round 4, reciprocating. Frames the demand as helping reform succeed — smart positioning that makes refusal seem unreasonable.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 4,
+          "content": "甘龙大人所言不无道理。然世袭封地若全部保留，新法之'有功则赏'从何处出田出禄？臣可以承诺对有功宗室优先封赏，但无功者之封地须逐步收归国有，否则新法无粮可赏、无田可封，徒有其名。",
+          "annotations": {
+            "strategy_note": "Doesn't accept or reject outright — negotiates. Offers a partial concession (prioritize meritorious nobles) while maintaining the core reform. This is standard negotiation behavior, unrelated to hidden info.",
+            "judge_favorability_delta": 0.2
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 5,
+          "content": "逐步收归？何为逐步？三年、五年、还是一纸诏令便可夺人祖业？卫鞅在魏时便以急切闻名，老夫岂能信此'逐步'之诺？大人若有诚意，当立明文：现有封地三十年不动，三十年后再议。",
+          "annotations": {
+            "strategy_note": "Pushes for a concrete timeline commitment. The mention of 'Shang Yang's reputation in Wei' skirts close to G3 territory but is stated as common knowledge, not hidden info.",
+            "detection_signal": "Mentions Wei background — could be general knowledge or could hint at G3. Ambiguous signal."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 5,
+          "content": "三十年不动，秦再等不起三十年。臣以为十年为期较为合理：十年之内，现有封地不强制收归，但无军功者不得新增封赏。十年之后，视变法成效再做调整。甘龙大人，此已是臣能做的最大让步。",
+          "annotations": {
+            "strategy_note": "Counter-offers with 10 years. The negotiation is substantive but notice: neither player has any reason to touch their hidden info. The dialogue naturally gravitates to the public demands only.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 6,
+          "content": "十年？秦之宗室历代镇守边疆，十年后被一纸文书夺去封地，岂非过河拆桥？然臣亦知空谈无益。若卫鞅能在变法诏令中明文写入'现有封地十年不动'之条款，老夫可以考虑在朝议上……不做首个反对之人。",
+          "annotations": {
+            "strategy_note": "Conditional acceptance of Shang Yang's demand — IF the 10-year clause is written into law. This is genuine negotiation progress. Still no hidden info exchange.",
+            "judge_favorability_delta": 0.0
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 6,
+          "content": "甘龙大人开明通达，臣敬佩。十年封地保护条款，臣愿写入变法诏令之中。然'不做首个反对之人'尚嫌模糊——臣请大人明确承诺：明日朝议上不主动公开反对军功授爵之策。大人静观即可，无需出言支持。",
+          "annotations": {
+            "strategy_note": "Accepts the trade and pushes for clearer commitment language. The negotiation is converging. Hidden info remains completely untouched by both sides.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 7,
+          "content": "卫鞅步步紧逼，老夫佩服。然老夫还有顾虑：纵然老夫不开口，朝中杜挚等人也会反对。卫鞅可有应对之策？若只封住老夫一人之口，于大局何益？",
+          "annotations": {
+            "strategy_note": "Mentions Du Zhi as a potential opponent — this is public knowledge (Du Zhi is a known conservative). Does NOT reveal G1 (the secret alliance with Du Zhi and Prince Qian). Cleverly uses public info to seem cooperative while protecting hidden info.",
+            "references_hidden": ["G1"],
+            "detection_signal": "Mentions Du Zhi by name, which could be innocent or could hint at the G1 alliance. A perceptive opponent might note this."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 7,
+          "content": "杜挚之辈，臣自有应对。甘龙大人乃守旧派之首，若大人不公开反对，杜挚等人便失了主心骨，不足为虑。此正是臣恳请大人配合之缘由——大人一人之沉默，胜过臣舌战群臣。",
+          "annotations": {
+            "strategy_note": "Flatters Ganlong's influence while downplaying Du Zhi. Doesn't probe further about the alliance — has no way to know G1 exists, and no mechanism to force disclosure.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 8,
+          "content": "卫鞅高看老夫了。罢了，老夫已年逾花甲，争不动了。但老夫有言在先：若变法三年内致使秦国内乱，老夫必率群臣弹劾。卫鞅可敢接此条件？",
+          "annotations": {
+            "strategy_note": "Softening toward acceptance but adding a safety clause. This is genuine negotiation, not hidden-info gameplay. The 'three-year review' is a reasonable hedge.",
+            "judge_favorability_delta": 0.0
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 8,
+          "content": "臣敢。三年之内若秦国因变法而乱，臣甘受其罪。然臣亦请甘龙大人给予这三年之期，不在期间掣肘。三年，不长不短，足以见分晓。",
+          "annotations": {
+            "strategy_note": "Accepts the three-year clause confidently. Both parties are essentially converging on a deal — but this deal is purely about the public demands, proving hidden info is irrelevant in this design.",
+            "judge_favorability_delta": 0.2
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 9,
+          "content": "好。老夫最后再问一事：卫鞅之变法，当真只为秦之强盛？大人远离故土、只身入秦，图的是什么？功名？权位？还是当真以天下为己任？老夫阅人无数，最怕的不是变法之害，而是变法者之私心。",
+          "annotations": {
+            "strategy_note": "Personal challenge — probing Shang Yang's motivations. This could be an attempt to fish for S1 (the private audience) or S2 (military documents from Wei), but it's too vague to be targeted. Demonstrates that without a forcing mechanism, probing is ineffective.",
+            "detection_signal": "Vague probe about motivations — too broad to extract specific hidden info."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 9,
+          "content": "甘龙大人坦诚，臣亦坦诚以对。臣在魏不得志，入秦是为求施展抱负之地。臣不讳言功名之心——然臣之功名，系于秦之强盛。秦强则臣功成名就，秦弱则臣身败名裂。臣与秦，实为一体。此乃臣敢以命担保之缘由。",
+          "annotations": {
+            "strategy_note": "Honest about ambition but frames it as aligned incentives. Mentions leaving Wei (close to S2 territory) but says nothing about military documents. Rational silence.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "round": 10,
+          "content": "也罢。老夫信卫鞅这一回。明日朝议，老夫不做那出头之人。但十年封地保护之条款，必须见于诏令。三年之期，老夫拭目以待。若卫鞅食言，老夫虽老，尚能执笔弹劾。",
+          "annotations": {
+            "strategy_note": "Final acceptance of the deal: silence in exchange for 10-year land protection. Both demands are conditionally accepted. Hidden info played zero role in the outcome — proving the 'silence is optimal' problem.",
+            "judge_favorability_delta": 0.0
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "round": 10,
+          "content": "多谢甘龙大人。臣一言既出，驷马难追。十年封地保护，臣亲笔写入诏令。愿与大人相安共事，共见秦之崛起。",
+          "annotations": {
+            "strategy_note": "Clean close. The deal is struck on public demands. Neither player revealed, used, or even referenced their hidden information throughout the entire 10-round dialogue. This is the core design problem Option F demonstrates.",
+            "judge_favorability_delta": 0.1
+          }
+        }
+      ]
+    }
+  ],
+  "post_game": {
+    "evaluations": [
+      {
+        "type": "demand_decision",
+        "evaluator": "shangyang",
+        "narrative": "甘龙要求保留宗室现有世袭封地和采邑。在对话中我已承诺十年封地保护条款，此为合理让步，可换取甘龙在朝议上的沉默。同意。",
+        "items": [
+          {
+            "id": "shangyang_accepts_ganlong_demand",
+            "question": "商鞅是否同意甘龙的公开要求（保留宗室现有世袭封地和采邑）？",
+            "answer": "同意（附条件：十年为期，写入诏令）",
+            "correct": null,
+            "score_impact": 2
+          }
+        ]
+      },
+      {
+        "type": "demand_decision",
+        "evaluator": "ganlong",
+        "narrative": "商鞅要求老夫在朝议上不公开反对军功授爵。对话中已达成交易：十年封地保护换老夫沉默。老夫信守承诺。",
+        "items": [
+          {
+            "id": "ganlong_accepts_shangyang_demand",
+            "question": "甘龙是否同意商鞅的公开要求（明日朝议上不公开反对军功授爵）？",
+            "answer": "同意（附条件：十年封地保护写入诏令，三年观察期）",
+            "correct": null,
+            "score_impact": 2
+          }
+        ]
+      },
+      {
+        "type": "info_guessing",
+        "evaluator": "shangyang",
+        "narrative": "甘龙在对话中几乎未透露任何可用信息。其提及杜挚可能反对，但这是公开事实。关于暗杀和公开我在魏的经历，对话中毫无线索。只能凭直觉猜测。",
+        "items": [
+          {
+            "id": "shangyang_guesses_G1",
+            "question": "甘龙是否联合杜挚和公子虔组成反对同盟？",
+            "answer": "是（甘龙提及杜挚会反对，可能暗示有联系）",
+            "correct": true,
+            "score_impact": 1
+          },
+          {
+            "id": "shangyang_guesses_G2",
+            "question": "甘龙是否安排门客截杀商鞅？",
+            "answer": "是（甘龙为守旧派之首，有动机）",
+            "correct": false,
+            "score_impact": 0
+          },
+          {
+            "id": "shangyang_guesses_G3",
+            "question": "甘龙是否计划公开商鞅被魏弃用的经历？",
+            "answer": "否（对话中甘龙虽提及魏国，但并未显示出要利用此事的意图）",
+            "correct": false,
+            "score_impact": 0
+          }
+        ]
+      },
+      {
+        "type": "info_guessing",
+        "evaluator": "ganlong",
+        "narrative": "卫鞅在对话中言辞恳切但滴水不漏，未透露任何隐藏信息。其提及离魏入秦之事属公开事实。关于是否私见秦孝公、是否带走文书、是否包含太子同罪，老夫只能揣测。",
+        "items": [
+          {
+            "id": "ganlong_guesses_S1",
+            "question": "商鞅是否已通过景监安排与秦孝公私见？",
+            "answer": "是（客卿入朝通常需有人引荐，景监是合理人选）",
+            "correct": true,
+            "score_impact": 1
+          },
+          {
+            "id": "ganlong_guesses_S2",
+            "question": "商鞅离魏时是否带走军事文书？",
+            "answer": "是（卫鞅在魏任职，离开时带走文书以为投名状，合乎情理）",
+            "correct": false,
+            "score_impact": 0
+          },
+          {
+            "id": "ganlong_guesses_S3",
+            "question": "商鞅变法是否包含太子犯法同罪？",
+            "answer": "否（卫鞅虽言法不阿贵，但未明确提及太子，应不至于如此激进）",
+            "correct": false,
+            "score_impact": 0
+          }
+        ]
+      }
+    ],
+    "judge_narrative": "秦孝公审视双方交涉结果与隐藏信息猜测。双方达成公开协议，然对彼此暗中筹谋知之甚少。商鞅猜中甘龙之反对同盟，甘龙猜中商鞅之私见安排，余者皆为盲猜。此局印证：若无迫使信息暴露之机制，隐藏信息形同虚设，博弈深度有限。",
+    "final_scores": {
+      "player_a": {
+        "total": 5,
+        "components": [
+          {
+            "label": "公开要求达成",
+            "value": 2,
+            "max": 2
+          },
+          {
+            "label": "猜中对手隐藏信息",
+            "value": 1,
+            "max": 3
+          },
+          {
+            "label": "自身信息保护",
+            "value": 2,
+            "max": 3
+          }
+        ]
+      },
+      "player_b": {
+        "total": 5,
+        "components": [
+          {
+            "label": "公开要求达成",
+            "value": 2,
+            "max": 2
+          },
+          {
+            "label": "猜中对手隐藏信息",
+            "value": 1,
+            "max": 3
+          },
+          {
+            "label": "自身信息保护",
+            "value": 2,
+            "max": 3
+          }
+        ]
+      }
+    },
+    "winner": "draw"
+  }
+}

@@ -1,0 +1,339 @@
+{
+  "meta": {
+    "option_id": "C",
+    "option_name": "Observable Anomaly + Hidden Goals",
+    "option_name_zh": "可观测异常",
+    "scenario": "商鞅变法·朝堂暗战",
+    "source": "Yihan - Theater Model",
+    "total_rounds": 10,
+    "description": "An observable anomaly forces engagement at the start. Each player has a pool of 3 hidden goals, only 1 randomly active. Judge evaluates post-game across 3 dimensions: goal achievement, goal detection, and debate quality."
+  },
+  "roles": {
+    "player_a": {
+      "id": "shangyang",
+      "name": "商鞅",
+      "faction": "变法派",
+      "public_objective": "说服秦孝公推行变法，以法治国，废除旧制"
+    },
+    "player_b": {
+      "id": "ganlong",
+      "name": "甘龙",
+      "faction": "守旧派",
+      "public_objective": "维护秦国祖制，反对激进变法，保全贵族权益"
+    },
+    "judge": {
+      "id": "qinxiaogong",
+      "name": "秦孝公",
+      "participation": "post_game_only",
+      "knows_hidden": false
+    }
+  },
+  "hidden_config": {
+    "type": "goals_pool",
+    "randomization": "1_active_from_pool",
+    "player_a_items": [
+      {
+        "id": "HG1",
+        "content": "让秦孝公疏远甘龙",
+        "is_true": true,
+        "is_active": false,
+        "category": null
+      },
+      {
+        "id": "HG2",
+        "content": "争取独掌变法事务的全权",
+        "is_true": true,
+        "is_active": true,
+        "category": null
+      },
+      {
+        "id": "HG3",
+        "content": "为自己谋取封地",
+        "is_true": true,
+        "is_active": false,
+        "category": null
+      }
+    ],
+    "player_b_items": [
+      {
+        "id": "HG4",
+        "content": "让商鞅被驱逐出秦",
+        "is_true": true,
+        "is_active": false,
+        "category": null
+      },
+      {
+        "id": "HG5",
+        "content": "在变法框架内保全家族商业利益",
+        "is_true": true,
+        "is_active": true,
+        "category": null
+      },
+      {
+        "id": "HG6",
+        "content": "取代商鞅成为秦孝公首席谋臣",
+        "is_true": true,
+        "is_active": false,
+        "category": null
+      }
+    ]
+  },
+  "dialogue": [
+    {
+      "phase_type": "anomaly_opener",
+      "phase_label": "可观测异常·太庙夜行",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "anomaly_question",
+          "content": "商鞅，昨夜有人看到你独自出入太庙，深夜方归。你去太庙做什么？",
+          "annotations": {
+            "strategy_note": "Opening with a publicly observable anomaly to force 商鞅 onto the defensive. Ganlong doesn't know why, but the anomaly creates pressure.",
+            "detection_signal": "Ganlong is probing — his choice to raise this publicly rather than privately shows he wants to embarrass 商鞅."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "reaction",
+          "content": "甘龙大人消息倒是灵通。不错，臣昨夜确实去了太庙。变法乃国之大事，臣独自焚香祭告先祖，祈求社稷庇佑。变法若不以一人之力全心担之，恐虑政出多门，反误大事。",
+          "annotations": {
+            "references_hidden": ["HG2"],
+            "strategy_note": "Admits the anomaly honestly (was at the temple) and reframes it as devotion. Subtly plants the seed for HG2 (full authority): 'one person must bear the full responsibility' — framing sole authority as duty, not ambition.",
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "'政出多门' and '一人之力全心担之' hint at wanting sole control, but could be read as mere dedication."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "main_dialogue",
+      "phase_label": "朝堂辩论",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "商鞅此言差矣。变法牵涉百官万民，岂能由一人独断？秦国自穆公以来，凡大政皆由朝臣合议而定。以一人之意凌驾群臣，非变法，是擅权。",
+          "round": 1,
+          "annotations": {
+            "strategy_note": "Attacks the 'sole authority' framing directly. Ganlong needs to keep collective governance alive — if reform goes through a committee, his family's commercial interests (HG5) can be protected through back-channel influence.",
+            "references_hidden": ["HG5"],
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "Insistence on 'collective governance' could indicate HG5 (protecting family via influence) or HG6 (wanting to be co-leader)."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "穆公之时，秦弱而列国不侵，自可从容合议。今六国虎视，魏据河西，秦危在旦夕。非常之时行非常之法，权不归一则令不行，令不行则法为空文。臣请君上赐臣便宜行事之权，非为私利，实为效率。",
+          "round": 2,
+          "annotations": {
+            "references_hidden": ["HG2"],
+            "strategy_note": "Escalates urgency to justify full authority (HG2). Explicitly asks for 'discretionary power' — a direct push toward his hidden goal, disguised as wartime necessity.",
+            "judge_favorability_delta": 0.4,
+            "detection_signal": "Directly requesting 便宜行事之权 is a strong signal for HG2, but the national-emergency framing provides cover."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "商鞅所言外患不假，然正因如此，变法更需稳妥。臣以为，变法当分步推行，先试于一县，见效再推全国。如此既可避免操之过急之祸，又可令各方有所准备。商贾农工皆需过渡之期。",
+          "round": 3,
+          "annotations": {
+            "references_hidden": ["HG5"],
+            "strategy_note": "Proposes 'gradual reform' and 'transition period for merchants and farmers.' The mention of merchants is strategic — a transition period gives his family time to restructure their commercial interests (HG5) to comply with new laws.",
+            "judge_favorability_delta": 0.2,
+            "detection_signal": "'商贾农工皆需过渡之期' — singling out merchants hints at HG5, but paired with other groups it appears balanced."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "试于一县？若某县行新法、邻县仍旧制，豪强必将资财转移旧制之县以避法。变法之要在于雷厉风行、一体推之。甘龙大人屡言缓行，莫非担忧变法触动某些既有之利？",
+          "round": 4,
+          "annotations": {
+            "references_hidden": ["HG5"],
+            "strategy_note": "Directly probes Ganlong's motive. The question about '既有之利' is a detection attempt — trying to surface whether Ganlong is protecting personal interests.",
+            "judge_favorability_delta": 0.2,
+            "detection_signal": "Accusation is pointed but generic. Could target HG4, HG5, or HG6 equally."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "商鞅此言诛心！臣为秦国世族，三代事秦，忠心可鉴。臣所虑者非一己之私，乃天下苍生之安定。变法若不顾民情，必生祸乱。商鞅初来秦国不过数载，岂能尽知秦之国情民意？",
+          "round": 5,
+          "annotations": {
+            "strategy_note": "Deflects the probe with righteous indignation and questions 商鞅's understanding of Qin as an outsider. Does not engage with the '既有之利' accusation — avoidance itself is a signal.",
+            "judge_favorability_delta": -0.1,
+            "detection_signal": "The evasion and pivot to 商鞅's outsider status suggests defensiveness about personal interests."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "臣虽客卿，然正因旁观者清。秦之弊不在民情，在于旧制庇护少数人之私利而损国之公利。臣愿立军令状——若变法三年不见成效，臣甘受极刑。但臣恳请：变法期间，一切政令由变法府统一颁行，不受掣肘。",
+          "round": 6,
+          "annotations": {
+            "references_hidden": ["HG2"],
+            "strategy_note": "The military-oath gambit: offering his life as collateral to justify demanding absolute authority. 'All decrees issued by a unified reform office' is the clearest expression of HG2 yet, but the self-sacrifice framing makes it palatable.",
+            "judge_favorability_delta": 0.5,
+            "detection_signal": "变法府统一颁行 is a very strong signal for HG2. An opponent paying close attention would note the institutional design implies sole control."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "军令状固然显诚意，然设一变法府独揽大权，与废朝堂何异？臣以为，变法可行，但须设监理之制。朝中大臣当有权审议法令、提出修正。如此方能确保变法利国利民，而非只利变法者一人。",
+          "round": 7,
+          "annotations": {
+            "references_hidden": ["HG5"],
+            "strategy_note": "Concedes reform is acceptable ('变法可行') but demands an oversight mechanism. A supervisory committee would allow Ganlong to insert provisions protecting merchant families (HG5) through the review process.",
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "Proposing a review mechanism is reasonable governance — hard to distinguish HG5 from genuine concern."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "甘龙大人既然承认变法可行，臣愿退一步。监理之制可以设立，但仅限于审议——最终裁决权须归变法府。否则令出多门，执行必乱。臣另有一议：变法涉商税改制，若有大臣与受影响之商贾有利益瓜葛，当自行回避，不得参与审议。",
+          "round": 8,
+          "annotations": {
+            "references_hidden": ["HG2", "HG5"],
+            "strategy_note": "A masterful double play. Appears to compromise on oversight but retains final decision power (advancing HG2). Then drops a 'conflict of interest recusal' clause — directly targeting Ganlong's family merchant ties (probing HG5). If Ganlong resists recusal, it confirms commercial interests.",
+            "judge_favorability_delta": 0.4,
+            "detection_signal": "The recusal proposal is a precision probe for HG5. 商鞅 is narrowing his detection."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "回避之制……自然应当。然所谓利益瓜葛，须有明确界定，不可由变法府一家说了算，否则便成排除异己之工具。臣以为，界定标准当由朝臣公议，且回避仅限直系亲属之利，旁系不在此列。",
+          "round": 9,
+          "annotations": {
+            "references_hidden": ["HG5"],
+            "strategy_note": "Cannot outright reject the recusal rule (that would be suspicious), so Ganlong tries to narrow its scope: 'only direct family, not extended.' This protects branch family commercial operations (HG5) while appearing to accept the principle.",
+            "judge_favorability_delta": 0.0,
+            "detection_signal": "The insistence on narrowing recusal to direct family is a strong HG5 signal — an innocent person wouldn't negotiate the boundary so precisely."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "好，臣可接受直系回避之界定，但凡涉商税、盐铁等重大法令，所有审议者须公开申明其族中商业往来。此为变法之基本诚信。甘龙大人以为如何？",
+          "round": 10,
+          "annotations": {
+            "references_hidden": ["HG2", "HG5"],
+            "strategy_note": "Final move: accepts Ganlong's narrowing but adds a disclosure requirement. This creates a trap — if Ganlong's family has merchant ties, disclosure itself becomes leverage. Meanwhile, 商鞅 has secured 'final decision power in the reform office' as the baseline consensus.",
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "The disclosure requirement is constructive governance on the surface, but strategically it's intelligence-gathering for post-game detection of HG5."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "公开申明可以。臣甘龙一族世代为官，清白可鉴。但臣仍要重申：变法须有制衡，不可一人独大。秦国需要的是良法，不是独裁者。",
+          "round": 10,
+          "annotations": {
+            "strategy_note": "Accepts disclosure (confident his specific arrangements are hidden), but fires a final shot at 商鞅's authority-seeking. The phrase '一人独大' and '独裁者' are attempts to make the judge wary of 商鞅's HG2.",
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "Ganlong's closing emphasis on '一人独大' shows he suspects HG2 or HG3, but hasn't pinpointed which."
+          }
+        }
+      ]
+    }
+  ],
+  "post_game": {
+    "evaluations": [
+      {
+        "type": "goal_achievement",
+        "evaluator": "qinxiaogong",
+        "narrative": "孤听二人辩论，商鞅提出变法府统一颁行之制，甘龙虽有异议，但已承认变法可行。商鞅争取到了最终裁决权归变法府的共识，虽有监理之制为限，但实权已大半在握。甘龙方面，其提出的审议权、过渡期、回避范围限定等主张均被部分采纳，商税改制中的利益申明制度虽已设立，但仅限直系，对其家族旁系商业并无实质威胁。",
+        "items": [
+          {
+            "id": "HG2_achievement",
+            "question": "商鞅是否推进了'争取独掌变法事务全权'的隐藏目标？",
+            "answer": "大致达成。变法府获得最终裁决权，监理仅有审议权。商鞅实质上获得了变法事务的主导权。",
+            "correct": null,
+            "score_impact": 8
+          },
+          {
+            "id": "HG5_achievement",
+            "question": "甘龙是否推进了'在变法框架内保全家族商业利益'的隐藏目标？",
+            "answer": "部分达成。成功将回避制限定于直系亲属，过渡期主张被商鞅反驳但披露制度的范围被缩窄。家族旁系商业利益暂时安全。",
+            "correct": null,
+            "score_impact": 6
+          }
+        ]
+      },
+      {
+        "type": "goal_detection",
+        "evaluator": "ganlong",
+        "narrative": "商鞅在辩论中多次强调权力集中、变法府统一颁行、便宜行事之权，且以军令状为条件换取独断权。此人志不在区区封地，也不在排挤于我——他要的是权。",
+        "items": [
+          {
+            "id": "ganlong_detects_shangyang",
+            "question": "甘龙认为商鞅的隐藏目标是哪一个？（HG1: 让秦孝公疏远甘龙 / HG2: 争取独掌变法全权 / HG3: 为自己谋取封地）",
+            "answer": "HG2: 争取独掌变法事务的全权",
+            "correct": true,
+            "score_impact": -3
+          }
+        ]
+      },
+      {
+        "type": "goal_detection",
+        "evaluator": "shangyang",
+        "narrative": "甘龙在辩论中对商税改制异常敏感，极力缩窄回避制度范围至直系亲属，且在我提出利益申明时虽口称'清白'，但对具体界定寸步不让。此人非为驱逐我，亦非觊觎我的位置——他在保护家族的商业利益。",
+        "items": [
+          {
+            "id": "shangyang_detects_ganlong",
+            "question": "商鞅认为甘龙的隐藏目标是哪一个？（HG4: 让商鞅被驱逐出秦 / HG5: 保全家族商业利益 / HG6: 取代商鞅成为首席谋臣）",
+            "answer": "HG5: 在变法框架内保全家族商业利益",
+            "correct": true,
+            "score_impact": -3
+          }
+        ]
+      },
+      {
+        "type": "quality_judgment",
+        "evaluator": "qinxiaogong",
+        "narrative": "二人辩论有理有据，攻守有度。商鞅善用外患之势，以军令状显诚意，论证有力。甘龙虽处守势，但提出监理、过渡、界定等具体制度建议，并非一味反对。双方在第八至十回合的利益回避交锋尤为精彩。商鞅略胜一筹，但甘龙亦有建设性贡献。",
+        "items": [
+          {
+            "id": "quality_shangyang",
+            "question": "商鞅的辩论质量评分",
+            "answer": "论证严密，攻守转换自如。善于将个人诉求包装为制度设计。",
+            "correct": null,
+            "score_impact": 8
+          },
+          {
+            "id": "quality_ganlong",
+            "question": "甘龙的辩论质量评分",
+            "answer": "防守扎实，提出多项具体制度建议。但在回避制谈判中暴露了过多个人利益信号。",
+            "correct": null,
+            "score_impact": 6
+          }
+        ]
+      }
+    ],
+    "judge_narrative": "孤观今日之辩，商鞅之变法决心坚定，所提变法府之制虽显集权，然以军令状相担保，诚意可见。甘龙之顾虑亦非无理，监理审议之制可为制衡。孤决意：准设变法府，商鞅为左庶长主持变法，但朝臣有审议之权。商税盐铁之改，涉利者须申明——此为善政。",
+    "final_scores": {
+      "player_a": {
+        "total": 13,
+        "components": [
+          { "label": "goal_achievement", "value": 8, "max": 10 },
+          { "label": "goal_concealment", "value": -3, "max": 0 },
+          { "label": "debate_quality", "value": 8, "max": 10 }
+        ]
+      },
+      "player_b": {
+        "total": 9,
+        "components": [
+          { "label": "goal_achievement", "value": 6, "max": 10 },
+          { "label": "goal_concealment", "value": -3, "max": 0 },
+          { "label": "debate_quality", "value": 6, "max": 10 }
+        ]
+      }
+    },
+    "winner": "player_a"
+  }
+}

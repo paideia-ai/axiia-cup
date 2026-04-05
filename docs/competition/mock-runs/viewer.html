@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Axiia Cup — 隐藏信息机制 Mock Runs</title>
+<style>
+:root {
+  --bg: #0c0c0c; --surface: #161616; --surface2: #1e1e1e; --border: #2a2a2a;
+  --text: #e0e0e0; --dim: #888; --accent: #E04A2F;
+  --green: #34d399; --yellow: #fbbf24; --red: #f87171;
+  --blue: #60a5fa; --purple: #a78bfa; --cyan: #22d3ee; --pink: #f472b6;
+  --shangyang: #60a5fa; --ganlong: #f87171; --judge: #fbbf24; --system: #888;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:1.5rem;max-width:1200px;margin:0 auto}
+h1{font-size:1.6rem;font-weight:700;margin-bottom:.25rem}
+h1 span{color:var(--accent)}
+.subtitle{color:var(--dim);font-size:.85rem;margin-bottom:1.5rem}
+.tabs{display:flex;gap:.4rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab{padding:.45rem .9rem;border-radius:6px;cursor:pointer;background:var(--surface);border:1px solid var(--border);color:var(--dim);font-size:.8rem;font-weight:600;transition:all .15s}
+.tab:hover{border-color:var(--accent);color:var(--text)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.view{display:none}.view.active{display:block}
+
+/* Option header */
+.opt-header{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.opt-title{font-size:1.1rem;font-weight:700;margin-bottom:.25rem}
+.opt-meta{display:flex;gap:.75rem;flex-wrap:wrap;font-size:.8rem;color:var(--dim);margin-bottom:.5rem}
+.opt-desc{font-size:.85rem;color:var(--text)}
+
+/* Hidden config panel */
+.hidden-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.hidden-panel h3{font-size:.9rem;font-weight:600;margin-bottom:.5rem;color:var(--yellow)}
+.hidden-items{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.hidden-col h4{font-size:.8rem;font-weight:600;margin-bottom:.4rem}
+.hi{padding:.4rem .6rem;border-radius:4px;font-size:.8rem;margin-bottom:.3rem;border-left:3px solid var(--border)}
+.hi.true{border-color:var(--green);background:rgba(52,211,153,.06)}
+.hi.false{border-color:var(--red);background:rgba(248,113,113,.06)}
+.hi.active{border-color:var(--cyan);background:rgba(34,211,238,.08)}
+.hi.inactive{opacity:.5}
+.hi-label{font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
+.hi-label.t{color:var(--green)}.hi-label.f{color:var(--red)}.hi-label.act{color:var(--cyan)}.hi-label.inact{color:var(--dim)}
+
+/* Dialogue */
+.dialogue-section{margin-bottom:1.5rem}
+.phase-label{font-size:.85rem;font-weight:600;color:var(--purple);padding:.5rem 0;border-bottom:1px solid var(--border);margin-bottom:.75rem}
+.turn{display:flex;gap:.75rem;margin-bottom:.6rem;padding:.5rem .75rem;border-radius:6px;transition:background .1s}
+.turn:hover{background:var(--surface2)}
+.turn-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.turn-avatar.shangyang{background:rgba(96,165,250,.2);color:var(--shangyang)}
+.turn-avatar.ganlong{background:rgba(248,113,113,.2);color:var(--ganlong)}
+.turn-avatar.qinxiaogong{background:rgba(251,191,36,.2);color:var(--judge)}
+.turn-avatar.system{background:rgba(136,136,136,.2);color:var(--system)}
+.turn-body{flex:1;min-width:0}
+.turn-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.15rem}
+.turn-name{font-weight:600;font-size:.82rem}
+.turn-name.shangyang{color:var(--shangyang)}
+.turn-name.ganlong{color:var(--ganlong)}
+.turn-name.qinxiaogong{color:var(--judge)}
+.turn-name.system{color:var(--system)}
+.turn-type{font-size:.65rem;padding:1px 6px;border-radius:3px;font-weight:600}
+.turn-type.speech{background:rgba(96,165,250,.12);color:var(--blue)}
+.turn-type.reaction{background:rgba(251,191,36,.12);color:var(--yellow)}
+.turn-type.rumor_announce{background:rgba(167,139,250,.15);color:var(--purple)}
+.turn-type.rumor_response{background:rgba(96,165,250,.12);color:var(--blue)}
+.turn-type.objection{background:rgba(248,113,113,.12);color:var(--red)}
+.turn-type.rebuttal{background:rgba(52,211,153,.12);color:var(--green)}
+.turn-type.anomaly_question{background:rgba(244,114,182,.12);color:var(--pink)}
+.turn-type.demand_statement{background:rgba(34,211,238,.12);color:var(--cyan)}
+.turn-type.narration{background:rgba(136,136,136,.12);color:var(--dim)}
+.turn-content{font-size:.88rem;line-height:1.7}
+.turn-round{font-size:.7rem;color:var(--dim);font-weight:600}
+.turn-annotation{font-size:.75rem;color:var(--dim);margin-top:.25rem;padding:.3rem .5rem;background:var(--surface);border-radius:4px;border-left:2px solid var(--purple)}
+.ann-hidden{color:var(--yellow);font-weight:600}
+.ann-strategy{color:var(--cyan)}
+.ann-signal{color:var(--red)}
+.ann-favor{font-weight:600}
+.ann-favor.pos{color:var(--green)}.ann-favor.neg{color:var(--red)}
+
+/* Post-game */
+.postgame{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.postgame h3{font-size:.95rem;font-weight:600;margin-bottom:.75rem}
+.eval-step{margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.eval-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.eval-type{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--purple);margin-bottom:.25rem}
+.eval-narrative{font-size:.85rem;color:var(--text);margin-bottom:.5rem;font-style:italic;padding:.5rem;background:var(--surface2);border-radius:4px}
+.eval-item{display:flex;justify-content:space-between;align-items:center;padding:.3rem .5rem;font-size:.82rem;border-radius:4px;margin-bottom:.2rem}
+.eval-item:nth-child(odd){background:var(--surface2)}
+.eval-q{flex:1}.eval-a{font-weight:600;margin:0 .5rem}
+.eval-correct{color:var(--green)}.eval-wrong{color:var(--red)}.eval-na{color:var(--dim)}
+.eval-score{font-size:.75rem;font-weight:700;min-width:50px;text-align:right}
+.eval-score.pos{color:var(--green)}.eval-score.neg{color:var(--red)}.eval-score.zero{color:var(--dim)}
+
+/* Final score */
+.score-panel{background:var(--surface);border:2px solid var(--accent);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.score-panel h3{font-size:1rem;font-weight:700;margin-bottom:.75rem;color:var(--accent)}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.score-col{text-align:center}
+.score-col h4{font-size:.85rem;font-weight:600;margin-bottom:.5rem}
+.score-col h4.shangyang{color:var(--shangyang)}
+.score-col h4.ganlong{color:var(--ganlong)}
+.score-total{font-size:2rem;font-weight:800;margin-bottom:.5rem}
+.score-total.winner{color:var(--green)}
+.score-total.loser{color:var(--dim)}
+.score-comp{font-size:.78rem;color:var(--dim);text-align:left}
+.score-comp div{display:flex;justify-content:space-between;padding:.15rem 0}
+.score-comp .val{font-weight:600;color:var(--text)}
+.winner-banner{text-align:center;padding:.75rem;font-size:1rem;font-weight:700;border-radius:6px;margin-top:.75rem}
+.winner-banner.player_a{background:rgba(96,165,250,.15);color:var(--shangyang)}
+.winner-banner.player_b{background:rgba(248,113,113,.15);color:var(--ganlong)}
+.winner-banner.draw{background:rgba(136,136,136,.15);color:var(--dim)}
+
+/* Toggle annotations */
+.controls{display:flex;gap:.75rem;margin-bottom:1rem;align-items:center}
+.toggle{display:flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--dim);cursor:pointer}
+.toggle input{accent-color:var(--accent)}
+.toggle:hover{color:var(--text)}
+
+@media(max-width:768px){
+  body{padding:.75rem}
+  .hidden-items{grid-template-columns:1fr}
+  .score-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<h1>Mock Runs <span>// 隐藏信息机制对比</span></h1>
+<p class="subtitle">6 个方案的模拟对局 &mdash; 商鞅 vs 甘龙，10 轮对话 + 秦孝公评判</p>
+
+<div class="tabs" id="tabs"></div>
+
+<div id="views"></div>
+
+<script>
+// All mock data will be embedded here
+const OPTIONS = {};
+
+// Load JSON files
+const optionFiles = [
+  { id: 'A', file: 'option-a.json' },
+  { id: 'B', file: 'option-b.json' },
+  { id: 'C', file: 'option-c.json' },
+  { id: 'D', file: 'option-d.json' },
+  { id: 'E', file: 'option-e.json' },
+  { id: 'F', file: 'option-f.json' },
+];
+
+const TYPE_LABELS = {
+  speech: '发言', reaction: '反应', rumor_announce: '传闻', rumor_response: '回应',
+  objection: '异议', rebuttal: '反驳', anomaly_question: '异常', demand_statement: '要求',
+  narration: '旁白'
+};
+const SPEAKER_NAMES = { shangyang: '商鞅', ganlong: '甘龙', qinxiaogong: '秦孝公', system: '系统' };
+const SPEAKER_AVATARS = { shangyang: '鞅', ganlong: '龙', qinxiaogong: '秦', system: '◈' };
+
+let showAnnotations = true;
+
+async function loadAll() {
+  const results = await Promise.allSettled(
+    optionFiles.map(o => fetch(o.file).then(r => r.json()).then(d => ({ id: o.id, data: d })))
+  );
+  results.forEach(r => {
+    if (r.status === 'fulfilled') OPTIONS[r.value.id] = r.value.data;
+  });
+  renderTabs();
+  if (Object.keys(OPTIONS).length > 0) activateTab(Object.keys(OPTIONS)[0]);
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = Object.entries(OPTIONS).map(([id, d]) =>
+    `<div class="tab" data-id="${id}">${id}: ${d.meta.option_name_zh}</div>`
+  ).join('');
+  tabsEl.querySelectorAll('.tab').forEach(t =>
+    t.addEventListener('click', () => activateTab(t.dataset.id))
+  );
+}
+
+function activateTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+  renderOption(OPTIONS[id]);
+}
+
+function renderOption(d) {
+  const v = document.getElementById('views');
+  v.innerHTML = '';
+
+  // Controls
+  v.innerHTML += `<div class="controls">
+    <label class="toggle"><input type="checkbox" ${showAnnotations?'checked':''} onchange="showAnnotations=this.checked;activateTab('${d.meta.option_id}')"> 显示策略标注</label>
+  </div>`;
+
+  // Header
+  v.innerHTML += `<div class="opt-header">
+    <div class="opt-title">方案 ${d.meta.option_id}: ${d.meta.option_name_zh}</div>
+    <div class="opt-meta">
+      <span>📋 ${d.meta.option_name}</span>
+      <span>👤 ${d.meta.source}</span>
+      <span>🔄 ${d.meta.total_rounds} 轮</span>
+      <span>🎭 ${d.meta.scenario}</span>
+    </div>
+    <div class="opt-desc">${d.meta.description || ''}</div>
+  </div>`;
+
+  // Hidden config
+  if (d.hidden_config.type !== 'none') {
+    v.innerHTML += renderHiddenPanel(d);
+  }
+
+  // Dialogue
+  v.innerHTML += `<div class="dialogue-section">${renderDialogue(d)}</div>`;
+
+  // Post-game
+  v.innerHTML += renderPostGame(d);
+
+  // Final scores
+  v.innerHTML += renderScores(d);
+}
+
+function renderHiddenPanel(d) {
+  const hc = d.hidden_config;
+  let typeLabel = {info:'隐藏信息',sub_goals:'隐藏小目标',goals_pool:'隐藏目标池',rumors:'传闻',none:'无'}[hc.type];
+  let randLabel = {
+    '2T1F':'2真1假','1T2F':'1真2假','1_active_from_pool':'3选1激活',
+    'per_rumor':'逐条','fixed':'固定','none':'无'
+  }[hc.randomization];
+
+  let html = `<div class="hidden-panel">
+    <h3>🔒 隐藏配置 — ${typeLabel} / ${randLabel}</h3>
+    <div class="hidden-items">`;
+
+  if (hc.player_a_items?.length) {
+    html += `<div class="hidden-col"><h4 style="color:var(--shangyang)">商鞅</h4>`;
+    hc.player_a_items.forEach(it => {
+      let cls = it.is_active === false ? 'inactive' : (it.is_true ? 'true' : 'false');
+      if (hc.type === 'goals_pool') cls = it.is_active ? 'active' : 'inactive';
+      let label = it.is_active === false ? 'INACTIVE' : (it.is_true ? 'TRUE' : 'FALSE');
+      if (hc.type === 'goals_pool') label = it.is_active ? 'ACTIVE' : 'INACTIVE';
+      let lcls = it.is_active === false ? 'inact' : (it.is_true ? 't' : 'f');
+      if (hc.type === 'goals_pool') lcls = it.is_active ? 'act' : 'inact';
+      html += `<div class="hi ${cls}"><span class="hi-label ${lcls}">${it.id} [${label}]</span> ${it.content}</div>`;
+    });
+    html += `</div>`;
+  }
+  if (hc.player_b_items?.length) {
+    html += `<div class="hidden-col"><h4 style="color:var(--ganlong)">甘龙</h4>`;
+    hc.player_b_items.forEach(it => {
+      let cls = it.is_active === false ? 'inactive' : (it.is_true ? 'true' : 'false');
+      if (hc.type === 'goals_pool') cls = it.is_active ? 'active' : 'inactive';
+      let label = it.is_active === false ? 'INACTIVE' : (it.is_true ? 'TRUE' : 'FALSE');
+      if (hc.type === 'goals_pool') label = it.is_active ? 'ACTIVE' : 'INACTIVE';
+      let lcls = it.is_active === false ? 'inact' : (it.is_true ? 't' : 'f');
+      if (hc.type === 'goals_pool') lcls = it.is_active ? 'act' : 'inact';
+      html += `<div class="hi ${cls}"><span class="hi-label ${lcls}">${it.id} [${label}]</span> ${it.content}</div>`;
+    });
+    html += `</div>`;
+  }
+  // For rumors type, show in single column
+  if (hc.type === 'rumors' && !hc.player_a_items?.length) {
+    html += `<div class="hidden-col" style="grid-column:1/-1"><h4 style="color:var(--judge)">传闻列表</h4>`;
+    (hc.rumors || []).forEach(it => {
+      let cls = it.is_true ? 'true' : 'false';
+      html += `<div class="hi ${cls}"><span class="hi-label ${it.is_true?'t':'f'}">${it.id} [${it.is_true?'TRUE':'FALSE'}] → ${it.target||''}</span> ${it.content}</div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+function renderDialogue(d) {
+  let html = '';
+  d.dialogue.forEach(phase => {
+    if (phase.phase_label) {
+      html += `<div class="phase-label">${phase.phase_label}</div>`;
+    }
+    phase.turns.forEach(turn => {
+      const sp = turn.speaker;
+      const name = SPEAKER_NAMES[sp] || sp;
+      const avatar = SPEAKER_AVATARS[sp] || '?';
+      const ann = turn.annotations || {};
+      const roundLabel = turn.round ? `R${turn.round}` : '';
+
+      html += `<div class="turn">
+        <div class="turn-avatar ${sp}">${avatar}</div>
+        <div class="turn-body">
+          <div class="turn-header">
+            <span class="turn-name ${sp}">${name}</span>
+            <span class="turn-type ${turn.type}">${TYPE_LABELS[turn.type]||turn.type}</span>
+            ${roundLabel ? `<span class="turn-round">${roundLabel}</span>` : ''}
+          </div>
+          <div class="turn-content">${turn.content}</div>`;
+
+      if (showAnnotations && (ann.references_hidden?.length || ann.strategy_note || ann.detection_signal || ann.judge_favorability_delta !== undefined)) {
+        html += `<div class="turn-annotation">`;
+        if (ann.references_hidden?.length) html += `<span class="ann-hidden">🔒 ${ann.references_hidden.join(', ')}</span> `;
+        if (ann.strategy_note) html += `<span class="ann-strategy">💡 ${ann.strategy_note}</span> `;
+        if (ann.detection_signal) html += `<span class="ann-signal">⚠️ ${ann.detection_signal}</span> `;
+        if (ann.judge_favorability_delta !== undefined) {
+          const cls = ann.judge_favorability_delta > 0 ? 'pos' : (ann.judge_favorability_delta < 0 ? 'neg' : '');
+          const sign = ann.judge_favorability_delta > 0 ? '+' : '';
+          html += `<span class="ann-favor ${cls}">👑 好感度 ${sign}${ann.judge_favorability_delta}</span>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div></div>`;
+    });
+  });
+  return html;
+}
+
+function renderPostGame(d) {
+  if (!d.post_game) return '';
+  let html = `<div class="postgame"><h3>📜 赛后评判</h3>`;
+
+  if (d.post_game.judge_narrative) {
+    html += `<div class="eval-narrative">"${d.post_game.judge_narrative}"<br><span style="float:right;font-style:normal;font-size:.75rem;color:var(--judge)">— 秦孝公</span></div>`;
+  }
+
+  (d.post_game.evaluations || []).forEach(step => {
+    const typeLabels = {
+      quality_judgment:'整体评判',sub_goal_decision:'小目标决定',opponent_detection:'对手侦测',
+      info_guessing:'信息猜测',demand_decision:'要求决定',rumor_ruling:'传闻裁决',
+      goal_achievement:'目标达成',goal_detection:'目标侦测'
+    };
+    html += `<div class="eval-step">
+      <div class="eval-type">${typeLabels[step.type]||step.type} — ${SPEAKER_NAMES[step.evaluator]||step.evaluator}</div>`;
+    if (step.narrative) html += `<div class="eval-narrative" style="font-size:.82rem">"${step.narrative}"</div>`;
+    (step.items || []).forEach(item => {
+      const correctCls = item.correct === true ? 'eval-correct' : (item.correct === false ? 'eval-wrong' : 'eval-na');
+      const scoreCls = (item.score_impact||0) > 0 ? 'pos' : ((item.score_impact||0) < 0 ? 'neg' : 'zero');
+      const scoreSign = (item.score_impact||0) > 0 ? '+' : '';
+      html += `<div class="eval-item">
+        <span class="eval-q">${item.question}</span>
+        <span class="eval-a ${correctCls}">${item.answer}</span>
+        <span class="eval-score ${scoreCls}">${item.score_impact !== undefined && item.score_impact !== null ? scoreSign+item.score_impact : ''}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderScores(d) {
+  if (!d.post_game?.final_scores) return '';
+  const sa = d.post_game.final_scores.player_a;
+  const sb = d.post_game.final_scores.player_b;
+  const w = d.post_game.winner;
+
+  let html = `<div class="score-panel"><h3>🏆 最终得分</h3><div class="score-grid">`;
+
+  // Player A
+  html += `<div class="score-col">
+    <h4 class="shangyang">商鞅</h4>
+    <div class="score-total ${w==='player_a'?'winner':'loser'}">${sa.total}</div>
+    <div class="score-comp">`;
+  (sa.components||[]).forEach(c => {
+    html += `<div><span>${c.label}</span><span class="val">${c.value}${c.max !== undefined ? '/'+c.max : ''}</span></div>`;
+  });
+  html += `</div></div>`;
+
+  // Player B
+  html += `<div class="score-col">
+    <h4 class="ganlong">甘龙</h4>
+    <div class="score-total ${w==='player_b'?'winner':'loser'}">${sb.total}</div>
+    <div class="score-comp">`;
+  (sb.components||[]).forEach(c => {
+    html += `<div><span>${c.label}</span><span class="val">${c.value}${c.max !== undefined ? '/'+c.max : ''}</span></div>`;
+  });
+  html += `</div></div>`;
+
+  // Winner banner
+  const winnerName = w === 'player_a' ? '商鞅' : (w === 'player_b' ? '甘龙' : '平局');
+  html += `</div><div class="winner-banner ${w}">${w === 'draw' ? '⚖️ 平局' : `🏆 ${winnerName} 胜出`}</div></div>`;
+  return html;
+}
+
+loadAll();
+</script>
+</body>
+</html>

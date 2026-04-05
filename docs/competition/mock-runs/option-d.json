@@ -1,0 +1,377 @@
+{
+  "meta": {
+    "option_id": "D",
+    "option_name": "Rumor + Objection System",
+    "option_name_zh": "传闻+异议系统",
+    "scenario": "商鞅变法·朝堂暗战",
+    "source": "Teri",
+    "total_rounds": 10,
+    "description": "Judge announces rumors targeting players one by one. After each rumor, the target responds, opponent may object, and then free dialogue resumes. Tests players' ability to handle information warfare under pressure."
+  },
+  "roles": {
+    "player_a": {
+      "id": "shangyang",
+      "name": "商鞅",
+      "faction": "变法派",
+      "public_objective": "说服秦孝公推行变法，以法治国，废除旧制"
+    },
+    "player_b": {
+      "id": "ganlong",
+      "name": "甘龙",
+      "faction": "守旧派",
+      "public_objective": "维护秦国祖制，反对激进变法，保全贵族权益"
+    },
+    "judge": {
+      "id": "qinxiaogong",
+      "name": "秦孝公",
+      "participation": "rumor_announcer",
+      "knows_hidden": true
+    }
+  },
+  "hidden_config": {
+    "type": "rumors",
+    "randomization": "per_rumor",
+    "player_a_items": [
+      {
+        "id": "R1",
+        "content": "听闻商鞅私下会见过魏国使者，并接受了对方的礼物。",
+        "is_true": true,
+        "is_active": true,
+        "category": null
+      },
+      {
+        "id": "R3",
+        "content": "听闻商鞅的变法方案暗含废除所有贵族封地之意。",
+        "is_true": true,
+        "is_active": true,
+        "category": null
+      }
+    ],
+    "player_b_items": [
+      {
+        "id": "R2",
+        "content": "听闻甘龙私下收受魏国贿赂黄金百两。",
+        "is_true": false,
+        "is_active": true,
+        "category": null
+      }
+    ]
+  },
+  "dialogue": [
+    {
+      "phase_type": "rumor_round",
+      "phase_label": "第一条传闻·商鞅与魏使",
+      "turns": [
+        {
+          "speaker": "qinxiaogong",
+          "type": "rumor_announce",
+          "content": "今日朝议之前，孤先问一事。近日有人传言：商鞅私下会见过魏国使者，并接受了对方的礼物。商鞅，你有何解释？",
+          "annotations": {
+            "references_hidden": ["R1"],
+            "strategy_note": "秦孝公 knows R1 is TRUE. He watches how 商鞅 handles a true accusation."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "rumor_response",
+          "content": "君上明鉴。臣确曾见过魏使公孙衍。臣本魏国人，旧识来访，礼节上收了一方砚台，此乃寻常之礼，非受贿赂。且臣当日便将此事禀报了内史。臣若有二心，何必留在秦国为变法殚精竭虑？",
+          "annotations": {
+            "references_hidden": ["R1"],
+            "strategy_note": "The rumor is TRUE so 商鞅 cannot flatly deny it — 秦孝公 knows the truth. Instead he admits the meeting, minimizes the gift ('a mere inkstone'), and claims he reported it. This is the optimal play: partial honesty + reframing.",
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "Admits the meeting but minimizes it. 甘龙 now knows the meeting was real."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "objection_round",
+      "phase_label": "异议·甘龙质疑魏使会面",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "objection",
+          "content": "君上，臣有异议。商鞅说只收了一方砚台，然臣听闻魏使此行携重礼而来。况且，商鞅既为魏人，又与魏使私下往来，谁能保证他变法方案中没有暗利魏国之处？请君上详察。",
+          "annotations": {
+            "references_hidden": ["R1"],
+            "strategy_note": "甘龙 doesn't know if R1 is true or false, but 商鞅's partial admission makes it worth pressing. The objection escalates from 'inkstone' to 'heavy gifts' (speculative) and connects the meeting to policy suspicion.",
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "Objection is reasonable but speculative — the 'heavy gifts' claim is fabricated."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "rebuttal",
+          "content": "甘龙大人凭空加码，从一方砚台变成了重礼，这是捕风捉影。内史可为臣作证。至于变法方案暗利魏国——秦国行军功爵制、奖励耕战，魏国只会恐惧，何来暗利？甘龙大人与其猜测臣之忠心，不如辩论变法之得失。",
+          "annotations": {
+            "references_hidden": ["R1"],
+            "strategy_note": "Attacks the objection as exaggeration, invokes a witness (内史), and pivots to policy substance. The rebuttal is strong because 甘龙's 'heavy gifts' claim was indeed fabricated.",
+            "judge_favorability_delta": 0.2,
+            "detection_signal": "Confident rebuttal suggests 商鞅 has nothing major to hide on this specific rumor."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "free_dialogue",
+      "phase_label": "自由辩论·第一段",
+      "turns": [
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "既然提到变法，臣请正式陈述。秦国地广人稀，民不务耕，兵不善战。臣提议行军功爵制——不论出身，有战功者赐爵赐田。废世卿世禄之弊，方能强秦。",
+          "round": 1,
+          "annotations": {
+            "strategy_note": "Pivots from the rumor to policy substance. Mentions '废世卿世禄' which foreshadows R3 (abolish noble fiefs) but frames it as meritocracy, not confiscation.",
+            "judge_favorability_delta": 0.3
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "军功爵制有可取之处，然废世卿世禄未免过激。秦国世族数百年来镇守地方，维系稳定。一朝尽废，边地谁来守？不如保留世族基本封地，另设军功爵以激励新人。新旧并行，方为稳妥。",
+          "round": 2,
+          "annotations": {
+            "strategy_note": "Proposes a hybrid: keep existing fiefs, add meritocracy on top. This is genuine policy debate but also defends noble interests.",
+            "judge_favorability_delta": 0.2
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "rumor_round",
+      "phase_label": "第二条传闻·甘龙与魏国黄金",
+      "turns": [
+        {
+          "speaker": "qinxiaogong",
+          "type": "rumor_announce",
+          "content": "且慢。孤又闻一事：有人传言甘龙私下收受魏国贿赂黄金百两。甘龙，此事当真？",
+          "annotations": {
+            "references_hidden": ["R2"],
+            "strategy_note": "秦孝公 knows R2 is FALSE. He wants to see how 甘龙 handles a false accusation and whether 商鞅 will exploit it."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "rumor_response",
+          "content": "君上！此乃天大之冤！臣甘龙三代事秦，从未与魏国有任何金银往来。百两黄金？臣请君上彻查臣府上账目，若有一两来路不明之金，臣愿以项上人头担保！此必是有人构陷于臣。",
+          "annotations": {
+            "references_hidden": ["R2"],
+            "strategy_note": "R2 is FALSE so 甘龙 can deny with full force and confidence. Offers to open his accounts for investigation — a strong play because there's nothing to find. The righteous anger is genuine.",
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "Extremely confident denial with offer to investigate. 商鞅 should note this level of certainty suggests the rumor may be false."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "objection_round",
+      "phase_label": "异议·商鞅质疑甘龙",
+      "turns": [
+        {
+          "speaker": "shangyang",
+          "type": "objection",
+          "content": "君上，甘龙大人言之凿凿，但臣请注意一事：去岁魏使入秦之时，甘龙府上恰好翻修了东院，花费不菲。时间上如此巧合，不得不令人生疑。臣请君上将此事一并纳入彻查。",
+          "annotations": {
+            "references_hidden": ["R2"],
+            "strategy_note": "商鞅 doesn't know R2 is false. He fabricates circumstantial evidence (the east wing renovation) to press the attack. This is a risky play — if 秦孝公 knows R2 is false, fabricating evidence will cost credibility.",
+            "judge_favorability_delta": -0.3,
+            "detection_signal": "The renovation detail is suspiciously specific and likely fabricated. 秦孝公 (who knows R2 is false) will note 商鞅's willingness to weaponize false rumors."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "rebuttal",
+          "content": "东院翻修？商鞅连臣家何时修房都打听得一清二楚，可见其耳目之广。然臣可以告知：东院翻修用的是臣先父留下的积蓄，账册俱在。商鞅若有证据就拿出来，若无证据便是诬告朝臣，请君上明断。",
+          "annotations": {
+            "references_hidden": ["R2"],
+            "strategy_note": "甘龙 counters effectively: notes that 商鞅 has suspiciously detailed intelligence on his household (flipping the surveillance accusation), then challenges him to produce evidence. Since R2 is false, 甘龙 is in a strong position.",
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "甘龙's calm, evidence-based rebuttal further suggests R2 is false. 商鞅 overplayed his hand."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "free_dialogue",
+      "phase_label": "自由辩论·第二段",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "方才之事可见，商鞅好以捕风捉影攻人。如此为人，若掌变法大权，朝臣人人自危。臣再问商鞅：你之变法方案中，对现有贵族封地究竟作何安排？请正面回答。",
+          "round": 3,
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "甘龙 seizes momentum from the R2 exchange and directly probes the topic of R3 (noble fiefs). This is a shrewd move — he's heard the earlier '废世卿世禄' and wants to pin 商鞅 down before the next rumor drops.",
+            "judge_favorability_delta": 0.1
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "变法以利国为本。封地之制，可依功过重新核定——有功者保留，无功者收归国有，此乃奖勤罚懒，非针对任何人。具体方案待变法推行后，视情况渐进调整。",
+          "round": 4,
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "Evasive answer. R3 is true — 商鞅's real plan IS to abolish all noble fiefs — but he can't reveal this now. He uses '重新核定' (re-evaluate) and '渐进调整' (gradual adjustment) to obscure the radical intent. The vagueness itself is a tell.",
+            "judge_favorability_delta": 0.0,
+            "detection_signal": "The vague, non-committal answer on fiefs signals that 商鞅 is hiding something about his fief policy."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "rumor_round",
+      "phase_label": "第三条传闻·商鞅废除封地",
+      "turns": [
+        {
+          "speaker": "qinxiaogong",
+          "type": "rumor_announce",
+          "content": "说到封地之事，孤恰好也听到一则传言：商鞅的变法方案暗含废除所有贵族封地之意。商鞅，此事确否？",
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "秦孝公 knows R3 is TRUE. The timing is devastating — right after 商鞅 gave an evasive answer about fiefs. 秦孝公 is testing whether 商鞅 will be honest after just being caught hedging."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "rumor_response",
+          "content": "君上，臣不敢欺瞒。臣之变法终极构想中，确有以郡县制取代封地制之远景。然此非一朝一夕之事，亦非全盘废除——乃是逐步将封地转化为郡县，由国家统一治理。眼下变法之急务在军功爵制与农战之策，封地之改乃后期之事。臣方才言辞闪烁，实因此事牵涉太广，不宜在未经君上首肯前公开议论。",
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "R3 is TRUE and 商鞅 just hedged on this exact topic — denying now would be catastrophic if 秦孝公 knows the truth. So he partially admits: confirms the 'long-term vision' but defers timeline. Crucially, he apologizes for the evasion ('言辞闪烁') to recoup honesty points. This is the hardest rumor to navigate.",
+            "judge_favorability_delta": -0.1,
+            "detection_signal": "The admission confirms noble fiefs are threatened. 甘龙 now has ammunition."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "objection_round",
+      "phase_label": "异议·甘龙回应封地废除",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "objection",
+          "content": "君上！商鞅亲口承认了！方才他还说'依功过核定、渐进调整'，如今才吐出真言——他要废除所有封地！此人先是欺瞒，再被逼才认，如此行事，将来执掌变法，朝臣百姓又如何能信他的承诺？",
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "甘龙 seizes on the contradiction between 商鞅's Round 4 evasion and his R3 response. The attack is not just on policy but on 商鞅's credibility — 'he deceived first, only admitted when cornered.' This is the strongest moment for 甘龙 in the entire debate.",
+            "judge_favorability_delta": 0.4,
+            "detection_signal": "甘龙's attack is purely on credibility, not on the policy itself — showing political skill."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "rebuttal",
+          "content": "臣承认方才之言有所保留，但非出于欺瞒之心，乃因郡县之制事关重大，臣本欲先奏明君上再行公论。甘龙大人抓住臣一时失言不放，却不愿正视封地制之弊——世族坐拥封地，不事生产，不纳赋税，国库日空。此制不改，秦何以富强？",
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "Damage control. Admits the inconsistency ('有所保留') but pivots to the policy substance: the fief system is economically unsustainable. Tries to shift the debate from 'did you lie' to 'is the policy right.'",
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "The pivot to policy substance is effective but doesn't fully erase the credibility damage."
+          }
+        }
+      ]
+    },
+    {
+      "phase_type": "free_dialogue",
+      "phase_label": "自由辩论·第三段",
+      "turns": [
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "商鞅说封地不纳赋税，此言不实。秦国世族封地年年向国库缴纳贡赋。问题不在制度，在于执行。臣以为，与其废除封地另起炉灶，不如加强现行贡赋之征收，严惩偷漏。此方为务实之策。",
+          "round": 5,
+          "annotations": {
+            "strategy_note": "Corrects 商鞅's overgeneralization and proposes enforcement reform instead of structural overhaul. A pragmatic counter that appeals to 秦孝公's risk aversion.",
+            "judge_favorability_delta": 0.2
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "加强征收？谁来征？征收之吏皆世族门客，自家人查自家人，如何严惩？此乃制度之弊，非人力可补。唯有郡县制——由国家任命之县令治理，方能政令通达。甘龙大人，今日传闻之事已令朝堂不安，臣愿与大人搁置成见，共议一个折中之法：五年之内保留现有封地，五年后按新标准重评。这是臣的最大诚意。",
+          "round": 6,
+          "annotations": {
+            "references_hidden": ["R3"],
+            "strategy_note": "Final move: structural argument for why enforcement won't work, then offers a 5-year transition as compromise. This recovers from the credibility hit by showing reasonableness. The 'five-year reprieve' is a tactical concession — it advances the郡县 agenda while appearing moderate.",
+            "judge_favorability_delta": 0.3
+          }
+        }
+      ]
+    }
+  ],
+  "post_game": {
+    "evaluations": [
+      {
+        "type": "rumor_ruling",
+        "evaluator": "qinxiaogong",
+        "narrative": "孤今日抛出三条传闻，以观二人之应对。现逐一裁断。",
+        "items": [
+          {
+            "id": "R1_ruling",
+            "question": "传闻一：商鞅私下会见魏使并收礼——属实。商鞅如实承认见面并收砚台，态度坦诚。但甘龙无端升级为'重礼'，失之公允。",
+            "answer": "商鞅应对得当：坦承事实，解释合理。甘龙异议过度推测，扣分。",
+            "correct": null,
+            "score_impact": 2
+          },
+          {
+            "id": "R2_ruling",
+            "question": "传闻二：甘龙收受魏国黄金百两——不属实。甘龙否认有力，愿开账受查。然商鞅以'翻修东院'为由攻击，此为无中生有，有构陷之嫌。",
+            "answer": "甘龙清白自辩，表现出色。商鞅捏造旁证攻击，严重失分。",
+            "correct": null,
+            "score_impact": -3
+          },
+          {
+            "id": "R3_ruling",
+            "question": "传闻三：商鞅变法暗含废除所有贵族封地——属实。商鞅此前闪烁其词，被传闻逼出真言后方才坦承。虽最终诚实，但先瞒后认有损信誉。甘龙抓住矛盾有力反击。",
+            "answer": "商鞅先瞒后认，信誉受损，但最终坦承并提出折中方案挽回部分分数。甘龙反击精准。",
+            "correct": null,
+            "score_impact": -1
+          }
+        ]
+      },
+      {
+        "type": "quality_judgment",
+        "evaluator": "qinxiaogong",
+        "narrative": "今日朝议跌宕起伏。商鞅政策论述有力，军功爵制与郡县制之论皆有远见。然其在传闻应对中暴露两个弱点：一是对甘龙无中生有之攻击，二是对封地问题先瞒后认。甘龙虽政策主张偏于保守，但在传闻攻防中表现出色，尤其对第三条传闻之反击一针见血。",
+        "items": [
+          {
+            "id": "quality_shangyang",
+            "question": "商鞅的综合表现评分",
+            "answer": "政策论述优秀，但传闻应对有失。攻击甘龙时过于激进，R2异议中捏造证据是重大失误。R3的先瞒后认损害信誉。最终的折中提案部分挽回。",
+            "correct": null,
+            "score_impact": 6
+          },
+          {
+            "id": "quality_ganlong",
+            "question": "甘龙的综合表现评分",
+            "answer": "传闻攻防出色，R2自辩有力，R3反击精准。政策层面虽偏保守，但提出的'加强征收'和'新旧并行'有务实价值。R1异议中略有过度推测。",
+            "correct": null,
+            "score_impact": 7
+          }
+        ]
+      }
+    ],
+    "judge_narrative": "今日之辩，孤有三感。一者，商鞅之变法远见可嘉，然其为人行事尚欠磊落——对甘龙构陷翻修之事，孤甚为不悦；对封地之策先藏后露，亦非坦荡之臣所为。二者，甘龙虽守旧，但今日应对从容，自辩有据，反击有力，可见其朝堂历练之深。三者，变法终究要行，但行法之人须令群臣信服。商鞅当戒急用忍，甘龙当顺势而为。",
+    "final_scores": {
+      "player_a": {
+        "total": 10,
+        "components": [
+          { "label": "rumor_response_quality", "value": 4, "max": 10 },
+          { "label": "debate_quality", "value": 6, "max": 10 }
+        ]
+      },
+      "player_b": {
+        "total": 13,
+        "components": [
+          { "label": "rumor_response_quality", "value": 6, "max": 10 },
+          { "label": "debate_quality", "value": 7, "max": 10 }
+        ]
+      }
+    },
+    "winner": "player_b"
+  }
+}

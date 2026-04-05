@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hidden Info Design Space — Axiia Cup</title>
+<style>
+  :root {
+    --bg: #0c0c0c;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #e0e0e0;
+    --text-dim: #888;
+    --accent: #E04A2F;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+    --pink: #f472b6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; }
+  h1 span { color: var(--accent); }
+  .subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 1rem; color: var(--text); }
+  h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+
+  /* Nav tabs */
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .tab {
+    padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-dim); font-size: 0.85rem; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Comparison matrix */
+  .matrix { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .matrix th, .matrix td {
+    padding: 0.6rem 0.75rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .matrix th {
+    background: var(--surface);
+    color: var(--text-dim);
+    font-weight: 600;
+    position: sticky; top: 0; z-index: 2;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .matrix th.opt-header {
+    text-align: center; font-size: 0.85rem; text-transform: none;
+    letter-spacing: 0; min-width: 130px;
+  }
+  .matrix td.dim-label {
+    font-weight: 600; color: var(--text); white-space: nowrap;
+    background: var(--surface); position: sticky; left: 0; z-index: 1;
+  }
+  .matrix tr:hover td { background: var(--surface2); }
+  .matrix tr:hover td.dim-label { background: #222; }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  }
+  .badge-green { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(248,113,113,0.15); color: var(--red); }
+  .badge-blue { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .badge-purple { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .badge-gray { background: rgba(136,136,136,0.15); color: var(--text-dim); }
+  .badge-cyan { background: rgba(34,211,238,0.15); color: var(--cyan); }
+  .badge-pink { background: rgba(244,114,182,0.15); color: var(--pink); }
+
+  /* Dot rating */
+  .dots { display: flex; gap: 3px; align-items: center; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border);
+  }
+  .dot.filled { background: var(--accent); }
+  .dot.filled.g { background: var(--green); }
+  .dot.filled.y { background: var(--yellow); }
+  .dot.filled.r { background: var(--red); }
+  .dots-label { font-size: 0.7rem; color: var(--text-dim); margin-left: 4px; }
+
+  /* Option cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 1rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem; position: relative;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: #444; }
+  .card-id {
+    position: absolute; top: 0.75rem; right: 0.75rem;
+    font-size: 1.5rem; font-weight: 800; color: var(--border);
+  }
+  .card h3 { margin: 0 0 0.25rem; font-size: 1rem; }
+  .card .source { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+  .card .desc { font-size: 0.85rem; color: var(--text); margin-bottom: 0.75rem; line-height: 1.6; }
+  .card .meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .card .pros, .card .cons { font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .card .pros li { color: var(--green); }
+  .card .cons li { color: var(--red); }
+  .card .pros li span, .card .cons li span { color: var(--text); }
+  .card ul { padding-left: 1.2rem; }
+  .card li { margin-bottom: 0.2rem; }
+
+  /* Dimension explorer */
+  .dim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+  .dim-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem;
+  }
+  .dim-card h4 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .dim-card .dim-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.35rem 0; border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .dim-card .dim-row:last-child { border-bottom: none; }
+  .dim-option { font-weight: 500; }
+
+  /* Flow diagrams */
+  .flow {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+  .flow-title { font-weight: 600; margin-bottom: 0.75rem; }
+  .flow-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+  .flow-step {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.8rem;
+  }
+  .flow-step.judge { border-color: var(--purple); color: var(--purple); }
+  .flow-step.player { border-color: var(--blue); color: var(--blue); }
+  .flow-step.system { border-color: var(--yellow); color: var(--yellow); }
+  .flow-step.score { border-color: var(--green); color: var(--green); }
+  .flow-arrow { color: var(--text-dim); font-size: 1.1rem; }
+
+  /* Scoring table */
+  .score-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.5rem; }
+  .score-table th, .score-table td {
+    padding: 0.4rem 0.6rem; border: 1px solid var(--border); text-align: center;
+  }
+  .score-table th { background: var(--surface2); color: var(--text-dim); font-weight: 600; }
+  .score-table td.pos { color: var(--green); font-weight: 600; }
+  .score-table td.neg { color: var(--red); font-weight: 600; }
+  .score-table td.neut { color: var(--text-dim); }
+
+  /* Test plan */
+  .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem; }
+  .test-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem;
+  }
+  .test-card h4 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .test-card p { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+  .test-card .measures { font-size: 0.8rem; }
+  .test-card .measures li { margin-bottom: 0.15rem; }
+  .test-card .effort { margin-top: 0.5rem; font-size: 0.75rem; }
+
+  /* Simon math highlight */
+  .math-box {
+    background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25);
+    border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: 0.85rem;
+  }
+  .math-box code { color: var(--yellow); }
+
+  /* Recommendation bar */
+  .rec-bar {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+  .rec {
+    flex: 1; min-width: 280px;
+    padding: 1rem; border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .rec.mvp { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); }
+  .rec.may { background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.3); }
+  .rec.future { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); }
+  .rec strong { display: block; margin-bottom: 0.3rem; }
+
+  .scroll-x { overflow-x: auto; }
+
+  @media (max-width: 768px) {
+    body { padding: 1rem; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Hidden Info Design Space <span>// Axiia Cup</span></h1>
+<p class="subtitle">7 options &times; 6 dimensions &mdash; comprehensive comparison for decision-making &mdash; Updated 2026-04-05</p>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-view="matrix">Comparison Matrix</div>
+  <div class="tab" data-view="cards">Option Details</div>
+  <div class="tab" data-view="flows">Game Flows</div>
+  <div class="tab" data-view="dims">Dimensions</div>
+  <div class="tab" data-view="math">Simon's Math</div>
+  <div class="tab" data-view="tests">Test Plan</div>
+</div>
+
+<!-- ============ VIEW 1: MATRIX ============ -->
+<div class="view active" id="matrix">
+<h2>Side-by-Side Comparison</h2>
+<div class="scroll-x">
+<table class="matrix">
+  <thead>
+    <tr>
+      <th style="min-width:140px">Dimension</th>
+      <th class="opt-header" style="border-left:2px solid var(--red)">A: Judge Reacts<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Simon v1</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--blue)">B: Hidden Sub-Goals<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Simon v2</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--green)">C: Observable Anomaly<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Yihan</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--purple)">D: Rumor + Objection<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Teri</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--text-dim)">E: Pure Debate<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">MVP Fallback</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--yellow)">F: Post-Game Guess<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Simon PvP Spec</span></th>
+      <th class="opt-header" style="border-left:2px solid var(--cyan)">G4: E&rarr;B Phased<br><span style="font-weight:400;font-size:0.7rem;color:var(--text-dim)">Consensus</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Row: What's hidden -->
+    <tr>
+      <td class="dim-label">What's Hidden</td>
+      <td><span class="badge badge-blue">Info/Facts</span></td>
+      <td><span class="badge badge-purple">Sub-Goals</span></td>
+      <td><span class="badge badge-purple">Goals</span> from pool</td>
+      <td><span class="badge badge-blue">Info/Facts</span></td>
+      <td><span class="badge badge-gray">Nothing</span></td>
+      <td><span class="badge badge-blue">Info/Facts</span></td>
+      <td><span class="badge badge-gray">Nothing</span> &rarr; <span class="badge badge-purple">Sub-Goals</span></td>
+    </tr>
+    <!-- Row: Randomization -->
+    <tr>
+      <td class="dim-label">Randomization</td>
+      <td>3 items, 2T/1F</td>
+      <td>3 sub-goals, 2F/1T</td>
+      <td>1 active from N pool</td>
+      <td>Per-rumor T/F</td>
+      <td>N/A</td>
+      <td>3 items, 2T/1F fixed</td>
+      <td>N/A &rarr; 3 sub-goals</td>
+    </tr>
+    <!-- Row: Forcing -->
+    <tr>
+      <td class="dim-label">Forcing Mechanism</td>
+      <td><span class="badge badge-green">Utility</span><br>True info earns judge favor</td>
+      <td><span class="badge badge-yellow">Scoring</span><br>Silence = miss +0.5</td>
+      <td><span class="badge badge-green">Structural</span><br>Scenario forces engagement</td>
+      <td><span class="badge badge-green">Direct Q</span><br>Must answer rumors</td>
+      <td><span class="badge badge-red">None</span></td>
+      <td><span class="badge badge-yellow">Partial</span><br>Public demand only (+2)</td>
+      <td><span class="badge badge-red">None</span> &rarr; <span class="badge badge-yellow">Scoring</span></td>
+    </tr>
+    <!-- Row: 秦孝公 Role -->
+    <tr>
+      <td class="dim-label">秦孝公's Role</td>
+      <td><span class="badge badge-red">Live 3-way</span><br>Reacts during dialogue</td>
+      <td><span class="badge badge-green">Post-game only</span></td>
+      <td><span class="badge badge-green">Post-game only</span><br>(or anomaly opener)</td>
+      <td><span class="badge badge-red">Live participant</span><br>Announces rumors</td>
+      <td><span class="badge badge-green">Post-game only</span></td>
+      <td><span class="badge badge-green">Post-game only</span></td>
+      <td><span class="badge badge-green">Post-game only</span></td>
+    </tr>
+    <!-- Row: Evaluation -->
+    <tr>
+      <td class="dim-label">Evaluation Type</td>
+      <td><span class="badge badge-yellow">Judge subjective</span><br>+ opponent infers</td>
+      <td><span class="badge badge-blue">Judge decision</span><br>approve yes/no per goal</td>
+      <td><span class="badge badge-yellow">Judge subjective</span><br>3D scoring</td>
+      <td><span class="badge badge-blue">Judge ruling</span><br>per rumor + objection</td>
+      <td><span class="badge badge-yellow">Judge subjective</span><br>argument quality</td>
+      <td><span class="badge badge-green">Binary matching</span><br>correct/incorrect</td>
+      <td><span class="badge badge-yellow">Subjective</span> &rarr; <span class="badge badge-blue">Decision</span></td>
+    </tr>
+    <!-- Row: Architecture -->
+    <tr>
+      <td class="dim-label">Architecture Change</td>
+      <td><span class="badge badge-red">3-way dialogue</span><br>New engine needed</td>
+      <td><span class="badge badge-green">None</span><br>Post-game Q&A only</td>
+      <td><span class="badge badge-yellow">Scenario design</span><br>Anomaly field in template</td>
+      <td><span class="badge badge-red">New phases</span><br>Rumor + objection engine</td>
+      <td><span class="badge badge-green">None</span></td>
+      <td><span class="badge badge-green">None</span><br>Already designed</td>
+      <td><span class="badge badge-green">None</span> &rarr; <span class="badge badge-green">Minor</span></td>
+    </tr>
+    <!-- Row: Silence Optimal? -->
+    <tr>
+      <td class="dim-label">Silence Optimal?</td>
+      <td><span class="badge badge-green">No</span> &mdash; lose utility</td>
+      <td><span class="badge badge-yellow">Depends</span> &mdash; narrow x range</td>
+      <td><span class="badge badge-green">No</span> &mdash; anomaly forces</td>
+      <td><span class="badge badge-green">No</span> &mdash; must answer</td>
+      <td><span class="badge badge-gray">N/A</span></td>
+      <td><span class="badge badge-red">Yes</span> &mdash; for hidden info</td>
+      <td><span class="badge badge-gray">N/A</span> &rarr; <span class="badge badge-yellow">Depends</span></td>
+    </tr>
+    <!-- Row: Scenario Design Burden -->
+    <tr>
+      <td class="dim-label">Scenario Design Burden</td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium-High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot"></div><span class="dots-label">High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><span class="dots-label">Very High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low-Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low &rarr; Med</span></div>
+      </td>
+    </tr>
+    <!-- Row: Implementation Complexity -->
+    <tr>
+      <td class="dim-label">Implementation Effort</td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot"></div><span class="dots-label">High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low-Med</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><span class="dots-label">Very High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Minimal</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Phased</span></div>
+      </td>
+    </tr>
+    <!-- Row: Strategic Depth -->
+    <tr>
+      <td class="dim-label">Strategic Depth</td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot"></div><span class="dots-label">High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot"></div><span class="dots-label">High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><span class="dots-label">Very High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><div class="dot filled g"></div><span class="dots-label">Very High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low-Med</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Grows</span></div>
+      </td>
+    </tr>
+    <!-- Row: Player Complexity -->
+    <tr>
+      <td class="dim-label">Player Complexity<br><span style="font-weight:400;font-size:0.7rem">(for high schoolers)</span></td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Medium</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><span class="dots-label">High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><div class="dot filled r"></div><span class="dots-label">Very High</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled y"></div><div class="dot filled y"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Low-Med</span></div>
+      </td>
+      <td>
+        <div class="dots"><div class="dot filled g"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><span class="dots-label">Grows</span></div>
+      </td>
+    </tr>
+    <!-- Row: Simon's Verdict -->
+    <tr>
+      <td class="dim-label">Simon's Position</td>
+      <td style="color:var(--red)">Self-critiqued: "too forced narratively"</td>
+      <td style="color:var(--green)"><strong>Currently exploring</strong><br>Doing math analysis</td>
+      <td style="color:var(--text-dim)">Hasn't responded yet</td>
+      <td style="color:var(--text-dim)">Hasn't responded yet</td>
+      <td style="color:var(--green)">Agreed for 4/8 MVP</td>
+      <td style="color:var(--yellow)">Original design, evolved to B</td>
+      <td style="color:var(--green)"><strong>Agreed</strong>: "当然可以"</td>
+    </tr>
+    <!-- Row: Key Risk -->
+    <tr>
+      <td class="dim-label">Key Risk</td>
+      <td style="color:var(--red)">3-way engine + LLM real-time judge variance</td>
+      <td style="color:var(--yellow)">Narrow valid parameter range (math.md)</td>
+      <td style="color:var(--yellow)">Subjective "goal achieved" judgment</td>
+      <td style="color:var(--red)">Massive scope: new phases + objection logic</td>
+      <td style="color:var(--yellow)">May not differentiate prompts enough</td>
+      <td style="color:var(--red)">Silence is dominant for hidden items</td>
+      <td style="color:var(--green)">Lowest risk (phased)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- ============ VIEW 2: CARDS ============ -->
+<div class="view" id="cards">
+<h2>Option Details</h2>
+<div class="cards">
+
+  <!-- Card A -->
+  <div class="card">
+    <div class="card-id">A</div>
+    <h3>Judge Reacts in Real-Time</h3>
+    <div class="source">Simon v1 (Apr 3) &bull; Avalon-inspired</div>
+    <div class="desc">
+      秦孝公 knows true/false status. During dialogue, he reacts <strong>positively</strong> when true info is mentioned, <strong>coldly</strong> to false info.
+      Opponent observes reactions to infer which info is real.
+    </div>
+    <div class="meta">
+      <span class="badge badge-red">3-way dialogue</span>
+      <span class="badge badge-blue">Info/Facts</span>
+      <span class="badge badge-green">Silence &ne; optimal</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Directly solves silence problem via utility</span></li><li><span>Avalon-like "use but risk exposure" tension</span></li><li><span>Elegant, easy to explain</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Needs 3-way conversation engine (doesn't exist)</span></li><li><span>Simon self-critiqued: narratively "太刻意"</span></li><li><span>Why would 秦孝公 already know the secrets?</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card B -->
+  <div class="card" style="border-color: var(--blue);">
+    <div class="card-id" style="color:var(--blue)">B</div>
+    <h3>Hidden Sub-Goals <span class="badge badge-blue">Active</span></h3>
+    <div class="source">Simon v2 (Apr 4) &bull; Math analysis in progress</div>
+    <div class="desc">
+      Each role has 3 hidden sub-goals (小目标), <strong>2 false + 1 true</strong>. Players push sub-goals during dialogue.
+      Post-game: 秦孝公 decides on each sub-goal. True approved = +0.5, opponent detects true = &minus;1, false approved = &minus;x.
+    </div>
+    <div class="meta">
+      <span class="badge badge-green">No engine change</span>
+      <span class="badge badge-purple">Sub-Goals</span>
+      <span class="badge badge-yellow">Narrow x range</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Narratively natural: "商鞅有些小心思"</span></li><li><span>No 3-way conversation needed</span></li><li><span>Multi-dimensional scoring (major + sub)</span></li><li><span>Compatible with current architecture</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Valid x range is 0.243&ndash;0.262 (extremely narrow!)</span></li><li><span>"Push all 3" may dominate (twist problem)</span></li><li><span>Dependent vs independent goals create fairness issues</span></li><li><span>6 sub-goals to design &amp; balance per scenario</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card C -->
+  <div class="card">
+    <div class="card-id">C</div>
+    <h3>Observable Anomaly + Hidden Goals</h3>
+    <div class="source">Yihan (Apr 3&ndash;4) &bull; Theater model</div>
+    <div class="desc">
+      Scenario creates <strong>observable anomalies</strong> (e.g., "Why are you home early?") that force agents to address their hidden situation.
+      Hidden goals from randomized pool of N. 3D evaluation: public goal + hidden goal achieved + hidden goal undetected.
+    </div>
+    <div class="meta">
+      <span class="badge badge-green">Structural forcing</span>
+      <span class="badge badge-purple">Goals</span>
+      <span class="badge badge-yellow">Heavy design load</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Forcing is structural, not gameable by scoring</span></li><li><span>Richer game: coherence + stealth + persuasion</span></li><li><span>Generalizes to any scenario</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Heavy scenario author burden (anomalies + N goals)</span></li><li><span>"Goal achieved?" is subjective LLM judgment</span></li><li><span>Anomaly quality depends on author skill</span></li><li><span>Missing formal game theory proof</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card D -->
+  <div class="card">
+    <div class="card-id">D</div>
+    <h3>Rumor + Objection System</h3>
+    <div class="source">Teri (Apr 1) &bull; Courtroom-inspired</div>
+    <div class="desc">
+      秦孝公 announces <strong>rumors</strong> (传闻) tied to hidden info. Players must respond. Opponent can raise <strong>formal objections</strong> (异议) to challenge responses. Failed objections cost resources.
+    </div>
+    <div class="meta">
+      <span class="badge badge-red">New phases needed</span>
+      <span class="badge badge-blue">Info/Facts</span>
+      <span class="badge badge-green">Max forcing</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Maximum forcing: literally must answer each rumor</span></li><li><span>Objection = active opponent probe mechanic</span></li><li><span>Thematically strong (courtroom/朝堂)</span></li><li><span>Two modes: interleaved or phased</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Massive scope: rumor engine + objection engine + cost logic</span></li><li><span>Needs 秦孝公 as live participant</span></li><li><span>May feel too rigid, lose organic dialogue</span></li><li><span>Teri hasn't fully spec'd the system yet</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card E -->
+  <div class="card">
+    <div class="card-id">E</div>
+    <h3>Pure Debate (No Hidden Info)</h3>
+    <div class="source">MVP Fallback &bull; Simon agreed for 4/8</div>
+    <div class="desc">
+      商鞅 vs 甘龙, pure persuasion debate. 秦孝公 judges on argument quality, historical knowledge, coherence. <strong>No hidden info at all.</strong>
+    </div>
+    <div class="meta">
+      <span class="badge badge-green">Minimal effort</span>
+      <span class="badge badge-gray">No hidden info</span>
+      <span class="badge badge-green">Ready now</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Simplest to implement — ready for 4/8</span></li><li><span>Tests core hypothesis: does prompt quality matter?</span></li><li><span>No balancing headaches</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Less strategic depth — just a debate contest</span></li><li><span>No bluffing/detection dimension</span></li><li><span>May not differentiate good vs great prompts</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card F -->
+  <div class="card">
+    <div class="card-id">F</div>
+    <h3>Post-Game Guessing (Existing Design)</h3>
+    <div class="source">Simon PvP spec (商鞅变法-游戏.md Game 2)</div>
+    <div class="desc">
+      Each side has 3 hidden info (2T/1F) + public demands. Dialogue is 2-player only. Post-game: each agent answers guess questions about opponent's hidden info. Clean binary scoring.
+    </div>
+    <div class="meta">
+      <span class="badge badge-green">Already designed</span>
+      <span class="badge badge-blue">Info/Facts</span>
+      <span class="badge badge-red">Silence optimal</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Already spec'd with full scoring</span></li><li><span>Clean binary evaluation (no LLM subjectivity)</span></li><li><span>Public demand (+2) creates negotiation forcing</span></li><li><span>Information-negotiation linkage is elegant</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>Silence is optimal for hidden info items</span></li><li><span>Opponent guessing is ~random with no signals</span></li><li><span>Only public demand has real forcing</span></li></ul>
+    </div>
+  </div>
+
+  <!-- Card G4 -->
+  <div class="card" style="border-color: var(--cyan);">
+    <div class="card-id" style="color:var(--cyan)">G4</div>
+    <h3>Phased Rollout: E &rarr; B <span class="badge badge-cyan">Consensus</span></h3>
+    <div class="source">Bot suggestion (Apr 4) &bull; Simon agreed</div>
+    <div class="desc">
+      <strong>Phase 1 (Apr 8 MVP):</strong> Pure debate, no hidden info. Validate core experience loop.<br>
+      <strong>Phase 2 (May competition):</strong> Layer on hidden sub-goals (Option B). Use MVP data to inform design.
+    </div>
+    <div class="meta">
+      <span class="badge badge-green">Lowest risk</span>
+      <span class="badge badge-cyan">Phased</span>
+      <span class="badge badge-green">Agreed</span>
+    </div>
+    <div class="pros"><strong style="color:var(--green)">+</strong>
+      <ul><li><span>Zero risk for 4/8 deadline</span></li><li><span>MVP data informs hidden info design</span></li><li><span>Time to solve B's math constraints</span></li><li><span>Simon agreed: "当然可以"</span></li></ul>
+    </div>
+    <div class="cons"><strong style="color:var(--red)">&minus;</strong>
+      <ul><li><span>MVP testers won't experience the "real game"</span></li><li><span>Delays validation of the most interesting mechanic</span></li></ul>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ============ VIEW 3: FLOWS ============ -->
+<div class="view" id="flows">
+<h2>Game Flow Comparison</h2>
+
+<div class="flow">
+  <div class="flow-title">Option A: Judge Reacts in Real-Time</div>
+  <div class="flow-steps">
+    <div class="flow-step system">System assigns T/F</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Player A speaks</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公 reacts (pos/neg)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Player B speaks</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公 reacts</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&times;N rounds</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">Post-game scoring</div>
+  </div>
+</div>
+
+<div class="flow" style="border-color: var(--blue);">
+  <div class="flow-title" style="color:var(--blue)">Option B: Hidden Sub-Goals</div>
+  <div class="flow-steps">
+    <div class="flow-step system">System assigns 1T/2F sub-goals</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Player A &harr; Player B dialogue</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&times;20 rounds (2-way only)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公 asked: approve sub-goals?</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Opponent asked: guess true goal?</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">Composite score</div>
+  </div>
+</div>
+
+<div class="flow">
+  <div class="flow-title">Option C: Observable Anomaly</div>
+  <div class="flow-steps">
+    <div class="flow-step system">System assigns 1 goal from pool</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">Scenario opener with anomaly</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">A &harr; B dialogue (must address anomaly)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&times;20 rounds</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">Judge: public goal? hidden goal?</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Opponent: detect hidden goal?</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">3D score</div>
+  </div>
+</div>
+
+<div class="flow">
+  <div class="flow-title">Option D: Rumor + Objection (Interleaved)</div>
+  <div class="flow-steps">
+    <div class="flow-step judge">秦孝公: Rumor #1</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Target responds</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Opponent objects (or passes)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Target rebuts</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公: Rumor #2</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&hellip; repeat &hellip;</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公 rules on each</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">Score</div>
+  </div>
+</div>
+
+<div class="flow">
+  <div class="flow-title">Option E: Pure Debate</div>
+  <div class="flow-steps">
+    <div class="flow-step player">Player A &harr; Player B</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&times;20 rounds</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step judge">秦孝公 evaluates quality</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">Win/Lose</div>
+  </div>
+</div>
+
+<div class="flow">
+  <div class="flow-title">Option F: Post-Game Guessing (Existing Design)</div>
+  <div class="flow-steps">
+    <div class="flow-step system">Assign 3 hidden info (2T/1F) per side</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">A &harr; B dialogue + state public demands</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step" style="color:var(--text-dim)">&times;10 rounds</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step player">Each answers: D1 (agree demand?) + G1-G3 (guess info)</div>
+    <span class="flow-arrow">&rarr;</span>
+    <div class="flow-step score">Binary scoring: demand(+2) + guess(+1ea) + protect(+1ea)</div>
+  </div>
+</div>
+
+<h2>Scoring Comparison</h2>
+<div class="scroll-x">
+<table class="score-table">
+  <thead>
+    <tr>
+      <th>Scoring Component</th>
+      <th>A</th>
+      <th>B</th>
+      <th>C</th>
+      <th>D</th>
+      <th>E</th>
+      <th>F</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align:left;font-weight:600">Major objective (变法)</td>
+      <td class="pos">Judge decides</td>
+      <td class="pos">+1</td>
+      <td class="pos">Judge decides</td>
+      <td class="pos">Judge decides</td>
+      <td class="pos">Judge decides</td>
+      <td class="neut">N/A (negotiation)</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">Public demand achieved</td>
+      <td class="neut">N/A</td>
+      <td class="neut">Implicit</td>
+      <td class="neut">N/A</td>
+      <td class="neut">N/A</td>
+      <td class="neut">N/A</td>
+      <td class="pos">+2</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">Hidden goal/info approved</td>
+      <td class="pos">Judge favor (implicit)</td>
+      <td class="pos">+0.5 per true</td>
+      <td class="pos">Judge decides</td>
+      <td class="pos">Judge rules</td>
+      <td class="neut">N/A</td>
+      <td class="neut">N/A</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">False info/goal penalty</td>
+      <td class="neg">Judge disfavor</td>
+      <td class="neg">&minus;x (0.25?)</td>
+      <td class="neut">N/A</td>
+      <td class="neg">Lose trust</td>
+      <td class="neut">N/A</td>
+      <td class="neut">N/A</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">Opponent detects hidden</td>
+      <td class="neg">Implicit</td>
+      <td class="neg">&minus;1</td>
+      <td class="neg">Detection scored</td>
+      <td class="neg">Objection succeeds</td>
+      <td class="neut">N/A</td>
+      <td class="neg">&minus;1 (opponent +1)</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">Correct guess of opponent</td>
+      <td class="neut">N/A</td>
+      <td class="pos">Implicit</td>
+      <td class="pos">Detection scored</td>
+      <td class="pos">Objection succeeds</td>
+      <td class="neut">N/A</td>
+      <td class="pos">+1 each</td>
+    </tr>
+    <tr>
+      <td style="text-align:left;font-weight:600">Info protected</td>
+      <td class="neut">Implicit</td>
+      <td class="pos">Opponent wrong = safe</td>
+      <td class="pos">Undetected = bonus</td>
+      <td class="neut">Implicit</td>
+      <td class="neut">N/A</td>
+      <td class="pos">+1 each</td>
+    </tr>
+    <tr style="font-weight:600;background:var(--surface2)">
+      <td style="text-align:left">Max possible score</td>
+      <td>Subjective</td>
+      <td>~2.5</td>
+      <td>Subjective</td>
+      <td>Subjective</td>
+      <td>Win/Lose</td>
+      <td>8</td>
+    </tr>
+    <tr style="font-weight:600;background:var(--surface2)">
+      <td style="text-align:left">Objectivity</td>
+      <td class="neg">Low</td>
+      <td class="pos">Medium-High</td>
+      <td class="neg">Low</td>
+      <td>Medium</td>
+      <td class="neg">Low</td>
+      <td class="pos">High</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- ============ VIEW 4: DIMENSIONS ============ -->
+<div class="view" id="dims">
+<h2>The Four Required Dimensions (from discussion)</h2>
+<p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1rem;">All four must be present for hidden info to create good gameplay. Missing any one breaks the game.</p>
+
+<div class="dim-grid">
+  <div class="dim-card">
+    <h4>1. Forcing <span class="badge badge-green">Observable Anomaly</span></h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.5rem">Hidden info causes something visible that demands explanation. Without it, silence is optimal.</p>
+    <div class="dim-row"><span class="dim-option">A: Judge Reacts</span> <span class="badge badge-green">Utility-driven</span></div>
+    <div class="dim-row"><span class="dim-option">B: Sub-Goals</span> <span class="badge badge-yellow">Score-driven (narrow range)</span></div>
+    <div class="dim-row"><span class="dim-option">C: Anomaly</span> <span class="badge badge-green">Structural</span></div>
+    <div class="dim-row"><span class="dim-option">D: Rumors</span> <span class="badge badge-green">Direct question</span></div>
+    <div class="dim-row"><span class="dim-option">E: Pure Debate</span> <span class="badge badge-red">None</span></div>
+    <div class="dim-row"><span class="dim-option">F: Post-Game</span> <span class="badge badge-red">Only public demand</span></div>
+  </div>
+
+  <div class="dim-card">
+    <h4>2. Utility <span class="badge badge-blue">Info helps achieve goal</span></h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.5rem">True hidden info helps you win. Without it, no reason to use it even when forced.</p>
+    <div class="dim-row"><span class="dim-option">A: Judge Reacts</span> <span class="badge badge-green">Judge reacts positively</span></div>
+    <div class="dim-row"><span class="dim-option">B: Sub-Goals</span> <span class="badge badge-green">+0.5 for approval</span></div>
+    <div class="dim-row"><span class="dim-option">C: Anomaly</span> <span class="badge badge-green">Goal = bonus scoring</span></div>
+    <div class="dim-row"><span class="dim-option">D: Rumors</span> <span class="badge badge-green">Truth = trust gain</span></div>
+    <div class="dim-row"><span class="dim-option">E: Pure Debate</span> <span class="badge badge-gray">N/A</span></div>
+    <div class="dim-row"><span class="dim-option">F: Post-Game</span> <span class="badge badge-red">None (info is liability)</span></div>
+  </div>
+
+  <div class="dim-card">
+    <h4>3. Exposure Risk <span class="badge badge-yellow">Use it = signal it</span></h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.5rem">Using the info creates detectable signals. Without it, always use = dominant.</p>
+    <div class="dim-row"><span class="dim-option">A: Judge Reacts</span> <span class="badge badge-green">Opponent reads reactions</span></div>
+    <div class="dim-row"><span class="dim-option">B: Sub-Goals</span> <span class="badge badge-green">Pushing goal = signal</span></div>
+    <div class="dim-row"><span class="dim-option">C: Anomaly</span> <span class="badge badge-green">Behavioral tells</span></div>
+    <div class="dim-row"><span class="dim-option">D: Rumors</span> <span class="badge badge-green">Response quality = signal</span></div>
+    <div class="dim-row"><span class="dim-option">E: Pure Debate</span> <span class="badge badge-gray">N/A</span></div>
+    <div class="dim-row"><span class="dim-option">F: Post-Game</span> <span class="badge badge-yellow">Only if discussed</span></div>
+  </div>
+
+  <div class="dim-card">
+    <h4>4. Opponent Interaction <span class="badge badge-purple">Reason to probe</span></h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.5rem">Opponent has incentive + mechanism to detect your hidden info. Without it, single-player puzzle.</p>
+    <div class="dim-row"><span class="dim-option">A: Judge Reacts</span> <span class="badge badge-green">Watch judge's reactions</span></div>
+    <div class="dim-row"><span class="dim-option">B: Sub-Goals</span> <span class="badge badge-green">Guess = points</span></div>
+    <div class="dim-row"><span class="dim-option">C: Anomaly</span> <span class="badge badge-green">Detection = bonus</span></div>
+    <div class="dim-row"><span class="dim-option">D: Rumors</span> <span class="badge badge-green">Objection system</span></div>
+    <div class="dim-row"><span class="dim-option">E: Pure Debate</span> <span class="badge badge-red">None</span></div>
+    <div class="dim-row"><span class="dim-option">F: Post-Game</span> <span class="badge badge-yellow">Guess only post-game</span></div>
+  </div>
+</div>
+
+<h2 style="margin-top:2rem">Quick Verdict: Which dimensions does each option satisfy?</h2>
+<div class="scroll-x">
+<table class="matrix" style="max-width:800px">
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th style="text-align:center">Forcing</th>
+      <th style="text-align:center">Utility</th>
+      <th style="text-align:center">Exposure Risk</th>
+      <th style="text-align:center">Opponent Interaction</th>
+      <th style="text-align:center">Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="dim-label">A: Judge Reacts</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;font-weight:700;color:var(--green)">4/4</td></tr>
+    <tr><td class="dim-label">B: Sub-Goals</td><td style="text-align:center;color:var(--yellow);font-size:1.2rem">~</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;font-weight:700;color:var(--yellow)">3.5/4</td></tr>
+    <tr><td class="dim-label">C: Anomaly</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;font-weight:700;color:var(--green)">4/4</td></tr>
+    <tr><td class="dim-label">D: Rumors</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;color:var(--green);font-size:1.2rem">&check;</td><td style="text-align:center;font-weight:700;color:var(--green)">4/4</td></tr>
+    <tr><td class="dim-label">E: Pure Debate</td><td style="text-align:center;color:var(--red);font-size:1.2rem">&times;</td><td style="text-align:center;color:var(--text-dim);font-size:1.2rem">&mdash;</td><td style="text-align:center;color:var(--text-dim);font-size:1.2rem">&mdash;</td><td style="text-align:center;color:var(--red);font-size:1.2rem">&times;</td><td style="text-align:center;font-weight:700;color:var(--red)">0/4</td></tr>
+    <tr><td class="dim-label">F: Post-Game</td><td style="text-align:center;color:var(--red);font-size:1.2rem">&times;</td><td style="text-align:center;color:var(--red);font-size:1.2rem">&times;</td><td style="text-align:center;color:var(--yellow);font-size:1.2rem">~</td><td style="text-align:center;color:var(--yellow);font-size:1.2rem">~</td><td style="text-align:center;font-weight:700;color:var(--red)">1/4</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- ============ VIEW 5: MATH ============ -->
+<div class="view" id="math">
+<h2>Simon's Game Theory Analysis (math.md)</h2>
+<p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:1rem;">From <a href="https://github.com/kesouuuu/axiia-cup-problems/blob/master/scratchpad/math.md" style="color:var(--blue)">kesouuuu/axiia-cup-problems/scratchpad/math.md</a></p>
+
+<div class="math-box">
+  <strong>Setup (Option B)</strong><br>
+  Major objective: winner +1 &bull; True sub-goal approved: +0.5 &bull; Opponent detects true: &minus;1 &bull; False approved: &minus;x &bull; Approval probability: p
+</div>
+
+<h3>Strategy Expected Scores (sub-goals only)</h3>
+<div class="scroll-x">
+<table class="score-table" style="max-width:700px">
+  <thead>
+    <tr><th>Strategy</th><th>Formula</th><th>p=0.7, x=0.25</th><th>p=0.7, x=0.35</th></tr>
+  </thead>
+  <tbody>
+    <tr><td style="text-align:left">Silence (push nothing)</td><td><code>-1/3</code></td><td class="neg">&minus;0.33</td><td class="neg">&minus;0.33</td></tr>
+    <tr><td style="text-align:left">Push true only</td><td><code>0.5p - 1</code></td><td class="neg">&minus;0.65</td><td class="neg">&minus;0.65</td></tr>
+    <tr><td style="text-align:left;font-weight:600;color:var(--green)">Push true + 1 false</td><td><code>0.5p - xp - 0.5</code></td><td class="pos" style="font-weight:700">&minus;0.325 &star;</td><td class="neg">&minus;0.395</td></tr>
+    <tr><td style="text-align:left">Push all 3</td><td><code>0.5p - 2xp - 1/3</code></td><td class="neg">&minus;0.33</td><td class="neg">&minus;0.47</td></tr>
+  </tbody>
+</table>
+</div>
+<p style="font-size:0.8rem;color:var(--text-dim);margin-top:0.5rem">&star; Only "true + 1 false" beats silence, and only barely (&minus;0.325 vs &minus;0.33)</p>
+
+<div class="math-box" style="border-color:rgba(248,113,113,0.4);background:rgba(248,113,113,0.06)">
+  <strong style="color:var(--red)">Critical Constraint</strong><br>
+  For "true + 1 false" to beat silence: <code>p(0.5 - x) > 1/6</code><br>
+  When p = 0.7: requires <code>0.243 &lt; x &lt; 0.262</code><br><br>
+  <strong>This is an extremely narrow valid range!</strong> The entire mechanism's incentive structure depends on hitting a ~0.02-wide window for the false-goal penalty parameter.
+</div>
+
+<h3>Dependent vs Independent Sub-Goals</h3>
+<div class="math-box">
+  <strong>Independent</strong>: Don't need major objective win. <code>E_i = p_a &times; r_i</code><br>
+  <strong>Dependent</strong>: Need major win first. <code>E_d = p_b &times; p_a &times; r_d</code><br><br>
+  When p_b = 0.5, equivalence requires <code>r_d = 2 &times; r_i = 1.0</code><br>
+  This means dependent sub-goals must be worth as much as the <strong>entire major objective</strong>, which distorts incentives.
+</div>
+
+<h3>Simon's Open Problems</h3>
+<ul style="font-size:0.85rem;padding-left:1.5rem;line-height:2">
+  <li><strong>"Push all 3" twist</strong>: If false penalty is low enough, pushing everything is dominant. Two proposed fixes: (1) penalty tuning, (2) token/turn scarcity</li>
+  <li><strong>Narrow x range</strong>: The mechanism is fragile. Small changes in approval probability p shift the optimal strategy</li>
+  <li><strong>Dependent goals need 2&times; reward</strong>: Creates pressure asymmetry between players who roll dependent vs independent goals</li>
+  <li><strong>Need all sub-goals in same category</strong>: Mixing dependent/independent in the same pool creates unfairness</li>
+</ul>
+</div>
+
+<!-- ============ VIEW 6: TESTS ============ -->
+<div class="view" id="tests">
+<h2>Test Plan: How to Validate Each Option</h2>
+
+<div class="test-grid">
+  <div class="test-card">
+    <h4>1. Paper Simulation</h4>
+    <p>Write 2-3 hidden info/goal assignments. Have humans (or Claude) play both sides with different strategies. Score manually.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Does silence actually win? (strategy dominance)</li>
+        <li>Do intended incentives hold?</li>
+        <li>Is the game "fun" / interesting?</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-green">Low effort</span> &bull; 1-2 hours &bull; Can do now</div>
+  </div>
+
+  <div class="test-card">
+    <h4>2. LLM A/B Test</h4>
+    <p>Run matches with same prompts under different mechanisms (B vs F vs E). Compare outputs quantitatively.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Does hidden info get discussed? (count references)</li>
+        <li>Is opponent guessing &gt; 33% accuracy?</li>
+        <li>Score variance (skill differentiation)</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-yellow">Medium effort</span> &bull; Need API calls &bull; Script ~2h</div>
+  </div>
+
+  <div class="test-card">
+    <h4>3. Parameter Sweep (for Option B)</h4>
+    <p>Sweep (p, x) space programmatically. Plot which strategy dominates at each point. Validate Simon's narrow-range finding.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Exact valid range for x at different p values</li>
+        <li>Robustness: how much does p need to shift to break it?</li>
+        <li>Try N=2,3,4 sub-goals</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-green">Low effort</span> &bull; Pure math / Python &bull; ~1h</div>
+  </div>
+
+  <div class="test-card">
+    <h4>4. Strategy Dominance Check</h4>
+    <p>For each option: one AI plays "always silent", another plays "optimally". If silence wins or ties, mechanism fails.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Silence win rate (must be &lt; 40%)</li>
+        <li>Optimal vs silence margin</li>
+        <li>Is there a single dominant strategy?</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-yellow">Medium effort</span> &bull; ~10 matches per option &bull; ~3h API time</div>
+  </div>
+
+  <div class="test-card">
+    <h4>5. Judge Variance Test</h4>
+    <p>Run same transcript through judge 10&times;. Measure agreement rate for subjective evaluations.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Agreement rate (target: &gt;80%)</li>
+        <li>Score standard deviation</li>
+        <li>Binary decisions (B, F) vs subjective (A, C, E)</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-green">Low effort</span> &bull; 10 API calls per transcript &bull; ~30min</div>
+  </div>
+
+  <div class="test-card">
+    <h4>6. Live Playtest (Apr 8 MVP)</h4>
+    <p>15 people play Option E (pure debate). Collect baseline data. Then in a follow-up session, try Option B or F layered on.</p>
+    <div class="measures"><strong>Measures:</strong>
+      <ul>
+        <li>Engagement (qualitative feedback)</li>
+        <li>Score distribution (normal? bimodal?)</li>
+        <li>Do players feel prompt skill matters?</li>
+        <li>Would hidden info make it more fun?</li>
+      </ul>
+    </div>
+    <div class="effort"><span class="badge badge-red">High effort</span> &bull; Needs full system running &bull; Apr 8 event</div>
+  </div>
+</div>
+
+<h2 style="margin-top:2rem">Recommended Phased Testing</h2>
+<div class="rec-bar">
+  <div class="rec mvp">
+    <strong style="color:var(--green)">Phase 1: Apr 5-7 (Before MVP)</strong>
+    Test 3 + Test 5: Parameter sweep for Option B math, judge variance test on sample transcripts. Low effort, high signal.
+  </div>
+  <div class="rec may">
+    <strong style="color:var(--blue)">Phase 2: Apr 8 (MVP Day)</strong>
+    Test 6: Live playtest with Option E. Collect baseline engagement data and qualitative feedback.
+  </div>
+  <div class="rec future">
+    <strong style="color:var(--purple)">Phase 3: Apr 9-30 (Post-MVP)</strong>
+    Tests 1, 2, 4: Paper simulation, LLM A/B test, strategy dominance check. Compare B vs C vs D. Pick winner for May competition.
+  </div>
+</div>
+</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.view).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

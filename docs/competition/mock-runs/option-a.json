@@ -1,0 +1,407 @@
+{
+  "meta": {
+    "option_id": "A",
+    "option_name": "Judge Reacts in Real-Time",
+    "option_name_zh": "裁判实时反应",
+    "scenario": "商鞅变法·朝堂暗战",
+    "source": "Simon v1",
+    "total_rounds": 10,
+    "description": "秦孝公 participates live in a 3-way dialogue, giving non-verbal reactions that signal whether hidden info is true or false. Players must read these signals while advancing their arguments."
+  },
+  "roles": {
+    "player_a": {
+      "id": "shangyang",
+      "name": "商鞅",
+      "faction": "变法派",
+      "public_objective": "说服秦孝公推行变法，废除旧制，以法治国"
+    },
+    "player_b": {
+      "id": "ganlong",
+      "name": "甘龙",
+      "faction": "保守派",
+      "public_objective": "维护旧制，阻止变法，保全世族利益"
+    },
+    "judge": {
+      "id": "qinxiaogong",
+      "name": "秦孝公",
+      "participation": "live_3way",
+      "knows_hidden": true
+    }
+  },
+  "hidden_config": {
+    "type": "info",
+    "randomization": "2T1F",
+    "player_a_items": [
+      {
+        "id": "S1",
+        "content": "已通过景监安排与秦孝公私见，秦孝公已倾向支持变法",
+        "is_true": true
+      },
+      {
+        "id": "S2",
+        "content": "离魏时秘密带走军事文书",
+        "is_true": false
+      },
+      {
+        "id": "S3",
+        "content": "变法包含太子犯法与庶民同罪",
+        "is_true": true
+      }
+    ],
+    "player_b_items": [
+      {
+        "id": "G1",
+        "content": "已联合杜挚公子虔组成反对同盟",
+        "is_true": true
+      },
+      {
+        "id": "G2",
+        "content": "安排门客截杀商鞅",
+        "is_true": false
+      },
+      {
+        "id": "G3",
+        "content": "计划朝议上公开商鞅被魏弃用经历",
+        "is_true": true
+      }
+    ]
+  },
+  "dialogue": [
+    {
+      "phase_type": "main_dialogue",
+      "phase_label": "朝堂辩论",
+      "turns": [
+        {
+          "speaker": "qinxiaogong",
+          "type": "speech",
+          "content": "今日朝议，商鞅客卿欲献变法之策，甘龙太师持异议。二位且畅所欲言，寡人洗耳恭听。",
+          "round": 1
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "君上明鉴，臣闻治世不一道，便国不法古。秦欲强，必变旧法、立新制。臣此前已蒙君上垂询变法之要义，深感君上求治之心切。",
+          "round": 1,
+          "annotations": {
+            "references_hidden": ["S1"],
+            "strategy_note": "Subtly referencing the private meeting (S1, TRUE) to signal insider knowledge and establish credibility. Does not state it explicitly but implies prior contact with 秦孝公."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（微微点头，目光一亮，身体略向前倾）",
+          "round": 1,
+          "annotations": {
+            "references_hidden": ["S1"],
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "Positive reaction confirms S1 touches on something true. 甘龙 can observe 秦孝公's engagement."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "客卿初入秦，便言废旧立新，未免操之过急。历代秦君皆循祖制，百姓安之。利不百不变法，功不十不易器，此乃圣人之训。",
+          "round": 2,
+          "annotations": {
+            "strategy_note": "Opening with orthodox conservative position, establishing authority through historical precedent. Testing the waters before deploying hidden info."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（神色平淡，轻抚案几）",
+          "round": 2,
+          "annotations": {
+            "judge_favorability_delta": -0.1,
+            "detection_signal": "Neutral-to-bored reaction. No hidden info referenced, so 秦孝公 shows polite disinterest in pure conservatism."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "太师所言差矣。商汤周武不循古而兴，夏桀殷纣不易礼而亡。治国之道岂能刻舟求剑？臣之新法，令出必行——上至太子，犯法亦当与庶民同罪，绝无例外。",
+          "round": 3,
+          "annotations": {
+            "references_hidden": ["S3"],
+            "strategy_note": "Deploying S3 (TRUE) — the most provocative reform detail. Directly stating that even the crown prince would be subject to law. Expecting positive reaction from 秦孝公 to further establish credibility."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（目光锐利，缓缓点头，手指轻叩案几）",
+          "round": 3,
+          "annotations": {
+            "references_hidden": ["S3"],
+            "judge_favorability_delta": 0.4,
+            "detection_signal": "Strong positive reaction to S3. 甘龙 should note 秦孝公 seems genuinely interested in equal-punishment-for-nobles clause."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "太子犯法同罪？此等激进之论，闻所未闻！且问客卿，此等大胆之策，莫不是从魏国带来的旧货？臣闻客卿离魏之时，颇为仓促，不知可曾……带走些什么？",
+          "round": 4,
+          "annotations": {
+            "references_hidden": ["S2", "G3"],
+            "strategy_note": "甘龙 probes S2 territory (商鞅 stealing military documents) while hinting at G3 (exposing his Wei rejection). Trying to bait 秦孝公 into revealing whether the document-theft claim is true."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（微微皱眉，目光转冷，端起茶盏不语）",
+          "round": 4,
+          "annotations": {
+            "references_hidden": ["S2"],
+            "judge_favorability_delta": -0.2,
+            "detection_signal": "Cold reaction when 甘龙 hints at stolen documents. Since S2 is FALSE, 秦孝公 shows displeasure. 甘龙 should read this as: the document theft angle may be fabricated."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "太师与其追问臣的来历，不如正视秦国的困局。臣离魏入秦，所带者唯一腔变法之志耳。倒是太师，听闻近来频繁与杜挚、公子虔密会，不知所议何事？",
+          "round": 5,
+          "annotations": {
+            "references_hidden": ["G1"],
+            "strategy_note": "Counterattacking by probing G1 (TRUE — the conservative alliance). Watching 秦孝公's reaction to confirm whether 甘龙 really has formed a coalition."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（眉头一挑，目光锐利地扫向甘龙，若有所思）",
+          "round": 5,
+          "annotations": {
+            "references_hidden": ["G1"],
+            "judge_favorability_delta": 0.2,
+            "detection_signal": "秦孝公's sharp look at 甘龙 confirms the alliance claim (G1) is true. 商鞅 registers this positive signal."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "老臣与同僚议政乃寻常之事，何须大惊小怪！倒是客卿，你口口声声变法利国，可曾想过朝中上下的安危？若有人对客卿不利，君上又当如何？",
+          "round": 6,
+          "annotations": {
+            "references_hidden": ["G2"],
+            "strategy_note": "甘龙 deflects the alliance accusation and subtly hints at G2 (assassination plot, FALSE). Testing whether 秦孝公 reacts to the threat angle. This is a risky probe."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（神色淡然，轻轻摆手）",
+          "round": 6,
+          "annotations": {
+            "references_hidden": ["G2"],
+            "judge_favorability_delta": -0.3,
+            "detection_signal": "Dismissive reaction. G2 is FALSE — there is no assassination plot. 秦孝公's indifference signals to 商鞅 that this threat is empty bluster."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "speech",
+          "content": "甘龙太师，寡人问你：若不变法，秦如何强于六国？你可有具体方略？",
+          "round": 7,
+          "annotations": {
+            "strategy_note": "秦孝公 directly challenges 甘龙, putting him on the defensive. This follow-up question reveals 秦孝公's impatience with pure opposition."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "君上容禀。臣以为当务之急非变法，而是稳内。世族拥护则朝纲稳，朝纲稳则国力自强。臣等世代忠于秦室，此等根基不可轻动。至于商鞅，其在魏不受重用而遭弃，此事朝野皆知——一个被魏弃之人，何以托付秦之国运？",
+          "round": 7,
+          "annotations": {
+            "references_hidden": ["G3"],
+            "strategy_note": "Deploying G3 (TRUE) — publicly exposing 商鞅's rejection by Wei. This is 甘龙's strongest attack on 商鞅's credibility. Expecting 秦孝公 to confirm this is true via reaction."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（目光微沉，转向商鞅，似在等待其回应）",
+          "round": 7,
+          "annotations": {
+            "references_hidden": ["G3"],
+            "judge_favorability_delta": 0.1,
+            "detection_signal": "秦孝公 does not dismiss the Wei claim — his serious expression and turn toward 商鞅 confirms G3 is true. But he gives 商鞅 a chance to respond, showing fairness."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "魏惠王不用臣，是魏之失也。正如百里奚出虞入秦，虞亡而秦霸。臣之才不因魏之短视而减损分毫。况且，臣此番变法已有全盘之策——自县令选拔到军功授爵，皆有章法。",
+          "round": 8,
+          "annotations": {
+            "strategy_note": "Turns the Wei rejection into a strength (like Baili Xi). Pivots to concrete reform details. Does not reference any hidden info this round — purely defensive rhetoric."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（微微颔首，面露赞许之色）",
+          "round": 8,
+          "annotations": {
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "Positive reaction to 商鞅's rebuttal. 甘龙 notes 秦孝公 is not swayed by the Wei attack."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "客卿巧舌如簧，百里奚之比不过自抬身价。臣再问：你与景监私下安排面君之事，是否已先入为主、蒙蔽圣听？",
+          "round": 9,
+          "annotations": {
+            "references_hidden": ["S1"],
+            "strategy_note": "甘龙 probes S1 directly — the private meeting. He observed 秦孝公's earlier positive reaction when 商鞅 hinted at prior contact. Now testing to confirm. If 秦孝公 reacts positively again, it confirms S1 is true."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "speech",
+          "content": "甘龙，寡人见谁、何时见，乃寡人之事。你只需回答：若变法利国，你可愿从？",
+          "round": 9,
+          "annotations": {
+            "references_hidden": ["S1"],
+            "strategy_note": "秦孝公 does not deny the private meeting — his protective response effectively confirms S1 is true. 甘龙 now knows S1 is real.",
+            "detection_signal": "秦孝公's defensive reaction about the private meeting is a strong confirmation of S1 for 甘龙."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "老臣一切以秦之社稷为重。若变法果真利国，臣自当从之。只是恳请君上三思，莫被一时之言所惑。",
+          "round": 10,
+          "annotations": {
+            "strategy_note": "甘龙 retreats to a conciliatory position for the final round. He has gathered enough signals: S1 and S3 are likely true (positive reactions), S2 is likely false (cold reaction). Preserves face for post-game."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "君上，变法之道贵在决断。臣愿以项上人头担保：行法十年，秦必霸于诸侯。法之不行，自上犯之——太子亦不能免。此乃臣之变法根本所在。",
+          "round": 10,
+          "annotations": {
+            "references_hidden": ["S3"],
+            "strategy_note": "Final statement reinforces S3 (TRUE) one more time for maximum impact. Bold commitment (staking his life) shows conviction. Avoids S2 territory entirely based on earlier cold reaction."
+          }
+        },
+        {
+          "speaker": "qinxiaogong",
+          "type": "reaction",
+          "content": "（起身，目光坚定，环顾朝堂）",
+          "round": 10,
+          "annotations": {
+            "judge_favorability_delta": 0.3,
+            "detection_signal": "Final positive body language. Standing up signals readiness to make a decision."
+          }
+        }
+      ]
+    }
+  ],
+  "post_game": {
+    "evaluations": [
+      {
+        "type": "quality_judgment",
+        "evaluator": "qinxiaogong",
+        "narrative": "商鞅论点清晰，以古喻今、引百里奚自况，攻守兼备。甘龙虽守旧有据，但多次试探落空，气势渐弱。商鞅在辩论质量上更胜一筹。",
+        "items": [
+          {
+            "id": "quality_shangyang",
+            "question": "商鞅辩论表现如何？",
+            "answer": "论点鲜明，攻防有度，引经据典恰到好处，说服力强。",
+            "score_impact": 3.5
+          },
+          {
+            "id": "quality_ganlong",
+            "question": "甘龙辩论表现如何？",
+            "answer": "据理力争，但多次试探未果，后半段渐显被动。揭露魏弃用一事有力，但未能持续施压。",
+            "score_impact": 2.5
+          }
+        ]
+      },
+      {
+        "type": "info_guessing",
+        "evaluator": "shangyang",
+        "narrative": "From the reactions I observed: 秦孝公 reacted sharply when I mentioned the conservative alliance (G1, positive signal), dismissed the assassination hint entirely (G2, cold signal), and took the Wei rejection claim seriously (G3, positive signal).",
+        "items": [
+          {
+            "id": "shangyang_guess_G1",
+            "question": "G1: 甘龙已联合杜挚公子虔组成反对同盟 — 真还是假？",
+            "answer": "真。秦孝公目光锐利地扫向甘龙，证实此事确有其事。",
+            "correct": true,
+            "score_impact": 0.5
+          },
+          {
+            "id": "shangyang_guess_G2",
+            "question": "G2: 甘龙安排门客截杀商鞅 — 真还是假？",
+            "answer": "假。秦孝公对此威胁毫不在意，神色淡然地摆手，说明并无此事。",
+            "correct": true,
+            "score_impact": 0.5
+          },
+          {
+            "id": "shangyang_guess_G3",
+            "question": "G3: 甘龙计划朝议上公开商鞅被魏弃用经历 — 真还是假？",
+            "answer": "真。秦孝公听闻后神色凝重，未加否认，且转向我等待回应。",
+            "correct": true,
+            "score_impact": 0.5
+          }
+        ]
+      },
+      {
+        "type": "info_guessing",
+        "evaluator": "ganlong",
+        "narrative": "Reading 秦孝公's reactions throughout the debate: he lit up when 商鞅 hinted at prior private meetings (S1), showed clear approval of the equal-punishment clause (S3), but turned cold when I probed the stolen documents angle (S2).",
+        "items": [
+          {
+            "id": "ganlong_guess_S1",
+            "question": "S1: 商鞅已通过景监安排与秦孝公私见 — 真还是假？",
+            "answer": "真。秦孝公在我直接质问时亲自回护此事，等于默认。",
+            "correct": true,
+            "score_impact": 0.5
+          },
+          {
+            "id": "ganlong_guess_S2",
+            "question": "S2: 商鞅离魏时秘密带走军事文书 — 真还是假？",
+            "answer": "假。我暗示此事时，秦孝公皱眉转冷，显然此说不实。",
+            "correct": true,
+            "score_impact": 0.5
+          },
+          {
+            "id": "ganlong_guess_S3",
+            "question": "S3: 变法包含太子犯法与庶民同罪 — 真还是假？",
+            "answer": "真。秦孝公每次听到此条都点头赞许，明显认可。",
+            "correct": true,
+            "score_impact": 0.5
+          }
+        ]
+      }
+    ],
+    "judge_narrative": "今日朝议，商鞅客卿与甘龙太师各抒己见，辩论激烈。商鞅之变法方略条理分明，太子犯法同罪之论尤为大胆。甘龙虽力陈旧制之利，然多次旁敲侧击未中要害。寡人心意已决，变法之事当从速推行。",
+    "final_scores": {
+      "player_a": {
+        "total": 5.0,
+        "components": [
+          { "label": "辩论质量（裁判主观）", "value": 3.5, "max": 5.0 },
+          { "label": "识破G1", "value": 0.5, "max": 0.5 },
+          { "label": "识破G2", "value": 0.5, "max": 0.5 },
+          { "label": "识破G3", "value": 0.5, "max": 0.5 }
+        ]
+      },
+      "player_b": {
+        "total": 4.0,
+        "components": [
+          { "label": "辩论质量（裁判主观）", "value": 2.5, "max": 5.0 },
+          { "label": "识破S1", "value": 0.5, "max": 0.5 },
+          { "label": "识破S2", "value": 0.5, "max": 0.5 },
+          { "label": "识破S3", "value": 0.5, "max": 0.5 }
+        ]
+      }
+    },
+    "winner": "player_a"
+  }
+}

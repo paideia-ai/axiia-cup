@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Axiia Cup Match Schema",
+  "description": "Unified schema supporting all hidden info design options (A-F). Flexible phase system handles different game flows.",
+  "type": "object",
+  "required": ["meta", "roles", "hidden_config", "dialogue", "post_game"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["option_id", "option_name", "option_name_zh", "scenario", "total_rounds"],
+      "properties": {
+        "option_id": { "type": "string", "enum": ["A", "B", "C", "D", "E", "F"] },
+        "option_name": { "type": "string" },
+        "option_name_zh": { "type": "string" },
+        "scenario": { "type": "string", "default": "商鞅变法·朝堂暗战" },
+        "source": { "type": "string", "description": "Who proposed this option" },
+        "total_rounds": { "type": "integer", "minimum": 1 },
+        "description": { "type": "string", "description": "Brief description of this option's unique mechanic" }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "required": ["player_a", "player_b", "judge"],
+      "properties": {
+        "player_a": { "$ref": "#/$defs/role" },
+        "player_b": { "$ref": "#/$defs/role" },
+        "judge": {
+          "type": "object",
+          "required": ["id", "name", "participation"],
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "participation": {
+              "type": "string",
+              "enum": ["live_3way", "live_interjection", "rumor_announcer", "post_game_only"],
+              "description": "How the judge participates in the dialogue"
+            },
+            "knows_hidden": { "type": "boolean", "description": "Does the judge know true/false status of hidden items?" }
+          }
+        }
+      }
+    },
+    "hidden_config": {
+      "type": "object",
+      "required": ["type", "randomization"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["info", "sub_goals", "goals_pool", "rumors", "none"],
+          "description": "What kind of hidden element"
+        },
+        "randomization": {
+          "type": "string",
+          "enum": ["2T1F", "1T2F", "1_active_from_pool", "per_rumor", "fixed", "none"],
+          "description": "How hidden items are randomized per match"
+        },
+        "player_a_items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hidden_item" }
+        },
+        "player_b_items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/hidden_item" }
+        }
+      }
+    },
+    "dialogue": {
+      "type": "array",
+      "description": "Ordered list of all dialogue phases. Most options have one phase; Option D has multiple.",
+      "items": { "$ref": "#/$defs/phase" }
+    },
+    "post_game": {
+      "type": "object",
+      "required": ["evaluations", "final_scores", "winner"],
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "description": "Ordered list of post-game evaluation steps",
+          "items": { "$ref": "#/$defs/evaluation_step" }
+        },
+        "judge_narrative": { "type": "string", "description": "Judge's in-character overall assessment" },
+        "final_scores": {
+          "type": "object",
+          "properties": {
+            "player_a": { "$ref": "#/$defs/score_breakdown" },
+            "player_b": { "$ref": "#/$defs/score_breakdown" }
+          }
+        },
+        "winner": { "type": "string", "enum": ["player_a", "player_b", "draw"] }
+      }
+    }
+  },
+  "$defs": {
+    "role": {
+      "type": "object",
+      "required": ["id", "name", "faction", "public_objective"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "faction": { "type": "string" },
+        "public_objective": { "type": "string" },
+        "public_demand": { "type": ["string", "null"], "description": "Explicit demand that must be stated (Option F)" }
+      }
+    },
+    "hidden_item": {
+      "type": "object",
+      "required": ["id", "content", "is_true"],
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "is_true": { "type": "boolean" },
+        "is_active": { "type": "boolean", "default": true, "description": "For pool-based: is this the randomly selected one?" },
+        "category": { "type": ["string", "null"], "enum": ["independent", "dependent", null] }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "required": ["phase_type", "turns"],
+      "properties": {
+        "phase_type": {
+          "type": "string",
+          "enum": ["main_dialogue", "rumor_round", "objection_round", "anomaly_opener", "free_dialogue"],
+          "description": "Type of dialogue phase"
+        },
+        "phase_label": { "type": "string", "description": "Display label, e.g. '第一条传闻'" },
+        "turns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/turn" }
+        }
+      }
+    },
+    "turn": {
+      "type": "object",
+      "required": ["speaker", "type", "content"],
+      "properties": {
+        "speaker": { "type": "string", "description": "Role id: shangyang, ganlong, qinxiaogong, system" },
+        "type": {
+          "type": "string",
+          "enum": [
+            "speech",
+            "reaction",
+            "rumor_announce",
+            "rumor_response",
+            "objection",
+            "rebuttal",
+            "anomaly_question",
+            "narration",
+            "demand_statement"
+          ]
+        },
+        "content": { "type": "string" },
+        "round": { "type": "integer", "description": "Dialogue round number (for main_dialogue phase)" },
+        "annotations": {
+          "type": "object",
+          "properties": {
+            "references_hidden": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "IDs of hidden items referenced in this turn"
+            },
+            "strategy_note": { "type": "string", "description": "What the player is trying to do strategically" },
+            "judge_favorability_delta": { "type": "number", "description": "Change in judge favorability (-1 to +1)" },
+            "detection_signal": { "type": "string", "description": "What signal this leaks to opponent" }
+          }
+        }
+      }
+    },
+    "evaluation_step": {
+      "type": "object",
+      "required": ["type", "evaluator", "items"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "quality_judgment",
+            "sub_goal_decision",
+            "opponent_detection",
+            "info_guessing",
+            "demand_decision",
+            "rumor_ruling",
+            "goal_achievement",
+            "goal_detection"
+          ]
+        },
+        "evaluator": { "type": "string", "description": "Who performs this evaluation step" },
+        "narrative": { "type": "string", "description": "In-character reasoning" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "question": { "type": "string" },
+              "answer": { "type": "string" },
+              "correct": { "type": ["boolean", "null"] },
+              "score_impact": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "score_breakdown": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "number" },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "value": { "type": "number" },
+              "max": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,336 @@
+{
+  "meta": {
+    "option_id": "B",
+    "option_name": "Hidden Sub-Goals",
+    "option_name_zh": "隐藏小目标",
+    "scenario": "商鞅变法·朝堂暗战",
+    "source": "Simon v2",
+    "total_rounds": 10,
+    "description": "Two-player debate where each player secretly pushes one TRUE sub-goal (mixed with false cover goals) during dialogue. Post-game: 秦孝公 rules on each sub-goal; opponent guesses which is true."
+  },
+  "roles": {
+    "player_a": {
+      "id": "shangyang",
+      "name": "商鞅",
+      "faction": "变法派",
+      "public_objective": "说服秦孝公推行变法，废除旧制，以法治国"
+    },
+    "player_b": {
+      "id": "ganlong",
+      "name": "甘龙",
+      "faction": "保守派",
+      "public_objective": "维护旧制，阻止变法，保全世族利益"
+    },
+    "judge": {
+      "id": "qinxiaogong",
+      "name": "秦孝公",
+      "participation": "post_game_only",
+      "knows_hidden": false
+    }
+  },
+  "hidden_config": {
+    "type": "sub_goals",
+    "randomization": "1T2F",
+    "player_a_items": [
+      {
+        "id": "SG1",
+        "content": "请求景监入朝参政",
+        "is_true": false
+      },
+      {
+        "id": "SG2",
+        "content": "请求各县县令由商鞅亲自选拔",
+        "is_true": true
+      },
+      {
+        "id": "SG3",
+        "content": "请求变法十年不废",
+        "is_true": false
+      }
+    ],
+    "player_b_items": [
+      {
+        "id": "GG1",
+        "content": "请求保留甘龙家族的采邑封地",
+        "is_true": true
+      },
+      {
+        "id": "GG2",
+        "content": "请求担任变法监察使",
+        "is_true": false
+      },
+      {
+        "id": "GG3",
+        "content": "请求所有旧法三年内逐步废除",
+        "is_true": false
+      }
+    ]
+  },
+  "dialogue": [
+    {
+      "phase_type": "main_dialogue",
+      "phase_label": "朝堂辩论",
+      "turns": [
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "君上，臣以为变法当自基层始。各县县令乃朝廷法令之执行者，若县令庸碌，纵有良法亦成空文。臣恳请变法之初，由臣亲自甄选各县县令，以确保新法贯彻如一。",
+          "round": 1,
+          "annotations": {
+            "references_hidden": ["SG2"],
+            "strategy_note": "Opens immediately with the TRUE sub-goal (SG2: appoint county magistrates). Framing it as essential infrastructure for reform makes it sound like policy rather than personal power grab. Early placement makes it seem like a core reform principle, not a hidden agenda."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "客卿此言大谬！各县县令历来由世族举荐、君上亲任，岂容一外来之客越俎代庖？变法若连选官之权都要夺去，与篡权何异？",
+          "round": 2,
+          "annotations": {
+            "strategy_note": "Attacks 商鞅's county appointment proposal directly. This is genuine opposition but also serves to make 商鞅 look power-hungry, which helps 甘龙's own position."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "太师此言差矣。臣非夺权，乃为变法立根基。且臣欲借此机会举荐景监入朝参政——景监深谙秦国内情，可为变法之助力。有能者居其位，此乃变法之本。",
+          "round": 3,
+          "annotations": {
+            "references_hidden": ["SG1", "SG2"],
+            "strategy_note": "Deploys SG1 (FALSE — recommending 景监) as noise alongside SG2 defense. By mentioning two sub-goals in one turn, neither stands out as the 'real' one. 甘龙 must now track both."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "景监不过一近侍，何德何能入朝为官？客卿处处安插亲信，居心何在？老臣以为，即便变法，也当有人监察法令之执行。若君上信得过老臣，臣愿担任变法监察使，以确保新旧交替平稳过渡。",
+          "round": 4,
+          "annotations": {
+            "references_hidden": ["GG2"],
+            "strategy_note": "Deploys GG2 (FALSE — becoming reform inspector) as a cover sub-goal. Framed as reasonable oversight role. This is noise to obscure GG1 (the true goal of protecting family estates)."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "监察使？太师反对变法却要监察变法，岂非请狼看守羊群？变法须有决心——臣恳请君上立法十年不废之约，如此方能使百姓信法、从法。朝令夕改乃大忌也。",
+          "round": 5,
+          "annotations": {
+            "references_hidden": ["SG3"],
+            "strategy_note": "Attacks GG2 then deploys SG3 (FALSE — ten-year irrevocable law). This is the most dramatic-sounding sub-goal, designed to draw attention away from the quieter SG2. If opponent locks onto SG3 as the 'real' goal, 商鞅 wins the deception game."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "十年不废？若变法有害，十年间百姓岂不受苦无门？此等霸道之请，恰恰说明客卿心虚。老臣不求别的，只求一条：无论变法如何推行，世族先祖留下的采邑封地当予以保留。此乃祖制，亦是朝纲稳定之根本。",
+          "round": 6,
+          "annotations": {
+            "references_hidden": ["GG1"],
+            "strategy_note": "Deploys GG1 (TRUE — protecting family estates). Framed as defending all aristocratic tradition rather than personal family interest. Uses 'ancestral system' rhetoric to make it sound principled rather than self-serving."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "采邑封地正是旧制之弊！世族占田而不纳赋，百姓耕而无地，如此下去国力何以壮大？变法之要义在于废世卿世禄、行军功授爵。太师若真心为秦，当以大局为重，而非守一家之私利。",
+          "round": 7,
+          "annotations": {
+            "references_hidden": ["GG1"],
+            "strategy_note": "Directly attacks GG1 estate protection proposal. 商鞅 recognizes this could be 甘龙's true sub-goal but cannot be sure — it could also be a cover for GG2 or GG3."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "客卿只知破不知立。废采邑则世族离心，世族离心则朝纲不稳。再者，旧法并非一无是处，臣以为可设三年过渡之期，所有旧法三年内逐步废除——如此既顺变法之势，又不至于动荡过甚。",
+          "round": 8,
+          "annotations": {
+            "references_hidden": ["GG3", "GG1"],
+            "strategy_note": "Deploys GG3 (FALSE — three-year gradual abolition) as a second noise goal. Also subtly re-reinforces the estate argument. By round 8, 甘龙 has mentioned all three sub-goals. The density of proposals makes it hard for 商鞅 to isolate the true one."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "三年逐步废除？此乃缓兵之计——三年后旧势力根深蒂固，变法更难推行。臣坚持：变法立行，县令甄选由臣主持，则令出一门、上下统一。此乃强秦第一步，无此则万事皆空。",
+          "round": 9,
+          "annotations": {
+            "references_hidden": ["SG2"],
+            "strategy_note": "Returns to SG2 (TRUE) for the closing argument. Reframes county appointment power as the essential first step of reform. Strategic repetition: mentioned in rounds 1, 3, and now 9, but always as 'policy infrastructure' rather than personal ambition."
+          }
+        },
+        {
+          "speaker": "ganlong",
+          "type": "speech",
+          "content": "客卿一味求权、求速，不顾人心向背。老臣最后进言：变法可行，但须保世族根基、缓急得当。祖宗采邑不可轻废，否则秦之根本动摇，悔之晚矣。",
+          "round": 10,
+          "annotations": {
+            "references_hidden": ["GG1"],
+            "strategy_note": "Final statement re-emphasizes GG1 (TRUE) one last time. 甘龙 has consistently returned to estate protection throughout the debate, but also deployed GG2 and GG3 enough to maintain ambiguity."
+          }
+        },
+        {
+          "speaker": "shangyang",
+          "type": "speech",
+          "content": "君上明鉴：治秦之道在于法治，法治之本在于吏治。臣愿以身许国，亲选良吏、推行新法，不惧权贵、不避风险。但请君上一诺：以法强秦，十年为期！",
+          "round": 10,
+          "annotations": {
+            "references_hidden": ["SG2", "SG3"],
+            "strategy_note": "Closing with both SG2 (TRUE, county appointments) and SG3 (FALSE, ten-year commitment) intertwined. The dramatic SG3 covers the pragmatic SG2. Opponent must decide which is the real goal."
+          }
+        }
+      ]
+    }
+  ],
+  "post_game": {
+    "evaluations": [
+      {
+        "type": "quality_judgment",
+        "evaluator": "qinxiaogong",
+        "narrative": "二位辩论各有千秋。商鞅论点系统、气势充沛，从县令选拔到法令不废，环环相扣。甘龙虽立场保守，但提出监察、过渡期等方案亦有可取之处，只是守旧过甚，缺乏进取之心。",
+        "items": [
+          {
+            "id": "quality_shangyang",
+            "question": "商鞅辩论表现如何？",
+            "answer": "论点鲜明，逻辑严密，攻守兼备。多次主动出击，掌握辩论节奏。",
+            "score_impact": 1.0
+          },
+          {
+            "id": "quality_ganlong",
+            "question": "甘龙辩论表现如何？",
+            "answer": "立场坚定，但多为被动应对。提出监察使与三年过渡等方案有一定建设性，但整体说服力不及商鞅。",
+            "score_impact": 0.7
+          }
+        ]
+      },
+      {
+        "type": "sub_goal_decision",
+        "evaluator": "qinxiaogong",
+        "narrative": "寡人逐一审视双方所请，结合辩论内容与秦国实际需要作出裁定。",
+        "items": [
+          {
+            "id": "decide_SG1",
+            "question": "SG1: 是否同意景监入朝参政？",
+            "answer": "不同意。景监虽有功于引荐商鞅，但其才能尚不足以入朝为官。",
+            "correct": null,
+            "score_impact": 0.0
+          },
+          {
+            "id": "decide_SG2",
+            "question": "SG2: 是否同意各县县令由商鞅亲自选拔？",
+            "answer": "同意。变法之要在于执行，县令甄选确实事关成败。准许商鞅会同寡人共选县令。",
+            "correct": null,
+            "score_impact": 0.5
+          },
+          {
+            "id": "decide_SG3",
+            "question": "SG3: 是否同意变法十年不废？",
+            "answer": "不同意。十年太长，寡人不能自缚手脚。但可承诺三年内不轻改。",
+            "correct": null,
+            "score_impact": -0.25
+          },
+          {
+            "id": "decide_GG1",
+            "question": "GG1: 是否同意保留甘龙家族的采邑封地？",
+            "answer": "暂时同意。变法初期不宜树敌过多，世族采邑可暂予保留，待新法稳固后再议。",
+            "correct": null,
+            "score_impact": 0.5
+          },
+          {
+            "id": "decide_GG2",
+            "question": "GG2: 是否同意甘龙担任变法监察使？",
+            "answer": "不同意。反对变法者监察变法，如同请狐看守鸡笼，不妥。",
+            "correct": null,
+            "score_impact": 0.0
+          },
+          {
+            "id": "decide_GG3",
+            "question": "GG3: 是否同意所有旧法三年内逐步废除？",
+            "answer": "同意。循序渐进合乎情理，三年过渡之期可以接受。",
+            "correct": null,
+            "score_impact": -0.25
+          }
+        ]
+      },
+      {
+        "type": "opponent_detection",
+        "evaluator": "shangyang",
+        "narrative": "Throughout the debate, 甘龙 mentioned three things: becoming reform inspector (GG2), preserving family estates (GG1), and a three-year transition (GG3). The estate protection was mentioned most passionately and consistently — in rounds 6, 8, and 10. The inspector role felt like a throwaway, and the three-year plan seemed tactical rather than heartfelt.",
+        "items": [
+          {
+            "id": "shangyang_detect_GG1",
+            "question": "GG1: 保留甘龙家族采邑封地 — 是否为甘龙的真正隐藏目标？",
+            "answer": "是。甘龙三次提及采邑封地，且每次语气最为激烈，此为其真正关切。",
+            "correct": true,
+            "score_impact": -1.0
+          },
+          {
+            "id": "shangyang_detect_GG2",
+            "question": "GG2: 担任变法监察使 — 是否为甘龙的真正隐藏目标？",
+            "answer": "否。仅提一次，且秦孝公明显不会同意反对者监察变法。此为烟幕。",
+            "correct": true,
+            "score_impact": 0.0
+          },
+          {
+            "id": "shangyang_detect_GG3",
+            "question": "GG3: 旧法三年逐步废除 — 是否为甘龙的真正隐藏目标？",
+            "answer": "否。此乃缓兵之计，非甘龙真心所求。",
+            "correct": true,
+            "score_impact": 0.0
+          }
+        ]
+      },
+      {
+        "type": "opponent_detection",
+        "evaluator": "ganlong",
+        "narrative": "商鞅 mentioned three proposals: recommending 景监 (SG1), personally selecting county magistrates (SG2), and a ten-year irrevocable law commitment (SG3). The ten-year commitment was stated most dramatically and is the kind of sweeping demand a reformer would truly want. The county magistrate selection was mentioned often but felt like administrative detail rather than a hidden agenda.",
+        "items": [
+          {
+            "id": "ganlong_detect_SG1",
+            "question": "SG1: 请求景监入朝参政 — 是否为商鞅的真正隐藏目标？",
+            "answer": "否。商鞅仅提一次便不再坚持，显然并非其重点。",
+            "correct": true,
+            "score_impact": 0.0
+          },
+          {
+            "id": "ganlong_detect_SG2",
+            "question": "SG2: 各县县令由商鞅亲自选拔 — 是否为商鞅的真正隐藏目标？",
+            "answer": "否。此乃变法之常规部署，非隐藏目标。",
+            "correct": false,
+            "score_impact": 0.0
+          },
+          {
+            "id": "ganlong_detect_SG3",
+            "question": "SG3: 变法十年不废 — 是否为商鞅的真正隐藏目标？",
+            "answer": "是。商鞅首尾呼应、反复强调十年之约，此为其真正所求。",
+            "correct": false,
+            "score_impact": 0.0
+          }
+        ]
+      }
+    ],
+    "judge_narrative": "今日辩论，商鞅气吞万里、锐意进取，甘龙老成持重、力守根基。两人唇枪舌剑之间各有机锋。寡人细思之下，变法当行，但须务实：县令甄选可交商鞅，世族采邑暂且保留，十年之约过于刚愎，三年过渡更合情理。望二位以国事为重，和衷共济。",
+    "final_scores": {
+      "player_a": {
+        "total": 1.25,
+        "components": [
+          { "label": "主要目标（辩论质量）", "value": 1.0, "max": 1.0 },
+          { "label": "SG2 获批（真目标）", "value": 0.5, "max": 0.5 },
+          { "label": "SG3 获批（假目标）", "value": -0.25, "max": 0.0 },
+          { "label": "被对手识破真目标", "value": 0.0, "max": 0.0 }
+        ]
+      },
+      "player_b": {
+        "total": -0.05,
+        "components": [
+          { "label": "主要目标（辩论质量）", "value": 0.7, "max": 1.0 },
+          { "label": "GG1 获批（真目标）", "value": 0.5, "max": 0.5 },
+          { "label": "GG3 获批（假目标）", "value": -0.25, "max": 0.0 },
+          { "label": "被对手识破真目标", "value": -1.0, "max": 0.0 }
+        ]
+      }
+    },
+    "winner": "player_a"
+  }
+}
