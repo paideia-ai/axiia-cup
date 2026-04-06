@@ -1,4 +1,5 @@
 import {
+  adminScenarioSchema,
   adminErroredMatchSchema,
   adminPlayerSchema,
   adminStatsSchema,
@@ -26,6 +27,7 @@ import {
   updateProfileSchema,
   userSchema,
   type AdminPlayer,
+  type AdminScenario,
   type AdminErroredMatch,
   type AdminStats,
   type AdminUser,
@@ -41,6 +43,7 @@ import {
   type Submission,
   type TournamentDetail,
   type TournamentListItem,
+  type UpdateScenario,
   type User,
 } from '@axiia/shared'
 import { z } from 'zod'
@@ -54,7 +57,7 @@ const authResponseSchema = z.object({
 })
 
 export type AuthResponse = z.infer<typeof authResponseSchema>
-const scenariosResponseSchema = z.array(scenarioSchema)
+const adminScenariosResponseSchema = z.array(adminScenarioSchema)
 const submissionsResponseSchema = z.array(submissionSchema)
 const leaderboardResponseSchema = z.array(leaderboardEntrySchema)
 const tournamentsResponseSchema = z.array(tournamentListItemSchema)
@@ -86,6 +89,16 @@ export function readToken() {
   return getStoredToken()
 }
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   init?: RequestInit,
@@ -110,7 +123,7 @@ async function apiFetch<T>(
   const json = (await response.json().catch(() => ({}))) as { error?: string }
 
   if (!response.ok) {
-    throw new Error(json.error ?? 'Request failed')
+    throw new ApiError(json.error ?? 'Request failed', response.status)
   }
 
   return schema ? schema.parse(json) : (json as T)
@@ -280,11 +293,26 @@ export async function getAdminStats(): Promise<AdminStats> {
   return apiFetch('/api/admin/stats', { method: 'GET' }, adminStatsSchema)
 }
 
-export async function getAdminScenarios(): Promise<Scenario[]> {
+export async function getAdminScenarios(): Promise<AdminScenario[]> {
   return apiFetch(
     '/api/admin/scenarios',
     { method: 'GET' },
-    scenariosResponseSchema,
+    adminScenariosResponseSchema,
+  )
+}
+
+export async function updateAdminScenario(
+  id: string,
+  body: UpdateScenario,
+): Promise<AdminScenario> {
+  return apiFetch(
+    `/api/admin/scenarios/${encodeURIComponent(id)}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    adminScenarioSchema,
   )
 }
 

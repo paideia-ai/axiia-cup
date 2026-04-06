@@ -201,9 +201,15 @@ function RunResult({
               </p>
             </div>
             <div className="px-5 py-4">
-              <p className="panel-label">Winner</p>
+              <p className="panel-label">胜者</p>
               <p className="mt-2 text-xl font-semibold text-(--foreground)">
-                {run.winner?.toUpperCase() ?? '—'}
+                {run.winner === 'a'
+                  ? scenario.roleAName
+                  : run.winner === 'b'
+                    ? scenario.roleBName
+                    : run.winner === 'draw'
+                      ? '平局'
+                      : '—'}
               </p>
             </div>
           </div>
@@ -350,20 +356,28 @@ function RunHistoryItem({
   isPending,
   isSelected,
   onSelect,
+  roleAName,
+  roleBName,
   run,
 }: {
   isPending: boolean
   isSelected: boolean
   onSelect: () => void
+  roleAName: string
+  roleBName: string
   run: PlaygroundRunSummary
 }) {
   const winnerLabel = isPending
     ? '进行中'
-    : run.winner
-      ? run.winner.toUpperCase()
-      : run.error
-        ? 'ERR'
-        : '—'
+    : run.winner === 'a'
+      ? roleAName
+      : run.winner === 'b'
+        ? roleBName
+        : run.winner === 'draw'
+          ? '平局'
+          : run.error
+            ? 'ERR'
+            : '—'
   const winnerColor = isPending
     ? 'text-(--accent)'
     : run.winner === 'a' || run.winner === 'b'
@@ -912,6 +926,8 @@ export function PlaygroundPage() {
                     isPending={run.id === activeRunId && isRunning}
                     isSelected={selectedRun?.id === run.id}
                     onSelect={() => void handleSelectRun(run)}
+                    roleAName={scenario.roleAName}
+                    roleBName={scenario.roleBName}
                     run={run}
                   />
                 ))}

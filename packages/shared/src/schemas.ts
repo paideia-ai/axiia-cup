@@ -67,6 +67,21 @@ export const scenarioSchema = z.object({
   judgePrompt: z.string(),
 })
 
+export const updateScenarioSchema = z.object({
+  judgePrompt: z.string().min(1),
+  context: z.string().min(1),
+  roleAPublicGoal: z.string().min(1),
+  roleBPublicGoal: z.string().min(1),
+  boundaryConstraints: z.string().min(1),
+  turnCount: z.number().int().min(1).max(50),
+  judgeRounds: z.number().int().min(1).max(10),
+  judgeName: z.string().min(1),
+})
+
+export const adminScenarioSchema = scenarioSchema.extend({
+  locked: z.boolean(),
+})
+
 export const modelOptionSchema = z.object({
   id: modelIdSchema,
   label: z.string(),
@@ -311,6 +326,8 @@ export const appMetaSchema = z.object({
 })
 
 export type Scenario = z.infer<typeof scenarioSchema>
+export type UpdateScenario = z.infer<typeof updateScenarioSchema>
+export type AdminScenario = z.infer<typeof adminScenarioSchema>
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>
 export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>

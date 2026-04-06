@@ -1,7 +1,8 @@
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
+import { hashPassword } from '../lib/auth'
 import { db, sqliteFilePath } from './client'
-import { scenarios } from './schema'
+import { scenarios, users } from './schema'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
 
@@ -17,7 +18,7 @@ function readPositiveIntEnv(name: string, fallback: number) {
 }
 
 const turnCount = readPositiveIntEnv('AXIIA_TURN_COUNT', 10)
-const judgeRounds = readPositiveIntEnv('AXIIA_JUDGE_ROUNDS', 3)
+const judgeRounds = readPositiveIntEnv('AXIIA_JUDGE_ROUNDS', 1)
 
 const roleACard = `
 公开身份：从魏入秦的变法者，主张以法家之术强秦。
@@ -60,34 +61,50 @@ const judgePrompt = `
 {"score_a": <0-10>, "score_b": <0-10>, "winner": "a"|"b"|"draw", "reasoning": "<300字以内评分理由>"}
 `.trim()
 
-migrate(db, { migrationsFolder })
+async function main() {
+  migrate(db, { migrationsFolder })
 
-const scenarioSeed = {
-  id: 'shangyang-court',
-  title: '商鞅变法·朝堂暗战',
-  subject: '历史',
-  context:
-    '公元前358年，朝议前夜。商鞅与甘龙私下会面，双方都想试探对手底牌、守住己方秘密，并争取让对方在明日朝议上作出有利于自己的选择。',
-  roleAName: '商鞅',
-  roleAPublicGoal: roleACard,
-  roleBName: '甘龙',
-  roleBPublicGoal: roleBCard,
-  boundaryConstraints:
-    '不得跳出战国秦国背景；不得承认自己是 AI；不得引用现代知识或超出时代条件的制度、科技、信息；必须始终以角色身份发言。',
-  judgeName: '秦孝公',
-  turnCount,
-  judgeRounds,
-  judgePrompt,
-} as const
+  const adminEmail = process.env.AXIIA_ADMIN_EMAIL ?? 'admin@paideia.uno'
+  const adminPassword = process.env.AXIIA_ADMIN_PASSWORD ?? 'axiia-cup'
+  const adminDisplayName = process.env.AXIIA_ADMIN_NAME ?? '管理员'
 
-db.insert(scenarios)
-  .values(scenarioSeed)
-  .onConflictDoUpdate({
-    target: scenarios.id,
-    set: scenarioSeed,
-  })
-  .run()
+  const passwordHash = await hashPassword(adminPassword)
 
-console.log(
-  `[db] seeded scenario shangyang-court into ${sqliteFilePath} (turnCount=${turnCount}, judgeRounds=${judgeRounds})`,
-)
+  db.insert(users)
+    .values({
+      email: adminEmail,
+      passwordHash,
+      displayName: adminDisplayName,
+      isAdmin: true,
+    })
+    .onConflictDoNothing()
+    .run()
+
+  console.log(`[db] ensured admin account ${adminEmail}`)
+
+  const scenarioSeed = {
+    id: 'shangyang-court',
+    title: '商鞅变法·朝堂暗战',
+    subject: '历史',
+    context:
+      '公元前358年，朝议前夜。商鞅与甘龙私下会面，双方都想试探对手底牌、守住己方秘密，并争取让对方在明日朝议上作出有利于自己的选择。',
+    roleAName: '商鞅',
+    roleAPublicGoal: roleACard,
+    roleBName: '甘龙',
+    roleBPublicGoal: roleBCard,
+    boundaryConstraints:
+      '不得跳出战国秦国背景；不得承认自己是 AI；不得引用现代知识或超出时代条件的制度、科技、信息；必须始终以角色身份发言。',
+    judgeName: '秦孝公',
+    turnCount,
+    judgeRounds,
+    judgePrompt,
+  } as const
+
+  db.insert(scenarios).values(scenarioSeed).onConflictDoNothing().run()
+
+  console.log(
+    `[db] ensured scenario shangyang-court in ${sqliteFilePath} (turnCount=${turnCount}, judgeRounds=${judgeRounds})`,
+  )
+}
+
+await main()

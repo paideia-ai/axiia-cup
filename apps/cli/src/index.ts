@@ -1,8 +1,14 @@
 import type {
+  AdminScenario,
   LeaderboardEntry,
   TournamentDetail,
   TournamentListItem,
+  UpdateScenario,
 } from '@axiia/shared'
+import { execSync } from 'node:child_process'
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Command } from 'commander'
 
 const API_BASE_URL = process.env.AXIIA_API_URL ?? 'http://localhost:3001'
@@ -227,6 +233,93 @@ program
         wins: entry.wins,
       })),
     )
+  })
+
+program
+  .command('scenarios')
+  .description('查看所有场景')
+  .action(async () => {
+    const scenarios = await apiFetch<AdminScenario[]>(
+      '/api/admin/scenarios',
+      { method: 'GET' },
+      true,
+    )
+
+    console.table(
+      scenarios.map((s) => ({
+        id: s.id,
+        title: s.title,
+        subject: s.subject,
+        turnCount: s.turnCount,
+        judgeRounds: s.judgeRounds,
+        judgeName: s.judgeName,
+        locked: s.locked ? '🔒' : '',
+      })),
+    )
+  })
+
+program
+  .command('scenario:edit')
+  .description('编辑场景（打开 $EDITOR）')
+  .argument('<scenarioId>', 'scenario id')
+  .action(async (scenarioId: string) => {
+    const scenarios = await apiFetch<AdminScenario[]>(
+      '/api/admin/scenarios',
+      { method: 'GET' },
+      true,
+    )
+    const scenario = scenarios.find((s) => s.id === scenarioId)
+
+    if (!scenario) {
+      throw new Error(`Scenario "${scenarioId}" not found`)
+    }
+
+    if (scenario.locked) {
+      throw new Error('比赛进行中，场景已锁定，无法编辑')
+    }
+
+    const editable: UpdateScenario = {
+      context: scenario.context,
+      roleAPublicGoal: scenario.roleAPublicGoal,
+      roleBPublicGoal: scenario.roleBPublicGoal,
+      boundaryConstraints: scenario.boundaryConstraints,
+      judgePrompt: scenario.judgePrompt,
+      judgeName: scenario.judgeName,
+      turnCount: scenario.turnCount,
+      judgeRounds: scenario.judgeRounds,
+    }
+
+    const tmpFile = join(tmpdir(), `axiia-scenario-${scenarioId}.json`)
+    writeFileSync(tmpFile, JSON.stringify(editable, null, 2), 'utf-8')
+
+    const editor = process.env.EDITOR ?? 'vi'
+
+    try {
+      execSync(`${editor} ${tmpFile}`, { stdio: 'inherit' })
+    } catch {
+      unlinkSync(tmpFile)
+      throw new Error('Editor exited with error')
+    }
+
+    const edited = JSON.parse(readFileSync(tmpFile, 'utf-8')) as UpdateScenario
+    unlinkSync(tmpFile)
+
+    const updated = await apiFetch<AdminScenario>(
+      `/api/admin/scenarios/${encodeURIComponent(scenarioId)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(edited),
+      },
+      true,
+    )
+
+    console.log(`场景「${updated.title}」已更新`)
+    console.table({
+      turnCount: updated.turnCount,
+      judgeRounds: updated.judgeRounds,
+      judgeName: updated.judgeName,
+      locked: updated.locked,
+    })
   })
 
 program.parseAsync().catch((error) => {

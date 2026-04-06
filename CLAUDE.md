@@ -79,7 +79,7 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - `AXIIA_DB_PATH` — SQLite database path (API)
 - `SILICONFLOW_API_KEY` — LLM API key (API)
 - `JWT_SECRET` — JWT signing secret (API)
-- `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `123456`; DB value takes priority)
+- `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `axiia_cup`; DB value takes priority)
 - `AXIIA_API_URL` — API base URL for CLI (default `http://localhost:3001`)
 - `AXIIA_ADMIN_TOKEN` — Admin bearer token for CLI
 - `WORKER_CONCURRENCY` — Worker max concurrent jobs (API, default 8)

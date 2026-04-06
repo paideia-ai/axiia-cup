@@ -12,6 +12,7 @@
     "dev:web": "bun run --filter @axiia/web dev",
     "dev:cli": "bun run --filter @axiia/cli dev",
     "db:migrate": "bun run --filter @axiia/api db:migrate",
+    "db:seed": "bun run --filter @axiia/api db:seed",
     "db:seed:demo": "bun run --filter @axiia/api db:seed:demo",
     "api:start": "bun run --filter @axiia/api start",
     "fmt": "oxfmt apps packages",
