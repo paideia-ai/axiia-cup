@@ -38,9 +38,14 @@ export function getLatestScenarioPlayers(
     ? and(
         eq(submissions.scenarioId, scenarioId),
         eq(users.isAdmin, false),
+        eq(users.disabled, false),
         lte(submissions.createdAt, beforeCreatedAt),
       )
-    : and(eq(submissions.scenarioId, scenarioId), eq(users.isAdmin, false))
+    : and(
+        eq(submissions.scenarioId, scenarioId),
+        eq(users.isAdmin, false),
+        eq(users.disabled, false),
+      )
 
   const rows = db
     .select({

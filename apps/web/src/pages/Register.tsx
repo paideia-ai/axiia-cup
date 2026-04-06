@@ -61,24 +61,11 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
-      <p className="mb-8 text-xs font-black tracking-[0.24em] text-(--accent)">
-        AXIIA CUP
-      </p>
-
       <div className="w-full max-w-sm space-y-5">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black tracking-tight text-(--foreground)">
+        <div className="flex items-center justify-center">
+          <h1 className="text-3xl font-black tracking-tight text-(--foreground)">
             注册
           </h1>
-          {step === 'credentials' ? (
-            <span className="text-xs text-(--foreground-muted)">
-              第 2 步，共 2 步
-            </span>
-          ) : (
-            <span className="text-xs text-(--foreground-muted)">
-              第 1 步，共 2 步
-            </span>
-          )}
         </div>
 
         <Card>
