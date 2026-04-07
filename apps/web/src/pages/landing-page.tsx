@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
+import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
 
 const steps = [
@@ -115,6 +116,10 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        <footer className="py-4">
+          <IcpRecord />
+        </footer>
       </div>
     </div>
   )

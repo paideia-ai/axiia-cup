@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
 import { Button } from '../ui/button'
+import { IcpRecord } from './icp-record'
 
 const navigation = [
   { to: '/dashboard', label: '控制台', icon: Gauge },
@@ -19,7 +20,7 @@ export function AppShell({ children }: PropsWithChildren) {
     : navigation
 
   return (
-    <div className="min-h-screen bg-(--background)">
+    <div className="flex min-h-screen flex-col bg-(--background)">
       <header className="sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6">
           <NavLink
@@ -64,9 +65,12 @@ export function AppShell({ children }: PropsWithChildren) {
           </div>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
         {children}
       </main>
+      <footer className="border-t border-(--border-soft) px-4 py-4 sm:px-6">
+        <IcpRecord className="mx-auto w-full max-w-7xl" />
+      </footer>
     </div>
   )
 }
