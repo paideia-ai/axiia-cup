@@ -31,6 +31,7 @@ import {
   toggleAdminUserDisabled,
   updateAdminRegistrationCode,
 } from '../lib/api'
+import { formatDateTime } from '../lib/datetime'
 
 function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
   const latest = new Map<string, TournamentListItem>()
@@ -90,23 +91,6 @@ function getTournamentCurrentRound(
     detail?.rounds.at(-1) ??
     null
   )
-}
-
-function formatDateTime(value: string) {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return date.toLocaleString('zh-CN', {
-    day: '2-digit',
-    hour: '2-digit',
-    hour12: false,
-    minute: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 }
 
 type AdminTab = 'tournaments' | 'players' | 'settings'

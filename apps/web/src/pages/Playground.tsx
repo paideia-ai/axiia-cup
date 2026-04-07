@@ -30,6 +30,7 @@ import {
   syncPlaygroundRun,
   type PlaygroundSession,
 } from '../lib/playground-session'
+import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 
 const runningStages = [
   {
@@ -71,13 +72,6 @@ function formatElapsed(seconds: number) {
   const remainingSeconds = seconds % 60
 
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
-}
-
-function parseSqlTimestamp(value: string) {
-  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`
-  const timestamp = Date.parse(normalized)
-
-  return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
 function isRunFinished(run: PlaygroundRun | null) {
@@ -844,7 +838,7 @@ function RunHistoryItem({
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-[11px] text-(--foreground-muted)">
-            {run.createdAt}
+            {formatDateTime(run.createdAt, { second: '2-digit' })}
           </p>
           {run.scoreA != null && run.scoreB != null ? (
             <p className="text-xs text-(--foreground-subtle)">
@@ -990,7 +984,7 @@ function findCandidateRunSummary(
 
   return (
     summaries.find(
-      (summary) => parseSqlTimestamp(summary.createdAt) >= startedAt,
+      (summary) => parseTimestampMs(summary.createdAt) >= startedAt,
     ) ?? null
   )
 }
@@ -1016,7 +1010,7 @@ function upsertRunSummary(
 
   return [nextSummary, ...remaining].sort(
     (left, right) =>
-      parseSqlTimestamp(right.createdAt) - parseSqlTimestamp(left.createdAt),
+      parseTimestampMs(right.createdAt) - parseTimestampMs(left.createdAt),
   )
 }
 

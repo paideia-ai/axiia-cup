@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { cn } from '../lib/cn'
 import { getMyRecentMatches, getMyStats } from '../lib/api'
+import { formatTimeAgo } from '../lib/datetime'
 
 type ConsoleStats = {
   completedMatchCount: number
@@ -17,22 +18,6 @@ type ConsoleStats = {
   submissionCount: number
   tournamentRound: number | null
   winRate: number | null
-}
-
-function formatTimeAgo(dateStr: string) {
-  const now = Date.now()
-  const then = new Date(dateStr).getTime()
-  const diffMs = now - then
-  const diffMin = Math.floor(diffMs / 60_000)
-
-  if (diffMin < 1) return '刚刚'
-  if (diffMin < 60) return `${diffMin}分钟前`
-
-  const diffHr = Math.floor(diffMin / 60)
-  if (diffHr < 24) return `${diffHr}小时前`
-
-  const diffDay = Math.floor(diffHr / 24)
-  return `${diffDay}天前`
 }
 
 function resultBadge(match: RecentMatch) {

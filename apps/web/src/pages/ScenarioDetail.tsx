@@ -17,6 +17,7 @@ import { Select, SelectItem } from '../components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Textarea } from '../components/ui/textarea'
 import { createSubmission, getMySubmissions, getScenario } from '../lib/api'
+import { formatDateTime } from '../lib/datetime'
 
 function countText(value: string) {
   return [...value].length
@@ -486,7 +487,9 @@ export function ScenarioDetailPage() {
                             ?.label ?? submission.model}
                         </Badge>
                         <span className="text-xs text-(--foreground-muted)">
-                          {submission.createdAt}
+                          {formatDateTime(submission.createdAt, {
+                            second: '2-digit',
+                          })}
                         </span>
                       </div>
                       <Button

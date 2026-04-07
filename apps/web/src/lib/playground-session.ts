@@ -1,6 +1,7 @@
 import type { PlaygroundRun, PlaygroundRunSummary } from '@axiia/shared'
 
 import { runPlayground } from './api'
+import { parseTimestampMs } from './datetime'
 
 const STORAGE_KEY = 'axiia-playground-session-v2'
 const RUN_MATCH_WINDOW_MS = 5_000
@@ -48,13 +49,6 @@ function createRequestId() {
   }
 
   return `playground-${Date.now()}-${Math.random().toString(16).slice(2)}`
-}
-
-function parseSqlTimestamp(value: string) {
-  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`
-  const timestamp = Date.parse(normalized)
-
-  return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
 function readPersistedState(): SessionMap {
@@ -287,7 +281,7 @@ export function resolvePlaygroundSession(
 
   const matchedSummary = summaries.find(
     (summary) =>
-      parseSqlTimestamp(summary.createdAt) >=
+      parseTimestampMs(summary.createdAt) >=
       session.startedAt - RUN_MATCH_WINDOW_MS,
   )
 
