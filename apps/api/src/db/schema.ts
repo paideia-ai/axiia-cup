@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   check,
+  index,
   integer,
   real,
   sqliteTable,
@@ -18,6 +19,8 @@ const matchStatuses = [
   'error',
 ] as const
 const matchWinners = ['a', 'b', 'draw'] as const
+const llmCallPhases = ['dialogue', 'examination', 'judgment'] as const
+const llmCallSides = ['a', 'b', 'judge'] as const
 
 const currentTimestamp = sql`CURRENT_TIMESTAMP`
 
@@ -217,6 +220,52 @@ export const matches = sqliteTable(
   }),
 )
 
+export const llmCalls = sqliteTable(
+  'llm_calls',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    matchId: integer('match_id').references(() => matches.id),
+    playgroundRunId: integer('playground_run_id').references(
+      () => playgroundRuns.id,
+    ),
+    phase: text('phase', { enum: llmCallPhases }).notNull(),
+    side: text('side', { enum: llmCallSides }).notNull(),
+    turnIndex: integer('turn_index'),
+    attempt: integer('attempt').notNull().default(1),
+    model: text('model').notNull(),
+    provider: text('provider').notNull().default('siliconflow'),
+    requestJson: text('request_json').notNull(),
+    responseJson: text('response_json'),
+    responseContent: text('response_content'),
+    error: text('error'),
+    durationMs: integer('duration_ms').notNull(),
+    createdAt: text('created_at').notNull().default(currentTimestamp),
+  },
+  (table) => ({
+    matchIdx: index('llm_calls_match_id_idx').on(table.matchId),
+    playgroundRunIdx: index('llm_calls_playground_run_id_idx').on(
+      table.playgroundRunId,
+    ),
+    phaseCheck: check(
+      'llm_calls_phase_check',
+      sql`${table.phase} in ('dialogue', 'examination', 'judgment')`,
+    ),
+    sideCheck: check(
+      'llm_calls_side_check',
+      sql`${table.side} in ('a', 'b', 'judge')`,
+    ),
+    attemptCheck: check('llm_calls_attempt_check', sql`${table.attempt} > 0`),
+    durationCheck: check(
+      'llm_calls_duration_ms_check',
+      sql`${table.durationMs} >= 0`,
+    ),
+    targetCheck: check(
+      'llm_calls_target_check',
+      sql`(${table.matchId} is not null and ${table.playgroundRunId} is null) or (${table.matchId} is null and ${table.playgroundRunId} is not null)`,
+    ),
+  }),
+)
+
 export const schema = {
   users,
   appSettings,
@@ -226,9 +275,12 @@ export const schema = {
   tournaments,
   rounds,
   matches,
+  llmCalls,
 }
 
 export type TournamentStatus = (typeof tournamentStatuses)[number]
 export type RoundStatus = (typeof roundStatuses)[number]
 export type MatchStatus = (typeof matchStatuses)[number]
 export type MatchWinner = (typeof matchWinners)[number]
+export type LlmCallPhase = (typeof llmCallPhases)[number]
+export type LlmCallSide = (typeof llmCallSides)[number]

@@ -5,10 +5,11 @@ import type {
   TournamentListItem,
   UpdateScenario,
 } from '@axiia/shared'
+import { Database } from 'bun:sqlite'
 import { execSync } from 'node:child_process'
-import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { Command } from 'commander'
 
 const API_BASE_URL = process.env.AXIIA_API_URL ?? 'http://localhost:3001'
@@ -42,6 +43,198 @@ type AdminPlayer = {
 }
 
 const program = new Command()
+
+function resolveLocalDatabasePath(explicitPath?: string) {
+  const configuredPath = explicitPath ?? process.env.AXIIA_DB_PATH
+
+  if (configuredPath) {
+    return resolve(process.cwd(), configuredPath)
+  }
+
+  if (process.cwd().endsWith(join('apps', 'cli'))) {
+    return resolve(process.cwd(), '../api/axiia.db')
+  }
+
+  return resolve(process.cwd(), 'apps/api/axiia.db')
+}
+
+function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) {
+    return fallback
+  }
+
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
+function exportPlaygroundRun(params: {
+  dbPath?: string
+  outputPath?: string
+  runId: number
+}) {
+  const dbPath = resolveLocalDatabasePath(params.dbPath)
+  const db = new Database(dbPath, { readonly: true })
+
+  try {
+    const rawRun = db
+      .query('select * from playground_runs where id = ?')
+      .get(params.runId) as Record<string, unknown> | null
+
+    if (!rawRun) {
+      throw new Error(`Playground run ${params.runId} not found in ${dbPath}`)
+    }
+
+    const rawSubmission = db
+      .query('select * from submissions where id = ?')
+      .get(rawRun.submission_id as number) as Record<string, unknown> | null
+    const rawScenario = db
+      .query('select * from scenarios where id = ?')
+      .get(rawRun.scenario_id as string) as Record<string, unknown> | null
+
+    const llmCalls = db
+      .query(
+        'select * from llm_calls where playground_run_id = ? order by id asc',
+      )
+      .all(params.runId) as Array<Record<string, unknown>>
+
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      dbPath,
+      kind: 'playground_run',
+      run: {
+        ...rawRun,
+        transcript: parseJsonField(rawRun.transcript as string | null, []),
+        judge_transcript_a: parseJsonField(
+          rawRun.judge_transcript_a as string | null,
+          [],
+        ),
+        judge_transcript_b: parseJsonField(
+          rawRun.judge_transcript_b as string | null,
+          [],
+        ),
+        info_assignment: parseJsonField(
+          rawRun.info_assignment as string | null,
+          null,
+        ),
+        judge_decision: parseJsonField(
+          rawRun.judge_decision as string | null,
+          null,
+        ),
+      },
+      submission: rawSubmission,
+      scenario: rawScenario,
+      llm_calls: llmCalls.map((call) => ({
+        ...call,
+        request_json: parseJsonField(call.request_json as string | null, null),
+        response_json: parseJsonField(
+          call.response_json as string | null,
+          null,
+        ),
+      })),
+    }
+
+    const json = JSON.stringify(payload, null, 2)
+
+    if (params.outputPath) {
+      const outputPath = resolve(process.cwd(), params.outputPath)
+      mkdirSync(dirname(outputPath), { recursive: true })
+      writeFileSync(outputPath, json, 'utf-8')
+      console.log(outputPath)
+      return
+    }
+
+    console.log(json)
+  } finally {
+    db.close()
+  }
+}
+
+function exportMatch(params: {
+  dbPath?: string
+  matchId: number
+  outputPath?: string
+}) {
+  const dbPath = resolveLocalDatabasePath(params.dbPath)
+  const db = new Database(dbPath, { readonly: true })
+
+  try {
+    const rawMatch = db
+      .query('select * from matches where id = ?')
+      .get(params.matchId) as Record<string, unknown> | null
+
+    if (!rawMatch) {
+      throw new Error(`Match ${params.matchId} not found in ${dbPath}`)
+    }
+
+    const subA = db
+      .query('select * from submissions where id = ?')
+      .get(rawMatch.sub_a_id as number) as Record<string, unknown> | null
+    const subB = db
+      .query('select * from submissions where id = ?')
+      .get(rawMatch.sub_b_id as number) as Record<string, unknown> | null
+    const scenario = db
+      .query('select * from scenarios where id = ?')
+      .get(rawMatch.scenario_id as string) as Record<string, unknown> | null
+
+    const llmCalls = db
+      .query('select * from llm_calls where match_id = ? order by id asc')
+      .all(params.matchId) as Array<Record<string, unknown>>
+
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      dbPath,
+      kind: 'match',
+      match: {
+        ...rawMatch,
+        transcript: parseJsonField(rawMatch.transcript as string | null, []),
+        judge_transcript_a: parseJsonField(
+          rawMatch.judge_transcript_a as string | null,
+          [],
+        ),
+        judge_transcript_b: parseJsonField(
+          rawMatch.judge_transcript_b as string | null,
+          [],
+        ),
+        info_assignment: parseJsonField(
+          rawMatch.info_assignment as string | null,
+          null,
+        ),
+        judge_decision: parseJsonField(
+          rawMatch.judge_decision as string | null,
+          null,
+        ),
+      },
+      submission_a: subA,
+      submission_b: subB,
+      scenario,
+      llm_calls: llmCalls.map((call) => ({
+        ...call,
+        request_json: parseJsonField(call.request_json as string | null, null),
+        response_json: parseJsonField(
+          call.response_json as string | null,
+          null,
+        ),
+      })),
+    }
+
+    const json = JSON.stringify(payload, null, 2)
+
+    if (params.outputPath) {
+      const outputPath = resolve(process.cwd(), params.outputPath)
+      mkdirSync(dirname(outputPath), { recursive: true })
+      writeFileSync(outputPath, json, 'utf-8')
+      console.log(outputPath)
+      return
+    }
+
+    console.log(json)
+  } finally {
+    db.close()
+  }
+}
 
 async function apiFetch<T>(
   path: string,
@@ -282,6 +475,7 @@ program
       boundaryConstraints: scenario.boundaryConstraints,
       turnCount: scenario.turnCount,
       judgeName: scenario.judgeName,
+      judgeModel: scenario.judgeModel,
       judgePrompt: scenario.judgePrompt,
       openingLine: scenario.openingLine,
       agentPromptTemplate: scenario.agentPromptTemplate,
@@ -338,6 +532,56 @@ program
       locked: updated.locked,
     })
   })
+
+program
+  .command('playground:export')
+  .description('导出本地 playground run 及其 llm_calls（本地数据库直读）')
+  .argument('<runId>', 'playground run id')
+  .option('-d, --db <path>', 'SQLite database path')
+  .option('-o, --output <path>', 'write JSON to file instead of stdout')
+  .action(
+    async (
+      runIdArg: string,
+      options: { db?: string; output?: string },
+    ) => {
+      const runId = Number.parseInt(runIdArg, 10)
+
+      if (!Number.isInteger(runId) || runId <= 0) {
+        throw new Error('runId must be a positive integer')
+      }
+
+      exportPlaygroundRun({
+        dbPath: options.db,
+        outputPath: options.output,
+        runId,
+      })
+    },
+  )
+
+program
+  .command('match:export')
+  .description('导出本地 match 及其 llm_calls（本地数据库直读）')
+  .argument('<matchId>', 'match id')
+  .option('-d, --db <path>', 'SQLite database path')
+  .option('-o, --output <path>', 'write JSON to file instead of stdout')
+  .action(
+    async (
+      matchIdArg: string,
+      options: { db?: string; output?: string },
+    ) => {
+      const matchId = Number.parseInt(matchIdArg, 10)
+
+      if (!Number.isInteger(matchId) || matchId <= 0) {
+        throw new Error('matchId must be a positive integer')
+      }
+
+      exportMatch({
+        dbPath: options.db,
+        matchId,
+        outputPath: options.output,
+      })
+    },
+  )
 
 program.parseAsync().catch((error) => {
   console.error(error instanceof Error ? error.message : 'Unknown CLI error')

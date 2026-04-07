@@ -74,6 +74,7 @@ export async function runMatch(
       infoAssignment: infoAssignment ?? undefined,
       judgeTranscriptA,
       judgeTranscriptB,
+      matchId,
       modelA: subA.model,
       modelB: subB.model,
       onDialogueTurn: async (nextTranscript) => {

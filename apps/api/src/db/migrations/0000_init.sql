@@ -120,3 +120,29 @@ CREATE TABLE `matches` (
   `updated_at` text,
   `created_at` text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+--> statement-breakpoint
+CREATE TABLE `llm_calls` (
+  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+  `match_id` integer REFERENCES `matches`(`id`),
+  `playground_run_id` integer REFERENCES `playground_runs`(`id`),
+  `phase` text NOT NULL CHECK(`phase` in ('dialogue', 'examination', 'judgment')),
+  `side` text NOT NULL CHECK(`side` in ('a', 'b', 'judge')),
+  `turn_index` integer,
+  `attempt` integer NOT NULL DEFAULT 1 CHECK(`attempt` > 0),
+  `model` text NOT NULL,
+  `provider` text NOT NULL DEFAULT 'siliconflow',
+  `request_json` text NOT NULL,
+  `response_json` text,
+  `response_content` text,
+  `error` text,
+  `duration_ms` integer NOT NULL CHECK(`duration_ms` >= 0),
+  `created_at` text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK(
+    (`match_id` is not null and `playground_run_id` is null) or
+    (`match_id` is null and `playground_run_id` is not null)
+  )
+);
+--> statement-breakpoint
+CREATE INDEX `llm_calls_match_id_idx` ON `llm_calls` (`match_id`);
+--> statement-breakpoint
+CREATE INDEX `llm_calls_playground_run_id_idx` ON `llm_calls` (`playground_run_id`);

@@ -328,6 +328,7 @@ function resetDatabase() {
   sqlite.exec(`
     PRAGMA foreign_keys = OFF;
     BEGIN;
+    DROP TABLE IF EXISTS llm_calls;
     DROP TABLE IF EXISTS matches;
     DROP TABLE IF EXISTS rounds;
     DROP TABLE IF EXISTS tournaments;

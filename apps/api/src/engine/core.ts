@@ -18,7 +18,7 @@ import {
 } from '@axiia/shared'
 
 import type { ScenarioRecord } from '../db/schema'
-import { chatCompletion } from './llm'
+import { chatCompletion, type ChatCompletionTrace } from './llm'
 
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
@@ -29,6 +29,7 @@ type MatchExecutionParams = {
   infoAssignment?: InfoAssignment
   judgeTranscriptA?: JudgeQA[]
   judgeTranscriptB?: JudgeQA[]
+  matchId?: number
   modelA: string
   modelB: string
   onDialogueTurn?: (transcript: TranscriptTurn[]) => Promise<void> | void
@@ -37,6 +38,7 @@ type MatchExecutionParams = {
   onJudgeTranscriptB?: (judgeTranscriptB: JudgeQA[]) => Promise<void> | void
   onJudgingStart?: (transcript: TranscriptTurn[]) => Promise<void> | void
   onStart?: () => Promise<void> | void
+  playgroundRunId?: number
   promptA: string
   promptB: string
   scenario: ScenarioRecord
@@ -59,12 +61,12 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function withRetry<T>(task: () => Promise<T>) {
+async function withRetry<T>(task: (attempt: number) => Promise<T>) {
   let lastError: unknown
 
   for (let attempt = 1; attempt <= RETRY_COUNT; attempt += 1) {
     try {
-      return await task()
+      return await task(attempt)
     } catch (error) {
       lastError = error
 
@@ -387,11 +389,12 @@ async function getExaminationAnswer(
   assignment: InfoAssignment,
   submissionPrompt: string,
   model: ModelId,
+  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
 ): Promise<JudgeQA> {
   const validInfoIds = getOpponentHiddenInfo(scenario, roleSide).map(
     (item) => item.id,
   )
-  const rawAnswer = await withRetry(async () => {
+  const rawAnswer = await withRetry(async (attempt) => {
     const { systemPrompt, messages } = buildDialogueContext(
       transcript,
       scenario,
@@ -415,6 +418,13 @@ async function getExaminationAnswer(
       model,
       systemPrompt,
       temperature: 0,
+      trace: {
+        ...traceTarget,
+        attempt,
+        phase: 'examination',
+        side: roleSide,
+        turnIndex: transcript.length,
+      },
     })
 
     return validateExaminationAnswer(
@@ -492,6 +502,7 @@ async function getJudgeDecision(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
+  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
 ): Promise<JudgeDecision> {
   const transcriptText =
     transcript.length > 0
@@ -546,13 +557,20 @@ async function getJudgeDecision(
   const judgeSystemMessage = buildJudgeSystemMessage(scenario, assignment)
   const judgeModel = parseModelId(scenario.judgeModel ?? DEFAULT_JUDGE_MODEL)
 
-  const raw = await withRetry(async () => {
+  const raw = await withRetry(async (attempt) => {
     const response = await chatCompletion({
       jsonMode: true,
       messages: [{ role: 'user', content: prompt }],
       model: judgeModel,
       systemPrompt: judgeSystemMessage,
       temperature: 0,
+      trace: {
+        ...traceTarget,
+        attempt,
+        phase: 'judgment',
+        side: 'judge',
+        turnIndex: transcript.length,
+      },
     })
 
     return validateJudgeDecision(
@@ -650,12 +668,20 @@ export async function executeMatchSession(
       speaker === 'a' ? params.promptA : params.promptB,
     )
 
-    const response = await withRetry(() =>
+    const response = await withRetry((attempt) =>
       chatCompletion({
         messages,
         model: speaker === 'a' ? modelA : modelB,
         systemPrompt,
         temperature: 0,
+        trace: {
+          attempt,
+          matchId: params.matchId,
+          phase: 'dialogue',
+          playgroundRunId: params.playgroundRunId,
+          side: speaker,
+          turnIndex,
+        },
       }),
     )
 
@@ -686,6 +712,10 @@ export async function executeMatchSession(
       assignment,
       params.promptA,
       modelA,
+      {
+        matchId: params.matchId,
+        playgroundRunId: params.playgroundRunId,
+      },
     )
 
     judgeTranscriptA.push(answerA)
@@ -702,6 +732,10 @@ export async function executeMatchSession(
       assignment,
       params.promptB,
       modelB,
+      {
+        matchId: params.matchId,
+        playgroundRunId: params.playgroundRunId,
+      },
     )
 
     judgeTranscriptB.push(answerB)
@@ -715,6 +749,10 @@ export async function executeMatchSession(
     transcript,
     judgeTranscriptA,
     judgeTranscriptB,
+    {
+      matchId: params.matchId,
+      playgroundRunId: params.playgroundRunId,
+    },
   )
 
   const { scoreA, scoreB, winner } = computeScores(

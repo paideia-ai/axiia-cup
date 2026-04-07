@@ -240,6 +240,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       judgeTranscriptB,
       modelA: submission.model,
       modelB: submission.model,
+      playgroundRunId: runId,
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript
         await persist({ transcript: JSON.stringify(nextTranscript) })

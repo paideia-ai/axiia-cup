@@ -11,6 +11,7 @@ import {
 
 import { db } from '../db/client'
 import {
+  llmCalls,
   matches,
   playgroundRuns,
   rounds,
@@ -36,6 +37,7 @@ beforeAll(() => {
 const TEST_SCENARIO_ID = 'test-scenario'
 
 function cleanupTestData() {
+  db.delete(llmCalls).run()
   db.delete(matches).run()
   db.delete(rounds).run()
   db.delete(tournaments).run()
