@@ -14,6 +14,49 @@ export const matchStatusSchema = z.enum([
 ])
 export const matchWinnerSchema = z.enum(['a', 'b', 'draw'])
 
+// ── Scenario structured data ────────────────────────────────────────────────
+
+const hiddenInfoIdSchema = z
+  .string()
+  .regex(
+    /^[A-Za-z][A-Za-z0-9_]*$/,
+    '隐藏信息 ID 仅支持字母、数字和下划线，且需以字母开头',
+  )
+
+export const hiddenInfoItemSchema = z.object({
+  id: hiddenInfoIdSchema,
+  content: z.string().trim().min(1),
+})
+
+export const requestItemSchema = z.object({
+  id: z.string().trim().min(1),
+  content: z.string().trim().min(1),
+})
+
+// ── Per-match randomization result ──────────────────────────────────────────
+
+export const infoAssignmentSchema = z.object({
+  roleAFalseInfoIds: z.array(z.string()),
+  roleBFalseInfoIds: z.array(z.string()),
+  roleATrueRequestIds: z.array(z.string()),
+  roleBTrueRequestIds: z.array(z.string()),
+})
+
+// ── Judge decision (replaces old judgeScoringSchema for engine output) ───────
+
+export const judgeDecisionSchema = z.object({
+  judgment: z.string(),
+  requests: z.record(z.string(), z.enum(['同意', '不同意'])),
+  speech: z.string(),
+})
+
+export const examinationAnswerSchema = z.object({
+  selectedInfoId: z.string().trim().min(1),
+  answer: z.string().trim().min(1),
+})
+
+// ── Common schemas ──────────────────────────────────────────────────────────
+
 export const userSchema = z.object({
   id: z.number().int().positive(),
   email: z.string().email(),
@@ -51,36 +94,204 @@ export const updateRegistrationCodeSchema = z.object({
   code: z.string().trim().min(1),
 })
 
-export const scenarioSchema = z.object({
+function validateUniqueIds(
+  items: { id: string }[],
+  path: string,
+  context: z.RefinementCtx,
+) {
+  const seen = new Set<string>()
+
+  items.forEach((item, index) => {
+    if (seen.has(item.id)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${path} 中存在重复 ID：${item.id}`,
+        path: [path, index, 'id'],
+      })
+      return
+    }
+
+    seen.add(item.id)
+  })
+
+  return seen
+}
+
+function validateScenarioProtocol(
+  scenario: {
+    falseInfoCount: number
+    roleAHiddenInfo: { id: string }[]
+    roleARequests: { id: string }[]
+    roleBHiddenInfo: { id: string }[]
+    roleBRequests: { id: string }[]
+    trueRequestCount: number
+  },
+  context: z.RefinementCtx,
+) {
+  const roleAInfoIds = validateUniqueIds(
+    scenario.roleAHiddenInfo,
+    'roleAHiddenInfo',
+    context,
+  )
+  const roleBInfoIds = validateUniqueIds(
+    scenario.roleBHiddenInfo,
+    'roleBHiddenInfo',
+    context,
+  )
+  const roleARequestIds = validateUniqueIds(
+    scenario.roleARequests,
+    'roleARequests',
+    context,
+  )
+  const roleBRequestIds = validateUniqueIds(
+    scenario.roleBRequests,
+    'roleBRequests',
+    context,
+  )
+
+  if (roleAInfoIds && roleBInfoIds) {
+    scenario.roleBHiddenInfo.forEach((item, index) => {
+      if (roleAInfoIds.has(item.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `roleAHiddenInfo 和 roleBHiddenInfo 不能复用同一 ID：${item.id}`,
+          path: ['roleBHiddenInfo', index, 'id'],
+        })
+      }
+    })
+  }
+
+  if (roleARequestIds && roleBRequestIds) {
+    scenario.roleBRequests.forEach((item, index) => {
+      if (roleARequestIds.has(item.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `roleARequests 和 roleBRequests 不能复用同一 ID：${item.id}`,
+          path: ['roleBRequests', index, 'id'],
+        })
+      }
+    })
+  }
+
+  if (scenario.falseInfoCount > scenario.roleAHiddenInfo.length) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'falseInfoCount 不能超过角色 A 的隐藏信息数量',
+      path: ['falseInfoCount'],
+    })
+  }
+
+  if (scenario.falseInfoCount > scenario.roleBHiddenInfo.length) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'falseInfoCount 不能超过角色 B 的隐藏信息数量',
+      path: ['falseInfoCount'],
+    })
+  }
+
+  if (scenario.trueRequestCount > scenario.roleARequests.length) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'trueRequestCount 不能超过角色 A 的请求数量',
+      path: ['trueRequestCount'],
+    })
+  }
+
+  if (scenario.trueRequestCount > scenario.roleBRequests.length) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'trueRequestCount 不能超过角色 B 的请求数量',
+      path: ['trueRequestCount'],
+    })
+  }
+}
+
+// ── Scenario ────────────────────────────────────────────────────────────────
+
+const scenarioBaseSchema = z.object({
   id: z.string(),
   title: z.string(),
   subject: z.string(),
   context: z.string(),
-  roleAName: z.string(),
-  roleAPublicGoal: z.string(),
-  roleBName: z.string(),
-  roleBPublicGoal: z.string(),
   boundaryConstraints: z.string(),
   turnCount: z.number().int().positive(),
   judgeName: z.string(),
-  judgeRounds: z.number().int().positive(),
+  judgeModel: modelIdSchema,
   judgePrompt: z.string(),
+  openingLine: z.string(),
+  agentPromptTemplate: z.string(),
+  examinationQuestionTemplate: z.string(),
+  // Role A
+  roleAName: z.string(),
+  roleAPublicIdentity: z.string(),
+  roleAMainGoal: z.string(),
+  roleAStance: z.string(),
+  roleAHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleARequests: z.array(requestItemSchema),
+  // Role B
+  roleBName: z.string(),
+  roleBPublicIdentity: z.string(),
+  roleBMainGoal: z.string(),
+  roleBStance: z.string(),
+  roleBHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleBRequests: z.array(requestItemSchema),
+  // Randomization config
+  falseInfoCount: z.number().int().nonnegative(),
+  trueRequestCount: z.number().int().positive(),
+  // Scoring config
+  mainGoalScore: z.number(),
+  trueRequestScore: z.number(),
+  falseRequestPenalty: z.number(),
 })
 
-export const updateScenarioSchema = z.object({
-  judgePrompt: z.string().min(1),
+export const scenarioSchema = scenarioBaseSchema.superRefine(
+  (scenario, context) => {
+    validateScenarioProtocol(scenario, context)
+  },
+)
+
+const updateScenarioBaseSchema = z.object({
   context: z.string().min(1),
-  roleAPublicGoal: z.string().min(1),
-  roleBPublicGoal: z.string().min(1),
   boundaryConstraints: z.string().min(1),
   turnCount: z.number().int().min(1).max(50),
-  judgeRounds: z.number().int().min(1).max(10),
   judgeName: z.string().min(1),
+  judgeModel: modelIdSchema,
+  judgePrompt: z.string().min(1),
+  openingLine: z.string().min(1),
+  agentPromptTemplate: z.string().min(1),
+  examinationQuestionTemplate: z.string().min(1),
+  roleAName: z.string().min(1),
+  roleAPublicIdentity: z.string().min(1),
+  roleAMainGoal: z.string().min(1),
+  roleAStance: z.string().min(1),
+  roleAHiddenInfo: z.array(hiddenInfoItemSchema).min(1),
+  roleARequests: z.array(requestItemSchema).min(1),
+  roleBName: z.string().min(1),
+  roleBPublicIdentity: z.string().min(1),
+  roleBMainGoal: z.string().min(1),
+  roleBStance: z.string().min(1),
+  roleBHiddenInfo: z.array(hiddenInfoItemSchema).min(1),
+  roleBRequests: z.array(requestItemSchema).min(1),
+  falseInfoCount: z.number().int().nonnegative(),
+  trueRequestCount: z.number().int().positive(),
+  mainGoalScore: z.number(),
+  trueRequestScore: z.number(),
+  falseRequestPenalty: z.number(),
 })
 
-export const adminScenarioSchema = scenarioSchema.extend({
-  locked: z.boolean(),
-})
+export const updateScenarioSchema = updateScenarioBaseSchema.superRefine(
+  (scenario, context) => {
+    validateScenarioProtocol(scenario, context)
+  },
+)
+
+export const adminScenarioSchema = scenarioBaseSchema
+  .extend({
+    locked: z.boolean(),
+  })
+  .superRefine((scenario, context) => {
+    validateScenarioProtocol(scenario, context)
+  })
 
 export const modelOptionSchema = z.object({
   id: modelIdSchema,
@@ -126,8 +337,11 @@ export const judgeQASchema = z.object({
   round: z.number().int().positive(),
   question: z.string(),
   answer: z.string(),
+  selectedInfoId: z.string().nullable().optional(),
+  isCorrect: z.boolean().nullable().optional(),
 })
 
+// Legacy scoring schema kept for DB read compatibility; engine now produces judgeDecision
 export const judgeScoringSchema = z.object({
   score_a: z.number(),
   score_b: z.number(),
@@ -163,6 +377,8 @@ export const matchSchema = z.object({
   transcript: z.array(transcriptTurnSchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
+  infoAssignment: infoAssignmentSchema.nullable(),
+  judgeDecision: judgeDecisionSchema.nullable(),
   scoreA: z.number().nullable(),
   scoreB: z.number().nullable(),
   winner: matchWinnerSchema.nullable(),
@@ -248,6 +464,8 @@ export const playgroundRunSchema = z.object({
   transcript: z.array(transcriptTurnSchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
+  infoAssignment: infoAssignmentSchema.nullable(),
+  judgeDecision: judgeDecisionSchema.nullable(),
   scoreA: z.number().nullable(),
   scoreB: z.number().nullable(),
   winner: matchWinnerSchema.nullable(),
@@ -329,6 +547,11 @@ export type Scenario = z.infer<typeof scenarioSchema>
 export type UpdateScenario = z.infer<typeof updateScenarioSchema>
 export type AdminScenario = z.infer<typeof adminScenarioSchema>
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>
+export type HiddenInfoItem = z.infer<typeof hiddenInfoItemSchema>
+export type RequestItem = z.infer<typeof requestItemSchema>
+export type InfoAssignment = z.infer<typeof infoAssignmentSchema>
+export type JudgeDecision = z.infer<typeof judgeDecisionSchema>
+export type ExaminationAnswer = z.infer<typeof examinationAnswerSchema>
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>
 export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>
 export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>

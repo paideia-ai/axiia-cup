@@ -1,4 +1,4 @@
-import type { JudgeQA, TranscriptTurn } from '@axiia/shared'
+import type { InfoAssignment, JudgeQA, TranscriptTurn } from '@axiia/shared'
 import { and, asc, eq, or } from 'drizzle-orm'
 
 import { db } from '../db/client'
@@ -217,6 +217,10 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     transcript = parseJsonField<TranscriptTurn[]>(run.transcript, [])
     judgeTranscriptA = parseJsonField<JudgeQA[]>(run.judgeTranscriptA, [])
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
+    const infoAssignment = parseJsonField<InfoAssignment | null>(
+      run.infoAssignment,
+      null,
+    )
 
     const persist = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
       db
@@ -231,6 +235,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
         .run()
 
     const result = await executeMatchSession({
+      infoAssignment: infoAssignment ?? undefined,
       judgeTranscriptA,
       judgeTranscriptB,
       modelA: submission.model,
@@ -238,6 +243,9 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript
         await persist({ transcript: JSON.stringify(nextTranscript) })
+      },
+      onInfoAssignment: async (assignment) => {
+        await persist({ infoAssignment: JSON.stringify(assignment) })
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
         judgeTranscriptA = nextJudgeTranscriptA
@@ -259,6 +267,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
 
     await persist({
       error: null,
+      infoAssignment: JSON.stringify(result.infoAssignment),
+      judgeDecision: JSON.stringify(result.judgeDecision),
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,

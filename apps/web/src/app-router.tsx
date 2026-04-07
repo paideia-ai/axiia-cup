@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
 import { AdminPage } from './pages/admin-page'
+import { AdminScenarioEditPage } from './pages/admin-scenario-edit'
 import ComponentPlaygroundPage from './pages/component-playground-page'
 import { DashboardPage } from './pages/dashboard-page'
 import { LeaderboardPage } from './pages/Leaderboard'
@@ -52,6 +53,16 @@ function ProtectedShell() {
           path="/admin"
           element={
             user?.isAdmin ? <AdminPage /> : <Navigate replace to="/dashboard" />
+          }
+        />
+        <Route
+          path="/admin/scenarios/:scenarioId"
+          element={
+            user?.isAdmin ? (
+              <AdminScenarioEditPage />
+            ) : (
+              <Navigate replace to="/dashboard" />
+            )
           }
         />
         <Route path="*" element={<Navigate replace to="/dashboard" />} />

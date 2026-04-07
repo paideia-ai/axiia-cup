@@ -53,11 +53,17 @@ function seedTestData() {
       subject: 'test',
       context: 'test context',
       roleAName: 'Role A',
-      roleAPublicGoal: 'Goal A',
+      roleAPublicIdentity: 'Identity A',
+      roleAMainGoal: 'Goal A',
+      roleAStance: 'Stance A',
       roleBName: 'Role B',
-      roleBPublicGoal: 'Goal B',
+      roleBPublicIdentity: 'Identity B',
+      roleBMainGoal: 'Goal B',
+      roleBStance: 'Stance B',
       boundaryConstraints: 'none',
       judgePrompt: 'judge',
+      agentPromptTemplate: 'template',
+      examinationQuestionTemplate: 'question',
     })
     .run()
 

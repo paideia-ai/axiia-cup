@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm'
-import type { JudgeQA, TranscriptTurn } from '@axiia/shared'
+import type { InfoAssignment, JudgeQA, TranscriptTurn } from '@axiia/shared'
 
 import { db } from '../db/client'
 import { matches, scenarios, submissions } from '../db/schema'
@@ -64,9 +64,14 @@ export async function runMatch(
   let transcript = parseJsonField<TranscriptTurn[]>(match.transcript, [])
   let judgeTranscriptA = parseJsonField<JudgeQA[]>(match.judgeTranscriptA, [])
   let judgeTranscriptB = parseJsonField<JudgeQA[]>(match.judgeTranscriptB, [])
+  const infoAssignment = parseJsonField<InfoAssignment | null>(
+    match.infoAssignment,
+    null,
+  )
 
   try {
     const result = await executeMatchSession({
+      infoAssignment: infoAssignment ?? undefined,
       judgeTranscriptA,
       judgeTranscriptB,
       modelA: subA.model,
@@ -76,6 +81,11 @@ export async function runMatch(
         await updateLeasedMatch(matchId, leaseToken, {
           currentTurn: nextTranscript.length,
           transcript: JSON.stringify(nextTranscript),
+        })
+      },
+      onInfoAssignment: async (assignment) => {
+        await updateLeasedMatch(matchId, leaseToken, {
+          infoAssignment: JSON.stringify(assignment),
         })
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
@@ -112,6 +122,8 @@ export async function runMatch(
     await updateLeasedMatch(matchId, leaseToken, {
       error: null,
       finishedAt: new Date().toISOString(),
+      infoAssignment: JSON.stringify(result.infoAssignment),
+      judgeDecision: JSON.stringify(result.judgeDecision),
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,

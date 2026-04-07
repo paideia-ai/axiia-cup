@@ -8,6 +8,7 @@ interface AccordionProps {
   children: ReactNode
   className?: string
   defaultValue?: string[]
+  multiple?: boolean
   value?: string[]
   onValueChange?: (value: string[]) => void
 }
@@ -16,12 +17,14 @@ export function Accordion({
   children,
   className,
   defaultValue,
+  multiple,
   value,
   onValueChange,
 }: AccordionProps) {
   return (
     <BaseAccordion.Root
       defaultValue={defaultValue}
+      multiple={multiple}
       value={value}
       onValueChange={onValueChange}
       className={cn('divide-y divide-(--border-soft)', className)}

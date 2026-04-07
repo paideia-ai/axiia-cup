@@ -1,23 +1,36 @@
-import type { PlaygroundRun } from '@axiia/shared'
+import type { PlaygroundRun, PlaygroundRunSummary } from '@axiia/shared'
 
 import { runPlayground } from './api'
 
 const STORAGE_KEY = 'axiia-playground-session-v2'
+const RUN_MATCH_WINDOW_MS = 5_000
+const RUN_PENDING_GRACE_MS = 30_000
 
 export type PlaygroundSession = {
   error: string | null
-  judgeRounds: number
   requestId: string
   run: PlaygroundRun | null
   runId: number | null
   scenarioId: string
   startedAt: number
   status: 'error' | 'running' | 'success'
+  submissionCreatedAt: string
   submissionId: number
   turnCount: number
 }
 
 type SessionMap = Record<string, PlaygroundSession>
+type SubmissionIdentity = {
+  createdAt: string
+  id: number
+  scenarioId: string
+}
+
+export type PlaygroundSessionResolution =
+  | { kind: 'none' }
+  | { kind: 'pending' }
+  | { kind: 'run'; runId: number }
+  | { kind: 'stale' }
 
 const listeners = new Set<() => void>()
 const inflightRequests = new Map<number, string>()
@@ -35,6 +48,13 @@ function createRequestId() {
   }
 
   return `playground-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+function parseSqlTimestamp(value: string) {
+  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`
+  const timestamp = Date.parse(normalized)
+
+  return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
 function readPersistedState(): SessionMap {
@@ -139,8 +159,8 @@ export function clearPlaygroundSession(submissionId: number) {
 }
 
 export function startPlaygroundRunSession(params: {
-  judgeRounds: number
   scenarioId: string
+  submissionCreatedAt: string
   submissionId: number
   turnCount: number
 }) {
@@ -149,13 +169,13 @@ export function startPlaygroundRunSession(params: {
 
   setSession({
     error: null,
-    judgeRounds: params.judgeRounds,
     requestId,
     run: null,
     runId: null,
     scenarioId: params.scenarioId,
     startedAt: Date.now(),
     status: 'running',
+    submissionCreatedAt: params.submissionCreatedAt,
     submissionId: params.submissionId,
     turnCount: params.turnCount,
   })
@@ -206,8 +226,8 @@ export function failPlaygroundRun(
 }
 
 export function startTrackedPlaygroundRun(params: {
-  judgeRounds: number
   scenarioId: string
+  submissionCreatedAt: string
   submissionId: number
   turnCount: number
 }) {
@@ -237,4 +257,50 @@ export function startTrackedPlaygroundRun(params: {
     })
 
   return requestId
+}
+
+export function resolvePlaygroundSession(
+  session: PlaygroundSession | null,
+  submission: SubmissionIdentity,
+  summaries: PlaygroundRunSummary[],
+  now = Date.now(),
+): PlaygroundSessionResolution {
+  if (!session) {
+    return { kind: 'none' }
+  }
+
+  if (
+    session.submissionId !== submission.id ||
+    session.scenarioId !== submission.scenarioId ||
+    session.submissionCreatedAt !== submission.createdAt
+  ) {
+    return { kind: 'stale' }
+  }
+
+  const persistedRunId = session.runId ?? session.run?.id ?? null
+
+  if (persistedRunId != null) {
+    return summaries.some((summary) => summary.id === persistedRunId)
+      ? { kind: 'run', runId: persistedRunId }
+      : { kind: 'stale' }
+  }
+
+  const matchedSummary = summaries.find(
+    (summary) =>
+      parseSqlTimestamp(summary.createdAt) >=
+      session.startedAt - RUN_MATCH_WINDOW_MS,
+  )
+
+  if (matchedSummary) {
+    return { kind: 'run', runId: matchedSummary.id }
+  }
+
+  if (
+    session.status === 'running' &&
+    now - session.startedAt <= RUN_PENDING_GRACE_MS
+  ) {
+    return { kind: 'pending' }
+  }
+
+  return { kind: 'stale' }
 }

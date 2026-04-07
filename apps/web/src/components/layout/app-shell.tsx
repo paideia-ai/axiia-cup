@@ -15,7 +15,7 @@ const navigation = [
 export function AppShell({ children }: PropsWithChildren) {
   const { logout, user } = useAuth()
   const navigationItems = user?.isAdmin
-    ? [...navigation, { to: '/admin', label: 'Admin', icon: Shield }]
+    ? [...navigation, { to: '/admin', label: '管理面板', icon: Shield }]
     : navigation
 
   return (

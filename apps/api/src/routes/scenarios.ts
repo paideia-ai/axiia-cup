@@ -8,35 +8,32 @@ import { Hono } from 'hono'
 
 import { db } from '../db/client'
 import { scenarios, tournaments } from '../db/schema'
+import { parseJsonField } from '../lib/json'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
 
-const publicScenarioSelection = {
-  boundaryConstraints: scenarios.boundaryConstraints,
-  context: scenarios.context,
-  id: scenarios.id,
-  judgeName: scenarios.judgeName,
-  judgePrompt: scenarios.judgePrompt,
-  judgeRounds: scenarios.judgeRounds,
-  roleAName: scenarios.roleAName,
-  roleAPublicGoal: scenarios.roleAPublicGoal,
-  roleBName: scenarios.roleBName,
-  roleBPublicGoal: scenarios.roleBPublicGoal,
-  subject: scenarios.subject,
-  title: scenarios.title,
-  turnCount: scenarios.turnCount,
-}
+const lockedExpression = sql<number>`exists(
+  select 1
+  from ${tournaments}
+  where ${and(
+    eq(tournaments.scenarioId, scenarios.id),
+    eq(tournaments.status, 'running'),
+  )}
+)`.as('locked')
 
-const adminScenarioSelection = {
-  ...publicScenarioSelection,
-  locked: sql<number>`exists(
-    select 1
-    from ${tournaments}
-    where ${and(
-      eq(tournaments.scenarioId, scenarios.id),
-      eq(tournaments.status, 'running'),
-    )}
-  )`.as('locked'),
+function serializeScenario(row: {
+  roleAHiddenInfo: string
+  roleARequests: string
+  roleBHiddenInfo: string
+  roleBRequests: string
+}) {
+  return {
+    ...row,
+    roleAHiddenInfo: parseJsonField(row.roleAHiddenInfo, []),
+    roleARequests: parseJsonField(row.roleARequests, []),
+    roleBHiddenInfo: parseJsonField(row.roleBHiddenInfo, []),
+    roleBRequests: parseJsonField(row.roleBRequests, []),
+  }
 }
 
 const scenariosRouter = new Hono()
@@ -47,7 +44,38 @@ scenariosRouter.get(
   requireAdmin,
   (context) => {
     const rows = db
-      .select(adminScenarioSelection)
+      .select({
+        agentPromptTemplate: scenarios.agentPromptTemplate,
+        boundaryConstraints: scenarios.boundaryConstraints,
+        context: scenarios.context,
+        examinationQuestionTemplate: scenarios.examinationQuestionTemplate,
+        falseInfoCount: scenarios.falseInfoCount,
+        falseRequestPenalty: scenarios.falseRequestPenalty,
+        id: scenarios.id,
+        judgeName: scenarios.judgeName,
+        judgeModel: scenarios.judgeModel,
+        judgePrompt: scenarios.judgePrompt,
+        locked: lockedExpression,
+        mainGoalScore: scenarios.mainGoalScore,
+        openingLine: scenarios.openingLine,
+        roleAHiddenInfo: scenarios.roleAHiddenInfo,
+        roleAMainGoal: scenarios.roleAMainGoal,
+        roleAName: scenarios.roleAName,
+        roleAPublicIdentity: scenarios.roleAPublicIdentity,
+        roleARequests: scenarios.roleARequests,
+        roleAStance: scenarios.roleAStance,
+        roleBHiddenInfo: scenarios.roleBHiddenInfo,
+        roleBMainGoal: scenarios.roleBMainGoal,
+        roleBName: scenarios.roleBName,
+        roleBPublicIdentity: scenarios.roleBPublicIdentity,
+        roleBRequests: scenarios.roleBRequests,
+        roleBStance: scenarios.roleBStance,
+        subject: scenarios.subject,
+        title: scenarios.title,
+        trueRequestCount: scenarios.trueRequestCount,
+        trueRequestScore: scenarios.trueRequestScore,
+        turnCount: scenarios.turnCount,
+      })
       .from(scenarios)
       .orderBy(asc(scenarios.createdAt))
       .all()
@@ -55,7 +83,7 @@ scenariosRouter.get(
     return context.json(
       rows.map((row) =>
         adminScenarioSchema.parse({
-          ...row,
+          ...serializeScenario(row),
           locked: Boolean(row.locked),
         }),
       ),
@@ -110,10 +138,26 @@ scenariosRouter.put(
         }
       }
 
-      tx.update(scenarios).set(parsed.data).where(eq(scenarios.id, id)).run()
+      const {
+        roleAHiddenInfo,
+        roleARequests,
+        roleBHiddenInfo,
+        roleBRequests,
+        ...rest
+      } = parsed.data
+      tx.update(scenarios)
+        .set({
+          ...rest,
+          roleAHiddenInfo: JSON.stringify(roleAHiddenInfo),
+          roleARequests: JSON.stringify(roleARequests),
+          roleBHiddenInfo: JSON.stringify(roleBHiddenInfo),
+          roleBRequests: JSON.stringify(roleBRequests),
+        })
+        .where(eq(scenarios.id, id))
+        .run()
 
       const updatedScenario = tx
-        .select(adminScenarioSelection)
+        .select()
         .from(scenarios)
         .where(eq(scenarios.id, id))
         .get()
@@ -127,8 +171,8 @@ scenariosRouter.put(
 
       return {
         scenario: adminScenarioSchema.parse({
-          ...updatedScenario,
-          locked: Boolean(updatedScenario.locked),
+          ...serializeScenario(updatedScenario),
+          locked: false,
         }),
       }
     })
@@ -143,17 +187,13 @@ scenariosRouter.put(
 
 scenariosRouter.get('/api/scenarios/:id', (context) => {
   const id = context.req.param('id')
-  const row = db
-    .select(publicScenarioSelection)
-    .from(scenarios)
-    .where(eq(scenarios.id, id))
-    .get()
+  const row = db.select().from(scenarios).where(eq(scenarios.id, id)).get()
 
   if (!row) {
     return context.json({ error: 'Scenario not found' }, 404)
   }
 
-  return context.json(scenarioSchema.parse(row))
+  return context.json(scenarioSchema.parse(serializeScenario(row)))
 })
 
 export { scenariosRouter }

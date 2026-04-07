@@ -1,11 +1,11 @@
 export const modelOptions = [
-  { id: 'kimi-k2.5', label: 'Kimi K2.5', apiModel: 'Pro/moonshotai/Kimi-K2.5' },
   {
     id: 'deepseek-v3.2',
     label: 'DeepSeek V3.2',
     apiModel: 'deepseek-ai/DeepSeek-V3.2',
   },
-  { id: 'qwen3-8b', label: 'Qwen3 8B', apiModel: 'Qwen/Qwen3-8B' },
+  { id: 'kimi-k2.5', label: 'Kimi K2.5', apiModel: 'Pro/moonshotai/Kimi-K2.5' },
+  { id: 'qwen3-32b', label: 'Qwen3', apiModel: 'Qwen/Qwen3-32B' },
   {
     id: 'minimax-m2.5',
     label: 'MiniMax M2.5',

@@ -61,14 +61,20 @@ beforeAll(async () => {
       subject: '历史',
       context: '原始背景',
       roleAName: '角色A',
-      roleAPublicGoal: '角色A目标',
+      roleAPublicIdentity: '角色A身份',
+      roleAMainGoal: '角色A目标',
+      roleAStance: '变法',
       roleBName: '角色B',
-      roleBPublicGoal: '角色B目标',
+      roleBPublicIdentity: '角色B身份',
+      roleBMainGoal: '角色B目标',
+      roleBStance: '维持现状',
       boundaryConstraints: '原始约束',
       turnCount: 10,
       judgeName: '裁判',
-      judgeRounds: 3,
+      judgeModel: 'deepseek-v3.2',
       judgePrompt: '原始裁判提示词',
+      agentPromptTemplate: '模板',
+      examinationQuestionTemplate: '问题模板',
     })
     .run()
 
@@ -102,14 +108,32 @@ function req(method: string, path: string, token?: string, body?: unknown) {
 }
 
 const validUpdate = {
-  judgePrompt: '更新后的裁判提示词',
   context: '更新后的背景',
-  roleAPublicGoal: '更新后A目标',
-  roleBPublicGoal: '更新后B目标',
   boundaryConstraints: '更新后约束',
   turnCount: 15,
-  judgeRounds: 5,
   judgeName: '秦孝公',
+  judgeModel: 'kimi-k2.5',
+  judgePrompt: '更新后的裁判提示词',
+  openingLine: '请开始辩论。',
+  agentPromptTemplate: '更新后模板',
+  examinationQuestionTemplate: '更新后问题模板',
+  roleAName: '角色A',
+  roleAPublicIdentity: '角色A身份',
+  roleAMainGoal: '更新后A目标',
+  roleAStance: '变法',
+  roleAHiddenInfo: [{ id: 'S1', content: '信息1' }],
+  roleARequests: [{ id: 'SR1', content: '请求1' }],
+  roleBName: '角色B',
+  roleBPublicIdentity: '角色B身份',
+  roleBMainGoal: '更新后B目标',
+  roleBStance: '维持现状',
+  roleBHiddenInfo: [{ id: 'G1', content: '信息2' }],
+  roleBRequests: [{ id: 'GR1', content: '请求2' }],
+  falseInfoCount: 0,
+  trueRequestCount: 1,
+  mainGoalScore: 1,
+  trueRequestScore: 0.5,
+  falseRequestPenalty: -0.25,
 }
 
 describe('PUT /api/admin/scenarios/:id', () => {
@@ -153,6 +177,34 @@ describe('PUT /api/admin/scenarios/:id', () => {
     expect(res.status).toBe(400)
   })
 
+  it('returns 400 for duplicate request ids across both sides', async () => {
+    const res = await req(
+      'PUT',
+      '/api/admin/scenarios/test-scenario',
+      adminToken,
+      {
+        ...validUpdate,
+        roleBRequests: [{ id: 'SR1', content: '重复请求 ID' }],
+      },
+    )
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when trueRequestCount exceeds available requests', async () => {
+    const res = await req(
+      'PUT',
+      '/api/admin/scenarios/test-scenario',
+      adminToken,
+      {
+        ...validUpdate,
+        trueRequestCount: 2,
+      },
+    )
+
+    expect(res.status).toBe(400)
+  })
+
   it('returns 200 and updates fields when unlocked', async () => {
     const res = await req(
       'PUT',
@@ -165,8 +217,9 @@ describe('PUT /api/admin/scenarios/:id', () => {
     expect(json.judgePrompt).toBe('更新后的裁判提示词')
     expect(json.context).toBe('更新后的背景')
     expect(json.turnCount).toBe(15)
-    expect(json.judgeRounds).toBe(5)
     expect(json.judgeName).toBe('秦孝公')
+    expect(json.judgeModel).toBe('kimi-k2.5')
+    expect(json.roleAMainGoal).toBe('更新后A目标')
     expect(json.locked).toBe(false)
   })
 

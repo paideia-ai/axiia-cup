@@ -251,7 +251,6 @@ program
         title: s.title,
         subject: s.subject,
         turnCount: s.turnCount,
-        judgeRounds: s.judgeRounds,
         judgeName: s.judgeName,
         locked: s.locked ? '🔒' : '',
       })),
@@ -280,13 +279,30 @@ program
 
     const editable: UpdateScenario = {
       context: scenario.context,
-      roleAPublicGoal: scenario.roleAPublicGoal,
-      roleBPublicGoal: scenario.roleBPublicGoal,
       boundaryConstraints: scenario.boundaryConstraints,
-      judgePrompt: scenario.judgePrompt,
-      judgeName: scenario.judgeName,
       turnCount: scenario.turnCount,
-      judgeRounds: scenario.judgeRounds,
+      judgeName: scenario.judgeName,
+      judgePrompt: scenario.judgePrompt,
+      openingLine: scenario.openingLine,
+      agentPromptTemplate: scenario.agentPromptTemplate,
+      examinationQuestionTemplate: scenario.examinationQuestionTemplate,
+      roleAName: scenario.roleAName,
+      roleAPublicIdentity: scenario.roleAPublicIdentity,
+      roleAMainGoal: scenario.roleAMainGoal,
+      roleAStance: scenario.roleAStance,
+      roleAHiddenInfo: scenario.roleAHiddenInfo,
+      roleARequests: scenario.roleARequests,
+      roleBName: scenario.roleBName,
+      roleBPublicIdentity: scenario.roleBPublicIdentity,
+      roleBMainGoal: scenario.roleBMainGoal,
+      roleBStance: scenario.roleBStance,
+      roleBHiddenInfo: scenario.roleBHiddenInfo,
+      roleBRequests: scenario.roleBRequests,
+      falseInfoCount: scenario.falseInfoCount,
+      trueRequestCount: scenario.trueRequestCount,
+      mainGoalScore: scenario.mainGoalScore,
+      trueRequestScore: scenario.trueRequestScore,
+      falseRequestPenalty: scenario.falseRequestPenalty,
     }
 
     const tmpFile = join(tmpdir(), `axiia-scenario-${scenarioId}.json`)
@@ -316,8 +332,9 @@ program
     console.log(`场景「${updated.title}」已更新`)
     console.table({
       turnCount: updated.turnCount,
-      judgeRounds: updated.judgeRounds,
       judgeName: updated.judgeName,
+      falseInfoCount: updated.falseInfoCount,
+      trueRequestCount: updated.trueRequestCount,
       locked: updated.locked,
     })
   })

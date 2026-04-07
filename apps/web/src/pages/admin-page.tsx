@@ -6,9 +6,7 @@ import type {
   AdminUser,
   TournamentDetail,
   TournamentListItem,
-  UpdateScenario,
 } from '@axiia/shared'
-import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -18,9 +16,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { Textarea } from '../components/ui/textarea'
 import {
-  ApiError,
   getAdminErroredMatches,
   getAdminRegistrationCode,
   getAdminScenarios,
@@ -34,7 +30,6 @@ import {
   startTournament,
   toggleAdminUserDisabled,
   updateAdminRegistrationCode,
-  updateAdminScenario,
 } from '../lib/api'
 
 function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
@@ -114,19 +109,6 @@ function formatDateTime(value: string) {
   })
 }
 
-function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
-  return {
-    judgePrompt: scenario.judgePrompt,
-    context: scenario.context,
-    roleAPublicGoal: scenario.roleAPublicGoal,
-    roleBPublicGoal: scenario.roleBPublicGoal,
-    boundaryConstraints: scenario.boundaryConstraints,
-    turnCount: scenario.turnCount,
-    judgeRounds: scenario.judgeRounds,
-    judgeName: scenario.judgeName,
-  }
-}
-
 type AdminTab = 'tournaments' | 'players' | 'settings'
 
 export function AdminPage() {
@@ -143,15 +125,8 @@ export function AdminPage() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
   const [registrationCode, setRegistrationCode] = useState<string | null>(null)
   const [registrationCodeDraft, setRegistrationCodeDraft] = useState('')
-  const [editingScenario, setEditingScenario] = useState<AdminScenario | null>(
-    null,
-  )
-  const [scenarioDraft, setScenarioDraft] = useState<UpdateScenario | null>(
-    null,
-  )
   const [isEditingRegistrationCode, setIsEditingRegistrationCode] =
     useState(false)
-  const [isSavingScenario, setIsSavingScenario] = useState(false)
   const [isSavingRegistrationCode, setIsSavingRegistrationCode] =
     useState(false)
   const [resetPasswordUserId, setResetPasswordUserId] = useState<number | null>(
@@ -395,51 +370,6 @@ export function AdminPage() {
     }
   }
 
-  function handleOpenScenarioEditor(scenario: AdminScenario) {
-    setEditingScenario(scenario)
-    setScenarioDraft(getScenarioUpdateInput(scenario))
-  }
-
-  function handleCloseScenarioEditor() {
-    setEditingScenario(null)
-    setScenarioDraft(null)
-  }
-
-  async function handleSaveScenario() {
-    if (!editingScenario || !scenarioDraft) {
-      return
-    }
-
-    try {
-      setIsSavingScenario(true)
-      setError(null)
-
-      const updatedScenario = await updateAdminScenario(
-        editingScenario.id,
-        scenarioDraft,
-      )
-
-      setScenarios((current) =>
-        current.map((scenario) =>
-          scenario.id === updatedScenario.id ? updatedScenario : scenario,
-        ),
-      )
-      handleCloseScenarioEditor()
-      setToast(`场景「${updatedScenario.title}」已更新`)
-      await loadAdminData(false)
-    } catch (saveError) {
-      if (saveError instanceof ApiError && saveError.status === 423) {
-        setError('比赛进行中，无法编辑')
-        await loadAdminData(false)
-        return
-      }
-
-      setError(saveError instanceof Error ? saveError.message : '保存场景失败')
-    } finally {
-      setIsSavingScenario(false)
-    }
-  }
-
   function handleOpenResetPassword(userId: number) {
     setResetPasswordUserId(userId)
     setResetPasswordDraft('')
@@ -531,214 +461,6 @@ export function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <Dialog.Root
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseScenarioEditor()
-          }
-        }}
-        open={editingScenario !== null}
-      >
-        <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px]" />
-          <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 flex max-h-[90vh] w-[min(92vw,960px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--border) bg-(--surface) shadow-[0_40px_120px_rgba(0,0,0,0.6)]">
-            <div className="border-b border-(--border-soft) px-6 py-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <Dialog.Title className="text-lg font-black tracking-tight text-(--foreground)">
-                    编辑场景
-                  </Dialog.Title>
-                  <Dialog.Description className="text-sm text-(--foreground-subtle)">
-                    {editingScenario
-                      ? `更新「${editingScenario.title}」的裁判提示词与回合配置。`
-                      : '更新场景配置。'}
-                  </Dialog.Description>
-                </div>
-                {editingScenario?.locked ? (
-                  <Badge className="gap-1" tone="warning">
-                    <Lock size={12} />
-                    已锁定
-                  </Badge>
-                ) : null}
-              </div>
-            </div>
-
-            <form
-              className="flex-1 overflow-y-auto px-6 py-5"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void handleSaveScenario()
-              }}
-            >
-              {scenarioDraft ? (
-                <div className="grid gap-4">
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>裁判提示词</span>
-                    <Textarea
-                      className="min-h-40"
-                      onChange={(event) =>
-                        setScenarioDraft((current) =>
-                          current
-                            ? { ...current, judgePrompt: event.target.value }
-                            : current,
-                        )
-                      }
-                      value={scenarioDraft.judgePrompt}
-                    />
-                  </label>
-
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>场景背景</span>
-                    <Textarea
-                      className="min-h-32"
-                      onChange={(event) =>
-                        setScenarioDraft((current) =>
-                          current
-                            ? { ...current, context: event.target.value }
-                            : current,
-                        )
-                      }
-                      value={scenarioDraft.context}
-                    />
-                  </label>
-
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>角色 A 公开目标</span>
-                      <Textarea
-                        className="min-h-28"
-                        onChange={(event) =>
-                          setScenarioDraft((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  roleAPublicGoal: event.target.value,
-                                }
-                              : current,
-                          )
-                        }
-                        value={scenarioDraft.roleAPublicGoal}
-                      />
-                    </label>
-
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>角色 B 公开目标</span>
-                      <Textarea
-                        className="min-h-28"
-                        onChange={(event) =>
-                          setScenarioDraft((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  roleBPublicGoal: event.target.value,
-                                }
-                              : current,
-                          )
-                        }
-                        value={scenarioDraft.roleBPublicGoal}
-                      />
-                    </label>
-                  </div>
-
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>边界约束</span>
-                    <Textarea
-                      className="min-h-28"
-                      onChange={(event) =>
-                        setScenarioDraft((current) =>
-                          current
-                            ? {
-                                ...current,
-                                boundaryConstraints: event.target.value,
-                              }
-                            : current,
-                        )
-                      }
-                      value={scenarioDraft.boundaryConstraints}
-                    />
-                  </label>
-
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>对话轮数</span>
-                      <Input
-                        max={50}
-                        min={1}
-                        onChange={(event) =>
-                          setScenarioDraft((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  turnCount:
-                                    event.target.value === ''
-                                      ? 0
-                                      : Number(event.target.value),
-                                }
-                              : current,
-                          )
-                        }
-                        type="number"
-                        value={scenarioDraft.turnCount}
-                      />
-                    </label>
-
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>裁判轮数</span>
-                      <Input
-                        max={10}
-                        min={1}
-                        onChange={(event) =>
-                          setScenarioDraft((current) =>
-                            current
-                              ? {
-                                  ...current,
-                                  judgeRounds:
-                                    event.target.value === ''
-                                      ? 0
-                                      : Number(event.target.value),
-                                }
-                              : current,
-                          )
-                        }
-                        type="number"
-                        value={scenarioDraft.judgeRounds}
-                      />
-                    </label>
-
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>裁判名称</span>
-                      <Input
-                        onChange={(event) =>
-                          setScenarioDraft((current) =>
-                            current
-                              ? { ...current, judgeName: event.target.value }
-                              : current,
-                          )
-                        }
-                        value={scenarioDraft.judgeName}
-                      />
-                    </label>
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-6 flex items-center justify-end gap-2 border-t border-(--border-soft) pt-5">
-                <Button
-                  onClick={handleCloseScenarioEditor}
-                  type="button"
-                  variant="secondary"
-                >
-                  取消
-                </Button>
-                <Button disabled={isSavingScenario} type="submit">
-                  {isSavingScenario ? '保存中...' : '保存修改'}
-                </Button>
-              </div>
-            </form>
-          </Dialog.Popup>
-        </Dialog.Portal>
-      </Dialog.Root>
-
       {toast ? (
         <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
           <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
@@ -1228,15 +950,14 @@ export function AdminPage() {
 
               return (
                 <Card key={scenario.id}>
-                  <CardHeader className="flex flex-col gap-3 border-none pb-0 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
+                  <CardHeader className="grid gap-6 lg:grid-cols-[1fr_220px]">
+                    <div className="space-y-3">
                       <CardTitle>{scenario.title}</CardTitle>
                       <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
                         {scenario.context}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{scenario.subject}</Badge>
+                    <div className="space-y-3">
                       <Badge tone="info">{players.length} 人已提交</Badge>
                       {scenario.locked ? (
                         <Badge className="gap-1" tone="warning">
@@ -1303,14 +1024,15 @@ export function AdminPage() {
                         </p>
                       </div>
 
-                      <Button
-                        className="w-full"
-                        disabled={scenario.locked}
-                        onClick={() => handleOpenScenarioEditor(scenario)}
-                        variant="secondary"
-                      >
-                        {scenario.locked ? '比赛进行中，已锁定' : '编辑场景'}
-                      </Button>
+                      <Link to={`/admin/scenarios/${scenario.id}`}>
+                        <Button
+                          className="w-full mb-3"
+                          disabled={scenario.locked}
+                          variant="secondary"
+                        >
+                          {scenario.locked ? '比赛进行中，已锁定' : '编辑场景'}
+                        </Button>
+                      </Link>
 
                       <Button
                         className="w-full"

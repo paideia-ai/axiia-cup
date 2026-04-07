@@ -1,5 +1,7 @@
 import {
   modelOptions,
+  type InfoAssignment,
+  type JudgeDecision,
   type PlaygroundRun,
   type PlaygroundRunSummary,
   type Scenario,
@@ -20,7 +22,9 @@ import {
   getScenario,
 } from '../lib/api'
 import {
+  clearPlaygroundSession,
   getPlaygroundSession,
+  resolvePlaygroundSession,
   startTrackedPlaygroundRun,
   subscribePlaygroundSession,
   syncPlaygroundRun,
@@ -138,19 +142,17 @@ function deriveRunningState(session: PlaygroundSession) {
 
   if (judgeRoundsA > 0 || judgeRoundsB > 0) {
     const totalJudgeProgress = judgeRoundsA + judgeRoundsB
-    const totalJudgeRounds = Math.max(1, session.judgeRounds * 2)
-    const completedJudging = Math.min(1, totalJudgeProgress / totalJudgeRounds)
-    const judgingComplete =
-      judgeRoundsA >= session.judgeRounds && judgeRoundsB >= session.judgeRounds
+    const completedJudging = Math.min(1, totalJudgeProgress / 2)
+    const judgingComplete = judgeRoundsA >= 1 && judgeRoundsB >= 1
 
     return {
       activeIndex: 3,
       detail: judgingComplete
-        ? '双方裁判问答已完成，正在汇总最终评分。'
-        : `裁判追问进度：A ${judgeRoundsA}/${session.judgeRounds} · B ${judgeRoundsB}/${session.judgeRounds}`,
+        ? '双方审讯已完成，正在汇总最终裁决。'
+        : `审讯进度：A ${judgeRoundsA}/1 · B ${judgeRoundsB}/1`,
       progressPercent: 70 + completedJudging * 22,
       stageKey: 'judging' as RunningStageKey,
-      title: judgingComplete ? '正在生成最终评分' : '进入审讯阶段',
+      title: judgingComplete ? '正在生成最终裁决' : '进入审讯阶段',
     }
   }
 
@@ -175,6 +177,389 @@ function deriveRunningState(session: PlaygroundSession) {
   }
 }
 
+function buildRequestContentMap(scenario: Scenario) {
+  return new Map(
+    [...scenario.roleARequests, ...scenario.roleBRequests].map((request) => [
+      request.id,
+      request.content,
+    ]),
+  )
+}
+
+function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
+  return new Map(items.map((item) => [item.id, item.content]))
+}
+
+function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
+  return (
+    <Card>
+      <CardHeader className="pb-0">
+        <CardTitle className="text-sm">场景资料</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-0 pt-2">
+        <Accordion defaultValue={['roles']}>
+          <AccordionItem
+            value="context"
+            title="场景背景"
+            triggerClassName="text-xs"
+          >
+            <p className="text-xs leading-5 text-(--foreground-subtle)">
+              {scenario.context}
+            </p>
+          </AccordionItem>
+
+          <AccordionItem
+            value="roles"
+            title="角色信息"
+            triggerClassName="text-xs"
+          >
+            <div className="space-y-3">
+              {(
+                [
+                  {
+                    name: scenario.roleAName,
+                    identity: scenario.roleAPublicIdentity,
+                    goal: scenario.roleAMainGoal,
+                    stance: scenario.roleAStance,
+                    hiddenInfo: scenario.roleAHiddenInfo,
+                    requests: scenario.roleARequests,
+                    side: 'a',
+                  },
+                  {
+                    name: scenario.roleBName,
+                    identity: scenario.roleBPublicIdentity,
+                    goal: scenario.roleBMainGoal,
+                    stance: scenario.roleBStance,
+                    hiddenInfo: scenario.roleBHiddenInfo,
+                    requests: scenario.roleBRequests,
+                    side: 'b',
+                  },
+                ] as const
+              ).map((role) => (
+                <div
+                  key={role.side}
+                  className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+                >
+                  <p
+                    className="text-xs font-semibold"
+                    style={{
+                      color:
+                        role.side === 'a' ? 'var(--accent)' : 'var(--info)',
+                    }}
+                  >
+                    {role.name}
+                  </p>
+                  <div className="space-y-1 text-[11px] leading-4 text-(--foreground-subtle)">
+                    <p>
+                      <span className="text-(--foreground-muted)">身份：</span>
+                      {role.identity}
+                    </p>
+                    <p>
+                      <span className="text-(--foreground-muted)">目标：</span>
+                      {role.goal}
+                    </p>
+                    <p>
+                      <span className="text-(--foreground-muted)">主张：</span>
+                      {role.stance}
+                    </p>
+                  </div>
+                  {role.hiddenInfo.length > 0 ? (
+                    <div>
+                      <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+                        隐藏信息（{role.hiddenInfo.length} 条）
+                      </p>
+                      <ul className="space-y-0.5">
+                        {role.hiddenInfo.map((item) => (
+                          <li
+                            key={item.id}
+                            className="text-[11px] leading-4 text-(--foreground-subtle) pl-2 border-l-2 border-(--border-soft)"
+                          >
+                            {item.content}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {role.requests.length > 0 ? (
+                    <div>
+                      <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+                        诉求（{role.requests.length} 条）
+                      </p>
+                      <ul className="space-y-0.5">
+                        {role.requests.map((item) => (
+                          <li
+                            key={item.id}
+                            className="text-[11px] leading-4 text-(--foreground-subtle) pl-2 border-l-2 border-(--border-soft)"
+                          >
+                            {item.content}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </AccordionItem>
+
+          <AccordionItem
+            value="rules"
+            title="游戏规则"
+            triggerClassName="text-xs"
+          >
+            <div className="space-y-2 text-[11px] leading-4 text-(--foreground-subtle)">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg bg-white/3 px-2.5 py-2">
+                  <p className="text-(--foreground-muted)">对话回合</p>
+                  <p className="text-sm font-semibold text-(--foreground)">
+                    {scenario.turnCount}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white/3 px-2.5 py-2">
+                  <p className="text-(--foreground-muted)">虚假信息数</p>
+                  <p className="text-sm font-semibold text-(--foreground)">
+                    {scenario.falseInfoCount}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-(--foreground-muted) mb-1">计分规则</p>
+                <div className="space-y-0.5 pl-2 border-l-2 border-(--border-soft)">
+                  <p>核心目标得分：{scenario.mainGoalScore} 分</p>
+                  <p>
+                    每条真诉求被采纳：+{scenario.trueRequestScore} 分（共{' '}
+                    {scenario.trueRequestCount} 条真诉求参与判定）
+                  </p>
+                  <p>每条假诉求被采纳：{scenario.falseRequestPenalty} 分</p>
+                </div>
+              </div>
+            </div>
+          </AccordionItem>
+
+          <AccordionItem
+            value="boundary"
+            title="边界约束"
+            triggerClassName="text-xs"
+          >
+            <p className="text-xs leading-5 text-(--foreground-subtle)">
+              {scenario.boundaryConstraints}
+            </p>
+          </AccordionItem>
+
+          <AccordionItem
+            value="judge"
+            title="裁判规则"
+            triggerClassName="text-xs"
+          >
+            <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+              {scenario.judgePrompt}
+            </p>
+          </AccordionItem>
+        </Accordion>
+      </CardContent>
+    </Card>
+  )
+}
+
+function InfoAssignmentPanel({
+  assignment,
+  scenario,
+}: {
+  assignment: InfoAssignment
+  scenario: Scenario
+}) {
+  const roleAFalse = new Set(assignment.roleAFalseInfoIds)
+  const roleBFalse = new Set(assignment.roleBFalseInfoIds)
+  const roleATrue = new Set(assignment.roleATrueRequestIds)
+  const roleBTrue = new Set(assignment.roleBTrueRequestIds)
+
+  return (
+    <Card>
+      <CardHeader className="pb-0">
+        <CardTitle className="text-sm">本局信息分配</CardTitle>
+        <p className="text-[11px] text-(--foreground-muted)">
+          每场比赛随机决定哪些隐藏信息为真、哪些为假，以及哪些诉求参与判定。
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-3">
+        {(
+          [
+            {
+              name: scenario.roleAName,
+              hiddenInfo: scenario.roleAHiddenInfo,
+              requests: scenario.roleARequests,
+              falseIds: roleAFalse,
+              trueReqIds: roleATrue,
+              side: 'a',
+            },
+            {
+              name: scenario.roleBName,
+              hiddenInfo: scenario.roleBHiddenInfo,
+              requests: scenario.roleBRequests,
+              falseIds: roleBFalse,
+              trueReqIds: roleBTrue,
+              side: 'b',
+            },
+          ] as const
+        ).map((role) => (
+          <div
+            key={role.side}
+            className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+          >
+            <p
+              className="text-xs font-semibold"
+              style={{
+                color: role.side === 'a' ? 'var(--accent)' : 'var(--info)',
+              }}
+            >
+              {role.name}
+            </p>
+            {role.hiddenInfo.length > 0 ? (
+              <div>
+                <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+                  隐藏信息
+                </p>
+                <ul className="space-y-1">
+                  {role.hiddenInfo.map((item) => {
+                    const isFalse = role.falseIds.has(item.id)
+                    return (
+                      <li
+                        key={item.id}
+                        className="flex items-start gap-1.5 text-[11px] leading-4"
+                      >
+                        <span
+                          className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                            isFalse
+                              ? 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                              : 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                          }`}
+                        >
+                          {isFalse ? '假' : '真'}
+                        </span>
+                        <span className="text-(--foreground-subtle)">
+                          {item.content}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ) : null}
+            {role.requests.length > 0 ? (
+              <div>
+                <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+                  诉求
+                </p>
+                <ul className="space-y-1">
+                  {role.requests.map((item) => {
+                    const isTrue = role.trueReqIds.has(item.id)
+                    return (
+                      <li
+                        key={item.id}
+                        className="flex items-start gap-1.5 text-[11px] leading-4"
+                      >
+                        <span
+                          className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                            isTrue
+                              ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                              : 'bg-white/8 text-(--foreground-muted)'
+                          }`}
+                        >
+                          {isTrue ? '参与' : '不参与'}
+                        </span>
+                        <span className="text-(--foreground-subtle)">
+                          {item.content}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+function JudgeDecisionPanel({
+  decision,
+  scenario,
+}: {
+  decision: JudgeDecision
+  scenario: Scenario
+}) {
+  const requestEntries = Object.entries(decision.requests)
+  const requestContentMap = buildRequestContentMap(scenario)
+
+  return (
+    <Card>
+      <CardHeader className="pb-0">
+        <CardTitle className="text-sm">裁判裁决</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-3">
+        <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+          <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+            主张裁决
+          </p>
+          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+            {decision.judgment}
+          </p>
+        </div>
+
+        {requestEntries.length > 0 ? (
+          <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+            <p className="text-[11px] font-medium text-(--foreground-muted) mb-2">
+              诉求裁定
+            </p>
+            <div className="space-y-1.5">
+              {requestEntries.map(([requestId, ruling]) => {
+                const isApproved = ruling === '同意'
+                return (
+                  <div
+                    key={requestId}
+                    className="flex items-start justify-between gap-2 text-[11px]"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-(--foreground-subtle)">
+                        <span className="font-medium text-(--foreground-muted)">
+                          [{requestId}]
+                        </span>{' '}
+                        {requestContentMap.get(requestId) ?? '未知请求'}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                        isApproved
+                          ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                          : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                      }`}
+                    >
+                      {ruling}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {decision.speech ? (
+          <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+            <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
+              裁判宣判词
+            </p>
+            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap italic">
+              {decision.speech}
+            </p>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  )
+}
+
 function RunResult({
   run,
   scenario,
@@ -191,13 +576,13 @@ function RunResult({
             <div className="px-5 py-4">
               <p className="panel-label">{scenario.roleAName}</p>
               <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
-                {run.scoreA ?? '—'} / 10
+                {run.scoreA ?? '—'}
               </p>
             </div>
             <div className="px-5 py-4">
               <p className="panel-label">{scenario.roleBName}</p>
               <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
-                {run.scoreB ?? '—'} / 10
+                {run.scoreB ?? '—'}
               </p>
             </div>
             <div className="px-5 py-4">
@@ -215,7 +600,7 @@ function RunResult({
           </div>
           {run.reasoning ? (
             <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
-              <p className="panel-label">裁判评分理由</p>
+              <p className="panel-label">裁判宣判词</p>
               <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
                 {run.reasoning}
               </pre>
@@ -223,6 +608,24 @@ function RunResult({
           ) : null}
         </CardContent>
       </Card>
+
+      {/* Info assignment & judge decision */}
+      {run.infoAssignment || run.judgeDecision ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {run.infoAssignment ? (
+            <InfoAssignmentPanel
+              assignment={run.infoAssignment}
+              scenario={scenario}
+            />
+          ) : null}
+          {run.judgeDecision ? (
+            <JudgeDecisionPanel
+              decision={run.judgeDecision}
+              scenario={scenario}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -297,50 +700,90 @@ function RunResult({
         ).map(({ transcript, roleName, side }) => (
           <Card key={side}>
             <CardHeader>
-              <CardTitle>裁判追问 · {roleName}</CardTitle>
+              <CardTitle>审讯结果 · {roleName}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {transcript.length ? (
-                transcript.map((item) => (
-                  <div
-                    key={item.round}
-                    className="overflow-hidden rounded-xl border border-(--border-soft)"
-                  >
-                    {/* Judge question */}
-                    <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                          {scenario.judgeName} · 第 {item.round} 轮
-                        </p>
-                        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                          {item.question}
-                        </p>
-                      </div>
-                    </div>
-                    {/* Role answer */}
+                transcript.map((item) => {
+                  const opponentInfoMap = buildInfoContentMap(
+                    side === 'a'
+                      ? scenario.roleBHiddenInfo
+                      : scenario.roleAHiddenInfo,
+                  )
+
+                  return (
                     <div
-                      className="px-4 py-3"
-                      style={{
-                        background:
-                          side === 'a'
-                            ? 'rgba(224,74,47,0.05)'
-                            : 'rgba(96,165,250,0.05)',
-                      }}
+                      key={item.round}
+                      className="overflow-hidden rounded-xl border border-(--border-soft)"
                     >
-                      <p
-                        className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                      <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                            {scenario.judgeName} · 第 {item.round} 轮
+                          </p>
+                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                            {item.question}
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className="space-y-3 px-4 py-3"
                         style={{
-                          color: side === 'a' ? 'var(--accent)' : 'var(--info)',
+                          background:
+                            side === 'a'
+                              ? 'rgba(224,74,47,0.05)'
+                              : 'rgba(96,165,250,0.05)',
                         }}
                       >
-                        {roleName} 回答
-                      </p>
-                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                        {item.answer}
-                      </p>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                          <span
+                            className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
+                            style={{
+                              background:
+                                side === 'a'
+                                  ? 'rgba(224,74,47,0.12)'
+                                  : 'rgba(96,165,250,0.12)',
+                            }}
+                          >
+                            {roleName} 选择 {item.selectedInfoId ?? '未作答'}
+                          </span>
+                          {item.isCorrect != null ? (
+                            <span
+                              className={`rounded px-1.5 py-0.5 font-semibold ${
+                                item.isCorrect
+                                  ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                  : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                              }`}
+                            >
+                              {item.isCorrect ? '判断正确' : '判断错误'}
+                            </span>
+                          ) : null}
+                        </div>
+                        {item.selectedInfoId ? (
+                          <p className="text-[11px] leading-5 text-(--foreground-muted)">
+                            对应信息：
+                            {opponentInfoMap.get(item.selectedInfoId) ??
+                              '未知信息'}
+                          </p>
+                        ) : null}
+                        <div>
+                          <p
+                            className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                            style={{
+                              color:
+                                side === 'a' ? 'var(--accent)' : 'var(--info)',
+                            }}
+                          >
+                            {roleName} 回答
+                          </p>
+                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                            {item.answer}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <p className="text-sm text-(--foreground-subtle)">暂无问答。</p>
               )}
@@ -659,8 +1102,29 @@ export function PlaygroundPage() {
         setRunSummaries(runs)
 
         const session = getPlaygroundSession(submissionId)
+        const resolvedSession = resolvePlaygroundSession(session, sub, runs)
 
-        if (session?.run) {
+        if (resolvedSession.kind === 'run' && session) {
+          const fullRun = await getPlaygroundRun(
+            submissionId,
+            resolvedSession.runId,
+          )
+          syncPlaygroundRun(submissionId, session.requestId, fullRun)
+          setSelectedRun(fullRun)
+          return
+        }
+
+        if (resolvedSession.kind === 'pending') {
+          setSelectedRun(null)
+          return
+        }
+
+        if (resolvedSession.kind === 'stale') {
+          clearPlaygroundSession(submissionId)
+          setSelectedRun(null)
+        }
+
+        if (session?.run && resolvedSession.kind !== 'stale') {
           setSelectedRun(session.run)
           return
         }
@@ -779,8 +1243,8 @@ export function PlaygroundPage() {
     setSelectedRun(null)
 
     startTrackedPlaygroundRun({
-      judgeRounds: scenario.judgeRounds,
       scenarioId: scenario.id,
+      submissionCreatedAt: submission.createdAt,
       submissionId,
       turnCount: scenario.turnCount,
     })
@@ -851,7 +1315,7 @@ export function PlaygroundPage() {
 
       {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* ── Left: Main content area ── */}
         <div className="space-y-6">
           {isRunning && activeSession ? (
@@ -913,6 +1377,8 @@ export function PlaygroundPage() {
               </Accordion>
             </CardContent>
           </Card>
+
+          <ScenarioInfoPanel scenario={scenario} />
 
           {runSummaries.length > 0 ? (
             <Card>

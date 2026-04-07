@@ -8,6 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { getMatch, getScenario, retryAdminMatch } from '../lib/api'
 
+function buildRequestContentMap(scenario: Scenario) {
+  return new Map(
+    [...scenario.roleARequests, ...scenario.roleBRequests].map((request) => [
+      request.id,
+      request.content,
+    ]),
+  )
+}
+
+function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
+  return new Map(items.map((item) => [item.id, item.content]))
+}
+
 export function MatchDetailPage() {
   const { matchId = '' } = useParams()
   const { user } = useAuth()
@@ -100,6 +113,7 @@ export function MatchDetailPage() {
 
   const roleAName = scenario?.roleAName ?? '—'
   const roleBName = scenario?.roleBName ?? '—'
+  const requestContentMap = scenario ? buildRequestContentMap(scenario) : null
   const playerALabel = `${roleAName}（${match.playerADisplayName}）`
   const playerBLabel = `${roleBName}（${match.playerBDisplayName}）`
   const winnerLabel =
@@ -205,6 +219,176 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
+      {match.infoAssignment || match.judgeDecision ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {match.infoAssignment && scenario ? (
+            <Card>
+              <CardHeader className="pb-0">
+                <CardTitle>本局信息分配</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-3">
+                {(
+                  [
+                    {
+                      falseIds: new Set(match.infoAssignment.roleAFalseInfoIds),
+                      hiddenInfo: scenario.roleAHiddenInfo,
+                      name: scenario.roleAName,
+                      requests: scenario.roleARequests,
+                      side: 'a' as const,
+                      trueRequestIds: new Set(
+                        match.infoAssignment.roleATrueRequestIds,
+                      ),
+                    },
+                    {
+                      falseIds: new Set(match.infoAssignment.roleBFalseInfoIds),
+                      hiddenInfo: scenario.roleBHiddenInfo,
+                      name: scenario.roleBName,
+                      requests: scenario.roleBRequests,
+                      side: 'b' as const,
+                      trueRequestIds: new Set(
+                        match.infoAssignment.roleBTrueRequestIds,
+                      ),
+                    },
+                  ] as const
+                ).map((role) => (
+                  <div
+                    key={role.side}
+                    className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+                  >
+                    <p
+                      className="text-xs font-semibold"
+                      style={{
+                        color:
+                          role.side === 'a' ? 'var(--accent)' : 'var(--info)',
+                      }}
+                    >
+                      {role.name}
+                    </p>
+                    <div>
+                      <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                        隐藏信息
+                      </p>
+                      <ul className="space-y-1">
+                        {role.hiddenInfo.map((item) => {
+                          const isFalse = role.falseIds.has(item.id)
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="flex items-start gap-1.5 text-[11px] leading-4"
+                            >
+                              <span
+                                className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                                  isFalse
+                                    ? 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                                    : 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                }`}
+                              >
+                                {isFalse ? '假' : '真'}
+                              </span>
+                              <span className="text-(--foreground-subtle)">
+                                {item.content}
+                              </span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                        诉求
+                      </p>
+                      <ul className="space-y-1">
+                        {role.requests.map((item) => {
+                          const isTrue = role.trueRequestIds.has(item.id)
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="flex items-start gap-1.5 text-[11px] leading-4"
+                            >
+                              <span
+                                className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                                  isTrue
+                                    ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                    : 'bg-white/8 text-(--foreground-muted)'
+                                }`}
+                              >
+                                {isTrue ? '参与' : '不参与'}
+                              </span>
+                              <span className="text-(--foreground-subtle)">
+                                {item.content}
+                              </span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {match.judgeDecision && scenario && requestContentMap ? (
+            <Card>
+              <CardHeader className="pb-0">
+                <CardTitle>裁判裁决</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-3">
+                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+                  <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                    主张裁决
+                  </p>
+                  <p className="text-xs leading-5 text-(--foreground-subtle)">
+                    {match.judgeDecision.judgment}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+                  <p className="mb-2 text-[11px] font-medium text-(--foreground-muted)">
+                    诉求裁定
+                  </p>
+                  <div className="space-y-1.5">
+                    {Object.entries(match.judgeDecision.requests).map(
+                      ([requestId, ruling]) => (
+                        <div
+                          key={requestId}
+                          className="flex items-start justify-between gap-2 text-[11px]"
+                        >
+                          <p className="text-(--foreground-subtle)">
+                            <span className="font-medium text-(--foreground-muted)">
+                              [{requestId}]
+                            </span>{' '}
+                            {requestContentMap.get(requestId) ?? '未知请求'}
+                          </p>
+                          <span
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                              ruling === '同意'
+                                ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                            }`}
+                          >
+                            {ruling}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
+                  <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                    裁判宣判词
+                  </p>
+                  <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                    {match.judgeDecision.speech}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Transcript */}
       <Card>
         <CardHeader>
@@ -275,7 +459,7 @@ export function MatchDetailPage() {
           <Card key={side}>
             <CardHeader>
               <CardTitle>
-                {scenario?.judgeName ?? '裁判'}追问 · {playerLabel}
+                {scenario?.judgeName ?? '裁判'}审讯 · {playerLabel}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -295,7 +479,7 @@ export function MatchDetailPage() {
                     </div>
                   </div>
                   <div
-                    className="px-4 py-3"
+                    className="space-y-3 px-4 py-3"
                     style={{
                       background:
                         side === 'a'
@@ -303,17 +487,52 @@ export function MatchDetailPage() {
                           : 'rgba(96,165,250,0.05)',
                     }}
                   >
-                    <p
-                      className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
-                      style={{
-                        color: side === 'a' ? 'var(--accent)' : 'var(--info)',
-                      }}
-                    >
-                      {playerLabel} 回答
-                    </p>
-                    <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                      {item.answer}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                      <span
+                        className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
+                        style={{
+                          background:
+                            side === 'a'
+                              ? 'rgba(224,74,47,0.12)'
+                              : 'rgba(96,165,250,0.12)',
+                        }}
+                      >
+                        选择 {item.selectedInfoId ?? '未作答'}
+                      </span>
+                      {item.isCorrect != null ? (
+                        <span
+                          className={`rounded px-1.5 py-0.5 font-semibold ${
+                            item.isCorrect
+                              ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                              : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                          }`}
+                        >
+                          {item.isCorrect ? '判断正确' : '判断错误'}
+                        </span>
+                      ) : null}
+                    </div>
+                    {scenario && item.selectedInfoId ? (
+                      <p className="text-[11px] leading-5 text-(--foreground-muted)">
+                        对应信息：
+                        {(side === 'a'
+                          ? buildInfoContentMap(scenario.roleBHiddenInfo)
+                          : buildInfoContentMap(scenario.roleAHiddenInfo)
+                        ).get(item.selectedInfoId) ?? '未知信息'}
+                      </p>
+                    ) : null}
+                    <div>
+                      <p
+                        className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                        style={{
+                          color: side === 'a' ? 'var(--accent)' : 'var(--info)',
+                        }}
+                      >
+                        {playerLabel} 回答
+                      </p>
+                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                        {item.answer}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -325,12 +544,12 @@ export function MatchDetailPage() {
       {/* Reasoning */}
       <Card>
         <CardHeader>
-          <CardTitle>{scenario?.judgeName ?? '裁判'}评分理由</CardTitle>
+          <CardTitle>{scenario?.judgeName ?? '裁判'}宣判词</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
             <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无评分理由。'}
+              {match.reasoning ?? '暂无宣判词。'}
             </p>
             {match.error ? (
               <p className="mt-4 text-sm text-(--accent)">

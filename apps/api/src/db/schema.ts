@@ -41,15 +41,39 @@ export const scenarios = sqliteTable('scenarios', {
   title: text('title').notNull(),
   subject: text('subject').notNull(),
   context: text('context').notNull(),
-  roleAName: text('role_a_name').notNull(),
-  roleAPublicGoal: text('role_a_public_goal').notNull(),
-  roleBName: text('role_b_name').notNull(),
-  roleBPublicGoal: text('role_b_public_goal').notNull(),
   boundaryConstraints: text('boundary_constraints').notNull(),
   turnCount: integer('turn_count').notNull().default(10),
   judgeName: text('judge_name').notNull().default('裁判'),
-  judgeRounds: integer('judge_rounds').notNull().default(3),
+  judgeModel: text('judge_model').notNull().default('deepseek-v3.2'),
   judgePrompt: text('judge_prompt').notNull(),
+  openingLine: text('opening_line')
+    .notNull()
+    .default(
+      '卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。',
+    ),
+  agentPromptTemplate: text('agent_prompt_template').notNull(),
+  examinationQuestionTemplate: text('examination_question_template').notNull(),
+  // Role A
+  roleAName: text('role_a_name').notNull(),
+  roleAPublicIdentity: text('role_a_public_identity').notNull(),
+  roleAMainGoal: text('role_a_main_goal').notNull(),
+  roleAStance: text('role_a_stance').notNull(),
+  roleAHiddenInfo: text('role_a_hidden_info').notNull().default('[]'),
+  roleARequests: text('role_a_requests').notNull().default('[]'),
+  // Role B
+  roleBName: text('role_b_name').notNull(),
+  roleBPublicIdentity: text('role_b_public_identity').notNull(),
+  roleBMainGoal: text('role_b_main_goal').notNull(),
+  roleBStance: text('role_b_stance').notNull(),
+  roleBHiddenInfo: text('role_b_hidden_info').notNull().default('[]'),
+  roleBRequests: text('role_b_requests').notNull().default('[]'),
+  // Randomization config
+  falseInfoCount: integer('false_info_count').notNull().default(1),
+  trueRequestCount: integer('true_request_count').notNull().default(1),
+  // Scoring config
+  mainGoalScore: real('main_goal_score').notNull().default(1),
+  trueRequestScore: real('true_request_score').notNull().default(0.5),
+  falseRequestPenalty: real('false_request_penalty').notNull().default(-0.25),
   createdAt: text('created_at').notNull().default(currentTimestamp),
 })
 
@@ -97,6 +121,8 @@ export const playgroundRuns = sqliteTable('playground_runs', {
   transcript: text('transcript').notNull().default('[]'),
   judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
   judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
+  infoAssignment: text('info_assignment'),
+  judgeDecision: text('judge_decision'),
   scoreA: real('score_a'),
   scoreB: real('score_b'),
   winner: text('winner', { enum: matchWinners }),
@@ -166,6 +192,8 @@ export const matches = sqliteTable(
     transcript: text('transcript').notNull().default('[]'),
     judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
     judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
+    infoAssignment: text('info_assignment'),
+    judgeDecision: text('judge_decision'),
     scoreA: real('score_a'),
     scoreB: real('score_b'),
     winner: text('winner', { enum: matchWinners }),
