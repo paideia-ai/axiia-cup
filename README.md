@@ -37,7 +37,7 @@ The admin CLI lives in `apps/cli`.
 bun run ./apps/cli/src/index.ts --help
 ```
 
-For remote API usage, admin token setup, and non-interactive scenario editing via `scenario:get` / `scenario:update`, see [CLI Guide](docs/tech/CLI.md).
+For CLI authentication, remote API usage, user and playground operations, and non-interactive scenario editing, see [CLI Guide](docs/tech/CLI.md).
 
 ## Production Deployment
 

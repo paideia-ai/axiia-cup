@@ -1,8 +1,14 @@
 import {
+  type AdminPlayer,
   type AdminScenario,
+  type AdminUser,
   type LeaderboardEntry,
+  type PlaygroundRun,
+  type PlaygroundRunStart,
+  type PlaygroundRunSummary,
   type TournamentDetail,
   type TournamentListItem,
+  type User,
 } from '@axiia/shared'
 import { Database } from 'bun:sqlite'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -12,7 +18,13 @@ import { Command } from 'commander'
 import { parseScenarioUpdateInput } from './scenario-update'
 
 const API_BASE_URL = process.env.AXIIA_API_URL ?? 'http://localhost:3001'
-const ADMIN_TOKEN = process.env.AXIIA_ADMIN_TOKEN
+const AUTH_TOKEN =
+  process.env.AXIIA_AUTH_TOKEN ?? process.env.AXIIA_ADMIN_TOKEN
+
+type AuthResponse = {
+  token: string
+  user: User
+}
 
 type StartRoundResponse = {
   byeSubmissions: number[]
@@ -29,16 +41,6 @@ type StartRoundResponse = {
   tournament: {
     id: number
   }
-}
-
-type AdminPlayer = {
-  displayName: string
-  email: string
-  model: string
-  submissionId: number
-  submittedAt: string
-  userId: number
-  version: number
 }
 
 const program = new Command()
@@ -238,7 +240,7 @@ function exportMatch(params: {
 async function apiFetch<T>(
   path: string,
   init?: RequestInit,
-  admin = false,
+  authRequired = false,
 ): Promise<T> {
   const headers = new Headers(init?.headers)
 
@@ -246,12 +248,10 @@ async function apiFetch<T>(
     headers.set('Content-Type', 'application/json')
   }
 
-  if (admin) {
-    if (!ADMIN_TOKEN) {
-      throw new Error('Missing AXIIA_ADMIN_TOKEN')
-    }
-
-    headers.set('Authorization', `Bearer ${ADMIN_TOKEN}`)
+  if (AUTH_TOKEN) {
+    headers.set('Authorization', `Bearer ${AUTH_TOKEN}`)
+  } else if (authRequired) {
+    throw new Error('Missing AXIIA_AUTH_TOKEN or AXIIA_ADMIN_TOKEN')
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -272,7 +272,11 @@ async function resolveTournamentId(input?: string) {
     return Number(input)
   }
 
-  const tournaments = await apiFetch<TournamentListItem[]>('/api/tournaments')
+  const tournaments = await apiFetch<TournamentListItem[]>(
+    '/api/tournaments',
+    undefined,
+    true,
+  )
   const latest = tournaments[0]
 
   if (!latest) {
@@ -290,6 +294,20 @@ function printMatches(matches: StartRoundResponse['matches']) {
       status: match.status,
     })),
   )
+}
+
+function parseId(value: string) {
+  const parsed = Number(value)
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null
+  }
+
+  return parsed
+}
+
+function shellEscapeSingleQuotes(value: string) {
+  return value.replaceAll("'", "'\"'\"'")
 }
 
 async function fetchAdminScenarios() {
@@ -340,18 +358,105 @@ function readJsonInput(filePath: string) {
   }
 }
 
+function printPlaygroundRunSummaries(runs: PlaygroundRunSummary[]) {
+  console.table(
+    runs.map((run) => ({
+      createdAt: run.createdAt,
+      error: run.error,
+      id: run.id,
+      scoreA: run.scoreA,
+      scoreB: run.scoreB,
+      submissionId: run.submissionId,
+      winner: run.winner,
+    })),
+  )
+}
+
+function printUsers(users: AdminUser[]) {
+  console.table(
+    users.map((user) => ({
+      createdAt: user.createdAt,
+      disabled: user.disabled,
+      displayName: user.displayName,
+      email: user.email,
+      id: user.id,
+      isAdmin: user.isAdmin,
+    })),
+  )
+}
+
 program.name('axiia').description('Axiia Cup 管理 CLI').version('0.1.0')
+
+program
+  .command('auth:login')
+  .description('登录并输出 bearer token')
+  .requiredOption('-e, --email <email>', 'email')
+  .requiredOption('-p, --password <password>', 'password')
+  .option('--json', 'print JSON response')
+  .option('--token-only', 'print token only')
+  .option('--shell', 'print shell export command')
+  .action(
+    async (options: {
+      email: string
+      json?: boolean
+      password: string
+      shell?: boolean
+      tokenOnly?: boolean
+    }) => {
+      const auth = await apiFetch<AuthResponse>(
+        '/api/auth/login',
+        {
+          body: JSON.stringify({
+            email: options.email,
+            password: options.password,
+          }),
+          method: 'POST',
+        },
+        false,
+      )
+
+      if (options.json) {
+        writeJsonOutput(auth)
+        return
+      }
+
+      if (options.tokenOnly) {
+        console.log(auth.token)
+        return
+      }
+
+      if (options.shell) {
+        console.log(
+          `export AXIIA_AUTH_TOKEN='${shellEscapeSingleQuotes(auth.token)}'`,
+        )
+        return
+      }
+
+      console.log(
+        `Logged in as ${auth.user.displayName} <${auth.user.email}>${auth.user.isAdmin ? ' (admin)' : ''}`,
+      )
+      console.log(
+        `export AXIIA_AUTH_TOKEN='${shellEscapeSingleQuotes(auth.token)}'`,
+      )
+    },
+  )
 
 program
   .command('players')
   .description('查看参赛者列表')
   .requiredOption('-s, --scenario <id>', 'scenario id')
-  .action(async (options: { scenario: string }) => {
+  .option('--json', 'print JSON instead of table')
+  .action(async (options: { json?: boolean; scenario: string }) => {
     const players = await apiFetch<AdminPlayer[]>(
       `/api/admin/tournaments/players?scenarioId=${encodeURIComponent(options.scenario)}`,
       { method: 'GET' },
       true,
     )
+
+    if (options.json) {
+      writeJsonOutput(players)
+      return
+    }
 
     console.table(
       players.map((player) => ({
@@ -369,7 +474,8 @@ program
   .command('start')
   .description('锁定报名并生成第 1 轮配对')
   .argument('<scenarioId>', 'scenario id')
-  .action(async (scenarioId: string) => {
+  .option('--json', 'print JSON instead of table')
+  .action(async (scenarioId: string, options: { json?: boolean }) => {
     const result = await apiFetch<StartRoundResponse>(
       '/api/admin/tournaments/start',
       {
@@ -378,6 +484,11 @@ program
       },
       true,
     )
+
+    if (options.json) {
+      writeJsonOutput(result)
+      return
+    }
 
     console.log(`Tournament ${result.tournament.id} created`)
     console.log(`Round ${result.round.roundNumber} created`)
@@ -393,14 +504,29 @@ program
   .command('status')
   .description('查看赛事进度')
   .argument('[tournamentId]', 'tournament id')
-  .action(async (tournamentIdArg?: string) => {
+  .option('--json', 'print JSON instead of table')
+  .action(async (tournamentIdArg: string | undefined, options: { json?: boolean }) => {
     const tournamentId = await resolveTournamentId(tournamentIdArg)
     const tournament = await apiFetch<TournamentDetail>(
       `/api/tournaments/${tournamentId}`,
+      undefined,
+      true,
     )
     const currentRound = tournament.rounds.at(-1)
 
     if (!currentRound) {
+      if (options.json) {
+        writeJsonOutput({
+          currentRound: null,
+          errored: 0,
+          queued: 0,
+          running: 0,
+          scored: 0,
+          tournamentId: tournament.id,
+        })
+        return
+      }
+
       console.log(`Tournament ${tournament.id} has no rounds yet`)
       return
     }
@@ -418,6 +544,18 @@ program
       (match) => match.status === 'error',
     ).length
 
+    if (options.json) {
+      writeJsonOutput({
+        currentRound: currentRound.roundNumber,
+        errored,
+        queued,
+        running,
+        scored,
+        tournamentId: tournament.id,
+      })
+      return
+    }
+
     console.table([
       {
         currentRound: currentRound.roundNumber,
@@ -434,7 +572,8 @@ program
   .command('next-round')
   .description('生成下一轮瑞士轮配对')
   .argument('<tournamentId>', 'tournament id')
-  .action(async (tournamentId: string) => {
+  .option('--json', 'print JSON instead of table')
+  .action(async (tournamentId: string, options: { json?: boolean }) => {
     const result = await apiFetch<StartRoundResponse>(
       `/api/admin/tournaments/${tournamentId}/next-round`,
       {
@@ -442,6 +581,11 @@ program
       },
       true,
     )
+
+    if (options.json) {
+      writeJsonOutput(result)
+      return
+    }
 
     console.log(
       `Round ${result.round.roundNumber} created for tournament ${result.tournament.id}`,
@@ -458,10 +602,18 @@ program
   .command('leaderboard')
   .description('查看排行榜')
   .argument('<tournamentId>', 'tournament id')
-  .action(async (tournamentId: string) => {
+  .option('--json', 'print JSON instead of table')
+  .action(async (tournamentId: string, options: { json?: boolean }) => {
     const leaderboard = await apiFetch<LeaderboardEntry[]>(
       `/api/tournaments/${tournamentId}/leaderboard`,
+      undefined,
+      true,
     )
+
+    if (options.json) {
+      writeJsonOutput(leaderboard)
+      return
+    }
 
     console.table(
       leaderboard.map((entry) => ({
@@ -523,11 +675,12 @@ program
   .command('scenario:update')
   .description('从文件或 stdin 更新场景')
   .argument('<scenarioId>', 'scenario id')
+  .option('--json', 'print JSON instead of summary')
   .requiredOption(
     '-f, --file <path>',
     'JSON file to read, or "-" to read from stdin',
   )
-  .action(async (scenarioId: string, options: { file: string }) => {
+  .action(async (scenarioId: string, options: { file: string; json?: boolean }) => {
     const scenario = await fetchAdminScenarioById(scenarioId)
 
     if (scenario.locked) {
@@ -545,6 +698,11 @@ program
       true,
     )
 
+    if (options.json) {
+      writeJsonOutput(updated)
+      return
+    }
+
     console.log(`场景「${updated.title}」已更新`)
     console.table({
       turnCount: updated.turnCount,
@@ -553,6 +711,174 @@ program
       locked: updated.locked,
     })
   })
+
+program
+  .command('users:list')
+  .description('查看用户列表')
+  .option('--json', 'print JSON instead of table')
+  .action(async (options: { json?: boolean }) => {
+    const users = await apiFetch<AdminUser[]>(
+      '/api/admin/users',
+      { method: 'GET' },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(users)
+      return
+    }
+
+    printUsers(users)
+  })
+
+program
+  .command('users:disable')
+  .description('切换用户禁用状态')
+  .argument('<userId>', 'user id')
+  .option('--json', 'print JSON instead of table')
+  .action(async (userIdArg: string, options: { json?: boolean }) => {
+    const userId = parseId(userIdArg)
+
+    if (!userId) {
+      throw new Error('Invalid user id')
+    }
+
+    const user = await apiFetch<AdminUser>(
+      `/api/admin/users/${userId}/disable`,
+      { method: 'PATCH' },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(user)
+      return
+    }
+
+    printUsers([user])
+  })
+
+program
+  .command('users:reset-password')
+  .description('重置用户密码')
+  .argument('<userId>', 'user id')
+  .requiredOption('-p, --password <password>', 'new password')
+  .option('--json', 'print JSON instead of text')
+  .action(
+    async (
+      userIdArg: string,
+      options: { json?: boolean; password: string },
+    ) => {
+      const userId = parseId(userIdArg)
+
+      if (!userId) {
+        throw new Error('Invalid user id')
+      }
+
+      const response = await apiFetch<{ ok: true }>(
+        `/api/admin/users/${userId}/reset-password`,
+        {
+          body: JSON.stringify({ password: options.password }),
+          method: 'POST',
+        },
+        true,
+      )
+
+      if (options.json) {
+        writeJsonOutput(response)
+        return
+      }
+
+      console.log(`Password reset for user ${userId}`)
+    },
+  )
+
+program
+  .command('playground:run')
+  .description('创建一条 playground run')
+  .argument('<submissionId>', 'submission id')
+  .option('--json', 'print JSON instead of text')
+  .action(async (submissionIdArg: string, options: { json?: boolean }) => {
+    const submissionId = parseId(submissionIdArg)
+
+    if (!submissionId) {
+      throw new Error('Invalid submission id')
+    }
+
+    const run = await apiFetch<PlaygroundRunStart>(
+      '/api/playground/run',
+      {
+        body: JSON.stringify({ submissionId }),
+        method: 'POST',
+      },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(run)
+      return
+    }
+
+    console.log(`Playground run ${run.id} queued`)
+  })
+
+program
+  .command('playground:list')
+  .description('查看某个 submission 的 playground runs')
+  .argument('<submissionId>', 'submission id')
+  .option('--json', 'print JSON instead of table')
+  .action(async (submissionIdArg: string, options: { json?: boolean }) => {
+    const submissionId = parseId(submissionIdArg)
+
+    if (!submissionId) {
+      throw new Error('Invalid submission id')
+    }
+
+    const runs = await apiFetch<PlaygroundRunSummary[]>(
+      `/api/playground/runs/${submissionId}`,
+      { method: 'GET' },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(runs)
+      return
+    }
+
+    printPlaygroundRunSummaries(runs)
+  })
+
+program
+  .command('playground:get')
+  .description('查看单条 playground run 详情')
+  .argument('<submissionId>', 'submission id')
+  .argument('<runId>', 'run id')
+  .option('-o, --output <path>', 'write JSON to file instead of stdout')
+  .action(
+    async (
+      submissionIdArg: string,
+      runIdArg: string,
+      options: { output?: string },
+    ) => {
+      const submissionId = parseId(submissionIdArg)
+      const runId = parseId(runIdArg)
+
+      if (!submissionId) {
+        throw new Error('Invalid submission id')
+      }
+
+      if (!runId) {
+        throw new Error('Invalid run id')
+      }
+
+      const run = await apiFetch<PlaygroundRun>(
+        `/api/playground/runs/${submissionId}/${runId}`,
+        { method: 'GET' },
+        true,
+      )
+
+      writeJsonOutput(run, options.output)
+    },
+  )
 
 program
   .command('playground:export')

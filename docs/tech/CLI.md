@@ -1,6 +1,6 @@
 # Axiia Cup CLI Guide
 
-`apps/cli` is the repository's admin command-line tool. The CLI already existed, but the repo did not have a complete usage guide. This document covers how to run it, how to connect it to a remote API, and how to update scenario data with the new non-interactive workflow.
+`apps/cli` is the repository's admin and operations CLI. It can authenticate against the API, inspect tournaments, update scenarios, manage users, and operate playground runs.
 
 ## 1. Running the CLI
 
@@ -10,7 +10,7 @@ From the repository root:
 bun run ./apps/cli/src/index.ts --help
 ```
 
-If you want to build first and then run the bundled output:
+If you want to build first and run the bundled output:
 
 ```bash
 bun run --filter @axiia/cli build
@@ -20,6 +20,7 @@ bun ./apps/cli/dist/index.js --help
 Current commands:
 
 ```text
+auth:login --email <email> --password <password>
 players --scenario <id>
 start <scenarioId>
 status [tournamentId]
@@ -28,248 +29,298 @@ leaderboard <tournamentId>
 scenarios
 scenario:get <scenarioId>
 scenario:update <scenarioId> --file <path|->
+users:list
+users:disable <userId>
+users:reset-password <userId> --password <password>
+playground:run <submissionId>
+playground:list <submissionId>
+playground:get <submissionId> <runId>
 playground:export <runId>
 match:export <matchId>
 ```
 
+Most table-style commands also support `--json`.
+
 ## 2. Environment Variables
 
-The CLI reads the following environment variables:
+The CLI reads these environment variables:
 
 ```bash
 AXIIA_API_URL=http://localhost:3001
-AXIIA_ADMIN_TOKEN=<admin-jwt>
+AXIIA_AUTH_TOKEN=<jwt>
+AXIIA_ADMIN_TOKEN=<jwt>
 AXIIA_DB_PATH=apps/api/axiia.db
 ```
 
 Notes:
 
-- `AXIIA_API_URL`: API base URL for the CLI. Defaults to `http://localhost:3001`. Avoid a trailing `/`.
-- `AXIIA_ADMIN_TOKEN`: admin JWT. All admin-only commands depend on it.
-- `AXIIA_DB_PATH`: only used by the local export commands that read SQLite directly.
+- `AXIIA_API_URL`: API base URL. Defaults to `http://localhost:3001`.
+- `AXIIA_AUTH_TOKEN`: generic bearer token used for authenticated CLI calls.
+- `AXIIA_ADMIN_TOKEN`: backward-compatible fallback. If `AXIIA_AUTH_TOKEN` is unset, the CLI will use this value instead.
+- `AXIIA_DB_PATH`: only used by the local SQLite export commands.
 
-## 3. Which Commands Use the API vs. Local SQLite
+In practice:
 
-### 3.1 Commands That Call the API
+- authenticated but non-admin commands can use either a normal user token or an admin token
+- admin commands require the token's user to actually have admin privileges on the server
+
+## 3. Authentication
+
+### 3.1 Login via CLI
+
+The CLI now provides `auth:login`:
+
+```bash
+bun run ./apps/cli/src/index.ts auth:login \
+  --email admin@example.com \
+  --password '<password>'
+```
+
+By default it prints a shell-ready export line:
+
+```bash
+export AXIIA_AUTH_TOKEN='...'
+```
+
+Useful variants:
+
+```bash
+bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --json
+bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --token-only
+bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --shell
+```
+
+### 3.2 Manual Login via API
+
+If you want to obtain the token yourself:
+
+```bash
+curl -sS "$AXIIA_API_URL/api/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"<email>","password":"<password>"}'
+```
+
+Then export the token:
+
+```bash
+export AXIIA_AUTH_TOKEN="<jwt>"
+```
+
+If you are already logged in through the web app, the browser stores the token in `localStorage` under `axiia-token`, which you can reuse manually.
+
+## 4. Which Commands Use the API vs. Local SQLite
+
+### 4.1 API-backed Commands
 
 These commands call `AXIIA_API_URL`:
 
-- `players --scenario <id>`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
-- `start <scenarioId>`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
-- `status [tournamentId]`: public endpoint, does not require an admin token
-- `next-round <tournamentId>`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
-- `leaderboard <tournamentId>`: public endpoint, does not require an admin token
-- `scenarios`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
-- `scenario:get <scenarioId>`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
-- `scenario:update <scenarioId> --file <path|->`: admin endpoint, requires `AXIIA_ADMIN_TOKEN`
+- `auth:login`
+- `players --scenario <id>`
+- `start <scenarioId>`
+- `status [tournamentId]`
+- `next-round <tournamentId>`
+- `leaderboard <tournamentId>`
+- `scenarios`
+- `scenario:get <scenarioId>`
+- `scenario:update <scenarioId> --file <path|->`
+- `users:list`
+- `users:disable <userId>`
+- `users:reset-password <userId> --password <password>`
+- `playground:run <submissionId>`
+- `playground:list <submissionId>`
+- `playground:get <submissionId> <runId>`
 
-### 3.2 Commands That Read Local SQLite Only
+### 4.2 Local SQLite-only Commands
 
 These commands do not call the API. They read a local SQLite file directly:
 
 - `playground:export <runId>`
 - `match:export <matchId>`
 
-That means if you are targeting a remote deployment, these export commands cannot read remote data unless you also have access to the server-side SQLite file.
+If you are targeting a remote deployment, these export commands cannot read remote data unless you also have access to the server-side SQLite file.
 
-## 4. Connecting to a Remote Service
+## 5. Tournament and Scenario Commands
 
-If the target is not local `localhost:3001` but a deployed API, configure both the base URL and an admin token first.
+### 5.1 Tournament Operations
 
-### 4.1 Set the API Base URL
-
-```bash
-export AXIIA_API_URL="https://your-api-host.example.com"
-```
-
-### 4.2 Get an Admin Token
-
-The CLI does not currently provide a built-in `login` command, so you need to obtain a JWT through the login API and then assign it to `AXIIA_ADMIN_TOKEN`.
-
-Example:
+Examples:
 
 ```bash
-curl -sS "$AXIIA_API_URL/api/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"<admin-email>","password":"<admin-password>"}'
-```
-
-Expected response:
-
-```json
-{
-  "token": "<jwt>",
-  "user": {
-    "id": 1,
-    "email": "admin@example.com",
-    "displayName": "Admin",
-    "isAdmin": true
-  }
-}
-```
-
-Then export the token:
-
-```bash
-export AXIIA_ADMIN_TOKEN="<jwt>"
-```
-
-Additional notes:
-
-- Only users with `user.isAdmin === true` can run the admin commands.
-- The local setup script `bun run db:seed` / `apps/api/src/db/seed.ts` creates an admin account. Its defaults come from `AXIIA_ADMIN_EMAIL` and `AXIIA_ADMIN_PASSWORD`; if unset, the defaults are `admin@paideia.uno` / `axiia-cup`.
-- Those defaults are only relevant for environments you seeded yourself. Do not assume a shared or production environment still uses them.
-- If you are already logged in through the admin web UI, the web app stores the JWT in browser `localStorage` under the key `axiia-token`. You can reuse it manually if needed.
-
-### 4.3 Example Remote Calls
-
-```bash
-export AXIIA_API_URL="https://your-api-host.example.com"
-export AXIIA_ADMIN_TOKEN="<jwt>"
-
-bun run ./apps/cli/src/index.ts scenarios
 bun run ./apps/cli/src/index.ts players --scenario shangyang-court
 bun run ./apps/cli/src/index.ts start shangyang-court
+bun run ./apps/cli/src/index.ts status
+bun run ./apps/cli/src/index.ts next-round 3
+bun run ./apps/cli/src/index.ts leaderboard 3
 ```
 
-## 5. Updating Scenario Data from the CLI
-
-The old interactive `scenario:edit` flow has been removed. Scenario editing is now a non-interactive, agent-friendly workflow:
-
-1. `scenarios --json`: discover available scenario IDs
-2. `scenario:get <scenarioId>`: fetch one scenario as JSON
-3. Modify the JSON externally
-4. `scenario:update <scenarioId> --file <path|->`: submit the updated payload
-
-### 5.1 Fetch Scenario JSON
+For scripting, use `--json`:
 
 ```bash
+bun run ./apps/cli/src/index.ts status --json
+bun run ./apps/cli/src/index.ts leaderboard 3 --json
+```
+
+### 5.2 Scenario Listing
+
+```bash
+bun run ./apps/cli/src/index.ts scenarios
 bun run ./apps/cli/src/index.ts scenarios --json
+```
+
+### 5.3 Fetch a Scenario as JSON
+
+```bash
 bun run ./apps/cli/src/index.ts scenario:get shangyang-court
 ```
 
-You can also write the scenario JSON directly to a file:
+Or write it to a file:
 
 ```bash
 bun run ./apps/cli/src/index.ts scenario:get shangyang-court \
   --output /tmp/shangyang-court.json
 ```
 
-`scenario:get` returns the full admin scenario object, including:
+The output is the full admin scenario object, including read-only metadata such as `id`, `title`, `subject`, and `locked`.
 
-- read-only metadata: `id`, `title`, `subject`, `locked`
-- editable fields: protocol settings, prompts, roles, hidden info, requests, and randomization config
+### 5.4 Update a Scenario
 
-### 5.2 Submit a Scenario Update
+The old interactive `scenario:edit` flow has been removed. Scenario editing is now non-interactive and agent-friendly:
+
+1. `scenarios --json`
+2. `scenario:get <id>`
+3. edit JSON externally
+4. `scenario:update <id> --file <path|->`
+
+Example:
 
 ```bash
 bun run ./apps/cli/src/index.ts scenario:update shangyang-court \
   --file /tmp/shangyang-court.json
 ```
 
-You can also read the JSON from stdin:
+Or from stdin:
 
 ```bash
 cat /tmp/shangyang-court.json | \
   bun run ./apps/cli/src/index.ts scenario:update shangyang-court --file -
 ```
 
-Execution flow:
-
-1. The CLI verifies that the scenario exists.
-2. If the scenario is locked by a running tournament, the CLI fails with `比赛进行中，场景已锁定，无法编辑`.
-3. The CLI reads JSON from `--file` or stdin.
-4. The CLI ignores read-only fields and extracts only the editable payload for validation and submission.
-5. The CLI sends `PUT /api/admin/scenarios/:id`.
-
-### 5.3 Editable Payload
-
-`scenario:update` ultimately submits an `UpdateScenario` payload with this shape:
-
-```json
-{
-  "turnCount": 10,
-  "judgeModel": "deepseek-v3.2",
-  "openingLine": "秦孝公端坐殿上，命两人陈词。",
-  "agentPromptTemplate": "...",
-  "examinationQuestionTemplate": "...",
-  "judgePrompt": "...",
-  "scorerPrompt": "...",
-  "roleAName": "商鞅",
-  "roleAHiddenInfo": [
-    { "id": "S1", "content": "Example hidden info" }
-  ],
-  "roleARequests": [
-    { "id": "SR1", "content": "Example request" }
-  ],
-  "roleBName": "甘龙",
-  "roleBHiddenInfo": [
-    { "id": "G1", "content": "Example hidden info" }
-  ],
-  "roleBRequests": [
-    { "id": "GR1", "content": "Example request" }
-  ],
-  "falseInfoCount": 1,
-  "trueRequestCount": 1
-}
-```
-
-Notes:
-
-- The input JSON may still contain `id`, `title`, `subject`, and `locked`; the CLI ignores them.
-- The actual update cannot change `id`, `title`, or `subject`.
-- In practice, the CLI is suited for editing scenario protocol rules and prompt configuration, not for renaming scenarios or changing their subject classification.
-
-### 5.4 Validation Rules
-
-The server validates the submitted payload. Important rules include:
-
-- `turnCount` must be between `1` and `50`
-- `judgeModel` must be one of the supported model IDs: `deepseek-v3.2`, `kimi-k2.5`, `qwen3-32b`, `minimax-m2.5`
-- `openingLine`, `agentPromptTemplate`, `judgePrompt`, `scorerPrompt`, and both role names must be non-empty
-- `examinationQuestionTemplate` may be empty; an empty string means examination is skipped
-- each item in `roleAHiddenInfo`, `roleBHiddenInfo`, `roleARequests`, and `roleBRequests` must be `{ id, content }`
-- all IDs may contain only letters, digits, and underscores, and must start with a letter
-- IDs must be unique within each list
-- role A and role B hidden-info IDs cannot overlap
-- role A and role B request IDs cannot overlap
-- hidden-info IDs and request IDs cannot reuse the same value
-- `falseInfoCount` cannot exceed the hidden-info count for either role
-- `trueRequestCount` cannot exceed the request count for either role
-
-### 5.5 Recommended Editing Workflow
-
-For a remote scenario update, the typical flow is:
+If you need machine-readable output:
 
 ```bash
-export AXIIA_API_URL="https://your-api-host.example.com"
-export AXIIA_ADMIN_TOKEN="<jwt>"
-
-bun run ./apps/cli/src/index.ts scenarios --json
-bun run ./apps/cli/src/index.ts scenario:get shangyang-court --output /tmp/shangyang-court.json
-# edit /tmp/shangyang-court.json
-bun run ./apps/cli/src/index.ts scenario:update shangyang-court --file /tmp/shangyang-court.json
+bun run ./apps/cli/src/index.ts scenario:update shangyang-court \
+  --file /tmp/shangyang-court.json \
+  --json
 ```
 
-If the command returns:
+Validation notes:
+
+- `turnCount` must be between `1` and `50`
+- `judgeModel` must be one of `deepseek-v3.2`, `kimi-k2.5`, `qwen3-32b`, `minimax-m2.5`
+- `openingLine`, `agentPromptTemplate`, `judgePrompt`, `scorerPrompt`, and both role names must be non-empty
+- `examinationQuestionTemplate` may be empty
+- hidden-info IDs and request IDs must be unique and must not overlap
+- `falseInfoCount` and `trueRequestCount` cannot exceed the relevant list sizes
+
+Read-only fields such as `id`, `title`, `subject`, and `locked` may exist in the input JSON, but the CLI ignores them when building the update payload.
+
+## 6. User Management Commands
+
+The CLI now exposes the existing admin user-management API.
+
+### 6.1 List Users
+
+```bash
+bun run ./apps/cli/src/index.ts users:list
+bun run ./apps/cli/src/index.ts users:list --json
+```
+
+### 6.2 Toggle Disabled State
+
+```bash
+bun run ./apps/cli/src/index.ts users:disable 42
+```
+
+The server-side route toggles the flag, so the same command disables or re-enables the user depending on their current state.
+
+### 6.3 Reset Password
+
+```bash
+bun run ./apps/cli/src/index.ts users:reset-password 42 \
+  --password 'new-password'
+```
+
+Use `--json` if you want the raw `{ "ok": true }` response.
+
+## 7. Playground Commands
+
+The CLI now exposes the playground API as well.
+
+### 7.1 Start a Playground Run
+
+```bash
+bun run ./apps/cli/src/index.ts playground:run 123
+```
+
+If the submission belongs to the authenticated user, the API returns a queued run ID. Use `--json` for structured output.
+
+### 7.2 List Playground Runs for a Submission
+
+```bash
+bun run ./apps/cli/src/index.ts playground:list 123
+bun run ./apps/cli/src/index.ts playground:list 123 --json
+```
+
+### 7.3 Fetch One Playground Run
+
+```bash
+bun run ./apps/cli/src/index.ts playground:get 123 456
+```
+
+Or write it to a file:
+
+```bash
+bun run ./apps/cli/src/index.ts playground:get 123 456 \
+  --output /tmp/playground-run.json
+```
+
+### 7.4 Playground Availability
+
+Playground runs are blocked while an official tournament is running. In that case the API returns the existing lock message:
 
 ```text
-场景「商鞅变法·朝堂辩法」已更新
+比赛进行中，试炼场暂停使用
 ```
 
-the remote update has been written successfully.
+## 8. JSON Output Support
 
-## 6. Current CLI Limits
+These commands now support `--json`:
 
-The CLI already supports:
+- `auth:login`
+- `players`
+- `start`
+- `status`
+- `next-round`
+- `leaderboard`
+- `scenarios`
+- `scenario:update`
+- `users:list`
+- `users:disable`
+- `users:reset-password`
+- `playground:run`
+- `playground:list`
 
-- connecting to a remote API to inspect and operate tournaments
-- listing scenarios
-- updating scenario protocol rules, prompts, roles, hidden info, requests, and randomization config through `scenario:get` / `scenario:update`
+Commands that already produce JSON by design:
 
-The CLI does not yet support:
+- `scenario:get`
+- `playground:get`
+- `playground:export`
+- `match:export`
 
-- logging in directly and obtaining a token automatically
-- field-by-field command-line updates such as `--set key=value`
+## 9. Current Limits
+
+The CLI still does not support:
+
+- field-by-field scenario mutation such as `scenario:update --set key=value`
 - changing a scenario's `id`, `title`, or `subject`
 - exporting remote `playground_runs` / `matches` data directly from a remote server's SQLite database
