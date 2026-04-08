@@ -166,7 +166,7 @@ playgroundRouter.get(
       playgroundRunSchema.parse({
         ...row,
         infoAssignment: parseJsonField(row.infoAssignment, null),
-        judgeDecision: parseJsonField(row.judgeDecision, null),
+        judgeDecision: row.judgeDecision ?? null,
         judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
         judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
         transcript: parseJsonField(row.transcript, []),

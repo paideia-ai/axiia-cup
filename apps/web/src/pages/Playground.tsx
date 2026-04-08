@@ -1,7 +1,6 @@
 import {
   modelOptions,
   type InfoAssignment,
-  type JudgeDecision,
   type PlaygroundRun,
   type PlaygroundRunSummary,
   type Scenario,
@@ -171,15 +170,6 @@ function deriveRunningState(session: PlaygroundSession) {
   }
 }
 
-function buildRequestContentMap(scenario: Scenario) {
-  return new Map(
-    [...scenario.roleARequests, ...scenario.roleBRequests].map((request) => [
-      request.id,
-      request.content,
-    ]),
-  )
-}
-
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
 }
@@ -193,16 +183,6 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
       <CardContent className="space-y-0 pt-2">
         <Accordion defaultValue={['roles']}>
           <AccordionItem
-            value="context"
-            title="场景背景"
-            triggerClassName="text-xs"
-          >
-            <p className="text-xs leading-5 text-(--foreground-subtle)">
-              {scenario.context}
-            </p>
-          </AccordionItem>
-
-          <AccordionItem
             value="roles"
             title="角色信息"
             triggerClassName="text-xs"
@@ -212,18 +192,12 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
                 [
                   {
                     name: scenario.roleAName,
-                    identity: scenario.roleAPublicIdentity,
-                    goal: scenario.roleAMainGoal,
-                    stance: scenario.roleAStance,
                     hiddenInfo: scenario.roleAHiddenInfo,
                     requests: scenario.roleARequests,
                     side: 'a',
                   },
                   {
                     name: scenario.roleBName,
-                    identity: scenario.roleBPublicIdentity,
-                    goal: scenario.roleBMainGoal,
-                    stance: scenario.roleBStance,
                     hiddenInfo: scenario.roleBHiddenInfo,
                     requests: scenario.roleBRequests,
                     side: 'b',
@@ -243,20 +217,6 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
                   >
                     {role.name}
                   </p>
-                  <div className="space-y-1 text-[11px] leading-4 text-(--foreground-subtle)">
-                    <p>
-                      <span className="text-(--foreground-muted)">身份：</span>
-                      {role.identity}
-                    </p>
-                    <p>
-                      <span className="text-(--foreground-muted)">目标：</span>
-                      {role.goal}
-                    </p>
-                    <p>
-                      <span className="text-(--foreground-muted)">主张：</span>
-                      {role.stance}
-                    </p>
-                  </div>
                   {role.hiddenInfo.length > 0 ? (
                     <div>
                       <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
@@ -316,28 +276,7 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
                   </p>
                 </div>
               </div>
-              <div>
-                <p className="text-(--foreground-muted) mb-1">计分规则</p>
-                <div className="space-y-0.5 pl-2 border-l-2 border-(--border-soft)">
-                  <p>核心目标得分：{scenario.mainGoalScore} 分</p>
-                  <p>
-                    每条真诉求被采纳：+{scenario.trueRequestScore} 分（共{' '}
-                    {scenario.trueRequestCount} 条真诉求参与判定）
-                  </p>
-                  <p>每条假诉求被采纳：{scenario.falseRequestPenalty} 分</p>
-                </div>
-              </div>
             </div>
-          </AccordionItem>
-
-          <AccordionItem
-            value="boundary"
-            title="边界约束"
-            triggerClassName="text-xs"
-          >
-            <p className="text-xs leading-5 text-(--foreground-subtle)">
-              {scenario.boundaryConstraints}
-            </p>
           </AccordionItem>
 
           <AccordionItem
@@ -372,7 +311,7 @@ function InfoAssignmentPanel({
       <CardHeader className="pb-0">
         <CardTitle className="text-sm">本局信息分配</CardTitle>
         <p className="text-[11px] text-(--foreground-muted)">
-          每场比赛随机决定哪些隐藏信息为真、哪些为假，以及哪些诉求参与判定。
+          每场比赛随机决定哪些隐藏信息为真、哪些为假，以及哪些诉求为真、哪些为假。
         </p>
       </CardHeader>
       <CardContent className="space-y-3 pt-3">
@@ -459,7 +398,7 @@ function InfoAssignmentPanel({
                               : 'bg-white/8 text-(--foreground-muted)'
                           }`}
                         >
-                          {isTrue ? '参与' : '不参与'}
+                          {isTrue ? '真' : '假'}
                         </span>
                         <span className="text-(--foreground-subtle)">
                           {item.content}
@@ -477,78 +416,16 @@ function InfoAssignmentPanel({
   )
 }
 
-function JudgeDecisionPanel({
-  decision,
-  scenario,
-}: {
-  decision: JudgeDecision
-  scenario: Scenario
-}) {
-  const requestEntries = Object.entries(decision.requests)
-  const requestContentMap = buildRequestContentMap(scenario)
-
+function JudgeDecisionPanel({ decision }: { decision: string }) {
   return (
     <Card>
       <CardHeader className="pb-0">
         <CardTitle className="text-sm">裁判裁决</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pt-3">
-        <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-          <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
-            主张裁决
-          </p>
-          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-            {decision.judgment}
-          </p>
-        </div>
-
-        {requestEntries.length > 0 ? (
-          <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-            <p className="text-[11px] font-medium text-(--foreground-muted) mb-2">
-              诉求裁定
-            </p>
-            <div className="space-y-1.5">
-              {requestEntries.map(([requestId, ruling]) => {
-                const isApproved = ruling === '同意'
-                return (
-                  <div
-                    key={requestId}
-                    className="flex items-start justify-between gap-2 text-[11px]"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-(--foreground-subtle)">
-                        <span className="font-medium text-(--foreground-muted)">
-                          [{requestId}]
-                        </span>{' '}
-                        {requestContentMap.get(requestId) ?? '未知请求'}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                        isApproved
-                          ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                          : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                      }`}
-                    >
-                      {ruling}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {decision.speech ? (
-          <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-            <p className="text-[11px] font-medium text-(--foreground-muted) mb-1">
-              裁判宣判词
-            </p>
-            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap italic">
-              {decision.speech}
-            </p>
-          </div>
-        ) : null}
+      <CardContent className="pt-3">
+        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+          {decision}
+        </p>
       </CardContent>
     </Card>
   )
@@ -613,10 +490,7 @@ function RunResult({
             />
           ) : null}
           {run.judgeDecision ? (
-            <JudgeDecisionPanel
-              decision={run.judgeDecision}
-              scenario={scenario}
-            />
+            <JudgeDecisionPanel decision={run.judgeDecision} />
           ) : null}
         </div>
       ) : null}
@@ -713,7 +587,7 @@ function RunResult({
                       <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
                         <div className="min-w-0">
                           <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                            {scenario.judgeName} · 第 {item.round} 轮
+                            问询 · 第 {item.round} 轮
                           </p>
                           <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
                             {item.question}

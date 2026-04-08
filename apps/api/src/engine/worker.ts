@@ -269,7 +269,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     await persist({
       error: null,
       infoAssignment: JSON.stringify(result.infoAssignment),
-      judgeDecision: JSON.stringify(result.judgeDecision),
+      judgeDecision: result.judgeDecision,
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,

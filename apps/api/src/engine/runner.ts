@@ -124,7 +124,7 @@ export async function runMatch(
       error: null,
       finishedAt: new Date().toISOString(),
       infoAssignment: JSON.stringify(result.infoAssignment),
-      judgeDecision: JSON.stringify(result.judgeDecision),
+      judgeDecision: result.judgeDecision,
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,

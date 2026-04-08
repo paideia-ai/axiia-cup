@@ -25,17 +25,11 @@ function countText(value: string) {
 
 function RoleCard({
   roleName,
-  publicIdentity,
-  mainGoal,
-  stance,
   hiddenInfo,
   requests,
   side,
 }: {
   roleName: string
-  publicIdentity: string
-  mainGoal: string
-  stance: string
   hiddenInfo: { id: string; content: string }[]
   requests: { id: string; content: string }[]
   side: 'a' | 'b'
@@ -47,20 +41,6 @@ function RoleCard({
       <p className="text-sm font-semibold" style={{ color: accentColor }}>
         {roleName}
       </p>
-      <div className="space-y-1 text-xs leading-5 text-(--foreground-subtle)">
-        <p>
-          <span className="text-(--foreground-muted)">公开身份：</span>
-          {publicIdentity}
-        </p>
-        <p>
-          <span className="text-(--foreground-muted)">核心目标：</span>
-          {mainGoal}
-        </p>
-        <p>
-          <span className="text-(--foreground-muted)">主张：</span>
-          {stance}
-        </p>
-      </div>
 
       {hiddenInfo.length > 0 ? (
         <div>
@@ -234,7 +214,6 @@ export function ScenarioDetailPage() {
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
           <Badge tone="info">{scenario.turnCount} 回合</Badge>
-          <Badge tone="warning">{scenario.judgeName}</Badge>
         </div>
       </div>
 
@@ -245,29 +224,17 @@ export function ScenarioDetailPage() {
         <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin">
           <Card>
             <CardContent className="space-y-3">
-              <Accordion multiple defaultValue={['context', 'roles']}>
-                <AccordionItem value="context" title="场景背景">
-                  <p className="text-xs leading-5 text-(--foreground-subtle)">
-                    {scenario.context}
-                  </p>
-                </AccordionItem>
-
+              <Accordion multiple defaultValue={['roles']}>
                 <AccordionItem value="roles" title="角色详情">
                   <div className="space-y-3">
                     <RoleCard
                       roleName={scenario.roleAName}
-                      publicIdentity={scenario.roleAPublicIdentity}
-                      mainGoal={scenario.roleAMainGoal}
-                      stance={scenario.roleAStance}
                       hiddenInfo={scenario.roleAHiddenInfo}
                       requests={scenario.roleARequests}
                       side="a"
                     />
                     <RoleCard
                       roleName={scenario.roleBName}
-                      publicIdentity={scenario.roleBPublicIdentity}
-                      mainGoal={scenario.roleBMainGoal}
-                      stance={scenario.roleBStance}
                       hiddenInfo={scenario.roleBHiddenInfo}
                       requests={scenario.roleBRequests}
                       side="b"
@@ -303,32 +270,6 @@ export function ScenarioDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-1">
-                      <p className="font-medium text-(--foreground)">
-                        计分公式
-                      </p>
-                      <p>
-                        核心主张被裁判采纳：
-                        <span className="font-semibold text-(--success)">
-                          +{scenario.mainGoalScore}
-                        </span>{' '}
-                        分
-                      </p>
-                      <p>
-                        每条真诉求被同意：
-                        <span className="font-semibold text-(--success)">
-                          +{scenario.trueRequestScore}
-                        </span>{' '}
-                        分
-                      </p>
-                      <p>
-                        每条假诉求被同意：
-                        <span className="font-semibold text-(--accent)">
-                          {scenario.falseRequestPenalty}
-                        </span>{' '}
-                        分
-                      </p>
-                    </div>
                     <p className="text-(--foreground-muted)">
                       每场比赛会随机从隐藏信息中选 {scenario.falseInfoCount}{' '}
                       条指定为假， 从诉求中选 {scenario.trueRequestCount}{' '}
@@ -361,12 +302,6 @@ export function ScenarioDetailPage() {
                       </li>
                     </ol>
                   </div>
-                </AccordionItem>
-
-                <AccordionItem value="boundary" title="边界约束">
-                  <p className="text-xs leading-5 text-(--foreground-subtle)">
-                    {scenario.boundaryConstraints}
-                  </p>
                 </AccordionItem>
 
                 <AccordionItem value="template" title="你的角色看到的世界">

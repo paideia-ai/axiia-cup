@@ -49,7 +49,7 @@ app.get('/api/meta', (context) => {
       roleAName: scenarios.roleAName,
       roleBName: scenarios.roleBName,
       subject: scenarios.subject,
-      summary: scenarios.context,
+      summary: scenarios.title,
       title: scenarios.title,
       turnCount: scenarios.turnCount,
     })

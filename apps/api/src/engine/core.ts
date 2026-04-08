@@ -2,15 +2,14 @@ import {
   examinationAnswerSchema,
   hiddenInfoItemSchema,
   infoAssignmentSchema,
-  judgeDecisionSchema,
   judgeQASchema,
   matchWinnerSchema,
   modelIdSchema,
   requestItemSchema,
+  scorerOutputSchema,
   transcriptTurnSchema,
   type HiddenInfoItem,
   type InfoAssignment,
-  type JudgeDecision,
   type JudgeQA,
   type ModelId,
   type RequestItem,
@@ -47,7 +46,7 @@ type MatchExecutionParams = {
 
 export type MatchExecutionResult = {
   infoAssignment: InfoAssignment
-  judgeDecision: JudgeDecision
+  judgeDecision: string
   judgeTranscriptA: JudgeQA[]
   judgeTranscriptB: JudgeQA[]
   reasoning: string
@@ -183,10 +182,6 @@ function buildOpponentRequestsText(items: RequestItem[]): string {
   return items.map((item) => `- ${item.id}：${item.content}`).join('\n')
 }
 
-function buildRequestCatalogText(items: RequestItem[]): string {
-  return items.map((item) => `- [${item.id}] ${item.content}`).join('\n')
-}
-
 /** Build the system message for a role agent using the scenario template. */
 export function buildAgentSystemMessage(
   scenario: ScenarioRecord,
@@ -210,36 +205,35 @@ export function buildAgentSystemMessage(
     ? assignment.roleATrueRequestIds
     : assignment.roleBTrueRequestIds
 
+  const opponentInfo = parseHiddenInfo(
+    isA ? scenario.roleBHiddenInfo : scenario.roleAHiddenInfo,
+  )
+
   const vars: Record<string, string> = {
     roleName: isA ? scenario.roleAName : scenario.roleBName,
-    publicIdentity: isA
-      ? scenario.roleAPublicIdentity
-      : scenario.roleBPublicIdentity,
-    mainGoal: isA ? scenario.roleAMainGoal : scenario.roleBMainGoal,
-    context: scenario.context,
+    opponentName: isA ? scenario.roleBName : scenario.roleAName,
+    roleAName: scenario.roleAName,
+    roleBName: scenario.roleBName,
     hiddenInfo: buildHiddenInfoText(myInfo, myFalseIds),
     requests: buildRequestsText(myRequests, myTrueReqIds),
-    opponentName: isA ? scenario.roleBName : scenario.roleAName,
-    opponentIdentity: isA
-      ? scenario.roleBPublicIdentity
-      : scenario.roleAPublicIdentity,
-    opponentGoal: isA ? scenario.roleBMainGoal : scenario.roleAMainGoal,
     opponentRequests: buildOpponentRequestsText(opponentRequests),
+    opponentInfoIds: opponentInfo.map((i) => i.id).join('/'),
+    opponentRequestIds: opponentRequests.map((i) => i.id).join('/'),
     turnCount: String(scenario.turnCount),
-    judgeName: scenario.judgeName,
-    constraints: scenario.boundaryConstraints,
-    mainGoalScore: String(scenario.mainGoalScore),
-    trueRequestScore: String(scenario.trueRequestScore),
-    falseRequestPenalty: String(scenario.falseRequestPenalty),
   }
 
   return interpolateTemplate(scenario.agentPromptTemplate, vars)
 }
 
-/** Build the judge system message with info labels interpolated. */
-export function buildJudgeSystemMessage(
+/** Build the judge prompt with all available variables interpolated. */
+export function buildJudgePrompt(
   scenario: ScenarioRecord,
   assignment: InfoAssignment,
+  extras: {
+    debate: string
+    examinationA: string
+    examinationB: string
+  },
 ): string {
   const roleAInfo = parseHiddenInfo(scenario.roleAHiddenInfo)
   const roleBInfo = parseHiddenInfo(scenario.roleBHiddenInfo)
@@ -247,34 +241,31 @@ export function buildJudgeSystemMessage(
   const roleBRequests = parseRequests(scenario.roleBRequests)
 
   const vars: Record<string, string> = {
-    context: scenario.context,
-    judgeName: scenario.judgeName,
-    constraints: scenario.boundaryConstraints,
-    turnCount: String(scenario.turnCount),
-    mainGoalScore: String(scenario.mainGoalScore),
-    trueRequestScore: String(scenario.trueRequestScore),
-    falseRequestPenalty: String(scenario.falseRequestPenalty),
     roleAName: scenario.roleAName,
-    roleAPublicIdentity: scenario.roleAPublicIdentity,
-    roleAMainGoal: scenario.roleAMainGoal,
-    roleAStance: scenario.roleAStance,
-    roleARequests: buildRequestCatalogText(roleARequests),
+    roleBName: scenario.roleBName,
+    turnCount: String(scenario.turnCount),
+    debate: extras.debate,
+    examinationA: extras.examinationA,
+    examinationB: extras.examinationB,
+    roleARequests: buildRequestsText(
+      roleARequests,
+      assignment.roleATrueRequestIds,
+    ),
     roleAHiddenInfo: buildHiddenInfoText(
       roleAInfo,
       assignment.roleAFalseInfoIds,
     ),
-    roleBName: scenario.roleBName,
-    roleBPublicIdentity: scenario.roleBPublicIdentity,
-    roleBMainGoal: scenario.roleBMainGoal,
-    roleBStance: scenario.roleBStance,
-    roleBRequests: buildRequestCatalogText(roleBRequests),
+    roleBRequests: buildRequestsText(
+      roleBRequests,
+      assignment.roleBTrueRequestIds,
+    ),
     roleBHiddenInfo: buildHiddenInfoText(
       roleBInfo,
       assignment.roleBFalseInfoIds,
     ),
   }
 
-  // Add S1_LABEL, S1_CONTENT, etc.
+  // Add per-item LABEL/CONTENT for hidden info
   for (const item of roleAInfo) {
     const isFalse = assignment.roleAFalseInfoIds.includes(item.id)
     vars[`${item.id}_LABEL`] = isFalse ? '子虚乌有' : '确有其事'
@@ -284,6 +275,19 @@ export function buildJudgeSystemMessage(
   for (const item of roleBInfo) {
     const isFalse = assignment.roleBFalseInfoIds.includes(item.id)
     vars[`${item.id}_LABEL`] = isFalse ? '子虚乌有' : '确有其事'
+    vars[`${item.id}_CONTENT`] = item.content
+  }
+
+  // Add per-item LABEL/CONTENT for requests
+  for (const item of roleARequests) {
+    const isTrue = assignment.roleATrueRequestIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isTrue ? '真' : '假'
+    vars[`${item.id}_CONTENT`] = item.content
+  }
+
+  for (const item of roleBRequests) {
+    const isTrue = assignment.roleBTrueRequestIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isTrue ? '真' : '假'
     vars[`${item.id}_CONTENT`] = item.content
   }
 
@@ -337,32 +341,30 @@ export function buildExaminationQuestion(
 ): string {
   const isA = roleSide === 'a'
   const opponentInfo = getOpponentHiddenInfo(scenario, roleSide)
-  const opponentInfoIds = opponentInfo.map((i) => i.id).join('/')
+  const opponentRequests = parseRequests(
+    isA ? scenario.roleBRequests : scenario.roleARequests,
+  )
 
   const vars: Record<string, string> = {
     roleName: isA ? scenario.roleAName : scenario.roleBName,
     opponentName: isA ? scenario.roleBName : scenario.roleAName,
-    opponentInfoIds,
-    judgeName: scenario.judgeName,
+    opponentInfoIds: opponentInfo.map((i) => i.id).join('/'),
+    opponentRequestIds: opponentRequests.map((i) => i.id).join('/'),
   }
 
   return interpolateTemplate(scenario.examinationQuestionTemplate, vars)
 }
 
-function buildExaminationPrompt(
-  judgeName: string,
-  question: string,
-  validInfoIds: string[],
-) {
+function buildExaminationPrompt(question: string, validIds: string[]) {
   return [
-    `【${judgeName}问询】${question}`,
+    question,
     '',
     '请严格按 JSON 输出，不要输出额外说明：',
     '{',
     '  "selectedInfoId": "从给定编号中选 1 条",',
     '  "answer": "以当前角色口吻，用中文简要说明理由"',
     '}',
-    `selectedInfoId 必须是以下编号之一：${validInfoIds.join(' / ')}`,
+    `selectedInfoId 必须是以下编号之一：${validIds.join(' / ')}`,
   ].join('\n')
 }
 
@@ -381,6 +383,42 @@ export function validateExaminationAnswer(
   return parsed
 }
 
+/** Derive valid examination IDs: info IDs if available, else request IDs. */
+function getExaminationValidIds(
+  scenario: ScenarioRecord,
+  roleSide: 'a' | 'b',
+): string[] {
+  const opponentInfo = getOpponentHiddenInfo(scenario, roleSide)
+  if (opponentInfo.length > 0) return opponentInfo.map((i) => i.id)
+
+  const isA = roleSide === 'a'
+  const opponentRequests = parseRequests(
+    isA ? scenario.roleBRequests : scenario.roleARequests,
+  )
+  return opponentRequests.map((i) => i.id)
+}
+
+/** Check if the examination answer is "correct" based on available data. */
+function checkExaminationCorrectness(
+  selectedId: string,
+  assignment: InfoAssignment,
+  roleSide: 'a' | 'b',
+  scenario: ScenarioRecord,
+): boolean {
+  // If opponent has hidden info, correct = selected a false info
+  const opponentInfo = getOpponentHiddenInfo(scenario, roleSide)
+  if (opponentInfo.length > 0) {
+    return getOpponentFalseInfoIds(assignment, roleSide).includes(selectedId)
+  }
+
+  // If opponent only has requests, correct = selected the true request
+  const isA = roleSide === 'a'
+  const opponentTrueReqIds = isA
+    ? assignment.roleBTrueRequestIds
+    : assignment.roleATrueRequestIds
+  return opponentTrueReqIds.includes(selectedId)
+}
+
 async function getExaminationAnswer(
   scenario: ScenarioRecord,
   transcript: TranscriptTurn[],
@@ -391,9 +429,7 @@ async function getExaminationAnswer(
   model: ModelId,
   traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
 ): Promise<JudgeQA> {
-  const validInfoIds = getOpponentHiddenInfo(scenario, roleSide).map(
-    (item) => item.id,
-  )
+  const validIds = getExaminationValidIds(scenario, roleSide)
   const rawAnswer = await withRetry(async (attempt) => {
     const { systemPrompt, messages } = buildDialogueContext(
       transcript,
@@ -405,11 +441,7 @@ async function getExaminationAnswer(
 
     messages.push({
       role: 'user',
-      content: buildExaminationPrompt(
-        scenario.judgeName,
-        question,
-        validInfoIds,
-      ),
+      content: buildExaminationPrompt(question, validIds),
     })
 
     const response = await chatCompletion({
@@ -429,7 +461,7 @@ async function getExaminationAnswer(
 
     return validateExaminationAnswer(
       JSON.parse(sanitizeJsonResponse(response)),
-      validInfoIds,
+      validIds,
     )
   })
 
@@ -438,8 +470,11 @@ async function getExaminationAnswer(
     question: question.trim(),
     answer: rawAnswer.answer.trim(),
     selectedInfoId: rawAnswer.selectedInfoId,
-    isCorrect: getOpponentFalseInfoIds(assignment, roleSide).includes(
+    isCorrect: checkExaminationCorrectness(
       rawAnswer.selectedInfoId,
+      assignment,
+      roleSide,
+      scenario,
     ),
   })
 }
@@ -463,39 +498,6 @@ function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
     .join('\n\n')
 }
 
-export function validateJudgeDecision(
-  scenario: ScenarioRecord,
-  raw: unknown,
-): JudgeDecision {
-  const decision = judgeDecisionSchema.parse(raw)
-  const validJudgments = new Set([scenario.roleAStance, scenario.roleBStance])
-
-  if (!validJudgments.has(decision.judgment)) {
-    throw new Error(`Invalid judgment: ${decision.judgment}`)
-  }
-
-  const requestIds = [
-    ...parseRequests(scenario.roleARequests).map((request) => request.id),
-    ...parseRequests(scenario.roleBRequests).map((request) => request.id),
-  ]
-  const expectedRequestIds = new Set(requestIds)
-  const actualRequestIds = Object.keys(decision.requests)
-  const missingRequestIds = requestIds.filter(
-    (id) => !(id in decision.requests),
-  )
-  const extraRequestIds = actualRequestIds.filter(
-    (id) => !expectedRequestIds.has(id),
-  )
-
-  if (missingRequestIds.length > 0 || extraRequestIds.length > 0) {
-    throw new Error(
-      `Judge request decisions mismatch (missing: ${missingRequestIds.join(', ') || 'none'}; extra: ${extraRequestIds.join(', ') || 'none'})`,
-    )
-  }
-
-  return decision
-}
-
 async function getJudgeDecision(
   scenario: ScenarioRecord,
   assignment: InfoAssignment,
@@ -503,8 +505,8 @@ async function getJudgeDecision(
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
   traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
-): Promise<JudgeDecision> {
-  const transcriptText =
+): Promise<string> {
+  const debateText =
     transcript.length > 0
       ? formatTranscript(transcript, scenario)
       : '（暂无对话）'
@@ -518,51 +520,18 @@ async function getJudgeDecision(
     examinationB,
   )
 
-  const roleAReqs = parseRequests(scenario.roleARequests)
-  const roleBReqs = parseRequests(scenario.roleBRequests)
-
-  const roleAReqList = buildRequestCatalogText(roleAReqs)
-  const roleBReqList = buildRequestCatalogText(roleBReqs)
-  const decisionShape = [...roleAReqs, ...roleBReqs]
-    .map((request) => `    "${request.id}": "同意" 或 "不同意"`)
-    .join(',\n')
-
-  const prompt = [
-    `=== 朝堂辩论记录 ===`,
-    transcriptText,
-    '',
-    `=== 问询结果（以下“系统判定”已由系统根据本局真相计算） ===`,
-    examinationAText,
-    '',
-    examinationBText,
-    '',
-    `=== 【${scenario.roleAName}】的请求（ID 与内容） ===`,
-    roleAReqList,
-    '',
-    `=== 【${scenario.roleBName}】的请求（ID 与内容） ===`,
-    roleBReqList,
-    '',
-    `请做出你的最终裁决。严格按以下 JSON 格式输出，不要其他内容：`,
-    `{`,
-    `  "judgment": "${scenario.roleAStance}" 或 "${scenario.roleBStance}",`,
-    `  "requests": {`,
-    decisionShape,
-    `  },`,
-    `  "speech": "（你的完整判决词）"`,
-    `}`,
-    '',
-    '注意：`requests` 中的 key 必须与上面列出的请求 ID 完全一致，不能遗漏，也不能新增其他 key。',
-  ].join('\n')
-
-  const judgeSystemMessage = buildJudgeSystemMessage(scenario, assignment)
+  const judgePrompt = buildJudgePrompt(scenario, assignment, {
+    debate: debateText,
+    examinationA: examinationAText,
+    examinationB: examinationBText,
+  })
   const judgeModel = parseModelId(scenario.judgeModel ?? DEFAULT_JUDGE_MODEL)
 
   const raw = await withRetry(async (attempt) => {
-    const response = await chatCompletion({
-      jsonMode: true,
-      messages: [{ role: 'user', content: prompt }],
+    return await chatCompletion({
+      messages: [{ role: 'user', content: '请做出你的裁决。' }],
       model: judgeModel,
-      systemPrompt: judgeSystemMessage,
+      systemPrompt: judgePrompt,
       temperature: 0,
       trace: {
         ...traceTarget,
@@ -572,60 +541,138 @@ async function getJudgeDecision(
         turnIndex: transcript.length,
       },
     })
-
-    return validateJudgeDecision(
-      scenario,
-      JSON.parse(sanitizeJsonResponse(response)),
-    )
   })
 
-  return raw
+  return raw.trim()
 }
 
-// ── Score computation ───────────────────────────────────────────────────────
+// ── Phase 4: Scorer ─────────────────────────────────────────────────────────
 
-export function computeScores(
-  decision: JudgeDecision,
-  assignment: InfoAssignment,
+function buildScorerPrompt(
   scenario: ScenarioRecord,
-): { scoreA: number; scoreB: number; winner: 'a' | 'b' | 'draw' } {
-  let scoreA = 0
-  let scoreB = 0
+  assignment: InfoAssignment,
+  extras: {
+    judgeOutput: string
+    debate: string
+    examinationA: string
+    examinationB: string
+  },
+): string {
+  const roleAInfo = parseHiddenInfo(scenario.roleAHiddenInfo)
+  const roleBInfo = parseHiddenInfo(scenario.roleBHiddenInfo)
+  const roleARequests = parseRequests(scenario.roleARequests)
+  const roleBRequests = parseRequests(scenario.roleBRequests)
 
-  // Main goal
-  if (decision.judgment === scenario.roleAStance) {
-    scoreA += scenario.mainGoalScore
-  } else if (decision.judgment === scenario.roleBStance) {
-    scoreB += scenario.mainGoalScore
+  const vars: Record<string, string> = {
+    roleAName: scenario.roleAName,
+    roleBName: scenario.roleBName,
+    judgeOutput: extras.judgeOutput,
+    infoAssignment: JSON.stringify(assignment, null, 2),
+    debate: extras.debate,
+    examinationA: extras.examinationA,
+    examinationB: extras.examinationB,
+    roleARequests: buildRequestsText(
+      roleARequests,
+      assignment.roleATrueRequestIds,
+    ),
+    roleAHiddenInfo: buildHiddenInfoText(
+      roleAInfo,
+      assignment.roleAFalseInfoIds,
+    ),
+    roleBRequests: buildRequestsText(
+      roleBRequests,
+      assignment.roleBTrueRequestIds,
+    ),
+    roleBHiddenInfo: buildHiddenInfoText(
+      roleBInfo,
+      assignment.roleBFalseInfoIds,
+    ),
   }
 
-  // Role A requests
-  const roleAReqs = parseRequests(scenario.roleARequests)
-  for (const req of roleAReqs) {
-    if (decision.requests[req.id] === '同意') {
-      if (assignment.roleATrueRequestIds.includes(req.id)) {
-        scoreA += scenario.trueRequestScore
-      } else {
-        scoreA += scenario.falseRequestPenalty
-      }
-    }
+  // Add per-item LABEL/CONTENT
+  for (const item of roleAInfo) {
+    const isFalse = assignment.roleAFalseInfoIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isFalse ? '子虚乌有' : '确有其事'
+    vars[`${item.id}_CONTENT`] = item.content
+  }
+  for (const item of roleBInfo) {
+    const isFalse = assignment.roleBFalseInfoIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isFalse ? '子虚乌有' : '确有其事'
+    vars[`${item.id}_CONTENT`] = item.content
+  }
+  for (const item of roleARequests) {
+    const isTrue = assignment.roleATrueRequestIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isTrue ? '真' : '假'
+    vars[`${item.id}_CONTENT`] = item.content
+  }
+  for (const item of roleBRequests) {
+    const isTrue = assignment.roleBTrueRequestIds.includes(item.id)
+    vars[`${item.id}_LABEL`] = isTrue ? '真' : '假'
+    vars[`${item.id}_CONTENT`] = item.content
   }
 
-  // Role B requests
-  const roleBReqs = parseRequests(scenario.roleBRequests)
-  for (const req of roleBReqs) {
-    if (decision.requests[req.id] === '同意') {
-      if (assignment.roleBTrueRequestIds.includes(req.id)) {
-        scoreB += scenario.trueRequestScore
-      } else {
-        scoreB += scenario.falseRequestPenalty
-      }
-    }
+  return interpolateTemplate(scenario.scorerPrompt, vars)
+}
+
+async function getScoreFromScorer(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+  judgeOutput: string,
+  transcript: TranscriptTurn[],
+  examinationA: JudgeQA[],
+  examinationB: JudgeQA[],
+  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
+): Promise<{
+  scoreA: number
+  scoreB: number
+  reasoning: string
+  winner: 'a' | 'b' | 'draw'
+}> {
+  const debateText =
+    transcript.length > 0
+      ? formatTranscript(transcript, scenario)
+      : '（暂无对话）'
+
+  const scorerPrompt = buildScorerPrompt(scenario, assignment, {
+    judgeOutput,
+    debate: debateText,
+    examinationA: buildExaminationSummary(scenario.roleAName, examinationA),
+    examinationB: buildExaminationSummary(scenario.roleBName, examinationB),
+  })
+  const scorerModel = parseModelId(scenario.judgeModel ?? DEFAULT_JUDGE_MODEL)
+
+  const result = await withRetry(async (attempt) => {
+    const response = await chatCompletion({
+      jsonMode: true,
+      messages: [{ role: 'user', content: '请根据以上信息计算双方得分。' }],
+      model: scorerModel,
+      systemPrompt: scorerPrompt,
+      temperature: 0,
+      trace: {
+        ...traceTarget,
+        attempt,
+        phase: 'scoring',
+        side: 'scorer',
+        turnIndex: transcript.length,
+      },
+    })
+
+    return scorerOutputSchema.parse(JSON.parse(sanitizeJsonResponse(response)))
+  })
+
+  const winner =
+    result.scoreA > result.scoreB
+      ? 'a'
+      : result.scoreB > result.scoreA
+        ? 'b'
+        : 'draw'
+
+  return {
+    scoreA: result.scoreA,
+    scoreB: result.scoreB,
+    reasoning: result.reasoning,
+    winner: matchWinnerSchema.parse(winner),
   }
-
-  const winner = scoreA > scoreB ? 'a' : scoreB > scoreA ? 'b' : 'draw'
-
-  return { scoreA, scoreB, winner: matchWinnerSchema.parse(winner) }
 }
 
 // ── Main execution ──────────────────────────────────────────────────────────
@@ -701,48 +748,53 @@ export async function executeMatchSession(
 
   await params.onJudgingStart?.(transcript)
 
-  // ── Phase 2: Examination — fixed "identify the lie" question ───────────
-  if (judgeTranscriptA.length === 0) {
-    const questionA = buildExaminationQuestion(params.scenario, 'a')
-    const answerA = await getExaminationAnswer(
-      params.scenario,
-      transcript,
-      questionA,
-      'a',
-      assignment,
-      params.promptA,
-      modelA,
-      {
-        matchId: params.matchId,
-        playgroundRunId: params.playgroundRunId,
-      },
-    )
+  // ── Phase 2: Examination (optional) ────────────────────────────────────
+  const hasExamination =
+    params.scenario.examinationQuestionTemplate.trim().length > 0
 
-    judgeTranscriptA.push(answerA)
-    await params.onJudgeTranscriptA?.(judgeTranscriptA)
+  if (hasExamination) {
+    if (judgeTranscriptA.length === 0) {
+      const questionA = buildExaminationQuestion(params.scenario, 'a')
+      const answerA = await getExaminationAnswer(
+        params.scenario,
+        transcript,
+        questionA,
+        'a',
+        assignment,
+        params.promptA,
+        modelA,
+        {
+          matchId: params.matchId,
+          playgroundRunId: params.playgroundRunId,
+        },
+      )
+
+      judgeTranscriptA.push(answerA)
+      await params.onJudgeTranscriptA?.(judgeTranscriptA)
+    }
+
+    if (judgeTranscriptB.length === 0) {
+      const questionB = buildExaminationQuestion(params.scenario, 'b')
+      const answerB = await getExaminationAnswer(
+        params.scenario,
+        transcript,
+        questionB,
+        'b',
+        assignment,
+        params.promptB,
+        modelB,
+        {
+          matchId: params.matchId,
+          playgroundRunId: params.playgroundRunId,
+        },
+      )
+
+      judgeTranscriptB.push(answerB)
+      await params.onJudgeTranscriptB?.(judgeTranscriptB)
+    }
   }
 
-  if (judgeTranscriptB.length === 0) {
-    const questionB = buildExaminationQuestion(params.scenario, 'b')
-    const answerB = await getExaminationAnswer(
-      params.scenario,
-      transcript,
-      questionB,
-      'b',
-      assignment,
-      params.promptB,
-      modelB,
-      {
-        matchId: params.matchId,
-        playgroundRunId: params.playgroundRunId,
-      },
-    )
-
-    judgeTranscriptB.push(answerB)
-    await params.onJudgeTranscriptB?.(judgeTranscriptB)
-  }
-
-  // ── Phase 3: Judge decision ────────────────────────────────────────────
+  // ── Phase 3: Judge decision (free-form output) ────────────────────────
   const judgeDecision = await getJudgeDecision(
     params.scenario,
     assignment,
@@ -755,10 +807,18 @@ export async function executeMatchSession(
     },
   )
 
-  const { scoreA, scoreB, winner } = computeScores(
-    judgeDecision,
-    assignment,
+  // ── Phase 4: Scorer ───────────────────────────────────────────────────
+  const { scoreA, scoreB, reasoning, winner } = await getScoreFromScorer(
     params.scenario,
+    assignment,
+    judgeDecision,
+    transcript,
+    judgeTranscriptA,
+    judgeTranscriptB,
+    {
+      matchId: params.matchId,
+      playgroundRunId: params.playgroundRunId,
+    },
   )
 
   return {
@@ -766,7 +826,7 @@ export async function executeMatchSession(
     judgeDecision,
     judgeTranscriptA,
     judgeTranscriptB,
-    reasoning: judgeDecision.speech,
+    reasoning,
     scoreA,
     scoreB,
     transcript,

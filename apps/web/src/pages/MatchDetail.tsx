@@ -8,15 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { getMatch, getScenario, retryAdminMatch } from '../lib/api'
 
-function buildRequestContentMap(scenario: Scenario) {
-  return new Map(
-    [...scenario.roleARequests, ...scenario.roleBRequests].map((request) => [
-      request.id,
-      request.content,
-    ]),
-  )
-}
-
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
 }
@@ -113,7 +104,6 @@ export function MatchDetailPage() {
 
   const roleAName = scenario?.roleAName ?? '—'
   const roleBName = scenario?.roleBName ?? '—'
-  const requestContentMap = scenario ? buildRequestContentMap(scenario) : null
   const playerALabel = `${roleAName}（${match.playerADisplayName}）`
   const playerBLabel = `${roleBName}（${match.playerBDisplayName}）`
   const winnerLabel =
@@ -314,7 +304,7 @@ export function MatchDetailPage() {
                                     : 'bg-white/8 text-(--foreground-muted)'
                                 }`}
                               >
-                                {isTrue ? '参与' : '不参与'}
+                                {isTrue ? '真' : '假'}
                               </span>
                               <span className="text-(--foreground-subtle)">
                                 {item.content}
@@ -330,59 +320,15 @@ export function MatchDetailPage() {
             </Card>
           ) : null}
 
-          {match.judgeDecision && scenario && requestContentMap ? (
+          {match.judgeDecision ? (
             <Card>
               <CardHeader className="pb-0">
                 <CardTitle>裁判裁决</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 pt-3">
-                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-                  <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
-                    主张裁决
-                  </p>
-                  <p className="text-xs leading-5 text-(--foreground-subtle)">
-                    {match.judgeDecision.judgment}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-                  <p className="mb-2 text-[11px] font-medium text-(--foreground-muted)">
-                    诉求裁定
-                  </p>
-                  <div className="space-y-1.5">
-                    {Object.entries(match.judgeDecision.requests).map(
-                      ([requestId, ruling]) => (
-                        <div
-                          key={requestId}
-                          className="flex items-start justify-between gap-2 text-[11px]"
-                        >
-                          <p className="text-(--foreground-subtle)">
-                            <span className="font-medium text-(--foreground-muted)">
-                              [{requestId}]
-                            </span>{' '}
-                            {requestContentMap.get(requestId) ?? '未知请求'}
-                          </p>
-                          <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                              ruling === '同意'
-                                ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                                : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                            }`}
-                          >
-                            {ruling}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-                <div className="rounded-lg border border-(--border-soft) bg-white/2 p-3">
-                  <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
-                    裁判宣判词
-                  </p>
-                  <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                    {match.judgeDecision.speech}
-                  </p>
-                </div>
+              <CardContent className="pt-3">
+                <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                  {match.judgeDecision}
+                </p>
               </CardContent>
             </Card>
           ) : null}
@@ -458,9 +404,7 @@ export function MatchDetailPage() {
         ).map(({ playerLabel, items, side }) => (
           <Card key={side}>
             <CardHeader>
-              <CardTitle>
-                {scenario?.judgeName ?? '裁判'}审讯 · {playerLabel}
-              </CardTitle>
+              <CardTitle>裁判审讯 · {playerLabel}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {items.map((item) => (
@@ -471,7 +415,7 @@ export function MatchDetailPage() {
                   <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
                     <div className="min-w-0">
                       <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                        {scenario?.judgeName ?? '裁判'} · 第 {item.round} 轮
+                        裁判 · 第 {item.round} 轮
                       </p>
                       <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
                         {item.question}
@@ -544,7 +488,7 @@ export function MatchDetailPage() {
       {/* Reasoning */}
       <Card>
         <CardHeader>
-          <CardTitle>{scenario?.judgeName ?? '裁判'}宣判词</CardTitle>
+          <CardTitle>裁判宣判词</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">

@@ -70,7 +70,11 @@ export function LoginPage() {
                 {error ? (
                   <p className="text-sm text-(--accent)">{error}</p>
                 ) : null}
-                <Button className="w-full" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-full"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? '登录中…' : '进入控制台'}
                 </Button>
               </form>

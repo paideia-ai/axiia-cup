@@ -444,7 +444,6 @@ program
         title: s.title,
         subject: s.subject,
         turnCount: s.turnCount,
-        judgeName: s.judgeName,
         locked: s.locked ? '🔒' : '',
       })),
     )
@@ -471,32 +470,21 @@ program
     }
 
     const editable: UpdateScenario = {
-      context: scenario.context,
-      boundaryConstraints: scenario.boundaryConstraints,
       turnCount: scenario.turnCount,
-      judgeName: scenario.judgeName,
       judgeModel: scenario.judgeModel,
-      judgePrompt: scenario.judgePrompt,
       openingLine: scenario.openingLine,
       agentPromptTemplate: scenario.agentPromptTemplate,
       examinationQuestionTemplate: scenario.examinationQuestionTemplate,
+      judgePrompt: scenario.judgePrompt,
+      scorerPrompt: scenario.scorerPrompt,
       roleAName: scenario.roleAName,
-      roleAPublicIdentity: scenario.roleAPublicIdentity,
-      roleAMainGoal: scenario.roleAMainGoal,
-      roleAStance: scenario.roleAStance,
       roleAHiddenInfo: scenario.roleAHiddenInfo,
       roleARequests: scenario.roleARequests,
       roleBName: scenario.roleBName,
-      roleBPublicIdentity: scenario.roleBPublicIdentity,
-      roleBMainGoal: scenario.roleBMainGoal,
-      roleBStance: scenario.roleBStance,
       roleBHiddenInfo: scenario.roleBHiddenInfo,
       roleBRequests: scenario.roleBRequests,
       falseInfoCount: scenario.falseInfoCount,
       trueRequestCount: scenario.trueRequestCount,
-      mainGoalScore: scenario.mainGoalScore,
-      trueRequestScore: scenario.trueRequestScore,
-      falseRequestPenalty: scenario.falseRequestPenalty,
     }
 
     const tmpFile = join(tmpdir(), `axiia-scenario-${scenarioId}.json`)
@@ -526,7 +514,6 @@ program
     console.log(`场景「${updated.title}」已更新`)
     console.table({
       turnCount: updated.turnCount,
-      judgeName: updated.judgeName,
       falseInfoCount: updated.falseInfoCount,
       trueRequestCount: updated.trueRequestCount,
       locked: updated.locked,
@@ -540,10 +527,7 @@ program
   .option('-d, --db <path>', 'SQLite database path')
   .option('-o, --output <path>', 'write JSON to file instead of stdout')
   .action(
-    async (
-      runIdArg: string,
-      options: { db?: string; output?: string },
-    ) => {
+    async (runIdArg: string, options: { db?: string; output?: string }) => {
       const runId = Number.parseInt(runIdArg, 10)
 
       if (!Number.isInteger(runId) || runId <= 0) {
@@ -565,10 +549,7 @@ program
   .option('-d, --db <path>', 'SQLite database path')
   .option('-o, --output <path>', 'write JSON to file instead of stdout')
   .action(
-    async (
-      matchIdArg: string,
-      options: { db?: string; output?: string },
-    ) => {
+    async (matchIdArg: string, options: { db?: string; output?: string }) => {
       const matchId = Number.parseInt(matchIdArg, 10)
 
       if (!Number.isInteger(matchId) || matchId <= 0) {

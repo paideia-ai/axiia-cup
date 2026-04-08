@@ -118,7 +118,9 @@ export async function chatCompletion(params: {
       { role: 'system' as const, content: params.systemPrompt },
       ...params.messages,
     ],
-    response_format: params.jsonMode ? { type: 'json_object' as const } : undefined,
+    response_format: params.jsonMode
+      ? { type: 'json_object' as const }
+      : undefined,
     temperature: params.temperature ?? 0,
   }
   const requestJson = safeStringify(requestPayload)

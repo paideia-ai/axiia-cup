@@ -446,7 +446,7 @@ tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
       finishedAt: match.finishedAt,
       id: match.id,
       infoAssignment: parseJsonField(match.infoAssignment, null),
-      judgeDecision: parseJsonField(match.judgeDecision, null),
+      judgeDecision: match.judgeDecision ?? null,
       judgeTranscriptA: parseJsonField(match.judgeTranscriptA, []),
       judgeTranscriptB: parseJsonField(match.judgeTranscriptB, []),
       playerADisplayName: match.playerADisplayName,

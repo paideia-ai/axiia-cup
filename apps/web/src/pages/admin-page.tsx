@@ -938,7 +938,7 @@ export function AdminPage() {
                     <div className="space-y-3">
                       <CardTitle>{scenario.title}</CardTitle>
                       <p className="mt-2 text-sm leading-6 text-(--foreground-subtle)">
-                        {scenario.context}
+                        {scenario.subject}
                       </p>
                     </div>
                     <div className="space-y-3">

@@ -19,8 +19,13 @@ const matchStatuses = [
   'error',
 ] as const
 const matchWinners = ['a', 'b', 'draw'] as const
-const llmCallPhases = ['dialogue', 'examination', 'judgment'] as const
-const llmCallSides = ['a', 'b', 'judge'] as const
+const llmCallPhases = [
+  'dialogue',
+  'examination',
+  'judgment',
+  'scoring',
+] as const
+const llmCallSides = ['a', 'b', 'judge', 'scorer'] as const
 
 const currentTimestamp = sql`CURRENT_TIMESTAMP`
 
@@ -43,40 +48,31 @@ export const scenarios = sqliteTable('scenarios', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   subject: text('subject').notNull(),
-  context: text('context').notNull(),
-  boundaryConstraints: text('boundary_constraints').notNull(),
   turnCount: integer('turn_count').notNull().default(10),
-  judgeName: text('judge_name').notNull().default('裁判'),
   judgeModel: text('judge_model').notNull().default('deepseek-v3.2'),
-  judgePrompt: text('judge_prompt').notNull(),
   openingLine: text('opening_line')
     .notNull()
     .default(
       '卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。',
     ),
+  // Prompt templates (admin-controlled)
   agentPromptTemplate: text('agent_prompt_template').notNull(),
-  examinationQuestionTemplate: text('examination_question_template').notNull(),
+  examinationQuestionTemplate: text('examination_question_template')
+    .notNull()
+    .default(''),
+  judgePrompt: text('judge_prompt').notNull(),
+  scorerPrompt: text('scorer_prompt').notNull().default(''),
   // Role A
   roleAName: text('role_a_name').notNull(),
-  roleAPublicIdentity: text('role_a_public_identity').notNull(),
-  roleAMainGoal: text('role_a_main_goal').notNull(),
-  roleAStance: text('role_a_stance').notNull(),
   roleAHiddenInfo: text('role_a_hidden_info').notNull().default('[]'),
   roleARequests: text('role_a_requests').notNull().default('[]'),
   // Role B
   roleBName: text('role_b_name').notNull(),
-  roleBPublicIdentity: text('role_b_public_identity').notNull(),
-  roleBMainGoal: text('role_b_main_goal').notNull(),
-  roleBStance: text('role_b_stance').notNull(),
   roleBHiddenInfo: text('role_b_hidden_info').notNull().default('[]'),
   roleBRequests: text('role_b_requests').notNull().default('[]'),
   // Randomization config
   falseInfoCount: integer('false_info_count').notNull().default(1),
   trueRequestCount: integer('true_request_count').notNull().default(1),
-  // Scoring config
-  mainGoalScore: real('main_goal_score').notNull().default(1),
-  trueRequestScore: real('true_request_score').notNull().default(0.5),
-  falseRequestPenalty: real('false_request_penalty').notNull().default(-0.25),
   createdAt: text('created_at').notNull().default(currentTimestamp),
 })
 

@@ -18,32 +18,21 @@ import { getAdminScenarios, updateAdminScenario } from '../lib/api'
 
 function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
   return {
-    context: scenario.context,
-    boundaryConstraints: scenario.boundaryConstraints,
     turnCount: scenario.turnCount,
-    judgeName: scenario.judgeName,
     judgeModel: scenario.judgeModel,
     judgePrompt: scenario.judgePrompt,
     openingLine: scenario.openingLine,
     agentPromptTemplate: scenario.agentPromptTemplate,
     examinationQuestionTemplate: scenario.examinationQuestionTemplate,
+    scorerPrompt: scenario.scorerPrompt,
     roleAName: scenario.roleAName,
-    roleAPublicIdentity: scenario.roleAPublicIdentity,
-    roleAMainGoal: scenario.roleAMainGoal,
-    roleAStance: scenario.roleAStance,
     roleAHiddenInfo: scenario.roleAHiddenInfo,
     roleARequests: scenario.roleARequests,
     roleBName: scenario.roleBName,
-    roleBPublicIdentity: scenario.roleBPublicIdentity,
-    roleBMainGoal: scenario.roleBMainGoal,
-    roleBStance: scenario.roleBStance,
     roleBHiddenInfo: scenario.roleBHiddenInfo,
     roleBRequests: scenario.roleBRequests,
     falseInfoCount: scenario.falseInfoCount,
     trueRequestCount: scenario.trueRequestCount,
-    mainGoalScore: scenario.mainGoalScore,
-    trueRequestScore: scenario.trueRequestScore,
-    falseRequestPenalty: scenario.falseRequestPenalty,
   }
 }
 
@@ -74,8 +63,9 @@ const promptVariableSections: PromptVariableSection[] = [
         title: '当前角色',
         items: [
           { token: '{{roleName}}', description: '当前角色名称。' },
-          { token: '{{publicIdentity}}', description: '当前角色公开身份。' },
-          { token: '{{mainGoal}}', description: '当前角色核心目标。' },
+          { token: '{{opponentName}}', description: '对手角色名称。' },
+          { token: '{{roleAName}}', description: '角色 A 名称。' },
+          { token: '{{roleBName}}', description: '角色 B 名称。' },
           {
             token: '{{hiddenInfo}}',
             description: '当前角色隐藏信息列表，已带本局真/假标记。',
@@ -84,47 +74,19 @@ const promptVariableSections: PromptVariableSection[] = [
             token: '{{requests}}',
             description: '当前角色诉求列表，已带本局真请求/假请求标记。',
           },
-        ],
-      },
-      {
-        title: '对手公开信息',
-        items: [
-          { token: '{{opponentName}}', description: '对手角色名称。' },
-          {
-            token: '{{opponentIdentity}}',
-            description: '对手公开身份。',
-          },
-          { token: '{{opponentGoal}}', description: '对手核心目标。' },
           {
             token: '{{opponentRequests}}',
             description: '对手诉求列表，只展示 ID 与内容。',
           },
-        ],
-      },
-      {
-        title: '场景与规则',
-        items: [
-          { token: '{{context}}', description: '场景背景。' },
+          {
+            token: '{{opponentInfoIds}}',
+            description: '对手隐藏信息 ID 列表。',
+          },
+          {
+            token: '{{opponentRequestIds}}',
+            description: '对手诉求 ID 列表。',
+          },
           { token: '{{turnCount}}', description: '对话轮数。' },
-          { token: '{{judgeName}}', description: '裁判名称。' },
-          { token: '{{constraints}}', description: '边界约束。' },
-        ],
-      },
-      {
-        title: '计分规则',
-        items: [
-          {
-            token: '{{mainGoalScore}}',
-            description: '主张被裁判采纳时的分值。',
-          },
-          {
-            token: '{{trueRequestScore}}',
-            description: '真请求被同意时的分值。',
-          },
-          {
-            token: '{{falseRequestPenalty}}',
-            description: '假请求被同意时的扣分。',
-          },
         ],
       },
     ],
@@ -133,85 +95,51 @@ const promptVariableSections: PromptVariableSection[] = [
     value: 'judge',
     title: '裁判模板',
     summary:
-      '用于裁判系统提示词，可以引用双方整体材料，也可以引用单条隐藏信息。',
+      '用于裁判系统提示词，可以引用双方整体材料，也可以引用单条隐藏信息或诉求。',
     categories: [
       {
-        title: '场景与规则',
-        items: [
-          { token: '{{judgeName}}', description: '裁判名称。' },
-          { token: '{{context}}', description: '场景背景。' },
-          { token: '{{constraints}}', description: '边界约束。' },
-          { token: '{{turnCount}}', description: '对话轮数。' },
-        ],
-      },
-      {
-        title: '计分规则',
-        items: [
-          {
-            token: '{{mainGoalScore}}',
-            description: '主张被采纳时的分值。',
-          },
-          {
-            token: '{{trueRequestScore}}',
-            description: '真请求被同意时的分值。',
-          },
-          {
-            token: '{{falseRequestPenalty}}',
-            description: '假请求被同意时的扣分。',
-          },
-        ],
-      },
-      {
-        title: '角色 A 材料',
+        title: '角色与对话',
         items: [
           { token: '{{roleAName}}', description: '角色 A 名称。' },
-          {
-            token: '{{roleAPublicIdentity}}',
-            description: '角色 A 公开身份。',
-          },
-          { token: '{{roleAMainGoal}}', description: '角色 A 核心目标。' },
-          { token: '{{roleAStance}}', description: '角色 A 主张。' },
-          {
-            token: '{{roleARequests}}',
-            description: '角色 A 诉求清单，格式为 [请求ID] 请求内容。',
-          },
+          { token: '{{roleBName}}', description: '角色 B 名称。' },
+          { token: '{{turnCount}}', description: '对话轮数。' },
+          { token: '{{debate}}', description: '双方对话记录。' },
+          { token: '{{examinationA}}', description: '角色 A 审讯记录。' },
+          { token: '{{examinationB}}', description: '角色 B 审讯记录。' },
+        ],
+      },
+      {
+        title: '角色材料',
+        items: [
           {
             token: '{{roleAHiddenInfo}}',
             description: '角色 A 隐藏信息清单，已带真假标记。',
-          },
-        ],
-      },
-      {
-        title: '角色 B 材料',
-        items: [
-          { token: '{{roleBName}}', description: '角色 B 名称。' },
-          {
-            token: '{{roleBPublicIdentity}}',
-            description: '角色 B 公开身份。',
-          },
-          { token: '{{roleBMainGoal}}', description: '角色 B 核心目标。' },
-          { token: '{{roleBStance}}', description: '角色 B 主张。' },
-          {
-            token: '{{roleBRequests}}',
-            description: '角色 B 诉求清单，格式为 [请求ID] 请求内容。',
           },
           {
             token: '{{roleBHiddenInfo}}',
             description: '角色 B 隐藏信息清单，已带真假标记。',
           },
+          {
+            token: '{{roleARequests}}',
+            description: '角色 A 诉求清单，已带真/假目标标记。',
+          },
+          {
+            token: '{{roleBRequests}}',
+            description: '角色 B 诉求清单，已带真/假目标标记。',
+          },
         ],
       },
       {
-        title: '单条隐藏信息',
+        title: '单条信息 / 诉求',
         items: [
           {
-            token: '{{<隐藏信息ID>_LABEL}}',
+            token: '{{<隐藏信息ID或请求ID>_LABEL}}',
             description:
-              '按隐藏信息 ID 替换成真假标签，值为“确有其事”或“子虚乌有”。',
+              '按 ID 替换成标签。隐藏信息输出“确有其事 / 子虚乌有”，诉求输出“真目标 / 假目标”。',
           },
           {
-            token: '{{<隐藏信息ID>_CONTENT}}',
-            description: '按隐藏信息 ID 替换成该条信息的原文内容。',
+            token: '{{<隐藏信息ID或请求ID>_CONTENT}}',
+            description: '按 ID 替换成对应隐藏信息或诉求的原文内容。',
           },
         ],
       },
@@ -226,16 +154,68 @@ const promptVariableSections: PromptVariableSection[] = [
         title: '当前回答方',
         items: [
           { token: '{{roleName}}', description: '当前被问询角色名称。' },
-          { token: '{{judgeName}}', description: '问询者名称。' },
-        ],
-      },
-      {
-        title: '对手信息',
-        items: [
           { token: '{{opponentName}}', description: '对手角色名称。' },
           {
             token: '{{opponentInfoIds}}',
             description: '当前可供选择的对手隐藏信息 ID 列表，例如 G1/G2/G3。',
+          },
+          {
+            token: '{{opponentRequestIds}}',
+            description: '当前可供选择的对手诉求 ID 列表。',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    value: 'scorer',
+    title: '评分模板',
+    summary: '用于评分器提示词，根据裁判输出和信息分配计算最终得分。',
+    categories: [
+      {
+        title: '角色与对话',
+        items: [
+          { token: '{{roleAName}}', description: '角色 A 名称。' },
+          { token: '{{roleBName}}', description: '角色 B 名称。' },
+          { token: '{{judgeOutput}}', description: '裁判输出内容。' },
+          { token: '{{infoAssignment}}', description: '本局信息分配。' },
+          { token: '{{debate}}', description: '双方对话记录。' },
+          { token: '{{examinationA}}', description: '角色 A 审讯记录。' },
+          { token: '{{examinationB}}', description: '角色 B 审讯记录。' },
+        ],
+      },
+      {
+        title: '角色材料',
+        items: [
+          {
+            token: '{{roleARequests}}',
+            description: '角色 A 诉求清单，已带真/假目标标记。',
+          },
+          {
+            token: '{{roleBRequests}}',
+            description: '角色 B 诉求清单，已带真/假目标标记。',
+          },
+          {
+            token: '{{roleAHiddenInfo}}',
+            description: '角色 A 隐藏信息清单，已带真假标记。',
+          },
+          {
+            token: '{{roleBHiddenInfo}}',
+            description: '角色 B 隐藏信息清单，已带真假标记。',
+          },
+        ],
+      },
+      {
+        title: '单条信息 / 诉求',
+        items: [
+          {
+            token: '{{<隐藏信息ID或请求ID>_LABEL}}',
+            description:
+              '按 ID 替换成标签。隐藏信息输出“确有其事 / 子虚乌有”，诉求输出“真目标 / 假目标”。',
+          },
+          {
+            token: '{{<隐藏信息ID或请求ID>_CONTENT}}',
+            description: '按 ID 替换成对应隐藏信息或诉求的原文内容。',
           },
         ],
       },
@@ -243,7 +223,7 @@ const promptVariableSections: PromptVariableSection[] = [
   },
 ]
 
-function buildHiddenInfoTemplateExamples(
+function buildTemplateExamples(
   items: { id: string }[],
   suffix: 'CONTENT' | 'LABEL',
 ) {
@@ -254,13 +234,21 @@ function buildHiddenInfoTemplateExamples(
 }
 
 function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
-  const labelExamples = [
-    ...buildHiddenInfoTemplateExamples(draft.roleAHiddenInfo, 'LABEL'),
-    ...buildHiddenInfoTemplateExamples(draft.roleBHiddenInfo, 'LABEL'),
+  const hiddenInfoLabelExamples = [
+    ...buildTemplateExamples(draft.roleAHiddenInfo, 'LABEL'),
+    ...buildTemplateExamples(draft.roleBHiddenInfo, 'LABEL'),
   ]
-  const contentExamples = [
-    ...buildHiddenInfoTemplateExamples(draft.roleAHiddenInfo, 'CONTENT'),
-    ...buildHiddenInfoTemplateExamples(draft.roleBHiddenInfo, 'CONTENT'),
+  const hiddenInfoContentExamples = [
+    ...buildTemplateExamples(draft.roleAHiddenInfo, 'CONTENT'),
+    ...buildTemplateExamples(draft.roleBHiddenInfo, 'CONTENT'),
+  ]
+  const requestLabelExamples = [
+    ...buildTemplateExamples(draft.roleARequests, 'LABEL'),
+    ...buildTemplateExamples(draft.roleBRequests, 'LABEL'),
+  ]
+  const requestContentExamples = [
+    ...buildTemplateExamples(draft.roleARequests, 'CONTENT'),
+    ...buildTemplateExamples(draft.roleBRequests, 'CONTENT'),
   ]
 
   return (
@@ -268,12 +256,15 @@ function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
       <div className="space-y-1">
         <p className="text-sm font-medium text-(--foreground)">变量说明</p>
         <p className="text-xs leading-5 text-(--foreground-muted)">
-          按模板类型和用途分类说明。裁判模板中的动态变量会根据右侧配置的隐藏信息
-          ID 自动生成。
+          按模板类型和用途分类说明。裁判/评分模板中的动态变量会根据右侧配置的隐藏信息
+          ID 与诉求 ID 自动生成，两者共享同一变量命名空间。
         </p>
       </div>
 
-      <Accordion multiple defaultValue={['agent', 'judge', 'examination']}>
+      <Accordion
+        multiple
+        defaultValue={['agent', 'judge', 'examination', 'scorer']}
+      >
         {promptVariableSections.map((section) => (
           <AccordionItem
             key={section.value}
@@ -311,34 +302,54 @@ function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
                 </div>
               ))}
 
-              {section.value === 'judge' ? (
+              {section.value === 'judge' || section.value === 'scorer' ? (
                 <div className="space-y-2 rounded-lg border border-(--border-soft) bg-white/3 p-3">
                   <p className="text-xs font-medium text-(--foreground)">
                     当前场景动态示例
                   </p>
                   <p className="text-[11px] leading-5 text-(--foreground-muted)">
-                    这些示例会随着右侧隐藏信息 ID
+                    这些示例会随着右侧隐藏信息 ID 与诉求 ID
                     变化，方便管理员确认命名是否正确。
                   </p>
                   <div className="space-y-2">
                     <div className="space-y-1">
                       <p className="text-[11px] text-(--foreground-subtle)">
-                        真假标签变量
+                        隐藏信息标签变量
                       </p>
                       <p className="font-mono text-[11px] leading-5 text-(--foreground-muted)">
-                        {labelExamples.length > 0
-                          ? labelExamples.join('、')
+                        {hiddenInfoLabelExamples.length > 0
+                          ? hiddenInfoLabelExamples.join('、')
                           : '当前还没有可展示的隐藏信息 ID'}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[11px] text-(--foreground-subtle)">
-                        信息内容变量
+                        隐藏信息内容变量
                       </p>
                       <p className="font-mono text-[11px] leading-5 text-(--foreground-muted)">
-                        {contentExamples.length > 0
-                          ? contentExamples.join('、')
+                        {hiddenInfoContentExamples.length > 0
+                          ? hiddenInfoContentExamples.join('、')
                           : '当前还没有可展示的隐藏信息 ID'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-(--foreground-subtle)">
+                        诉求标签变量
+                      </p>
+                      <p className="font-mono text-[11px] leading-5 text-(--foreground-muted)">
+                        {requestLabelExamples.length > 0
+                          ? requestLabelExamples.join('、')
+                          : '当前还没有可展示的诉求 ID'}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[11px] text-(--foreground-subtle)">
+                        诉求内容变量
+                      </p>
+                      <p className="font-mono text-[11px] leading-5 text-(--foreground-muted)">
+                        {requestContentExamples.length > 0
+                          ? requestContentExamples.join('、')
+                          : '当前还没有可展示的诉求 ID'}
                       </p>
                     </div>
                   </div>
@@ -534,7 +545,7 @@ export function AdminScenarioEditPage() {
           <p className="page-eyebrow">Admin</p>
           <h1 className="page-title">编辑场景 · {scenario.title}</h1>
           <p className="page-subtitle">
-            修改场景配置、角色信息、隐藏信息、诉求、提示词模板和计分规则。
+            修改场景配置、角色信息、隐藏信息、诉求和提示词模板。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -563,34 +574,6 @@ export function AdminScenarioEditPage() {
                 <CardTitle>基本信息</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                  <span>场景背景</span>
-                  <Textarea
-                    className="min-h-32"
-                    onChange={(event) =>
-                      setDraft((c) =>
-                        c ? { ...c, context: event.target.value } : c,
-                      )
-                    }
-                    value={draft.context}
-                  />
-                </label>
-
-                <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                  <span>边界约束</span>
-                  <Textarea
-                    className="min-h-20"
-                    onChange={(event) =>
-                      setDraft((c) =>
-                        c
-                          ? { ...c, boundaryConstraints: event.target.value }
-                          : c,
-                      )
-                    }
-                    value={draft.boundaryConstraints}
-                  />
-                </label>
-
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>对话轮数</span>
@@ -612,17 +595,6 @@ export function AdminScenarioEditPage() {
                       }
                       type="number"
                       value={draft.turnCount}
-                    />
-                  </label>
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>裁判名称</span>
-                    <Input
-                      onChange={(event) =>
-                        setDraft((c) =>
-                          c ? { ...c, judgeName: event.target.value } : c,
-                        )
-                      }
-                      value={draft.judgeName}
                     />
                   </label>
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
@@ -708,62 +680,6 @@ export function AdminScenarioEditPage() {
                     />
                   </label>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>主张分值</span>
-                    <Input
-                      onChange={(event) =>
-                        setDraft((c) =>
-                          c
-                            ? {
-                                ...c,
-                                mainGoalScore: Number(event.target.value),
-                              }
-                            : c,
-                        )
-                      }
-                      step="0.1"
-                      type="number"
-                      value={draft.mainGoalScore}
-                    />
-                  </label>
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>真请求分值</span>
-                    <Input
-                      onChange={(event) =>
-                        setDraft((c) =>
-                          c
-                            ? {
-                                ...c,
-                                trueRequestScore: Number(event.target.value),
-                              }
-                            : c,
-                        )
-                      }
-                      step="0.1"
-                      type="number"
-                      value={draft.trueRequestScore}
-                    />
-                  </label>
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>假请求扣分</span>
-                    <Input
-                      onChange={(event) =>
-                        setDraft((c) =>
-                          c
-                            ? {
-                                ...c,
-                                falseRequestPenalty: Number(event.target.value),
-                              }
-                            : c,
-                        )
-                      }
-                      step="0.1"
-                      type="number"
-                      value={draft.falseRequestPenalty}
-                    />
-                  </label>
-                </div>
               </CardContent>
             </Card>
 
@@ -816,6 +732,18 @@ export function AdminScenarioEditPage() {
                     value={draft.examinationQuestionTemplate}
                   />
                 </label>
+                <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                  <span>评分提示词</span>
+                  <Textarea
+                    className="min-h-48"
+                    onChange={(event) =>
+                      setDraft((c) =>
+                        c ? { ...c, scorerPrompt: event.target.value } : c,
+                      )
+                    }
+                    value={draft.scorerPrompt}
+                  />
+                </label>
                 <PromptVariableGuide draft={draft} />
               </CardContent>
             </Card>
@@ -828,18 +756,12 @@ export function AdminScenarioEditPage() {
                 {
                   side: 'A' as const,
                   nameKey: 'roleAName' as const,
-                  identityKey: 'roleAPublicIdentity' as const,
-                  goalKey: 'roleAMainGoal' as const,
-                  stanceKey: 'roleAStance' as const,
                   hiddenInfoKey: 'roleAHiddenInfo' as const,
                   requestsKey: 'roleARequests' as const,
                 },
                 {
                   side: 'B' as const,
                   nameKey: 'roleBName' as const,
-                  identityKey: 'roleBPublicIdentity' as const,
-                  goalKey: 'roleBMainGoal' as const,
-                  stanceKey: 'roleBStance' as const,
                   hiddenInfoKey: 'roleBHiddenInfo' as const,
                   requestsKey: 'roleBRequests' as const,
                 },
@@ -853,61 +775,19 @@ export function AdminScenarioEditPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>名称</span>
-                      <Input
-                        onChange={(event) =>
-                          setDraft((c) =>
-                            c
-                              ? { ...c, [role.nameKey]: event.target.value }
-                              : c,
-                          )
-                        }
-                        value={draft[role.nameKey]}
-                      />
-                    </label>
-                    <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                      <span>主张</span>
-                      <Input
-                        onChange={(event) =>
-                          setDraft((c) =>
-                            c
-                              ? { ...c, [role.stanceKey]: event.target.value }
-                              : c,
-                          )
-                        }
-                        value={draft[role.stanceKey]}
-                      />
-                    </label>
-                  </div>
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>公开身份</span>
+                    <span>名称</span>
                     <Input
                       onChange={(event) =>
                         setDraft((c) =>
-                          c
-                            ? { ...c, [role.identityKey]: event.target.value }
-                            : c,
+                          c ? { ...c, [role.nameKey]: event.target.value } : c,
                         )
                       }
-                      value={draft[role.identityKey]}
-                    />
-                  </label>
-                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                    <span>核心目标</span>
-                    <Textarea
-                      className="min-h-16"
-                      onChange={(event) =>
-                        setDraft((c) =>
-                          c ? { ...c, [role.goalKey]: event.target.value } : c,
-                        )
-                      }
-                      value={draft[role.goalKey]}
+                      value={draft[role.nameKey]}
                     />
                   </label>
                   <IdContentListEditor
-                    helperText="隐藏信息 ID 会参与裁判模板插值。建议使用 S1、G2 这类以字母开头的短 ID。"
+                    helperText="隐藏信息 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头。建议使用 S1、G2 这类短 ID。"
                     label="隐藏信息"
                     items={draft[role.hiddenInfoKey]}
                     onChange={(items) =>
@@ -917,7 +797,7 @@ export function AdminScenarioEditPage() {
                     }
                   />
                   <IdContentListEditor
-                    helperText="请求 ID 会作为裁判输出 JSON 的 key。建议保持稳定且易读，例如 SR1、GR2。"
+                    helperText="请求 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头，并且不能与任何隐藏信息 ID 复用。建议保持稳定且易读，例如 SR1、GR2。"
                     label="诉求清单"
                     items={draft[role.requestsKey]}
                     onChange={(items) =>
