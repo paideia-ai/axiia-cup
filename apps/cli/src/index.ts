@@ -1,16 +1,15 @@
-import type {
-  AdminScenario,
-  LeaderboardEntry,
-  TournamentDetail,
-  TournamentListItem,
-  UpdateScenario,
+import {
+  type AdminScenario,
+  type LeaderboardEntry,
+  type TournamentDetail,
+  type TournamentListItem,
 } from '@axiia/shared'
 import { Database } from 'bun:sqlite'
-import { execSync } from 'node:child_process'
-import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { Command } from 'commander'
+
+import { parseScenarioUpdateInput } from './scenario-update'
 
 const API_BASE_URL = process.env.AXIIA_API_URL ?? 'http://localhost:3001'
 const ADMIN_TOKEN = process.env.AXIIA_ADMIN_TOKEN
@@ -293,6 +292,54 @@ function printMatches(matches: StartRoundResponse['matches']) {
   )
 }
 
+async function fetchAdminScenarios() {
+  return apiFetch<AdminScenario[]>(
+    '/api/admin/scenarios',
+    { method: 'GET' },
+    true,
+  )
+}
+
+async function fetchAdminScenarioById(scenarioId: string) {
+  const scenarios = await fetchAdminScenarios()
+  const scenario = scenarios.find((item) => item.id === scenarioId)
+
+  if (!scenario) {
+    throw new Error(`Scenario "${scenarioId}" not found`)
+  }
+
+  return scenario
+}
+
+function writeJsonOutput(payload: unknown, outputPath?: string) {
+  const json = JSON.stringify(payload, null, 2)
+
+  if (!outputPath) {
+    console.log(json)
+    return
+  }
+
+  const resolvedPath = resolve(process.cwd(), outputPath)
+  mkdirSync(dirname(resolvedPath), { recursive: true })
+  writeFileSync(resolvedPath, `${json}\n`, 'utf-8')
+  console.log(resolvedPath)
+}
+
+function readJsonInput(filePath: string) {
+  const source =
+    filePath === '-'
+      ? readFileSync(0, 'utf-8')
+      : readFileSync(resolve(process.cwd(), filePath), 'utf-8')
+
+  try {
+    return JSON.parse(source) as unknown
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown JSON parse error'
+    throw new Error(`Invalid JSON input: ${message}`)
+  }
+}
+
 program.name('axiia').description('Axiia Cup 管理 CLI').version('0.1.0')
 
 program
@@ -431,76 +478,63 @@ program
 program
   .command('scenarios')
   .description('查看所有场景')
-  .action(async () => {
-    const scenarios = await apiFetch<AdminScenario[]>(
-      '/api/admin/scenarios',
-      { method: 'GET' },
-      true,
-    )
+  .option('--json', 'print JSON instead of table')
+  .action(async (options: { json?: boolean }) => {
+    const scenarios = await fetchAdminScenarios()
+    const summary = scenarios.map((s) => ({
+      id: s.id,
+      title: s.title,
+      subject: s.subject,
+      turnCount: s.turnCount,
+      locked: s.locked,
+    }))
+
+    if (options.json) {
+      writeJsonOutput(summary)
+      return
+    }
 
     console.table(
-      scenarios.map((s) => ({
-        id: s.id,
-        title: s.title,
-        subject: s.subject,
-        turnCount: s.turnCount,
+      summary.map((s) => ({
+        ...s,
         locked: s.locked ? '🔒' : '',
       })),
     )
   })
 
 program
-  .command('scenario:edit')
-  .description('编辑场景（打开 $EDITOR）')
+  .command('scenario:get')
+  .description('读取单个场景 JSON')
   .argument('<scenarioId>', 'scenario id')
-  .action(async (scenarioId: string) => {
-    const scenarios = await apiFetch<AdminScenario[]>(
-      '/api/admin/scenarios',
-      { method: 'GET' },
-      true,
-    )
-    const scenario = scenarios.find((s) => s.id === scenarioId)
+  .option('-o, --output <path>', 'write JSON to file instead of stdout')
+  .action(
+    async (
+      scenarioId: string,
+      options: {
+        output?: string
+      },
+    ) => {
+      const scenario = await fetchAdminScenarioById(scenarioId)
+      writeJsonOutput(scenario, options.output)
+    },
+  )
 
-    if (!scenario) {
-      throw new Error(`Scenario "${scenarioId}" not found`)
-    }
+program
+  .command('scenario:update')
+  .description('从文件或 stdin 更新场景')
+  .argument('<scenarioId>', 'scenario id')
+  .requiredOption(
+    '-f, --file <path>',
+    'JSON file to read, or "-" to read from stdin',
+  )
+  .action(async (scenarioId: string, options: { file: string }) => {
+    const scenario = await fetchAdminScenarioById(scenarioId)
 
     if (scenario.locked) {
       throw new Error('比赛进行中，场景已锁定，无法编辑')
     }
 
-    const editable: UpdateScenario = {
-      turnCount: scenario.turnCount,
-      judgeModel: scenario.judgeModel,
-      openingLine: scenario.openingLine,
-      agentPromptTemplate: scenario.agentPromptTemplate,
-      examinationQuestionTemplate: scenario.examinationQuestionTemplate,
-      judgePrompt: scenario.judgePrompt,
-      scorerPrompt: scenario.scorerPrompt,
-      roleAName: scenario.roleAName,
-      roleAHiddenInfo: scenario.roleAHiddenInfo,
-      roleARequests: scenario.roleARequests,
-      roleBName: scenario.roleBName,
-      roleBHiddenInfo: scenario.roleBHiddenInfo,
-      roleBRequests: scenario.roleBRequests,
-      falseInfoCount: scenario.falseInfoCount,
-      trueRequestCount: scenario.trueRequestCount,
-    }
-
-    const tmpFile = join(tmpdir(), `axiia-scenario-${scenarioId}.json`)
-    writeFileSync(tmpFile, JSON.stringify(editable, null, 2), 'utf-8')
-
-    const editor = process.env.EDITOR ?? 'vi'
-
-    try {
-      execSync(`${editor} ${tmpFile}`, { stdio: 'inherit' })
-    } catch {
-      unlinkSync(tmpFile)
-      throw new Error('Editor exited with error')
-    }
-
-    const edited = JSON.parse(readFileSync(tmpFile, 'utf-8')) as UpdateScenario
-    unlinkSync(tmpFile)
+    const edited = parseScenarioUpdateInput(readJsonInput(options.file))
 
     const updated = await apiFetch<AdminScenario>(
       `/api/admin/scenarios/${encodeURIComponent(scenarioId)}`,

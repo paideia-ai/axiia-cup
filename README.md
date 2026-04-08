@@ -29,6 +29,16 @@ bun run db:seed:demo
 
 Avoid maintaining a separate `apps/api/.env`, or the API and workspace commands can drift.
 
+## CLI
+
+The admin CLI lives in `apps/cli`.
+
+```bash
+bun run ./apps/cli/src/index.ts --help
+```
+
+For remote API usage, admin token setup, and non-interactive scenario editing via `scenario:get` / `scenario:update`, see [CLI Guide](docs/tech/CLI.md).
+
 ## Production Deployment
 
 Production deployment assets live in `deploy/`.
@@ -56,5 +66,6 @@ The web container listens on `127.0.0.1:${WEB_HOST_PORT}` and is intended to sit
 
 - [Design Spec](docs/competition/DESIGN_SPEC.md) — product rules and decisions
 - [Architecture](docs/tech/ARCHITECTURE.md) — technical stack, data model, and deployment notes
+- [CLI Guide](docs/tech/CLI.md) — CLI usage, remote API setup, and scenario editing workflow
 - [Server Deployment Checklist](docs/tech/DEPLOYMENT_SERVER.md) — step-by-step single-server production rollout
 - [Design System](docs/tech/DESIGN.md) — visual direction, typography, and color
