@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIIA CUP — 密卷</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ======= RESET & BASE ======= */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0c0c0c;
+  --accent: #E04A2F;
+  --accent-glow: rgba(224, 74, 47, 0.4);
+  --parchment: #1a1714;
+  --parchment-light: #2a2520;
+  --text: #e8e0d4;
+  --text-dim: #9a9085;
+  --mono: 'Courier New', 'Menlo', monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans SC', 'Satoshi', sans-serif;
+  font-size: 24px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+/* ======= SCANLINE OVERLAY (global) ======= */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+}
+
+/* ======= NOISE OVERLAY ======= */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.025;
+  background-image:
+    repeating-linear-gradient(45deg, #fff 0px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(-45deg, #fff 0px, transparent 1px, transparent 5px);
+}
+
+/* ======= AGED PAPER TEXTURE MIXIN ======= */
+.paper-texture {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(180, 160, 120, 0.02) 0px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 160, 120, 0.015) 0px,
+      transparent 1px,
+      transparent 4px
+    ),
+    linear-gradient(135deg, var(--parchment) 0%, #151210 50%, var(--parchment) 100%);
+}
+
+/* ======= REVEAL ANIMATION ======= */
+.reveal {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.15s; }
+.reveal-delay-2 { transition-delay: 0.3s; }
+.reveal-delay-3 { transition-delay: 0.45s; }
+.reveal-delay-4 { transition-delay: 0.6s; }
+
+/* ======= SECTION DIVIDER ======= */
+.section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  height: 1px;
+  width: 120px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.section-divider .diamond {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ======= SECTION WRAPPER ======= */
+section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 80px;
+  position: relative;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  max-width: none;
+  padding: 60px 40px;
+  overflow: hidden;
+}
+
+/* Ancient textile texture background */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(180, 140, 80, 0.012) 0px,
+      transparent 1px,
+      transparent 6px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 140, 80, 0.01) 0px,
+      transparent 1px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgba(180, 140, 80, 0.006) 0px,
+      transparent 1px,
+      transparent 12px
+    ),
+    radial-gradient(ellipse at 50% 40%, rgba(224, 74, 47, 0.06) 0%, transparent 60%),
+    var(--bg);
+  pointer-events: none;
+}
+
+.hero-brand {
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-decree {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 24px;
+}
+
+.hero-decree .line1 {
+  font-size: 42px;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.hero-decree .line2 {
+  font-size: 96px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.05em;
+  background: linear-gradient(180deg, #f0e6d6 0%, #c8b89a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+}
+
+.hero-subtitle {
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  margin-bottom: 70px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-subtitle span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Wax seal button */
+.seal-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #f0e6d6;
+  letter-spacing: 0.05em;
+  background:
+    radial-gradient(circle at 40% 35%, #e8553e 0%, var(--accent) 40%, #8b1a0a 100%);
+  box-shadow:
+    0 0 40px var(--accent-glow),
+    0 4px 20px rgba(0,0,0,0.6),
+    inset 0 -3px 8px rgba(0,0,0,0.3),
+    inset 0 2px 6px rgba(255,200,160,0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.seal-btn:hover {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 60px var(--accent-glow),
+    0 0 100px rgba(224, 74, 47, 0.2),
+    0 6px 30px rgba(0,0,0,0.6),
+    inset 0 -3px 8px rgba(0,0,0,0.3),
+    inset 0 2px 6px rgba(255,200,160,0.2);
+}
+
+.seal-btn::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(224, 74, 47, 0.3);
+}
+
+/* Scroll decoration lines flanking hero */
+.hero-scroll-line {
+  position: absolute;
+  width: 2px;
+  height: 300px;
+  background: linear-gradient(180deg, transparent, rgba(224, 74, 47, 0.2), transparent);
+}
+.hero-scroll-line.left { left: 80px; top: 50%; transform: translateY(-50%); }
+.hero-scroll-line.right { right: 80px; top: 50%; transform: translateY(-50%); }
+
+
+/* =========================================================
+   MISSION BRIEFING
+   ========================================================= */
+.mission {
+  position: relative;
+}
+
+.classified-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 4px 16px;
+  letter-spacing: 0.2em;
+  margin-left: 16px;
+  vertical-align: middle;
+  transform: rotate(-2deg);
+}
+
+.mission-title {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 60px;
+}
+
+.mission-card {
+  border: 1px solid rgba(180, 160, 120, 0.12);
+  border-left: 4px solid var(--accent);
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(180, 140, 80, 0.015) 0px,
+      transparent 1px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(180, 140, 80, 0.01) 0px,
+      transparent 1px,
+      transparent 6px
+    ),
+    linear-gradient(135deg, var(--parchment) 0%, #110f0d 100%);
+  z-index: 0;
+}
+
+.mission-card > * { position: relative; z-index: 1; }
+
+/* Top-secret watermark */
+.mission-card::after {
+  content: '机密';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 160px;
+  font-weight: 900;
+  color: rgba(224, 74, 47, 0.03);
+  letter-spacing: 0.3em;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dossier-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(180, 160, 120, 0.08);
+}
+
+.dossier-entry:last-child { border-bottom: none; }
+
+.dossier-label {
+  font-family: var(--mono);
+  font-size: 20px;
+  color: var(--accent);
+  min-width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.dossier-value {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+
+/* =========================================================
+   PATH SELECTION (Dossier Folders)
+   ========================================================= */
+.paths {
+  position: relative;
+}
+
+.paths-title {
+  font-size: 64px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 80px;
+  letter-spacing: 0.06em;
+}
+
+.paths-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+}
+
+.folder {
+  position: relative;
+  padding: 56px;
+  border: 1px solid rgba(180, 160, 120, 0.1);
+  border-left: 4px solid var(--accent);
+  overflow: hidden;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.folder:nth-child(1) { transform: rotate(-0.8deg); }
+.folder:nth-child(2) { transform: rotate(0.6deg); }
+
+.folder:hover {
+  transform: rotate(0deg) translateY(-4px) !important;
+  box-shadow: 0 12px 50px rgba(0,0,0,0.4);
+}
+
+/* Paper texture for folders */
+.folder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(200, 170, 110, 0.018) 0px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(200, 170, 110, 0.012) 0px,
+      transparent 1px,
+      transparent 5px
+    ),
+    linear-gradient(180deg, var(--parchment-light) 0%, var(--parchment) 100%);
+  z-index: 0;
+}
+
+.folder > * { position: relative; z-index: 1; }
+
+/* Folder tab */
+.folder-tab {
+  position: absolute;
+  top: -1px;
+  left: 40px;
+  background: var(--parchment-light);
+  border: 1px solid rgba(180, 160, 120, 0.1);
+  border-bottom: none;
+  padding: 8px 28px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  z-index: 2;
+}
+
+.folder-title {
+  font-size: 40px;
+  font-weight: 900;
+  margin-bottom: 36px;
+  margin-top: 20px;
+  color: var(--text);
+}
+
+.folder-entry {
+  display: flex;
+  gap: 20px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(180, 160, 120, 0.06);
+}
+.folder-entry:last-child { border-bottom: none; }
+
+.folder-label {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--accent);
+  min-width: 65px;
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.folder-value {
+  font-size: 26px;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   GAME FLOW TIMELINE
+   ========================================================= */
+.flow {
+  position: relative;
+}
+
+.flow-title {
+  font-size: 64px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 80px;
+  letter-spacing: 0.08em;
+}
+
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Vertical line */
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 60px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--accent), rgba(224, 74, 47, 0.1));
+}
+
+.timeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  padding: 36px 0;
+  position: relative;
+}
+
+.timeline-icon {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--parchment-light) 0%, var(--bg) 100%);
+  border: 2px solid rgba(224, 74, 47, 0.25);
+  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-content {
+  padding-top: 20px;
+}
+
+.timeline-step-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+
+.timeline-step-desc {
+  font-size: 24px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   PARENTS NOTICE
+   ========================================================= */
+.parents {
+  position: relative;
+}
+
+.notice-card {
+  border: 2px solid rgba(224, 74, 47, 0.2);
+  padding: 70px 80px;
+  position: relative;
+  overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.notice-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(180, 140, 80, 0.012) 0px,
+      transparent 1px,
+      transparent 4px
+    ),
+    linear-gradient(135deg, var(--parchment) 0%, #0e0d0b 100%);
+  z-index: 0;
+}
+
+.notice-card > * { position: relative; z-index: 1; }
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 50px;
+}
+
+.notice-title {
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.notice-stamp {
+  display: inline-block;
+  border: 3px solid var(--accent);
+  color: var(--accent);
+  padding: 6px 20px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  transform: rotate(-5deg);
+}
+
+.notice-item {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 18px 0;
+  font-size: 28px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(180, 160, 120, 0.06);
+}
+
+.notice-item:last-child { border-bottom: none; }
+
+.notice-check {
+  color: #4ade80;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   FOOTER CTA
+   ========================================================= */
+.footer-cta {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: none;
+  padding: 100px 40px;
+  position: relative;
+}
+
+.footer-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 60%, rgba(224, 74, 47, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.footer-question {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 60px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  position: relative;
+  z-index: 1;
+}
+
+.cta-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 72px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, var(--accent) 0%, #c03020 100%);
+  box-shadow:
+    0 0 40px var(--accent-glow),
+    0 4px 24px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.cta-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow:
+    0 0 70px var(--accent-glow),
+    0 0 120px rgba(224, 74, 47, 0.15),
+    0 8px 40px rgba(0,0,0,0.5);
+}
+
+/* Glowing border animation */
+.cta-btn::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, var(--accent), transparent, var(--accent));
+  z-index: -1;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.footer-brand {
+  margin-top: 80px;
+  font-family: 'Satoshi', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5em;
+  color: var(--text-dim);
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ======= SCROLL UNROLL ANIMATION (hero-specific) ======= */
+@keyframes unroll {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+  100% {
+    clip-path: inset(0 0 0% 0);
+    opacity: 1;
+  }
+}
+
+.hero-decree {
+  animation: unroll 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+.hero-subtitle {
+  animation: unroll 1s cubic-bezier(0.22, 1, 0.36, 1) 1s both;
+}
+
+.seal-btn {
+  animation: sealAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) 1.6s both;
+}
+
+@keyframes sealAppear {
+  0% {
+    transform: scale(0.3) rotate(-30deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* ======= RESPONSIVE (just in case, but desktop-first) ======= */
+@media (max-width: 900px) {
+  section { padding: 60px 30px; }
+  .hero-decree .line2 { font-size: 56px; }
+  .paths-grid { grid-template-columns: 1fr; }
+  .mission-title, .paths-title, .flow-title { font-size: 44px; }
+  .folder:nth-child(1), .folder:nth-child(2) { transform: rotate(0deg); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero">
+  <div class="hero-scroll-line left"></div>
+  <div class="hero-scroll-line right"></div>
+
+  <div class="hero-brand">AXIIA CUP</div>
+
+  <div class="hero-decree">
+    <span class="line1">朕有一道密旨...</span>
+    <span class="line2">用策略征服朝堂</span>
+  </div>
+
+  <p class="hero-subtitle">AI智能体对抗赛 · <span>你的谋略 AI来执行</span></p>
+
+  <a href="#mission" class="seal-btn">拆开密卷</a>
+</section>
+
+<!-- ==================== DIVIDER ==================== -->
+<div class="section-divider">
+  <div class="diamond"></div>
+</div>
+
+<!-- ==================== MISSION BRIEFING ==================== -->
+<section class="mission" id="mission">
+  <h2 class="mission-title reveal">
+    任务简报<span class="classified-badge">[机密]</span>
+  </h2>
+
+  <div class="mission-card reveal reveal-delay-1">
+    <div class="dossier-entry">
+      <span class="dossier-label">身份：</span>
+      <span class="dossier-value">你是幕后军师</span>
+    </div>
+    <div class="dossier-entry">
+      <span class="dossier-label">任务：</span>
+      <span class="dossier-value">编写策略，操控AI角色</span>
+    </div>
+    <div class="dossier-entry">
+      <span class="dossier-label">战场：</span>
+      <span class="dossier-value">历史朝堂、法庭、谈判桌</span>
+    </div>
+    <div class="dossier-entry">
+      <span class="dossier-label">武器：</span>
+      <span class="dossier-value">纯中文策略提示词（不是代码！）</span>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DIVIDER ==================== -->
+<div class="section-divider">
+  <div class="diamond"></div>
+</div>
+
+<!-- ==================== PATH SELECTION ==================== -->
+<section class="paths">
+  <h2 class="paths-title reveal">你适合哪条路线？</h2>
+
+  <div class="paths-grid">
+    <!-- Folder A -->
+    <div class="folder reveal reveal-delay-1">
+      <div class="folder-tab">档案 A</div>
+      <h3 class="folder-title">理科生</h3>
+      <div class="folder-entry">
+        <span class="folder-label">代号：</span>
+        <span class="folder-value">跨界特工</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">优势：</span>
+        <span class="folder-value">逻辑清晰、系统思维</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">任务：</span>
+        <span class="folder-value">用你的技术脑，攻克人文场景</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">收获：</span>
+        <span class="folder-value">STEM &times; 人文的跨学科竞争力</span>
+      </div>
+    </div>
+
+    <!-- Folder B -->
+    <div class="folder reveal reveal-delay-2">
+      <div class="folder-tab">档案 B</div>
+      <h3 class="folder-title">文科生</h3>
+      <div class="folder-entry">
+        <span class="folder-label">代号：</span>
+        <span class="folder-value">策略大师</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">优势：</span>
+        <span class="folder-value">历史素养、文字功底</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">任务：</span>
+        <span class="folder-value">零代码，你的知识就是算法</span>
+      </div>
+      <div class="folder-entry">
+        <span class="folder-label">收获：</span>
+        <span class="folder-value">自然理解AI，无需写一行代码</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DIVIDER ==================== -->
+<div class="section-divider">
+  <div class="diamond"></div>
+</div>
+
+<!-- ==================== GAME FLOW ==================== -->
+<section class="flow">
+  <h2 class="flow-title reveal">对战流程</h2>
+
+  <div class="timeline">
+    <div class="timeline-step reveal">
+      <div class="timeline-icon">📜</div>
+      <div class="timeline-content">
+        <div class="timeline-step-title">选择剧本场景</div>
+        <div class="timeline-step-desc">历史朝堂、谈判桌、法庭辩论...你来挑</div>
+      </div>
+    </div>
+
+    <div class="timeline-step reveal reveal-delay-1">
+      <div class="timeline-icon">✍️</div>
+      <div class="timeline-content">
+        <div class="timeline-step-title">撰写角色策略</div>
+        <div class="timeline-step-desc">中文策略提示词，1000字以内</div>
+      </div>
+    </div>
+
+    <div class="timeline-step reveal reveal-delay-2">
+      <div class="timeline-icon">⚔️</div>
+      <div class="timeline-content">
+        <div class="timeline-step-title">AI自动执行对话博弈</div>
+        <div class="timeline-step-desc">你的策略注入AI，两军对垒，自动交锋</div>
+      </div>
+    </div>
+
+    <div class="timeline-step reveal reveal-delay-3">
+      <div class="timeline-icon">👑</div>
+      <div class="timeline-content">
+        <div class="timeline-step-title">裁判评分，瑞士轮排名</div>
+        <div class="timeline-step-desc">AI裁判打分，公平透明，层层晋级</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DIVIDER ==================== -->
+<div class="section-divider">
+  <div class="diamond"></div>
+</div>
+
+<!-- ==================== PARENTS NOTICE ==================== -->
+<section class="parents">
+  <div class="notice-card reveal">
+    <div class="notice-header">
+      <h2 class="notice-title">家长须知</h2>
+      <span class="notice-stamp">官方通知</span>
+    </div>
+
+    <div class="notice-item reveal reveal-delay-1">
+      <span class="notice-check">✅</span>
+      <span>纯线上文字活动，安全无忧</span>
+    </div>
+    <div class="notice-item reveal reveal-delay-2">
+      <span class="notice-check">✅</span>
+      <span>AI素养 + 人文思辨 + 策略思维，三位一体</span>
+    </div>
+    <div class="notice-item reveal reveal-delay-3">
+      <span class="notice-check">✅</span>
+      <span>每周2-3小时，不影响学业</span>
+    </div>
+    <div class="notice-item reveal reveal-delay-4">
+      <span class="notice-check">✅</span>
+      <span>前沿AI竞赛履历，助力升学申请</span>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DIVIDER ==================== -->
+<div class="section-divider">
+  <div class="diamond"></div>
+</div>
+
+<!-- ==================== FOOTER CTA ==================== -->
+<section class="footer-cta">
+  <div class="footer-question reveal">密卷已阅，是否接受任务？</div>
+  <a href="#" class="cta-btn reveal reveal-delay-1">接受任务</a>
+  <div class="footer-brand reveal reveal-delay-2">AXIIA CUP &middot; 智能体大赛</div>
+</section>
+
+
+<!-- ==================== INLINE JS ==================== -->
+<script>
+(function() {
+  // Reveal on scroll (IntersectionObserver)
+  const revealElements = document.querySelectorAll('.reveal');
+
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, {
+    threshold: 0.15,
+    rootMargin: '0px 0px -40px 0px'
+  });
+
+  revealElements.forEach(function(el) {
+    observer.observe(el);
+  });
+
+  // Smooth scroll for seal button
+  document.querySelector('.seal-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

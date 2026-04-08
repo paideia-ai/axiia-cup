@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIIA CUP - 选手招募令</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0c0c0c;
+  --accent: #E04A2F;
+  --accent-glow: rgba(224, 74, 47, 0.6);
+  --accent-dim: rgba(224, 74, 47, 0.15);
+  --white: #ffffff;
+  --gray: #888888;
+  --light: #e0e0e0;
+  --card-bg: #141414;
+  --card-border: #222222;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Noto Sans SC', 'Satoshi', sans-serif;
+  overflow-x: hidden;
+  font-size: 24px;
+  line-height: 1.6;
+}
+
+/* ===== DIAGONAL STRIPE PATTERN ===== */
+.stripe-bg {
+  position: relative;
+}
+.stripe-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 40px,
+    rgba(224, 74, 47, 0.03) 40px,
+    rgba(224, 74, 47, 0.03) 42px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== SCANNING LASER LINE ===== */
+.laser-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 20%, var(--accent-glow) 50%, var(--accent) 80%, transparent 100%);
+  z-index: 9999;
+  animation: laserScan 6s linear infinite;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+@keyframes laserScan {
+  0% { top: -2px; }
+  100% { top: 100vh; }
+}
+
+/* ===== GLITCH EFFECT ===== */
+@keyframes glitch {
+  0%, 100% {
+    text-shadow:
+      2px 0 #ff0040,
+      -2px 0 #0ff;
+    transform: translate(0);
+  }
+  10% {
+    text-shadow:
+      -3px 0 #ff0040,
+      3px 0 #0ff;
+    transform: translate(-2px, 1px);
+  }
+  20% {
+    text-shadow:
+      3px 0 #ff0040,
+      -3px 0 #0ff;
+    transform: translate(2px, -1px);
+  }
+  30% {
+    text-shadow:
+      0 0 #ff0040,
+      0 0 #0ff;
+    transform: translate(0);
+  }
+  40% {
+    text-shadow:
+      -2px 0 #ff0040,
+      2px 0 #0ff;
+    transform: translate(-1px, 2px);
+  }
+  50% {
+    text-shadow:
+      2px 0 #ff0040,
+      -2px 0 #0ff;
+    transform: translate(1px, -1px);
+  }
+  60%, 100% {
+    text-shadow:
+      0 0 transparent,
+      0 0 transparent;
+    transform: translate(0);
+  }
+}
+
+@keyframes glitchFlicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.8; }
+  94% { opacity: 1; }
+  96% { opacity: 0.6; }
+  97% { opacity: 1; }
+}
+
+/* ===== PULSE CTA ===== */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(224, 74, 47, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba(224, 74, 47, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(224, 74, 47, 0); }
+}
+
+@keyframes accentLineScroll {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+/* ===== NEON GLOW ===== */
+.neon-text {
+  text-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 20px rgba(224, 74, 47, 0.4),
+    0 0 40px rgba(224, 74, 47, 0.2);
+}
+
+/* ===== SECTION LAYOUT ===== */
+section {
+  position: relative;
+  padding: 100px 80px;
+  z-index: 1;
+}
+
+.section-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== SKEW DIVIDERS ===== */
+.skew-divider-top {
+  position: relative;
+}
+.skew-divider-top::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: var(--bg);
+  transform: skewY(-1.5deg);
+  z-index: 2;
+}
+
+.skew-divider-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: var(--bg);
+  transform: skewY(1.5deg);
+  z-index: 2;
+}
+
+/* ===== CTA BUTTON ===== */
+.cta-btn {
+  display: inline-block;
+  padding: 22px 64px;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 28px;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  letter-spacing: 2px;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  transition: transform 0.2s, background 0.2s;
+  animation: pulse 2s infinite;
+}
+
+.cta-btn:hover {
+  transform: scale(1.05);
+  background: #f05535;
+}
+
+/* =========================================
+   SECTION 1: HERO
+   ========================================= */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle radial gradient overlay */
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(224, 74, 47, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-brand {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 120px;
+  font-weight: 900;
+  letter-spacing: 16px;
+  color: var(--white);
+  animation: glitch 4s infinite, glitchFlicker 5s infinite;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-banner {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 32px;
+  font-weight: 900;
+  padding: 14px 60px;
+  letter-spacing: 6px;
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-headline {
+  font-size: 110px;
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-sub {
+  font-size: 30px;
+  color: var(--light);
+  margin-bottom: 50px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Accent scanning line */
+.accent-scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: accentLineScroll 3s linear infinite;
+  top: 60%;
+  opacity: 0.4;
+  z-index: 1;
+}
+
+/* =========================================
+   SECTION 2: STATS BAR
+   ========================================= */
+#stats {
+  background: #111111;
+  padding: 80px 80px;
+  position: relative;
+  z-index: 3;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.stat-item {
+  padding: 30px 20px;
+}
+
+.stat-number {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 80px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.stat-number .neon-text {
+  text-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 30px rgba(224, 74, 47, 0.4),
+    0 0 60px rgba(224, 74, 47, 0.15);
+}
+
+.stat-label {
+  font-size: 24px;
+  color: var(--gray);
+  font-weight: 700;
+}
+
+/* =========================================
+   SECTION 3: WHAT IS THIS
+   ========================================= */
+#what {
+  padding: 120px 80px;
+}
+
+.section-title {
+  font-size: 60px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.what-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.what-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 50px 40px;
+  text-align: center;
+  transition: transform 0.3s, border-color 0.3s;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+}
+
+.what-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--accent);
+}
+
+.what-card-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.what-card-title {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+
+.what-card-desc {
+  font-size: 22px;
+  color: var(--light);
+  line-height: 1.7;
+}
+
+/* =========================================
+   SECTION 4: DUAL TRACK RECRUITMENT
+   ========================================= */
+#recruit {
+  padding: 120px 80px;
+  background: linear-gradient(180deg, var(--bg) 0%, #0f0f0f 100%);
+}
+
+.recruit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.recruit-card {
+  position: relative;
+  background: var(--card-bg);
+  padding: 60px 50px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+
+.recruit-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, var(--accent), transparent 60%);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.recruit-card:hover {
+  transform: translateY(-6px);
+}
+
+.recruit-card-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.recruit-card-title {
+  font-size: 42px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.recruit-card-subtitle {
+  font-size: 24px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.recruit-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.recruit-card li {
+  font-size: 22px;
+  color: var(--light);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--card-border);
+  line-height: 1.6;
+}
+
+.recruit-card li:last-child {
+  border-bottom: none;
+}
+
+.recruit-card .highlight-line {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--accent);
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid var(--accent);
+  border-bottom: none;
+}
+
+/* =========================================
+   SECTION 5: HOW TO PLAY
+   ========================================= */
+#howto {
+  padding: 120px 80px;
+  background: #111111;
+}
+
+.steps-flow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.step-block {
+  flex: 1;
+  text-align: center;
+  padding: 40px 30px;
+  position: relative;
+}
+
+.step-number {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.step-title {
+  font-size: 40px;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+
+.step-desc {
+  font-size: 20px;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+.step-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: var(--accent);
+  padding-top: 50px;
+  flex-shrink: 0;
+  width: 60px;
+}
+
+/* =========================================
+   SECTION 6: PARENT ZONE
+   ========================================= */
+#parent {
+  padding: 120px 80px;
+  background: #0e0e0e;
+}
+
+.parent-title {
+  font-size: 52px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 60px;
+  color: var(--light);
+}
+
+.parent-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.parent-item {
+  background: #161616;
+  border: 1px solid #222;
+  padding: 40px 30px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+
+.parent-item:hover {
+  border-color: #444;
+}
+
+.parent-item-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.parent-item-title {
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 14px;
+  color: var(--white);
+}
+
+.parent-item-desc {
+  font-size: 20px;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+/* =========================================
+   SECTION 7: FINAL CTA
+   ========================================= */
+#final-cta {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+#final-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(224, 74, 47, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.final-headline {
+  font-size: 80px;
+  font-weight: 900;
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 2;
+}
+
+.final-cta-btn {
+  position: relative;
+  z-index: 2;
+}
+
+/* Animated particles bg for final CTA */
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 0.3; }
+  100% { transform: translateY(-60vh) scale(0.5); opacity: 0; }
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatUp linear infinite;
+}
+
+/* =========================================
+   ANIMATIONS ON SCROLL (simple)
+   ========================================= */
+.fade-in {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================
+   SKEW CLIP DIVIDERS
+   ========================================= */
+.clip-top {
+  clip-path: polygon(0 30px, 100% 0, 100% 100%, 0 100%);
+  margin-top: -30px;
+}
+
+.clip-bottom {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 30px), 0 100%);
+}
+</style>
+</head>
+<body>
+
+<!-- Scanning laser line -->
+<div class="laser-line"></div>
+
+<!-- ===== SECTION 1: HERO ===== -->
+<section id="hero" class="stripe-bg">
+  <div class="accent-scan-line"></div>
+
+  <div class="hero-brand">AXIIA CUP</div>
+
+  <div class="hero-banner">第一赛季 &middot; 选手招募中</div>
+
+  <h1 class="hero-headline">不写代码的AI大赛</h1>
+
+  <p class="hero-sub">用策略提示词，操控AI角色，在历史场景中对决</p>
+
+  <a href="#" class="cta-btn">立即报名</a>
+</section>
+
+<!-- ===== SECTION 2: STATS BAR ===== -->
+<section id="stats" class="clip-top clip-bottom">
+  <div class="stats-grid">
+    <div class="stat-item fade-in">
+      <div class="stat-number neon-text">1000字</div>
+      <div class="stat-label">每个策略的字数上限</div>
+    </div>
+    <div class="stat-item fade-in">
+      <div class="stat-number neon-text">20轮</div>
+      <div class="stat-label">每场对话回合数</div>
+    </div>
+    <div class="stat-item fade-in">
+      <div class="stat-number neon-text">4大模型</div>
+      <div class="stat-label">可选国产AI模型</div>
+    </div>
+    <div class="stat-item fade-in">
+      <div class="stat-number neon-text">0行代码</div>
+      <div class="stat-label">完全不需要编程</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 3: WHAT IS THIS ===== -->
+<section id="what" class="stripe-bg">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">这是什么比赛？</h2>
+    <div class="what-grid">
+      <div class="what-card fade-in">
+        <span class="what-card-icon">🎭</span>
+        <div class="what-card-title">剧本杀 &times; AI</div>
+        <p class="what-card-desc">你写剧本，AI来演。<br>历史场景，角色对抗，策略博弈。</p>
+      </div>
+      <div class="what-card fade-in">
+        <span class="what-card-icon">🐺</span>
+        <div class="what-card-title">狼人杀 &times; 智能体</div>
+        <p class="what-card-desc">隐藏信息，推理判断，<br>你的AI会说谎吗？</p>
+      </div>
+      <div class="what-card fade-in">
+        <span class="what-card-icon">🏆</span>
+        <div class="what-card-title">锦标赛 &times; 排位</div>
+        <p class="what-card-desc">瑞士轮赛制，强者对强者，<br>排名见真章。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 4: DUAL TRACK RECRUITMENT ===== -->
+<section id="recruit" class="stripe-bg">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">选手招募</h2>
+    <div class="recruit-grid">
+      <div class="recruit-card fade-in">
+        <span class="recruit-card-icon">🔬</span>
+        <div class="recruit-card-title">理科生战队</div>
+        <div class="recruit-card-subtitle">给你的技术加点人文buff</div>
+        <ul>
+          <li>你擅长逻辑推理 → 在历史朝堂上无往不利</li>
+          <li>你懂系统思维 → 策略布局就是你的主场</li>
+          <li class="highlight-line">STEM &times; 人文 = 跨界王者</li>
+        </ul>
+      </div>
+      <div class="recruit-card fade-in">
+        <span class="recruit-card-icon">📚</span>
+        <div class="recruit-card-title">文科生战队</div>
+        <div class="recruit-card-subtitle">你的知识就是最强武器</div>
+        <ul>
+          <li>零代码，纯中文写策略</li>
+          <li>历史素养 = 天然竞争力</li>
+          <li class="highlight-line">自然学会AI和智能体，比同龄人先走一步</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 5: HOW TO PLAY ===== -->
+<section id="howto" class="clip-top">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">怎么参赛？</h2>
+    <div class="steps-flow">
+      <div class="step-block fade-in">
+        <div class="step-number">STEP 1</div>
+        <div class="step-title">选场景</div>
+        <div class="step-desc">挑选一个历史对决场景</div>
+      </div>
+      <div class="step-arrow fade-in">→</div>
+      <div class="step-block fade-in">
+        <div class="step-number">STEP 2</div>
+        <div class="step-title">写策略</div>
+        <div class="step-desc">用中文写提示词策略</div>
+      </div>
+      <div class="step-arrow fade-in">→</div>
+      <div class="step-block fade-in">
+        <div class="step-number">STEP 3</div>
+        <div class="step-title">AI对战</div>
+        <div class="step-desc">你的AI和对手AI实时对话</div>
+      </div>
+      <div class="step-arrow fade-in">→</div>
+      <div class="step-block fade-in">
+        <div class="step-number">STEP 4</div>
+        <div class="step-title">冲排名</div>
+        <div class="step-desc">赢得比赛，登上排行榜</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 6: PARENT ZONE ===== -->
+<section id="parent">
+  <div class="section-inner">
+    <h2 class="parent-title fade-in">📋 家长专区</h2>
+    <div class="parent-grid">
+      <div class="parent-item fade-in">
+        <span class="parent-item-icon">🔒</span>
+        <div class="parent-item-title">安全</div>
+        <p class="parent-item-desc">纯文字在线活动，无需下载安装任何软件</p>
+      </div>
+      <div class="parent-item fade-in">
+        <span class="parent-item-icon">🧠</span>
+        <div class="parent-item-title">学到什么</div>
+        <p class="parent-item-desc">AI素养 + 策略思维 + 人文思辨</p>
+      </div>
+      <div class="parent-item fade-in">
+        <span class="parent-item-icon">⏰</span>
+        <div class="parent-item-title">时间</div>
+        <p class="parent-item-desc">每周2-3小时，灵活安排</p>
+      </div>
+      <div class="parent-item fade-in">
+        <span class="parent-item-icon">🎓</span>
+        <div class="parent-item-title">价值</div>
+        <p class="parent-item-desc">AI竞赛经历，升学加分项</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 7: FINAL CTA ===== -->
+<section id="final-cta" class="stripe-bg">
+  <!-- Particles will be injected by JS -->
+  <h2 class="final-headline fade-in neon-text">你准备好了吗？</h2>
+  <div class="final-cta-btn fade-in">
+    <a href="#" class="cta-btn">加入第一赛季</a>
+  </div>
+</section>
+
+<script>
+// ===== SCROLL FADE IN =====
+(function() {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    },
+    { threshold: 0.15 }
+  );
+
+  document.querySelectorAll('.fade-in').forEach((el) => {
+    observer.observe(el);
+  });
+})();
+
+// ===== GENERATE PARTICLES FOR FINAL CTA =====
+(function() {
+  const cta = document.getElementById('final-cta');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.bottom = '-10px';
+    p.style.animationDuration = (4 + Math.random() * 6) + 's';
+    p.style.animationDelay = (Math.random() * 5) + 's';
+    p.style.width = (2 + Math.random() * 4) + 'px';
+    p.style.height = p.style.width;
+    cta.appendChild(p);
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIIA CUP — 朝堂对决 · AI智能体对抗赛</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: #0c0c0c;
+  color: #e8e8e8;
+  font-family: 'Noto Sans SC', 'Satoshi', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ========== UTILITY ========== */
+.accent { color: #E04A2F; }
+.section-pad { padding: 120px 80px; max-width: 1440px; margin: 0 auto; }
+
+/* ========== SCROLL FADE-IN ========== */
+.fade-in {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========== GRADIENT DIVIDER ========== */
+.gradient-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E04A2F, transparent);
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+/* ============================================================
+   SECTION 1 — HERO
+   ============================================================ */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #0c0c0c;
+}
+
+/* Radial mood lighting */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 60% at 20% 50%, rgba(224,74,47,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 80% 50%, rgba(224,74,47,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(224,74,47,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* VS clash background glow */
+.hero-vs-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-vs-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(224,74,47,0.18) 0%, rgba(224,74,47,0.04) 40%, transparent 70%);
+  animation: vsPulse 4s ease-in-out infinite;
+}
+.hero-vs-bg::after {
+  content: 'VS';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Satoshi', sans-serif;
+  font-size: 220px;
+  font-weight: 900;
+  color: rgba(224,74,47,0.06);
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+@keyframes vsPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.7; }
+}
+
+/* Diagonal slash lines */
+.hero-slash {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.hero-slash::before,
+.hero-slash::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  width: 3px;
+  height: 140%;
+  background: linear-gradient(to bottom, transparent, rgba(224,74,47,0.12), transparent);
+  transform: rotate(15deg);
+}
+.hero-slash::before { left: 38%; }
+.hero-slash::after { left: 62%; transform: rotate(-15deg); }
+
+/* Side characters */
+.hero-sides {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 6%;
+  pointer-events: none;
+  z-index: 1;
+}
+.hero-char {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.hero-char-icon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 900;
+  border: 3px solid rgba(224,74,47,0.4);
+  background: rgba(224,74,47,0.08);
+  color: #E04A2F;
+  text-shadow: 0 0 30px rgba(224,74,47,0.5);
+  box-shadow: 0 0 40px rgba(224,74,47,0.15);
+}
+.hero-char-name {
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(224,74,47,0.3);
+}
+.hero-char-role {
+  font-size: 18px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.2em;
+}
+.hero-char.left .hero-char-icon { border-color: rgba(100,160,255,0.4); background: rgba(100,160,255,0.08); color: #6aa0ff; text-shadow: 0 0 30px rgba(100,160,255,0.4); box-shadow: 0 0 40px rgba(100,160,255,0.1); }
+.hero-char.left .hero-char-name { text-shadow: 0 0 20px rgba(100,160,255,0.3); }
+
+/* Center content */
+.hero-center {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.hero-brand {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: #E04A2F;
+  text-shadow: 0 0 40px rgba(224,74,47,0.4);
+}
+.hero-title {
+  font-size: 92px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 60px rgba(224,74,47,0.2);
+}
+.hero-tagline {
+  font-size: 26px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.2em;
+}
+
+/* CTA button */
+.cta-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 22px 72px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  background: #E04A2F;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  box-shadow: 0 0 50px rgba(224,74,47,0.35), 0 0 100px rgba(224,74,47,0.15);
+  transition: transform 0.2s, box-shadow 0.3s;
+  animation: ctaGlow 2.5s ease-in-out infinite;
+}
+.cta-btn:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 70px rgba(224,74,47,0.5), 0 0 140px rgba(224,74,47,0.2);
+}
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 0 50px rgba(224,74,47,0.35), 0 0 100px rgba(224,74,47,0.15); }
+  50% { box-shadow: 0 0 60px rgba(224,74,47,0.5), 0 0 120px rgba(224,74,47,0.25); }
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.3);
+  font-size: 14px;
+  letter-spacing: 0.15em;
+  animation: scrollBob 2s ease-in-out infinite;
+}
+.scroll-hint::after {
+  content: '';
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(224,74,47,0.4), transparent);
+}
+@keyframes scrollBob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ============================================================
+   SECTION 2 — WHAT IS THIS
+   ============================================================ */
+.what-section { text-align: center; }
+.what-section .section-statement {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1.3;
+  margin-bottom: 80px;
+  color: #fff;
+}
+.what-section .section-statement .accent-line {
+  display: block;
+  color: #E04A2F;
+}
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+}
+.compare-card {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 56px 40px;
+  text-align: center;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.compare-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(224,74,47,0.3);
+  box-shadow: 0 12px 48px rgba(224,74,47,0.1);
+}
+.compare-card-icon {
+  font-size: 72px;
+  margin-bottom: 24px;
+  display: block;
+}
+.compare-card-title {
+  font-size: 34px;
+  font-weight: 900;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.compare-card-desc {
+  font-size: 22px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   SECTION 3 — TWO TRACKS (SPLIT SCREEN)
+   ============================================================ */
+.tracks-section {
+  padding: 0;
+  max-width: 100%;
+}
+.tracks-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 700px;
+}
+.track {
+  padding: 100px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.track-left { background: linear-gradient(135deg, rgba(60,100,200,0.08) 0%, #0c0c0c 70%); }
+.track-left::before { background: linear-gradient(to right, rgba(60,100,200,0.04), transparent); }
+.track-right { background: linear-gradient(225deg, rgba(224,74,47,0.08) 0%, #0c0c0c 70%); }
+.track-right::before { background: linear-gradient(to left, rgba(224,74,47,0.04), transparent); }
+
+.track-label {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.track-left .track-label { color: #6aa0ff; }
+.track-right .track-label { color: #E04A2F; }
+
+.track-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 40px;
+  line-height: 1.2;
+}
+
+.track-points {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.track-points li {
+  font-size: 24px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.6;
+  padding-left: 28px;
+  position: relative;
+}
+.track-points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.track-left .track-points li::before { background: #6aa0ff; box-shadow: 0 0 12px rgba(106,160,255,0.4); }
+.track-right .track-points li::before { background: #E04A2F; box-shadow: 0 0 12px rgba(224,74,47,0.4); }
+
+/* Vertical divider between tracks */
+.tracks-split { position: relative; }
+.tracks-split::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(224,74,47,0.3), transparent);
+  transform: translateX(-50%);
+}
+
+/* ============================================================
+   SECTION 4 — HOW IT WORKS
+   ============================================================ */
+.how-section { text-align: center; }
+.how-section .section-title {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 80px;
+}
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+.step-item {
+  padding: 48px 32px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.step-item:hover {
+  border-color: rgba(224,74,47,0.3);
+  box-shadow: 0 8px 40px rgba(224,74,47,0.08);
+}
+.step-num {
+  font-family: 'Satoshi', sans-serif;
+  font-size: 64px;
+  font-weight: 900;
+  color: #E04A2F;
+  line-height: 1;
+  margin-bottom: 20px;
+  text-shadow: 0 0 30px rgba(224,74,47,0.3);
+}
+.step-text {
+  font-size: 24px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+}
+.step-detail {
+  font-size: 18px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   SECTION 5 — FOR PARENTS
+   ============================================================ */
+.parents-section { max-width: 960px; margin: 0 auto; padding: 120px 80px; }
+.parents-section .section-title {
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 64px;
+  text-align: center;
+}
+.qa-list { display: flex; flex-direction: column; gap: 36px; }
+.qa-item {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 44px 52px;
+  transition: border-color 0.3s;
+}
+.qa-item:hover { border-color: rgba(224,74,47,0.25); }
+.qa-q {
+  font-size: 28px;
+  font-weight: 700;
+  color: #E04A2F;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.qa-q::before {
+  content: 'Q';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(224,74,47,0.12);
+  font-family: 'Satoshi', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.qa-a {
+  font-size: 24px;
+  color: rgba(255,255,255,0.7);
+  padding-left: 52px;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   SECTION 6 — FOOTER CTA
+   ============================================================ */
+.footer-cta {
+  text-align: center;
+  padding: 120px 80px 100px;
+}
+.footer-cta-title {
+  font-size: 56px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.footer-cta-sub {
+  font-size: 24px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 48px;
+  letter-spacing: 0.1em;
+}
+.footer-bottom {
+  margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid #1a1a1a;
+  font-size: 16px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SECTION 1 — HERO
+     ============================================================ -->
+<section class="hero">
+  <div class="hero-slash"></div>
+  <div class="hero-vs-bg"></div>
+
+  <div class="hero-sides">
+    <div class="hero-char left">
+      <div class="hero-char-icon">商</div>
+      <div class="hero-char-name">商 鞅</div>
+      <div class="hero-char-role">变法派</div>
+    </div>
+    <div class="hero-char right">
+      <div class="hero-char-icon">甘</div>
+      <div class="hero-char-name">甘 龙</div>
+      <div class="hero-char-role">守旧派</div>
+    </div>
+  </div>
+
+  <div class="hero-center">
+    <div class="hero-brand">AXIIA CUP</div>
+    <h1 class="hero-title">用策略对决<br>不用写代码</h1>
+    <p class="hero-tagline">AI智能体对抗赛 · 第一赛季</p>
+    <a href="#signup" class="cta-btn">立即报名</a>
+  </div>
+
+  <div class="scroll-hint">向下滑动</div>
+</section>
+
+<!-- ============================================================
+     SECTION 2 — WHAT IS THIS
+     ============================================================ -->
+<div class="gradient-divider"></div>
+
+<section class="what-section section-pad">
+  <h2 class="section-statement fade-in">
+    这不是编程比赛<br>
+    <span class="accent-line">这是策略博弈</span>
+  </h2>
+
+  <div class="compare-grid">
+    <div class="compare-card fade-in">
+      <span class="compare-card-icon">🎭</span>
+      <h3 class="compare-card-title">像剧本杀</h3>
+      <p class="compare-card-desc">你扮演历史角色<br>用策略说服对手</p>
+    </div>
+    <div class="compare-card fade-in">
+      <span class="compare-card-icon">🐺</span>
+      <h3 class="compare-card-title">像狼人杀</h3>
+      <p class="compare-card-desc">隐藏信息、推理判断<br>心理博弈</p>
+    </div>
+    <div class="compare-card fade-in">
+      <span class="compare-card-icon">🎙️</span>
+      <h3 class="compare-card-title">像辩论赛</h3>
+      <p class="compare-card-desc">AI替你上场<br>但策略是你写的</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 3 — TWO TRACKS
+     ============================================================ -->
+<div class="gradient-divider"></div>
+
+<section class="tracks-section">
+  <div class="tracks-split">
+    <div class="track track-left fade-in">
+      <div class="track-label">STEM TRACK</div>
+      <h2 class="track-title">理科生通道</h2>
+      <ul class="track-points">
+        <li>你已经懂技术了，来给AI加点人文素养</li>
+        <li>历史、法律、哲学场景，让你的STEM背景跨界发光</li>
+        <li>不需要额外学习，你的逻辑思维就是武器</li>
+      </ul>
+    </div>
+    <div class="track track-right fade-in">
+      <div class="track-label">人文 TRACK</div>
+      <h2 class="track-title">文科生通道</h2>
+      <ul class="track-points">
+        <li>零代码，纯中文写策略</li>
+        <li>你的历史知识、文学素养就是最强竞争力</li>
+        <li>自然地理解AI和智能体，不碰一行代码</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 4 — HOW IT WORKS
+     ============================================================ -->
+<div class="gradient-divider"></div>
+
+<section class="how-section section-pad">
+  <h2 class="section-title fade-in">如何参赛</h2>
+
+  <div class="steps-grid">
+    <div class="step-item fade-in">
+      <div class="step-num">①</div>
+      <div class="step-text">选择场景</div>
+      <div class="step-detail">历史朝堂、法庭辩论……</div>
+    </div>
+    <div class="step-item fade-in">
+      <div class="step-num">②</div>
+      <div class="step-text">用中文写策略提示词</div>
+      <div class="step-detail">每个角色1000字以内</div>
+    </div>
+    <div class="step-item fade-in">
+      <div class="step-num">③</div>
+      <div class="step-text">AI自动对战</div>
+      <div class="step-detail">裁判评分，全程自动</div>
+    </div>
+    <div class="step-item fade-in">
+      <div class="step-num">④</div>
+      <div class="step-text">瑞士轮排名</div>
+      <div class="step-detail">争夺冠军</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 5 — FOR PARENTS
+     ============================================================ -->
+<div class="gradient-divider"></div>
+
+<section class="parents-section">
+  <h2 class="section-title fade-in">家长关心的问题</h2>
+
+  <div class="qa-list">
+    <div class="qa-item fade-in">
+      <div class="qa-q">安全吗？</div>
+      <div class="qa-a">纯文字策略，无需下载软件，全程在线。所有内容经过审核，环境安全可控。</div>
+    </div>
+    <div class="qa-item fade-in">
+      <div class="qa-q">学什么？</div>
+      <div class="qa-a">AI素养 + 人文思辨 + 策略思维。在实战中理解AI如何工作，培养跨学科能力。</div>
+    </div>
+    <div class="qa-item fade-in">
+      <div class="qa-q">耽误学习吗？</div>
+      <div class="qa-a">每周投入2-3小时，跨学科能力提升。比赛本身就是一种深度学习方式。</div>
+    </div>
+    <div class="qa-item fade-in">
+      <div class="qa-q">含金量？</div>
+      <div class="qa-a">前沿AI竞赛经验，丰富申请履历。展示你在AI时代的策略思维与人文素养。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 6 — FOOTER CTA
+     ============================================================ -->
+<div class="gradient-divider"></div>
+
+<section class="footer-cta" id="signup">
+  <h2 class="footer-cta-title fade-in">第一赛季报名中</h2>
+  <p class="footer-cta-sub fade-in">名额有限 · 先到先得</p>
+  <a href="#" class="cta-btn fade-in">立即报名</a>
+  <div class="footer-bottom">AXIIA CUP &copy; 2026 &mdash; AI智能体对抗赛</div>
+</section>
+
+<!-- ============================================================
+     MINIMAL JS — scroll fade-in observer
+     ============================================================ -->
+<script>
+(function(){
+  const els = document.querySelectorAll('.fade-in');
+  if (!('IntersectionObserver' in window)) {
+    els.forEach(function(el){ el.classList.add('visible'); });
+    return;
+  }
+  const observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(function(el){ observer.observe(el); });
+})();
+</script>
+
+</body>
+</html>

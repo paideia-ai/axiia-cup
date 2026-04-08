@@ -15,3 +15,4 @@ coverage/
 !apps/api/.env.example
 deploy/production.env
 deploy/data/
+.gstack/
