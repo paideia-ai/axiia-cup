@@ -9,20 +9,39 @@ The engine orchestrates multi-agent conversations where agents have private stat
 
 ## 2. Agent Identities
 
-Each agent has a **soul file** — a static identity document. Hidden objectives are appended at runtime to produce the agent's **effective identity**.
+### Agents
 
 ```
-A1: 甘龙 (GL)          soul: gl.md
-A2: 商鞅 (SY)          soul: sy.md
-A3: 秦孝公 (QXG)       soul: qxg.md
-A4: 旁白/DM (Narrator)  soul: dm.md
+A1: 甘龙 (GL)          player-written strategy prompt
+A2: 商鞅 (SY)          player-written strategy prompt
+A3: 秦孝公 (QXG)       platform-authored soul: qxg.md
+A4: 旁白/DM (Narrator)  scripted cue templates (NOT an LLM agent)
 ```
 
+### Three-Layer Separation (CRITICAL)
+
 ```
-A1' = A1.soul + random_hidden_objective(GL)
-A2' = A2.soul + random_hidden_objective(SY)
-A3  = A3.soul  (no hidden objective — judge is neutral)
-A4  = A4.soul  (narrator is system-controlled, may not need LLM calls)
+Layer 1: Character identity     → player prompt (GL/SY) or platform soul (QXG)
+Layer 2: Hidden motivation      → in-character language, no game mechanics
+Layer 3: Game rules             → EXTERNAL, only scorer sees this, never in any conversation
+```
+
+- **No agent ever sees Layer 3.** Game rules (scoring, point values, true/false assignments) are external. Characters don't know it's a game.
+- QXG makes judgment as a character ("this man has earned my trust"), not as a scorer ("SY scores +0.5").
+- Hidden objectives use character language: "the military appointment is what you truly need" not "+0.5 points if approved."
+
+### Effective Identity Composition
+
+```
+GL/SY (player-controlled):
+  A1_eff = player_strategy_prompt + hidden_objective
+  A2_eff = player_strategy_prompt + hidden_objective
+
+QXG (platform-controlled):
+  A3 = qxg.soul.md  (no hidden objective — judge is neutral)
+
+DM (not an agent):
+  A4 = set of template strings for phase transitions (no LLM calls)
 ```
 
 ## 3. Context Phases
@@ -131,31 +150,37 @@ LLM(system, messages) → output
 
 Placeholders for files/templates:
 ```
-{gl.md}           — GL soul file (static identity, personality, goals)
-{sy.md}           — SY soul file
-{qxg.md}          — QXG soul file
-{dm.md}           — Narrator soul file
-{hidden_obj_gl}   — randomly assigned hidden objective for GL
-{hidden_obj_sy}   — randomly assigned hidden objective for SY
-{opening.md}      — narrator's opening line / scene setting
-{exam_instruct.md} — instructions for QXG on how to examine
-{decision_instruct.md} — instructions for QXG to make final call
-{scorer_instruct.md}   — scoring rubric and output format
+{player_prompt_gl}    — player-written strategy prompt for GL
+{player_prompt_sy}    — player-written strategy prompt for SY
+{qxg.md}              — platform-authored QXG soul (character identity only)
+{hidden_obj_gl}       — randomly assigned hidden objective for GL (in-character language)
+{hidden_obj_sy}       — randomly assigned hidden objective for SY (in-character language)
+{scorer_instruct.md}  — scoring rubric + game rules (Layer 3, ONLY seen by scorer)
+```
+
+DM cue templates (scripted, no LLM calls):
+```
+{dm_opening}          — tells SY to start debate ("卫鞅，寡人今日召你...")
+{dm_exam_sy}          — tells QXG to examine SY (includes cross-probe instruction)
+{dm_exam_gl}          — tells QXG to examine GL (includes cross-probe instruction)
+{dm_decision}         — tells QXG to make final judgment
 ```
 
 ---
 
 ### Phase C1: Setup (no LLM calls)
 
-```python
-# Compose effective identities
-A1_eff = render("{gl.md}", hidden_obj=random_select(gl_hidden_objectives))
-A2_eff = render("{sy.md}", hidden_obj=random_select(sy_hidden_objectives))
+```ts
+// Compose effective identities (Layer 1 + Layer 2)
+const A1_eff = player_prompt_gl + "\n\n" + random_select(gl_hidden_objectives)
+const A2_eff = player_prompt_sy + "\n\n" + random_select(sy_hidden_objectives)
 
-# Initialize empty transcripts
-C2_transcript = []
-C3_transcript = []
-C4_transcript = []
+// Layer 3 (game rules) is NOT included — only scorer sees it at C6
+
+// Initialize empty transcripts
+const C2_transcript: Turn[] = []
+const C3_transcript: QARound[] = []
+const C4_transcript: QARound[] = []
 ```
 
 ---
@@ -219,12 +244,7 @@ Each agent always sees:
 - **Messages**: alternating user/assistant where user = opponent's lines, assistant = own lines
 - The opening line is the first user message for SY
 
-**DM/Narrator interjections** (optional): If the narrator needs to interject (e.g., "秦孝公面色凝重" or scene changes), these are injected as additional user messages before the current speaker's turn:
-
-```
-session_SY.messages += [{ user: "[旁白] 甘龙此言一出，殿中众臣窃窃私语。" }]
-session_SY.messages += [{ user: GL_turn_5 }]
-```
+**DM role in C2**: The DM only provides the opening cue (`{dm_opening}`) as the first user message to SY. No mid-debate interjections. The debate is pure GL vs SY.
 
 **C2 output:**
 ```
@@ -236,65 +256,71 @@ C2_rendered = format_transcript(C2_transcript)
 
 ### Phase C3: QXG Examines SY (hybrid, M rounds)
 
-QXG receives the debate as a **document** in its system prompt, then has a **conversation** with SY.
+QXG's system prompt is its soul only. The debate transcript is injected as a **user message**, not in the system prompt. DM provides cross-probe instructions.
 
+```ts
+const qxg_system = qxg_soul_md  // character identity only, short
+
+const session_QXG_SY = {
+  system: qxg_system,
+  messages: []  // fresh session for this examination
+}
 ```
-qxg_system_for_SY = render("{qxg.md}", {
-  debate_transcript: C2_rendered,
-  exam_instructions: "{exam_instruct.md}",
-  target: "商鞅"
+
+**Round 1 -- QXG asks:**
+
+The DM cue tells QXG to examine SY and cross-probe about GL's goals:
+```ts
+const dm_cue = render("{dm_exam_sy}", {
+  debate: C2_rendered,
+  target: "商鞅",
+  cross_probe: "试探商鞅对甘龙真实意图的判断"
 })
 
-session_QXG_SY = { system: qxg_system_for_SY, messages: [] }
-```
+// DM cue includes debate transcript + cross-probe instruction
+session_QXG_SY.messages.push({ role: "user", content: dm_cue })
 
-**Round 1 — QXG asks:**
-```
 LLM_CALL_N+1 = LLM(
-  system:   qxg_system_for_SY,
-  messages: [{ user: "你现在要质询商鞅。请提出你的第一个问题。" }]
+  system:   qxg_system,
+  messages: session_QXG_SY.messages
 ) → QXG_q1
 
-session_QXG_SY.messages += [
-  { user: "你现在要质询商鞅。请提出你的第一个问题。" },
-  { assistant: QXG_q1 }
-]
+session_QXG_SY.messages.push({ role: "assistant", content: QXG_q1 })
 ```
 
-**Round 1 — SY answers:**
+**Round 1 -- SY answers:**
 
-SY's session continues from the debate, but QXG's question is injected:
-```
+SY's session continues from the debate. QXG's question is injected:
+```ts
+session_SY.messages.push({ role: "user", content: "[秦孝公质询] " + QXG_q1 })
+
 LLM_CALL_N+2 = LLM(
   system:   A2_eff,
-  messages: [
-    ...session_SY.messages,         // full debate history
-    { user: "[秦孝公质询] " + QXG_q1 }
-  ]
+  messages: session_SY.messages
 ) → SY_a1
 
-session_SY.messages += [
-  { user: "[秦孝公质询] " + QXG_q1 },
-  { assistant: SY_a1 }
-]
-C3_transcript += [{ q: QXG_q1, a: SY_a1 }]
+session_SY.messages.push({ role: "assistant", content: SY_a1 })
+C3_transcript.push({ q: QXG_q1, a: SY_a1 })
 ```
 
-**Round 2 — QXG follows up:**
-```
-session_QXG_SY.messages += [{ user: "商鞅答曰：" + SY_a1 }]
+**Round 2 -- QXG follows up:**
+```ts
+session_QXG_SY.messages.push({ role: "user", content: "商鞅答曰：" + SY_a1 })
 
 LLM_CALL_N+3 = LLM(
-  system:   qxg_system_for_SY,
-  messages: session_QXG_SY.messages + [{ user: "商鞅答曰：" + SY_a1 }]
+  system:   qxg_system,
+  messages: session_QXG_SY.messages
 ) → QXG_q2
 
-session_QXG_SY.messages += [{ assistant: QXG_q2 }]
+session_QXG_SY.messages.push({ role: "assistant", content: QXG_q2 })
 ```
 
 **...pattern continues for M rounds.**
 
-**Key insight**: SY's message array grows continuously from the debate into the QA — SY experiences the whole thing as one continuous conversation. QXG's session is separate and starts fresh for this examination.
+**Key design points:**
+- SY's message array grows continuously from debate into QA -- SY experiences one unbroken conversation.
+- QXG has a **separate, fresh session** for this examination. QXG has 3 sessions total (exam SY, exam GL, decision).
+- DM cross-probe instruction ("试探商鞅对甘龙真实意图的判断") guarantees the core game mechanic fires.
 
 **C3 output:**
 ```
@@ -334,43 +360,54 @@ C4_rendered = format_qa(C4_transcript)
 
 ### Phase C5: QXG Final Decision (function style, 1 call)
 
-One-shot. QXG receives ALL prior context as documents and makes a decision.
+One-shot. QXG's system prompt is its soul only. ALL evidence goes in the user message.
 
-```
-decision_system = render("{qxg.md}", {
-  debate_transcript: C2_rendered,
+```ts
+const decision_message = render("{dm_decision}", {
+  debate: C2_rendered,
   examination_SY: C3_rendered,
-  examination_GL: C4_rendered,
-  dm_instruction: "{decision_instruct.md}"
+  examination_GL: C4_rendered
 })
 
 LLM_CALL_FINAL = LLM(
-  system:   decision_system,
-  messages: [{ user: "听完辩论与质询，你现在必须做出最终裁决。" }]
+  system:   qxg_soul_md,   // character identity only
+  messages: [{ role: "user", content: decision_message }]
 ) → QXG_decision
 ```
 
 **C5 output:**
-```
-C5_raw = QXG_decision   // free-form in-character speech
+```ts
+const C5_raw = QXG_decision   // free-form in-character speech, NO structured scoring
 ```
 
-**Cross-discovery**: QXG discovers SY's secrets from GL's examination (C4), and GL's secrets from SY's examination (C3). This happens naturally — during C3, QXG asks SY probing questions that might reveal GL's weaknesses (since SY has incentive to expose GL), and vice versa in C4.
+**Cross-discovery**: QXG synthesizes insights from both examinations. During C3, QXG cross-probed SY about GL's goals (DM-instructed). During C4, QXG cross-probed GL about SY's goals. At C5, QXG has all the evidence to detect hidden motivations.
+
+**QXG is authoritative.** QXG's judgment is the final word. The scorer (C6) only extracts structured scores from QXG's speech -- it cannot override or second-guess QXG's decision.
 
 ---
 
 ### Phase C6: Score Extraction (function style, 1 call)
 
-Separate scorer LLM parses the decision into structured output. This is NOT an in-world character — it's a utility function.
+Separate scorer LLM parses QXG's speech into structured output. This is NOT an in-world character -- it's a utility function. **The scorer is the ONLY entity that sees game rules (Layer 3).**
 
-```
+```ts
 LLM_CALL_SCORER = LLM(
-  system:   "{scorer_instruct.md}" + ground_truth_assignments,
-  messages: [{ user: C5_raw }]
+  system:   scorer_instruct_md + ground_truth_assignments,  // Layer 3: game rules
+  messages: [{ role: "user", content: C5_raw }]             // ONLY QXG's speech
 ) → { scoreA, scoreB, winner, reasoning }
 ```
 
-Or, if the decision output format is structured enough, this can be **deterministic parsing** with no LLM call.
+**Scorer receives ONLY:**
+- QXG's free-form judgment text (C5_raw)
+- Game rules and ground truth assignments (Layer 3)
+
+**Scorer does NOT receive:**
+- Debate transcript
+- Examination transcripts
+- Hidden objectives
+- Player prompts
+
+This prevents the scorer from re-judging the match. QXG's word is final. The scorer only maps QXG's in-character decisions to point values.
 
 ---
 
@@ -408,14 +445,16 @@ With N=20 debate turns and M=4 QA rounds:
 
 What each agent sees at its heaviest call:
 
-| Agent | Heaviest Call | System Prompt Contains | Messages Contain |
-|-------|--------------|----------------------|-----------------|
-| SY    | Last QA answer (C3) | soul + hidden obj (~800 tok) | 20 debate turns + 4 QA rounds (~8k tok) |
-| GL    | Last QA answer (C4) | soul + hidden obj (~800 tok) | 20 debate turns + 4 QA rounds (~8k tok) |
-| QXG   | Final decision (C5) | soul + debate transcript + 2x QA transcripts (~12k tok) | 1 instruction message |
-| Scorer | C6 | rubric + ground truth (~1k tok) | QXG's decision (~2k tok) |
+| Agent | Heaviest Call | System Prompt | Messages |
+|-------|--------------|---------------|----------|
+| SY    | Last QA answer (C3) | player prompt + hidden obj (~800 tok) | 20 debate turns + 4 QA rounds (~8k tok) |
+| GL    | Last QA answer (C4) | player prompt + hidden obj (~800 tok) | 20 debate turns + 4 QA rounds (~8k tok) |
+| QXG   | Final decision (C5) | soul only (~500 tok) | debate + 2x QA transcripts + DM instruction (~12k tok) |
+| Scorer | C6 | rubric + game rules (~1k tok) | QXG's speech only (~2k tok) |
 
 **Total context per game: ~40-60k tokens across all calls.**
+
+**Model requirement:** This flow requires models with **32k+ context window**. Models with <8k context (e.g., MiniMax-abab5.5) cannot support the examination phases where agents carry full debate history.
 
 ---
 
@@ -480,31 +519,34 @@ What each agent sees at its heaviest call:
 
 ## 9. Implementation Primitives
 
-### 9.1 Soul File (static identity)
+### 9.1 Soul File (platform-controlled agents only)
+
+Only QXG has a platform-authored soul file. GL/SY souls are player-written strategy prompts.
 
 ```markdown
-# {agent_name}.md
+# qxg.md — 秦孝公
 
-你是{角色名}。
+你是秦孝公嬴渠梁，秦国国君。
 
 ## 身份
-{角色背景、性格、动机}
-
-## 目标
-{公开目标}
+{角色背景、性格、处境}
 
 ## 行为约束
-{时代限制、禁止行为}
+{时代限制、禁止行为、不得使用现代词汇}
 ```
+
+Note: qxg.md contains NO game rules, NO scoring mechanics. QXG judges as a character.
 
 ### 9.2 Effective Identity (soul + runtime injection)
 
 ```typescript
 type EffectiveIdentity = {
-  system: string       // rendered soul + hidden objectives
+  system: string       // Layer 1 (soul/prompt) + Layer 2 (hidden objective)
   messages: Message[]  // grows during conversation phases
 }
 ```
+
+**QXG has 3 separate sessions** (exam SY, exam GL, decision). The soul is shared across sessions, but each session has its own message array. QXG does NOT carry conversation state between phases.
 
 ### 9.3 Context Renderer
 
@@ -557,26 +599,36 @@ type FunctionCall = {
 
 ---
 
-## 11. Open Questions
+## 11. Resolved Design Decisions
 
-1. **Should C3 and C4 run in parallel or sequential?**
-   - Parallel: faster, but QXG can't use insights from one examination in the other
-   - Sequential: QXG can build on what it learned from SY when questioning GL
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| C3/C4 parallel or sequential? | Independent, sequential implementation | Logically independent. Cross-discovery at C5 synthesis. Sequential for simplicity. |
+| QXG questions: templated or generated? | DM controls. Can instruct QXG what to ask or tell QXG to decide freely. | Single point of control. DM cue can be "ask about X" or "question freely." |
+| DM: LLM calls? | No. Scripted cue templates only. | DM provides phase transitions (opening, exam start, decision cue). Not mid-debate interjections. |
+| How much debate does SY/GL see during QA? | Full debate in message history. | SY/GL experience one continuous conversation from debate into QA. Natural but requires 32k+ models. |
+| QXG sessions carry over to C5? | No. C5 is a fresh one-shot with rendered transcripts. | QXG has 3 separate sessions. Decision synthesizes all evidence from scratch. |
+| Scorer authority? | QXG authoritative. Scorer parses only. | Scorer receives ONLY QXG's speech + game rules. Cannot override judgment. |
+| Game rules in agent context? | Never. Layer 3 is external. | Characters don't know it's a game. Hidden objectives use character language, not point values. |
 
-2. **Does QXG generate its own questions or are they templated?**
-   - Generated: more natural, QXG adapts based on debate content
-   - Templated: more reproducible, easier to control examination scope
-   - Hybrid: first question templated, follow-ups generated
+## 12. Verification Invariants
 
-3. **Does the DM/Narrator need LLM calls?**
-   - If DM just sets scenes: no LLM, use templates
-   - If DM reacts to debate content: needs LLM calls, adds complexity
+These are the testable assertions that the implementation must satisfy:
 
-4. **How much of the debate does SY/GL see during QA?**
-   - Full debate in message history (conversation continuation): natural but large
-   - Summarized debate: saves tokens but may lose detail
-   - Only their own turns + QA: minimal but loses opponent context
+1. **Agent isolation**: GL never sees SY's hidden objectives. SY never sees GL's hidden objectives. Neither sees game rules.
+2. **Message completeness**: No duplicate messages, no missing turns. Message arrays grow monotonically.
+3. **C5 completeness**: QXG's decision prompt contains debate transcript + both examination transcripts.
+4. **Scorer isolation**: Scorer receives ONLY QXG's speech + game rules. No debate, no examination, no hidden objectives.
+5. **Cross-probe firing**: QXG asks about the opponent's goals during each examination (DM-instructed).
+6. **DM cue delivery**: Each phase-transition cue reaches the correct agent at the correct phase.
+7. **Layer 3 separation**: Game rules (scoring rubric, point values) appear in exactly one place: the scorer's system prompt.
+8. **QXG session independence**: QXG's examination of SY does not share message state with examination of GL or the decision call.
 
-5. **Should QXG's examination sessions carry over to C5?**
-   - Option A: C5 gets rendered transcripts of C3+C4 (function style, current proposal)
-   - Option B: C5 continues QXG's conversation session from C3/C4 (carries forward messages)
+## 13. Implementation Concerns (deferred)
+
+These were flagged during review but are implementation-level, not spec-level:
+
+- **Match timeout**: 10-minute hard-kill + 38 calls may cause false errors. Revisit timeout policy.
+- **Resume strategy**: If failure mid-examination, regenerated QXG question will differ. Need to persist intermediate Q state.
+- **DB schema**: Phase/side enums need updating for new roles (scorer side, examination phases).
+- **Soul validation**: Missing/malformed soul files or player prompts should fail loudly at C1, not silently at C2.
