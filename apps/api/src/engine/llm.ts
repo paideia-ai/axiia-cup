@@ -3,12 +3,16 @@ import OpenAI from 'openai'
 
 import type { LlmCallPhase, LlmCallSide } from '../db/schema'
 import { llmCalls } from '../db/schema'
+import { initializeLangfuseTracing, observeOpenAIClient } from '../lib/langfuse'
 
-const SILICONFLOW_BASE_URL = 'https://api.siliconflow.cn/v1'
+const SILICONFLOW_BASE_URL =
+  process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
 const LLM_PROVIDER = 'siliconflow'
 
 let _client: OpenAI | null = null
 let _dbModulePromise: Promise<typeof import('../db/client')> | null = null
+
+initializeLangfuseTracing()
 
 function getSiliconFlowApiKey() {
   const apiKey = process.env.SILICONFLOW_API_KEY
@@ -45,6 +49,37 @@ function getClient() {
   }
 
   return _client
+}
+
+function getObservedClient(trace: ChatCompletionTrace | undefined, model: ModelId) {
+  const sessionId =
+    trace?.matchId != null
+      ? `match:${trace.matchId}`
+      : trace?.playgroundRunId != null
+        ? `playground:${trace.playgroundRunId}`
+        : undefined
+
+  return observeOpenAIClient(getClient(), {
+    generationMetadata: {
+      attempt: trace?.attempt,
+      matchId: trace?.matchId,
+      modelId: model,
+      phase: trace?.phase,
+      playgroundRunId: trace?.playgroundRunId,
+      provider: LLM_PROVIDER,
+      side: trace?.side,
+      turnIndex: trace?.turnIndex ?? null,
+    },
+    generationName: trace ? `axiia:${trace.phase}:${trace.side}` : 'axiia:chat',
+    sessionId,
+    tags: [
+      `provider:${LLM_PROVIDER}`,
+      `model:${model}`,
+      trace?.phase ? `phase:${trace.phase}` : null,
+      trace?.side ? `side:${trace.side}` : null,
+    ].filter((value): value is string => value !== null),
+    traceName: sessionId ?? 'axiia:llm',
+  })
 }
 
 function getDbModule() {
@@ -111,7 +146,7 @@ export async function chatCompletion(params: {
   jsonMode?: boolean
   trace?: ChatCompletionTrace
 }): Promise<string> {
-  const client = getClient()
+  const client = getObservedClient(params.trace, params.model)
   const requestPayload = {
     model: modelOptions.find((m) => m.id === params.model)!.apiModel,
     messages: [
