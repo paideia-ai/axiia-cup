@@ -69,7 +69,11 @@ export function parseJudgeDecision(
     return speech ? { kind: 'speech', raw, speech } : { kind: 'unparsed', raw }
   }
 
-  if (parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)) {
+  if (
+    parsedJson &&
+    typeof parsedJson === 'object' &&
+    !Array.isArray(parsedJson)
+  ) {
     const parsedDecision = structuredJudgeDecisionSchema.safeParse(parsedJson)
 
     if (parsedDecision.success) {

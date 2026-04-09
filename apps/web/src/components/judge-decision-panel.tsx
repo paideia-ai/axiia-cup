@@ -58,7 +58,8 @@ function resolveOutcomeBadgeStyle(outcome: string) {
     return {
       backgroundColor: 'color-mix(in srgb, var(--success) 14%, transparent)',
       borderColor: 'color-mix(in srgb, var(--success) 30%, transparent)',
-      boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--success) 12%, transparent)',
+      boxShadow:
+        'inset 0 1px 0 color-mix(in srgb, var(--success) 12%, transparent)',
     }
   }
 
@@ -66,7 +67,8 @@ function resolveOutcomeBadgeStyle(outcome: string) {
     return {
       backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
       borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)',
-      boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--accent) 12%, transparent)',
+      boxShadow:
+        'inset 0 1px 0 color-mix(in srgb, var(--accent) 12%, transparent)',
     }
   }
 
@@ -131,13 +133,7 @@ function buildRequestGroups(
   return groups
 }
 
-function DecisionPlaceholder({
-  label,
-  text,
-}: {
-  label: string
-  text: string
-}) {
+function DecisionPlaceholder({ label, text }: { label: string; text: string }) {
   return (
     <div className="rounded-xl border border-dashed border-(--border-soft) bg-white/2 p-2.5">
       <p className="panel-label">{label}</p>
@@ -271,7 +267,7 @@ export function JudgeDecisionPanel({
               <div className="mt-1.5 rounded-xl border border-(--border-soft) bg-white/2 px-3.5 py-2.5">
                 <p className="text-xs leading-5 whitespace-pre-wrap text-(--foreground-subtle)">
                   {parsed.kind === 'structured'
-                    ? parsed.speech ?? '暂无宣判词。'
+                    ? (parsed.speech ?? '暂无宣判词。')
                     : parsed.speech}
                 </p>
               </div>
