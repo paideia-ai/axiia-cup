@@ -5,11 +5,10 @@ export const modelOptions = [
     apiModel: 'deepseek-ai/DeepSeek-V3.2',
   },
   { id: 'kimi-k2.5', label: 'Kimi K2.5', apiModel: 'Pro/moonshotai/Kimi-K2.5' },
-  { id: 'qwen3-32b', label: 'Qwen3', apiModel: 'Qwen/Qwen3-32B' },
   {
-    id: 'minimax-m2.5',
-    label: 'MiniMax M2.5',
-    apiModel: 'Pro/MiniMaxAI/MiniMax-M2.5',
+    id: 'qwen3.5-397b-a17b',
+    label: 'Qwen3.5',
+    apiModel: 'Qwen/Qwen3.5-397B-A17B',
   },
 ] as const satisfies readonly { id: string; label: string; apiModel: string }[]
 
@@ -20,7 +19,6 @@ export const modelIds = [
   modelOptions[0].id,
   modelOptions[1].id,
   modelOptions[2].id,
-  modelOptions[3].id,
 ] as const
 
 export const MIN_SWISS_ROUNDS = 2

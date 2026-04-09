@@ -241,7 +241,7 @@ const playerSeeds = [
   {
     displayName: 'happy',
     email: 'happy@paideia.uno',
-    model: modelOptions[3]!.id,
+    model: modelOptions[0]!.id,
     password: 'player1234',
     promptA:
       '以下是你的行动策略：始终以胜负为导向，优先争取让对方在公开立场上退半步。把真请求说得轻描淡写，把假请求说得言之凿凿来迷惑对手。',

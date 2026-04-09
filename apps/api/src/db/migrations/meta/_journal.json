@@ -15,6 +15,13 @@
       "when": 1744100000000,
       "tag": "0001_template_driven",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "2",
+      "when": 1775699946000,
+      "tag": "0002_model_refresh",
+      "breakpoints": true
     }
   ]
 }

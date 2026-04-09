@@ -216,7 +216,7 @@ bun run ./apps/cli/src/index.ts scenario:update shangyang-court \
 Validation notes:
 
 - `turnCount` must be between `1` and `50`
-- `judgeModel` must be one of `deepseek-v3.2`, `kimi-k2.5`, `qwen3-32b`, `minimax-m2.5`
+- `judgeModel` must be one of `deepseek-v3.2`, `kimi-k2.5`, `qwen3.5-397b-a17b`
 - `openingLine`, `agentPromptTemplate`, `judgePrompt`, `scorerPrompt`, and both role names must be non-empty
 - `examinationQuestionTemplate` may be empty
 - hidden-info IDs and request IDs must be unique and must not overlap
