@@ -9,7 +9,7 @@ import {
   type Submission,
 } from '@axiia/shared'
 import { ArrowLeft } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Accordion, AccordionItem } from '../components/ui/accordion'
@@ -35,6 +35,7 @@ import {
   type PlaygroundSession,
 } from '../lib/playground-session'
 import { formatDateTime, parseTimestampMs } from '../lib/datetime'
+import { usePageVisibility } from '../lib/page-visibility'
 
 const runningStages = [
   {
@@ -950,6 +951,7 @@ export function PlaygroundPage() {
   }>()
   const submissionId = Number(submissionIdParam)
   const navigate = useNavigate()
+  const isPageVisible = usePageVisibility()
 
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
@@ -974,6 +976,7 @@ export function PlaygroundPage() {
       ? Math.max(0, Math.floor((Date.now() - activeSession.startedAt) / 1000))
       : 0,
   )
+  const refreshInFlightRef = useRef(false)
 
   useEffect(() => {
     if (!Number.isInteger(submissionId) || submissionId <= 0) {
@@ -1106,10 +1109,15 @@ export function PlaygroundPage() {
 
   const refreshActiveRun = useCallback(async () => {
     if (!activeSession || activeSession.status !== 'running') {
-      return
+      return false
+    }
+
+    if (refreshInFlightRef.current) {
+      return true
     }
 
     try {
+      refreshInFlightRef.current = true
       setIsRefreshing(true)
       const summaries = await getPlaygroundRuns(submissionId)
       setRunSummaries(summaries)
@@ -1117,7 +1125,7 @@ export function PlaygroundPage() {
       const candidate = findCandidateRunSummary(activeSession, summaries)
 
       if (!candidate) {
-        return
+        return true
       }
 
       const fullRun = await getPlaygroundRun(submissionId, candidate.id)
@@ -1127,14 +1135,19 @@ export function PlaygroundPage() {
       if (isRunFinished(fullRun)) {
         setSelectedRun(fullRun)
         setError(fullRun.error ?? null)
+        return false
       }
+
+      return true
     } catch (refreshError) {
       setError(
         refreshError instanceof Error
           ? refreshError.message
           : '刷新试炼场状态失败',
       )
+      return true
     } finally {
+      refreshInFlightRef.current = false
       setIsRefreshing(false)
     }
   }, [activeSession, submissionId])
@@ -1145,25 +1158,31 @@ export function PlaygroundPage() {
     }
 
     let cancelled = false
+    let timeoutId: number | null = null
 
     const sync = async () => {
       if (cancelled) {
         return
       }
 
-      await refreshActiveRun()
+      const shouldContinue = await refreshActiveRun()
+
+      if (!cancelled && shouldContinue) {
+        timeoutId = window.setTimeout(() => {
+          void sync()
+        }, isPageVisible ? 4_000 : 15_000)
+      }
     }
 
     void sync()
-    const timer = window.setInterval(() => {
-      void sync()
-    }, 4000)
 
     return () => {
       cancelled = true
-      window.clearInterval(timer)
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId)
+      }
     }
-  }, [activeSession, refreshActiveRun])
+  }, [activeSession, isPageVisible, refreshActiveRun])
 
   const handleRun = () => {
     if (!submission || !scenario) {

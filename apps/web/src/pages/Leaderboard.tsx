@@ -1,9 +1,4 @@
-import type {
-  LeaderboardEntry,
-  Scenario,
-  TournamentDetail,
-  TournamentListItem,
-} from '@axiia/shared'
+import type { LeaderboardEntry, Scenario, TournamentDetail } from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -15,12 +10,12 @@ import {
   getTournament,
   getTournaments,
 } from '../lib/api'
-import { Select, SelectItem } from '../components/ui/select'
+import { usePageVisibility } from '../lib/page-visibility'
 
 export function LeaderboardPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
+  const isPageVisible = usePageVisibility()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [tournamentDetail, setTournamentDetail] =
@@ -70,12 +65,6 @@ export function LeaderboardPage() {
   const getPlayerName = (submissionId: number) =>
     playersBySubmissionId.get(submissionId)?.playerName ??
     `submission #${submissionId}`
-  const getRoleLabel = (side: 'a' | 'b') => {
-    if (side === 'a') return scenario ? scenario.roleAName : '—'
-    return scenario ? scenario.roleBName : '—'
-  }
-  const formatMatchSide = (submissionId: number, side: 'a' | 'b') =>
-    `${getPlayerName(submissionId)} · ${getRoleLabel(side)}`
   const openPlayerDetail = (submissionId: number) => {
     if (!selectedTournamentId) return
     void navigate(
@@ -87,7 +76,6 @@ export function LeaderboardPage() {
     const loadTournamentList = async () => {
       try {
         const tournamentList = await getTournaments()
-        setTournaments(tournamentList)
         if (!selectedTournamentId && tournamentList[0]) {
           setSearchParams(
             { tournament: String(tournamentList[0].id) },
@@ -113,7 +101,9 @@ export function LeaderboardPage() {
     let timeoutId: number | null = null
     let hasLoadedScenario = false
 
-    const loadData = async (isInitial: boolean) => {
+    const loadData = async (
+      isInitial: boolean,
+    ): Promise<TournamentDetail | null> => {
       const loadId = ++latestLoadIdRef.current
       try {
         if (isInitial) {
@@ -124,26 +114,28 @@ export function LeaderboardPage() {
           getLeaderboard(selectedTournamentId),
           getTournament(selectedTournamentId),
         ])
-        if (cancelled || loadId !== latestLoadIdRef.current) return
+        if (cancelled || loadId !== latestLoadIdRef.current) return null
         if (!hasLoadedScenario) {
           const scenarioResponse = await getScenario(
             tournamentResponse.scenarioId,
           )
-          if (cancelled || loadId !== latestLoadIdRef.current) return
+          if (cancelled || loadId !== latestLoadIdRef.current) return null
           setScenario(scenarioResponse)
           hasLoadedScenario = true
         }
         setError(null)
         setLeaderboard(leaderboardResponse)
         setTournamentDetail(tournamentResponse)
+        return tournamentResponse
       } catch (loadError) {
-        if (cancelled || loadId !== latestLoadIdRef.current) return
+        if (cancelled || loadId !== latestLoadIdRef.current) return null
         if (isInitial) {
           setScenario(null)
           setError(
             loadError instanceof Error ? loadError.message : '加载排行榜失败',
           )
         }
+        return null
       } finally {
         if (!cancelled && loadId === latestLoadIdRef.current && isInitial) {
           setIsLoading(false)
@@ -152,11 +144,12 @@ export function LeaderboardPage() {
     }
 
     const poll = async (isInitial: boolean) => {
-      await loadData(isInitial)
-      if (!cancelled) {
+      const detail = await loadData(isInitial)
+
+      if (!cancelled && detail && detail.status !== 'finished') {
         timeoutId = window.setTimeout(() => {
           void poll(false)
-        }, 5_000)
+        }, isPageVisible ? 5_000 : 20_000)
       }
     }
 
@@ -165,7 +158,7 @@ export function LeaderboardPage() {
       cancelled = true
       if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
-  }, [selectedTournamentId])
+  }, [isPageVisible, selectedTournamentId])
 
   return (
     <div className="space-y-6">

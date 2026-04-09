@@ -98,6 +98,10 @@ export const submissions = sqliteTable(
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({
+    scenarioCreatedAtIdx: index('submissions_scenario_id_created_at_idx').on(
+      table.scenarioId,
+      table.createdAt,
+    ),
     userScenarioVersion: uniqueIndex('submissions_user_scenario_version').on(
       table.userId,
       table.scenarioId,
@@ -119,40 +123,52 @@ export const presetOpponents = sqliteTable('preset_opponents', {
   createdAt: text('created_at').notNull().default(currentTimestamp),
 })
 
-export const playgroundRuns = sqliteTable('playground_runs', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  submissionId: integer('submission_id')
-    .notNull()
-    .references(() => submissions.id),
-  status: text('status', {
-    enum: ['queued', 'running', 'scored', 'error'] as const,
-  })
-    .notNull()
-    .default('queued'),
-  leaseToken: text('lease_token'),
-  scenarioId: text('scenario_id')
-    .notNull()
-    .references(() => scenarios.id),
-  opponentMode: text('opponent_mode', { enum: opponentModes })
-    .notNull()
-    .default('self'),
-  presetOpponentId: integer('preset_opponent_id').references(
-    () => presetOpponents.id,
-  ),
-  actualPromptA: text('actual_prompt_a'),
-  actualPromptB: text('actual_prompt_b'),
-  transcript: text('transcript').notNull().default('[]'),
-  judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
-  judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
-  infoAssignment: text('info_assignment'),
-  judgeDecision: text('judge_decision'),
-  scoreA: real('score_a'),
-  scoreB: real('score_b'),
-  winner: text('winner', { enum: matchWinners }),
-  reasoning: text('reasoning'),
-  error: text('error'),
-  createdAt: text('created_at').notNull().default(currentTimestamp),
-})
+export const playgroundRuns = sqliteTable(
+  'playground_runs',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    submissionId: integer('submission_id')
+      .notNull()
+      .references(() => submissions.id),
+    status: text('status', {
+      enum: ['queued', 'running', 'scored', 'error'] as const,
+    })
+      .notNull()
+      .default('queued'),
+    leaseToken: text('lease_token'),
+    scenarioId: text('scenario_id')
+      .notNull()
+      .references(() => scenarios.id),
+    opponentMode: text('opponent_mode', { enum: opponentModes })
+      .notNull()
+      .default('self'),
+    presetOpponentId: integer('preset_opponent_id').references(
+      () => presetOpponents.id,
+    ),
+    actualPromptA: text('actual_prompt_a'),
+    actualPromptB: text('actual_prompt_b'),
+    transcript: text('transcript').notNull().default('[]'),
+    judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
+    judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
+    infoAssignment: text('info_assignment'),
+    judgeDecision: text('judge_decision'),
+    scoreA: real('score_a'),
+    scoreB: real('score_b'),
+    winner: text('winner', { enum: matchWinners }),
+    reasoning: text('reasoning'),
+    error: text('error'),
+    createdAt: text('created_at').notNull().default(currentTimestamp),
+  },
+  (table) => ({
+    statusCreatedAtIdx: index('playground_runs_status_created_at_idx').on(
+      table.status,
+      table.createdAt,
+    ),
+    submissionCreatedAtIdx: index(
+      'playground_runs_submission_id_created_at_idx',
+    ).on(table.submissionId, table.createdAt),
+  }),
+)
 
 export const tournaments = sqliteTable(
   'tournaments',
@@ -187,6 +203,9 @@ export const rounds = sqliteTable(
     status: text('status', { enum: roundStatuses }).notNull(),
   },
   (table) => ({
+    tournamentRoundNumberIdx: index(
+      'rounds_tournament_id_round_number_idx',
+    ).on(table.tournamentId, table.roundNumber),
     statusCheck: check(
       'rounds_status_check',
       sql`${table.status} in ('pairing', 'running', 'done')`,
@@ -229,6 +248,11 @@ export const matches = sqliteTable(
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({
+    roundIdIdx: index('matches_round_id_idx').on(table.roundId),
+    statusCreatedAtIdx: index('matches_status_created_at_idx').on(
+      table.status,
+      table.createdAt,
+    ),
     statusCheck: check(
       'matches_status_check',
       sql`${table.status} in ('queued', 'running', 'judging', 'scored', 'error')`,

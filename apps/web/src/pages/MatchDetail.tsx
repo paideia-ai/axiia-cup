@@ -8,6 +8,7 @@ import { JudgeDecisionPanel } from '../components/judge-decision-panel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { getMatch, getScenario, retryAdminMatch } from '../lib/api'
+import { usePageVisibility } from '../lib/page-visibility'
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
@@ -16,6 +17,7 @@ function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
 export function MatchDetailPage() {
   const { matchId = '' } = useParams()
   const { user } = useAuth()
+  const isPageVisible = usePageVisibility()
   const [match, setMatch] = useState<MatchDetail | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -36,7 +38,9 @@ export function MatchDetailPage() {
     let timeoutId: number | null = null
     let hasLoadedScenario = false
 
-    const loadMatch = async (isInitial: boolean) => {
+    const loadMatch = async (
+      isInitial: boolean,
+    ): Promise<MatchDetail | null> => {
       const loadId = ++latestLoadIdRef.current
       try {
         if (isInitial) {
@@ -44,23 +48,25 @@ export function MatchDetailPage() {
           setError(null)
         }
         const detail = await getMatch(numericId)
-        if (cancelled || loadId !== latestLoadIdRef.current) return
+        if (cancelled || loadId !== latestLoadIdRef.current) return null
         if (!hasLoadedScenario) {
           const scenarioDetail = await getScenario(detail.scenarioId)
-          if (cancelled || loadId !== latestLoadIdRef.current) return
+          if (cancelled || loadId !== latestLoadIdRef.current) return null
           setScenario(scenarioDetail)
           hasLoadedScenario = true
         }
         setError(null)
         setMatch(detail)
+        return detail
       } catch (loadError) {
-        if (cancelled || loadId !== latestLoadIdRef.current) return
+        if (cancelled || loadId !== latestLoadIdRef.current) return null
         if (isInitial) {
           setScenario(null)
           setError(
             loadError instanceof Error ? loadError.message : '加载对局失败',
           )
         }
+        return null
       } finally {
         if (!cancelled && loadId === latestLoadIdRef.current && isInitial) {
           setIsLoading(false)
@@ -69,11 +75,17 @@ export function MatchDetailPage() {
     }
 
     const poll = async (isInitial: boolean) => {
-      await loadMatch(isInitial)
-      if (!cancelled) {
+      const detail = await loadMatch(isInitial)
+
+      if (
+        !cancelled &&
+        detail &&
+        detail.status !== 'scored' &&
+        detail.status !== 'error'
+      ) {
         timeoutId = window.setTimeout(() => {
           void poll(false)
-        }, 3_000)
+        }, isPageVisible ? 3_000 : 15_000)
       }
     }
 
@@ -82,7 +94,7 @@ export function MatchDetailPage() {
       cancelled = true
       if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
-  }, [matchId])
+  }, [isPageVisible, matchId])
 
   useEffect(() => {
     if (!toast) return
