@@ -1,4 +1,5 @@
 ALTER TABLE `submissions` ADD COLUMN `retired_at` text;
+--> statement-breakpoint
 
 -- Repair the old 0002 model-refresh migration, which rewrote historical
 -- submissions to current model IDs without preserving that they belonged to
