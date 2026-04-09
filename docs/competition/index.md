@@ -11,6 +11,8 @@ Competition design: product requirements, problem scenarios, judging criteria, a
 - [meta-criteria.md](meta-criteria.md) — Meta-criteria for precise winning conditions in strategic language games (47 scenarios analyzed)
 - [classic-strategic-scenarios.md](classic-strategic-scenarios.md) — 47 classic strategic scenarios catalog with winning conditions
 - [info-session-workflow.md](info-session-workflow.md) — Info session 扫码后运营流程（微信群管理、提醒、跟进）
+- [info-session-gameplan.md](info-session-gameplan.md) — 4/9 说明会执行方案：30 分钟结构、demo 流程、PMF 验证要点
+- [pmf-session-plan.md](pmf-session-plan.md) — 内测 PMF 验证计划：5 层验证框架、14 天执行节奏、决策矩阵
 - [problems/](problems/) — Specific game designs and background materials:
   - [problems/商鞅变法-游戏.md](problems/商鞅变法-游戏.md) — Shang Yang reform games: single-player (Four Audiences) + two-player (Court Intrigue)
   - [problems/oj-simpson-games-zh.md](problems/oj-simpson-games-zh.md) — OJ Simpson trial games (Chinese)
