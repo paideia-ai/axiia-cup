@@ -2,12 +2,13 @@ import {
   adminErroredMatchSchema,
   computeSwissRounds,
   matchDetailSchema,
+  matchProgressSchema,
   okResponseSchema,
   tournamentDetailSchema,
   tournamentRoundSchema,
   tournamentSchema,
 } from '@axiia/shared'
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -469,6 +470,44 @@ tournamentRouter.get('/api/matches/:id', requireAuth, (context) => {
       tournamentId: match.tournamentId,
       transcript: parseJsonField(match.transcript, []),
       winner: match.winner,
+    }),
+  )
+})
+
+tournamentRouter.get('/api/matches/:id/status', requireAuth, (context) => {
+  const matchId = parseId(context.req.param('id'))
+
+  if (!matchId) {
+    return context.json({ error: 'Invalid match id' }, 400)
+  }
+
+  const match = db
+    .select({
+      currentTurn: matches.currentTurn,
+      error: matches.error,
+      hasInfoAssignment: sql<number>`case when ${matches.infoAssignment} is null then 0 else 1 end`,
+      hasJudgeDecision: sql<number>`case when ${matches.judgeDecision} is null then 0 else 1 end`,
+      id: matches.id,
+      judgeTranscriptALength: sql<number>`coalesce(json_array_length(${matches.judgeTranscriptA}), 0)`,
+      judgeTranscriptBLength: sql<number>`coalesce(json_array_length(${matches.judgeTranscriptB}), 0)`,
+      scoreA: matches.scoreA,
+      scoreB: matches.scoreB,
+      status: matches.status,
+      winner: matches.winner,
+    })
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .get()
+
+  if (!match) {
+    return context.json({ error: 'Match not found' }, 404)
+  }
+
+  return context.json(
+    matchProgressSchema.parse({
+      ...match,
+      hasInfoAssignment: Boolean(match.hasInfoAssignment),
+      hasJudgeDecision: Boolean(match.hasJudgeDecision),
     }),
   )
 })

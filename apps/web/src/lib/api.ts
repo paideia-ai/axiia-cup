@@ -9,8 +9,10 @@ import {
   createSubmissionSchema,
   leaderboardEntrySchema,
   matchDetailSchema,
+  matchProgressSchema,
   okResponseSchema,
   playgroundRunSchema,
+  playgroundRunProgressSchema,
   playgroundRunStartSchema,
   playgroundRunSummarySchema,
   personalStatsSchema,
@@ -41,9 +43,11 @@ import {
   type CreatePresetOpponent,
   type LeaderboardEntry,
   type MatchDetail,
+  type MatchProgress,
   type OpponentMode,
   type PersonalStats,
   type PlaygroundRun,
+  type PlaygroundRunProgress,
   type PlaygroundRunStart,
   type PlaygroundRunSummary,
   type PresetOpponent,
@@ -335,8 +339,29 @@ export async function getPlaygroundRun(
   )
 }
 
+export async function getPlaygroundRunProgress(
+  submissionId: number,
+  runId: number,
+): Promise<PlaygroundRunProgress> {
+  return apiFetch(
+    `/api/playground/runs/${submissionId}/${runId}/status`,
+    { method: 'GET' },
+    playgroundRunProgressSchema,
+  )
+}
+
 export async function getMatch(id: number | string): Promise<MatchDetail> {
   return apiFetch(`/api/matches/${id}`, { method: 'GET' }, matchDetailSchema)
+}
+
+export async function getMatchProgress(
+  id: number | string,
+): Promise<MatchProgress> {
+  return apiFetch(
+    `/api/matches/${id}/status`,
+    { method: 'GET' },
+    matchProgressSchema,
+  )
 }
 
 export async function getTournament(

@@ -3,6 +3,7 @@ import {
   type InfoAssignment,
   type OpponentMode,
   type PlaygroundRun,
+  type PlaygroundRunProgress,
   type PlaygroundRunSummary,
   type PresetOpponent,
   type Scenario,
@@ -21,6 +22,7 @@ import { Select, SelectItem } from '../components/ui/select'
 import {
   getMySubmissions,
   getPlaygroundRun,
+  getPlaygroundRunProgress,
   getPlaygroundRuns,
   getPresetOpponents,
   getScenario,
@@ -932,6 +934,54 @@ function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
   }
 }
 
+function createRunProgressSnapshot(run: PlaygroundRun): PlaygroundRunProgress {
+  return {
+    createdAt: run.createdAt,
+    error: run.error,
+    hasActualPromptA: run.actualPromptA != null,
+    hasActualPromptB: run.actualPromptB != null,
+    hasInfoAssignment: run.infoAssignment != null,
+    hasJudgeDecision: run.judgeDecision != null,
+    id: run.id,
+    judgeTranscriptALength: run.judgeTranscriptA.length,
+    judgeTranscriptBLength: run.judgeTranscriptB.length,
+    scoreA: run.scoreA,
+    scoreB: run.scoreB,
+    status: run.error
+      ? 'error'
+      : isRunFinished(run)
+        ? 'scored'
+        : 'running',
+    submissionId: run.submissionId,
+    transcriptLength: run.transcript.length,
+    winner: run.winner,
+  }
+}
+
+function hasRunProgressChanged(
+  previous: PlaygroundRunProgress | null,
+  next: PlaygroundRunProgress,
+) {
+  if (!previous) {
+    return true
+  }
+
+  return (
+    previous.status !== next.status ||
+    previous.transcriptLength !== next.transcriptLength ||
+    previous.judgeTranscriptALength !== next.judgeTranscriptALength ||
+    previous.judgeTranscriptBLength !== next.judgeTranscriptBLength ||
+    previous.hasActualPromptA !== next.hasActualPromptA ||
+    previous.hasActualPromptB !== next.hasActualPromptB ||
+    previous.hasInfoAssignment !== next.hasInfoAssignment ||
+    previous.hasJudgeDecision !== next.hasJudgeDecision ||
+    previous.scoreA !== next.scoreA ||
+    previous.scoreB !== next.scoreB ||
+    previous.winner !== next.winner ||
+    previous.error !== next.error
+  )
+}
+
 function upsertRunSummary(
   summaries: PlaygroundRunSummary[],
   nextRun: PlaygroundRun,
@@ -977,6 +1027,7 @@ export function PlaygroundPage() {
       : 0,
   )
   const refreshInFlightRef = useRef(false)
+  const activeRunProgressRef = useRef<PlaygroundRunProgress | null>(null)
 
   useEffect(() => {
     if (!Number.isInteger(submissionId) || submissionId <= 0) {
@@ -987,6 +1038,7 @@ export function PlaygroundPage() {
       setActiveSession(session)
 
       if (!session) {
+        activeRunProgressRef.current = null
         setElapsedSeconds(0)
         return
       }
@@ -997,6 +1049,7 @@ export function PlaygroundPage() {
 
       if (session.status === 'success' && session.run) {
         setSelectedRun(session.run)
+        activeRunProgressRef.current = createRunProgressSnapshot(session.run)
         setRunSummaries((current) => upsertRunSummary(current, session.run!))
         setError(null)
       } else if (session.status === 'error') {
@@ -1044,6 +1097,7 @@ export function PlaygroundPage() {
             resolvedSession.runId,
           )
           syncPlaygroundRun(submissionId, session.requestId, fullRun)
+          activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
           setSelectedRun(fullRun)
           return
         }
@@ -1059,6 +1113,7 @@ export function PlaygroundPage() {
         }
 
         if (session?.run && resolvedSession.kind !== 'stale') {
+          activeRunProgressRef.current = createRunProgressSnapshot(session.run)
           setSelectedRun(session.run)
           return
         }
@@ -1076,6 +1131,7 @@ export function PlaygroundPage() {
             submissionId,
             latestFinishedRun.id,
           )
+          activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
           setSelectedRun(fullRun)
         } else {
           setSelectedRun(null)
@@ -1119,26 +1175,47 @@ export function PlaygroundPage() {
     try {
       refreshInFlightRef.current = true
       setIsRefreshing(true)
-      const summaries = await getPlaygroundRuns(submissionId)
-      setRunSummaries(summaries)
+      const activeRunId = activeSession.runId ?? activeSession.run?.id ?? null
 
-      const candidate = findCandidateRunSummary(activeSession, summaries)
+      if (activeRunId == null) {
+        const summaries = await getPlaygroundRuns(submissionId)
+        setRunSummaries(summaries)
 
-      if (!candidate) {
+        const candidate = findCandidateRunSummary(activeSession, summaries)
+
+        if (!candidate) {
+          return true
+        }
+
+        const fullRun = await getPlaygroundRun(submissionId, candidate.id)
+        syncPlaygroundRun(submissionId, activeSession.requestId, fullRun)
+        activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
+        setRunSummaries((current) => upsertRunSummary(current, fullRun))
+        setSelectedRun(fullRun)
+
+        if (isRunFinished(fullRun)) {
+          setError(fullRun.error ?? null)
+          return false
+        }
+
         return true
       }
 
-      const fullRun = await getPlaygroundRun(submissionId, candidate.id)
-      syncPlaygroundRun(submissionId, activeSession.requestId, fullRun)
-      setRunSummaries((current) => upsertRunSummary(current, fullRun))
+      const progress = await getPlaygroundRunProgress(submissionId, activeRunId)
 
-      if (isRunFinished(fullRun)) {
-        setSelectedRun(fullRun)
-        setError(fullRun.error ?? null)
-        return false
+      if (!hasRunProgressChanged(activeRunProgressRef.current, progress)) {
+        return progress.status === 'queued' || progress.status === 'running'
       }
 
-      return true
+      activeRunProgressRef.current = progress
+
+      const fullRun = await getPlaygroundRun(submissionId, activeRunId)
+      syncPlaygroundRun(submissionId, activeSession.requestId, fullRun)
+      setRunSummaries((current) => upsertRunSummary(current, fullRun))
+      setSelectedRun(fullRun)
+      setError(fullRun.error ?? null)
+
+      return progress.status === 'queued' || progress.status === 'running'
     } catch (refreshError) {
       setError(
         refreshError instanceof Error
@@ -1191,6 +1268,7 @@ export function PlaygroundPage() {
 
     setError(null)
     setSelectedRun(null)
+    activeRunProgressRef.current = null
 
     startTrackedPlaygroundRun({
       scenarioId: scenario.id,

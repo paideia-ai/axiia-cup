@@ -1,4 +1,4 @@
-import type { MatchDetail, Scenario } from '@axiia/shared'
+import type { MatchDetail, MatchProgress, Scenario } from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -7,11 +7,49 @@ import { Button } from '../components/ui/button'
 import { JudgeDecisionPanel } from '../components/judge-decision-panel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
-import { getMatch, getScenario, retryAdminMatch } from '../lib/api'
+import { getMatch, getMatchProgress, getScenario, retryAdminMatch } from '../lib/api'
 import { usePageVisibility } from '../lib/page-visibility'
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
+}
+
+function createMatchProgressSnapshot(match: MatchDetail): MatchProgress {
+  return {
+    currentTurn: match.currentTurn,
+    error: match.error,
+    hasInfoAssignment: match.infoAssignment != null,
+    hasJudgeDecision: match.judgeDecision != null,
+    id: match.id,
+    judgeTranscriptALength: match.judgeTranscriptA.length,
+    judgeTranscriptBLength: match.judgeTranscriptB.length,
+    scoreA: match.scoreA,
+    scoreB: match.scoreB,
+    status: match.status,
+    winner: match.winner,
+  }
+}
+
+function hasMatchProgressChanged(
+  previous: MatchProgress | null,
+  next: MatchProgress,
+) {
+  if (!previous) {
+    return true
+  }
+
+  return (
+    previous.status !== next.status ||
+    previous.currentTurn !== next.currentTurn ||
+    previous.judgeTranscriptALength !== next.judgeTranscriptALength ||
+    previous.judgeTranscriptBLength !== next.judgeTranscriptBLength ||
+    previous.hasInfoAssignment !== next.hasInfoAssignment ||
+    previous.hasJudgeDecision !== next.hasJudgeDecision ||
+    previous.scoreA !== next.scoreA ||
+    previous.scoreB !== next.scoreB ||
+    previous.winner !== next.winner ||
+    previous.error !== next.error
+  )
 }
 
 export function MatchDetailPage() {
@@ -25,6 +63,7 @@ export function MatchDetailPage() {
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const latestLoadIdRef = useRef(0)
+  const progressRef = useRef<MatchProgress | null>(null)
 
   useEffect(() => {
     const numericId = Number(matchId)
@@ -38,7 +77,7 @@ export function MatchDetailPage() {
     let timeoutId: number | null = null
     let hasLoadedScenario = false
 
-    const loadMatch = async (
+    const loadMatchDetail = async (
       isInitial: boolean,
     ): Promise<MatchDetail | null> => {
       const loadId = ++latestLoadIdRef.current
@@ -57,6 +96,7 @@ export function MatchDetailPage() {
         }
         setError(null)
         setMatch(detail)
+        progressRef.current = createMatchProgressSnapshot(detail)
         return detail
       } catch (loadError) {
         if (cancelled || loadId !== latestLoadIdRef.current) return null
@@ -75,13 +115,36 @@ export function MatchDetailPage() {
     }
 
     const poll = async (isInitial: boolean) => {
-      const detail = await loadMatch(isInitial)
+      let status: MatchProgress['status'] | null = null
+
+      if (isInitial) {
+        const detail = await loadMatchDetail(true)
+        status = detail?.status ?? null
+      } else {
+        try {
+          const progress = await getMatchProgress(numericId)
+          if (cancelled) return
+
+          status = progress.status
+
+          if (hasMatchProgressChanged(progressRef.current, progress)) {
+            progressRef.current = progress
+            await loadMatchDetail(false)
+          }
+        } catch (loadError) {
+          if (!cancelled) {
+            setError(
+              loadError instanceof Error ? loadError.message : '加载对局失败',
+            )
+          }
+        }
+      }
 
       if (
         !cancelled &&
-        detail &&
-        detail.status !== 'scored' &&
-        detail.status !== 'error'
+        status !== null &&
+        status !== 'scored' &&
+        status !== 'error'
       ) {
         timeoutId = window.setTimeout(() => {
           void poll(false)
@@ -170,6 +233,7 @@ export function MatchDetailPage() {
                   const loadId = ++latestLoadIdRef.current
                   const detail = await getMatch(match.id)
                   if (loadId !== latestLoadIdRef.current) return
+                  progressRef.current = createMatchProgressSnapshot(detail)
                   setMatch(detail)
                   setToast('已将异常对局重新加入队列')
                 } catch (retryError) {

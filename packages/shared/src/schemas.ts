@@ -498,6 +498,20 @@ export const matchDetailSchema = matchSchema.extend({
   playerBModel: z.string(),
 })
 
+export const matchProgressSchema = z.object({
+  id: z.number().int().positive(),
+  status: matchStatusSchema,
+  currentTurn: z.number().int().nonnegative(),
+  judgeTranscriptALength: z.number().int().nonnegative(),
+  judgeTranscriptBLength: z.number().int().nonnegative(),
+  hasInfoAssignment: z.boolean(),
+  hasJudgeDecision: z.boolean(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
+  error: z.string().nullable(),
+})
+
 export const opponentModeSchema = z.enum(['self', 'preset'])
 
 export const presetOpponentSchema = z.object({
@@ -538,6 +552,24 @@ export const playgroundRunSchema = z.object({
   scoreB: z.number().nullable(),
   winner: matchWinnerSchema.nullable(),
   reasoning: z.string().nullable(),
+  error: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export const playgroundRunProgressSchema = z.object({
+  id: z.number().int().positive(),
+  submissionId: z.number().int().positive(),
+  status: z.enum(['queued', 'running', 'scored', 'error']),
+  transcriptLength: z.number().int().nonnegative(),
+  judgeTranscriptALength: z.number().int().nonnegative(),
+  judgeTranscriptBLength: z.number().int().nonnegative(),
+  hasInfoAssignment: z.boolean(),
+  hasJudgeDecision: z.boolean(),
+  hasActualPromptA: z.boolean(),
+  hasActualPromptB: z.boolean(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
   error: z.string().nullable(),
   createdAt: z.string(),
 })
@@ -653,11 +685,13 @@ export type TournamentRound = z.infer<typeof tournamentRoundSchema>
 export type Tournament = z.infer<typeof tournamentSchema>
 export type TournamentDetail = z.infer<typeof tournamentDetailSchema>
 export type MatchDetail = z.infer<typeof matchDetailSchema>
+export type MatchProgress = z.infer<typeof matchProgressSchema>
 export type OpponentMode = z.infer<typeof opponentModeSchema>
 export type PresetOpponent = z.infer<typeof presetOpponentSchema>
 export type CreatePresetOpponent = z.infer<typeof createPresetOpponentSchema>
 export type UpdatePresetOpponent = z.infer<typeof updatePresetOpponentSchema>
 export type PlaygroundRun = z.infer<typeof playgroundRunSchema>
+export type PlaygroundRunProgress = z.infer<typeof playgroundRunProgressSchema>
 export type PlaygroundRunStart = z.infer<typeof playgroundRunStartSchema>
 export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>

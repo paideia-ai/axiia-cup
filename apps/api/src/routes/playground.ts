@@ -1,9 +1,10 @@
 import {
   opponentModeSchema,
+  playgroundRunProgressSchema,
   playgroundRunSchema,
   playgroundRunSummarySchema,
 } from '@axiia/shared'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 
@@ -170,6 +171,70 @@ playgroundRouter.get(
           presetOpponentId: row.presetOpponentId ?? null,
         }),
       ),
+    )
+  },
+)
+
+playgroundRouter.get(
+  '/api/playground/runs/:submissionId/:runId/status',
+  requireAuth,
+  async (context) => {
+    const userId = resolveUserId(context)
+    const submissionId = parseId(context.req.param('submissionId'))
+    const runId = parseId(context.req.param('runId'))
+
+    if (!submissionId) {
+      return context.json({ error: 'Invalid submission ID' }, 400)
+    }
+
+    if (!runId) {
+      return context.json({ error: 'Invalid run ID' }, 400)
+    }
+
+    const submission = db
+      .select({ id: submissions.id, userId: submissions.userId })
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .get()
+
+    if (!submission || submission.userId !== userId) {
+      return context.json({ error: 'Submission not found' }, 404)
+    }
+
+    const row = db
+      .select({
+        createdAt: playgroundRuns.createdAt,
+        error: playgroundRuns.error,
+        hasActualPromptA: sql<number>`case when ${playgroundRuns.actualPromptA} is null then 0 else 1 end`,
+        hasActualPromptB: sql<number>`case when ${playgroundRuns.actualPromptB} is null then 0 else 1 end`,
+        hasInfoAssignment: sql<number>`case when ${playgroundRuns.infoAssignment} is null then 0 else 1 end`,
+        hasJudgeDecision: sql<number>`case when ${playgroundRuns.judgeDecision} is null then 0 else 1 end`,
+        id: playgroundRuns.id,
+        judgeTranscriptALength: sql<number>`coalesce(json_array_length(${playgroundRuns.judgeTranscriptA}), 0)`,
+        judgeTranscriptBLength: sql<number>`coalesce(json_array_length(${playgroundRuns.judgeTranscriptB}), 0)`,
+        scoreA: playgroundRuns.scoreA,
+        scoreB: playgroundRuns.scoreB,
+        status: playgroundRuns.status,
+        submissionId: playgroundRuns.submissionId,
+        transcriptLength: sql<number>`coalesce(json_array_length(${playgroundRuns.transcript}), 0)`,
+        winner: playgroundRuns.winner,
+      })
+      .from(playgroundRuns)
+      .where(eq(playgroundRuns.id, runId))
+      .get()
+
+    if (!row || row.submissionId !== submissionId) {
+      return context.json({ error: 'Run not found' }, 404)
+    }
+
+    return context.json(
+      playgroundRunProgressSchema.parse({
+        ...row,
+        hasActualPromptA: Boolean(row.hasActualPromptA),
+        hasActualPromptB: Boolean(row.hasActualPromptB),
+        hasInfoAssignment: Boolean(row.hasInfoAssignment),
+        hasJudgeDecision: Boolean(row.hasJudgeDecision),
+      }),
     )
   },
 )
