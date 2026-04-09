@@ -1,4 +1,8 @@
-import { playgroundRunSchema, playgroundRunSummarySchema } from '@axiia/shared'
+import {
+  opponentModeSchema,
+  playgroundRunSchema,
+  playgroundRunSummarySchema,
+} from '@axiia/shared'
 import { desc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -6,6 +10,7 @@ import { z } from 'zod'
 import { db } from '../db/client'
 import {
   playgroundRuns,
+  presetOpponents,
   scenarios,
   submissions,
   tournaments,
@@ -14,7 +19,11 @@ import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
 import { requireAuth } from '../middleware/requireAuth'
 
-const runRequestSchema = z.object({ submissionId: z.number().int().positive() })
+const runRequestSchema = z.object({
+  submissionId: z.number().int().positive(),
+  opponentMode: opponentModeSchema.optional().default('self'),
+  presetOpponentId: z.number().int().positive().optional(),
+})
 
 const playgroundRouter = new Hono()
 
@@ -68,12 +77,32 @@ playgroundRouter.post('/api/playground/run', requireAuth, async (context) => {
     return context.json({ error: 'Scenario not found' }, 404)
   }
 
+  const { opponentMode, presetOpponentId } = parsed.data
+
+  if (opponentMode === 'preset') {
+    if (!presetOpponentId) {
+      return context.json({ error: '预设对手模式需要选择一个预设' }, 400)
+    }
+
+    const preset = db
+      .select()
+      .from(presetOpponents)
+      .where(eq(presetOpponents.id, presetOpponentId))
+      .get()
+
+    if (!preset || preset.scenarioId !== scenario.id) {
+      return context.json({ error: '预设对手不存在' }, 404)
+    }
+  }
+
   const run = db
     .insert(playgroundRuns)
     .values({
       status: 'queued',
       scenarioId: scenario.id,
       submissionId: submission.id,
+      opponentMode,
+      presetOpponentId: opponentMode === 'preset' ? presetOpponentId : null,
     })
     .returning()
     .get()
@@ -110,6 +139,8 @@ playgroundRouter.get(
         createdAt: playgroundRuns.createdAt,
         error: playgroundRuns.error,
         id: playgroundRuns.id,
+        opponentMode: playgroundRuns.opponentMode,
+        presetOpponentId: playgroundRuns.presetOpponentId,
         scoreA: playgroundRuns.scoreA,
         scoreB: playgroundRuns.scoreB,
         submissionId: playgroundRuns.submissionId,
@@ -121,7 +152,13 @@ playgroundRouter.get(
       .all()
 
     return context.json(
-      rows.map((row) => playgroundRunSummarySchema.parse(row)),
+      rows.map((row) =>
+        playgroundRunSummarySchema.parse({
+          ...row,
+          opponentMode: row.opponentMode ?? 'self',
+          presetOpponentId: row.presetOpponentId ?? null,
+        }),
+      ),
     )
   },
 )
@@ -165,10 +202,14 @@ playgroundRouter.get(
     return context.json(
       playgroundRunSchema.parse({
         ...row,
+        actualPromptA: row.actualPromptA ?? null,
+        actualPromptB: row.actualPromptB ?? null,
         infoAssignment: parseJsonField(row.infoAssignment, null),
         judgeDecision: row.judgeDecision ?? null,
         judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
         judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
+        opponentMode: row.opponentMode ?? 'self',
+        presetOpponentId: row.presetOpponentId ?? null,
         transcript: parseJsonField(row.transcript, []),
       }),
     )

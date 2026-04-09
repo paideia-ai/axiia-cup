@@ -1,6 +1,7 @@
 import {
   modelOptions,
   type AdminScenario,
+  type PresetOpponent,
   type UpdateScenario,
 } from '@axiia/shared'
 import { ArrowLeft, Lock } from 'lucide-react'
@@ -14,7 +15,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
-import { getAdminScenarios, updateAdminScenario } from '../lib/api'
+import {
+  createPresetOpponent,
+  deletePresetOpponent,
+  getAdminScenarios,
+  getPresetOpponents,
+  updateAdminScenario,
+  updatePresetOpponent,
+} from '../lib/api'
 
 function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
   return {
@@ -438,11 +446,201 @@ function IdContentListEditor({
   )
 }
 
+function RolePresetOpponentsEditor({
+  scenarioId,
+  role,
+  roleName,
+  presets,
+  onPresetsChange,
+}: {
+  scenarioId: string
+  role: 'a' | 'b'
+  roleName: string
+  presets: PresetOpponent[]
+  onPresetsChange: (
+    updater: (prev: PresetOpponent[]) => PresetOpponent[],
+  ) => void
+}) {
+  const [newLabel, setNewLabel] = useState('')
+  const [newPrompt, setNewPrompt] = useState('')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+  const [editPrompt, setEditPrompt] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const rolePresets = presets.filter((p) => p.role === role)
+
+  const handleCreate = async () => {
+    if (!newLabel.trim() || !newPrompt.trim()) return
+    try {
+      setIsSaving(true)
+      setError(null)
+      const created = await createPresetOpponent({
+        scenarioId,
+        role,
+        label: newLabel.trim(),
+        prompt: newPrompt.trim(),
+      })
+      onPresetsChange((prev) => [...prev, created])
+      setNewLabel('')
+      setNewPrompt('')
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : '创建失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleUpdate = async (id: number) => {
+    if (!editLabel.trim() || !editPrompt.trim()) return
+    try {
+      setIsSaving(true)
+      setError(null)
+      const updated = await updatePresetOpponent(id, {
+        label: editLabel.trim(),
+        prompt: editPrompt.trim(),
+      })
+      onPresetsChange((prev) => prev.map((p) => (p.id === id ? updated : p)))
+      setEditingId(null)
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : '更新失败')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      setError(null)
+      await deletePresetOpponent(id)
+      onPresetsChange((prev) => prev.filter((p) => p.id !== id))
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : '删除失败')
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-(--foreground-subtle)">
+        预设对手 Prompt
+      </p>
+      <p className="text-[11px] text-(--foreground-muted)">
+        玩家可在试炼场选择预设对手替换{roleName}的 Prompt 进行对战。
+      </p>
+
+      {error ? <p className="text-xs text-(--accent)">{error}</p> : null}
+
+      {rolePresets.length > 0 ? (
+        <div className="space-y-2">
+          {rolePresets.map((preset) => (
+            <div
+              key={preset.id}
+              className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+            >
+              {editingId === preset.id ? (
+                <div className="space-y-2">
+                  <Input
+                    placeholder="名称"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                  />
+                  <Textarea
+                    className="min-h-20"
+                    placeholder="Prompt"
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={isSaving}
+                      onClick={() => void handleUpdate(preset.id)}
+                    >
+                      {isSaving ? '保存中…' : '保存'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setEditingId(null)}
+                    >
+                      取消
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-(--foreground)">
+                      {preset.label}
+                    </span>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        className="text-[11px] text-(--foreground-muted) hover:text-(--foreground)"
+                        onClick={() => {
+                          setEditingId(preset.id)
+                          setEditLabel(preset.label)
+                          setEditPrompt(preset.prompt)
+                        }}
+                      >
+                        编辑
+                      </button>
+                      <button
+                        type="button"
+                        className="text-[11px] text-(--accent) hover:text-(--accent)/80"
+                        onClick={() => void handleDelete(preset.id)}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap line-clamp-3">
+                    {preset.prompt}
+                  </p>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-(--foreground-muted)">暂无预设对手。</p>
+      )}
+
+      {/* Add new */}
+      <div className="space-y-2 rounded-lg border border-dashed border-(--border-soft) p-3">
+        <p className="text-[11px] font-medium text-(--foreground-muted)">
+          添加预设
+        </p>
+        <Input
+          placeholder="名称（如：基础保守型）"
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+        />
+        <Textarea
+          className="min-h-20"
+          placeholder="预设对手 Prompt"
+          value={newPrompt}
+          onChange={(e) => setNewPrompt(e.target.value)}
+        />
+        <Button
+          size="sm"
+          disabled={isSaving || !newLabel.trim() || !newPrompt.trim()}
+          onClick={() => void handleCreate()}
+        >
+          {isSaving ? '添加中…' : '添加'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export function AdminScenarioEditPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
   const [scenario, setScenario] = useState<AdminScenario | null>(null)
   const [draft, setDraft] = useState<UpdateScenario | null>(null)
+  const [presets, setPresets] = useState<PresetOpponent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -459,9 +657,13 @@ export function AdminScenarioEditPage() {
       try {
         setIsLoading(true)
         setError(null)
-        const scenarios = await getAdminScenarios()
+        const [scenarios, presetData] = await Promise.all([
+          getAdminScenarios(),
+          getPresetOpponents(scenarioId),
+        ])
         const found = scenarios.find((s) => s.id === scenarioId) ?? null
         setScenario(found)
+        setPresets(presetData)
         if (found) {
           setDraft(getScenarioUpdateInput(found))
         } else {
@@ -805,6 +1007,13 @@ export function AdminScenarioEditPage() {
                         c ? { ...c, [role.requestsKey]: items } : c,
                       )
                     }
+                  />
+                  <RolePresetOpponentsEditor
+                    scenarioId={scenario.id}
+                    role={role.side === 'A' ? 'a' : 'b'}
+                    roleName={draft[role.nameKey]}
+                    presets={presets}
+                    onPresetsChange={setPresets}
                   />
                 </CardContent>
               </Card>

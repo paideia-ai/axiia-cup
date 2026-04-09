@@ -1,4 +1,8 @@
-import type { PlaygroundRun, PlaygroundRunSummary } from '@axiia/shared'
+import type {
+  OpponentMode,
+  PlaygroundRun,
+  PlaygroundRunSummary,
+} from '@axiia/shared'
 
 import { runPlayground } from './api'
 import { parseTimestampMs } from './datetime'
@@ -224,6 +228,8 @@ export function startTrackedPlaygroundRun(params: {
   submissionCreatedAt: string
   submissionId: number
   turnCount: number
+  opponentMode?: OpponentMode
+  presetOpponentId?: number
 }) {
   const existing = getPlaygroundSession(params.submissionId)
 
@@ -233,7 +239,11 @@ export function startTrackedPlaygroundRun(params: {
 
   const requestId = startPlaygroundRunSession(params)
 
-  void runPlayground(params.submissionId)
+  void runPlayground(
+    params.submissionId,
+    params.opponentMode,
+    params.presetOpponentId,
+  )
     .then((run) => {
       return queuePlaygroundRun(params.submissionId, requestId, run)
     })

@@ -2,7 +2,13 @@ import type { InfoAssignment, JudgeQA, TranscriptTurn } from '@axiia/shared'
 import { and, asc, eq, or } from 'drizzle-orm'
 
 import { db } from '../db/client'
-import { matches, playgroundRuns, scenarios, submissions } from '../db/schema'
+import {
+  matches,
+  playgroundRuns,
+  presetOpponents,
+  scenarios,
+  submissions,
+} from '../db/schema'
 import { parseJsonField } from '../lib/json'
 import { executeMatchSession } from './core'
 import { runMatch } from './runner'
@@ -214,6 +220,41 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       return
     }
 
+    // Resolve actual prompts based on opponent mode
+    let promptA = submission.promptA
+    let promptB = submission.promptB
+
+    if (run.opponentMode === 'preset' && run.presetOpponentId) {
+      const preset = db
+        .select()
+        .from(presetOpponents)
+        .where(eq(presetOpponents.id, run.presetOpponentId))
+        .get()
+
+      if (!preset) {
+        db.update(playgroundRuns)
+          .set({
+            error: '预设对手已被删除',
+            leaseToken: null,
+            status: 'error',
+          })
+          .where(
+            and(
+              eq(playgroundRuns.id, runId),
+              eq(playgroundRuns.leaseToken, leaseToken),
+            ),
+          )
+          .run()
+        return
+      }
+
+      if (preset.role === 'a') {
+        promptA = preset.prompt
+      } else {
+        promptB = preset.prompt
+      }
+    }
+
     transcript = parseJsonField<TranscriptTurn[]>(run.transcript, [])
     judgeTranscriptA = parseJsonField<JudgeQA[]>(run.judgeTranscriptA, [])
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
@@ -233,6 +274,9 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
           ),
         )
         .run()
+
+    // Store actual prompts used at the start
+    await persist({ actualPromptA: promptA, actualPromptB: promptB })
 
     const result = await executeMatchSession({
       infoAssignment: infoAssignment ?? undefined,
@@ -260,8 +304,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
           judgeTranscriptB: JSON.stringify(nextJudgeTranscriptB),
         })
       },
-      promptA: submission.promptA,
-      promptB: submission.promptB,
+      promptA,
+      promptB,
       scenario,
       transcript,
     })

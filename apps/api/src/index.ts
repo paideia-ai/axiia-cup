@@ -7,6 +7,7 @@ import { adminUsersRouter } from './routes/admin-users'
 import { authRouter } from './routes/auth'
 import { appMetaSchema, modelOptions } from '@axiia/shared'
 import { playgroundRouter } from './routes/playground'
+import { presetOpponentsRouter } from './routes/preset-opponents'
 import { scenariosRouter } from './routes/scenarios'
 import { statsRouter } from './routes/stats'
 import { submissionsRouter } from './routes/submissions'
@@ -71,6 +72,7 @@ app.route('/', adminSettingsRouter)
 app.route('/', adminUsersRouter)
 app.route('/', authRouter)
 app.route('/', playgroundRouter)
+app.route('/', presetOpponentsRouter)
 app.route('/', scenariosRouter)
 app.route('/', statsRouter)
 app.route('/', submissionsRouter)

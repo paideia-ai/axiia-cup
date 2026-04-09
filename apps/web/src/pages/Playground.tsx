@@ -1,8 +1,10 @@
 import {
   modelOptions,
   type InfoAssignment,
+  type OpponentMode,
   type PlaygroundRun,
   type PlaygroundRunSummary,
+  type PresetOpponent,
   type Scenario,
   type Submission,
 } from '@axiia/shared'
@@ -14,10 +16,12 @@ import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Select, SelectItem } from '../components/ui/select'
 import {
   getMySubmissions,
   getPlaygroundRun,
   getPlaygroundRuns,
+  getPresetOpponents,
   getScenario,
 } from '../lib/api'
 import {
@@ -431,6 +435,72 @@ function JudgeDecisionPanel({ decision }: { decision: string }) {
   )
 }
 
+function ActualPromptsPanel({
+  run,
+  scenario,
+}: {
+  run: PlaygroundRun
+  scenario: Scenario
+}) {
+  if (!run.actualPromptA && !run.actualPromptB) {
+    return null
+  }
+
+  return (
+    <Card className="px-4 py-2">
+      <Accordion>
+        <AccordionItem
+          value="actual-prompts"
+          title={
+            <span className="text-sm font-semibold">
+              本局使用 Prompt
+              {run.opponentMode === 'preset' ? (
+                <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-[rgba(96,165,250,0.15)] text-(--info)">
+                  预设对手
+                </span>
+              ) : null}
+            </span>
+          }
+        >
+          <div className="space-y-3">
+            {(
+              [
+                {
+                  label: scenario.roleAName,
+                  prompt: run.actualPromptA,
+                  side: 'a',
+                },
+                {
+                  label: scenario.roleBName,
+                  prompt: run.actualPromptB,
+                  side: 'b',
+                },
+              ] as const
+            ).map((item) => (
+              <div
+                key={item.side}
+                className="rounded-lg border border-(--border-soft) bg-white/2 p-3"
+              >
+                <p
+                  className="text-xs font-semibold mb-1.5"
+                  style={{
+                    color: item.side === 'a' ? 'var(--accent)' : 'var(--info)',
+                  }}
+                >
+                  {item.label}
+                </p>
+                <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                  {item.prompt ?? '（未记录）'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </AccordionItem>
+      </Accordion>
+    </Card>
+  )
+}
+
 function RunResult({
   run,
   scenario,
@@ -440,6 +510,9 @@ function RunResult({
 }) {
   return (
     <div className="space-y-6">
+      {/* Actual prompts used */}
+      <ActualPromptsPanel run={run} scenario={scenario} />
+
       {/* Scoring summary - always visible at top */}
       <Card>
         <CardContent className="py-5">
@@ -711,9 +784,16 @@ function RunHistoryItem({
     >
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] text-(--foreground-muted)">
-            {formatDateTime(run.createdAt, { second: '2-digit' })}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] text-(--foreground-muted)">
+              {formatDateTime(run.createdAt, { second: '2-digit' })}
+            </p>
+            {run.opponentMode === 'preset' ? (
+              <span className="rounded px-1 py-px text-[9px] font-semibold bg-[rgba(96,165,250,0.15)] text-(--info)">
+                预设
+              </span>
+            ) : null}
+          </div>
           {run.scoreA != null && run.scoreB != null ? (
             <p className="text-xs text-(--foreground-subtle)">
               {run.scoreA} : {run.scoreB}
@@ -868,6 +948,8 @@ function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
     createdAt: run.createdAt,
     error: run.error,
     id: run.id,
+    opponentMode: run.opponentMode,
+    presetOpponentId: run.presetOpponentId,
     scoreA: run.scoreA,
     scoreB: run.scoreB,
     submissionId: run.submissionId,
@@ -897,6 +979,11 @@ export function PlaygroundPage() {
 
   const [submission, setSubmission] = useState<Submission | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
+  const [presetOpponentList, setPresetOpponentList] = useState<
+    PresetOpponent[]
+  >([])
+  const [opponentMode, setOpponentMode] = useState<OpponentMode>('self')
+  const [selectedPresetId, setSelectedPresetId] = useState<number | undefined>()
   const [runSummaries, setRunSummaries] = useState<PlaygroundRunSummary[]>([])
   const [selectedRun, setSelectedRun] = useState<PlaygroundRun | null>(null)
   const [activeSession, setActiveSession] = useState<PlaygroundSession | null>(
@@ -961,13 +1048,15 @@ export function PlaygroundPage() {
           return
         }
 
-        const [scenarioData, runs] = await Promise.all([
+        const [scenarioData, runs, presets] = await Promise.all([
           getScenario(sub.scenarioId),
           getPlaygroundRuns(submissionId),
+          getPresetOpponents(sub.scenarioId),
         ])
 
         setScenario(scenarioData)
         setRunSummaries(runs)
+        setPresetOpponentList(presets)
 
         const session = getPlaygroundSession(submissionId)
         const resolvedSession = resolvePlaygroundSession(session, sub, runs)
@@ -1115,6 +1204,9 @@ export function PlaygroundPage() {
       submissionCreatedAt: submission.createdAt,
       submissionId,
       turnCount: scenario.turnCount,
+      opponentMode,
+      presetOpponentId:
+        opponentMode === 'preset' ? selectedPresetId : undefined,
     })
   }
 
@@ -1215,9 +1307,82 @@ export function PlaygroundPage() {
         <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:scrollbar-thin space-y-4">
           <Card>
             <CardContent className="space-y-3 py-4">
+              {/* Opponent mode selector */}
+              {presetOpponentList.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-medium text-(--foreground-muted)">
+                    对手选择
+                  </p>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpponentMode('self')
+                        setSelectedPresetId(undefined)
+                      }}
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
+                        opponentMode === 'self'
+                          ? 'border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)] text-(--foreground) font-semibold'
+                          : 'border-(--border-soft) text-(--foreground-muted) hover:bg-white/5'
+                      }`}
+                    >
+                      自己对打
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOpponentMode('preset')}
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
+                        opponentMode === 'preset'
+                          ? 'border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)] text-(--foreground) font-semibold'
+                          : 'border-(--border-soft) text-(--foreground-muted) hover:bg-white/5'
+                      }`}
+                    >
+                      预设对手
+                    </button>
+                  </div>
+                  {opponentMode === 'preset' ? (
+                    <Select
+                      className="my-1"
+                      placeholder="选择预设对手…"
+                      value={
+                        selectedPresetId != null
+                          ? String(selectedPresetId)
+                          : undefined
+                      }
+                      onValueChange={(val) =>
+                        setSelectedPresetId(val ? Number(val) : undefined)
+                      }
+                      renderValue={(val) => {
+                        const preset = presetOpponentList.find(
+                          (p) => String(p.id) === val,
+                        )
+                        if (!preset) return val
+                        const roleName =
+                          preset.role === 'a'
+                            ? scenario.roleAName
+                            : scenario.roleBName
+                        return `${preset.label}（${roleName}）`
+                      }}
+                    >
+                      {presetOpponentList.map((preset) => (
+                        <SelectItem key={preset.id} value={String(preset.id)}>
+                          {preset.label}（
+                          {preset.role === 'a'
+                            ? scenario.roleAName
+                            : scenario.roleBName}
+                          ）
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  ) : null}
+                </div>
+              ) : null}
+
               <Button
                 className="w-full"
-                disabled={isRunning}
+                disabled={
+                  isRunning || (opponentMode === 'preset' && !selectedPresetId)
+                }
                 onClick={handleRun}
               >
                 {isRunning ? '对战进行中...' : '运行对战'}
@@ -1226,7 +1391,7 @@ export function PlaygroundPage() {
               <Accordion className="rounded-xl border border-(--border-soft) px-3">
                 <AccordionItem
                   value="promptA"
-                  title={scenario.roleAName}
+                  title={`我的 ${scenario.roleAName}`}
                   triggerClassName="text-xs"
                 >
                   <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
@@ -1235,7 +1400,7 @@ export function PlaygroundPage() {
                 </AccordionItem>
                 <AccordionItem
                   value="promptB"
-                  title={scenario.roleBName}
+                  title={`我的 ${scenario.roleBName}`}
                   triggerClassName="text-xs"
                 >
                   <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">

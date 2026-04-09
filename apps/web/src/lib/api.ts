@@ -27,22 +27,29 @@ import {
   updateProfileSchema,
   userSchema,
   type AdminPlayer,
+  presetOpponentSchema,
+  createPresetOpponentSchema,
+  updatePresetOpponentSchema,
   type AdminScenario,
   type AdminErroredMatch,
   type AdminStats,
   type AdminUser,
+  type CreatePresetOpponent,
   type LeaderboardEntry,
   type MatchDetail,
+  type OpponentMode,
   type PersonalStats,
   type PlaygroundRun,
   type PlaygroundRunStart,
   type PlaygroundRunSummary,
+  type PresetOpponent,
   type RegistrationCodeResponse,
   type RecentMatch,
   type Scenario,
   type Submission,
   type TournamentDetail,
   type TournamentListItem,
+  type UpdatePresetOpponent,
   type UpdateScenario,
   type User,
 } from '@axiia/shared'
@@ -63,6 +70,7 @@ const leaderboardResponseSchema = z.array(leaderboardEntrySchema)
 const tournamentsResponseSchema = z.array(tournamentListItemSchema)
 const recentMatchesResponseSchema = z.array(recentMatchSchema)
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema)
+const presetOpponentsResponseSchema = z.array(presetOpponentSchema)
 const adminPlayersResponseSchema = z.array(adminPlayerSchema)
 const adminErroredMatchesResponseSchema = z.array(adminErroredMatchSchema)
 const adminUsersResponseSchema = z.array(adminUserSchema)
@@ -224,11 +232,55 @@ export async function createSubmission(
 
 export async function runPlayground(
   submissionId: number,
+  opponentMode: OpponentMode = 'self',
+  presetOpponentId?: number,
 ): Promise<PlaygroundRunStart> {
   return apiFetch(
     '/api/playground/run',
-    { method: 'POST', body: JSON.stringify({ submissionId }) },
+    {
+      method: 'POST',
+      body: JSON.stringify({ submissionId, opponentMode, presetOpponentId }),
+    },
     playgroundRunStartSchema,
+  )
+}
+
+export async function getPresetOpponents(
+  scenarioId: string,
+): Promise<PresetOpponent[]> {
+  return apiFetch(
+    `/api/scenarios/${encodeURIComponent(scenarioId)}/preset-opponents`,
+    { method: 'GET' },
+    presetOpponentsResponseSchema,
+  )
+}
+
+export async function createPresetOpponent(
+  body: CreatePresetOpponent,
+): Promise<PresetOpponent> {
+  return apiFetch(
+    '/api/admin/preset-opponents',
+    { method: 'POST', body: JSON.stringify(body) },
+    presetOpponentSchema,
+  )
+}
+
+export async function updatePresetOpponent(
+  id: number,
+  body: UpdatePresetOpponent,
+): Promise<PresetOpponent> {
+  return apiFetch(
+    `/api/admin/preset-opponents/${id}`,
+    { method: 'PUT', body: JSON.stringify(body) },
+    presetOpponentSchema,
+  )
+}
+
+export async function deletePresetOpponent(id: number): Promise<{ ok: true }> {
+  return apiFetch(
+    `/api/admin/preset-opponents/${id}`,
+    { method: 'DELETE' },
+    okResponseSchema,
   )
 }
 

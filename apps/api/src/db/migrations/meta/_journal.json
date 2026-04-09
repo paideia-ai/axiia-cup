@@ -22,6 +22,13 @@
       "when": 1775699946000,
       "tag": "0002_model_refresh",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "3",
+      "when": 1775800000000,
+      "tag": "0003_preset_opponents",
+      "breakpoints": true
     }
   ]
 }

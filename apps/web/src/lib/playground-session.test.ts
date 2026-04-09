@@ -44,6 +44,8 @@ describe('resolvePlaygroundSession', () => {
           createdAt: '2026-04-06 08:01:00',
           error: null,
           id: 7,
+          opponentMode: 'self' as const,
+          presetOpponentId: null,
           scoreA: 1,
           scoreB: 0,
           submissionId: 1,
@@ -58,6 +60,8 @@ describe('resolvePlaygroundSession', () => {
   it('marks persisted transcripts stale when the backend has no matching run', () => {
     const session = createSession({
       run: {
+        actualPromptA: null,
+        actualPromptB: null,
         createdAt: '2026-04-07 09:22:50',
         error: null,
         id: 9,
@@ -65,6 +69,8 @@ describe('resolvePlaygroundSession', () => {
         judgeDecision: null,
         judgeTranscriptA: [],
         judgeTranscriptB: [],
+        opponentMode: 'self' as const,
+        presetOpponentId: null,
         reasoning: null,
         scenarioId: 'shangyang-court',
         scoreA: null,
@@ -123,6 +129,8 @@ describe('resolvePlaygroundSession', () => {
           createdAt: '2026-04-07 09:22:47',
           error: null,
           id: 11,
+          opponentMode: 'self' as const,
+          presetOpponentId: null,
           scoreA: null,
           scoreB: null,
           submissionId: 1,

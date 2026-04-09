@@ -103,6 +103,19 @@ export const submissions = sqliteTable(
   }),
 )
 
+const opponentModes = ['self', 'preset'] as const
+
+export const presetOpponents = sqliteTable('preset_opponents', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  scenarioId: text('scenario_id')
+    .notNull()
+    .references(() => scenarios.id),
+  role: text('role', { enum: ['a', 'b'] as const }).notNull(),
+  label: text('label').notNull(),
+  prompt: text('prompt').notNull(),
+  createdAt: text('created_at').notNull().default(currentTimestamp),
+})
+
 export const playgroundRuns = sqliteTable('playground_runs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   submissionId: integer('submission_id')
@@ -117,6 +130,14 @@ export const playgroundRuns = sqliteTable('playground_runs', {
   scenarioId: text('scenario_id')
     .notNull()
     .references(() => scenarios.id),
+  opponentMode: text('opponent_mode', { enum: opponentModes })
+    .notNull()
+    .default('self'),
+  presetOpponentId: integer('preset_opponent_id').references(
+    () => presetOpponents.id,
+  ),
+  actualPromptA: text('actual_prompt_a'),
+  actualPromptB: text('actual_prompt_b'),
   transcript: text('transcript').notNull().default('[]'),
   judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
   judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
@@ -267,6 +288,7 @@ export const schema = {
   appSettings,
   scenarios,
   submissions,
+  presetOpponents,
   playgroundRuns,
   tournaments,
   rounds,
@@ -274,6 +296,7 @@ export const schema = {
   llmCalls,
 }
 
+export type OpponentMode = (typeof opponentModes)[number]
 export type TournamentStatus = (typeof tournamentStatuses)[number]
 export type RoundStatus = (typeof roundStatuses)[number]
 export type MatchStatus = (typeof matchStatuses)[number]
