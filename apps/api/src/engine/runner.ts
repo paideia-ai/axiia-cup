@@ -61,6 +61,16 @@ export async function runMatch(
     return
   }
 
+  if (subA.retiredAt || subB.retiredAt) {
+    await updateLeasedMatch(matchId, leaseToken, {
+      error: 'Match includes archived submissions',
+      finishedAt: new Date().toISOString(),
+      leaseToken: null,
+      status: 'error',
+    })
+    return
+  }
+
   let transcript = parseJsonField<TranscriptTurn[]>(match.transcript, [])
   let judgeTranscriptA = parseJsonField<JudgeQA[]>(match.judgeTranscriptA, [])
   let judgeTranscriptB = parseJsonField<JudgeQA[]>(match.judgeTranscriptB, [])

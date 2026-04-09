@@ -4,6 +4,7 @@ import { db } from '../db/client'
 import { appSettings } from '../db/schema'
 
 const REGISTRATION_CODE_KEY = 'registrationCode'
+const WRITE_LOCK_KEY = 'writeLock'
 
 function getSetting(key: string) {
   const setting = db
@@ -37,4 +38,12 @@ export function getRegistrationCode() {
 
 export function setRegistrationCode(code: string) {
   return setSetting(REGISTRATION_CODE_KEY, code)
+}
+
+export function isWriteLocked() {
+  return getSetting(WRITE_LOCK_KEY) === '1'
+}
+
+export function setWriteLock(locked: boolean) {
+  return setSetting(WRITE_LOCK_KEY, locked ? '1' : '0') === '1'
 }

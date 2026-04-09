@@ -29,6 +29,16 @@ beforeAll(async () => {
   scenariosTable = schema.scenarios
   tournamentsTable = schema.tournaments
 
+  db.delete(schema.llmCalls).run()
+  db.delete(schema.matches).run()
+  db.delete(schema.rounds).run()
+  db.delete(schema.tournaments).run()
+  db.delete(schema.playgroundRuns).run()
+  db.delete(schema.presetOpponents).run()
+  db.delete(schema.submissions).run()
+  db.delete(schema.users).run()
+  db.delete(schema.scenarios).run()
+
   const auth = await import('../lib/auth')
   signToken = auth.signToken
 

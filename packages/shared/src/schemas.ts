@@ -386,7 +386,8 @@ export const submissionSchema = z.object({
   scenarioId: z.string(),
   promptA: z.string(),
   promptB: z.string(),
-  model: modelIdSchema,
+  model: z.string(),
+  retiredAt: z.string().nullable(),
   version: z.number().int().positive(),
   createdAt: z.string(),
 })
@@ -426,7 +427,7 @@ export const adminPlayerSchema = z.object({
   submissionId: z.number().int().positive(),
   email: z.string().email(),
   displayName: z.string(),
-  model: modelIdSchema,
+  model: z.string(),
   version: z.number().int().positive(),
   submittedAt: z.string(),
 })
@@ -484,9 +485,9 @@ export const matchDetailSchema = matchSchema.extend({
   tournamentId: z.number().int().positive(),
   roundNumber: z.number().int().positive(),
   playerADisplayName: z.string(),
-  playerAModel: modelIdSchema,
+  playerAModel: z.string(),
   playerBDisplayName: z.string(),
-  playerBModel: modelIdSchema,
+  playerBModel: z.string(),
 })
 
 export const opponentModeSchema = z.enum(['self', 'preset'])
@@ -576,9 +577,9 @@ export const adminErroredMatchSchema = z.object({
   scenarioTitle: z.string(),
   status: z.literal('error'),
   playerADisplayName: z.string(),
-  playerAModel: modelIdSchema,
+  playerAModel: z.string(),
   playerBDisplayName: z.string(),
-  playerBModel: modelIdSchema,
+  playerBModel: z.string(),
   error: z.string().nullable(),
   createdAt: z.string(),
 })

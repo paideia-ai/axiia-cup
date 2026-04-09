@@ -7,7 +7,7 @@ import {
   tournamentRoundSchema,
   tournamentSchema,
 } from '@axiia/shared'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -34,6 +34,7 @@ import {
 } from '../lib/tournaments'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
+import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 
 const startTournamentSchema = z.object({
   scenarioId: z.string().min(1),
@@ -128,6 +129,7 @@ tournamentRouter.post(
   '/api/admin/tournaments/start',
   requireAuth,
   requireAdmin,
+  requireWritesUnlocked,
   async (context) => {
     const json = await context.req.json().catch(() => null)
     const parsed = startTournamentSchema.safeParse(json)
@@ -246,6 +248,7 @@ tournamentRouter.post(
   '/api/admin/tournaments/:id/next-round',
   requireAuth,
   requireAdmin,
+  requireWritesUnlocked,
   (context) => {
     const tournamentId = parseId(context.req.param('id'))
 
@@ -269,7 +272,7 @@ tournamentRouter.post(
       return context.json(
         {
           error:
-            'Cannot advance: round not fully scored, has errors, or already advanced',
+            'Cannot advance: round not fully scored, has errors, includes archived submissions, or already advanced',
         },
         400,
       )
@@ -474,6 +477,7 @@ tournamentRouter.post(
   '/api/admin/matches/:id/retry',
   requireAuth,
   requireAdmin,
+  requireWritesUnlocked,
   (context) => {
     const matchId = parseId(context.req.param('id'))
 
@@ -489,6 +493,24 @@ tournamentRouter.post(
 
     if (match.status !== 'error') {
       return context.json({ error: 'Only errored matches can be retried' }, 400)
+    }
+
+    const relatedSubmissions = db
+      .select({
+        id: submissions.id,
+        retiredAt: submissions.retiredAt,
+      })
+      .from(submissions)
+      .where(inArray(submissions.id, [match.subAId, match.subBId]))
+      .all()
+
+    if (
+      relatedSubmissions.some((submission) => submission.retiredAt !== null)
+    ) {
+      return context.json(
+        { error: 'Match includes archived submissions and cannot be retried' },
+        409,
+      )
     }
 
     const round = db

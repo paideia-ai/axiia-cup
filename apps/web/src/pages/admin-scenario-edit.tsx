@@ -810,6 +810,10 @@ export function AdminScenarioEditPage() {
                             : c,
                         )
                       }
+                      renderValue={(value) =>
+                        modelOptions.find((option) => option.id === value)
+                          ?.label ?? value
+                      }
                     >
                       {modelOptions.map((option) => (
                         <SelectItem key={option.id} value={option.id}>

@@ -29,6 +29,13 @@
       "when": 1775800000000,
       "tag": "0003_preset_opponents",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "4",
+      "when": 1775806800000,
+      "tag": "0004_submission_retirement",
+      "breakpoints": true
     }
   ]
 }

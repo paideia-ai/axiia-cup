@@ -3,7 +3,7 @@ import {
   personalStatsSchema,
   recentMatchSchema,
 } from '@axiia/shared'
-import { desc, eq, inArray, or, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { Hono } from 'hono'
 
@@ -34,7 +34,7 @@ statsRouter.get('/api/stats/me', requireAuth, (context) => {
       version: submissions.version,
     })
     .from(submissions)
-    .where(eq(submissions.userId, userId))
+    .where(and(eq(submissions.userId, userId), isNull(submissions.retiredAt)))
     .orderBy(desc(submissions.id))
     .all()
   const submissionIds = userSubmissions.map((submission) => submission.id)

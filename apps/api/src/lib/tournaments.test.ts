@@ -14,6 +14,7 @@ import {
   llmCalls,
   matches,
   playgroundRuns,
+  presetOpponents,
   rounds,
   scenarios,
   submissions,
@@ -42,6 +43,7 @@ function cleanupTestData() {
   db.delete(rounds).run()
   db.delete(tournaments).run()
   db.delete(playgroundRuns).run()
+  db.delete(presetOpponents).run()
   db.delete(submissions).run()
   db.delete(users).run()
   db.delete(scenarios).where(eq(scenarios.id, TEST_SCENARIO_ID)).run()
@@ -199,6 +201,33 @@ describe('getLatestScenarioPlayers', () => {
 
     expect(players).toHaveLength(4)
     expect(players.map((player) => player.userId)).toEqual([1, 2, 3, 4])
+    expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3, 4])
+  })
+
+  it('excludes retired submissions from current pairings', () => {
+    db.update(submissions)
+      .set({ retiredAt: '2026-04-09 12:00:00' })
+      .where(eq(submissions.id, 4))
+      .run()
+
+    const players = getLatestScenarioPlayers(TEST_SCENARIO_ID)
+
+    expect(players).toHaveLength(3)
+    expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3])
+  })
+
+  it('keeps later-retired submissions in historical snapshots', () => {
+    db.update(submissions)
+      .set({ retiredAt: '2026-04-09 12:00:00' })
+      .where(eq(submissions.id, 4))
+      .run()
+
+    const players = getLatestScenarioPlayers(
+      TEST_SCENARIO_ID,
+      '2026-04-09 11:00:00',
+    )
+
+    expect(players).toHaveLength(4)
     expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3, 4])
   })
 })
@@ -437,5 +466,29 @@ describe('advanceToNextRound', () => {
     // Second call fails (currentRound already advanced)
     const result2 = advanceToNextRound(tournament.id)
     expect(result2).toBeNull()
+  })
+
+  it('returns null when tournament participants have been archived', () => {
+    const tournament = createTestTournament()
+    const { round } = createRoundWithMatches({
+      pairs: [
+        [1, 2],
+        [3, 4],
+      ],
+      roundNumber: 1,
+      scenarioId: TEST_SCENARIO_ID,
+      tournamentId: tournament.id,
+    })
+
+    scoreAllMatchesInRound(round.id)
+    syncRoundStatus(round.id)
+    db.update(submissions)
+      .set({ retiredAt: '2026-04-09 12:00:00' })
+      .where(eq(submissions.id, 4))
+      .run()
+
+    const result = advanceToNextRound(tournament.id)
+
+    expect(result).toBeNull()
   })
 })

@@ -91,6 +91,7 @@ export const submissions = sqliteTable(
     promptA: text('prompt_a').notNull(),
     promptB: text('prompt_b').notNull(),
     model: text('model').notNull(),
+    retiredAt: text('retired_at'),
     version: integer('version').notNull(),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },

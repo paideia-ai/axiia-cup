@@ -1207,6 +1207,7 @@ export function PlaygroundPage() {
         : null,
     [submission],
   )
+  const isSubmissionRetired = Boolean(submission?.retiredAt)
 
   const activeRunId = activeSession?.runId ?? activeSession?.run?.id ?? null
   const isRunning = activeSession?.status === 'running'
@@ -1248,6 +1249,12 @@ export function PlaygroundPage() {
       </div>
 
       {error ? <p className="text-sm text-(--accent)">{error}</p> : null}
+      {isSubmissionRetired ? (
+        <p className="text-sm text-(--foreground-muted)">
+          该 Submission
+          关联的模型已退役。你仍然可以查看历史记录，但不能再次运行试炼场。
+        </p>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         {/* ── Left: Main content area ── */}
@@ -1362,11 +1369,17 @@ export function PlaygroundPage() {
               <Button
                 className="w-full"
                 disabled={
-                  isRunning || (opponentMode === 'preset' && !selectedPresetId)
+                  isSubmissionRetired ||
+                  isRunning ||
+                  (opponentMode === 'preset' && !selectedPresetId)
                 }
                 onClick={handleRun}
               >
-                {isRunning ? '对战进行中...' : '运行对战'}
+                {isSubmissionRetired
+                  ? '该版本已封存'
+                  : isRunning
+                    ? '对战进行中...'
+                    : '运行对战'}
               </Button>
 
               <Accordion className="rounded-xl border border-(--border-soft) px-3">

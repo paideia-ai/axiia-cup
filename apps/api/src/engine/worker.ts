@@ -220,6 +220,23 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       return
     }
 
+    if (submission.retiredAt) {
+      db.update(playgroundRuns)
+        .set({
+          error: 'Submission is archived and cannot be executed',
+          leaseToken: null,
+          status: 'error',
+        })
+        .where(
+          and(
+            eq(playgroundRuns.id, runId),
+            eq(playgroundRuns.leaseToken, leaseToken),
+          ),
+        )
+        .run()
+      return
+    }
+
     // Resolve actual prompts based on opponent mode
     let promptA = submission.promptA
     let promptB = submission.promptB

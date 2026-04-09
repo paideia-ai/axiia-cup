@@ -7,7 +7,7 @@ import {
   tournamentMatchSummarySchema,
   tournamentRoundSchema,
 } from '@axiia/shared'
-import { and, asc, desc, eq, lte } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, lte, or } from 'drizzle-orm'
 
 import { db, type DbTransaction } from '../db/client'
 import {
@@ -34,17 +34,26 @@ export function getLatestScenarioPlayers(
   scenarioId: string,
   beforeCreatedAt?: string,
 ) {
+  const availabilityClause = beforeCreatedAt
+    ? or(
+        isNull(submissions.retiredAt),
+        gt(submissions.retiredAt, beforeCreatedAt),
+      )
+    : isNull(submissions.retiredAt)
+
   const whereClause = beforeCreatedAt
     ? and(
         eq(submissions.scenarioId, scenarioId),
         eq(users.isAdmin, false),
         eq(users.disabled, false),
         lte(submissions.createdAt, beforeCreatedAt),
+        availabilityClause,
       )
     : and(
         eq(submissions.scenarioId, scenarioId),
         eq(users.isAdmin, false),
         eq(users.disabled, false),
+        availabilityClause,
       )
 
   const rows = db
@@ -78,6 +87,23 @@ export function getLatestScenarioPlayers(
   return [...latestByUser.values()].sort(
     (left, right) => left.userId - right.userId,
   )
+}
+
+function hasArchivedParticipants(submissionIds: number[]) {
+  if (submissionIds.length === 0) {
+    return false
+  }
+
+  const participantRows = db
+    .select({
+      id: submissions.id,
+      retiredAt: submissions.retiredAt,
+    })
+    .from(submissions)
+    .where(inArray(submissions.id, submissionIds))
+    .all()
+
+  return participantRows.some((row) => row.retiredAt !== null)
 }
 
 export function getTournamentPlayers(tournament: TournamentRecord) {
@@ -558,6 +584,11 @@ export function advanceToNextRound(tournamentId: number) {
     leaderboard.map((entry) => [entry.submissionId, entry.wins]),
   )
   const playerIds = players.map((player) => player.submissionId)
+
+  if (hasArchivedParticipants(playerIds)) {
+    return null
+  }
+
   const pairs = swissPair({
     playerIds,
     previousPairings: buildPreviousPairings(tournamentId),
