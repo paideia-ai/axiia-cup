@@ -103,6 +103,7 @@ function seedTestData() {
         promptB: 'b',
         model: 'kimi-k2.5',
         version: 1,
+        createdAt: '2026-04-09 10:00:00',
       },
       {
         id: 2,
@@ -112,6 +113,7 @@ function seedTestData() {
         promptB: 'b',
         model: 'kimi-k2.5',
         version: 1,
+        createdAt: '2026-04-09 10:00:00',
       },
       {
         id: 3,
@@ -121,6 +123,7 @@ function seedTestData() {
         promptB: 'b',
         model: 'kimi-k2.5',
         version: 1,
+        createdAt: '2026-04-09 10:00:00',
       },
       {
         id: 4,
@@ -130,6 +133,7 @@ function seedTestData() {
         promptB: 'b',
         model: 'kimi-k2.5',
         version: 1,
+        createdAt: '2026-04-09 10:00:00',
       },
     ])
     .run()

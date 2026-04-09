@@ -38,6 +38,7 @@ export type ChatCompletionTrace = {
   playgroundRunId?: number
   side: LlmCallSide
   turnIndex?: number | null
+  userId?: number | null
 }
 
 function getClient() {
@@ -101,6 +102,27 @@ function safeStringify(value: unknown) {
   }
 }
 
+function extractTokenUsage(responseJson: string | null): {
+  promptTokens: number | null
+  completionTokens: number | null
+} {
+  if (!responseJson) {
+    return { promptTokens: null, completionTokens: null }
+  }
+
+  try {
+    const parsed = JSON.parse(responseJson) as {
+      usage?: { prompt_tokens?: number; completion_tokens?: number }
+    }
+    return {
+      promptTokens: parsed.usage?.prompt_tokens ?? null,
+      completionTokens: parsed.usage?.completion_tokens ?? null,
+    }
+  } catch {
+    return { promptTokens: null, completionTokens: null }
+  }
+}
+
 async function persistLlmCall(
   trace: ChatCompletionTrace | undefined,
   record: {
@@ -118,22 +140,28 @@ async function persistLlmCall(
 
   try {
     const { db } = await getDbModule()
+    const { promptTokens, completionTokens } = extractTokenUsage(
+      record.responseJson,
+    )
 
     db.insert(llmCalls)
       .values({
         attempt: trace.attempt ?? 1,
+        completionTokens,
         durationMs: record.durationMs,
         error: record.error,
         matchId: trace.matchId,
         model: record.model,
         phase: trace.phase,
         playgroundRunId: trace.playgroundRunId,
+        promptTokens,
         provider: LLM_PROVIDER,
         requestJson: record.requestJson,
         responseContent: record.responseContent,
         responseJson: record.responseJson,
         side: trace.side,
         turnIndex: trace.turnIndex ?? null,
+        userId: trace.userId ?? null,
       })
       .run()
   } catch (error) {

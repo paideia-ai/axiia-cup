@@ -3,6 +3,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
 import { AdminPage } from './pages/admin-page'
+import { AdminMonitorPage } from './pages/admin/admin-monitor-page'
+import { AdminPlayersPage } from './pages/admin/admin-players-page'
+import { AdminSettingsPage } from './pages/admin/admin-settings-page'
+import { AdminTournamentsPage } from './pages/admin/admin-tournaments-page'
 import { AdminScenarioEditPage } from './pages/admin-scenario-edit'
 import ComponentPlaygroundPage from './pages/component-playground-page'
 import { DashboardPage } from './pages/dashboard-page'
@@ -52,20 +56,26 @@ function ProtectedShell() {
         <Route
           path="/admin"
           element={
-            user?.isAdmin ? <AdminPage /> : <Navigate replace to="/dashboard" />
+            user?.isAdmin ? <AdminPage /> : <Navigate replace to="/scenarios" />
           }
-        />
+        >
+          <Route index element={<Navigate replace to="tournaments" />} />
+          <Route path="tournaments" element={<AdminTournamentsPage />} />
+          <Route path="players" element={<AdminPlayersPage />} />
+          <Route path="monitor" element={<AdminMonitorPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
+        </Route>
         <Route
           path="/admin/scenarios/:scenarioId"
           element={
             user?.isAdmin ? (
               <AdminScenarioEditPage />
             ) : (
-              <Navigate replace to="/dashboard" />
+              <Navigate replace to="/scenarios" />
             )
           }
         />
-        <Route path="*" element={<Navigate replace to="/dashboard" />} />
+        <Route path="*" element={<Navigate replace to="/scenarios" />} />
       </Routes>
     </AppShell>
   )
@@ -84,7 +94,7 @@ export function AppRouter() {
             isLoading ? (
               <div />
             ) : user ? (
-              <Navigate replace to="/dashboard" />
+              <Navigate replace to="/scenarios" />
             ) : (
               <LoginPage />
             )
@@ -96,7 +106,7 @@ export function AppRouter() {
             isLoading ? (
               <div />
             ) : user ? (
-              <Navigate replace to="/dashboard" />
+              <Navigate replace to="/scenarios" />
             ) : (
               <RegisterPage />
             )

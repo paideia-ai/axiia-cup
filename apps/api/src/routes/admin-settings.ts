@@ -1,10 +1,17 @@
 import {
   registrationCodeResponseSchema,
+  tokenSoftCapResponseSchema,
   updateRegistrationCodeSchema,
+  updateTokenSoftCapSchema,
 } from '@axiia/shared'
 import { Hono } from 'hono'
 
-import { getRegistrationCode, setRegistrationCode } from '../lib/settings'
+import {
+  getRegistrationCode,
+  getTokenSoftCap,
+  setRegistrationCode,
+  setTokenSoftCap,
+} from '../lib/settings'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
 
@@ -38,6 +45,39 @@ adminSettingsRouter.put(
     const code = setRegistrationCode(parsed.data.code)
 
     return context.json(registrationCodeResponseSchema.parse({ code }))
+  },
+)
+
+adminSettingsRouter.get(
+  '/api/admin/settings/token-soft-cap',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    return context.json(
+      tokenSoftCapResponseSchema.parse({
+        cap: getTokenSoftCap(),
+      }),
+    )
+  },
+)
+
+adminSettingsRouter.put(
+  '/api/admin/settings/token-soft-cap',
+  requireAuth,
+  requireAdmin,
+  async (context) => {
+    const json = await context.req.json().catch(() => null)
+    const parsed = updateTokenSoftCapSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return context.json({ error: 'Invalid request body' }, 400)
+    }
+
+    setTokenSoftCap(parsed.data.cap)
+
+    return context.json(
+      tokenSoftCapResponseSchema.parse({ cap: getTokenSoftCap() }),
+    )
   },
 )
 

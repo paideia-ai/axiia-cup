@@ -16,6 +16,7 @@ import {
   users,
 } from '../db/schema'
 import { getLeaderboard } from '../lib/tournaments'
+import { resolveUserId } from '../lib/resolve-user'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
 
@@ -26,7 +27,7 @@ const matchUserA = alias(users, 'match_user_a')
 const matchUserB = alias(users, 'match_user_b')
 
 statsRouter.get('/api/stats/me', requireAuth, (context) => {
-  const userId = context.get('userId')
+  const userId = resolveUserId(context)
   const userSubmissions = db
     .select({
       id: submissions.id,
@@ -157,7 +158,7 @@ statsRouter.get('/api/admin/stats', requireAuth, requireAdmin, (context) => {
 })
 
 statsRouter.get('/api/matches/my', requireAuth, (context) => {
-  const userId = context.get('userId')
+  const userId = resolveUserId(context)
   const recentMatchRows = db
     .select({
       createdAt: matches.createdAt,

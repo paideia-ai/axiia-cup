@@ -17,7 +17,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!isLoading && user) {
-    return <Navigate replace to="/dashboard" />
+    return <Navigate replace to="/scenarios" />
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +28,7 @@ export function LoginPage() {
     try {
       const response = await loginRequest({ email, password })
       login(response)
-      navigate('/dashboard', { replace: true })
+      navigate('/scenarios', { replace: true })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '登录失败',
@@ -75,7 +75,7 @@ export function LoginPage() {
                   disabled={isSubmitting}
                   type="submit"
                 >
-                  {isSubmitting ? '登录中…' : '进入控制台'}
+                  {isSubmitting ? '登录中…' : '进入工坊'}
                 </Button>
               </form>
             </CardContent>

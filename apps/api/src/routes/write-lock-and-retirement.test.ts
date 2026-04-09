@@ -42,6 +42,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   db.delete(schema.appSettings).run()
+  db.delete(schema.llmCalls).run()
   db.delete(schema.matches).run()
   db.delete(schema.rounds).run()
   db.delete(schema.tournaments).run()

@@ -17,6 +17,7 @@ import {
 } from '../db/schema'
 import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
+import { resolveUserId } from '../lib/resolve-user'
 import { requireAuth } from '../middleware/requireAuth'
 import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 
@@ -126,7 +127,7 @@ playgroundRouter.get(
   '/api/playground/runs/:submissionId',
   requireAuth,
   async (context) => {
-    const userId = context.get('userId')
+    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
 
     if (!submissionId) {
@@ -177,7 +178,7 @@ playgroundRouter.get(
   '/api/playground/runs/:submissionId/:runId',
   requireAuth,
   async (context) => {
-    const userId = context.get('userId')
+    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
     const runId = parseId(context.req.param('runId'))
 

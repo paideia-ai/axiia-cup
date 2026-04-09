@@ -26,6 +26,8 @@ const llmCallPhases = [
   'scoring',
 ] as const
 const llmCallSides = ['a', 'b', 'judge', 'scorer'] as const
+// NOTE: CHECK constraints in DB updated in 0005_llm_calls_telemetry.sql
+// to match these enums (previously missing 'scoring' and 'scorer').
 
 const currentTimestamp = sql`CURRENT_TIMESTAMP`
 
@@ -246,6 +248,7 @@ export const llmCalls = sqliteTable(
     playgroundRunId: integer('playground_run_id').references(
       () => playgroundRuns.id,
     ),
+    userId: integer('user_id').references(() => users.id),
     phase: text('phase', { enum: llmCallPhases }).notNull(),
     side: text('side', { enum: llmCallSides }).notNull(),
     turnIndex: integer('turn_index'),
@@ -257,6 +260,8 @@ export const llmCalls = sqliteTable(
     responseContent: text('response_content'),
     error: text('error'),
     durationMs: integer('duration_ms').notNull(),
+    promptTokens: integer('prompt_tokens'),
+    completionTokens: integer('completion_tokens'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({
@@ -264,13 +269,14 @@ export const llmCalls = sqliteTable(
     playgroundRunIdx: index('llm_calls_playground_run_id_idx').on(
       table.playgroundRunId,
     ),
+    userIdx: index('llm_calls_user_id_idx').on(table.userId),
     phaseCheck: check(
       'llm_calls_phase_check',
-      sql`${table.phase} in ('dialogue', 'examination', 'judgment')`,
+      sql`${table.phase} in ('dialogue', 'examination', 'judgment', 'scoring')`,
     ),
     sideCheck: check(
       'llm_calls_side_check',
-      sql`${table.side} in ('a', 'b', 'judge')`,
+      sql`${table.side} in ('a', 'b', 'judge', 'scorer')`,
     ),
     attemptCheck: check('llm_calls_attempt_check', sql`${table.attempt} > 0`),
     durationCheck: check(

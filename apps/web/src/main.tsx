@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import App from './app'
 import { AuthProvider } from './context/auth'
+import { ImpersonationProvider } from './context/impersonation'
 import './styles.css'
 
 const rootElement = document.getElementById('root')
@@ -13,8 +14,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <ImpersonationProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </ImpersonationProvider>
   </StrictMode>,
 )

@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 
 import { db, sqlite } from '../db/client'
 import { scenarios, submissions, tournaments } from '../db/schema'
+import { resolveUserId } from '../lib/resolve-user'
 import { requireAuth } from '../middleware/requireAuth'
 import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 
@@ -29,7 +30,7 @@ function isUniqueConstraintError(error: unknown) {
 const submissionsRouter = new Hono()
 
 submissionsRouter.get('/api/submissions/my', requireAuth, (context) => {
-  const userId = context.get('userId')
+  const userId = resolveUserId(context)
   const rows = db
     .select(submissionSelection)
     .from(submissions)
@@ -44,7 +45,7 @@ submissionsRouter.get(
   '/api/submissions/my/:scenarioId',
   requireAuth,
   (context) => {
-    const userId = context.get('userId')
+    const userId = resolveUserId(context)
     const scenarioId = context.req.param('scenarioId')
     const rows = db
       .select(submissionSelection)

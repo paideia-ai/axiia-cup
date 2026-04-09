@@ -315,8 +315,8 @@ export function ScenarioDetailPage() {
           <p className="page-eyebrow">Scenario</p>
           <h1 className="page-title">{scenario.title}</h1>
           <p className="page-subtitle">
-            你只需编写每个角色的策略提示词。系统会先渲染该角色看到的世界，再把你的策略提示词直接拼到
-            System Prompt 末尾。
+            你需要编写两个角色的策略提示词。系统会先将预设的角色提示词与你的提示词拼接为
+            System Prompt。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -506,11 +506,9 @@ export function ScenarioDetailPage() {
                     <TabsTrigger value="b">{scenario.roleBName}</TabsTrigger>
                   </TabsList>
 
-                  <div className="space-y-3 rounded-xl border border-(--border-soft) bg-white/2 p-4">
-                    <pre className="whitespace-pre-wrap rounded-lg bg-[rgba(255,255,255,0.03)] p-3 text-[11px] leading-5 text-(--foreground-subtle) font-mono">
-                      {promptTemplatePreview}
-                    </pre>
-                  </div>
+                  <pre className="whitespace-pre-wrap rounded-lg bg-[rgba(255,255,255,0.03)] p-3 text-[11px] leading-5 text-(--foreground-subtle) font-mono">
+                    {promptTemplatePreview}
+                  </pre>
 
                   <TabsContent value="a" className="space-y-1.5">
                     <Textarea

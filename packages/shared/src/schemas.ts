@@ -109,6 +109,14 @@ export const updateRegistrationCodeSchema = z.object({
   code: z.string().trim().min(1),
 })
 
+export const tokenSoftCapResponseSchema = z.object({
+  cap: z.number().int().positive(),
+})
+
+export const updateTokenSoftCapSchema = z.object({
+  cap: z.number().int().positive().max(100_000_000),
+})
+
 function validateUniqueIds(
   items: { id: string }[],
   path: string,
@@ -568,6 +576,22 @@ export const adminStatsSchema = z.object({
   scored: z.number().int().nonnegative(),
 })
 
+export const adminMonitorUserSchema = z.object({
+  userId: z.number().int().positive(),
+  displayName: z.string(),
+  email: z.string(),
+  disabled: z.boolean(),
+  submissionCount: z.number().int().nonnegative(),
+  latestVersion: z.number().int().nonnegative().nullable(),
+  playgroundRunCount: z.number().int().nonnegative(),
+  matchCount: z.number().int().nonnegative(),
+  totalPromptTokens: z.number().int().nonnegative(),
+  totalCompletionTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+  lastActiveAt: z.string().nullable(),
+  isOverSoftCap: z.boolean(),
+})
+
 export const adminErroredMatchSchema = z.object({
   id: z.number().int().positive(),
   tournamentId: z.number().int().positive(),
@@ -637,6 +661,7 @@ export type PlaygroundRun = z.infer<typeof playgroundRunSchema>
 export type PlaygroundRunStart = z.infer<typeof playgroundRunStartSchema>
 export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>
+export type AdminMonitorUser = z.infer<typeof adminMonitorUserSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
 export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
 export type AdminUser = z.infer<typeof adminUserSchema>
@@ -646,6 +671,7 @@ export type AppMeta = z.infer<typeof appMetaSchema>
 export type RegistrationCodeResponse = z.infer<
   typeof registrationCodeResponseSchema
 >
+export type TokenSoftCapResponse = z.infer<typeof tokenSoftCapResponseSchema>
 export type User = z.infer<typeof userSchema>
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>

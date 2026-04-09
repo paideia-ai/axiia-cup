@@ -330,6 +330,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       promptB,
       scenario,
       transcript,
+      userIdA: submission.userId,
+      userIdB: submission.userId,
     })
 
     await persist({

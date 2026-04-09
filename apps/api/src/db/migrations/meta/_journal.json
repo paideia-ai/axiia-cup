@@ -36,6 +36,13 @@
       "when": 1775806800000,
       "tag": "0004_submission_retirement",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1775900000000,
+      "tag": "0005_llm_calls_telemetry",
+      "breakpoints": true
     }
   ]
 }

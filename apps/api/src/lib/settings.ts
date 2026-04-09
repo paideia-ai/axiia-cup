@@ -47,3 +47,15 @@ export function isWriteLocked() {
 export function setWriteLock(locked: boolean) {
   return setSetting(WRITE_LOCK_KEY, locked ? '1' : '0') === '1'
 }
+
+const TOKEN_SOFT_CAP_KEY = 'tokenSoftCap'
+
+export function getTokenSoftCap(): number {
+  const value = getSetting(TOKEN_SOFT_CAP_KEY)
+  const parsed = value ? Number(value) : Number.NaN
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 500_000
+}
+
+export function setTokenSoftCap(cap: number) {
+  return setSetting(TOKEN_SOFT_CAP_KEY, String(cap))
+}

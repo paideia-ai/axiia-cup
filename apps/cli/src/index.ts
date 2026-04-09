@@ -1,4 +1,5 @@
 import {
+  type AdminMonitorUser,
   type AdminPlayer,
   type AdminScenario,
   type AdminUser,
@@ -929,6 +930,170 @@ program
       })
     },
   )
+
+function formatTokens(tokens: number) {
+  if (tokens >= 1_000_000) {
+    return `${(tokens / 1_000_000).toFixed(1)}M`
+  }
+
+  if (tokens >= 1_000) {
+    return `${(tokens / 1_000).toFixed(1)}K`
+  }
+
+  return String(tokens)
+}
+
+function timeAgo(isoDate: string) {
+  const diff = Date.now() - new Date(isoDate).getTime()
+  const minutes = Math.floor(diff / 60_000)
+
+  if (minutes < 1) {
+    return '刚刚'
+  }
+
+  if (minutes < 60) {
+    return `${minutes}分钟前`
+  }
+
+  const hours = Math.floor(minutes / 60)
+
+  if (hours < 24) {
+    return `${hours}小时前`
+  }
+
+  const days = Math.floor(hours / 24)
+  return `${days}天前`
+}
+
+program
+  .command('monitor')
+  .description('查看所有玩家活动概览')
+  .option('--json', 'print JSON instead of table')
+  .action(async (options: { json?: boolean }) => {
+    const users = await apiFetch<AdminMonitorUser[]>(
+      '/api/admin/monitor/users',
+      { method: 'GET' },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(users)
+      return
+    }
+
+    if (users.length === 0) {
+      console.log('暂无玩家数据')
+      return
+    }
+
+    console.table(
+      users.map((user) => ({
+        id: user.userId,
+        name: user.displayName,
+        submissions: user.submissionCount,
+        playground: user.playgroundRunCount,
+        matches: user.matchCount,
+        tokens: formatTokens(user.totalTokens),
+        lastActive: user.lastActiveAt ? timeAgo(user.lastActiveAt) : '—',
+        alert: user.isOverSoftCap ? '⚠ 超限' : '',
+      })),
+    )
+  })
+
+program
+  .command('monitor:player')
+  .description('查看单个玩家详情（模拟玩家视角）')
+  .argument('<userId>', 'user id')
+  .option('--json', 'print JSON instead of text')
+  .action(async (userIdArg: string, options: { json?: boolean }) => {
+    const userId = parseId(userIdArg)
+
+    if (!userId) {
+      throw new Error('Invalid user id')
+    }
+
+    const [monitorData, stats, submissions, recentMatches] = await Promise.all([
+      apiFetch<AdminMonitorUser[]>(
+        '/api/admin/monitor/users',
+        { method: 'GET' },
+        true,
+      ),
+      apiFetch<Record<string, unknown>>(
+        `/api/stats/me?asUserId=${userId}`,
+        { method: 'GET' },
+        true,
+      ),
+      apiFetch<Array<Record<string, unknown>>>(
+        `/api/submissions/my?asUserId=${userId}`,
+        { method: 'GET' },
+        true,
+      ),
+      apiFetch<Array<Record<string, unknown>>>(
+        `/api/matches/my?asUserId=${userId}`,
+        { method: 'GET' },
+        true,
+      ),
+    ])
+
+    const userMonitor = monitorData.find((u) => u.userId === userId)
+
+    if (options.json) {
+      writeJsonOutput({
+        monitor: userMonitor ?? null,
+        stats,
+        submissions,
+        recentMatches,
+      })
+      return
+    }
+
+    if (!userMonitor) {
+      console.log(`用户 ${userId} 未找到`)
+      return
+    }
+
+    console.log(`\n  玩家: ${userMonitor.displayName} (${userMonitor.email})`)
+    console.log(`  状态: ${userMonitor.disabled ? '已禁用' : '正常'}`)
+    console.log(`  提交版本数: ${userMonitor.submissionCount}`)
+    console.log(`  试炼场次数: ${userMonitor.playgroundRunCount}`)
+    console.log(`  正式对战数: ${userMonitor.matchCount}`)
+    console.log(
+      `  Token 消耗: ${formatTokens(userMonitor.totalTokens)} (prompt: ${formatTokens(userMonitor.totalPromptTokens)}, completion: ${formatTokens(userMonitor.totalCompletionTokens)})`,
+    )
+    console.log(
+      `  最近活跃: ${userMonitor.lastActiveAt ? timeAgo(userMonitor.lastActiveAt) : '—'}`,
+    )
+
+    if (userMonitor.isOverSoftCap) {
+      console.log(`  ⚠ 已超出 Token 软上限`)
+    }
+
+    if (submissions.length > 0) {
+      console.log(`\n  最近提交:`)
+      console.table(
+        submissions.slice(0, 5).map((sub) => ({
+          version: sub.version,
+          model: sub.model,
+          createdAt: sub.createdAt,
+        })),
+      )
+    }
+
+    if (recentMatches.length > 0) {
+      console.log(`  最近对战:`)
+      console.table(
+        recentMatches.slice(0, 5).map((match) => ({
+          id: match.id,
+          opponent: match.opponentName,
+          mySide: match.mySide,
+          winner: match.winner,
+          status: match.status,
+        })),
+      )
+    }
+
+    console.log()
+  })
 
 program.parseAsync().catch((error) => {
   console.error(error instanceof Error ? error.message : 'Unknown CLI error')

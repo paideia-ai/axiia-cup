@@ -42,6 +42,8 @@ type MatchExecutionParams = {
   promptB: string
   scenario: ScenarioRecord
   transcript?: TranscriptTurn[]
+  userIdA?: number
+  userIdB?: number
 }
 
 export type MatchExecutionResult = {
@@ -446,7 +448,10 @@ async function getExaminationAnswer(
   assignment: InfoAssignment,
   submissionPrompt: string,
   model: ModelId,
-  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
+  traceTarget: Pick<
+    ChatCompletionTrace,
+    'matchId' | 'playgroundRunId' | 'userId'
+  >,
 ): Promise<JudgeQA> {
   const validIds = getExaminationValidIds(scenario, roleSide)
   const rawAnswer = await withRetry(async (attempt) => {
@@ -523,7 +528,10 @@ async function getJudgeDecision(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
+  traceTarget: Pick<
+    ChatCompletionTrace,
+    'matchId' | 'playgroundRunId' | 'userId'
+  >,
 ): Promise<string> {
   const debateText =
     transcript.length > 0
@@ -640,7 +648,10 @@ async function getScoreFromScorer(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<ChatCompletionTrace, 'matchId' | 'playgroundRunId'>,
+  traceTarget: Pick<
+    ChatCompletionTrace,
+    'matchId' | 'playgroundRunId' | 'userId'
+  >,
 ): Promise<{
   scoreA: number
   scoreB: number
@@ -747,6 +758,7 @@ export async function executeMatchSession(
           playgroundRunId: params.playgroundRunId,
           side: speaker,
           turnIndex,
+          userId: speaker === 'a' ? params.userIdA : params.userIdB,
         },
       }),
     )
@@ -785,6 +797,7 @@ export async function executeMatchSession(
         {
           matchId: params.matchId,
           playgroundRunId: params.playgroundRunId,
+          userId: params.userIdA,
         },
       )
 
@@ -805,6 +818,7 @@ export async function executeMatchSession(
         {
           matchId: params.matchId,
           playgroundRunId: params.playgroundRunId,
+          userId: params.userIdB,
         },
       )
 

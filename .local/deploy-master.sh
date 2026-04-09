@@ -261,6 +261,9 @@ unlock_write_lock() {
 cd "$app_dir"
 require_remote_cmd python3
 
+echo "Building images before enabling write lock..."
+"${compose_cmd[@]}" build
+
 if [[ -f "$db_file" ]]; then
   echo "Enabling write lock..."
   set_write_lock 1
@@ -270,8 +273,6 @@ if [[ -f "$db_file" ]]; then
 else
   echo "SQLite database not found at $db_file; skipping write lock and active-task drain."
 fi
-
-"${compose_cmd[@]}" build
 
 if [[ "$reset_data" == "1" ]]; then
   echo "Resetting SQLite data..."

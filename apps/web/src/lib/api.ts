@@ -1,4 +1,5 @@
 import {
+  adminMonitorUserSchema,
   adminScenarioSchema,
   adminErroredMatchSchema,
   adminPlayerSchema,
@@ -16,6 +17,8 @@ import {
   recentMatchSchema,
   registrationCodeResponseSchema,
   resetPasswordSchema,
+  tokenSoftCapResponseSchema,
+  updateTokenSoftCapSchema,
   scenarioSchema,
   submissionSchema,
   tournamentDetailSchema,
@@ -30,6 +33,7 @@ import {
   presetOpponentSchema,
   createPresetOpponentSchema,
   updatePresetOpponentSchema,
+  type AdminMonitorUser,
   type AdminScenario,
   type AdminErroredMatch,
   type AdminStats,
@@ -45,6 +49,7 @@ import {
   type PresetOpponent,
   type RegistrationCodeResponse,
   type RecentMatch,
+  type TokenSoftCapResponse,
   type Scenario,
   type Submission,
   type TournamentDetail,
@@ -54,6 +59,8 @@ import {
   type User,
 } from '@axiia/shared'
 import { z } from 'zod'
+
+import { getCurrentAsUserId } from '../context/impersonation'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 const TOKEN_STORAGE_KEY = 'axiia-token'
@@ -71,6 +78,7 @@ const tournamentsResponseSchema = z.array(tournamentListItemSchema)
 const recentMatchesResponseSchema = z.array(recentMatchSchema)
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema)
 const presetOpponentsResponseSchema = z.array(presetOpponentSchema)
+const adminMonitorUsersResponseSchema = z.array(adminMonitorUserSchema)
 const adminPlayersResponseSchema = z.array(adminPlayerSchema)
 const adminErroredMatchesResponseSchema = z.array(adminErroredMatchSchema)
 const adminUsersResponseSchema = z.array(adminUserSchema)
@@ -107,6 +115,26 @@ export class ApiError extends Error {
   }
 }
 
+const IMPERSONATABLE_PATH_PATTERNS = [
+  /^\/api\/stats\/me(?:$|\?)/,
+  /^\/api\/matches\/my(?:$|\?)/,
+  /^\/api\/submissions\/my(?:$|\/|\?)/,
+  /^\/api\/playground\/runs\/\d+(?:\/\d+)?(?:$|\?)/,
+]
+
+function isImpersonatablePath(path: string): boolean {
+  return IMPERSONATABLE_PATH_PATTERNS.some((pattern) => pattern.test(path))
+}
+
+function withImpersonation(path: string): string {
+  const asUserId = getCurrentAsUserId()
+  if (asUserId == null || !isImpersonatablePath(path)) {
+    return path
+  }
+  const separator = path.includes('?') ? '&' : '?'
+  return `${path}${separator}asUserId=${asUserId}`
+}
+
 async function apiFetch<T>(
   path: string,
   init?: RequestInit,
@@ -123,7 +151,9 @@ async function apiFetch<T>(
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const finalPath = withImpersonation(path)
+
+  const response = await fetch(`${API_BASE_URL}${finalPath}`, {
     ...init,
     headers,
   })
@@ -341,6 +371,14 @@ export async function getMyStats(): Promise<PersonalStats> {
   return apiFetch('/api/stats/me', { method: 'GET' }, personalStatsSchema)
 }
 
+export async function getAdminMonitorUsers(): Promise<AdminMonitorUser[]> {
+  return apiFetch(
+    '/api/admin/monitor/users',
+    { method: 'GET' },
+    adminMonitorUsersResponseSchema,
+  )
+}
+
 export async function getAdminStats(): Promise<AdminStats> {
   return apiFetch('/api/admin/stats', { method: 'GET' }, adminStatsSchema)
 }
@@ -399,6 +437,29 @@ export async function getAdminRegistrationCode(): Promise<RegistrationCodeRespon
     '/api/admin/settings/registration-code',
     { method: 'GET' },
     registrationCodeResponseSchema,
+  )
+}
+
+export async function getAdminTokenSoftCap(): Promise<TokenSoftCapResponse> {
+  return apiFetch(
+    '/api/admin/settings/token-soft-cap',
+    { method: 'GET' },
+    tokenSoftCapResponseSchema,
+  )
+}
+
+export async function updateAdminTokenSoftCap(
+  input: z.input<typeof updateTokenSoftCapSchema>,
+): Promise<TokenSoftCapResponse> {
+  const body = updateTokenSoftCapSchema.parse(input)
+
+  return apiFetch(
+    '/api/admin/settings/token-soft-cap',
+    {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    },
+    tokenSoftCapResponseSchema,
   )
 }
 

@@ -128,6 +128,8 @@ export async function runMatch(
       promptB: subB.promptB,
       scenario,
       transcript,
+      userIdA: subA.userId,
+      userIdB: subB.userId,
     })
 
     await updateLeasedMatch(matchId, leaseToken, {
