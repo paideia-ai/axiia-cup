@@ -225,6 +225,22 @@ export function buildAgentSystemMessage(
   return interpolateTemplate(scenario.agentPromptTemplate, vars)
 }
 
+export function buildAgentRuntimeSystemPrompt(
+  scenario: ScenarioRecord,
+  roleSide: 'a' | 'b',
+  assignment: InfoAssignment,
+  userStrategyPrompt: string,
+): string {
+  const systemPrompt = buildAgentSystemMessage(scenario, roleSide, assignment)
+  const trimmedStrategyPrompt = userStrategyPrompt.trim()
+
+  if (trimmedStrategyPrompt.length === 0) {
+    return systemPrompt
+  }
+
+  return `${systemPrompt}\n\n${trimmedStrategyPrompt}`
+}
+
 /** Build the judge prompt with all available variables interpolated. */
 export function buildJudgePrompt(
   scenario: ScenarioRecord,
@@ -303,16 +319,19 @@ function buildDialogueContext(
   assignment: InfoAssignment,
   userStrategyPrompt: string,
 ) {
-  const systemPrompt = buildAgentSystemMessage(scenario, roleSide, assignment)
+  const systemPrompt = buildAgentRuntimeSystemPrompt(
+    scenario,
+    roleSide,
+    assignment,
+    userStrategyPrompt,
+  )
 
-  const messages: { role: 'user' | 'assistant'; content: string }[] = [
-    { role: 'user', content: userStrategyPrompt },
-    ...transcript.map((turn) => ({
+  const messages: { role: 'user' | 'assistant'; content: string }[] =
+    transcript.map((turn) => ({
       role:
         turn.speaker === roleSide ? ('assistant' as const) : ('user' as const),
       content: turn.content,
-    })),
-  ]
+    }))
 
   if (transcript.length === 0) {
     messages.push({ role: 'user', content: scenario.openingLine })

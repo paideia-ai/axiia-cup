@@ -6,6 +6,7 @@ process.env.SILICONFLOW_API_KEY = 'test-siliconflow-api-key'
 
 let sanitizeJsonResponse: (typeof import('./core'))['sanitizeJsonResponse']
 let buildAgentSystemMessage: (typeof import('./core'))['buildAgentSystemMessage']
+let buildAgentRuntimeSystemPrompt: (typeof import('./core'))['buildAgentRuntimeSystemPrompt']
 let buildJudgePrompt: (typeof import('./core'))['buildJudgePrompt']
 let buildExaminationQuestion: (typeof import('./core'))['buildExaminationQuestion']
 let randomizeInfoAssignment: (typeof import('./core'))['randomizeInfoAssignment']
@@ -15,6 +16,7 @@ beforeAll(async () => {
   const core = await import('./core')
   sanitizeJsonResponse = core.sanitizeJsonResponse
   buildAgentSystemMessage = core.buildAgentSystemMessage
+  buildAgentRuntimeSystemPrompt = core.buildAgentRuntimeSystemPrompt
   buildJudgePrompt = core.buildJudgePrompt
   buildExaminationQuestion = core.buildExaminationQuestion
   randomizeInfoAssignment = core.randomizeInfoAssignment
@@ -114,6 +116,27 @@ describe('buildAgentSystemMessage', () => {
     const message = buildAgentSystemMessage(scenario, 'a', assignment)
 
     expect(message).toContain(scenario.roleBName)
+  })
+})
+
+describe('buildAgentRuntimeSystemPrompt', () => {
+  const assignment = {
+    roleAFalseInfoIds: ['S2'],
+    roleBFalseInfoIds: ['G2'],
+    roleATrueRequestIds: ['SR1'],
+    roleBTrueRequestIds: ['GR1'],
+  }
+
+  it('appends the user strategy prompt to the system prompt body', () => {
+    const message = buildAgentRuntimeSystemPrompt(
+      scenario,
+      'a',
+      assignment,
+      '以下是你的行动策略：先稳住阵脚，再试探对手。',
+    )
+
+    expect(message).toContain('你是商鞅。')
+    expect(message).toContain('以下是你的行动策略：先稳住阵脚，再试探对手。')
   })
 })
 

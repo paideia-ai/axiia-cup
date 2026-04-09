@@ -10,7 +10,7 @@ import {
   submissions,
 } from '../db/schema'
 import { parseJsonField } from '../lib/json'
-import { executeMatchSession } from './core'
+import { executeMatchSession, randomizeInfoAssignment } from './core'
 import { runMatch } from './runner'
 import { registerWorkerKickHandler } from './worker-signal'
 
@@ -258,10 +258,12 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     transcript = parseJsonField<TranscriptTurn[]>(run.transcript, [])
     judgeTranscriptA = parseJsonField<JudgeQA[]>(run.judgeTranscriptA, [])
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
-    const infoAssignment = parseJsonField<InfoAssignment | null>(
+    const persistedInfoAssignment = parseJsonField<InfoAssignment | null>(
       run.infoAssignment,
       null,
     )
+    const infoAssignment =
+      persistedInfoAssignment ?? randomizeInfoAssignment(scenario)
 
     const persist = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
       db
@@ -275,11 +277,14 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
         )
         .run()
 
-    // Store actual prompts used at the start
-    await persist({ actualPromptA: promptA, actualPromptB: promptB })
+    await persist({
+      actualPromptA: promptA,
+      actualPromptB: promptB,
+      infoAssignment: JSON.stringify(infoAssignment),
+    })
 
     const result = await executeMatchSession({
-      infoAssignment: infoAssignment ?? undefined,
+      infoAssignment,
       judgeTranscriptA,
       judgeTranscriptB,
       modelA: submission.model,
