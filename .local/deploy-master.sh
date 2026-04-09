@@ -191,7 +191,7 @@ require_remote_cmd() {
 set_write_lock() {
   local locked=$1
 
-  python3 - "$db_file" "$locked" <<'PY'
+  sudo python3 - "$db_file" "$locked" <<'PY'
 import sqlite3
 import sys
 
@@ -213,7 +213,7 @@ PY
 }
 
 count_active_tasks() {
-  python3 - "$db_file" <<'PY'
+  sudo python3 - "$db_file" <<'PY'
 import sqlite3
 import sys
 
