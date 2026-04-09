@@ -18,8 +18,7 @@ import { Command } from 'commander'
 import { parseScenarioUpdateInput } from './scenario-update'
 
 const API_BASE_URL = process.env.AXIIA_API_URL ?? 'http://localhost:3001'
-const AUTH_TOKEN =
-  process.env.AXIIA_AUTH_TOKEN ?? process.env.AXIIA_ADMIN_TOKEN
+const AUTH_TOKEN = process.env.AXIIA_AUTH_TOKEN ?? process.env.AXIIA_ADMIN_TOKEN
 
 type AuthResponse = {
   token: string
@@ -505,68 +504,73 @@ program
   .description('查看赛事进度')
   .argument('[tournamentId]', 'tournament id')
   .option('--json', 'print JSON instead of table')
-  .action(async (tournamentIdArg: string | undefined, options: { json?: boolean }) => {
-    const tournamentId = await resolveTournamentId(tournamentIdArg)
-    const tournament = await apiFetch<TournamentDetail>(
-      `/api/tournaments/${tournamentId}`,
-      undefined,
-      true,
-    )
-    const currentRound = tournament.rounds.at(-1)
+  .action(
+    async (
+      tournamentIdArg: string | undefined,
+      options: { json?: boolean },
+    ) => {
+      const tournamentId = await resolveTournamentId(tournamentIdArg)
+      const tournament = await apiFetch<TournamentDetail>(
+        `/api/tournaments/${tournamentId}`,
+        undefined,
+        true,
+      )
+      const currentRound = tournament.rounds.at(-1)
 
-    if (!currentRound) {
+      if (!currentRound) {
+        if (options.json) {
+          writeJsonOutput({
+            currentRound: null,
+            errored: 0,
+            queued: 0,
+            running: 0,
+            scored: 0,
+            tournamentId: tournament.id,
+          })
+          return
+        }
+
+        console.log(`Tournament ${tournament.id} has no rounds yet`)
+        return
+      }
+
+      const queued = currentRound.matches.filter(
+        (match) => match.status === 'queued',
+      ).length
+      const running = currentRound.matches.filter(
+        (match) => match.status === 'running' || match.status === 'judging',
+      ).length
+      const scored = currentRound.matches.filter(
+        (match) => match.status === 'scored',
+      ).length
+      const errored = currentRound.matches.filter(
+        (match) => match.status === 'error',
+      ).length
+
       if (options.json) {
         writeJsonOutput({
-          currentRound: null,
-          errored: 0,
-          queued: 0,
-          running: 0,
-          scored: 0,
+          currentRound: currentRound.roundNumber,
+          errored,
+          queued,
+          running,
+          scored,
           tournamentId: tournament.id,
         })
         return
       }
 
-      console.log(`Tournament ${tournament.id} has no rounds yet`)
-      return
-    }
-
-    const queued = currentRound.matches.filter(
-      (match) => match.status === 'queued',
-    ).length
-    const running = currentRound.matches.filter(
-      (match) => match.status === 'running' || match.status === 'judging',
-    ).length
-    const scored = currentRound.matches.filter(
-      (match) => match.status === 'scored',
-    ).length
-    const errored = currentRound.matches.filter(
-      (match) => match.status === 'error',
-    ).length
-
-    if (options.json) {
-      writeJsonOutput({
-        currentRound: currentRound.roundNumber,
-        errored,
-        queued,
-        running,
-        scored,
-        tournamentId: tournament.id,
-      })
-      return
-    }
-
-    console.table([
-      {
-        currentRound: currentRound.roundNumber,
-        errored,
-        queued,
-        running,
-        scored,
-        tournamentId: tournament.id,
-      },
-    ])
-  })
+      console.table([
+        {
+          currentRound: currentRound.roundNumber,
+          errored,
+          queued,
+          running,
+          scored,
+          tournamentId: tournament.id,
+        },
+      ])
+    },
+  )
 
 program
   .command('next-round')
@@ -680,37 +684,39 @@ program
     '-f, --file <path>',
     'JSON file to read, or "-" to read from stdin',
   )
-  .action(async (scenarioId: string, options: { file: string; json?: boolean }) => {
-    const scenario = await fetchAdminScenarioById(scenarioId)
+  .action(
+    async (scenarioId: string, options: { file: string; json?: boolean }) => {
+      const scenario = await fetchAdminScenarioById(scenarioId)
 
-    if (scenario.locked) {
-      throw new Error('比赛进行中，场景已锁定，无法编辑')
-    }
+      if (scenario.locked) {
+        throw new Error('比赛进行中，场景已锁定，无法编辑')
+      }
 
-    const edited = parseScenarioUpdateInput(readJsonInput(options.file))
+      const edited = parseScenarioUpdateInput(readJsonInput(options.file))
 
-    const updated = await apiFetch<AdminScenario>(
-      `/api/admin/scenarios/${encodeURIComponent(scenarioId)}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify(edited),
-      },
-      true,
-    )
+      const updated = await apiFetch<AdminScenario>(
+        `/api/admin/scenarios/${encodeURIComponent(scenarioId)}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(edited),
+        },
+        true,
+      )
 
-    if (options.json) {
-      writeJsonOutput(updated)
-      return
-    }
+      if (options.json) {
+        writeJsonOutput(updated)
+        return
+      }
 
-    console.log(`场景「${updated.title}」已更新`)
-    console.table({
-      turnCount: updated.turnCount,
-      falseInfoCount: updated.falseInfoCount,
-      trueRequestCount: updated.trueRequestCount,
-      locked: updated.locked,
-    })
-  })
+      console.log(`场景「${updated.title}」已更新`)
+      console.table({
+        turnCount: updated.turnCount,
+        falseInfoCount: updated.falseInfoCount,
+        trueRequestCount: updated.trueRequestCount,
+        locked: updated.locked,
+      })
+    },
+  )
 
 program
   .command('users:list')

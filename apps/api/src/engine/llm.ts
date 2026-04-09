@@ -51,7 +51,10 @@ function getClient() {
   return _client
 }
 
-function getObservedClient(trace: ChatCompletionTrace | undefined, model: ModelId) {
+function getObservedClient(
+  trace: ChatCompletionTrace | undefined,
+  model: ModelId,
+) {
   const sessionId =
     trace?.matchId != null
       ? `match:${trace.matchId}`

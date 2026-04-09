@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
+import { JudgeDecisionPanel } from '../components/judge-decision-panel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { getMatch, getScenario, retryAdminMatch } from '../lib/api'
@@ -209,131 +210,132 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
-      {match.infoAssignment || match.judgeDecision ? (
-        <div className="grid gap-6 xl:grid-cols-2">
-          {match.infoAssignment && scenario ? (
-            <Card>
-              <CardHeader className="pb-0">
-                <CardTitle>本局信息分配</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-3">
-                {(
-                  [
-                    {
-                      falseIds: new Set(match.infoAssignment.roleAFalseInfoIds),
-                      hiddenInfo: scenario.roleAHiddenInfo,
-                      name: scenario.roleAName,
-                      requests: scenario.roleARequests,
-                      side: 'a' as const,
-                      trueRequestIds: new Set(
-                        match.infoAssignment.roleATrueRequestIds,
-                      ),
-                    },
-                    {
-                      falseIds: new Set(match.infoAssignment.roleBFalseInfoIds),
-                      hiddenInfo: scenario.roleBHiddenInfo,
-                      name: scenario.roleBName,
-                      requests: scenario.roleBRequests,
-                      side: 'b' as const,
-                      trueRequestIds: new Set(
-                        match.infoAssignment.roleBTrueRequestIds,
-                      ),
-                    },
-                  ] as const
-                ).map((role) => (
-                  <div
-                    key={role.side}
-                    className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+      <div className="grid gap-6 xl:grid-cols-2">
+        {match.infoAssignment && scenario ? (
+          <Card>
+            <CardHeader className="pb-0">
+              <CardTitle>本局信息分配</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-3">
+              {(
+                [
+                  {
+                    falseIds: new Set(match.infoAssignment.roleAFalseInfoIds),
+                    hiddenInfo: scenario.roleAHiddenInfo,
+                    name: scenario.roleAName,
+                    requests: scenario.roleARequests,
+                    side: 'a' as const,
+                    trueRequestIds: new Set(
+                      match.infoAssignment.roleATrueRequestIds,
+                    ),
+                  },
+                  {
+                    falseIds: new Set(match.infoAssignment.roleBFalseInfoIds),
+                    hiddenInfo: scenario.roleBHiddenInfo,
+                    name: scenario.roleBName,
+                    requests: scenario.roleBRequests,
+                    side: 'b' as const,
+                    trueRequestIds: new Set(
+                      match.infoAssignment.roleBTrueRequestIds,
+                    ),
+                  },
+                ] as const
+              ).map((role) => (
+                <div
+                  key={role.side}
+                  className="rounded-lg border border-(--border-soft) bg-white/2 p-3 space-y-2"
+                >
+                  <p
+                    className="text-xs font-semibold"
+                    style={{
+                      color:
+                        role.side === 'a' ? 'var(--accent)' : 'var(--info)',
+                    }}
                   >
-                    <p
-                      className="text-xs font-semibold"
-                      style={{
-                        color:
-                          role.side === 'a' ? 'var(--accent)' : 'var(--info)',
-                      }}
-                    >
-                      {role.name}
+                    {role.name}
+                  </p>
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                      隐藏信息
                     </p>
-                    <div>
-                      <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
-                        隐藏信息
-                      </p>
-                      <ul className="space-y-1">
-                        {role.hiddenInfo.map((item) => {
-                          const isFalse = role.falseIds.has(item.id)
+                    <ul className="space-y-1">
+                      {role.hiddenInfo.map((item) => {
+                        const isFalse = role.falseIds.has(item.id)
 
-                          return (
-                            <li
-                              key={item.id}
-                              className="flex items-start gap-1.5 text-[11px] leading-4"
+                        return (
+                          <li
+                            key={item.id}
+                            className="flex items-start gap-1.5 text-[11px] leading-4"
+                          >
+                            <span
+                              className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                                isFalse
+                                  ? 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                                  : 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                              }`}
                             >
-                              <span
-                                className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
-                                  isFalse
-                                    ? 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                                    : 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                                }`}
-                              >
-                                {isFalse ? '假' : '真'}
-                              </span>
-                              <span className="text-(--foreground-subtle)">
-                                {item.content}
-                              </span>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
-                        诉求
-                      </p>
-                      <ul className="space-y-1">
-                        {role.requests.map((item) => {
-                          const isTrue = role.trueRequestIds.has(item.id)
-
-                          return (
-                            <li
-                              key={item.id}
-                              className="flex items-start gap-1.5 text-[11px] leading-4"
-                            >
-                              <span
-                                className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
-                                  isTrue
-                                    ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                                    : 'bg-white/8 text-(--foreground-muted)'
-                                }`}
-                              >
-                                {isTrue ? '真' : '假'}
-                              </span>
-                              <span className="text-(--foreground-subtle)">
-                                {item.content}
-                              </span>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </div>
+                              {isFalse ? '假' : '真'}
+                            </span>
+                            <span className="text-(--foreground-subtle)">
+                              {item.content}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          ) : null}
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium text-(--foreground-muted)">
+                      诉求
+                    </p>
+                    <ul className="space-y-1">
+                      {role.requests.map((item) => {
+                        const isTrue = role.trueRequestIds.has(item.id)
 
-          {match.judgeDecision ? (
-            <Card>
-              <CardHeader className="pb-0">
-                <CardTitle>裁判裁决</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-3">
-                <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                  {match.judgeDecision}
-                </p>
-              </CardContent>
-            </Card>
-          ) : null}
-        </div>
-      ) : null}
+                        return (
+                          <li
+                            key={item.id}
+                            className="flex items-start gap-1.5 text-[11px] leading-4"
+                          >
+                            <span
+                              className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-semibold ${
+                                isTrue
+                                  ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                  : 'bg-white/8 text-(--foreground-muted)'
+                              }`}
+                            >
+                              {isTrue ? '真' : '假'}
+                            </span>
+                            <span className="text-(--foreground-subtle)">
+                              {item.content}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <JudgeDecisionPanel
+          decision={match.judgeDecision}
+          errorMessage={match.error}
+          scenario={
+            scenario
+              ? {
+                  roleAName: scenario.roleAName,
+                  roleARequests: scenario.roleARequests,
+                  roleBName: scenario.roleBName,
+                  roleBRequests: scenario.roleBRequests,
+                }
+              : undefined
+          }
+          waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
+        />
+      </div>
 
       {/* Transcript */}
       <Card>

@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
+import { JudgeDecisionPanel } from '../components/judge-decision-panel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import {
@@ -87,18 +88,6 @@ function isRunFinished(run: PlaygroundRun | null) {
     run.scoreA != null ||
     run.scoreB != null ||
     run.winner != null
-  )
-}
-
-function hasRunOutput(run: PlaygroundRun | null) {
-  if (!run) {
-    return false
-  }
-
-  return (
-    run.transcript.length > 0 ||
-    run.judgeTranscriptA.length > 0 ||
-    run.judgeTranscriptB.length > 0
   )
 }
 
@@ -420,21 +409,6 @@ function InfoAssignmentPanel({
   )
 }
 
-function JudgeDecisionPanel({ decision }: { decision: string }) {
-  return (
-    <Card>
-      <CardHeader className="pb-0">
-        <CardTitle className="text-sm">裁判裁决</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-3">
-        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-          {decision}
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
 function ActualPromptsPanel({
   run,
   scenario,
@@ -500,7 +474,6 @@ function ActualPromptsPanel({
     </Card>
   )
 }
-
 function RunResult({
   run,
   scenario,
@@ -554,19 +527,20 @@ function RunResult({
       </Card>
 
       {/* Info assignment & judge decision */}
-      {run.infoAssignment || run.judgeDecision ? (
-        <div className="grid gap-6 xl:grid-cols-2">
-          {run.infoAssignment ? (
-            <InfoAssignmentPanel
-              assignment={run.infoAssignment}
-              scenario={scenario}
-            />
-          ) : null}
-          {run.judgeDecision ? (
-            <JudgeDecisionPanel decision={run.judgeDecision} />
-          ) : null}
-        </div>
-      ) : null}
+      <div className="grid gap-6 xl:grid-cols-2">
+        {run.infoAssignment ? (
+          <InfoAssignmentPanel
+            assignment={run.infoAssignment}
+            scenario={scenario}
+          />
+        ) : null}
+        <JudgeDecisionPanel
+          decision={run.judgeDecision}
+          errorMessage={run.error}
+          scenario={scenario}
+          waitingMessage="裁判模块已就位，待审讯完成后展示最终裁决。"
+        />
+      </div>
 
       <Card>
         <CardHeader>
@@ -1286,8 +1260,15 @@ export function PlaygroundPage() {
                 onRefresh={() => void refreshActiveRun()}
                 session={activeSession}
               />
-              {hasRunOutput(activeSession.run) ? (
-                <RunResult run={activeSession.run!} scenario={scenario} />
+              {activeSession.run ? (
+                <RunResult run={activeSession.run} scenario={scenario} />
+              ) : null}
+              {!activeSession.run ? (
+                <JudgeDecisionPanel
+                  decision={null}
+                  scenario={scenario}
+                  waitingMessage="对战任务刚刚提交，裁判判决模块已展示，待引擎开始执行后会逐步补全内容。"
+                />
               ) : null}
             </>
           ) : visibleRun ? (
