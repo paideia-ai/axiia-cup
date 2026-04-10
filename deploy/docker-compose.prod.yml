@@ -5,9 +5,6 @@ services:
       dockerfile: deploy/Dockerfile.api
     restart: unless-stopped
     environment:
-      AXIIA_ADMIN_EMAIL: ${AXIIA_ADMIN_EMAIL:-}
-      AXIIA_ADMIN_NAME: ${AXIIA_ADMIN_NAME:-}
-      AXIIA_ADMIN_PASSWORD: ${AXIIA_ADMIN_PASSWORD:-}
       AXIIA_DB_PATH: ${AXIIA_DB_PATH:-/data/axiia.db}
       CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}

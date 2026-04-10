@@ -64,8 +64,7 @@ docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.ym
 docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml exec api bun run ./apps/api/src/db/seed.ts
 ```
 
-`seed.ts` also creates the initial admin account from `AXIIA_ADMIN_EMAIL`,
-`AXIIA_ADMIN_PASSWORD`, and `AXIIA_ADMIN_NAME`.
+`seed.ts` also creates the initial admin account using the built-in default credentials.
 
 Scripted flow on a server:
 

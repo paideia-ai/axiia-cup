@@ -180,7 +180,7 @@ rsync -az --delete \
   "${ARCHIVE_DIR}/" "${HOST}:${REMOTE_DIR}/"
 
 note "Running remote deploy orchestration"
-ssh "${HOST}" 'bash -s -- "$@"' _ \
+ssh "${HOST}" bash -s -- \
   "${REMOTE_DIR}" "${REMOTE_ENV}" "${BOOTSTRAP}" "${WITH_SEED}" "${RESET_DATA}" <<'EOF'
 set -euo pipefail
 
@@ -209,12 +209,12 @@ set +a
 data_dir="${AXIIA_DATA_DIR%/}/api"
 db_file="${data_dir}/axiia.db"
 compose_file="${remote_dir}/deploy/docker-compose.prod.yml"
-compose_cmd=(docker compose --env-file "${remote_env}" -f "${compose_file}")
+compose_cmd=(sudo docker compose --env-file "${remote_env}" -f "${compose_file}")
 
 set_write_lock() {
   local locked="$1"
 
-  python3 - "${db_file}" "${locked}" <<'PY'
+  sudo python3 - "${db_file}" "${locked}" <<'PY'
 import sqlite3
 import sys
 
@@ -236,7 +236,7 @@ PY
 }
 
 count_active_tasks() {
-  python3 - "${db_file}" <<'PY'
+  sudo python3 - "${db_file}" <<'PY'
 import sqlite3
 import sys
 
@@ -301,7 +301,7 @@ fi
 if [[ "${reset_data}" == "1" ]]; then
   printf '[deploy-master] resetting SQLite data\n'
   "${compose_cmd[@]}" down
-  rm -f \
+  sudo rm -f \
     "${data_dir}/axiia.db" \
     "${data_dir}/axiia.db-shm" \
     "${data_dir}/axiia.db-wal"

@@ -79,9 +79,6 @@ CORS_ORIGIN=https://cup.axiia.ai
 JWT_SECRET=<long-random-secret>
 SILICONFLOW_API_KEY=<real-key>
 REGISTRATION_CODE=axiia_cup
-AXIIA_ADMIN_EMAIL=admin@example.com
-AXIIA_ADMIN_PASSWORD=<strong-initial-password>
-AXIIA_ADMIN_NAME=管理员
 PORT=3001
 WORKER_CONCURRENCY=8
 AXIIA_DB_PATH=/data/axiia.db
@@ -190,18 +187,10 @@ docker compose \
 
 This should seed the default `shangyang-court` scenario.
 
-It also ensures an initial admin account exists using these environment variables:
-
-- `AXIIA_ADMIN_EMAIL`
-- `AXIIA_ADMIN_PASSWORD`
-- `AXIIA_ADMIN_NAME`
-
-If you leave them unset, the fallback account is:
+It also ensures an initial admin account exists with the default credentials:
 
 - email: `admin@paideia.uno`
 - password: `axiia-cup`
-
-Do not rely on the fallback credentials on a real server.
 
 ## 8. Local Host Smoke Checks
 

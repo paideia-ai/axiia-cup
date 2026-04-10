@@ -33,8 +33,8 @@ ensure_http_tools
 
 BASE_URL="${BASE_URL:-$(default_base_url)}"
 LOGIN_PAYLOAD="$(printf '{"email":"%s","password":"%s"}' \
-  "$(json_escape "${AXIIA_ADMIN_EMAIL}")" \
-  "$(json_escape "${AXIIA_ADMIN_PASSWORD}")")"
+  "admin@paideia.uno" \
+  "axiia-cup")"
 
 check_contains() {
   local label="$1"

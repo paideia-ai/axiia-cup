@@ -63,15 +63,11 @@ validate_runtime_env() {
   require_env JWT_SECRET
   require_env SILICONFLOW_API_KEY
   require_env REGISTRATION_CODE
-  require_env AXIIA_ADMIN_EMAIL
-  require_env AXIIA_ADMIN_PASSWORD
-  require_env AXIIA_ADMIN_NAME
   require_env AXIIA_DATA_DIR
   require_env WEB_HOST_PORT
 
   require_env_not_placeholder JWT_SECRET "replace-with-a-long-random-secret"
   require_env_not_placeholder SILICONFLOW_API_KEY "replace-with-your-siliconflow-key"
-  require_env_not_placeholder AXIIA_ADMIN_PASSWORD "change-me-before-first-login"
 
   [[ "${AXIIA_DATA_DIR}" = /* ]] ||
     die "AXIIA_DATA_DIR must be an absolute path, got: ${AXIIA_DATA_DIR}"
