@@ -36,6 +36,7 @@ users:reset-password <userId> --password <password>
 playground:run <submissionId>
 playground:list <submissionId>
 playground:get <submissionId> <runId>
+playground:interrupt <submissionId> <runId>
 battles
 user:agents <userId>
 agent:summary <submissionId> <side>
@@ -133,6 +134,7 @@ These commands call `AXIIA_API_URL`:
 - `playground:run <submissionId>`
 - `playground:list <submissionId>`
 - `playground:get <submissionId> <runId>`
+- `playground:interrupt <submissionId> <runId>`
 - `battles`
 - `user:agents <userId>`
 - `agent:summary <submissionId> <side>`
@@ -218,6 +220,29 @@ Validation notes:
 - `examinationQuestionTemplate` may be empty
 - hidden-info IDs and request IDs must be unique and must not overlap
 - `falseInfoCount` and `trueRequestCount` cannot exceed the relevant list sizes
+
+## 6. Playground Commands
+
+Start a run:
+
+```bash
+bun run ./apps/cli/src/index.ts playground:run 42
+```
+
+Fetch a run:
+
+```bash
+bun run ./apps/cli/src/index.ts playground:get 42 108
+```
+
+Interrupt a running or queued run:
+
+```bash
+bun run ./apps/cli/src/index.ts playground:interrupt 42 108
+```
+
+The interrupt command returns the updated run payload as JSON. If the run had
+already finished, it returns the current persisted run instead of failing.
 
 Read-only fields such as `id`, `title`, `subject`, and `locked` may exist in the input JSON, but the CLI ignores them when building the update payload.
 

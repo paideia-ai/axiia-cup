@@ -4,6 +4,11 @@ import OpenAI from 'openai'
 import type { LlmCallPhase, LlmCallSide } from '../db/schema'
 import { llmCalls } from '../db/schema'
 import { initializeLangfuseTracing, observeOpenAIClient } from '../lib/langfuse'
+import {
+  getPlaygroundInterruptMessage,
+  isPlaygroundRunInterruptedError,
+  PlaygroundRunInterruptedError,
+} from './playground-interrupt'
 
 const SILICONFLOW_BASE_URL =
   process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
@@ -175,6 +180,7 @@ export async function chatCompletion(params: {
   messages: ChatMessage[]
   temperature?: number
   jsonMode?: boolean
+  signal?: AbortSignal
   trace?: ChatCompletionTrace
 }): Promise<string> {
   const client = getObservedClient(params.trace, params.model)
@@ -193,7 +199,9 @@ export async function chatCompletion(params: {
   const startedAt = Date.now()
 
   try {
-    const response = await client.chat.completions.create(requestPayload)
+    const response = await client.chat.completions.create(requestPayload, {
+      signal: params.signal,
+    })
 
     const content = response.choices[0]?.message?.content
 
@@ -213,6 +221,21 @@ export async function chatCompletion(params: {
     return content
   } catch (error) {
     const durationMs = Date.now() - startedAt
+
+    if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
+      const message = getPlaygroundInterruptMessage(params.signal)
+
+      await persistLlmCall(params.trace, {
+        durationMs,
+        error: message,
+        model: params.model,
+        requestJson,
+        responseContent: null,
+        responseJson: null,
+      })
+
+      throw new PlaygroundRunInterruptedError(message)
+    }
 
     if (error instanceof Error) {
       const status =

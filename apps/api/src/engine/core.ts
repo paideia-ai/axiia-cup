@@ -18,6 +18,12 @@ import {
 
 import type { ScenarioRecord } from '../db/schema'
 import { chatCompletion, type ChatCompletionTrace } from './llm'
+import {
+  getPlaygroundInterruptMessage,
+  isPlaygroundRunInterruptedError,
+  PlaygroundRunInterruptedError,
+  throwIfPlaygroundRunInterrupted,
+} from './playground-interrupt'
 
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
@@ -41,6 +47,7 @@ type MatchExecutionParams = {
   promptA: string
   promptB: string
   scenario: ScenarioRecord
+  signal?: AbortSignal
   transcript?: TranscriptTurn[]
   userIdA?: number
   userIdB?: number
@@ -58,21 +65,56 @@ export type MatchExecutionResult = {
   winner: 'a' | 'b' | 'draw'
 }
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new PlaygroundRunInterruptedError(getPlaygroundInterruptMessage(signal)))
+      return
+    }
+
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve(undefined)
+    }, ms)
+
+    const onAbort = () => {
+      cleanup()
+      reject(
+        new PlaygroundRunInterruptedError(getPlaygroundInterruptMessage(signal)),
+      )
+    }
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+    }
+
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
 }
 
-async function withRetry<T>(task: (attempt: number) => Promise<T>) {
+async function withRetry<T>(
+  task: (attempt: number) => Promise<T>,
+  signal?: AbortSignal,
+) {
   let lastError: unknown
 
   for (let attempt = 1; attempt <= RETRY_COUNT; attempt += 1) {
+    throwIfPlaygroundRunInterrupted(signal)
+
     try {
       return await task(attempt)
     } catch (error) {
+      if (isPlaygroundRunInterruptedError(error) || signal?.aborted) {
+        throw new PlaygroundRunInterruptedError(
+          getPlaygroundInterruptMessage(signal),
+        )
+      }
+
       lastError = error
 
       if (attempt < RETRY_COUNT) {
-        await sleep(RETRY_DELAY_MS)
+        await sleep(RETRY_DELAY_MS, signal)
       }
     }
   }
@@ -452,6 +494,7 @@ async function getExaminationAnswer(
     ChatCompletionTrace,
     'matchId' | 'playgroundRunId' | 'userId'
   >,
+  signal?: AbortSignal,
 ): Promise<JudgeQA> {
   const validIds = getExaminationValidIds(scenario, roleSide)
   const rawAnswer = await withRetry(async (attempt) => {
@@ -474,6 +517,7 @@ async function getExaminationAnswer(
       model,
       systemPrompt,
       temperature: 0,
+      signal,
       trace: {
         ...traceTarget,
         attempt,
@@ -487,7 +531,7 @@ async function getExaminationAnswer(
       JSON.parse(sanitizeJsonResponse(response)),
       validIds,
     )
-  })
+  }, signal)
 
   return judgeQASchema.parse({
     round: 1,
@@ -532,6 +576,7 @@ async function getJudgeDecision(
     ChatCompletionTrace,
     'matchId' | 'playgroundRunId' | 'userId'
   >,
+  signal?: AbortSignal,
 ): Promise<string> {
   const debateText =
     transcript.length > 0
@@ -558,6 +603,7 @@ async function getJudgeDecision(
     return await chatCompletion({
       messages: [{ role: 'user', content: '请做出你的裁决。' }],
       model: judgeModel,
+      signal,
       systemPrompt: judgePrompt,
       temperature: 0,
       trace: {
@@ -568,7 +614,7 @@ async function getJudgeDecision(
         turnIndex: transcript.length,
       },
     })
-  })
+  }, signal)
 
   return raw.trim()
 }
@@ -652,6 +698,7 @@ async function getScoreFromScorer(
     ChatCompletionTrace,
     'matchId' | 'playgroundRunId' | 'userId'
   >,
+  signal?: AbortSignal,
 ): Promise<{
   scoreA: number
   scoreB: number
@@ -676,6 +723,7 @@ async function getScoreFromScorer(
       jsonMode: true,
       messages: [{ role: 'user', content: '请根据以上信息计算双方得分。' }],
       model: scorerModel,
+      signal,
       systemPrompt: scorerPrompt,
       temperature: 0,
       trace: {
@@ -688,7 +736,7 @@ async function getScoreFromScorer(
     })
 
     return scorerOutputSchema.parse(JSON.parse(sanitizeJsonResponse(response)))
-  })
+  }, signal)
 
   const winner =
     result.scoreA > result.scoreB
@@ -727,8 +775,11 @@ export async function executeMatchSession(
     ? infoAssignmentSchema.parse(params.infoAssignment)
     : randomizeInfoAssignment(params.scenario)
 
+  throwIfPlaygroundRunInterrupted(params.signal)
   await params.onStart?.()
+  throwIfPlaygroundRunInterrupted(params.signal)
   await params.onInfoAssignment?.(assignment)
+  throwIfPlaygroundRunInterrupted(params.signal)
 
   // ── Phase 1: Dialogue ──────────────────────────────────────────────────
   for (
@@ -736,6 +787,8 @@ export async function executeMatchSession(
     turnIndex < params.scenario.turnCount;
     turnIndex += 1
   ) {
+    throwIfPlaygroundRunInterrupted(params.signal)
+
     const speaker = turnIndex % 2 === 0 ? 'a' : 'b'
     const { systemPrompt, messages } = buildDialogueContext(
       transcript,
@@ -749,6 +802,7 @@ export async function executeMatchSession(
       chatCompletion({
         messages,
         model: speaker === 'a' ? modelA : modelB,
+        signal: params.signal,
         systemPrompt,
         temperature: 0,
         trace: {
@@ -761,6 +815,7 @@ export async function executeMatchSession(
           userId: speaker === 'a' ? params.userIdA : params.userIdB,
         },
       }),
+      params.signal,
     )
 
     transcript.push(
@@ -775,9 +830,12 @@ export async function executeMatchSession(
     )
 
     await params.onDialogueTurn?.(transcript)
+    throwIfPlaygroundRunInterrupted(params.signal)
   }
 
+  throwIfPlaygroundRunInterrupted(params.signal)
   await params.onJudgingStart?.(transcript)
+  throwIfPlaygroundRunInterrupted(params.signal)
 
   // ── Phase 2: Examination (optional) ────────────────────────────────────
   const hasExamination =
@@ -799,6 +857,7 @@ export async function executeMatchSession(
           playgroundRunId: params.playgroundRunId,
           userId: params.userIdA,
         },
+        params.signal,
       )
 
       judgeTranscriptA.push(answerA)
@@ -820,6 +879,7 @@ export async function executeMatchSession(
           playgroundRunId: params.playgroundRunId,
           userId: params.userIdB,
         },
+        params.signal,
       )
 
       judgeTranscriptB.push(answerB)
@@ -838,6 +898,7 @@ export async function executeMatchSession(
       matchId: params.matchId,
       playgroundRunId: params.playgroundRunId,
     },
+    params.signal,
   )
 
   // ── Phase 4: Scorer ───────────────────────────────────────────────────
@@ -852,6 +913,7 @@ export async function executeMatchSession(
       matchId: params.matchId,
       playgroundRunId: params.playgroundRunId,
     },
+    params.signal,
   )
 
   return {

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { eq } from 'drizzle-orm'
 
 const testDbPath = join(tmpdir(), `axiia-write-lock-test-${Date.now()}.db`)
 process.env.AXIIA_DB_PATH = testDbPath
@@ -181,6 +182,91 @@ describe('write lock and retired submissions', () => {
     })
 
     expect(res.status).toBe(409)
+  })
+
+  it('allows users to interrupt their own queued playground run', async () => {
+    db.insert(schema.submissions)
+      .values({
+        id: 22,
+        userId: 2,
+        scenarioId: 'test-scenario',
+        promptA: 'prompt a',
+        promptB: 'prompt b',
+        model: 'deepseek-v3.2',
+        version: 1,
+      })
+      .run()
+
+    db.insert(schema.playgroundRuns)
+      .values({
+        id: 23,
+        submissionId: 22,
+        scenarioId: 'test-scenario',
+        status: 'queued',
+      })
+      .run()
+
+    const res = await req(
+      'POST',
+      '/api/playground/runs/22/23/interrupt',
+      userToken,
+    )
+    const json = (await res.json()) as { error: string | null }
+
+    expect(res.status).toBe(200)
+    expect(json.error).toBe('用户手动中断了本次试炼场运行')
+
+    const interrupted = db
+      .select()
+      .from(schema.playgroundRuns)
+      .where(eq(schema.playgroundRuns.id, 23))
+      .get()
+
+    expect(interrupted?.status).toBe('error')
+  })
+
+  it('interrupts running playground runs even when write lock is enabled', async () => {
+    db.insert(schema.appSettings).values({ key: 'writeLock', value: '1' }).run()
+
+    db.insert(schema.submissions)
+      .values({
+        id: 24,
+        userId: 2,
+        scenarioId: 'test-scenario',
+        promptA: 'prompt a',
+        promptB: 'prompt b',
+        model: 'deepseek-v3.2',
+        version: 1,
+      })
+      .run()
+
+    db.insert(schema.playgroundRuns)
+      .values({
+        id: 25,
+        submissionId: 24,
+        scenarioId: 'test-scenario',
+        leaseToken: 'lease-1',
+        status: 'running',
+      })
+      .run()
+
+    const res = await req(
+      'POST',
+      '/api/playground/runs/24/25/interrupt',
+      userToken,
+    )
+
+    expect(res.status).toBe(200)
+
+    const interrupted = db
+      .select()
+      .from(schema.playgroundRuns)
+      .where(eq(schema.playgroundRuns.id, 25))
+      .get()
+
+    expect(interrupted?.status).toBe('error')
+    expect(interrupted?.leaseToken).toBeNull()
+    expect(interrupted?.error).toBe('用户手动中断了本次试炼场运行')
   })
 
   it('rejects retrying matches that include retired submissions', async () => {

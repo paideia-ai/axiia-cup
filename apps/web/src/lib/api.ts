@@ -279,6 +279,17 @@ export async function runPlayground(
   )
 }
 
+export async function interruptPlaygroundRun(
+  submissionId: number,
+  runId: number,
+): Promise<PlaygroundRun> {
+  return apiFetch(
+    `/api/playground/runs/${submissionId}/${runId}/interrupt`,
+    { method: 'POST' },
+    playgroundRunSchema,
+  )
+}
+
 export async function getPresetOpponents(
   scenarioId: string,
 ): Promise<PresetOpponent[]> {

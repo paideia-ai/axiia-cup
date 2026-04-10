@@ -4,7 +4,7 @@ import {
   playgroundRunSchema,
   playgroundRunSummarySchema,
 } from '@axiia/shared'
-import { desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, or, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 
@@ -16,6 +16,10 @@ import {
   submissions,
   tournaments,
 } from '../db/schema'
+import {
+  interruptActivePlaygroundRun,
+  PLAYGROUND_RUN_INTERRUPTED_MESSAGE,
+} from '../engine/playground-interrupt'
 import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
 import { resolveUserId } from '../lib/resolve-user'
@@ -42,6 +46,26 @@ function parseId(value: string) {
   }
 
   return parsed
+}
+
+function serializePlaygroundRun(row: typeof playgroundRuns.$inferSelect) {
+  return playgroundRunSchema.parse({
+    ...row,
+    actualPromptA: row.actualPromptA ?? null,
+    actualPromptB: row.actualPromptB ?? null,
+    infoAssignment: parseJsonField(row.infoAssignment, null),
+    judgeDecision: row.judgeDecision ?? null,
+    judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
+    judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
+    opponentMode: row.opponentMode ?? 'self',
+    presetOpponentId: row.presetOpponentId ?? null,
+    presetOpponentRole: row.presetOpponentRole ?? null,
+    presetOpponentLabel: row.presetOpponentLabel ?? null,
+    transcript: parseJsonField(row.transcript, []),
+    startedAt: row.startedAt ?? null,
+    finishedAt: row.finishedAt ?? null,
+    updatedAt: row.updatedAt ?? row.createdAt,
+  })
 }
 
 playgroundRouter.post(
@@ -270,25 +294,90 @@ playgroundRouter.get(
       return context.json({ error: 'Run not found' }, 404)
     }
 
-    return context.json(
-      playgroundRunSchema.parse({
-        ...row,
-        actualPromptA: row.actualPromptA ?? null,
-        actualPromptB: row.actualPromptB ?? null,
-        infoAssignment: parseJsonField(row.infoAssignment, null),
-        judgeDecision: row.judgeDecision ?? null,
-        judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
-        judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
-        opponentMode: row.opponentMode ?? 'self',
-        presetOpponentId: row.presetOpponentId ?? null,
-        presetOpponentRole: row.presetOpponentRole ?? null,
-        presetOpponentLabel: row.presetOpponentLabel ?? null,
-        transcript: parseJsonField(row.transcript, []),
-        startedAt: row.startedAt ?? null,
-        finishedAt: row.finishedAt ?? null,
-        updatedAt: row.updatedAt ?? row.createdAt,
-      }),
-    )
+    return context.json(serializePlaygroundRun(row))
+  },
+)
+
+playgroundRouter.post(
+  '/api/playground/runs/:submissionId/:runId/interrupt',
+  requireAuth,
+  async (context) => {
+    const userId = resolveUserId(context)
+    const submissionId = parseId(context.req.param('submissionId'))
+    const runId = parseId(context.req.param('runId'))
+
+    if (!submissionId) {
+      return context.json({ error: 'Invalid submission ID' }, 400)
+    }
+
+    if (!runId) {
+      return context.json({ error: 'Invalid run ID' }, 400)
+    }
+
+    const submission = db
+      .select({ id: submissions.id, userId: submissions.userId })
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .get()
+
+    if (!submission || submission.userId !== userId) {
+      return context.json({ error: 'Submission not found' }, 404)
+    }
+
+    const run = db
+      .select()
+      .from(playgroundRuns)
+      .where(eq(playgroundRuns.id, runId))
+      .get()
+
+    if (!run || run.submissionId !== submissionId) {
+      return context.json({ error: 'Run not found' }, 404)
+    }
+
+    if (run.status === 'scored' || run.status === 'error') {
+      return context.json(serializePlaygroundRun(run))
+    }
+
+    interruptActivePlaygroundRun(runId)
+
+    const interruptedAt = nowIso()
+    const interruptedRun = db
+      .update(playgroundRuns)
+      .set({
+        error: PLAYGROUND_RUN_INTERRUPTED_MESSAGE,
+        finishedAt: interruptedAt,
+        leaseToken: null,
+        status: 'error',
+        updatedAt: interruptedAt,
+      })
+      .where(
+        and(
+          eq(playgroundRuns.id, runId),
+          eq(playgroundRuns.submissionId, submissionId),
+          or(
+            eq(playgroundRuns.status, 'queued'),
+            eq(playgroundRuns.status, 'running'),
+          ),
+        ),
+      )
+      .returning()
+      .get()
+
+    if (!interruptedRun) {
+      const currentRun = db
+        .select()
+        .from(playgroundRuns)
+        .where(eq(playgroundRuns.id, runId))
+        .get()
+
+      if (!currentRun || currentRun.submissionId !== submissionId) {
+        return context.json({ error: 'Run not found' }, 404)
+      }
+
+      return context.json(serializePlaygroundRun(currentRun))
+    }
+
+    return context.json(serializePlaygroundRun(interruptedRun))
   },
 )
 

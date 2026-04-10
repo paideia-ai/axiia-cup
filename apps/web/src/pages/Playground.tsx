@@ -30,6 +30,7 @@ import {
 import {
   clearPlaygroundSession,
   getPlaygroundSession,
+  interruptTrackedPlaygroundRun,
   resolvePlaygroundSession,
   startTrackedPlaygroundRun,
   subscribePlaygroundSession,
@@ -787,11 +788,13 @@ function RunHistoryItem({
 
 function ProgressPanel({
   elapsedSeconds,
+  isInterrupting,
+  onInterrupt,
   session,
 }: {
   elapsedSeconds: number
-  isRefreshing: boolean
-  onRefresh: () => void
+  isInterrupting: boolean
+  onInterrupt: () => void
   session: PlaygroundSession
 }) {
   const progress = deriveRunningState(session)
@@ -816,6 +819,16 @@ function ProgressPanel({
             <span className="font-mono tabular-nums text-(--foreground)">
               {formatElapsed(elapsedSeconds)}
             </span>
+            {visibleRunId ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={isInterrupting}
+                onClick={onInterrupt}
+              >
+                {isInterrupting ? '中断中...' : '中断'}
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -981,7 +994,7 @@ export function PlaygroundPage() {
         : null,
   )
   const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isInterrupting, setIsInterrupting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(() =>
     activeSession
@@ -1009,10 +1022,13 @@ export function PlaygroundPage() {
         Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000)),
       )
 
-      if (session.status === 'success' && session.run) {
+      if (session.run && session.status !== 'running') {
         setSelectedRun(session.run)
         activeRunProgressRef.current = createRunProgressSnapshot(session.run)
         setRunSummaries((current) => upsertRunSummary(current, session.run!))
+      }
+
+      if (session.status === 'success') {
         setError(null)
       } else if (session.status === 'error') {
         setError(session.error ?? '试炼场运行失败')
@@ -1136,7 +1152,6 @@ export function PlaygroundPage() {
 
     try {
       refreshInFlightRef.current = true
-      setIsRefreshing(true)
       const activeRunId = activeSession.runId ?? activeSession.run?.id ?? null
 
       if (activeRunId == null) {
@@ -1167,7 +1182,6 @@ export function PlaygroundPage() {
       return true
     } finally {
       refreshInFlightRef.current = false
-      setIsRefreshing(false)
     }
   }, [activeSession, submissionId])
 
@@ -1238,6 +1252,39 @@ export function PlaygroundPage() {
     }
   }
 
+  const handleInterrupt = useCallback(async () => {
+    if (!activeSession || activeSession.status !== 'running') {
+      return
+    }
+
+    const activeRunId = activeSession.runId ?? activeSession.run?.id ?? null
+
+    if (activeRunId == null) {
+      return
+    }
+
+    try {
+      setIsInterrupting(true)
+      const interruptedRun = await interruptTrackedPlaygroundRun({
+        submissionId,
+        requestId: activeSession.requestId,
+        runId: activeRunId,
+      })
+      activeRunProgressRef.current = createRunProgressSnapshot(interruptedRun)
+      setRunSummaries((current) => upsertRunSummary(current, interruptedRun))
+      setSelectedRun(interruptedRun)
+      setError(interruptedRun.error ?? '试炼场已中断')
+    } catch (interruptError) {
+      setError(
+        interruptError instanceof Error
+          ? interruptError.message
+          : '中断试炼场失败',
+      )
+    } finally {
+      setIsInterrupting(false)
+    }
+  }, [activeSession, submissionId])
+
   const modelLabel = useMemo(
     () =>
       submission
@@ -1302,8 +1349,8 @@ export function PlaygroundPage() {
             <>
               <ProgressPanel
                 elapsedSeconds={elapsedSeconds}
-                isRefreshing={isRefreshing}
-                onRefresh={() => void refreshActiveRun()}
+                isInterrupting={isInterrupting}
+                onInterrupt={() => void handleInterrupt()}
                 session={activeSession}
               />
               {activeSession.run ? (
@@ -1410,6 +1457,7 @@ export function PlaygroundPage() {
                 disabled={
                   isSubmissionRetired ||
                   isRunning ||
+                  isInterrupting ||
                   (opponentMode === 'preset' && !selectedPresetId)
                 }
                 onClick={handleRun}

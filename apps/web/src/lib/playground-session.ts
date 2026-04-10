@@ -4,7 +4,7 @@ import type {
   PlaygroundRunSummary,
 } from '@axiia/shared'
 
-import { runPlayground } from './api'
+import { interruptPlaygroundRun, runPlayground } from './api'
 import { parseTimestampMs } from './datetime'
 
 const STORAGE_KEY = 'axiia-playground-session-v2'
@@ -261,6 +261,16 @@ export function startTrackedPlaygroundRun(params: {
     })
 
   return requestId
+}
+
+export async function interruptTrackedPlaygroundRun(params: {
+  submissionId: number
+  requestId: string
+  runId: number
+}) {
+  const run = await interruptPlaygroundRun(params.submissionId, params.runId)
+  syncPlaygroundRun(params.submissionId, params.requestId, run)
+  return run
 }
 
 export function resolvePlaygroundSession(

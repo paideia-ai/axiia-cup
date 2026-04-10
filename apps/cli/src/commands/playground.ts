@@ -119,6 +119,45 @@ export function registerPlaygroundCommands(program: Command) {
     )
 
   program
+    .command('playground:interrupt')
+    .description('Interrupt one playground run (JSON by default)')
+    .argument('<submissionId>', 'submission id')
+    .argument('<runId>', 'run id')
+    .option('-o, --output <path>', 'write output to file instead of stdout')
+    .action(
+      async (
+        submissionIdArg: string,
+        runIdArg: string,
+        options: { output?: string },
+      ) => {
+        const submissionId = parseId(submissionIdArg)
+        const runId = parseId(runIdArg)
+
+        if (!submissionId) {
+          throw new Error('Invalid submission id')
+        }
+
+        if (!runId) {
+          throw new Error('Invalid run id')
+        }
+
+        const run = await apiFetch<PlaygroundRun>(
+          `/api/playground/runs/${submissionId}/${runId}/interrupt`,
+          { method: 'POST' },
+          true,
+        )
+
+        writeJsonOutput(
+          {
+            kind: 'playground.run_interrupted',
+            run: normalizePlaygroundRun(run),
+          },
+          options.output,
+        )
+      },
+    )
+
+  program
     .command('playground:export')
     .description('Export a local playground run and its llm_calls from SQLite')
     .argument('<runId>', 'playground run id')

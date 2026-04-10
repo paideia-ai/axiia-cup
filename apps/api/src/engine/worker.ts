@@ -11,6 +11,12 @@ import {
 } from '../db/schema'
 import { parseJsonField } from '../lib/json'
 import { executeMatchSession, randomizeInfoAssignment } from './core'
+import {
+  isPlaygroundRunInterruptedError,
+  PLAYGROUND_RUN_INTERRUPTED_MESSAGE,
+  registerPlaygroundAbortController,
+  unregisterPlaygroundAbortController,
+} from './playground-interrupt'
 import { runMatch } from './runner'
 import { registerWorkerKickHandler } from './worker-signal'
 
@@ -177,6 +183,9 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
   let transcript: TranscriptTurn[] = []
   let judgeTranscriptA: JudgeQA[] = []
   let judgeTranscriptB: JudgeQA[] = []
+  const abortController = new AbortController()
+
+  registerPlaygroundAbortController(runId, abortController)
 
   try {
     console.log(`[worker] starting playground run ${runId}`)
@@ -320,6 +329,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       judgeTranscriptB,
       modelA: submission.model,
       modelB: submission.model,
+      signal: abortController.signal,
       playgroundRunId: runId,
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript
@@ -366,10 +376,15 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
 
     console.log(`[worker] completed playground run ${runId}`)
   } catch (error) {
+    const errorMessage = isPlaygroundRunInterruptedError(error)
+      ? PLAYGROUND_RUN_INTERRUPTED_MESSAGE
+      : error instanceof Error
+        ? error.message
+        : 'Unknown engine failure'
+
     db.update(playgroundRuns)
       .set({
-        error:
-        error instanceof Error ? error.message : 'Unknown engine failure',
+        error: errorMessage,
         finishedAt: nowIso(),
         judgeTranscriptA: JSON.stringify(judgeTranscriptA),
         judgeTranscriptB: JSON.stringify(judgeTranscriptB),
@@ -386,8 +401,13 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       )
       .run()
 
-    console.error(`[worker] failed playground run ${runId}:`, error)
+    if (isPlaygroundRunInterruptedError(error)) {
+      console.log(`[worker] interrupted playground run ${runId}`)
+    } else {
+      console.error(`[worker] failed playground run ${runId}:`, error)
+    }
   } finally {
+    unregisterPlaygroundAbortController(runId, abortController)
     inFlightJobKeys.delete(`playground:${runId}`)
     queueMicrotask(() => {
       void pollOnce()
