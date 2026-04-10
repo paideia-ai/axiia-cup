@@ -1,5 +1,13 @@
 import type { Context } from 'hono'
 
+export function isAdminRequest(context: Context): boolean {
+  return context.get('isAdmin') === true
+}
+
+export function canAccessUserId(context: Context, ownerUserId: number): boolean {
+  return isAdminRequest(context) || context.get('userId') === ownerUserId
+}
+
 /**
  * Returns the effective userId for the request.
  * If the caller is an admin and provides ?asUserId=N, returns that userId
@@ -7,9 +15,8 @@ import type { Context } from 'hono'
  */
 export function resolveUserId(context: Context): number {
   const jwtUserId = context.get('userId') as number
-  const isAdmin = context.get('isAdmin') as boolean | undefined
 
-  if (!isAdmin) {
+  if (!isAdminRequest(context)) {
     return jwtUserId
   }
 

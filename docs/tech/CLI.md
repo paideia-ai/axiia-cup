@@ -73,6 +73,11 @@ In practice:
 - authenticated but non-admin commands can use either a normal user token or an admin token
 - admin commands require the token's user to actually have admin privileges on the server
 
+Access model:
+
+- resource-scoped reads and actions such as `playground:run`, `playground:list`, `playground:get`, and `playground:interrupt` accept either the owner or an admin token for the referenced `submissionId`
+- user-scoped endpoints such as `/api/stats/me`, `/api/submissions/my`, and `/api/matches/my` stay scoped to one effective user; admins can switch that scope with `?asUserId=<id>`, which is what `monitor:player` uses internally
+
 ## 3. Authentication
 
 ### 3.1 Login via CLI

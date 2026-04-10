@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { resolveUserId } from './resolve-user'
+import { canAccessUserId, isAdminRequest, resolveUserId } from './resolve-user'
 
 function mockContext(opts: {
   userId: number
@@ -56,5 +56,37 @@ describe('resolveUserId', () => {
   it('ignores non-numeric asUserId', () => {
     const ctx = mockContext({ userId: 1, isAdmin: true, asUserId: 'abc' })
     expect(resolveUserId(ctx)).toBe(1)
+  })
+})
+
+describe('isAdminRequest', () => {
+  it('returns false for non-admin requests', () => {
+    expect(isAdminRequest(mockContext({ userId: 5, isAdmin: false }))).toBe(
+      false,
+    )
+  })
+
+  it('returns true for admin requests', () => {
+    expect(isAdminRequest(mockContext({ userId: 1, isAdmin: true }))).toBe(true)
+  })
+})
+
+describe('canAccessUserId', () => {
+  it('allows users to access their own resources', () => {
+    expect(canAccessUserId(mockContext({ userId: 5, isAdmin: false }), 5)).toBe(
+      true,
+    )
+  })
+
+  it('blocks non-admin users from accessing other user resources', () => {
+    expect(canAccessUserId(mockContext({ userId: 5, isAdmin: false }), 7)).toBe(
+      false,
+    )
+  })
+
+  it('allows admins to access other user resources', () => {
+    expect(canAccessUserId(mockContext({ userId: 1, isAdmin: true }), 7)).toBe(
+      true,
+    )
   })
 })

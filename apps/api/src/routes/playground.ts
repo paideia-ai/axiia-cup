@@ -22,7 +22,7 @@ import {
 } from '../engine/playground-interrupt'
 import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from '../lib/json'
-import { resolveUserId } from '../lib/resolve-user'
+import { canAccessUserId } from '../lib/resolve-user'
 import { requireAuth } from '../middleware/requireAuth'
 import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 
@@ -80,8 +80,6 @@ playgroundRouter.post(
       return context.json({ error: 'Invalid request body' }, 400)
     }
 
-    const userId = context.get('userId')
-
     const runningTournament = db
       .select({ id: tournaments.id })
       .from(tournaments)
@@ -98,7 +96,7 @@ playgroundRouter.post(
       .where(eq(submissions.id, parsed.data.submissionId))
       .get()
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission || !canAccessUserId(context, submission.userId)) {
       return context.json({ error: 'Submission not found' }, 404)
     }
 
@@ -164,7 +162,6 @@ playgroundRouter.get(
   '/api/playground/runs/:submissionId',
   requireAuth,
   async (context) => {
-    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
 
     if (!submissionId) {
@@ -178,7 +175,7 @@ playgroundRouter.get(
       .where(eq(submissions.id, submissionId))
       .get()
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission || !canAccessUserId(context, submission.userId)) {
       return context.json({ error: 'Submission not found' }, 404)
     }
 
@@ -215,7 +212,6 @@ playgroundRouter.get(
   '/api/playground/runs/:submissionId/:runId/status',
   requireAuth,
   async (context) => {
-    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
     const runId = parseId(context.req.param('runId'))
 
@@ -233,7 +229,7 @@ playgroundRouter.get(
       .where(eq(submissions.id, submissionId))
       .get()
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission || !canAccessUserId(context, submission.userId)) {
       return context.json({ error: 'Submission not found' }, 404)
     }
 
@@ -262,7 +258,6 @@ playgroundRouter.get(
   '/api/playground/runs/:submissionId/:runId',
   requireAuth,
   async (context) => {
-    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
     const runId = parseId(context.req.param('runId'))
 
@@ -280,7 +275,7 @@ playgroundRouter.get(
       .where(eq(submissions.id, submissionId))
       .get()
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission || !canAccessUserId(context, submission.userId)) {
       return context.json({ error: 'Submission not found' }, 404)
     }
 
@@ -302,7 +297,6 @@ playgroundRouter.post(
   '/api/playground/runs/:submissionId/:runId/interrupt',
   requireAuth,
   async (context) => {
-    const userId = resolveUserId(context)
     const submissionId = parseId(context.req.param('submissionId'))
     const runId = parseId(context.req.param('runId'))
 
@@ -320,7 +314,7 @@ playgroundRouter.post(
       .where(eq(submissions.id, submissionId))
       .get()
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission || !canAccessUserId(context, submission.userId)) {
       return context.json({ error: 'Submission not found' }, 404)
     }
 

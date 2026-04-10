@@ -168,6 +168,125 @@ describe('write lock and retired submissions', () => {
     expect(json.find((item) => item.id === 11)?.retiredAt).toBeNull()
   })
 
+  it('allows admins to queue a playground run for another user submission', async () => {
+    db.insert(schema.submissions)
+      .values({
+        id: 13,
+        userId: 2,
+        scenarioId: 'test-scenario',
+        promptA: 'prompt a',
+        promptB: 'prompt b',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
+        version: 1,
+      })
+      .run()
+
+    const res = await req('POST', '/api/playground/run', adminToken, {
+      submissionId: 13,
+    })
+    const json = (await res.json()) as { id: number; status: string }
+
+    expect(res.status).toBe(202)
+    expect(json.status).toBe('queued')
+
+    const createdRun = db
+      .select()
+      .from(schema.playgroundRuns)
+      .where(eq(schema.playgroundRuns.id, json.id))
+      .get()
+
+    expect(createdRun?.submissionId).toBe(13)
+  })
+
+  it('allows admins to inspect and interrupt another user playground run', async () => {
+    db.insert(schema.submissions)
+      .values({
+        id: 14,
+        userId: 2,
+        scenarioId: 'test-scenario',
+        promptA: 'prompt a',
+        promptB: 'prompt b',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
+        version: 1,
+      })
+      .run()
+
+    db.insert(schema.playgroundRuns)
+      .values({
+        id: 15,
+        submissionId: 14,
+        scenarioId: 'test-scenario',
+        status: 'queued',
+      })
+      .run()
+
+    const listRes = await req('GET', '/api/playground/runs/14', adminToken)
+    const listJson = (await listRes.json()) as Array<{ id: number }>
+
+    expect(listRes.status).toBe(200)
+    expect(listJson.map((item) => item.id)).toEqual([15])
+
+    const detailRes = await req('GET', '/api/playground/runs/14/15', adminToken)
+    const detailJson = (await detailRes.json()) as { id: number; submissionId: number }
+
+    expect(detailRes.status).toBe(200)
+    expect(detailJson.id).toBe(15)
+    expect(detailJson.submissionId).toBe(14)
+
+    const statusRes = await req(
+      'GET',
+      '/api/playground/runs/14/15/status',
+      adminToken,
+    )
+    const statusJson = (await statusRes.json()) as { id: number; status: string }
+
+    expect(statusRes.status).toBe(200)
+    expect(statusJson).toMatchObject({ id: 15, status: 'queued' })
+
+    const interruptRes = await req(
+      'POST',
+      '/api/playground/runs/14/15/interrupt',
+      adminToken,
+    )
+    const interruptJson = (await interruptRes.json()) as { error: string | null }
+
+    expect(interruptRes.status).toBe(200)
+    expect(interruptJson.error).toBe('用户手动中断了本次试炼场运行')
+  })
+
+  it('still blocks non-admin users from reading another user playground runs', async () => {
+    db.insert(schema.submissions)
+      .values({
+        id: 16,
+        userId: 1,
+        scenarioId: 'test-scenario',
+        promptA: 'prompt a',
+        promptB: 'prompt b',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
+        version: 1,
+      })
+      .run()
+
+    db.insert(schema.playgroundRuns)
+      .values({
+        id: 17,
+        submissionId: 16,
+        scenarioId: 'test-scenario',
+        status: 'queued',
+      })
+      .run()
+
+    const res = await req('GET', '/api/playground/runs/16', userToken)
+
+    expect(res.status).toBe(404)
+  })
+
   it('rejects playground runs for retired submissions', async () => {
     db.insert(schema.submissions)
       .values({
