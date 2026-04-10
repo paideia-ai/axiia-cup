@@ -30,11 +30,16 @@ scenarios
 scenario:get <scenarioId>
 scenario:update <scenarioId> --file <path|->
 users:list
+users:find --name <keyword>|--email <keyword>|--query <keyword>
 users:disable <userId>
 users:reset-password <userId> --password <password>
 playground:run <submissionId>
 playground:list <submissionId>
 playground:get <submissionId> <runId>
+battles
+user:agents <userId>
+agent:summary <submissionId> <side>
+battle:export <source> <id>
 playground:export <runId>
 match:export <matchId>
 ```
@@ -124,11 +129,16 @@ These commands call `AXIIA_API_URL`:
 - `scenario:get <scenarioId>`
 - `scenario:update <scenarioId> --file <path|->`
 - `users:list`
+- `users:find --name <keyword>|--email <keyword>|--query <keyword>`
 - `users:disable <userId>`
 - `users:reset-password <userId> --password <password>`
 - `playground:run <submissionId>`
 - `playground:list <submissionId>`
 - `playground:get <submissionId> <runId>`
+- `battles`
+- `user:agents <userId>`
+- `agent:summary <submissionId> <side>`
+- `battle:export <source> <id>`
 
 ### 4.2 Local SQLite-only Commands
 
@@ -243,7 +253,17 @@ bun run ./apps/cli/src/index.ts users:disable 42
 
 The server-side route toggles the flag, so the same command disables or re-enables the user depending on their current state.
 
-### 6.3 Reset Password
+### 6.3 Find Users by Name or Email
+
+```bash
+bun run ./apps/cli/src/index.ts users:find --name Anna
+bun run ./apps/cli/src/index.ts users:find --email anna@example.com
+bun run ./apps/cli/src/index.ts users:find --query anna --json
+```
+
+This command reuses the admin user list and filters it locally by substring.
+
+### 6.4 Reset Password
 
 ```bash
 bun run ./apps/cli/src/index.ts users:reset-password 42 \
@@ -309,15 +329,71 @@ These commands now support `--json`:
 - `users:reset-password`
 - `playground:run`
 - `playground:list`
+- `battles`
+- `user:agents`
+- `agent:summary`
 
 Commands that already produce JSON by design:
 
 - `scenario:get`
 - `playground:get`
+- `battle:export`
 - `playground:export`
 - `match:export`
 
-## 9. Current Limits
+## 9. Analytics Commands
+
+The CLI now exposes the admin analytics API, which unifies official tournament
+matches and Playground runs into one battle view.
+
+### 9.1 List Battles
+
+```bash
+bun run ./apps/cli/src/index.ts battles
+bun run ./apps/cli/src/index.ts battles --source playground --mode pve --json
+bun run ./apps/cli/src/index.ts battles --user 42 --limit 20
+```
+
+Supported filters:
+
+- `--user <id>`
+- `--submission <id>`
+- `--side <a|b>`
+- `--source <tournament|playground>`
+- `--mode <pvp|pve>`
+- `--status <queued|running|judging|scored|error>`
+- `--limit <n>`
+
+### 9.2 List a User's Agents
+
+```bash
+bun run ./apps/cli/src/index.ts user:agents 42
+bun run ./apps/cli/src/index.ts user:agents 42 --json
+```
+
+Agents are reported at `submission + side` granularity, so one submission
+produces two agents: `A` and `B`.
+
+### 9.3 Inspect One Agent
+
+```bash
+bun run ./apps/cli/src/index.ts agent:summary 123 a
+bun run ./apps/cli/src/index.ts agent:summary 123 b --json
+```
+
+This returns the agent's aggregated record plus recent battles.
+
+### 9.4 Export One Battle from the API
+
+```bash
+bun run ./apps/cli/src/index.ts battle:export tournament 88
+bun run ./apps/cli/src/index.ts battle:export playground 144 --output /tmp/battle.json
+```
+
+Unlike `playground:export` and `match:export`, this command reads through the
+remote admin API and works without direct SQLite access.
+
+## 10. Current Limits
 
 The CLI still does not support:
 

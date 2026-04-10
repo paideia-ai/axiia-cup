@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 
 import { db } from '../db/client'
+import { listAnalyticsBattles } from '../lib/analytics'
 import { getTokenSoftCap } from '../lib/settings'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
@@ -25,9 +26,7 @@ adminMonitorRouter.get(
       latestVersion: number | null
       playgroundRunCount: number
       matchCount: number
-      totalPromptTokens: number
-      totalCompletionTokens: number
-      lastActiveAt: string | null
+      lastSubmissionAt: string | null
     }>(sql`
       SELECT
         u.id AS userId,
@@ -38,9 +37,7 @@ adminMonitorRouter.get(
         sub_stats.latest_version AS latestVersion,
         COALESCE(pg_stats.playground_run_count, 0) AS playgroundRunCount,
         COALESCE(match_stats.match_count, 0) AS matchCount,
-        COALESCE(token_stats.total_prompt_tokens, 0) AS totalPromptTokens,
-        COALESCE(token_stats.total_completion_tokens, 0) AS totalCompletionTokens,
-        COALESCE(token_stats.last_active_at, sub_stats.last_submission_at) AS lastActiveAt
+        sub_stats.last_submission_at AS lastSubmissionAt
       FROM users u
       LEFT JOIN (
         SELECT
@@ -69,19 +66,48 @@ adminMonitorRouter.get(
         WHERE m.status = 'scored'
         GROUP BY s.user_id
       ) match_stats ON match_stats.user_id = u.id
-      LEFT JOIN (
-        SELECT
-          user_id,
-          SUM(COALESCE(prompt_tokens, 0)) AS total_prompt_tokens,
-          SUM(COALESCE(completion_tokens, 0)) AS total_completion_tokens,
-          MAX(created_at) AS last_active_at
-        FROM llm_calls
-        WHERE user_id IS NOT NULL
-        GROUP BY user_id
-      ) token_stats ON token_stats.user_id = u.id
       WHERE u.is_admin = 0
-      ORDER BY totalCompletionTokens + totalPromptTokens DESC, u.id ASC
+      ORDER BY u.id ASC
     `)
+
+    const tokenStatsByUser = new Map<
+      number,
+      {
+        lastActiveAt: string | null
+        totalCompletionTokens: number
+        totalPromptTokens: number
+      }
+    >()
+    const battles = listAnalyticsBattles()
+
+    for (const battle of battles) {
+      const activityAt =
+        battle.finishedAt ??
+        battle.updatedAt ??
+        battle.startedAt ??
+        battle.createdAt
+
+      for (const participant of [battle.participantA, battle.participantB]) {
+        if (participant.kind !== 'submission' || participant.userId == null) {
+          continue
+        }
+
+        const current = tokenStatsByUser.get(participant.userId) ?? {
+          lastActiveAt: null,
+          totalCompletionTokens: 0,
+          totalPromptTokens: 0,
+        }
+
+        current.totalPromptTokens += participant.promptTokens
+        current.totalCompletionTokens += participant.completionTokens
+
+        if (!current.lastActiveAt || activityAt > current.lastActiveAt) {
+          current.lastActiveAt = activityAt
+        }
+
+        tokenStatsByUser.set(participant.userId, current)
+      }
+    }
 
     const result = rows.map((row) =>
       adminMonitorUserSchema.parse({
@@ -93,13 +119,25 @@ adminMonitorRouter.get(
         latestVersion: row.latestVersion,
         playgroundRunCount: row.playgroundRunCount,
         matchCount: row.matchCount,
-        totalPromptTokens: row.totalPromptTokens,
-        totalCompletionTokens: row.totalCompletionTokens,
-        totalTokens: row.totalPromptTokens + row.totalCompletionTokens,
-        lastActiveAt: row.lastActiveAt,
+        totalPromptTokens:
+          tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0,
+        totalCompletionTokens:
+          tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0,
+        totalTokens:
+          (tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0) +
+          (tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0),
+        lastActiveAt:
+          tokenStatsByUser.get(row.userId)?.lastActiveAt ??
+          row.lastSubmissionAt,
         isOverSoftCap:
-          row.totalPromptTokens + row.totalCompletionTokens > softCap,
+          (tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0) +
+            (tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0) >
+          softCap,
       }),
+    )
+
+    result.sort(
+      (left, right) => right.totalTokens - left.totalTokens || left.userId - right.userId,
     )
 
     return context.json(result)

@@ -112,7 +112,9 @@ function claimPlaygroundRun(runId: number) {
     .update(playgroundRuns)
     .set({
       error: null,
+      finishedAt: null,
       leaseToken,
+      startedAt: nowIso(),
       status: 'running',
       updatedAt: nowIso(),
     })
@@ -244,6 +246,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     // Resolve actual prompts based on opponent mode
     let promptA = submission.promptA
     let promptB = submission.promptB
+    let userIdA: number | undefined = submission.userId
+    let userIdB: number | undefined = submission.userId
 
     if (run.opponentMode === 'preset' && run.presetOpponentId) {
       const preset = db
@@ -272,8 +276,10 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
 
       if (preset.role === 'a') {
         promptA = preset.prompt
+        userIdA = undefined
       } else {
         promptB = preset.prompt
+        userIdB = undefined
       }
     }
 
@@ -338,12 +344,13 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       promptB,
       scenario,
       transcript,
-      userIdA: submission.userId,
-      userIdB: submission.userId,
+      userIdA,
+      userIdB,
     })
 
     await persist({
       error: null,
+      finishedAt: nowIso(),
       infoAssignment: JSON.stringify(result.infoAssignment),
       judgeDecision: result.judgeDecision,
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
@@ -362,7 +369,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     db.update(playgroundRuns)
       .set({
         error:
-          error instanceof Error ? error.message : 'Unknown engine failure',
+        error instanceof Error ? error.message : 'Unknown engine failure',
+        finishedAt: nowIso(),
         judgeTranscriptA: JSON.stringify(judgeTranscriptA),
         judgeTranscriptB: JSON.stringify(judgeTranscriptB),
         leaseToken: null,

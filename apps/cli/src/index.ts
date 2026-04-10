@@ -1,4 +1,7 @@
 import {
+  type AdminAnalyticsAgentDetail,
+  type AdminAnalyticsAgentSummary,
+  type AdminAnalyticsBattle,
   type AdminMonitorUser,
   type AdminPlayer,
   type AdminScenario,
@@ -385,6 +388,38 @@ function printUsers(users: AdminUser[]) {
   )
 }
 
+function filterUsersByQuery(
+  users: AdminUser[],
+  options: { email?: string; name?: string; query?: string },
+) {
+  const emailNeedle = options.email?.trim().toLowerCase()
+  const nameNeedle = options.name?.trim().toLowerCase()
+  const queryNeedle = options.query?.trim().toLowerCase()
+
+  return users.filter((user) => {
+    const email = user.email.toLowerCase()
+    const displayName = user.displayName.toLowerCase()
+
+    if (emailNeedle && !email.includes(emailNeedle)) {
+      return false
+    }
+
+    if (nameNeedle && !displayName.includes(nameNeedle)) {
+      return false
+    }
+
+    if (
+      queryNeedle &&
+      !email.includes(queryNeedle) &&
+      !displayName.includes(queryNeedle)
+    ) {
+      return false
+    }
+
+    return true
+  })
+}
+
 program.name('axiia').description('Axiia Cup 管理 CLI').version('0.1.0')
 
 program
@@ -739,6 +774,45 @@ program
   })
 
 program
+  .command('users:find')
+  .description('按名字或邮箱查找用户')
+  .option('--name <keyword>', 'match display name by substring')
+  .option('--email <keyword>', 'match email by substring')
+  .option('-q, --query <keyword>', 'match name or email by substring')
+  .option('--json', 'print JSON instead of table')
+  .action(
+    async (options: {
+      email?: string
+      json?: boolean
+      name?: string
+      query?: string
+    }) => {
+      if (!options.name && !options.email && !options.query) {
+        throw new Error('Provide --name, --email, or --query')
+      }
+
+      const users = await apiFetch<AdminUser[]>(
+        '/api/admin/users',
+        { method: 'GET' },
+        true,
+      )
+      const matches = filterUsersByQuery(users, options)
+
+      if (options.json) {
+        writeJsonOutput(matches)
+        return
+      }
+
+      if (matches.length === 0) {
+        console.log('未找到匹配用户')
+        return
+      }
+
+      printUsers(matches)
+    },
+  )
+
+program
   .command('users:disable')
   .description('切换用户禁用状态')
   .argument('<userId>', 'user id')
@@ -931,6 +1005,243 @@ program
     },
   )
 
+program
+  .command('battles')
+  .description('查看统一 battle 视图（tournament + playground）')
+  .option('--user <id>', 'filter by user id')
+  .option('--submission <id>', 'filter by submission id')
+  .option('--side <side>', 'filter by agent side (a or b)')
+  .option('--source <source>', 'filter by source (tournament or playground)')
+  .option('--mode <mode>', 'filter by playground mode (pvp or pve)')
+  .option('--status <status>', 'filter by status')
+  .option('--limit <n>', 'max rows to return', '50')
+  .option('--json', 'print JSON instead of table')
+  .action(
+    async (
+      options: {
+        json?: boolean
+        limit?: string
+        mode?: string
+        side?: string
+        source?: string
+        status?: string
+        submission?: string
+        user?: string
+      },
+    ) => {
+      const params = new URLSearchParams()
+
+      if (options.user) params.set('userId', options.user)
+      if (options.submission) params.set('submissionId', options.submission)
+      if (options.side) params.set('side', options.side)
+      if (options.source) params.set('source', options.source)
+      if (options.mode) params.set('mode', options.mode)
+      if (options.status) params.set('status', options.status)
+      if (options.limit) params.set('limit', options.limit)
+
+      const path = `/api/admin/analytics/battles${
+        params.size > 0 ? `?${params.toString()}` : ''
+      }`
+      const battles = await apiFetch<AdminAnalyticsBattle[]>(
+        path,
+        { method: 'GET' },
+        true,
+      )
+
+      if (options.json) {
+        writeJsonOutput(battles)
+        return
+      }
+
+      if (battles.length === 0) {
+        console.log('暂无 battle 数据')
+        return
+      }
+
+      console.table(
+        battles.map((battle) => ({
+          id: `${battle.source}:${battle.id}`,
+          kind: formatBattleKind(battle),
+          scenario: battle.scenarioTitle,
+          a: formatBattleParticipant(battle.participantA),
+          b: formatBattleParticipant(battle.participantB),
+          status: battle.status,
+          winner: formatBattleWinner(battle),
+          score:
+            battle.scoreA != null && battle.scoreB != null
+              ? `${battle.scoreA}:${battle.scoreB}`
+              : '—',
+          tokens: formatTokens(battle.totalTokens),
+          createdAt: battle.createdAt,
+        })),
+      )
+    },
+  )
+
+program
+  .command('user:agents')
+  .description('查看某个用户的所有 agent（submission + side）')
+  .argument('<userId>', 'user id')
+  .option('--json', 'print JSON instead of table')
+  .action(async (userIdArg: string, options: { json?: boolean }) => {
+    const userId = parseId(userIdArg)
+
+    if (!userId) {
+      throw new Error('Invalid user id')
+    }
+
+    const agents = await apiFetch<AdminAnalyticsAgentSummary[]>(
+      `/api/admin/analytics/users/${userId}/agents`,
+      { method: 'GET' },
+      true,
+    )
+
+    if (options.json) {
+      writeJsonOutput(agents)
+      return
+    }
+
+    if (agents.length === 0) {
+      console.log('该用户暂无 agent 数据')
+      return
+    }
+
+    console.table(
+      agents.map((agent) => ({
+        submissionId: agent.submissionId,
+        side: agent.side,
+        role: agent.roleName,
+        version: agent.version,
+        scenario: agent.scenarioTitle,
+        model: agent.model,
+        battles: agent.battleCount,
+        tournament: agent.tournamentBattleCount,
+        pvp: agent.playgroundPvpCount,
+        pve: agent.playgroundPveCount,
+        wins: agent.wins,
+        losses: agent.losses,
+        draws: agent.draws,
+        pending: agent.pending,
+        errors: agent.errors,
+        tokens: formatTokens(agent.totalTokens),
+        lastBattle: agent.lastBattleAt ?? '—',
+      })),
+    )
+  })
+
+program
+  .command('agent:summary')
+  .description('查看单个 agent 的汇总与最近 battles')
+  .argument('<submissionId>', 'submission id')
+  .argument('<side>', 'agent side (a or b)')
+  .option('--json', 'print JSON instead of text')
+  .action(
+    async (
+      submissionIdArg: string,
+      side: string,
+      options: { json?: boolean },
+    ) => {
+      const submissionId = parseId(submissionIdArg)
+
+      if (!submissionId) {
+        throw new Error('Invalid submission id')
+      }
+
+      if (side !== 'a' && side !== 'b') {
+        throw new Error('side must be "a" or "b"')
+      }
+
+      const detail = await apiFetch<AdminAnalyticsAgentDetail>(
+        `/api/admin/analytics/agents/${submissionId}/${side}/summary`,
+        { method: 'GET' },
+        true,
+      )
+
+      if (options.json) {
+        writeJsonOutput(detail)
+        return
+      }
+
+      const { summary } = detail
+      console.log(
+        `\n  Agent: submission ${summary.submissionId} / ${summary.side.toUpperCase()} / ${summary.roleName}`,
+      )
+      console.log(`  用户: ${summary.userDisplayName} (#${summary.userId})`)
+      console.log(
+        `  版本: v${summary.version} · ${summary.model} · ${summary.scenarioTitle}`,
+      )
+      console.log(
+        `  战绩: ${summary.wins} 胜 / ${summary.losses} 负 / ${summary.draws} 平`,
+      )
+      console.log(
+        `  分布: tournament ${summary.tournamentBattleCount} / pvp ${summary.playgroundPvpCount} / pve ${summary.playgroundPveCount}`,
+      )
+      console.log(
+        `  均分: for ${formatAverage(summary.avgScoreFor)} / against ${formatAverage(summary.avgScoreAgainst)}`,
+      )
+      console.log(
+        `  Token: ${formatTokens(summary.totalTokens)} (prompt ${formatTokens(summary.totalPromptTokens)}, completion ${formatTokens(summary.totalCompletionTokens)})`,
+      )
+      console.log(`  最近 battle: ${summary.lastBattleAt ?? '—'}`)
+
+      if (detail.recentBattles.length > 0) {
+        console.log(`\n  最近 battles:`)
+        console.table(
+          detail.recentBattles.map((battle) => ({
+            id: `${battle.source}:${battle.id}`,
+            kind: formatBattleKind(battle),
+            opponent:
+              battle.participantA.submissionId === summary.submissionId &&
+              battle.participantA.side === summary.side
+                ? battle.participantB.label
+                : battle.participantA.label,
+            status: battle.status,
+            winner: formatBattleWinner(battle),
+            score:
+              battle.scoreA != null && battle.scoreB != null
+                ? `${battle.scoreA}:${battle.scoreB}`
+                : '—',
+            createdAt: battle.createdAt,
+          })),
+        )
+      }
+
+      console.log()
+    },
+  )
+
+program
+  .command('battle:export')
+  .description('通过 API 导出单场 battle 的原始记录与 llm_calls')
+  .argument('<source>', 'battle source (tournament or playground)')
+  .argument('<id>', 'battle id')
+  .option('-o, --output <path>', 'write JSON to file instead of stdout')
+  .action(
+    async (
+      source: string,
+      idArg: string,
+      options: { output?: string },
+    ) => {
+      if (source !== 'tournament' && source !== 'playground') {
+        throw new Error('source must be "tournament" or "playground"')
+      }
+
+      const id = parseId(idArg)
+
+      if (!id) {
+        throw new Error('Invalid battle id')
+      }
+
+      const payload = await apiFetch<unknown>(
+        `/api/admin/analytics/battles/${source}/${id}/export`,
+        { method: 'GET' },
+        true,
+      )
+
+      writeJsonOutput(payload, options.output)
+    },
+  )
+
 function formatTokens(tokens: number) {
   if (tokens >= 1_000_000) {
     return `${(tokens / 1_000_000).toFixed(1)}M`
@@ -963,6 +1274,38 @@ function timeAgo(isoDate: string) {
 
   const days = Math.floor(hours / 24)
   return `${days}天前`
+}
+
+function formatBattleKind(battle: AdminAnalyticsBattle) {
+  if (battle.source === 'tournament') {
+    return 'tournament'
+  }
+
+  return battle.mode ?? 'playground'
+}
+
+function formatBattleParticipant(participant: AdminAnalyticsBattle['participantA']) {
+  if (participant.kind === 'preset') {
+    return participant.label
+  }
+
+  return `${participant.userDisplayName ?? '未知玩家'} · v${participant.version ?? '?'} · ${participant.side.toUpperCase()}`
+}
+
+function formatBattleWinner(battle: AdminAnalyticsBattle) {
+  if (battle.winner == null) {
+    return '—'
+  }
+
+  if (battle.winner === 'draw') {
+    return 'draw'
+  }
+
+  return battle.winner === 'a' ? battle.participantA.label : battle.participantB.label
+}
+
+function formatAverage(value: number | null) {
+  return value == null ? '—' : value.toFixed(2)
 }
 
 program

@@ -145,6 +145,10 @@ export const playgroundRuns = sqliteTable(
     presetOpponentId: integer('preset_opponent_id').references(
       () => presetOpponents.id,
     ),
+    presetOpponentRole: text('preset_opponent_role', {
+      enum: ['a', 'b'] as const,
+    }),
+    presetOpponentLabel: text('preset_opponent_label'),
     actualPromptA: text('actual_prompt_a'),
     actualPromptB: text('actual_prompt_b'),
     transcript: text('transcript').notNull().default('[]'),
@@ -157,6 +161,8 @@ export const playgroundRuns = sqliteTable(
     winner: text('winner', { enum: matchWinners }),
     reasoning: text('reasoning'),
     error: text('error'),
+    startedAt: text('started_at'),
+    finishedAt: text('finished_at'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
     updatedAt: text('updated_at'),
   },

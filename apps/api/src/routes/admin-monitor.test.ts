@@ -17,6 +17,9 @@ let userToken: string
 let adminId: number
 let player1Id: number
 let player2Id: number
+let player1SubmissionId: number
+let player2SubmissionId: number
+let pveRunId: number
 
 beforeAll(async () => {
   const { migrate } = await import('drizzle-orm/bun-sqlite/migrator')
@@ -95,7 +98,7 @@ beforeAll(async () => {
     .run()
 
   // Submissions for player 1
-  const sub1Id = db
+  player1SubmissionId = db
     .insert(schema.submissions)
     .values({
       userId: player1Id,
@@ -120,7 +123,7 @@ beforeAll(async () => {
     .run()
 
   // Submission for player 2
-  const sub3Id = db
+  player2SubmissionId = db
     .insert(schema.submissions)
     .values({
       userId: player2Id,
@@ -137,9 +140,18 @@ beforeAll(async () => {
   const pgRun1Id = db
     .insert(schema.playgroundRuns)
     .values({
-      submissionId: sub1Id,
+      submissionId: player1SubmissionId,
       scenarioId: 'mon-test-scenario',
       status: 'scored',
+      scoreA: 1,
+      scoreB: 2,
+      winner: 'b',
+      startedAt: '2026-04-10T09:00:00.000Z',
+      finishedAt: '2026-04-10T09:03:00.000Z',
+      updatedAt: '2026-04-10T09:03:00.000Z',
+      transcript: '[]',
+      judgeTranscriptA: '[]',
+      judgeTranscriptB: '[]',
     })
     .returning({ id: schema.playgroundRuns.id })
     .get()!.id
@@ -186,7 +198,7 @@ beforeAll(async () => {
   const pgRun2Id = db
     .insert(schema.playgroundRuns)
     .values({
-      submissionId: sub3Id,
+      submissionId: player2SubmissionId,
       scenarioId: 'mon-test-scenario',
       status: 'scored',
     })
@@ -213,13 +225,180 @@ beforeAll(async () => {
     })
     .run()
 
+  const presetId = db
+    .insert(schema.presetOpponents)
+    .values({
+      scenarioId: 'mon-test-scenario',
+      role: 'b',
+      label: '铁血守旧派',
+      prompt: 'preset prompt',
+    })
+    .returning({ id: schema.presetOpponents.id })
+    .get()!.id
+
+  const tournamentId = db
+    .insert(schema.tournaments)
+    .values({
+      scenarioId: 'mon-test-scenario',
+      status: 'finished',
+      currentRound: 1,
+      totalRounds: 1,
+    })
+    .returning({ id: schema.tournaments.id })
+    .get()!.id
+
+  const roundId = db
+    .insert(schema.rounds)
+    .values({
+      tournamentId,
+      roundNumber: 1,
+      status: 'done',
+    })
+    .returning({ id: schema.rounds.id })
+    .get()!.id
+
+  const matchId = db
+    .insert(schema.matches)
+    .values({
+      roundId,
+      scenarioId: 'mon-test-scenario',
+      subAId: player1SubmissionId,
+      subBId: player2SubmissionId,
+      status: 'scored',
+      currentTurn: 10,
+      scoreA: 2,
+      scoreB: 1,
+      winner: 'a',
+      startedAt: '2026-04-10T10:00:00.000Z',
+      finishedAt: '2026-04-10T10:05:00.000Z',
+      updatedAt: '2026-04-10T10:05:00.000Z',
+      transcript: '[]',
+      judgeTranscriptA: '[]',
+      judgeTranscriptB: '[]',
+      reasoning: 'player one wins',
+    })
+    .returning({ id: schema.matches.id })
+    .get()!.id
+
+  pveRunId = db
+    .insert(schema.playgroundRuns)
+    .values({
+      submissionId: player1SubmissionId,
+      scenarioId: 'mon-test-scenario',
+      opponentMode: 'preset',
+      presetOpponentId: presetId,
+      presetOpponentRole: 'b',
+      presetOpponentLabel: '铁血守旧派',
+      status: 'scored',
+      scoreA: 3,
+      scoreB: 0,
+      winner: 'a',
+      startedAt: '2026-04-10T12:00:00.000Z',
+      finishedAt: '2026-04-10T12:03:00.000Z',
+      updatedAt: '2026-04-10T12:03:00.000Z',
+      transcript: '[]',
+      judgeTranscriptA: '[]',
+      judgeTranscriptB: '[]',
+      reasoning: 'preset loses',
+    })
+    .returning({ id: schema.playgroundRuns.id })
+    .get()!.id
+
+  db.insert(schema.llmCalls)
+    .values([
+      {
+        matchId,
+        userId: player1Id,
+        phase: 'dialogue',
+        side: 'a',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'match-a',
+        durationMs: 100,
+        promptTokens: 100,
+        completionTokens: 50,
+      },
+      {
+        matchId,
+        userId: player2Id,
+        phase: 'dialogue',
+        side: 'b',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'match-b',
+        durationMs: 100,
+        promptTokens: 80,
+        completionTokens: 40,
+      },
+      {
+        matchId,
+        phase: 'judgment',
+        side: 'judge',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'judge',
+        durationMs: 100,
+        promptTokens: 30,
+        completionTokens: 10,
+      },
+      {
+        matchId,
+        phase: 'scoring',
+        side: 'scorer',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'score',
+        durationMs: 100,
+        promptTokens: 20,
+        completionTokens: 5,
+      },
+      {
+        playgroundRunId: pveRunId,
+        userId: player1Id,
+        phase: 'dialogue',
+        side: 'a',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'pve-a',
+        durationMs: 100,
+        promptTokens: 90,
+        completionTokens: 45,
+      },
+      {
+        playgroundRunId: pveRunId,
+        phase: 'dialogue',
+        side: 'b',
+        model: 'deepseek-v3.2',
+        provider: 'siliconflow',
+        requestJson: '{}',
+        responseJson: '{}',
+        responseContent: 'preset-b',
+        durationMs: 100,
+        promptTokens: 40,
+        completionTokens: 20,
+      },
+    ])
+    .run()
+
   adminToken = await signToken({ userId: adminId, isAdmin: true })
   userToken = await signToken({ userId: player1Id, isAdmin: false })
 
-  // Build test app with auth middleware + admin monitor router
+  // Build test app with auth middleware + admin routes
   const { Hono } = await import('hono')
+  const { adminAnalyticsRouter } = await import('./admin-analytics')
   const { adminMonitorRouter } = await import('./admin-monitor')
   app = new Hono()
+  app.route('/', adminAnalyticsRouter)
   app.route('/', adminMonitorRouter)
 })
 
@@ -275,7 +454,7 @@ describe('GET /api/admin/monitor/users', () => {
     expect(data.every((u) => u.userId !== adminId)).toBe(true)
   })
 
-  it('returns correct token totals for player 2', async () => {
+  it('returns correct token totals for player 1', async () => {
     const res = await req('GET', '/api/admin/monitor/users', adminToken)
     const data = (await res.json()) as Array<{
       userId: number
@@ -289,15 +468,15 @@ describe('GET /api/admin/monitor/users', () => {
 
     const p1 = data.find((u) => u.userId === player1Id)!
     expect(p1).toBeTruthy()
-    expect(p1.totalPromptTokens).toBe(300)
-    expect(p1.totalCompletionTokens).toBe(150)
-    expect(p1.totalTokens).toBe(450)
+    expect(p1.totalPromptTokens).toBe(490)
+    expect(p1.totalCompletionTokens).toBe(245)
+    expect(p1.totalTokens).toBe(735)
     expect(p1.submissionCount).toBe(2)
     expect(p1.latestVersion).toBe(2)
-    expect(p1.playgroundRunCount).toBe(1)
+    expect(p1.playgroundRunCount).toBe(2)
   })
 
-  it('returns correct token totals for player 3', async () => {
+  it('returns correct token totals for player 2', async () => {
     const res = await req('GET', '/api/admin/monitor/users', adminToken)
     const data = (await res.json()) as Array<{
       userId: number
@@ -308,9 +487,9 @@ describe('GET /api/admin/monitor/users', () => {
 
     const p2 = data.find((u) => u.userId === player2Id)!
     expect(p2).toBeTruthy()
-    expect(p2.totalPromptTokens).toBe(50)
-    expect(p2.totalCompletionTokens).toBe(25)
-    expect(p2.totalTokens).toBe(75)
+    expect(p2.totalPromptTokens).toBe(130)
+    expect(p2.totalCompletionTokens).toBe(65)
+    expect(p2.totalTokens).toBe(195)
   })
 
   it('orders by total tokens descending', async () => {
@@ -320,7 +499,7 @@ describe('GET /api/admin/monitor/users', () => {
       totalTokens: number
     }>
 
-    // Player 1 (450 tokens) should come before Player 2 (75 tokens)
+    // Player 1 (735 tokens) should come before Player 2 (195 tokens)
     const p1Idx = data.findIndex((u) => u.userId === player1Id)
     const p2Idx = data.findIndex((u) => u.userId === player2Id)
     expect(p1Idx).toBeLessThan(p2Idx)
@@ -333,5 +512,83 @@ describe('GET /api/admin/monitor/users', () => {
     }>
 
     expect(data.every((u) => u.isOverSoftCap === false)).toBe(true)
+  })
+})
+
+describe('GET /api/admin/analytics/*', () => {
+  it('returns unified battles with tournament, pvp, and pve rows', async () => {
+    const res = await req('GET', '/api/admin/analytics/battles?limit=10', adminToken)
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as Array<Record<string, unknown>>
+
+    expect(data).toHaveLength(4)
+
+    const pve = data.find((item) => item.source === 'playground' && item.mode === 'pve')
+    expect(pve).toBeDefined()
+    expect((pve as { participantA: { kind: string } }).participantA.kind).toBe(
+      'submission',
+    )
+    expect((pve as { participantB: { kind: string } }).participantB.kind).toBe(
+      'preset',
+    )
+
+    const tournament = data.find((item) => item.source === 'tournament')
+    expect(tournament).toBeDefined()
+    expect((tournament as { totalTokens: number }).totalTokens).toBe(335)
+  })
+
+  it('returns per-agent summaries on submission + side granularity', async () => {
+    const res = await req(
+      'GET',
+      `/api/admin/analytics/users/${player1Id}/agents`,
+      adminToken,
+    )
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as Array<Record<string, unknown>>
+
+    expect(data).toHaveLength(4)
+
+    const agentA = data.find(
+      (item) =>
+        item.submissionId === player1SubmissionId && item.side === 'a',
+    ) as Record<string, unknown> | undefined
+    const agentB = data.find(
+      (item) =>
+        item.submissionId === player1SubmissionId && item.side === 'b',
+    ) as Record<string, unknown> | undefined
+
+    expect(agentA).toBeDefined()
+    expect(agentA?.battleCount).toBe(3)
+    expect(agentA?.tournamentBattleCount).toBe(1)
+    expect(agentA?.playgroundPvpCount).toBe(1)
+    expect(agentA?.playgroundPveCount).toBe(1)
+    expect(agentA?.wins).toBe(2)
+    expect(agentA?.losses).toBe(1)
+    expect(agentA?.draws).toBe(0)
+    expect(agentA?.totalTokens).toBe(435)
+
+    expect(agentB).toBeDefined()
+    expect(agentB?.battleCount).toBe(1)
+    expect(agentB?.wins).toBe(1)
+    expect(agentB?.totalTokens).toBe(300)
+  })
+
+  it('exports a remote battle with parsed llm call payloads', async () => {
+    const res = await req(
+      'GET',
+      `/api/admin/analytics/battles/playground/${pveRunId}/export`,
+      adminToken,
+    )
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as {
+      kind: string
+      llmCalls: Array<{ requestJson: unknown; responseJson: unknown }>
+      summary: { mode: string | null }
+    }
+
+    expect(data.kind).toBe('playground_battle')
+    expect(data.summary.mode).toBe('pve')
+    expect(data.llmCalls.length).toBeGreaterThan(0)
+    expect(data.llmCalls[0]?.requestJson).toBeDefined()
   })
 })

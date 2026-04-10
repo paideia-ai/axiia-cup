@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 
 import { startWorker } from './engine/worker'
 import { adminMonitorRouter } from './routes/admin-monitor'
+import { adminAnalyticsRouter } from './routes/admin-analytics'
 import { adminSettingsRouter } from './routes/admin-settings'
 import { adminUsersRouter } from './routes/admin-users'
 import { authRouter } from './routes/auth'
@@ -69,6 +70,7 @@ app.get('/api/meta', (context) => {
 })
 
 app.get('/api/models', (context) => context.json({ items: modelOptions }))
+app.route('/', adminAnalyticsRouter)
 app.route('/', adminMonitorRouter)
 app.route('/', adminSettingsRouter)
 app.route('/', adminUsersRouter)

@@ -93,19 +93,22 @@ playgroundRouter.post(
     }
 
     const { opponentMode, presetOpponentId } = parsed.data
+    let selectedPreset: typeof presetOpponents.$inferSelect | null = null
 
     if (opponentMode === 'preset') {
       if (!presetOpponentId) {
         return context.json({ error: '预设对手模式需要选择一个预设' }, 400)
       }
 
-      const preset = db
+      selectedPreset =
+        db
         .select()
         .from(presetOpponents)
         .where(eq(presetOpponents.id, presetOpponentId))
         .get()
+        ?? null
 
-      if (!preset || preset.scenarioId !== scenario.id) {
+      if (!selectedPreset || selectedPreset.scenarioId !== scenario.id) {
         return context.json({ error: '预设对手不存在' }, 404)
       }
     }
@@ -118,6 +121,10 @@ playgroundRouter.post(
         submissionId: submission.id,
         opponentMode,
         presetOpponentId: opponentMode === 'preset' ? presetOpponentId : null,
+        presetOpponentRole:
+          opponentMode === 'preset' ? selectedPreset?.role ?? null : null,
+        presetOpponentLabel:
+          opponentMode === 'preset' ? selectedPreset?.label ?? null : null,
         updatedAt: nowIso(),
       })
       .returning()
@@ -274,7 +281,11 @@ playgroundRouter.get(
         judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
         opponentMode: row.opponentMode ?? 'self',
         presetOpponentId: row.presetOpponentId ?? null,
+        presetOpponentRole: row.presetOpponentRole ?? null,
+        presetOpponentLabel: row.presetOpponentLabel ?? null,
         transcript: parseJsonField(row.transcript, []),
+        startedAt: row.startedAt ?? null,
+        finishedAt: row.finishedAt ?? null,
         updatedAt: row.updatedAt ?? row.createdAt,
       }),
     )

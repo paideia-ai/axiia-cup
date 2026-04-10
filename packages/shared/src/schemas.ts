@@ -541,6 +541,8 @@ export const playgroundRunSchema = z.object({
   scenarioId: z.string(),
   opponentMode: opponentModeSchema,
   presetOpponentId: z.number().int().positive().nullable(),
+  presetOpponentRole: z.enum(['a', 'b']).nullable(),
+  presetOpponentLabel: z.string().nullable(),
   actualPromptA: z.string().nullable(),
   actualPromptB: z.string().nullable(),
   transcript: z.array(transcriptTurnSchema),
@@ -554,6 +556,8 @@ export const playgroundRunSchema = z.object({
   reasoning: z.string().nullable(),
   error: z.string().nullable(),
   createdAt: z.string(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
   updatedAt: z.string(),
 })
 
@@ -596,6 +600,94 @@ export const adminStatsSchema = z.object({
   queued: z.number().int().nonnegative(),
   running: z.number().int().nonnegative(),
   scored: z.number().int().nonnegative(),
+})
+
+export const analyticsBattleSourceSchema = z.enum([
+  'tournament',
+  'playground',
+])
+
+export const analyticsBattleModeSchema = z.enum(['pvp', 'pve'])
+
+export const analyticsAgentKindSchema = z.enum(['submission', 'preset'])
+
+export const analyticsBattleParticipantSchema = z.object({
+  agentKey: z.string(),
+  kind: analyticsAgentKindSchema,
+  side: z.enum(['a', 'b']),
+  roleName: z.string(),
+  label: z.string(),
+  userId: z.number().int().positive().nullable(),
+  userDisplayName: z.string().nullable(),
+  submissionId: z.number().int().positive().nullable(),
+  version: z.number().int().positive().nullable(),
+  model: z.string().nullable(),
+  presetOpponentId: z.number().int().positive().nullable(),
+  presetLabel: z.string().nullable(),
+  promptTokens: z.number().int().nonnegative(),
+  completionTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+})
+
+export const adminAnalyticsBattleSchema = z.object({
+  id: z.number().int().positive(),
+  source: analyticsBattleSourceSchema,
+  mode: analyticsBattleModeSchema.nullable(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  tournamentId: z.number().int().positive().nullable(),
+  roundId: z.number().int().positive().nullable(),
+  roundNumber: z.number().int().positive().nullable(),
+  status: matchStatusSchema,
+  currentTurn: z.number().int().nonnegative(),
+  scoreA: z.number().nullable(),
+  scoreB: z.number().nullable(),
+  winner: matchWinnerSchema.nullable(),
+  createdAt: z.string(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+  error: z.string().nullable(),
+  participantA: analyticsBattleParticipantSchema,
+  participantB: analyticsBattleParticipantSchema,
+  totalPromptTokens: z.number().int().nonnegative(),
+  totalCompletionTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+})
+
+export const adminAnalyticsAgentSummarySchema = z.object({
+  agentKey: z.string(),
+  userId: z.number().int().positive(),
+  userDisplayName: z.string(),
+  submissionId: z.number().int().positive(),
+  side: z.enum(['a', 'b']),
+  roleName: z.string(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  model: z.string(),
+  version: z.number().int().positive(),
+  createdAt: z.string(),
+  retiredAt: z.string().nullable(),
+  battleCount: z.number().int().nonnegative(),
+  tournamentBattleCount: z.number().int().nonnegative(),
+  playgroundPvpCount: z.number().int().nonnegative(),
+  playgroundPveCount: z.number().int().nonnegative(),
+  wins: z.number().int().nonnegative(),
+  losses: z.number().int().nonnegative(),
+  draws: z.number().int().nonnegative(),
+  pending: z.number().int().nonnegative(),
+  errors: z.number().int().nonnegative(),
+  avgScoreFor: z.number().nullable(),
+  avgScoreAgainst: z.number().nullable(),
+  totalPromptTokens: z.number().int().nonnegative(),
+  totalCompletionTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+  lastBattleAt: z.string().nullable(),
+})
+
+export const adminAnalyticsAgentDetailSchema = z.object({
+  summary: adminAnalyticsAgentSummarySchema,
+  recentBattles: z.array(adminAnalyticsBattleSchema),
 })
 
 export const adminMonitorUserSchema = z.object({
@@ -685,6 +777,19 @@ export type PlaygroundRunProgress = z.infer<typeof playgroundRunProgressSchema>
 export type PlaygroundRunStart = z.infer<typeof playgroundRunStartSchema>
 export type PlaygroundRunSummary = z.infer<typeof playgroundRunSummarySchema>
 export type PersonalStats = z.infer<typeof personalStatsSchema>
+export type AnalyticsBattleSource = z.infer<typeof analyticsBattleSourceSchema>
+export type AnalyticsBattleMode = z.infer<typeof analyticsBattleModeSchema>
+export type AnalyticsAgentKind = z.infer<typeof analyticsAgentKindSchema>
+export type AnalyticsBattleParticipant = z.infer<
+  typeof analyticsBattleParticipantSchema
+>
+export type AdminAnalyticsBattle = z.infer<typeof adminAnalyticsBattleSchema>
+export type AdminAnalyticsAgentSummary = z.infer<
+  typeof adminAnalyticsAgentSummarySchema
+>
+export type AdminAnalyticsAgentDetail = z.infer<
+  typeof adminAnalyticsAgentDetailSchema
+>
 export type AdminMonitorUser = z.infer<typeof adminMonitorUserSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
 export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
