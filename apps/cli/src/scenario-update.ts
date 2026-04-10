@@ -55,8 +55,16 @@ export function parseScenarioUpdateInput(raw: unknown): UpdateScenario {
     throw new Error('Scenario update payload must be a JSON object')
   }
 
+  const candidate =
+    'scenario' in (raw as Record<string, unknown>) &&
+    (raw as Record<string, unknown>).scenario &&
+    typeof (raw as Record<string, unknown>).scenario === 'object' &&
+    !Array.isArray((raw as Record<string, unknown>).scenario)
+      ? ((raw as Record<string, unknown>).scenario as Record<string, unknown>)
+      : (raw as Record<string, unknown>)
+
   const parsed = updateScenarioSchema.safeParse(
-    buildUpdateCandidate(raw as Record<string, unknown>),
+    buildUpdateCandidate(candidate),
   )
 
   if (parsed.success) {

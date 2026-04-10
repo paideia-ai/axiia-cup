@@ -7,17 +7,17 @@ function buildUpdateScenario(): UpdateScenario {
   return {
     turnCount: 10,
     judgeModel: 'deepseek-v3.2',
-    openingLine: '秦孝公命两人陈词。',
+    openingLine: 'The ruler asks both speakers to present their arguments.',
     agentPromptTemplate: 'agent prompt',
     examinationQuestionTemplate: '',
     judgePrompt: 'judge prompt',
     scorerPrompt: 'scorer prompt',
-    roleAName: '商鞅',
-    roleAHiddenInfo: [{ id: 'S1', content: '角色 A 隐藏信息' }],
-    roleARequests: [{ id: 'SR1', content: '角色 A 请求' }],
-    roleBName: '甘龙',
-    roleBHiddenInfo: [{ id: 'G1', content: '角色 B 隐藏信息' }],
-    roleBRequests: [{ id: 'GR1', content: '角色 B 请求' }],
+    roleAName: 'Role A',
+    roleAHiddenInfo: [{ id: 'S1', content: 'Role A hidden info' }],
+    roleARequests: [{ id: 'SR1', content: 'Role A request' }],
+    roleBName: 'Role B',
+    roleBHiddenInfo: [{ id: 'G1', content: 'Role B hidden info' }],
+    roleBRequests: [{ id: 'GR1', content: 'Role B request' }],
     falseInfoCount: 1,
     trueRequestCount: 1,
   }
@@ -25,9 +25,9 @@ function buildUpdateScenario(): UpdateScenario {
 
 function buildAdminScenario(): AdminScenario {
   return {
-    id: 'shangyang-court',
-    title: '商鞅变法·朝堂辩法',
-    subject: '历史',
+    id: 'reform-court',
+    title: 'Court Reform Debate',
+    subject: 'history',
     locked: false,
     ...buildUpdateScenario(),
   }

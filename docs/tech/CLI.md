@@ -40,11 +40,14 @@ battles
 user:agents <userId>
 agent:summary <submissionId> <side>
 battle:export <source> <id>
+monitor
+monitor:player <userId>
 playground:export <runId>
 match:export <matchId>
 ```
 
-Most table-style commands also support `--json`.
+Analytics and user-discovery commands now default to structured JSON output.
+List-style commands support `--jsonl` for one-record-per-line output.
 
 ## 2. Environment Variables
 
@@ -81,16 +84,11 @@ bun run ./apps/cli/src/index.ts auth:login \
   --password '<password>'
 ```
 
-By default it prints a shell-ready export line:
-
-```bash
-export AXIIA_AUTH_TOKEN='...'
-```
+By default it prints a JSON object containing the token, user, and a ready-to-run `shellExport` field.
 
 Useful variants:
 
 ```bash
-bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --json
 bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --token-only
 bun run ./apps/cli/src/index.ts auth:login --email ... --password ... --shell
 ```
@@ -139,6 +137,8 @@ These commands call `AXIIA_API_URL`:
 - `user:agents <userId>`
 - `agent:summary <submissionId> <side>`
 - `battle:export <source> <id>`
+- `monitor`
+- `monitor:player <userId>`
 
 ### 4.2 Local SQLite-only Commands
 
@@ -163,18 +163,13 @@ bun run ./apps/cli/src/index.ts next-round 3
 bun run ./apps/cli/src/index.ts leaderboard 3
 ```
 
-For scripting, use `--json`:
-
-```bash
-bun run ./apps/cli/src/index.ts status --json
-bun run ./apps/cli/src/index.ts leaderboard 3 --json
-```
+All of these commands now return JSON by default. Add `--jsonl` on list-style commands when you want one record per line.
 
 ### 5.2 Scenario Listing
 
 ```bash
 bun run ./apps/cli/src/index.ts scenarios
-bun run ./apps/cli/src/index.ts scenarios --json
+bun run ./apps/cli/src/index.ts scenarios --jsonl
 ```
 
 ### 5.3 Fetch a Scenario as JSON
@@ -190,13 +185,13 @@ bun run ./apps/cli/src/index.ts scenario:get shangyang-court \
   --output /tmp/shangyang-court.json
 ```
 
-The output is the full admin scenario object, including read-only metadata such as `id`, `title`, `subject`, and `locked`.
+输出会包含 `kind` 字段以及完整的 admin scenario 对象，里面仍然保留 `id`、`title`、`subject`、`locked` 等只读元数据。
 
 ### 5.4 Update a Scenario
 
 The old interactive `scenario:edit` flow has been removed. Scenario editing is now non-interactive and agent-friendly:
 
-1. `scenarios --json`
+1. `scenarios`
 2. `scenario:get <id>`
 3. edit JSON externally
 4. `scenario:update <id> --file <path|->`
@@ -213,14 +208,6 @@ Or from stdin:
 ```bash
 cat /tmp/shangyang-court.json | \
   bun run ./apps/cli/src/index.ts scenario:update shangyang-court --file -
-```
-
-If you need machine-readable output:
-
-```bash
-bun run ./apps/cli/src/index.ts scenario:update shangyang-court \
-  --file /tmp/shangyang-court.json \
-  --json
 ```
 
 Validation notes:
@@ -242,7 +229,7 @@ The CLI now exposes the existing admin user-management API.
 
 ```bash
 bun run ./apps/cli/src/index.ts users:list
-bun run ./apps/cli/src/index.ts users:list --json
+bun run ./apps/cli/src/index.ts users:list --jsonl
 ```
 
 ### 6.2 Toggle Disabled State
@@ -258,7 +245,8 @@ The server-side route toggles the flag, so the same command disables or re-enabl
 ```bash
 bun run ./apps/cli/src/index.ts users:find --name Anna
 bun run ./apps/cli/src/index.ts users:find --email anna@example.com
-bun run ./apps/cli/src/index.ts users:find --query anna --json
+bun run ./apps/cli/src/index.ts users:find --query anna
+bun run ./apps/cli/src/index.ts users:find --query anna --jsonl
 ```
 
 This command reuses the admin user list and filters it locally by substring.
@@ -270,7 +258,7 @@ bun run ./apps/cli/src/index.ts users:reset-password 42 \
   --password 'new-password'
 ```
 
-Use `--json` if you want the raw `{ "ok": true }` response.
+The response is JSON by default.
 
 ## 7. Playground Commands
 
@@ -282,13 +270,13 @@ The CLI now exposes the playground API as well.
 bun run ./apps/cli/src/index.ts playground:run 123
 ```
 
-If the submission belongs to the authenticated user, the API returns a queued run ID. Use `--json` for structured output.
+If the submission belongs to the authenticated user, the API returns a queued run ID as JSON.
 
 ### 7.2 List Playground Runs for a Submission
 
 ```bash
 bun run ./apps/cli/src/index.ts playground:list 123
-bun run ./apps/cli/src/index.ts playground:list 123 --json
+bun run ./apps/cli/src/index.ts playground:list 123 --jsonl
 ```
 
 ### 7.3 Fetch One Playground Run
@@ -304,6 +292,8 @@ bun run ./apps/cli/src/index.ts playground:get 123 456 \
   --output /tmp/playground-run.json
 ```
 
+The payload includes a `kind` field and a normalized `run` object.
+
 ### 7.4 Playground Availability
 
 Playground runs are blocked while an official tournament is running. In that case the API returns the existing lock message:
@@ -312,28 +302,21 @@ Playground runs are blocked while an official tournament is running. In that cas
 比赛进行中，试炼场暂停使用
 ```
 
-## 8. JSON Output Support
+## 8. Structured Output
 
-These commands now support `--json`:
+Every command now emits JSON by default. These list-style commands also support `--jsonl`:
 
-- `auth:login`
 - `players`
-- `start`
-- `status`
-- `next-round`
 - `leaderboard`
 - `scenarios`
-- `scenario:update`
 - `users:list`
-- `users:disable`
-- `users:reset-password`
-- `playground:run`
+- `users:find`
 - `playground:list`
 - `battles`
 - `user:agents`
-- `agent:summary`
+- `monitor`
 
-Commands that already produce JSON by design:
+Commands that already produced JSON and continue to do so:
 
 - `scenario:get`
 - `playground:get`
@@ -350,7 +333,8 @@ matches and Playground runs into one battle view.
 
 ```bash
 bun run ./apps/cli/src/index.ts battles
-bun run ./apps/cli/src/index.ts battles --source playground --mode pve --json
+bun run ./apps/cli/src/index.ts battles --source playground --mode pve
+bun run ./apps/cli/src/index.ts battles --source playground --mode pve --jsonl
 bun run ./apps/cli/src/index.ts battles --user 42 --limit 20
 ```
 
@@ -368,7 +352,7 @@ Supported filters:
 
 ```bash
 bun run ./apps/cli/src/index.ts user:agents 42
-bun run ./apps/cli/src/index.ts user:agents 42 --json
+bun run ./apps/cli/src/index.ts user:agents 42 --jsonl
 ```
 
 Agents are reported at `submission + side` granularity, so one submission
@@ -378,7 +362,7 @@ produces two agents: `A` and `B`.
 
 ```bash
 bun run ./apps/cli/src/index.ts agent:summary 123 a
-bun run ./apps/cli/src/index.ts agent:summary 123 b --json
+bun run ./apps/cli/src/index.ts agent:summary 123 b --output /tmp/agent-summary.json
 ```
 
 This returns the agent's aggregated record plus recent battles.
