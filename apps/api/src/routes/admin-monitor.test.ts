@@ -104,7 +104,9 @@ beforeAll(async () => {
       userId: player1Id,
       scenarioId: 'mon-test-scenario',
       version: 1,
-      model: 'deepseek-v3.2',
+      modelLegacy: 'deepseek-v3.2',
+      modelA: 'deepseek-v3.2',
+      modelB: 'deepseek-v3.2',
       promptA: 'prompt a v1',
       promptB: 'prompt b v1',
     })
@@ -116,7 +118,9 @@ beforeAll(async () => {
       userId: player1Id,
       scenarioId: 'mon-test-scenario',
       version: 2,
-      model: 'deepseek-v3.2',
+      modelLegacy: 'deepseek-v3.2',
+      modelA: 'deepseek-v3.2',
+      modelB: 'deepseek-v3.2',
       promptA: 'prompt a v2',
       promptB: 'prompt b v2',
     })
@@ -129,7 +133,9 @@ beforeAll(async () => {
       userId: player2Id,
       scenarioId: 'mon-test-scenario',
       version: 1,
-      model: 'deepseek-v3.2',
+      modelLegacy: 'deepseek-v3.2',
+      modelA: 'deepseek-v3.2',
+      modelB: 'deepseek-v3.2',
       promptA: 'prompt a v1',
       promptB: 'prompt b v1',
     })
@@ -517,13 +523,19 @@ describe('GET /api/admin/monitor/users', () => {
 
 describe('GET /api/admin/analytics/*', () => {
   it('returns unified battles with tournament, pvp, and pve rows', async () => {
-    const res = await req('GET', '/api/admin/analytics/battles?limit=10', adminToken)
+    const res = await req(
+      'GET',
+      '/api/admin/analytics/battles?limit=10',
+      adminToken,
+    )
     expect(res.status).toBe(200)
     const data = (await res.json()) as Array<Record<string, unknown>>
 
     expect(data).toHaveLength(4)
 
-    const pve = data.find((item) => item.source === 'playground' && item.mode === 'pve')
+    const pve = data.find(
+      (item) => item.source === 'playground' && item.mode === 'pve',
+    )
     expect(pve).toBeDefined()
     expect((pve as { participantA: { kind: string } }).participantA.kind).toBe(
       'submission',
@@ -549,12 +561,10 @@ describe('GET /api/admin/analytics/*', () => {
     expect(data).toHaveLength(4)
 
     const agentA = data.find(
-      (item) =>
-        item.submissionId === player1SubmissionId && item.side === 'a',
+      (item) => item.submissionId === player1SubmissionId && item.side === 'a',
     ) as Record<string, unknown> | undefined
     const agentB = data.find(
-      (item) =>
-        item.submissionId === player1SubmissionId && item.side === 'b',
+      (item) => item.submissionId === player1SubmissionId && item.side === 'b',
     ) as Record<string, unknown> | undefined
 
     expect(agentA).toBeDefined()

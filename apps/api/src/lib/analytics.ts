@@ -56,7 +56,10 @@ const matchSubA = alias(submissions, 'analytics_match_sub_a')
 const matchSubB = alias(submissions, 'analytics_match_sub_b')
 const matchUserA = alias(users, 'analytics_match_user_a')
 const matchUserB = alias(users, 'analytics_match_user_b')
-const playgroundSubmission = alias(submissions, 'analytics_playground_submission')
+const playgroundSubmission = alias(
+  submissions,
+  'analytics_playground_submission',
+)
 const playgroundUser = alias(users, 'analytics_playground_user')
 const playgroundPreset = alias(presetOpponents, 'analytics_playground_preset')
 
@@ -168,10 +171,13 @@ function buildPresetParticipant(params: {
   }
 }
 
-function compareCreatedAtDesc(left: { createdAt: string; id: number }, right: {
-  createdAt: string
-  id: number
-}) {
+function compareCreatedAtDesc(
+  left: { createdAt: string; id: number },
+  right: {
+    createdAt: string
+    id: number
+  },
+) {
   return right.createdAt.localeCompare(left.createdAt) || right.id - left.id
 }
 
@@ -235,7 +241,10 @@ function battleMatchesFilters(
 
 function getBattleActivityAt(battle: AdminAnalyticsBattle) {
   return (
-    battle.finishedAt ?? battle.updatedAt ?? battle.startedAt ?? battle.createdAt
+    battle.finishedAt ??
+    battle.updatedAt ??
+    battle.startedAt ??
+    battle.createdAt
   )
 }
 
@@ -273,11 +282,11 @@ export function listAnalyticsBattles(
       error: matches.error,
       finishedAt: matches.finishedAt,
       id: matches.id,
-      playerAModel: matchSubA.model,
+      playerAModel: matchSubA.modelA,
       playerAName: matchUserA.displayName,
       playerAUserId: matchUserA.id,
       playerAVersion: matchSubA.version,
-      playerBModel: matchSubB.model,
+      playerBModel: matchSubB.modelB,
       playerBName: matchUserB.displayName,
       playerBUserId: matchUserB.id,
       playerBVersion: matchSubB.version,
@@ -365,19 +374,22 @@ export function listAnalyticsBattles(
       finishedAt: playgroundRuns.finishedAt,
       id: playgroundRuns.id,
       mode: playgroundRuns.opponentMode,
-      playerModel: playgroundSubmission.model,
+      playerModelA: playgroundSubmission.modelA,
+      playerModelB: playgroundSubmission.modelB,
       playerName: playgroundUser.displayName,
       playerUserId: playgroundUser.id,
       playerVersion: playgroundSubmission.version,
       presetOpponentId: playgroundRuns.presetOpponentId,
-      presetOpponentLabel:
-        sql<string | null>`coalesce(${playgroundRuns.presetOpponentLabel}, ${playgroundPreset.label})`.as(
-          'presetOpponentLabel',
-        ),
-      presetOpponentRole:
-        sql<'a' | 'b' | null>`coalesce(${playgroundRuns.presetOpponentRole}, ${playgroundPreset.role})`.as(
-          'presetOpponentRole',
-        ),
+      presetOpponentLabel: sql<
+        string | null
+      >`coalesce(${playgroundRuns.presetOpponentLabel}, ${playgroundPreset.label})`.as(
+        'presetOpponentLabel',
+      ),
+      presetOpponentRole: sql<
+        'a' | 'b' | null
+      >`coalesce(${playgroundRuns.presetOpponentRole}, ${playgroundPreset.role})`.as(
+        'presetOpponentRole',
+      ),
       roleAName: scenarios.roleAName,
       roleBName: scenarios.roleBName,
       scenarioId: playgroundRuns.scenarioId,
@@ -392,9 +404,18 @@ export function listAnalyticsBattles(
     })
     .from(playgroundRuns)
     .innerJoin(scenarios, eq(scenarios.id, playgroundRuns.scenarioId))
-    .innerJoin(playgroundSubmission, eq(playgroundSubmission.id, playgroundRuns.submissionId))
-    .innerJoin(playgroundUser, eq(playgroundUser.id, playgroundSubmission.userId))
-    .leftJoin(playgroundPreset, eq(playgroundPreset.id, playgroundRuns.presetOpponentId))
+    .innerJoin(
+      playgroundSubmission,
+      eq(playgroundSubmission.id, playgroundRuns.submissionId),
+    )
+    .innerJoin(
+      playgroundUser,
+      eq(playgroundUser.id, playgroundSubmission.userId),
+    )
+    .leftJoin(
+      playgroundPreset,
+      eq(playgroundPreset.id, playgroundRuns.presetOpponentId),
+    )
     .all()
     .map((row) => {
       const mode = row.mode === 'self' ? 'pvp' : 'pve'
@@ -403,7 +424,7 @@ export function listAnalyticsBattles(
         mode === 'pvp'
           ? buildSubmissionParticipant({
               battleId: row.id,
-              model: row.playerModel,
+              model: row.playerModelA,
               roleName: row.roleAName,
               side: 'a',
               submissionId: row.submissionId,
@@ -423,7 +444,7 @@ export function listAnalyticsBattles(
               })
             : buildSubmissionParticipant({
                 battleId: row.id,
-                model: row.playerModel,
+                model: row.playerModelA,
                 roleName: row.roleAName,
                 side: 'a',
                 submissionId: row.submissionId,
@@ -436,7 +457,7 @@ export function listAnalyticsBattles(
         mode === 'pvp'
           ? buildSubmissionParticipant({
               battleId: row.id,
-              model: row.playerModel,
+              model: row.playerModelB,
               roleName: row.roleBName,
               side: 'b',
               submissionId: row.submissionId,
@@ -448,7 +469,7 @@ export function listAnalyticsBattles(
           : presetRole === 'a'
             ? buildSubmissionParticipant({
                 battleId: row.id,
-                model: row.playerModel,
+                model: row.playerModelB,
                 roleName: row.roleBName,
                 side: 'b',
                 submissionId: row.submissionId,
@@ -511,7 +532,8 @@ export function listUserAnalyticsAgentSummaries(userId: number) {
   const submissionRows = db
     .select({
       createdAt: submissions.createdAt,
-      model: submissions.model,
+      modelA: submissions.modelA,
+      modelB: submissions.modelB,
       retiredAt: submissions.retiredAt,
       scenarioId: submissions.scenarioId,
       scenarioTitle: scenarios.title,
@@ -544,7 +566,7 @@ export function listUserAnalyticsAgentSummaries(userId: number) {
         errors: 0,
         lastBattleAt: null,
         losses: 0,
-        model: row.model,
+        model: side === 'a' ? row.modelA : row.modelB,
         pending: 0,
         playgroundPveCount: 0,
         playgroundPvpCount: 0,
@@ -661,10 +683,7 @@ export function listUserAnalyticsAgentSummaries(userId: number) {
     })
 }
 
-export function getAnalyticsAgentDetail(
-  submissionId: number,
-  side: 'a' | 'b',
-) {
+export function getAnalyticsAgentDetail(submissionId: number, side: 'a' | 'b') {
   const submission = db
     .select({
       userId: submissions.userId,

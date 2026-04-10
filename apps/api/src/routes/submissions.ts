@@ -11,7 +11,8 @@ import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 const submissionSelection = {
   createdAt: submissions.createdAt,
   id: submissions.id,
-  model: submissions.model,
+  modelA: submissions.modelA,
+  modelB: submissions.modelB,
   promptA: submissions.promptA,
   promptB: submissions.promptB,
   retiredAt: submissions.retiredAt,
@@ -76,7 +77,8 @@ submissionsRouter.post(
     }
 
     const userId = context.get('userId')
-    const { model, promptA, promptB, scenarioId } = parsed.data
+    const { modelA, modelB, promptA, promptB, scenarioId } = parsed.data
+    const modelLegacy = modelA === modelB ? modelA : `${modelA}/${modelB}`
 
     const scenario = db
       .select({ id: scenarios.id })
@@ -122,7 +124,9 @@ submissionsRouter.post(
       const createdSubmission = db
         .insert(submissions)
         .values({
-          model,
+          modelLegacy,
+          modelA,
+          modelB,
           promptA,
           promptB,
           scenarioId,

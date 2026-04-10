@@ -92,7 +92,9 @@ export const submissions = sqliteTable(
       .references(() => scenarios.id),
     promptA: text('prompt_a').notNull(),
     promptB: text('prompt_b').notNull(),
-    model: text('model').notNull(),
+    modelLegacy: text('model').notNull(),
+    modelA: text('model_a').notNull(),
+    modelB: text('model_b').notNull(),
     retiredAt: text('retired_at'),
     version: integer('version').notNull(),
     createdAt: text('created_at').notNull().default(currentTimestamp),
@@ -210,9 +212,10 @@ export const rounds = sqliteTable(
     status: text('status', { enum: roundStatuses }).notNull(),
   },
   (table) => ({
-    tournamentRoundNumberIdx: index(
-      'rounds_tournament_id_round_number_idx',
-    ).on(table.tournamentId, table.roundNumber),
+    tournamentRoundNumberIdx: index('rounds_tournament_id_round_number_idx').on(
+      table.tournamentId,
+      table.roundNumber,
+    ),
     statusCheck: check(
       'rounds_status_check',
       sql`${table.status} in ('pairing', 'running', 'done')`,

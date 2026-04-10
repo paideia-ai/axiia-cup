@@ -394,7 +394,8 @@ export const submissionSchema = z.object({
   scenarioId: z.string(),
   promptA: z.string(),
   promptB: z.string(),
-  model: z.string(),
+  modelA: z.string(),
+  modelB: z.string(),
   retiredAt: z.string().nullable(),
   version: z.number().int().positive(),
   createdAt: z.string(),
@@ -404,7 +405,8 @@ export const createSubmissionSchema = z.object({
   scenarioId: z.string().min(1),
   promptA: z.string().trim().min(1).max(1000),
   promptB: z.string().trim().min(1).max(1000),
-  model: modelIdSchema,
+  modelA: modelIdSchema,
+  modelB: modelIdSchema,
 })
 
 export const matchSchema = z.object({
@@ -435,7 +437,8 @@ export const adminPlayerSchema = z.object({
   submissionId: z.number().int().positive(),
   email: z.string().email(),
   displayName: z.string(),
-  model: z.string(),
+  modelA: z.string(),
+  modelB: z.string(),
   version: z.number().int().positive(),
   submittedAt: z.string(),
 })
@@ -602,10 +605,7 @@ export const adminStatsSchema = z.object({
   scored: z.number().int().nonnegative(),
 })
 
-export const analyticsBattleSourceSchema = z.enum([
-  'tournament',
-  'playground',
-])
+export const analyticsBattleSourceSchema = z.enum(['tournament', 'playground'])
 
 export const analyticsBattleModeSchema = z.enum(['pvp', 'pve'])
 

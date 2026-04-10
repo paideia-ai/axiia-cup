@@ -26,6 +26,17 @@ type TournamentRecord = typeof tournaments.$inferSelect
 
 type TournamentPlayer = ReturnType<typeof adminPlayerSchema.parse>
 
+function resolveModelLabel(model: string) {
+  return modelOptions.find((option) => option.id === model)?.label ?? model
+}
+
+function formatSubmissionModelLabel(modelA: string, modelB: string) {
+  const labelA = resolveModelLabel(modelA)
+  const labelB = resolveModelLabel(modelB)
+
+  return modelA === modelB ? labelA : `A: ${labelA} / B: ${labelB}`
+}
+
 function pairKey(a: number, b: number) {
   return a < b ? `${a}-${b}` : `${b}-${a}`
 }
@@ -60,7 +71,8 @@ export function getLatestScenarioPlayers(
     .select({
       displayName: users.displayName,
       email: users.email,
-      model: submissions.model,
+      modelA: submissions.modelA,
+      modelB: submissions.modelB,
       submissionId: submissions.id,
       submittedAt: submissions.createdAt,
       userId: users.id,
@@ -463,9 +475,7 @@ export function getLeaderboard(tournamentId: number) {
     const buchholz = [
       ...(opponents.get(player.submissionId) ?? new Set<number>()),
     ].reduce((sum, opponentId) => sum + (wins.get(opponentId) ?? 0), 0)
-    const modelLabel =
-      modelOptions.find((option) => option.id === player.model)?.label ??
-      player.model
+    const modelLabel = formatSubmissionModelLabel(player.modelA, player.modelB)
 
     return {
       buchholz,

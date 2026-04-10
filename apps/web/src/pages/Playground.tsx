@@ -82,6 +82,10 @@ function formatElapsed(seconds: number) {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
+function resolveModelLabel(modelId: string) {
+  return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
+}
+
 function isRunFinished(run: PlaygroundRun | null) {
   if (!run) {
     return false
@@ -933,11 +937,7 @@ function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
 function createRunProgressSnapshot(run: PlaygroundRun): PlaygroundRunProgress {
   return {
     id: run.id,
-    status: run.error
-      ? 'error'
-      : isRunFinished(run)
-        ? 'scored'
-        : 'running',
+    status: run.error ? 'error' : isRunFinished(run) ? 'scored' : 'running',
     submissionId: run.submissionId,
     updatedAt: run.updatedAt ?? run.createdAt,
   }
@@ -952,8 +952,7 @@ function hasRunProgressChanged(
   }
 
   return (
-    previous.status !== next.status ||
-    previous.updatedAt !== next.updatedAt
+    previous.status !== next.status || previous.updatedAt !== next.updatedAt
   )
 }
 
@@ -1065,6 +1064,7 @@ export function PlaygroundPage() {
         setScenario(scenarioData)
         setRunSummaries(runs)
         setPresetOpponentList(presets)
+        if (presets.length > 0) setOpponentMode('preset')
 
         const session = getPlaygroundSession(submissionId)
         const resolvedSession = resolvePlaygroundSession(session, sub, runs)
@@ -1201,9 +1201,12 @@ export function PlaygroundPage() {
       const shouldContinue = await refreshActiveRun()
 
       if (!cancelled && shouldContinue) {
-        timeoutId = window.setTimeout(() => {
-          void sync()
-        }, isPageVisible ? 5_000 : 15_000)
+        timeoutId = window.setTimeout(
+          () => {
+            void sync()
+          },
+          isPageVisible ? 5_000 : 15_000,
+        )
       }
     }
 
@@ -1285,14 +1288,6 @@ export function PlaygroundPage() {
     }
   }, [activeSession, submissionId])
 
-  const modelLabel = useMemo(
-    () =>
-      submission
-        ? (modelOptions.find((option) => option.id === submission.model)
-            ?.label ?? submission.model)
-        : null,
-    [submission],
-  )
   const isSubmissionRetired = Boolean(submission?.retiredAt)
 
   const activeRunId = activeSession?.runId ?? activeSession?.run?.id ?? null
@@ -1312,6 +1307,17 @@ export function PlaygroundPage() {
     return <p className="text-sm text-(--accent)">{error ?? '找不到该版本'}</p>
   }
 
+  const roleModelBadges = [
+    {
+      label: `${scenario.roleAName} · ${resolveModelLabel(submission.modelA)}`,
+      tone: 'info' as const,
+    },
+    {
+      label: `${scenario.roleBName} · ${resolveModelLabel(submission.modelB)}`,
+      tone: 'warning' as const,
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1330,7 +1336,11 @@ export function PlaygroundPage() {
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
           <Badge tone="info">v{submission.version}</Badge>
-          {modelLabel ? <Badge tone="warning">{modelLabel}</Badge> : null}
+          {roleModelBadges.map((badge) => (
+            <Badge key={badge.label} tone={badge.tone}>
+              {badge.label}
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -1383,21 +1393,21 @@ export function PlaygroundPage() {
             <CardContent className="space-y-3 py-4">
               {/* Opponent mode selector */}
               {presetOpponentList.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-[11px] font-medium text-(--foreground-muted)">
+                <div className="rounded-xl border border-(--border-soft) bg-white/2 p-3 space-y-3">
+                  <p className="text-[10px] font-semibold tracking-widest uppercase text-(--foreground-muted)">
                     对手选择
                   </p>
-                  <div className="flex gap-1.5">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-black/20 p-1">
                     <button
                       type="button"
                       onClick={() => {
                         setOpponentMode('self')
                         setSelectedPresetId(undefined)
                       }}
-                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
+                      className={`rounded-md py-2 text-xs font-medium transition-all ${
                         opponentMode === 'self'
-                          ? 'border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)] text-(--foreground) font-semibold'
-                          : 'border-(--border-soft) text-(--foreground-muted) hover:bg-white/5'
+                          ? 'bg-(--surface-elevated) text-(--foreground) shadow-sm'
+                          : 'text-(--foreground-muted) hover:text-(--foreground)/80'
                       }`}
                     >
                       自己对打
@@ -1405,10 +1415,10 @@ export function PlaygroundPage() {
                     <button
                       type="button"
                       onClick={() => setOpponentMode('preset')}
-                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs transition ${
+                      className={`rounded-md py-2 text-xs font-medium transition-all ${
                         opponentMode === 'preset'
-                          ? 'border-[rgba(224,74,47,0.35)] bg-[rgba(224,74,47,0.1)] text-(--foreground) font-semibold'
-                          : 'border-(--border-soft) text-(--foreground-muted) hover:bg-white/5'
+                          ? 'bg-(--surface-elevated) text-(--foreground) shadow-sm'
+                          : 'text-(--foreground-muted) hover:text-(--foreground)/80'
                       }`}
                     >
                       预设对手
@@ -1416,7 +1426,6 @@ export function PlaygroundPage() {
                   </div>
                   {opponentMode === 'preset' ? (
                     <Select
-                      className="my-1"
                       placeholder="选择预设对手…"
                       value={
                         selectedPresetId != null

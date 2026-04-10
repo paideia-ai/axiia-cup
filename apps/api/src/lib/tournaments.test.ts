@@ -101,7 +101,9 @@ function seedTestData() {
         scenarioId: TEST_SCENARIO_ID,
         promptA: 'a',
         promptB: 'b',
-        model: 'kimi-k2.5',
+        modelLegacy: 'kimi-k2.5',
+        modelA: 'kimi-k2.5',
+        modelB: 'kimi-k2.5',
         version: 1,
         createdAt: '2026-04-09 10:00:00',
       },
@@ -111,7 +113,9 @@ function seedTestData() {
         scenarioId: TEST_SCENARIO_ID,
         promptA: 'a',
         promptB: 'b',
-        model: 'kimi-k2.5',
+        modelLegacy: 'kimi-k2.5',
+        modelA: 'kimi-k2.5',
+        modelB: 'kimi-k2.5',
         version: 1,
         createdAt: '2026-04-09 10:00:00',
       },
@@ -121,7 +125,9 @@ function seedTestData() {
         scenarioId: TEST_SCENARIO_ID,
         promptA: 'a',
         promptB: 'b',
-        model: 'kimi-k2.5',
+        modelLegacy: 'kimi-k2.5',
+        modelA: 'kimi-k2.5',
+        modelB: 'kimi-k2.5',
         version: 1,
         createdAt: '2026-04-09 10:00:00',
       },
@@ -131,7 +137,9 @@ function seedTestData() {
         scenarioId: TEST_SCENARIO_ID,
         promptA: 'a',
         promptB: 'b',
-        model: 'kimi-k2.5',
+        modelLegacy: 'kimi-k2.5',
+        modelA: 'kimi-k2.5',
+        modelB: 'kimi-k2.5',
         version: 1,
         createdAt: '2026-04-09 10:00:00',
       },
@@ -196,7 +204,9 @@ describe('getLatestScenarioPlayers', () => {
         scenarioId: TEST_SCENARIO_ID,
         promptA: 'admin-a',
         promptB: 'admin-b',
-        model: 'kimi-k2.5',
+        modelLegacy: 'kimi-k2.5',
+        modelA: 'kimi-k2.5',
+        modelB: 'kimi-k2.5',
         version: 1,
       })
       .run()
@@ -486,10 +496,9 @@ describe('advanceToNextRound', () => {
 
     scoreAllMatchesInRound(round.id)
     syncRoundStatus(round.id)
-    db.update(submissions)
-      .set({ retiredAt: '2026-04-09 12:00:00' })
-      .where(eq(submissions.id, 4))
-      .run()
+    const retiredAt = new Date(Date.now() + 60_000).toISOString()
+
+    db.update(submissions).set({ retiredAt }).where(eq(submissions.id, 4)).run()
 
     const result = advanceToNextRound(tournament.id)
 

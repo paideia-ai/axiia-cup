@@ -85,8 +85,8 @@ export async function runMatch(
       judgeTranscriptA,
       judgeTranscriptB,
       matchId,
-      modelA: subA.model,
-      modelB: subB.model,
+      modelA: subA.modelA,
+      modelB: subB.modelB,
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript
         await updateLeasedMatch(matchId, leaseToken, {

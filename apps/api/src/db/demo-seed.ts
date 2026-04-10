@@ -211,7 +211,8 @@ const playerSeeds = [
   {
     displayName: 'anna',
     email: 'anna@paideia.uno',
-    model: modelOptions[0]!.id,
+    modelA: modelOptions[0]!.id,
+    modelB: modelOptions[0]!.id,
     password: 'player1234',
     promptA:
       '以下是你的行动策略：先稳住局面，主动推进关键交换条件，但不要过早暴露底牌。三个请求均匀着推来掩护真目标，让对手猜不透。',
@@ -221,7 +222,8 @@ const playerSeeds = [
   {
     displayName: 'momo',
     email: 'momo@paideia.uno',
-    model: modelOptions[1]!.id,
+    modelA: modelOptions[1]!.id,
+    modelB: modelOptions[1]!.id,
     password: 'player1234',
     promptA:
       '以下是你的行动策略：先确认对方底线，再逐步施压，争取在中段完成核心诉求推进。只推真请求，假请求一句不提。',
@@ -231,7 +233,8 @@ const playerSeeds = [
   {
     displayName: 'rin',
     email: 'rin@paideia.uno',
-    model: modelOptions[2]!.id,
+    modelA: modelOptions[2]!.id,
+    modelB: modelOptions[2]!.id,
     password: 'player1234',
     promptA:
       '以下是你的行动策略：多从对方公开目标切入，持续套取信息，同时守住己方敏感点。三个请求都提但轻重不一，误导对手判断。',
@@ -241,7 +244,8 @@ const playerSeeds = [
   {
     displayName: 'happy',
     email: 'happy@paideia.uno',
-    model: modelOptions[0]!.id,
+    modelA: modelOptions[0]!.id,
+    modelB: modelOptions[0]!.id,
     password: 'player1234',
     promptA:
       '以下是你的行动策略：始终以胜负为导向，优先争取让对方在公开立场上退半步。把真请求说得轻描淡写，把假请求说得言之凿凿来迷惑对手。',
@@ -309,7 +313,9 @@ async function main() {
 
     db.insert(submissions)
       .values({
-        model: player.model,
+        modelLegacy: player.modelA,
+        modelA: player.modelA,
+        modelB: player.modelB,
         promptA: player.promptA,
         promptB: player.promptB,
         scenarioId: scenarioSeed.id,

@@ -327,8 +327,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       infoAssignment,
       judgeTranscriptA,
       judgeTranscriptB,
-      modelA: submission.model,
-      modelB: submission.model,
+      modelA: submission.modelA,
+      modelB: submission.modelB,
       signal: abortController.signal,
       playgroundRunId: runId,
       onDialogueTurn: async (nextTranscript) => {

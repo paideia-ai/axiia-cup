@@ -118,7 +118,8 @@ describe('write lock and retired submissions', () => {
       scenarioId: 'test-scenario',
       promptA: 'prompt a',
       promptB: 'prompt b',
-      model: 'deepseek-v3.2',
+      modelA: 'deepseek-v3.2',
+      modelB: 'deepseek-v3.2',
     })
 
     expect(res.status).toBe(503)
@@ -133,7 +134,9 @@ describe('write lock and retired submissions', () => {
           scenarioId: 'test-scenario',
           promptA: 'active a',
           promptB: 'active b',
-          model: 'deepseek-v3.2',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
           version: 1,
         },
         {
@@ -142,7 +145,9 @@ describe('write lock and retired submissions', () => {
           scenarioId: 'test-scenario',
           promptA: 'retired a',
           promptB: 'retired b',
-          model: 'deepseek-v3.2',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
           retiredAt: '2026-04-09 12:00:00',
           version: 2,
         },
@@ -171,7 +176,9 @@ describe('write lock and retired submissions', () => {
         scenarioId: 'test-scenario',
         promptA: 'retired a',
         promptB: 'retired b',
-        model: 'deepseek-v3.2',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
         retiredAt: '2026-04-09 12:00:00',
         version: 1,
       })
@@ -192,7 +199,9 @@ describe('write lock and retired submissions', () => {
         scenarioId: 'test-scenario',
         promptA: 'prompt a',
         promptB: 'prompt b',
-        model: 'deepseek-v3.2',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
         version: 1,
       })
       .run()
@@ -235,7 +244,9 @@ describe('write lock and retired submissions', () => {
         scenarioId: 'test-scenario',
         promptA: 'prompt a',
         promptB: 'prompt b',
-        model: 'deepseek-v3.2',
+        modelLegacy: 'deepseek-v3.2',
+        modelA: 'deepseek-v3.2',
+        modelB: 'deepseek-v3.2',
         version: 1,
       })
       .run()
@@ -278,7 +289,9 @@ describe('write lock and retired submissions', () => {
           scenarioId: 'test-scenario',
           promptA: 'admin a',
           promptB: 'admin b',
-          model: 'deepseek-v3.2',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
           version: 1,
         },
         {
@@ -287,7 +300,9 @@ describe('write lock and retired submissions', () => {
           scenarioId: 'test-scenario',
           promptA: 'retired a',
           promptB: 'retired b',
-          model: 'deepseek-v3.2',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
           retiredAt: '2026-04-09 12:00:00',
           version: 1,
         },

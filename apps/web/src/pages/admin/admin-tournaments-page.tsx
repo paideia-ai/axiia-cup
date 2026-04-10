@@ -1,3 +1,4 @@
+import { modelOptions } from '@axiia/shared'
 import type {
   AdminErroredMatch,
   AdminPlayer,
@@ -74,6 +75,10 @@ function getRoundStatusLabel(
     case 'done':
       return '已结束'
   }
+}
+
+function resolveModelLabel(modelId: string) {
+  return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
 }
 
 function getTournamentCurrentRound(
@@ -594,7 +599,8 @@ export function AdminTournamentsPage() {
                           <p className="panel-copy">{player.email}</p>
                         </div>
                         <div className="text-right text-xs text-(--foreground-subtle)">
-                          <p>{player.model}</p>
+                          <p>A · {resolveModelLabel(player.modelA)}</p>
+                          <p>B · {resolveModelLabel(player.modelB)}</p>
                           <p>
                             v{player.version} · sub #{player.submissionId}
                           </p>
