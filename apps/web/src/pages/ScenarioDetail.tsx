@@ -23,6 +23,10 @@ function countText(value: string) {
   return [...value].length
 }
 
+function buildDefaultStrategyPrompt(roleName: string) {
+  return `你是${roleName}`
+}
+
 function interpolatePromptTemplate(
   template: string,
   variables: Record<string, string>,
@@ -229,6 +233,9 @@ export function ScenarioDetailPage() {
           setPromptA(latest.promptA)
           setPromptB(latest.promptB)
           setModel(latest.model as ModelOption['id'])
+        } else {
+          setPromptA(buildDefaultStrategyPrompt(scenarioResponse.roleAName))
+          setPromptB(buildDefaultStrategyPrompt(scenarioResponse.roleBName))
         }
       } catch (loadError) {
         setError(
