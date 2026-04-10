@@ -79,8 +79,10 @@ CORS_ORIGIN=https://cup.axiia.ai
 JWT_SECRET=<long-random-secret>
 SILICONFLOW_API_KEY=<real-key>
 REGISTRATION_CODE=axiia_cup
+AXIIA_ADMIN_EMAIL=admin@example.com
+AXIIA_ADMIN_PASSWORD=<strong-initial-password>
+AXIIA_ADMIN_NAME=管理员
 PORT=3001
-ENABLE_WORKER=true
 WORKER_CONCURRENCY=8
 AXIIA_DB_PATH=/data/axiia.db
 AXIIA_DATA_DIR=/srv/axiia-cup/shared/data
@@ -92,10 +94,57 @@ Notes:
 
 - `JWT_SECRET` is required. The API now fails at startup if it is missing.
 - `SILICONFLOW_API_KEY` is required. The API now fails at startup if it is missing.
+- `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, and `LANGFUSE_BASE_URL` are optional. Leave all three blank unless you want tracing.
 - Leave `VITE_API_URL` empty to use same-origin `/api` requests through the web container.
 - `AXIIA_DATA_DIR` must point to a persistent host path, not a temporary directory.
+- `AXIIA_DATA_DIR` should live outside the repo checkout so you do not accidentally bind a stale local database into production.
 
-## 5. Build And Start
+## 5. Scripted Flow
+
+The repository now includes three deployment helper scripts:
+
+- `deploy/deploy-master.sh` — local machine entrypoint; syncs a committed Git snapshot to the server and triggers remote scripts
+- `deploy/bootstrap-server.sh` — first deployment on a fresh server
+- `deploy/deploy.sh` — normal day-to-day redeploys
+- `deploy/smoke-check.sh` — smoke tests against the local port or an external base URL
+
+These scripts do **not** install Docker, nginx/Angie, or Certbot for you. They assume the prerequisites from section 1 are already satisfied and that the repo is already present on the server.
+
+Typical order on a fresh server:
+
+1. Install Docker / Compose and the host reverse proxy.
+2. Clone the repo into `/srv/axiia-cup/current`.
+3. Create and edit `/srv/axiia-cup/shared/config/production.env`.
+4. Run:
+
+```bash
+cd /srv/axiia-cup/current
+./deploy/bootstrap-server.sh /srv/axiia-cup/shared/config/production.env
+```
+
+5. Install the reverse proxy config and obtain TLS.
+6. Point DNS at the server.
+7. Re-run smoke checks against the public domain:
+
+```bash
+cd /srv/axiia-cup/current
+BASE_URL=https://cup.axiia.ai \
+  ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
+```
+
+If you prefer to drive the flow from your local machine instead of SSHing in manually, use:
+
+```bash
+cd /path/to/local/axiia-cup
+./deploy/deploy-master.sh
+./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
+./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
+./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+```
+
+`deploy-master.sh` syncs a committed Git snapshot from your local repo to the remote checkout path, optionally uploads a local env file to the remote env path, and then runs the remote scripts there. By default it deploys `origin/master`, so uncommitted local changes are not published unless you commit them and point `--ref` at that commit.
+
+## 6. Build And Start
 
 From the repo root:
 
@@ -120,10 +169,13 @@ docker compose \
 Expected result:
 
 - `api` is `Up`
+- `api` health is `healthy`
 - `web` is `Up`
 - `web` is listening on `127.0.0.1:8200`
 
-## 6. Seed Initial Scenario
+If `api` is restarting instead of becoming healthy, check `docker compose logs api` before proceeding. The usual causes are missing secrets or mounting an unexpected old SQLite file into `/data`.
+
+## 7. Seed Initial Scenario
 
 The app can start with an empty database, but the product is not useful until at least one scenario is seeded.
 
@@ -138,7 +190,20 @@ docker compose \
 
 This should seed the default `shangyang-court` scenario.
 
-## 7. Local Host Smoke Checks
+It also ensures an initial admin account exists using these environment variables:
+
+- `AXIIA_ADMIN_EMAIL`
+- `AXIIA_ADMIN_PASSWORD`
+- `AXIIA_ADMIN_NAME`
+
+If you leave them unset, the fallback account is:
+
+- email: `admin@paideia.uno`
+- password: `axiia-cup`
+
+Do not rely on the fallback credentials on a real server.
+
+## 8. Local Host Smoke Checks
 
 Before touching DNS or reverse proxy, verify the host-local port:
 
@@ -147,6 +212,9 @@ curl http://127.0.0.1:8200/health
 curl http://127.0.0.1:8200/api/meta
 curl http://127.0.0.1:8200/
 curl http://127.0.0.1:8200/dashboard
+curl http://127.0.0.1:8200/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"<strong-initial-password>"}'
 ```
 
 Expected results:
@@ -155,8 +223,16 @@ Expected results:
 - `/api/meta` returns models and at least one scenario
 - `/` returns the SPA HTML
 - `/dashboard` also returns the SPA HTML because SPA fallback is enabled
+- the login request returns a JWT and an admin user object
 
-## 8. Host Reverse Proxy
+The equivalent scripted check is:
+
+```bash
+cd /srv/axiia-cup/current
+./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
+```
+
+## 9. Host Reverse Proxy
 
 ### 8a. Obtain TLS Certificate
 
@@ -211,7 +287,7 @@ The reverse proxy should forward:
 
 - `cup.axiia.ai/*` -> `http://127.0.0.1:8200` (HTTPS termination at this layer)
 
-## 9. DNS Cutover
+## 10. DNS Cutover
 
 In the DNS provider panel, add:
 
@@ -224,7 +300,7 @@ Initial recommendation:
 - Keep the record as plain DNS first
 - Do not enable CDN/proxy mode until the first external validation is complete
 
-## 10. External Validation
+## 11. External Validation
 
 After DNS propagates:
 
@@ -240,7 +316,7 @@ Open in a browser and verify:
 - Login page loads
 - Scenario data is visible
 
-## 11. Rollback
+## 12. Rollback
 
 If deployment breaks after a new release:
 
@@ -262,7 +338,55 @@ docker compose \
 
 Rollback does not remove the SQLite database because it is mounted from the host.
 
-## 12. Logs And Diagnostics
+## 13. Daily Deploy
+
+For an ordinary release on an existing server:
+
+1. Update the repo checkout:
+
+```bash
+cd /srv/axiia-cup/current
+git pull
+```
+
+2. Redeploy:
+
+```bash
+cd /srv/axiia-cup/current
+./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env
+```
+
+3. If you need to verify the public domain after DNS / TLS changes:
+
+```bash
+cd /srv/axiia-cup/current
+BASE_URL=https://cup.axiia.ai \
+  ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
+```
+
+If you intentionally want to re-run the default bootstrap seed during a deploy, use:
+
+```bash
+cd /srv/axiia-cup/current
+./deploy/deploy.sh --seed /srv/axiia-cup/shared/config/production.env
+```
+
+The equivalent local-machine command is:
+
+```bash
+cd /path/to/local/axiia-cup
+./deploy/deploy-master.sh
+./deploy/deploy-master.sh --host ubuntu@cup-server --local-env ./deploy/production.env
+```
+
+And if you also want a public-domain smoke check:
+
+```bash
+cd /path/to/local/axiia-cup
+./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+```
+
+## 14. Logs And Diagnostics
 
 Useful commands:
 
@@ -284,7 +408,7 @@ docker compose \
 ls -la /srv/axiia-cup/shared/data/api
 ```
 
-## 13. Operational Notes
+## 15. Operational Notes
 
 - This deployment is intentionally single-machine and SQLite-backed.
 - Run only one `api` instance unless the worker model is redesigned.
@@ -292,7 +416,7 @@ ls -la /srv/axiia-cup/shared/data/api
 - Do not commit `production.env`.
 - Rotate `JWT_SECRET` and `SILICONFLOW_API_KEY` through the server config, not through the repository.
 
-## 14. Backup
+## 16. Backup
 
 The SQLite database is a WAL-mode database. Do **not** use plain `cp` on a live database — it can produce corrupt backups if a write is in progress.
 

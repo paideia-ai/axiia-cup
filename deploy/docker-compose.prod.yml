@@ -5,9 +5,11 @@ services:
       dockerfile: deploy/Dockerfile.api
     restart: unless-stopped
     environment:
+      AXIIA_ADMIN_EMAIL: ${AXIIA_ADMIN_EMAIL:-}
+      AXIIA_ADMIN_NAME: ${AXIIA_ADMIN_NAME:-}
+      AXIIA_ADMIN_PASSWORD: ${AXIIA_ADMIN_PASSWORD:-}
       AXIIA_DB_PATH: ${AXIIA_DB_PATH:-/data/axiia.db}
       CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
-      ENABLE_WORKER: ${ENABLE_WORKER:-true}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
@@ -16,6 +18,13 @@ services:
       REGISTRATION_CODE: ${REGISTRATION_CODE:-axiia_cup}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:?SILICONFLOW_API_KEY is required}
       WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-8}
+    healthcheck:
+      test: >-
+        bun -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3001') + '/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     volumes:
       - ${AXIIA_DATA_DIR:-./data}/api:/data
 
@@ -26,7 +35,8 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL:-}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - 127.0.0.1:${WEB_HOST_PORT:-8200}:80
     restart: unless-stopped
