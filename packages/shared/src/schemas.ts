@@ -554,24 +554,14 @@ export const playgroundRunSchema = z.object({
   reasoning: z.string().nullable(),
   error: z.string().nullable(),
   createdAt: z.string(),
+  updatedAt: z.string(),
 })
 
 export const playgroundRunProgressSchema = z.object({
   id: z.number().int().positive(),
   submissionId: z.number().int().positive(),
   status: z.enum(['queued', 'running', 'scored', 'error']),
-  transcriptLength: z.number().int().nonnegative(),
-  judgeTranscriptALength: z.number().int().nonnegative(),
-  judgeTranscriptBLength: z.number().int().nonnegative(),
-  hasInfoAssignment: z.boolean(),
-  hasJudgeDecision: z.boolean(),
-  hasActualPromptA: z.boolean(),
-  hasActualPromptB: z.boolean(),
-  scoreA: z.number().nullable(),
-  scoreB: z.number().nullable(),
-  winner: matchWinnerSchema.nullable(),
-  error: z.string().nullable(),
-  createdAt: z.string(),
+  updatedAt: z.string(),
 })
 
 export const playgroundRunStartSchema = z.object({

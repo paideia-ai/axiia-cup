@@ -30,6 +30,10 @@ const runRequestSchema = z.object({
 
 const playgroundRouter = new Hono()
 
+function nowIso() {
+  return new Date().toISOString()
+}
+
 function parseId(value: string) {
   const parsed = Number(value)
 
@@ -114,6 +118,7 @@ playgroundRouter.post(
         submissionId: submission.id,
         opponentMode,
         presetOpponentId: opponentMode === 'preset' ? presetOpponentId : null,
+        updatedAt: nowIso(),
       })
       .returning()
       .get()
@@ -203,21 +208,10 @@ playgroundRouter.get(
 
     const row = db
       .select({
-        createdAt: playgroundRuns.createdAt,
-        error: playgroundRuns.error,
-        hasActualPromptA: sql<number>`case when ${playgroundRuns.actualPromptA} is null then 0 else 1 end`,
-        hasActualPromptB: sql<number>`case when ${playgroundRuns.actualPromptB} is null then 0 else 1 end`,
-        hasInfoAssignment: sql<number>`case when ${playgroundRuns.infoAssignment} is null then 0 else 1 end`,
-        hasJudgeDecision: sql<number>`case when ${playgroundRuns.judgeDecision} is null then 0 else 1 end`,
         id: playgroundRuns.id,
-        judgeTranscriptALength: sql<number>`coalesce(json_array_length(${playgroundRuns.judgeTranscriptA}), 0)`,
-        judgeTranscriptBLength: sql<number>`coalesce(json_array_length(${playgroundRuns.judgeTranscriptB}), 0)`,
-        scoreA: playgroundRuns.scoreA,
-        scoreB: playgroundRuns.scoreB,
         status: playgroundRuns.status,
         submissionId: playgroundRuns.submissionId,
-        transcriptLength: sql<number>`coalesce(json_array_length(${playgroundRuns.transcript}), 0)`,
-        winner: playgroundRuns.winner,
+        updatedAt: sql<string>`coalesce(${playgroundRuns.updatedAt}, ${playgroundRuns.createdAt})`,
       })
       .from(playgroundRuns)
       .where(eq(playgroundRuns.id, runId))
@@ -228,13 +222,7 @@ playgroundRouter.get(
     }
 
     return context.json(
-      playgroundRunProgressSchema.parse({
-        ...row,
-        hasActualPromptA: Boolean(row.hasActualPromptA),
-        hasActualPromptB: Boolean(row.hasActualPromptB),
-        hasInfoAssignment: Boolean(row.hasInfoAssignment),
-        hasJudgeDecision: Boolean(row.hasJudgeDecision),
-      }),
+      playgroundRunProgressSchema.parse(row),
     )
   },
 )
@@ -287,6 +275,7 @@ playgroundRouter.get(
         opponentMode: row.opponentMode ?? 'self',
         presetOpponentId: row.presetOpponentId ?? null,
         transcript: parseJsonField(row.transcript, []),
+        updatedAt: row.updatedAt ?? row.createdAt,
       }),
     )
   },

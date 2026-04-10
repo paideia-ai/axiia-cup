@@ -77,6 +77,7 @@ describe('resolvePlaygroundSession', () => {
         scoreB: null,
         submissionId: 1,
         transcript: [],
+        updatedAt: '2026-04-07 09:22:50',
         winner: null,
       },
       runId: 9,

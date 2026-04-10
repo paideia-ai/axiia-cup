@@ -75,6 +75,7 @@ function recoverInterruptedPlaygroundRuns() {
       error: null,
       leaseToken: null,
       status: 'queued',
+      updatedAt: nowIso(),
     })
     .where(eq(playgroundRuns.status, 'running'))
     .returning({ id: playgroundRuns.id })
@@ -113,6 +114,7 @@ function claimPlaygroundRun(runId: number) {
       error: null,
       leaseToken,
       status: 'running',
+      updatedAt: nowIso(),
     })
     .where(
       and(eq(playgroundRuns.id, runId), eq(playgroundRuns.status, 'queued')),
@@ -209,6 +211,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
           error: 'Missing scenario or submission for playground run',
           leaseToken: null,
           status: 'error',
+          updatedAt: nowIso(),
         })
         .where(
           and(
@@ -226,6 +229,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
           error: 'Submission is archived and cannot be executed',
           leaseToken: null,
           status: 'error',
+          updatedAt: nowIso(),
         })
         .where(
           and(
@@ -254,6 +258,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
             error: '预设对手已被删除',
             leaseToken: null,
             status: 'error',
+            updatedAt: nowIso(),
           })
           .where(
             and(
@@ -285,7 +290,10 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     const persist = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
       db
         .update(playgroundRuns)
-        .set(values)
+        .set({
+          ...values,
+          updatedAt: nowIso(),
+        })
         .where(
           and(
             eq(playgroundRuns.id, runId),
@@ -360,6 +368,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
         leaseToken: null,
         status: 'error',
         transcript: JSON.stringify(transcript),
+        updatedAt: nowIso(),
       })
       .where(
         and(

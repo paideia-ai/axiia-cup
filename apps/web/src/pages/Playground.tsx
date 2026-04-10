@@ -903,23 +903,6 @@ function ProgressPanel({
   )
 }
 
-function findCandidateRunSummary(
-  session: PlaygroundSession,
-  summaries: PlaygroundRunSummary[],
-) {
-  if (session.runId) {
-    return summaries.find((summary) => summary.id === session.runId) ?? null
-  }
-
-  const startedAt = session.startedAt - 5000
-
-  return (
-    summaries.find(
-      (summary) => parseTimestampMs(summary.createdAt) >= startedAt,
-    ) ?? null
-  )
-}
-
 function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
   return {
     createdAt: run.createdAt,
@@ -936,25 +919,14 @@ function createRunSummary(run: PlaygroundRun): PlaygroundRunSummary {
 
 function createRunProgressSnapshot(run: PlaygroundRun): PlaygroundRunProgress {
   return {
-    createdAt: run.createdAt,
-    error: run.error,
-    hasActualPromptA: run.actualPromptA != null,
-    hasActualPromptB: run.actualPromptB != null,
-    hasInfoAssignment: run.infoAssignment != null,
-    hasJudgeDecision: run.judgeDecision != null,
     id: run.id,
-    judgeTranscriptALength: run.judgeTranscriptA.length,
-    judgeTranscriptBLength: run.judgeTranscriptB.length,
-    scoreA: run.scoreA,
-    scoreB: run.scoreB,
     status: run.error
       ? 'error'
       : isRunFinished(run)
         ? 'scored'
         : 'running',
     submissionId: run.submissionId,
-    transcriptLength: run.transcript.length,
-    winner: run.winner,
+    updatedAt: run.updatedAt ?? run.createdAt,
   }
 }
 
@@ -968,17 +940,7 @@ function hasRunProgressChanged(
 
   return (
     previous.status !== next.status ||
-    previous.transcriptLength !== next.transcriptLength ||
-    previous.judgeTranscriptALength !== next.judgeTranscriptALength ||
-    previous.judgeTranscriptBLength !== next.judgeTranscriptBLength ||
-    previous.hasActualPromptA !== next.hasActualPromptA ||
-    previous.hasActualPromptB !== next.hasActualPromptB ||
-    previous.hasInfoAssignment !== next.hasInfoAssignment ||
-    previous.hasJudgeDecision !== next.hasJudgeDecision ||
-    previous.scoreA !== next.scoreA ||
-    previous.scoreB !== next.scoreB ||
-    previous.winner !== next.winner ||
-    previous.error !== next.error
+    previous.updatedAt !== next.updatedAt
   )
 }
 
@@ -1178,26 +1140,6 @@ export function PlaygroundPage() {
       const activeRunId = activeSession.runId ?? activeSession.run?.id ?? null
 
       if (activeRunId == null) {
-        const summaries = await getPlaygroundRuns(submissionId)
-        setRunSummaries(summaries)
-
-        const candidate = findCandidateRunSummary(activeSession, summaries)
-
-        if (!candidate) {
-          return true
-        }
-
-        const fullRun = await getPlaygroundRun(submissionId, candidate.id)
-        syncPlaygroundRun(submissionId, activeSession.requestId, fullRun)
-        activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
-        setRunSummaries((current) => upsertRunSummary(current, fullRun))
-        setSelectedRun(fullRun)
-
-        if (isRunFinished(fullRun)) {
-          setError(fullRun.error ?? null)
-          return false
-        }
-
         return true
       }
 
@@ -1247,7 +1189,7 @@ export function PlaygroundPage() {
       if (!cancelled && shouldContinue) {
         timeoutId = window.setTimeout(() => {
           void sync()
-        }, isPageVisible ? 4_000 : 15_000)
+        }, isPageVisible ? 5_000 : 15_000)
       }
     }
 

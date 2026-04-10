@@ -158,6 +158,7 @@ export const playgroundRuns = sqliteTable(
     reasoning: text('reasoning'),
     error: text('error'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
+    updatedAt: text('updated_at'),
   },
   (table) => ({
     statusCreatedAtIdx: index('playground_runs_status_created_at_idx').on(
