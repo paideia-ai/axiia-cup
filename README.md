@@ -47,8 +47,11 @@ Production deployment assets live in `deploy/`.
 - `deploy/Dockerfile.web` builds the Vite SPA and serves it with nginx
 - `deploy/Dockerfile.api` builds the Bun API and runs DB migrations on startup
 - `deploy/nginx.web.conf` provides SPA fallback and proxies `/api` and `/health`
+- `deploy/bootstrap-ubuntu-host.sh` prepares a fresh Ubuntu host with Docker, Compose, nginx, and the expected `/srv/axiia-cup` layout
+- `deploy/nginx.origin.axiia-cup.isofucius.cn.conf` is an example host-level nginx config for `axiia-cup.isofucius.cn` and `axiia-cup-2.isofucius.cn` when TLS terminates upstream at ESA/CDN
 - `deploy/angie.cup.axiia.ai.conf` is an example host-level reverse proxy for `cup.axiia.ai`
 - `deploy/deploy-master.sh` runs on your local machine and pushes a committed Git snapshot to a remote server over `ssh + rsync`
+- `deploy/dump-production-db.sh` runs on your local machine and pulls a consistent production SQLite backup over `ssh + rsync`
 - `deploy/bootstrap-server.sh` bootstraps a fresh server after prerequisites are in place
 - `deploy/deploy.sh` handles day-to-day redeploys
 - `deploy/smoke-check.sh` verifies health, SPA fallback, seeded data, and admin login
@@ -69,9 +72,10 @@ docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.ym
 Scripted flow on a server:
 
 ```bash
+./deploy/bootstrap-ubuntu-host.sh
 ./deploy/bootstrap-server.sh /srv/axiia-cup/shared/config/production.env
 ./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env
-BASE_URL=https://cup.axiia.ai ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
+BASE_URL=https://axiia-cup.isofucius.cn ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
 ```
 
 Scripted flow from your local machine:
@@ -81,7 +85,8 @@ Scripted flow from your local machine:
 ./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
 ./deploy/deploy-master.sh --host ubuntu@cup-server --local-env ./deploy/production.env
 ./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
-./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
+./deploy/dump-production-db.sh
 ```
 
 In this repository, `./deploy/deploy-master.sh` with no arguments deploys
@@ -90,6 +95,10 @@ check. Use `--ref HEAD` if you intentionally want to deploy your current local
 commit instead.
 
 The web container listens on `127.0.0.1:${WEB_HOST_PORT}` and is intended to sit behind a host-level reverse proxy such as Angie or nginx.
+
+In the current `isofucius.cn` production setup, TLS terminates upstream at ESA,
+so the origin host only needs plain HTTP on port `80` and should proxy that to
+`127.0.0.1:${WEB_HOST_PORT}`.
 
 For production, point `AXIIA_DATA_DIR` at a persistent host path outside the
 repo checkout. Leave `LANGFUSE_*` blank unless you actually want telemetry.

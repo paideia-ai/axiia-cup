@@ -18,7 +18,7 @@ Canonical local-to-remote deploy entrypoint. Runs on your local machine and:
 6. optionally runs a public smoke check
 
 Options:
-  --host <user@server>         SSH target. Default: anna@120.55.38.143
+  --host <user@server>         SSH target. Default: anna@cup-worker.isofucius.cn
   --ref <git-ref>              Git ref to deploy. Default: origin/master
   --remote-dir <path>          Remote repo checkout path
                                Default: /srv/axiia-cup/current
@@ -38,7 +38,7 @@ Examples:
   deploy/deploy-master.sh --host ubuntu@cup-server
   deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
   deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
-  deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+  deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
 EOF
 }
 
@@ -72,7 +72,7 @@ wait_for_url() {
   die "Timed out waiting for ${url}"
 }
 
-HOST="${DEPLOY_HOST:-anna@120.55.38.143}"
+HOST="${DEPLOY_HOST:-anna@cup-worker.isofucius.cn}"
 REF="${DEPLOY_REF:-origin/master}"
 REMOTE_DIR="${DEPLOY_APP_DIR:-/srv/axiia-cup/current}"
 REMOTE_ENV="${DEPLOY_ENV_FILE:-/srv/axiia-cup/shared/config/production.env}"

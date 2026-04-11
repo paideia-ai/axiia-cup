@@ -4,11 +4,13 @@ This document is the operational checklist for deploying Axiia Cup onto a single
 
 The deployment target assumed here is:
 
-- Public domain: `cup.axiia.ai`
-- Host-level reverse proxy: Angie or nginx
+- Public domain: `axiia-cup.isofucius.cn`
+- Preview / validation domain: `axiia-cup-2.isofucius.cn`
+- Host-level reverse proxy: nginx or Angie
 - App runtime: Docker Compose
 - App topology: `web` container + `api` container
 - Database: SQLite on a persistent host volume
+- Edge / CDN: optional; the current production setup uses ESA to terminate TLS upstream and forwards plain HTTP to the origin host
 
 ## 1. Prerequisites
 
@@ -17,7 +19,7 @@ The server must already have:
 - Docker Engine
 - Docker Compose v2
 - A reverse proxy on the host, typically Angie or nginx
-- A DNS-managed domain that can point `cup.axiia.ai` to the server
+- A DNS-managed domain or upstream proxy that can forward `axiia-cup.isofucius.cn` to the server
 
 Recommended verification commands:
 
@@ -25,6 +27,12 @@ Recommended verification commands:
 docker --version
 docker compose version
 sudo angie -v || sudo nginx -v
+```
+
+On a fresh Ubuntu host, you can prepare these prerequisites with:
+
+```bash
+./deploy/bootstrap-ubuntu-host.sh
 ```
 
 ## 2. Directory Layout
@@ -75,7 +83,7 @@ cp deploy/production.env.example /srv/axiia-cup/shared/config/production.env
 Edit `/srv/axiia-cup/shared/config/production.env` and set at least:
 
 ```env
-CORS_ORIGIN=https://cup.axiia.ai
+CORS_ORIGIN=https://axiia-cup.isofucius.cn,https://axiia-cup-2.isofucius.cn
 JWT_SECRET=<long-random-secret>
 SILICONFLOW_API_KEY=<real-key>
 REGISTRATION_CODE=axiia_cup
@@ -105,7 +113,7 @@ The repository now includes three deployment helper scripts:
 - `deploy/deploy.sh` — normal day-to-day redeploys
 - `deploy/smoke-check.sh` — smoke tests against the local port or an external base URL
 
-These scripts do **not** install Docker, nginx/Angie, or Certbot for you. They assume the prerequisites from section 1 are already satisfied and that the repo is already present on the server.
+`deploy/bootstrap-server.sh` still assumes Docker and nginx/Angie already exist. On a fresh Ubuntu server, run `deploy/bootstrap-ubuntu-host.sh` first.
 
 Typical order on a fresh server:
 
@@ -125,7 +133,7 @@ cd /srv/axiia-cup/current
 
 ```bash
 cd /srv/axiia-cup/current
-BASE_URL=https://cup.axiia.ai \
+BASE_URL=https://axiia-cup.isofucius.cn \
   ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
 ```
 
@@ -136,7 +144,7 @@ cd /path/to/local/axiia-cup
 ./deploy/deploy-master.sh
 ./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
 ./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
-./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
 ```
 
 `deploy-master.sh` syncs a committed Git snapshot from your local repo to the remote checkout path, optionally uploads a local env file to the remote env path, and then runs the remote scripts there. By default it deploys `origin/master`, so uncommitted local changes are not published unless you commit them and point `--ref` at that commit.
@@ -223,79 +231,59 @@ cd /srv/axiia-cup/current
 
 ## 9. Host Reverse Proxy
 
-### 8a. Obtain TLS Certificate
+### 9a. Direct-TLS Reverse Proxy
 
-The example Angie config requires a Let's Encrypt certificate. Install Certbot and issue the certificate before activating the config.
-
-For Angie:
-
-```bash
-sudo apt install certbot
-sudo certbot certonly --standalone -d cup.axiia.ai
-```
-
-If Angie is already running on port 80, stop it first or use the webroot plugin with a temp config.
-
-The certificate will be written to `/etc/letsencrypt/live/cup.axiia.ai/`.
-
-Set up auto-renewal:
-
-```bash
-sudo systemctl enable certbot.timer
-sudo systemctl start certbot.timer
-```
-
-Or add a cron entry: `0 3 * * * certbot renew --quiet && systemctl reload angie`
-
-### 8b. Install Reverse Proxy Config
-
-Use the example config in:
+If the origin host itself terminates TLS, use the Angie example config in:
 
 ```text
 deploy/angie.cup.axiia.ai.conf
 ```
 
-This config redirects HTTP → HTTPS and proxies HTTPS traffic to the web container on `127.0.0.1:8200`.
+That config redirects HTTP → HTTPS and proxies HTTPS traffic to the web container on `127.0.0.1:8200`.
 
-Typical Angie location on the server:
+### 9b. ESA / CDN / WAF Origin-Only Reverse Proxy
 
-```bash
-sudo cp deploy/angie.cup.axiia.ai.conf /etc/angie/http.d/cup.axiia.ai.conf
-sudo angie -t
-sudo systemctl reload angie
+If TLS terminates upstream and the server only needs to serve plain HTTP as an origin, use:
+
+```text
+deploy/nginx.origin.axiia-cup.isofucius.cn.conf
 ```
 
-If the server uses nginx instead, adapt the same config shape and run:
+Typical nginx installation:
 
 ```bash
+sudo cp deploy/nginx.origin.axiia-cup.isofucius.cn.conf /etc/nginx/sites-available/axiia-cup-origin.conf
+sudo ln -sf /etc/nginx/sites-available/axiia-cup-origin.conf /etc/nginx/sites-enabled/axiia-cup-origin.conf
+sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
 The reverse proxy should forward:
 
-- `cup.axiia.ai/*` -> `http://127.0.0.1:8200` (HTTPS termination at this layer)
+- `axiia-cup.isofucius.cn/*` -> `http://127.0.0.1:8200`
+- `axiia-cup-2.isofucius.cn/*` -> `http://127.0.0.1:8200`
 
 ## 10. DNS Cutover
 
-In the DNS provider panel, add:
+In the DNS provider or ESA / CDN panel, add or update:
 
 - Type: `A`
-- Host: `cup`
+- Host: `axiia-cup`
 - Value: `<server-public-ip>`
 
 Initial recommendation:
 
-- Keep the record as plain DNS first
-- Do not enable CDN/proxy mode until the first external validation is complete
+- Validate a preview / canary hostname such as `axiia-cup-2.isofucius.cn` before cutting the primary domain
+- If TLS terminates upstream, ensure the upstream origin target points to the server's plain HTTP listener on port `80`
 
 ## 11. External Validation
 
 After DNS propagates:
 
 ```bash
-curl https://cup.axiia.ai/health
-curl https://cup.axiia.ai/api/meta
+curl https://axiia-cup.isofucius.cn/health
+curl https://axiia-cup.isofucius.cn/api/meta
 ```
 
 Open in a browser and verify:
@@ -349,7 +337,7 @@ cd /srv/axiia-cup/current
 
 ```bash
 cd /srv/axiia-cup/current
-BASE_URL=https://cup.axiia.ai \
+BASE_URL=https://axiia-cup.isofucius.cn \
   ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
 ```
 
@@ -372,7 +360,7 @@ And if you also want a public-domain smoke check:
 
 ```bash
 cd /path/to/local/axiia-cup
-./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://cup.axiia.ai
+./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
 ```
 
 ## 14. Logs And Diagnostics

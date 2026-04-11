@@ -18,7 +18,7 @@ Smoke tests the deployed stack by checking:
 
 By default it targets http://127.0.0.1:${WEB_HOST_PORT}.
 Override the target with BASE_URL, for example:
-  BASE_URL=https://cup.axiia.ai deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
+  BASE_URL=https://axiia-cup.isofucius.cn deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
 EOF
 }
 
