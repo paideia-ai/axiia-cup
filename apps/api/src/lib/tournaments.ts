@@ -30,11 +30,9 @@ function resolveModelLabel(model: string) {
   return modelOptions.find((option) => option.id === model)?.label ?? model
 }
 
-function formatSubmissionModelLabel(modelA: string, modelB: string) {
+function formatSubmissionModelLabel(modelA: string, _modelB: string) {
   const labelA = resolveModelLabel(modelA)
-  const labelB = resolveModelLabel(modelB)
-
-  return modelA === modelB ? labelA : `A: ${labelA} / B: ${labelB}`
+  return labelA
 }
 
 function pairKey(a: number, b: number) {

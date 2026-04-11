@@ -265,9 +265,6 @@ export function MatchDetailPage() {
             <CardTitle>
               {playerALabel} vs {playerBLabel}
             </CardTitle>
-            <p className="mt-1.5 text-sm text-(--foreground-subtle)">
-              {match.playerAModel} vs {match.playerBModel}
-            </p>
           </div>
           <div className="flex items-stretch gap-3">
             <div className="rounded-xl border border-(--border-soft) bg-white/3 px-5 py-3">

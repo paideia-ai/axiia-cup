@@ -1307,17 +1307,6 @@ export function PlaygroundPage() {
     return <p className="text-sm text-(--accent)">{error ?? '找不到该版本'}</p>
   }
 
-  const roleModelBadges = [
-    {
-      label: `${scenario.roleAName} · ${resolveModelLabel(submission.modelA)}`,
-      tone: 'info' as const,
-    },
-    {
-      label: `${scenario.roleBName} · ${resolveModelLabel(submission.modelB)}`,
-      tone: 'warning' as const,
-    },
-  ]
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1336,11 +1325,7 @@ export function PlaygroundPage() {
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
           <Badge tone="info">v{submission.version}</Badge>
-          {roleModelBadges.map((badge) => (
-            <Badge key={badge.label} tone={badge.tone}>
-              {badge.label}
-            </Badge>
-          ))}
+          <Badge tone="info">模型 · {resolveModelLabel(submission.modelA)}</Badge>
         </div>
       </div>
 
