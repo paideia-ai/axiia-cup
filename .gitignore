@@ -16,3 +16,6 @@ coverage/
 deploy/production.env
 deploy/data/
 .gstack/
+.local/prod-login.sh
+.local/prod.env
+.local/prod-prompts/

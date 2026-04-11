@@ -6,6 +6,7 @@ Documentation and design assets for the Axiia Cup project.
 
 | File / Folder | Description |
 |---|---|
+| `analysis/` | Post-hoc cohort analyses (per scenario) |
 | `competition/` | Competition design specifications and rules |
 | `game-research/` | Game research analysis and design principles |
 | `legacy/` | Historical/superseded design documents |
@@ -22,6 +23,7 @@ Documentation and design assets for the Axiia Cup project.
 ```mermaid
 graph TD
     docs["docs/"]
+    docs --> analysis
     docs --> competition
     docs --> game-research
     docs --> legacy
