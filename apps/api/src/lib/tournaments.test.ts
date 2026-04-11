@@ -25,6 +25,7 @@ import {
   advanceToNextRound,
   createRoundWithMatches,
   getLatestScenarioPlayers,
+  getLeaderboard,
   maybeAdvanceRound,
   syncRoundStatus,
 } from './tournaments'
@@ -176,6 +177,27 @@ function scoreAllMatchesInRound(roundId: number) {
     .run()
 }
 
+function scoreMatch(
+  matchId: number,
+  winner: 'a' | 'b' | 'draw',
+  scoreA: number,
+  scoreB: number,
+) {
+  db.update(matches)
+    .set({
+      status: 'scored',
+      winner,
+      scoreA,
+      scoreB,
+      transcript: '[]',
+      judgeTranscriptA: '[]',
+      judgeTranscriptB: '[]',
+      finishedAt: new Date().toISOString(),
+    })
+    .where(eq(matches.id, matchId))
+    .run()
+}
+
 describe('getLatestScenarioPlayers', () => {
   beforeEach(() => {
     cleanupTestData()
@@ -243,6 +265,102 @@ describe('getLatestScenarioPlayers', () => {
 
     expect(players).toHaveLength(4)
     expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('getLeaderboard', () => {
+  beforeEach(() => {
+    cleanupTestData()
+    seedTestData()
+  })
+
+  afterEach(() => {
+    cleanupTestData()
+  })
+
+  it('tracks total and per-role win-loss records separately', () => {
+    const tournament = createTestTournament()
+    const { round } = createRoundWithMatches({
+      pairs: [
+        [1, 2],
+        [3, 4],
+      ],
+      roundNumber: 1,
+      scenarioId: TEST_SCENARIO_ID,
+      tournamentId: tournament.id,
+    })
+
+    const roundMatches = db
+      .select()
+      .from(matches)
+      .where(eq(matches.roundId, round.id))
+      .all()
+    const firstLeg = roundMatches.find(
+      (match) => match.subAId === 1 && match.subBId === 2,
+    )
+    const secondLeg = roundMatches.find(
+      (match) => match.subAId === 2 && match.subBId === 1,
+    )
+    const thirdLeg = roundMatches.find(
+      (match) => match.subAId === 3 && match.subBId === 4,
+    )
+    const fourthLeg = roundMatches.find(
+      (match) => match.subAId === 4 && match.subBId === 3,
+    )
+
+    expect(firstLeg).toBeDefined()
+    expect(secondLeg).toBeDefined()
+    expect(thirdLeg).toBeDefined()
+    expect(fourthLeg).toBeDefined()
+
+    scoreMatch(firstLeg!.id, 'a', 8, 5)
+    scoreMatch(secondLeg!.id, 'draw', 6, 6)
+    scoreMatch(thirdLeg!.id, 'b', 4, 7)
+    scoreMatch(fourthLeg!.id, 'a', 9, 3)
+
+    const leaderboard = getLeaderboard(tournament.id)
+
+    expect(leaderboard).not.toBeNull()
+    expect(leaderboard?.map((entry) => entry.submissionId)).toEqual([
+      4, 1, 2, 3,
+    ])
+
+    expect(leaderboard?.[0]).toMatchObject({
+      submissionId: 4,
+      wins: 2,
+      losses: 0,
+      roleAWins: 1,
+      roleALosses: 0,
+      roleBWins: 1,
+      roleBLosses: 0,
+    })
+    expect(leaderboard?.[1]).toMatchObject({
+      submissionId: 1,
+      wins: 1.5,
+      losses: 0,
+      roleAWins: 1,
+      roleALosses: 0,
+      roleBWins: 0.5,
+      roleBLosses: 0,
+    })
+    expect(leaderboard?.[2]).toMatchObject({
+      submissionId: 2,
+      wins: 0.5,
+      losses: 1,
+      roleAWins: 0.5,
+      roleALosses: 0,
+      roleBWins: 0,
+      roleBLosses: 1,
+    })
+    expect(leaderboard?.[3]).toMatchObject({
+      submissionId: 3,
+      wins: 0,
+      losses: 2,
+      roleAWins: 0,
+      roleALosses: 1,
+      roleBWins: 0,
+      roleBLosses: 1,
+    })
   })
 })
 

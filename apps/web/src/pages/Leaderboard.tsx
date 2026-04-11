@@ -72,6 +72,10 @@ export function LeaderboardPage() {
     `submission #${submissionId}`
   const resolveModelLabel = (modelId: string) =>
     modelOptions.find((option) => option.id === modelId)?.label ?? modelId
+  const formatScore = (value: number) =>
+    Number.isInteger(value) ? String(value) : value.toFixed(1)
+  const formatRecord = (wins: number, losses: number) =>
+    `${formatScore(wins)} / ${losses}`
   const openPlayerDetail = (submissionId: number) => {
     if (!selectedTournamentId) return
     void navigate(
@@ -230,8 +234,14 @@ export function LeaderboardPage() {
                   <th className="pb-3 pr-6">排名</th>
                   <th className="pb-3 pr-6">选手</th>
                   <th className="pb-3 pr-6">模型</th>
-                  <th className="pb-3 pr-4">胜</th>
-                  <th className="pb-3 pr-4">负</th>
+                  <th className="pb-3 pr-4">总胜</th>
+                  <th className="pb-3 pr-4">总负</th>
+                  <th className="pb-3 pr-6">
+                    {scenario?.roleAName ?? 'A'} 胜 / 负
+                  </th>
+                  <th className="pb-3 pr-6">
+                    {scenario?.roleBName ?? 'B'} 胜 / 负
+                  </th>
                   <th className="pb-3 pr-4">Buchholz</th>
                   <th className="pb-3">胜率</th>
                 </tr>
@@ -273,6 +283,12 @@ export function LeaderboardPage() {
                     </td>
                     <td className="py-4 pr-4 tabular-nums text-(--foreground)">
                       {entry.losses}
+                    </td>
+                    <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
+                      {formatRecord(entry.roleAWins, entry.roleALosses)}
+                    </td>
+                    <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
+                      {formatRecord(entry.roleBWins, entry.roleBLosses)}
                     </td>
                     <td className="py-4 pr-4 tabular-nums text-(--foreground-subtle)">
                       {entry.buchholz.toFixed(1)}

@@ -411,6 +411,18 @@ export function getLeaderboard(tournamentId: number) {
 
   const wins = new Map<number, number>(participantIds.map((id) => [id, 0]))
   const losses = new Map<number, number>(participantIds.map((id) => [id, 0]))
+  const roleAWins = new Map<number, number>(
+    participantIds.map((id) => [id, 0]),
+  )
+  const roleALosses = new Map<number, number>(
+    participantIds.map((id) => [id, 0]),
+  )
+  const roleBWins = new Map<number, number>(
+    participantIds.map((id) => [id, 0]),
+  )
+  const roleBLosses = new Map<number, number>(
+    participantIds.map((id) => [id, 0]),
+  )
   const completedResults = new Map<number, number>(
     participantIds.map((id) => [id, 0]),
   )
@@ -459,18 +471,34 @@ export function getLeaderboard(tournamentId: number) {
     if (match.winner === 'a') {
       wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
       losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1)
+      roleAWins.set(match.subAId, (roleAWins.get(match.subAId) ?? 0) + 1)
+      roleBLosses.set(
+        match.subBId,
+        (roleBLosses.get(match.subBId) ?? 0) + 1,
+      )
     } else if (match.winner === 'b') {
       wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1)
       losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1)
+      roleBWins.set(match.subBId, (roleBWins.get(match.subBId) ?? 0) + 1)
+      roleALosses.set(
+        match.subAId,
+        (roleALosses.get(match.subAId) ?? 0) + 1,
+      )
     } else if (match.winner === 'draw') {
       wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 0.5)
       wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 0.5)
+      roleAWins.set(match.subAId, (roleAWins.get(match.subAId) ?? 0) + 0.5)
+      roleBWins.set(match.subBId, (roleBWins.get(match.subBId) ?? 0) + 0.5)
     }
   }
 
   const entries = participants.map((player) => {
     const playerWins = wins.get(player.submissionId) ?? 0
     const playerLosses = losses.get(player.submissionId) ?? 0
+    const playerRoleAWins = roleAWins.get(player.submissionId) ?? 0
+    const playerRoleALosses = roleALosses.get(player.submissionId) ?? 0
+    const playerRoleBWins = roleBWins.get(player.submissionId) ?? 0
+    const playerRoleBLosses = roleBLosses.get(player.submissionId) ?? 0
     const totalPlayed = completedResults.get(player.submissionId) ?? 0
     const buchholz = [
       ...(opponents.get(player.submissionId) ?? new Set<number>()),
@@ -485,6 +513,10 @@ export function getLeaderboard(tournamentId: number) {
       modelLabel,
       playerName: player.displayName,
       rank: 0,
+      roleALosses: playerRoleALosses,
+      roleAWins: playerRoleAWins,
+      roleBLosses: playerRoleBLosses,
+      roleBWins: playerRoleBWins,
       status:
         tournament.status === 'finished'
           ? 'done'
