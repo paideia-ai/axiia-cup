@@ -30,9 +30,11 @@ function resolveModelLabel(model: string) {
   return modelOptions.find((option) => option.id === model)?.label ?? model
 }
 
-function formatSubmissionModelLabel(modelA: string, _modelB: string) {
+function formatSubmissionModelLabel(modelA: string, modelB: string) {
   const labelA = resolveModelLabel(modelA)
-  return labelA
+  const labelB = resolveModelLabel(modelB)
+
+  return modelA === modelB ? labelA : `A · ${labelA} / B · ${labelB}`
 }
 
 function pairKey(a: number, b: number) {
@@ -478,6 +480,8 @@ export function getLeaderboard(tournamentId: number) {
     return {
       buchholz,
       losses: playerLosses,
+      modelA: player.modelA,
+      modelB: player.modelB,
       modelLabel,
       playerName: player.displayName,
       rank: 0,

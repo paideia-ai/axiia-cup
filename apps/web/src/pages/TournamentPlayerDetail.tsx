@@ -1,7 +1,8 @@
-import type {
-  LeaderboardEntry,
-  Scenario,
-  TournamentDetail,
+import {
+  modelOptions,
+  type LeaderboardEntry,
+  type Scenario,
+  type TournamentDetail,
 } from '@axiia/shared'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -76,6 +77,8 @@ export function TournamentPlayerDetailPage() {
 
   const getPlayerName = (id: number) =>
     playersBySubmissionId.get(id)?.playerName ?? `submission #${id}`
+  const resolveModelLabel = (modelId: string) =>
+    modelOptions.find((option) => option.id === modelId)?.label ?? modelId
   const roleALabel = scenario ? scenario.roleAName : '—'
   const roleBLabel = scenario ? scenario.roleBName : '—'
 
@@ -147,12 +150,17 @@ export function TournamentPlayerDetailPage() {
           <p className="page-eyebrow">Player Detail</p>
           <h1 className="page-title">{player.playerName}</h1>
           <p className="page-subtitle">
-            {scenario?.title ?? '当前赛事'} · 第 {player.rank} 名 ·{' '}
-            {player.modelLabel}
+            {scenario?.title ?? '当前赛事'} · 第 {player.rank} 名
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="info">Round {tournamentDetail.currentRound}</Badge>
+          <Badge tone="accent">
+            {roleALabel} · {resolveModelLabel(player.modelA)}
+          </Badge>
+          <Badge tone="info">
+            {roleBLabel} · {resolveModelLabel(player.modelB)}
+          </Badge>
           <Link to={`/leaderboard?tournament=${tournamentDetail.id}`}>
             <Button variant="secondary" size="sm">
               返回排行榜

@@ -163,7 +163,8 @@ function RoleCard({
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
-  const [model, setModel] = useState<ModelOption['id']>(modelOptions[0]!.id)
+  const [modelA, setModelA] = useState<ModelOption['id']>(modelOptions[0]!.id)
+  const [modelB, setModelB] = useState<ModelOption['id']>(modelOptions[0]!.id)
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [promptA, setPromptA] = useState('')
@@ -215,11 +216,13 @@ export function ScenarioDetailPage() {
         if (latest) {
           setPromptA(latest.promptA)
           setPromptB(latest.promptB)
-          setModel(latest.modelA as ModelOption['id'])
+          setModelA(latest.modelA as ModelOption['id'])
+          setModelB(latest.modelB as ModelOption['id'])
         } else {
           setPromptA(buildDefaultStrategyPrompt(scenarioResponse.roleAName))
           setPromptB(buildDefaultStrategyPrompt(scenarioResponse.roleBName))
-          setModel(modelOptions[0]!.id)
+          setModelA(modelOptions[0]!.id)
+          setModelB(modelOptions[0]!.id)
         }
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : '加载场景失败')
@@ -244,15 +247,15 @@ export function ScenarioDetailPage() {
     setError(null)
 
     const parsed = createSubmissionSchema.safeParse({
-      modelA: model,
-      modelB: model,
+      modelA,
+      modelB,
       promptA,
       promptB,
       scenarioId,
     })
 
     if (!parsed.success) {
-      setError('请检查提示词与模型是否都已填写完整')
+      setError('请检查两个角色的提示词与模型是否都已填写完整')
       return
     }
 
@@ -520,13 +523,30 @@ export function ScenarioDetailPage() {
                   </TabsContent>
                 </Tabs>
 
-                <div className="flex flex-col items-center gap-4 lg:flex-row lg:items-end">
+                <div className="flex flex-col justify-center items-center gap-4 lg:flex-row lg:items-end">
                   <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
-                    <span>选择模型</span>
+                    <span>{scenario.roleAName} 模型</span>
                     <Select
-                      value={model}
+                      value={modelA}
                       onValueChange={(value) => {
-                        if (value) setModel(value as ModelOption['id'])
+                        if (value) setModelA(value as ModelOption['id'])
+                      }}
+                      renderValue={(value) => resolveModelLabel(value)}
+                      className="w-full"
+                    >
+                      {modelOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </label>
+                  <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
+                    <span>{scenario.roleBName} 模型</span>
+                    <Select
+                      value={modelB}
+                      onValueChange={(value) => {
+                        if (value) setModelB(value as ModelOption['id'])
                       }}
                       renderValue={(value) => resolveModelLabel(value)}
                       className="w-full"
@@ -564,7 +584,10 @@ export function ScenarioDetailPage() {
                           v{submission.version}
                         </p>
                         <Badge tone="accent" className="shrink-0 whitespace-nowrap">
-                          模型 · {resolveModelLabel(submission.modelA)}
+                          {scenario.roleAName} · {resolveModelLabel(submission.modelA)}
+                        </Badge>
+                        <Badge tone="info" className="shrink-0 whitespace-nowrap">
+                          {scenario.roleBName} · {resolveModelLabel(submission.modelB)}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between gap-3">

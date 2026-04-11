@@ -1325,7 +1325,12 @@ export function PlaygroundPage() {
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
           <Badge tone="info">v{submission.version}</Badge>
-          <Badge tone="info">模型 · {resolveModelLabel(submission.modelA)}</Badge>
+          <Badge tone="info">
+            {scenario.roleAName} · {resolveModelLabel(submission.modelA)}
+          </Badge>
+          <Badge tone="warning">
+            {scenario.roleBName} · {resolveModelLabel(submission.modelB)}
+          </Badge>
         </div>
       </div>
 

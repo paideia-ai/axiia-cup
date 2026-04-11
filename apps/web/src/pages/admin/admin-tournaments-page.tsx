@@ -510,7 +510,8 @@ export function AdminTournamentsPage() {
                         {match.playerADisplayName} vs {match.playerBDisplayName}
                       </p>
                       <p className="panel-copy">
-                        {match.playerAModel} vs {match.playerBModel}
+                        A · {resolveModelLabel(match.playerAModel)} / B ·{' '}
+                        {resolveModelLabel(match.playerBModel)}
                       </p>
                     </div>
                     <div className="rounded-xl border border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.08)] px-4 py-3 text-sm leading-6 text-(--foreground-subtle)">

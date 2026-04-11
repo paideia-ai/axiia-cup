@@ -1,4 +1,9 @@
-import type { LeaderboardEntry, Scenario, TournamentDetail } from '@axiia/shared'
+import {
+  modelOptions,
+  type LeaderboardEntry,
+  type Scenario,
+  type TournamentDetail,
+} from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -65,6 +70,8 @@ export function LeaderboardPage() {
   const getPlayerName = (submissionId: number) =>
     playersBySubmissionId.get(submissionId)?.playerName ??
     `submission #${submissionId}`
+  const resolveModelLabel = (modelId: string) =>
+    modelOptions.find((option) => option.id === modelId)?.label ?? modelId
   const openPlayerDetail = (submissionId: number) => {
     if (!selectedTournamentId) return
     void navigate(
@@ -147,9 +154,12 @@ export function LeaderboardPage() {
       const detail = await loadData(isInitial)
 
       if (!cancelled && detail && detail.status !== 'finished') {
-        timeoutId = window.setTimeout(() => {
-          void poll(false)
-        }, isPageVisible ? 5_000 : 20_000)
+        timeoutId = window.setTimeout(
+          () => {
+            void poll(false)
+          },
+          isPageVisible ? 5_000 : 20_000,
+        )
       }
     }
 
@@ -247,7 +257,16 @@ export function LeaderboardPage() {
                       {entry.playerName}
                     </td>
                     <td className="py-4 pr-6 text-(--foreground-subtle)">
-                      {entry.modelLabel}
+                      <div className="space-y-0.5">
+                        <p>
+                          {scenario?.roleAName ?? 'A'} ·{' '}
+                          {resolveModelLabel(entry.modelA)}
+                        </p>
+                        <p>
+                          {scenario?.roleBName ?? 'B'} ·{' '}
+                          {resolveModelLabel(entry.modelB)}
+                        </p>
+                      </div>
                     </td>
                     <td className="py-4 pr-4 tabular-nums text-(--foreground)">
                       {entry.wins}

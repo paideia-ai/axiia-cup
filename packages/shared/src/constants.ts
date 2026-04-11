@@ -8,7 +8,7 @@ export const modelOptions = [
   {
     id: 'qwen3.5-397b-a17b',
     label: 'Qwen3.5',
-    apiModel: 'Qwen/Qwen3.5-397B-A17B',
+    apiModel: 'Qwen/Qwen3.5-27B',
   },
 ] as const satisfies readonly { id: string; label: string; apiModel: string }[]
 

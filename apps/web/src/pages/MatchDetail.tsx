@@ -1,4 +1,9 @@
-import type { MatchDetail, MatchProgress, Scenario } from '@axiia/shared'
+import {
+  modelOptions,
+  type MatchDetail,
+  type MatchProgress,
+  type Scenario,
+} from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -7,7 +12,12 @@ import { Button } from '../components/ui/button'
 import { JudgeDecisionPanel } from '../components/judge-decision-panel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
-import { getMatch, getMatchProgress, getScenario, retryAdminMatch } from '../lib/api'
+import {
+  getMatch,
+  getMatchProgress,
+  getScenario,
+  retryAdminMatch,
+} from '../lib/api'
 import { usePageVisibility } from '../lib/page-visibility'
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
@@ -28,6 +38,10 @@ function createMatchProgressSnapshot(match: MatchDetail): MatchProgress {
     status: match.status,
     winner: match.winner,
   }
+}
+
+function resolveModelLabel(modelId: string) {
+  return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
 }
 
 function hasMatchProgressChanged(
@@ -146,9 +160,12 @@ export function MatchDetailPage() {
         status !== 'scored' &&
         status !== 'error'
       ) {
-        timeoutId = window.setTimeout(() => {
-          void poll(false)
-        }, isPageVisible ? 3_000 : 15_000)
+        timeoutId = window.setTimeout(
+          () => {
+            void poll(false)
+          },
+          isPageVisible ? 3_000 : 15_000,
+        )
       }
     }
 
@@ -265,6 +282,11 @@ export function MatchDetailPage() {
             <CardTitle>
               {playerALabel} vs {playerBLabel}
             </CardTitle>
+            <p className="mt-1.5 text-sm text-(--foreground-subtle)">
+              {roleAName} · {resolveModelLabel(match.playerAModel)}
+              <span className="mx-2">/</span>
+              {roleBName} · {resolveModelLabel(match.playerBModel)}
+            </p>
           </div>
           <div className="flex items-stretch gap-3">
             <div className="rounded-xl border border-(--border-soft) bg-white/3 px-5 py-3">
