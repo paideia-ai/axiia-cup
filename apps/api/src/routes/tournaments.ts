@@ -29,6 +29,7 @@ import {
   createRoundWithMatches,
   extractByeSubmissionIds,
   getLatestScenarioPlayers,
+  getLatestScenarioPlayerPrompts,
   getLeaderboard,
   getTournamentDetail,
   listTournaments,
@@ -121,6 +122,23 @@ tournamentRouter.get(
     }
 
     const players = getLatestScenarioPlayers(scenarioId)
+
+    return context.json(players)
+  },
+)
+
+tournamentRouter.get(
+  '/api/admin/tournaments/players/prompts',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const scenarioId = context.req.query('scenarioId')
+
+    if (!scenarioId) {
+      return context.json({ error: 'scenarioId is required' }, 400)
+    }
+
+    const players = getLatestScenarioPlayerPrompts(scenarioId)
 
     return context.json(players)
   },

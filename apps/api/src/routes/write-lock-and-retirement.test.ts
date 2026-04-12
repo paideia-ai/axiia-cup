@@ -231,7 +231,10 @@ describe('write lock and retired submissions', () => {
     expect(listJson.map((item) => item.id)).toEqual([15])
 
     const detailRes = await req('GET', '/api/playground/runs/14/15', adminToken)
-    const detailJson = (await detailRes.json()) as { id: number; submissionId: number }
+    const detailJson = (await detailRes.json()) as {
+      id: number
+      submissionId: number
+    }
 
     expect(detailRes.status).toBe(200)
     expect(detailJson.id).toBe(15)
@@ -242,7 +245,10 @@ describe('write lock and retired submissions', () => {
       '/api/playground/runs/14/15/status',
       adminToken,
     )
-    const statusJson = (await statusRes.json()) as { id: number; status: string }
+    const statusJson = (await statusRes.json()) as {
+      id: number
+      status: string
+    }
 
     expect(statusRes.status).toBe(200)
     expect(statusJson).toMatchObject({ id: 15, status: 'queued' })
@@ -252,7 +258,9 @@ describe('write lock and retired submissions', () => {
       '/api/playground/runs/14/15/interrupt',
       adminToken,
     )
-    const interruptJson = (await interruptRes.json()) as { error: string | null }
+    const interruptJson = (await interruptRes.json()) as {
+      error: string | null
+    }
 
     expect(interruptRes.status).toBe(200)
     expect(interruptJson.error).toBe('用户手动中断了本次试炼场运行')
@@ -462,5 +470,69 @@ describe('write lock and retired submissions', () => {
     const res = await req('POST', '/api/admin/matches/43/retry', adminToken)
 
     expect(res.status).toBe(409)
+  })
+
+  it('allows admins to export latest player prompts for a scenario', async () => {
+    db.insert(schema.submissions)
+      .values([
+        {
+          id: 21,
+          userId: 2,
+          scenarioId: 'test-scenario',
+          promptA: 'prompt a v1',
+          promptB: 'prompt b v1',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
+          version: 1,
+          createdAt: '2026-04-09 10:00:00',
+        },
+        {
+          id: 22,
+          userId: 2,
+          scenarioId: 'test-scenario',
+          promptA: 'prompt a v2',
+          promptB: 'prompt b v2',
+          modelLegacy: 'kimi-k2.5',
+          modelA: 'kimi-k2.5',
+          modelB: 'kimi-k2.5',
+          version: 2,
+          createdAt: '2026-04-09 11:00:00',
+        },
+      ])
+      .run()
+
+    const res = await req(
+      'GET',
+      '/api/admin/tournaments/players/prompts?scenarioId=test-scenario',
+      adminToken,
+    )
+    const json = (await res.json()) as Array<{
+      displayName: string
+      email: string
+      modelA: string
+      modelB: string
+      promptA: string
+      promptB: string
+      submissionId: number
+      submittedAt: string
+      userId: number
+      version: number
+    }>
+
+    expect(res.status).toBe(200)
+    expect(json).toHaveLength(1)
+    expect(json[0]).toEqual({
+      userId: 2,
+      submissionId: 22,
+      email: 'user@test.com',
+      displayName: 'User',
+      modelA: 'kimi-k2.5',
+      modelB: 'kimi-k2.5',
+      promptA: 'prompt a v2',
+      promptB: 'prompt b v2',
+      version: 2,
+      submittedAt: '2026-04-09 11:00:00',
+    })
   })
 })

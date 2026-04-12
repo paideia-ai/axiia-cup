@@ -22,6 +22,7 @@ Current commands:
 ```text
 auth:login --email <email> --password <password>
 players --scenario <id>
+players:prompts --scenario <id>
 start <scenarioId>
 status [tournamentId]
 next-round <tournamentId>
@@ -125,6 +126,7 @@ These commands call `AXIIA_API_URL`:
 
 - `auth:login`
 - `players --scenario <id>`
+- `players:prompts --scenario <id>`
 - `start <scenarioId>`
 - `status [tournamentId]`
 - `next-round <tournamentId>`
@@ -164,6 +166,7 @@ Examples:
 
 ```bash
 bun run ./apps/cli/src/index.ts players --scenario shangyang-court
+bun run ./apps/cli/src/index.ts players:prompts --scenario shangyang-court
 bun run ./apps/cli/src/index.ts start shangyang-court
 bun run ./apps/cli/src/index.ts status
 bun run ./apps/cli/src/index.ts next-round 3
@@ -171,6 +174,15 @@ bun run ./apps/cli/src/index.ts leaderboard 3
 ```
 
 All of these commands now return JSON by default. Add `--jsonl` on list-style commands when you want one record per line.
+
+Export all latest player prompts to a file:
+
+```bash
+bun run ./apps/cli/src/index.ts players:prompts \
+  --scenario shangyang-court \
+  --jsonl \
+  --output /tmp/shangyang-court-prompts.jsonl
+```
 
 ### 5.2 Scenario Listing
 

@@ -453,6 +453,11 @@ export const adminPlayerSchema = z.object({
   submittedAt: z.string(),
 })
 
+export const adminPlayerPromptExportSchema = adminPlayerSchema.extend({
+  promptA: z.string(),
+  promptB: z.string(),
+})
+
 export const tournamentListItemSchema = z.object({
   id: z.number().int().positive(),
   scenarioId: z.string(),
@@ -769,6 +774,9 @@ export type JudgeQA = z.infer<typeof judgeQASchema>
 export type JudgeScoring = z.infer<typeof judgeScoringSchema>
 export type Submission = z.infer<typeof submissionSchema>
 export type AdminPlayer = z.infer<typeof adminPlayerSchema>
+export type AdminPlayerPromptExport = z.infer<
+  typeof adminPlayerPromptExportSchema
+>
 export type TournamentListItem = z.infer<typeof tournamentListItemSchema>
 export type TournamentMatchSummary = z.infer<
   typeof tournamentMatchSummarySchema

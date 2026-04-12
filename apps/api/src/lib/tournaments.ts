@@ -1,5 +1,6 @@
 import {
   adminPlayerSchema,
+  adminPlayerPromptExportSchema,
   leaderboardEntrySchema,
   modelOptions,
   tournamentDetailSchema,
@@ -25,6 +26,9 @@ import { parseJsonField } from './json'
 type TournamentRecord = typeof tournaments.$inferSelect
 
 type TournamentPlayer = ReturnType<typeof adminPlayerSchema.parse>
+type TournamentPlayerPromptExport = ReturnType<
+  typeof adminPlayerPromptExportSchema.parse
+>
 
 function resolveModelLabel(model: string) {
   return modelOptions.find((option) => option.id === model)?.label ?? model
@@ -93,6 +97,68 @@ export function getLatestScenarioPlayers(
   for (const row of rows) {
     if (!latestByUser.has(row.userId)) {
       latestByUser.set(row.userId, adminPlayerSchema.parse(row))
+    }
+  }
+
+  return [...latestByUser.values()].sort(
+    (left, right) => left.userId - right.userId,
+  )
+}
+
+export function getLatestScenarioPlayerPrompts(
+  scenarioId: string,
+  beforeCreatedAt?: string,
+) {
+  const availabilityClause = beforeCreatedAt
+    ? or(
+        isNull(submissions.retiredAt),
+        gt(submissions.retiredAt, beforeCreatedAt),
+      )
+    : isNull(submissions.retiredAt)
+
+  const whereClause = beforeCreatedAt
+    ? and(
+        eq(submissions.scenarioId, scenarioId),
+        eq(users.isAdmin, false),
+        eq(users.disabled, false),
+        lte(submissions.createdAt, beforeCreatedAt),
+        availabilityClause,
+      )
+    : and(
+        eq(submissions.scenarioId, scenarioId),
+        eq(users.isAdmin, false),
+        eq(users.disabled, false),
+        availabilityClause,
+      )
+
+  const rows = db
+    .select({
+      displayName: users.displayName,
+      email: users.email,
+      modelA: submissions.modelA,
+      modelB: submissions.modelB,
+      promptA: submissions.promptA,
+      promptB: submissions.promptB,
+      submissionId: submissions.id,
+      submittedAt: submissions.createdAt,
+      userId: users.id,
+      version: submissions.version,
+    })
+    .from(submissions)
+    .innerJoin(users, eq(users.id, submissions.userId))
+    .where(whereClause)
+    .orderBy(
+      desc(submissions.createdAt),
+      desc(submissions.version),
+      desc(submissions.id),
+    )
+    .all()
+
+  const latestByUser = new Map<number, TournamentPlayerPromptExport>()
+
+  for (const row of rows) {
+    if (!latestByUser.has(row.userId)) {
+      latestByUser.set(row.userId, adminPlayerPromptExportSchema.parse(row))
     }
   }
 
@@ -411,15 +477,11 @@ export function getLeaderboard(tournamentId: number) {
 
   const wins = new Map<number, number>(participantIds.map((id) => [id, 0]))
   const losses = new Map<number, number>(participantIds.map((id) => [id, 0]))
-  const roleAWins = new Map<number, number>(
-    participantIds.map((id) => [id, 0]),
-  )
+  const roleAWins = new Map<number, number>(participantIds.map((id) => [id, 0]))
   const roleALosses = new Map<number, number>(
     participantIds.map((id) => [id, 0]),
   )
-  const roleBWins = new Map<number, number>(
-    participantIds.map((id) => [id, 0]),
-  )
+  const roleBWins = new Map<number, number>(participantIds.map((id) => [id, 0]))
   const roleBLosses = new Map<number, number>(
     participantIds.map((id) => [id, 0]),
   )
@@ -472,18 +534,12 @@ export function getLeaderboard(tournamentId: number) {
       wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 1)
       losses.set(match.subBId, (losses.get(match.subBId) ?? 0) + 1)
       roleAWins.set(match.subAId, (roleAWins.get(match.subAId) ?? 0) + 1)
-      roleBLosses.set(
-        match.subBId,
-        (roleBLosses.get(match.subBId) ?? 0) + 1,
-      )
+      roleBLosses.set(match.subBId, (roleBLosses.get(match.subBId) ?? 0) + 1)
     } else if (match.winner === 'b') {
       wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 1)
       losses.set(match.subAId, (losses.get(match.subAId) ?? 0) + 1)
       roleBWins.set(match.subBId, (roleBWins.get(match.subBId) ?? 0) + 1)
-      roleALosses.set(
-        match.subAId,
-        (roleALosses.get(match.subAId) ?? 0) + 1,
-      )
+      roleALosses.set(match.subAId, (roleALosses.get(match.subAId) ?? 0) + 1)
     } else if (match.winner === 'draw') {
       wins.set(match.subAId, (wins.get(match.subAId) ?? 0) + 0.5)
       wins.set(match.subBId, (wins.get(match.subBId) ?? 0) + 0.5)

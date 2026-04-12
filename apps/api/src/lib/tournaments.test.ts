@@ -25,6 +25,7 @@ import {
   advanceToNextRound,
   createRoundWithMatches,
   getLatestScenarioPlayers,
+  getLatestScenarioPlayerPrompts,
   getLeaderboard,
   maybeAdvanceRound,
   syncRoundStatus,
@@ -265,6 +266,63 @@ describe('getLatestScenarioPlayers', () => {
 
     expect(players).toHaveLength(4)
     expect(players.map((player) => player.submissionId)).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('getLatestScenarioPlayerPrompts', () => {
+  beforeEach(() => {
+    cleanupTestData()
+    seedTestData()
+  })
+
+  afterEach(() => {
+    cleanupTestData()
+  })
+
+  it('returns the latest prompt pair for each non-admin player', () => {
+    db.insert(submissions)
+      .values({
+        id: 10,
+        userId: 1,
+        scenarioId: TEST_SCENARIO_ID,
+        promptA: 'latest prompt a',
+        promptB: 'latest prompt b',
+        modelLegacy: 'qwen3.5-397b-a17b',
+        modelA: 'qwen3.5-397b-a17b',
+        modelB: 'qwen3.5-397b-a17b',
+        version: 2,
+        createdAt: '2026-04-09 11:00:00',
+      })
+      .run()
+
+    const players = getLatestScenarioPlayerPrompts(TEST_SCENARIO_ID)
+
+    expect(players).toHaveLength(4)
+    expect(players[0]).toMatchObject({
+      userId: 1,
+      submissionId: 10,
+      promptA: 'latest prompt a',
+      promptB: 'latest prompt b',
+      version: 2,
+    })
+  })
+
+  it('keeps later-retired prompts in historical snapshots', () => {
+    db.update(submissions)
+      .set({ retiredAt: '2026-04-09 12:00:00' })
+      .where(eq(submissions.id, 4))
+      .run()
+
+    const players = getLatestScenarioPlayerPrompts(
+      TEST_SCENARIO_ID,
+      '2026-04-09 11:00:00',
+    )
+
+    expect(players).toHaveLength(4)
+    expect(players.find((player) => player.submissionId === 4)).toMatchObject({
+      promptA: 'a',
+      promptB: 'b',
+    })
   })
 })
 

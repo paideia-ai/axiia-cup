@@ -4,6 +4,7 @@ import {
   type AdminAnalyticsBattle,
   type AdminMonitorUser,
   type AdminPlayer,
+  type AdminPlayerPromptExport,
   type AdminScenario,
   type AdminUser,
   type LeaderboardEntry,
@@ -71,6 +72,27 @@ export function normalizePlayer(player: AdminPlayer) {
       modelA: player.modelA,
       modelB: player.modelB,
       submittedAt: player.submittedAt,
+    },
+  }
+}
+
+export function normalizePlayerPromptExport(player: AdminPlayerPromptExport) {
+  return {
+    user: {
+      id: player.userId,
+      displayName: player.displayName,
+      email: player.email,
+    },
+    submission: {
+      id: player.submissionId,
+      version: player.version,
+      modelA: player.modelA,
+      modelB: player.modelB,
+      submittedAt: player.submittedAt,
+    },
+    prompts: {
+      a: player.promptA,
+      b: player.promptB,
     },
   }
 }

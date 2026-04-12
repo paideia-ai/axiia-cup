@@ -1,5 +1,6 @@
 import {
   type AdminPlayer,
+  type AdminPlayerPromptExport,
   type LeaderboardEntry,
   type TournamentDetail,
 } from '@axiia/shared'
@@ -10,6 +11,7 @@ import { writeCollectionOutput, writeJsonOutput } from '../lib/io'
 import {
   normalizeLeaderboardEntry,
   normalizePlayer,
+  normalizePlayerPromptExport,
   normalizeStartRoundResponse,
   normalizeTournamentStatus,
 } from '../lib/normalizers'
@@ -45,8 +47,40 @@ export function registerTournamentCommands(program: Command) {
     )
 
   program
+    .command('players:prompts')
+    .description(
+      'Export latest player prompts for a scenario (JSON by default)',
+    )
+    .requiredOption('-s, --scenario <id>', 'scenario id')
+    .option('--jsonl', 'emit one normalized player prompt JSON object per line')
+    .option('-o, --output <path>', 'write output to file instead of stdout')
+    .action(
+      async (options: {
+        jsonl?: boolean
+        output?: string
+        scenario: string
+      }) => {
+        const players = await apiFetch<AdminPlayerPromptExport[]>(
+          `/api/admin/tournaments/players/prompts?scenarioId=${encodeURIComponent(options.scenario)}`,
+          { method: 'GET' },
+          true,
+        )
+
+        writeCollectionOutput({
+          format: options.jsonl ? 'jsonl' : 'json',
+          items: players.map(normalizePlayerPromptExport),
+          kind: 'tournament.player_prompts',
+          meta: { scenarioId: options.scenario },
+          outputPath: options.output,
+        })
+      },
+    )
+
+  program
     .command('start')
-    .description('Lock entries and create the first round pairings (JSON by default)')
+    .description(
+      'Lock entries and create the first round pairings (JSON by default)',
+    )
     .argument('<scenarioId>', 'scenario id')
     .option('-o, --output <path>', 'write output to file instead of stdout')
     .action(async (scenarioId: string, options: { output?: string }) => {
@@ -75,7 +109,10 @@ export function registerTournamentCommands(program: Command) {
     .argument('[tournamentId]', 'tournament id')
     .option('-o, --output <path>', 'write output to file instead of stdout')
     .action(
-      async (tournamentIdArg: string | undefined, options: { output?: string }) => {
+      async (
+        tournamentIdArg: string | undefined,
+        options: { output?: string },
+      ) => {
         const tournamentId = await resolveTournamentId(tournamentIdArg)
         const tournament = await apiFetch<TournamentDetail>(
           `/api/tournaments/${tournamentId}`,
@@ -120,7 +157,10 @@ export function registerTournamentCommands(program: Command) {
     .command('leaderboard')
     .description('Show the leaderboard (JSON by default)')
     .argument('<tournamentId>', 'tournament id')
-    .option('--jsonl', 'emit one normalized leaderboard entry JSON object per line')
+    .option(
+      '--jsonl',
+      'emit one normalized leaderboard entry JSON object per line',
+    )
     .option('-o, --output <path>', 'write output to file instead of stdout')
     .action(
       async (
@@ -149,18 +189,20 @@ export function registerTournamentCommands(program: Command) {
     .argument('<matchId>', 'match id')
     .option('-d, --db <path>', 'SQLite database path')
     .option('-o, --output <path>', 'write JSON to file instead of stdout')
-    .action(async (matchIdArg: string, options: { db?: string; output?: string }) => {
-      const matchId = Number.parseInt(matchIdArg, 10)
+    .action(
+      async (matchIdArg: string, options: { db?: string; output?: string }) => {
+        const matchId = Number.parseInt(matchIdArg, 10)
 
-      if (!Number.isInteger(matchId) || matchId <= 0) {
-        throw new Error('matchId must be a positive integer')
-      }
+        if (!Number.isInteger(matchId) || matchId <= 0) {
+          throw new Error('matchId must be a positive integer')
+        }
 
-      const { exportMatch } = await import('../lib/local-export')
-      exportMatch({
-        dbPath: options.db,
-        matchId,
-        outputPath: options.output,
-      })
-    })
+        const { exportMatch } = await import('../lib/local-export')
+        exportMatch({
+          dbPath: options.db,
+          matchId,
+          outputPath: options.output,
+        })
+      },
+    )
 }
