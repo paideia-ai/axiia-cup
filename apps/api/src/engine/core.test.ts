@@ -51,6 +51,7 @@ const scenario: ScenarioRecord = {
   ]),
   turnCount: 8,
   judgeModel: 'deepseek-v3.2',
+  scorerModel: 'deepseek-v3.2',
   judgePrompt:
     'A={{roleAName}} B={{roleBName}} 辩论：{{debate}} 问询A：{{examinationA}} 问询B：{{examinationB}} 请求A：{{roleARequests}} 请求B：{{roleBRequests}}',
   scorerPrompt: '计分。{{judgeOutput}}',

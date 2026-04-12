@@ -68,7 +68,8 @@ export function normalizePlayer(player: AdminPlayer) {
     submission: {
       id: player.submissionId,
       version: player.version,
-      model: player.model,
+      modelA: player.modelA,
+      modelB: player.modelB,
       submittedAt: player.submittedAt,
     },
   }

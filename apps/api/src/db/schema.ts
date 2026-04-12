@@ -52,6 +52,7 @@ export const scenarios = sqliteTable('scenarios', {
   subject: text('subject').notNull(),
   turnCount: integer('turn_count').notNull().default(10),
   judgeModel: text('judge_model').notNull().default('deepseek-v3.2'),
+  scorerModel: text('scorer_model').notNull().default('deepseek-v3.2'),
   openingLine: text('opening_line')
     .notNull()
     .default(

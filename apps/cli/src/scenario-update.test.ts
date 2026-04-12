@@ -7,6 +7,7 @@ function buildUpdateScenario(): UpdateScenario {
   return {
     turnCount: 10,
     judgeModel: 'deepseek-v3.2',
+    scorerModel: 'gpt-4.1',
     openingLine: 'The ruler asks both speakers to present their arguments.',
     agentPromptTemplate: 'agent prompt',
     examinationQuestionTemplate: '',

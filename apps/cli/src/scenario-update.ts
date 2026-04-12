@@ -7,6 +7,7 @@ import {
 const updateScenarioKeys = [
   'turnCount',
   'judgeModel',
+  'scorerModel',
   'openingLine',
   'agentPromptTemplate',
   'examinationQuestionTemplate',
@@ -26,6 +27,7 @@ export function toEditableScenario(scenario: AdminScenario): UpdateScenario {
   return {
     turnCount: scenario.turnCount,
     judgeModel: scenario.judgeModel,
+    scorerModel: scenario.scorerModel,
     openingLine: scenario.openingLine,
     agentPromptTemplate: scenario.agentPromptTemplate,
     examinationQuestionTemplate: scenario.examinationQuestionTemplate,
@@ -63,9 +65,7 @@ export function parseScenarioUpdateInput(raw: unknown): UpdateScenario {
       ? ((raw as Record<string, unknown>).scenario as Record<string, unknown>)
       : (raw as Record<string, unknown>)
 
-  const parsed = updateScenarioSchema.safeParse(
-    buildUpdateCandidate(candidate),
-  )
+  const parsed = updateScenarioSchema.safeParse(buildUpdateCandidate(candidate))
 
   if (parsed.success) {
     return parsed.data

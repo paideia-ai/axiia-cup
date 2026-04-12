@@ -1,5 +1,5 @@
 import {
-  modelOptions,
+  evaluationModelOptions,
   type AdminScenario,
   type PresetOpponent,
   type UpdateScenario,
@@ -28,6 +28,7 @@ function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
   return {
     turnCount: scenario.turnCount,
     judgeModel: scenario.judgeModel,
+    scorerModel: scenario.scorerModel,
     judgePrompt: scenario.judgePrompt,
     openingLine: scenario.openingLine,
     agentPromptTemplate: scenario.agentPromptTemplate,
@@ -811,11 +812,39 @@ export function AdminScenarioEditPage() {
                         )
                       }
                       renderValue={(value) =>
-                        modelOptions.find((option) => option.id === value)
-                          ?.label ?? value
+                        evaluationModelOptions.find(
+                          (option) => option.id === value,
+                        )?.label ?? value
                       }
                     >
-                      {modelOptions.map((option) => (
+                      {evaluationModelOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </label>
+                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                    <span>计分模型</span>
+                    <Select
+                      value={draft.scorerModel}
+                      onValueChange={(value) =>
+                        setDraft((c) =>
+                          c && value
+                            ? {
+                                ...c,
+                                scorerModel: value as typeof c.scorerModel,
+                              }
+                            : c,
+                        )
+                      }
+                      renderValue={(value) =>
+                        evaluationModelOptions.find(
+                          (option) => option.id === value,
+                        )?.label ?? value
+                      }
+                    >
+                      {evaluationModelOptions.map((option) => (
                         <SelectItem key={option.id} value={option.id}>
                           {option.label}
                         </SelectItem>

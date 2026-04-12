@@ -1,4 +1,4 @@
-import { modelOptions } from '@axiia/shared'
+import { evaluationModelOptions, modelOptions } from '@axiia/shared'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { sql } from 'drizzle-orm'
 
@@ -188,7 +188,8 @@ const scenarioSeed = {
   title: '商鞅变法·朝堂辩法',
   subject: '历史',
   turnCount,
-  judgeModel: modelOptions[0]!.id,
+  judgeModel: evaluationModelOptions[0]!.id,
+  scorerModel: evaluationModelOptions[0]!.id,
   openingLine:
     '卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。',
   agentPromptTemplate,

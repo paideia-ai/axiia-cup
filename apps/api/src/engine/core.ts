@@ -1,18 +1,20 @@
 import {
+  evaluationModelIdSchema,
   examinationAnswerSchema,
   hiddenInfoItemSchema,
   infoAssignmentSchema,
   judgeQASchema,
   matchWinnerSchema,
-  modelIdSchema,
   requestItemSchema,
   scorerOutputSchema,
+  submissionModelIdSchema,
   transcriptTurnSchema,
+  type EvaluationModelId,
   type HiddenInfoItem,
   type InfoAssignment,
   type JudgeQA,
-  type ModelId,
   type RequestItem,
+  type SubmissionModelId,
   type TranscriptTurn,
 } from '@axiia/shared'
 
@@ -28,7 +30,11 @@ import {
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
 
-export const DEFAULT_JUDGE_MODEL = 'deepseek-v3.2' as const satisfies ModelId
+export const DEFAULT_JUDGE_MODEL =
+  'deepseek-v3.2' as const satisfies EvaluationModelId
+
+export const DEFAULT_SCORER_MODEL =
+  'deepseek-v3.2' as const satisfies EvaluationModelId
 
 type MatchExecutionParams = {
   infoAssignment?: InfoAssignment
@@ -68,7 +74,11 @@ export type MatchExecutionResult = {
 function sleep(ms: number, signal?: AbortSignal) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(new PlaygroundRunInterruptedError(getPlaygroundInterruptMessage(signal)))
+      reject(
+        new PlaygroundRunInterruptedError(
+          getPlaygroundInterruptMessage(signal),
+        ),
+      )
       return
     }
 
@@ -80,7 +90,9 @@ function sleep(ms: number, signal?: AbortSignal) {
     const onAbort = () => {
       cleanup()
       reject(
-        new PlaygroundRunInterruptedError(getPlaygroundInterruptMessage(signal)),
+        new PlaygroundRunInterruptedError(
+          getPlaygroundInterruptMessage(signal),
+        ),
       )
     }
 
@@ -124,8 +136,12 @@ async function withRetry<T>(
     : new Error('Unknown engine error')
 }
 
-export function parseModelId(value: string) {
-  return modelIdSchema.parse(value)
+export function parseSubmissionModelId(value: string) {
+  return submissionModelIdSchema.parse(value)
+}
+
+export function parseEvaluationModelId(value: string) {
+  return evaluationModelIdSchema.parse(value)
 }
 
 export function sanitizeJsonResponse(raw: string) {
@@ -489,7 +505,7 @@ async function getExaminationAnswer(
   roleSide: 'a' | 'b',
   assignment: InfoAssignment,
   submissionPrompt: string,
-  model: ModelId,
+  model: SubmissionModelId,
   traceTarget: Pick<
     ChatCompletionTrace,
     'matchId' | 'playgroundRunId' | 'userId'
@@ -597,7 +613,9 @@ async function getJudgeDecision(
     examinationA: examinationAText,
     examinationB: examinationBText,
   })
-  const judgeModel = parseModelId(scenario.judgeModel ?? DEFAULT_JUDGE_MODEL)
+  const judgeModel = parseEvaluationModelId(
+    scenario.judgeModel ?? DEFAULT_JUDGE_MODEL,
+  )
 
   const raw = await withRetry(async (attempt) => {
     return await chatCompletion({
@@ -716,7 +734,9 @@ async function getScoreFromScorer(
     examinationA: buildExaminationSummary(scenario.roleAName, examinationA),
     examinationB: buildExaminationSummary(scenario.roleBName, examinationB),
   })
-  const scorerModel = parseModelId(scenario.judgeModel ?? DEFAULT_JUDGE_MODEL)
+  const scorerModel = parseEvaluationModelId(
+    scenario.scorerModel ?? DEFAULT_SCORER_MODEL,
+  )
 
   const result = await withRetry(async (attempt) => {
     const response = await chatCompletion({
@@ -767,8 +787,8 @@ export async function executeMatchSession(
   const judgeTranscriptB = (params.judgeTranscriptB ?? []).map((item) =>
     judgeQASchema.parse(item),
   )
-  const modelA = parseModelId(params.modelA)
-  const modelB = parseModelId(params.modelB)
+  const modelA = parseSubmissionModelId(params.modelA)
+  const modelB = parseSubmissionModelId(params.modelB)
 
   // Randomize or restore assignment
   const assignment = params.infoAssignment
@@ -798,23 +818,24 @@ export async function executeMatchSession(
       speaker === 'a' ? params.promptA : params.promptB,
     )
 
-    const response = await withRetry((attempt) =>
-      chatCompletion({
-        messages,
-        model: speaker === 'a' ? modelA : modelB,
-        signal: params.signal,
-        systemPrompt,
-        temperature: 0,
-        trace: {
-          attempt,
-          matchId: params.matchId,
-          phase: 'dialogue',
-          playgroundRunId: params.playgroundRunId,
-          side: speaker,
-          turnIndex,
-          userId: speaker === 'a' ? params.userIdA : params.userIdB,
-        },
-      }),
+    const response = await withRetry(
+      (attempt) =>
+        chatCompletion({
+          messages,
+          model: speaker === 'a' ? modelA : modelB,
+          signal: params.signal,
+          systemPrompt,
+          temperature: 0,
+          trace: {
+            attempt,
+            matchId: params.matchId,
+            phase: 'dialogue',
+            playgroundRunId: params.playgroundRunId,
+            side: speaker,
+            turnIndex,
+            userId: speaker === 'a' ? params.userIdA : params.userIdB,
+          },
+        }),
       params.signal,
     )
 

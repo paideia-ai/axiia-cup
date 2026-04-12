@@ -1,3 +1,4 @@
+import { evaluationModelOptions } from '@axiia/shared'
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { hashPassword } from '../lib/auth'
@@ -223,7 +224,8 @@ async function main() {
         },
         { id: 'GR3', content: '请保世族封地食邑世代相传，不受裁减' },
       ]),
-      judgeModel: 'deepseek-v3.2',
+      judgeModel: evaluationModelOptions[0]!.id,
+      scorerModel: evaluationModelOptions[0]!.id,
       turnCount,
       falseInfoCount: 0,
       trueRequestCount: 1,

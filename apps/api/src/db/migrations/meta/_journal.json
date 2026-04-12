@@ -71,6 +71,13 @@
       "when": 1776300000000,
       "tag": "0009_submission_dual_models",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "10",
+      "when": 1776310000000,
+      "tag": "0010_scorer_model",
+      "breakpoints": true
     }
   ]
 }

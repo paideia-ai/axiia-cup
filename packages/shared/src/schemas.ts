@@ -1,8 +1,10 @@
 import { z } from 'zod'
 
-import { modelIds } from './constants'
+import { evaluationModelIds, modelIds, submissionModelIds } from './constants'
 
 export const modelIdSchema = z.enum(modelIds)
+export const submissionModelIdSchema = z.enum(submissionModelIds)
+export const evaluationModelIdSchema = z.enum(evaluationModelIds)
 export const tournamentStatusSchema = z.enum(['open', 'running', 'finished'])
 export const roundStatusSchema = z.enum(['pairing', 'running', 'done'])
 export const matchStatusSchema = z.enum([
@@ -272,7 +274,8 @@ const scenarioBaseSchema = z.object({
   title: z.string(),
   subject: z.string(),
   turnCount: z.number().int().positive(),
-  judgeModel: modelIdSchema,
+  judgeModel: evaluationModelIdSchema,
+  scorerModel: evaluationModelIdSchema,
   openingLine: z.string(),
   // Prompt templates (admin-controlled)
   agentPromptTemplate: z.string(),
@@ -300,7 +303,8 @@ export const scenarioSchema = scenarioBaseSchema.superRefine(
 
 const updateScenarioBaseSchema = z.object({
   turnCount: z.number().int().min(1).max(50),
-  judgeModel: modelIdSchema,
+  judgeModel: evaluationModelIdSchema,
+  scorerModel: evaluationModelIdSchema,
   openingLine: z.string().min(1),
   // Prompt templates
   agentPromptTemplate: z.string().min(1),
@@ -411,8 +415,8 @@ export const createSubmissionSchema = z.object({
   scenarioId: z.string().min(1),
   promptA: z.string().trim().min(1).max(1000),
   promptB: z.string().trim().min(1).max(1000),
-  modelA: modelIdSchema,
-  modelB: modelIdSchema,
+  modelA: submissionModelIdSchema,
+  modelB: submissionModelIdSchema,
 })
 
 export const matchSchema = z.object({

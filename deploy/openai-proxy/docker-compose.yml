@@ -1,0 +1,26 @@
+services:
+  llm-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      HOST: 0.0.0.0
+      PORT: ${PORT:-3100}
+      GATEWAY_SHARED_TOKEN: ${GATEWAY_SHARED_TOKEN:-}
+      OPENAI_UPSTREAM_BASE_URL: ${OPENAI_UPSTREAM_BASE_URL:-https://api.openai.com}
+      OPENAI_UPSTREAM_API_KEY: ${OPENAI_UPSTREAM_API_KEY:-}
+      ANTHROPIC_UPSTREAM_BASE_URL: ${ANTHROPIC_UPSTREAM_BASE_URL:-https://api.anthropic.com}
+      ANTHROPIC_UPSTREAM_API_KEY: ${ANTHROPIC_UPSTREAM_API_KEY:-}
+      ANTHROPIC_VERSION: ${ANTHROPIC_VERSION:-2023-06-01}
+    ports:
+      - 127.0.0.1:${HOST_PORT:-3100}:${PORT:-3100}
+    init: true
+    read_only: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    user: "node"

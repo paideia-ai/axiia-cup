@@ -73,6 +73,7 @@ beforeAll(async () => {
       roleBName: '角色B',
       turnCount: 10,
       judgeModel: 'deepseek-v3.2',
+      scorerModel: 'deepseek-v3.2',
       judgePrompt: '原始裁判提示词',
       scorerPrompt: '原始计分提示词',
       agentPromptTemplate: '模板',
@@ -112,6 +113,7 @@ function req(method: string, path: string, token?: string, body?: unknown) {
 const validUpdate = {
   turnCount: 15,
   judgeModel: 'kimi-k2.5',
+  scorerModel: 'gpt-4.1',
   judgePrompt: '更新后的裁判提示词',
   scorerPrompt: '更新后的计分提示词',
   openingLine: '请开始辩论。',
@@ -236,6 +238,7 @@ describe('PUT /api/admin/scenarios/:id', () => {
     expect(json.judgePrompt).toBe('更新后的裁判提示词')
     expect(json.turnCount).toBe(15)
     expect(json.judgeModel).toBe('kimi-k2.5')
+    expect(json.scorerModel).toBe('gpt-4.1')
     expect(json.locked).toBe(false)
   })
 

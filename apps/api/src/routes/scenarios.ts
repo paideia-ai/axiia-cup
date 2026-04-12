@@ -59,6 +59,7 @@ scenariosRouter.get(
         roleBHiddenInfo: scenarios.roleBHiddenInfo,
         roleBName: scenarios.roleBName,
         roleBRequests: scenarios.roleBRequests,
+        scorerModel: scenarios.scorerModel,
         scorerPrompt: scenarios.scorerPrompt,
         subject: scenarios.subject,
         title: scenarios.title,
