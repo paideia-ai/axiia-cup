@@ -29,6 +29,7 @@ import {
   getLeaderboard,
   maybeAdvanceRound,
   syncRoundStatus,
+  terminateTournament,
 } from './tournaments'
 
 const migrationsFolder = new URL('../db/migrations', import.meta.url).pathname
@@ -679,5 +680,145 @@ describe('advanceToNextRound', () => {
     const result = advanceToNextRound(tournament.id)
 
     expect(result).toBeNull()
+  })
+
+  it('returns null when tournament has been terminated', () => {
+    const tournament = createTestTournament()
+    const { round } = createRoundWithMatches({
+      pairs: [
+        [1, 2],
+        [3, 4],
+      ],
+      roundNumber: 1,
+      scenarioId: TEST_SCENARIO_ID,
+      tournamentId: tournament.id,
+    })
+
+    scoreAllMatchesInRound(round.id)
+    syncRoundStatus(round.id)
+    terminateTournament(tournament.id)
+
+    const result = advanceToNextRound(tournament.id)
+
+    expect(result).toBeNull()
+  })
+})
+
+describe('terminateTournament', () => {
+  beforeEach(() => {
+    cleanupTestData()
+    seedTestData()
+  })
+
+  afterEach(() => {
+    cleanupTestData()
+  })
+
+  it('terminates the tournament and marks unfinished matches as errors', () => {
+    const tournament = createTestTournament()
+    const { round } = createRoundWithMatches({
+      pairs: [
+        [1, 2],
+        [3, 4],
+      ],
+      roundNumber: 1,
+      scenarioId: TEST_SCENARIO_ID,
+      tournamentId: tournament.id,
+    })
+
+    const roundMatches = db
+      .select()
+      .from(matches)
+      .where(eq(matches.roundId, round.id))
+      .orderBy(matches.id)
+      .all()
+
+    db.update(matches)
+      .set({
+        leaseToken: 'lease-1',
+        startedAt: '2026-04-09T12:00:00.000Z',
+        status: 'running',
+      })
+      .where(eq(matches.id, roundMatches[0].id))
+      .run()
+
+    db.update(matches)
+      .set({
+        leaseToken: 'lease-2',
+        startedAt: '2026-04-09T12:01:00.000Z',
+        status: 'judging',
+      })
+      .where(eq(matches.id, roundMatches[1].id))
+      .run()
+
+    db.update(matches)
+      .set({
+        finishedAt: '2026-04-09T12:02:00.000Z',
+        scoreA: 9,
+        scoreB: 5,
+        status: 'scored',
+        winner: 'a',
+      })
+      .where(eq(matches.id, roundMatches[2].id))
+      .run()
+
+    const result = terminateTournament(tournament.id)
+
+    expect(result).not.toBeNull()
+    expect(result?.terminatedMatchCount).toBe(3)
+    expect(result?.interruptedMatchIds).toEqual(
+      expect.arrayContaining([roundMatches[0].id, roundMatches[1].id]),
+    )
+
+    const updatedTournament = db
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournament.id))
+      .get()
+    const updatedRound = db
+      .select()
+      .from(rounds)
+      .where(eq(rounds.id, round.id))
+      .get()
+    const updatedMatches = db
+      .select()
+      .from(matches)
+      .where(eq(matches.roundId, round.id))
+      .orderBy(matches.id)
+      .all()
+
+    expect(updatedTournament?.status).toBe('terminated')
+    expect(updatedRound?.status).toBe('done')
+    expect(updatedMatches[0]).toMatchObject({
+      error: '管理员手动终止了当前赛事',
+      leaseToken: null,
+      status: 'error',
+    })
+    expect(updatedMatches[1]).toMatchObject({
+      error: '管理员手动终止了当前赛事',
+      leaseToken: null,
+      status: 'error',
+    })
+    expect(updatedMatches[2]).toMatchObject({
+      scoreA: 9,
+      scoreB: 5,
+      status: 'scored',
+      winner: 'a',
+    })
+    expect(updatedMatches[3]).toMatchObject({
+      error: '管理员手动终止了当前赛事',
+      leaseToken: null,
+      status: 'error',
+    })
+
+    syncRoundStatus(round.id)
+
+    const resyncedRound = db
+      .select()
+      .from(rounds)
+      .where(eq(rounds.id, round.id))
+      .get()
+
+    expect(resyncedRound?.status).toBe('done')
   })
 })

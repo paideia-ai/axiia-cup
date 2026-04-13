@@ -24,6 +24,7 @@ async function updateLeasedMatch(
 export async function runMatch(
   matchId: number,
   leaseToken: string,
+  signal?: AbortSignal,
 ): Promise<void> {
   const match = db
     .select()
@@ -127,6 +128,7 @@ export async function runMatch(
       promptA: subA.promptA,
       promptB: subB.promptB,
       scenario,
+      signal,
       transcript,
       userIdA: subA.userId,
       userIdB: subB.userId,

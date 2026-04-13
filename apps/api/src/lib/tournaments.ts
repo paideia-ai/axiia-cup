@@ -19,6 +19,10 @@ import {
   tournaments,
   users,
 } from '../db/schema'
+import {
+  interruptActiveMatch,
+  TOURNAMENT_TERMINATED_MESSAGE,
+} from '../engine/match-interrupt'
 import { swissPair } from '../engine/swiss'
 import { kickWorker } from '../engine/worker-signal'
 import { parseJsonField } from './json'
@@ -283,6 +287,23 @@ export function syncRoundStatus(roundId: number) {
 
   if (!round) {
     return null
+  }
+
+  const tournament = db
+    .select({ status: tournaments.status })
+    .from(tournaments)
+    .where(eq(tournaments.id, round.tournamentId))
+    .get()
+
+  if (tournament?.status === 'terminated') {
+    if (round.status !== 'done') {
+      db.update(rounds)
+        .set({ status: 'done' })
+        .where(eq(rounds.id, roundId))
+        .run()
+    }
+
+    return 'done'
   }
 
   const roundMatches = db
@@ -574,7 +595,7 @@ export function getLeaderboard(tournamentId: number) {
       roleBLosses: playerRoleBLosses,
       roleBWins: playerRoleBWins,
       status:
-        tournament.status === 'finished'
+        tournament.status === 'finished' || tournament.status === 'terminated'
           ? 'done'
           : tournament.status === 'open'
             ? 'queued'
@@ -648,7 +669,7 @@ export function advanceToNextRound(tournamentId: number) {
     .where(eq(tournaments.id, tournamentId))
     .get()
 
-  if (!tournament) {
+  if (!tournament || tournament.status !== 'running') {
     return null
   }
 
@@ -737,6 +758,103 @@ export function advanceToNextRound(tournamentId: number) {
   }
 
   kickWorker()
+
+  return result
+}
+
+export function terminateTournament(
+  tournamentId: number,
+  reason = TOURNAMENT_TERMINATED_MESSAGE,
+) {
+  const terminatedAt = new Date().toISOString()
+  const terminableStatuses = ['queued', 'running', 'judging'] as const
+  const runningStatuses = ['running', 'judging'] as const
+
+  const result = db.transaction((tx) => {
+    const tournament = tx
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .get()
+
+    if (!tournament || tournament.status !== 'running') {
+      return null
+    }
+
+    const terminableMatches = tx
+      .select({
+        id: matches.id,
+        status: matches.status,
+      })
+      .from(matches)
+      .innerJoin(rounds, eq(matches.roundId, rounds.id))
+      .where(
+        and(
+          eq(rounds.tournamentId, tournamentId),
+          inArray(matches.status, terminableStatuses),
+        ),
+      )
+      .all()
+
+    const updatedTournament = tx
+      .update(tournaments)
+      .set({ status: 'terminated' })
+      .where(
+        and(
+          eq(tournaments.id, tournamentId),
+          eq(tournaments.status, 'running'),
+        ),
+      )
+      .returning()
+      .get()
+
+    if (!updatedTournament) {
+      return null
+    }
+
+    if (terminableMatches.length > 0) {
+      tx.update(matches)
+        .set({
+          error: reason,
+          finishedAt: terminatedAt,
+          leaseToken: null,
+          status: 'error',
+          updatedAt: terminatedAt,
+        })
+        .where(
+          inArray(
+            matches.id,
+            terminableMatches.map((match) => match.id),
+          ),
+        )
+        .run()
+    }
+
+    tx.update(rounds)
+      .set({ status: 'done' })
+      .where(eq(rounds.tournamentId, tournamentId))
+      .run()
+
+    return {
+      terminatedMatchCount: terminableMatches.length,
+      tournament: updatedTournament,
+      interruptedMatchIds: terminableMatches
+        .filter(
+          (match) =>
+            match.status === runningStatuses[0] ||
+            match.status === runningStatuses[1],
+        )
+        .map((match) => match.id),
+    }
+  })
+
+  if (!result) {
+    return null
+  }
+
+  for (const matchId of result.interruptedMatchIds) {
+    interruptActiveMatch(matchId, reason)
+  }
 
   return result
 }

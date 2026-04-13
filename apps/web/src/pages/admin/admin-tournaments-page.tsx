@@ -28,6 +28,7 @@ import {
   getTournaments,
   retryAdminMatch,
   startTournament,
+  terminateAdminTournament,
 } from '../../lib/api'
 
 function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
@@ -44,10 +45,10 @@ function buildLatestTournamentMap(tournaments: TournamentListItem[]) {
 
 function buildMonitoredTournaments(tournaments: TournamentListItem[]) {
   const active = tournaments.filter(
-    (tournament) => tournament.status !== 'finished',
+    (tournament) => tournament.status === 'running',
   )
   const recentFinished = tournaments.filter(
-    (tournament) => tournament.status === 'finished',
+    (tournament) => tournament.status !== 'running',
   )
 
   return [...active, ...recentFinished.slice(0, 3)]
@@ -61,6 +62,8 @@ function getTournamentStatusMeta(status: TournamentListItem['status']) {
       return { label: '进行中', tone: 'warning' as const }
     case 'finished':
       return { label: '已结束', tone: 'success' as const }
+    case 'terminated':
+      return { label: '已终止', tone: 'warning' as const }
   }
 }
 
@@ -110,6 +113,9 @@ export function AdminTournamentsPage() {
   const [startingScenarioId, setStartingScenarioId] = useState<string | null>(
     null,
   )
+  const [terminatingTournamentIds, setTerminatingTournamentIds] = useState<
+    number[]
+  >([])
   const [retryingMatchIds, setRetryingMatchIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -126,6 +132,13 @@ export function AdminTournamentsPage() {
   const scenarioTitleById = useMemo(
     () => new Map(scenarios.map((scenario) => [scenario.id, scenario.title])),
     [scenarios],
+  )
+  const tournamentStatusById = useMemo(
+    () =>
+      new Map(
+        tournaments.map((tournament) => [tournament.id, tournament.status]),
+      ),
+    [tournaments],
   )
   const erroredMatchCountByTournament = useMemo(() => {
     const counts = new Map<number, number>()
@@ -301,6 +314,29 @@ export function AdminTournamentsPage() {
     }
   }
 
+  async function handleTerminateTournament(tournamentId: number) {
+    try {
+      setTerminatingTournamentIds((current) => [...current, tournamentId])
+      setError(null)
+
+      await terminateAdminTournament(tournamentId)
+      setToast(`Tournament #${tournamentId} 已终止`)
+      await loadTournamentsPageData(false)
+    } catch (terminateError) {
+      setError(
+        terminateError instanceof Error
+          ? terminateError.message
+          : '终止比赛失败',
+      )
+    } finally {
+      setTerminatingTournamentIds((current) =>
+        current.filter(
+          (currentTournamentId) => currentTournamentId !== tournamentId,
+        ),
+      )
+    }
+  }
+
   return (
     <div className="space-y-6">
       {toast ? (
@@ -365,7 +401,7 @@ export function AdminTournamentsPage() {
               isLoading
                 ? 'info'
                 : monitoredTournaments.some(
-                      (tournament) => tournament.status !== 'finished',
+                      (tournament) => tournament.status === 'running',
                     )
                   ? 'warning'
                   : 'info'
@@ -413,7 +449,24 @@ export function AdminTournamentsPage() {
                       <p className="panel-title">{tournament.scenarioTitle}</p>
                       <p className="panel-copy">Tournament #{tournament.id}</p>
                     </div>
-                    <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+                      {tournament.status === 'running' ? (
+                        <Button
+                          disabled={terminatingTournamentIds.includes(
+                            tournament.id,
+                          )}
+                          onClick={() =>
+                            void handleTerminateTournament(tournament.id)
+                          }
+                          size="sm"
+                        >
+                          {terminatingTournamentIds.includes(tournament.id)
+                            ? '终止中...'
+                            : '终止比赛'}
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3">
@@ -426,9 +479,11 @@ export function AdminTournamentsPage() {
                       <p className="panel-copy">
                         {tournament.status === 'finished'
                           ? '全部轮次已结束。'
-                          : currentRound
-                            ? `当前轮状态：${getRoundStatusLabel(currentRound.status)}`
-                            : '等待当前轮详情同步。'}
+                          : tournament.status === 'terminated'
+                            ? '赛事已手动终止。'
+                            : currentRound
+                              ? `当前轮状态：${getRoundStatusLabel(currentRound.status)}`
+                              : '等待当前轮详情同步。'}
                       </p>
                     </div>
 
@@ -486,6 +541,8 @@ export function AdminTournamentsPage() {
           {erroredMatches.length > 0 ? (
             erroredMatches.map((match) => {
               const isRetrying = retryingMatchIds.includes(match.id)
+              const isTournamentTerminated =
+                tournamentStatusById.get(match.tournamentId) === 'terminated'
 
               return (
                 <div
@@ -527,11 +584,15 @@ export function AdminTournamentsPage() {
                       </Button>
                     </Link>
                     <Button
-                      disabled={isRetrying}
+                      disabled={isRetrying || isTournamentTerminated}
                       onClick={() => void handleRetryMatch(match.id)}
                       size="sm"
                     >
-                      {isRetrying ? '重试中...' : '重试'}
+                      {isTournamentTerminated
+                        ? '赛事已终止'
+                        : isRetrying
+                          ? '重试中...'
+                          : '重试'}
                     </Button>
                   </div>
                 </div>
@@ -550,7 +611,10 @@ export function AdminTournamentsPage() {
           const players = playersByScenario[scenario.id] ?? []
           const latestTournament =
             latestTournamentByScenario.get(scenario.id) ?? null
-          const canStart = players.length >= 2 && startingScenarioId == null
+          const canStart =
+            players.length >= 2 &&
+            startingScenarioId == null &&
+            !scenario.locked
 
           return (
             <Card key={scenario.id}>
@@ -580,7 +644,9 @@ export function AdminTournamentsPage() {
                       Tournament #{latestTournament.id} ·{' '}
                       {latestTournament.status === 'finished'
                         ? `已结束 (${latestTournament.totalRounds} 轮)`
-                        : `第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮`}
+                        : latestTournament.status === 'terminated'
+                          ? `已终止 (第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮)`
+                          : `第 ${latestTournament.currentRound} / ${latestTournament.totalRounds} 轮`}
                     </Badge>
                   ) : null}
                 </div>
@@ -621,9 +687,11 @@ export function AdminTournamentsPage() {
                     <p className="panel-copy">
                       {players.length < 2
                         ? '至少需要 2 个有效提交版本。'
-                        : latestTournament
-                          ? `上次 Tournament #${latestTournament.id} 已记录，可再次开始新比赛。`
-                          : '将创建新的 Tournament，并生成第 1 轮配对。'}
+                        : latestTournament?.status === 'running'
+                          ? `Tournament #${latestTournament.id} 进行中，请先终止或等待结束。`
+                          : latestTournament
+                            ? `上次 Tournament #${latestTournament.id} 已记录，可再次开始新比赛。`
+                            : '将创建新的 Tournament，并生成第 1 轮配对。'}
                     </p>
                   </div>
 
@@ -644,7 +712,9 @@ export function AdminTournamentsPage() {
                   >
                     {startingScenarioId === scenario.id
                       ? '启动中...'
-                      : '开始比赛'}
+                      : scenario.locked
+                        ? '比赛进行中'
+                        : '开始比赛'}
                   </Button>
                 </div>
               </CardContent>

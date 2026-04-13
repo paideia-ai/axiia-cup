@@ -9,7 +9,12 @@ import {
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core'
 
-const tournamentStatuses = ['open', 'running', 'finished'] as const
+const tournamentStatuses = [
+  'open',
+  'running',
+  'finished',
+  'terminated',
+] as const
 const roundStatuses = ['pairing', 'running', 'done'] as const
 const matchStatuses = [
   'queued',
@@ -197,7 +202,7 @@ export const tournaments = sqliteTable(
   (table) => ({
     statusCheck: check(
       'tournaments_status_check',
-      sql`${table.status} in ('open', 'running', 'finished')`,
+      sql`${table.status} in ('open', 'running', 'finished', 'terminated')`,
     ),
   }),
 )

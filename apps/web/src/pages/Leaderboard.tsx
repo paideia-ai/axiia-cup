@@ -157,7 +157,7 @@ export function LeaderboardPage() {
     const poll = async (isInitial: boolean) => {
       const detail = await loadData(isInitial)
 
-      if (!cancelled && detail && detail.status !== 'finished') {
+      if (!cancelled && detail && detail.status === 'running') {
         timeoutId = window.setTimeout(
           () => {
             void poll(false)
@@ -184,11 +184,19 @@ export function LeaderboardPage() {
         <div className="flex flex-wrap items-center gap-3">
           {tournamentDetail ? (
             <Badge
-              tone={tournamentDetail.status === 'finished' ? 'success' : 'info'}
+              tone={
+                tournamentDetail.status === 'finished'
+                  ? 'success'
+                  : tournamentDetail.status === 'terminated'
+                    ? 'warning'
+                    : 'info'
+              }
             >
               {tournamentDetail.status === 'finished'
                 ? `已结束 · ${tournamentDetail.totalRounds} 轮`
-                : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
+                : tournamentDetail.status === 'terminated'
+                  ? `已终止 · 第 ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds} 轮`
+                  : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
             </Badge>
           ) : null}
           {/* <Select

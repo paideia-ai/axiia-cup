@@ -154,6 +154,30 @@ export function registerTournamentCommands(program: Command) {
     })
 
   program
+    .command('terminate')
+    .description('Terminate a running tournament (JSON by default)')
+    .argument('<tournamentId>', 'tournament id')
+    .option('-o, --output <path>', 'write output to file instead of stdout')
+    .action(async (tournamentId: string, options: { output?: string }) => {
+      const result = await apiFetch<{ ok: true }>(
+        `/api/admin/tournaments/${tournamentId}/terminate`,
+        {
+          method: 'POST',
+        },
+        true,
+      )
+
+      writeJsonOutput(
+        {
+          kind: 'tournament.terminate',
+          ok: result.ok,
+          tournamentId: Number(tournamentId),
+        },
+        options.output,
+      )
+    })
+
+  program
     .command('leaderboard')
     .description('Show the leaderboard (JSON by default)')
     .argument('<tournamentId>', 'tournament id')

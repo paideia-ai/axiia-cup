@@ -125,6 +125,38 @@ describe('write lock and retired submissions', () => {
     expect(res.status).toBe(503)
   })
 
+  it('allows submission creation when the latest tournament is open but not running', async () => {
+    db.insert(schema.tournaments)
+      .values({
+        id: 10,
+        scenarioId: 'test-scenario',
+        status: 'open',
+        currentRound: 0,
+        totalRounds: 4,
+      })
+      .run()
+
+    const res = await req('POST', '/api/submissions', userToken, {
+      scenarioId: 'test-scenario',
+      promptA: 'prompt a',
+      promptB: 'prompt b',
+      modelA: 'deepseek-v3.2',
+      modelB: 'deepseek-v3.2',
+    })
+    const json = (await res.json()) as { id: number; scenarioId: string }
+
+    expect(res.status).toBe(201)
+    expect(json).toMatchObject({ scenarioId: 'test-scenario' })
+
+    const createdSubmission = db
+      .select()
+      .from(schema.submissions)
+      .where(eq(schema.submissions.id, json.id))
+      .get()
+
+    expect(createdSubmission?.userId).toBe(2)
+  })
+
   it('returns retired submissions in the normal list as read-only records', async () => {
     db.insert(schema.submissions)
       .values([
@@ -534,5 +566,119 @@ describe('write lock and retired submissions', () => {
       version: 2,
       submittedAt: '2026-04-09 11:00:00',
     })
+  })
+
+  it('allows admins to terminate a running tournament even when write lock is enabled', async () => {
+    db.insert(schema.submissions)
+      .values([
+        {
+          id: 51,
+          userId: 2,
+          scenarioId: 'test-scenario',
+          promptA: 'prompt a',
+          promptB: 'prompt b',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
+          version: 1,
+        },
+        {
+          id: 52,
+          userId: 1,
+          scenarioId: 'test-scenario',
+          promptA: 'prompt admin a',
+          promptB: 'prompt admin b',
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
+          version: 1,
+        },
+      ])
+      .run()
+
+    db.insert(schema.appSettings).values({ key: 'writeLock', value: '1' }).run()
+
+    db.insert(schema.tournaments)
+      .values({
+        id: 61,
+        scenarioId: 'test-scenario',
+        status: 'running',
+        currentRound: 1,
+        totalRounds: 4,
+      })
+      .run()
+
+    db.insert(schema.rounds)
+      .values({
+        id: 62,
+        tournamentId: 61,
+        roundNumber: 1,
+        status: 'running',
+      })
+      .run()
+
+    db.insert(schema.matches)
+      .values([
+        {
+          id: 63,
+          roundId: 62,
+          scenarioId: 'test-scenario',
+          status: 'queued',
+          subAId: 51,
+          subBId: 52,
+          updatedAt: '2026-04-09T12:00:00.000Z',
+        },
+        {
+          id: 64,
+          roundId: 62,
+          scenarioId: 'test-scenario',
+          status: 'running',
+          subAId: 52,
+          subBId: 51,
+          leaseToken: 'lease-64',
+          updatedAt: '2026-04-09T12:00:00.000Z',
+        },
+      ])
+      .run()
+
+    const res = await req(
+      'POST',
+      '/api/admin/tournaments/61/terminate',
+      adminToken,
+    )
+    const json = (await res.json()) as { ok: true }
+
+    expect(res.status).toBe(200)
+    expect(json).toEqual({ ok: true })
+
+    const tournament = db
+      .select()
+      .from(schema.tournaments)
+      .where(eq(schema.tournaments.id, 61))
+      .get()
+    const round = db
+      .select()
+      .from(schema.rounds)
+      .where(eq(schema.rounds.id, 62))
+      .get()
+    const terminatedMatches = db
+      .select()
+      .from(schema.matches)
+      .where(eq(schema.matches.roundId, 62))
+      .all()
+
+    expect(tournament?.status).toBe('terminated')
+    expect(round?.status).toBe('done')
+    expect(terminatedMatches.every((match) => match.status === 'error')).toBe(
+      true,
+    )
+    expect(
+      terminatedMatches.every(
+        (match) => match.error === '管理员手动终止了当前赛事',
+      ),
+    ).toBe(true)
+    expect(terminatedMatches.every((match) => match.leaseToken === null)).toBe(
+      true,
+    )
   })
 })

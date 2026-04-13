@@ -12,6 +12,10 @@ import {
 import { parseJsonField } from '../lib/json'
 import { executeMatchSession, randomizeInfoAssignment } from './core'
 import {
+  registerMatchAbortController,
+  unregisterMatchAbortController,
+} from './match-interrupt'
+import {
   isPlaygroundRunInterruptedError,
   PLAYGROUND_RUN_INTERRUPTED_MESSAGE,
   registerPlaygroundAbortController,
@@ -149,13 +153,17 @@ function markMatchAsTimedOut(matchId: number, leaseToken: string) {
 
 async function runClaimedMatch(matchId: number, leaseToken: string) {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
+  const abortController = new AbortController()
+
+  registerMatchAbortController(matchId, abortController)
 
   try {
     console.log(`[worker] starting match ${matchId}`)
     await Promise.race([
-      runMatch(matchId, leaseToken),
+      runMatch(matchId, leaseToken, abortController.signal),
       new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
+          abortController.abort(MATCH_TIMEOUT_ERROR)
           reject(new Error(MATCH_TIMEOUT_ERROR))
         }, MATCH_STALE_TIMEOUT_MS)
       }),
@@ -172,6 +180,7 @@ async function runClaimedMatch(matchId: number, leaseToken: string) {
       clearTimeout(timeoutId)
     }
 
+    unregisterMatchAbortController(matchId, abortController)
     inFlightJobKeys.delete(`match:${matchId}`)
     queueMicrotask(() => {
       void pollOnce()

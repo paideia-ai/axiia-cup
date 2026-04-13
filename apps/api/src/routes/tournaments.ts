@@ -33,6 +33,7 @@ import {
   getLeaderboard,
   getTournamentDetail,
   listTournaments,
+  terminateTournament,
 } from '../lib/tournaments'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
@@ -174,6 +175,21 @@ tournamentRouter.post(
         round,
         tournament: updatedTournament,
       } = db.transaction((tx) => {
+        const existingRunningTournament = tx
+          .select({ id: tournaments.id })
+          .from(tournaments)
+          .where(
+            and(
+              eq(tournaments.scenarioId, parsed.data.scenarioId),
+              eq(tournaments.status, 'running'),
+            ),
+          )
+          .get()
+
+        if (existingRunningTournament) {
+          throw new Error('A tournament is already running for this scenario')
+        }
+
         const tournament = tx
           .insert(tournaments)
           .values({
@@ -258,8 +274,53 @@ tournamentRouter.post(
         return context.json({ error: error.message }, 400)
       }
 
+      if (
+        error instanceof Error &&
+        error.message === 'A tournament is already running for this scenario'
+      ) {
+        return context.json({ error: '当前场景已有进行中的比赛' }, 409)
+      }
+
       throw error
     }
+  },
+)
+
+tournamentRouter.post(
+  '/api/admin/tournaments/:id/terminate',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const tournamentId = parseId(context.req.param('id'))
+
+    if (!tournamentId) {
+      return context.json({ error: 'Invalid tournament id' }, 400)
+    }
+
+    const tournament = db
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .get()
+
+    if (!tournament) {
+      return context.json({ error: 'Tournament not found' }, 404)
+    }
+
+    if (tournament.status !== 'running') {
+      return context.json(
+        { error: 'Only running tournaments can be terminated' },
+        400,
+      )
+    }
+
+    const result = terminateTournament(tournamentId)
+
+    if (!result) {
+      return context.json({ error: 'Tournament could not be terminated' }, 409)
+    }
+
+    return context.json(okResponseSchema.parse({ ok: true }))
   },
 )
 
@@ -578,6 +639,25 @@ tournamentRouter.post(
 
     if (!round) {
       return context.json({ error: 'Round not found' }, 404)
+    }
+
+    const tournament = db
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, round.tournamentId))
+      .get()
+
+    if (!tournament) {
+      return context.json({ error: 'Tournament not found' }, 404)
+    }
+
+    if (tournament.status === 'terminated') {
+      return context.json(
+        {
+          error: 'Tournament has been terminated and matches cannot be retried',
+        },
+        409,
+      )
     }
 
     db.transaction((tx) => {

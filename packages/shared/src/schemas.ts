@@ -5,7 +5,12 @@ import { evaluationModelIds, modelIds, submissionModelIds } from './constants'
 export const modelIdSchema = z.enum(modelIds)
 export const submissionModelIdSchema = z.enum(submissionModelIds)
 export const evaluationModelIdSchema = z.enum(evaluationModelIds)
-export const tournamentStatusSchema = z.enum(['open', 'running', 'finished'])
+export const tournamentStatusSchema = z.enum([
+  'open',
+  'running',
+  'finished',
+  'terminated',
+])
 export const roundStatusSchema = z.enum(['pairing', 'running', 'done'])
 export const matchStatusSchema = z.enum([
   'queued',

@@ -26,6 +26,7 @@ players:prompts --scenario <id>
 start <scenarioId>
 status [tournamentId]
 next-round <tournamentId>
+terminate <tournamentId>
 leaderboard <tournamentId>
 scenarios
 scenario:get <scenarioId>
@@ -130,6 +131,7 @@ These commands call `AXIIA_API_URL`:
 - `start <scenarioId>`
 - `status [tournamentId]`
 - `next-round <tournamentId>`
+- `terminate <tournamentId>`
 - `leaderboard <tournamentId>`
 - `scenarios`
 - `scenario:get <scenarioId>`
@@ -170,6 +172,7 @@ bun run ./apps/cli/src/index.ts players:prompts --scenario shangyang-court
 bun run ./apps/cli/src/index.ts start shangyang-court
 bun run ./apps/cli/src/index.ts status
 bun run ./apps/cli/src/index.ts next-round 3
+bun run ./apps/cli/src/index.ts terminate 3
 bun run ./apps/cli/src/index.ts leaderboard 3
 ```
 

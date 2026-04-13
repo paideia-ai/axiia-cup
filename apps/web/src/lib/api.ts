@@ -525,6 +525,16 @@ export async function startTournament(scenarioId: string) {
   )
 }
 
+export async function terminateAdminTournament(
+  tournamentId: number | string,
+): Promise<{ ok: true }> {
+  return apiFetch(
+    `/api/admin/tournaments/${tournamentId}/terminate`,
+    { method: 'POST' },
+    okResponseSchema,
+  )
+}
+
 export async function retryAdminMatch(
   matchId: number | string,
 ): Promise<{ ok: true }> {
