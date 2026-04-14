@@ -42,6 +42,7 @@ app.get('/health', (context) =>
   context.json({
     ok: true,
     timestamp: new Date().toISOString(),
+    buildSha: process.env.APP_BUILD_SHA ?? 'unknown',
   }),
 )
 
