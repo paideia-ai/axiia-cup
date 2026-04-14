@@ -40,8 +40,9 @@ Primary production host:
 
 Public domains:
 
-- `axiia-cup.isofucius.cn` — primary
-- `axiia-cup-2.isofucius.cn` — preview/canary alias to the same server and app
+- `axiia-cup.isofucius.cn` — primary production domain
+- `axiia-cup-2.isofucius.cn` — production preview/canary alias to the same prod stack
+- `cup-dev-114514.isofucius.cn` — dev stack on the same server
 
 Historical note:
 
@@ -53,29 +54,38 @@ Historical note:
 Current app shape on `cup-worker`:
 
 - nginx listens on port `80`
-- nginx proxies app traffic to `127.0.0.1:8200`
-- Docker Compose runs two containers:
-  - `api`
-  - `web`
+- nginx proxies production traffic to `127.0.0.1:8200`
+- nginx proxies dev traffic to `127.0.0.1:8201`
+- Docker Compose runs two independent stacks on the same host:
+  - production stack: default compose project (`deploy-*` containers)
+  - dev stack: `COMPOSE_PROJECT_NAME=axiia-dev` (`axiia-dev-*` containers)
 
 Persistent data and config paths:
 
 - repo checkout: `/srv/axiia-cup/current`
-- app env: `/srv/axiia-cup/shared/config/production.env`
-- SQLite data root: `/srv/axiia-cup/shared/data`
-- SQLite DB: `/srv/axiia-cup/shared/data/api/axiia.db`
+- prod env: `/srv/axiia-cup/shared/config/production.env`
+- dev env: `/srv/axiia-cup/shared/config/development.env`
+- prod SQLite data root: `/srv/axiia-cup/shared/data`
+- prod SQLite DB: `/srv/axiia-cup/shared/data/api/axiia.db`
+- dev SQLite data root: `/srv/axiia-cup/shared/data/dev`
+- dev SQLite DB: `/srv/axiia-cup/shared/data/dev/api/axiia.db`
 
 ### 1.3 Deploy webhook
 
-Standard production deploys are handled by a server-local webhook service:
+Standard deploys are handled by a server-local webhook service:
 
 - script: `/srv/axiia-cup/deploy-webhook/server.py`
 - systemd unit: `axiia-deploy-webhook.service`
 - bind address: `127.0.0.1:9900`
 - public route: `https://axiia-cup.isofucius.cn/_deploy`
+- nginx also exposes the same route on `https://cup-dev-114514.isofucius.cn/_deploy`
 - nginx proxies `/_deploy` to the webhook service
 
-The webhook is **not** implemented in this repository. It is a server-local operational component.
+The webhook is still a server-local operational component, but the repository now
+keeps manual backup/reference snapshots in:
+
+- `docs/tech/server-local/deploy-webhook.server.py`
+- `docs/tech/server-local/nginx.origin.split-stack.conf`
 
 ## 2. Branch protection
 
@@ -101,7 +111,14 @@ Triggers:
 - push to `master`
 - pull request targeting `master`
 
-Checks run:
+Docs-only skip rule:
+
+- heavy CI is skipped only when **every changed file** is either:
+  - under `docs/`
+  - or a root-level Markdown file such as `README.md`, `AGENTS.md`, or `CLAUDE.md`
+- otherwise the full CI suite runs
+
+Checks run when not skipped:
 
 - `bun install --frozen-lockfile`
 - `bun run fmt:check`
@@ -110,7 +127,7 @@ Checks run:
 - `bun run build`
 - `cd apps/api && bun test`
 
-### 3.2 Image build and push
+### 3.2 Image build and dev auto-deploy
 
 Workflow: `.github/workflows/build.yml`
 
@@ -119,11 +136,18 @@ Triggers:
 - push to `master`
 - manual `workflow_dispatch`
 
-What it does:
+Docs-only skip rule:
+
+- the build workflow still runs a light classify step on push to `master`
+- heavy image build/push is skipped only when the same docs-only rule from CI matches
+- `workflow_dispatch` always forces a real build
+
+What it does when not skipped:
 
 - authenticates GitHub Actions to Aliyun via OIDC
 - logs into Aliyun ACR
 - builds and pushes two images tagged by commit SHA
+- on push to `master`, automatically deploys that same SHA to the **dev** stack by sending `target=dev` to the deploy webhook
 
 Registry details:
 
@@ -160,27 +184,45 @@ Deploy sequence:
 2. Build workflow has pushed images for that commit SHA to ACR.
 3. Deploy workflow resolves the commit SHA for the pushed release tag.
 4. Deploy workflow signs a short-lived JWT using `DEPLOY_WEBHOOK_SECRET`.
-5. Deploy workflow POSTs to `https://axiia-cup.isofucius.cn/_deploy`.
+5. Deploy workflow POSTs to `https://axiia-cup.isofucius.cn/_deploy` with `target=prod`.
 6. The webhook server:
    - verifies the JWT with `WEBHOOK_SECRET`
    - logs into ACR with the local Aliyun CLI
    - pulls the `api` and `web` images for that SHA
-   - runs Docker Compose with `deploy/docker-compose.acr.yml`
+   - updates only the **prod** stack
 
 ### 3.4 What the webhook actually runs
 
-The live webhook server currently:
+The live webhook server currently supports two targets:
 
-- reads app env from `/srv/axiia-cup/shared/config/production.env`
-- reads webhook secret from `/srv/axiia-cup/shared/config/deploy-webhook.env`
-- sets:
-  - `API_IMAGE=<acr-api-image>:<sha>`
-  - `WEB_IMAGE=<acr-web-image>:<sha>`
-- runs:
+- `prod`
+  - reads app env from `/srv/axiia-cup/shared/config/production.env`
+  - updates the default compose project (current container names start with `deploy-`)
+- `dev`
+  - reads app env from `/srv/axiia-cup/shared/config/development.env`
+  - updates compose project `axiia-dev`
+  - before starting the dev stack, it runs `deploy/sync-prod-db-to-dev.sh`
+  - that script creates a consistent SQLite backup from prod, copies it into the dev DB, and sanitizes active worker state (`writeLock`, queued/running jobs, running tournaments)
+
+For both targets the webhook sets:
+
+- `API_IMAGE=<acr-api-image>:<sha>`
+- `WEB_IMAGE=<acr-web-image>:<sha>`
+
+Prod compose run shape:
 
 ```bash
 docker compose -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
   --env-file /srv/axiia-cup/shared/config/production.env \
+  up -d --remove-orphans
+```
+
+Dev compose run shape:
+
+```bash
+docker compose -p axiia-dev \
+  -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
+  --env-file /srv/axiia-cup/shared/config/development.env \
   up -d --remove-orphans
 ```
 
@@ -190,16 +232,25 @@ The shell scripts in `deploy/` still matter, but they are now **manual fallback 
 
 Useful manual commands on the production host:
 
+Prod fallback deploy:
+
 ```bash
 cd /srv/axiia-cup/current
-./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env
+./deploy/deploy.sh --mode prod /srv/axiia-cup/shared/config/production.env
 ```
 
-Fast restart after env-only changes:
+Dev fallback deploy:
 
 ```bash
 cd /srv/axiia-cup/current
-./deploy/deploy.sh --skip-build /srv/axiia-cup/shared/config/production.env
+./deploy/deploy.sh --mode dev /srv/axiia-cup/shared/config/development.env
+```
+
+Fast prod restart after env-only changes:
+
+```bash
+cd /srv/axiia-cup/current
+./deploy/deploy.sh --mode prod --skip-build /srv/axiia-cup/shared/config/production.env
 ```
 
 First-time bootstrap on a fresh host:
@@ -244,11 +295,12 @@ This section records **where** secrets live, not their values.
 
 | Item | Location | Notes |
 | --- | --- | --- |
-| `JWT_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/production.env` | app auth signing/verification |
-| `DEPLOY_WEBHOOK_SECRET` | GitHub Actions secret | used by deploy workflow to sign JWT |
+| `JWT_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | app auth signing/verification |
+| `DEPLOY_WEBHOOK_SECRET` | GitHub Actions secret | used by deploy and auto-dev-deploy workflows to sign JWTs |
 | `WEBHOOK_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/deploy-webhook.env` | must match GitHub `DEPLOY_WEBHOOK_SECRET` |
-| `SILICONFLOW_API_KEY` | `cup-worker:/srv/axiia-cup/shared/config/production.env` | player/submission LLM traffic |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` on China worker | `cup-worker:/srv/axiia-cup/shared/config/production.env` | gateway tokens, not real provider keys |
+| `SILICONFLOW_API_KEY` | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | player/submission LLM traffic |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` on China worker | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | gateway tokens, not real provider keys |
+| dev DB refresh helper | `cup-worker:/srv/axiia-cup/current/deploy/sync-prod-db-to-dev.sh` | used by the webhook before each dev deploy |
 | real OpenAI / Anthropic keys | US host `104.238.220.76`, in the llm-gateway deployment env | never store on the China worker |
 | `GATEWAY_SHARED_TOKEN` | US host gateway deployment env (see `docs/tech/LLM_GATEWAY_OPERATIONS.md`) | value reused as China worker `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` |
 | Aliyun OIDC trust | Aliyun RAM role `githubactions-axiiacup` trusting `acs:ram::1805039414054707:oidc-provider/GitHub` | keyless GitHub Actions auth to ACR |

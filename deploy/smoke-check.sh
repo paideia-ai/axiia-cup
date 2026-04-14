@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/_lib.sh"
 
 usage() {
   cat <<'EOF'
-Usage: deploy/smoke-check.sh [env-file]
+Usage: deploy/smoke-check.sh [--mode prod|dev] [env-file]
 
 Smoke tests the deployed stack by checking:
 - /health
@@ -16,16 +16,31 @@ Smoke tests the deployed stack by checking:
 - /dashboard
 - admin login
 
+Default mode is prod, which uses deploy/production.env.
+Dev mode uses deploy/development.env unless you pass an explicit env file.
 By default it targets http://127.0.0.1:${WEB_HOST_PORT}.
 Override the target with BASE_URL, for example:
   BASE_URL=https://axiia-cup.isofucius.cn deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
 EOF
 }
 
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  usage
-  exit 0
-fi
+DEPLOY_MODE="${DEPLOY_MODE:-prod}"
+
+while [[ $# -gt 0 ]]; do
+  case "${1:-}" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --mode)
+      DEPLOY_MODE="${2:-}"
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 load_env_file "$@"
 validate_runtime_env

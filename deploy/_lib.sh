@@ -18,6 +18,33 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
+resolve_mode() {
+  local mode="${DEPLOY_MODE:-prod}"
+
+  case "$mode" in
+    prod|dev)
+      printf '%s\n' "$mode"
+      ;;
+    *)
+      die "DEPLOY_MODE must be prod or dev, got: ${mode}"
+      ;;
+  esac
+}
+
+default_env_file_for_mode() {
+  case "$1" in
+    prod)
+      printf '%s\n' "${REPO_ROOT}/deploy/production.env"
+      ;;
+    dev)
+      printf '%s\n' "${REPO_ROOT}/deploy/development.env"
+      ;;
+    *)
+      die "Unknown deploy mode: $1"
+      ;;
+  esac
+}
+
 resolve_env_file() {
   if [[ $# -gt 1 ]]; then
     die "Expected at most one argument: [env-file]"
@@ -33,10 +60,11 @@ resolve_env_file() {
     return
   fi
 
-  printf '%s\n' "${REPO_ROOT}/deploy/production.env"
+  default_env_file_for_mode "$(resolve_mode)"
 }
 
 load_env_file() {
+  DEPLOY_MODE="$(resolve_mode)"
   ENV_FILE="$(resolve_env_file "$@")"
   [[ -f "${ENV_FILE}" ]] || die "Env file not found: ${ENV_FILE}"
 

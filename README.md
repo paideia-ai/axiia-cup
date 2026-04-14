@@ -56,9 +56,12 @@ Production deployment assets live in `deploy/`.
 - `deploy/angie.cup.axiia.ai.conf` is an example host-level reverse proxy for `cup.axiia.ai`
 - `deploy/deploy-master.sh` runs on your local machine and pushes a committed Git snapshot to a remote server over `ssh + rsync`
 - `deploy/dump-production-db.sh` runs on your local machine and pulls a consistent production SQLite backup over `ssh + rsync`
-- `deploy/bootstrap-server.sh` bootstraps a fresh server after prerequisites are in place
-- `deploy/deploy.sh` handles day-to-day redeploys
-- `deploy/smoke-check.sh` verifies health, SPA fallback, seeded data, and admin login
+- `deploy/bootstrap-server.sh` bootstraps a fresh server after prerequisites are in place; it supports `--mode prod|dev`
+- `deploy/deploy.sh` handles day-to-day redeploys; it supports `--mode prod|dev`
+- `deploy/smoke-check.sh` verifies health, SPA fallback, seeded data, and admin login; it supports `--mode prod|dev`
+- `deploy/development.env.example` is the dev-stack env template for split deployments
+- `deploy/sync-prod-db-to-dev.sh` refreshes the dev SQLite DB safely from a production snapshot and sanitizes active worker state
+- `docs/tech/server-local/` stores manual backup snapshots of server-local webhook/nginx files that are maintained by hand
 
 Typical single-server deployment flow:
 
