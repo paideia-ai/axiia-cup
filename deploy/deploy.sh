@@ -7,13 +7,16 @@ source "${SCRIPT_DIR}/_lib.sh"
 
 usage() {
   cat <<'EOF'
-Usage: deploy/deploy.sh [--skip-build] [--seed] [env-file]
+Usage: deploy/deploy.sh [--mode prod|dev] [--skip-build] [--seed] [env-file]
 
 Daily deployment helper:
-1. validates the production env file
-2. rebuilds and restarts the production compose stack
+1. validates the selected runtime env file
+2. rebuilds and restarts the selected compose stack
 3. optionally re-runs seed.ts
 4. runs smoke checks against the local web port
+
+Default mode is prod, which uses deploy/production.env.
+Dev mode uses deploy/development.env unless you pass an explicit env file.
 
 Use --seed only if you intentionally want to ensure the default scenario and
 bootstrap admin exist.
@@ -22,6 +25,7 @@ ran `docker compose build`.
 EOF
 }
 
+DEPLOY_MODE="${DEPLOY_MODE:-prod}"
 SKIP_BUILD=0
 WITH_SEED=0
 
@@ -30,6 +34,10 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       usage
       exit 0
+      ;;
+    --mode)
+      DEPLOY_MODE="${2:-}"
+      shift 2
       ;;
     --skip-build)
       SKIP_BUILD=1
@@ -51,6 +59,7 @@ ensure_docker_ready
 ensure_http_tools
 ensure_data_dir
 
+note "Using mode: ${DEPLOY_MODE}"
 note "Using env file: ${ENV_FILE}"
 note "Rebuilding and restarting containers"
 if [[ "${SKIP_BUILD}" -eq 1 ]]; then
@@ -65,6 +74,6 @@ if [[ "${WITH_SEED}" -eq 1 ]]; then
 fi
 
 note "Running smoke checks"
-"${SCRIPT_DIR}/smoke-check.sh" "${ENV_FILE}"
+DEPLOY_MODE="${DEPLOY_MODE}" "${SCRIPT_DIR}/smoke-check.sh" "${ENV_FILE}"
 
 note "Deploy complete"
