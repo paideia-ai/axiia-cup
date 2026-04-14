@@ -32,20 +32,28 @@ function resolveModelLabel(modelId: string) {
   return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
 }
 
-function interpolatePromptTemplate(template: string, variables: Record<string, string>) {
+function interpolatePromptTemplate(
+  template: string,
+  variables: Record<string, string>,
+) {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
     return key in variables ? variables[key] : match
   })
 }
 
-function buildPromptPreviewList(items: { id: string; content: string }[], note?: string) {
+function buildPromptPreviewList(
+  items: { id: string; content: string }[],
+  note?: string,
+) {
   if (items.length === 0) {
     return '（无）'
   }
 
   return items
     .map((item) =>
-      note ? `- ${item.id}：${item.content}（${note}）` : `- ${item.id}：${item.content}`,
+      note
+        ? `- ${item.id}：${item.content}（${note}）`
+        : `- ${item.id}：${item.content}`,
     )
     .join('\n')
 }
@@ -54,10 +62,16 @@ function buildRolePromptPreview(scenario: Scenario, side: 'a' | 'b') {
   const isRoleA = side === 'a'
   const roleName = isRoleA ? scenario.roleAName : scenario.roleBName
   const opponentName = isRoleA ? scenario.roleBName : scenario.roleAName
-  const hiddenInfo = isRoleA ? scenario.roleAHiddenInfo : scenario.roleBHiddenInfo
+  const hiddenInfo = isRoleA
+    ? scenario.roleAHiddenInfo
+    : scenario.roleBHiddenInfo
   const requests = isRoleA ? scenario.roleARequests : scenario.roleBRequests
-  const opponentRequests = isRoleA ? scenario.roleBRequests : scenario.roleARequests
-  const opponentHiddenInfo = isRoleA ? scenario.roleBHiddenInfo : scenario.roleAHiddenInfo
+  const opponentRequests = isRoleA
+    ? scenario.roleBRequests
+    : scenario.roleARequests
+  const opponentHiddenInfo = isRoleA
+    ? scenario.roleBHiddenInfo
+    : scenario.roleAHiddenInfo
 
   return interpolatePromptTemplate(scenario.agentPromptTemplate, {
     roleName,
@@ -65,7 +79,8 @@ function buildRolePromptPreview(scenario: Scenario, side: 'a' | 'b') {
     roleAName: scenario.roleAName,
     roleBName: scenario.roleBName,
     hiddenInfo: buildPromptPreviewList(hiddenInfo, '实际运行中会随机标注真假'),
-    requests: requests.length > 0 ? '实际的真假请求会在运行中随机分配' : '（无）',
+    requests:
+      requests.length > 0 ? '实际的真假请求会在运行中随机分配' : '（无）',
     opponentRequests: buildPromptPreviewList(opponentRequests),
     opponentInfoIds: opponentHiddenInfo.map((item) => item.id).join('/'),
     opponentRequestIds: opponentRequests.map((item) => item.id).join('/'),
@@ -78,25 +93,29 @@ const scoringRuleItems = [
     title: '秦孝公支持你的立场',
     detail: '变法 / 维持现状',
     score: '+1',
-    scoreClassName: 'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    scoreClassName:
+      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
   },
   {
     title: '你的真请求被秦孝公同意',
     detail: '命中真目标',
     score: '+0.5',
-    scoreClassName: 'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    scoreClassName:
+      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
   },
   {
     title: '你的假请求被秦孝公同意',
     detail: '每个假请求单独结算',
     score: '-0.25',
-    scoreClassName: 'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
+    scoreClassName:
+      'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
   },
   {
     title: '你的真请求被对手猜中',
     detail: '被识破真目标',
     score: '-0.75',
-    scoreClassName: 'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
+    scoreClassName:
+      'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
   },
 ] as const
 
@@ -130,7 +149,9 @@ function RoleCard({
                 key={item.id}
                 className="text-xs leading-5 text-(--foreground-subtle) pl-2.5 border-l-2 border-(--border-soft)"
               >
-                <span className="mr-1 text-(--foreground-muted)">[{item.id}]</span>
+                <span className="mr-1 text-(--foreground-muted)">
+                  [{item.id}]
+                </span>
                 {item.content}
               </li>
             ))}
@@ -149,7 +170,9 @@ function RoleCard({
                 key={item.id}
                 className="text-xs leading-5 text-(--foreground-subtle) pl-2.5 border-l-2 border-(--border-soft)"
               >
-                <span className="mr-1 text-(--foreground-muted)">[{item.id}]</span>
+                <span className="mr-1 text-(--foreground-muted)">
+                  [{item.id}]
+                </span>
                 {item.content}
               </li>
             ))}
@@ -225,7 +248,9 @@ export function ScenarioDetailPage() {
           setModelB(modelOptions[0]!.id)
         }
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : '加载场景失败')
+        setError(
+          loadError instanceof Error ? loadError.message : '加载场景失败',
+        )
       } finally {
         setIsLoading(false)
       }
@@ -266,7 +291,9 @@ export function ScenarioDetailPage() {
       setSubmissions(history)
       setToast(`v${created.version} 已保存`)
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : '保存失败')
+      setError(
+        submissionError instanceof Error ? submissionError.message : '保存失败',
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -325,7 +352,13 @@ export function ScenarioDetailPage() {
               <CardContent className="space-y-3">
                 <Accordion
                   multiple
-                  defaultValue={['roles', 'scoring', 'flow', 'score-rules', 'judge']}
+                  defaultValue={[
+                    'roles',
+                    'scoring',
+                    'flow',
+                    'score-rules',
+                    'judge',
+                  ]}
                 >
                   <AccordionItem value="roles" title="角色详情">
                     <div className="space-y-3">
@@ -348,14 +381,18 @@ export function ScenarioDetailPage() {
                     <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
                       <div className="flex flex-wrap gap-2">
                         <div className="rounded-lg border border-(--border-soft) bg-white/3 px-3 py-2">
-                          <p className="text-[11px] text-(--foreground-muted)">对话回合</p>
+                          <p className="text-[11px] text-(--foreground-muted)">
+                            对话回合
+                          </p>
                           <p className="text-base font-semibold text-(--foreground)">
                             {scenario.turnCount}
                           </p>
                         </div>
                         {scenario.roleAHiddenInfo.length > 0 ? (
                           <div className="rounded-lg border border-(--border-soft) bg-white/3 px-3 py-2">
-                            <p className="text-[11px] text-(--foreground-muted)">虚假信息数</p>
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              虚假信息数
+                            </p>
                             <p className="text-base font-semibold text-(--foreground)">
                               {scenario.falseInfoCount}
                             </p>
@@ -363,7 +400,9 @@ export function ScenarioDetailPage() {
                         ) : null}
                         {scenario.roleARequests.length > 0 ? (
                           <div className="rounded-lg border border-(--border-soft) bg-white/3 px-3 py-2">
-                            <p className="text-[11px] text-(--foreground-muted)">真诉求数</p>
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              真诉求数
+                            </p>
                             <p className="text-base font-semibold text-(--foreground)">
                               {scenario.trueRequestCount}
                             </p>
@@ -385,21 +424,30 @@ export function ScenarioDetailPage() {
                   <AccordionItem value="flow" title="比赛流程">
                     <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
                       <li>
-                        <span className="font-medium text-(--foreground)">对话阶段</span>
-                        ：双方进行 {scenario.turnCount} 轮对话，各自根据策略提示词行动
+                        <span className="font-medium text-(--foreground)">
+                          对话阶段
+                        </span>
+                        ：双方进行 {scenario.turnCount}{' '}
+                        轮对话，各自根据策略提示词行动
                       </li>
                       {scenario.examinationQuestionTemplate ? (
                         <li>
-                          <span className="font-medium text-(--foreground)">问询阶段</span>
+                          <span className="font-medium text-(--foreground)">
+                            问询阶段
+                          </span>
                           ：裁判分别向双方提问，双方独立作答（互不可见）
                         </li>
                       ) : null}
                       <li>
-                        <span className="font-medium text-(--foreground)">裁决阶段</span>
+                        <span className="font-medium text-(--foreground)">
+                          裁决阶段
+                        </span>
                         ：裁判综合辩论内容做出最终裁决
                       </li>
                       <li>
-                        <span className="font-medium text-(--foreground)">计分阶段</span>
+                        <span className="font-medium text-(--foreground)">
+                          计分阶段
+                        </span>
                         ：系统根据裁决结果计算双方得分，判定胜负
                       </li>
                     </ol>
@@ -434,7 +482,8 @@ export function ScenarioDetailPage() {
                           ))}
                         </div>
                         <p className="text-[11px] text-(--foreground-muted)">
-                          假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣 0.75 分。
+                          假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
+                          0.75 分。
                         </p>
                       </div>
                     </AccordionItem>
@@ -464,7 +513,9 @@ export function ScenarioDetailPage() {
               <form className="grid gap-4" onSubmit={handleSave}>
                 <Tabs
                   value={selectedRoleTab}
-                  onValueChange={(value) => setSelectedRoleTab(value === 'b' ? 'b' : 'a')}
+                  onValueChange={(value) =>
+                    setSelectedRoleTab(value === 'b' ? 'b' : 'a')
+                  }
                 >
                   <TabsList>
                     <TabsTrigger value="a">{scenario.roleAName}</TabsTrigger>
@@ -474,7 +525,10 @@ export function ScenarioDetailPage() {
                   <TabsContent value="a" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
                       <Accordion defaultValue={['template']}>
-                        <AccordionItem value="template" title="系统预设角色提示词">
+                        <AccordionItem
+                          value="template"
+                          title="系统预设角色提示词"
+                        >
                           <pre className="whitespace-pre-wrap text-[11px] leading-5 text-(--foreground-subtle) font-mono">
                             {promptTemplatePreviewA}
                           </pre>
@@ -499,7 +553,10 @@ export function ScenarioDetailPage() {
                   <TabsContent value="b" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
                       <Accordion defaultValue={['template']}>
-                        <AccordionItem value="template" title="系统预设角色提示词">
+                        <AccordionItem
+                          value="template"
+                          title="系统预设角色提示词"
+                        >
                           <pre className="whitespace-pre-wrap text-[11px] leading-5 text-(--foreground-subtle) font-mono">
                             {promptTemplatePreviewB}
                           </pre>
@@ -583,11 +640,19 @@ export function ScenarioDetailPage() {
                         <p className="shrink-0 font-semibold text-(--foreground)">
                           v{submission.version}
                         </p>
-                        <Badge tone="accent" className="shrink-0 whitespace-nowrap">
-                          {scenario.roleAName} · {resolveModelLabel(submission.modelA)}
+                        <Badge
+                          tone="accent"
+                          className="shrink-0 whitespace-nowrap"
+                        >
+                          {scenario.roleAName} ·{' '}
+                          {resolveModelLabel(submission.modelA)}
                         </Badge>
-                        <Badge tone="info" className="shrink-0 whitespace-nowrap">
-                          {scenario.roleBName} · {resolveModelLabel(submission.modelB)}
+                        <Badge
+                          tone="info"
+                          className="shrink-0 whitespace-nowrap"
+                        >
+                          {scenario.roleBName} ·{' '}
+                          {resolveModelLabel(submission.modelB)}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between gap-3">
@@ -601,7 +666,9 @@ export function ScenarioDetailPage() {
                           variant="secondary"
                           size="sm"
                           className="shrink-0 whitespace-nowrap"
-                          onClick={() => navigate(`/playground/${submission.id}`)}
+                          onClick={() =>
+                            navigate(`/playground/${submission.id}`)
+                          }
                         >
                           <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
                           前往试炼场

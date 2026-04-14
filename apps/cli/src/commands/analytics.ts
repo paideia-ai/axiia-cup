@@ -28,19 +28,17 @@ export function registerAnalyticsCommands(program: Command) {
     .option('--jsonl', 'emit one normalized battle JSON object per line')
     .option('-o, --output <path>', 'write output to file instead of stdout')
     .action(
-      async (
-        options: {
-          jsonl?: boolean
-          limit?: string
-          mode?: string
-          output?: string
-          side?: string
-          source?: string
-          status?: string
-          submission?: string
-          user?: string
-        },
-      ) => {
+      async (options: {
+        jsonl?: boolean
+        limit?: string
+        mode?: string
+        output?: string
+        side?: string
+        source?: string
+        status?: string
+        submission?: string
+        user?: string
+      }) => {
         const params = new URLSearchParams()
 
         if (options.user) params.set('userId', options.user)
@@ -67,7 +65,9 @@ export function registerAnalyticsCommands(program: Command) {
           meta: {
             query: {
               userId: options.user ? Number(options.user) : null,
-              submissionId: options.submission ? Number(options.submission) : null,
+              submissionId: options.submission
+                ? Number(options.submission)
+                : null,
               side: options.side ?? null,
               source: options.source ?? null,
               mode: options.mode ?? null,
@@ -115,7 +115,9 @@ export function registerAnalyticsCommands(program: Command) {
 
   program
     .command('agent:summary')
-    .description('Show an agent summary and recent battles (structured JSON by default)')
+    .description(
+      'Show an agent summary and recent battles (structured JSON by default)',
+    )
     .argument('<submissionId>', 'submission id')
     .argument('<side>', 'agent side (a or b)')
     .option('-o, --output <path>', 'write output to file instead of stdout')
@@ -158,11 +160,7 @@ export function registerAnalyticsCommands(program: Command) {
     .argument('<id>', 'battle id')
     .option('-o, --output <path>', 'write JSON to file instead of stdout')
     .action(
-      async (
-        source: string,
-        idArg: string,
-        options: { output?: string },
-      ) => {
+      async (source: string, idArg: string, options: { output?: string }) => {
         if (source !== 'tournament' && source !== 'playground') {
           throw new Error('source must be "tournament" or "playground"')
         }

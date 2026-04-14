@@ -10,7 +10,9 @@ interface ScrollAreaProps {
 
 export function ScrollArea({ children, className }: ScrollAreaProps) {
   return (
-    <BaseScrollArea.Root className={cn('relative overflow-hidden h-full', className)}>
+    <BaseScrollArea.Root
+      className={cn('relative overflow-hidden h-full', className)}
+    >
       <BaseScrollArea.Viewport className="h-full w-full">
         <BaseScrollArea.Content>{children}</BaseScrollArea.Content>
       </BaseScrollArea.Viewport>

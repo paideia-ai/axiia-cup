@@ -137,7 +137,8 @@ adminMonitorRouter.get(
     )
 
     result.sort(
-      (left, right) => right.totalTokens - left.totalTokens || left.userId - right.userId,
+      (left, right) =>
+        right.totalTokens - left.totalTokens || left.userId - right.userId,
     )
 
     return context.json(result)

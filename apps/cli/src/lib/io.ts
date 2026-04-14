@@ -65,7 +65,7 @@ export function writeCollectionOutput<T>(params: {
     payload: {
       kind: params.kind,
       count: params.items.length,
-      ...(params.meta ?? {}),
+      ...params.meta,
       items: params.items,
     },
   })

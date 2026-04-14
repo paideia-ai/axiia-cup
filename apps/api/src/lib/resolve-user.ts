@@ -4,7 +4,10 @@ export function isAdminRequest(context: Context): boolean {
   return context.get('isAdmin') === true
 }
 
-export function canAccessUserId(context: Context, ownerUserId: number): boolean {
+export function canAccessUserId(
+  context: Context,
+  ownerUserId: number,
+): boolean {
   return isAdminRequest(context) || context.get('userId') === ownerUserId
 }
 

@@ -163,17 +163,19 @@ export function registerPlaygroundCommands(program: Command) {
     .argument('<runId>', 'playground run id')
     .option('-d, --db <path>', 'SQLite database path')
     .option('-o, --output <path>', 'write JSON to file instead of stdout')
-    .action(async (runIdArg: string, options: { db?: string; output?: string }) => {
-      const runId = Number.parseInt(runIdArg, 10)
+    .action(
+      async (runIdArg: string, options: { db?: string; output?: string }) => {
+        const runId = Number.parseInt(runIdArg, 10)
 
-      if (!Number.isInteger(runId) || runId <= 0) {
-        throw new Error('runId must be a positive integer')
-      }
+        if (!Number.isInteger(runId) || runId <= 0) {
+          throw new Error('runId must be a positive integer')
+        }
 
-      exportPlaygroundRun({
-        dbPath: options.db,
-        outputPath: options.output,
-        runId,
-      })
-    })
+        exportPlaygroundRun({
+          dbPath: options.db,
+          outputPath: options.output,
+          runId,
+        })
+      },
+    )
 }

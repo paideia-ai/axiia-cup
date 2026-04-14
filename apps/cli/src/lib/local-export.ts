@@ -88,7 +88,10 @@ export function exportPlaygroundRun(params: {
         scenario: rawScenario,
         llm_calls: llmCalls.map((call) => ({
           ...call,
-          request_json: parseJsonField(call.request_json as string | null, null),
+          request_json: parseJsonField(
+            call.request_json as string | null,
+            null,
+          ),
           response_json: parseJsonField(
             call.response_json as string | null,
             null,
@@ -163,7 +166,10 @@ export function exportMatch(params: {
         scenario,
         llm_calls: llmCalls.map((call) => ({
           ...call,
-          request_json: parseJsonField(call.request_json as string | null, null),
+          request_json: parseJsonField(
+            call.request_json as string | null,
+            null,
+          ),
           response_json: parseJsonField(
             call.response_json as string | null,
             null,

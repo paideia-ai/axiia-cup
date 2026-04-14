@@ -39,30 +39,32 @@ export function registerMonitorCommands(program: Command) {
         throw new Error('Invalid user id')
       }
 
-      const [monitorData, stats, submissions, recentMatches] = await Promise.all([
-        apiFetch<AdminMonitorUser[]>(
-          '/api/admin/monitor/users',
-          { method: 'GET' },
-          true,
-        ),
-        apiFetch<Record<string, unknown>>(
-          `/api/stats/me?asUserId=${userId}`,
-          { method: 'GET' },
-          true,
-        ),
-        apiFetch<Array<Record<string, unknown>>>(
-          `/api/submissions/my?asUserId=${userId}`,
-          { method: 'GET' },
-          true,
-        ),
-        apiFetch<Array<Record<string, unknown>>>(
-          `/api/matches/my?asUserId=${userId}`,
-          { method: 'GET' },
-          true,
-        ),
-      ])
+      const [monitorData, stats, submissions, recentMatches] =
+        await Promise.all([
+          apiFetch<AdminMonitorUser[]>(
+            '/api/admin/monitor/users',
+            { method: 'GET' },
+            true,
+          ),
+          apiFetch<Record<string, unknown>>(
+            `/api/stats/me?asUserId=${userId}`,
+            { method: 'GET' },
+            true,
+          ),
+          apiFetch<Array<Record<string, unknown>>>(
+            `/api/submissions/my?asUserId=${userId}`,
+            { method: 'GET' },
+            true,
+          ),
+          apiFetch<Array<Record<string, unknown>>>(
+            `/api/matches/my?asUserId=${userId}`,
+            { method: 'GET' },
+            true,
+          ),
+        ])
 
-      const userMonitor = monitorData.find((user) => user.userId === userId) ?? null
+      const userMonitor =
+        monitorData.find((user) => user.userId === userId) ?? null
 
       writeJsonOutput(
         {

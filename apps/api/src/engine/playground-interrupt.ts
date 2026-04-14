@@ -1,7 +1,6 @@
 import { APIUserAbortError } from 'openai'
 
-export const PLAYGROUND_RUN_INTERRUPTED_MESSAGE =
-  '用户手动中断了本次试炼场运行'
+export const PLAYGROUND_RUN_INTERRUPTED_MESSAGE = '用户手动中断了本次试炼场运行'
 
 const activePlaygroundControllers = new Map<number, AbortController>()
 
@@ -30,7 +29,9 @@ export function isPlaygroundRunInterruptedError(error: unknown) {
 
 export function throwIfPlaygroundRunInterrupted(signal?: AbortSignal) {
   if (signal?.aborted) {
-    throw new PlaygroundRunInterruptedError(getPlaygroundInterruptMessage(signal))
+    throw new PlaygroundRunInterruptedError(
+      getPlaygroundInterruptMessage(signal),
+    )
   }
 }
 

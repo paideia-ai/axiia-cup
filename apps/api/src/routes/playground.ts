@@ -124,11 +124,10 @@ playgroundRouter.post(
 
       selectedPreset =
         db
-        .select()
-        .from(presetOpponents)
-        .where(eq(presetOpponents.id, presetOpponentId))
-        .get()
-        ?? null
+          .select()
+          .from(presetOpponents)
+          .where(eq(presetOpponents.id, presetOpponentId))
+          .get() ?? null
 
       if (!selectedPreset || selectedPreset.scenarioId !== scenario.id) {
         return context.json({ error: '预设对手不存在' }, 404)
@@ -144,9 +143,9 @@ playgroundRouter.post(
         opponentMode,
         presetOpponentId: opponentMode === 'preset' ? presetOpponentId : null,
         presetOpponentRole:
-          opponentMode === 'preset' ? selectedPreset?.role ?? null : null,
+          opponentMode === 'preset' ? (selectedPreset?.role ?? null) : null,
         presetOpponentLabel:
-          opponentMode === 'preset' ? selectedPreset?.label ?? null : null,
+          opponentMode === 'preset' ? (selectedPreset?.label ?? null) : null,
         updatedAt: nowIso(),
       })
       .returning()
@@ -248,9 +247,7 @@ playgroundRouter.get(
       return context.json({ error: 'Run not found' }, 404)
     }
 
-    return context.json(
-      playgroundRunProgressSchema.parse(row),
-    )
+    return context.json(playgroundRunProgressSchema.parse(row))
   },
 )
 

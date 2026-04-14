@@ -12,7 +12,10 @@ export function registerAuthCommands(program: Command) {
     .requiredOption('-p, --password <password>', 'password')
     .option('--token-only', 'print token only')
     .option('--shell', 'print shell export command')
-    .option('-o, --output <path>', 'write JSON output to file instead of stdout')
+    .option(
+      '-o, --output <path>',
+      'write JSON output to file instead of stdout',
+    )
     .action(
       async (options: {
         email: string

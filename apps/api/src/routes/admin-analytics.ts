@@ -10,7 +10,13 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 
 import { db } from '../db/client'
-import { llmCalls, matches, playgroundRuns, scenarios, submissions } from '../db/schema'
+import {
+  llmCalls,
+  matches,
+  playgroundRuns,
+  scenarios,
+  submissions,
+} from '../db/schema'
 import {
   getAnalyticsAgentDetail,
   listAnalyticsBattles,
@@ -41,7 +47,9 @@ const battlesQuerySchema = z.object({
   mode: analyticsBattleModeSchema.optional(),
   side: z.enum(['a', 'b']).optional(),
   source: analyticsBattleSourceSchema.optional(),
-  status: z.enum(['queued', 'running', 'judging', 'scored', 'error']).optional(),
+  status: z
+    .enum(['queued', 'running', 'judging', 'scored', 'error'])
+    .optional(),
   submissionId: z.coerce.number().int().positive().optional(),
   userId: z.coerce.number().int().positive().optional(),
 })
@@ -59,7 +67,9 @@ adminAnalyticsRouter.get(
 
     const battles = listAnalyticsBattles(parsed.data)
 
-    return context.json(battles.map((battle) => adminAnalyticsBattleSchema.parse(battle)))
+    return context.json(
+      battles.map((battle) => adminAnalyticsBattleSchema.parse(battle)),
+    )
   },
 )
 
@@ -77,7 +87,9 @@ adminAnalyticsRouter.get(
     const summaries = listUserAnalyticsAgentSummaries(userId)
 
     return context.json(
-      summaries.map((summary) => adminAnalyticsAgentSummarySchema.parse(summary)),
+      summaries.map((summary) =>
+        adminAnalyticsAgentSummarySchema.parse(summary),
+      ),
     )
   },
 )
@@ -125,7 +137,8 @@ adminAnalyticsRouter.get(
     }
 
     const summary =
-      listAnalyticsBattles({ source }).find((battle) => battle.id === id) ?? null
+      listAnalyticsBattles({ source }).find((battle) => battle.id === id) ??
+      null
 
     if (source === 'tournament') {
       const match = db.select().from(matches).where(eq(matches.id, id)).get()
@@ -178,7 +191,11 @@ adminAnalyticsRouter.get(
       })
     }
 
-    const run = db.select().from(playgroundRuns).where(eq(playgroundRuns.id, id)).get()
+    const run = db
+      .select()
+      .from(playgroundRuns)
+      .where(eq(playgroundRuns.id, id))
+      .get()
 
     if (!run) {
       return context.json({ error: 'Battle not found' }, 404)

@@ -1,8 +1,16 @@
 import { type AdminScenario } from '@axiia/shared'
 import type { Command } from 'commander'
 
-import { apiFetch, fetchAdminScenarioById, fetchAdminScenarios } from '../lib/http'
-import { readJsonInput, writeCollectionOutput, writeJsonOutput } from '../lib/io'
+import {
+  apiFetch,
+  fetchAdminScenarioById,
+  fetchAdminScenarios,
+} from '../lib/http'
+import {
+  readJsonInput,
+  writeCollectionOutput,
+  writeJsonOutput,
+} from '../lib/io'
 import { normalizeScenarioSummary } from '../lib/normalizers'
 import { parseScenarioUpdateInput } from '../scenario-update'
 
