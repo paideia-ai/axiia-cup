@@ -2,6 +2,8 @@
 
 This document is the operational checklist for deploying Axiia Cup onto a single Linux server with Docker Compose and a host-level reverse proxy such as Angie or nginx.
 
+**Important:** this doc focuses on **server bootstrap and manual Docker Compose fallback**. The **current standard production release path** is GitHub Actions -> Aliyun ACR -> server-local deploy webhook. For the current release workflow, rollback, secret inventory, and live production topology, see [CI_CD_OPERATIONS.md](CI_CD_OPERATIONS.md).
+
 The deployment target assumed here is:
 
 - Public domain: `axiia-cup.isofucius.cn`
@@ -295,6 +297,10 @@ Open in a browser and verify:
 
 ## 12. Rollback
 
+For the **standard tag-driven production rollback flow**, see [CI_CD_OPERATIONS.md](CI_CD_OPERATIONS.md).
+
+This section describes the **manual Docker Compose fallback rollback** path.
+
 If deployment breaks after a new release:
 
 1. Restore the previous repo version in `/srv/axiia-cup/current`
@@ -315,9 +321,11 @@ docker compose \
 
 Rollback does not remove the SQLite database because it is mounted from the host.
 
-## 13. Daily Deploy
+## 13. Daily Deploy (Manual Fallback)
 
-For an ordinary release on an existing server:
+For the **standard production release path**, see [CI_CD_OPERATIONS.md](CI_CD_OPERATIONS.md).
+
+For an ordinary manual fallback deploy on an existing server:
 
 1. Update the repo checkout:
 

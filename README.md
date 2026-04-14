@@ -41,6 +41,10 @@ For CLI authentication, remote API usage, user and playground operations, and no
 
 ## Production Deployment
 
+The **current standard production release path** is GitHub Actions -> Aliyun ACR -> server-local deploy webhook. See [CI/CD and Production Operations](docs/tech/CI_CD_OPERATIONS.md).
+
+The shell scripts in `deploy/` remain important for first-time server bootstrap, manual fallback deploys, smoke checks, and DB backup.
+
 Production deployment assets live in `deploy/`.
 
 - `deploy/docker-compose.prod.yml` runs the `web` and `api` services
@@ -107,6 +111,7 @@ repo checkout. Leave `LANGFUSE_*` blank unless you actually want telemetry.
 
 - [Design Spec](docs/competition/DESIGN_SPEC.md) — product rules and decisions
 - [Architecture](docs/tech/ARCHITECTURE.md) — technical stack, data model, and deployment notes
+- [CI/CD and Production Operations](docs/tech/CI_CD_OPERATIONS.md) — current release flow, production topology, rollback, and secret inventory
 - [CLI Guide](docs/tech/CLI.md) — CLI usage, remote API setup, and scenario editing workflow
-- [Server Deployment Checklist](docs/tech/DEPLOYMENT_SERVER.md) — step-by-step single-server production rollout
+- [Server Deployment Checklist](docs/tech/DEPLOYMENT_SERVER.md) — server bootstrap and manual Docker Compose fallback
 - [Design System](docs/tech/DESIGN.md) — visual direction, typography, and color
