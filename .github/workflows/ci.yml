@@ -3,26 +3,8 @@ name: CI
 on:
   push:
     branches: [master]
-    paths:
-      - "apps/**"
-      - "packages/**"
-      - "package.json"
-      - "bun.lock"
-      - "turbo.json"
-      - ".github/workflows/**"
-      - ".oxlintrc.json"
-      - ".oxfmtrc.json"
   pull_request:
     branches: [master]
-    paths:
-      - "apps/**"
-      - "packages/**"
-      - "package.json"
-      - "bun.lock"
-      - "turbo.json"
-      - ".github/workflows/**"
-      - ".oxlintrc.json"
-      - ".oxfmtrc.json"
 
 jobs:
   check:
