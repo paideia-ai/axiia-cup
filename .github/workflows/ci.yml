@@ -3,8 +3,24 @@ name: CI
 on:
   push:
     branches: [master]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'deploy/**'
+      - 'bun.lockb'
+      - 'turbo.json'
+      - 'package.json'
+      - '.github/workflows/**'
   pull_request:
     branches: [master]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'deploy/**'
+      - 'bun.lockb'
+      - 'turbo.json'
+      - 'package.json'
+      - '.github/workflows/**'
 
 jobs:
   check:
