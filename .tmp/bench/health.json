@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:3101/health",
+  "concurrency": 50,
+  "requests": 2000,
+  "completed": 2000,
+  "failures": 0,
+  "totalMs": 30.51,
+  "rps": 65550.13,
+  "latencyMs": {
+    "min": 0.15,
+    "avg": 0.75,
+    "p50": 0.48,
+    "p90": 0.81,
+    "p95": 1.13,
+    "p99": 9.59,
+    "max": 9.8
+  },
+  "statuses": {
+    "200": 2000
+  }
+}
+MAX_RSS_KB=124608

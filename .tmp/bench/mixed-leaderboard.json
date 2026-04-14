@@ -1,0 +1,21 @@
+{
+  "url": "http://127.0.0.1:3101/api/tournaments/1/leaderboard",
+  "concurrency": 8,
+  "requests": 160,
+  "completed": 160,
+  "failures": 0,
+  "totalMs": 383.19,
+  "rps": 417.54,
+  "latencyMs": {
+    "min": 11.11,
+    "avg": 18.87,
+    "p50": 18.33,
+    "p90": 25.05,
+    "p95": 27.01,
+    "p99": 32.35,
+    "max": 33.75
+  },
+  "statuses": {
+    "200": 160
+  }
+}

@@ -124,7 +124,7 @@ jobs:
 
       - name: Trigger deploy
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X POST "${{ env.DEPLOY_WEBHOOK_URL }}" \
+          response=$(curl -s -w "\n%{http_code}" --max-time 120 -X POST "${{ env.DEPLOY_WEBHOOK_URL }}" \
             -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}" \
             -H "Content-Type: application/json")
           

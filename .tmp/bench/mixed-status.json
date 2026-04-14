@@ -1,0 +1,21 @@
+{
+  "url": "http://127.0.0.1:3101/api/matches/402/status",
+  "concurrency": 20,
+  "requests": 1200,
+  "completed": 1200,
+  "failures": 0,
+  "totalMs": 456.49,
+  "rps": 2628.73,
+  "latencyMs": {
+    "min": 1.5,
+    "avg": 7.58,
+    "p50": 1.82,
+    "p90": 21.75,
+    "p95": 23.94,
+    "p99": 24.74,
+    "max": 43.78
+  },
+  "statuses": {
+    "200": 1200
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "dbPath": "/Users/minsheng/Developer/axiia-cup/.tmp/bench/axiia-bench.db",
+  "benchPassword": "benchpass123",
+  "counts": {
+    "users": 201,
+    "submissions": 200,
+    "tournaments": 1,
+    "rounds": 3,
+    "matches": 600,
+    "llmCalls": 14400
+  }
+}

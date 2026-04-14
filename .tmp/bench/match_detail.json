@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:3101/api/matches/402",
+  "concurrency": 20,
+  "requests": 300,
+  "completed": 300,
+  "failures": 0,
+  "totalMs": 88.01,
+  "rps": 3408.59,
+  "latencyMs": {
+    "min": 4.29,
+    "avg": 5.7,
+    "p50": 5.18,
+    "p90": 8.35,
+    "p95": 10.36,
+    "p99": 11.78,
+    "max": 12.32
+  },
+  "statuses": {
+    "200": 300
+  }
+}
+MAX_RSS_KB=177488
