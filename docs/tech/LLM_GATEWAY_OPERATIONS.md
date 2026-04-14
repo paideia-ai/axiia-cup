@@ -90,24 +90,34 @@ It stores the real upstream keys:
 
 ### 4.2 China worker
 
-The China worker runs a user-level systemd service:
+The China worker currently uses a long-running `ssh -L` process under the `anna` user.
+It is **not** currently managed by a user-level systemd service.
 
-- `axiia-us-gateway-tunnel.service`
+Verified live command shape:
 
-The recommended service wiring is tracked in:
+```bash
+/usr/bin/ssh -NT -g \
+  -i /home/anna/.ssh/axiia_us_gateway \
+  -o BatchMode=yes \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile=/home/anna/.ssh/known_hosts \
+  -L 0.0.0.0:33100:127.0.0.1:3100 \
+  anna@104.238.220.76
+```
+
+Operational notes:
+
+- the tunnel currently binds `0.0.0.0:33100`
+- if this process dies, evaluation-model traffic fails
+- the checked-in service example is still useful as reference, but it does **not** match the current live production setup exactly
+
+Reference files in this repo:
 
 - [deploy/start-us-gateway-tunnel.sh](../../deploy/start-us-gateway-tunnel.sh)
 - [deploy/axiia-us-gateway-tunnel.service.example](../../deploy/axiia-us-gateway-tunnel.service.example)
-
-Its job is:
-
-- resolve the Docker bridge / host-gateway IP on the China worker
-- bind `${bridge_ip}:33100` instead of `0.0.0.0:33100`
-- forward to the US host `127.0.0.1:3100`
-
-The service file lives at:
-
-- `/home/anna/.config/systemd/user/axiia-us-gateway-tunnel.service`
 
 ### 4.3 API container
 
@@ -300,35 +310,25 @@ sudo docker compose --env-file .env up -d --build
 
 ### 9.2 China worker
 
-Install or refresh the tunnel files:
+Current live production tunnel management is a long-running `ssh -L` process under `anna`, not a user-level systemd service.
+
+Quick status checks:
 
 ```bash
 ssh anna@cup-worker.isofucius.cn
-sudo loginctl enable-linger anna
-mkdir -p ~/.config/systemd/user
-cp /srv/axiia-cup/current/deploy/axiia-us-gateway-tunnel.service.example \
-  ~/.config/systemd/user/axiia-us-gateway-tunnel.service
-systemctl --user daemon-reload
-systemctl --user enable --now axiia-us-gateway-tunnel.service
-```
-
-First-time tunnel requirement:
-
-- The `anna` user on the China worker must already be able to run
-  `ssh -o BatchMode=yes anna@reliablesite.tuna-miaplacidus.ts.net true`
-  without an interactive password prompt. Configure that with the usual
-  `~/.ssh/config`, `authorized_keys`, and `known_hosts` files before enabling
-  the service.
-
-Tunnel status:
-
-```bash
-ssh anna@cup-worker.isofucius.cn
-systemctl --user status axiia-us-gateway-tunnel.service
-BIND_IP=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
+ps -ef | grep '33100:127.0.0.1:3100' | grep -v grep
 ss -ltnp | grep 33100
-curl "http://${BIND_IP}:33100/health"
+curl http://127.0.0.1:33100/health
 ```
+
+Current manual restart pattern:
+
+```bash
+ssh anna@cup-worker.isofucius.cn
+ssh -NT -g -L 0.0.0.0:33100:127.0.0.1:3100 anna@104.238.220.76
+```
+
+Reference only: the repo also contains `deploy/start-us-gateway-tunnel.sh` and `deploy/axiia-us-gateway-tunnel.service.example`, but those describe a cleaner future/alternate setup rather than the exact live production wiring.
 
 App deploy:
 

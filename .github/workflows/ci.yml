@@ -13,19 +13,68 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches: [master]
-    paths:
-      - 'apps/**'
-      - 'packages/**'
-      - 'deploy/**'
-      - 'bun.lockb'
-      - 'turbo.json'
-      - 'package.json'
-      - '.github/workflows/**'
 
 jobs:
-  check:
-    name: Check
+  classify:
     runs-on: ubuntu-latest
+    outputs:
+      markdown_only: ${{ steps.classify.outputs.markdown_only }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed files
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" != "pull_request" ]]; then
+            echo "markdown_only=false" >> "$GITHUB_OUTPUT"
+            echo "Push to master: running full CI."
+            exit 0
+          fi
+
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < <(git diff --name-only -z "$base_sha" "$head_sha")
+
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "markdown_only=false" >> "$GITHUB_OUTPUT"
+            echo "No changed files detected; defaulting to full CI."
+            exit 0
+          fi
+
+          printf 'Changed files:\n%s\n' "${files[@]}"
+
+          markdown_only=true
+          for file in "${files[@]}"; do
+            if [[ "$file" != *.md ]]; then
+              markdown_only=false
+              break
+            fi
+          done
+
+          echo "markdown_only=$markdown_only" >> "$GITHUB_OUTPUT"
+
+          if [[ "$markdown_only" == true ]]; then
+            echo "Markdown-only PR detected; heavy CI will be skipped."
+          else
+            echo "Non-Markdown changes detected; full CI required."
+          fi
+
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: classify
+    if: github.event_name != 'pull_request' || needs.classify.outputs.markdown_only != 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -50,3 +99,35 @@ jobs:
       - name: Test
         run: bun test
         working-directory: apps/api
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    needs:
+      - classify
+      - ci
+    if: always()
+
+    steps:
+      - name: Enforce PR gate
+        shell: bash
+        env:
+          MARKDOWN_ONLY: ${{ needs.classify.outputs.markdown_only }}
+          CI_RESULT: ${{ needs.ci.result }}
+        run: |
+          set -euo pipefail
+
+          echo "markdown_only=$MARKDOWN_ONLY"
+          echo "ci=$CI_RESULT"
+
+          if [[ "$MARKDOWN_ONLY" == "true" ]]; then
+            echo "Markdown-only PR detected; skipping heavy CI."
+            exit 0
+          fi
+
+          if [[ "$CI_RESULT" != "success" ]]; then
+            echo "CI job must pass."
+            exit 1
+          fi
+
+          echo "Required CI gate passed."

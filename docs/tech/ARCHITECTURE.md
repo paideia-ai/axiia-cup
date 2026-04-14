@@ -172,7 +172,7 @@ axiia leaderboard      # 查看排行榜（胜场 + Buchholz）
 | 多 Block 瑞士轮 + 迭代窗口 | MVP 单次瑞士轮够用，多 block 是纯新增                     |
 | Elo/Glicko-2 积分          | 胜率排名足够，Elo 在加多 block 时一起做                   |
 | 真实邮件 OTP               | 国际邮件服务送达中国邮箱不可靠；国内服务需 ICP 备案       |
-| CI/CD 自动部署             | 手动 docker compose 部署；GFW 导致 GitHub→中国 VPS 不稳定 |
+| CI/CD 自动部署             | 已实现：GitHub Actions + Aliyun ACR + `release/*` webhook 部署；见 `docs/tech/CI_CD_OPERATIONS.md` |
 | Prompt 版本锁定            | MVP 由管理员口头约定比赛期间不改 prompt                   |
 | 试炼场后端                 | 前端可用，后端可 stub 或延后                              |
 | 忘记密码                   | MVP 期间管理员手动重置                                    |

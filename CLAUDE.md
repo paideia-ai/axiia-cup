@@ -70,8 +70,9 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 
 ## Deployment
 
-- **Fly.io**: `fly deploy` (CI via `.github/workflows/fly-deploy.yml`)
-- **Static demo**: Vercel (axiia-cup.vercel.app)
+- **Current production release path**: GitHub Actions -> Aliyun ACR -> server-local deploy webhook (`release/*` tags trigger production deploys)
+- **Manual fallback**: `./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env` on the production host
+- **Canonical ops doc**: `docs/tech/CI_CD_OPERATIONS.md`
 - Database file at `$AXIIA_DB_PATH` or default `apps/api/axiia.db`
 
 ## Environment Variables
