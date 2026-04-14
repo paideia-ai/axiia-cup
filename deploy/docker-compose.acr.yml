@@ -1,0 +1,40 @@
+services:
+  api:
+    image: ${API_IMAGE:?API_IMAGE is required}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    environment:
+      AXIIA_DB_PATH: ${AXIIA_DB_PATH:-/data/axiia.db}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_VERSION: ${ANTHROPIC_VERSION:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS_ORIGIN is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      PORT: ${PORT:-3001}
+      REGISTRATION_CODE: ${REGISTRATION_CODE:-axiia_cup}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:?SILICONFLOW_API_KEY is required}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-8}
+    healthcheck:
+      test: >-
+        bun -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3001') + '/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    volumes:
+      - ${AXIIA_DATA_DIR:-./data}/api:/data
+
+  web:
+    image: ${WEB_IMAGE:?WEB_IMAGE is required}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:${WEB_HOST_PORT:-8200}:80
+    restart: unless-stopped
