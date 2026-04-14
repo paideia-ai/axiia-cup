@@ -78,11 +78,16 @@ Standard deploys are handled by a server-local webhook service:
 - systemd unit: `axiia-deploy-webhook.service`
 - bind address: `127.0.0.1:9900`
 - public route: `https://axiia-cup.isofucius.cn/_deploy`
-- nginx also exposes the same route on `https://cup-dev-114514.isofucius.cn/_deploy`
-- nginx proxies `/_deploy` to the webhook service
+- status route: `https://axiia-cup.isofucius.cn/_deploy/status?id=<deployment-id>`
+- nginx also exposes the same routes on `https://cup-dev-114514.isofucius.cn`
+- nginx proxies `/_deploy` and `/_deploy/status` to the webhook service
 
-The webhook is still a server-local operational component, but the repository now
-keeps manual backup/reference snapshots in:
+The webhook now accepts deploy requests asynchronously:
+
+- `POST /_deploy` validates the JWT, starts the deploy in background, and returns `202 Accepted`
+- the response includes a random in-memory `deploymentId`
+- callers poll `GET /_deploy/status?id=<deployment-id>` until status becomes `success` or `failed`
+- deployment state is stored in memory on the webhook process and is lost if the service restarts
 
 - `docs/tech/server-local/deploy-webhook.server.py`
 - `docs/tech/server-local/nginx.origin.split-stack.conf`
@@ -147,7 +152,8 @@ What it does when not skipped:
 - authenticates GitHub Actions to Aliyun via OIDC
 - logs into Aliyun ACR
 - builds and pushes two images tagged by commit SHA
-- on push to `master`, automatically deploys that same SHA to the **dev** stack by sending `target=dev` to the deploy webhook
+- on push to `master`, starts an async deploy for that same SHA to the **dev** stack
+- the workflow polls the webhook status endpoint using the returned `deploymentId` until the deploy reaches `success` or `failed`
 
 Registry details:
 
@@ -184,9 +190,10 @@ Deploy sequence:
 2. Build workflow has pushed images for that commit SHA to ACR.
 3. Deploy workflow resolves the commit SHA for the pushed release tag.
 4. Deploy workflow signs a short-lived JWT using `DEPLOY_WEBHOOK_SECRET`.
-5. Deploy workflow POSTs to `https://axiia-cup.isofucius.cn/_deploy` with `target=prod`.
-6. The webhook server:
-   - verifies the JWT with `WEBHOOK_SECRET`
+5. Deploy workflow `POST`s to `https://axiia-cup.isofucius.cn/_deploy` with `target=prod`.
+6. The webhook validates the JWT, starts the production deploy in background, and returns `202 Accepted` with a random `deploymentId`.
+7. Deploy workflow polls `GET /_deploy/status?id=<deployment-id>` until the status becomes `success` or `failed`.
+8. The webhook worker:
    - logs into ACR with the local Aliyun CLI
    - pulls the `api` and `web` images for that SHA
    - updates only the **prod** stack

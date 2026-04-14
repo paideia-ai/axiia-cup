@@ -10,11 +10,15 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import subprocess
+import threading
 import time
 from dataclasses import dataclass
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import jwt
 
@@ -23,6 +27,7 @@ LISTEN_PORT = 9900
 
 REGISTRY = "second-acr-registry.cn-hangzhou.cr.aliyuncs.com"
 ACR_INSTANCE_ID = "cri-qvdxmkdj3dh8s2oe"
+DEPLOYMENT_TTL_SECONDS = 3600
 
 WEBHOOK_SECRET_FILE = os.environ.get(
     "WEBHOOK_SECRET_FILE",
@@ -49,6 +54,15 @@ TARGETS = {
     ),
 }
 
+SECRET: str | None = None
+DEPLOYMENTS: dict[str, dict[str, object | None]] = {}
+ACTIVE_DEPLOYMENTS_BY_TARGET: dict[str, str] = {}
+DEPLOYMENTS_LOCK = threading.Lock()
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
 
 def load_secret() -> str:
     path = Path(WEBHOOK_SECRET_FILE)
@@ -57,9 +71,6 @@ def load_secret() -> str:
         if line.startswith("WEBHOOK_SECRET="):
             return line.split("=", 1)[1]
     raise RuntimeError(f"WEBHOOK_SECRET not found in {path}")
-
-
-SECRET: str | None = None
 
 
 def verify_jwt(token: str) -> dict:
@@ -168,6 +179,95 @@ def deploy_target(target: str, tag: str) -> None:
     wait_for_http_health(runtime_env.get("WEB_HOST_PORT", "8200"))
 
 
+def deployment_public_view(record: dict[str, object | None]) -> dict[str, object | None]:
+    return {
+        key: value
+        for key, value in record.items()
+        if not key.startswith("_")
+    }
+
+
+def prune_old_deployments_locked() -> None:
+    cutoff = time.time() - DEPLOYMENT_TTL_SECONDS
+    for deployment_id, record in list(DEPLOYMENTS.items()):
+        updated_at = float(record.get("_updatedAtEpoch", 0) or 0)
+        status = record.get("status")
+        if updated_at < cutoff and status in {"success", "failed"}:
+            DEPLOYMENTS.pop(deployment_id, None)
+
+
+def active_deployment_for_target_locked(target: str) -> dict[str, object | None] | None:
+    deployment_id = ACTIVE_DEPLOYMENTS_BY_TARGET.get(target)
+    if not deployment_id:
+        return None
+    record = DEPLOYMENTS.get(deployment_id)
+    if record is None or record.get("status") not in {"accepted", "running"}:
+        ACTIVE_DEPLOYMENTS_BY_TARGET.pop(target, None)
+        return None
+    return record
+
+
+def update_deployment(
+    deployment_id: str,
+    *,
+    status: str,
+    error: str | None = None,
+    mark_started: bool = False,
+    mark_finished: bool = False,
+) -> None:
+    with DEPLOYMENTS_LOCK:
+        record = DEPLOYMENTS[deployment_id]
+        record["status"] = status
+        if mark_started and record.get("startedAt") is None:
+            record["startedAt"] = now_iso()
+        if mark_finished:
+            record["finishedAt"] = now_iso()
+        if error is not None:
+            record["error"] = error
+        record["_updatedAtEpoch"] = time.time()
+
+
+def run_deployment(deployment_id: str) -> None:
+    with DEPLOYMENTS_LOCK:
+        record = DEPLOYMENTS[deployment_id]
+        target = str(record["target"])
+        tag = str(record["tag"])
+
+    update_deployment(deployment_id, status="running", mark_started=True)
+    print(f"Deploy started deployment_id={deployment_id} target={target} tag={tag}")
+
+    try:
+        acr_login()
+        pull_images(tag)
+        deploy_target(target, tag)
+    except subprocess.CalledProcessError as error:
+        message = f"deploy failed: {error}"
+        print(f"Deploy failed deployment_id={deployment_id}: {message}")
+        update_deployment(
+            deployment_id,
+            status="failed",
+            error=message,
+            mark_finished=True,
+        )
+    except Exception as error:  # noqa: BLE001
+        message = str(error)
+        print(f"Deploy error deployment_id={deployment_id}: {message}")
+        update_deployment(
+            deployment_id,
+            status="failed",
+            error=message,
+            mark_finished=True,
+        )
+    else:
+        print(f"Deploy succeeded deployment_id={deployment_id} target={target} tag={tag}")
+        update_deployment(deployment_id, status="success", mark_finished=True)
+    finally:
+        with DEPLOYMENTS_LOCK:
+            if ACTIVE_DEPLOYMENTS_BY_TARGET.get(target) == deployment_id:
+                ACTIVE_DEPLOYMENTS_BY_TARGET.pop(target, None)
+            prune_old_deployments_locked()
+
+
 class DeployHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args):
         print(f"[{self.log_date_time_string()}] {format % args}")
@@ -180,29 +280,57 @@ class DeployHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self):
-        if self.path == "/health":
-            self.send_json(200, {"status": "ok"})
-        else:
-            self.send_json(404, {"error": "not found"})
-
-    def do_POST(self):
-        if self.path != "/_deploy":
-            self.send_json(404, {"error": "not found"})
-            return
-
+    def require_auth(self) -> dict | None:
         auth = self.headers.get("Authorization", "")
         if not auth.startswith("Bearer "):
             self.send_json(401, {"error": "missing bearer token"})
-            return
+            return None
 
         try:
-            payload = verify_jwt(auth[7:])
+            return verify_jwt(auth[7:])
         except jwt.ExpiredSignatureError:
             self.send_json(401, {"error": "token expired"})
-            return
         except jwt.InvalidTokenError as error:
             self.send_json(401, {"error": f"invalid token: {error}"})
+        return None
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+
+        if parsed.path == "/health":
+            self.send_json(200, {"status": "ok"})
+            return
+
+        if parsed.path != "/_deploy/status":
+            self.send_json(404, {"error": "not found"})
+            return
+
+        if self.require_auth() is None:
+            return
+
+        deployment_id = parse_qs(parsed.query).get("id", [""])[0].strip()
+        if not deployment_id:
+            self.send_json(400, {"error": "missing deployment id"})
+            return
+
+        with DEPLOYMENTS_LOCK:
+            prune_old_deployments_locked()
+            record = DEPLOYMENTS.get(deployment_id)
+            if record is None:
+                self.send_json(404, {"error": "deployment not found", "deploymentId": deployment_id})
+                return
+            body = deployment_public_view(record)
+
+        self.send_json(200, body)
+
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        if parsed.path != "/_deploy":
+            self.send_json(404, {"error": "not found"})
+            return
+
+        payload = self.require_auth()
+        if payload is None:
             return
 
         tag = payload.get("tag")
@@ -211,31 +339,59 @@ class DeployHandler(BaseHTTPRequestHandler):
         if not tag:
             self.send_json(400, {"error": "missing tag in token"})
             return
-        if not tag.isalnum() or len(tag) < 7:
+        if not isinstance(tag, str) or not tag.isalnum() or len(tag) < 7:
             self.send_json(400, {"error": "invalid tag format"})
             return
         if target not in TARGETS:
             self.send_json(400, {"error": f"invalid target: {target}"})
             return
 
-        print(f"Deploy requested for target={target} tag={tag}")
+        with DEPLOYMENTS_LOCK:
+            prune_old_deployments_locked()
+            active_record = active_deployment_for_target_locked(target)
+            if active_record is not None:
+                self.send_json(
+                    409,
+                    {
+                        "error": f"deploy already running for target {target}",
+                        "deploymentId": active_record["deploymentId"],
+                        "status": active_record["status"],
+                        "target": active_record["target"],
+                        "tag": active_record["tag"],
+                    },
+                )
+                return
 
-        try:
-            acr_login()
-            pull_images(tag)
-            deploy_target(target, tag)
-            self.send_json(200, {"status": "deployed", "target": target, "tag": tag})
-        except subprocess.CalledProcessError as error:
-            print(f"Deploy failed: {error}")
-            self.send_json(500, {"error": f"deploy failed: {error}"})
-        except Exception as error:  # noqa: BLE001
-            print(f"Deploy error: {error}")
-            self.send_json(500, {"error": str(error)})
+            deployment_id = secrets.token_urlsafe(12)
+            record: dict[str, object | None] = {
+                "deploymentId": deployment_id,
+                "status": "accepted",
+                "target": target,
+                "tag": tag,
+                "error": None,
+                "createdAt": now_iso(),
+                "startedAt": None,
+                "finishedAt": None,
+                "_updatedAtEpoch": time.time(),
+            }
+            DEPLOYMENTS[deployment_id] = record
+            ACTIVE_DEPLOYMENTS_BY_TARGET[target] = deployment_id
+            body = deployment_public_view(record)
+
+        print(f"Deploy accepted deployment_id={deployment_id} target={target} tag={tag}")
+        thread = threading.Thread(
+            target=run_deployment,
+            args=(deployment_id,),
+            daemon=True,
+            name=f"deploy-{target}-{deployment_id}",
+        )
+        thread.start()
+        self.send_json(202, body)
 
 
 def main() -> None:
     print(f"Starting deploy webhook on {LISTEN_HOST}:{LISTEN_PORT}")
-    server = HTTPServer((LISTEN_HOST, LISTEN_PORT), DeployHandler)
+    server = ThreadingHTTPServer((LISTEN_HOST, LISTEN_PORT), DeployHandler)
     server.serve_forever()
 
 

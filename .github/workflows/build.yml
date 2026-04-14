@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
 
           NOW=$(date +%s)
-          EXP=$((NOW + 300))
+          EXP=$((NOW + 900))
 
           HEADER=$(echo -n '{"alg":"HS256","typ":"JWT"}' | base64 | tr -d '\n=' | tr '+/' '-_')
           PAYLOAD=$(printf '{"tag":"%s","target":"dev","repo":"%s","iat":%s,"exp":%s}' \
@@ -124,12 +124,13 @@ jobs:
 
           echo "jwt=${HEADER}.${PAYLOAD}.${SIGNATURE}" >> "$GITHUB_OUTPUT"
 
-      - name: Trigger dev deploy
+      - name: Start dev deploy
+        id: start
         shell: bash
         run: |
           set -euo pipefail
 
-          response=$(curl -s -w "\n%{http_code}" --max-time 180 -X POST "${{ env.DEPLOY_WEBHOOK_URL }}" \
+          response=$(curl -s -w "\n%{http_code}" --max-time 30 -X POST "${{ env.DEPLOY_WEBHOOK_URL }}" \
             -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}" \
             -H "Content-Type: application/json")
 
@@ -139,9 +140,62 @@ jobs:
           echo "Response: $body"
           echo "Status: $status"
 
-          if [[ "$status" != "200" ]]; then
-            echo "Dev deploy failed with status $status"
+          if [[ "$status" != "202" ]]; then
+            echo "Dev deploy start failed with status $status"
             exit 1
           fi
 
-          echo "✅ Deployed dev for commit ${{ github.sha }}"
+          deployment_id=$(echo "$body" | jq -r '.deploymentId // empty')
+          if [[ -z "$deployment_id" ]]; then
+            echo "Missing deploymentId in start response"
+            exit 1
+          fi
+
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Started dev deployment $deployment_id"
+
+      - name: Wait for dev deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deployment_id='${{ steps.start.outputs.deployment_id }}'
+          status_url="${{ env.DEPLOY_WEBHOOK_URL }}/status?id=${deployment_id}"
+
+          for attempt in $(seq 1 120); do
+            response=$(curl -s -w "\n%{http_code}" --max-time 30 "$status_url" \
+              -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}")
+
+            body=$(echo "$response" | head -n -1)
+            http_status=$(echo "$response" | tail -n 1)
+
+            echo "Poll #$attempt HTTP $http_status: $body"
+
+            if [[ "$http_status" != "200" ]]; then
+              echo "Dev deploy status check failed with HTTP $http_status"
+              exit 1
+            fi
+
+            deploy_status=$(echo "$body" | jq -r '.status // empty')
+            case "$deploy_status" in
+              success)
+                echo "✅ Deployed dev for commit ${{ github.sha }}"
+                exit 0
+                ;;
+              failed)
+                error_message=$(echo "$body" | jq -r '.error // "unknown deploy failure"')
+                echo "Dev deploy failed: $error_message"
+                exit 1
+                ;;
+              accepted|running)
+                sleep 5
+                ;;
+              *)
+                echo "Unexpected deploy status: $deploy_status"
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "Timed out waiting for dev deploy $deployment_id"
+          exit 1
