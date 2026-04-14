@@ -1,0 +1,68 @@
+name: Build and Push to ACR
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "deploy/Dockerfile.*"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/build-push.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ALIBABA_CLOUD_REGION_ID: cn-hangzhou
+  ACR_INSTANCE_ID: cri-qvdxmkdj3dh8s2oe
+  REGISTRY_URL: second-acr-registry.cn-hangzhou.cr.aliyuncs.com
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure Aliyun credentials
+        uses: aliyun/configure-aliyun-credentials-action@v1
+        with:
+          oidc-provider-arn: acs:ram::1805039414054707:oidc-provider/GitHub
+          role-to-assume: acs:ram::1805039414054707:role/githubactions-axiiacup
+
+      - name: Install Aliyun CLI
+        uses: aliyun/setup-aliyun-cli-action@v1
+
+      - name: Login to ACR
+        run: |
+          auth_info=$(aliyun cr GetAuthorizationToken --InstanceId ${{ env.ACR_INSTANCE_ID }})
+          username=$(echo $auth_info | jq -r .TempUsername)
+          password=$(echo $auth_info | jq -r .AuthorizationToken)
+          echo $password | docker login --username $username --password-stdin ${{ env.REGISTRY_URL }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.api
+          push: true
+          tags: ${{ env.REGISTRY_URL }}/apps/axiia-cup-api:${{ github.sha }}
+          provenance: false
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.web
+          push: true
+          tags: ${{ env.REGISTRY_URL }}/apps/axiia-cup-web:${{ github.sha }}
+          provenance: false
