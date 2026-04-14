@@ -79,6 +79,8 @@ jobs:
           context: .
           file: deploy/Dockerfile.api
           push: true
+          build-args: |
+            APP_BUILD_SHA=${{ github.sha }}
           tags: ${{ env.REGISTRY_URL }}/apps/axiia-cup-api:${{ github.sha }}
           provenance: false
 
