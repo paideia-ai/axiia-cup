@@ -15,6 +15,7 @@ const tournamentStatuses = [
   'finished',
   'terminated',
 ] as const
+const pairingModes = ['auto', 'manual'] as const
 const roundStatuses = ['pairing', 'running', 'done'] as const
 const matchStatuses = [
   'queued',
@@ -197,6 +198,9 @@ export const tournaments = sqliteTable(
       .default('open'),
     currentRound: integer('current_round').notNull().default(0),
     totalRounds: integer('total_rounds').notNull().default(4),
+    pairingMode: text('pairing_mode', { enum: pairingModes })
+      .notNull()
+      .default('auto'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({
@@ -344,6 +348,7 @@ export const schema = {
 }
 
 export type OpponentMode = (typeof opponentModes)[number]
+export type PairingMode = (typeof pairingModes)[number]
 export type TournamentStatus = (typeof tournamentStatuses)[number]
 export type RoundStatus = (typeof roundStatuses)[number]
 export type MatchStatus = (typeof matchStatuses)[number]
