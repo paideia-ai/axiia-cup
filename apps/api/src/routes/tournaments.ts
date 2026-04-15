@@ -429,20 +429,11 @@ tournamentRouter.post(
 
       if (currentRound) {
         const state = getRoundTerminalState(currentRound.id)
+        const allTerminal = state.queuedCount === 0 && state.runningCount === 0
 
-        if (!state.isDone) {
+        if (!allTerminal) {
           return context.json(
-            { error: 'Current round is not yet complete' },
-            400,
-          )
-        }
-
-        if (state.hasErrors) {
-          return context.json(
-            {
-              error:
-                'Current round has errored matches — retry or skip them first',
-            },
+            { error: 'Current round still has running or queued matches' },
             400,
           )
         }
