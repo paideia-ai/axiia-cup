@@ -31,8 +31,7 @@ export function swissPair(params: {
     }
 
     let opponentIndex = remaining.findIndex(
-      (candidate) =>
-        !params.previousPairings.has(pairKey(player, candidate)),
+      (candidate) => !params.previousPairings.has(pairKey(player, candidate)),
     )
 
     if (opponentIndex === -1) {

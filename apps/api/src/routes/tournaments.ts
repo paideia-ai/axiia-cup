@@ -52,7 +52,9 @@ const startCustomSchema = z.object({
 })
 
 const createRoundSchema = z.object({
-  pairs: z.array(z.tuple([z.number().int().positive(), z.number().int().positive()])).min(1),
+  pairs: z
+    .array(z.tuple([z.number().int().positive(), z.number().int().positive()]))
+    .min(1),
 })
 
 const tournamentRouter = new Hono()
@@ -437,7 +439,10 @@ tournamentRouter.post(
 
         if (state.hasErrors) {
           return context.json(
-            { error: 'Current round has errored matches — retry or skip them first' },
+            {
+              error:
+                'Current round has errored matches — retry or skip them first',
+            },
             400,
           )
         }
@@ -449,10 +454,7 @@ tournamentRouter.post(
     const uniqueSubIds = new Set(allSubIds)
 
     if (uniqueSubIds.size !== allSubIds.length) {
-      return context.json(
-        { error: 'Duplicate submission IDs in pairs' },
-        400,
-      )
+      return context.json({ error: 'Duplicate submission IDs in pairs' }, 400)
     }
 
     const foundSubs = db
@@ -466,10 +468,7 @@ tournamentRouter.post(
     }
 
     if (foundSubs.some((s) => s.retiredAt !== null)) {
-      return context.json(
-        { error: 'Some submissions are archived' },
-        400,
-      )
+      return context.json({ error: 'Some submissions are archived' }, 400)
     }
 
     const nextRoundNumber = tournament.currentRound + 1
@@ -495,7 +494,10 @@ tournamentRouter.post(
       tournament.createdAt,
     )
     const allPlayerIds = allPlayers.map((p) => p.submissionId)
-    const byeSubmissions = extractByeSubmissionIds(allPlayerIds, parsed.data.pairs)
+    const byeSubmissions = extractByeSubmissionIds(
+      allPlayerIds,
+      parsed.data.pairs,
+    )
 
     kickWorker()
 

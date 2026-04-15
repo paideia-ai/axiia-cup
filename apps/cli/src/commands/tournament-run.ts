@@ -58,10 +58,7 @@ export function registerTournamentRunCommand(program: Command) {
       'Run a tournament with configurable format and player selection',
     )
     .requiredOption('-s, --scenario <id>', 'scenario ID')
-    .requiredOption(
-      '--format <format>',
-      'pairing format: swiss or round-robin',
-    )
+    .requiredOption('--format <format>', 'pairing format: swiss or round-robin')
     .option('--include <ids>', 'comma-separated submission IDs to include')
     .option('--exclude <ids>', 'comma-separated submission IDs to exclude')
     .option('--rounds <n>', 'override computed round count', Number)
@@ -198,9 +195,7 @@ async function runTournament(options: RunOptions) {
       log(`Byes: ${byeIds.join(', ')}`)
     }
 
-    log(
-      `Pairs: ${pairs.map(([a, b]) => `${a} vs ${b}`).join(', ')}`,
-    )
+    log(`Pairs: ${pairs.map(([a, b]) => `${a} vs ${b}`).join(', ')}`)
 
     // Send pairs to server
     const roundResponse = await apiFetch<CreateRoundResponse>(
