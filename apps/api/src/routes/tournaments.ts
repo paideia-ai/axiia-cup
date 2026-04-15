@@ -49,6 +49,7 @@ const startCustomSchema = z.object({
   scenarioId: z.string().min(1),
   submissionIds: z.array(z.number().int().positive()).min(2),
   totalRounds: z.number().int().positive(),
+  modelOverride: z.string().min(1).optional(),
 })
 
 const createRoundSchema = z.object({
@@ -363,6 +364,7 @@ tournamentRouter.post(
         currentRound: 0,
         totalRounds: parsed.data.totalRounds,
         pairingMode: 'manual',
+        modelOverride: parsed.data.modelOverride ?? null,
       })
       .returning()
       .get()

@@ -92,6 +92,13 @@
       "when": 1776320000000,
       "tag": "0012_tournament_pairing_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "13",
+      "when": 1776325000000,
+      "tag": "0013_tournament_model_override",
+      "breakpoints": true
     }
   ]
 }
