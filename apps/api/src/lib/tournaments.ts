@@ -893,6 +893,10 @@ export function maybeAdvanceRound(roundId: number) {
     return
   }
 
+  if (tournament.pairingMode === 'manual') {
+    return
+  }
+
   const result = advanceToNextRound(tournament.id)
 
   if (result) {

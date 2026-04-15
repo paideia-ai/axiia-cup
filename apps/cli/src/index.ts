@@ -5,6 +5,7 @@ import { registerAuthCommands } from './commands/auth'
 import { registerMonitorCommands } from './commands/monitor'
 import { registerPlaygroundCommands } from './commands/playground'
 import { registerScenarioCommands } from './commands/scenarios'
+import { registerTournamentRunCommand } from './commands/tournament-run'
 import { registerTournamentCommands } from './commands/tournaments'
 import { registerUserCommands } from './commands/users'
 
@@ -14,6 +15,7 @@ program.name('axiia').description('Axiia Cup admin CLI').version('0.1.0')
 
 registerAuthCommands(program)
 registerTournamentCommands(program)
+registerTournamentRunCommand(program)
 registerScenarioCommands(program)
 registerUserCommands(program)
 registerPlaygroundCommands(program)

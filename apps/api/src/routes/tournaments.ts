@@ -31,6 +31,7 @@ import {
   getLatestScenarioPlayers,
   getLatestScenarioPlayerPrompts,
   getLeaderboard,
+  getRoundTerminalState,
   getTournamentDetail,
   listTournaments,
   terminateTournament,
@@ -42,6 +43,16 @@ import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
 const startTournamentSchema = z.object({
   scenarioId: z.string().min(1),
   totalRounds: z.number().int().positive().optional(),
+})
+
+const startCustomSchema = z.object({
+  scenarioId: z.string().min(1),
+  submissionIds: z.array(z.number().int().positive()).min(2),
+  totalRounds: z.number().int().positive(),
+})
+
+const createRoundSchema = z.object({
+  pairs: z.array(z.tuple([z.number().int().positive(), z.number().int().positive()])).min(1),
 })
 
 const tournamentRouter = new Hono()
@@ -283,6 +294,224 @@ tournamentRouter.post(
 
       throw error
     }
+  },
+)
+
+tournamentRouter.post(
+  '/api/admin/tournaments/start-custom',
+  requireAuth,
+  requireAdmin,
+  requireWritesUnlocked,
+  async (context) => {
+    const json = await context.req.json().catch(() => null)
+    const parsed = startCustomSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return context.json({ error: 'Invalid request body' }, 400)
+    }
+
+    const scenario = db
+      .select()
+      .from(scenarios)
+      .where(eq(scenarios.id, parsed.data.scenarioId))
+      .get()
+
+    if (!scenario) {
+      return context.json({ error: 'Scenario not found' }, 404)
+    }
+
+    const existingRunning = db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(
+        and(
+          eq(tournaments.scenarioId, parsed.data.scenarioId),
+          eq(tournaments.status, 'running'),
+        ),
+      )
+      .get()
+
+    if (existingRunning) {
+      return context.json({ error: '当前场景已有进行中的比赛' }, 409)
+    }
+
+    const allPlayers = getLatestScenarioPlayers(parsed.data.scenarioId)
+    const validSubIds = new Set(allPlayers.map((p) => p.submissionId))
+
+    const invalidIds = parsed.data.submissionIds.filter(
+      (id) => !validSubIds.has(id),
+    )
+
+    if (invalidIds.length > 0) {
+      return context.json(
+        { error: `Invalid submission IDs: ${invalidIds.join(', ')}` },
+        400,
+      )
+    }
+
+    const selectedPlayers = allPlayers.filter((p) =>
+      parsed.data.submissionIds.includes(p.submissionId),
+    )
+
+    const tournament = db
+      .insert(tournaments)
+      .values({
+        scenarioId: parsed.data.scenarioId,
+        status: 'running',
+        currentRound: 0,
+        totalRounds: parsed.data.totalRounds,
+        pairingMode: 'manual',
+      })
+      .returning()
+      .get()
+
+    return context.json({
+      tournament: tournamentSchema.parse(tournament),
+      players: selectedPlayers,
+    })
+  },
+)
+
+tournamentRouter.post(
+  '/api/admin/tournaments/:id/create-round',
+  requireAuth,
+  requireAdmin,
+  requireWritesUnlocked,
+  async (context) => {
+    const tournamentId = parseId(context.req.param('id'))
+
+    if (!tournamentId) {
+      return context.json({ error: 'Invalid tournament id' }, 400)
+    }
+
+    const json = await context.req.json().catch(() => null)
+    const parsed = createRoundSchema.safeParse(json)
+
+    if (!parsed.success) {
+      return context.json({ error: 'Invalid request body' }, 400)
+    }
+
+    const tournament = db
+      .select()
+      .from(tournaments)
+      .where(eq(tournaments.id, tournamentId))
+      .get()
+
+    if (!tournament) {
+      return context.json({ error: 'Tournament not found' }, 404)
+    }
+
+    if (tournament.status !== 'running') {
+      return context.json({ error: 'Tournament is not running' }, 400)
+    }
+
+    if (tournament.pairingMode !== 'manual') {
+      return context.json(
+        { error: 'Only manual-pairing tournaments support create-round' },
+        400,
+      )
+    }
+
+    // Check current round is complete (or no rounds yet)
+    if (tournament.currentRound > 0) {
+      const currentRound = db
+        .select()
+        .from(rounds)
+        .where(
+          and(
+            eq(rounds.tournamentId, tournamentId),
+            eq(rounds.roundNumber, tournament.currentRound),
+          ),
+        )
+        .get()
+
+      if (currentRound) {
+        const state = getRoundTerminalState(currentRound.id)
+
+        if (!state.isDone) {
+          return context.json(
+            { error: 'Current round is not yet complete' },
+            400,
+          )
+        }
+
+        if (state.hasErrors) {
+          return context.json(
+            { error: 'Current round has errored matches — retry or skip them first' },
+            400,
+          )
+        }
+      }
+    }
+
+    // Validate submission IDs in pairs
+    const allSubIds = parsed.data.pairs.flat()
+    const uniqueSubIds = new Set(allSubIds)
+
+    if (uniqueSubIds.size !== allSubIds.length) {
+      return context.json(
+        { error: 'Duplicate submission IDs in pairs' },
+        400,
+      )
+    }
+
+    const foundSubs = db
+      .select({ id: submissions.id, retiredAt: submissions.retiredAt })
+      .from(submissions)
+      .where(inArray(submissions.id, [...uniqueSubIds]))
+      .all()
+
+    if (foundSubs.length !== uniqueSubIds.size) {
+      return context.json({ error: 'Some submission IDs not found' }, 400)
+    }
+
+    if (foundSubs.some((s) => s.retiredAt !== null)) {
+      return context.json(
+        { error: 'Some submissions are archived' },
+        400,
+      )
+    }
+
+    const nextRoundNumber = tournament.currentRound + 1
+
+    const { round: createdRound, matches: createdMatches } =
+      createRoundWithMatches({
+        pairs: parsed.data.pairs,
+        roundNumber: nextRoundNumber,
+        scenarioId: tournament.scenarioId,
+        tournamentId,
+      })
+
+    const updatedTournament = db
+      .update(tournaments)
+      .set({ currentRound: nextRoundNumber })
+      .where(eq(tournaments.id, tournamentId))
+      .returning()
+      .get()
+
+    // Collect player IDs from all pairs to compute byes
+    const allPlayers = getLatestScenarioPlayers(
+      tournament.scenarioId,
+      tournament.createdAt,
+    )
+    const allPlayerIds = allPlayers.map((p) => p.submissionId)
+    const byeSubmissions = extractByeSubmissionIds(allPlayerIds, parsed.data.pairs)
+
+    kickWorker()
+
+    return context.json({
+      byeSubmissions,
+      matches: createdMatches,
+      round: tournamentRoundSchema.parse({
+        byeSubmissions,
+        id: createdRound.id,
+        matches: createdMatches,
+        roundNumber: createdRound.roundNumber,
+        status: createdRound.status,
+        tournamentId: createdRound.tournamentId,
+      }),
+      tournament: tournamentSchema.parse(updatedTournament),
+    })
   },
 )
 
