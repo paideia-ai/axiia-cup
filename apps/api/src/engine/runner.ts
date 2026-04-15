@@ -2,7 +2,13 @@ import { and, eq } from 'drizzle-orm'
 import type { InfoAssignment, JudgeQA, TranscriptTurn } from '@axiia/shared'
 
 import { db } from '../db/client'
-import { matches, scenarios, submissions } from '../db/schema'
+import {
+  matches,
+  rounds,
+  scenarios,
+  submissions,
+  tournaments,
+} from '../db/schema'
 import { parseJsonField } from '../lib/json'
 import { maybeAdvanceRound, syncRoundStatus } from '../lib/tournaments'
 import { executeMatchSession } from './core'
@@ -80,14 +86,30 @@ export async function runMatch(
     null,
   )
 
+  // Check for tournament-level model override
+  const round = db
+    .select()
+    .from(rounds)
+    .where(eq(rounds.id, match.roundId))
+    .get()
+  const tournament = round
+    ? db
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.id, round.tournamentId))
+        .get()
+    : null
+  const modelA = tournament?.modelOverride ?? subA.modelA
+  const modelB = tournament?.modelOverride ?? subB.modelB
+
   try {
     const result = await executeMatchSession({
       infoAssignment: infoAssignment ?? undefined,
       judgeTranscriptA,
       judgeTranscriptB,
       matchId,
-      modelA: subA.modelA,
-      modelB: subB.modelB,
+      modelA,
+      modelB,
       onDialogueTurn: async (nextTranscript) => {
         transcript = nextTranscript
         await updateLeasedMatch(matchId, leaseToken, {

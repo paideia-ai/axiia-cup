@@ -201,6 +201,7 @@ export const tournaments = sqliteTable(
     pairingMode: text('pairing_mode', { enum: pairingModes })
       .notNull()
       .default('auto'),
+    modelOverride: text('model_override'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({

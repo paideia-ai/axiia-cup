@@ -75,6 +75,10 @@ export function registerTournamentRunCommand(program: Command) {
       Number,
       5000,
     )
+    .option(
+      '--model-override <model>',
+      'force all matches to use this model (e.g. deepseek-v3.2)',
+    )
     .option('-o, --output <path>', 'write result JSON to file')
     .action(async (options: RunOptions) => {
       await runTournament(options)
@@ -86,6 +90,7 @@ type RunOptions = {
   exclude?: string
   format: string
   include?: string
+  modelOverride?: string
   output?: string
   pollInterval: number
   retryLimit: number
@@ -132,6 +137,9 @@ async function runTournament(options: RunOptions) {
     `  ${players.map((p) => `${p.displayName} (sub:${p.submissionId})`).join(', ')}`,
   )
   log(`Rounds: ${totalRounds}`)
+  if (options.modelOverride) {
+    log(`Model override: ${options.modelOverride}`)
+  }
 
   // 3. Pre-compute round-robin schedule if needed
   const rrSchedule =
@@ -159,6 +167,9 @@ async function runTournament(options: RunOptions) {
         scenarioId: options.scenario,
         submissionIds: playerIds,
         totalRounds,
+        ...(options.modelOverride
+          ? { modelOverride: options.modelOverride }
+          : {}),
       }),
     },
     true,

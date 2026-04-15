@@ -506,6 +506,7 @@ export const tournamentSchema = z.object({
   currentRound: z.number().int().nonnegative(),
   totalRounds: z.number().int().positive(),
   pairingMode: z.enum(['auto', 'manual']).optional(),
+  modelOverride: z.string().nullable().optional(),
   createdAt: z.string(),
 })
 
