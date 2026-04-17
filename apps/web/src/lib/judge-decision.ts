@@ -74,7 +74,9 @@ function parseXmlRequests(raw: string) {
   }
 
   const requests = Object.fromEntries(
-    Array.from(requestsBlock.matchAll(/<([A-Za-z][A-Za-z0-9_]*)>([\s\S]*?)<\/\1>/g))
+    Array.from(
+      requestsBlock.matchAll(/<([A-Za-z][A-Za-z0-9_]*)>([\s\S]*?)<\/\1>/g),
+    )
       .map((match) => [match[1], trimToNull(match[2])])
       .filter(
         (entry): entry is [string, string] =>

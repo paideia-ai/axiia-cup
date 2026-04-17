@@ -177,10 +177,7 @@ async function persistLlmCall(
     responseJson: string | null
   },
 ) {
-  if (
-    !trace ||
-    (trace.matchId == null && trace.playgroundRunId == null)
-  ) {
+  if (!trace || (trace.matchId == null && trace.playgroundRunId == null)) {
     return
   }
 

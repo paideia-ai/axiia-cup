@@ -57,14 +57,17 @@ async function callSiliconFlow(body: unknown) {
     )
   }
 
-  const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
+  const response = await fetch(
+    'https://api.siliconflow.cn/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  })
+  )
 
   return (await response.json()) as ChatCompletionResponse
 }
@@ -287,9 +290,15 @@ async function main() {
   printCaseResult(`xml_prompt (${modelId})`, xmlResult)
 
   console.log('\nNotes:')
-  console.log('- SiliconFlow currently rejects forced specific function tool_choice objects.')
-  console.log('- In our live tests, json_object + reasoning could truncate assistant content even when reasoning_content was long.')
-  console.log('- Tool calls and XML prompts were both healthier in the same session, but XML is easier to make deterministic in the current engine.')
+  console.log(
+    '- SiliconFlow currently rejects forced specific function tool_choice objects.',
+  )
+  console.log(
+    '- In our live tests, json_object + reasoning could truncate assistant content even when reasoning_content was long.',
+  )
+  console.log(
+    '- Tool calls and XML prompts were both healthier in the same session, but XML is easier to make deterministic in the current engine.',
+  )
 }
 
 main().catch((error) => {

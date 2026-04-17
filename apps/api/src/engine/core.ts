@@ -191,7 +191,10 @@ export function parseExaminationStructuredResponse(
   const normalized = sanitizeStructuredResponse(raw)
 
   try {
-    return validateExaminationAnswer(JSON.parse(sanitizeJsonResponse(raw)), validInfoIds)
+    return validateExaminationAnswer(
+      JSON.parse(sanitizeJsonResponse(raw)),
+      validInfoIds,
+    )
   } catch {
     const selectedInfoId = extractXmlTag(normalized, 'selectedInfoId')
     const answer = extractXmlTag(normalized, 'answer')
