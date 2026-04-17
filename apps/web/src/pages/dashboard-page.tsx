@@ -161,8 +161,32 @@ export function DashboardPage() {
               />
             ))
           ) : recentMatches.length === 0 ? (
-            <div className="rounded-xl border border-(--border-soft) bg-white/2 px-4 py-5 text-sm text-(--foreground-subtle)">
-              暂无最近对局。
+            <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-sm">
+              <p className="font-semibold text-(--foreground)">
+                欢迎来到 AXIIA CUP
+              </p>
+              <p className="mt-2 text-(--foreground-subtle) leading-6">
+                你还没有参加过对局。
+              </p>
+              <ol className="mt-3 space-y-1 text-(--foreground-subtle) list-decimal list-inside">
+                <li>前往工坊，编写你的策略提示词</li>
+                <li>保存后等待管理员开启下一轮比赛</li>
+                <li>比赛结束后，你的战绩会显示在这里</li>
+              </ol>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  to="/scenarios"
+                  className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  前往工坊 →
+                </Link>
+                <Link
+                  to="/leaderboard"
+                  className="inline-flex items-center rounded-lg border border-(--border-soft) px-4 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/5"
+                >
+                  查看排行榜，学习他人策略 →
+                </Link>
+              </div>
             </div>
           ) : (
             recentMatches.map((match) => (

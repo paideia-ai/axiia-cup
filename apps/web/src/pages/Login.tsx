@@ -75,7 +75,7 @@ export function LoginPage() {
                   disabled={isSubmitting}
                   type="submit"
                 >
-                  {isSubmitting ? '登录中…' : '进入工坊'}
+                  {isSubmitting ? '登录中…' : '登录'}
                 </Button>
               </form>
             </CardContent>
