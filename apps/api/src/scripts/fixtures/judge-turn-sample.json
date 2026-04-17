@@ -1,0 +1,70 @@
+{
+  "scenario": {
+    "id": "sample-judge-turn",
+    "title": "商鞅变法·本地裁判回放",
+    "subject": "历史",
+    "turnCount": 4,
+    "judgeModel": "deepseek-v3.2",
+    "scorerModel": "kimi-k2.5",
+    "openingLine": "卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。",
+    "agentPromptTemplate": "你是{{roleName}}。对手是{{opponentName}}。你的隐藏信息：\n{{hiddenInfo}}\n\n你的真实/伪装请求：\n{{requests}}\n\n对手请求：\n{{opponentRequests}}\n\n总轮数：{{turnCount}}。请以朝堂辩论口吻回应。",
+    "examinationQuestionTemplate": "{{opponentName}} 的隐藏信息（{{opponentInfoIds}}）里，哪一条最像假的？",
+    "judgePrompt": "你是秦孝公。请阅读整场辩论与双方问询结果，然后以君主口吻作出裁决。\n\n辩论记录：\n{{debate}}\n\n甲方问询：\n{{examinationA}}\n\n乙方问询：\n{{examinationB}}\n\n商鞅请求：\n{{roleARequests}}\n\n甘龙请求：\n{{roleBRequests}}\n\n输出应说明：1) 是否支持变法；2) 是否批准双方各项请求；3) 一段面向群臣的裁决讲话。",
+    "scorerPrompt": "你是赛制记分器。根据以下规则，从裁判发言中提取结构化得分：\n- 若裁判明确支持变法，则 A 得 1 分；若明确维持现状，则 B 得 1 分。\n- 对每方的真实请求，每批准一项 +0.5。\n- 对每方的伪装请求，每批准一项 -0.25。\n\n随机真相分配：\n{{infoAssignment}}\n\n裁判原话：\n{{judgeOutput}}\n\n只根据裁判原话给分，不要重新裁判。",
+    "roleAName": "商鞅",
+    "roleAHiddenInfo": "[{\"id\":\"S1\",\"content\":\"商鞅已通过景监向秦孝公秘密递交变法纲要\"},{\"id\":\"S2\",\"content\":\"商鞅曾在魏国亲见李悝变法成效\"},{\"id\":\"S3\",\"content\":\"商鞅已在边邑试行军功授爵三月\"}]",
+    "roleARequests": "[{\"id\":\"SR1\",\"content\":\"请封商鞅为左庶长，主持变法\"},{\"id\":\"SR2\",\"content\":\"请擢景监为大夫\"},{\"id\":\"SR3\",\"content\":\"请赐商鞅举荐县令之权\"}]",
+    "roleBName": "甘龙",
+    "roleBHiddenInfo": "[{\"id\":\"G1\",\"content\":\"甘龙已联合宗室重臣共同抵制变法\"},{\"id\":\"G2\",\"content\":\"吴起变法后被旧贵族射杀于灵堂\"},{\"id\":\"G3\",\"content\":\"商鞅在魏国时方案曾被公叔痤否决\"}]",
+    "roleBRequests": "[{\"id\":\"GR1\",\"content\":\"请封甘龙之子为陇西郡守\"},{\"id\":\"GR2\",\"content\":\"请加太师府议政之权\"},{\"id\":\"GR3\",\"content\":\"请保世族封地食邑世代相传\"}]",
+    "falseInfoCount": 1,
+    "trueRequestCount": 1,
+    "createdAt": "2026-04-17T00:00:00.000Z"
+  },
+  "infoAssignment": {
+    "roleAFalseInfoIds": ["S2"],
+    "roleATrueRequestIds": ["SR1"],
+    "roleBFalseInfoIds": ["G2"],
+    "roleBTrueRequestIds": ["GR2"]
+  },
+  "transcript": [
+    {
+      "speaker": "a",
+      "role": "商鞅",
+      "content": "邻国竞相整饬法度，若秦国仍循旧章，终将坐失强国之机。臣请以法一民、以赏战功，使国有常法、军有锐气。"
+    },
+    {
+      "speaker": "b",
+      "role": "甘龙",
+      "content": "祖宗之法所以安秦，骤然更张，只会使宗室贵族离心。若朝廷根基先乱，再好的新法也无从施行。"
+    },
+    {
+      "speaker": "a",
+      "role": "商鞅",
+      "content": "变法并非轻弃根基，而是剪除积弊。若惧人言而不敢动，则外患日逼、国势日衰，此非保国之道。"
+    },
+    {
+      "speaker": "b",
+      "role": "甘龙",
+      "content": "治国先治心。若法令朝出夕改、官民无所适从，则怨气先起于内廷，何谈御外？"
+    }
+  ],
+  "judgeTranscriptA": [
+    {
+      "round": 1,
+      "question": "甘龙的隐藏信息（G1/G2/G3）里，哪一条最像假的？",
+      "answer": "臣疑 G2 多半借古人惨祸以自危言。",
+      "selectedInfoId": "G2",
+      "isCorrect": true
+    }
+  ],
+  "judgeTranscriptB": [
+    {
+      "round": 1,
+      "question": "商鞅的隐藏信息（S1/S2/S3）里，哪一条最像假的？",
+      "answer": "臣以为 S2 近于借他国旧事为己张势。",
+      "selectedInfoId": "S2",
+      "isCorrect": true
+    }
+  ]
+}

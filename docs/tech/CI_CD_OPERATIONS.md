@@ -12,6 +12,17 @@ It is the canonical reference for:
 - production host topology
 - secret/config storage locations
 
+Release path at a glance:
+
+```text
+GitHub PR -> merge to master
+  -> GitHub Actions build.yml
+  -> build + push api/web images to Aliyun ACR
+  -> release/* tag pushes deploy.yml
+  -> deploy webhook on cup-worker
+  -> docker compose updates prod stack on cup-worker.isofucius.cn
+```
+
 For first-time server bootstrap and manual Docker Compose operations, also see
 [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md).
 

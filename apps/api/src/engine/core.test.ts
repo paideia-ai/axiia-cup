@@ -5,6 +5,9 @@ import type { ScenarioRecord } from '../db/schema'
 process.env.SILICONFLOW_API_KEY = 'test-siliconflow-api-key'
 
 let sanitizeJsonResponse: (typeof import('./core'))['sanitizeJsonResponse']
+let getPreferredStructuredOutputMode: (typeof import('./core'))['getPreferredStructuredOutputMode']
+let parseExaminationStructuredResponse: (typeof import('./core'))['parseExaminationStructuredResponse']
+let parseScorerStructuredResponse: (typeof import('./core'))['parseScorerStructuredResponse']
 let buildAgentSystemMessage: (typeof import('./core'))['buildAgentSystemMessage']
 let buildAgentRuntimeSystemPrompt: (typeof import('./core'))['buildAgentRuntimeSystemPrompt']
 let buildJudgePrompt: (typeof import('./core'))['buildJudgePrompt']
@@ -15,6 +18,9 @@ let validateExaminationAnswer: (typeof import('./core'))['validateExaminationAns
 beforeAll(async () => {
   const core = await import('./core')
   sanitizeJsonResponse = core.sanitizeJsonResponse
+  getPreferredStructuredOutputMode = core.getPreferredStructuredOutputMode
+  parseExaminationStructuredResponse = core.parseExaminationStructuredResponse
+  parseScorerStructuredResponse = core.parseScorerStructuredResponse
   buildAgentSystemMessage = core.buildAgentSystemMessage
   buildAgentRuntimeSystemPrompt = core.buildAgentRuntimeSystemPrompt
   buildJudgePrompt = core.buildJudgePrompt
@@ -88,6 +94,73 @@ describe('sanitizeJsonResponse', () => {
     expect(sanitizeJsonResponse('  \n\t {"winner":"a"} \n\n  ')).toBe(
       '{"winner":"a"}',
     )
+  })
+})
+
+describe('getPreferredStructuredOutputMode', () => {
+  it('uses xml for siliconflow models', () => {
+    expect(getPreferredStructuredOutputMode('deepseek-v3.2')).toBe('xml')
+    expect(getPreferredStructuredOutputMode('kimi-k2.5')).toBe('xml')
+  })
+
+  it('uses json for openai models', () => {
+    expect(getPreferredStructuredOutputMode('gpt-5.4')).toBe('json')
+  })
+
+  it('uses xml for anthropic models', () => {
+    expect(getPreferredStructuredOutputMode('claude-sonnet-4-5')).toBe('xml')
+  })
+})
+
+describe('parseExaminationStructuredResponse', () => {
+  it('parses examination JSON responses', () => {
+    expect(
+      parseExaminationStructuredResponse(
+        '{"selectedInfoId":"G2","answer":"此言不实。"}',
+        ['G1', 'G2', 'G3'],
+      ),
+    ).toEqual({
+      selectedInfoId: 'G2',
+      answer: '此言不实。',
+    })
+  })
+
+  it('parses examination XML responses', () => {
+    expect(
+      parseExaminationStructuredResponse(
+        '<result><selectedInfoId>G2</selectedInfoId><answer>此言不实。</answer></result>',
+        ['G1', 'G2', 'G3'],
+      ),
+    ).toEqual({
+      selectedInfoId: 'G2',
+      answer: '此言不实。',
+    })
+  })
+})
+
+describe('parseScorerStructuredResponse', () => {
+  it('parses scorer JSON responses', () => {
+    expect(
+      parseScorerStructuredResponse(
+        '{"scoreA":1.5,"scoreB":0.5,"reasoning":"A更充分。"}',
+      ),
+    ).toEqual({
+      scoreA: 1.5,
+      scoreB: 0.5,
+      reasoning: 'A更充分。',
+    })
+  })
+
+  it('parses scorer XML responses', () => {
+    expect(
+      parseScorerStructuredResponse(
+        '<result><scoreA>1.5</scoreA><scoreB>0.5</scoreB><reasoning>A更充分。</reasoning></result>',
+      ),
+    ).toEqual({
+      scoreA: 1.5,
+      scoreB: 0.5,
+      reasoning: 'A更充分。',
+    })
   })
 })
 

@@ -30,7 +30,7 @@ function trimToNull(value: string | null | undefined) {
 }
 
 function stripMarkdownCodeFence(raw: string) {
-  const fencedMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  const fencedMatch = raw.match(/```(?:json|xml)?\s*([\s\S]*?)\s*```/i)
 
   return fencedMatch?.[1]?.trim() ?? raw.trim()
 }
@@ -45,11 +45,59 @@ function looksLikeStructuredJson(raw: string) {
   )
 }
 
+function looksLikeStructuredXml(raw: string) {
+  return (
+    raw.startsWith('<') ||
+    raw.includes('<judgment>') ||
+    raw.includes('<requests>') ||
+    raw.includes('<speech>')
+  )
+}
+
 function parseJsonCandidate(raw: string) {
   try {
     return JSON.parse(raw) as unknown
   } catch {
     return null
+  }
+}
+
+function extractXmlTag(raw: string, tag: string) {
+  const match = raw.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i'))
+  return trimToNull(match?.[1])
+}
+
+function parseXmlRequests(raw: string) {
+  const requestsBlock = extractXmlTag(raw, 'requests')
+  if (!requestsBlock) {
+    return {}
+  }
+
+  const requests = Object.fromEntries(
+    Array.from(requestsBlock.matchAll(/<([A-Za-z][A-Za-z0-9_]*)>([\s\S]*?)<\/\1>/g))
+      .map((match) => [match[1], trimToNull(match[2])])
+      .filter(
+        (entry): entry is [string, string] =>
+          typeof entry[0] === 'string' && typeof entry[1] === 'string',
+      ),
+  )
+
+  return requests
+}
+
+function parseXmlStructuredDecision(raw: string) {
+  const judgment = extractXmlTag(raw, 'judgment')
+  const speech = extractXmlTag(raw, 'speech')
+  const requests = parseXmlRequests(raw)
+
+  if (!judgment && !speech && Object.keys(requests).length === 0) {
+    return null
+  }
+
+  return {
+    judgment,
+    requests,
+    speech,
   }
 }
 
@@ -97,7 +145,19 @@ export function parseJudgeDecision(
     }
   }
 
-  if (looksLikeStructuredJson(raw)) {
+  const parsedXml = parseXmlStructuredDecision(normalized)
+
+  if (parsedXml) {
+    return {
+      kind: 'structured',
+      judgment: parsedXml.judgment,
+      raw,
+      requests: parsedXml.requests,
+      speech: parsedXml.speech,
+    }
+  }
+
+  if (looksLikeStructuredJson(raw) || looksLikeStructuredXml(raw)) {
     return { kind: 'unparsed', raw }
   }
 

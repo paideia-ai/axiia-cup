@@ -29,6 +29,23 @@ bun run db:seed:demo
 
 Avoid maintaining a separate `apps/api/.env`, or the API and workspace commands can drift.
 
+## Local judge-turn repro
+
+To reproduce the SiliconFlow structured-output behavior and run a sample judge turn locally:
+
+```bash
+bun run --filter @axiia/api judge-turn:repro:siliconflow
+bun run --filter @axiia/api judge-turn:local
+```
+
+The local judge-turn script reads `apps/api/src/scripts/fixtures/judge-turn-sample.json` by default.
+You can also pass your own input file and optional model overrides:
+
+```bash
+bun run --filter @axiia/api judge-turn:local -- ./path/to/input.json
+bun run --filter @axiia/api judge-turn:local -- ./path/to/input.json --judge-model deepseek-v3.2 --scorer-model kimi-k2.5
+```
+
 ## CLI
 
 The admin CLI lives in `apps/cli`.

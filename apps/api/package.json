@@ -11,6 +11,8 @@
     "db:seed:demo": "bun run ./src/db/demo-seed.ts",
     "start": "bun ./dist/index.js",
     "test": "bun test",
+    "judge-turn:local": "bun run ./src/scripts/run-judge-turn-local.ts",
+    "judge-turn:repro:siliconflow": "bun run ./src/scripts/repro-siliconflow-structured-output.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "oxlint src"
   },

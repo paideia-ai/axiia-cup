@@ -56,6 +56,61 @@ describe('parseJudgeDecision', () => {
     })
   })
 
+  it('parses structured judge XML', () => {
+    const result = parseJudgeDecision(`
+      <result>
+        <judgment>推行变法</judgment>
+        <requests>
+          <SR1>同意</SR1>
+          <GR2>不同意</GR2>
+        </requests>
+        <speech>此议可行。</speech>
+      </result>
+    `)
+
+    expect(result).toEqual({
+      kind: 'structured',
+      judgment: '推行变法',
+      raw: `
+      <result>
+        <judgment>推行变法</judgment>
+        <requests>
+          <SR1>同意</SR1>
+          <GR2>不同意</GR2>
+        </requests>
+        <speech>此议可行。</speech>
+      </result>
+    `.trim(),
+      requests: {
+        GR2: '不同意',
+        SR1: '同意',
+      },
+      speech: '此议可行。',
+    })
+  })
+
+  it('parses fenced XML output', () => {
+    const result = parseJudgeDecision(`\`\`\`xml
+    <result>
+      <judgment>维持现状</judgment>
+      <speech>不可轻动。</speech>
+    </result>
+    \`\`\``)
+
+    expect(result).toEqual({
+      kind: 'structured',
+      judgment: '维持现状',
+      raw: `\`\`\`xml
+    <result>
+      <judgment>维持现状</judgment>
+      <speech>不可轻动。</speech>
+    </result>
+    \`\`\``,
+      requests: {},
+      speech: '不可轻动。',
+    })
+  })
+
   it('treats plain text as speech-only output', () => {
     expect(parseJudgeDecision('朕意已决，今日不议此事。')).toEqual({
       kind: 'speech',

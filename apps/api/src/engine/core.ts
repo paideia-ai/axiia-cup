@@ -1,6 +1,7 @@
 import {
   evaluationModelIdSchema,
   examinationAnswerSchema,
+  getModelDefinition,
   hiddenInfoItemSchema,
   infoAssignmentSchema,
   judgeQASchema,
@@ -149,6 +150,86 @@ export function sanitizeJsonResponse(raw: string) {
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
 
   return fenced ? fenced[1].trim() : trimmed
+}
+
+type StructuredOutputMode = 'json' | 'xml'
+
+function sanitizeStructuredResponse(raw: string) {
+  const trimmed = raw.trim()
+  const fenced = trimmed.match(/```(?:json|xml)?\s*([\s\S]*?)\s*```/i)
+
+  return fenced ? fenced[1].trim() : trimmed
+}
+
+function extractXmlTag(raw: string, tag: string) {
+  const match = raw.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'i'))
+  return match?.[1]?.trim() ?? null
+}
+
+function parseXmlNumberTag(raw: string, tag: string) {
+  const value = extractXmlTag(raw, tag)
+  if (!value) return null
+
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+export function getPreferredStructuredOutputMode(
+  model: SubmissionModelId | EvaluationModelId,
+): StructuredOutputMode {
+  // SiliconFlow reasoning models can truncate assistant content when JSON mode
+  // is combined with long reasoning, and our Anthropic path does not enforce a
+  // provider-native JSON mode today. Prompted XML is the most reliable common
+  // denominator outside OpenAI's native structured-output path.
+  return getModelDefinition(model).provider === 'openai' ? 'json' : 'xml'
+}
+
+export function parseExaminationStructuredResponse(
+  raw: string,
+  validInfoIds: string[],
+) {
+  const normalized = sanitizeStructuredResponse(raw)
+
+  try {
+    return validateExaminationAnswer(JSON.parse(sanitizeJsonResponse(raw)), validInfoIds)
+  } catch {
+    const selectedInfoId = extractXmlTag(normalized, 'selectedInfoId')
+    const answer = extractXmlTag(normalized, 'answer')
+
+    if (!selectedInfoId || !answer) {
+      throw new Error('Failed to parse examination structured response')
+    }
+
+    return validateExaminationAnswer(
+      {
+        selectedInfoId,
+        answer,
+      },
+      validInfoIds,
+    )
+  }
+}
+
+export function parseScorerStructuredResponse(raw: string) {
+  const normalized = sanitizeStructuredResponse(raw)
+
+  try {
+    return scorerOutputSchema.parse(JSON.parse(sanitizeJsonResponse(raw)))
+  } catch {
+    const scoreA = parseXmlNumberTag(normalized, 'scoreA')
+    const scoreB = parseXmlNumberTag(normalized, 'scoreB')
+    const reasoning = extractXmlTag(normalized, 'reasoning')
+
+    if (scoreA == null || scoreB == null || reasoning == null) {
+      throw new Error('Failed to parse scorer structured response')
+    }
+
+    return scorerOutputSchema.parse({
+      scoreA,
+      scoreB,
+      reasoning,
+    })
+  }
 }
 
 // ── Helpers: parse JSON fields from scenario ────────────────────────────────
@@ -434,7 +515,24 @@ export function buildExaminationQuestion(
   return interpolateTemplate(scenario.examinationQuestionTemplate, vars)
 }
 
-function buildExaminationPrompt(question: string, validIds: string[]) {
+function buildExaminationPrompt(
+  question: string,
+  validIds: string[],
+  mode: StructuredOutputMode,
+) {
+  if (mode === 'xml') {
+    return [
+      question,
+      '',
+      '请只输出 XML，不要输出 JSON、Markdown 或额外说明：',
+      '<result>',
+      '  <selectedInfoId>从给定编号中选 1 条</selectedInfoId>',
+      '  <answer>以当前角色口吻，用中文简要说明理由</answer>',
+      '</result>',
+      `selectedInfoId 必须是以下编号之一：${validIds.join(' / ')}`,
+    ].join('\n')
+  }
+
   return [
     question,
     '',
@@ -513,6 +611,7 @@ async function getExaminationAnswer(
   signal?: AbortSignal,
 ): Promise<JudgeQA> {
   const validIds = getExaminationValidIds(scenario, roleSide)
+  const outputMode = getPreferredStructuredOutputMode(model)
   const rawAnswer = await withRetry(async (attempt) => {
     const { systemPrompt, messages } = buildDialogueContext(
       transcript,
@@ -524,11 +623,11 @@ async function getExaminationAnswer(
 
     messages.push({
       role: 'user',
-      content: buildExaminationPrompt(question, validIds),
+      content: buildExaminationPrompt(question, validIds, outputMode),
     })
 
     const response = await chatCompletion({
-      jsonMode: true,
+      jsonMode: outputMode === 'json',
       messages,
       model,
       systemPrompt,
@@ -543,10 +642,7 @@ async function getExaminationAnswer(
       },
     })
 
-    return validateExaminationAnswer(
-      JSON.parse(sanitizeJsonResponse(response)),
-      validIds,
-    )
+    return parseExaminationStructuredResponse(response, validIds)
   }, signal)
 
   return judgeQASchema.parse({
@@ -705,6 +801,22 @@ function buildScorerPrompt(
   return interpolateTemplate(scenario.scorerPrompt, vars)
 }
 
+function buildScorerUserMessage(mode: StructuredOutputMode) {
+  if (mode === 'xml') {
+    return [
+      '请根据以上信息计算双方得分。',
+      '请只输出 XML，不要输出 JSON、Markdown 或额外说明：',
+      '<result>',
+      '  <scoreA>数字</scoreA>',
+      '  <scoreB>数字</scoreB>',
+      '  <reasoning>中文说明</reasoning>',
+      '</result>',
+    ].join('\n')
+  }
+
+  return '请根据以上信息计算双方得分。'
+}
+
 async function getScoreFromScorer(
   scenario: ScenarioRecord,
   assignment: InfoAssignment,
@@ -737,11 +849,17 @@ async function getScoreFromScorer(
   const scorerModel = parseEvaluationModelId(
     scenario.scorerModel ?? DEFAULT_SCORER_MODEL,
   )
+  const outputMode = getPreferredStructuredOutputMode(scorerModel)
 
   const result = await withRetry(async (attempt) => {
     const response = await chatCompletion({
-      jsonMode: true,
-      messages: [{ role: 'user', content: '请根据以上信息计算双方得分。' }],
+      jsonMode: outputMode === 'json',
+      messages: [
+        {
+          role: 'user',
+          content: buildScorerUserMessage(outputMode),
+        },
+      ],
       model: scorerModel,
       signal,
       systemPrompt: scorerPrompt,
@@ -755,7 +873,7 @@ async function getScoreFromScorer(
       },
     })
 
-    return scorerOutputSchema.parse(JSON.parse(sanitizeJsonResponse(response)))
+    return parseScorerStructuredResponse(response)
   }, signal)
 
   const winner =
@@ -770,6 +888,63 @@ async function getScoreFromScorer(
     scoreB: result.scoreB,
     reasoning: result.reasoning,
     winner: matchWinnerSchema.parse(winner),
+  }
+}
+
+export async function executeJudgeTurn(params: {
+  infoAssignment: InfoAssignment
+  judgeTranscriptA: JudgeQA[]
+  judgeTranscriptB: JudgeQA[]
+  matchId?: number
+  playgroundRunId?: number
+  scenario: ScenarioRecord
+  signal?: AbortSignal
+  transcript: TranscriptTurn[]
+}) {
+  const transcript = params.transcript.map((item) =>
+    transcriptTurnSchema.parse(item),
+  )
+  const assignment = infoAssignmentSchema.parse(params.infoAssignment)
+  const judgeTranscriptA = params.judgeTranscriptA.map((item) =>
+    judgeQASchema.parse(item),
+  )
+  const judgeTranscriptB = params.judgeTranscriptB.map((item) =>
+    judgeQASchema.parse(item),
+  )
+
+  const judgeDecision = await getJudgeDecision(
+    params.scenario,
+    assignment,
+    transcript,
+    judgeTranscriptA,
+    judgeTranscriptB,
+    {
+      matchId: params.matchId,
+      playgroundRunId: params.playgroundRunId,
+    },
+    params.signal,
+  )
+
+  const { scoreA, scoreB, reasoning, winner } = await getScoreFromScorer(
+    params.scenario,
+    assignment,
+    judgeDecision,
+    transcript,
+    judgeTranscriptA,
+    judgeTranscriptB,
+    {
+      matchId: params.matchId,
+      playgroundRunId: params.playgroundRunId,
+    },
+    params.signal,
+  )
+
+  return {
+    judgeDecision,
+    reasoning,
+    scoreA,
+    scoreB,
+    winner,
   }
 }
 
