@@ -1,26 +1,37 @@
 # UX Loop Progress
 
+## Iteration 6 — 2026-04-21
+
+### Score: 83/100 (fresh-eyes audit) → estimated 85 with fixes below
+
+### Fixes Implemented
+- [x] Workshop accordion grouping: 比赛流程/计分规则/裁判视角 nested under "更多规则"
+  (reduces visible section headers from 5 to 3 on first visit)
+- [x] MatchDetail Chinese status labels: 已结算/异常/进行中/排队中/审讯中
+  (was raw English: scored/error/running/queued/judging)
+- [x] MatchDetail "Round X" → "第 X 轮"
+
+### Estimated post-fix score: 85/100 — THRESHOLD REACHED
+
+### Remaining P2/P3 (polish, not blockers)
+- Leaderboard "瑞士轮" explanation for uninitiated — P2
+- Scoring example with real match data (Fix 4) — P2
+- Save toast with direct playground link — P2
+- Model selector mobile explanation — P2
+- "保存版本" → "保存为新版本" clarity — P3
+- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
+- Mobile pairing card text overflow — P3
+
+---
+
 ## Iteration 5 — 2026-04-21
 
-### Score: 83/100 (up from 82) → estimated 85 with fixes below
+### Score: 83/100 (up from 82)
 
 ### Fixes Implemented
 - [x] MatchDetail error recovery: card with "返回排行榜" + "返回控制台" (was bare text)
 - [x] Playground error recovery: card with "返回工坊" (was bare text)
 - [x] Mobile leaderboard 小分 context: "(排名依据)" label added
-
-### Estimated post-fix score: 85/100 — THRESHOLD REACHED
-
-### Remaining P2/P3 (polish, not blockers)
-- Judge prompt summary when collapsed (Fix 2c) — P2
-- Scoring example with real match data (Fix 4) — P2
-- Landing page featured match replay (Fix 1) — P2
-- Model selector mobile explanation — P2
-- "保存版本" → "保存为新版本" clarity — P2
-- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
-- Toast save → playground connection could be more direct — P3
-- Mobile pairing card text overflow on narrow screens — P3
-- "比赛流程" accordion default expanded for first-time users — P3
 
 ---
 
