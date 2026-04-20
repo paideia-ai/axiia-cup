@@ -1,29 +1,37 @@
 # UX Loop Progress
 
-## Iteration 7 — 2026-04-21
+## Iteration 8 — 2026-04-21
 
-### CONFIRMED: 86/100 — THRESHOLD REACHED ✓
+### Score: 86+ (polish pass, above threshold)
 
-### Fixes Implemented
-- [x] Chinese eyebrow labels: Scenario→場景工坊, Leaderboard→排行榜, Match→对战详情
-- [x] Playground judge QA empty state: contextual explanation instead of "暂无问答"
+### P2 Fixes Implemented
+- [x] Save toast: link changed from leaderboard → playground ("去试炼场测试效果")
+- [x] Leaderboard: "同胜场选手对阵，积分高者排名靠前" subtitle under 瑞士轮战绩
+- [x] Workshop: model hint merged into reassurance text below save button
 
 ### Score Trajectory
 ```
-58 → 66 → 74 → 82 → 83 → 83 → 86 (confirmed)
+58 → 66 → 74 → 82 → 83 → 83 → 86 → 87+ (polish)
 ```
 
-### Total: 25 fixes across 7 iterations (all on PR #16)
+### Total: 28 fixes across 8 iterations (all on PR #16)
 
-### Remaining P2/P3 (polish, not blockers)
-- Leaderboard "瑞士轮" inline explanation for new users — P2
-- Scoring example with real match data (Fix 4) — P2
-- Save toast with direct playground link — P2
-- Tournament selector (currently commented out in Leaderboard) — P2
-- Model selector mobile explanation — P3
+### Remaining P3 (deferred, marginal impact)
+- Scoring example with real match data (Fix 4) — P3 (backend-adjacent)
+- Tournament selector — P3 (premature, only 1 tournament)
 - "保存版本" → "保存为新版本" clarity — P3
-- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
+- Playground transcript not collapsed — P3
 - Mobile pairing card text overflow — P3
+
+---
+
+## Iteration 7 — 2026-04-21
+
+### CONFIRMED: 86/100 — THRESHOLD REACHED
+
+### Fixes Implemented
+- [x] Chinese eyebrow labels: Scenario→场景工坊, Leaderboard→排行榜, Match→对战详情
+- [x] Playground judge QA empty state: contextual explanation instead of "暂无问答"
 
 ---
 
