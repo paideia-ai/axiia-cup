@@ -256,7 +256,7 @@ export function MatchDetailPage() {
           <p className="page-eyebrow">Match</p>
           <h1 className="page-title">对战结果 #{match.id}</h1>
           <p className="page-subtitle">
-            Round {match.roundNumber} · {playerALabel} vs {playerBLabel}
+            第 {match.roundNumber} 轮 · {playerALabel} vs {playerBLabel}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -269,7 +269,13 @@ export function MatchDetailPage() {
                   : 'info'
             }
           >
-            {match.status}
+            {{
+              error: '异常',
+              judging: '审讯中',
+              queued: '排队中',
+              running: '进行中',
+              scored: '已结算',
+            }[match.status] ?? match.status}
           </Badge>
           {user?.isAdmin && match.status === 'error' ? (
             <Button

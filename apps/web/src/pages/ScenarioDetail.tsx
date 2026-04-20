@@ -419,78 +419,82 @@ export function ScenarioDetailPage() {
                     </div>
                   </AccordionItem>
 
-                  <AccordionItem value="flow" title="比赛流程">
-                    <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          对话阶段
-                        </span>
-                        ：双方进行 {scenario.turnCount}{' '}
-                        轮对话，各自根据策略提示词行动
-                      </li>
-                      {scenario.examinationQuestionTemplate ? (
-                        <li>
-                          <span className="font-medium text-(--foreground)">
-                            问询阶段
-                          </span>
-                          ：裁判分别向双方提问，双方独立作答（互不可见）
-                        </li>
-                      ) : null}
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          裁决阶段
-                        </span>
-                        ：裁判综合辩论内容做出最终裁决
-                      </li>
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          计分阶段
-                        </span>
-                        ：系统根据裁决结果计算双方得分，判定胜负
-                      </li>
-                    </ol>
-                  </AccordionItem>
-
-                  {showScoringRules ? (
-                    <AccordionItem value="score-rules" title="计分规则">
-                      <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
-                        <p className="text-[11px] text-(--foreground-muted)">
-                          每局双方独立计分，得分高者胜。
-                        </p>
-                        <div className="space-y-2">
-                          {scoringRuleItems.map((rule) => (
-                            <div
-                              key={rule.title}
-                              className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
-                            >
-                              <div className="min-w-0 space-y-0.5">
-                                <p className="text-xs font-medium text-(--foreground)">
-                                  {rule.title}
-                                </p>
-                                <p className="text-[11px] text-(--foreground-muted)">
-                                  {rule.detail}
-                                </p>
-                              </div>
-                              <span
-                                className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
-                              >
-                                {rule.score}
+                  <AccordionItem value="more-rules" title="更多规则">
+                    <Accordion multiple>
+                      <AccordionItem value="flow" title="比赛流程">
+                        <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              对话阶段
+                            </span>
+                            ：双方进行 {scenario.turnCount}{' '}
+                            轮对话，各自根据策略提示词行动
+                          </li>
+                          {scenario.examinationQuestionTemplate ? (
+                            <li>
+                              <span className="font-medium text-(--foreground)">
+                                问询阶段
                               </span>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-[11px] text-(--foreground-muted)">
-                          假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
-                          0.75 分。
-                        </p>
-                      </div>
-                    </AccordionItem>
-                  ) : null}
+                              ：裁判分别向双方提问，双方独立作答（互不可见）
+                            </li>
+                          ) : null}
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              裁决阶段
+                            </span>
+                            ：裁判综合辩论内容做出最终裁决
+                          </li>
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              计分阶段
+                            </span>
+                            ：系统根据裁决结果计算双方得分，判定胜负
+                          </li>
+                        </ol>
+                      </AccordionItem>
 
-                  <AccordionItem value="judge" title="裁判的视角与判决逻辑">
-                    <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
-                      {scenario.judgePrompt}
-                    </p>
+                      {showScoringRules ? (
+                        <AccordionItem value="score-rules" title="计分规则">
+                          <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              每局双方独立计分，得分高者胜。
+                            </p>
+                            <div className="space-y-2">
+                              {scoringRuleItems.map((rule) => (
+                                <div
+                                  key={rule.title}
+                                  className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
+                                >
+                                  <div className="min-w-0 space-y-0.5">
+                                    <p className="text-xs font-medium text-(--foreground)">
+                                      {rule.title}
+                                    </p>
+                                    <p className="text-[11px] text-(--foreground-muted)">
+                                      {rule.detail}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+                                  >
+                                    {rule.score}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
+                              0.75 分。
+                            </p>
+                          </div>
+                        </AccordionItem>
+                      ) : null}
+
+                      <AccordionItem value="judge" title="裁判的视角与判决逻辑">
+                        <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                          {scenario.judgePrompt}
+                        </p>
+                      </AccordionItem>
+                    </Accordion>
                   </AccordionItem>
                 </Accordion>
               </CardContent>
