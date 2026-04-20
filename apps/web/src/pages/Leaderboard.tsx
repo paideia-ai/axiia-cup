@@ -250,7 +250,12 @@ export function LeaderboardPage() {
                   <th className="pb-3 pr-6">
                     {scenario?.roleBName ?? 'B'} 胜 / 负
                   </th>
-                  <th className="pb-3 pr-4">Buchholz</th>
+                  <th
+                    className="pb-3 pr-4"
+                    title="所有对局得分总和，用于同胜场排名区分"
+                  >
+                    小分
+                  </th>
                   <th className="pb-3">胜率</th>
                 </tr>
               </thead>

@@ -7,7 +7,7 @@ import {
 } from '@axiia/shared'
 import { FlaskConical } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
@@ -263,7 +263,7 @@ export function ScenarioDetailPage() {
 
   useEffect(() => {
     if (!toast) return
-    const timer = window.setTimeout(() => setToast(null), 3000)
+    const timer = window.setTimeout(() => setToast(null), 5000)
     return () => window.clearTimeout(timer)
   }, [toast])
 
@@ -289,7 +289,9 @@ export function ScenarioDetailPage() {
       const created = await createSubmission(parsed.data)
       const history = await getMySubmissions(scenarioId)
       setSubmissions(history)
-      setToast(`v${created.version} 已保存`)
+      setToast(
+        `v${created.version} 已保存 · 可去排行榜查看往期对局，学习优秀策略`,
+      )
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '保存失败',
@@ -324,7 +326,14 @@ export function ScenarioDetailPage() {
       {toast ? (
         <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
           <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
-          {toast}
+          <span>{toast}</span>
+          <Link
+            to="/leaderboard"
+            className="shrink-0 text-xs font-medium text-(--accent) hover:underline"
+            onClick={() => setToast(null)}
+          >
+            排行榜 →
+          </Link>
         </div>
       ) : null}
 
@@ -350,16 +359,7 @@ export function ScenarioDetailPage() {
           <ScrollArea className="h-full">
             <Card>
               <CardContent className="space-y-3">
-                <Accordion
-                  multiple
-                  defaultValue={[
-                    'roles',
-                    'scoring',
-                    'flow',
-                    'score-rules',
-                    'judge',
-                  ]}
-                >
+                <Accordion multiple defaultValue={['roles']}>
                   <AccordionItem value="roles" title="角色详情">
                     <div className="space-y-3">
                       <RoleCard
@@ -511,6 +511,12 @@ export function ScenarioDetailPage() {
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSave}>
+                <p className="text-xs text-(--foreground-muted) leading-5">
+                  你需要同时编写{scenario.roleAName}和{scenario.roleBName}
+                  的策略。比赛时你的{scenario.roleAName}会对阵别人的
+                  {scenario.roleBName}，你的{scenario.roleBName}会对阵别人的
+                  {scenario.roleAName}。
+                </p>
                 <Tabs
                   value={selectedRoleTab}
                   onValueChange={(value) =>
@@ -540,7 +546,7 @@ export function ScenarioDetailPage() {
                         className="min-h-55"
                         maxLength={1000}
                         onChange={(event) => setPromptA(event.target.value)}
-                        placeholder={`为 ${scenario.roleAName} 编写策略提示词…`}
+                        placeholder={`例如：在辩论中强调变法对军事力量的具体提升，用历史战例作为论据…`}
                         value={promptA}
                       />
                       <p
@@ -568,7 +574,7 @@ export function ScenarioDetailPage() {
                         className="min-h-55"
                         maxLength={1000}
                         onChange={(event) => setPromptB(event.target.value)}
-                        placeholder={`为 ${scenario.roleBName} 编写策略提示词…`}
+                        placeholder={`例如：强调祖制的稳定性，质疑对手方案的可行性和成本…`}
                         value={promptB}
                       />
                       <p
@@ -582,7 +588,9 @@ export function ScenarioDetailPage() {
 
                 <div className="flex flex-col justify-center items-center gap-4 lg:flex-row lg:items-end">
                   <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
-                    <span>{scenario.roleAName} 模型</span>
+                    <span title="模型影响 AI 的表达风格和推理能力">
+                      {scenario.roleAName} 模型
+                    </span>
                     <Select
                       value={modelA}
                       onValueChange={(value) => {
@@ -599,7 +607,9 @@ export function ScenarioDetailPage() {
                     </Select>
                   </label>
                   <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
-                    <span>{scenario.roleBName} 模型</span>
+                    <span title="模型影响 AI 的表达风格和推理能力">
+                      {scenario.roleBName} 模型
+                    </span>
                     <Select
                       value={modelB}
                       onValueChange={(value) => {
@@ -619,6 +629,9 @@ export function ScenarioDetailPage() {
                     {isSubmitting ? '保存中…' : '保存版本'}
                   </Button>
                 </div>
+                <p className="text-center text-[11px] text-(--foreground-muted)">
+                  你可以随时修改，比赛前自动使用最新版本。
+                </p>
               </form>
             </CardContent>
           </Card>
