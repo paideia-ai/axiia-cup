@@ -1368,10 +1368,42 @@ export function PlaygroundPage() {
             <RunResult run={visibleRun} scenario={scenario} />
           ) : (
             <Card>
-              <CardContent className="flex items-center justify-center py-24">
-                <p className="text-sm text-(--foreground-subtle)">
-                  点击「运行对战」开始一次新的试炼场测试。
+              <CardContent className="py-12 px-6 text-center">
+                <p className="text-base font-semibold text-(--foreground)">
+                  试炼场 — 安全测试你的策略
                 </p>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-(--foreground-subtle)">
+                  你的 AI 会和对手进行一场完整辩论（约 2
+                  分钟），结果不计入正式排名，可以放心反复测试。
+                </p>
+                <div className="mt-6">
+                  <Button
+                    disabled={
+                      isSubmissionRetired ||
+                      isRunning ||
+                      isInterrupting ||
+                      (opponentMode === 'preset' && !selectedPresetId)
+                    }
+                    onClick={handleRun}
+                  >
+                    运行对战
+                  </Button>
+                </div>
+                <div className="mx-auto mt-6 max-w-sm text-left text-xs leading-5 text-(--foreground-muted)">
+                  <p>
+                    <span className="font-medium text-(--foreground-subtle)">
+                      自己对打
+                    </span>{' '}
+                    — 你的{scenario.roleAName} vs 你的
+                    {scenario.roleBName}
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-medium text-(--foreground-subtle)">
+                      预设对手
+                    </span>{' '}
+                    — 和官方预设的策略对战
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}

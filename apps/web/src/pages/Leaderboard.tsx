@@ -249,34 +249,13 @@ export function LeaderboardPage() {
               </div>
             </div>
           ) : (
-            <table className="min-w-full text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-[0.14em] text-(--foreground-muted)">
-                <tr className="border-b border-(--border-soft)">
-                  <th className="pb-3 pr-6">排名</th>
-                  <th className="pb-3 pr-6">选手</th>
-                  <th className="pb-3 pr-6">模型</th>
-                  <th className="pb-3 pr-4">总胜</th>
-                  <th className="pb-3 pr-4">总负</th>
-                  <th className="pb-3 pr-6">
-                    {scenario?.roleAName ?? 'A'} 胜 / 负
-                  </th>
-                  <th className="pb-3 pr-6">
-                    {scenario?.roleBName ?? 'B'} 胜 / 负
-                  </th>
-                  <th
-                    className="pb-3 pr-4"
-                    title="得分总和 · 同胜场时小分高者排名靠前"
-                  >
-                    小分
-                  </th>
-                  <th className="pb-3">胜率</th>
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Mobile card layout */}
+              <div className="space-y-2 md:hidden">
                 {leaderboard.map((entry) => (
-                  <tr
+                  <div
                     key={entry.submissionId}
-                    className="cursor-pointer border-b border-(--border-soft) transition last:border-b-0 hover:bg-white/3"
+                    className="cursor-pointer rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3 transition hover:bg-white/4"
                     onClick={() => openPlayerDetail(entry.submissionId)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -286,46 +265,107 @@ export function LeaderboardPage() {
                     }}
                     tabIndex={0}
                   >
-                    <td className="py-4 pr-6 tabular-nums text-base font-black text-(--foreground)">
-                      #{entry.rank}
-                    </td>
-                    <td className="py-4 pr-6 font-semibold text-(--foreground)">
-                      {entry.playerName}
-                    </td>
-                    <td className="py-4 pr-6 text-(--foreground-subtle)">
-                      <div className="space-y-0.5">
-                        <p>
-                          {scenario?.roleAName ?? 'A'} ·{' '}
-                          {resolveModelLabel(entry.modelA)}
-                        </p>
-                        <p>
-                          {scenario?.roleBName ?? 'B'} ·{' '}
-                          {resolveModelLabel(entry.modelB)}
-                        </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="tabular-nums text-lg font-black text-(--foreground)">
+                          #{entry.rank}
+                        </span>
+                        <span className="font-semibold text-(--foreground)">
+                          {entry.playerName}
+                        </span>
                       </div>
-                    </td>
-                    <td className="py-4 pr-4 tabular-nums text-(--foreground)">
-                      {entry.wins}
-                    </td>
-                    <td className="py-4 pr-4 tabular-nums text-(--foreground)">
-                      {entry.losses}
-                    </td>
-                    <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
-                      {formatRecord(entry.roleAWins, entry.roleALosses)}
-                    </td>
-                    <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
-                      {formatRecord(entry.roleBWins, entry.roleBLosses)}
-                    </td>
-                    <td className="py-4 pr-4 tabular-nums text-(--foreground-subtle)">
-                      {entry.buchholz.toFixed(1)}
-                    </td>
-                    <td className="py-4 tabular-nums text-(--foreground-subtle)">
-                      {entry.winRate.toFixed(1)}%
-                    </td>
-                  </tr>
+                      <span className="tabular-nums text-sm font-semibold text-(--success)">
+                        {entry.winRate.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-(--foreground-muted)">
+                      <span>
+                        {formatScore(entry.wins)}胜 {entry.losses}负
+                      </span>
+                      <span>小分 {entry.buchholz.toFixed(1)}</span>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Desktop table */}
+              <table className="hidden min-w-full text-left text-sm md:table">
+                <thead className="text-[11px] uppercase tracking-[0.14em] text-(--foreground-muted)">
+                  <tr className="border-b border-(--border-soft)">
+                    <th className="pb-3 pr-6">排名</th>
+                    <th className="pb-3 pr-6">选手</th>
+                    <th className="pb-3 pr-6">模型</th>
+                    <th className="pb-3 pr-4">总胜</th>
+                    <th className="pb-3 pr-4">总负</th>
+                    <th className="pb-3 pr-6">
+                      {scenario?.roleAName ?? 'A'} 胜 / 负
+                    </th>
+                    <th className="pb-3 pr-6">
+                      {scenario?.roleBName ?? 'B'} 胜 / 负
+                    </th>
+                    <th
+                      className="pb-3 pr-4"
+                      title="得分总和 · 同胜场时小分高者排名靠前"
+                    >
+                      小分
+                    </th>
+                    <th className="pb-3">胜率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.map((entry) => (
+                    <tr
+                      key={entry.submissionId}
+                      className="cursor-pointer border-b border-(--border-soft) transition last:border-b-0 hover:bg-white/3"
+                      onClick={() => openPlayerDetail(entry.submissionId)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          openPlayerDetail(entry.submissionId)
+                        }
+                      }}
+                      tabIndex={0}
+                    >
+                      <td className="py-4 pr-6 tabular-nums text-base font-black text-(--foreground)">
+                        #{entry.rank}
+                      </td>
+                      <td className="py-4 pr-6 font-semibold text-(--foreground)">
+                        {entry.playerName}
+                      </td>
+                      <td className="py-4 pr-6 text-(--foreground-subtle)">
+                        <div className="space-y-0.5">
+                          <p>
+                            {scenario?.roleAName ?? 'A'} ·{' '}
+                            {resolveModelLabel(entry.modelA)}
+                          </p>
+                          <p>
+                            {scenario?.roleBName ?? 'B'} ·{' '}
+                            {resolveModelLabel(entry.modelB)}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-4 pr-4 tabular-nums text-(--foreground)">
+                        {entry.wins}
+                      </td>
+                      <td className="py-4 pr-4 tabular-nums text-(--foreground)">
+                        {entry.losses}
+                      </td>
+                      <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
+                        {formatRecord(entry.roleAWins, entry.roleALosses)}
+                      </td>
+                      <td className="py-4 pr-6 tabular-nums text-(--foreground-subtle)">
+                        {formatRecord(entry.roleBWins, entry.roleBLosses)}
+                      </td>
+                      <td className="py-4 pr-4 tabular-nums text-(--foreground-subtle)">
+                        {entry.buchholz.toFixed(1)}
+                      </td>
+                      <td className="py-4 tabular-nums text-(--foreground-subtle)">
+                        {entry.winRate.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </CardContent>
       </Card>
@@ -364,7 +404,7 @@ export function LeaderboardPage() {
                     </span>
                   </div>
                   {/* Individual matches — two columns */}
-                  <div className="grid grid-cols-2 divide-x divide-(--border-soft)">
+                  <div className="grid grid-cols-1 divide-y md:grid-cols-2 md:divide-x md:divide-y-0 divide-(--border-soft)">
                     {pairing.matches.map((match) => {
                       const scored =
                         match.status === 'scored' &&

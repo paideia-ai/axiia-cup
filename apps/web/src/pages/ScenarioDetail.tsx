@@ -341,9 +341,7 @@ export function ScenarioDetailPage() {
         <div>
           <p className="page-eyebrow">Scenario</p>
           <h1 className="page-title">{scenario.title}</h1>
-          <p className="page-subtitle">
-            写一段策略让你的 AI 在辩论中胜出
-          </p>
+          <p className="page-subtitle">写一段策略让你的 AI 在辩论中胜出</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
@@ -512,15 +510,12 @@ export function ScenarioDetailPage() {
             {!localStorage.getItem('axiia-quickstart-dismissed') && (
               <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-[rgba(74,222,128,0.2)] bg-[rgba(74,222,128,0.06)] px-4 py-3">
                 <div className="min-w-0 flex-1 space-y-1 text-xs leading-5 text-(--foreground-subtle)">
-                  <p className="font-semibold text-(--foreground)">
-                    快速上手
-                  </p>
+                  <p className="font-semibold text-(--foreground)">快速上手</p>
                   <p>
                     你的{scenario.roleAName}会对阵别人的
                     {scenario.roleBName}，你的{scenario.roleBName}
                     会对阵别人的{scenario.roleAName}
-                    。写一段策略告诉 AI 怎么赢得辩论，100
-                    字就够开始。
+                    。写一段策略告诉 AI 怎么赢得辩论，100 字就够开始。
                   </p>
                   <Link
                     to="/leaderboard"
@@ -533,10 +528,7 @@ export function ScenarioDetailPage() {
                   type="button"
                   className="shrink-0 rounded p-1 text-(--foreground-muted) transition hover:bg-white/8 hover:text-(--foreground)"
                   onClick={(e) => {
-                    localStorage.setItem(
-                      'axiia-quickstart-dismissed',
-                      '1',
-                    )
+                    localStorage.setItem('axiia-quickstart-dismissed', '1')
                     const card = (e.target as HTMLElement).closest(
                       '[class*="mx-6"]',
                     )
