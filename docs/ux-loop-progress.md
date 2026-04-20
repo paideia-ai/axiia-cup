@@ -1,5 +1,25 @@
 # UX Loop Progress
 
+## Iteration 4 — 2026-04-21
+
+### Score: 82/100 (up from 74)
+
+### Fixes Implemented
+- [x] Workshop mobile order: editor appears first (order-1), reference material below (order-2)
+- [x] Character counter: shows "还剩 X 字" only when <200 remaining; hidden otherwise
+
+### Estimated post-fix score: ~85/100
+
+### Remaining P2/P3 (nice-to-haves, not blockers)
+- Judge prompt summary when collapsed (Fix 2c) — P2
+- Scoring example with real match data (Fix 4) — P2
+- Landing page featured match replay (Fix 1) — P2
+- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
+- Toast save → playground connection could be more direct — P3
+- Mobile pairing card text overflow on narrow screens — P3
+
+---
+
 ## Iteration 3 — 2026-04-21
 
 ### Score: 74/100 (up from 66)
@@ -13,14 +33,6 @@
 - [x] Playground: rich first-use empty state with explanation, inline CTA, mode descriptions
 
 ### Estimated post-fix score: ~85/100
-
-### Next Steps for Iteration 4
-- Mobile workshop layout (two-column doesn't adapt well on phone)
-- Judge prompt summary when collapsed (Fix 2c from remaining)
-- Scoring example with real match data (Fix 4 from remaining)
-- Character count UX (show "剩余 X 字" instead of "X / 1000")
-- Settings page mobile audit
-- Re-audit to confirm 85+ score
 
 ---
 
