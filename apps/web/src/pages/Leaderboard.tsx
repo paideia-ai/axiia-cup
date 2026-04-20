@@ -232,9 +232,22 @@ export function LeaderboardPage() {
               ))}
             </div>
           ) : leaderboard.length === 0 ? (
-            <p className="rounded-xl border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
-              暂无排行榜数据。
-            </p>
+            <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-sm">
+              <p className="font-semibold text-(--foreground)">
+                暂无进行中的赛事
+              </p>
+              <p className="mt-2 text-(--foreground-subtle) leading-6">
+                管理员开启新赛季后，排行榜会在这里更新。你可以先去工坊完善你的策略提示词。
+              </p>
+              <div className="mt-5">
+                <Link
+                  to="/scenarios/shangyang-court"
+                  className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                >
+                  前往工坊 →
+                </Link>
+              </div>
+            </div>
           ) : (
             <table className="min-w-full text-left text-sm">
               <thead className="text-[11px] uppercase tracking-[0.14em] text-(--foreground-muted)">
@@ -330,7 +343,9 @@ export function LeaderboardPage() {
         </CardHeader>
         <CardContent>
           {!activeRound || activeRoundPairings.length === 0 ? (
-            <p className="text-sm text-(--foreground-subtle)">暂无对阵数据。</p>
+            <p className="rounded-xl border border-(--border-soft) bg-white/2 px-5 py-4 text-sm text-(--foreground-subtle)">
+              当前轮次尚未开始，对阵信息将在管理员开启下一轮后显示。
+            </p>
           ) : (
             <div className="space-y-3">
               {activeRoundPairings.map((pairing) => (

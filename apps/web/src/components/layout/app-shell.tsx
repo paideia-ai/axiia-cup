@@ -100,12 +100,30 @@ export function AppShell({ children }: PropsWithChildren) {
           </div>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8">
         {children}
       </main>
-      <footer className="border-t border-(--border-soft) px-4 py-4 sm:px-6">
+      <footer className="hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block">
         <IcpRecord className="mx-auto w-full max-w-7xl" />
       </footer>
+      {/* Mobile bottom tab bar */}
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-(--border-soft) bg-[rgba(12,12,12,0.92)] backdrop-blur-xl md:hidden">
+        {navigationItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              cn(
+                'flex flex-1 flex-col items-center gap-1 py-3 text-[10px] font-medium text-(--foreground-muted) transition',
+                isActive && 'text-(--accent)',
+              )
+            }
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   )
 }

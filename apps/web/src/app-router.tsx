@@ -75,7 +75,7 @@ function ProtectedShell() {
             )
           }
         />
-        <Route path="*" element={<Navigate replace to="/scenarios" />} />
+        <Route path="*" element={<Navigate replace to="/dashboard" />} />
       </Routes>
     </AppShell>
   )
@@ -94,7 +94,7 @@ export function AppRouter() {
             isLoading ? (
               <div />
             ) : user ? (
-              <Navigate replace to="/scenarios" />
+              <Navigate replace to="/dashboard" />
             ) : (
               <LoginPage />
             )
@@ -106,7 +106,7 @@ export function AppRouter() {
             isLoading ? (
               <div />
             ) : user ? (
-              <Navigate replace to="/scenarios" />
+              <Navigate replace to="/dashboard" />
             ) : (
               <RegisterPage />
             )

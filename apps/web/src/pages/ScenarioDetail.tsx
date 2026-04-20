@@ -530,7 +530,7 @@ export function ScenarioDetailPage() {
 
                   <TabsContent value="a" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
-                      <Accordion defaultValue={['template']}>
+                      <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
                           title="系统预设角色提示词"
@@ -558,7 +558,7 @@ export function ScenarioDetailPage() {
                   </TabsContent>
                   <TabsContent value="b" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
-                      <Accordion defaultValue={['template']}>
+                      <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
                           title="系统预设角色提示词"
