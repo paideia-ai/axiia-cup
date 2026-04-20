@@ -1,5 +1,29 @@
 # UX Loop Progress
 
+## Iteration 3 — 2026-04-21
+
+### Score: 74/100 (up from 66)
+
+### Fixes Implemented
+- [x] Mobile leaderboard: card layout on <md screens (rank + name + win% + record)
+- [x] Mobile pairings: vertical stack on small screens (was cramped 2-col grid)
+- [x] Match detail: transcript collapsed by default with turn count + toggle
+- [x] Match detail: judge QA collapsed by default with toggle
+- [x] Match detail: breadcrumb back link ("← 返回排行榜")
+- [x] Playground: rich first-use empty state with explanation, inline CTA, mode descriptions
+
+### Estimated post-fix score: ~85/100
+
+### Next Steps for Iteration 4
+- Mobile workshop layout (two-column doesn't adapt well on phone)
+- Judge prompt summary when collapsed (Fix 2c from remaining)
+- Scoring example with real match data (Fix 4 from remaining)
+- Character count UX (show "剩余 X 字" instead of "X / 1000")
+- Settings page mobile audit
+- Re-audit to confirm 85+ score
+
+---
+
 ## Iteration 2 — 2026-04-21
 
 ### Score: 66/100 (up from 58)
