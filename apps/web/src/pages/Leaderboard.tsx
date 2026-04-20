@@ -178,7 +178,7 @@ export function LeaderboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="page-eyebrow">Leaderboard</p>
+          <p className="page-eyebrow">排行榜</p>
           <h1 className="page-title">排行榜</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">

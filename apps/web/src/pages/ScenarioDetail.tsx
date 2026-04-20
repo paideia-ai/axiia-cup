@@ -339,7 +339,7 @@ export function ScenarioDetailPage() {
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="page-eyebrow">Scenario</p>
+          <p className="page-eyebrow">场景工坊</p>
           <h1 className="page-title">{scenario.title}</h1>
           <p className="page-subtitle">写一段策略让你的 AI 在辩论中胜出</p>
         </div>

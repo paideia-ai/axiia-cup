@@ -708,7 +708,9 @@ function RunResult({
                   )
                 })
               ) : (
-                <p className="text-sm text-(--foreground-subtle)">暂无问答。</p>
+                <p className="text-sm text-(--foreground-subtle)">
+                  审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
+                </p>
               )}
             </CardContent>
           </Card>

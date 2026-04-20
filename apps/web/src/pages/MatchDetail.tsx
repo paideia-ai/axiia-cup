@@ -253,7 +253,7 @@ export function MatchDetailPage() {
           >
             ← 返回排行榜
           </Link>
-          <p className="page-eyebrow">Match</p>
+          <p className="page-eyebrow">对战详情</p>
           <h1 className="page-title">对战结果 #{match.id}</h1>
           <p className="page-subtitle">
             第 {match.roundNumber} 轮 · {playerALabel} vs {playerBLabel}
