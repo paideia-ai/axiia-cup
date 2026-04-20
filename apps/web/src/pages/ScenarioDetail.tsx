@@ -289,9 +289,7 @@ export function ScenarioDetailPage() {
       const created = await createSubmission(parsed.data)
       const history = await getMySubmissions(scenarioId)
       setSubmissions(history)
-      setToast(
-        `v${created.version} 已保存 · 可去排行榜查看往期对局，学习优秀策略`,
-      )
+      setToast(`v${created.version} 已保存 · 去试炼场测试效果`)
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '保存失败',
@@ -327,13 +325,15 @@ export function ScenarioDetailPage() {
         <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
           <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
           <span>{toast}</span>
-          <Link
-            to="/leaderboard"
-            className="shrink-0 text-xs font-medium text-(--accent) hover:underline"
-            onClick={() => setToast(null)}
-          >
-            排行榜 →
-          </Link>
+          {submissions[0] ? (
+            <Link
+              to={`/playground/${submissions[0].id}`}
+              className="shrink-0 text-xs font-medium text-(--accent) hover:underline"
+              onClick={() => setToast(null)}
+            >
+              试炼场 →
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
@@ -662,7 +662,8 @@ export function ScenarioDetailPage() {
                   </Button>
                 </div>
                 <p className="text-center text-[11px] text-(--foreground-muted)">
-                  你可以随时修改，比赛前自动使用最新版本。
+                  不同模型影响 AI
+                  的表达风格和推理深度。你可以随时修改，比赛前自动使用最新版本。
                 </p>
               </form>
             </CardContent>

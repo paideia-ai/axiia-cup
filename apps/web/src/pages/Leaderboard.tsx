@@ -219,7 +219,12 @@ export function LeaderboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>瑞士轮战绩</CardTitle>
+          <div>
+            <CardTitle>瑞士轮战绩</CardTitle>
+            <p className="mt-1 text-xs text-(--foreground-muted)">
+              同胜场选手对阵，积分高者排名靠前
+            </p>
+          </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {isLoading ? (
