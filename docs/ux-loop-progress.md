@@ -1,5 +1,30 @@
 # UX Loop Progress
 
+## Iteration 2 — 2026-04-21
+
+### Score: 66/100 (up from 58)
+
+### Fixes Implemented
+- [x] Match Detail: reorder sections — verdict/reasoning moved above transcript (outcome-first)
+- [x] Workshop subtitle: "写一段策略让你的 AI 在辩论中胜出" (outcome, not mechanism)
+- [x] Workshop editor description: simplified to "保存后可在试炼场测试效果"
+- [x] Quick Start card: dismissible callout with game mechanic summary + example link
+- [x] Example match link (#277) in 3 locations: dashboard, workshop quick-start, landing page
+- [x] 小分 tooltip text improved
+
+### Estimated post-fix score: ~76/100
+
+### Next Steps for Iteration 3
+- Mobile leaderboard card view (table unusable on small screens)
+- Mobile workshop layout improvements
+- Match detail transcript collapse (show only first 3 turns, expand rest)
+- Judge prompt summary when collapsed (Fix 2c)
+- Scoring example with real match data (Fix 4)
+- Playground first-use guidance
+- Re-audit and re-score
+
+---
+
 ## Iteration 1 — 2026-04-21
 
 ### Score: 58/100
