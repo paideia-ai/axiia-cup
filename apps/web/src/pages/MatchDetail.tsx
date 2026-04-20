@@ -305,7 +305,43 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
+      {/* Verdict — moved up: users want "why did I win/lose?" first */}
+      <Card>
+        <CardHeader>
+          <CardTitle>裁判宣判词</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
+            <p className="panel-copy whitespace-pre-wrap">
+              {match.reasoning ?? '暂无宣判词。'}
+            </p>
+            {match.error ? (
+              <p className="mt-4 text-sm text-(--accent)">
+                错误信息：{match.error}
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Judge decision + info assignment */}
       <div className="grid gap-6 xl:grid-cols-2">
+        <JudgeDecisionPanel
+          decision={match.judgeDecision}
+          errorMessage={match.error}
+          scenario={
+            scenario
+              ? {
+                  roleAName: scenario.roleAName,
+                  roleARequests: scenario.roleARequests,
+                  roleBName: scenario.roleBName,
+                  roleBRequests: scenario.roleBRequests,
+                }
+              : undefined
+          }
+          waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
+        />
+
         {match.infoAssignment && scenario ? (
           <Card>
             <CardHeader className="pb-0">
@@ -414,74 +450,7 @@ export function MatchDetailPage() {
             </CardContent>
           </Card>
         ) : null}
-
-        <JudgeDecisionPanel
-          decision={match.judgeDecision}
-          errorMessage={match.error}
-          scenario={
-            scenario
-              ? {
-                  roleAName: scenario.roleAName,
-                  roleARequests: scenario.roleARequests,
-                  roleBName: scenario.roleBName,
-                  roleBRequests: scenario.roleBRequests,
-                }
-              : undefined
-          }
-          waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
-        />
       </div>
-
-      {/* Transcript */}
-      <Card>
-        <CardHeader>
-          <CardTitle>完整 Transcript</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            const turnKeyCounts = new Map<string, number>()
-            return match.transcript.map((turn, index) => {
-              const baseKey = `${turn.speaker}:${turn.content}`
-              const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
-              turnKeyCounts.set(baseKey, occurrence)
-              const isA = turn.speaker === 'a'
-
-              return (
-                <div
-                  key={`${baseKey}:${occurrence}`}
-                  className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
-                >
-                  <p
-                    className="px-1 text-xs font-semibold"
-                    style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
-                  >
-                    {isA ? playerALabel : playerBLabel}
-                    <span className="ml-1.5 font-normal opacity-60">
-                      #{index + 1}
-                    </span>
-                  </p>
-                  <div
-                    className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
-                    style={
-                      isA
-                        ? {
-                            background: 'rgba(224,74,47,0.1)',
-                            border: '1px solid rgba(224,74,47,0.2)',
-                          }
-                        : {
-                            background: 'rgba(96,165,250,0.08)',
-                            border: '1px solid rgba(96,165,250,0.18)',
-                          }
-                    }
-                  >
-                    {turn.content}
-                  </div>
-                </div>
-              )
-            })
-          })()}
-        </CardContent>
-      </Card>
 
       {/* Judge QA */}
       <div className="grid gap-6 xl:grid-cols-2">
@@ -582,22 +551,54 @@ export function MatchDetailPage() {
         ))}
       </div>
 
-      {/* Reasoning */}
+      {/* Transcript — reference material, kept at bottom */}
       <Card>
         <CardHeader>
-          <CardTitle>裁判宣判词</CardTitle>
+          <CardTitle>完整 Transcript</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
-            <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无宣判词。'}
-            </p>
-            {match.error ? (
-              <p className="mt-4 text-sm text-(--accent)">
-                错误信息：{match.error}
-              </p>
-            ) : null}
-          </div>
+        <CardContent className="space-y-4">
+          {(() => {
+            const turnKeyCounts = new Map<string, number>()
+            return match.transcript.map((turn, index) => {
+              const baseKey = `${turn.speaker}:${turn.content}`
+              const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+              turnKeyCounts.set(baseKey, occurrence)
+              const isA = turn.speaker === 'a'
+
+              return (
+                <div
+                  key={`${baseKey}:${occurrence}`}
+                  className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
+                >
+                  <p
+                    className="px-1 text-xs font-semibold"
+                    style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
+                  >
+                    {isA ? playerALabel : playerBLabel}
+                    <span className="ml-1.5 font-normal opacity-60">
+                      #{index + 1}
+                    </span>
+                  </p>
+                  <div
+                    className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+                    style={
+                      isA
+                        ? {
+                            background: 'rgba(224,74,47,0.1)',
+                            border: '1px solid rgba(224,74,47,0.2)',
+                          }
+                        : {
+                            background: 'rgba(96,165,250,0.08)',
+                            border: '1px solid rgba(96,165,250,0.18)',
+                          }
+                    }
+                  >
+                    {turn.content}
+                  </div>
+                </div>
+              )
+            })
+          })()}
         </CardContent>
       </Card>
     </div>

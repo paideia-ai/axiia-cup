@@ -128,6 +128,15 @@ export function LandingPage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-12 text-center">
+            <Link
+              to="/matches/277"
+              className="text-sm font-medium text-(--accent) transition hover:opacity-80"
+            >
+              先看一场真实对局 →
+            </Link>
+          </div>
         </section>
 
         <footer className="py-4">

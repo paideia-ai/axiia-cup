@@ -13,22 +13,32 @@
 6. **P1 — Leaderboard empty states**: "暂无排行榜数据" and "暂无对阵数据" are dead ends with no guidance.
 7. **P1 — Landing copy is mechanism-oriented**: "瑞士轮赛制" jargon, should be outcome-oriented.
 
-### Fixes Implementing This Iteration
-- [ ] Mobile bottom tab navigation
-- [ ] Post-register redirect to `/dashboard`
-- [ ] Post-login redirect to `/dashboard` for new users
-- [ ] 邀请码 helper text
-- [ ] Landing page hero CTA for logged-out users
-- [ ] Collapse template accordion by default
-- [ ] Leaderboard empty state redesign
-- [ ] Landing page copy rewrite
+### Fixes Implemented This Iteration
+- [x] Mobile bottom tab navigation (`app-shell.tsx`)
+- [x] Post-register redirect to `/dashboard` (`Register.tsx`, `app-router.tsx`)
+- [x] Post-login redirect to `/dashboard` (`Login.tsx`, `app-router.tsx`)
+- [x] 邀请码 helper text (`Register.tsx`)
+- [x] Landing page hero CTA for logged-out users (`landing-page.tsx`)
+- [x] Collapse template accordion by default (`ScenarioDetail.tsx`)
+- [x] Leaderboard empty state redesign (`Leaderboard.tsx`)
+- [x] Landing page copy rewrite — outcome-oriented (`landing-page.tsx`)
+
+### PR
+- PR #16: https://github.com/paideia-ai/axiia-cup/pull/16
 
 ### Next Steps for Iteration 2
 - Quick Start Card component (Fix 2b from remaining doc)
 - Example match link (Fix 5b)
 - Match detail transcript collapse
 - Mobile-responsive workshop layout
-- Re-score after all fixes applied
+- Settings / user profile accessible from mobile bottom nav
+- Re-score after all fixes deployed
 
 ### Files Modified
-(to be updated after implementation)
+- `apps/web/src/app-router.tsx` — redirects to /dashboard
+- `apps/web/src/components/layout/app-shell.tsx` — mobile bottom tabs
+- `apps/web/src/pages/Leaderboard.tsx` — empty states
+- `apps/web/src/pages/Login.tsx` — redirect
+- `apps/web/src/pages/Register.tsx` — redirect + helper text
+- `apps/web/src/pages/ScenarioDetail.tsx` — template accordion collapsed
+- `apps/web/src/pages/landing-page.tsx` — CTA buttons + copy rewrite

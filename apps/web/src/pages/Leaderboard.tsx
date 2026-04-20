@@ -265,7 +265,7 @@ export function LeaderboardPage() {
                   </th>
                   <th
                     className="pb-3 pr-4"
-                    title="所有对局得分总和，用于同胜场排名区分"
+                    title="得分总和 · 同胜场时小分高者排名靠前"
                   >
                     小分
                   </th>
