@@ -353,7 +353,7 @@ export function ScenarioDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Left: Scene Materials (reference, sticky) ── */}
-        <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
+        <div className="order-2 lg:order-1 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
           <ScrollArea className="h-full">
             <Card>
               <CardContent className="space-y-3">
@@ -499,7 +499,7 @@ export function ScenarioDetailPage() {
         </div>
 
         {/* ── Right: Prompt Editor + Version History ── */}
-        <div className="space-y-6">
+        <div className="order-1 space-y-6 lg:order-2">
           <Card>
             <CardHeader className="flex flex-col gap-3 border-none pb-0">
               <CardTitle>编写策略提示词</CardTitle>
@@ -573,11 +573,13 @@ export function ScenarioDetailPage() {
                         placeholder={`例如：在辩论中强调变法对军事力量的具体提升，用历史战例作为论据…`}
                         value={promptA}
                       />
-                      <p
-                        className={`text-right text-xs tabular-nums ${promptALength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
-                      >
-                        {promptALength} / 1000
-                      </p>
+                      {1000 - promptALength < 200 ? (
+                        <p
+                          className={`text-right text-xs tabular-nums ${promptALength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
+                        >
+                          还剩 {1000 - promptALength} 字
+                        </p>
+                      ) : null}
                     </div>
                   </TabsContent>
                   <TabsContent value="b" className="space-y-3">
@@ -601,11 +603,13 @@ export function ScenarioDetailPage() {
                         placeholder={`例如：强调祖制的稳定性，质疑对手方案的可行性和成本…`}
                         value={promptB}
                       />
-                      <p
-                        className={`text-right text-xs tabular-nums ${promptBLength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
-                      >
-                        {promptBLength} / 1000
-                      </p>
+                      {1000 - promptBLength < 200 ? (
+                        <p
+                          className={`text-right text-xs tabular-nums ${promptBLength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
+                        >
+                          还剩 {1000 - promptBLength} 字
+                        </p>
+                      ) : null}
                     </div>
                   </TabsContent>
                 </Tabs>
