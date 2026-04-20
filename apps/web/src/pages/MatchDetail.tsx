@@ -195,7 +195,32 @@ export function MatchDetailPage() {
   }
 
   if (error || !match) {
-    return <p className="text-sm text-(--accent)">{error ?? '对局不存在'}</p>
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm">
+          <p className="font-semibold text-(--foreground)">
+            {error ?? '对局不存在'}
+          </p>
+          <p className="mt-2 text-(--foreground-subtle)">
+            该对局可能已被删除或链接无效。
+          </p>
+          <div className="mt-5 flex justify-center gap-3">
+            <Link
+              to="/leaderboard"
+              className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              返回排行榜
+            </Link>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center rounded-lg border border-(--border-soft) px-4 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/5"
+            >
+              返回控制台
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const roleAName = scenario?.roleAName ?? '—'

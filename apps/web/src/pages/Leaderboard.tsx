@@ -282,7 +282,12 @@ export function LeaderboardPage() {
                       <span>
                         {formatScore(entry.wins)}胜 {entry.losses}负
                       </span>
-                      <span>小分 {entry.buchholz.toFixed(1)}</span>
+                      <span>
+                        小分 {entry.buchholz.toFixed(1)}
+                        <span className="ml-1 text-(--foreground-muted)/60">
+                          (排名依据)
+                        </span>
+                      </span>
                     </div>
                   </div>
                 ))}

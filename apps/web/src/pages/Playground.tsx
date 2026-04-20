@@ -11,7 +11,7 @@ import {
 } from '@axiia/shared'
 import { ArrowLeft } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
@@ -1304,7 +1304,26 @@ export function PlaygroundPage() {
   }
 
   if (!submission || !scenario) {
-    return <p className="text-sm text-(--accent)">{error ?? '找不到该版本'}</p>
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm">
+          <p className="font-semibold text-(--foreground)">
+            {error ?? '找不到该版本'}
+          </p>
+          <p className="mt-2 text-(--foreground-subtle)">
+            该版本可能不存在或链接已过期。
+          </p>
+          <div className="mt-5 flex justify-center">
+            <Link
+              to="/scenarios/shangyang-court"
+              className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              返回工坊
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
