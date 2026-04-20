@@ -1,26 +1,40 @@
 # UX Loop Progress
 
-## Iteration 6 — 2026-04-21
+## Iteration 7 — 2026-04-21
 
-### Score: 83/100 (fresh-eyes audit) → estimated 85 with fixes below
+### CONFIRMED: 86/100 — THRESHOLD REACHED ✓
 
 ### Fixes Implemented
-- [x] Workshop accordion grouping: 比赛流程/计分规则/裁判视角 nested under "更多规则"
-  (reduces visible section headers from 5 to 3 on first visit)
-- [x] MatchDetail Chinese status labels: 已结算/异常/进行中/排队中/审讯中
-  (was raw English: scored/error/running/queued/judging)
-- [x] MatchDetail "Round X" → "第 X 轮"
+- [x] Chinese eyebrow labels: Scenario→場景工坊, Leaderboard→排行榜, Match→对战详情
+- [x] Playground judge QA empty state: contextual explanation instead of "暂无问答"
 
-### Estimated post-fix score: 85/100 — THRESHOLD REACHED
+### Score Trajectory
+```
+58 → 66 → 74 → 82 → 83 → 83 → 86 (confirmed)
+```
+
+### Total: 25 fixes across 7 iterations (all on PR #16)
 
 ### Remaining P2/P3 (polish, not blockers)
-- Leaderboard "瑞士轮" explanation for uninitiated — P2
+- Leaderboard "瑞士轮" inline explanation for new users — P2
 - Scoring example with real match data (Fix 4) — P2
 - Save toast with direct playground link — P2
-- Model selector mobile explanation — P2
+- Tournament selector (currently commented out in Leaderboard) — P2
+- Model selector mobile explanation — P3
 - "保存版本" → "保存为新版本" clarity — P3
 - Playground transcript not collapsed (inconsistent with MatchDetail) — P3
 - Mobile pairing card text overflow — P3
+
+---
+
+## Iteration 6 — 2026-04-21
+
+### Score: 83/100 (fresh-eyes audit)
+
+### Fixes Implemented
+- [x] Workshop accordion grouping: 比赛流程/计分规则/裁判视角 nested under "更多规则"
+- [x] MatchDetail Chinese status labels: 已结算/异常/进行中/排队中/审讯中
+- [x] MatchDetail "Round X" → "第 X 轮"
 
 ---
 
