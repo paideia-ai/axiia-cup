@@ -1,5 +1,29 @@
 # UX Loop Progress
 
+## Iteration 5 — 2026-04-21
+
+### Score: 83/100 (up from 82) → estimated 85 with fixes below
+
+### Fixes Implemented
+- [x] MatchDetail error recovery: card with "返回排行榜" + "返回控制台" (was bare text)
+- [x] Playground error recovery: card with "返回工坊" (was bare text)
+- [x] Mobile leaderboard 小分 context: "(排名依据)" label added
+
+### Estimated post-fix score: 85/100 — THRESHOLD REACHED
+
+### Remaining P2/P3 (polish, not blockers)
+- Judge prompt summary when collapsed (Fix 2c) — P2
+- Scoring example with real match data (Fix 4) — P2
+- Landing page featured match replay (Fix 1) — P2
+- Model selector mobile explanation — P2
+- "保存版本" → "保存为新版本" clarity — P2
+- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
+- Toast save → playground connection could be more direct — P3
+- Mobile pairing card text overflow on narrow screens — P3
+- "比赛流程" accordion default expanded for first-time users — P3
+
+---
+
 ## Iteration 4 — 2026-04-21
 
 ### Score: 82/100 (up from 74)
@@ -7,16 +31,6 @@
 ### Fixes Implemented
 - [x] Workshop mobile order: editor appears first (order-1), reference material below (order-2)
 - [x] Character counter: shows "还剩 X 字" only when <200 remaining; hidden otherwise
-
-### Estimated post-fix score: ~85/100
-
-### Remaining P2/P3 (nice-to-haves, not blockers)
-- Judge prompt summary when collapsed (Fix 2c) — P2
-- Scoring example with real match data (Fix 4) — P2
-- Landing page featured match replay (Fix 1) — P2
-- Playground transcript not collapsed (inconsistent with MatchDetail) — P3
-- Toast save → playground connection could be more direct — P3
-- Mobile pairing card text overflow on narrow screens — P3
 
 ---
 
