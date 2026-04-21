@@ -22,7 +22,7 @@ export function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!isLoading && user) {
-    return <Navigate replace to="/scenarios" />
+    return <Navigate replace to="/dashboard" />
   }
 
   const handleContinue = (event: React.FormEvent<HTMLFormElement>) => {
@@ -50,7 +50,7 @@ export function RegisterPage() {
         password,
       })
       login(response)
-      navigate('/scenarios', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '注册失败',
@@ -104,6 +104,9 @@ export function RegisterPage() {
                         placeholder="邀请码"
                         value={otp}
                       />
+                      <span className="text-xs text-(--foreground-muted)">
+                        从群聊或活动页面获取
+                      </span>
                     </label>
                     <label className="block space-y-1.5 text-sm text-(--foreground-subtle)">
                       <span>显示名称</span>

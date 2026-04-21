@@ -5,6 +5,7 @@ import {
   type Scenario,
 } from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
@@ -73,6 +74,8 @@ export function MatchDetailPage() {
   const [match, setMatch] = useState<MatchDetail | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showTranscript, setShowTranscript] = useState(false)
+  const [showJudgeQA, setShowJudgeQA] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -192,7 +195,32 @@ export function MatchDetailPage() {
   }
 
   if (error || !match) {
-    return <p className="text-sm text-(--accent)">{error ?? '对局不存在'}</p>
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm">
+          <p className="font-semibold text-(--foreground)">
+            {error ?? '对局不存在'}
+          </p>
+          <p className="mt-2 text-(--foreground-subtle)">
+            该对局可能已被删除或链接无效。
+          </p>
+          <div className="mt-5 flex justify-center gap-3">
+            <Link
+              to="/leaderboard"
+              className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              返回排行榜
+            </Link>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center rounded-lg border border-(--border-soft) px-4 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/5"
+            >
+              返回控制台
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const roleAName = scenario?.roleAName ?? '—'
@@ -219,10 +247,16 @@ export function MatchDetailPage() {
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="page-eyebrow">Match</p>
+          <Link
+            to={`/leaderboard?tournament=${match.tournamentId}`}
+            className="mb-2 flex items-center gap-1 text-xs text-(--foreground-muted) hover:text-(--foreground-subtle)"
+          >
+            ← 返回排行榜
+          </Link>
+          <p className="page-eyebrow">对战详情</p>
           <h1 className="page-title">对战结果 #{match.id}</h1>
           <p className="page-subtitle">
-            Round {match.roundNumber} · {playerALabel} vs {playerBLabel}
+            第 {match.roundNumber} 轮 · {playerALabel} vs {playerBLabel}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -235,7 +269,13 @@ export function MatchDetailPage() {
                   : 'info'
             }
           >
-            {match.status}
+            {{
+              error: '异常',
+              judging: '审讯中',
+              queued: '排队中',
+              running: '进行中',
+              scored: '已结算',
+            }[match.status] ?? match.status}
           </Badge>
           {user?.isAdmin && match.status === 'error' ? (
             <Button
@@ -305,7 +345,43 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
+      {/* Verdict — moved up: users want "why did I win/lose?" first */}
+      <Card>
+        <CardHeader>
+          <CardTitle>裁判宣判词</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
+            <p className="panel-copy whitespace-pre-wrap">
+              {match.reasoning ?? '暂无宣判词。'}
+            </p>
+            {match.error ? (
+              <p className="mt-4 text-sm text-(--accent)">
+                错误信息：{match.error}
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Judge decision + info assignment */}
       <div className="grid gap-6 xl:grid-cols-2">
+        <JudgeDecisionPanel
+          decision={match.judgeDecision}
+          errorMessage={match.error}
+          scenario={
+            scenario
+              ? {
+                  roleAName: scenario.roleAName,
+                  roleARequests: scenario.roleARequests,
+                  roleBName: scenario.roleBName,
+                  roleBRequests: scenario.roleBRequests,
+                }
+              : undefined
+          }
+          waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
+        />
+
         {match.infoAssignment && scenario ? (
           <Card>
             <CardHeader className="pb-0">
@@ -414,191 +490,186 @@ export function MatchDetailPage() {
             </CardContent>
           </Card>
         ) : null}
-
-        <JudgeDecisionPanel
-          decision={match.judgeDecision}
-          errorMessage={match.error}
-          scenario={
-            scenario
-              ? {
-                  roleAName: scenario.roleAName,
-                  roleARequests: scenario.roleARequests,
-                  roleBName: scenario.roleBName,
-                  roleBRequests: scenario.roleBRequests,
-                }
-              : undefined
-          }
-          waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
-        />
       </div>
 
-      {/* Transcript */}
+      {/* Judge QA — collapsed by default */}
       <Card>
         <CardHeader>
-          <CardTitle>完整 Transcript</CardTitle>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between"
+            onClick={() => setShowJudgeQA((v) => !v)}
+          >
+            <CardTitle>裁判审讯详情</CardTitle>
+            <ChevronDown
+              className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showJudgeQA ? 'rotate-180' : ''}`}
+            />
+          </button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            const turnKeyCounts = new Map<string, number>()
-            return match.transcript.map((turn, index) => {
-              const baseKey = `${turn.speaker}:${turn.content}`
-              const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
-              turnKeyCounts.set(baseKey, occurrence)
-              const isA = turn.speaker === 'a'
-
-              return (
-                <div
-                  key={`${baseKey}:${occurrence}`}
-                  className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
-                >
-                  <p
-                    className="px-1 text-xs font-semibold"
-                    style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
-                  >
-                    {isA ? playerALabel : playerBLabel}
-                    <span className="ml-1.5 font-normal opacity-60">
-                      #{index + 1}
-                    </span>
-                  </p>
-                  <div
-                    className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
-                    style={
-                      isA
-                        ? {
-                            background: 'rgba(224,74,47,0.1)',
-                            border: '1px solid rgba(224,74,47,0.2)',
-                          }
-                        : {
-                            background: 'rgba(96,165,250,0.08)',
-                            border: '1px solid rgba(96,165,250,0.18)',
-                          }
-                    }
-                  >
-                    {turn.content}
-                  </div>
-                </div>
-              )
-            })
-          })()}
-        </CardContent>
       </Card>
-
-      {/* Judge QA */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        {(
-          [
-            {
-              playerLabel: playerALabel,
-              items: match.judgeTranscriptA,
-              side: 'a' as const,
-            },
-            {
-              playerLabel: playerBLabel,
-              items: match.judgeTranscriptB,
-              side: 'b' as const,
-            },
-          ] as const
-        ).map(({ playerLabel, items, side }) => (
-          <Card key={side}>
-            <CardHeader>
-              <CardTitle>裁判审讯 · {playerLabel}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {items.map((item) => (
-                <div
-                  key={`${side}-${item.round}`}
-                  className="overflow-hidden rounded-xl border border-(--border-soft)"
-                >
-                  <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                        裁判 · 第 {item.round} 轮
-                      </p>
-                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                        {item.question}
-                      </p>
-                    </div>
-                  </div>
+      {showJudgeQA ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {(
+            [
+              {
+                playerLabel: playerALabel,
+                items: match.judgeTranscriptA,
+                side: 'a' as const,
+              },
+              {
+                playerLabel: playerBLabel,
+                items: match.judgeTranscriptB,
+                side: 'b' as const,
+              },
+            ] as const
+          ).map(({ playerLabel, items, side }) => (
+            <Card key={side}>
+              <CardHeader>
+                <CardTitle>裁判审讯 · {playerLabel}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {items.map((item) => (
                   <div
-                    className="space-y-3 px-4 py-3"
-                    style={{
-                      background:
-                        side === 'a'
-                          ? 'rgba(224,74,47,0.05)'
-                          : 'rgba(96,165,250,0.05)',
-                    }}
+                    key={`${side}-${item.round}`}
+                    className="overflow-hidden rounded-xl border border-(--border-soft)"
                   >
-                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                      <span
-                        className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
-                        style={{
-                          background:
-                            side === 'a'
-                              ? 'rgba(224,74,47,0.12)'
-                              : 'rgba(96,165,250,0.12)',
-                        }}
-                      >
-                        选择 {item.selectedInfoId ?? '未作答'}
-                      </span>
-                      {item.isCorrect != null ? (
-                        <span
-                          className={`rounded px-1.5 py-0.5 font-semibold ${
-                            item.isCorrect
-                              ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                              : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                          }`}
-                        >
-                          {item.isCorrect ? '判断正确' : '判断错误'}
-                        </span>
-                      ) : null}
+                    <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                          裁判 · 第 {item.round} 轮
+                        </p>
+                        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                          {item.question}
+                        </p>
+                      </div>
                     </div>
-                    {scenario && item.selectedInfoId ? (
-                      <p className="text-[11px] leading-5 text-(--foreground-muted)">
-                        对应信息：
-                        {(side === 'a'
-                          ? buildInfoContentMap(scenario.roleBHiddenInfo)
-                          : buildInfoContentMap(scenario.roleAHiddenInfo)
-                        ).get(item.selectedInfoId) ?? '未知信息'}
-                      </p>
-                    ) : null}
-                    <div>
-                      <p
-                        className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
-                        style={{
-                          color: side === 'a' ? 'var(--accent)' : 'var(--info)',
-                        }}
-                      >
-                        {playerLabel} 回答
-                      </p>
-                      <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                        {item.answer}
-                      </p>
+                    <div
+                      className="space-y-3 px-4 py-3"
+                      style={{
+                        background:
+                          side === 'a'
+                            ? 'rgba(224,74,47,0.05)'
+                            : 'rgba(96,165,250,0.05)',
+                      }}
+                    >
+                      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                        <span
+                          className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
+                          style={{
+                            background:
+                              side === 'a'
+                                ? 'rgba(224,74,47,0.12)'
+                                : 'rgba(96,165,250,0.12)',
+                          }}
+                        >
+                          选择 {item.selectedInfoId ?? '未作答'}
+                        </span>
+                        {item.isCorrect != null ? (
+                          <span
+                            className={`rounded px-1.5 py-0.5 font-semibold ${
+                              item.isCorrect
+                                ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                            }`}
+                          >
+                            {item.isCorrect ? '判断正确' : '判断错误'}
+                          </span>
+                        ) : null}
+                      </div>
+                      {scenario && item.selectedInfoId ? (
+                        <p className="text-[11px] leading-5 text-(--foreground-muted)">
+                          对应信息：
+                          {(side === 'a'
+                            ? buildInfoContentMap(scenario.roleBHiddenInfo)
+                            : buildInfoContentMap(scenario.roleAHiddenInfo)
+                          ).get(item.selectedInfoId) ?? '未知信息'}
+                        </p>
+                      ) : null}
+                      <div>
+                        <p
+                          className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                          style={{
+                            color:
+                              side === 'a' ? 'var(--accent)' : 'var(--info)',
+                          }}
+                        >
+                          {playerLabel} 回答
+                        </p>
+                        <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                          {item.answer}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : null}
 
-      {/* Reasoning */}
+      {/* Transcript — collapsed by default, reference material */}
       <Card>
         <CardHeader>
-          <CardTitle>裁判宣判词</CardTitle>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between"
+            onClick={() => setShowTranscript((v) => !v)}
+          >
+            <CardTitle>
+              完整 Transcript · {match.transcript.length} 回合
+            </CardTitle>
+            <ChevronDown
+              className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showTranscript ? 'rotate-180' : ''}`}
+            />
+          </button>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
-            <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无宣判词。'}
-            </p>
-            {match.error ? (
-              <p className="mt-4 text-sm text-(--accent)">
-                错误信息：{match.error}
-              </p>
-            ) : null}
-          </div>
-        </CardContent>
+        {showTranscript ? (
+          <CardContent className="space-y-4">
+            {(() => {
+              const turnKeyCounts = new Map<string, number>()
+              return match.transcript.map((turn, index) => {
+                const baseKey = `${turn.speaker}:${turn.content}`
+                const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+                turnKeyCounts.set(baseKey, occurrence)
+                const isA = turn.speaker === 'a'
+
+                return (
+                  <div
+                    key={`${baseKey}:${occurrence}`}
+                    className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
+                  >
+                    <p
+                      className="px-1 text-xs font-semibold"
+                      style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
+                    >
+                      {isA ? playerALabel : playerBLabel}
+                      <span className="ml-1.5 font-normal opacity-60">
+                        #{index + 1}
+                      </span>
+                    </p>
+                    <div
+                      className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+                      style={
+                        isA
+                          ? {
+                              background: 'rgba(224,74,47,0.1)',
+                              border: '1px solid rgba(224,74,47,0.2)',
+                            }
+                          : {
+                              background: 'rgba(96,165,250,0.08)',
+                              border: '1px solid rgba(96,165,250,0.18)',
+                            }
+                      }
+                    >
+                      {turn.content}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
+          </CardContent>
+        ) : null}
       </Card>
     </div>
   )

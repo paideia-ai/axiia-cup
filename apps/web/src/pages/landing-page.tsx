@@ -11,19 +11,18 @@ const steps = [
     n: '01',
     title: '编写提示词',
     description:
-      '为两个对立角色各写一份系统提示词，每份不超过 1000 字，围绕公开规则持续优化策略。',
+      '给你的 AI 角色写一段策略指引（不超过 1000 字），告诉它辩论时怎么赢。',
   },
   {
     n: '02',
     title: '自动对战',
     description:
-      '你的智能体会自动进入多轮对抗，平台负责拼接场景材料、裁判追问和结果判定。',
+      '你的 AI 会自动和其他玩家的 AI 一对一辩论，裁判 AI 打分定胜负。',
   },
   {
     n: '03',
     title: '排行竞技',
-    description:
-      '瑞士轮赛制按胜场和小分排序，强调长期稳定收敛，而不是单场运气。',
+    description: '每轮多场比赛积累排名，看看谁的策略最强。',
   },
 ]
 
@@ -88,16 +87,30 @@ export function LandingPage() {
               智能体对抗赛。编写你的系统提示词，让两个 AI
               在历史、法律、戏剧场景中展开博弈。
             </p>
-            {user ? (
-              <div className="mt-10 flex justify-center">
+            <div className="mt-10 flex justify-center gap-4">
+              {user ? (
                 <Link to="/dashboard">
                   <Button size="lg">
                     进入控制台
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-              </div>
-            ) : null}
+              ) : !isLoading ? (
+                <>
+                  <Link to="/register">
+                    <Button size="lg">
+                      立即注册
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button size="lg" variant="secondary">
+                      已有账户，登录
+                    </Button>
+                  </Link>
+                </>
+              ) : null}
+            </div>
           </div>
 
           <div className="mt-16 grid w-full max-w-5xl divide-y divide-[rgba(255,255,255,0.07)] text-left lg:grid-cols-3 lg:divide-x lg:divide-y-0">
@@ -114,6 +127,15 @@ export function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link
+              to="/matches/277"
+              className="text-sm font-medium text-(--accent) transition hover:opacity-80"
+            >
+              先看一场真实对局 →
+            </Link>
           </div>
         </section>
 

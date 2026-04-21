@@ -11,7 +11,7 @@ import {
 } from '@axiia/shared'
 import { ArrowLeft } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
@@ -708,7 +708,9 @@ function RunResult({
                   )
                 })
               ) : (
-                <p className="text-sm text-(--foreground-subtle)">暂无问答。</p>
+                <p className="text-sm text-(--foreground-subtle)">
+                  审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -1304,7 +1306,26 @@ export function PlaygroundPage() {
   }
 
   if (!submission || !scenario) {
-    return <p className="text-sm text-(--accent)">{error ?? '找不到该版本'}</p>
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm">
+          <p className="font-semibold text-(--foreground)">
+            {error ?? '找不到该版本'}
+          </p>
+          <p className="mt-2 text-(--foreground-subtle)">
+            该版本可能不存在或链接已过期。
+          </p>
+          <div className="mt-5 flex justify-center">
+            <Link
+              to="/scenarios/shangyang-court"
+              className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+              返回工坊
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -1368,10 +1389,42 @@ export function PlaygroundPage() {
             <RunResult run={visibleRun} scenario={scenario} />
           ) : (
             <Card>
-              <CardContent className="flex items-center justify-center py-24">
-                <p className="text-sm text-(--foreground-subtle)">
-                  点击「运行对战」开始一次新的试炼场测试。
+              <CardContent className="py-12 px-6 text-center">
+                <p className="text-base font-semibold text-(--foreground)">
+                  试炼场 — 安全测试你的策略
                 </p>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-(--foreground-subtle)">
+                  你的 AI 会和对手进行一场完整辩论（约 2
+                  分钟），结果不计入正式排名，可以放心反复测试。
+                </p>
+                <div className="mt-6">
+                  <Button
+                    disabled={
+                      isSubmissionRetired ||
+                      isRunning ||
+                      isInterrupting ||
+                      (opponentMode === 'preset' && !selectedPresetId)
+                    }
+                    onClick={handleRun}
+                  >
+                    运行对战
+                  </Button>
+                </div>
+                <div className="mx-auto mt-6 max-w-sm text-left text-xs leading-5 text-(--foreground-muted)">
+                  <p>
+                    <span className="font-medium text-(--foreground-subtle)">
+                      自己对打
+                    </span>{' '}
+                    — 你的{scenario.roleAName} vs 你的
+                    {scenario.roleBName}
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-medium text-(--foreground-subtle)">
+                      预设对手
+                    </span>{' '}
+                    — 和官方预设的策略对战
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}

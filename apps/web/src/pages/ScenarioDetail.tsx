@@ -5,7 +5,7 @@ import {
   type Scenario,
   type Submission,
 } from '@axiia/shared'
-import { FlaskConical } from 'lucide-react'
+import { FlaskConical, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -289,9 +289,7 @@ export function ScenarioDetailPage() {
       const created = await createSubmission(parsed.data)
       const history = await getMySubmissions(scenarioId)
       setSubmissions(history)
-      setToast(
-        `v${created.version} 已保存 · 可去排行榜查看往期对局，学习优秀策略`,
-      )
+      setToast(`v${created.version} 已保存 · 去试炼场测试效果`)
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '保存失败',
@@ -327,23 +325,23 @@ export function ScenarioDetailPage() {
         <div className="fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-xl border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
           <span className="h-2 w-2 shrink-0 rounded-full bg-(--success)" />
           <span>{toast}</span>
-          <Link
-            to="/leaderboard"
-            className="shrink-0 text-xs font-medium text-(--accent) hover:underline"
-            onClick={() => setToast(null)}
-          >
-            排行榜 →
-          </Link>
+          {submissions[0] ? (
+            <Link
+              to={`/playground/${submissions[0].id}`}
+              className="shrink-0 text-xs font-medium text-(--accent) hover:underline"
+              onClick={() => setToast(null)}
+            >
+              试炼场 →
+            </Link>
+          ) : null}
         </div>
       ) : null}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="page-eyebrow">Scenario</p>
+          <p className="page-eyebrow">场景工坊</p>
           <h1 className="page-title">{scenario.title}</h1>
-          <p className="page-subtitle">
-            你需要编写两个角色的策略提示词。系统会先将预设的角色提示词与你的提示词拼接为系统提示词。
-          </p>
+          <p className="page-subtitle">写一段策略让你的 AI 在辩论中胜出</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
@@ -355,7 +353,7 @@ export function ScenarioDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Left: Scene Materials (reference, sticky) ── */}
-        <div className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
+        <div className="order-2 lg:order-1 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
           <ScrollArea className="h-full">
             <Card>
               <CardContent className="space-y-3">
@@ -421,78 +419,82 @@ export function ScenarioDetailPage() {
                     </div>
                   </AccordionItem>
 
-                  <AccordionItem value="flow" title="比赛流程">
-                    <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          对话阶段
-                        </span>
-                        ：双方进行 {scenario.turnCount}{' '}
-                        轮对话，各自根据策略提示词行动
-                      </li>
-                      {scenario.examinationQuestionTemplate ? (
-                        <li>
-                          <span className="font-medium text-(--foreground)">
-                            问询阶段
-                          </span>
-                          ：裁判分别向双方提问，双方独立作答（互不可见）
-                        </li>
-                      ) : null}
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          裁决阶段
-                        </span>
-                        ：裁判综合辩论内容做出最终裁决
-                      </li>
-                      <li>
-                        <span className="font-medium text-(--foreground)">
-                          计分阶段
-                        </span>
-                        ：系统根据裁决结果计算双方得分，判定胜负
-                      </li>
-                    </ol>
-                  </AccordionItem>
-
-                  {showScoringRules ? (
-                    <AccordionItem value="score-rules" title="计分规则">
-                      <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
-                        <p className="text-[11px] text-(--foreground-muted)">
-                          每局双方独立计分，得分高者胜。
-                        </p>
-                        <div className="space-y-2">
-                          {scoringRuleItems.map((rule) => (
-                            <div
-                              key={rule.title}
-                              className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
-                            >
-                              <div className="min-w-0 space-y-0.5">
-                                <p className="text-xs font-medium text-(--foreground)">
-                                  {rule.title}
-                                </p>
-                                <p className="text-[11px] text-(--foreground-muted)">
-                                  {rule.detail}
-                                </p>
-                              </div>
-                              <span
-                                className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
-                              >
-                                {rule.score}
+                  <AccordionItem value="more-rules" title="更多规则">
+                    <Accordion multiple>
+                      <AccordionItem value="flow" title="比赛流程">
+                        <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              对话阶段
+                            </span>
+                            ：双方进行 {scenario.turnCount}{' '}
+                            轮对话，各自根据策略提示词行动
+                          </li>
+                          {scenario.examinationQuestionTemplate ? (
+                            <li>
+                              <span className="font-medium text-(--foreground)">
+                                问询阶段
                               </span>
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-[11px] text-(--foreground-muted)">
-                          假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
-                          0.75 分。
-                        </p>
-                      </div>
-                    </AccordionItem>
-                  ) : null}
+                              ：裁判分别向双方提问，双方独立作答（互不可见）
+                            </li>
+                          ) : null}
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              裁决阶段
+                            </span>
+                            ：裁判综合辩论内容做出最终裁决
+                          </li>
+                          <li>
+                            <span className="font-medium text-(--foreground)">
+                              计分阶段
+                            </span>
+                            ：系统根据裁决结果计算双方得分，判定胜负
+                          </li>
+                        </ol>
+                      </AccordionItem>
 
-                  <AccordionItem value="judge" title="裁判的视角与判决逻辑">
-                    <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
-                      {scenario.judgePrompt}
-                    </p>
+                      {showScoringRules ? (
+                        <AccordionItem value="score-rules" title="计分规则">
+                          <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              每局双方独立计分，得分高者胜。
+                            </p>
+                            <div className="space-y-2">
+                              {scoringRuleItems.map((rule) => (
+                                <div
+                                  key={rule.title}
+                                  className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
+                                >
+                                  <div className="min-w-0 space-y-0.5">
+                                    <p className="text-xs font-medium text-(--foreground)">
+                                      {rule.title}
+                                    </p>
+                                    <p className="text-[11px] text-(--foreground-muted)">
+                                      {rule.detail}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+                                  >
+                                    {rule.score}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[11px] text-(--foreground-muted)">
+                              假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
+                              0.75 分。
+                            </p>
+                          </div>
+                        </AccordionItem>
+                      ) : null}
+
+                      <AccordionItem value="judge" title="裁判的视角与判决逻辑">
+                        <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                          {scenario.judgePrompt}
+                        </p>
+                      </AccordionItem>
+                    </Accordion>
                   </AccordionItem>
                 </Accordion>
               </CardContent>
@@ -501,14 +503,46 @@ export function ScenarioDetailPage() {
         </div>
 
         {/* ── Right: Prompt Editor + Version History ── */}
-        <div className="space-y-6">
+        <div className="order-1 space-y-6 lg:order-2">
           <Card>
             <CardHeader className="flex flex-col gap-3 border-none pb-0">
               <CardTitle>编写策略提示词</CardTitle>
               <p className="text-sm leading-6 text-(--foreground-subtle)">
-                每次保存会创建一个新版本。比赛由管理员开启，届时将自动使用你的最新版本参赛。
+                保存后可在试炼场测试效果，比赛前自动使用最新版本。
               </p>
             </CardHeader>
+            {!localStorage.getItem('axiia-quickstart-dismissed') && (
+              <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-[rgba(74,222,128,0.2)] bg-[rgba(74,222,128,0.06)] px-4 py-3">
+                <div className="min-w-0 flex-1 space-y-1 text-xs leading-5 text-(--foreground-subtle)">
+                  <p className="font-semibold text-(--foreground)">快速上手</p>
+                  <p>
+                    你的{scenario.roleAName}会对阵别人的
+                    {scenario.roleBName}，你的{scenario.roleBName}
+                    会对阵别人的{scenario.roleAName}
+                    。写一段策略告诉 AI 怎么赢得辩论，100 字就够开始。
+                  </p>
+                  <Link
+                    to="/leaderboard"
+                    className="inline-block text-xs font-medium text-(--accent) hover:opacity-80"
+                  >
+                    去排行榜看看别人怎么打的 →
+                  </Link>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 rounded p-1 text-(--foreground-muted) transition hover:bg-white/8 hover:text-(--foreground)"
+                  onClick={(e) => {
+                    localStorage.setItem('axiia-quickstart-dismissed', '1')
+                    const card = (e.target as HTMLElement).closest(
+                      '[class*="mx-6"]',
+                    )
+                    card?.remove()
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSave}>
                 <p className="text-xs text-(--foreground-muted) leading-5">
@@ -530,7 +564,7 @@ export function ScenarioDetailPage() {
 
                   <TabsContent value="a" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
-                      <Accordion defaultValue={['template']}>
+                      <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
                           title="系统预设角色提示词"
@@ -549,16 +583,18 @@ export function ScenarioDetailPage() {
                         placeholder={`例如：在辩论中强调变法对军事力量的具体提升，用历史战例作为论据…`}
                         value={promptA}
                       />
-                      <p
-                        className={`text-right text-xs tabular-nums ${promptALength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
-                      >
-                        {promptALength} / 1000
-                      </p>
+                      {1000 - promptALength < 200 ? (
+                        <p
+                          className={`text-right text-xs tabular-nums ${promptALength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
+                        >
+                          还剩 {1000 - promptALength} 字
+                        </p>
+                      ) : null}
                     </div>
                   </TabsContent>
                   <TabsContent value="b" className="space-y-3">
                     <div className="rounded-lg border border-(--border-soft) px-3">
-                      <Accordion defaultValue={['template']}>
+                      <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
                           title="系统预设角色提示词"
@@ -577,11 +613,13 @@ export function ScenarioDetailPage() {
                         placeholder={`例如：强调祖制的稳定性，质疑对手方案的可行性和成本…`}
                         value={promptB}
                       />
-                      <p
-                        className={`text-right text-xs tabular-nums ${promptBLength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
-                      >
-                        {promptBLength} / 1000
-                      </p>
+                      {1000 - promptBLength < 200 ? (
+                        <p
+                          className={`text-right text-xs tabular-nums ${promptBLength > 1000 ? 'text-(--accent)' : 'text-(--foreground-muted)'}`}
+                        >
+                          还剩 {1000 - promptBLength} 字
+                        </p>
+                      ) : null}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -630,7 +668,8 @@ export function ScenarioDetailPage() {
                   </Button>
                 </div>
                 <p className="text-center text-[11px] text-(--foreground-muted)">
-                  你可以随时修改，比赛前自动使用最新版本。
+                  不同模型影响 AI
+                  的表达风格和推理深度。你可以随时修改，比赛前自动使用最新版本。
                 </p>
               </form>
             </CardContent>

@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Flow Diagram — Axiia Cup Engine</title>
+<style>
+  :root {
+    --sy-primary: #3B82F6;
+    --sy-light: #DBEAFE;
+    --sy-hidden: #60A5FA;
+    --gl-primary: #10B981;
+    --gl-light: #D1FAE5;
+    --gl-hidden: #34D399;
+    --qxg-primary: #8B5CF6;
+    --qxg-light: #EDE9FE;
+    --dm-primary: #F59E0B;
+    --dm-light: #FEF3C7;
+    --scorer-primary: #EF4444;
+    --scorer-light: #FEE2E2;
+    --rendered-bg: #F3F4F6;
+    --rendered-border: #9CA3AF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0F172A;
+    color: #E2E8F0;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: #F8FAFC; }
+  .subtitle { color: #94A3B8; margin-bottom: 40px; font-size: 14px; }
+
+  /* ── Legend ── */
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-bottom: 48px;
+    padding: 20px;
+    background: #1E293B;
+    border-radius: 12px;
+    border: 1px solid #334155;
+  }
+  .legend h2 { grid-column: 1/-1; font-size: 14px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-swatch {
+    width: 20px; height: 20px; border-radius: 4px; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .legend-swatch.hatched {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 6px);
+  }
+
+  /* ── Phase sections ── */
+  .phase {
+    margin-bottom: 48px;
+    position: relative;
+  }
+  .phase-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .phase-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 50%;
+    font-weight: 700; font-size: 14px;
+    background: #334155; color: #F8FAFC;
+  }
+  .phase-title { font-size: 20px; font-weight: 600; color: #F8FAFC; }
+  .phase-desc { font-size: 13px; color: #94A3B8; margin-left: 52px; margin-bottom: 16px; }
+
+  /* ── LLM Call Cards ── */
+  .call-card {
+    background: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .call-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: #334155;
+    font-size: 13px; font-weight: 600;
+    color: #CBD5E1;
+  }
+  .call-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #475569; color: #F1F5F9;
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 11px; font-family: monospace;
+  }
+  .call-speaker {
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+  }
+  .speaker-sy { background: var(--sy-primary); color: white; }
+  .speaker-gl { background: var(--gl-primary); color: white; }
+  .speaker-qxg { background: var(--qxg-primary); color: white; }
+  .speaker-scorer { background: var(--scorer-primary); color: white; }
+
+  .call-body {
+    display: grid;
+    grid-template-columns: minmax(180px, auto) 1fr;
+    gap: 1px;
+    background: #334155;
+  }
+
+  .sys-section, .msg-section {
+    padding: 12px 16px;
+    background: #1E293B;
+  }
+  .section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: #64748B; margin-bottom: 8px;
+  }
+
+  /* ── Context Blocks ── */
+  .ctx-block {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    margin: 2px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .ctx-block.small { font-size: 11px; padding: 3px 8px; }
+
+  .b-sy-prompt    { background: var(--sy-primary); color: white; }
+  .b-sy-hidden    { background: var(--sy-hidden); color: white; }
+  .b-gl-prompt    { background: var(--gl-primary); color: white; }
+  .b-gl-hidden    { background: var(--gl-hidden); color: white; }
+  .b-qxg-soul     { background: var(--qxg-primary); color: white; }
+  .b-dm           { background: var(--dm-primary); color: #1E293B; }
+  .b-scorer       { background: var(--scorer-primary); color: white; }
+  .b-game-rules   { background: #DC2626; color: white; }
+  .b-ground-truth { background: #F87171; color: white; }
+
+  .b-sy-turn      { background: var(--sy-light); color: var(--sy-primary); border-color: var(--sy-primary); }
+  .b-gl-turn      { background: var(--gl-light); color: var(--gl-primary); border-color: var(--gl-primary); }
+  .b-qxg-turn     { background: var(--qxg-light); color: var(--qxg-primary); border-color: var(--qxg-primary); }
+  .b-qxg-decision { background: var(--qxg-primary); color: white; }
+
+  .b-rendered {
+    background: var(--rendered-bg); color: #374151;
+    border: 1px dashed var(--rendered-border);
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.04) 4px, rgba(0,0,0,0.04) 8px);
+  }
+
+  /* ── Message row ── */
+  .msg-row {
+    display: flex; align-items: flex-start; gap: 6px;
+    margin-bottom: 6px;
+    padding: 4px 0;
+  }
+  .msg-role {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 3px;
+    flex-shrink: 0; margin-top: 3px;
+    font-family: monospace;
+  }
+  .role-user { background: #475569; color: #CBD5E1; }
+  .role-assistant { background: #0F172A; color: #94A3B8; }
+  .msg-content { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+  /* ── Output arrow ── */
+  .output-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    background: #0F172A;
+    font-size: 12px; color: #94A3B8;
+  }
+  .output-arrow { color: #64748B; font-family: monospace; font-size: 16px; }
+  .output-block {
+    padding: 4px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+    border: 2px solid;
+  }
+  .out-sy { background: var(--sy-light); color: var(--sy-primary); border-color: var(--sy-primary); }
+  .out-gl { background: var(--gl-light); color: var(--gl-primary); border-color: var(--gl-primary); }
+  .out-qxg { background: var(--qxg-light); color: var(--qxg-primary); border-color: var(--qxg-primary); }
+  .out-score { background: var(--scorer-light); color: var(--scorer-primary); border-color: var(--scorer-primary); }
+
+  /* ── Render step ── */
+  .render-step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    margin: 8px 0 16px 0;
+    background: #1E293B;
+    border: 1px dashed #475569;
+    border-radius: 8px;
+    font-size: 13px; color: #94A3B8;
+  }
+  .render-step code { color: #F59E0B; font-size: 12px; }
+
+  /* ── Connector lines ── */
+  .connector {
+    display: flex; justify-content: center; padding: 8px 0;
+    color: #475569; font-size: 20px;
+  }
+
+  /* ── Accumulation indicator ── */
+  .accum-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: #64748B; font-style: italic;
+    padding: 4px 0 2px 0;
+  }
+  .accum-indicator::before { content: ""; flex: 0 0 12px; height: 1px; background: #475569; }
+
+  /* ── Ellipsis ── */
+  .ellipsis {
+    text-align: center; padding: 12px; color: #64748B;
+    font-size: 18px; letter-spacing: 4px;
+  }
+
+  /* ── Layer 3 warning ── */
+  .layer3-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #7F1D1D; color: #FCA5A5;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── Annotations ── */
+  .annotation {
+    margin: 4px 0 8px 52px;
+    padding: 8px 12px;
+    background: #1a1a2e;
+    border-left: 3px solid #475569;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px; color: #94A3B8;
+  }
+  .annotation strong { color: #CBD5E1; }
+
+  /* ── Composition box (for C1) ── */
+  .compose-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px;
+    background: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .compose-eq { font-size: 18px; font-weight: 700; color: #64748B; font-family: monospace; }
+  .compose-plus { font-size: 14px; color: #64748B; font-family: monospace; }
+
+  /* ── Embedded document blocks ── */
+  .embedded-doc {
+    border: 1px dashed; border-radius: 6px;
+    padding: 6px 10px; margin: 2px;
+    font-size: 11px; display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  }
+  .embed-c2 { border-color: #6B7280; background: rgba(107,114,128,0.1); }
+  .embed-c3 { border-color: var(--sy-primary); background: rgba(59,130,246,0.05); }
+  .embed-c4 { border-color: var(--gl-primary); background: rgba(16,185,129,0.05); }
+
+  .contains-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+    color: #64748B; display: block; width: 100%;
+  }
+
+  /* ── Phase connector (vertical) ── */
+  .phase-connector {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 4px 0;
+    color: #475569;
+  }
+  .phase-connector .line { width: 2px; height: 20px; background: #334155; }
+  .phase-connector .arrow { font-size: 14px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .call-body { grid-template-columns: 1fr; }
+    .legend { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<h1>Context Flow Diagram</h1>
+<p class="subtitle">Exact context composition for every LLM call in the Axiia Cup match engine. Each colored block is a distinct piece of context.</p>
+
+<!-- ═══════════════════════════════ LEGEND ═══════════════════════════════ -->
+<div class="legend">
+  <h2>Context Atoms</h2>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--sy-primary)"></div>
+    <span>Player Prompt (SY/商鞅) — Layer 1</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--sy-hidden)"></div>
+    <span>Hidden Objective (SY) — Layer 2</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--gl-primary)"></div>
+    <span>Player Prompt (GL/甘龙) — Layer 1</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--gl-hidden)"></div>
+    <span>Hidden Objective (GL) — Layer 2</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--qxg-primary)"></div>
+    <span>QXG Soul (秦孝公) — Layer 1</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--dm-primary)"></div>
+    <span>DM Cue (Narrator template)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--sy-light);border:1px solid var(--sy-primary)"></div>
+    <span>SY generated turn (output)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--gl-light);border:1px solid var(--gl-primary)"></div>
+    <span>GL generated turn (output)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--qxg-light);border:1px solid var(--qxg-primary)"></div>
+    <span>QXG generated (question/decision)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch hatched" style="background:var(--rendered-bg);border:1px dashed var(--rendered-border)"></div>
+    <span>Rendered document (transcript)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:var(--scorer-primary)"></div>
+    <span>Scorer instructions — <span class="layer3-badge">Layer 3</span></span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#F87171"></div>
+    <span>Ground truth — <span class="layer3-badge">Layer 3</span></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ C1 SETUP ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge">C1</div>
+    <span class="phase-title">Setup</span>
+  </div>
+  <p class="phase-desc">No LLM calls. Compose effective identities from Layer 1 + Layer 2. Layer 3 is NOT included.</p>
+
+  <div class="compose-box">
+    <span class="ctx-block b-sy-prompt">player_prompt_sy</span>
+    <span class="compose-plus">+</span>
+    <span class="ctx-block b-sy-hidden">hidden_obj_sy</span>
+    <span class="compose-eq">=</span>
+    <span style="font-weight:600;color:#93C5FD;">A2_eff (SY)</span>
+  </div>
+  <div class="compose-box">
+    <span class="ctx-block b-gl-prompt">player_prompt_gl</span>
+    <span class="compose-plus">+</span>
+    <span class="ctx-block b-gl-hidden">hidden_obj_gl</span>
+    <span class="compose-eq">=</span>
+    <span style="font-weight:600;color:#6EE7B7;">A1_eff (GL)</span>
+  </div>
+</div>
+
+<div class="phase-connector"><div class="line"></div><div class="arrow">▼</div></div>
+
+<!-- ═══════════════════════════════ C2 DEBATE ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge">C2</div>
+    <span class="phase-title">Debate — SY vs GL</span>
+  </div>
+  <p class="phase-desc">N turns (default 20). Conversation style — message arrays grow. Each agent sees opponent's lines as "user" and own lines as "assistant".</p>
+
+  <!-- Turn 1: SY -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call 1</span>
+      <span class="call-speaker speaker-sy">SY</span>
+      SY speaks first
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-sy-prompt">player_prompt_sy</span>
+        <span class="ctx-block b-sy-hidden">hidden_obj_sy</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[]</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-dm">dm_opening</span>
+            <span style="font-size:11px;color:#64748B;">"卫鞅，寡人今日召你..."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-sy">SY_turn_1</span>
+    </div>
+  </div>
+
+  <!-- Turn 2: GL -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call 2</span>
+      <span class="call-speaker speaker-gl">GL</span>
+      GL responds
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-gl-prompt">player_prompt_gl</span>
+        <span class="ctx-block b-gl-hidden">hidden_obj_gl</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[]</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-sy-turn">SY_turn_1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-gl">GL_turn_1</span>
+    </div>
+  </div>
+
+  <!-- Turn 3: SY -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call 3</span>
+      <span class="call-speaker speaker-sy">SY</span>
+      SY responds — message array is growing
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-sy-prompt">player_prompt_sy</span>
+        <span class="ctx-block b-sy-hidden">hidden_obj_sy</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 3 messages</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-dm">dm_opening</span>
+          </div>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-sy-turn">SY_turn_1</span>
+          </div>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-gl-turn">GL_turn_1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-sy">SY_turn_2</span>
+    </div>
+  </div>
+
+  <!-- Turn 4: GL -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call 4</span>
+      <span class="call-speaker speaker-gl">GL</span>
+      GL responds — message array growing
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-gl-prompt">player_prompt_gl</span>
+        <span class="ctx-block b-gl-hidden">hidden_obj_gl</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 3 messages</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-sy-turn">SY_turn_1</span>
+          </div>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-gl-turn">GL_turn_1</span>
+          </div>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-sy-turn">SY_turn_2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-gl">GL_turn_2</span>
+    </div>
+  </div>
+
+  <div class="ellipsis">. . .</div>
+
+  <!-- Turn N: last turn -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N</span>
+      <span class="call-speaker speaker-gl">GL</span>
+      Final debate turn — messages[] has N entries
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-gl-prompt">player_prompt_gl</span>
+        <span class="ctx-block b-gl-hidden">hidden_obj_gl</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— N-1 messages</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-sy-turn">SY_turn_1</span>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <span class="ctx-block small b-gl-turn">GL_turn_1</span>
+        </div>
+        <div style="color:#475569;font-size:11px;padding:2px 0 2px 48px;">... all turns ...</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-sy-turn">SY_turn_(N/2)</span>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-gl">GL_turn_(N/2)</span>
+    </div>
+  </div>
+
+  <!-- Render step -->
+  <div class="render-step">
+    <code>format_transcript()</code>
+    <span>→</span>
+    <span class="ctx-block b-rendered" style="font-weight:600;">C2_rendered</span>
+    <span style="font-size:12px;">All N turns serialized into a text document</span>
+  </div>
+</div>
+
+<div class="phase-connector"><div class="line"></div><div class="arrow">▼</div></div>
+
+<!-- ═══════════════════════════════ C3 EXAM SY ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge">C3</div>
+    <span class="phase-title">Examination — QXG questions SY</span>
+  </div>
+  <p class="phase-desc">M rounds (default 4). QXG starts a <strong>fresh session</strong>. SY's session <strong>continues</strong> from the debate. DM instructs cross-probing about GL's goals.</p>
+
+  <!-- QXG asks Q1 -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+1</span>
+      <span class="call-speaker speaker-qxg">QXG</span>
+      QXG asks first question — fresh session
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-qxg-soul">qxg_soul</span>
+        <div style="font-size:10px;color:#64748B;margin-top:4px;">Character identity only. Short.</div>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 1 message</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <div class="embedded-doc embed-c2" style="display:flex;flex-direction:column;">
+              <span class="ctx-block small b-dm">dm_exam_sy</span>
+              <span class="contains-label" style="margin-top:4px;">contains:</span>
+              <span class="ctx-block small b-rendered">C2_rendered (full debate)</span>
+              <span class="ctx-block small b-dm" style="font-size:10px;">cross_probe: "试探商鞅对甘龙真实意图"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-qxg">QXG_q1</span>
+    </div>
+  </div>
+
+  <!-- SY answers A1 -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+2</span>
+      <span class="call-speaker speaker-sy">SY</span>
+      SY answers — session continues from debate (N debate msgs + 1 question)
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-sy-prompt">player_prompt_sy</span>
+        <span class="ctx-block b-sy-hidden">hidden_obj_sy</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— N+1 messages (debate + question)</span></div>
+        <div class="accum-indicator">debate history (N messages from C2)</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-dm">dm_opening</span>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <span class="ctx-block small b-sy-turn">SY_turn_1</span>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-gl-turn">GL_turn_1</span>
+        </div>
+        <div style="color:#475569;font-size:11px;padding:2px 0 2px 48px;">... all N debate turns ...</div>
+        <div class="accum-indicator">new: QXG examination question</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span style="font-size:11px;color:#64748B;">[秦孝公质询]</span>
+            <span class="ctx-block small b-qxg-turn">QXG_q1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-sy">SY_a1</span>
+    </div>
+  </div>
+
+  <!-- QXG asks Q2 -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+3</span>
+      <span class="call-speaker speaker-qxg">QXG</span>
+      QXG follows up — QXG session grows
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-qxg-soul">qxg_soul</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 3 messages</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-dm">dm_exam_sy</span>
+            <span style="font-size:10px;color:#64748B;">(contains C2_rendered + cross_probe)</span>
+          </div>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <span class="ctx-block small b-qxg-turn">QXG_q1</span>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span style="font-size:11px;color:#64748B;">商鞅答曰：</span>
+            <span class="ctx-block small b-sy-turn">SY_a1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-qxg">QXG_q2</span>
+    </div>
+  </div>
+
+  <!-- SY answers A2 -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+4</span>
+      <span class="call-speaker speaker-sy">SY</span>
+      SY answers — session has N debate msgs + 2 QA pairs
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-sy-prompt">player_prompt_sy</span>
+        <span class="ctx-block b-sy-hidden">hidden_obj_sy</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— N+3 messages</span></div>
+        <div class="accum-indicator">debate history (N messages)</div>
+        <div style="color:#475569;font-size:11px;padding:2px 0 2px 48px;">dm_opening, SY_t1, GL_t1, ... all debate ...</div>
+        <div class="accum-indicator">QA round 1</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-qxg-turn">QXG_q1</span>
+        </div>
+        <div class="msg-row">
+          <span class="msg-role role-assistant">asst</span>
+          <span class="ctx-block small b-sy-turn">SY_a1</span>
+        </div>
+        <div class="accum-indicator">QA round 2 (new)</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <span class="ctx-block small b-qxg-turn">QXG_q2</span>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-sy">SY_a2</span>
+    </div>
+  </div>
+
+  <div class="ellipsis">. . . M rounds total . . .</div>
+
+  <div class="render-step">
+    <code>format_qa()</code>
+    <span>→</span>
+    <span class="ctx-block b-rendered" style="font-weight:600;">C3_rendered</span>
+    <span style="font-size:12px;">All M QA rounds (秦孝公问/商鞅答) serialized</span>
+  </div>
+</div>
+
+<div class="phase-connector"><div class="line"></div><div class="arrow">▼</div></div>
+
+<!-- ═══════════════════════════════ C4 EXAM GL ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge">C4</div>
+    <span class="phase-title">Examination — QXG questions GL</span>
+  </div>
+  <p class="phase-desc">Mirror of C3 with GL. QXG starts <strong>another fresh session</strong> (independent from C3). GL's session <strong>continues</strong> from the debate. DM instructs cross-probing about SY's goals.</p>
+
+  <!-- QXG asks GL Q1 -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+2M+1</span>
+      <span class="call-speaker speaker-qxg">QXG</span>
+      QXG asks GL — new fresh session (independent from C3 QXG session)
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-qxg-soul">qxg_soul</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 1 message</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <div class="embedded-doc embed-c2" style="display:flex;flex-direction:column;">
+              <span class="ctx-block small b-dm">dm_exam_gl</span>
+              <span class="contains-label" style="margin-top:4px;">contains:</span>
+              <span class="ctx-block small b-rendered">C2_rendered (same debate)</span>
+              <span class="ctx-block small b-dm" style="font-size:10px;">cross_probe: "试探甘龙对商鞅真实意图"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-qxg">QXG_q1_gl</span>
+    </div>
+  </div>
+
+  <!-- GL answers -->
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+2M+2</span>
+      <span class="call-speaker speaker-gl">GL</span>
+      GL answers — session continues from debate
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-gl-prompt">player_prompt_gl</span>
+        <span class="ctx-block b-gl-hidden">hidden_obj_gl</span>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— N+1 messages</span></div>
+        <div class="accum-indicator">debate history (N messages from C2)</div>
+        <div style="color:#475569;font-size:11px;padding:2px 0 2px 48px;">SY_t1, GL_t1, SY_t2, ... all debate ...</div>
+        <div class="accum-indicator">new: QXG examination question</div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span style="font-size:11px;color:#64748B;">[秦孝公质询]</span>
+            <span class="ctx-block small b-qxg-turn">QXG_q1_gl</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-gl">GL_a1</span>
+    </div>
+  </div>
+
+  <div class="ellipsis">. . . M rounds total . . .</div>
+
+  <div class="render-step">
+    <code>format_qa()</code>
+    <span>→</span>
+    <span class="ctx-block b-rendered" style="font-weight:600;">C4_rendered</span>
+    <span style="font-size:12px;">All M QA rounds (秦孝公问/甘龙答) serialized</span>
+  </div>
+</div>
+
+<div class="phase-connector"><div class="line"></div><div class="arrow">▼</div></div>
+
+<!-- ═══════════════════════════════ C5 DECISION ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge">C5</div>
+    <span class="phase-title">Decision — QXG judges</span>
+  </div>
+  <p class="phase-desc">One-shot function call. QXG's <strong>third session</strong> (independent from C3 and C4). All evidence in user message. QXG is <strong>authoritative</strong> — scorer cannot override.</p>
+
+  <div class="call-card">
+    <div class="call-header">
+      <span class="call-number">Call N+4M+1</span>
+      <span class="call-speaker speaker-qxg">QXG</span>
+      Final judgment — fresh one-shot, all evidence as documents
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt</div>
+        <span class="ctx-block b-qxg-soul">qxg_soul</span>
+        <div style="font-size:10px;color:#64748B;margin-top:4px;">Same soul, third session.</div>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 1 message (large)</span></div>
+        <div class="msg-row" style="align-items:stretch;">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content" style="flex-direction:column;align-items:flex-start;">
+            <div class="embedded-doc embed-c2" style="display:flex;flex-direction:column;width:100%;">
+              <span class="ctx-block small b-dm">dm_decision</span>
+              <span class="contains-label" style="margin-top:4px;">contains all evidence:</span>
+              <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <span class="ctx-block small b-rendered">C2_rendered (debate)</span>
+                <span class="ctx-block small b-rendered" style="border-color:var(--sy-primary);">C3_rendered (exam SY)</span>
+                <span class="ctx-block small b-rendered" style="border-color:var(--gl-primary);">C4_rendered (exam GL)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-qxg" style="border-width:3px;">QXG_decision</span>
+      <span style="font-size:11px;color:#94A3B8;">free-form in-character speech, NO scores</span>
+    </div>
+  </div>
+</div>
+
+<div class="phase-connector"><div class="line"></div><div class="arrow">▼</div></div>
+
+<!-- ═══════════════════════════════ C6 SCORER ═══════════════════════════════ -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-badge" style="background:#7F1D1D;">C6</div>
+    <span class="phase-title">Score Extraction</span>
+  </div>
+  <p class="phase-desc"><span class="layer3-badge">Layer 3</span> appears here and ONLY here. Scorer receives QXG's speech + game rules. NO debate, NO examination, NO hidden objectives. Cannot override QXG.</p>
+
+  <div class="call-card" style="border-color:#7F1D1D;">
+    <div class="call-header" style="background:#7F1D1D;">
+      <span class="call-number" style="background:#991B1B;">Call N+4M+2</span>
+      <span class="call-speaker speaker-scorer">Scorer</span>
+      Utility function — NOT an in-world character
+      <span class="layer3-badge">Layer 3</span>
+    </div>
+    <div class="call-body">
+      <div class="sys-section">
+        <div class="section-label">System Prompt <span class="layer3-badge">Layer 3</span></div>
+        <span class="ctx-block b-scorer">scorer_instruct</span>
+        <span class="ctx-block b-game-rules">game_rules</span>
+        <span class="ctx-block b-ground-truth">ground_truth</span>
+        <div style="font-size:10px;color:#F87171;margin-top:6px;">Point values, true/false assignments, scoring rubric</div>
+      </div>
+      <div class="msg-section">
+        <div class="section-label">Messages[] <span style="color:#475569">— 1 message</span></div>
+        <div class="msg-row">
+          <span class="msg-role role-user">user</span>
+          <div class="msg-content">
+            <span class="ctx-block small b-qxg-decision">QXG_decision</span>
+            <span style="font-size:10px;color:#94A3B8;">QXG's speech only. Nothing else.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="output-row" style="background:#1a0505;">
+      <span class="output-arrow">→</span>
+      <span class="output-block out-score">{ scoreA, scoreB, winner, reasoning }</span>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>What scorer DOES NOT see:</strong> player prompts, hidden objectives, debate transcript, examination transcripts, DM cues.
+    QXG's word is final. Scorer only maps in-character decisions to point values.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SUMMARY ═══════════════════════════════ -->
+<div style="margin-top:48px;padding:24px;background:#1E293B;border-radius:12px;border:1px solid #334155;">
+  <h2 style="font-size:16px;color:#F8FAFC;margin-bottom:12px;">Context Isolation Summary</h2>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <thead>
+      <tr style="border-bottom:1px solid #334155;">
+        <th style="text-align:left;padding:8px;color:#94A3B8;">Agent</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Own Prompt</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Own Hidden Obj</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Opponent Prompt</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Opponent Hidden</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Debate</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Exam QA</th>
+        <th style="text-align:center;padding:8px;color:#94A3B8;">Game Rules</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #1E293B;">
+        <td style="padding:8px;"><span class="ctx-block small b-sy-prompt">SY</span></td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003;</td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#F59E0B;">turns only</td>
+        <td style="text-align:center;padding:8px;color:#F59E0B;">own QA only</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007; NEVER</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1E293B;">
+        <td style="padding:8px;"><span class="ctx-block small b-gl-prompt">GL</span></td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003;</td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#F59E0B;">turns only</td>
+        <td style="text-align:center;padding:8px;color:#F59E0B;">own QA only</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007; NEVER</td>
+      </tr>
+      <tr style="border-bottom:1px solid #1E293B;">
+        <td style="padding:8px;"><span class="ctx-block small b-qxg-soul">QXG</span></td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003; soul</td>
+        <td style="text-align:center;padding:8px;color:#64748B;">N/A</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003; rendered</td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003; both</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007; NEVER</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;"><span class="ctx-block small b-scorer">Scorer</span></td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#EF4444;">&#10007;</td>
+        <td style="text-align:center;padding:8px;color:#22C55E;">&#10003; ONLY HERE</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:16px;padding-top:12px;border-top:1px solid #334155;font-size:12px;color:#64748B;">
+    Total LLM calls per match (N=20, M=4): <strong style="color:#F8FAFC;">38</strong> = 20 debate + 8 exam SY + 8 exam GL + 1 decision + 1 scorer
+  </div>
+</div>
+
+</body>
+</html>
