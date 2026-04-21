@@ -545,6 +545,12 @@ export function ScenarioDetailPage() {
             )}
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSave}>
+                <p className="text-xs text-(--foreground-muted) leading-5">
+                  你需要同时编写{scenario.roleAName}和{scenario.roleBName}
+                  的策略。比赛时你的{scenario.roleAName}会对阵别人的
+                  {scenario.roleBName}，你的{scenario.roleBName}会对阵别人的
+                  {scenario.roleAName}。
+                </p>
                 <Tabs
                   value={selectedRoleTab}
                   onValueChange={(value) =>
