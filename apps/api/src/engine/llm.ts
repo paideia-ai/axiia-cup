@@ -231,6 +231,11 @@ function buildOpenAICompatibleRequest(params: {
       ? { type: 'json_object' as const }
       : undefined,
     temperature: params.temperature ?? 0,
+    // Some SiliconFlow models (e.g. Qwen3 thinking variants) require explicitly
+    // disabling thinking mode; otherwise the API returns 400.
+    ...(modelDefinition.thinking === 'disabled'
+      ? { enable_thinking: false }
+      : {}),
   }
 }
 
