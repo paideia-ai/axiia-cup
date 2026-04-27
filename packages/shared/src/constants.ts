@@ -11,6 +11,8 @@ export const evaluationOnlyModelIds = [
   'claude-sonnet-4',
   'claude-sonnet-4-5',
   'claude-opus-4-5',
+  'claude-opus-4-6',
+  'qwen3-235b',
 ] as const
 
 export const evaluationModelIds = [
@@ -81,6 +83,20 @@ export const modelCatalog = [
     label: 'Claude Opus 4.5',
     apiModel: 'claude-opus-4-5-20251101',
     provider: 'anthropic',
+    surfaces: ['evaluation'],
+  },
+  {
+    id: 'claude-opus-4-6',
+    label: 'Claude Opus 4.6',
+    apiModel: 'claude-opus-4-6',
+    provider: 'anthropic',
+    surfaces: ['evaluation'],
+  },
+  {
+    id: 'qwen3-235b',
+    label: 'Qwen3 235B',
+    apiModel: 'Qwen/Qwen3-235B-A22B',
+    provider: 'siliconflow',
     surfaces: ['evaluation'],
   },
 ] as const satisfies readonly ModelDefinition[]
