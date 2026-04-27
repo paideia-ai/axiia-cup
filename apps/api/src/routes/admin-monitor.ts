@@ -161,7 +161,10 @@ adminMonitorRouter.post(
   requireAuth,
   requireAdmin,
   async (context) => {
-    const body = await context.req.json<{ matchIds: number[]; judgeModel: string }>()
+    const body = await context.req.json<{
+      matchIds: number[]
+      judgeModel: string
+    }>()
     const { matchIds, judgeModel: judgeModelRaw } = body
 
     const judgeModel = evaluationModelIdSchema.parse(judgeModelRaw)
@@ -169,7 +172,11 @@ adminMonitorRouter.post(
     const results = []
 
     for (const matchId of matchIds) {
-      const match = db.select().from(matches).where(eq(matches.id, matchId)).get()
+      const match = db
+        .select()
+        .from(matches)
+        .where(eq(matches.id, matchId))
+        .get()
       if (!match || match.status !== 'scored') {
         results.push({ matchId, error: 'not found or not done' })
         continue
@@ -196,7 +203,12 @@ adminMonitorRouter.post(
         : []
       const assignment: InfoAssignment = match.infoAssignment
         ? JSON.parse(match.infoAssignment)
-        : { roleAFalseInfoIds: [], roleBFalseInfoIds: [], roleATrueRequestIds: [], roleBTrueRequestIds: [] }
+        : {
+            roleAFalseInfoIds: [],
+            roleBFalseInfoIds: [],
+            roleATrueRequestIds: [],
+            roleBTrueRequestIds: [],
+          }
 
       const debateText =
         transcript.length > 0
@@ -208,7 +220,10 @@ adminMonitorRouter.post(
               .join('\n\n')
           : '（暂无对话）'
 
-      function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
+      function buildExaminationSummary(
+        roleName: string,
+        examination: JudgeQA[],
+      ) {
         if (examination.length === 0) return `【${roleName}】未完成问询。`
         return examination
           .map((item) =>
