@@ -33,6 +33,7 @@ type ModelDefinition = {
   label: string
   provider: ModelProvider
   surfaces: readonly ('evaluation' | 'submission')[]
+  thinking?: 'disabled'
 }
 
 export const modelCatalog = [
@@ -98,6 +99,7 @@ export const modelCatalog = [
     apiModel: 'Pro/Qwen/Qwen3-235B-A22B',
     provider: 'siliconflow',
     surfaces: ['evaluation'],
+    thinking: 'disabled',
   },
 ] as const satisfies readonly ModelDefinition[]
 
@@ -134,14 +136,14 @@ export const evaluationModelOptions = modelCatalog
     toPublicModelOption(entry),
   ) as readonly EvaluationModelOption[]
 
-export function getModelDefinition(id: ModelId) {
+export function getModelDefinition(id: ModelId): ModelDefinition {
   const model = modelCatalog.find((entry) => entry.id === id)
 
   if (!model) {
     throw new Error(`Unknown model id: ${id}`)
   }
 
-  return model
+  return model as ModelDefinition
 }
 
 export const MIN_SWISS_ROUNDS = 2
