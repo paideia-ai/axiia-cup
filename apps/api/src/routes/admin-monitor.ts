@@ -1,12 +1,21 @@
-import { adminMonitorUserSchema } from '@axiia/shared'
-import { sql } from 'drizzle-orm'
+import {
+  adminMonitorUserSchema,
+  evaluationModelIdSchema,
+  type InfoAssignment,
+  type JudgeQA,
+  type TranscriptTurn,
+} from '@axiia/shared'
+import { eq, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 
 import { db } from '../db/client'
+import { buildJudgePrompt } from '../engine/core'
+import { chatCompletion } from '../engine/llm'
 import { listAnalyticsBattles } from '../lib/analytics'
 import { getTokenSoftCap } from '../lib/settings'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
+import { matches, scenarios } from '../db/schema'
 
 const adminMonitorRouter = new Hono()
 
@@ -142,6 +151,108 @@ adminMonitorRouter.get(
     )
 
     return context.json(result)
+  },
+)
+
+// ── Research: re-run judge on existing match transcripts ─────────────────────
+
+adminMonitorRouter.post(
+  '/api/admin/rejudge',
+  requireAuth,
+  requireAdmin,
+  async (context) => {
+    const body = await context.req.json<{ matchIds: number[]; judgeModel: string }>()
+    const { matchIds, judgeModel: judgeModelRaw } = body
+
+    const judgeModel = evaluationModelIdSchema.parse(judgeModelRaw)
+
+    const results = []
+
+    for (const matchId of matchIds) {
+      const match = db.select().from(matches).where(eq(matches.id, matchId)).get()
+      if (!match || match.status !== 'scored') {
+        results.push({ matchId, error: 'not found or not done' })
+        continue
+      }
+
+      const scenario = db
+        .select()
+        .from(scenarios)
+        .where(eq(scenarios.id, match.scenarioId))
+        .get()
+      if (!scenario) {
+        results.push({ matchId, error: 'scenario not found' })
+        continue
+      }
+
+      const transcript: TranscriptTurn[] = match.transcript
+        ? JSON.parse(match.transcript)
+        : []
+      const judgeA: JudgeQA[] = match.judgeTranscriptA
+        ? JSON.parse(match.judgeTranscriptA)
+        : []
+      const judgeB: JudgeQA[] = match.judgeTranscriptB
+        ? JSON.parse(match.judgeTranscriptB)
+        : []
+      const assignment: InfoAssignment = match.infoAssignment
+        ? JSON.parse(match.infoAssignment)
+        : { roleAFalseInfoIds: [], roleBFalseInfoIds: [], roleATrueRequestIds: [], roleBTrueRequestIds: [] }
+
+      const debateText =
+        transcript.length > 0
+          ? transcript
+              .map(
+                (t, i) =>
+                  `[第${i + 1}轮] ${t.speaker === 'a' ? scenario.roleAName : scenario.roleBName}：${t.content}`,
+              )
+              .join('\n\n')
+          : '（暂无对话）'
+
+      function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
+        if (examination.length === 0) return `【${roleName}】未完成问询。`
+        return examination
+          .map((item) =>
+            [
+              `【${roleName}】`,
+              `- 指认编号：${item.selectedInfoId ?? '未作答'}`,
+              `- 系统判定：${item.isCorrect == null ? '未判定' : item.isCorrect ? '正确' : '错误'}`,
+              `- 回答：${item.answer}`,
+            ].join('\n'),
+          )
+          .join('\n\n')
+      }
+
+      const judgePrompt = buildJudgePrompt(scenario, assignment, {
+        debate: debateText,
+        examinationA: buildExaminationSummary(scenario.roleAName, judgeA),
+        examinationB: buildExaminationSummary(scenario.roleBName, judgeB),
+      })
+
+      try {
+        const newDecision = await chatCompletion({
+          messages: [{ role: 'user', content: '请做出你的裁决。' }],
+          model: judgeModel,
+          systemPrompt: judgePrompt,
+          temperature: 0,
+          trace: { phase: 'judgment', side: 'judge' },
+        })
+
+        results.push({
+          matchId,
+          subAId: match.subAId,
+          subBId: match.subBId,
+          originalWinner: match.winner,
+          originalScoreA: match.scoreA,
+          originalScoreB: match.scoreB,
+          newDecision,
+          judgeModel,
+        })
+      } catch (e) {
+        results.push({ matchId, error: String(e) })
+      }
+    }
+
+    return context.json({ results })
   },
 )
 
