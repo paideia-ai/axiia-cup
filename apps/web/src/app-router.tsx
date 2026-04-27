@@ -19,6 +19,16 @@ import { RegisterPage } from './pages/Register'
 import { ScenarioDetailPage } from './pages/ScenarioDetail'
 import { SettingsPage } from './pages/settings-page'
 import { TournamentPlayerDetailPage } from './pages/TournamentPlayerDetail'
+import { MockIndex } from './pages/mocks/mock-index'
+import { MockLanding } from './pages/mocks/mock-landing'
+import { MockLogin } from './pages/mocks/mock-login'
+import { MockRegister } from './pages/mocks/mock-register'
+import { MockDashboard } from './pages/mocks/mock-dashboard'
+import { MockDashboardEmpty } from './pages/mocks/mock-dashboard-empty'
+import { MockWorkshop } from './pages/mocks/mock-workshop'
+import { MockLeaderboard } from './pages/mocks/mock-leaderboard'
+import { MockMatch } from './pages/mocks/mock-match'
+import { MockShell } from './pages/mocks/mock-shell'
 
 function ProtectedShell() {
   const { isLoading, user } = useAuth()
@@ -110,6 +120,51 @@ export function AppRouter() {
             ) : (
               <RegisterPage />
             )
+          }
+        />
+        {/* Static mock pages — no auth required */}
+        <Route path="/mocks" element={<MockIndex />} />
+        <Route path="/mocks/landing" element={<MockLanding />} />
+        <Route path="/mocks/login" element={<MockLogin />} />
+        <Route path="/mocks/register" element={<MockRegister />} />
+        <Route
+          path="/mocks/dashboard"
+          element={
+            <MockShell>
+              <MockDashboard />
+            </MockShell>
+          }
+        />
+        <Route
+          path="/mocks/dashboard-empty"
+          element={
+            <MockShell>
+              <MockDashboardEmpty />
+            </MockShell>
+          }
+        />
+        <Route
+          path="/mocks/workshop"
+          element={
+            <MockShell>
+              <MockWorkshop />
+            </MockShell>
+          }
+        />
+        <Route
+          path="/mocks/leaderboard"
+          element={
+            <MockShell>
+              <MockLeaderboard />
+            </MockShell>
+          }
+        />
+        <Route
+          path="/mocks/match"
+          element={
+            <MockShell>
+              <MockMatch />
+            </MockShell>
           }
         />
         <Route path="/*" element={<ProtectedShell />} />
