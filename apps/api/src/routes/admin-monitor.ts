@@ -7,6 +7,7 @@ import {
 } from '@axiia/shared'
 import { eq, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { randomUUID } from 'node:crypto'
 
 import { db } from '../db/client'
 import { buildJudgePrompt } from '../engine/core'
@@ -156,6 +157,45 @@ adminMonitorRouter.get(
 
 // ── Research: re-run judge on existing match transcripts ─────────────────────
 
+type RejudgeResult =
+  | {
+      matchId: number
+      subAId: number
+      subBId: number
+      originalWinner: string | null
+      originalScoreA: number | null
+      originalScoreB: number | null
+      newDecision: string
+      judgeModel: string
+    }
+  | { matchId: number; error: string }
+
+interface RejudgeJob {
+  status: 'running' | 'done' | 'error'
+  results: RejudgeResult[]
+  pending: number
+  total: number
+  startedAt: string
+  finishedAt: string | null
+  errorMessage?: string
+}
+
+const rejudgeJobs = new Map<string, RejudgeJob>()
+
+function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
+  if (examination.length === 0) return `【${roleName}】未完成问询。`
+  return examination
+    .map((item) =>
+      [
+        `【${roleName}】`,
+        `- 指认编号：${item.selectedInfoId ?? '未作答'}`,
+        `- 系统判定：${item.isCorrect == null ? '未判定' : item.isCorrect ? '正确' : '错误'}`,
+        `- 回答：${item.answer}`,
+      ].join('\n'),
+    )
+    .join('\n\n')
+}
+
 adminMonitorRouter.post(
   '/api/admin/rejudge',
   requireAuth,
@@ -166,108 +206,129 @@ adminMonitorRouter.post(
       judgeModel: string
     }>()
     const { matchIds, judgeModel: judgeModelRaw } = body
-
     const judgeModel = evaluationModelIdSchema.parse(judgeModelRaw)
 
-    const results = []
-
-    for (const matchId of matchIds) {
-      const match = db
-        .select()
-        .from(matches)
-        .where(eq(matches.id, matchId))
-        .get()
-      if (!match || match.status !== 'scored') {
-        results.push({ matchId, error: 'not found or not done' })
-        continue
-      }
-
-      const scenario = db
-        .select()
-        .from(scenarios)
-        .where(eq(scenarios.id, match.scenarioId))
-        .get()
-      if (!scenario) {
-        results.push({ matchId, error: 'scenario not found' })
-        continue
-      }
-
-      const transcript: TranscriptTurn[] = match.transcript
-        ? JSON.parse(match.transcript)
-        : []
-      const judgeA: JudgeQA[] = match.judgeTranscriptA
-        ? JSON.parse(match.judgeTranscriptA)
-        : []
-      const judgeB: JudgeQA[] = match.judgeTranscriptB
-        ? JSON.parse(match.judgeTranscriptB)
-        : []
-      const assignment: InfoAssignment = match.infoAssignment
-        ? JSON.parse(match.infoAssignment)
-        : {
-            roleAFalseInfoIds: [],
-            roleBFalseInfoIds: [],
-            roleATrueRequestIds: [],
-            roleBTrueRequestIds: [],
-          }
-
-      const debateText =
-        transcript.length > 0
-          ? transcript
-              .map(
-                (t, i) =>
-                  `[第${i + 1}轮] ${t.speaker === 'a' ? scenario.roleAName : scenario.roleBName}：${t.content}`,
-              )
-              .join('\n\n')
-          : '（暂无对话）'
-
-      function buildExaminationSummary(
-        roleName: string,
-        examination: JudgeQA[],
-      ) {
-        if (examination.length === 0) return `【${roleName}】未完成问询。`
-        return examination
-          .map((item) =>
-            [
-              `【${roleName}】`,
-              `- 指认编号：${item.selectedInfoId ?? '未作答'}`,
-              `- 系统判定：${item.isCorrect == null ? '未判定' : item.isCorrect ? '正确' : '错误'}`,
-              `- 回答：${item.answer}`,
-            ].join('\n'),
-          )
-          .join('\n\n')
-      }
-
-      const judgePrompt = buildJudgePrompt(scenario, assignment, {
-        debate: debateText,
-        examinationA: buildExaminationSummary(scenario.roleAName, judgeA),
-        examinationB: buildExaminationSummary(scenario.roleBName, judgeB),
-      })
-
-      try {
-        const newDecision = await chatCompletion({
-          messages: [{ role: 'user', content: '请做出你的裁决。' }],
-          model: judgeModel,
-          systemPrompt: judgePrompt,
-          temperature: 0,
-          trace: { phase: 'judgment', side: 'judge' },
-        })
-
-        results.push({
-          matchId,
-          subAId: match.subAId,
-          subBId: match.subBId,
-          originalWinner: match.winner,
-          originalScoreA: match.scoreA,
-          originalScoreB: match.scoreB,
-          newDecision,
-          judgeModel,
-        })
-      } catch (e) {
-        results.push({ matchId, error: String(e) })
-      }
+    const jobId = randomUUID()
+    const job: RejudgeJob = {
+      status: 'running',
+      results: [],
+      pending: matchIds.length,
+      total: matchIds.length,
+      startedAt: new Date().toISOString(),
+      finishedAt: null,
     }
+    rejudgeJobs.set(jobId, job)
 
-    return context.json({ results })
+    // Fire and forget — run all judges in parallel
+    Promise.all(
+      matchIds.map(async (matchId) => {
+        const match = db
+          .select()
+          .from(matches)
+          .where(eq(matches.id, matchId))
+          .get()
+        if (!match || match.status !== 'scored') {
+          job.results.push({ matchId, error: 'not found or not scored' })
+          job.pending--
+          return
+        }
+
+        const scenario = db
+          .select()
+          .from(scenarios)
+          .where(eq(scenarios.id, match.scenarioId))
+          .get()
+        if (!scenario) {
+          job.results.push({ matchId, error: 'scenario not found' })
+          job.pending--
+          return
+        }
+
+        const transcript: TranscriptTurn[] = match.transcript
+          ? JSON.parse(match.transcript)
+          : []
+        const judgeA: JudgeQA[] = match.judgeTranscriptA
+          ? JSON.parse(match.judgeTranscriptA)
+          : []
+        const judgeB: JudgeQA[] = match.judgeTranscriptB
+          ? JSON.parse(match.judgeTranscriptB)
+          : []
+        const assignment: InfoAssignment = match.infoAssignment
+          ? JSON.parse(match.infoAssignment)
+          : {
+              roleAFalseInfoIds: [],
+              roleBFalseInfoIds: [],
+              roleATrueRequestIds: [],
+              roleBTrueRequestIds: [],
+            }
+
+        const debateText =
+          transcript.length > 0
+            ? transcript
+                .map(
+                  (t, i) =>
+                    `[第${i + 1}轮] ${t.speaker === 'a' ? scenario.roleAName : scenario.roleBName}：${t.content}`,
+                )
+                .join('\n\n')
+            : '（暂无对话）'
+
+        const judgePrompt = buildJudgePrompt(scenario, assignment, {
+          debate: debateText,
+          examinationA: buildExaminationSummary(scenario.roleAName, judgeA),
+          examinationB: buildExaminationSummary(scenario.roleBName, judgeB),
+        })
+
+        try {
+          const newDecision = await chatCompletion({
+            messages: [{ role: 'user', content: '请做出你的裁决。' }],
+            model: judgeModel,
+            systemPrompt: judgePrompt,
+            temperature: 0,
+            trace: { phase: 'judgment', side: 'judge' },
+          })
+          job.results.push({
+            matchId,
+            subAId: match.subAId,
+            subBId: match.subBId,
+            originalWinner: match.winner,
+            originalScoreA: match.scoreA,
+            originalScoreB: match.scoreB,
+            newDecision,
+            judgeModel,
+          })
+        } catch (e) {
+          job.results.push({ matchId, error: String(e) })
+        }
+        job.pending--
+      }),
+    ).then(() => {
+      job.status = 'done'
+      job.finishedAt = new Date().toISOString()
+    })
+
+    return context.json({ jobId, status: 'running', total: matchIds.length })
+  },
+)
+
+adminMonitorRouter.get(
+  '/api/admin/rejudge/:jobId',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const { jobId } = context.req.param()
+    const job = rejudgeJobs.get(jobId)
+    if (!job) {
+      return context.json({ error: 'job not found' }, 404)
+    }
+    return context.json({
+      jobId,
+      status: job.status,
+      total: job.total,
+      completed: job.total - job.pending,
+      startedAt: job.startedAt,
+      finishedAt: job.finishedAt,
+      results: job.results,
+    })
   },
 )
 
