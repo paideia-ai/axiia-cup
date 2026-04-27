@@ -96,7 +96,7 @@ export const modelCatalog = [
   {
     id: 'qwen3-235b',
     label: 'Qwen3 235B',
-    apiModel: 'Pro/Qwen/Qwen3-235B-A22B',
+    apiModel: 'Qwen/Qwen3-72B',
     provider: 'siliconflow',
     surfaces: ['evaluation'],
     thinking: 'disabled',
