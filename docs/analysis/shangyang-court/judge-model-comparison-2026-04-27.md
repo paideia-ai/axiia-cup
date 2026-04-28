@@ -143,3 +143,81 @@ No consistent tiebreaker logic visible from this sample. Narrative content in th
 ## Appendix: Raw Kimi decisions (first 300 chars each)
 
 See job `d6a55860-141f-4bc8-9b47-a590843668b4` on production API (`GET /api/admin/rejudge/:jobId`). Job is stored in-memory on the server process — retrieve before next deploy.
+
+---
+
+# Extension (2026-04-28): Six-Judge Comparison
+
+Same 8 T8 top-5 matches re-judged through 6 additional models to characterize bias and inter-model agreement.
+
+## Models
+
+| Model | ID | apiModel | Provider |
+|-------|----|---------|----------|
+| Qwen3.5 397B | `qwen3.5-397b` | `Qwen/Qwen3.5-397B-A17B` | SiliconFlow |
+| Qwen3.6 27B | `qwen3.6-27b` | `Qwen/Qwen3.6-27B` | SiliconFlow |
+| MiniMax M2.5 | `minimax-m2.5` | `MiniMaxAI/MiniMax-M2.5` | SiliconFlow |
+| GLM-4.6 | `glm-4.6` | `zai-org/GLM-4.6` | SiliconFlow |
+| GPT-5.4 | `gpt-5.4` | `gpt-5.4` | OpenAI |
+| Claude Opus 4.6 | `claude-opus-4-6` | `claude-opus-4-6` | Anthropic |
+
+All called with `temperature=0`. Qwen3.5/3.6 sent with `enable_thinking: false`.
+
+## Per-match winners
+
+Format: `winner(SR/GR)` where SR = approved 商鞅 requests, GR = approved 甘龙 requests. ✓ = agrees with DeepSeek.
+
+| Match | DS | qwen3.5-397b | qwen3.6-27b | minimax-m2.5 | glm-4.6 | gpt-5.4 | claude-opus-4-6 |
+|------:|:--:|:------------:|:-----------:|:------------:|:-------:|:-------:|:---------------:|
+| 295 | b | b(0/3) ✓ | a(3/0) ✗ | a(3/0) ✗ | b(1/2) ✓ | a(2/0) ✗ | a(1/0) ✗ |
+| 296 | a | b(1/3) ✗ | a(3/0) ✓ | a(3/0) ✓ | a(2/0) ✓ | a(3/0) ✓ | tie(0/0) ✗ |
+| 311 | b | b(0/3) ✓ | b(0/3) ✓ | tie(2/2) ✗ | b(0/2) ✓ | b(0/2) ✓ | tie(0/0) ✗ |
+| 312 | a | b(0/3) ✗ | a(2/0) ✓ | a(1/0) ✓ | a(1/0) ✓ | a(1/0) ✓ | a(2/0) ✓ |
+| 329 | a | b(0/3) ✗ | a(2/0) ✓ | b(1/2) ✗ | b(0/1) ✗ | a(1/0) ✓ | a(1/0) ✓ |
+| 330 | b | b(0/3) ✓ | a(2/0) ✗ | b(0/3) ✓ | b(0/2) ✓ | a(2/0) ✗ | tie(0/0) ✗ |
+| 349 | b | a(2/0) ✗ | b(1/3) ✓ | a(2/0) ✗ | a(3/2) ✗ | a(3/0) ✗ | a(2/0) ✗ |
+| 350 | b | b(0/3) ✓ | a(3/0) ✗ | a(3/0) ✗ | a(3/0) ✗ | a(3/0) ✗ | a(1/0) ✗ |
+
+## Agreement with DeepSeek
+
+| Judge | Agree | Bias (a / b / tie) |
+|-------|------:|:------------------:|
+| GLM-4.6 | **5/8** | 4 / 4 / 0 |
+| Qwen3.6 27B | **5/8** | 6 / 2 / 0 |
+| Qwen3.5 397B | 4/8 | 1 / 7 / 0 |
+| GPT-5.4 | 4/8 | 7 / 1 / 0 |
+| MiniMax M2.5 | 3/8 | 5 / 2 / 1 |
+| Claude Opus 4.6 | 2/8 | 5 / 0 / 3 |
+| _Reference: DS_ | _8/8_ | 3 / 5 / 0 |
+
+## Findings
+
+1. **Massive cross-model bias spread.** Qwen3.5-397B sides with 甘龙 in 7/8 matches; Claude Opus 4.6 never picks 甘龙 (5 a + 3 ties). The same eight transcripts produce nearly opposite verdicts depending on judge.
+
+2. **GLM-4.6 is the most balanced and the closest to DeepSeek's distribution** (4 a / 4 b vs DS 3 a / 5 b), and ties qwen3.6-27b for highest agreement (5/8). It's a credible alternative judge.
+
+3. **Claude Opus 4.6 collapses to "tie"** on 3/8 matches with zero approvals on either side (0/0). It appears to interpret the rubric extremely conservatively — refusing to grant any specific request — while still narratively favoring 商鞅. This is a failure mode for the current scoring engine, which divides ties poorly.
+
+4. **GPT-5.4 ≈ Qwen3.6-27B in bias** (both ~6/8 favoring 商鞅), suggesting a shared "Western judge bias" toward reformist arguments (GPT-4 → 变法 was the original anecdote).
+
+5. **Match 349 is a stress test** — DS was the only judge picking 甘龙 here (Qwen3.6 also picked b). The other 5 judges all picked 商鞅. This match's "true" outcome is genuinely contested.
+
+6. **Match 311 is the most stable** — 4 of 6 new judges agree with DS (b). Only the two extreme-商鞅 judges (MiniMax, Claude Opus) deviate, and both deviate to "tie" rather than picking a different winner.
+
+## Implications
+
+- **No single judge is "correct."** The 5/8 ceiling for agreement with DS, and the bimodal A-bias / B-bias split across model families, means judge choice is a first-order experimental variable, not a tuning parameter.
+- **Ensemble/median-of-judges is worth piloting** for high-stakes ranking decisions. A vote-of-3 across DS + GLM-4.6 + (one A-biased judge like GPT-5.4) would smooth the most polarized verdicts.
+- **Claude Opus 4.6 needs prompt adjustment** before being used as a judge — its tie-rate makes it unusable for ranked tournaments as configured.
+
+## Reproducibility
+
+- Local script: `.local/rejudge-multi.py` (fires N async jobs, polls, consolidates)
+- Raw results: `/tmp/rejudge-multi-results.json` on dev machine
+- Job IDs (in-memory on prod, retrieve before next deploy):
+  - qwen3.5-397b: `0623636e-cb0a-49ba-ac0a-d5bf265962a3`
+  - qwen3.6-27b: `76da19b5-0869-4c81-b541-cf47e1021f0c`
+  - minimax-m2.5: `43ffae94-7402-4ec3-b220-ec97a563ae7b`
+  - glm-4.6: `4e84bc0a-790f-4dcf-9fe7-a054f2c16f32`
+  - gpt-5.4: `83a7e2c8-34ca-480d-bb9c-6d4b90e7b95e`
+  - claude-opus-4-6: `52ce0787-3cc3-428b-a1b4-c69333f4c695`
