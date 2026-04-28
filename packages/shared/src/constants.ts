@@ -12,7 +12,10 @@ export const evaluationOnlyModelIds = [
   'claude-sonnet-4-5',
   'claude-opus-4-5',
   'claude-opus-4-6',
-  'qwen3-235b',
+  'qwen3.5-397b',
+  'qwen3.6-27b',
+  'minimax-m2.5',
+  'glm-4.6',
 ] as const
 
 export const evaluationModelIds = [
@@ -94,12 +97,34 @@ export const modelCatalog = [
     surfaces: ['evaluation'],
   },
   {
-    id: 'qwen3-235b',
-    label: 'Qwen3',
-    apiModel: 'Qwen/Qwen3-32B',
+    id: 'qwen3.5-397b',
+    label: 'Qwen3.5 397B',
+    apiModel: 'Qwen/Qwen3.5-397B-A17B',
     provider: 'siliconflow',
     surfaces: ['evaluation'],
     thinking: 'disabled',
+  },
+  {
+    id: 'qwen3.6-27b',
+    label: 'Qwen3.6 27B',
+    apiModel: 'Qwen/Qwen3.6-27B',
+    provider: 'siliconflow',
+    surfaces: ['evaluation'],
+    thinking: 'disabled',
+  },
+  {
+    id: 'minimax-m2.5',
+    label: 'MiniMax M2.5',
+    apiModel: 'MiniMaxAI/MiniMax-M2.5',
+    provider: 'siliconflow',
+    surfaces: ['evaluation'],
+  },
+  {
+    id: 'glm-4.6',
+    label: 'GLM-4.6',
+    apiModel: 'zai-org/GLM-4.6',
+    provider: 'siliconflow',
+    surfaces: ['evaluation'],
   },
 ] as const satisfies readonly ModelDefinition[]
 
