@@ -51,6 +51,18 @@ export const requestItemSchema = z.object({
   content: z.string().trim().min(1),
 })
 
+export const roleOptionSchema = z.object({
+  id: z
+    .string()
+    .trim()
+    .regex(
+      templateVariableIdPattern,
+      '角色选项 ID 仅支持字母、数字和下划线，且需以字母开头',
+    ),
+  name: z.string().trim().min(1),
+  requests: z.array(requestItemSchema),
+})
+
 // ── Per-match randomization result ──────────────────────────────────────────
 
 export const infoAssignmentSchema = z.object({
@@ -151,8 +163,10 @@ function validateScenarioProtocol(
   scenario: {
     falseInfoCount: number
     roleAHiddenInfo: { id: string }[]
+    roleAOptions: { id: string; requests: { id: string }[] }[]
     roleARequests: { id: string }[]
     roleBHiddenInfo: { id: string }[]
+    roleBOptions: { id: string; requests: { id: string }[] }[]
     roleBRequests: { id: string }[]
     trueRequestCount: number
   },
@@ -178,6 +192,88 @@ function validateScenarioProtocol(
     'roleBRequests',
     context,
   )
+  validateUniqueIds(scenario.roleAOptions, 'roleAOptions', context)
+  validateUniqueIds(scenario.roleBOptions, 'roleBOptions', context)
+
+  if (scenario.roleAOptions.length > 0 && scenario.roleBOptions.length === 0) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '使用角色选项时，角色 B 也必须配置选项',
+      path: ['roleBOptions'],
+    })
+  }
+
+  if (scenario.roleBOptions.length > 0 && scenario.roleAOptions.length === 0) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '使用角色选项时，角色 A 也必须配置选项',
+      path: ['roleAOptions'],
+    })
+  }
+
+  const roleAOptionRequestIds = new Set<string>()
+  scenario.roleAOptions.forEach((option, optionIndex) => {
+    const seen = new Set<string>()
+
+    option.requests.forEach((request, requestIndex) => {
+      if (seen.has(request.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${option.id} 中存在重复请求 ID：${request.id}`,
+          path: ['roleAOptions', optionIndex, 'requests', requestIndex, 'id'],
+        })
+      }
+
+      seen.add(request.id)
+
+      if (roleAOptionRequestIds.has(request.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `roleAOptions 中请求 ID 不能重复：${request.id}`,
+          path: ['roleAOptions', optionIndex, 'requests', requestIndex, 'id'],
+        })
+      }
+
+      roleAOptionRequestIds.add(request.id)
+    })
+  })
+
+  const roleBOptionRequestIds = new Set<string>()
+  scenario.roleBOptions.forEach((option, optionIndex) => {
+    const seen = new Set<string>()
+
+    option.requests.forEach((request, requestIndex) => {
+      if (seen.has(request.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${option.id} 中存在重复请求 ID：${request.id}`,
+          path: ['roleBOptions', optionIndex, 'requests', requestIndex, 'id'],
+        })
+      }
+
+      seen.add(request.id)
+
+      if (roleBOptionRequestIds.has(request.id)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `roleBOptions 中请求 ID 不能重复：${request.id}`,
+          path: ['roleBOptions', optionIndex, 'requests', requestIndex, 'id'],
+        })
+      }
+
+      roleBOptionRequestIds.add(request.id)
+    })
+  })
+
+  for (const requestId of roleAOptionRequestIds) {
+    if (roleBOptionRequestIds.has(requestId)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `roleAOptions 和 roleBOptions 不能复用同一请求 ID：${requestId}`,
+        path: ['roleBOptions'],
+      })
+    }
+  }
 
   if (roleAInfoIds && roleBInfoIds) {
     scenario.roleBHiddenInfo.forEach((item, index) => {
@@ -260,6 +356,16 @@ function validateScenarioProtocol(
     })
   }
 
+  scenario.roleAOptions.forEach((option, index) => {
+    if (scenario.trueRequestCount > option.requests.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${option.id} 的请求数量不能少于 trueRequestCount`,
+        path: ['roleAOptions', index, 'requests'],
+      })
+    }
+  })
+
   if (
     scenario.roleBRequests.length > 0 &&
     scenario.trueRequestCount > scenario.roleBRequests.length
@@ -270,6 +376,16 @@ function validateScenarioProtocol(
       path: ['trueRequestCount'],
     })
   }
+
+  scenario.roleBOptions.forEach((option, index) => {
+    if (scenario.trueRequestCount > option.requests.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${option.id} 的请求数量不能少于 trueRequestCount`,
+        path: ['roleBOptions', index, 'requests'],
+      })
+    }
+  })
 }
 
 // ── Scenario ────────────────────────────────────────────────────────────────
@@ -290,10 +406,12 @@ const scenarioBaseSchema = z.object({
   // Role A
   roleAName: z.string(),
   roleAHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleAOptions: z.array(roleOptionSchema),
   roleARequests: z.array(requestItemSchema),
   // Role B
   roleBName: z.string(),
   roleBHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleBOptions: z.array(roleOptionSchema),
   roleBRequests: z.array(requestItemSchema),
   // Randomization config
   falseInfoCount: z.number().int().nonnegative(),
@@ -319,9 +437,11 @@ const updateScenarioBaseSchema = z.object({
   // Roles
   roleAName: z.string().min(1),
   roleAHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleAOptions: z.array(roleOptionSchema),
   roleARequests: z.array(requestItemSchema),
   roleBName: z.string().min(1),
   roleBHiddenInfo: z.array(hiddenInfoItemSchema),
+  roleBOptions: z.array(roleOptionSchema),
   roleBRequests: z.array(requestItemSchema),
   // Randomization
   falseInfoCount: z.number().int().nonnegative(),
@@ -411,6 +531,8 @@ export const submissionSchema = z.object({
   promptB: z.string(),
   modelA: z.string(),
   modelB: z.string(),
+  roleAOptionId: z.string().nullable().optional(),
+  roleBOptionId: z.string().nullable().optional(),
   retiredAt: z.string().nullable(),
   version: z.number().int().positive(),
   createdAt: z.string(),
@@ -422,6 +544,8 @@ export const createSubmissionSchema = z.object({
   promptB: z.string().trim().min(1).max(1000),
   modelA: submissionModelIdSchema,
   modelB: submissionModelIdSchema,
+  roleAOptionId: z.string().trim().min(1).nullable().optional(),
+  roleBOptionId: z.string().trim().min(1).nullable().optional(),
 })
 
 export const matchSchema = z.object({
@@ -519,6 +643,8 @@ export const matchDetailSchema = matchSchema.extend({
   roundNumber: z.number().int().positive(),
   playerADisplayName: z.string(),
   playerAModel: z.string(),
+  roleAOptionId: z.string().nullable().optional(),
+  roleBOptionId: z.string().nullable().optional(),
   playerBDisplayName: z.string(),
   playerBModel: z.string(),
 })
@@ -771,6 +897,7 @@ export type AdminScenario = z.infer<typeof adminScenarioSchema>
 export type ScenarioSummary = z.infer<typeof scenarioSummarySchema>
 export type HiddenInfoItem = z.infer<typeof hiddenInfoItemSchema>
 export type RequestItem = z.infer<typeof requestItemSchema>
+export type RoleOption = z.infer<typeof roleOptionSchema>
 export type InfoAssignment = z.infer<typeof infoAssignmentSchema>
 export type ScorerOutput = z.infer<typeof scorerOutputSchema>
 export type ExaminationAnswer = z.infer<typeof examinationAnswerSchema>

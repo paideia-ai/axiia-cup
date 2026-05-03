@@ -12,6 +12,7 @@ import {
 import { parseJsonField } from '../lib/json'
 import { maybeAdvanceRound, syncRoundStatus } from '../lib/tournaments'
 import { executeMatchSession } from './core'
+import { resolveScenarioRoleOptions } from './scenario-options'
 
 async function updateLeasedMatch(
   matchId: number,
@@ -103,6 +104,11 @@ export async function runMatch(
   const modelB = tournament?.modelOverride ?? subB.modelB
 
   try {
+    const resolvedScenario = resolveScenarioRoleOptions(scenario, {
+      roleAOptionId: subA.roleAOptionId,
+      roleBOptionId: subB.roleBOptionId,
+    })
+
     const result = await executeMatchSession({
       infoAssignment: infoAssignment ?? undefined,
       judgeTranscriptA,
@@ -149,7 +155,7 @@ export async function runMatch(
       },
       promptA: subA.promptA,
       promptB: subB.promptB,
-      scenario,
+      scenario: resolvedScenario,
       signal,
       transcript,
       userIdA: subA.userId,

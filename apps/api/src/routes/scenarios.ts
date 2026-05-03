@@ -23,15 +23,19 @@ const lockedExpression = sql<number>`exists(
 
 function serializeScenario(row: {
   roleAHiddenInfo: string
+  roleAOptions: string
   roleARequests: string
   roleBHiddenInfo: string
+  roleBOptions: string
   roleBRequests: string
 }) {
   return {
     ...row,
     roleAHiddenInfo: parseJsonField(row.roleAHiddenInfo, []),
+    roleAOptions: parseJsonField(row.roleAOptions, []),
     roleARequests: parseJsonField(row.roleARequests, []),
     roleBHiddenInfo: parseJsonField(row.roleBHiddenInfo, []),
+    roleBOptions: parseJsonField(row.roleBOptions, []),
     roleBRequests: parseJsonField(row.roleBRequests, []),
   }
 }
@@ -55,9 +59,11 @@ scenariosRouter.get(
         openingLine: scenarios.openingLine,
         roleAHiddenInfo: scenarios.roleAHiddenInfo,
         roleAName: scenarios.roleAName,
+        roleAOptions: scenarios.roleAOptions,
         roleARequests: scenarios.roleARequests,
         roleBHiddenInfo: scenarios.roleBHiddenInfo,
         roleBName: scenarios.roleBName,
+        roleBOptions: scenarios.roleBOptions,
         roleBRequests: scenarios.roleBRequests,
         scorerModel: scenarios.scorerModel,
         scorerPrompt: scenarios.scorerPrompt,
@@ -130,8 +136,10 @@ scenariosRouter.put(
 
       const {
         roleAHiddenInfo,
+        roleAOptions,
         roleARequests,
         roleBHiddenInfo,
+        roleBOptions,
         roleBRequests,
         ...rest
       } = parsed.data
@@ -139,8 +147,10 @@ scenariosRouter.put(
         .set({
           ...rest,
           roleAHiddenInfo: JSON.stringify(roleAHiddenInfo),
+          roleAOptions: JSON.stringify(roleAOptions),
           roleARequests: JSON.stringify(roleARequests),
           roleBHiddenInfo: JSON.stringify(roleBHiddenInfo),
+          roleBOptions: JSON.stringify(roleBOptions),
           roleBRequests: JSON.stringify(roleBRequests),
         })
         .where(eq(scenarios.id, id))

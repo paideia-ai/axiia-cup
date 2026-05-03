@@ -99,6 +99,13 @@
       "when": 1776325000000,
       "tag": "0013_tournament_model_override",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "14",
+      "when": 1776330000000,
+      "tag": "0014_selectable_role_options",
+      "breakpoints": true
     }
   ]
 }

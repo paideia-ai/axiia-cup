@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 
 import { db, sqlite } from '../db/client'
 import { scenarios, submissions, tournaments } from '../db/schema'
+import { validateScenarioRoleOptionSelection } from '../engine/scenario-options'
 import { resolveUserId } from '../lib/resolve-user'
 import { requireAuth } from '../middleware/requireAuth'
 import { requireWritesUnlocked } from '../middleware/requireWritesUnlocked'
@@ -16,6 +17,8 @@ const submissionSelection = {
   promptA: submissions.promptA,
   promptB: submissions.promptB,
   retiredAt: submissions.retiredAt,
+  roleAOptionId: submissions.roleAOptionId,
+  roleBOptionId: submissions.roleBOptionId,
   scenarioId: submissions.scenarioId,
   version: submissions.version,
 }
@@ -77,17 +80,47 @@ submissionsRouter.post(
     }
 
     const userId = context.get('userId')
-    const { modelA, modelB, promptA, promptB, scenarioId } = parsed.data
+    const {
+      modelA,
+      modelB,
+      promptA,
+      promptB,
+      roleAOptionId,
+      roleBOptionId,
+      scenarioId,
+    } = parsed.data
     const modelLegacy = modelA === modelB ? modelA : `${modelA}/${modelB}`
 
     const scenario = db
-      .select({ id: scenarios.id })
+      .select()
       .from(scenarios)
       .where(eq(scenarios.id, scenarioId))
       .get()
 
     if (!scenario) {
       return context.json({ error: 'Scenario not found' }, 404)
+    }
+
+    let roleOptionSelection: {
+      roleAOptionId: string | null
+      roleBOptionId: string | null
+    }
+
+    try {
+      roleOptionSelection = validateScenarioRoleOptionSelection(scenario, {
+        roleAOptionId,
+        roleBOptionId,
+      })
+    } catch (error) {
+      return context.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Invalid role option selection',
+        },
+        400,
+      )
     }
 
     const activeTournament = db
@@ -129,6 +162,8 @@ submissionsRouter.post(
           modelB,
           promptA,
           promptB,
+          roleAOptionId: roleOptionSelection.roleAOptionId,
+          roleBOptionId: roleOptionSelection.roleBOptionId,
           scenarioId,
           userId,
           version,

@@ -74,10 +74,12 @@ export const scenarios = sqliteTable('scenarios', {
   // Role A
   roleAName: text('role_a_name').notNull(),
   roleAHiddenInfo: text('role_a_hidden_info').notNull().default('[]'),
+  roleAOptions: text('role_a_options').notNull().default('[]'),
   roleARequests: text('role_a_requests').notNull().default('[]'),
   // Role B
   roleBName: text('role_b_name').notNull(),
   roleBHiddenInfo: text('role_b_hidden_info').notNull().default('[]'),
+  roleBOptions: text('role_b_options').notNull().default('[]'),
   roleBRequests: text('role_b_requests').notNull().default('[]'),
   // Randomization config
   falseInfoCount: integer('false_info_count').notNull().default(1),
@@ -102,6 +104,8 @@ export const submissions = sqliteTable(
     modelLegacy: text('model').notNull(),
     modelA: text('model_a').notNull(),
     modelB: text('model_b').notNull(),
+    roleAOptionId: text('role_a_option_id'),
+    roleBOptionId: text('role_b_option_id'),
     retiredAt: text('retired_at'),
     version: integer('version').notNull(),
     createdAt: text('created_at').notNull().default(currentTimestamp),

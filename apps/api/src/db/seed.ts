@@ -3,6 +3,7 @@ import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 
 import { hashPassword } from '../lib/auth'
 import { db, sqliteFilePath } from './client'
+import { ensureHonnojiScenario } from './honnoji-scenario'
 import { scenarios, users } from './schema'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
@@ -242,6 +243,9 @@ async function main() {
   console.log(
     `[db] ensured scenario shangyang-court in ${sqliteFilePath} (turnCount=${turnCount})`,
   )
+
+  ensureHonnojiScenario()
+  console.log(`[db] ensured scenario honnoji-decision in ${sqliteFilePath}`)
 }
 
 await main()

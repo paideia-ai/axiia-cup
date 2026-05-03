@@ -22,6 +22,7 @@ import {
   unregisterPlaygroundAbortController,
 } from './playground-interrupt'
 import { runMatch } from './runner'
+import { resolveScenarioRoleOptions } from './scenario-options'
 import { registerWorkerKickHandler } from './worker-signal'
 
 const MAX_CONCURRENT = Number(process.env.WORKER_CONCURRENCY) || 8
@@ -304,12 +305,16 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     transcript = parseJsonField<TranscriptTurn[]>(run.transcript, [])
     judgeTranscriptA = parseJsonField<JudgeQA[]>(run.judgeTranscriptA, [])
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
+    const resolvedScenario = resolveScenarioRoleOptions(scenario, {
+      roleAOptionId: submission.roleAOptionId,
+      roleBOptionId: submission.roleBOptionId,
+    })
     const persistedInfoAssignment = parseJsonField<InfoAssignment | null>(
       run.infoAssignment,
       null,
     )
     const infoAssignment =
-      persistedInfoAssignment ?? randomizeInfoAssignment(scenario)
+      persistedInfoAssignment ?? randomizeInfoAssignment(resolvedScenario)
 
     const persist = (values: Partial<typeof playgroundRuns.$inferInsert>) =>
       db
@@ -361,7 +366,7 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       },
       promptA,
       promptB,
-      scenario,
+      scenario: resolvedScenario,
       transcript,
       userIdA,
       userIdB,

@@ -39,6 +39,7 @@ import {
 } from '../lib/playground-session'
 import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 import { usePageVisibility } from '../lib/page-visibility'
+import { buildScenarioWithResolvedRoles } from '../lib/scenario-roles'
 
 const runningStages = [
   {
@@ -1328,6 +1329,11 @@ export function PlaygroundPage() {
     )
   }
 
+  const displayScenario = buildScenarioWithResolvedRoles(scenario, {
+    roleAOptionId: submission.roleAOptionId,
+    roleBOptionId: submission.roleBOptionId,
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1347,10 +1353,10 @@ export function PlaygroundPage() {
           <Badge>{scenario.subject}</Badge>
           <Badge tone="info">v{submission.version}</Badge>
           <Badge tone="info">
-            {scenario.roleAName} · {resolveModelLabel(submission.modelA)}
+            {displayScenario.roleAName} · {resolveModelLabel(submission.modelA)}
           </Badge>
           <Badge tone="warning">
-            {scenario.roleBName} · {resolveModelLabel(submission.modelB)}
+            {displayScenario.roleBName} · {resolveModelLabel(submission.modelB)}
           </Badge>
         </div>
       </div>
@@ -1375,18 +1381,18 @@ export function PlaygroundPage() {
                 session={activeSession}
               />
               {activeSession.run ? (
-                <RunResult run={activeSession.run} scenario={scenario} />
+                <RunResult run={activeSession.run} scenario={displayScenario} />
               ) : null}
               {!activeSession.run ? (
                 <JudgeDecisionPanel
                   decision={null}
-                  scenario={scenario}
+                  scenario={displayScenario}
                   waitingMessage="对战任务刚刚提交，裁判判决模块已展示，待引擎开始执行后会逐步补全内容。"
                 />
               ) : null}
             </>
           ) : visibleRun ? (
-            <RunResult run={visibleRun} scenario={scenario} />
+            <RunResult run={visibleRun} scenario={displayScenario} />
           ) : (
             <Card>
               <CardContent className="py-12 px-6 text-center">
@@ -1415,8 +1421,8 @@ export function PlaygroundPage() {
                     <span className="font-medium text-(--foreground-subtle)">
                       自己对打
                     </span>{' '}
-                    — 你的{scenario.roleAName} vs 你的
-                    {scenario.roleBName}
+                    — 你的{displayScenario.roleAName} vs 你的
+                    {displayScenario.roleBName}
                   </p>
                   <p className="mt-1">
                     <span className="font-medium text-(--foreground-subtle)">
@@ -1485,8 +1491,8 @@ export function PlaygroundPage() {
                         if (!preset) return val
                         const roleName =
                           preset.role === 'a'
-                            ? scenario.roleAName
-                            : scenario.roleBName
+                            ? displayScenario.roleAName
+                            : displayScenario.roleBName
                         return `${preset.label}（${roleName}）`
                       }}
                     >
@@ -1494,8 +1500,8 @@ export function PlaygroundPage() {
                         <SelectItem key={preset.id} value={String(preset.id)}>
                           {preset.label}（
                           {preset.role === 'a'
-                            ? scenario.roleAName
-                            : scenario.roleBName}
+                            ? displayScenario.roleAName
+                            : displayScenario.roleBName}
                           ）
                         </SelectItem>
                       ))}
@@ -1524,7 +1530,7 @@ export function PlaygroundPage() {
               <Accordion className="rounded-xl border border-(--border-soft) px-3">
                 <AccordionItem
                   value="promptA"
-                  title={`我的 ${scenario.roleAName}`}
+                  title={`我的 ${displayScenario.roleAName}`}
                   triggerClassName="text-xs"
                 >
                   <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
@@ -1533,7 +1539,7 @@ export function PlaygroundPage() {
                 </AccordionItem>
                 <AccordionItem
                   value="promptB"
-                  title={`我的 ${scenario.roleBName}`}
+                  title={`我的 ${displayScenario.roleBName}`}
                   triggerClassName="text-xs"
                 >
                   <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
@@ -1544,7 +1550,7 @@ export function PlaygroundPage() {
             </CardContent>
           </Card>
 
-          <ScenarioInfoPanel scenario={scenario} />
+          <ScenarioInfoPanel scenario={displayScenario} />
 
           {runSummaries.length > 0 ? (
             <Card>
@@ -1558,8 +1564,8 @@ export function PlaygroundPage() {
                     isPending={run.id === activeRunId && isRunning}
                     isSelected={selectedRun?.id === run.id}
                     onSelect={() => void handleSelectRun(run)}
-                    roleAName={scenario.roleAName}
-                    roleBName={scenario.roleBName}
+                    roleAName={displayScenario.roleAName}
+                    roleBName={displayScenario.roleBName}
                     run={run}
                   />
                 ))}
