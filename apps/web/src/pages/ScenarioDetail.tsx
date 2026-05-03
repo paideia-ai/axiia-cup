@@ -606,7 +606,7 @@ export function ScenarioDetailPage() {
                     。写一段策略告诉 AI 怎么赢得辩论，100 字就够开始。
                   </p>
                   <Link
-                    to="/leaderboard"
+                    to={`/leaderboard?scenario=${encodeURIComponent(scenario.id)}`}
                     className="inline-block text-xs font-medium text-(--accent) hover:opacity-80"
                   >
                     去排行榜看看别人怎么打的 →

@@ -17,6 +17,7 @@ import { MatchDetailPage } from './pages/MatchDetail'
 import { PlaygroundPage } from './pages/Playground'
 import { RegisterPage } from './pages/Register'
 import { ScenarioDetailPage } from './pages/ScenarioDetail'
+import { ScenariosPage } from './pages/Scenarios'
 import { SettingsPage } from './pages/settings-page'
 import { TournamentPlayerDetailPage } from './pages/TournamentPlayerDetail'
 import { MockIndex } from './pages/mocks/mock-index'
@@ -49,10 +50,7 @@ function ProtectedShell() {
     <AppShell>
       <Routes>
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route
-          path="/scenarios"
-          element={<Navigate replace to="/scenarios/shangyang-court" />}
-        />
+        <Route path="/scenarios" element={<ScenariosPage />} />
         <Route path="/scenarios/:scenarioId" element={<ScenarioDetailPage />} />
         <Route path="/playground/:submissionId" element={<PlaygroundPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />

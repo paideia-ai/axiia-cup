@@ -17,7 +17,7 @@ import { IcpRecord } from './icp-record'
 
 const navigation = [
   { to: '/dashboard', label: '控制台', icon: Gauge },
-  { to: '/scenarios/shangyang-court', label: '工坊', icon: LayoutDashboard },
+  { to: '/scenarios', label: '工坊', icon: LayoutDashboard },
   { to: '/leaderboard', label: '排行榜', icon: Trophy },
 ]
 

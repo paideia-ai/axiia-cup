@@ -705,6 +705,12 @@ export function AdminTournamentsPage() {
                     </Button>
                   </Link>
 
+                  <Link to={`/scenarios/${scenario.id}`}>
+                    <Button className="mb-3 w-full" variant="secondary">
+                      查看工坊
+                    </Button>
+                  </Link>
+
                   <Button
                     className="w-full"
                     disabled={!canStart}

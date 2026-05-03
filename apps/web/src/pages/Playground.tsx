@@ -1318,7 +1318,7 @@ export function PlaygroundPage() {
           </p>
           <div className="mt-5 flex justify-center">
             <Link
-              to="/scenarios/shangyang-court"
+              to="/scenarios"
               className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
             >
               返回工坊

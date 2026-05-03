@@ -53,7 +53,7 @@ export function LandingPage() {
                 >
                   控制台
                 </Link>
-                <Link to="/scenarios/shangyang-court">
+                <Link to="/scenarios">
                   <Button size="sm">进入工坊</Button>
                 </Link>
               </>
