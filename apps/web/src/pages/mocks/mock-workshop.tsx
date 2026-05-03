@@ -22,7 +22,7 @@ import {
 import { Textarea } from '../../components/ui/textarea'
 import { mockScenario, mockSubmissions } from './mock-data'
 
-function RoleCard({
+function RoleInfoBlock({
   roleName,
   hiddenInfo,
   requests,
@@ -110,13 +110,13 @@ export function MockWorkshop() {
                 <Accordion multiple defaultValue={['roles']}>
                   <AccordionItem value="roles" title="角色详情">
                     <div className="space-y-3">
-                      <RoleCard
+                      <RoleInfoBlock
                         roleName={s.roleAName}
                         hiddenInfo={s.roleAHiddenInfo}
                         requests={s.roleARequests}
                         side="a"
                       />
-                      <RoleCard
+                      <RoleInfoBlock
                         roleName={s.roleBName}
                         hiddenInfo={s.roleBHiddenInfo}
                         requests={s.roleBRequests}

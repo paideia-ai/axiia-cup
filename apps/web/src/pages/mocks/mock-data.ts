@@ -18,6 +18,8 @@ export const mockScenario = {
   trueRequestCount: 2,
   roleAName: '商鞅',
   roleBName: '甘龙',
+  roleAOptions: [],
+  roleBOptions: [],
   roleAHiddenInfo: [
     { id: 'A1', content: '秦国军队在河西之战中损失惨重，急需改革军功制度。' },
     { id: 'A2', content: '魏国商人已秘密向秦国走私铁器，变法可利用此渠道。' },

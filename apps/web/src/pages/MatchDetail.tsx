@@ -20,6 +20,7 @@ import {
   retryAdminMatch,
 } from '../lib/api'
 import { usePageVisibility } from '../lib/page-visibility'
+import { buildScenarioWithResolvedRoles } from '../lib/scenario-roles'
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
@@ -223,8 +224,14 @@ export function MatchDetailPage() {
     )
   }
 
-  const roleAName = scenario?.roleAName ?? '—'
-  const roleBName = scenario?.roleBName ?? '—'
+  const displayScenario = scenario
+    ? buildScenarioWithResolvedRoles(scenario, {
+        roleAOptionId: match.roleAOptionId,
+        roleBOptionId: match.roleBOptionId,
+      })
+    : null
+  const roleAName = displayScenario?.roleAName ?? '—'
+  const roleBName = displayScenario?.roleBName ?? '—'
   const playerALabel = `${roleAName}（${match.playerADisplayName}）`
   const playerBLabel = `${roleBName}（${match.playerBDisplayName}）`
   const winnerLabel =
@@ -370,19 +377,19 @@ export function MatchDetailPage() {
           decision={match.judgeDecision}
           errorMessage={match.error}
           scenario={
-            scenario
+            displayScenario
               ? {
-                  roleAName: scenario.roleAName,
-                  roleARequests: scenario.roleARequests,
-                  roleBName: scenario.roleBName,
-                  roleBRequests: scenario.roleBRequests,
+                  roleAName: displayScenario.roleAName,
+                  roleARequests: displayScenario.roleARequests,
+                  roleBName: displayScenario.roleBName,
+                  roleBRequests: displayScenario.roleBRequests,
                 }
               : undefined
           }
           waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
         />
 
-        {match.infoAssignment && scenario ? (
+        {match.infoAssignment && displayScenario ? (
           <Card>
             <CardHeader className="pb-0">
               <CardTitle>本局信息分配</CardTitle>
@@ -392,9 +399,9 @@ export function MatchDetailPage() {
                 [
                   {
                     falseIds: new Set(match.infoAssignment.roleAFalseInfoIds),
-                    hiddenInfo: scenario.roleAHiddenInfo,
-                    name: scenario.roleAName,
-                    requests: scenario.roleARequests,
+                    hiddenInfo: displayScenario.roleAHiddenInfo,
+                    name: displayScenario.roleAName,
+                    requests: displayScenario.roleARequests,
                     side: 'a' as const,
                     trueRequestIds: new Set(
                       match.infoAssignment.roleATrueRequestIds,
@@ -402,9 +409,9 @@ export function MatchDetailPage() {
                   },
                   {
                     falseIds: new Set(match.infoAssignment.roleBFalseInfoIds),
-                    hiddenInfo: scenario.roleBHiddenInfo,
-                    name: scenario.roleBName,
-                    requests: scenario.roleBRequests,
+                    hiddenInfo: displayScenario.roleBHiddenInfo,
+                    name: displayScenario.roleBName,
+                    requests: displayScenario.roleBRequests,
                     side: 'b' as const,
                     trueRequestIds: new Set(
                       match.infoAssignment.roleBTrueRequestIds,
@@ -576,12 +583,16 @@ export function MatchDetailPage() {
                           </span>
                         ) : null}
                       </div>
-                      {scenario && item.selectedInfoId ? (
+                      {displayScenario && item.selectedInfoId ? (
                         <p className="text-[11px] leading-5 text-(--foreground-muted)">
                           对应信息：
                           {(side === 'a'
-                            ? buildInfoContentMap(scenario.roleBHiddenInfo)
-                            : buildInfoContentMap(scenario.roleAHiddenInfo)
+                            ? buildInfoContentMap(
+                                displayScenario.roleBHiddenInfo,
+                              )
+                            : buildInfoContentMap(
+                                displayScenario.roleAHiddenInfo,
+                              )
                           ).get(item.selectedInfoId) ?? '未知信息'}
                         </p>
                       ) : null}

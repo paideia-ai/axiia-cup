@@ -19,6 +19,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Textarea } from '../components/ui/textarea'
 import { createSubmission, getMySubmissions, getScenario } from '../lib/api'
 import { formatDateTime } from '../lib/datetime'
+import {
+  getRoleDisplayName,
+  getRoleRequests,
+  resolveScenarioRoles,
+  scenarioHasRoleOptions,
+} from '../lib/scenario-roles'
 
 function countText(value: string) {
   return [...value].length
@@ -58,17 +64,28 @@ function buildPromptPreviewList(
     .join('\n')
 }
 
-function buildRolePromptPreview(scenario: Scenario, side: 'a' | 'b') {
+function buildRolePromptPreview(
+  scenario: Scenario,
+  side: 'a' | 'b',
+  optionId: string | null,
+  opponentOptionId: string | null,
+) {
   const isRoleA = side === 'a'
-  const roleName = isRoleA ? scenario.roleAName : scenario.roleBName
-  const opponentName = isRoleA ? scenario.roleBName : scenario.roleAName
+  const roleName = getRoleDisplayName(scenario, side, optionId)
+  const opponentName = getRoleDisplayName(
+    scenario,
+    isRoleA ? 'b' : 'a',
+    opponentOptionId,
+  )
   const hiddenInfo = isRoleA
     ? scenario.roleAHiddenInfo
     : scenario.roleBHiddenInfo
-  const requests = isRoleA ? scenario.roleARequests : scenario.roleBRequests
-  const opponentRequests = isRoleA
-    ? scenario.roleBRequests
-    : scenario.roleARequests
+  const requests = getRoleRequests(scenario, side, optionId)
+  const opponentRequests = getRoleRequests(
+    scenario,
+    isRoleA ? 'b' : 'a',
+    opponentOptionId,
+  )
   const opponentHiddenInfo = isRoleA
     ? scenario.roleBHiddenInfo
     : scenario.roleAHiddenInfo
@@ -76,8 +93,16 @@ function buildRolePromptPreview(scenario: Scenario, side: 'a' | 'b') {
   return interpolatePromptTemplate(scenario.agentPromptTemplate, {
     roleName,
     opponentName,
-    roleAName: scenario.roleAName,
-    roleBName: scenario.roleBName,
+    roleAName: getRoleDisplayName(
+      scenario,
+      'a',
+      isRoleA ? optionId : opponentOptionId,
+    ),
+    roleBName: getRoleDisplayName(
+      scenario,
+      'b',
+      isRoleA ? opponentOptionId : optionId,
+    ),
     hiddenInfo: buildPromptPreviewList(hiddenInfo, '实际运行中会随机标注真假'),
     requests:
       requests.length > 0 ? '实际的真假请求会在运行中随机分配' : '（无）',
@@ -90,21 +115,21 @@ function buildRolePromptPreview(scenario: Scenario, side: 'a' | 'b') {
 
 const scoringRuleItems = [
   {
-    title: '秦孝公支持你的立场',
-    detail: '变法 / 维持现状',
+    title: '裁判支持你的立场',
+    detail: '大目标',
     score: '+1',
     scoreClassName:
       'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
   },
   {
-    title: '你的真请求被秦孝公同意',
+    title: '你的真请求被裁判同意',
     detail: '命中真目标',
     score: '+0.5',
     scoreClassName:
       'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
   },
   {
-    title: '你的假请求被秦孝公同意',
+    title: '你的假请求被裁判同意',
     detail: '每个假请求单独结算',
     score: '-0.25',
     scoreClassName:
@@ -119,7 +144,7 @@ const scoringRuleItems = [
   },
 ] as const
 
-function RoleCard({
+function RoleInfoBlock({
   roleName,
   hiddenInfo,
   requests,
@@ -192,6 +217,12 @@ export function ScenarioDetailPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [promptA, setPromptA] = useState('')
   const [promptB, setPromptB] = useState('')
+  const [selectedRoleAOptionId, setSelectedRoleAOptionId] = useState<
+    string | null
+  >(null)
+  const [selectedRoleBOptionId, setSelectedRoleBOptionId] = useState<
+    string | null
+  >(null)
   const [selectedRoleTab, setSelectedRoleTab] = useState<'a' | 'b'>('a')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -201,12 +232,28 @@ export function ScenarioDetailPage() {
   const promptALength = useMemo(() => countText(promptA), [promptA])
   const promptBLength = useMemo(() => countText(promptB), [promptB])
   const promptTemplatePreviewA = useMemo(
-    () => (scenario ? buildRolePromptPreview(scenario, 'a') : ''),
-    [scenario],
+    () =>
+      scenario
+        ? buildRolePromptPreview(
+            scenario,
+            'a',
+            selectedRoleAOptionId,
+            selectedRoleBOptionId,
+          )
+        : '',
+    [scenario, selectedRoleAOptionId, selectedRoleBOptionId],
   )
   const promptTemplatePreviewB = useMemo(
-    () => (scenario ? buildRolePromptPreview(scenario, 'b') : ''),
-    [scenario],
+    () =>
+      scenario
+        ? buildRolePromptPreview(
+            scenario,
+            'b',
+            selectedRoleBOptionId,
+            selectedRoleAOptionId,
+          )
+        : '',
+    [scenario, selectedRoleAOptionId, selectedRoleBOptionId],
   )
 
   const showScoringRules = useMemo(() => {
@@ -215,8 +262,10 @@ export function ScenarioDetailPage() {
     }
 
     return (
-      scenario.roleARequests.length > 0 &&
-      scenario.roleBRequests.length > 0 &&
+      (scenario.roleARequests.length > 0 ||
+        scenario.roleAOptions.some((option) => option.requests.length > 0)) &&
+      (scenario.roleBRequests.length > 0 ||
+        scenario.roleBOptions.some((option) => option.requests.length > 0)) &&
       Boolean(scenario.examinationQuestionTemplate)
     )
   }, [scenario])
@@ -236,14 +285,31 @@ export function ScenarioDetailPage() {
 
         // Pre-fill from latest version
         const latest = submissionsResponse[0]
+        const defaultRoleAOptionId =
+          scenarioResponse.roleAOptions[0]?.id ?? null
+        const defaultRoleBOptionId =
+          scenarioResponse.roleBOptions[0]?.id ?? null
+        const nextRoleAOptionId = latest?.roleAOptionId ?? defaultRoleAOptionId
+        const nextRoleBOptionId = latest?.roleBOptionId ?? defaultRoleBOptionId
+        setSelectedRoleAOptionId(nextRoleAOptionId)
+        setSelectedRoleBOptionId(nextRoleBOptionId)
+
         if (latest) {
           setPromptA(latest.promptA)
           setPromptB(latest.promptB)
           setModelA(latest.modelA as ModelOption['id'])
           setModelB(latest.modelB as ModelOption['id'])
         } else {
-          setPromptA(buildDefaultStrategyPrompt(scenarioResponse.roleAName))
-          setPromptB(buildDefaultStrategyPrompt(scenarioResponse.roleBName))
+          setPromptA(
+            buildDefaultStrategyPrompt(
+              getRoleDisplayName(scenarioResponse, 'a', nextRoleAOptionId),
+            ),
+          )
+          setPromptB(
+            buildDefaultStrategyPrompt(
+              getRoleDisplayName(scenarioResponse, 'b', nextRoleBOptionId),
+            ),
+          )
           setModelA(modelOptions[0]!.id)
           setModelB(modelOptions[0]!.id)
         }
@@ -271,11 +337,22 @@ export function ScenarioDetailPage() {
     event.preventDefault()
     setError(null)
 
+    if (
+      scenario &&
+      scenarioHasRoleOptions(scenario) &&
+      (!selectedRoleAOptionId || !selectedRoleBOptionId)
+    ) {
+      setError('请选择两个阵营的入局角色')
+      return
+    }
+
     const parsed = createSubmissionSchema.safeParse({
       modelA,
       modelB,
       promptA,
       promptB,
+      roleAOptionId: selectedRoleAOptionId,
+      roleBOptionId: selectedRoleBOptionId,
       scenarioId,
     })
 
@@ -319,6 +396,13 @@ export function ScenarioDetailPage() {
     return <p className="text-sm text-(--foreground-subtle)">场景不存在。</p>
   }
 
+  const hasRoleOptions = scenarioHasRoleOptions(scenario)
+  const { roleAName, roleARequests, roleBName, roleBRequests } =
+    resolveScenarioRoles(scenario, {
+      roleAOptionId: selectedRoleAOptionId,
+      roleBOptionId: selectedRoleBOptionId,
+    })
+
   return (
     <div className="space-y-6">
       {toast ? (
@@ -360,16 +444,16 @@ export function ScenarioDetailPage() {
                 <Accordion multiple defaultValue={['roles']}>
                   <AccordionItem value="roles" title="角色详情">
                     <div className="space-y-3">
-                      <RoleCard
-                        roleName={scenario.roleAName}
+                      <RoleInfoBlock
+                        roleName={roleAName}
                         hiddenInfo={scenario.roleAHiddenInfo}
-                        requests={scenario.roleARequests}
+                        requests={roleARequests}
                         side="a"
                       />
-                      <RoleCard
-                        roleName={scenario.roleBName}
+                      <RoleInfoBlock
+                        roleName={roleBName}
                         hiddenInfo={scenario.roleBHiddenInfo}
-                        requests={scenario.roleBRequests}
+                        requests={roleBRequests}
                         side="b"
                       />
                     </div>
@@ -396,7 +480,7 @@ export function ScenarioDetailPage() {
                             </p>
                           </div>
                         ) : null}
-                        {scenario.roleARequests.length > 0 ? (
+                        {roleARequests.length > 0 ? (
                           <div className="rounded-lg border border-(--border-soft) bg-white/3 px-3 py-2">
                             <p className="text-[11px] text-(--foreground-muted)">
                               真诉求数
@@ -410,10 +494,10 @@ export function ScenarioDetailPage() {
                       <p className="text-(--foreground-muted)">
                         {scenario.roleAHiddenInfo.length > 0 &&
                           `每场比赛会随机从隐藏信息中选 ${scenario.falseInfoCount} 条指定为假。`}
-                        {scenario.roleARequests.length > 0 &&
+                        {roleARequests.length > 0 &&
                           `从诉求中随机选 ${scenario.trueRequestCount} 条作为真诉求。`}
                         {(scenario.roleAHiddenInfo.length > 0 ||
-                          scenario.roleARequests.length > 0) &&
+                          roleARequests.length > 0) &&
                           ' AI 在对话前就会知道自己的真假分配。'}
                       </p>
                     </div>
@@ -516,9 +600,9 @@ export function ScenarioDetailPage() {
                 <div className="min-w-0 flex-1 space-y-1 text-xs leading-5 text-(--foreground-subtle)">
                   <p className="font-semibold text-(--foreground)">快速上手</p>
                   <p>
-                    你的{scenario.roleAName}会对阵别人的
-                    {scenario.roleBName}，你的{scenario.roleBName}
-                    会对阵别人的{scenario.roleAName}
+                    你的{roleAName}会对阵别人的{roleBName}，你的
+                    {roleBName}
+                    会对阵别人的{roleAName}
                     。写一段策略告诉 AI 怎么赢得辩论，100 字就够开始。
                   </p>
                   <Link
@@ -546,10 +630,9 @@ export function ScenarioDetailPage() {
             <CardContent>
               <form className="grid gap-4" onSubmit={handleSave}>
                 <p className="text-xs text-(--foreground-muted) leading-5">
-                  你需要同时编写{scenario.roleAName}和{scenario.roleBName}
-                  的策略。比赛时你的{scenario.roleAName}会对阵别人的
-                  {scenario.roleBName}，你的{scenario.roleBName}会对阵别人的
-                  {scenario.roleAName}。
+                  你需要同时编写{roleAName}和{roleBName}
+                  的策略。比赛时你的{roleAName}会对阵别人的{roleBName}
+                  ，你的{roleBName}会对阵别人的{roleAName}。
                 </p>
                 <Tabs
                   value={selectedRoleTab}
@@ -558,16 +641,38 @@ export function ScenarioDetailPage() {
                   }
                 >
                   <TabsList>
-                    <TabsTrigger value="a">{scenario.roleAName}</TabsTrigger>
-                    <TabsTrigger value="b">{scenario.roleBName}</TabsTrigger>
+                    <TabsTrigger value="a">{roleAName}</TabsTrigger>
+                    <TabsTrigger value="b">{roleBName}</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="a" className="space-y-3">
+                    {hasRoleOptions ? (
+                      <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                        <span>{scenario.roleAName}入局角色</span>
+                        <Select
+                          value={selectedRoleAOptionId ?? undefined}
+                          onValueChange={(value) => {
+                            if (value) setSelectedRoleAOptionId(value)
+                          }}
+                          renderValue={(value) =>
+                            scenario.roleAOptions.find(
+                              (option) => option.id === value,
+                            )?.name ?? value
+                          }
+                        >
+                          {scenario.roleAOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.name}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </label>
+                    ) : null}
                     <div className="rounded-lg border border-(--border-soft) px-3">
                       <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
-                          title="系统预设角色提示词"
+                          title="Agent 提示词模板"
                         >
                           <pre className="whitespace-pre-wrap text-[11px] leading-5 text-(--foreground-subtle) font-mono">
                             {promptTemplatePreviewA}
@@ -580,7 +685,7 @@ export function ScenarioDetailPage() {
                         className="min-h-55"
                         maxLength={1000}
                         onChange={(event) => setPromptA(event.target.value)}
-                        placeholder={`例如：在辩论中强调变法对军事力量的具体提升，用历史战例作为论据…`}
+                        placeholder="例如：先明确你的立场，再用裁判最难忽视的风险和利益组织论点…"
                         value={promptA}
                       />
                       {1000 - promptALength < 200 ? (
@@ -593,11 +698,33 @@ export function ScenarioDetailPage() {
                     </div>
                   </TabsContent>
                   <TabsContent value="b" className="space-y-3">
+                    {hasRoleOptions ? (
+                      <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                        <span>{scenario.roleBName}入局角色</span>
+                        <Select
+                          value={selectedRoleBOptionId ?? undefined}
+                          onValueChange={(value) => {
+                            if (value) setSelectedRoleBOptionId(value)
+                          }}
+                          renderValue={(value) =>
+                            scenario.roleBOptions.find(
+                              (option) => option.id === value,
+                            )?.name ?? value
+                          }
+                        >
+                          {scenario.roleBOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>
+                              {option.name}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </label>
+                    ) : null}
                     <div className="rounded-lg border border-(--border-soft) px-3">
                       <Accordion defaultValue={[]}>
                         <AccordionItem
                           value="template"
-                          title="系统预设角色提示词"
+                          title="Agent 提示词模板"
                         >
                           <pre className="whitespace-pre-wrap text-[11px] leading-5 text-(--foreground-subtle) font-mono">
                             {promptTemplatePreviewB}
@@ -610,7 +737,7 @@ export function ScenarioDetailPage() {
                         className="min-h-55"
                         maxLength={1000}
                         onChange={(event) => setPromptB(event.target.value)}
-                        placeholder={`例如：强调祖制的稳定性，质疑对手方案的可行性和成本…`}
+                        placeholder="例如：先拆解对方方案的成本，再把你的真诉求藏在可执行的条件中…"
                         value={promptB}
                       />
                       {1000 - promptBLength < 200 ? (
@@ -627,7 +754,7 @@ export function ScenarioDetailPage() {
                 <div className="flex flex-col justify-center items-center gap-4 lg:flex-row lg:items-end">
                   <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
                     <span title="模型影响 AI 的表达风格和推理能力">
-                      {scenario.roleAName} 模型
+                      {roleAName} 模型
                     </span>
                     <Select
                       value={modelA}
@@ -646,7 +773,7 @@ export function ScenarioDetailPage() {
                   </label>
                   <label className="block w-full text-sm text-(--foreground-subtle) lg:flex-1">
                     <span title="模型影响 AI 的表达风格和推理能力">
-                      {scenario.roleBName} 模型
+                      {roleBName} 模型
                     </span>
                     <Select
                       value={modelB}
@@ -682,53 +809,60 @@ export function ScenarioDetailPage() {
                 <CardTitle>版本历史</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {submissions.map((submission) => (
-                  <div
-                    key={submission.id}
-                    className="rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="shrink-0 font-semibold text-(--foreground)">
-                          v{submission.version}
-                        </p>
-                        <Badge
-                          tone="accent"
-                          className="shrink-0 whitespace-nowrap"
-                        >
-                          {scenario.roleAName} ·{' '}
-                          {resolveModelLabel(submission.modelA)}
-                        </Badge>
-                        <Badge
-                          tone="info"
-                          className="shrink-0 whitespace-nowrap"
-                        >
-                          {scenario.roleBName} ·{' '}
-                          {resolveModelLabel(submission.modelB)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="whitespace-nowrap text-xs text-(--foreground-muted)">
-                          {formatDateTime(submission.createdAt, {
-                            second: '2-digit',
-                          })}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="shrink-0 whitespace-nowrap"
-                          onClick={() =>
-                            navigate(`/playground/${submission.id}`)
-                          }
-                        >
-                          <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
-                          前往试炼场
-                        </Button>
+                {submissions.map((submission) => {
+                  const submissionRoles = resolveScenarioRoles(scenario, {
+                    roleAOptionId: submission.roleAOptionId,
+                    roleBOptionId: submission.roleBOptionId,
+                  })
+
+                  return (
+                    <div
+                      key={submission.id}
+                      className="rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="shrink-0 font-semibold text-(--foreground)">
+                            v{submission.version}
+                          </p>
+                          <Badge
+                            tone="accent"
+                            className="shrink-0 whitespace-nowrap"
+                          >
+                            {submissionRoles.roleAName} ·{' '}
+                            {resolveModelLabel(submission.modelA)}
+                          </Badge>
+                          <Badge
+                            tone="info"
+                            className="shrink-0 whitespace-nowrap"
+                          >
+                            {submissionRoles.roleBName} ·{' '}
+                            {resolveModelLabel(submission.modelB)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="whitespace-nowrap text-xs text-(--foreground-muted)">
+                            {formatDateTime(submission.createdAt, {
+                              second: '2-digit',
+                            })}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="shrink-0 whitespace-nowrap"
+                            onClick={() =>
+                              navigate(`/playground/${submission.id}`)
+                            }
+                          >
+                            <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
+                            前往试炼场
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </CardContent>
             </Card>
           ) : null}

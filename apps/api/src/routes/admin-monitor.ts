@@ -12,11 +12,12 @@ import { randomUUID } from 'node:crypto'
 import { db } from '../db/client'
 import { buildJudgePrompt } from '../engine/core'
 import { chatCompletion } from '../engine/llm'
+import { resolveScenarioRoleOptions } from '../engine/scenario-options'
 import { listAnalyticsBattles } from '../lib/analytics'
 import { getTokenSoftCap } from '../lib/settings'
 import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
-import { matches, scenarios } from '../db/schema'
+import { matches, scenarios, submissions } from '../db/schema'
 
 const adminMonitorRouter = new Hono()
 
@@ -243,6 +244,26 @@ adminMonitorRouter.post(
           job.pending--
           return
         }
+        const subA = db
+          .select()
+          .from(submissions)
+          .where(eq(submissions.id, match.subAId))
+          .get()
+        const subB = db
+          .select()
+          .from(submissions)
+          .where(eq(submissions.id, match.subBId))
+          .get()
+        if (!subA || !subB) {
+          job.results.push({ matchId, error: 'submissions not found' })
+          job.pending--
+          return
+        }
+
+        const resolvedScenario = resolveScenarioRoleOptions(scenario, {
+          roleAOptionId: subA.roleAOptionId,
+          roleBOptionId: subB.roleBOptionId,
+        })
 
         const transcript: TranscriptTurn[] = match.transcript
           ? JSON.parse(match.transcript)
@@ -267,15 +288,21 @@ adminMonitorRouter.post(
             ? transcript
                 .map(
                   (t, i) =>
-                    `[第${i + 1}轮] ${t.speaker === 'a' ? scenario.roleAName : scenario.roleBName}：${t.content}`,
+                    `[第${i + 1}轮] ${t.speaker === 'a' ? resolvedScenario.roleAName : resolvedScenario.roleBName}：${t.content}`,
                 )
                 .join('\n\n')
             : '（暂无对话）'
 
-        const judgePrompt = buildJudgePrompt(scenario, assignment, {
+        const judgePrompt = buildJudgePrompt(resolvedScenario, assignment, {
           debate: debateText,
-          examinationA: buildExaminationSummary(scenario.roleAName, judgeA),
-          examinationB: buildExaminationSummary(scenario.roleBName, judgeB),
+          examinationA: buildExaminationSummary(
+            resolvedScenario.roleAName,
+            judgeA,
+          ),
+          examinationB: buildExaminationSummary(
+            resolvedScenario.roleBName,
+            judgeB,
+          ),
         })
 
         try {

@@ -33,6 +33,7 @@ const scenario: ScenarioRecord = {
     { id: 'S2', content: '商鞅在魏国时亲眼见证了李悝变法的成效' },
     { id: 'S3', content: '商鞅已在秦国边境小邑秘密试行军功授爵三月' },
   ]),
+  roleAOptions: '[]',
   roleARequests: JSON.stringify([
     { id: 'SR1', content: '请封商鞅为左庶长，委以军政重任' },
     { id: 'SR2', content: '请擢景监为大夫，入朝参与国政' },
@@ -44,6 +45,7 @@ const scenario: ScenarioRecord = {
     { id: 'G2', content: '楚国吴起变法后被旧贵族射杀于灵堂之上' },
     { id: 'G3', content: '商鞅在魏国时方案被公叔痤否决' },
   ]),
+  roleBOptions: '[]',
   roleBRequests: JSON.stringify([
     { id: 'GR1', content: '请封甘龙之子为陇西郡守' },
     { id: 'GR2', content: '请加太师府议政之权' },
