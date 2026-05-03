@@ -131,6 +131,7 @@ export const presetOpponents = sqliteTable('preset_opponents', {
     .notNull()
     .references(() => scenarios.id),
   role: text('role', { enum: ['a', 'b'] as const }).notNull(),
+  roleOptionId: text('role_option_id'),
   label: text('label').notNull(),
   prompt: text('prompt').notNull(),
   createdAt: text('created_at').notNull().default(currentTimestamp),

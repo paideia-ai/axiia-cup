@@ -485,10 +485,22 @@ function RoleOptionsEditor({
   helperText,
   options,
   onChange,
+  onPresetsChange,
+  presets,
+  role,
+  scenarioId,
+  savedOptionIds,
 }: {
   helperText?: string
   options: RoleOption[]
   onChange: (options: RoleOption[]) => void
+  onPresetsChange: (
+    updater: (prev: PresetOpponent[]) => PresetOpponent[],
+  ) => void
+  presets: PresetOpponent[]
+  role: 'a' | 'b'
+  savedOptionIds: string[]
+  scenarioId: string
 }) {
   const updateOption = (index: number, nextOption: RoleOption) => {
     const next = [...options]
@@ -536,56 +548,72 @@ function RoleOptionsEditor({
       ) : (
         <div className="space-y-3">
           {options.map((option, index) => (
-            <div
-              key={index}
-              className="space-y-3 rounded-lg border border-(--border-soft) bg-white/2 p-3"
-            >
-              <div className="grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)_auto]">
-                <Input
-                  placeholder="角色 ID"
-                  value={option.id}
-                  onChange={(event) =>
-                    updateOption(index, {
-                      ...option,
-                      id: event.target.value,
-                    })
-                  }
-                />
-                <Input
-                  placeholder="角色名称"
-                  value={option.name}
-                  onChange={(event) =>
-                    updateOption(index, {
-                      ...option,
-                      name: event.target.value,
-                    })
-                  }
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="text-(--accent)"
-                  onClick={() =>
-                    onChange(options.filter((_, i) => i !== index))
-                  }
-                >
-                  删除角色
-                </Button>
-              </div>
+            <div key={index} className="space-y-3">
+              <div className="space-y-3 rounded-lg border border-(--border-soft) bg-white/2 p-3">
+                <div className="grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)_auto]">
+                  <Input
+                    placeholder="角色 ID"
+                    value={option.id}
+                    onChange={(event) =>
+                      updateOption(index, {
+                        ...option,
+                        id: event.target.value,
+                      })
+                    }
+                  />
+                  <Input
+                    placeholder="角色名称"
+                    value={option.name}
+                    onChange={(event) =>
+                      updateOption(index, {
+                        ...option,
+                        name: event.target.value,
+                      })
+                    }
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="text-(--accent)"
+                    onClick={() =>
+                      onChange(options.filter((_, i) => i !== index))
+                    }
+                  >
+                    删除角色
+                  </Button>
+                </div>
 
-              <IdContentListEditor
-                helperText="这里的诉求只属于这个入局角色。玩家选择该角色时，运行时会用这组诉求参与真请求随机化、裁判模板和评分模板。"
-                items={option.requests}
-                label={`${option.name || option.id || '该角色'}的诉求清单`}
-                newItemPrefix="R"
-                onChange={(requests) =>
-                  updateOption(index, {
-                    ...option,
-                    requests,
-                  })
+                <IdContentListEditor
+                  helperText="这里的诉求只属于这个入局角色。玩家选择该角色时，运行时会用这组诉求参与真请求随机化、裁判模板和评分模板。"
+                  items={option.requests}
+                  label={`${option.name || option.id || '该角色'}的诉求清单`}
+                  newItemPrefix="R"
+                  onChange={(requests) =>
+                    updateOption(index, {
+                      ...option,
+                      requests,
+                    })
+                  }
+                  reservedIds={requestIds}
+                />
+              </div>
+              <RolePresetOpponentsEditor
+                disabled={
+                  !option.id.trim() ||
+                  !savedOptionIds.includes(option.id.trim())
                 }
-                reservedIds={requestIds}
+                disabledReason={
+                  option.id.trim()
+                    ? '这个入局角色 ID 还没有保存。先保存场景，再给该角色添加预设 Prompt。'
+                    : '先填写并保存入局角色 ID，才能给该角色添加预设 Prompt。'
+                }
+                onPresetsChange={onPresetsChange}
+                presets={presets}
+                role={role}
+                roleName={option.name || option.id || '该入局角色'}
+                roleOptionId={option.id.trim() || null}
+                scenarioId={scenarioId}
               />
             </div>
           ))}
@@ -614,19 +642,25 @@ function RoleOptionsStarter({ onAdd }: { onAdd: () => void }) {
 }
 
 function RolePresetOpponentsEditor({
+  disabled = false,
+  disabledReason = '当前不能添加预设 Prompt。',
+  onPresetsChange,
+  presets,
   scenarioId,
   role,
   roleName,
-  presets,
-  onPresetsChange,
+  roleOptionId = null,
 }: {
-  scenarioId: string
-  role: 'a' | 'b'
-  roleName: string
-  presets: PresetOpponent[]
+  disabled?: boolean
+  disabledReason?: string
   onPresetsChange: (
     updater: (prev: PresetOpponent[]) => PresetOpponent[],
   ) => void
+  presets: PresetOpponent[]
+  scenarioId: string
+  role: 'a' | 'b'
+  roleName: string
+  roleOptionId?: string | null
 }) {
   const [newLabel, setNewLabel] = useState('')
   const [newPrompt, setNewPrompt] = useState('')
@@ -636,16 +670,19 @@ function RolePresetOpponentsEditor({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const rolePresets = presets.filter((p) => p.role === role)
+  const rolePresets = presets.filter(
+    (p) => p.role === role && (p.roleOptionId ?? null) === roleOptionId,
+  )
 
   const handleCreate = async () => {
-    if (!newLabel.trim() || !newPrompt.trim()) return
+    if (disabled || !newLabel.trim() || !newPrompt.trim()) return
     try {
       setIsSaving(true)
       setError(null)
       const created = await createPresetOpponent({
         scenarioId,
         role,
+        roleOptionId,
         label: newLabel.trim(),
         prompt: newPrompt.trim(),
       })
@@ -695,6 +732,9 @@ function RolePresetOpponentsEditor({
       <p className="text-[11px] text-(--foreground-muted)">
         玩家可在试炼场选择预设对手替换{roleName}的 Prompt 进行对战。
       </p>
+      {disabled ? (
+        <p className="text-[11px] text-(--accent)">{disabledReason}</p>
+      ) : null}
 
       {error ? <p className="text-xs text-(--accent)">{error}</p> : null}
 
@@ -792,7 +832,9 @@ function RolePresetOpponentsEditor({
         />
         <Button
           size="sm"
-          disabled={isSaving || !newLabel.trim() || !newPrompt.trim()}
+          disabled={
+            disabled || isSaving || !newLabel.trim() || !newPrompt.trim()
+          }
           onClick={() => void handleCreate()}
         >
           {isSaving ? '添加中…' : '添加'}
@@ -1206,12 +1248,19 @@ export function AdminScenarioEditPage() {
                   {usesRoleOptions ? (
                     <RoleOptionsEditor
                       helperText="用于本能寺这类可选角色场景。每个入局角色都有自己的诉求清单；玩家选中该角色后，运行时会使用该角色的诉求。"
+                      onPresetsChange={setPresets}
                       options={draft[role.optionsKey]}
                       onChange={(options) =>
                         setDraft((c) =>
                           c ? { ...c, [role.optionsKey]: options } : c,
                         )
                       }
+                      presets={presets}
+                      role={role.side === 'A' ? 'a' : 'b'}
+                      savedOptionIds={scenario[role.optionsKey].map(
+                        (option) => option.id,
+                      )}
+                      scenarioId={scenario.id}
                     />
                   ) : (
                     <RoleOptionsStarter
@@ -1252,13 +1301,15 @@ export function AdminScenarioEditPage() {
                       )
                     }
                   />
-                  <RolePresetOpponentsEditor
-                    scenarioId={scenario.id}
-                    role={role.side === 'A' ? 'a' : 'b'}
-                    roleName={draft[role.nameKey]}
-                    presets={presets}
-                    onPresetsChange={setPresets}
-                  />
+                  {!usesRoleOptions ? (
+                    <RolePresetOpponentsEditor
+                      scenarioId={scenario.id}
+                      role={role.side === 'A' ? 'a' : 'b'}
+                      roleName={draft[role.nameKey]}
+                      presets={presets}
+                      onPresetsChange={setPresets}
+                    />
+                  ) : null}
                 </CardContent>
               </Card>
             ))}

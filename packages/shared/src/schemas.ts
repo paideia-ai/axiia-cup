@@ -669,6 +669,7 @@ export const presetOpponentSchema = z.object({
   id: z.number().int().positive(),
   scenarioId: z.string(),
   role: z.enum(['a', 'b']),
+  roleOptionId: z.string().nullable().optional(),
   label: z.string(),
   prompt: z.string(),
   createdAt: z.string(),
@@ -677,6 +678,7 @@ export const presetOpponentSchema = z.object({
 export const createPresetOpponentSchema = z.object({
   scenarioId: z.string().min(1),
   role: z.enum(['a', 'b']),
+  roleOptionId: z.string().trim().min(1).nullable().optional(),
   label: z.string().trim().min(1).max(100),
   prompt: z.string().trim().min(1).max(2000),
 })
