@@ -2,6 +2,7 @@ import {
   evaluationModelOptions,
   type AdminScenario,
   type PresetOpponent,
+  type RoleOption,
   type UpdateScenario,
 } from '@axiia/shared'
 import { ArrowLeft, Lock } from 'lucide-react'
@@ -244,7 +245,31 @@ function buildTemplateExamples(
     .map((id) => `{{${id}_${suffix}}}`)
 }
 
+function buildNextId(items: { id: string }[], prefix: string) {
+  const normalizedPrefix = /^[A-Za-z]/.test(prefix) ? prefix : 'I'
+  let index = 1
+  let id = `${normalizedPrefix}${index}`
+  const existingIds = new Set(items.map((item) => item.id))
+
+  while (existingIds.has(id)) {
+    index += 1
+    id = `${normalizedPrefix}${index}`
+  }
+
+  return id
+}
+
+function collectScenarioRequests(draft: UpdateScenario) {
+  return [
+    ...draft.roleARequests,
+    ...draft.roleBRequests,
+    ...draft.roleAOptions.flatMap((option) => option.requests),
+    ...draft.roleBOptions.flatMap((option) => option.requests),
+  ]
+}
+
 function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
+  const requests = collectScenarioRequests(draft)
   const hiddenInfoLabelExamples = [
     ...buildTemplateExamples(draft.roleAHiddenInfo, 'LABEL'),
     ...buildTemplateExamples(draft.roleBHiddenInfo, 'LABEL'),
@@ -253,14 +278,8 @@ function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
     ...buildTemplateExamples(draft.roleAHiddenInfo, 'CONTENT'),
     ...buildTemplateExamples(draft.roleBHiddenInfo, 'CONTENT'),
   ]
-  const requestLabelExamples = [
-    ...buildTemplateExamples(draft.roleARequests, 'LABEL'),
-    ...buildTemplateExamples(draft.roleBRequests, 'LABEL'),
-  ]
-  const requestContentExamples = [
-    ...buildTemplateExamples(draft.roleARequests, 'CONTENT'),
-    ...buildTemplateExamples(draft.roleBRequests, 'CONTENT'),
-  ]
+  const requestLabelExamples = buildTemplateExamples(requests, 'LABEL')
+  const requestContentExamples = buildTemplateExamples(requests, 'CONTENT')
 
   return (
     <div className="space-y-3 rounded-xl border border-(--border-soft) bg-white/2 p-4">
@@ -378,12 +397,16 @@ function IdContentListEditor({
   helperText,
   items,
   label,
+  newItemPrefix = 'I',
   onChange,
+  reservedIds = [],
 }: {
   helperText?: string
   items: { id: string; content: string }[]
   label: string
+  newItemPrefix?: string
   onChange: (items: { id: string; content: string }[]) => void
+  reservedIds?: string[]
 }) {
   return (
     <div className="space-y-2 text-sm text-(--foreground-subtle)">
@@ -394,7 +417,16 @@ function IdContentListEditor({
           size="sm"
           variant="secondary"
           onClick={() =>
-            onChange([...items, { id: `${items.length + 1}`, content: '' }])
+            onChange([
+              ...items,
+              {
+                id: buildNextId(
+                  [...items, ...reservedIds.map((id) => ({ id }))],
+                  newItemPrefix,
+                ),
+                content: '',
+              },
+            ])
           }
         >
           + 添加
@@ -445,6 +477,138 @@ function IdContentListEditor({
       {helperText ? (
         <p className="text-[11px] text-(--foreground-muted)">{helperText}</p>
       ) : null}
+    </div>
+  )
+}
+
+function RoleOptionsEditor({
+  helperText,
+  options,
+  onChange,
+}: {
+  helperText?: string
+  options: RoleOption[]
+  onChange: (options: RoleOption[]) => void
+}) {
+  const updateOption = (index: number, nextOption: RoleOption) => {
+    const next = [...options]
+    next[index] = nextOption
+    onChange(next)
+  }
+  const requestIds = options.flatMap((option) =>
+    option.requests.map((request) => request.id),
+  )
+
+  return (
+    <div className="space-y-3 text-sm text-(--foreground-subtle)">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p>入局角色</p>
+          {helperText ? (
+            <p className="mt-1 text-[11px] leading-5 text-(--foreground-muted)">
+              {helperText}
+            </p>
+          ) : null}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() =>
+            onChange([
+              ...options,
+              {
+                id: buildNextId(options, 'role'),
+                name: '',
+                requests: [],
+              },
+            ])
+          }
+        >
+          + 添加角色
+        </Button>
+      </div>
+
+      {options.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-(--border-soft) px-3 py-4 text-xs text-(--foreground-muted)">
+          暂无入局角色。没有入局角色时，比赛使用下方阵营通用诉求。
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {options.map((option, index) => (
+            <div
+              key={index}
+              className="space-y-3 rounded-lg border border-(--border-soft) bg-white/2 p-3"
+            >
+              <div className="grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)_auto]">
+                <Input
+                  placeholder="角色 ID"
+                  value={option.id}
+                  onChange={(event) =>
+                    updateOption(index, {
+                      ...option,
+                      id: event.target.value,
+                    })
+                  }
+                />
+                <Input
+                  placeholder="角色名称"
+                  value={option.name}
+                  onChange={(event) =>
+                    updateOption(index, {
+                      ...option,
+                      name: event.target.value,
+                    })
+                  }
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="text-(--accent)"
+                  onClick={() =>
+                    onChange(options.filter((_, i) => i !== index))
+                  }
+                >
+                  删除角色
+                </Button>
+              </div>
+
+              <IdContentListEditor
+                helperText="这里的诉求只属于这个入局角色。玩家选择该角色时，运行时会用这组诉求参与真请求随机化、裁判模板和评分模板。"
+                items={option.requests}
+                label={`${option.name || option.id || '该角色'}的诉求清单`}
+                newItemPrefix="R"
+                onChange={(requests) =>
+                  updateOption(index, {
+                    ...option,
+                    requests,
+                  })
+                }
+                reservedIds={requestIds}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RoleOptionsStarter({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="space-y-2 rounded-lg border border-dashed border-(--border-soft) px-3 py-4 text-sm text-(--foreground-subtle)">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p>入局角色（可选）</p>
+          <p className="mt-1 text-[11px] leading-5 text-(--foreground-muted)">
+            固定角色场景可以保持关闭；需要让玩家选择具体角色时再启用。
+          </p>
+        </div>
+        <Button type="button" size="sm" variant="secondary" onClick={onAdd}>
+          + 添加角色
+        </Button>
+      </div>
     </div>
   )
 }
@@ -728,6 +892,9 @@ export function AdminScenarioEditPage() {
     )
   }
 
+  const usesRoleOptions =
+    draft.roleAOptions.length > 0 || draft.roleBOptions.length > 0
+
   return (
     <div className="space-y-6">
       {toast ? (
@@ -994,12 +1161,14 @@ export function AdminScenarioEditPage() {
                   side: 'A' as const,
                   nameKey: 'roleAName' as const,
                   hiddenInfoKey: 'roleAHiddenInfo' as const,
+                  optionsKey: 'roleAOptions' as const,
                   requestsKey: 'roleARequests' as const,
                 },
                 {
                   side: 'B' as const,
                   nameKey: 'roleBName' as const,
                   hiddenInfoKey: 'roleBHiddenInfo' as const,
+                  optionsKey: 'roleBOptions' as const,
                   requestsKey: 'roleBRequests' as const,
                 },
               ] as const
@@ -1027,16 +1196,56 @@ export function AdminScenarioEditPage() {
                     helperText="隐藏信息 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头。建议使用 S1、G2 这类短 ID。"
                     label="隐藏信息"
                     items={draft[role.hiddenInfoKey]}
+                    newItemPrefix={role.side === 'A' ? 'AInfo' : 'BInfo'}
                     onChange={(items) =>
                       setDraft((c) =>
                         c ? { ...c, [role.hiddenInfoKey]: items } : c,
                       )
                     }
                   />
+                  {usesRoleOptions ? (
+                    <RoleOptionsEditor
+                      helperText="用于本能寺这类可选角色场景。每个入局角色都有自己的诉求清单；玩家选中该角色后，运行时会使用该角色的诉求。"
+                      options={draft[role.optionsKey]}
+                      onChange={(options) =>
+                        setDraft((c) =>
+                          c ? { ...c, [role.optionsKey]: options } : c,
+                        )
+                      }
+                    />
+                  ) : (
+                    <RoleOptionsStarter
+                      onAdd={() =>
+                        setDraft((c) =>
+                          c
+                            ? {
+                                ...c,
+                                [role.optionsKey]: [
+                                  {
+                                    id: 'role1',
+                                    name: '',
+                                    requests: [],
+                                  },
+                                ],
+                              }
+                            : c,
+                        )
+                      }
+                    />
+                  )}
                   <IdContentListEditor
-                    helperText="请求 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头，并且不能与任何隐藏信息 ID 复用。建议保持稳定且易读，例如 SR1、GR2。"
-                    label="诉求清单"
+                    helperText={
+                      draft[role.optionsKey].length > 0
+                        ? '当前角色已有入局角色，实战会优先使用入局角色自己的诉求；这个阵营通用诉求通常保持为空。请求 ID 不能与任何隐藏信息 ID 复用。'
+                        : '请求 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头，并且不能与任何隐藏信息 ID 复用。建议保持稳定且易读，例如 SR1、GR2。'
+                    }
+                    label={
+                      draft[role.optionsKey].length > 0
+                        ? '阵营通用诉求（无入局角色时使用）'
+                        : '诉求清单'
+                    }
                     items={draft[role.requestsKey]}
+                    newItemPrefix={role.side === 'A' ? 'AR' : 'BR'}
                     onChange={(items) =>
                       setDraft((c) =>
                         c ? { ...c, [role.requestsKey]: items } : c,
