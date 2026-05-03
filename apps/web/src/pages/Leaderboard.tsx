@@ -2,14 +2,18 @@ import {
   modelOptions,
   type LeaderboardEntry,
   type Scenario,
+  type ScenarioSummary,
   type TournamentDetail,
+  type TournamentListItem,
 } from '@axiia/shared'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Select, SelectItem } from '../components/ui/select'
 import {
+  getAppMeta,
   getLeaderboard,
   getScenario,
   getTournament,
@@ -23,14 +27,44 @@ export function LeaderboardPage() {
   const isPageVisible = usePageVisibility()
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [scenario, setScenario] = useState<Scenario | null>(null)
+  const [scenarioSummaries, setScenarioSummaries] = useState<ScenarioSummary[]>(
+    [],
+  )
   const [tournamentDetail, setTournamentDetail] =
     useState<TournamentDetail | null>(null)
+  const [tournaments, setTournaments] = useState<TournamentListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const latestLoadIdRef = useRef(0)
 
   const selectedTournamentId =
     Number(searchParams.get('tournament') ?? 0) || null
+  const selectedScenarioId = searchParams.get('scenario') || null
+  const activeScenarioId =
+    tournamentDetail?.scenarioId ?? selectedScenarioId ?? scenario?.id ?? null
+  const activeScenarioSummary =
+    (activeScenarioId
+      ? scenarioSummaries.find((item) => item.id === activeScenarioId)
+      : null) ??
+    (scenario
+      ? {
+          id: scenario.id,
+          roleAName: scenario.roleAName,
+          roleBName: scenario.roleBName,
+          subject: scenario.subject,
+          summary: scenario.title,
+          title: scenario.title,
+          turnCount: scenario.turnCount,
+        }
+      : null)
+  const tournamentsForActiveScenario = activeScenarioId
+    ? tournaments.filter(
+        (tournament) => tournament.scenarioId === activeScenarioId,
+      )
+    : tournaments
+  const workshopHref = activeScenarioId
+    ? `/scenarios/${activeScenarioId}`
+    : '/scenarios'
   const activeRound =
     tournamentDetail?.rounds.find(
       (round) => round.roundNumber === tournamentDetail.currentRound,
@@ -82,17 +116,76 @@ export function LeaderboardPage() {
       `/leaderboard/tournaments/${selectedTournamentId}/players/${submissionId}`,
     )
   }
+  const handleScenarioChange = (scenarioId: string | null) => {
+    if (!scenarioId) return
+
+    const latestTournament = tournaments.find(
+      (tournament) => tournament.scenarioId === scenarioId,
+    )
+
+    setLeaderboard([])
+    setScenario(null)
+    setTournamentDetail(null)
+
+    setSearchParams(
+      latestTournament
+        ? {
+            scenario: scenarioId,
+            tournament: String(latestTournament.id),
+          }
+        : { scenario: scenarioId },
+    )
+  }
+  const handleTournamentChange = (tournamentId: string | null) => {
+    if (!tournamentId) return
+
+    const selectedTournament = tournaments.find(
+      (tournament) => String(tournament.id) === tournamentId,
+    )
+
+    setSearchParams({
+      ...(selectedTournament
+        ? { scenario: selectedTournament.scenarioId }
+        : {}),
+      tournament: tournamentId,
+    })
+  }
 
   useEffect(() => {
     const loadTournamentList = async () => {
       try {
-        const tournamentList = await getTournaments()
-        if (!selectedTournamentId && tournamentList[0]) {
+        const [tournamentList, meta] = await Promise.all([
+          getTournaments(),
+          getAppMeta(),
+        ])
+
+        setTournaments(tournamentList)
+        setScenarioSummaries(meta.scenarios)
+
+        if (selectedTournamentId) {
+          return
+        }
+
+        const latestTournament = selectedScenarioId
+          ? tournamentList.find(
+              (tournament) => tournament.scenarioId === selectedScenarioId,
+            )
+          : tournamentList[0]
+
+        if (latestTournament) {
           setSearchParams(
-            { tournament: String(tournamentList[0].id) },
+            {
+              scenario: latestTournament.scenarioId,
+              tournament: String(latestTournament.id),
+            },
             { replace: true },
           )
-        } else if (tournamentList.length === 0) {
+        } else if (!selectedScenarioId && meta.scenarios[0]) {
+          setSearchParams({ scenario: meta.scenarios[0].id }, { replace: true })
+        } else {
+          setLeaderboard([])
+          setScenario(null)
+          setTournamentDetail(null)
           setIsLoading(false)
         }
       } catch (loadError) {
@@ -103,7 +196,7 @@ export function LeaderboardPage() {
       }
     }
     void loadTournamentList()
-  }, [selectedTournamentId, setSearchParams])
+  }, [selectedScenarioId, selectedTournamentId, setSearchParams])
 
   useEffect(() => {
     if (!selectedTournamentId) return
@@ -179,9 +272,51 @@ export function LeaderboardPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="page-eyebrow">排行榜</p>
-          <h1 className="page-title">排行榜</h1>
+          <h1 className="page-title">
+            {activeScenarioSummary?.title ?? '排行榜'}
+          </h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {scenarioSummaries.length > 0 ? (
+            <Select
+              className="min-w-48"
+              value={activeScenarioId ?? undefined}
+              onValueChange={handleScenarioChange}
+              renderValue={(value) =>
+                scenarioSummaries.find((item) => item.id === value)?.title ??
+                value
+              }
+            >
+              {scenarioSummaries.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.title}
+                </SelectItem>
+              ))}
+            </Select>
+          ) : null}
+          {tournamentsForActiveScenario.length > 0 ? (
+            <Select
+              className="min-w-38"
+              value={
+                selectedTournamentId != null
+                  ? String(selectedTournamentId)
+                  : undefined
+              }
+              onValueChange={handleTournamentChange}
+              renderValue={(value) => {
+                const selected = tournaments.find(
+                  (item) => String(item.id) === value,
+                )
+                return selected ? `Tournament #${selected.id}` : value
+              }}
+            >
+              {tournamentsForActiveScenario.map((item) => (
+                <SelectItem key={item.id} value={String(item.id)}>
+                  #{item.id} · {item.status}
+                </SelectItem>
+              ))}
+            </Select>
+          ) : null}
           {tournamentDetail ? (
             <Badge
               tone={
@@ -199,19 +334,6 @@ export function LeaderboardPage() {
                   : `Round ${tournamentDetail.currentRound} / ${tournamentDetail.totalRounds}`}
             </Badge>
           ) : null}
-          {/* <Select
-            value={selectedTournamentId ? String(selectedTournamentId) : ''}
-            onValueChange={(v) => {
-              if (v) setSearchParams({ tournament: v })
-            }}
-            placeholder="选择赛事…"
-          >
-            {tournaments.map((t) => (
-              <SelectItem key={t.id} value={String(t.id)}>
-                #{t.id} · {t.scenarioTitle}
-              </SelectItem>
-            ))}
-          </Select> */}
         </div>
       </div>
 
@@ -239,14 +361,14 @@ export function LeaderboardPage() {
           ) : leaderboard.length === 0 ? (
             <div className="rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-sm">
               <p className="font-semibold text-(--foreground)">
-                暂无进行中的赛事
+                暂无该场景的赛事
               </p>
               <p className="mt-2 text-(--foreground-subtle) leading-6">
                 管理员开启新赛季后，排行榜会在这里更新。你可以先去工坊完善你的策略提示词。
               </p>
               <div className="mt-5">
                 <Link
-                  to="/scenarios/shangyang-court"
+                  to={workshopHref}
                   className="inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
                 >
                   前往工坊 →

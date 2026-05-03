@@ -5,6 +5,7 @@ import {
   adminPlayerSchema,
   adminStatsSchema,
   adminUserSchema,
+  appMetaSchema,
   changePasswordSchema,
   createSubmissionSchema,
   leaderboardEntrySchema,
@@ -40,6 +41,7 @@ import {
   type AdminErroredMatch,
   type AdminStats,
   type AdminUser,
+  type AppMeta,
   type CreatePresetOpponent,
   type LeaderboardEntry,
   type MatchDetail,
@@ -203,6 +205,10 @@ export async function register(input: {
 
 export async function getMe(): Promise<User> {
   return apiFetch('/api/auth/me', { method: 'GET' }, userSchema)
+}
+
+export async function getAppMeta(): Promise<AppMeta> {
+  return apiFetch('/api/meta', { method: 'GET' }, appMetaSchema)
 }
 
 export async function updateProfile(
