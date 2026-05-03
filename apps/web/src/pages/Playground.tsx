@@ -1005,6 +1005,33 @@ export function PlaygroundPage() {
   )
   const refreshInFlightRef = useRef(false)
   const activeRunProgressRef = useRef<PlaygroundRunProgress | null>(null)
+  const availablePresetOpponentList = useMemo(() => {
+    if (!submission) {
+      return []
+    }
+
+    return presetOpponentList.filter((preset) => {
+      const selectedRoleOptionId =
+        preset.role === 'a'
+          ? submission.roleAOptionId
+          : submission.roleBOptionId
+
+      return (
+        !preset.roleOptionId || preset.roleOptionId === selectedRoleOptionId
+      )
+    })
+  }, [presetOpponentList, submission])
+
+  useEffect(() => {
+    if (
+      selectedPresetId != null &&
+      !availablePresetOpponentList.some(
+        (preset) => preset.id === selectedPresetId,
+      )
+    ) {
+      setSelectedPresetId(undefined)
+    }
+  }, [availablePresetOpponentList, selectedPresetId])
 
   useEffect(() => {
     if (!Number.isInteger(submissionId) || submissionId <= 0) {
@@ -1441,7 +1468,7 @@ export function PlaygroundPage() {
           <Card>
             <CardContent className="space-y-3 py-4">
               {/* Opponent mode selector */}
-              {presetOpponentList.length > 0 ? (
+              {availablePresetOpponentList.length > 0 ? (
                 <div className="rounded-xl border border-(--border-soft) bg-white/2 p-3 space-y-3">
                   <p className="text-[10px] font-semibold tracking-widest uppercase text-(--foreground-muted)">
                     对手选择
@@ -1485,7 +1512,7 @@ export function PlaygroundPage() {
                         setSelectedPresetId(val ? Number(val) : undefined)
                       }
                       renderValue={(val) => {
-                        const preset = presetOpponentList.find(
+                        const preset = availablePresetOpponentList.find(
                           (p) => String(p.id) === val,
                         )
                         if (!preset) return val
@@ -1496,7 +1523,7 @@ export function PlaygroundPage() {
                         return `${preset.label}（${roleName}）`
                       }}
                     >
-                      {presetOpponentList.map((preset) => (
+                      {availablePresetOpponentList.map((preset) => (
                         <SelectItem key={preset.id} value={String(preset.id)}>
                           {preset.label}（
                           {preset.role === 'a'

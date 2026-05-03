@@ -1,9 +1,10 @@
 import {
   createPresetOpponentSchema,
   presetOpponentSchema,
+  roleOptionSchema,
   updatePresetOpponentSchema,
 } from '@axiia/shared'
-import { and, asc, eq } from 'drizzle-orm'
+import { asc, eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 
 import { db } from '../db/client'
@@ -12,6 +13,33 @@ import { requireAdmin } from '../middleware/requireAdmin'
 import { requireAuth } from '../middleware/requireAuth'
 
 const presetOpponentsRouter = new Hono()
+
+function getScenarioRoleOptions(
+  scenario: typeof scenarios.$inferSelect,
+  role: 'a' | 'b',
+) {
+  return roleOptionSchema
+    .array()
+    .parse(
+      JSON.parse(role === 'a' ? scenario.roleAOptions : scenario.roleBOptions),
+    )
+}
+
+function validateRoleOptionId(
+  scenario: typeof scenarios.$inferSelect,
+  role: 'a' | 'b',
+  roleOptionId: string | null | undefined,
+) {
+  if (!roleOptionId) return null
+
+  const options = getScenarioRoleOptions(scenario, role)
+
+  if (!options.some((option) => option.id === roleOptionId)) {
+    throw new Error('Role option not found for this scenario role')
+  }
+
+  return roleOptionId
+}
 
 // List preset opponents for a scenario (public, for playground selector)
 presetOpponentsRouter.get(
@@ -24,7 +52,11 @@ presetOpponentsRouter.get(
       .select()
       .from(presetOpponents)
       .where(eq(presetOpponents.scenarioId, scenarioId))
-      .orderBy(asc(presetOpponents.role), asc(presetOpponents.createdAt))
+      .orderBy(
+        asc(presetOpponents.role),
+        asc(presetOpponents.roleOptionId),
+        asc(presetOpponents.createdAt),
+      )
       .all()
 
     return context.json(rows.map((row) => presetOpponentSchema.parse(row)))
@@ -45,7 +77,7 @@ presetOpponentsRouter.post(
     }
 
     const scenario = db
-      .select({ id: scenarios.id })
+      .select()
       .from(scenarios)
       .where(eq(scenarios.id, parsed.data.scenarioId))
       .get()
@@ -54,7 +86,34 @@ presetOpponentsRouter.post(
       return context.json({ error: 'Scenario not found' }, 404)
     }
 
-    const row = db.insert(presetOpponents).values(parsed.data).returning().get()
+    let roleOptionId: string | null = null
+
+    try {
+      roleOptionId = validateRoleOptionId(
+        scenario,
+        parsed.data.role,
+        parsed.data.roleOptionId,
+      )
+    } catch (validationError) {
+      return context.json(
+        {
+          error:
+            validationError instanceof Error
+              ? validationError.message
+              : 'Invalid role option',
+        },
+        400,
+      )
+    }
+
+    const row = db
+      .insert(presetOpponents)
+      .values({
+        ...parsed.data,
+        roleOptionId,
+      })
+      .returning()
+      .get()
 
     return context.json(presetOpponentSchema.parse(row), 201)
   },

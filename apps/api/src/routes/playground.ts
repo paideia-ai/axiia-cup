@@ -132,6 +132,18 @@ playgroundRouter.post(
       if (!selectedPreset || selectedPreset.scenarioId !== scenario.id) {
         return context.json({ error: '预设对手不存在' }, 404)
       }
+
+      const selectedSubmissionRoleOptionId =
+        selectedPreset.role === 'a'
+          ? submission.roleAOptionId
+          : submission.roleBOptionId
+
+      if (
+        selectedPreset.roleOptionId &&
+        selectedPreset.roleOptionId !== selectedSubmissionRoleOptionId
+      ) {
+        return context.json({ error: '预设对手不适用于当前入局角色' }, 400)
+      }
     }
 
     const run = db
