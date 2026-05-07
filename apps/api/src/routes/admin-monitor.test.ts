@@ -519,6 +519,111 @@ describe('GET /api/admin/monitor/users', () => {
 
     expect(data.every((u) => u.isOverSoftCap === false)).toBe(true)
   })
+
+  it('uses a newer submission as last activity when battle analytics are older', async () => {
+    const { eq } = await import('drizzle-orm')
+    const schema = await import('../db/schema')
+    const latestSubmissionAt = '2026-04-12T08:00:00.000Z'
+    const stalePlayerId = db
+      .insert(schema.users)
+      .values({
+        email: 'mon-stale-activity@test.com',
+        passwordHash: 'hash',
+        displayName: 'Stale Activity',
+        isAdmin: false,
+      })
+      .returning({ id: schema.users.id })
+      .get()!.id
+    let staleSubmissionId: number | null = null
+
+    try {
+      staleSubmissionId = db
+        .insert(schema.submissions)
+        .values({
+          userId: stalePlayerId,
+          scenarioId: 'mon-test-scenario',
+          version: 1,
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
+          promptA: 'old prompt a',
+          promptB: 'old prompt b',
+          createdAt: '2026-04-10T08:00:00.000Z',
+        })
+        .returning({ id: schema.submissions.id })
+        .get()!.id
+
+      db.insert(schema.submissions)
+        .values({
+          userId: stalePlayerId,
+          scenarioId: 'mon-test-scenario',
+          version: 2,
+          modelLegacy: 'deepseek-v3.2',
+          modelA: 'deepseek-v3.2',
+          modelB: 'deepseek-v3.2',
+          promptA: 'new prompt a',
+          promptB: 'new prompt b',
+          createdAt: latestSubmissionAt,
+        })
+        .run()
+
+      const staleRunId = db
+        .insert(schema.playgroundRuns)
+        .values({
+          submissionId: staleSubmissionId,
+          scenarioId: 'mon-test-scenario',
+          status: 'scored',
+          startedAt: '2026-04-10T09:00:00.000Z',
+          finishedAt: '2026-04-10T09:03:00.000Z',
+          updatedAt: '2026-04-10T09:03:00.000Z',
+          transcript: '[]',
+          judgeTranscriptA: '[]',
+          judgeTranscriptB: '[]',
+        })
+        .returning({ id: schema.playgroundRuns.id })
+        .get()!.id
+
+      db.insert(schema.llmCalls)
+        .values({
+          playgroundRunId: staleRunId,
+          userId: stalePlayerId,
+          phase: 'dialogue',
+          side: 'a',
+          model: 'deepseek-v3.2',
+          provider: 'siliconflow',
+          requestJson: '{}',
+          responseJson: '{}',
+          responseContent: 'stale',
+          durationMs: 100,
+          promptTokens: 10,
+          completionTokens: 5,
+        })
+        .run()
+
+      const res = await req('GET', '/api/admin/monitor/users', adminToken)
+      const data = (await res.json()) as Array<{
+        lastActiveAt: string | null
+        userId: number
+      }>
+
+      expect(data.find((u) => u.userId === stalePlayerId)?.lastActiveAt).toBe(
+        latestSubmissionAt,
+      )
+    } finally {
+      db.delete(schema.llmCalls)
+        .where(eq(schema.llmCalls.userId, stalePlayerId))
+        .run()
+      if (staleSubmissionId != null) {
+        db.delete(schema.playgroundRuns)
+          .where(eq(schema.playgroundRuns.submissionId, staleSubmissionId))
+          .run()
+      }
+      db.delete(schema.submissions)
+        .where(eq(schema.submissions.userId, stalePlayerId))
+        .run()
+      db.delete(schema.users).where(eq(schema.users.id, stalePlayerId)).run()
+    }
+  })
 })
 
 describe('GET /api/admin/analytics/*', () => {
