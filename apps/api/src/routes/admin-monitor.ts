@@ -20,6 +20,56 @@ import { requireAuth } from '../middleware/requireAuth'
 import { matches, scenarios, submissions } from '../db/schema'
 
 const adminMonitorRouter = new Hono()
+const TIMEZONE_SUFFIX_PATTERN = /(Z|[+-]\d{2}:\d{2})$/i
+
+function normalizeTimestamp(value: string) {
+  const trimmed = value.trim()
+
+  if (!trimmed || TIMEZONE_SUFFIX_PATTERN.test(trimmed)) {
+    return trimmed
+  }
+
+  if (trimmed.includes(' ')) {
+    return `${trimmed.replace(' ', 'T')}Z`
+  }
+
+  if (trimmed.includes('T')) {
+    return `${trimmed}Z`
+  }
+
+  return trimmed
+}
+
+function timestampMs(value: string) {
+  const parsed = Date.parse(normalizeTimestamp(value))
+  return Number.isNaN(parsed) ? null : parsed
+}
+
+function latestTimestamp(...values: Array<string | null>) {
+  let latest: string | null = null
+  let latestMs = -Infinity
+
+  for (const value of values) {
+    if (!value) {
+      continue
+    }
+
+    const ms = timestampMs(value)
+    if (ms == null) {
+      if (latest == null) {
+        latest = value
+      }
+      continue
+    }
+
+    if (ms >= latestMs) {
+      latest = value
+      latestMs = ms
+    }
+  }
+
+  return latest
+}
 
 adminMonitorRouter.get(
   '/api/admin/monitor/users',
@@ -120,8 +170,13 @@ adminMonitorRouter.get(
       }
     }
 
-    const result = rows.map((row) =>
-      adminMonitorUserSchema.parse({
+    const result = rows.map((row) => {
+      const tokenStats = tokenStatsByUser.get(row.userId)
+      const totalPromptTokens = tokenStats?.totalPromptTokens ?? 0
+      const totalCompletionTokens = tokenStats?.totalCompletionTokens ?? 0
+      const totalTokens = totalPromptTokens + totalCompletionTokens
+
+      return adminMonitorUserSchema.parse({
         userId: row.userId,
         displayName: row.displayName,
         email: row.email,
@@ -130,22 +185,16 @@ adminMonitorRouter.get(
         latestVersion: row.latestVersion,
         playgroundRunCount: row.playgroundRunCount,
         matchCount: row.matchCount,
-        totalPromptTokens:
-          tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0,
-        totalCompletionTokens:
-          tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0,
-        totalTokens:
-          (tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0) +
-          (tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0),
-        lastActiveAt:
-          tokenStatsByUser.get(row.userId)?.lastActiveAt ??
+        totalPromptTokens,
+        totalCompletionTokens,
+        totalTokens,
+        lastActiveAt: latestTimestamp(
+          tokenStats?.lastActiveAt ?? null,
           row.lastSubmissionAt,
-        isOverSoftCap:
-          (tokenStatsByUser.get(row.userId)?.totalPromptTokens ?? 0) +
-            (tokenStatsByUser.get(row.userId)?.totalCompletionTokens ?? 0) >
-          softCap,
-      }),
-    )
+        ),
+        isOverSoftCap: totalTokens > softCap,
+      })
+    })
 
     result.sort(
       (left, right) =>
