@@ -87,6 +87,13 @@ function resolveModelLabel(modelId: string) {
   return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
 }
 
+// TODO(tech-debt): hard-coded default preset opponent per scenario, matched by
+// label substring. Should be a DB `isDefault` flag on preset_opponents instead.
+// See docs/tech/tech-debt.md.
+const DEFAULT_PRESET_LABEL_BY_SCENARIO: Record<string, string> = {
+  'shangyang-court': '曾公',
+}
+
 function isRunFinished(run: PlaygroundRun | null) {
   if (!run) {
     return false
@@ -1094,7 +1101,19 @@ export function PlaygroundPage() {
         setScenario(scenarioData)
         setRunSummaries(runs)
         setPresetOpponentList(presets)
-        if (presets.length > 0) setOpponentMode('preset')
+        if (presets.length > 0) {
+          setOpponentMode('preset')
+          // TODO(tech-debt): default preset opponent is hard-coded per scenario
+          // by label substring. Replace with a DB `isDefault` flag on
+          // preset_opponents. See docs/tech/tech-debt.md.
+          const preferredSubstr =
+            DEFAULT_PRESET_LABEL_BY_SCENARIO[sub.scenarioId]
+          const preferred =
+            (preferredSubstr &&
+              presets.find((p) => p.label.includes(preferredSubstr))) ||
+            presets[0]
+          setSelectedPresetId(preferred.id)
+        }
 
         const session = getPlaygroundSession(submissionId)
         const resolvedSession = resolvePlaygroundSession(session, sub, runs)
