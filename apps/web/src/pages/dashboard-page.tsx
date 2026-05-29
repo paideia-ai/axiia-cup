@@ -181,12 +181,6 @@ export function DashboardPage() {
                   前往工坊 →
                 </Link>
                 <Link
-                  to="/matches/277"
-                  className="inline-flex items-center rounded-lg border border-(--border-soft) px-4 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/5"
-                >
-                  先看一场精彩对局 →
-                </Link>
-                <Link
                   to="/leaderboard"
                   className="inline-flex items-center rounded-lg border border-(--border-soft) px-4 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/5"
                 >
