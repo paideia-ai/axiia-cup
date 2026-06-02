@@ -9,6 +9,10 @@ import {
   scorerOutputSchema,
   submissionModelIdSchema,
   transcriptTurnSchema,
+  formatTrolleyCasesForPrompt,
+  trolleyFixedCaseIds,
+  trolleyRandomCaseIds,
+  TROLLEY_SCENARIO_ID,
   type EvaluationModelId,
   type HiddenInfoItem,
   type InfoAssignment,
@@ -188,6 +192,20 @@ function pickRandomIds(items: { id: string }[], count: number): string[] {
   return shuffled.slice(0, count).map((i) => i.id)
 }
 
+function randomizeSelectedCaseIds(scenario: ScenarioRecord): string[] {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return []
+  }
+
+  return [
+    ...trolleyFixedCaseIds,
+    ...pickRandomIds(
+      trolleyRandomCaseIds.map((id) => ({ id })),
+      2,
+    ),
+  ]
+}
+
 export function randomizeInfoAssignment(
   scenario: ScenarioRecord,
 ): InfoAssignment {
@@ -201,6 +219,7 @@ export function randomizeInfoAssignment(
     roleATrueRequestIds: pickRandomIds(roleAReqs, scenario.trueRequestCount),
     roleBFalseInfoIds: pickRandomIds(roleBInfo, scenario.falseInfoCount),
     roleBTrueRequestIds: pickRandomIds(roleBReqs, scenario.trueRequestCount),
+    selectedCaseIds: randomizeSelectedCaseIds(scenario),
   })
 }
 
@@ -242,6 +261,33 @@ function buildOpponentRequestsText(items: RequestItem[]): string {
   return items.map((item) => `- ${item.id}：${item.content}`).join('\n')
 }
 
+function buildScenarioCaseVars(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+): Record<string, string> {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return {
+      caseId1: '',
+      caseId2: '',
+      caseId3: '',
+      cases: '',
+    }
+  }
+
+  const selectedCaseIds =
+    assignment.selectedCaseIds && assignment.selectedCaseIds.length > 0
+      ? assignment.selectedCaseIds
+      : [...trolleyFixedCaseIds, ...trolleyRandomCaseIds.slice(0, 2)]
+  const [caseId1 = '', caseId2 = '', caseId3 = ''] = selectedCaseIds
+
+  return {
+    caseId1,
+    caseId2,
+    caseId3,
+    cases: formatTrolleyCasesForPrompt(selectedCaseIds),
+  }
+}
+
 /** Build the system message for a role agent using the scenario template. */
 export function buildAgentSystemMessage(
   scenario: ScenarioRecord,
@@ -268,10 +314,23 @@ export function buildAgentSystemMessage(
   const opponentInfo = parseHiddenInfo(
     isA ? scenario.roleBHiddenInfo : scenario.roleAHiddenInfo,
   )
+  const roleName = isA ? scenario.roleAName : scenario.roleBName
+  const opponentName = isA ? scenario.roleBName : scenario.roleAName
+  const sideName =
+    scenario.id === TROLLEY_SCENARIO_ID ? (isA ? '一人侧' : '五人侧') : roleName
+  const opponentSideName =
+    scenario.id === TROLLEY_SCENARIO_ID
+      ? isA
+        ? '五人侧'
+        : '一人侧'
+      : opponentName
 
   const vars: Record<string, string> = {
-    roleName: isA ? scenario.roleAName : scenario.roleBName,
-    opponentName: isA ? scenario.roleBName : scenario.roleAName,
+    ...buildScenarioCaseVars(scenario, assignment),
+    roleName,
+    opponentName,
+    sideName,
+    opponentSideName,
     roleAName: scenario.roleAName,
     roleBName: scenario.roleBName,
     hiddenInfo: buildHiddenInfoText(myInfo, myFalseIds),
@@ -317,6 +376,7 @@ export function buildJudgePrompt(
   const roleBRequests = parseRequests(scenario.roleBRequests)
 
   const vars: Record<string, string> = {
+    ...buildScenarioCaseVars(scenario, assignment),
     roleAName: scenario.roleAName,
     roleBName: scenario.roleBName,
     turnCount: String(scenario.turnCount),
@@ -655,6 +715,7 @@ function buildScorerPrompt(
   const roleBRequests = parseRequests(scenario.roleBRequests)
 
   const vars: Record<string, string> = {
+    ...buildScenarioCaseVars(scenario, assignment),
     roleAName: scenario.roleAName,
     roleBName: scenario.roleBName,
     judgeOutput: extras.judgeOutput,

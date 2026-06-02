@@ -120,6 +120,38 @@ describe('buildAgentSystemMessage', () => {
 
     expect(message).toContain(scenario.roleBName)
   })
+
+  it('interpolates selected trolley cases and side names', () => {
+    const message = buildAgentSystemMessage(
+      {
+        ...scenario,
+        id: 'trolley-problem',
+        roleAName: '奕仁',
+        roleAHiddenInfo: '[]',
+        roleARequests: '[]',
+        roleBName: '武仁',
+        roleBHiddenInfo: '[]',
+        roleBRequests: '[]',
+        agentPromptTemplate:
+          '你是{{roleName}}。你代表{{sideName}}，对手是{{opponentSideName}}。案件：{{cases}}',
+      },
+      'a',
+      {
+        roleAFalseInfoIds: [],
+        roleBFalseInfoIds: [],
+        roleATrueRequestIds: [],
+        roleBTrueRequestIds: [],
+        selectedCaseIds: ['A', 'B', 'E'],
+      },
+    )
+
+    expect(message).toContain('你是奕仁')
+    expect(message).toContain('你代表一人侧')
+    expect(message).toContain('对手是五人侧')
+    expect(message).toContain('A. 原始电车')
+    expect(message).toContain('B. 器官移植')
+    expect(message).toContain('E. 缸中之脑')
+  })
 })
 
 describe('buildAgentRuntimeSystemPrompt', () => {
@@ -231,6 +263,33 @@ describe('randomizeInfoAssignment', () => {
 
     expect(['S1', 'S2', 'S3']).toContain(assignment.roleAFalseInfoIds[0])
     expect(['G1', 'G2', 'G3']).toContain(assignment.roleBFalseInfoIds[0])
+  })
+
+  it('does not assign cases to non-trolley scenarios', () => {
+    const assignment = randomizeInfoAssignment(scenario)
+
+    expect(assignment.selectedCaseIds).toEqual([])
+  })
+
+  it('assigns case A plus two random pool cases for trolley scenarios', () => {
+    const assignment = randomizeInfoAssignment({
+      ...scenario,
+      id: 'trolley-problem',
+      roleAHiddenInfo: '[]',
+      roleARequests: '[]',
+      roleBHiddenInfo: '[]',
+      roleBRequests: '[]',
+      falseInfoCount: 0,
+      trueRequestCount: 0,
+    })
+
+    const selectedCaseIds = assignment.selectedCaseIds ?? []
+
+    expect(selectedCaseIds).toHaveLength(3)
+    expect(selectedCaseIds).toContain('A')
+    expect(
+      selectedCaseIds.filter((caseId) => ['B', 'C', 'D', 'E'].includes(caseId)),
+    ).toHaveLength(2)
   })
 })
 

@@ -9,6 +9,7 @@ node_modules/
 dist/
 build/
 .DS_Store
+*:Zone.Identifier
 coverage/
 .env*
 !.env.example

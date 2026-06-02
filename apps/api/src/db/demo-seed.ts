@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm'
 import { hashPassword } from '../lib/auth'
 import { db, sqlite, sqliteFilePath } from './client'
 import { scenarios, submissions, users } from './schema'
+import { ensureTrolleyScenario } from './trolley-scenario'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
 
@@ -283,6 +284,7 @@ async function main() {
   migrate(db, { migrationsFolder })
 
   db.insert(scenarios).values(scenarioSeed).run()
+  ensureTrolleyScenario()
 
   const admin = db
     .insert(users)
