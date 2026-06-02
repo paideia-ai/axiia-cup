@@ -52,6 +52,10 @@ export function scenarioHasInfoAssignmentDetails(scenario: Scenario) {
   )
 }
 
+export function scenarioHasExamination(scenario: Scenario) {
+  return scenario.examinationQuestionTemplate.trim().length > 0
+}
+
 export function resolveScenarioRoles(
   scenario: Scenario,
   selection: RoleSelection,

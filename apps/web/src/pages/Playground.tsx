@@ -41,6 +41,7 @@ import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 import { usePageVisibility } from '../lib/page-visibility'
 import {
   buildScenarioWithResolvedRoles,
+  scenarioHasExamination,
   scenarioHasInfoAssignmentDetails,
 } from '../lib/scenario-roles'
 
@@ -502,6 +503,7 @@ function RunResult({
 }) {
   const showInfoAssignment =
     run.infoAssignment != null && scenarioHasInfoAssignmentDetails(scenario)
+  const showExaminationResults = scenarioHasExamination(scenario)
 
   return (
     <div className="space-y-6">
@@ -622,116 +624,120 @@ function RunResult({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {(
-          [
-            {
-              transcript: run.judgeTranscriptA,
-              roleName: scenario.roleAName,
-              side: 'a' as const,
-            },
-            {
-              transcript: run.judgeTranscriptB,
-              roleName: scenario.roleBName,
-              side: 'b' as const,
-            },
-          ] as const
-        ).map(({ transcript, roleName, side }) => (
-          <Card key={side}>
-            <CardHeader>
-              <CardTitle>审讯结果 · {roleName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {transcript.length ? (
-                transcript.map((item) => {
-                  const opponentInfoMap = buildInfoContentMap(
-                    side === 'a'
-                      ? scenario.roleBHiddenInfo
-                      : scenario.roleAHiddenInfo,
-                  )
+      {showExaminationResults ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {(
+            [
+              {
+                transcript: run.judgeTranscriptA,
+                roleName: scenario.roleAName,
+                side: 'a' as const,
+              },
+              {
+                transcript: run.judgeTranscriptB,
+                roleName: scenario.roleBName,
+                side: 'b' as const,
+              },
+            ] as const
+          ).map(({ transcript, roleName, side }) => (
+            <Card key={side}>
+              <CardHeader>
+                <CardTitle>审讯结果 · {roleName}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {transcript.length ? (
+                  transcript.map((item) => {
+                    const opponentInfoMap = buildInfoContentMap(
+                      side === 'a'
+                        ? scenario.roleBHiddenInfo
+                        : scenario.roleAHiddenInfo,
+                    )
 
-                  return (
-                    <div
-                      key={item.round}
-                      className="overflow-hidden rounded-xl border border-(--border-soft)"
-                    >
-                      <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                            问询 · 第 {item.round} 轮
-                          </p>
-                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                            {item.question}
-                          </p>
-                        </div>
-                      </div>
+                    return (
                       <div
-                        className="space-y-3 px-4 py-3"
-                        style={{
-                          background:
-                            side === 'a'
-                              ? 'rgba(224,74,47,0.05)'
-                              : 'rgba(96,165,250,0.05)',
-                        }}
+                        key={item.round}
+                        className="overflow-hidden rounded-xl border border-(--border-soft)"
                       >
-                        <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                          <span
-                            className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
-                            style={{
-                              background:
-                                side === 'a'
-                                  ? 'rgba(224,74,47,0.12)'
-                                  : 'rgba(96,165,250,0.12)',
-                            }}
-                          >
-                            {roleName} 选择 {item.selectedInfoId ?? '未作答'}
-                          </span>
-                          {item.isCorrect != null ? (
-                            <span
-                              className={`rounded px-1.5 py-0.5 font-semibold ${
-                                item.isCorrect
-                                  ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                                  : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                              }`}
-                            >
-                              {item.isCorrect ? '判断正确' : '判断错误'}
-                            </span>
-                          ) : null}
+                        <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                              问询 · 第 {item.round} 轮
+                            </p>
+                            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                              {item.question}
+                            </p>
+                          </div>
                         </div>
-                        {item.selectedInfoId ? (
-                          <p className="text-[11px] leading-5 text-(--foreground-muted)">
-                            对应信息：
-                            {opponentInfoMap.get(item.selectedInfoId) ??
-                              '未知信息'}
-                          </p>
-                        ) : null}
-                        <div>
-                          <p
-                            className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
-                            style={{
-                              color:
-                                side === 'a' ? 'var(--accent)' : 'var(--info)',
-                            }}
-                          >
-                            {roleName} 回答
-                          </p>
-                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                            {item.answer}
-                          </p>
+                        <div
+                          className="space-y-3 px-4 py-3"
+                          style={{
+                            background:
+                              side === 'a'
+                                ? 'rgba(224,74,47,0.05)'
+                                : 'rgba(96,165,250,0.05)',
+                          }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                            <span
+                              className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
+                              style={{
+                                background:
+                                  side === 'a'
+                                    ? 'rgba(224,74,47,0.12)'
+                                    : 'rgba(96,165,250,0.12)',
+                              }}
+                            >
+                              {roleName} 选择 {item.selectedInfoId ?? '未作答'}
+                            </span>
+                            {item.isCorrect != null ? (
+                              <span
+                                className={`rounded px-1.5 py-0.5 font-semibold ${
+                                  item.isCorrect
+                                    ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                    : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                                }`}
+                              >
+                                {item.isCorrect ? '判断正确' : '判断错误'}
+                              </span>
+                            ) : null}
+                          </div>
+                          {item.selectedInfoId ? (
+                            <p className="text-[11px] leading-5 text-(--foreground-muted)">
+                              对应信息：
+                              {opponentInfoMap.get(item.selectedInfoId) ??
+                                '未知信息'}
+                            </p>
+                          ) : null}
+                          <div>
+                            <p
+                              className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                              style={{
+                                color:
+                                  side === 'a'
+                                    ? 'var(--accent)'
+                                    : 'var(--info)',
+                              }}
+                            >
+                              {roleName} 回答
+                            </p>
+                            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                              {item.answer}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })
-              ) : (
-                <p className="text-sm text-(--foreground-subtle)">
-                  审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                    )
+                  })
+                ) : (
+                  <p className="text-sm text-(--foreground-subtle)">
+                    审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
