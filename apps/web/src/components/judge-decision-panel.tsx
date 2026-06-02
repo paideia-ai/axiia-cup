@@ -156,6 +156,8 @@ export function JudgeDecisionPanel({
     parsed?.kind === 'structured'
       ? buildRequestGroups(parsed.requests, scenario)
       : []
+  const caseJudgmentRows =
+    parsed?.kind === 'structured' ? Object.entries(parsed.judgments) : []
 
   const badge = !parsed
     ? errorMessage
@@ -204,17 +206,39 @@ export function JudgeDecisionPanel({
             </p>
             <p className="mt-0.5 text-xs leading-5 text-(--foreground-subtle)">
               当前不会直接展示原始 JSON。请检查裁判输出格式，确保至少包含
-              `judgment`、`requests`、`speech` 中的一个结构化字段。
+              `judgment`、`judgments`、`requests`、`speech` 中的一个结构化字段。
             </p>
           </div>
         ) : (
           <>
-            {parsed.kind === 'structured' && parsed.judgment ? (
+            {parsed.kind === 'structured' &&
+            (parsed.judgment || parsed.winner) ? (
               <div className="rounded-xl border border-[rgba(224,74,47,0.18)] bg-[rgba(224,74,47,0.08)] px-3.5 py-2.5">
                 <p className="panel-label">最终裁断</p>
                 <p className="mt-0.5 text-lg font-semibold text-(--foreground)">
-                  {parsed.judgment}
+                  {parsed.judgment ?? `胜方：${parsed.winner}`}
                 </p>
+              </div>
+            ) : null}
+
+            {caseJudgmentRows.length > 0 ? (
+              <div className="space-y-2.5">
+                <p className="panel-label">案件裁决</p>
+                <div className="grid gap-2.5">
+                  {caseJudgmentRows.map(([caseId, outcome]) => (
+                    <div
+                      key={caseId}
+                      className="flex items-center justify-between gap-2.5 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
+                    >
+                      <p className="text-xs font-semibold text-(--foreground)">
+                        案件 {caseId}
+                      </p>
+                      <span className="inline-flex min-w-[4.5rem] shrink-0 items-center justify-center rounded-full border border-(--border) bg-(--surface-elevated) px-2.5 py-1 text-center text-[11px] font-semibold text-(--info)">
+                        {outcome}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : null}
 

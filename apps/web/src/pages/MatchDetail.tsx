@@ -1,5 +1,7 @@
 import {
+  getTrolleyCasesByIds,
   modelOptions,
+  TROLLEY_SCENARIO_ID,
   type MatchDetail,
   type MatchProgress,
   type Scenario,
@@ -27,6 +29,86 @@ import {
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
+}
+
+function buildTrolleyTranscriptSections(
+  match: MatchDetail,
+  scenario: Scenario,
+) {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return null
+  }
+
+  const selectedCaseIds = match.infoAssignment?.selectedCaseIds ?? []
+  const cases = getTrolleyCasesByIds(selectedCaseIds)
+
+  if (cases.length === 0) {
+    return null
+  }
+
+  return cases.map((caseInfo, index) => ({
+    caseInfo,
+    startIndex: index * scenario.turnCount,
+    transcript: match.transcript.slice(
+      index * scenario.turnCount,
+      (index + 1) * scenario.turnCount,
+    ),
+    turnCount: scenario.turnCount,
+  }))
+}
+
+function TranscriptTurnList({
+  playerALabel,
+  playerBLabel,
+  startIndex = 0,
+  transcript,
+}: {
+  playerALabel: string
+  playerBLabel: string
+  startIndex?: number
+  transcript: MatchDetail['transcript']
+}) {
+  const turnKeyCounts = new Map<string, number>()
+
+  return transcript.map((turn, index) => {
+    const baseKey = `${turn.speaker}:${turn.content}`
+    const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+    turnKeyCounts.set(baseKey, occurrence)
+    const isA = turn.speaker === 'a'
+
+    return (
+      <div
+        key={`${startIndex}:${baseKey}:${occurrence}`}
+        className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
+      >
+        <p
+          className="px-1 text-xs font-semibold"
+          style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
+        >
+          {isA ? playerALabel : playerBLabel}
+          <span className="ml-1.5 font-normal opacity-60">
+            #{startIndex + index + 1}
+          </span>
+        </p>
+        <div
+          className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+          style={
+            isA
+              ? {
+                  background: 'rgba(224,74,47,0.1)',
+                  border: '1px solid rgba(224,74,47,0.2)',
+                }
+              : {
+                  background: 'rgba(96,165,250,0.08)',
+                  border: '1px solid rgba(96,165,250,0.18)',
+                }
+          }
+        >
+          {turn.content}
+        </div>
+      </div>
+    )
+  })
 }
 
 function createMatchProgressSnapshot(match: MatchDetail): MatchProgress {
@@ -249,6 +331,9 @@ export function MatchDetailPage() {
     match.infoAssignment != null &&
     displayScenario != null &&
     scenarioHasInfoAssignmentDetails(displayScenario)
+  const trolleyTranscriptSections = displayScenario
+    ? buildTrolleyTranscriptSections(match, displayScenario)
+    : null
 
   return (
     <div className="space-y-6">
@@ -646,48 +731,41 @@ export function MatchDetailPage() {
         </CardHeader>
         {showTranscript ? (
           <CardContent className="space-y-4">
-            {(() => {
-              const turnKeyCounts = new Map<string, number>()
-              return match.transcript.map((turn, index) => {
-                const baseKey = `${turn.speaker}:${turn.content}`
-                const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
-                turnKeyCounts.set(baseKey, occurrence)
-                const isA = turn.speaker === 'a'
-
-                return (
-                  <div
-                    key={`${baseKey}:${occurrence}`}
-                    className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
+            {trolleyTranscriptSections ? (
+              <div className="space-y-5">
+                {trolleyTranscriptSections.map((section) => (
+                  <section
+                    key={section.caseInfo.id}
+                    className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
                   >
-                    <p
-                      className="px-1 text-xs font-semibold"
-                      style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
-                    >
-                      {isA ? playerALabel : playerBLabel}
-                      <span className="ml-1.5 font-normal opacity-60">
-                        #{index + 1}
-                      </span>
-                    </p>
-                    <div
-                      className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
-                      style={
-                        isA
-                          ? {
-                              background: 'rgba(224,74,47,0.1)',
-                              border: '1px solid rgba(224,74,47,0.2)',
-                            }
-                          : {
-                              background: 'rgba(96,165,250,0.08)',
-                              border: '1px solid rgba(96,165,250,0.18)',
-                            }
-                      }
-                    >
-                      {turn.content}
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-(--foreground)">
+                          案件 {section.caseInfo.id} · {section.caseInfo.title}
+                        </p>
+                        <p className="mt-1 text-[11px] text-(--foreground-muted)">
+                          {section.transcript.length}/{section.turnCount} 轮
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )
-              })
-            })()}
+                    <div className="space-y-4">
+                      <TranscriptTurnList
+                        playerALabel={playerALabel}
+                        playerBLabel={playerBLabel}
+                        startIndex={section.startIndex}
+                        transcript={section.transcript}
+                      />
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <TranscriptTurnList
+                playerALabel={playerALabel}
+                playerBLabel={playerBLabel}
+                transcript={match.transcript}
+              />
+            )}
           </CardContent>
         ) : null}
       </Card>

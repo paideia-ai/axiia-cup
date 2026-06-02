@@ -2,17 +2,21 @@ import { z } from 'zod'
 
 const structuredJudgeDecisionSchema = z.object({
   judgment: z.string().trim().min(1).optional(),
+  judgments: z.record(z.string().trim().min(1)).optional(),
   requests: z.record(z.string().trim().min(1)).optional(),
   speech: z.string().trim().min(1).optional(),
+  winner: z.string().trim().min(1).optional(),
 })
 
 export type ParsedJudgeDecision =
   | {
       kind: 'structured'
       judgment: string | null
+      judgments: Record<string, string>
       raw: string
       requests: Record<string, string>
       speech: string | null
+      winner: string | null
     }
   | {
       kind: 'speech'
@@ -40,8 +44,10 @@ function looksLikeStructuredJson(raw: string) {
     raw.startsWith('{') ||
     raw.startsWith('```') ||
     raw.includes('"judgment"') ||
+    raw.includes('"judgments"') ||
     raw.includes('"requests"') ||
-    raw.includes('"speech"')
+    raw.includes('"speech"') ||
+    raw.includes('"winner"')
   )
 }
 
@@ -78,20 +84,34 @@ export function parseJudgeDecision(
 
     if (parsedDecision.success) {
       const judgment = trimToNull(parsedDecision.data.judgment)
+      const judgments = Object.fromEntries(
+        Object.entries(parsedDecision.data.judgments ?? {}).filter((entry) =>
+          Boolean(trimToNull(entry[1])),
+        ),
+      )
       const speech = trimToNull(parsedDecision.data.speech)
       const requests = Object.fromEntries(
         Object.entries(parsedDecision.data.requests ?? {}).filter((entry) =>
           Boolean(trimToNull(entry[1])),
         ),
       )
+      const winner = trimToNull(parsedDecision.data.winner)
 
-      if (judgment || speech || Object.keys(requests).length > 0) {
+      if (
+        judgment ||
+        speech ||
+        winner ||
+        Object.keys(judgments).length > 0 ||
+        Object.keys(requests).length > 0
+      ) {
         return {
           kind: 'structured',
           judgment,
+          judgments,
           raw,
           requests,
           speech,
+          winner,
         }
       }
     }

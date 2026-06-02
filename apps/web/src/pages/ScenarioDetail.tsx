@@ -3,6 +3,7 @@ import {
   formatTrolleyCasesForPrompt,
   modelOptions,
   trolleyCases,
+  trolleyCasesPerMatch,
   TROLLEY_SCENARIO_ID,
   type ModelOption,
   type Scenario,
@@ -133,6 +134,11 @@ function buildRolePromptPreview(
     opponentRequests: buildPromptPreviewList(opponentRequests),
     opponentInfoIds: opponentHiddenInfo.map((item) => item.id).join('/'),
     opponentRequestIds: opponentRequests.map((item) => item.id).join('/'),
+    caseTurnCount: String(scenario.turnCount),
+    totalTurnCount:
+      scenario.id === TROLLEY_SCENARIO_ID
+        ? String(scenario.turnCount * trolleyCasesPerMatch)
+        : String(scenario.turnCount),
     turnCount: String(scenario.turnCount),
   })
 }
@@ -511,6 +517,13 @@ export function ScenarioDetailPage() {
       roleAOptionId: selectedRoleAOptionId,
       roleBOptionId: selectedRoleBOptionId,
     })
+  const isTrolleyScenario = scenario.id === TROLLEY_SCENARIO_ID
+  const totalDialogueTurns = isTrolleyScenario
+    ? scenario.turnCount * trolleyCasesPerMatch
+    : scenario.turnCount
+  const turnCountLabel = isTrolleyScenario
+    ? `每案 ${scenario.turnCount} 轮 · 总 ${totalDialogueTurns} 轮`
+    : `${scenario.turnCount} 回合`
 
   return (
     <div className="space-y-6">
@@ -538,7 +551,7 @@ export function ScenarioDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge>{scenario.subject}</Badge>
-          <Badge tone="info">{scenario.turnCount} 回合</Badge>
+          <Badge tone="info">{turnCountLabel}</Badge>
         </div>
       </div>
 
@@ -595,7 +608,9 @@ export function ScenarioDetailPage() {
                             对话回合
                           </p>
                           <p className="text-base font-semibold text-(--foreground)">
-                            {scenario.turnCount}
+                            {isTrolleyScenario
+                              ? `${scenario.turnCount} / ${totalDialogueTurns}`
+                              : scenario.turnCount}
                           </p>
                         </div>
                         {scenario.roleAHiddenInfo.length > 0 ? (
@@ -637,8 +652,10 @@ export function ScenarioDetailPage() {
                         <span className="font-medium text-(--foreground)">
                           对话阶段
                         </span>
-                        ：双方进行 {scenario.turnCount}{' '}
-                        轮对话，各自根据策略提示词行动
+                        ：
+                        {isTrolleyScenario
+                          ? `三个案件逐一辩论，每案 ${scenario.turnCount} 轮，总计 ${totalDialogueTurns} 轮`
+                          : `双方进行 ${scenario.turnCount} 轮对话，各自根据策略提示词行动`}
                       </li>
                       {scenario.examinationQuestionTemplate ? (
                         <li>

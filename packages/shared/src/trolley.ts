@@ -53,10 +53,16 @@ export const trolleyRandomCaseIds = [
   'E',
 ] as const satisfies TrolleyCaseId[]
 
+export const trolleyCasesPerMatch = 3
+
 export function getTrolleyCasesByIds(caseIds: readonly string[]) {
   return caseIds
     .map((caseId) => trolleyCases.find((item) => item.id === caseId))
     .filter((item): item is (typeof trolleyCases)[number] => Boolean(item))
+}
+
+export function getTrolleyCaseById(caseId: string) {
+  return trolleyCases.find((item) => item.id === caseId) ?? null
 }
 
 export function formatTrolleyCasesForPrompt(caseIds: readonly string[]) {
@@ -65,4 +71,10 @@ export function formatTrolleyCasesForPrompt(caseIds: readonly string[]) {
   return cases
     .map((item) => `${item.id}. ${item.title}\n${item.description}`)
     .join('\n\n')
+}
+
+export function formatTrolleyCaseForPrompt(caseId: string) {
+  const item = getTrolleyCaseById(caseId)
+
+  return item ? `${item.id}. ${item.title}\n${item.description}` : ''
 }

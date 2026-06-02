@@ -9,7 +9,9 @@ import {
   scorerOutputSchema,
   submissionModelIdSchema,
   transcriptTurnSchema,
+  formatTrolleyCaseForPrompt,
   formatTrolleyCasesForPrompt,
+  getTrolleyCaseById,
   trolleyFixedCaseIds,
   trolleyRandomCaseIds,
   TROLLEY_SCENARIO_ID,
@@ -261,6 +263,12 @@ function buildOpponentRequestsText(items: RequestItem[]): string {
   return items.map((item) => `- ${item.id}：${item.content}`).join('\n')
 }
 
+function getSelectedTrolleyCaseIds(assignment: InfoAssignment): string[] {
+  return assignment.selectedCaseIds && assignment.selectedCaseIds.length > 0
+    ? assignment.selectedCaseIds
+    : [...trolleyFixedCaseIds, ...trolleyRandomCaseIds.slice(0, 2)]
+}
+
 function buildScenarioCaseVars(
   scenario: ScenarioRecord,
   assignment: InfoAssignment,
@@ -270,22 +278,36 @@ function buildScenarioCaseVars(
       caseId1: '',
       caseId2: '',
       caseId3: '',
+      caseCount: '',
+      caseTurnCount: String(scenario.turnCount),
       cases: '',
+      totalTurnCount: String(scenario.turnCount),
     }
   }
 
-  const selectedCaseIds =
-    assignment.selectedCaseIds && assignment.selectedCaseIds.length > 0
-      ? assignment.selectedCaseIds
-      : [...trolleyFixedCaseIds, ...trolleyRandomCaseIds.slice(0, 2)]
+  const selectedCaseIds = getSelectedTrolleyCaseIds(assignment)
   const [caseId1 = '', caseId2 = '', caseId3 = ''] = selectedCaseIds
 
   return {
     caseId1,
     caseId2,
     caseId3,
+    caseCount: String(selectedCaseIds.length),
+    caseTurnCount: String(scenario.turnCount),
     cases: formatTrolleyCasesForPrompt(selectedCaseIds),
+    totalTurnCount: String(scenario.turnCount * selectedCaseIds.length),
   }
+}
+
+export function getScenarioDialogueTurnLimit(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+) {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return scenario.turnCount
+  }
+
+  return scenario.turnCount * getSelectedTrolleyCaseIds(assignment).length
 }
 
 /** Build the system message for a role agent using the scenario template. */
@@ -432,12 +454,64 @@ export function buildJudgePrompt(
 
 // ── Message building ────────────────────────────────────────────────────────
 
+type TrolleyDialogueScope = {
+  caseId: string
+  caseIndex: number
+  caseTranscript: TranscriptTurn[]
+  selectedCaseIds: string[]
+}
+
+function getTrolleyDialogueScope(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+  transcript: TranscriptTurn[],
+): TrolleyDialogueScope | null {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return null
+  }
+
+  const selectedCaseIds = getSelectedTrolleyCaseIds(assignment)
+  const caseIndex = Math.min(
+    Math.floor(transcript.length / scenario.turnCount),
+    selectedCaseIds.length - 1,
+  )
+  const startIndex = caseIndex * scenario.turnCount
+
+  return {
+    caseId: selectedCaseIds[caseIndex] ?? '',
+    caseIndex,
+    caseTranscript: transcript.slice(
+      startIndex,
+      startIndex + scenario.turnCount,
+    ),
+    selectedCaseIds,
+  }
+}
+
+function buildTrolleyCaseOpening(
+  scenario: ScenarioRecord,
+  scope: TrolleyDialogueScope,
+) {
+  const caseText = formatTrolleyCaseForPrompt(scope.caseId)
+
+  return [
+    `现在进入案件 ${scope.caseId}（第 ${scope.caseIndex + 1}/${scope.selectedCaseIds.length} 个入局案件）。`,
+    `本案件单独辩论 ${scenario.turnCount} 轮，只围绕当前案件发言；不要把其他案件合并进本案件。`,
+    '',
+    '=== 当前案件 ===',
+    caseText || scope.caseId,
+    '',
+    `请${scenario.roleAName}先发言。`,
+  ].join('\n')
+}
+
 function buildDialogueContext(
   transcript: TranscriptTurn[],
   scenario: ScenarioRecord,
   roleSide: 'a' | 'b',
   assignment: InfoAssignment,
   userStrategyPrompt: string,
+  trolleyScope?: TrolleyDialogueScope | null,
 ) {
   const systemPrompt = buildAgentRuntimeSystemPrompt(
     scenario,
@@ -445,17 +519,28 @@ function buildDialogueContext(
     assignment,
     userStrategyPrompt,
   )
+  const contextTranscript = trolleyScope
+    ? trolleyScope.caseTranscript
+    : transcript
 
-  const messages: { role: 'user' | 'assistant'; content: string }[] =
-    transcript.map((turn) => ({
+  const messages: { role: 'user' | 'assistant'; content: string }[] = []
+
+  if (trolleyScope) {
+    messages.push({
+      role: 'user',
+      content: buildTrolleyCaseOpening(scenario, trolleyScope),
+    })
+  } else if (transcript.length === 0) {
+    messages.push({ role: 'user', content: scenario.openingLine })
+  }
+
+  messages.push(
+    ...contextTranscript.map((turn) => ({
       role:
         turn.speaker === roleSide ? ('assistant' as const) : ('user' as const),
       content: turn.content,
-    }))
-
-  if (transcript.length === 0) {
-    messages.push({ role: 'user', content: scenario.openingLine })
-  }
+    })),
+  )
 
   return { systemPrompt, messages }
 }
@@ -469,6 +554,42 @@ function formatTranscript(
       (t, i) =>
         `[第${i + 1}轮] ${t.speaker === 'a' ? scenario.roleAName : scenario.roleBName}：${t.content}`,
     )
+    .join('\n\n')
+}
+
+export function formatDebateTranscriptForJudge(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+  transcript: TranscriptTurn[],
+) {
+  if (transcript.length === 0) {
+    return '（暂无对话）'
+  }
+
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return formatTranscript(transcript, scenario)
+  }
+
+  const selectedCaseIds = getSelectedTrolleyCaseIds(assignment)
+
+  return selectedCaseIds
+    .map((caseId, caseIndex) => {
+      const caseInfo = getTrolleyCaseById(caseId)
+      const caseTranscript = transcript.slice(
+        caseIndex * scenario.turnCount,
+        (caseIndex + 1) * scenario.turnCount,
+      )
+
+      return [
+        `=== 案件 ${caseInfo?.id ?? caseId}. ${caseInfo?.title ?? ''} ===`,
+        `案件设定：${caseInfo?.description ?? caseId}`,
+        '',
+        '本案件辩论记录：',
+        caseTranscript.length > 0
+          ? formatTranscript(caseTranscript, scenario)
+          : '（暂无对话）',
+      ].join('\n')
+    })
     .join('\n\n')
 }
 
@@ -654,10 +775,11 @@ async function getJudgeDecision(
   >,
   signal?: AbortSignal,
 ): Promise<string> {
-  const debateText =
-    transcript.length > 0
-      ? formatTranscript(transcript, scenario)
-      : '（暂无对话）'
+  const debateText = formatDebateTranscriptForJudge(
+    scenario,
+    assignment,
+    transcript,
+  )
 
   const examinationAText = buildExaminationSummary(
     scenario.roleAName,
@@ -784,10 +906,11 @@ async function getScoreFromScorer(
   reasoning: string
   winner: 'a' | 'b' | 'draw'
 }> {
-  const debateText =
-    transcript.length > 0
-      ? formatTranscript(transcript, scenario)
-      : '（暂无对话）'
+  const debateText = formatDebateTranscriptForJudge(
+    scenario,
+    assignment,
+    transcript,
+  )
 
   const scorerPrompt = buildScorerPrompt(scenario, assignment, {
     judgeOutput,
@@ -863,20 +986,33 @@ export async function executeMatchSession(
   throwIfPlaygroundRunInterrupted(params.signal)
 
   // ── Phase 1: Dialogue ──────────────────────────────────────────────────
+  const dialogueTurnLimit = getScenarioDialogueTurnLimit(
+    params.scenario,
+    assignment,
+  )
   for (
     let turnIndex = transcript.length;
-    turnIndex < params.scenario.turnCount;
+    turnIndex < dialogueTurnLimit;
     turnIndex += 1
   ) {
     throwIfPlaygroundRunInterrupted(params.signal)
 
-    const speaker = turnIndex % 2 === 0 ? 'a' : 'b'
+    const trolleyScope = getTrolleyDialogueScope(
+      params.scenario,
+      assignment,
+      transcript,
+    )
+    const speakerTurnIndex = trolleyScope
+      ? trolleyScope.caseTranscript.length
+      : turnIndex
+    const speaker = speakerTurnIndex % 2 === 0 ? 'a' : 'b'
     const { systemPrompt, messages } = buildDialogueContext(
       transcript,
       params.scenario,
       speaker,
       assignment,
       speaker === 'a' ? params.promptA : params.promptB,
+      trolleyScope,
     )
 
     const response = await withRetry(
