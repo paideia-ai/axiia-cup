@@ -5,6 +5,7 @@ import { hashPassword } from '../lib/auth'
 import { db, sqliteFilePath } from './client'
 import { ensureHonnojiScenario } from './honnoji-scenario'
 import { scenarios, users } from './schema'
+import { ensureTrolleyScenario } from './trolley-scenario'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
 
@@ -246,6 +247,8 @@ async function main() {
 
   ensureHonnojiScenario()
   console.log(`[db] ensured scenario honnoji-decision in ${sqliteFilePath}`)
+  ensureTrolleyScenario()
+  console.log(`[db] ensured scenario trolley-problem in ${sqliteFilePath}`)
 }
 
 await main()

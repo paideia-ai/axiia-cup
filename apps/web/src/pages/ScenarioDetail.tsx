@@ -1,6 +1,9 @@
 import {
   createSubmissionSchema,
+  formatTrolleyCasesForPrompt,
   modelOptions,
+  trolleyCases,
+  TROLLEY_SCENARIO_ID,
   type ModelOption,
   type Scenario,
   type Submission,
@@ -89,10 +92,31 @@ function buildRolePromptPreview(
   const opponentHiddenInfo = isRoleA
     ? scenario.roleBHiddenInfo
     : scenario.roleAHiddenInfo
+  const sideName =
+    scenario.id === TROLLEY_SCENARIO_ID
+      ? isRoleA
+        ? '一人侧'
+        : '五人侧'
+      : roleName
+  const opponentSideName =
+    scenario.id === TROLLEY_SCENARIO_ID
+      ? isRoleA
+        ? '五人侧'
+        : '一人侧'
+      : opponentName
 
   return interpolatePromptTemplate(scenario.agentPromptTemplate, {
+    cases:
+      scenario.id === TROLLEY_SCENARIO_ID
+        ? formatTrolleyCasesForPrompt(trolleyCases.map((item) => item.id))
+        : '',
+    caseId1: 'A',
+    caseId2: 'B',
+    caseId3: 'C',
     roleName,
     opponentName,
+    sideName,
+    opponentSideName,
     roleAName: getRoleDisplayName(
       scenario,
       'a',
@@ -204,6 +228,91 @@ function RoleInfoBlock({
           </ul>
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function TrolleyCaseTabs() {
+  return (
+    <Tabs defaultValue={trolleyCases[0]!.id} className="space-y-4">
+      <TabsList className="gap-1">
+        {trolleyCases.map((item) => (
+          <TabsTrigger key={item.id} value={item.id} className="px-3">
+            {item.id}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+
+      {trolleyCases.map((item) => (
+        <TabsContent key={item.id} value={item.id} className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-(--foreground)">
+                {item.id}. {item.title}
+              </p>
+              <Badge tone={item.isFixed ? 'accent' : 'info'}>
+                {item.isFixed ? '固定入局' : '随机池'}
+              </Badge>
+            </div>
+            <p className="text-xs leading-5 text-(--foreground-subtle)">
+              {item.description}
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-(--border-soft) bg-white">
+            <img
+              alt={`${item.title} meme`}
+              className="h-auto max-h-72 w-full object-contain"
+              loading="lazy"
+              src={item.imageSrc}
+            />
+          </div>
+        </TabsContent>
+      ))}
+
+      <p className="text-[11px] leading-5 text-(--foreground-muted)">
+        每局固定使用 A，并从 B-E 中随机抽取两个案件进入辩论。
+      </p>
+    </Tabs>
+  )
+}
+
+function TrolleyRoleDetails() {
+  const roles = [
+    {
+      name: '奕仁',
+      side: '一人侧',
+      className: 'border-[rgba(224,74,47,0.38)] bg-[rgba(224,74,47,0.08)]',
+      badgeClassName:
+        'border-[rgba(224,74,47,0.34)] bg-[rgba(224,74,47,0.14)] text-[rgb(255,166,148)]',
+    },
+    {
+      name: '武仁',
+      side: '五人侧',
+      className: 'border-[rgba(82,160,255,0.34)] bg-[rgba(82,160,255,0.08)]',
+      badgeClassName:
+        'border-[rgba(82,160,255,0.32)] bg-[rgba(82,160,255,0.14)] text-[rgb(157,201,255)]',
+    },
+  ] as const
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {roles.map((role) => (
+        <div
+          key={role.name}
+          className={`rounded-lg border px-4 py-3 ${role.className}`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-lg font-semibold text-(--foreground)">
+              {role.name}
+            </p>
+            <span
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${role.badgeClassName}`}
+            >
+              {role.side}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -441,23 +550,42 @@ export function ScenarioDetailPage() {
           <ScrollArea className="h-full">
             <Card>
               <CardContent className="space-y-3">
-                <Accordion multiple defaultValue={['roles']}>
-                  <AccordionItem value="roles" title="角色详情">
-                    <div className="space-y-3">
-                      <RoleInfoBlock
-                        roleName={roleAName}
-                        hiddenInfo={scenario.roleAHiddenInfo}
-                        requests={roleARequests}
-                        side="a"
-                      />
-                      <RoleInfoBlock
-                        roleName={roleBName}
-                        hiddenInfo={scenario.roleBHiddenInfo}
-                        requests={roleBRequests}
-                        side="b"
-                      />
-                    </div>
-                  </AccordionItem>
+                <Accordion
+                  multiple
+                  defaultValue={
+                    scenario.id === TROLLEY_SCENARIO_ID
+                      ? ['trolley-cases', 'roles']
+                      : ['roles']
+                  }
+                >
+                  {scenario.id === TROLLEY_SCENARIO_ID ? (
+                    <AccordionItem value="trolley-cases" title="案件介绍">
+                      <TrolleyCaseTabs />
+                    </AccordionItem>
+                  ) : null}
+
+                  {scenario.id === TROLLEY_SCENARIO_ID ? (
+                    <AccordionItem value="roles" title="角色详情">
+                      <TrolleyRoleDetails />
+                    </AccordionItem>
+                  ) : (
+                    <AccordionItem value="roles" title="角色详情">
+                      <div className="space-y-3">
+                        <RoleInfoBlock
+                          roleName={roleAName}
+                          hiddenInfo={scenario.roleAHiddenInfo}
+                          requests={roleARequests}
+                          side="a"
+                        />
+                        <RoleInfoBlock
+                          roleName={roleBName}
+                          hiddenInfo={scenario.roleBHiddenInfo}
+                          requests={roleBRequests}
+                          side="b"
+                        />
+                      </div>
+                    </AccordionItem>
+                  )}
 
                   <AccordionItem value="scoring" title="机制参数">
                     <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
@@ -503,82 +631,78 @@ export function ScenarioDetailPage() {
                     </div>
                   </AccordionItem>
 
-                  <AccordionItem value="more-rules" title="更多规则">
-                    <Accordion multiple>
-                      <AccordionItem value="flow" title="比赛流程">
-                        <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
-                          <li>
-                            <span className="font-medium text-(--foreground)">
-                              对话阶段
-                            </span>
-                            ：双方进行 {scenario.turnCount}{' '}
-                            轮对话，各自根据策略提示词行动
-                          </li>
-                          {scenario.examinationQuestionTemplate ? (
-                            <li>
-                              <span className="font-medium text-(--foreground)">
-                                问询阶段
-                              </span>
-                              ：裁判分别向双方提问，双方独立作答（互不可见）
-                            </li>
-                          ) : null}
-                          <li>
-                            <span className="font-medium text-(--foreground)">
-                              裁决阶段
-                            </span>
-                            ：裁判综合辩论内容做出最终裁决
-                          </li>
-                          <li>
-                            <span className="font-medium text-(--foreground)">
-                              计分阶段
-                            </span>
-                            ：系统根据裁决结果计算双方得分，判定胜负
-                          </li>
-                        </ol>
-                      </AccordionItem>
-
-                      {showScoringRules ? (
-                        <AccordionItem value="score-rules" title="计分规则">
-                          <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
-                            <p className="text-[11px] text-(--foreground-muted)">
-                              每局双方独立计分，得分高者胜。
-                            </p>
-                            <div className="space-y-2">
-                              {scoringRuleItems.map((rule) => (
-                                <div
-                                  key={rule.title}
-                                  className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
-                                >
-                                  <div className="min-w-0 space-y-0.5">
-                                    <p className="text-xs font-medium text-(--foreground)">
-                                      {rule.title}
-                                    </p>
-                                    <p className="text-[11px] text-(--foreground-muted)">
-                                      {rule.detail}
-                                    </p>
-                                  </div>
-                                  <span
-                                    className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
-                                  >
-                                    {rule.score}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                            <p className="text-[11px] text-(--foreground-muted)">
-                              假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
-                              0.75 分。
-                            </p>
-                          </div>
-                        </AccordionItem>
+                  <AccordionItem value="flow" title="比赛流程">
+                    <ol className="space-y-2 text-xs leading-5 text-(--foreground-subtle) list-decimal list-inside">
+                      <li>
+                        <span className="font-medium text-(--foreground)">
+                          对话阶段
+                        </span>
+                        ：双方进行 {scenario.turnCount}{' '}
+                        轮对话，各自根据策略提示词行动
+                      </li>
+                      {scenario.examinationQuestionTemplate ? (
+                        <li>
+                          <span className="font-medium text-(--foreground)">
+                            问询阶段
+                          </span>
+                          ：裁判分别向双方提问，双方独立作答（互不可见）
+                        </li>
                       ) : null}
+                      <li>
+                        <span className="font-medium text-(--foreground)">
+                          裁决阶段
+                        </span>
+                        ：裁判综合辩论内容做出最终裁决
+                      </li>
+                      <li>
+                        <span className="font-medium text-(--foreground)">
+                          计分阶段
+                        </span>
+                        ：系统根据裁决结果计算双方得分，判定胜负
+                      </li>
+                    </ol>
+                  </AccordionItem>
 
-                      <AccordionItem value="judge" title="裁判的视角与判决逻辑">
-                        <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
-                          {scenario.judgePrompt}
+                  {showScoringRules ? (
+                    <AccordionItem value="score-rules" title="计分规则">
+                      <div className="space-y-3 text-xs leading-5 text-(--foreground-subtle)">
+                        <p className="text-[11px] text-(--foreground-muted)">
+                          每局双方独立计分，得分高者胜。
                         </p>
-                      </AccordionItem>
-                    </Accordion>
+                        <div className="space-y-2">
+                          {scoringRuleItems.map((rule) => (
+                            <div
+                              key={rule.title}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-(--border-soft) bg-white/2 px-3 py-2.5"
+                            >
+                              <div className="min-w-0 space-y-0.5">
+                                <p className="text-xs font-medium text-(--foreground)">
+                                  {rule.title}
+                                </p>
+                                <p className="text-[11px] text-(--foreground-muted)">
+                                  {rule.detail}
+                                </p>
+                              </div>
+                              <span
+                                className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+                              >
+                                {rule.score}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-(--foreground-muted)">
+                          假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
+                          0.75 分。
+                        </p>
+                      </div>
+                    </AccordionItem>
+                  ) : null}
+
+                  <AccordionItem value="judge" title="裁判的视角与判决逻辑">
+                    <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                      {scenario.judgePrompt}
+                    </p>
                   </AccordionItem>
                 </Accordion>
               </CardContent>

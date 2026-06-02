@@ -70,6 +70,7 @@ export const infoAssignmentSchema = z.object({
   roleBFalseInfoIds: z.array(z.string()),
   roleATrueRequestIds: z.array(z.string()),
   roleBTrueRequestIds: z.array(z.string()),
+  selectedCaseIds: z.array(z.string()).optional(),
 })
 
 // ── Judge decision — free-form text, structure controlled by admin's prompt ──
