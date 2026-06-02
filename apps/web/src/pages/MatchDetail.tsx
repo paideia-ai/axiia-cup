@@ -20,7 +20,10 @@ import {
   retryAdminMatch,
 } from '../lib/api'
 import { usePageVisibility } from '../lib/page-visibility'
-import { buildScenarioWithResolvedRoles } from '../lib/scenario-roles'
+import {
+  buildScenarioWithResolvedRoles,
+  scenarioHasInfoAssignmentDetails,
+} from '../lib/scenario-roles'
 
 function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
@@ -242,6 +245,10 @@ export function MatchDetailPage() {
         : match.winner === 'draw'
           ? '平局'
           : '—'
+  const showInfoAssignment =
+    match.infoAssignment != null &&
+    displayScenario != null &&
+    scenarioHasInfoAssignmentDetails(displayScenario)
 
   return (
     <div className="space-y-6">
@@ -372,7 +379,9 @@ export function MatchDetailPage() {
       </Card>
 
       {/* Judge decision + info assignment */}
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div
+        className={`grid gap-6 ${showInfoAssignment ? 'xl:grid-cols-2' : ''}`}
+      >
         <JudgeDecisionPanel
           decision={match.judgeDecision}
           errorMessage={match.error}
@@ -389,7 +398,7 @@ export function MatchDetailPage() {
           waitingMessage="裁判尚未完成最终裁决，结果将在审讯结束后显示。"
         />
 
-        {match.infoAssignment && displayScenario ? (
+        {showInfoAssignment && match.infoAssignment && displayScenario ? (
           <Card>
             <CardHeader className="pb-0">
               <CardTitle>本局信息分配</CardTitle>

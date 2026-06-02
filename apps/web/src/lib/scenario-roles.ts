@@ -43,6 +43,15 @@ export function scenarioHasRoleOptions(scenario: Scenario) {
   return scenario.roleAOptions.length > 0 || scenario.roleBOptions.length > 0
 }
 
+export function scenarioHasInfoAssignmentDetails(scenario: Scenario) {
+  return (
+    scenario.roleAHiddenInfo.length > 0 ||
+    scenario.roleBHiddenInfo.length > 0 ||
+    scenario.roleARequests.length > 0 ||
+    scenario.roleBRequests.length > 0
+  )
+}
+
 export function resolveScenarioRoles(
   scenario: Scenario,
   selection: RoleSelection,
