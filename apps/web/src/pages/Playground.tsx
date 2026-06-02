@@ -1,6 +1,7 @@
 import {
   getTrolleyCasesByIds,
   modelOptions,
+  trolleyCasesPerMatch,
   TROLLEY_SCENARIO_ID,
   type InfoAssignment,
   type OpponentMode,
@@ -95,8 +96,16 @@ function resolveModelLabel(modelId: string) {
 
 function getScenarioTotalDialogueTurns(scenario: Scenario) {
   return scenario.id === TROLLEY_SCENARIO_ID
-    ? scenario.turnCount * 3
+    ? scenario.turnCount * trolleyCasesPerMatch
     : scenario.turnCount
+}
+
+function isIncompleteTrolleyRun(run: PlaygroundRun, scenario: Scenario) {
+  return (
+    scenario.id === TROLLEY_SCENARIO_ID &&
+    run.transcript.length > 0 &&
+    run.transcript.length < getScenarioTotalDialogueTurns(scenario)
+  )
 }
 
 // TODO(tech-debt): hard-coded default preset opponent per scenario, matched by
@@ -119,7 +128,10 @@ function isRunFinished(run: PlaygroundRun | null) {
   )
 }
 
-function deriveRunningState(session: PlaygroundSession) {
+function deriveRunningState(
+  session: PlaygroundSession,
+  totalDialogueTurns = session.turnCount,
+) {
   if (session.status === 'error') {
     return {
       activeIndex: 4,
@@ -171,11 +183,14 @@ function deriveRunningState(session: PlaygroundSession) {
   }
 
   if (turns > 0) {
-    const dialogueProgress = Math.min(1, turns / Math.max(1, session.turnCount))
+    const dialogueProgress = Math.min(
+      1,
+      turns / Math.max(1, totalDialogueTurns),
+    )
 
     return {
       activeIndex: 2,
-      detail: `对话进度：已完成 ${turns}/${session.turnCount} 回合`,
+      detail: `对话进度：已完成 ${turns}/${totalDialogueTurns} 回合`,
       progressPercent: 28 + dialogueProgress * 38,
       stageKey: 'dialogue' as RunningStageKey,
       title: '双方正在对战',
@@ -594,9 +609,13 @@ function RunResult({
   run: PlaygroundRun
   scenario: Scenario
 }) {
+  const isTrolleyScenario = scenario.id === TROLLEY_SCENARIO_ID
   const showInfoAssignment =
-    run.infoAssignment != null && scenarioHasInfoAssignmentDetails(scenario)
-  const showExaminationResults = scenarioHasExamination(scenario)
+    run.infoAssignment != null &&
+    !isTrolleyScenario &&
+    scenarioHasInfoAssignmentDetails(scenario)
+  const showExaminationResults =
+    !isTrolleyScenario && scenarioHasExamination(scenario)
   const trolleyTranscriptSections = buildTrolleyTranscriptSections(
     run,
     scenario,
@@ -906,13 +925,15 @@ function ProgressPanel({
   isInterrupting,
   onInterrupt,
   session,
+  totalDialogueTurns,
 }: {
   elapsedSeconds: number
   isInterrupting: boolean
   onInterrupt: () => void
   session: PlaygroundSession
+  totalDialogueTurns?: number
 }) {
-  const progress = deriveRunningState(session)
+  const progress = deriveRunningState(session, totalDialogueTurns)
   const visibleRunId = session.runId ?? session.run?.id ?? null
 
   return (
@@ -1226,7 +1247,9 @@ export function PlaygroundPage() {
           )
           syncPlaygroundRun(submissionId, session.requestId, fullRun)
           activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
-          setSelectedRun(fullRun)
+          setSelectedRun(
+            isIncompleteTrolleyRun(fullRun, scenarioData) ? null : fullRun,
+          )
           return
         }
 
@@ -1242,7 +1265,11 @@ export function PlaygroundPage() {
 
         if (session?.run && resolvedSession.kind !== 'stale') {
           activeRunProgressRef.current = createRunProgressSnapshot(session.run)
-          setSelectedRun(session.run)
+          setSelectedRun(
+            isIncompleteTrolleyRun(session.run, scenarioData)
+              ? null
+              : session.run,
+          )
           return
         }
 
@@ -1260,7 +1287,9 @@ export function PlaygroundPage() {
             latestFinishedRun.id,
           )
           activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
-          setSelectedRun(fullRun)
+          setSelectedRun(
+            isIncompleteTrolleyRun(fullRun, scenarioData) ? null : fullRun,
+          )
         } else {
           setSelectedRun(null)
         }
@@ -1526,6 +1555,9 @@ export function PlaygroundPage() {
                 isInterrupting={isInterrupting}
                 onInterrupt={() => void handleInterrupt()}
                 session={activeSession}
+                totalDialogueTurns={getScenarioTotalDialogueTurns(
+                  displayScenario,
+                )}
               />
               {activeSession.run ? (
                 <RunResult run={activeSession.run} scenario={displayScenario} />

@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'bun:test'
 
 import {
+  canReusePlaygroundSession,
   resolvePlaygroundSession,
   type PlaygroundSession,
 } from './playground-session'
@@ -12,6 +13,8 @@ function createSession(
 ): PlaygroundSession {
   return {
     error: null,
+    opponentMode: 'self',
+    presetOpponentId: null,
     requestId: 'req-1',
     run: null,
     runId: null,
@@ -146,5 +149,59 @@ describe('resolvePlaygroundSession', () => {
     )
 
     expect(result).toEqual({ kind: 'run', runId: 11 })
+  })
+})
+
+describe('canReusePlaygroundSession', () => {
+  it('does not reuse an old running session when the turn count changed', () => {
+    const session = createSession({
+      scenarioId: 'trolley-problem',
+      turnCount: 10,
+    })
+
+    expect(
+      canReusePlaygroundSession(session, {
+        scenarioId: 'trolley-problem',
+        submissionCreatedAt: session.submissionCreatedAt,
+        submissionId: session.submissionId,
+        turnCount: 30,
+      }),
+    ).toBe(false)
+  })
+
+  it('does not reuse a running session when opponent mode changed', () => {
+    const session = createSession({
+      opponentMode: 'self',
+      presetOpponentId: null,
+    })
+
+    expect(
+      canReusePlaygroundSession(session, {
+        opponentMode: 'preset',
+        presetOpponentId: 5,
+        scenarioId: session.scenarioId,
+        submissionCreatedAt: session.submissionCreatedAt,
+        submissionId: session.submissionId,
+        turnCount: session.turnCount,
+      }),
+    ).toBe(false)
+  })
+
+  it('reuses the matching running session', () => {
+    const session = createSession({
+      opponentMode: 'preset',
+      presetOpponentId: 5,
+    })
+
+    expect(
+      canReusePlaygroundSession(session, {
+        opponentMode: 'preset',
+        presetOpponentId: 5,
+        scenarioId: session.scenarioId,
+        submissionCreatedAt: session.submissionCreatedAt,
+        submissionId: session.submissionId,
+        turnCount: session.turnCount,
+      }),
+    ).toBe(true)
   })
 })

@@ -13,6 +13,8 @@ const RUN_PENDING_GRACE_MS = 30_000
 
 export type PlaygroundSession = {
   error: string | null
+  opponentMode: OpponentMode
+  presetOpponentId: number | null
   requestId: string
   run: PlaygroundRun | null
   runId: number | null
@@ -157,6 +159,8 @@ export function clearPlaygroundSession(submissionId: number) {
 }
 
 export function startPlaygroundRunSession(params: {
+  opponentMode?: OpponentMode
+  presetOpponentId?: number
   scenarioId: string
   submissionCreatedAt: string
   submissionId: number
@@ -167,6 +171,8 @@ export function startPlaygroundRunSession(params: {
 
   setSession({
     error: null,
+    opponentMode: params.opponentMode ?? 'self',
+    presetOpponentId: params.presetOpponentId ?? null,
     requestId,
     run: null,
     runId: null,
@@ -179,6 +185,28 @@ export function startPlaygroundRunSession(params: {
   })
 
   return requestId
+}
+
+export function canReusePlaygroundSession(
+  session: PlaygroundSession,
+  params: {
+    opponentMode?: OpponentMode
+    presetOpponentId?: number
+    scenarioId: string
+    submissionCreatedAt: string
+    submissionId: number
+    turnCount: number
+  },
+) {
+  return (
+    session.status === 'running' &&
+    session.scenarioId === params.scenarioId &&
+    session.submissionCreatedAt === params.submissionCreatedAt &&
+    session.submissionId === params.submissionId &&
+    session.turnCount === params.turnCount &&
+    session.opponentMode === (params.opponentMode ?? 'self') &&
+    session.presetOpponentId === (params.presetOpponentId ?? null)
+  )
 }
 
 export function syncPlaygroundRun(
@@ -233,8 +261,12 @@ export function startTrackedPlaygroundRun(params: {
 }) {
   const existing = getPlaygroundSession(params.submissionId)
 
-  if (existing?.status === 'running') {
+  if (existing && canReusePlaygroundSession(existing, params)) {
     return existing.requestId
+  }
+
+  if (existing?.status === 'running') {
+    clearPlaygroundSession(params.submissionId)
   }
 
   const requestId = startPlaygroundRunSession(params)
