@@ -39,7 +39,10 @@ import {
 } from '../lib/playground-session'
 import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 import { usePageVisibility } from '../lib/page-visibility'
-import { buildScenarioWithResolvedRoles } from '../lib/scenario-roles'
+import {
+  buildScenarioWithResolvedRoles,
+  scenarioHasInfoAssignmentDetails,
+} from '../lib/scenario-roles'
 
 const runningStages = [
   {
@@ -497,6 +500,9 @@ function RunResult({
   run: PlaygroundRun
   scenario: Scenario
 }) {
+  const showInfoAssignment =
+    run.infoAssignment != null && scenarioHasInfoAssignmentDetails(scenario)
+
   return (
     <div className="space-y-6">
       {/* Actual prompts used */}
@@ -543,8 +549,10 @@ function RunResult({
       </Card>
 
       {/* Info assignment & judge decision */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        {run.infoAssignment ? (
+      <div
+        className={`grid gap-6 ${showInfoAssignment ? 'xl:grid-cols-2' : ''}`}
+      >
+        {showInfoAssignment && run.infoAssignment ? (
           <InfoAssignmentPanel
             assignment={run.infoAssignment}
             scenario={scenario}
