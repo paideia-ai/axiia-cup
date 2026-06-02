@@ -11,11 +11,15 @@ const agentPromptTemplate = `
 
 你的对手是{{opponentName}}，代表{{opponentSideName}}。
 
-=== 本局案件 ===
+=== 入局案件总览 ===
 {{cases}}
 
+本局不会把三个案件合并成一场辩论。系统会按案件顺序逐一提示当前案件。
+每个案件单独辩论 {{caseTurnCount}} 轮，总计 {{totalTurnCount}} 轮。
+你在每个案件中都要重新围绕当前案件为{{sideName}}辩护。
+
 === 辩论目标 ===
-明理者会在辩论结束后，对每个案件分别支持"一人侧"或"五人侧"。
+明理者会在三个案件都辩论结束后，根据每个案件各自的辩论记录，分别支持"一人侧"或"五人侧"。
 三个案件中，获得至少 2 个案件裁决的一方胜出。
 
 === 边界约束 ===
@@ -38,7 +42,7 @@ const judgePrompt = `
 
 你只知道下面的案件设定，以及你在辩论中亲耳听到的一切。
 
-你的任务不是找一个抽象上最聪明的学派答案，而是判断：在每个具体案件中，哪一方更成功地说明了一个普通而明理的人可以接受的选择标准。
+每个案件都有自己的独立辩论记录。你的任务不是找一个抽象上最聪明的学派答案，而是判断：在每个具体案件中，哪一方更成功地说明了一个普通而明理的人可以接受的选择标准。
 
 绝不使用任何游戏外身份发言。不要说"玩家""提示词""AI""模型"等打破场景的话。
 
@@ -61,11 +65,12 @@ const judgePrompt = `
 
 === 裁决要求 ===
 你必须对三个案件分别裁决。
+判断某个案件时，应根据该案件的设定和该案件下方的独立辩论记录作出判断。
 每个案件只能支持"一人侧"或"五人侧"。
 不得弃权，不得判平，不得说"视情况而定"。
 三个案件的裁决可以不同。
 
-=== 辩论记录 ===
+=== 按案件分段的辩论记录 ===
 {{debate}}
 
 === 输出格式 ===
@@ -119,7 +124,7 @@ const scorerPrompt = `
 
 === 注意 ===
 - roleA 始终是一人侧，roleB 始终是五人侧。
-- 本局只有三个案件，不存在隐藏请求、隐藏事实或问询分。
+- 本局只有三个案件，每个案件都有独立辩论记录，不存在隐藏请求、隐藏事实或问询分。
 - 核实 reasoning 中的总分计算正确。
 - json 输出中 scoreA 和 scoreB 的值必须与 reasoning 中算术式的最终结果完全相同。
 
@@ -132,30 +137,35 @@ const scorerPrompt = `
 {{judgeOutput}}
 `.trim()
 
+const trolleyScenarioValues = {
+  id: TROLLEY_SCENARIO_ID,
+  title: '电车难题',
+  subject: '哲学',
+  roleAName: '奕仁',
+  roleAHiddenInfo: '[]',
+  roleARequests: '[]',
+  roleBName: '武仁',
+  roleBHiddenInfo: '[]',
+  roleBRequests: '[]',
+  judgeModel: evaluationModelOptions[0]!.id,
+  scorerModel: evaluationModelOptions[0]!.id,
+  turnCount: 10,
+  falseInfoCount: 0,
+  trueRequestCount: 0,
+  openingLine:
+    '本局将按案件逐一辩论。每个案件开始时系统会列出当前案件，请奕仁先发言。',
+  agentPromptTemplate,
+  examinationQuestionTemplate: '',
+  judgePrompt,
+  scorerPrompt,
+}
+
 export function ensureTrolleyScenario() {
   db.insert(scenarios)
-    .values({
-      id: TROLLEY_SCENARIO_ID,
-      title: '电车难题',
-      subject: '哲学',
-      roleAName: '奕仁',
-      roleAHiddenInfo: '[]',
-      roleARequests: '[]',
-      roleBName: '武仁',
-      roleBHiddenInfo: '[]',
-      roleBRequests: '[]',
-      judgeModel: evaluationModelOptions[0]!.id,
-      scorerModel: evaluationModelOptions[0]!.id,
-      turnCount: 10,
-      falseInfoCount: 0,
-      trueRequestCount: 0,
-      openingLine:
-        '本局三个案件已经列明。请奕仁先发言，说明为什么明理者应在这些案件中支持一人侧。',
-      agentPromptTemplate,
-      examinationQuestionTemplate: '',
-      judgePrompt,
-      scorerPrompt,
+    .values(trolleyScenarioValues)
+    .onConflictDoUpdate({
+      target: scenarios.id,
+      set: trolleyScenarioValues,
     })
-    .onConflictDoNothing()
     .run()
 }

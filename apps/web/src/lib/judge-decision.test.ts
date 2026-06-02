@@ -18,6 +18,7 @@ describe('parseJudgeDecision', () => {
     expect(result).toEqual({
       kind: 'structured',
       judgment: '推行变法',
+      judgments: {},
       raw: `{
       "judgment": "推行变法",
       "requests": {
@@ -31,28 +32,61 @@ describe('parseJudgeDecision', () => {
         SR1: '同意',
       },
       speech: '此议可行。',
+      winner: null,
     })
   })
 
   it('parses fenced JSON output', () => {
-    const result = parseJudgeDecision(`\`\`\`json
+    const raw = `\`\`\`json
     {
       "judgment": "维持现状",
       "speech": "不可轻动。"
     }
-    \`\`\``)
+    \`\`\``
+    const result = parseJudgeDecision(raw)
 
     expect(result).toEqual({
       kind: 'structured',
       judgment: '维持现状',
-      raw: `\`\`\`json
-    {
-      "judgment": "维持现状",
-      "speech": "不可轻动。"
-    }
-    \`\`\``,
+      judgments: {},
+      raw,
       requests: {},
       speech: '不可轻动。',
+      winner: null,
+    })
+  })
+
+  it('parses trolley case judgments', () => {
+    const result = parseJudgeDecision(`{
+      "judgments": {
+        "A": "一人侧",
+        "B": "五人侧",
+        "E": "五人侧"
+      },
+      "winner": "五人侧",
+      "speech": "B 与 E 中五人侧更能说明边界。"
+    }`)
+
+    expect(result).toEqual({
+      kind: 'structured',
+      judgment: null,
+      judgments: {
+        A: '一人侧',
+        B: '五人侧',
+        E: '五人侧',
+      },
+      raw: `{
+      "judgments": {
+        "A": "一人侧",
+        "B": "五人侧",
+        "E": "五人侧"
+      },
+      "winner": "五人侧",
+      "speech": "B 与 E 中五人侧更能说明边界。"
+    }`,
+      requests: {},
+      speech: 'B 与 E 中五人侧更能说明边界。',
+      winner: '五人侧',
     })
   })
 

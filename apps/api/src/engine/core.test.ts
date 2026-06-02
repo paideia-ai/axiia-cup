@@ -9,6 +9,8 @@ let buildAgentSystemMessage: (typeof import('./core'))['buildAgentSystemMessage'
 let buildAgentRuntimeSystemPrompt: (typeof import('./core'))['buildAgentRuntimeSystemPrompt']
 let buildJudgePrompt: (typeof import('./core'))['buildJudgePrompt']
 let buildExaminationQuestion: (typeof import('./core'))['buildExaminationQuestion']
+let formatDebateTranscriptForJudge: (typeof import('./core'))['formatDebateTranscriptForJudge']
+let getScenarioDialogueTurnLimit: (typeof import('./core'))['getScenarioDialogueTurnLimit']
 let randomizeInfoAssignment: (typeof import('./core'))['randomizeInfoAssignment']
 let validateExaminationAnswer: (typeof import('./core'))['validateExaminationAnswer']
 
@@ -19,6 +21,8 @@ beforeAll(async () => {
   buildAgentRuntimeSystemPrompt = core.buildAgentRuntimeSystemPrompt
   buildJudgePrompt = core.buildJudgePrompt
   buildExaminationQuestion = core.buildExaminationQuestion
+  formatDebateTranscriptForJudge = core.formatDebateTranscriptForJudge
+  getScenarioDialogueTurnLimit = core.getScenarioDialogueTurnLimit
   randomizeInfoAssignment = core.randomizeInfoAssignment
   validateExaminationAnswer = core.validateExaminationAnswer
 })
@@ -133,7 +137,7 @@ describe('buildAgentSystemMessage', () => {
         roleBHiddenInfo: '[]',
         roleBRequests: '[]',
         agentPromptTemplate:
-          '你是{{roleName}}。你代表{{sideName}}，对手是{{opponentSideName}}。案件：{{cases}}',
+          '你是{{roleName}}。你代表{{sideName}}，对手是{{opponentSideName}}。每案{{caseTurnCount}}轮，总{{totalTurnCount}}轮。案件：{{cases}}',
       },
       'a',
       {
@@ -148,6 +152,7 @@ describe('buildAgentSystemMessage', () => {
     expect(message).toContain('你是奕仁')
     expect(message).toContain('你代表一人侧')
     expect(message).toContain('对手是五人侧')
+    expect(message).toContain('每案8轮，总24轮')
     expect(message).toContain('A. 原始电车')
     expect(message).toContain('B. 器官移植')
     expect(message).toContain('E. 缸中之脑')
@@ -290,6 +295,51 @@ describe('randomizeInfoAssignment', () => {
     expect(
       selectedCaseIds.filter((caseId) => ['B', 'C', 'D', 'E'].includes(caseId)),
     ).toHaveLength(2)
+  })
+})
+
+describe('trolley dialogue segmentation', () => {
+  const trolleyScenario: ScenarioRecord = {
+    ...scenario,
+    id: 'trolley-problem',
+    roleAName: '奕仁',
+    roleAHiddenInfo: '[]',
+    roleARequests: '[]',
+    roleBName: '武仁',
+    roleBHiddenInfo: '[]',
+    roleBRequests: '[]',
+    falseInfoCount: 0,
+    trueRequestCount: 0,
+    turnCount: 2,
+  }
+  const assignment = {
+    roleAFalseInfoIds: [],
+    roleBFalseInfoIds: [],
+    roleATrueRequestIds: [],
+    roleBTrueRequestIds: [],
+    selectedCaseIds: ['A', 'B', 'E'],
+  }
+
+  it('uses per-case turn count for the total dialogue limit', () => {
+    expect(getScenarioDialogueTurnLimit(trolleyScenario, assignment)).toBe(6)
+    expect(getScenarioDialogueTurnLimit(scenario, assignment)).toBe(8)
+  })
+
+  it('formats debate records by case for judging', () => {
+    const debate = formatDebateTranscriptForJudge(trolleyScenario, assignment, [
+      { speaker: 'a', role: '奕仁', content: 'A案一人侧开场' },
+      { speaker: 'b', role: '武仁', content: 'A案五人侧回应' },
+      { speaker: 'a', role: '奕仁', content: 'B案一人侧开场' },
+      { speaker: 'b', role: '武仁', content: 'B案五人侧回应' },
+      { speaker: 'a', role: '奕仁', content: 'E案一人侧开场' },
+    ])
+
+    expect(debate).toContain('=== 案件 A. 原始电车 ===')
+    expect(debate).toContain('[第1轮] 奕仁：A案一人侧开场')
+    expect(debate).toContain('=== 案件 B. 器官移植 ===')
+    expect(debate).toContain('[第1轮] 奕仁：B案一人侧开场')
+    expect(debate).toContain('=== 案件 E. 缸中之脑 ===')
+    expect(debate).toContain('[第1轮] 奕仁：E案一人侧开场')
   })
 })
 

@@ -1,5 +1,7 @@
 import {
+  getTrolleyCasesByIds,
   modelOptions,
+  TROLLEY_SCENARIO_ID,
   type InfoAssignment,
   type OpponentMode,
   type PlaygroundRun,
@@ -39,7 +41,11 @@ import {
 } from '../lib/playground-session'
 import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 import { usePageVisibility } from '../lib/page-visibility'
-import { buildScenarioWithResolvedRoles } from '../lib/scenario-roles'
+import {
+  buildScenarioWithResolvedRoles,
+  scenarioHasExamination,
+  scenarioHasInfoAssignmentDetails,
+} from '../lib/scenario-roles'
 
 const runningStages = [
   {
@@ -85,6 +91,12 @@ function formatElapsed(seconds: number) {
 
 function resolveModelLabel(modelId: string) {
   return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
+}
+
+function getScenarioTotalDialogueTurns(scenario: Scenario) {
+  return scenario.id === TROLLEY_SCENARIO_ID
+    ? scenario.turnCount * 3
+    : scenario.turnCount
 }
 
 // TODO(tech-debt): hard-coded default preset opponent per scenario, matched by
@@ -183,7 +195,34 @@ function buildInfoContentMap(items: Scenario['roleAHiddenInfo']) {
   return new Map(items.map((item) => [item.id, item.content]))
 }
 
+function buildTrolleyTranscriptSections(
+  run: PlaygroundRun,
+  scenario: Scenario,
+) {
+  if (scenario.id !== TROLLEY_SCENARIO_ID) {
+    return null
+  }
+
+  const selectedCaseIds = run.infoAssignment?.selectedCaseIds ?? []
+  const cases = getTrolleyCasesByIds(selectedCaseIds)
+
+  if (cases.length === 0) {
+    return null
+  }
+
+  return cases.map((caseInfo, index) => ({
+    caseInfo,
+    startIndex: index * scenario.turnCount,
+    transcript: run.transcript.slice(
+      index * scenario.turnCount,
+      (index + 1) * scenario.turnCount,
+    ),
+  }))
+}
+
 function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
+  const totalDialogueTurns = getScenarioTotalDialogueTurns(scenario)
+
   return (
     <Card>
       <CardHeader className="pb-0">
@@ -275,7 +314,7 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
                 <div className="rounded-lg bg-white/3 px-2.5 py-2">
                   <p className="text-(--foreground-muted)">对话回合</p>
                   <p className="text-sm font-semibold text-(--foreground)">
-                    {scenario.turnCount}
+                    {totalDialogueTurns}
                   </p>
                 </div>
                 <div className="rounded-lg bg-white/3 px-2.5 py-2">
@@ -490,6 +529,64 @@ function ActualPromptsPanel({
     </Card>
   )
 }
+
+function TranscriptTurnList({
+  scenario,
+  startIndex = 0,
+  transcript,
+}: {
+  scenario: Scenario
+  startIndex?: number
+  transcript: PlaygroundRun['transcript']
+}) {
+  if (transcript.length === 0) {
+    return <p className="text-sm text-(--foreground-subtle)">对话尚未开始。</p>
+  }
+
+  const turnKeyCounts = new Map<string, number>()
+
+  return transcript.map((turn, index) => {
+    const baseKey = `${turn.speaker}:${turn.content}`
+    const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
+    turnKeyCounts.set(baseKey, occurrence)
+    const isA = turn.speaker === 'a'
+    const roleName = isA ? scenario.roleAName : scenario.roleBName
+
+    return (
+      <div
+        key={`${startIndex}:${baseKey}:${occurrence}`}
+        className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
+      >
+        <p
+          className="px-1 text-xs font-semibold"
+          style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
+        >
+          {roleName}
+          <span className="ml-1.5 font-normal opacity-60">
+            #{startIndex + index + 1}
+          </span>
+        </p>
+        <div
+          className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
+          style={
+            isA
+              ? {
+                  background: 'rgba(224,74,47,0.1)',
+                  border: '1px solid rgba(224,74,47,0.2)',
+                }
+              : {
+                  background: 'rgba(96,165,250,0.08)',
+                  border: '1px solid rgba(96,165,250,0.18)',
+                }
+          }
+        >
+          {turn.content}
+        </div>
+      </div>
+    )
+  })
+}
+
 function RunResult({
   run,
   scenario,
@@ -497,6 +594,14 @@ function RunResult({
   run: PlaygroundRun
   scenario: Scenario
 }) {
+  const showInfoAssignment =
+    run.infoAssignment != null && scenarioHasInfoAssignmentDetails(scenario)
+  const showExaminationResults = scenarioHasExamination(scenario)
+  const trolleyTranscriptSections = buildTrolleyTranscriptSections(
+    run,
+    scenario,
+  )
+
   return (
     <div className="space-y-6">
       {/* Actual prompts used */}
@@ -543,8 +648,10 @@ function RunResult({
       </Card>
 
       {/* Info assignment & judge decision */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        {run.infoAssignment ? (
+      <div
+        className={`grid gap-6 ${showInfoAssignment ? 'xl:grid-cols-2' : ''}`}
+      >
+        {showInfoAssignment && run.infoAssignment ? (
           <InfoAssignmentPanel
             assignment={run.infoAssignment}
             scenario={scenario}
@@ -560,170 +667,164 @@ function RunResult({
 
       <Card>
         <CardHeader>
-          <CardTitle>对话记录</CardTitle>
+          <CardTitle>
+            对话记录
+            {trolleyTranscriptSections
+              ? ` · ${run.transcript.length}/${scenario.turnCount * trolleyTranscriptSections.length} 轮`
+              : ''}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {run.transcript.length ? (
-            (() => {
-              const turnKeyCounts = new Map<string, number>()
-
-              return run.transcript.map((turn, index) => {
-                const baseKey = `${turn.speaker}:${turn.content}`
-                const occurrence = (turnKeyCounts.get(baseKey) ?? 0) + 1
-                turnKeyCounts.set(baseKey, occurrence)
-                const isA = turn.speaker === 'a'
-                const roleName = isA ? scenario.roleAName : scenario.roleBName
-
-                return (
-                  <div
-                    key={`${baseKey}:${occurrence}`}
-                    className={`flex flex-col gap-1.5 ${isA ? 'items-start' : 'items-end'}`}
-                  >
-                    <p
-                      className="px-1 text-xs font-semibold"
-                      style={{ color: isA ? 'var(--accent)' : 'var(--info)' }}
-                    >
-                      {roleName}
-                      <span className="ml-1.5 font-normal opacity-60">
-                        #{index + 1}
-                      </span>
-                    </p>
-                    <div
-                      className="max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 text-(--foreground)"
-                      style={
-                        isA
-                          ? {
-                              background: 'rgba(224,74,47,0.1)',
-                              border: '1px solid rgba(224,74,47,0.2)',
-                            }
-                          : {
-                              background: 'rgba(96,165,250,0.08)',
-                              border: '1px solid rgba(96,165,250,0.18)',
-                            }
-                      }
-                    >
-                      {turn.content}
+          {trolleyTranscriptSections ? (
+            <div className="space-y-5">
+              {trolleyTranscriptSections.map((section) => (
+                <section
+                  key={section.caseInfo.id}
+                  className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
+                >
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-(--foreground)">
+                        案件 {section.caseInfo.id} · {section.caseInfo.title}
+                      </p>
+                      <p className="mt-1 text-[11px] text-(--foreground-muted)">
+                        {section.transcript.length}/{scenario.turnCount} 轮
+                      </p>
                     </div>
                   </div>
-                )
-              })
-            })()
+                  <div className="space-y-4">
+                    <TranscriptTurnList
+                      scenario={scenario}
+                      startIndex={section.startIndex}
+                      transcript={section.transcript}
+                    />
+                  </div>
+                </section>
+              ))}
+            </div>
           ) : (
-            <p className="text-sm text-(--foreground-subtle)">对话尚未开始。</p>
+            <TranscriptTurnList
+              scenario={scenario}
+              transcript={run.transcript}
+            />
           )}
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {(
-          [
-            {
-              transcript: run.judgeTranscriptA,
-              roleName: scenario.roleAName,
-              side: 'a' as const,
-            },
-            {
-              transcript: run.judgeTranscriptB,
-              roleName: scenario.roleBName,
-              side: 'b' as const,
-            },
-          ] as const
-        ).map(({ transcript, roleName, side }) => (
-          <Card key={side}>
-            <CardHeader>
-              <CardTitle>审讯结果 · {roleName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {transcript.length ? (
-                transcript.map((item) => {
-                  const opponentInfoMap = buildInfoContentMap(
-                    side === 'a'
-                      ? scenario.roleBHiddenInfo
-                      : scenario.roleAHiddenInfo,
-                  )
+      {showExaminationResults ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {(
+            [
+              {
+                transcript: run.judgeTranscriptA,
+                roleName: scenario.roleAName,
+                side: 'a' as const,
+              },
+              {
+                transcript: run.judgeTranscriptB,
+                roleName: scenario.roleBName,
+                side: 'b' as const,
+              },
+            ] as const
+          ).map(({ transcript, roleName, side }) => (
+            <Card key={side}>
+              <CardHeader>
+                <CardTitle>审讯结果 · {roleName}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {transcript.length ? (
+                  transcript.map((item) => {
+                    const opponentInfoMap = buildInfoContentMap(
+                      side === 'a'
+                        ? scenario.roleBHiddenInfo
+                        : scenario.roleAHiddenInfo,
+                    )
 
-                  return (
-                    <div
-                      key={item.round}
-                      className="overflow-hidden rounded-xl border border-(--border-soft)"
-                    >
-                      <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
-                            问询 · 第 {item.round} 轮
-                          </p>
-                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                            {item.question}
-                          </p>
-                        </div>
-                      </div>
+                    return (
                       <div
-                        className="space-y-3 px-4 py-3"
-                        style={{
-                          background:
-                            side === 'a'
-                              ? 'rgba(224,74,47,0.05)'
-                              : 'rgba(96,165,250,0.05)',
-                        }}
+                        key={item.round}
+                        className="overflow-hidden rounded-xl border border-(--border-soft)"
                       >
-                        <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                          <span
-                            className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
-                            style={{
-                              background:
-                                side === 'a'
-                                  ? 'rgba(224,74,47,0.12)'
-                                  : 'rgba(96,165,250,0.12)',
-                            }}
-                          >
-                            {roleName} 选择 {item.selectedInfoId ?? '未作答'}
-                          </span>
-                          {item.isCorrect != null ? (
-                            <span
-                              className={`rounded px-1.5 py-0.5 font-semibold ${
-                                item.isCorrect
-                                  ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
-                                  : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
-                              }`}
-                            >
-                              {item.isCorrect ? '判断正确' : '判断错误'}
-                            </span>
-                          ) : null}
+                        <div className="flex gap-3 border-b border-(--border-soft) bg-white/2 px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)">
+                              问询 · 第 {item.round} 轮
+                            </p>
+                            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                              {item.question}
+                            </p>
+                          </div>
                         </div>
-                        {item.selectedInfoId ? (
-                          <p className="text-[11px] leading-5 text-(--foreground-muted)">
-                            对应信息：
-                            {opponentInfoMap.get(item.selectedInfoId) ??
-                              '未知信息'}
-                          </p>
-                        ) : null}
-                        <div>
-                          <p
-                            className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
-                            style={{
-                              color:
-                                side === 'a' ? 'var(--accent)' : 'var(--info)',
-                            }}
-                          >
-                            {roleName} 回答
-                          </p>
-                          <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
-                            {item.answer}
-                          </p>
+                        <div
+                          className="space-y-3 px-4 py-3"
+                          style={{
+                            background:
+                              side === 'a'
+                                ? 'rgba(224,74,47,0.05)'
+                                : 'rgba(96,165,250,0.05)',
+                          }}
+                        >
+                          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                            <span
+                              className="rounded px-1.5 py-0.5 font-semibold text-(--foreground)"
+                              style={{
+                                background:
+                                  side === 'a'
+                                    ? 'rgba(224,74,47,0.12)'
+                                    : 'rgba(96,165,250,0.12)',
+                              }}
+                            >
+                              {roleName} 选择 {item.selectedInfoId ?? '未作答'}
+                            </span>
+                            {item.isCorrect != null ? (
+                              <span
+                                className={`rounded px-1.5 py-0.5 font-semibold ${
+                                  item.isCorrect
+                                    ? 'bg-[rgba(74,222,128,0.15)] text-(--success)'
+                                    : 'bg-[rgba(224,74,47,0.15)] text-(--accent)'
+                                }`}
+                              >
+                                {item.isCorrect ? '判断正确' : '判断错误'}
+                              </span>
+                            ) : null}
+                          </div>
+                          {item.selectedInfoId ? (
+                            <p className="text-[11px] leading-5 text-(--foreground-muted)">
+                              对应信息：
+                              {opponentInfoMap.get(item.selectedInfoId) ??
+                                '未知信息'}
+                            </p>
+                          ) : null}
+                          <div>
+                            <p
+                              className="mb-1 text-[12px] font-semibold uppercase tracking-[0.1em]"
+                              style={{
+                                color:
+                                  side === 'a'
+                                    ? 'var(--accent)'
+                                    : 'var(--info)',
+                              }}
+                            >
+                              {roleName} 回答
+                            </p>
+                            <p className="text-xs leading-5 text-(--foreground-subtle) whitespace-pre-wrap">
+                              {item.answer}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })
-              ) : (
-                <p className="text-sm text-(--foreground-subtle)">
-                  审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                    )
+                  })
+                ) : (
+                  <p className="text-sm text-(--foreground-subtle)">
+                    审讯阶段结束后，裁判对双方的追问与回答将显示在这里。
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1282,7 +1383,7 @@ export function PlaygroundPage() {
       scenarioId: scenario.id,
       submissionCreatedAt: submission.createdAt,
       submissionId,
-      turnCount: scenario.turnCount,
+      turnCount: getScenarioTotalDialogueTurns(scenario),
       opponentMode,
       presetOpponentId:
         opponentMode === 'preset' ? selectedPresetId : undefined,
