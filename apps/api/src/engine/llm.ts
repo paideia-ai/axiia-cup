@@ -22,6 +22,13 @@ const ANTHROPIC_BASE_URL =
   process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com'
 const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
 const ANTHROPIC_MAX_TOKENS = Number(process.env.ANTHROPIC_MAX_TOKENS ?? 4096)
+const DEFAULT_LLM_REQUEST_TIMEOUT_MS = 240_000
+const configuredLlmRequestTimeoutMs = Number(
+  process.env.LLM_REQUEST_TIMEOUT_MS ?? DEFAULT_LLM_REQUEST_TIMEOUT_MS,
+)
+const LLM_REQUEST_TIMEOUT_MS = Number.isFinite(configuredLlmRequestTimeoutMs)
+  ? Math.max(0, configuredLlmRequestTimeoutMs)
+  : DEFAULT_LLM_REQUEST_TIMEOUT_MS
 
 let _dbModulePromise: Promise<typeof import('../db/client')> | null = null
 let _openAiClients: Partial<Record<'openai' | 'siliconflow', OpenAI>> = {}
@@ -66,6 +73,69 @@ function getRequiredEnv(name: string) {
   }
 
   return value
+}
+
+function formatTimeoutMs(ms: number) {
+  if (ms >= 60_000) {
+    const minutes = ms / 60_000
+    return `${Number.isInteger(minutes) ? minutes : minutes.toFixed(1)}m`
+  }
+
+  const seconds = ms / 1000
+  return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)}s`
+}
+
+function createRequestAbortSignal(parentSignal?: AbortSignal): {
+  cleanup: () => void
+  signal?: AbortSignal
+  timedOut: () => boolean
+} {
+  if (LLM_REQUEST_TIMEOUT_MS <= 0) {
+    return {
+      cleanup: () => {},
+      signal: parentSignal,
+      timedOut: () => false,
+    }
+  }
+
+  const controller = new AbortController()
+  let cleanedUp = false
+  let timedOut = false
+
+  const abortFromParent = () => {
+    if (!controller.signal.aborted) {
+      controller.abort(parentSignal?.reason)
+    }
+  }
+
+  if (parentSignal?.aborted) {
+    abortFromParent()
+  } else {
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true })
+  }
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+    if (!controller.signal.aborted) {
+      controller.abort(
+        `LLM request timed out after ${formatTimeoutMs(LLM_REQUEST_TIMEOUT_MS)}`,
+      )
+    }
+  }, LLM_REQUEST_TIMEOUT_MS)
+
+  return {
+    cleanup: () => {
+      if (cleanedUp) {
+        return
+      }
+
+      cleanedUp = true
+      clearTimeout(timeoutId)
+      parentSignal?.removeEventListener('abort', abortFromParent)
+    },
+    signal: controller.signal,
+    timedOut: () => timedOut,
+  }
 }
 
 function getOpenAICompatibleBaseUrl(provider: OpenAICompatibleProvider) {
@@ -283,10 +353,11 @@ async function callOpenAICompatibleChatCompletion(
   const requestPayload = buildOpenAICompatibleRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
+  const requestAbort = createRequestAbortSignal(params.signal)
 
   try {
     const response = await client.chat.completions.create(requestPayload, {
-      signal: params.signal,
+      signal: requestAbort.signal,
     })
 
     const content = response.choices[0]?.message?.content
@@ -325,6 +396,23 @@ async function callOpenAICompatibleChatCompletion(
       throw new PlaygroundRunInterruptedError(message)
     }
 
+    if (requestAbort.timedOut()) {
+      const providerLabel = provider === 'openai' ? 'OpenAI' : 'SiliconFlow'
+      const message = `${providerLabel} request timed out after ${formatTimeoutMs(LLM_REQUEST_TIMEOUT_MS)}`
+
+      await persistLlmCall(params.trace, {
+        durationMs,
+        error: message,
+        model: params.model,
+        provider,
+        requestJson,
+        responseContent: null,
+        responseJson: null,
+      })
+
+      throw new Error(message, { cause: error })
+    }
+
     if (error instanceof Error) {
       const status =
         'status' in error
@@ -359,6 +447,8 @@ async function callOpenAICompatibleChatCompletion(
     })
 
     throw error
+  } finally {
+    requestAbort.cleanup()
   }
 }
 
@@ -375,6 +465,7 @@ async function callAnthropicChatCompletion(params: {
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
+  const requestAbort = createRequestAbortSignal(params.signal)
 
   try {
     const response = await fetch(
@@ -387,7 +478,7 @@ async function callAnthropicChatCompletion(params: {
           'x-api-key': getRequiredEnv('ANTHROPIC_API_KEY'),
         },
         body: requestJson,
-        signal: params.signal,
+        signal: requestAbort.signal,
       },
     )
 
@@ -440,6 +531,22 @@ async function callAnthropicChatCompletion(params: {
       throw new PlaygroundRunInterruptedError(message)
     }
 
+    if (requestAbort.timedOut()) {
+      const message = `Anthropic request timed out after ${formatTimeoutMs(LLM_REQUEST_TIMEOUT_MS)}`
+
+      await persistLlmCall(params.trace, {
+        durationMs,
+        error: message,
+        model: params.model,
+        provider,
+        requestJson,
+        responseContent: null,
+        responseJson: null,
+      })
+
+      throw new Error(message, { cause: error })
+    }
+
     if (error instanceof Error) {
       await persistLlmCall(params.trace, {
         durationMs,
@@ -467,6 +574,8 @@ async function callAnthropicChatCompletion(params: {
     })
 
     throw error
+  } finally {
+    requestAbort.cleanup()
   }
 }
 

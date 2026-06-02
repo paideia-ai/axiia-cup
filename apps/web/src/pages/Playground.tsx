@@ -100,11 +100,11 @@ function getScenarioTotalDialogueTurns(scenario: Scenario) {
     : scenario.turnCount
 }
 
-function isIncompleteTrolleyRun(run: PlaygroundRun, scenario: Scenario) {
+function isLegacyTrolleyRun(run: PlaygroundRun, scenario: Scenario) {
   return (
     scenario.id === TROLLEY_SCENARIO_ID &&
     run.transcript.length > 0 &&
-    run.transcript.length < getScenarioTotalDialogueTurns(scenario)
+    (run.infoAssignment?.selectedCaseIds?.length ?? 0) === 0
   )
 }
 
@@ -605,9 +605,11 @@ function TranscriptTurnList({
 function RunResult({
   run,
   scenario,
+  showOutcome = true,
 }: {
   run: PlaygroundRun
   scenario: Scenario
+  showOutcome?: boolean
 }) {
   const isTrolleyScenario = scenario.id === TROLLEY_SCENARIO_ID
   const showInfoAssignment =
@@ -626,63 +628,66 @@ function RunResult({
       {/* Actual prompts used */}
       <ActualPromptsPanel run={run} scenario={scenario} />
 
-      {/* Scoring summary - always visible at top */}
-      <Card>
-        <CardContent className="py-5">
-          <div className="grid grid-cols-3 divide-x divide-(--border-soft) rounded-xl border border-(--border-soft)">
-            <div className="px-5 py-4">
-              <p className="panel-label">{scenario.roleAName}</p>
-              <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
-                {run.scoreA ?? '—'}
-              </p>
+      {showOutcome ? (
+        <Card>
+          <CardContent className="py-5">
+            <div className="grid grid-cols-3 divide-x divide-(--border-soft) rounded-xl border border-(--border-soft)">
+              <div className="px-5 py-4">
+                <p className="panel-label">{scenario.roleAName}</p>
+                <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
+                  {run.scoreA ?? '—'}
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="panel-label">{scenario.roleBName}</p>
+                <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
+                  {run.scoreB ?? '—'}
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="panel-label">胜者</p>
+                <p className="mt-2 text-xl font-semibold text-(--foreground)">
+                  {run.winner === 'a'
+                    ? scenario.roleAName
+                    : run.winner === 'b'
+                      ? scenario.roleBName
+                      : run.winner === 'draw'
+                        ? '平局'
+                        : '—'}
+                </p>
+              </div>
             </div>
-            <div className="px-5 py-4">
-              <p className="panel-label">{scenario.roleBName}</p>
-              <p className="mt-2 tabular-nums text-2xl font-black tracking-tight text-(--foreground)">
-                {run.scoreB ?? '—'}
-              </p>
-            </div>
-            <div className="px-5 py-4">
-              <p className="panel-label">胜者</p>
-              <p className="mt-2 text-xl font-semibold text-(--foreground)">
-                {run.winner === 'a'
-                  ? scenario.roleAName
-                  : run.winner === 'b'
-                    ? scenario.roleBName
-                    : run.winner === 'draw'
-                      ? '平局'
-                      : '—'}
-              </p>
-            </div>
-          </div>
-          {run.reasoning ? (
-            <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
-              <p className="panel-label">裁判宣判词</p>
-              <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
-                {run.reasoning}
-              </pre>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            {run.reasoning ? (
+              <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
+                <p className="panel-label">裁判宣判词</p>
+                <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
+                  {run.reasoning}
+                </pre>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Info assignment & judge decision */}
-      <div
-        className={`grid gap-6 ${showInfoAssignment ? 'xl:grid-cols-2' : ''}`}
-      >
-        {showInfoAssignment && run.infoAssignment ? (
-          <InfoAssignmentPanel
-            assignment={run.infoAssignment}
+      {showOutcome ? (
+        <div
+          className={`grid gap-6 ${showInfoAssignment ? 'xl:grid-cols-2' : ''}`}
+        >
+          {showInfoAssignment && run.infoAssignment ? (
+            <InfoAssignmentPanel
+              assignment={run.infoAssignment}
+              scenario={scenario}
+            />
+          ) : null}
+          <JudgeDecisionPanel
+            decision={run.judgeDecision}
+            errorMessage={run.error}
             scenario={scenario}
+            waitingMessage="裁判模块已就位，待审讯完成后展示最终裁决。"
           />
-        ) : null}
-        <JudgeDecisionPanel
-          decision={run.judgeDecision}
-          errorMessage={run.error}
-          scenario={scenario}
-          waitingMessage="裁判模块已就位，待审讯完成后展示最终裁决。"
-        />
-      </div>
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -730,7 +735,7 @@ function RunResult({
         </CardContent>
       </Card>
 
-      {showExaminationResults ? (
+      {showOutcome && showExaminationResults ? (
         <div className="grid gap-6 xl:grid-cols-2">
           {(
             [
@@ -1248,7 +1253,7 @@ export function PlaygroundPage() {
           syncPlaygroundRun(submissionId, session.requestId, fullRun)
           activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
           setSelectedRun(
-            isIncompleteTrolleyRun(fullRun, scenarioData) ? null : fullRun,
+            isLegacyTrolleyRun(fullRun, scenarioData) ? null : fullRun,
           )
           return
         }
@@ -1266,9 +1271,7 @@ export function PlaygroundPage() {
         if (session?.run && resolvedSession.kind !== 'stale') {
           activeRunProgressRef.current = createRunProgressSnapshot(session.run)
           setSelectedRun(
-            isIncompleteTrolleyRun(session.run, scenarioData)
-              ? null
-              : session.run,
+            isLegacyTrolleyRun(session.run, scenarioData) ? null : session.run,
           )
           return
         }
@@ -1288,7 +1291,7 @@ export function PlaygroundPage() {
           )
           activeRunProgressRef.current = createRunProgressSnapshot(fullRun)
           setSelectedRun(
-            isIncompleteTrolleyRun(fullRun, scenarioData) ? null : fullRun,
+            isLegacyTrolleyRun(fullRun, scenarioData) ? null : fullRun,
           )
         } else {
           setSelectedRun(null)
@@ -1560,7 +1563,11 @@ export function PlaygroundPage() {
                 )}
               />
               {activeSession.run ? (
-                <RunResult run={activeSession.run} scenario={displayScenario} />
+                <RunResult
+                  run={activeSession.run}
+                  scenario={displayScenario}
+                  showOutcome={isRunFinished(activeSession.run)}
+                />
               ) : null}
               {!activeSession.run ? (
                 <JudgeDecisionPanel
