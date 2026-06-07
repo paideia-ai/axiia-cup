@@ -77,7 +77,7 @@ export function registerTournamentRunCommand(program: Command) {
     )
     .option(
       '--model-override <model>',
-      'force all matches to use this model (e.g. deepseek-v3.2)',
+      'force all matches to use this model (e.g. deepseek-v4-pro)',
     )
     .option('-o, --output <path>', 'write result JSON to file')
     .action(async (options: RunOptions) => {

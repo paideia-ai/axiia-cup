@@ -118,8 +118,8 @@ describe('write lock and retired submissions', () => {
       scenarioId: 'test-scenario',
       promptA: 'prompt a',
       promptB: 'prompt b',
-      modelA: 'deepseek-v3.2',
-      modelB: 'deepseek-v3.2',
+      modelA: 'deepseek-v4-pro',
+      modelB: 'deepseek-v4-pro',
     })
 
     expect(res.status).toBe(503)
@@ -140,8 +140,8 @@ describe('write lock and retired submissions', () => {
       scenarioId: 'test-scenario',
       promptA: 'prompt a',
       promptB: 'prompt b',
-      modelA: 'deepseek-v3.2',
-      modelB: 'deepseek-v3.2',
+      modelA: 'deepseek-v4-pro',
+      modelB: 'deepseek-v4-pro',
     })
     const json = (await res.json()) as { id: number; scenarioId: string }
 

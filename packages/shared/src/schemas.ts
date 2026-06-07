@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
-import { evaluationModelIds, modelIds, submissionModelIds } from './constants'
+import {
+  evaluationModelIds,
+  modelIds,
+  playerSelectableModelIds,
+  submissionModelIds,
+} from './constants'
 
 export const modelIdSchema = z.enum(modelIds)
 export const submissionModelIdSchema = z.enum(submissionModelIds)
+export const playerSelectableModelIdSchema = z.enum(playerSelectableModelIds)
 export const evaluationModelIdSchema = z.enum(evaluationModelIds)
 export const tournamentStatusSchema = z.enum([
   'open',
@@ -543,8 +549,8 @@ export const createSubmissionSchema = z.object({
   scenarioId: z.string().min(1),
   promptA: z.string().trim().min(1).max(1000),
   promptB: z.string().trim().min(1).max(1000),
-  modelA: submissionModelIdSchema,
-  modelB: submissionModelIdSchema,
+  modelA: playerSelectableModelIdSchema,
+  modelB: playerSelectableModelIdSchema,
   roleAOptionId: z.string().trim().min(1).nullable().optional(),
   roleBOptionId: z.string().trim().min(1).nullable().optional(),
 })
