@@ -124,6 +124,46 @@
       max-width: 1200px;
     }
 
+    .play-slide .split {
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.48fr);
+    }
+
+    .site-panel {
+      align-self: center;
+      text-align: center;
+    }
+
+    .site-panel h3 {
+      margin-bottom: 18px;
+      color: var(--accent);
+      font-size: clamp(20px, 2vw, 28px);
+    }
+
+    .qr-code {
+      display: block;
+      width: min(30vw, 300px);
+      max-width: 100%;
+      aspect-ratio: 1;
+      margin: 0 auto 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .site-url,
+    .invite-code {
+      margin: 8px 0 0;
+      color: var(--fg);
+      font-size: clamp(20px, 1.8vw, 28px);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .invite-code {
+      color: var(--accent-2);
+    }
+
     .engineering-detail h2 {
       max-width: 720px;
       font-size: clamp(30px, 3.2vw, 52px);
@@ -370,11 +410,19 @@
       <div class="footer"><span>02</span></div>
     </section>
 
-    <section class="slide">
+    <section class="slide play-slide">
       <p class="kicker">02</p>
-      <div class="hero">
-        <h2>先玩一局</h2>
-        <p>在讲规则之前，先让 prompt 变成一个会行动、会对抗、会被裁判评价的 agent。</p>
+      <div class="split">
+        <div>
+          <h2>先玩一局</h2>
+          <p>在讲规则之前，先让 prompt 变成一个会行动、会对抗、会被裁判评价的 agent。</p>
+        </div>
+        <div class="panel site-panel">
+          <h3>扫码进入</h3>
+          <img class="qr-code" src="./axiia-cup-qr.svg" alt="https://axiia-cup.isofucius.cn 的二维码">
+          <p class="site-url">axiia-cup.isofucius.cn</p>
+          <p class="invite-code">邀请码: axiia_cup</p>
+        </div>
       </div>
       <div class="footer"><span>03</span></div>
     </section>
