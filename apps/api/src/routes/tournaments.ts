@@ -4,6 +4,7 @@ import {
   matchDetailSchema,
   matchProgressSchema,
   okResponseSchema,
+  playerSelectableModelIdSchema,
   tournamentDetailSchema,
   tournamentRoundSchema,
   tournamentSchema,
@@ -49,7 +50,7 @@ const startCustomSchema = z.object({
   scenarioId: z.string().min(1),
   submissionIds: z.array(z.number().int().positive()).min(2),
   totalRounds: z.number().int().positive(),
-  modelOverride: z.string().min(1).optional(),
+  modelOverride: playerSelectableModelIdSchema.optional(),
 })
 
 const createRoundSchema = z.object({

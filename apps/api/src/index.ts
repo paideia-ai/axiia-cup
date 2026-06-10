@@ -7,7 +7,7 @@ import { adminAnalyticsRouter } from './routes/admin-analytics'
 import { adminSettingsRouter } from './routes/admin-settings'
 import { adminUsersRouter } from './routes/admin-users'
 import { authRouter } from './routes/auth'
-import { appMetaSchema, modelOptions } from '@axiia/shared'
+import { appMetaSchema, playerModelOptions } from '@axiia/shared'
 import { playgroundRouter } from './routes/playground'
 import { presetOpponentsRouter } from './routes/preset-opponents'
 import { scenariosRouter } from './routes/scenarios'
@@ -63,14 +63,14 @@ app.get('/api/meta', (context) => {
   const payload = appMetaSchema.parse({
     name: 'Axiia Cup',
     stage: 'mvp',
-    models: modelOptions,
+    models: playerModelOptions,
     scenarios: scenarioSummaries,
   })
 
   return context.json(payload)
 })
 
-app.get('/api/models', (context) => context.json({ items: modelOptions }))
+app.get('/api/models', (context) => context.json({ items: playerModelOptions }))
 app.route('/', adminAnalyticsRouter)
 app.route('/', adminMonitorRouter)
 app.route('/', adminSettingsRouter)

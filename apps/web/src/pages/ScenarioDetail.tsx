@@ -1,11 +1,12 @@
 import {
   createSubmissionSchema,
   formatTrolleyCasesForPrompt,
-  modelOptions,
+  playerModelOptions,
+  resolveModelLabel,
   trolleyCases,
   trolleyCasesPerMatch,
   TROLLEY_SCENARIO_ID,
-  type ModelOption,
+  type PlayerModelOption,
   type Scenario,
   type Submission,
 } from '@axiia/shared'
@@ -36,10 +37,6 @@ function countText(value: string) {
 
 function buildDefaultStrategyPrompt(roleName: string) {
   return `你是${roleName}`
-}
-
-function resolveModelLabel(modelId: string) {
-  return modelOptions.find((option) => option.id === modelId)?.label ?? modelId
 }
 
 function interpolatePromptTemplate(
@@ -323,11 +320,22 @@ function TrolleyRoleDetails() {
   )
 }
 
+const defaultPlayerModelId = playerModelOptions[0]!.id
+
+function coercePlayerModelId(modelId: string | undefined) {
+  return (
+    playerModelOptions.find((option) => option.id === modelId)?.id ??
+    defaultPlayerModelId
+  )
+}
+
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
-  const [modelA, setModelA] = useState<ModelOption['id']>(modelOptions[0]!.id)
-  const [modelB, setModelB] = useState<ModelOption['id']>(modelOptions[0]!.id)
+  const [modelA, setModelA] =
+    useState<PlayerModelOption['id']>(defaultPlayerModelId)
+  const [modelB, setModelB] =
+    useState<PlayerModelOption['id']>(defaultPlayerModelId)
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [promptA, setPromptA] = useState('')
@@ -412,8 +420,8 @@ export function ScenarioDetailPage() {
         if (latest) {
           setPromptA(latest.promptA)
           setPromptB(latest.promptB)
-          setModelA(latest.modelA as ModelOption['id'])
-          setModelB(latest.modelB as ModelOption['id'])
+          setModelA(coercePlayerModelId(latest.modelA))
+          setModelB(coercePlayerModelId(latest.modelB))
         } else {
           setPromptA(
             buildDefaultStrategyPrompt(
@@ -425,8 +433,8 @@ export function ScenarioDetailPage() {
               getRoleDisplayName(scenarioResponse, 'b', nextRoleBOptionId),
             ),
           )
-          setModelA(modelOptions[0]!.id)
-          setModelB(modelOptions[0]!.id)
+          setModelA(defaultPlayerModelId)
+          setModelB(defaultPlayerModelId)
         }
       } catch (loadError) {
         setError(
@@ -900,12 +908,14 @@ export function ScenarioDetailPage() {
                     <Select
                       value={modelA}
                       onValueChange={(value) => {
-                        if (value) setModelA(value as ModelOption['id'])
+                        if (value) {
+                          setModelA(value as PlayerModelOption['id'])
+                        }
                       }}
                       renderValue={(value) => resolveModelLabel(value)}
                       className="w-full"
                     >
-                      {modelOptions.map((option) => (
+                      {playerModelOptions.map((option) => (
                         <SelectItem key={option.id} value={option.id}>
                           {option.label}
                         </SelectItem>
@@ -919,12 +929,14 @@ export function ScenarioDetailPage() {
                     <Select
                       value={modelB}
                       onValueChange={(value) => {
-                        if (value) setModelB(value as ModelOption['id'])
+                        if (value) {
+                          setModelB(value as PlayerModelOption['id'])
+                        }
                       }}
                       renderValue={(value) => resolveModelLabel(value)}
                       className="w-full"
                     >
-                      {modelOptions.map((option) => (
+                      {playerModelOptions.map((option) => (
                         <SelectItem key={option.id} value={option.id}>
                           {option.label}
                         </SelectItem>
