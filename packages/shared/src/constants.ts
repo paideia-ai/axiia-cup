@@ -5,7 +5,7 @@ export const submissionModelIds = [
   'deepseek-v4-pro',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m3',
+  'minimax-m2.5',
   'glm-5.1',
 ] as const
 
@@ -13,9 +13,11 @@ export const playerSelectableModelIds = [
   'deepseek-v4-pro',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m3',
+  'minimax-m2.5',
   'glm-5.1',
 ] as const
+
+export const retiredModelIds = ['minimax-m3'] as const
 
 export const evaluationOnlyModelIds = [
   'gpt-4.1',
@@ -26,7 +28,6 @@ export const evaluationOnlyModelIds = [
   'claude-opus-4-5',
   'claude-opus-4-6',
   'qwen3.5-397b',
-  'minimax-m2.5',
   'glm-4.6',
 ] as const
 
@@ -41,14 +42,18 @@ export type SubmissionModelId = (typeof submissionModelIds)[number]
 export type PlayerSelectableModelId = (typeof playerSelectableModelIds)[number]
 export type EvaluationModelId = (typeof evaluationModelIds)[number]
 export type ModelId = EvaluationModelId
+export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
+
+type ModelSurface = 'evaluation' | 'submission'
+type CatalogModelId = ModelId | RetiredModelId
 
 type ModelDefinition = {
   apiModel: string
-  id: ModelId
+  id: CatalogModelId
   label: string
   provider: ModelProvider
-  surfaces: readonly ('evaluation' | 'submission')[]
+  surfaces: readonly ModelSurface[]
   thinking?: 'disabled'
 }
 
@@ -100,6 +105,13 @@ export const modelCatalog = [
     id: 'minimax-m3',
     label: 'MiniMax M3',
     apiModel: 'MiniMaxAI/MiniMax-M3',
+    provider: 'siliconflow',
+    surfaces: [],
+  },
+  {
+    id: 'minimax-m2.5',
+    label: 'MiniMax M2.5',
+    apiModel: 'MiniMaxAI/MiniMax-M2.5',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
   },
@@ -168,13 +180,6 @@ export const modelCatalog = [
     thinking: 'disabled',
   },
   {
-    id: 'minimax-m2.5',
-    label: 'MiniMax M2.5',
-    apiModel: 'MiniMaxAI/MiniMax-M2.5',
-    provider: 'siliconflow',
-    surfaces: ['evaluation'],
-  },
-  {
     id: 'glm-4.6',
     label: 'GLM-4.6',
     apiModel: 'zai-org/GLM-4.6',
@@ -182,8 +187,6 @@ export const modelCatalog = [
     surfaces: ['evaluation'],
   },
 ] as const satisfies readonly ModelDefinition[]
-
-type ModelSurface = 'evaluation' | 'submission'
 
 type PublicModelOption<TId extends ModelId> = {
   id: TId
@@ -207,7 +210,7 @@ export type ModelOption = PublicModelOption<SubmissionModelId>
 export type PlayerModelOption = PublicModelOption<PlayerSelectableModelId>
 export type EvaluationModelOption = PublicModelOption<EvaluationModelId>
 
-const playerSelectableModelIdSet = new Set<ModelId>(playerSelectableModelIds)
+const playerSelectableModelIdSet = new Set<string>(playerSelectableModelIds)
 
 export const modelOptions = modelCatalog
   .filter((entry) => supportsSurface(entry, 'submission'))
