@@ -17,7 +17,7 @@ const chosenPlayerModelIds = [
   'deepseek-v4-pro',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m3',
+  'minimax-m2.5',
   'glm-5.1',
 ] as const
 
@@ -29,6 +29,9 @@ describe('model catalog', () => {
     ])
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'deepseek-v3.2',
+    )
+    expect(playerModelOptions.map((option) => option.id)).not.toContain(
+      'minimax-m3',
     )
   })
 
@@ -68,6 +71,7 @@ describe('model catalog', () => {
     expect(resolveModelLabel('deepseek-v3.2')).toBe('DeepSeek V3.2')
     expect(submissionModelIdSchema.parse('deepseek-v3.2')).toBe('deepseek-v3.2')
     expect(resolveModelLabel('kimi-k2.5')).toBe('Kimi K2.5')
+    expect(resolveModelLabel('minimax-m3')).toBe('MiniMax M3')
     expect(resolveModelLabel('qwen3.5-397b-a17b')).toBe('Qwen3.5')
   })
 
@@ -100,8 +104,8 @@ describe('model catalog', () => {
       apiModel: 'Qwen/Qwen3.6-27B',
       thinking: 'disabled',
     })
-    expect(getModelDefinition('minimax-m3').apiModel).toBe(
-      'MiniMaxAI/MiniMax-M3',
+    expect(getModelDefinition('minimax-m2.5').apiModel).toBe(
+      'MiniMaxAI/MiniMax-M2.5',
     )
     expect(getModelDefinition('glm-5.1').apiModel).toBe('Pro/zai-org/GLM-5.1')
   })
