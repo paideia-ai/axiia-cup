@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Axiia Cup 杭州国美 Vibe Coding 分享</title>
+  <style>
+    :root {
+      --bg: #f7f5ef;
+      --fg: #171716;
+      --muted: #66645d;
+      --line: #d8d3c6;
+      --accent: #b13f2e;
+      --accent-2: #1f6f68;
+      --paper: #fffcf4;
+      --code: #23211d;
+      --code-fg: #f6efe4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    body {
+      letter-spacing: 0;
+    }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: clamp(36px, 7vw, 96px);
+      background:
+        linear-gradient(90deg, rgba(177, 63, 46, 0.08), transparent 34%),
+        var(--bg);
+    }
+
+    .slide.active {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+    }
+
+    .kicker {
+      margin: 0;
+      color: var(--accent);
+      font-size: clamp(15px, 1.7vw, 22px);
+      font-weight: 700;
+    }
+
+    .hero,
+    .center {
+      align-self: center;
+      max-width: min(1180px, 100%);
+    }
+
+    .center {
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 1160px;
+      font-size: clamp(56px, 9vw, 132px);
+    }
+
+    h2 {
+      max-width: 1100px;
+      font-size: clamp(44px, 7vw, 104px);
+    }
+
+    .center h1,
+    .center h2,
+    .center p {
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    p {
+      max-width: 980px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: clamp(22px, 2.4vw, 34px);
+      line-height: 1.35;
+    }
+
+    .small {
+      max-width: 900px;
+      font-size: clamp(18px, 1.6vw, 24px);
+      line-height: 1.55;
+    }
+
+    .split {
+      align-self: center;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+      gap: clamp(28px, 5vw, 72px);
+      align-items: center;
+      max-width: 1200px;
+    }
+
+    .engineering-detail h2 {
+      max-width: 720px;
+      font-size: clamp(30px, 3.2vw, 52px);
+      line-height: 1.12;
+      text-wrap: balance;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: clamp(22px, 3vw, 38px);
+    }
+
+    .panel h3 {
+      margin: 0 0 16px;
+      color: var(--accent-2);
+      font-size: clamp(20px, 2vw, 30px);
+      line-height: 1.2;
+    }
+
+    .panel h3 + p,
+    .panel h3 + ul,
+    .panel h3 + pre {
+      margin-top: 0;
+    }
+
+    .panel p + h3,
+    .panel ul + h3,
+    .panel pre + h3 {
+      margin-top: clamp(28px, 3vw, 44px);
+    }
+
+    .panel p,
+    .panel li {
+      color: var(--fg);
+      font-size: clamp(17px, 1.5vw, 23px);
+      line-height: 1.55;
+    }
+
+    .panel.compact h3 {
+      margin-bottom: 10px;
+      font-size: clamp(18px, 1.6vw, 24px);
+    }
+
+    .panel.compact p + h3,
+    .panel.compact ul + h3,
+    .panel.compact pre + h3 {
+      margin-top: clamp(18px, 2vw, 28px);
+    }
+
+    .panel.compact p,
+    .panel.compact li {
+      font-size: clamp(15px, 1.25vw, 19px);
+      line-height: 1.42;
+    }
+
+    ul {
+      margin: 14px 0 0;
+      padding-left: 1.1em;
+    }
+
+    li + li {
+      margin-top: 10px;
+    }
+
+    .quote {
+      border-left: 5px solid var(--accent);
+      padding-left: 24px;
+      color: var(--fg);
+      font-size: clamp(22px, 2.3vw, 34px);
+      line-height: 1.5;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: clamp(16px, 1.35vw, 20px);
+      line-height: 1.4;
+    }
+
+    .grid {
+      align-self: center;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      max-width: 1180px;
+    }
+
+    .card {
+      min-height: 180px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 26px;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--accent-2);
+      font-size: clamp(20px, 1.8vw, 28px);
+    }
+
+    .card span {
+      display: block;
+      color: var(--fg);
+      font-size: clamp(17px, 1.45vw, 22px);
+      line-height: 1.45;
+    }
+
+    pre {
+      overflow: hidden;
+      margin: 18px 0 0;
+      border-radius: 8px;
+      background: var(--code);
+      color: var(--code-fg);
+      padding: 22px 24px;
+      font-size: clamp(15px, 1.35vw, 21px);
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.08);
+      z-index: 3;
+    }
+
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 160ms ease;
+    }
+
+    .nav {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(255, 252, 244, 0.88);
+      color: var(--fg);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    @media (max-width: 820px) {
+      .slide {
+        padding: 30px 22px 54px;
+      }
+
+      .split,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .card {
+        padding: 20px;
+      }
+
+      .card {
+        min-height: 0;
+      }
+    }
+
+    @media print {
+      html,
+      body {
+        overflow: visible;
+      }
+
+      .deck {
+        height: auto;
+      }
+
+      .slide,
+      .slide.active {
+        position: relative;
+        display: grid;
+        width: 100vw;
+        height: 100vh;
+        break-after: page;
+      }
+
+      .nav,
+      .progress {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active">
+      <p class="kicker">杭州国美 Vibe Coding 课程分享</p>
+      <div class="hero">
+        <h1>Axiia Cup</h1>
+        <p>把 prompt writing 做成一场真正有胜负、有策略、有迭代空间的比赛。</p>
+      </div>
+      <div class="footer"><span>01</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">01</p>
+      <div class="hero">
+        <h2>Axiia Cup 是什么</h2>
+        <p>玩家写 prompt，控制 agent 在历史、哲学和伦理场景里辩论、说服和博弈。</p>
+      </div>
+      <div class="footer"><span>02</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">02</p>
+      <div class="hero">
+        <h2>先玩一局</h2>
+        <p>在讲规则之前，先让 prompt 变成一个会行动、会对抗、会被裁判评价的 agent。</p>
+      </div>
+      <div class="footer"><span>03</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">03</p>
+      <div class="hero">
+        <h2>从想法到产品</h2>
+        <p>问题不是“能不能写一句好 prompt”，而是：能不能设计一套可以比赛的语言系统。</p>
+      </div>
+      <div class="footer"><span>04</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">04</p>
+      <div class="hero">
+        <h2>Judge Prompt 为什么公开</h2>
+        <p>裁判 prompt 本质上是比赛规则。公开之后，玩家是在研究一个可见的评价系统。</p>
+      </div>
+      <div class="footer"><span>05</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">05</p>
+      <div class="hero">
+        <h2>Judge Bias Spectrum</h2>
+        <p>同一批对战记录，换不同的大模型来当裁判，判决会发生怎样的变化？</p>
+      </div>
+      <div class="footer"><span>06</span></div>
+    </section>
+
+    <section class="slide">
+      <p class="kicker">06</p>
+      <div class="hero">
+        <h2>工程选择</h2>
+        <p>最后看四个工程选择：CLI、scenario data in database、database schema、Langfuse。</p>
+      </div>
+      <div class="footer"><span>07</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 1 / CLI</p>
+      <div class="split">
+        <div>
+          <h2>什么是 CLI</h2>
+          <p class="small">CLI 是 Command Line Interface，也就是命令行界面。在网页 UI 里用鼠标点按钮，在 CLI 里是在终端输入命令，让程序做事。</p>
+        </div>
+        <div class="panel">
+          <h3>同一个后端操作</h3>
+          <p>网页里可以点一个按钮：</p>
+          <pre><code>Start Tournament</code></pre>
+          <p>CLI 里则可能是：</p>
+          <pre><code>axiia start shangyang-court</code></pre>
+        </div>
+      </div>
+      <div class="footer"><span>08</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 1 / CLI</p>
+      <div class="split">
+        <div>
+          <h2>Web UI 和 CLI 的区别</h2>
+          <p class="small">一个网站完全可以只有 web app，没有 CLI。区别在于，CLI 提供了另一种 control surface。</p>
+        </div>
+        <div class="panel">
+          <h3>适合谁</h3>
+          <ul>
+            <li>Web UI：适合人在浏览器里点。</li>
+            <li>CLI：适合人、脚本、CI、AI agent 在终端里操作。</li>
+          </ul>
+          <h3>适合什么操作</h3>
+          <ul>
+            <li>编辑 scenario。</li>
+            <li>开始 tournament。</li>
+            <li>查看结果。</li>
+            <li>导出数据。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer"><span>09</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 1 / CLI</p>
+      <div class="split">
+        <div>
+          <h2>为什么这对 Axiia Cup 有用</h2>
+          <p class="small">Axiia Cup 里有很多经常需要查看、修改和导出的东西。如果只能通过网页操作，很多迭代会比较慢。</p>
+        </div>
+        <div class="panel">
+          <h3>经常需要操作的数据</h3>
+          <ul>
+            <li>scenario、player prompt、judge prompt、scorer prompt。</li>
+            <li>tournament、playground run、battle transcript。</li>
+            <li>LLM call logs。</li>
+          </ul>
+          <h3>为什么对 AI agent 友好</h3>
+          <p>AI 擅长读文件、改 JSON、运行命令、看结构化输出，不需要像人一样在网页里一步步点击。</p>
+        </div>
+      </div>
+      <div class="footer"><span>10</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 2</p>
+      <div class="split">
+        <div>
+          <h2>Scenario data in database</h2>
+          <p class="small">Axiia Cup 预期会有多个场景，所以 scenario 不完全 hardcode 在代码里，而是存进数据库。</p>
+        </div>
+        <div class="panel">
+          <h3>如果 hardcode</h3>
+          <pre><code>const scenario = {
+  id: "shangyang-court",
+  judgePrompt: "...",
+  roleAName: "商鞅",
+  roleBName: "甘龙"
+}</code></pre>
+          <h3>为什么进数据库</h3>
+          <ul>
+            <li>角色设定、judge prompt、scorer prompt 都会反复改。</li>
+            <li>隐藏目标、对话轮数和新场景也需要测试。</li>
+            <li>数据库让 scenario 更方便编辑、测试和迭代。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer"><span>11</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 3</p>
+      <div class="split">
+        <div>
+          <h2>Database schema</h2>
+          <p class="small">把 scenario 放进数据库之后，更难的问题是：schema 应该长什么样？也就是必须有哪些字段、每个字段是什么格式。</p>
+        </div>
+        <div class="panel compact">
+          <h3>难点</h3>
+          <ul>
+            <li>商鞅变法有隐藏请求和赛后问询。</li>
+            <li>本能寺之变有可选角色。</li>
+            <li>电车难题没有隐藏目标，更像多个伦理案件的逐案辩论。</li>
+          </ul>
+          <h3>太死 / 太松</h3>
+          <p>schema 太死，只能支持一种场景；schema 太松，又很难验证、运行和调试。</p>
+        </div>
+      </div>
+      <div class="footer"><span>12</span></div>
+    </section>
+
+    <section class="slide engineering-detail">
+      <p class="kicker">工程选择 4</p>
+      <div class="split">
+        <div>
+          <h2>Langfuse</h2>
+          <p class="small">Axiia Cup 里，一场比赛不是一次 LLM 调用，而是一串连续调用。人的困难是：要知道模型到底看到了什么、说了什么、在哪一步出错。</p>
+        </div>
+        <div class="panel compact">
+          <h3>一局比赛是一串调用</h3>
+          <ul>
+            <li>player agent A 发言。</li>
+            <li>player agent B 回应。</li>
+            <li>继续多轮对话。</li>
+            <li>judge 阅读对话并裁决。</li>
+            <li>scorer 根据裁决和规则计算分数。</li>
+          </ul>
+          <h3>Langfuse 让什么可见</h3>
+          <ul>
+            <li>这一轮是谁在发言、使用哪个模型。</li>
+            <li>输入 prompt、模型返回、call 属于 player / judge / scorer。</li>
+            <li>耗时、报错、token 使用量。</li>
+          </ul>
+          <h3>为什么重要</h3>
+          <p>没有观察工具，只能看到赢了、输了、失败了；很难知道是 player 没遵守角色、judge prompt 上下文不对、scorer 没解析输出，还是模型返回了格式错误的 JSON。</p>
+        </div>
+      </div>
+      <div class="footer"><span>13</span></div>
+    </section>
+  </main>
+
+  <div class="nav" aria-label="Slide navigation">
+    <button id="prev" type="button" aria-label="上一页">‹</button>
+    <button id="next" type="button" aria-label="下一页">›</button>
+  </div>
+  <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const prevButton = document.querySelector("#prev");
+    const nextButton = document.querySelector("#next");
+    const bar = document.querySelector("#bar");
+    let index = 0;
+
+    function showSlide(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("active", slideIndex === index);
+      });
+      prevButton.disabled = index === 0;
+      nextButton.disabled = index === slides.length - 1;
+      bar.style.width = `${((index + 1) / slides.length) * 100}%`;
+      window.location.hash = String(index + 1).padStart(2, "0");
+    }
+
+    function fromHash() {
+      const raw = window.location.hash.replace("#", "");
+      const parsed = Number.parseInt(raw, 10);
+      if (Number.isInteger(parsed) && parsed >= 1) showSlide(parsed - 1);
+    }
+
+    prevButton.addEventListener("click", () => showSlide(index - 1));
+    nextButton.addEventListener("click", () => showSlide(index + 1));
+
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index + 1);
+      }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index - 1);
+      }
+      if (event.key === "Home") showSlide(0);
+      if (event.key === "End") showSlide(slides.length - 1);
+    });
+
+    window.addEventListener("hashchange", fromHash);
+    fromHash();
+    showSlide(index);
+  </script>
+</body>
+</html>
