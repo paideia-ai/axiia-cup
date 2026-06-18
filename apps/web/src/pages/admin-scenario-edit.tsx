@@ -761,6 +761,7 @@ function RolePresetOpponentsEditor({
                   <div className="flex gap-2">
                     <Button
                       size="sm"
+                      type="button"
                       disabled={isSaving}
                       onClick={() => void handleUpdate(preset.id)}
                     >
@@ -768,6 +769,7 @@ function RolePresetOpponentsEditor({
                     </Button>
                     <Button
                       size="sm"
+                      type="button"
                       variant="secondary"
                       onClick={() => setEditingId(null)}
                     >
@@ -832,6 +834,7 @@ function RolePresetOpponentsEditor({
         />
         <Button
           size="sm"
+          type="button"
           disabled={
             disabled || isSaving || !newLabel.trim() || !newPrompt.trim()
           }
@@ -1107,7 +1110,7 @@ export function AdminScenarioEditPage() {
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>真请求数量</span>
                     <Input
-                      min={1}
+                      min={0}
                       onChange={(event) =>
                         setDraft((c) =>
                           c
@@ -1115,7 +1118,7 @@ export function AdminScenarioEditPage() {
                                 ...c,
                                 trueRequestCount:
                                   event.target.value === ''
-                                    ? 1
+                                    ? 0
                                     : Number(event.target.value),
                               }
                             : c,
