@@ -104,13 +104,11 @@ function getOpenAICompatibleClient(provider: OpenAICompatibleProvider) {
 }
 
 function getLangfuseSessionId(trace: ChatCompletionTrace | undefined) {
-  return (
-    trace?.matchId != null
-      ? `match:${trace.matchId}`
-      : trace?.playgroundRunId != null
-        ? `playground:${trace.playgroundRunId}`
-        : undefined
-  )
+  return trace?.matchId != null
+    ? `match:${trace.matchId}`
+    : trace?.playgroundRunId != null
+      ? `playground:${trace.playgroundRunId}`
+      : undefined
 }
 
 function getLangfuseGenerationName(trace: ChatCompletionTrace | undefined) {
