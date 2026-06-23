@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Axiia Scoring Benchmark</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f7f4;
+      --ink: #17201b;
+      --muted: #66736b;
+      --line: #d9ded8;
+      --panel: #ffffff;
+      --good: #0f7a4c;
+      --bad: #a33a2a;
+      --warn: #9b6a1b;
+    }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+      margin: 0;
+    }
+    main {
+      margin: 0 auto;
+      max-width: 1180px;
+      padding: 32px 20px 56px;
+    }
+    h1, h2 {
+      letter-spacing: 0;
+      line-height: 1.15;
+    }
+    h1 {
+      font-size: 34px;
+      margin: 0 0 6px;
+    }
+    h2 {
+      border-top: 1px solid var(--line);
+      font-size: 22px;
+      margin: 34px 0 14px;
+      padding-top: 24px;
+    }
+    .meta, .note {
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 18px 0;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 26px;
+    }
+    table {
+      background: var(--panel);
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #edf2ee;
+      font-size: 13px;
+    }
+    tr:last-child td {
+      border-bottom: 0;
+    }
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    pre {
+      background: #1c211d;
+      border-radius: 8px;
+      color: #edf2ee;
+      max-height: 220px;
+      overflow: auto;
+      padding: 12px;
+      white-space: pre-wrap;
+    }
+    .good { color: var(--good); font-weight: 700; }
+    .bad { color: var(--bad); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    a { color: #255f85; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Axiia Scoring Benchmark</h1>
+  <p class="meta">Generated at 2026-06-23T12:46:18.378Z. Case limit: 10. Dry run: no.</p>
+
+  <div class="grid">
+    <div class="metric"><span>Models</span><strong>11</strong></div>
+    <div class="metric"><span>Cases</span><strong>20</strong></div>
+    <div class="metric"><span>Calls</span><strong>220</strong></div>
+    <div class="metric"><span>JSON sentence</span><strong>added</strong></div>
+  </div>
+
+  <h2>Prompt Change</h2>
+  <pre>输出必须是可被 JSON.parse 直接解析的合法 JSON；reasoning 内引用内容请用「」或单引号，禁止未转义英文双引号。</pre>
+
+  <h2>Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Total</th>
+        <th>JSON parse</th>
+        <th>Schema</th>
+        <th>Provider errors</th>
+        <th>Avg ms</th>
+        <th>P50 ms</th>
+        <th>P90 ms</th>
+        <th>Avg input tokens</th>
+        <th>Avg output tokens</th>
+        <th>Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Qwen3.6 27B</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>12,774</td>
+        <td>10,433</td>
+        <td>17,376</td>
+        <td>1,544</td>
+        <td>420</td>
+        <td>CNY 0.0589</td>
+      </tr>
+<tr>
+        <td>GLM-5.1</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>18,607</td>
+        <td>18,032</td>
+        <td>22,276</td>
+        <td>1,533</td>
+        <td>936</td>
+        <td>CNY 0.6331</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Flash</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>23,185</td>
+        <td>17,182</td>
+        <td>48,153</td>
+        <td>1,519</td>
+        <td>590</td>
+        <td>CNY 0.0540</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Pro</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>25,692</td>
+        <td>22,389</td>
+        <td>31,047</td>
+        <td>1,519</td>
+        <td>820</td>
+        <td>CNY 0.1895</td>
+      </tr>
+<tr>
+        <td>GPT-5.4</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>5,300</td>
+        <td>5,120</td>
+        <td>6,171</td>
+        <td>1,703</td>
+        <td>514</td>
+        <td>USD 0.2393</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>4,489</td>
+        <td>3,582</td>
+        <td>5,724</td>
+        <td>1,703</td>
+        <td>457</td>
+        <td>USD 0.0667</td>
+      </tr>
+<tr>
+        <td>GPT-4.1</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>3,835</td>
+        <td>3,247</td>
+        <td>5,035</td>
+        <td>1,704</td>
+        <td>333</td>
+        <td>USD 0.1215</td>
+      </tr>
+<tr>
+        <td>Claude Sonnet 4.5</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>8,562</td>
+        <td>8,289</td>
+        <td>10,410</td>
+        <td>2,177</td>
+        <td>524</td>
+        <td>USD 0.2878</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.5</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>10,270</td>
+        <td>7,005</td>
+        <td>21,948</td>
+        <td>2,177</td>
+        <td>481</td>
+        <td>USD 0.4582</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.8</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>8,093</td>
+        <td>7,035</td>
+        <td>10,455</td>
+        <td>2,225</td>
+        <td>423</td>
+        <td>USD 0.4339</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.7</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td class="good">100.0%</td>
+        <td>0</td>
+        <td>4,666</td>
+        <td>3,961</td>
+        <td>5,014</td>
+        <td>2,231</td>
+        <td>149</td>
+        <td>USD 0.2977</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Model Settings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Provider</th>
+        <th>API model</th>
+        <th>Repo id</th>
+        <th>Settings</th>
+        <th>Input price</th>
+        <th>Output price</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Qwen3.6 27B</td>
+        <td>siliconflow</td>
+        <td><code>Qwen/Qwen3.6-27B</code></td>
+        <td><code>qwen3.6-27b</code></td>
+        <td>response_format=json_object; temperature=0; enable_thinking=false</td>
+        <td>CNY 0.6 / 1M</td>
+        <td>CNY 4.8 / 1M</td>
+      </tr>
+<tr>
+        <td>GLM-5.1</td>
+        <td>siliconflow</td>
+        <td><code>Pro/zai-org/GLM-5.1</code></td>
+        <td><code>glm-5.1</code></td>
+        <td>response_format=json_object; temperature=0</td>
+        <td>CNY 6 / 1M</td>
+        <td>CNY 24 / 1M</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Flash</td>
+        <td>siliconflow</td>
+        <td><code>deepseek-ai/DeepSeek-V4-Flash</code></td>
+        <td><code>deepseek-v4-flash</code></td>
+        <td>response_format=json_object; temperature=0</td>
+        <td>CNY 1 / 1M</td>
+        <td>CNY 2 / 1M</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Pro</td>
+        <td>siliconflow</td>
+        <td><code>deepseek-ai/DeepSeek-V4-Pro</code></td>
+        <td><code>deepseek-v4-pro</code></td>
+        <td>response_format=json_object; temperature=0</td>
+        <td>CNY 3 / 1M</td>
+        <td>CNY 6 / 1M</td>
+      </tr>
+<tr>
+        <td>GPT-5.4</td>
+        <td>openai</td>
+        <td><code>gpt-5.4</code></td>
+        <td><code>gpt-5.4</code></td>
+        <td>response_format=json_object; default temperature; reasoning_effort=low</td>
+        <td>USD 2.5 / 1M</td>
+        <td>USD 15 / 1M</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>openai</td>
+        <td><code>gpt-5.4-mini</code></td>
+        <td><code>gpt-5.4-mini</code></td>
+        <td>response_format=json_object; default temperature; reasoning_effort=low</td>
+        <td>USD 0.75 / 1M</td>
+        <td>USD 4.5 / 1M</td>
+      </tr>
+<tr>
+        <td>GPT-4.1</td>
+        <td>openai</td>
+        <td><code>gpt-4.1</code></td>
+        <td><code>gpt-4.1</code></td>
+        <td>response_format=json_object; temperature=0</td>
+        <td>USD 2 / 1M</td>
+        <td>USD 8 / 1M</td>
+      </tr>
+<tr>
+        <td>Claude Sonnet 4.5</td>
+        <td>anthropic</td>
+        <td><code>claude-sonnet-4-5</code></td>
+        <td><code>claude-sonnet-4-5</code></td>
+        <td>prompt-only JSON; temperature=0</td>
+        <td>USD 3 / 1M</td>
+        <td>USD 15 / 1M</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.5</td>
+        <td>anthropic</td>
+        <td><code>claude-opus-4-5-20251101</code></td>
+        <td><code>claude-opus-4-5</code></td>
+        <td>prompt-only JSON; temperature=0</td>
+        <td>USD 5 / 1M</td>
+        <td>USD 25 / 1M</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.8</td>
+        <td>anthropic</td>
+        <td><code>claude-opus-4-8</code></td>
+        <td>benchmark-only</td>
+        <td>prompt-only JSON; thinking=adaptive; output_config.effort=low; no sampling params</td>
+        <td>USD 5 / 1M</td>
+        <td>USD 25 / 1M</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.7</td>
+        <td>anthropic</td>
+        <td><code>claude-opus-4-7</code></td>
+        <td>benchmark-only</td>
+        <td>prompt-only JSON; thinking=adaptive; output_config.effort=low; no sampling params</td>
+        <td>USD 5 / 1M</td>
+        <td>USD 25 / 1M</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Score Correctness</h2>
+  <p class="note">Expected scores are computed deterministically from each persisted scorer prompt, including accepted requests and examination penalties.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Correct</th>
+        <th>Total</th>
+        <th>Score correctness</th>
+        <th>Avg absolute delta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Qwen3.6 27B</td>
+        <td>17</td>
+        <td>20</td>
+        <td class="bad">85.0%</td>
+        <td>0.113</td>
+      </tr>
+<tr>
+        <td>GLM-5.1</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>17</td>
+        <td>20</td>
+        <td class="bad">85.0%</td>
+        <td>0.044</td>
+      </tr>
+<tr>
+        <td>GPT-4.1</td>
+        <td>19</td>
+        <td>20</td>
+        <td class="warn">95.0%</td>
+        <td>0.006</td>
+      </tr>
+<tr>
+        <td>Claude Sonnet 4.5</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.8</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.7</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Flash</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>DeepSeek V4 Pro</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>GPT-5.4</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+<tr>
+        <td>Claude Opus 4.5</td>
+        <td>20</td>
+        <td>20</td>
+        <td class="good">100.0%</td>
+        <td>0.000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Score Failures</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Battle</th>
+        <th>Scenario</th>
+        <th>Expected score</th>
+        <th>Actual score</th>
+        <th>Delta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Qwen3.6 27B</td>
+        <td>playground:1202</td>
+        <td>honnoji-decision</td>
+        <td>0.75, 0</td>
+        <td>1.5, -0.75</td>
+        <td>0.75, -0.75</td>
+      </tr>
+<tr>
+        <td>Qwen3.6 27B</td>
+        <td>playground:1187</td>
+        <td>honnoji-decision</td>
+        <td>0.75, 0</td>
+        <td>1.5, -0.75</td>
+        <td>0.75, -0.75</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>playground:1059</td>
+        <td>shangyang-court</td>
+        <td>-0.75, 0.25</td>
+        <td>-0.75, 0.75</td>
+        <td>0, 0.5</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>playground:1172</td>
+        <td>honnoji-decision</td>
+        <td>-0.25, 1.5</td>
+        <td>0.75, 1.5</td>
+        <td>1, 0</td>
+      </tr>
+<tr>
+        <td>GPT-5.4 mini</td>
+        <td>playground:560</td>
+        <td>shangyang-court</td>
+        <td>0.75, -1</td>
+        <td>1, -1</td>
+        <td>0.25, 0</td>
+      </tr>
+<tr>
+        <td>GPT-4.1</td>
+        <td>playground:1181</td>
+        <td>honnoji-decision</td>
+        <td>0.75, -1.25</td>
+        <td>0.75, -1</td>
+        <td>0, 0.25</td>
+      </tr>
+<tr>
+        <td>Qwen3.6 27B</td>
+        <td>playground:1171</td>
+        <td>honnoji-decision</td>
+        <td>0.75, 0</td>
+        <td>1.5, -0.75</td>
+        <td>0.75, -0.75</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <h2>Cases</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Battle</th>
+        <th>Source</th>
+        <th>Scenario</th>
+        <th>Error token</th>
+        <th>Prompt chars</th>
+        <th>Messages</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1203</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2783</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1202</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2296</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1198</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2059</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1197</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2167</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1187</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2276</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1185</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>西</td>
+        <td>2388</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1184</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2295</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1182</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2388</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1059</td>
+        <td>playground</td>
+        <td>shangyang-court</td>
+        <td>维</td>
+        <td>1668</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1046</td>
+        <td>playground</td>
+        <td>shangyang-court</td>
+        <td>维</td>
+        <td>1629</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1181</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2170</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1179</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2369</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1173</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2328</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1172</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>西</td>
+        <td>2396</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1171</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>袭</td>
+        <td>2058</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1090</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>西</td>
+        <td>2262</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1089</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>西</td>
+        <td>2243</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>1077</td>
+        <td>playground</td>
+        <td>honnoji-decision</td>
+        <td>西</td>
+        <td>2158</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>560</td>
+        <td>playground</td>
+        <td>shangyang-court</td>
+        <td>变</td>
+        <td>1841</td>
+        <td>1</td>
+      </tr>
+<tr>
+        <td>555</td>
+        <td>playground</td>
+        <td>shangyang-court</td>
+        <td>维</td>
+        <td>1910</td>
+        <td>1</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Failure Examples</h2>
+  <p class="good">No failures in this run.</p>
+
+  <h2>Sources</h2>
+  <ul>
+    <li><a href="https://developers.openai.com/api/docs/pricing">OpenAI API pricing</a></li>
+<li><a href="https://openai.com/index/gpt-4-1/">OpenAI GPT-4.1 pricing</a></li>
+<li><a href="https://docs.anthropic.com/en/docs/about-claude/pricing">Anthropic pricing</a></li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/effort">Anthropic effort</a></li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking">Anthropic adaptive thinking</a></li>
+<li><a href="https://siliconflow.cn/pricing">SiliconFlow pricing</a></li>
+<li><a href="https://docs.siliconflow.com/en/userguide/guides/json-mode">SiliconFlow JSON mode</a></li>
+  </ul>
+
+  <p class="note">Raw benchmark data is in <code>results.json</code>. Prompt text and full request bodies are intentionally not written into this HTML.</p>
+</main>
+</body>
+</html>
