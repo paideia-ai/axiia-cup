@@ -159,7 +159,7 @@ export function AdminTournamentsPage() {
       {
         label: '进行中',
         value: stats?.running ?? 0,
-        copy: '全局异步执行或裁判评分中。',
+        copy: '全局异步执行、裁决或计分中。',
       },
       {
         label: '已评分',

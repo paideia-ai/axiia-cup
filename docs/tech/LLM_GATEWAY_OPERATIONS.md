@@ -266,12 +266,14 @@ Docker deployment on a local Linux box.
 
 ## 8. Admin Scenario Model Selection
 
-Judge and scorer models are configured per scenario in the admin UI.
+Judge models are configured per scenario in the admin UI. Scorer models are still
+stored for legacy/fallback scenarios, but existing built-in scenarios use
+programmatic scoring.
 
 The admin scenario edit page now has two separate fields:
 
 - `裁判模型`
-- `计分模型`
+- `计分模型` (disabled when the scenario uses programmatic scoring)
 
 See:
 
@@ -280,7 +282,8 @@ See:
 Runtime usage:
 
 - Judgment reads `scenario.judgeModel`
-- Scoring reads `scenario.scorerModel`
+- Built-in programmatic scenarios compute scores in-process
+- Fallback scoring for unsupported scenarios reads `scenario.scorerModel`
 
 See:
 

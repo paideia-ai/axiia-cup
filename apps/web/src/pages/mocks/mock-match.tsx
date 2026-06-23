@@ -68,7 +68,7 @@ export function MockMatch() {
       {/* Verdict — outcome-first */}
       <Card>
         <CardHeader>
-          <CardTitle>裁判宣判词</CardTitle>
+          <CardTitle>计分明细</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">

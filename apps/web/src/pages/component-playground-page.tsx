@@ -437,7 +437,7 @@ function PlaygroundInner() {
                   ).map(([key, val]) => {
                     const labels: Record<keyof typeof checks, string> = {
                       roleplay: '角色扮演模式',
-                      autoJudge: '自动裁判评分',
+                      autoJudge: '自动裁决计分',
                       multiRound: '多轮对话',
                     }
                     return (
@@ -675,7 +675,7 @@ function PlaygroundInner() {
 
               <Tabs.Panel value="strategy" className="pt-5">
                 <p className="text-sm text-(--foreground-subtle)">
-                  策略分析图表将在此显示，包括角色偏好、论点强度和裁判评分分布。
+                  策略分析图表将在此显示，包括角色偏好、论点强度和计分分布。
                 </p>
               </Tabs.Panel>
 
@@ -797,7 +797,7 @@ function PlaygroundInner() {
                   value: 'rules',
                   title: '比赛规则',
                   content:
-                    'Axiia Cup 采用瑞士轮制赛制，每位选手提交一个 AI Agent 参与辩论对抗。每场对局包含多轮对话阶段和裁判评分环节，最终由评分模型判定胜负。',
+                    'Axiia Cup 采用瑞士轮制赛制，每位选手提交一个 AI Agent 参与辩论对抗。每场对局包含多轮对话、裁判裁决和系统计分，最终由得分判定胜负。',
                 },
                 {
                   value: 'roles',

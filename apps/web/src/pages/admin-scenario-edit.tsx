@@ -1,5 +1,6 @@
 import {
   evaluationModelOptions,
+  scenarioUsesProgrammaticScorer,
   type AdminScenario,
   type PresetOpponent,
   type RoleOption,
@@ -182,7 +183,8 @@ const promptVariableSections: PromptVariableSection[] = [
   {
     value: 'scorer',
     title: '评分模板',
-    summary: '用于评分器提示词，根据裁判输出和信息分配计算最终得分。',
+    summary:
+      '用于未接入程序化计分的评分器提示词，根据裁判输出和信息分配计算最终得分。',
     categories: [
       {
         title: '角色与对话',
@@ -939,6 +941,7 @@ export function AdminScenarioEditPage() {
 
   const usesRoleOptions =
     draft.roleAOptions.length > 0 || draft.roleBOptions.length > 0
+  const usesProgrammaticScoring = scenarioUsesProgrammaticScorer(scenario.id)
 
   return (
     <div className="space-y-6">
@@ -1041,6 +1044,7 @@ export function AdminScenarioEditPage() {
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>计分模型</span>
                     <Select
+                      disabled={usesProgrammaticScoring}
                       value={draft.scorerModel}
                       onValueChange={(value) =>
                         setDraft((c) =>
@@ -1064,6 +1068,11 @@ export function AdminScenarioEditPage() {
                         </SelectItem>
                       ))}
                     </Select>
+                    {usesProgrammaticScoring ? (
+                      <p className="text-xs leading-5 text-(--foreground-muted)">
+                        此场景使用程序化计分，运行时不会调用计分模型。
+                      </p>
+                    ) : null}
                   </label>
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>开场白</span>
@@ -1182,9 +1191,14 @@ export function AdminScenarioEditPage() {
                   />
                 </label>
                 <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                  <span>评分提示词</span>
+                  <span>
+                    {usesProgrammaticScoring
+                      ? '评分提示词（程序化计分未使用）'
+                      : '评分提示词'}
+                  </span>
                   <Textarea
                     className="min-h-48"
+                    disabled={usesProgrammaticScoring}
                     onChange={(event) =>
                       setDraft((c) =>
                         c ? { ...c, scorerPrompt: event.target.value } : c,
