@@ -3,6 +3,13 @@ import {
   type ModelId,
   type ModelProvider,
 } from '@axiia/shared'
+import {
+  propagateAttributes,
+  startObservation,
+  type LangfuseGeneration,
+  type LangfuseGenerationAttributes,
+  type PropagateAttributesParams,
+} from '@langfuse/tracing'
 import OpenAI from 'openai'
 
 import type { LlmCallPhase, LlmCallSide } from '../db/schema'
@@ -39,6 +46,8 @@ type AnthropicResponse = {
   content?: Array<{ text?: string; type: string }>
   usage?: { input_tokens?: number; output_tokens?: number }
 }
+
+type AnthropicRequestPayload = ReturnType<typeof buildAnthropicRequest>
 
 export type ChatCompletionTrace = {
   attempt?: number
@@ -94,39 +103,161 @@ function getOpenAICompatibleClient(provider: OpenAICompatibleProvider) {
   return client
 }
 
+function getLangfuseSessionId(trace: ChatCompletionTrace | undefined) {
+  return trace?.matchId != null
+    ? `match:${trace.matchId}`
+    : trace?.playgroundRunId != null
+      ? `playground:${trace.playgroundRunId}`
+      : undefined
+}
+
+function getLangfuseGenerationName(trace: ChatCompletionTrace | undefined) {
+  return trace ? `axiia:${trace.phase}:${trace.side}` : 'axiia:chat'
+}
+
+function getLangfuseTags(
+  trace: ChatCompletionTrace | undefined,
+  model: ModelId,
+  provider: ModelProvider,
+) {
+  return [
+    `provider:${provider}`,
+    `model:${model}`,
+    trace?.phase ? `phase:${trace.phase}` : null,
+    trace?.side ? `side:${trace.side}` : null,
+  ].filter((value): value is string => value !== null)
+}
+
+function getLangfuseGenerationMetadata(
+  trace: ChatCompletionTrace | undefined,
+  model: ModelId,
+  provider: ModelProvider,
+): Record<string, unknown> {
+  return {
+    attempt: trace?.attempt,
+    matchId: trace?.matchId,
+    modelId: model,
+    phase: trace?.phase,
+    playgroundRunId: trace?.playgroundRunId,
+    provider,
+    side: trace?.side,
+    turnIndex: trace?.turnIndex ?? null,
+  }
+}
+
+function getLangfuseTraceAttributes(
+  trace: ChatCompletionTrace | undefined,
+  model: ModelId,
+  provider: ModelProvider,
+): PropagateAttributesParams {
+  const sessionId = getLangfuseSessionId(trace)
+
+  return {
+    sessionId,
+    tags: getLangfuseTags(trace, model, provider),
+    traceName: sessionId ?? 'axiia:llm',
+  }
+}
+
 function getObservedOpenAIClient(
   trace: ChatCompletionTrace | undefined,
   model: ModelId,
   provider: OpenAICompatibleProvider,
 ) {
-  const sessionId =
-    trace?.matchId != null
-      ? `match:${trace.matchId}`
-      : trace?.playgroundRunId != null
-        ? `playground:${trace.playgroundRunId}`
-        : undefined
+  const sessionId = getLangfuseSessionId(trace)
 
   return observeOpenAIClient(getOpenAICompatibleClient(provider), {
-    generationMetadata: {
-      attempt: trace?.attempt,
-      matchId: trace?.matchId,
-      modelId: model,
-      phase: trace?.phase,
-      playgroundRunId: trace?.playgroundRunId,
-      provider,
-      side: trace?.side,
-      turnIndex: trace?.turnIndex ?? null,
-    },
-    generationName: trace ? `axiia:${trace.phase}:${trace.side}` : 'axiia:chat',
+    generationMetadata: getLangfuseGenerationMetadata(trace, model, provider),
+    generationName: getLangfuseGenerationName(trace),
     sessionId,
-    tags: [
-      `provider:${provider}`,
-      `model:${model}`,
-      trace?.phase ? `phase:${trace.phase}` : null,
-      trace?.side ? `side:${trace.side}` : null,
-    ].filter((value): value is string => value !== null),
+    tags: getLangfuseTags(trace, model, provider),
     traceName: sessionId ?? 'axiia:llm',
   })
+}
+
+function getAnthropicModelParameters(
+  requestPayload: AnthropicRequestPayload,
+): Record<string, number> {
+  return {
+    max_tokens: requestPayload.max_tokens,
+    temperature: requestPayload.temperature,
+  }
+}
+
+function getAnthropicUsageDetails(
+  response: AnthropicResponse,
+): Record<string, number> | undefined {
+  const promptTokens = response.usage?.input_tokens
+  const completionTokens = response.usage?.output_tokens
+
+  if (promptTokens == null && completionTokens == null) {
+    return undefined
+  }
+
+  return {
+    ...(promptTokens != null ? { promptTokens } : {}),
+    ...(completionTokens != null ? { completionTokens } : {}),
+    ...(promptTokens != null && completionTokens != null
+      ? { totalTokens: promptTokens + completionTokens }
+      : {}),
+  }
+}
+
+function startAnthropicLangfuseGeneration(params: {
+  model: ModelId
+  requestPayload: AnthropicRequestPayload
+  trace: ChatCompletionTrace | undefined
+}): LangfuseGeneration | null {
+  if (!initializeLangfuseTracing()) {
+    return null
+  }
+
+  try {
+    const provider: ModelProvider = 'anthropic'
+
+    return propagateAttributes(
+      getLangfuseTraceAttributes(params.trace, params.model, provider),
+      () =>
+        startObservation(
+          getLangfuseGenerationName(params.trace),
+          {
+            input: params.requestPayload,
+            metadata: getLangfuseGenerationMetadata(
+              params.trace,
+              params.model,
+              provider,
+            ),
+            model: params.requestPayload.model,
+            modelParameters: getAnthropicModelParameters(params.requestPayload),
+          },
+          { asType: 'generation' },
+        ),
+    )
+  } catch (error) {
+    console.error('[langfuse] failed to start Anthropic generation', error)
+    return null
+  }
+}
+
+function finishAnthropicLangfuseGeneration(
+  generation: LangfuseGeneration | null,
+  attributes: LangfuseGenerationAttributes,
+) {
+  if (!generation) {
+    return
+  }
+
+  try {
+    generation.update(attributes)
+  } catch (error) {
+    console.error('[langfuse] failed to update Anthropic generation', error)
+  }
+
+  try {
+    generation.end()
+  } catch (error) {
+    console.error('[langfuse] failed to end Anthropic generation', error)
+  }
 }
 
 function safeStringify(value: unknown) {
@@ -375,6 +506,12 @@ async function callAnthropicChatCompletion(params: {
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
+  const langfuseGeneration = startAnthropicLangfuseGeneration({
+    model: params.model,
+    requestPayload,
+    trace: params.trace,
+  })
+  let responseText: string | null = null
 
   try {
     const response = await fetch(
@@ -391,7 +528,7 @@ async function callAnthropicChatCompletion(params: {
       },
     )
 
-    const responseText = await response.text()
+    responseText = await response.text()
 
     if (!response.ok) {
       throw new Error(
@@ -410,6 +547,11 @@ async function callAnthropicChatCompletion(params: {
       throw new Error('Empty completion response')
     }
 
+    finishAnthropicLangfuseGeneration(langfuseGeneration, {
+      output: content,
+      usageDetails: getAnthropicUsageDetails(parsed),
+    })
+
     await persistLlmCall(params.trace, {
       durationMs: Date.now() - startedAt,
       error: null,
@@ -427,6 +569,12 @@ async function callAnthropicChatCompletion(params: {
     if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
       const message = getPlaygroundInterruptMessage(params.signal)
 
+      finishAnthropicLangfuseGeneration(langfuseGeneration, {
+        level: 'ERROR',
+        output: responseText ?? { error: message },
+        statusMessage: message,
+      })
+
       await persistLlmCall(params.trace, {
         durationMs,
         error: message,
@@ -441,6 +589,12 @@ async function callAnthropicChatCompletion(params: {
     }
 
     if (error instanceof Error) {
+      finishAnthropicLangfuseGeneration(langfuseGeneration, {
+        level: 'ERROR',
+        output: responseText ?? { error: error.message },
+        statusMessage: error.message,
+      })
+
       await persistLlmCall(params.trace, {
         durationMs,
         error: error.message,
@@ -455,6 +609,12 @@ async function callAnthropicChatCompletion(params: {
     }
 
     const message = 'Anthropic request failed (unknown): non-Error thrown'
+
+    finishAnthropicLangfuseGeneration(langfuseGeneration, {
+      level: 'ERROR',
+      output: responseText ?? { error: message },
+      statusMessage: message,
+    })
 
     await persistLlmCall(params.trace, {
       durationMs,
