@@ -702,7 +702,7 @@ function PlaygroundInner() {
                     tone: 'accent' as const,
                   },
                   { label: '胜率', val: 75, tone: 'success' as const },
-                  { label: '评分进度', val: 32, tone: 'info' as const },
+                  { label: '计分进度', val: 32, tone: 'info' as const },
                 ].map(({ label, val, tone }) => {
                   const colors = {
                     accent: 'bg-(--accent)',
@@ -807,9 +807,9 @@ function PlaygroundInner() {
                 },
                 {
                   value: 'scoring',
-                  title: '评分标准',
+                  title: '计分规则',
                   content:
-                    '裁判从逻辑严密性、论据充分性、回应相关性三个维度进行评分。每个维度满分 10 分，综合得分决定单场胜负，系列赛采用 Best-of-3 制度。',
+                    '裁判先做出场景裁决，系统再根据大目标、真请求、假请求和问询命中情况计算双方得分。',
                 },
                 {
                   value: 'submission',

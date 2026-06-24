@@ -162,7 +162,7 @@ export function AdminTournamentsPage() {
         copy: '全局异步执行、裁决或计分中。',
       },
       {
-        label: '已评分',
+        label: '已计分',
         value: stats?.scored ?? 0,
         copy: '全局已完成，可进入排行榜统计。',
       },
