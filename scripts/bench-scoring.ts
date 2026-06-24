@@ -12,7 +12,7 @@ const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
 const ANTHROPIC_MAX_TOKENS = Number(process.env.ANTHROPIC_MAX_TOKENS ?? 4096)
 const REQUEST_TIMEOUT_MS = Number(process.env.BENCH_REQUEST_TIMEOUT_MS ?? 60_000)
 
-type Provider = 'anthropic' | 'openai' | 'siliconflow'
+type Provider = 'anthropic' | 'deepseek' | 'openai' | 'siliconflow'
 type Currency = 'CNY' | 'USD'
 
 type ChatMessage = {
@@ -29,6 +29,7 @@ type ModelConfig = {
   provider: Provider
   repoModelId: string | null
   settingsLabel: string
+  useDeepSeekThinkingOff?: boolean
   omitTemperature?: boolean
   useAnthropicLowEffort?: boolean
   useOpenAiLowReasoning?: boolean
@@ -212,24 +213,28 @@ const modelConfigs: ModelConfig[] = [
     settingsLabel: 'response_format=json_object; temperature=0',
   },
   {
-    apiModel: 'deepseek-ai/DeepSeek-V4-Flash',
-    currency: 'CNY',
-    inputPricePerMillion: 1,
+    apiModel: 'deepseek-v4-flash',
+    currency: 'USD',
+    inputPricePerMillion: 0.14,
     label: 'DeepSeek V4 Flash',
-    outputPricePerMillion: 2,
-    provider: 'siliconflow',
+    outputPricePerMillion: 0.28,
+    provider: 'deepseek',
     repoModelId: 'deepseek-v4-flash',
-    settingsLabel: 'response_format=json_object; temperature=0',
+    settingsLabel:
+      'official DeepSeek API; response_format=json_object; temperature=0; thinking=disabled; input price uses cache-miss rate',
+    useDeepSeekThinkingOff: true,
   },
   {
-    apiModel: 'deepseek-ai/DeepSeek-V4-Pro',
-    currency: 'CNY',
-    inputPricePerMillion: 3,
+    apiModel: 'deepseek-v4-pro',
+    currency: 'USD',
+    inputPricePerMillion: 0.435,
     label: 'DeepSeek V4 Pro',
-    outputPricePerMillion: 6,
-    provider: 'siliconflow',
+    outputPricePerMillion: 0.87,
+    provider: 'deepseek',
     repoModelId: 'deepseek-v4-pro',
-    settingsLabel: 'response_format=json_object; temperature=0',
+    settingsLabel:
+      'official DeepSeek API; response_format=json_object; temperature=0; thinking=disabled; input price uses cache-miss rate',
+    useDeepSeekThinkingOff: true,
   },
   {
     apiModel: 'gpt-5.4',
@@ -451,12 +456,24 @@ function selectModels(modelFilter: string[]) {
   return selected
 }
 
-function validateProviderKeys() {
-  const missing = [
-    'ANTHROPIC_API_KEY',
-    'OPENAI_API_KEY',
-    'SILICONFLOW_API_KEY',
-  ].filter((name) => !getOptionalEnv(name))
+function getProviderApiKeyEnv(provider: Provider) {
+  if (provider === 'anthropic') {
+    return 'ANTHROPIC_API_KEY'
+  }
+  if (provider === 'deepseek') {
+    return 'DEEPSEEK_API_KEY'
+  }
+  if (provider === 'openai') {
+    return 'OPENAI_API_KEY'
+  }
+  return 'SILICONFLOW_API_KEY'
+}
+
+function validateProviderKeys(models: ModelConfig[]) {
+  const required = new Set(
+    models.map((model) => getProviderApiKeyEnv(model.provider)),
+  )
+  const missing = [...required].filter((name) => !getOptionalEnv(name))
 
   if (missing.length > 0) {
     throw new Error(`Missing provider API keys: ${missing.join(', ')}`)
@@ -725,6 +742,7 @@ function openAiCompatibleRequestBody(model: ModelConfig, testCase: BenchCase) {
     model: model.apiModel,
     response_format: { type: 'json_object' },
     ...(model.omitTemperature ? {} : { temperature: 0 }),
+    ...(model.useDeepSeekThinkingOff ? { thinking: { type: 'disabled' } } : {}),
     ...(model.useSiliconFlowThinkingOff ? { enable_thinking: false } : {}),
     ...(model.useOpenAiLowReasoning ? { reasoning_effort: 'low' } : {}),
   }
@@ -850,11 +868,16 @@ async function callProvider(
   const baseUrl =
     model.provider === 'openai'
       ? getOptionalEnv('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1'
-      : getOptionalEnv('SILICONFLOW_BASE_URL') ?? 'https://api.siliconflow.cn/v1'
+      : model.provider === 'deepseek'
+        ? getOptionalEnv('DEEPSEEK_BASE_URL') ?? 'https://api.deepseek.com'
+        : getOptionalEnv('SILICONFLOW_BASE_URL') ??
+          'https://api.siliconflow.cn/v1'
   const apiKey =
     model.provider === 'openai'
       ? getRequiredEnv('OPENAI_API_KEY')
-      : getRequiredEnv('SILICONFLOW_API_KEY')
+      : model.provider === 'deepseek'
+        ? getRequiredEnv('DEEPSEEK_API_KEY')
+        : getRequiredEnv('SILICONFLOW_API_KEY')
   const requestBody = openAiCompatibleRequestBody(model, testCase)
   const response = await fetchWithTimeout(
     new URL('chat/completions', normalizeBaseUrl(baseUrl)),
@@ -1166,6 +1189,11 @@ function renderHtml(
   correctnessReport: CorrectnessReport | null,
 ) {
   const sourceLinks = [
+    ['DeepSeek pricing', 'https://api-docs.deepseek.com/quick_start/pricing'],
+    [
+      'DeepSeek Chat Completions',
+      'https://api-docs.deepseek.com/api/create-chat-completion',
+    ],
     ['OpenAI API pricing', 'https://developers.openai.com/api/docs/pricing'],
     ['OpenAI GPT-4.1 pricing', 'https://openai.com/index/gpt-4-1/'],
     [
@@ -1571,11 +1599,11 @@ function mergeReports(
 
 async function main() {
   const options = parseArgs()
+  const selectedModels = selectModels(options.models)
   if (!options.dryRun && options.mergeResults.length === 0) {
-    validateProviderKeys()
+    validateProviderKeys(selectedModels)
   }
 
-  const selectedModels = selectModels(options.models)
   const outputDir =
     options.outputDir || join('docs', 'bench', 'runs', `scoring-${timestampSlug()}`)
 

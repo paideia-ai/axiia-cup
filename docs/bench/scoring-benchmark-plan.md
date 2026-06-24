@@ -32,6 +32,8 @@ The requested benchmark set is:
 | --- | --- | --- | --- |
 | Qwen3.6 27B | `qwen3.6-27b` | `Qwen/Qwen3.6-27B` | SiliconFlow |
 | GLM-5.1 | `glm-5.1` | `Pro/zai-org/GLM-5.1` | SiliconFlow |
+| DeepSeek V4 Flash | `deepseek-v4-flash` | `deepseek-v4-flash` | DeepSeek official API |
+| DeepSeek V4 Pro | `deepseek-v4-pro` | `deepseek-v4-pro` | DeepSeek official API |
 | GPT-5.4 mini | `gpt-5.4-mini` | `gpt-5.4-mini` | OpenAI |
 | GPT-4.1 | `gpt-4.1` | `gpt-4.1` | OpenAI |
 | Claude Sonnet 4.5 | `claude-sonnet-4-5` | `claude-sonnet-4-5` | Anthropic |
@@ -48,6 +50,8 @@ Prices below are current planning inputs and should be copied into the final HTM
 | --- | ---: | ---: | --- |
 | Qwen3.6 27B | CNY 0.60 / 1M tokens | CNY 4.80 / 1M tokens | SiliconFlow pricing, under 128k context |
 | GLM-5.1 | CNY 6.00 / 1M tokens | CNY 24.00 / 1M tokens | SiliconFlow pricing, under 32k context |
+| DeepSeek V4 Flash | USD 0.14 / 1M input tokens, cache miss | USD 0.28 / 1M output tokens | DeepSeek pricing |
+| DeepSeek V4 Pro | USD 0.435 / 1M input tokens, cache miss | USD 0.87 / 1M output tokens | DeepSeek pricing |
 | GPT-5.4 mini | USD 0.75 / 1M tokens | USD 4.50 / 1M tokens | OpenAI pricing |
 | GPT-4.1 | USD 2.00 / 1M tokens | USD 8.00 / 1M tokens | OpenAI GPT-4.1 pricing |
 | Claude Sonnet 4.5 | USD 3.00 / 1M tokens | USD 15.00 / 1M tokens | Anthropic pricing |
@@ -64,6 +68,8 @@ Source links to preserve in the HTML:
 - Anthropic Opus 4.8 migration/model details: https://platform.claude.com/docs/en/about-claude/models/migration-guide
 - Anthropic effort settings: https://platform.claude.com/docs/en/build-with-claude/effort
 - Anthropic adaptive thinking: https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking
+- DeepSeek pricing: https://api-docs.deepseek.com/quick_start/pricing
+- DeepSeek Chat Completions API: https://api-docs.deepseek.com/api/create-chat-completion
 - SiliconFlow pricing: https://siliconflow.cn/pricing
 - SiliconFlow JSON mode: https://docs.siliconflow.com/en/userguide/guides/json-mode
 - SiliconFlow Chat Completions API: https://docs.siliconflow.com/en/api-reference/chat-completions/chat-completions
@@ -81,6 +87,8 @@ Pilot run: 10 cases per model.
 | --- | ---: |
 | Qwen3.6 27B | ~CNY 0.05 |
 | GLM-5.1 | ~CNY 0.32 |
+| DeepSeek V4 Flash | ~USD 0.005 |
+| DeepSeek V4 Pro | ~USD 0.017 |
 | GPT-5.4 mini | ~USD 0.05 |
 | GPT-4.1 | ~USD 0.11 |
 | Claude Sonnet 4.5 | ~USD 0.18 |
@@ -93,6 +101,8 @@ Full run: 30 cases per model.
 | --- | ---: |
 | Qwen3.6 27B | ~CNY 0.15 |
 | GLM-5.1 | ~CNY 0.95 |
+| DeepSeek V4 Flash | ~USD 0.016 |
+| DeepSeek V4 Pro | ~USD 0.051 |
 | GPT-5.4 mini | ~USD 0.15 |
 | GPT-4.1 | ~USD 0.32 |
 | Claude Sonnet 4.5 | ~USD 0.54 |
@@ -152,6 +162,25 @@ Recommended benchmark settings:
 | GPT-4.1 | `response_format: { type: "json_object" }` | `0` | No reasoning-effort setting |
 
 Implementation note: the current app code uses Chat Completions and does not send reasoning controls. The benchmark runner should either keep that path for apples-to-apples production comparison, or use a separate Responses API track when testing OpenAI reasoning effort directly.
+
+### DeepSeek Official API Models
+
+Applicable models: `deepseek-v4-flash`, `deepseek-v4-pro`.
+
+Current benchmark behavior for DeepSeek official API:
+
+- Uses OpenAI-compatible Chat Completions at `https://api.deepseek.com`.
+- Sends `response_format: { type: "json_object" }`.
+- Sends `temperature: 0`.
+- Sends `thinking: { type: "disabled" }` for a lower-latency scorer comparison.
+- Uses cache-miss input pricing in the report cost estimate; real billing can be lower when DeepSeek reports cache-hit input tokens.
+
+Recommended benchmark settings:
+
+| Model | JSON mode | Temperature | Thinking/reasoning setting |
+| --- | --- | ---: | --- |
+| DeepSeek V4 Flash | `response_format: { type: "json_object" }` | `0` | `thinking: { type: "disabled" }` |
+| DeepSeek V4 Pro | `response_format: { type: "json_object" }` | `0` | `thinking: { type: "disabled" }` |
 
 ### Anthropic Models
 
@@ -260,14 +289,28 @@ The pilot runner lives at:
 bun scripts/bench-scoring.ts --case-limit 10
 ```
 
-It requires these local environment variables:
+It requires these local environment variables for case collection:
 
 ```bash
 AXIIA_API_URL=...
 AXIIA_AUTH_TOKEN=...
+```
+
+It also requires provider keys for the selected model providers:
+
+```bash
+DEEPSEEK_API_KEY=...
 ANTHROPIC_API_KEY=...
 OPENAI_API_KEY=...
 SILICONFLOW_API_KEY=...
+```
+
+Useful DeepSeek-only run:
+
+```bash
+bun scripts/bench-scoring.ts \
+  --case-limit 10 \
+  --models deepseek-v4-flash,deepseek-v4-pro
 ```
 
 Useful dry run:

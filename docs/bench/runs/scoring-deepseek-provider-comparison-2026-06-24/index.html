@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Axiia DeepSeek Provider Comparison</title>
+  <style>
+    :root { color-scheme: light; --bg:#f7f7f4; --ink:#17201b; --muted:#66736b; --line:#d9ded8; --panel:#fff; --good:#0f7a4c; --bad:#a33a2a; --warn:#9b6a1b; }
+    body { background:var(--bg); color:var(--ink); font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height:1.45; margin:0; }
+    main { margin:0 auto; max-width:1180px; padding:40px 24px 64px; }
+    h1 { font-size:32px; line-height:1.1; margin:0 0 8px; }
+    h2 { border-top:1px solid var(--line); font-size:22px; margin:32px 0 12px; padding-top:24px; }
+    p { color:var(--muted); margin:0 0 16px; }
+    .metrics { display:grid; gap:12px; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); margin:24px 0; }
+    .metric { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+    .metric span { color:var(--muted); display:block; font-size:13px; }
+    .metric strong { display:block; font-size:24px; margin-top:4px; }
+    table { border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; width:100%; }
+    th, td { border-bottom:1px solid var(--line); font-size:14px; padding:9px 10px; text-align:left; vertical-align:top; }
+    th { background:#eef1ec; color:#3d4941; font-size:12px; letter-spacing:0; text-transform:uppercase; }
+    tr:last-child td { border-bottom:0; }
+    code { background:#eef1ec; border-radius:4px; padding:2px 4px; }
+    .good { color:var(--good); font-weight:700; }
+    .bad { color:var(--bad); font-weight:700; }
+    .warn { color:var(--warn); font-weight:700; }
+    .note { color:var(--muted); font-size:14px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Axiia DeepSeek Provider Comparison</h1>
+  <p>Generated 2026-06-24T06:33:24.581Z. This merges the 2026-06-23 benchmark report with the 2026-06-24 official DeepSeek API run. DeepSeek rows are relabeled by provider so SiliconFlow and official API results do not overwrite each other.</p>
+  <div class="metrics">
+    <div class="metric"><span>Cases</span><strong>20</strong></div>
+    <div class="metric"><span>Models</span><strong>13</strong></div>
+    <div class="metric"><span>Attempts</span><strong>260</strong></div>
+    <div class="metric"><span>DeepSeek Provider Rows</span><strong>4</strong></div>
+  </div>
+  <h2>DeepSeek Provider Comparison</h2>
+  <p class="note">All four rows use the same 20 case IDs. Official API rows explicitly set <code>thinking: { type: "disabled" }</code>. The older SiliconFlow rows did not send an explicit reasoning-mode switch; the saved payload was <code>response_format=json_object; temperature=0</code>.</p>
+  <table><thead><tr><th>Model</th><th>Provider</th><th>Reasoning mode</th><th>JSON</th><th>Schema</th><th>Score correctness</th><th>Avg latency</th><th>Median</th><th>P90</th><th>Max</th><th>Avg output tokens</th><th>Cost</th></tr></thead><tbody>
+  <tr><td>DeepSeek V4 Flash (Official API)</td><td>DeepSeek official API</td><td>Off, explicit <code>thinking.disabled</code></td><td class="good">100.0%</td><td class="good">100.0%</td><td class="bad">18/20 (90.0%)</td><td>2.80s</td><td>2.63s</td><td>3.29s</td><td>3.75s</td><td>257.0</td><td>USD 0.0057</td></tr>
+<tr><td>DeepSeek V4 Flash (SiliconFlow)</td><td>SiliconFlow</td><td>Not set in old run</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">20/20 (100.0%)</td><td>23.18s</td><td>17.18s</td><td>48.15s</td><td>52.46s</td><td>590.3</td><td>CNY 0.054</td></tr>
+<tr><td>DeepSeek V4 Pro (Official API)</td><td>DeepSeek official API</td><td>Off, explicit <code>thinking.disabled</code></td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">20/20 (100.0%)</td><td>4.78s</td><td>4.65s</td><td>5.70s</td><td>6.84s</td><td>325.5</td><td>USD 0.0190</td></tr>
+<tr><td>DeepSeek V4 Pro (SiliconFlow)</td><td>SiliconFlow</td><td>Not set in old run</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">20/20 (100.0%)</td><td>25.69s</td><td>22.39s</td><td>31.05s</td><td>56.46s</td><td>819.7</td><td>CNY 0.189</td></tr>
+  </tbody></table>
+  <p class="note">For a controlled SiliconFlow no-reasoning run, rerun these rows with <code>enable_thinking: false</code>. Until then, the SiliconFlow latency rows should be read as previous-run behavior, not a provider-only comparison.</p>
+  <h2>DeepSeek Score Failures</h2>
+  <table><thead><tr><th>Model</th><th>Battle</th><th>Scenario</th><th>Expected</th><th>Actual</th><th>Delta</th></tr></thead><tbody><tr><td>DeepSeek V4 Flash (Official API)</td><td>playground:1179</td><td>honnoji-decision</td><td>0.75, 0</td><td>1.5, -0.75</td><td>0.75, -0.75</td></tr>
+<tr><td>DeepSeek V4 Flash (Official API)</td><td>playground:560</td><td>shangyang-court</td><td>0.75, -1</td><td>0.75, -0.5</td><td>0, 0.5</td></tr></tbody></table>
+  <h2>Full Model Summary</h2>
+  <table><thead><tr><th>Model</th><th>Provider</th><th>Total</th><th>JSON</th><th>Schema</th><th>Score correctness</th><th>Avg latency</th><th>P90 latency</th><th>Cost</th></tr></thead><tbody>
+  <tr><td>DeepSeek V4 Flash (Official API)</td><td>deepseek</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="bad">90.0%</td><td>2.80s</td><td>3.29s</td><td>USD 0.0057</td></tr>
+<tr><td>DeepSeek V4 Flash (SiliconFlow)</td><td>siliconflow</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>23.18s</td><td>48.15s</td><td>CNY 0.054</td></tr>
+<tr><td>DeepSeek V4 Pro (Official API)</td><td>deepseek</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>4.78s</td><td>5.70s</td><td>USD 0.0190</td></tr>
+<tr><td>DeepSeek V4 Pro (SiliconFlow)</td><td>siliconflow</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>25.69s</td><td>31.05s</td><td>CNY 0.189</td></tr>
+<tr><td>Claude Opus 4.5</td><td>anthropic</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>10.27s</td><td>21.95s</td><td>USD 0.4582</td></tr>
+<tr><td>Claude Opus 4.7</td><td>anthropic</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>4.67s</td><td>5.01s</td><td>USD 0.2977</td></tr>
+<tr><td>Claude Opus 4.8</td><td>anthropic</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>8.09s</td><td>10.46s</td><td>USD 0.4339</td></tr>
+<tr><td>Claude Sonnet 4.5</td><td>anthropic</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>8.56s</td><td>10.41s</td><td>USD 0.2878</td></tr>
+<tr><td>GLM-5.1</td><td>siliconflow</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>18.61s</td><td>22.28s</td><td>CNY 0.633</td></tr>
+<tr><td>GPT-4.1</td><td>openai</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="warn">95.0%</td><td>3.83s</td><td>5.04s</td><td>USD 0.1215</td></tr>
+<tr><td>GPT-5.4</td><td>openai</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="good">100.0%</td><td>5.30s</td><td>6.17s</td><td>USD 0.2393</td></tr>
+<tr><td>GPT-5.4 mini</td><td>openai</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="bad">85.0%</td><td>4.49s</td><td>5.72s</td><td>USD 0.0667</td></tr>
+<tr><td>Qwen3.6 27B</td><td>siliconflow</td><td>20</td><td class="good">100.0%</td><td class="good">100.0%</td><td class="bad">85.0%</td><td>12.77s</td><td>17.38s</td><td>CNY 0.059</td></tr>
+  </tbody></table>
+  <h2>Cases</h2>
+  <table><thead><tr><th>Battle</th><th>Scenario</th><th>Error token</th><th>Prompt chars</th><th>Messages</th></tr></thead><tbody>
+  <tr><td>playground:1046</td><td>shangyang-court</td><td><code>维</code></td><td>1629</td><td>1</td></tr>
+<tr><td>playground:1059</td><td>shangyang-court</td><td><code>维</code></td><td>1668</td><td>1</td></tr>
+<tr><td>playground:1077</td><td>honnoji-decision</td><td><code>西</code></td><td>2158</td><td>1</td></tr>
+<tr><td>playground:1089</td><td>honnoji-decision</td><td><code>西</code></td><td>2243</td><td>1</td></tr>
+<tr><td>playground:1090</td><td>honnoji-decision</td><td><code>西</code></td><td>2262</td><td>1</td></tr>
+<tr><td>playground:1171</td><td>honnoji-decision</td><td><code>袭</code></td><td>2058</td><td>1</td></tr>
+<tr><td>playground:1172</td><td>honnoji-decision</td><td><code>西</code></td><td>2396</td><td>1</td></tr>
+<tr><td>playground:1173</td><td>honnoji-decision</td><td><code>袭</code></td><td>2328</td><td>1</td></tr>
+<tr><td>playground:1179</td><td>honnoji-decision</td><td><code>袭</code></td><td>2369</td><td>1</td></tr>
+<tr><td>playground:1181</td><td>honnoji-decision</td><td><code>袭</code></td><td>2170</td><td>1</td></tr>
+<tr><td>playground:1182</td><td>honnoji-decision</td><td><code>袭</code></td><td>2388</td><td>1</td></tr>
+<tr><td>playground:1184</td><td>honnoji-decision</td><td><code>袭</code></td><td>2295</td><td>1</td></tr>
+<tr><td>playground:1185</td><td>honnoji-decision</td><td><code>西</code></td><td>2388</td><td>1</td></tr>
+<tr><td>playground:1187</td><td>honnoji-decision</td><td><code>袭</code></td><td>2276</td><td>1</td></tr>
+<tr><td>playground:1197</td><td>honnoji-decision</td><td><code>袭</code></td><td>2167</td><td>1</td></tr>
+<tr><td>playground:1198</td><td>honnoji-decision</td><td><code>袭</code></td><td>2059</td><td>1</td></tr>
+<tr><td>playground:1202</td><td>honnoji-decision</td><td><code>袭</code></td><td>2296</td><td>1</td></tr>
+<tr><td>playground:1203</td><td>honnoji-decision</td><td><code>袭</code></td><td>2783</td><td>1</td></tr>
+<tr><td>playground:555</td><td>shangyang-court</td><td><code>维</code></td><td>1910</td><td>1</td></tr>
+<tr><td>playground:560</td><td>shangyang-court</td><td><code>变</code></td><td>1841</td><td>1</td></tr>
+  </tbody></table>
+  <h2>Source Artifacts</h2>
+  <p class="note">This folder is the retained DeepSeek benchmark artifact. <code>results.json</code> contains the merged official DeepSeek API attempts, correctness results, and provider comparison rows. The SiliconFlow baseline comes from <code>docs/bench/runs/scoring-pilot-combined-2026-06-23/results.json</code> and <code>docs/bench/runs/scoring-correctness-2026-06-23/results.json</code>; intermediate official DeepSeek raw/final folders were intentionally consolidated out of the PR.</p>
+</main>
+</body>
+</html>
