@@ -32,6 +32,7 @@ import {
   PlaygroundRunInterruptedError,
   throwIfPlaygroundRunInterrupted,
 } from './playground-interrupt'
+import { computeProgrammaticScore } from './programmatic-scorer'
 
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
@@ -1120,19 +1121,29 @@ export async function executeMatchSession(
   )
 
   // ── Phase 4: Scorer ───────────────────────────────────────────────────
-  const { scoreA, scoreB, reasoning, winner } = await getScoreFromScorer(
-    params.scenario,
+  const programmaticScore = computeProgrammaticScore({
     assignment,
-    judgeDecision,
-    transcript,
-    judgeTranscriptA,
-    judgeTranscriptB,
-    {
-      matchId: params.matchId,
-      playgroundRunId: params.playgroundRunId,
-    },
-    params.signal,
-  )
+    examinationA: judgeTranscriptA,
+    examinationB: judgeTranscriptB,
+    judgeOutput: judgeDecision,
+    scenario: params.scenario,
+  })
+
+  const { scoreA, scoreB, reasoning, winner } =
+    programmaticScore ??
+    (await getScoreFromScorer(
+      params.scenario,
+      assignment,
+      judgeDecision,
+      transcript,
+      judgeTranscriptA,
+      judgeTranscriptB,
+      {
+        matchId: params.matchId,
+        playgroundRunId: params.playgroundRunId,
+      },
+      params.signal,
+    ))
 
   return {
     infoAssignment: assignment,

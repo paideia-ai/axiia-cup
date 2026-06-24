@@ -444,15 +444,15 @@ export function MatchDetailPage() {
         </CardHeader>
       </Card>
 
-      {/* Verdict — moved up: users want "why did I win/lose?" first */}
+      {/* Scoring detail — moved up: users want "why did I win/lose?" first */}
       <Card>
         <CardHeader>
-          <CardTitle>裁判宣判词</CardTitle>
+          <CardTitle>计分明细</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
             <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无宣判词。'}
+              {match.reasoning ?? '暂无计分明细。'}
             </p>
             {match.error ? (
               <p className="mt-4 text-sm text-(--accent)">

@@ -1,5 +1,6 @@
 import {
   evaluationModelOptions,
+  scenarioUsesProgrammaticScorer,
   type AdminScenario,
   type PresetOpponent,
   type RoleOption,
@@ -181,8 +182,9 @@ const promptVariableSections: PromptVariableSection[] = [
   },
   {
     value: 'scorer',
-    title: '评分模板',
-    summary: '用于评分器提示词，根据裁判输出和信息分配计算最终得分。',
+    title: '计分模板',
+    summary:
+      '用于未接入程序化计分的计分提示词，根据裁判输出和信息分配计算最终得分。',
     categories: [
       {
         title: '角色与对话',
@@ -286,7 +288,7 @@ function PromptVariableGuide({ draft }: { draft: UpdateScenario }) {
       <div className="space-y-1">
         <p className="text-sm font-medium text-(--foreground)">变量说明</p>
         <p className="text-xs leading-5 text-(--foreground-muted)">
-          按模板类型和用途分类说明。裁判/评分模板中的动态变量会根据右侧配置的隐藏信息
+          按模板类型和用途分类说明。裁判/计分模板中的动态变量会根据右侧配置的隐藏信息
           ID 与诉求 ID 自动生成，两者共享同一变量命名空间。
         </p>
       </div>
@@ -585,7 +587,7 @@ function RoleOptionsEditor({
                 </div>
 
                 <IdContentListEditor
-                  helperText="这里的诉求只属于这个入局角色。玩家选择该角色时，运行时会用这组诉求参与真请求随机化、裁判模板和评分模板。"
+                  helperText="这里的诉求只属于这个入局角色。玩家选择该角色时，运行时会用这组诉求参与真请求随机化、裁判模板和计分模板。"
                   items={option.requests}
                   label={`${option.name || option.id || '该角色'}的诉求清单`}
                   newItemPrefix="R"
@@ -939,6 +941,7 @@ export function AdminScenarioEditPage() {
 
   const usesRoleOptions =
     draft.roleAOptions.length > 0 || draft.roleBOptions.length > 0
+  const usesProgrammaticScoring = scenarioUsesProgrammaticScorer(scenario.id)
 
   return (
     <div className="space-y-6">
@@ -1041,6 +1044,7 @@ export function AdminScenarioEditPage() {
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>计分模型</span>
                     <Select
+                      disabled={usesProgrammaticScoring}
                       value={draft.scorerModel}
                       onValueChange={(value) =>
                         setDraft((c) =>
@@ -1064,6 +1068,11 @@ export function AdminScenarioEditPage() {
                         </SelectItem>
                       ))}
                     </Select>
+                    {usesProgrammaticScoring ? (
+                      <p className="text-xs leading-5 text-(--foreground-muted)">
+                        此场景使用程序化计分，运行时不会调用计分模型。
+                      </p>
+                    ) : null}
                   </label>
                   <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                     <span>开场白</span>
@@ -1182,9 +1191,14 @@ export function AdminScenarioEditPage() {
                   />
                 </label>
                 <label className="block space-y-2 text-sm text-(--foreground-subtle)">
-                  <span>评分提示词</span>
+                  <span>
+                    {usesProgrammaticScoring
+                      ? '计分提示词（程序化计分未使用）'
+                      : '计分提示词'}
+                  </span>
                   <Textarea
                     className="min-h-48"
+                    disabled={usesProgrammaticScoring}
                     onChange={(event) =>
                       setDraft((c) =>
                         c ? { ...c, scorerPrompt: event.target.value } : c,
@@ -1238,7 +1252,7 @@ export function AdminScenarioEditPage() {
                     />
                   </label>
                   <IdContentListEditor
-                    helperText="隐藏信息 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头。建议使用 S1、G2 这类短 ID。"
+                    helperText="隐藏信息 ID 会参与裁判/计分模板插值。仅支持字母、数字和下划线，且需以字母开头。建议使用 S1、G2 这类短 ID。"
                     label="隐藏信息"
                     items={draft[role.hiddenInfoKey]}
                     newItemPrefix={role.side === 'A' ? 'AInfo' : 'BInfo'}
@@ -1289,7 +1303,7 @@ export function AdminScenarioEditPage() {
                     helperText={
                       draft[role.optionsKey].length > 0
                         ? '当前角色已有入局角色，实战会优先使用入局角色自己的诉求；这个阵营通用诉求通常保持为空。请求 ID 不能与任何隐藏信息 ID 复用。'
-                        : '请求 ID 会参与裁判/评分模板插值。仅支持字母、数字和下划线，且需以字母开头，并且不能与任何隐藏信息 ID 复用。建议保持稳定且易读，例如 SR1、GR2。'
+                        : '请求 ID 会参与裁判/计分模板插值。仅支持字母、数字和下划线，且需以字母开头，并且不能与任何隐藏信息 ID 复用。建议保持稳定且易读，例如 SR1、GR2。'
                     }
                     label={
                       draft[role.optionsKey].length > 0

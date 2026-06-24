@@ -83,7 +83,7 @@ export const infoAssignmentSchema = z.object({
 
 export const judgeDecisionSchema = z.string()
 
-// ── Scorer output — the only engine-validated LLM output ────────────────────
+// ── Legacy LLM scorer output ────────────────────────────────────────────────
 
 export const scorerOutputSchema = z.object({
   scoreA: z.number(),
