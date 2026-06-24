@@ -133,7 +133,7 @@ function deriveRunningState(session: PlaygroundSession) {
   if (session.status === 'success' || isRunFinished(session.run)) {
     return {
       activeIndex: 4,
-      detail: '结果已写入记录，可以查看完整 transcript 与裁判评分。',
+      detail: '结果已写入记录，可以查看完整 transcript 与计分结果。',
       progressPercent: 100,
       stageKey: 'completed' as RunningStageKey,
       title: '对战已完成',
@@ -638,7 +638,7 @@ function RunResult({
           </div>
           {run.reasoning ? (
             <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
-              <p className="panel-label">裁判宣判词</p>
+              <p className="panel-label">计分明细</p>
               <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
                 {run.reasoning}
               </pre>

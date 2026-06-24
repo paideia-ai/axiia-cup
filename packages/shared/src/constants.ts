@@ -38,11 +38,25 @@ export const evaluationModelIds = [
 
 export const modelIds = evaluationModelIds
 
+export const programmaticScorerScenarioIds = [
+  'shangyang-court',
+  'honnoji-decision',
+  'trolley-problem',
+] as const
+
+export function scenarioUsesProgrammaticScorer(scenarioId: string) {
+  return (programmaticScorerScenarioIds as readonly string[]).includes(
+    scenarioId,
+  )
+}
+
 export type SubmissionModelId = (typeof submissionModelIds)[number]
 export type PlayerSelectableModelId = (typeof playerSelectableModelIds)[number]
 export type EvaluationModelId = (typeof evaluationModelIds)[number]
 export type ModelId = EvaluationModelId
 export type RetiredModelId = (typeof retiredModelIds)[number]
+export type ProgrammaticScorerScenarioId =
+  (typeof programmaticScorerScenarioIds)[number]
 export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
 
 type ModelSurface = 'evaluation' | 'submission'

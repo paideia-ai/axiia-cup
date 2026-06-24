@@ -140,36 +140,44 @@ function buildRolePromptPreview(
   })
 }
 
-const scoringRuleItems = [
-  {
-    title: '裁判支持你的立场',
-    detail: '大目标',
-    score: '+1',
-    scoreClassName:
-      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-  },
-  {
-    title: '你的真请求被裁判同意',
-    detail: '命中真目标',
-    score: '+0.5',
-    scoreClassName:
-      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-  },
-  {
-    title: '你的假请求被裁判同意',
-    detail: '每个假请求单独结算',
-    score: '-0.25',
-    scoreClassName:
-      'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
-  },
-  {
-    title: '你的真请求被对手猜中',
-    detail: '被识破真目标',
-    score: '-0.75',
-    scoreClassName:
-      'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
-  },
-] as const
+function getDiscoveryPenalty(scenarioId: string) {
+  return scenarioId === 'shangyang-court' ? '1' : '0.75'
+}
+
+function buildScoringRuleItems(scenarioId: string) {
+  const discoveryPenalty = getDiscoveryPenalty(scenarioId)
+
+  return [
+    {
+      title: '裁判支持你的立场',
+      detail: '大目标',
+      score: '+1',
+      scoreClassName:
+        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    },
+    {
+      title: '你的真请求被裁判同意',
+      detail: '命中真目标',
+      score: '+0.5',
+      scoreClassName:
+        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    },
+    {
+      title: '你的假请求被裁判同意',
+      detail: '每个假请求单独结算',
+      score: '-0.25',
+      scoreClassName:
+        'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
+    },
+    {
+      title: '你的真请求被对手猜中',
+      detail: '被识破真目标',
+      score: `-${discoveryPenalty}`,
+      scoreClassName:
+        'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
+    },
+  ] as const
+}
 
 function RoleInfoBlock({
   roleName,
@@ -392,6 +400,8 @@ export function ScenarioDetailPage() {
       Boolean(scenario.examinationQuestionTemplate)
     )
   }, [scenario])
+  const scoringRuleItems = scenario ? buildScoringRuleItems(scenario.id) : []
+  const discoveryPenalty = scenario ? getDiscoveryPenalty(scenario.id) : '0.75'
 
   useEffect(() => {
     const load = async () => {
@@ -718,7 +728,7 @@ export function ScenarioDetailPage() {
                         </div>
                         <p className="text-[11px] text-(--foreground-muted)">
                           假请求的扣分按被同意的个数累计；真请求一旦被对手猜中，额外扣
-                          0.75 分。
+                          {discoveryPenalty} 分。
                         </p>
                       </div>
                     </AccordionItem>
