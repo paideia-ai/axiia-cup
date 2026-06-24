@@ -863,6 +863,78 @@ export const adminMonitorUserSchema = z.object({
   isOverSoftCap: z.boolean(),
 })
 
+export const adminLlmLatencySourceSchema = z.enum([
+  'all',
+  'playground',
+  'tournament',
+])
+export const adminLlmLatencyPhaseSchema = z.enum([
+  'dialogue',
+  'examination',
+  'judgment',
+  'scoring',
+])
+
+export const adminLlmLatencyAggregateSchema = z.object({
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  phase: adminLlmLatencyPhaseSchema,
+  provider: z.string(),
+  model: z.string(),
+  callCount: z.number().int().nonnegative(),
+  runCount: z.number().int().nonnegative(),
+  avgDurationMs: z.number().nonnegative(),
+  p50DurationMs: z.number().nonnegative(),
+  p95DurationMs: z.number().nonnegative(),
+  maxDurationMs: z.number().nonnegative(),
+  totalDurationMs: z.number().nonnegative(),
+  totalPromptTokens: z.number().int().nonnegative(),
+  totalCompletionTokens: z.number().int().nonnegative(),
+})
+
+export const adminLlmLatencyCallSchema = z.object({
+  id: z.number().int().positive(),
+  source: z.enum(['playground', 'tournament']),
+  runId: z.number().int().positive(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  phase: adminLlmLatencyPhaseSchema,
+  side: z.enum(['a', 'b', 'judge', 'scorer']),
+  provider: z.string(),
+  model: z.string(),
+  durationMs: z.number().int().nonnegative(),
+  promptTokens: z.number().int().nonnegative(),
+  completionTokens: z.number().int().nonnegative(),
+  completedAt: z.string().nullable(),
+  createdAt: z.string(),
+})
+
+export const adminLlmLatencyReportSchema = z.object({
+  generatedAt: z.string(),
+  filters: z.object({
+    source: adminLlmLatencySourceSchema,
+    scenarioId: z.string().nullable(),
+    phase: adminLlmLatencyPhaseSchema.nullable(),
+    provider: z.string().nullable(),
+    model: z.string().nullable(),
+    from: z.string().nullable(),
+    to: z.string().nullable(),
+  }),
+  options: z.object({
+    scenarios: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+      }),
+    ),
+    phases: z.array(adminLlmLatencyPhaseSchema),
+    providers: z.array(z.string()),
+    models: z.array(z.string()),
+  }),
+  aggregates: z.array(adminLlmLatencyAggregateSchema),
+  calls: z.array(adminLlmLatencyCallSchema),
+})
+
 export const adminErroredMatchSchema = z.object({
   id: z.number().int().positive(),
   tournamentId: z.number().int().positive(),
@@ -952,6 +1024,13 @@ export type AdminAnalyticsAgentDetail = z.infer<
   typeof adminAnalyticsAgentDetailSchema
 >
 export type AdminMonitorUser = z.infer<typeof adminMonitorUserSchema>
+export type AdminLlmLatencySource = z.infer<typeof adminLlmLatencySourceSchema>
+export type AdminLlmLatencyPhase = z.infer<typeof adminLlmLatencyPhaseSchema>
+export type AdminLlmLatencyAggregate = z.infer<
+  typeof adminLlmLatencyAggregateSchema
+>
+export type AdminLlmLatencyCall = z.infer<typeof adminLlmLatencyCallSchema>
+export type AdminLlmLatencyReport = z.infer<typeof adminLlmLatencyReportSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
 export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>
 export type AdminUser = z.infer<typeof adminUserSchema>

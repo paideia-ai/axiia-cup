@@ -1,4 +1,5 @@
 import {
+  adminLlmLatencyReportSchema,
   adminMonitorUserSchema,
   adminScenarioSchema,
   adminErroredMatchSchema,
@@ -32,6 +33,7 @@ import {
   updateRegistrationCodeSchema,
   updateProfileSchema,
   userSchema,
+  type AdminLlmLatencyReport,
   type AdminPlayer,
   presetOpponentSchema,
   createPresetOpponentSchema,
@@ -85,6 +87,7 @@ const recentMatchesResponseSchema = z.array(recentMatchSchema)
 const playgroundRunSummariesSchema = z.array(playgroundRunSummarySchema)
 const presetOpponentsResponseSchema = z.array(presetOpponentSchema)
 const adminMonitorUsersResponseSchema = z.array(adminMonitorUserSchema)
+const adminLlmLatencyReportResponseSchema = adminLlmLatencyReportSchema
 const adminPlayersResponseSchema = z.array(adminPlayerSchema)
 const adminErroredMatchesResponseSchema = z.array(adminErroredMatchSchema)
 const adminUsersResponseSchema = z.array(adminUserSchema)
@@ -418,6 +421,34 @@ export async function getAdminMonitorUsers(): Promise<AdminMonitorUser[]> {
     '/api/admin/monitor/users',
     { method: 'GET' },
     adminMonitorUsersResponseSchema,
+  )
+}
+
+export async function getAdminLlmLatencyReport(
+  filters: {
+    from?: string
+    model?: string
+    phase?: string
+    provider?: string
+    scenarioId?: string
+    source?: string
+    to?: string
+  } = {},
+): Promise<AdminLlmLatencyReport> {
+  const params = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) {
+      params.set(key, value)
+    }
+  }
+
+  const query = params.toString()
+
+  return apiFetch(
+    `/api/admin/monitor/llm-latency${query ? `?${query}` : ''}`,
+    { method: 'GET' },
+    adminLlmLatencyReportResponseSchema,
   )
 }
 

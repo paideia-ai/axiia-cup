@@ -1,4 +1,7 @@
 import {
+  adminLlmLatencyPhaseSchema,
+  adminLlmLatencyReportSchema,
+  adminLlmLatencySourceSchema,
   adminMonitorUserSchema,
   evaluationModelIdSchema,
   type InfoAssignment,
@@ -21,6 +24,29 @@ import { matches, scenarios, submissions } from '../db/schema'
 
 const adminMonitorRouter = new Hono()
 const TIMEZONE_SUFFIX_PATTERN = /(Z|[+-]\d{2}:\d{2})$/i
+const LLM_LATENCY_PHASES = [
+  'dialogue',
+  'examination',
+  'judgment',
+  'scoring',
+] as const
+
+type LlmLatencyCallRow = {
+  id: number
+  source: 'playground' | 'tournament'
+  runId: number
+  scenarioId: string
+  scenarioTitle: string
+  phase: (typeof LLM_LATENCY_PHASES)[number]
+  side: 'a' | 'b' | 'judge' | 'scorer'
+  provider: string
+  model: string
+  durationMs: number
+  promptTokens: number
+  completionTokens: number
+  completedAt: string | null
+  createdAt: string
+}
 
 function normalizeTimestamp(value: string) {
   const trimmed = value.trim()
@@ -70,6 +96,284 @@ function latestTimestamp(...values: Array<string | null>) {
 
   return latest
 }
+
+function uniqueSorted(values: Iterable<string>) {
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right))
+}
+
+function percentile(values: number[], percentileValue: number) {
+  if (values.length === 0) {
+    return 0
+  }
+
+  const sorted = [...values].sort((left, right) => left - right)
+  const index = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil((percentileValue / 100) * sorted.length) - 1),
+  )
+
+  return sorted[index] ?? 0
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10
+}
+
+function getStringQueryValue(value: string | undefined) {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : null
+}
+
+function parseDateQueryValue(value: string | undefined) {
+  const trimmed = getStringQueryValue(value)
+
+  if (!trimmed) {
+    return { ok: true as const, value: null }
+  }
+
+  if (timestampMs(trimmed) == null) {
+    return { ok: false as const, value: trimmed }
+  }
+
+  return { ok: true as const, value: trimmed }
+}
+
+function rowCompletedMs(
+  row: Pick<LlmLatencyCallRow, 'completedAt' | 'createdAt'>,
+) {
+  return timestampMs(row.completedAt ?? row.createdAt) ?? -Infinity
+}
+
+function listSuccessfulCompletedLlmCalls(): LlmLatencyCallRow[] {
+  return db.all<LlmLatencyCallRow>(sql`
+    SELECT
+      lc.id AS id,
+      CASE
+        WHEN lc.playground_run_id IS NOT NULL THEN 'playground'
+        ELSE 'tournament'
+      END AS source,
+      COALESCE(lc.playground_run_id, lc.match_id) AS runId,
+      s.id AS scenarioId,
+      s.title AS scenarioTitle,
+      lc.phase AS phase,
+      lc.side AS side,
+      lc.provider AS provider,
+      lc.model AS model,
+      lc.duration_ms AS durationMs,
+      COALESCE(lc.prompt_tokens, 0) AS promptTokens,
+      COALESCE(lc.completion_tokens, 0) AS completionTokens,
+      COALESCE(
+        pr.finished_at,
+        m.finished_at,
+        pr.updated_at,
+        m.updated_at,
+        pr.created_at,
+        m.created_at
+      ) AS completedAt,
+      lc.created_at AS createdAt
+    FROM llm_calls lc
+    LEFT JOIN playground_runs pr
+      ON pr.id = lc.playground_run_id
+      AND pr.status = 'scored'
+    LEFT JOIN matches m
+      ON m.id = lc.match_id
+      AND m.status = 'scored'
+    JOIN scenarios s
+      ON s.id = COALESCE(pr.scenario_id, m.scenario_id)
+    WHERE lc.error IS NULL
+      AND lc.response_content IS NOT NULL
+      AND (
+        (lc.playground_run_id IS NOT NULL AND pr.id IS NOT NULL)
+        OR (lc.match_id IS NOT NULL AND m.id IS NOT NULL)
+      )
+  `)
+}
+
+adminMonitorRouter.get(
+  '/api/admin/monitor/llm-latency',
+  requireAuth,
+  requireAdmin,
+  (context) => {
+    const sourceParse = adminLlmLatencySourceSchema.safeParse(
+      context.req.query('source') ?? 'all',
+    )
+
+    if (!sourceParse.success) {
+      return context.json({ error: 'Invalid source filter' }, 400)
+    }
+
+    const phaseRaw = getStringQueryValue(context.req.query('phase'))
+    const phaseParse = phaseRaw
+      ? adminLlmLatencyPhaseSchema.safeParse(phaseRaw)
+      : null
+
+    if (phaseParse && !phaseParse.success) {
+      return context.json({ error: 'Invalid phase filter' }, 400)
+    }
+
+    const fromParse = parseDateQueryValue(context.req.query('from'))
+    const toParse = parseDateQueryValue(context.req.query('to'))
+
+    if (!fromParse.ok || !toParse.ok) {
+      return context.json({ error: 'Invalid date filter' }, 400)
+    }
+
+    const source = sourceParse.data
+    const scenarioId = getStringQueryValue(context.req.query('scenarioId'))
+    const phase = phaseParse?.data ?? null
+    const provider = getStringQueryValue(context.req.query('provider'))
+    const model = getStringQueryValue(context.req.query('model'))
+    const from = fromParse.value
+    const to = toParse.value
+    const fromMs = from ? timestampMs(from) : null
+    const toMs = to ? timestampMs(to) : null
+    const allRows = listSuccessfulCompletedLlmCalls()
+    const filteredRows = allRows.filter((row) => {
+      if (source !== 'all' && row.source !== source) {
+        return false
+      }
+
+      if (scenarioId && row.scenarioId !== scenarioId) {
+        return false
+      }
+
+      if (phase && row.phase !== phase) {
+        return false
+      }
+
+      if (provider && row.provider !== provider) {
+        return false
+      }
+
+      if (model && row.model !== model) {
+        return false
+      }
+
+      const completedMs = rowCompletedMs(row)
+
+      if (fromMs != null && completedMs < fromMs) {
+        return false
+      }
+
+      if (toMs != null && completedMs > toMs) {
+        return false
+      }
+
+      return true
+    })
+
+    const aggregateMap = new Map<
+      string,
+      {
+        completionTokens: number
+        durations: number[]
+        model: string
+        phase: LlmLatencyCallRow['phase']
+        promptTokens: number
+        provider: string
+        runKeys: Set<string>
+        scenarioId: string
+        scenarioTitle: string
+      }
+    >()
+
+    for (const row of filteredRows) {
+      const key = [row.scenarioId, row.phase, row.provider, row.model].join(
+        '\u0000',
+      )
+      const current = aggregateMap.get(key) ?? {
+        completionTokens: 0,
+        durations: [],
+        model: row.model,
+        phase: row.phase,
+        promptTokens: 0,
+        provider: row.provider,
+        runKeys: new Set<string>(),
+        scenarioId: row.scenarioId,
+        scenarioTitle: row.scenarioTitle,
+      }
+
+      current.durations.push(row.durationMs)
+      current.promptTokens += row.promptTokens
+      current.completionTokens += row.completionTokens
+      current.runKeys.add(`${row.source}:${row.runId}`)
+      aggregateMap.set(key, current)
+    }
+
+    const phaseOrder = new Map(
+      LLM_LATENCY_PHASES.map((phaseValue, index) => [phaseValue, index]),
+    )
+    const aggregates = [...aggregateMap.values()]
+      .map((item) => {
+        const totalDurationMs = item.durations.reduce(
+          (sum, duration) => sum + duration,
+          0,
+        )
+
+        return {
+          scenarioId: item.scenarioId,
+          scenarioTitle: item.scenarioTitle,
+          phase: item.phase,
+          provider: item.provider,
+          model: item.model,
+          callCount: item.durations.length,
+          runCount: item.runKeys.size,
+          avgDurationMs: roundOne(totalDurationMs / item.durations.length),
+          p50DurationMs: percentile(item.durations, 50),
+          p95DurationMs: percentile(item.durations, 95),
+          maxDurationMs: Math.max(...item.durations),
+          totalDurationMs,
+          totalPromptTokens: item.promptTokens,
+          totalCompletionTokens: item.completionTokens,
+        }
+      })
+      .sort(
+        (left, right) =>
+          left.scenarioTitle.localeCompare(right.scenarioTitle) ||
+          (phaseOrder.get(left.phase) ?? 0) -
+            (phaseOrder.get(right.phase) ?? 0) ||
+          left.model.localeCompare(right.model),
+      )
+
+    const scenarioOptions = new Map<string, string>()
+
+    for (const row of allRows) {
+      scenarioOptions.set(row.scenarioId, row.scenarioTitle)
+    }
+
+    const result = adminLlmLatencyReportSchema.parse({
+      generatedAt: new Date().toISOString(),
+      filters: {
+        source,
+        scenarioId,
+        phase,
+        provider,
+        model,
+        from,
+        to,
+      },
+      options: {
+        scenarios: [...scenarioOptions.entries()]
+          .map(([id, title]) => ({ id, title }))
+          .sort((left, right) => left.title.localeCompare(right.title)),
+        phases: LLM_LATENCY_PHASES.filter((phaseValue) =>
+          allRows.some((row) => row.phase === phaseValue),
+        ),
+        providers: uniqueSorted(allRows.map((row) => row.provider)),
+        models: uniqueSorted(allRows.map((row) => row.model)),
+      },
+      aggregates,
+      calls: filteredRows
+        .sort(
+          (left, right) =>
+            rowCompletedMs(right) - rowCompletedMs(left) || right.id - left.id,
+        )
+        .slice(0, 100),
+    })
+
+    return context.json(result)
+  },
+)
 
 adminMonitorRouter.get(
   '/api/admin/monitor/users',

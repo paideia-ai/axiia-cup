@@ -626,6 +626,169 @@ describe('GET /api/admin/monitor/users', () => {
   })
 })
 
+describe('GET /api/admin/monitor/llm-latency', () => {
+  it('returns 401 without auth', async () => {
+    const res = await req('GET', '/api/admin/monitor/llm-latency')
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 403 for non-admin', async () => {
+    const res = await req('GET', '/api/admin/monitor/llm-latency', userToken)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns per-scenario, per-phase, per-model aggregates', async () => {
+    const res = await req('GET', '/api/admin/monitor/llm-latency', adminToken)
+    expect(res.status).toBe(200)
+
+    const data = (await res.json()) as {
+      aggregates: Array<{
+        scenarioId: string
+        phase: string
+        model: string
+        callCount: number
+        runCount: number
+        avgDurationMs: number
+        p50DurationMs: number
+        p95DurationMs: number
+        totalPromptTokens: number
+        totalCompletionTokens: number
+      }>
+      calls: Array<Record<string, unknown>>
+    }
+
+    const dialogue = data.aggregates.find(
+      (row) =>
+        row.scenarioId === 'mon-test-scenario' &&
+        row.phase === 'dialogue' &&
+        row.model === 'deepseek-v3.2',
+    )
+
+    expect(dialogue).toBeDefined()
+    expect(dialogue?.callCount).toBe(7)
+    expect(dialogue?.runCount).toBe(4)
+    expect(dialogue?.avgDurationMs).toBe(257.1)
+    expect(dialogue?.p50DurationMs).toBe(100)
+    expect(dialogue?.p95DurationMs).toBe(600)
+    expect(dialogue?.totalPromptTokens).toBe(660)
+    expect(dialogue?.totalCompletionTokens).toBe(330)
+    expect(data.calls.length).toBeGreaterThan(0)
+  })
+
+  it('filters playground and tournament rows separately', async () => {
+    const tournamentRes = await req(
+      'GET',
+      '/api/admin/monitor/llm-latency?source=tournament',
+      adminToken,
+    )
+    expect(tournamentRes.status).toBe(200)
+
+    const tournamentData = (await tournamentRes.json()) as {
+      aggregates: Array<{ phase: string; model: string; callCount: number }>
+      calls: Array<{ source: string }>
+    }
+    const tournamentDialogue = tournamentData.aggregates.find(
+      (row) => row.phase === 'dialogue' && row.model === 'deepseek-v3.2',
+    )
+
+    expect(tournamentDialogue?.callCount).toBe(2)
+    expect(
+      tournamentData.calls.every((row) => row.source === 'tournament'),
+    ).toBe(true)
+
+    const playgroundRes = await req(
+      'GET',
+      '/api/admin/monitor/llm-latency?source=playground',
+      adminToken,
+    )
+    expect(playgroundRes.status).toBe(200)
+
+    const playgroundData = (await playgroundRes.json()) as {
+      aggregates: Array<{ phase: string; model: string; callCount: number }>
+      calls: Array<{ source: string }>
+    }
+    const playgroundDialogue = playgroundData.aggregates.find(
+      (row) => row.phase === 'dialogue' && row.model === 'deepseek-v3.2',
+    )
+
+    expect(playgroundDialogue?.callCount).toBe(5)
+    expect(
+      playgroundData.calls.every((row) => row.source === 'playground'),
+    ).toBe(true)
+  })
+
+  it('excludes failed calls and calls from unfinished runs', async () => {
+    const { eq } = await import('drizzle-orm')
+    const schema = await import('../db/schema')
+    const unfinishedRunId = db
+      .insert(schema.playgroundRuns)
+      .values({
+        submissionId: player1SubmissionId,
+        scenarioId: 'mon-test-scenario',
+        status: 'running',
+        transcript: '[]',
+        judgeTranscriptA: '[]',
+        judgeTranscriptB: '[]',
+      })
+      .returning({ id: schema.playgroundRuns.id })
+      .get()!.id
+
+    try {
+      db.insert(schema.llmCalls)
+        .values([
+          {
+            playgroundRunId: pveRunId,
+            phase: 'scoring',
+            side: 'scorer',
+            model: 'claude-sonnet-4-5',
+            provider: 'anthropic',
+            requestJson: '{}',
+            responseJson: null,
+            responseContent: null,
+            error: 'failed once',
+            durationMs: 9999,
+          },
+          {
+            playgroundRunId: unfinishedRunId,
+            phase: 'scoring',
+            side: 'scorer',
+            model: 'claude-sonnet-4-5',
+            provider: 'anthropic',
+            requestJson: '{}',
+            responseJson: '{}',
+            responseContent: 'unfinished success',
+            durationMs: 8888,
+          },
+        ])
+        .run()
+
+      const res = await req('GET', '/api/admin/monitor/llm-latency', adminToken)
+      expect(res.status).toBe(200)
+      const data = (await res.json()) as {
+        aggregates: Array<{ model: string }>
+        calls: Array<{ model: string }>
+      }
+
+      expect(
+        data.aggregates.some((row) => row.model === 'claude-sonnet-4-5'),
+      ).toBe(false)
+      expect(data.calls.some((row) => row.model === 'claude-sonnet-4-5')).toBe(
+        false,
+      )
+    } finally {
+      db.delete(schema.llmCalls)
+        .where(eq(schema.llmCalls.playgroundRunId, unfinishedRunId))
+        .run()
+      db.delete(schema.llmCalls)
+        .where(eq(schema.llmCalls.model, 'claude-sonnet-4-5'))
+        .run()
+      db.delete(schema.playgroundRuns)
+        .where(eq(schema.playgroundRuns.id, unfinishedRunId))
+        .run()
+    }
+  })
+})
+
 describe('GET /api/admin/analytics/*', () => {
   it('returns unified battles with tournament, pvp, and pve rows', async () => {
     const res = await req(
