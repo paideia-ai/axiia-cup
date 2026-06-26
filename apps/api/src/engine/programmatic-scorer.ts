@@ -310,7 +310,7 @@ function computeRequestGameScore(
   }
 
   const score: Record<Side, number> = { a: 0, b: 0 }
-  const lines = ['程序化计分明细：']
+  const lines: string[] = []
   const requestItems = buildRequestScoreItems(
     params.scenario,
     params.assignment,
@@ -416,7 +416,7 @@ function computeTrolleyScore(params: ProgrammaticScoreParams) {
 
   let scoreA = 0
   let scoreB = 0
-  const lines = ['程序化计分明细：']
+  const lines: string[] = []
 
   for (const caseId of caseIds) {
     const judgment = judgeOutput.judgments[caseId]
