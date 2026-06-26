@@ -66,6 +66,11 @@ type MatchExecutionParams = {
   userIdB?: number
 }
 
+type MatchTraceTarget = Pick<
+  ChatCompletionTrace,
+  'matchId' | 'playgroundRunId' | 'scenarioId' | 'source' | 'userId'
+>
+
 export type MatchExecutionResult = {
   infoAssignment: InfoAssignment
   judgeDecision: string
@@ -184,6 +189,24 @@ function getOpponentHiddenInfo(
   return parseHiddenInfo(
     roleSide === 'a' ? scenario.roleBHiddenInfo : scenario.roleAHiddenInfo,
   )
+}
+
+function buildMatchTraceTarget(params: MatchExecutionParams): MatchTraceTarget {
+  const target: MatchTraceTarget = {
+    scenarioId: params.scenario.id,
+  }
+
+  if (params.matchId != null) {
+    target.matchId = params.matchId
+    target.source = 'tournament'
+  }
+
+  if (params.playgroundRunId != null) {
+    target.playgroundRunId = params.playgroundRunId
+    target.source ??= 'playground'
+  }
+
+  return target
 }
 
 // ── Randomization ───────────────────────────────────────────────────────────
@@ -688,10 +711,7 @@ async function getExaminationAnswer(
   assignment: InfoAssignment,
   submissionPrompt: string,
   model: SubmissionModelId,
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
 ): Promise<JudgeQA> {
   const validIds = getExaminationValidIds(scenario, roleSide)
@@ -770,10 +790,7 @@ async function getJudgeDecision(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
 ): Promise<string> {
   const debateText = formatDebateTranscriptForJudge(
@@ -896,10 +913,7 @@ async function getScoreFromScorer(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
 ): Promise<{
   scoreA: number
@@ -974,6 +988,7 @@ export async function executeMatchSession(
   )
   const modelA = parseSubmissionModelId(params.modelA)
   const modelB = parseSubmissionModelId(params.modelB)
+  const runTraceTarget = buildMatchTraceTarget(params)
 
   // Randomize or restore assignment
   const assignment = params.infoAssignment
@@ -1025,10 +1040,9 @@ export async function executeMatchSession(
           systemPrompt,
           temperature: 0,
           trace: {
+            ...runTraceTarget,
             attempt,
-            matchId: params.matchId,
             phase: 'dialogue',
-            playgroundRunId: params.playgroundRunId,
             side: speaker,
             turnIndex,
             userId: speaker === 'a' ? params.userIdA : params.userIdB,
@@ -1072,8 +1086,7 @@ export async function executeMatchSession(
         params.promptA,
         modelA,
         {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
+          ...runTraceTarget,
           userId: params.userIdA,
         },
         params.signal,
@@ -1094,8 +1107,7 @@ export async function executeMatchSession(
         params.promptB,
         modelB,
         {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
+          ...runTraceTarget,
           userId: params.userIdB,
         },
         params.signal,
@@ -1113,10 +1125,7 @@ export async function executeMatchSession(
     transcript,
     judgeTranscriptA,
     judgeTranscriptB,
-    {
-      matchId: params.matchId,
-      playgroundRunId: params.playgroundRunId,
-    },
+    runTraceTarget,
     params.signal,
   )
 
@@ -1138,10 +1147,7 @@ export async function executeMatchSession(
       transcript,
       judgeTranscriptA,
       judgeTranscriptB,
-      {
-        matchId: params.matchId,
-        playgroundRunId: params.playgroundRunId,
-      },
+      runTraceTarget,
       params.signal,
     ))
 

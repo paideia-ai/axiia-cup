@@ -8,11 +8,12 @@ import {
   startObservation,
   type LangfuseGeneration,
   type LangfuseGenerationAttributes,
+  type LangfuseSpan,
   type PropagateAttributesParams,
 } from '@langfuse/tracing'
 import OpenAI from 'openai'
 
-import type { LlmCallPhase, LlmCallSide } from '../db/schema'
+import type * as DbClientModule from '../db/client'
 import { llmCalls } from '../db/schema'
 import { initializeLangfuseTracing, observeOpenAIClient } from '../lib/langfuse'
 import {
@@ -20,6 +21,12 @@ import {
   isPlaygroundRunInterruptedError,
   PlaygroundRunInterruptedError,
 } from './playground-interrupt'
+import {
+  buildLangfuseTraceUrl,
+  buildLlmObservabilityMetadata,
+  type LlmCallTraceContext,
+  type LlmObservabilityMetadata,
+} from './llm-observability'
 
 const SILICONFLOW_BASE_URL =
   process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
@@ -30,7 +37,7 @@ const ANTHROPIC_BASE_URL =
 const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
 const ANTHROPIC_MAX_TOKENS = Number(process.env.ANTHROPIC_MAX_TOKENS ?? 4096)
 
-let _dbModulePromise: Promise<typeof import('../db/client')> | null = null
+let _dbModulePromise: Promise<typeof DbClientModule> | null = null
 let _openAiClients: Partial<Record<'openai' | 'siliconflow', OpenAI>> = {}
 
 initializeLangfuseTracing()
@@ -49,14 +56,13 @@ type AnthropicResponse = {
 
 type AnthropicRequestPayload = ReturnType<typeof buildAnthropicRequest>
 
-export type ChatCompletionTrace = {
-  attempt?: number
-  matchId?: number
-  phase: LlmCallPhase
-  playgroundRunId?: number
-  side: LlmCallSide
-  turnIndex?: number | null
-  userId?: number | null
+export type ChatCompletionTrace = LlmCallTraceContext
+
+type LangfuseLinkInfo = {
+  langfuseObservationId: string | null
+  langfuseTraceUrl: string | null
+  otelSpanId: string | null
+  otelTraceId: string | null
 }
 
 function getDbModule() {
@@ -103,76 +109,114 @@ function getOpenAICompatibleClient(provider: OpenAICompatibleProvider) {
   return client
 }
 
-function getLangfuseSessionId(trace: ChatCompletionTrace | undefined) {
-  return trace?.matchId != null
-    ? `match:${trace.matchId}`
-    : trace?.playgroundRunId != null
-      ? `playground:${trace.playgroundRunId}`
-      : undefined
-}
-
-function getLangfuseGenerationName(trace: ChatCompletionTrace | undefined) {
-  return trace ? `axiia:${trace.phase}:${trace.side}` : 'axiia:chat'
-}
-
-function getLangfuseTags(
+function getLangfusePropagationAttributes(
   trace: ChatCompletionTrace | undefined,
-  model: ModelId,
-  provider: ModelProvider,
-) {
-  return [
-    `provider:${provider}`,
-    `model:${model}`,
-    trace?.phase ? `phase:${trace.phase}` : null,
-    trace?.side ? `side:${trace.side}` : null,
-  ].filter((value): value is string => value !== null)
-}
-
-function getLangfuseGenerationMetadata(
-  trace: ChatCompletionTrace | undefined,
-  model: ModelId,
-  provider: ModelProvider,
-): Record<string, unknown> {
-  return {
-    attempt: trace?.attempt,
-    matchId: trace?.matchId,
-    modelId: model,
-    phase: trace?.phase,
-    playgroundRunId: trace?.playgroundRunId,
-    provider,
-    side: trace?.side,
-    turnIndex: trace?.turnIndex ?? null,
-  }
-}
-
-function getLangfuseTraceAttributes(
-  trace: ChatCompletionTrace | undefined,
-  model: ModelId,
-  provider: ModelProvider,
+  observability: LlmObservabilityMetadata,
 ): PropagateAttributesParams {
-  const sessionId = getLangfuseSessionId(trace)
-
   return {
-    sessionId,
-    tags: getLangfuseTags(trace, model, provider),
-    traceName: sessionId ?? 'axiia:llm',
+    metadata: observability.propagatedMetadata,
+    sessionId: observability.sessionId,
+    tags: observability.tags,
+    traceName: observability.traceName,
+    userId: trace?.userId != null ? String(trace.userId) : undefined,
   }
 }
 
 function getObservedOpenAIClient(
-  trace: ChatCompletionTrace | undefined,
-  model: ModelId,
+  observability: LlmObservabilityMetadata,
+  parentSpan: LangfuseSpan | null,
   provider: OpenAICompatibleProvider,
 ) {
-  const sessionId = getLangfuseSessionId(trace)
-
   return observeOpenAIClient(getOpenAICompatibleClient(provider), {
-    generationMetadata: getLangfuseGenerationMetadata(trace, model, provider),
-    generationName: getLangfuseGenerationName(trace),
-    sessionId,
-    tags: getLangfuseTags(trace, model, provider),
-    traceName: sessionId ?? 'axiia:llm',
+    generationMetadata: observability.generationMetadata,
+    generationName: observability.generationName,
+    parentSpanContext: parentSpan?.otelSpan.spanContext(),
+    sessionId: observability.sessionId,
+    tags: observability.tags,
+    traceName: observability.traceName,
   })
+}
+
+function emptyLangfuseLinkInfo(): LangfuseLinkInfo {
+  return {
+    langfuseObservationId: null,
+    langfuseTraceUrl: null,
+    otelSpanId: null,
+    otelTraceId: null,
+  }
+}
+
+function getLangfuseLinkInfo(
+  observation: LangfuseGeneration | LangfuseSpan | null,
+): LangfuseLinkInfo {
+  if (!observation) {
+    return emptyLangfuseLinkInfo()
+  }
+
+  return {
+    langfuseObservationId: observation.id,
+    langfuseTraceUrl: buildLangfuseTraceUrl(observation.traceId),
+    otelSpanId: observation.id,
+    otelTraceId: observation.traceId,
+  }
+}
+
+function withLangfusePropagation<T>(
+  trace: ChatCompletionTrace | undefined,
+  observability: LlmObservabilityMetadata,
+  fn: () => T,
+): T {
+  if (!initializeLangfuseTracing()) {
+    return fn()
+  }
+
+  return propagateAttributes(
+    getLangfusePropagationAttributes(trace, observability),
+    fn,
+  )
+}
+
+function startOpenAILangfuseSpan(
+  observability: LlmObservabilityMetadata,
+): LangfuseSpan | null {
+  if (!initializeLangfuseTracing()) {
+    return null
+  }
+
+  try {
+    const span = startObservation(observability.generationName, {
+      metadata: observability.generationMetadata,
+    })
+
+    span.otelSpan.setAttributes(observability.otelAttributes)
+    return span
+  } catch (error) {
+    console.error('[langfuse] failed to start LLM span', error)
+    return null
+  }
+}
+
+function finishOpenAILangfuseSpan(
+  span: LangfuseSpan | null,
+  attributes?: { level?: 'ERROR'; statusMessage?: string },
+) {
+  if (!span) {
+    return
+  }
+
+  if (attributes) {
+    try {
+      span.update(attributes)
+    } catch (error) {
+      console.error('[langfuse] failed to update LLM span', error)
+    }
+  }
+
+  try {
+    span.end()
+  } catch (error) {
+    console.error('[langfuse] failed to end LLM span', error)
+  }
 }
 
 function getAnthropicModelParameters(
@@ -204,7 +248,7 @@ function getAnthropicUsageDetails(
 }
 
 function startAnthropicLangfuseGeneration(params: {
-  model: ModelId
+  observability: LlmObservabilityMetadata
   requestPayload: AnthropicRequestPayload
   trace: ChatCompletionTrace | undefined
 }): LangfuseGeneration | null {
@@ -213,25 +257,23 @@ function startAnthropicLangfuseGeneration(params: {
   }
 
   try {
-    const provider: ModelProvider = 'anthropic'
-
     return propagateAttributes(
-      getLangfuseTraceAttributes(params.trace, params.model, provider),
-      () =>
-        startObservation(
-          getLangfuseGenerationName(params.trace),
+      getLangfusePropagationAttributes(params.trace, params.observability),
+      () => {
+        const generation = startObservation(
+          params.observability.generationName,
           {
             input: params.requestPayload,
-            metadata: getLangfuseGenerationMetadata(
-              params.trace,
-              params.model,
-              provider,
-            ),
+            metadata: params.observability.generationMetadata,
             model: params.requestPayload.model,
             modelParameters: getAnthropicModelParameters(params.requestPayload),
           },
           { asType: 'generation' },
-        ),
+        )
+
+        generation.otelSpan.setAttributes(params.observability.otelAttributes)
+        return generation
+      },
     )
   } catch (error) {
     console.error('[langfuse] failed to start Anthropic generation', error)
@@ -301,11 +343,14 @@ async function persistLlmCall(
   record: {
     durationMs: number
     error: string | null
+    gatewayProvider: ModelProvider
+    langfuse: LangfuseLinkInfo
     model: ModelId
-    provider: ModelProvider
     requestJson: string
     responseContent: string | null
     responseJson: string | null
+    source: 'playground' | 'tournament' | null
+    underlyingProvider: string
   },
 ) {
   if (!trace) {
@@ -324,17 +369,25 @@ async function persistLlmCall(
         completionTokens,
         durationMs: record.durationMs,
         error: record.error,
+        gatewayProvider: record.gatewayProvider,
+        langfuseObservationId: record.langfuse.langfuseObservationId,
+        langfuseTraceUrl: record.langfuse.langfuseTraceUrl,
         matchId: trace.matchId,
         model: record.model,
+        otelSpanId: record.langfuse.otelSpanId,
+        otelTraceId: record.langfuse.otelTraceId,
         phase: trace.phase,
         playgroundRunId: trace.playgroundRunId,
         promptTokens,
-        provider: record.provider,
+        provider: record.gatewayProvider,
         requestJson: record.requestJson,
         responseContent: record.responseContent,
         responseJson: record.responseJson,
+        scenarioId: trace.scenarioId ?? null,
         side: trace.side,
+        source: record.source,
         turnIndex: trace.turnIndex ?? null,
+        underlyingProvider: record.underlyingProvider,
         userId: trace.userId ?? null,
       })
       .run()
@@ -410,87 +463,140 @@ async function callOpenAICompatibleChatCompletion(
   },
   provider: OpenAICompatibleProvider,
 ) {
-  const client = getObservedOpenAIClient(params.trace, params.model, provider)
+  const observability = buildLlmObservabilityMetadata({
+    jsonMode: params.jsonMode,
+    model: params.model,
+    trace: params.trace,
+  })
   const requestPayload = buildOpenAICompatibleRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
+  let langfuseSpan: LangfuseSpan | null = null
 
-  try {
-    const response = await client.chat.completions.create(requestPayload, {
-      signal: params.signal,
-    })
-
-    const content = response.choices[0]?.message?.content
-
-    if (!content) {
-      throw new Error('Empty completion response')
-    }
-
-    await persistLlmCall(params.trace, {
-      durationMs: Date.now() - startedAt,
-      error: null,
-      model: params.model,
-      provider,
-      requestJson,
-      responseContent: content,
-      responseJson: safeStringify(response),
-    })
-
-    return content
-  } catch (error) {
-    const durationMs = Date.now() - startedAt
-
-    if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
-      const message = getPlaygroundInterruptMessage(params.signal)
-
-      await persistLlmCall(params.trace, {
-        durationMs,
-        error: message,
-        model: params.model,
+  return await withLangfusePropagation(
+    params.trace,
+    observability,
+    async () => {
+      langfuseSpan = startOpenAILangfuseSpan(observability)
+      const client = getObservedOpenAIClient(
+        observability,
+        langfuseSpan,
         provider,
-        requestJson,
-        responseContent: null,
-        responseJson: null,
-      })
+      )
 
-      throw new PlaygroundRunInterruptedError(message)
-    }
+      try {
+        const response = await client.chat.completions.create(requestPayload, {
+          signal: params.signal,
+        })
 
-    if (error instanceof Error) {
-      const status =
-        'status' in error
-          ? String((error as { status?: number }).status ?? 'unknown')
-          : 'unknown'
-      const providerLabel = provider === 'openai' ? 'OpenAI' : 'SiliconFlow'
-      const message = `${providerLabel} request failed (${status}): ${error.message}`
+        const content = response.choices[0]?.message?.content
 
-      await persistLlmCall(params.trace, {
-        durationMs,
-        error: message,
-        model: params.model,
-        provider,
-        requestJson,
-        responseContent: null,
-        responseJson: null,
-      })
+        if (!content) {
+          throw new Error('Empty completion response')
+        }
 
-      throw new Error(message, { cause: error })
-    }
+        await persistLlmCall(params.trace, {
+          durationMs: Date.now() - startedAt,
+          error: null,
+          gatewayProvider: observability.gatewayProvider,
+          langfuse: getLangfuseLinkInfo(langfuseSpan),
+          model: params.model,
+          requestJson,
+          responseContent: content,
+          responseJson: safeStringify(response),
+          source: observability.source,
+          underlyingProvider: observability.underlyingProvider,
+        })
 
-    const message = `${provider} request failed (unknown): non-Error thrown`
+        return content
+      } catch (error) {
+        const durationMs = Date.now() - startedAt
 
-    await persistLlmCall(params.trace, {
-      durationMs,
-      error: message,
-      model: params.model,
-      provider,
-      requestJson,
-      responseContent: null,
-      responseJson: null,
-    })
+        if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
+          const message = getPlaygroundInterruptMessage(params.signal)
+          const langfuse = getLangfuseLinkInfo(langfuseSpan)
 
-    throw error
-  }
+          finishOpenAILangfuseSpan(langfuseSpan, {
+            level: 'ERROR',
+            statusMessage: message,
+          })
+          langfuseSpan = null
+
+          await persistLlmCall(params.trace, {
+            durationMs,
+            error: message,
+            gatewayProvider: observability.gatewayProvider,
+            langfuse,
+            model: params.model,
+            requestJson,
+            responseContent: null,
+            responseJson: null,
+            source: observability.source,
+            underlyingProvider: observability.underlyingProvider,
+          })
+
+          throw new PlaygroundRunInterruptedError(message)
+        }
+
+        if (error instanceof Error) {
+          const status =
+            'status' in error
+              ? String((error as { status?: number }).status ?? 'unknown')
+              : 'unknown'
+          const providerLabel = provider === 'openai' ? 'OpenAI' : 'SiliconFlow'
+          const message = `${providerLabel} request failed (${status}): ${error.message}`
+          const langfuse = getLangfuseLinkInfo(langfuseSpan)
+
+          finishOpenAILangfuseSpan(langfuseSpan, {
+            level: 'ERROR',
+            statusMessage: message,
+          })
+          langfuseSpan = null
+
+          await persistLlmCall(params.trace, {
+            durationMs,
+            error: message,
+            gatewayProvider: observability.gatewayProvider,
+            langfuse,
+            model: params.model,
+            requestJson,
+            responseContent: null,
+            responseJson: null,
+            source: observability.source,
+            underlyingProvider: observability.underlyingProvider,
+          })
+
+          throw new Error(message, { cause: error })
+        }
+
+        const message = `${provider} request failed (unknown): non-Error thrown`
+        const langfuse = getLangfuseLinkInfo(langfuseSpan)
+
+        finishOpenAILangfuseSpan(langfuseSpan, {
+          level: 'ERROR',
+          statusMessage: message,
+        })
+        langfuseSpan = null
+
+        await persistLlmCall(params.trace, {
+          durationMs,
+          error: message,
+          gatewayProvider: observability.gatewayProvider,
+          langfuse,
+          model: params.model,
+          requestJson,
+          responseContent: null,
+          responseJson: null,
+          source: observability.source,
+          underlyingProvider: observability.underlyingProvider,
+        })
+
+        throw error
+      } finally {
+        finishOpenAILangfuseSpan(langfuseSpan)
+      }
+    },
+  )
 }
 
 async function callAnthropicChatCompletion(params: {
@@ -502,12 +608,16 @@ async function callAnthropicChatCompletion(params: {
   signal?: AbortSignal
   trace?: ChatCompletionTrace
 }) {
-  const provider: ModelProvider = 'anthropic'
+  const observability = buildLlmObservabilityMetadata({
+    jsonMode: params.jsonMode,
+    model: params.model,
+    trace: params.trace,
+  })
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
   const langfuseGeneration = startAnthropicLangfuseGeneration({
-    model: params.model,
+    observability,
     requestPayload,
     trace: params.trace,
   })
@@ -555,11 +665,14 @@ async function callAnthropicChatCompletion(params: {
     await persistLlmCall(params.trace, {
       durationMs: Date.now() - startedAt,
       error: null,
+      gatewayProvider: observability.gatewayProvider,
+      langfuse: getLangfuseLinkInfo(langfuseGeneration),
       model: params.model,
-      provider,
       requestJson,
       responseContent: content,
       responseJson: responseText,
+      source: observability.source,
+      underlyingProvider: observability.underlyingProvider,
     })
 
     return content
@@ -578,11 +691,14 @@ async function callAnthropicChatCompletion(params: {
       await persistLlmCall(params.trace, {
         durationMs,
         error: message,
+        gatewayProvider: observability.gatewayProvider,
+        langfuse: getLangfuseLinkInfo(langfuseGeneration),
         model: params.model,
-        provider,
         requestJson,
         responseContent: null,
         responseJson: null,
+        source: observability.source,
+        underlyingProvider: observability.underlyingProvider,
       })
 
       throw new PlaygroundRunInterruptedError(message)
@@ -598,11 +714,14 @@ async function callAnthropicChatCompletion(params: {
       await persistLlmCall(params.trace, {
         durationMs,
         error: error.message,
+        gatewayProvider: observability.gatewayProvider,
+        langfuse: getLangfuseLinkInfo(langfuseGeneration),
         model: params.model,
-        provider,
         requestJson,
         responseContent: null,
         responseJson: null,
+        source: observability.source,
+        underlyingProvider: observability.underlyingProvider,
       })
 
       throw error
@@ -619,11 +738,14 @@ async function callAnthropicChatCompletion(params: {
     await persistLlmCall(params.trace, {
       durationMs,
       error: message,
+      gatewayProvider: observability.gatewayProvider,
+      langfuse: getLangfuseLinkInfo(langfuseGeneration),
       model: params.model,
-      provider,
       requestJson,
       responseContent: null,
       responseJson: null,
+      source: observability.source,
+      underlyingProvider: observability.underlyingProvider,
     })
 
     throw error

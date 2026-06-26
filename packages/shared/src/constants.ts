@@ -58,6 +58,14 @@ export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ProgrammaticScorerScenarioId =
   (typeof programmaticScorerScenarioIds)[number]
 export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
+export type UnderlyingModelProvider =
+  | 'anthropic'
+  | 'deepseek'
+  | 'minimax'
+  | 'moonshot'
+  | 'openai'
+  | 'qwen'
+  | 'zai'
 
 type ModelSurface = 'evaluation' | 'submission'
 type CatalogModelId = ModelId | RetiredModelId
@@ -69,6 +77,7 @@ type ModelDefinition = {
   provider: ModelProvider
   surfaces: readonly ModelSurface[]
   thinking?: 'disabled'
+  underlyingProvider: UnderlyingModelProvider
 }
 
 export const modelCatalog = [
@@ -78,6 +87,7 @@ export const modelCatalog = [
     apiModel: 'deepseek-ai/DeepSeek-V3.2',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'deepseek',
   },
   {
     id: 'kimi-k2.5',
@@ -85,6 +95,7 @@ export const modelCatalog = [
     apiModel: 'Pro/moonshotai/Kimi-K2.5',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'moonshot',
   },
   {
     id: 'qwen3.5-397b-a17b',
@@ -92,6 +103,7 @@ export const modelCatalog = [
     apiModel: 'Qwen/Qwen3.5-27B',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'qwen',
   },
   {
     id: 'deepseek-v4-pro',
@@ -99,6 +111,7 @@ export const modelCatalog = [
     apiModel: 'deepseek-ai/DeepSeek-V4-Pro',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'deepseek',
   },
   {
     id: 'kimi-k2.6',
@@ -106,6 +119,7 @@ export const modelCatalog = [
     apiModel: 'Pro/moonshotai/Kimi-K2.6',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'moonshot',
   },
   {
     id: 'qwen3.6-27b',
@@ -114,6 +128,7 @@ export const modelCatalog = [
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
     thinking: 'disabled',
+    underlyingProvider: 'qwen',
   },
   {
     id: 'minimax-m3',
@@ -121,6 +136,7 @@ export const modelCatalog = [
     apiModel: 'MiniMaxAI/MiniMax-M3',
     provider: 'siliconflow',
     surfaces: [],
+    underlyingProvider: 'minimax',
   },
   {
     id: 'minimax-m2.5',
@@ -128,6 +144,7 @@ export const modelCatalog = [
     apiModel: 'MiniMaxAI/MiniMax-M2.5',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'minimax',
   },
   {
     id: 'glm-5.1',
@@ -135,6 +152,7 @@ export const modelCatalog = [
     apiModel: 'Pro/zai-org/GLM-5.1',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'zai',
   },
   {
     id: 'gpt-4.1',
@@ -142,6 +160,7 @@ export const modelCatalog = [
     apiModel: 'gpt-4.1',
     provider: 'openai',
     surfaces: ['evaluation'],
+    underlyingProvider: 'openai',
   },
   {
     id: 'gpt-5.4',
@@ -149,6 +168,7 @@ export const modelCatalog = [
     apiModel: 'gpt-5.4',
     provider: 'openai',
     surfaces: ['evaluation'],
+    underlyingProvider: 'openai',
   },
   {
     id: 'gpt-5.4-mini',
@@ -156,6 +176,7 @@ export const modelCatalog = [
     apiModel: 'gpt-5.4-mini',
     provider: 'openai',
     surfaces: ['evaluation'],
+    underlyingProvider: 'openai',
   },
   {
     id: 'claude-sonnet-4',
@@ -163,6 +184,7 @@ export const modelCatalog = [
     apiModel: 'claude-sonnet-4',
     provider: 'anthropic',
     surfaces: ['evaluation'],
+    underlyingProvider: 'anthropic',
   },
   {
     id: 'claude-sonnet-4-5',
@@ -170,6 +192,7 @@ export const modelCatalog = [
     apiModel: 'claude-sonnet-4-5',
     provider: 'anthropic',
     surfaces: ['evaluation'],
+    underlyingProvider: 'anthropic',
   },
   {
     id: 'claude-opus-4-5',
@@ -177,6 +200,7 @@ export const modelCatalog = [
     apiModel: 'claude-opus-4-5-20251101',
     provider: 'anthropic',
     surfaces: ['evaluation'],
+    underlyingProvider: 'anthropic',
   },
   {
     id: 'claude-opus-4-6',
@@ -184,6 +208,7 @@ export const modelCatalog = [
     apiModel: 'claude-opus-4-6',
     provider: 'anthropic',
     surfaces: ['evaluation'],
+    underlyingProvider: 'anthropic',
   },
   {
     id: 'qwen3.5-397b',
@@ -192,6 +217,7 @@ export const modelCatalog = [
     provider: 'siliconflow',
     surfaces: ['evaluation'],
     thinking: 'disabled',
+    underlyingProvider: 'qwen',
   },
   {
     id: 'glm-4.6',
@@ -199,6 +225,7 @@ export const modelCatalog = [
     apiModel: 'zai-org/GLM-4.6',
     provider: 'siliconflow',
     surfaces: ['evaluation'],
+    underlyingProvider: 'zai',
   },
 ] as const satisfies readonly ModelDefinition[]
 
@@ -248,6 +275,12 @@ export function getModelDefinition(id: ModelId): ModelDefinition {
   }
 
   return model as ModelDefinition
+}
+
+export function getUnderlyingModelProvider(
+  id: ModelId,
+): UnderlyingModelProvider {
+  return getModelDefinition(id).underlyingProvider
 }
 
 export function resolveModelLabel(modelId: string): string {

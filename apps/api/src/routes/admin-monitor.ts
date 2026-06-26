@@ -40,10 +40,12 @@ type LlmLatencyCallRow = {
   phase: (typeof LLM_LATENCY_PHASES)[number]
   side: 'a' | 'b' | 'judge' | 'scorer'
   provider: string
+  gatewayProvider: string | null
   model: string
   durationMs: number
   promptTokens: number
   completionTokens: number
+  langfuseTraceUrl: string | null
   completedAt: string | null
   createdAt: string
 }
@@ -148,20 +150,37 @@ function listSuccessfulCompletedLlmCalls(): LlmLatencyCallRow[] {
   return db.all<LlmLatencyCallRow>(sql`
     SELECT
       lc.id AS id,
-      CASE
-        WHEN lc.playground_run_id IS NOT NULL THEN 'playground'
-        ELSE 'tournament'
-      END AS source,
+      COALESCE(
+        lc.source,
+        CASE
+          WHEN lc.playground_run_id IS NOT NULL THEN 'playground'
+          ELSE 'tournament'
+        END
+      ) AS source,
       COALESCE(lc.playground_run_id, lc.match_id) AS runId,
-      s.id AS scenarioId,
+      COALESCE(lc.scenario_id, s.id) AS scenarioId,
       s.title AS scenarioTitle,
       lc.phase AS phase,
       lc.side AS side,
-      lc.provider AS provider,
+      COALESCE(
+        lc.underlying_provider,
+        CASE
+          WHEN lc.model LIKE 'deepseek-%' THEN 'deepseek'
+          WHEN lc.model LIKE 'qwen%' THEN 'qwen'
+          WHEN lc.model LIKE 'kimi-%' THEN 'moonshot'
+          WHEN lc.model LIKE 'minimax-%' THEN 'minimax'
+          WHEN lc.model LIKE 'glm-%' THEN 'zai'
+          WHEN lc.model LIKE 'gpt-%' THEN 'openai'
+          WHEN lc.model LIKE 'claude-%' THEN 'anthropic'
+          ELSE lc.provider
+        END
+      ) AS provider,
+      COALESCE(lc.gateway_provider, lc.provider) AS gatewayProvider,
       lc.model AS model,
       lc.duration_ms AS durationMs,
       COALESCE(lc.prompt_tokens, 0) AS promptTokens,
       COALESCE(lc.completion_tokens, 0) AS completionTokens,
+      lc.langfuse_trace_url AS langfuseTraceUrl,
       COALESCE(
         pr.finished_at,
         m.finished_at,
@@ -179,7 +198,7 @@ function listSuccessfulCompletedLlmCalls(): LlmLatencyCallRow[] {
       ON m.id = lc.match_id
       AND m.status = 'scored'
     JOIN scenarios s
-      ON s.id = COALESCE(pr.scenario_id, m.scenario_id)
+      ON s.id = COALESCE(lc.scenario_id, pr.scenario_id, m.scenario_id)
     WHERE lc.error IS NULL
       AND lc.response_content IS NOT NULL
       AND (
@@ -267,6 +286,7 @@ adminMonitorRouter.get(
       {
         completionTokens: number
         durations: number[]
+        gatewayProviders: Set<string>
         model: string
         phase: LlmLatencyCallRow['phase']
         promptTokens: number
@@ -284,6 +304,7 @@ adminMonitorRouter.get(
       const current = aggregateMap.get(key) ?? {
         completionTokens: 0,
         durations: [],
+        gatewayProviders: new Set<string>(),
         model: row.model,
         phase: row.phase,
         promptTokens: 0,
@@ -296,6 +317,9 @@ adminMonitorRouter.get(
       current.durations.push(row.durationMs)
       current.promptTokens += row.promptTokens
       current.completionTokens += row.completionTokens
+      if (row.gatewayProvider) {
+        current.gatewayProviders.add(row.gatewayProvider)
+      }
       current.runKeys.add(`${row.source}:${row.runId}`)
       aggregateMap.set(key, current)
     }
@@ -315,6 +339,7 @@ adminMonitorRouter.get(
           scenarioTitle: item.scenarioTitle,
           phase: item.phase,
           provider: item.provider,
+          gatewayProviders: uniqueSorted(item.gatewayProviders),
           model: item.model,
           callCount: item.durations.length,
           runCount: item.runKeys.size,
@@ -664,7 +689,13 @@ adminMonitorRouter.post(
             model: judgeModel,
             systemPrompt: judgePrompt,
             temperature: 0,
-            trace: { phase: 'judgment', side: 'judge' },
+            trace: {
+              matchId,
+              phase: 'judgment',
+              scenarioId: resolvedScenario.id,
+              side: 'judge',
+              source: 'tournament',
+            },
           })
           job.results.push({
             matchId,
@@ -684,6 +715,7 @@ adminMonitorRouter.post(
     ).then(() => {
       job.status = 'done'
       job.finishedAt = new Date().toISOString()
+      return undefined
     })
 
     return context.json({ jobId, status: 'running', total: matchIds.length })

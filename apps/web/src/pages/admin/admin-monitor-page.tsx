@@ -1,5 +1,5 @@
 import type { AdminLlmLatencyReport, AdminMonitorUser } from '@axiia/shared'
-import { Activity, Eye } from 'lucide-react'
+import { Activity, ExternalLink, Eye } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -102,6 +102,29 @@ function formatAbsoluteTime(value: string | null) {
     minute: '2-digit',
     month: '2-digit',
   }).format(date)
+}
+
+function formatGatewayProvider(
+  provider: string,
+  gatewayProvider: string | null,
+) {
+  if (!gatewayProvider || gatewayProvider === provider) {
+    return null
+  }
+
+  return `via ${gatewayProvider}`
+}
+
+function formatGatewayProviders(provider: string, gatewayProviders: string[]) {
+  const distinctGateways = gatewayProviders.filter(
+    (gatewayProvider) => gatewayProvider && gatewayProvider !== provider,
+  )
+
+  if (distinctGateways.length === 0) {
+    return null
+  }
+
+  return `via ${distinctGateways.join(', ')}`
 }
 
 export function AdminMonitorPage() {
@@ -323,7 +346,7 @@ export function AdminMonitorPage() {
           </Select>
         </label>
         <label className="space-y-1 text-xs text-(--foreground-subtle)">
-          Provider
+          模型厂商
           <Select
             value={latencyFilters.provider}
             onValueChange={(value) =>
@@ -435,53 +458,63 @@ export function AdminMonitorPage() {
               </tr>
             </thead>
             <tbody>
-              {latencyReport.aggregates.map((row) => (
-                <tr
-                  key={`${row.scenarioId}:${row.phase}:${row.provider}:${row.model}`}
-                  className="border-b border-(--border-soft) last:border-b-0 transition hover:bg-white/3"
-                >
-                  <td className="px-4 py-3 text-(--foreground)">
-                    {row.scenarioTitle}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge tone="info">{phaseLabels[row.phase]}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex min-w-[180px] items-center gap-2">
-                      <Activity className="h-3.5 w-3.5 shrink-0 text-(--foreground-subtle)" />
-                      <div>
-                        <p className="font-medium text-(--foreground)">
-                          {row.model}
-                        </p>
-                        <p className="text-xs text-(--foreground-subtle)">
-                          {row.provider}
-                        </p>
+              {latencyReport.aggregates.map((row) => {
+                const gatewayLabel = formatGatewayProviders(
+                  row.provider,
+                  row.gatewayProviders,
+                )
+
+                return (
+                  <tr
+                    key={`${row.scenarioId}:${row.phase}:${row.provider}:${row.model}`}
+                    className="border-b border-(--border-soft) last:border-b-0 transition hover:bg-white/3"
+                  >
+                    <td className="px-4 py-3 text-(--foreground)">
+                      {row.scenarioTitle}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge tone="info">{phaseLabels[row.phase]}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex min-w-[180px] items-center gap-2">
+                        <Activity className="h-3.5 w-3.5 shrink-0 text-(--foreground-subtle)" />
+                        <div>
+                          <p className="font-medium text-(--foreground)">
+                            {row.model}
+                          </p>
+                          <p className="text-xs text-(--foreground-subtle)">
+                            {row.provider}
+                            {gatewayLabel ? (
+                              <span className="ml-2">{gatewayLabel}</span>
+                            ) : null}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                    {row.callCount}
-                    <span className="ml-1 text-xs text-(--foreground-subtle)">
-                      / {row.runCount} run
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                    {formatDuration(row.avgDurationMs)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                    {formatDuration(row.p50DurationMs)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
-                    {formatDuration(row.p95DurationMs)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                    {formatDuration(row.maxDurationMs)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                    {formatDuration(row.totalDurationMs)}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {row.callCount}
+                      <span className="ml-1 text-xs text-(--foreground-subtle)">
+                        / {row.runCount} run
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {formatDuration(row.avgDurationMs)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {formatDuration(row.p50DurationMs)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
+                      {formatDuration(row.p95DurationMs)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {formatDuration(row.maxDurationMs)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {formatDuration(row.totalDurationMs)}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -505,49 +538,75 @@ export function AdminMonitorPage() {
                   <th className="px-4 py-3 font-medium">阶段</th>
                   <th className="px-4 py-3 font-medium">Side</th>
                   <th className="px-4 py-3 font-medium">模型</th>
+                  <th className="px-4 py-3 font-medium">Trace</th>
                   <th className="px-4 py-3 font-medium text-right">耗时</th>
                   <th className="px-4 py-3 font-medium text-right">Token</th>
                   <th className="px-4 py-3 font-medium text-right">完成</th>
                 </tr>
               </thead>
               <tbody>
-                {latencyReport.calls.map((call) => (
-                  <tr
-                    key={call.id}
-                    className="border-b border-(--border-soft) last:border-b-0 transition hover:bg-white/3"
-                  >
-                    <td className="px-4 py-3 tabular-nums text-(--foreground)">
-                      {call.source === 'tournament' ? '赛事' : 'PG'} #
-                      {call.runId}
-                    </td>
-                    <td className="px-4 py-3 text-(--foreground)">
-                      {call.scenarioTitle}
-                    </td>
-                    <td className="px-4 py-3 text-(--foreground-subtle)">
-                      {phaseLabels[call.phase]}
-                    </td>
-                    <td className="px-4 py-3 text-(--foreground-subtle)">
-                      {sideLabels[call.side]}
-                    </td>
-                    <td className="px-4 py-3 text-(--foreground)">
-                      {call.model}
-                      <span className="ml-2 text-xs text-(--foreground-subtle)">
-                        {call.provider}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
-                      {formatDuration(call.durationMs)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                      {formatTokenCount(
-                        call.promptTokens + call.completionTokens,
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs text-(--foreground-subtle)">
-                      {formatAbsoluteTime(call.completedAt)}
-                    </td>
-                  </tr>
-                ))}
+                {latencyReport.calls.map((call) => {
+                  const gatewayLabel = formatGatewayProvider(
+                    call.provider,
+                    call.gatewayProvider,
+                  )
+
+                  return (
+                    <tr
+                      key={call.id}
+                      className="border-b border-(--border-soft) last:border-b-0 transition hover:bg-white/3"
+                    >
+                      <td className="px-4 py-3 tabular-nums text-(--foreground)">
+                        {call.source === 'tournament' ? '赛事' : 'PG'} #
+                        {call.runId}
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground)">
+                        {call.scenarioTitle}
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground-subtle)">
+                        {phaseLabels[call.phase]}
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground-subtle)">
+                        {sideLabels[call.side]}
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground)">
+                        {call.model}
+                        <span className="ml-2 text-xs text-(--foreground-subtle)">
+                          {call.provider}
+                          {gatewayLabel ? (
+                            <span className="ml-2">{gatewayLabel}</span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {call.langfuseTraceUrl ? (
+                          <a
+                            className="inline-flex items-center gap-1 text-(--accent) transition hover:opacity-80"
+                            href={call.langfuseTraceUrl}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Langfuse
+                          </a>
+                        ) : (
+                          <span className="text-(--foreground-subtle)">--</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
+                        {formatDuration(call.durationMs)}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                        {formatTokenCount(
+                          call.promptTokens + call.completionTokens,
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-(--foreground-subtle)">
+                        {formatAbsoluteTime(call.completedAt)}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

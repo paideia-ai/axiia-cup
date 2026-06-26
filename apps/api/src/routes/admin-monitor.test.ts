@@ -172,6 +172,12 @@ beforeAll(async () => {
         side: 'a',
         model: 'deepseek-v3.2',
         provider: 'siliconflow',
+        gatewayProvider: 'siliconflow',
+        underlyingProvider: 'deepseek',
+        scenarioId: 'mon-test-scenario',
+        source: 'playground',
+        langfuseTraceUrl:
+          'https://langfuse.test/project/test/traces/trace-dialogue-a',
         requestJson: '{}',
         responseJson: JSON.stringify({
           usage: { prompt_tokens: 100, completion_tokens: 50 },
@@ -645,6 +651,8 @@ describe('GET /api/admin/monitor/llm-latency', () => {
       aggregates: Array<{
         scenarioId: string
         phase: string
+        provider: string
+        gatewayProviders: string[]
         model: string
         callCount: number
         runCount: number
@@ -654,7 +662,7 @@ describe('GET /api/admin/monitor/llm-latency', () => {
         totalPromptTokens: number
         totalCompletionTokens: number
       }>
-      calls: Array<Record<string, unknown>>
+      calls: Array<{ langfuseTraceUrl: string | null }>
     }
 
     const dialogue = data.aggregates.find(
@@ -665,6 +673,8 @@ describe('GET /api/admin/monitor/llm-latency', () => {
     )
 
     expect(dialogue).toBeDefined()
+    expect(dialogue?.provider).toBe('deepseek')
+    expect(dialogue?.gatewayProviders).toEqual(['siliconflow'])
     expect(dialogue?.callCount).toBe(7)
     expect(dialogue?.runCount).toBe(4)
     expect(dialogue?.avgDurationMs).toBe(257.1)
@@ -673,6 +683,13 @@ describe('GET /api/admin/monitor/llm-latency', () => {
     expect(dialogue?.totalPromptTokens).toBe(660)
     expect(dialogue?.totalCompletionTokens).toBe(330)
     expect(data.calls.length).toBeGreaterThan(0)
+    expect(
+      data.calls.some(
+        (call) =>
+          call.langfuseTraceUrl ===
+          'https://langfuse.test/project/test/traces/trace-dialogue-a',
+      ),
+    ).toBe(true)
   })
 
   it('filters playground and tournament rows separately', async () => {

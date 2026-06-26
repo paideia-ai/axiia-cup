@@ -113,6 +113,13 @@
       "when": 1776335000000,
       "tag": "0015_preset_role_options",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "16",
+      "when": 1776340000000,
+      "tag": "0016_llm_observability_links",
+      "breakpoints": true
     }
   ]
 }

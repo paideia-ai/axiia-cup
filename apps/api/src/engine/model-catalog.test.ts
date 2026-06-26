@@ -4,6 +4,7 @@ import {
   createSubmissionSchema,
   evaluationModelOptions,
   getModelDefinition,
+  getUnderlyingModelProvider,
   modelOptions,
   modelIds,
   playerModelOptions,
@@ -117,6 +118,9 @@ describe('model catalog', () => {
   it('has a catalog entry for every valid model id', () => {
     for (const modelId of modelIds) {
       expect(getModelDefinition(modelId).id).toBe(modelId)
+      expect(getUnderlyingModelProvider(modelId)).toBe(
+        getModelDefinition(modelId).underlyingProvider,
+      )
     }
   })
 })

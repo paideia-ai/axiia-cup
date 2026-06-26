@@ -298,6 +298,8 @@ export const llmCalls = sqliteTable(
     playgroundRunId: integer('playground_run_id').references(
       () => playgroundRuns.id,
     ),
+    scenarioId: text('scenario_id').references(() => scenarios.id),
+    source: text('source', { enum: ['playground', 'tournament'] as const }),
     userId: integer('user_id').references(() => users.id),
     phase: text('phase', { enum: llmCallPhases }).notNull(),
     side: text('side', { enum: llmCallSides }).notNull(),
@@ -305,6 +307,8 @@ export const llmCalls = sqliteTable(
     attempt: integer('attempt').notNull().default(1),
     model: text('model').notNull(),
     provider: text('provider').notNull().default('siliconflow'),
+    gatewayProvider: text('gateway_provider'),
+    underlyingProvider: text('underlying_provider'),
     requestJson: text('request_json').notNull(),
     responseJson: text('response_json'),
     responseContent: text('response_content'),
@@ -312,12 +316,20 @@ export const llmCalls = sqliteTable(
     durationMs: integer('duration_ms').notNull(),
     promptTokens: integer('prompt_tokens'),
     completionTokens: integer('completion_tokens'),
+    otelTraceId: text('otel_trace_id'),
+    otelSpanId: text('otel_span_id'),
+    langfuseObservationId: text('langfuse_observation_id'),
+    langfuseTraceUrl: text('langfuse_trace_url'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({
     matchIdx: index('llm_calls_match_id_idx').on(table.matchId),
     playgroundRunIdx: index('llm_calls_playground_run_id_idx').on(
       table.playgroundRunId,
+    ),
+    scenarioIdx: index('llm_calls_scenario_id_idx').on(table.scenarioId),
+    underlyingProviderIdx: index('llm_calls_underlying_provider_idx').on(
+      table.underlyingProvider,
     ),
     userIdx: index('llm_calls_user_id_idx').on(table.userId),
     phaseCheck: check(
