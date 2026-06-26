@@ -11,7 +11,7 @@ import {
   type Scenario,
   type Submission,
 } from '@axiia/shared'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -41,6 +41,7 @@ import {
 } from '../lib/playground-session'
 import { formatDateTime, parseTimestampMs } from '../lib/datetime'
 import { usePageVisibility } from '../lib/page-visibility'
+import { formatScoringReasoning } from '../lib/scoring-reasoning'
 import {
   buildScenarioWithResolvedRoles,
   scenarioHasExamination,
@@ -594,6 +595,7 @@ function RunResult({
   run: PlaygroundRun
   scenario: Scenario
 }) {
+  const [showScoringDetails, setShowScoringDetails] = useState(false)
   const showInfoAssignment =
     run.infoAssignment != null && scenarioHasInfoAssignmentDetails(scenario)
   const showExaminationResults = scenarioHasExamination(scenario)
@@ -601,6 +603,7 @@ function RunResult({
     run,
     scenario,
   )
+  const scoringReasoning = formatScoringReasoning(run.reasoning)
 
   return (
     <div className="space-y-6">
@@ -636,12 +639,24 @@ function RunResult({
               </p>
             </div>
           </div>
-          {run.reasoning ? (
-            <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2 p-4">
-              <p className="panel-label">计分明细</p>
-              <pre className="panel-copy mt-1 whitespace-pre-wrap font-sans text-xs leading-5">
-                {run.reasoning}
-              </pre>
+          {scoringReasoning ? (
+            <div className="mt-4 rounded-xl border border-(--border-soft) bg-white/2">
+              <button
+                type="button"
+                aria-expanded={showScoringDetails}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+                onClick={() => setShowScoringDetails((v) => !v)}
+              >
+                <p className="panel-label">计分明细</p>
+                <ChevronDown
+                  className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showScoringDetails ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showScoringDetails ? (
+                <pre className="panel-copy px-4 pb-4 whitespace-pre-wrap font-sans text-xs leading-5">
+                  {scoringReasoning}
+                </pre>
+              ) : null}
             </div>
           ) : null}
         </CardContent>

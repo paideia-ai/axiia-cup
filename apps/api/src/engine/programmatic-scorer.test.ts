@@ -80,7 +80,7 @@ describe('computeProgrammaticScore', () => {
     expect(result?.scoreA).toBe(1.25)
     expect(result?.scoreB).toBe(-1.25)
     expect(result?.winner).toBe('a')
-    expect(result?.reasoning).toContain('程序化计分明细')
+    expect(result?.reasoning).not.toContain('程序化计分明细')
     expect(result?.reasoning).toContain('scoreA = 1.25, scoreB = -1.25')
   })
 
