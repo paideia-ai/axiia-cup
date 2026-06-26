@@ -22,6 +22,7 @@ import {
   retryAdminMatch,
 } from '../lib/api'
 import { usePageVisibility } from '../lib/page-visibility'
+import { formatScoringReasoning } from '../lib/scoring-reasoning'
 import {
   buildScenarioWithResolvedRoles,
   scenarioHasInfoAssignmentDetails,
@@ -160,6 +161,7 @@ export function MatchDetailPage() {
   const [match, setMatch] = useState<MatchDetail | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showScoringDetails, setShowScoringDetails] = useState(false)
   const [showTranscript, setShowTranscript] = useState(false)
   const [showJudgeQA, setShowJudgeQA] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
@@ -334,6 +336,7 @@ export function MatchDetailPage() {
   const trolleyTranscriptSections = displayScenario
     ? buildTrolleyTranscriptSections(match, displayScenario)
     : null
+  const scoringReasoning = formatScoringReasoning(match.reasoning)
 
   return (
     <div className="space-y-6">
@@ -447,20 +450,32 @@ export function MatchDetailPage() {
       {/* Scoring detail — moved up: users want "why did I win/lose?" first */}
       <Card>
         <CardHeader>
-          <CardTitle>计分明细</CardTitle>
+          <button
+            type="button"
+            aria-expanded={showScoringDetails}
+            className="flex w-full items-center justify-between"
+            onClick={() => setShowScoringDetails((v) => !v)}
+          >
+            <CardTitle>计分明细</CardTitle>
+            <ChevronDown
+              className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showScoringDetails ? 'rotate-180' : ''}`}
+            />
+          </button>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
-            <p className="panel-copy whitespace-pre-wrap">
-              {match.reasoning ?? '暂无计分明细。'}
-            </p>
-            {match.error ? (
-              <p className="mt-4 text-sm text-(--accent)">
-                错误信息：{match.error}
+        {showScoringDetails ? (
+          <CardContent>
+            <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
+              <p className="panel-copy whitespace-pre-wrap">
+                {scoringReasoning || '暂无计分明细。'}
               </p>
-            ) : null}
-          </div>
-        </CardContent>
+              {match.error ? (
+                <p className="mt-4 text-sm text-(--accent)">
+                  错误信息：{match.error}
+                </p>
+              ) : null}
+            </div>
+          </CardContent>
+        ) : null}
       </Card>
 
       {/* Judge decision + info assignment */}
