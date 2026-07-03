@@ -101,7 +101,7 @@ Notes:
 
 - `JWT_SECRET` is required. The API now fails at startup if it is missing.
 - `SILICONFLOW_API_KEY` is required. The API now fails at startup if it is missing.
-- `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, and `LANGFUSE_BASE_URL` are optional. Leave all three blank unless you want tracing.
+- `LANGFUSE_SECRET_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_BASE_URL`, and `LANGFUSE_PROJECT_ID` are optional. Leave all four blank unless you want tracing and clickable Langfuse links.
 - Leave `VITE_API_URL` empty to use same-origin `/api` requests through the web container.
 - `AXIIA_DATA_DIR` must point to a persistent host path, not a temporary directory.
 - `AXIIA_DATA_DIR` should live outside the repo checkout so you do not accidentally bind a stale local database into production.
