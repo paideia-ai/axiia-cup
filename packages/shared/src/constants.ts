@@ -7,6 +7,7 @@ export const submissionModelIds = [
   'qwen3.6-27b',
   'minimax-m2.5',
   'glm-5.1',
+  'glm-5.2',
 ] as const
 
 export const playerSelectableModelIds = [
@@ -14,7 +15,7 @@ export const playerSelectableModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
-  'glm-5.1',
+  'glm-5.2',
 ] as const
 
 export const retiredModelIds = ['minimax-m3'] as const
@@ -153,6 +154,13 @@ export const modelCatalog = [
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'zai',
+  },
+  {
+    id: 'glm-5.2',
+    label: 'GLM-5.2',
+    apiModel: 'zai-org/GLM-5.2',
+    provider: 'siliconflow',
+    surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'gpt-4.1',
