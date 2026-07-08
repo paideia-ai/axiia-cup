@@ -19,7 +19,7 @@ const chosenPlayerModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
-  'glm-5.1',
+  'glm-5.2',
 ] as const
 
 describe('model catalog', () => {
@@ -33,6 +33,9 @@ describe('model catalog', () => {
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'minimax-m3',
+    )
+    expect(playerModelOptions.map((option) => option.id)).not.toContain(
+      'glm-5.1',
     )
   })
 
@@ -59,7 +62,7 @@ describe('model catalog', () => {
         roleBName: 'B',
         roleBOptions: [],
         roleBRequests: [],
-        scorerModel: 'glm-5.1',
+        scorerModel: 'glm-5.2',
         scorerPrompt: 'score',
         trueRequestCount: 0,
         turnCount: 10,
@@ -74,12 +77,14 @@ describe('model catalog', () => {
     expect(resolveModelLabel('kimi-k2.5')).toBe('Kimi K2.5')
     expect(resolveModelLabel('minimax-m3')).toBe('MiniMax M3')
     expect(resolveModelLabel('qwen3.5-397b-a17b')).toBe('Qwen3.5')
+    expect(resolveModelLabel('glm-5.1')).toBe('GLM-5.1')
+    expect(submissionModelIdSchema.parse('glm-5.1')).toBe('glm-5.1')
   })
 
   it('rejects legacy model ids for newly created player submissions', () => {
     const validInput = {
       modelA: 'deepseek-v4-pro',
-      modelB: 'glm-5.1',
+      modelB: 'glm-5.2',
       promptA: '你是甲方',
       promptB: '你是乙方',
       scenarioId: 'shangyang-court',
@@ -90,6 +95,12 @@ describe('model catalog', () => {
       createSubmissionSchema.safeParse({
         ...validInput,
         modelA: 'deepseek-v3.2',
+      }).success,
+    ).toBe(false)
+    expect(
+      createSubmissionSchema.safeParse({
+        ...validInput,
+        modelA: 'glm-5.1',
       }).success,
     ).toBe(false)
   })
@@ -108,7 +119,7 @@ describe('model catalog', () => {
     expect(getModelDefinition('minimax-m2.5').apiModel).toBe(
       'MiniMaxAI/MiniMax-M2.5',
     )
-    expect(getModelDefinition('glm-5.1').apiModel).toBe('Pro/zai-org/GLM-5.1')
+    expect(getModelDefinition('glm-5.2').apiModel).toBe('zai-org/GLM-5.2')
   })
 
   it('does not change the default evaluation model order', () => {

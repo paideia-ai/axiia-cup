@@ -10,13 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card'
+import { formatScoringReasoning } from '../../lib/scoring-reasoning'
 import { mockMatchDetail, mockScenario } from './mock-data'
 
 export function MockMatch() {
+  const [showScoringDetails, setShowScoringDetails] = useState(false)
   const [showTranscript, setShowTranscript] = useState(false)
   const [showJudgeQA, setShowJudgeQA] = useState(false)
   const m = mockMatchDetail
   const s = mockScenario
+  const scoringReasoning = formatScoringReasoning(m.reasoning)
 
   const playerALabel = `${s.roleAName}（${m.playerADisplayName}）`
   const playerBLabel = `${s.roleBName}（${m.playerBDisplayName}）`
@@ -68,13 +71,27 @@ export function MockMatch() {
       {/* Verdict — outcome-first */}
       <Card>
         <CardHeader>
-          <CardTitle>计分明细</CardTitle>
+          <button
+            type="button"
+            aria-expanded={showScoringDetails}
+            className="flex w-full items-center justify-between"
+            onClick={() => setShowScoringDetails((v) => !v)}
+          >
+            <CardTitle>计分明细</CardTitle>
+            <ChevronDown
+              className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showScoringDetails ? 'rotate-180' : ''}`}
+            />
+          </button>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
-            <p className="panel-copy whitespace-pre-wrap">{m.reasoning}</p>
-          </div>
-        </CardContent>
+        {showScoringDetails ? (
+          <CardContent>
+            <div className="rounded-xl border border-(--border-soft) bg-white/2 p-4">
+              <p className="panel-copy whitespace-pre-wrap">
+                {scoringReasoning || '暂无计分明细。'}
+              </p>
+            </div>
+          </CardContent>
+        ) : null}
       </Card>
 
       {/* Judge QA — collapsed by default */}
