@@ -192,6 +192,7 @@ beforeAll(async () => {
         userId: player1Id,
         phase: 'dialogue',
         side: 'b',
+        attempt: 2,
         model: 'deepseek-v3.2',
         provider: 'siliconflow',
         requestJson: '{}',
@@ -656,13 +657,30 @@ describe('GET /api/admin/monitor/llm-latency', () => {
         model: string
         callCount: number
         runCount: number
-        avgDurationMs: number
-        p50DurationMs: number
-        p95DurationMs: number
+        avgCallDurationMs: number
+        p50CallDurationMs: number
+        p95CallDurationMs: number
+        maxCallDurationMs: number
+        avgRunDurationMs: number
+        p50RunDurationMs: number
+        p95RunDurationMs: number
+        maxRunDurationMs: number
         totalPromptTokens: number
         totalCompletionTokens: number
       }>
-      calls: Array<{ langfuseTraceUrl: string | null }>
+      calls: Array<{
+        attempt: number
+        langfuseTraceUrl: string | null
+        turnIndex: number | null
+      }>
+      runs: Array<{
+        callCount: number
+        durationMs: number
+        maxAttempt: number
+        model: string
+        phase: string
+        runId: number
+      }>
     }
 
     const dialogue = data.aggregates.find(
@@ -677,11 +695,26 @@ describe('GET /api/admin/monitor/llm-latency', () => {
     expect(dialogue?.gatewayProviders).toEqual(['siliconflow'])
     expect(dialogue?.callCount).toBe(7)
     expect(dialogue?.runCount).toBe(4)
-    expect(dialogue?.avgDurationMs).toBe(257.1)
-    expect(dialogue?.p50DurationMs).toBe(100)
-    expect(dialogue?.p95DurationMs).toBe(600)
+    expect(dialogue?.avgCallDurationMs).toBe(257.1)
+    expect(dialogue?.p50CallDurationMs).toBe(100)
+    expect(dialogue?.p95CallDurationMs).toBe(600)
+    expect(dialogue?.maxCallDurationMs).toBe(600)
+    expect(dialogue?.avgRunDurationMs).toBe(450)
+    expect(dialogue?.p50RunDurationMs).toBe(200)
+    expect(dialogue?.p95RunDurationMs).toBe(1100)
+    expect(dialogue?.maxRunDurationMs).toBe(1100)
     expect(dialogue?.totalPromptTokens).toBe(660)
     expect(dialogue?.totalCompletionTokens).toBe(330)
+    expect(
+      data.runs.some(
+        (run) =>
+          run.phase === 'dialogue' &&
+          run.model === 'deepseek-v3.2' &&
+          run.callCount === 2 &&
+          run.durationMs === 1100 &&
+          run.maxAttempt === 2,
+      ),
+    ).toBe(true)
     expect(data.calls.length).toBeGreaterThan(0)
     expect(
       data.calls.some(
@@ -776,6 +809,18 @@ describe('GET /api/admin/monitor/llm-latency', () => {
             responseContent: 'unfinished success',
             durationMs: 8888,
           },
+          {
+            playgroundRunId: pveRunId,
+            purpose: 'rejudge',
+            phase: 'judgment',
+            side: 'judge',
+            model: 'claude-sonnet-4-5',
+            provider: 'anthropic',
+            requestJson: '{}',
+            responseJson: '{}',
+            responseContent: 'research-only success',
+            durationMs: 7777,
+          },
         ])
         .run()
 
@@ -803,6 +848,16 @@ describe('GET /api/admin/monitor/llm-latency', () => {
         .where(eq(schema.playgroundRuns.id, unfinishedRunId))
         .run()
     }
+  })
+
+  it('rejects an inverted date range', async () => {
+    const res = await req(
+      'GET',
+      '/api/admin/monitor/llm-latency?from=2026-04-11T00%3A00%3A00.000Z&to=2026-04-10T00%3A00%3A00.000Z',
+      adminToken,
+    )
+
+    expect(res.status).toBe(400)
   })
 })
 

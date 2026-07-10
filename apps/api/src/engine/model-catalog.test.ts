@@ -120,6 +120,7 @@ describe('model catalog', () => {
       'MiniMaxAI/MiniMax-M2.5',
     )
     expect(getModelDefinition('glm-5.2').apiModel).toBe('zai-org/GLM-5.2')
+    expect(getUnderlyingModelProvider('glm-5.2')).toBe('zai')
   })
 
   it('does not change the default evaluation model order', () => {
@@ -129,9 +130,10 @@ describe('model catalog', () => {
   it('has a catalog entry for every valid model id', () => {
     for (const modelId of modelIds) {
       expect(getModelDefinition(modelId).id).toBe(modelId)
-      expect(getUnderlyingModelProvider(modelId)).toBe(
-        getModelDefinition(modelId).underlyingProvider,
-      )
+      const provider = getUnderlyingModelProvider(modelId)
+
+      expect(provider).toBeDefined()
+      expect(provider).toBe(getModelDefinition(modelId).underlyingProvider)
     }
   })
 })

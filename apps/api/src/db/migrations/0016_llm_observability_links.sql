@@ -4,6 +4,8 @@ ALTER TABLE `llm_calls` ADD COLUMN `scenario_id` text REFERENCES `scenarios`(`id
 --> statement-breakpoint
 ALTER TABLE `llm_calls` ADD COLUMN `source` text;
 --> statement-breakpoint
+ALTER TABLE `llm_calls` ADD COLUMN `purpose` text NOT NULL DEFAULT 'game' CHECK(`purpose` in ('game', 'rejudge'));
+--> statement-breakpoint
 ALTER TABLE `llm_calls` ADD COLUMN `gateway_provider` text;
 --> statement-breakpoint
 ALTER TABLE `llm_calls` ADD COLUMN `underlying_provider` text;
@@ -51,3 +53,5 @@ SET
 CREATE INDEX `llm_calls_scenario_id_idx` ON `llm_calls` (`scenario_id`);
 --> statement-breakpoint
 CREATE INDEX `llm_calls_underlying_provider_idx` ON `llm_calls` (`underlying_provider`);
+--> statement-breakpoint
+CREATE INDEX `llm_calls_monitor_dimensions_idx` ON `llm_calls` (`purpose`, `scenario_id`, `phase`, `underlying_provider`, `model`, `created_at`);

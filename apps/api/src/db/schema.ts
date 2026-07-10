@@ -300,6 +300,9 @@ export const llmCalls = sqliteTable(
     ),
     scenarioId: text('scenario_id').references(() => scenarios.id),
     source: text('source', { enum: ['playground', 'tournament'] as const }),
+    purpose: text('purpose', { enum: ['game', 'rejudge'] as const })
+      .notNull()
+      .default('game'),
     userId: integer('user_id').references(() => users.id),
     phase: text('phase', { enum: llmCallPhases }).notNull(),
     side: text('side', { enum: llmCallSides }).notNull(),
@@ -331,6 +334,14 @@ export const llmCalls = sqliteTable(
     underlyingProviderIdx: index('llm_calls_underlying_provider_idx').on(
       table.underlyingProvider,
     ),
+    monitorDimensionsIdx: index('llm_calls_monitor_dimensions_idx').on(
+      table.purpose,
+      table.scenarioId,
+      table.phase,
+      table.underlyingProvider,
+      table.model,
+      table.createdAt,
+    ),
     userIdx: index('llm_calls_user_id_idx').on(table.userId),
     phaseCheck: check(
       'llm_calls_phase_check',
@@ -339,6 +350,10 @@ export const llmCalls = sqliteTable(
     sideCheck: check(
       'llm_calls_side_check',
       sql`${table.side} in ('a', 'b', 'judge', 'scorer')`,
+    ),
+    purposeCheck: check(
+      'llm_calls_purpose_check',
+      sql`${table.purpose} in ('game', 'rejudge')`,
     ),
     attemptCheck: check('llm_calls_attempt_check', sql`${table.attempt} > 0`),
     durationCheck: check(

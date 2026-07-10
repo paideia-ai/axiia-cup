@@ -25,7 +25,12 @@ import {
 } from '@axiia/shared'
 
 import type { ScenarioRecord } from '../db/schema'
-import { chatCompletion, type ChatCompletionTrace } from './llm'
+import {
+  chatCompletion,
+  type ChatCompletionTrace,
+  withLlmPhaseTrace,
+  withLlmRunTrace,
+} from './llm'
 import {
   getPlaygroundInterruptMessage,
   isPlaygroundRunInterruptedError,
@@ -68,7 +73,7 @@ type MatchExecutionParams = {
 
 type MatchTraceTarget = Pick<
   ChatCompletionTrace,
-  'matchId' | 'playgroundRunId' | 'scenarioId' | 'source' | 'userId'
+  'matchId' | 'playgroundRunId' | 'purpose' | 'scenarioId' | 'source' | 'userId'
 >
 
 export type MatchExecutionResult = {
@@ -193,6 +198,7 @@ function getOpponentHiddenInfo(
 
 function buildMatchTraceTarget(params: MatchExecutionParams): MatchTraceTarget {
   const target: MatchTraceTarget = {
+    purpose: 'game',
     scenarioId: params.scenario.id,
   }
 
@@ -974,8 +980,9 @@ async function getScoreFromScorer(
 
 // ── Main execution ──────────────────────────────────────────────────────────
 
-export async function executeMatchSession(
+async function executeMatchSessionWithinTrace(
   params: MatchExecutionParams,
+  runTraceTarget: MatchTraceTarget,
 ): Promise<MatchExecutionResult> {
   const transcript = (params.transcript ?? []).map((item) =>
     transcriptTurnSchema.parse(item),
@@ -988,7 +995,6 @@ export async function executeMatchSession(
   )
   const modelA = parseSubmissionModelId(params.modelA)
   const modelB = parseSubmissionModelId(params.modelB)
-  const runTraceTarget = buildMatchTraceTarget(params)
 
   // Randomize or restore assignment
   const assignment = params.infoAssignment
@@ -1002,69 +1008,75 @@ export async function executeMatchSession(
   throwIfPlaygroundRunInterrupted(params.signal)
 
   // ── Phase 1: Dialogue ──────────────────────────────────────────────────
-  const dialogueTurnLimit = getScenarioDialogueTurnLimit(
-    params.scenario,
-    assignment,
+  await withLlmPhaseTrace(
+    { ...runTraceTarget, phase: 'dialogue' },
+    async () => {
+      const dialogueTurnLimit = getScenarioDialogueTurnLimit(
+        params.scenario,
+        assignment,
+      )
+
+      for (
+        let turnIndex = transcript.length;
+        turnIndex < dialogueTurnLimit;
+        turnIndex += 1
+      ) {
+        throwIfPlaygroundRunInterrupted(params.signal)
+
+        const trolleyScope = getTrolleyDialogueScope(
+          params.scenario,
+          assignment,
+          transcript,
+        )
+        const speakerTurnIndex = trolleyScope
+          ? trolleyScope.caseTranscript.length
+          : turnIndex
+        const speaker = speakerTurnIndex % 2 === 0 ? 'a' : 'b'
+        const { systemPrompt, messages } = buildDialogueContext(
+          transcript,
+          params.scenario,
+          speaker,
+          assignment,
+          speaker === 'a' ? params.promptA : params.promptB,
+          trolleyScope,
+        )
+
+        const response = await withRetry(
+          (attempt) =>
+            chatCompletion({
+              messages,
+              model: speaker === 'a' ? modelA : modelB,
+              signal: params.signal,
+              systemPrompt,
+              temperature: 0,
+              trace: {
+                ...runTraceTarget,
+                attempt,
+                phase: 'dialogue',
+                side: speaker,
+                turnIndex,
+                userId: speaker === 'a' ? params.userIdA : params.userIdB,
+              },
+            }),
+          params.signal,
+        )
+
+        transcript.push(
+          transcriptTurnSchema.parse({
+            speaker,
+            role:
+              speaker === 'a'
+                ? params.scenario.roleAName
+                : params.scenario.roleBName,
+            content: response.trim(),
+          }),
+        )
+
+        await params.onDialogueTurn?.(transcript)
+        throwIfPlaygroundRunInterrupted(params.signal)
+      }
+    },
   )
-  for (
-    let turnIndex = transcript.length;
-    turnIndex < dialogueTurnLimit;
-    turnIndex += 1
-  ) {
-    throwIfPlaygroundRunInterrupted(params.signal)
-
-    const trolleyScope = getTrolleyDialogueScope(
-      params.scenario,
-      assignment,
-      transcript,
-    )
-    const speakerTurnIndex = trolleyScope
-      ? trolleyScope.caseTranscript.length
-      : turnIndex
-    const speaker = speakerTurnIndex % 2 === 0 ? 'a' : 'b'
-    const { systemPrompt, messages } = buildDialogueContext(
-      transcript,
-      params.scenario,
-      speaker,
-      assignment,
-      speaker === 'a' ? params.promptA : params.promptB,
-      trolleyScope,
-    )
-
-    const response = await withRetry(
-      (attempt) =>
-        chatCompletion({
-          messages,
-          model: speaker === 'a' ? modelA : modelB,
-          signal: params.signal,
-          systemPrompt,
-          temperature: 0,
-          trace: {
-            ...runTraceTarget,
-            attempt,
-            phase: 'dialogue',
-            side: speaker,
-            turnIndex,
-            userId: speaker === 'a' ? params.userIdA : params.userIdB,
-          },
-        }),
-      params.signal,
-    )
-
-    transcript.push(
-      transcriptTurnSchema.parse({
-        speaker,
-        role:
-          speaker === 'a'
-            ? params.scenario.roleAName
-            : params.scenario.roleBName,
-        content: response.trim(),
-      }),
-    )
-
-    await params.onDialogueTurn?.(transcript)
-    throwIfPlaygroundRunInterrupted(params.signal)
-  }
 
   throwIfPlaygroundRunInterrupted(params.signal)
   await params.onJudgingStart?.(transcript)
@@ -1075,81 +1087,96 @@ export async function executeMatchSession(
     params.scenario.examinationQuestionTemplate.trim().length > 0
 
   if (hasExamination) {
-    if (judgeTranscriptA.length === 0) {
-      const questionA = buildExaminationQuestion(params.scenario, 'a')
-      const answerA = await getExaminationAnswer(
-        params.scenario,
-        transcript,
-        questionA,
-        'a',
-        assignment,
-        params.promptA,
-        modelA,
-        {
-          ...runTraceTarget,
-          userId: params.userIdA,
-        },
-        params.signal,
-      )
+    await withLlmPhaseTrace(
+      { ...runTraceTarget, phase: 'examination' },
+      async () => {
+        if (judgeTranscriptA.length === 0) {
+          const questionA = buildExaminationQuestion(params.scenario, 'a')
+          const answerA = await getExaminationAnswer(
+            params.scenario,
+            transcript,
+            questionA,
+            'a',
+            assignment,
+            params.promptA,
+            modelA,
+            {
+              ...runTraceTarget,
+              userId: params.userIdA,
+            },
+            params.signal,
+          )
 
-      judgeTranscriptA.push(answerA)
-      await params.onJudgeTranscriptA?.(judgeTranscriptA)
-    }
+          judgeTranscriptA.push(answerA)
+          await params.onJudgeTranscriptA?.(judgeTranscriptA)
+        }
 
-    if (judgeTranscriptB.length === 0) {
-      const questionB = buildExaminationQuestion(params.scenario, 'b')
-      const answerB = await getExaminationAnswer(
-        params.scenario,
-        transcript,
-        questionB,
-        'b',
-        assignment,
-        params.promptB,
-        modelB,
-        {
-          ...runTraceTarget,
-          userId: params.userIdB,
-        },
-        params.signal,
-      )
+        if (judgeTranscriptB.length === 0) {
+          const questionB = buildExaminationQuestion(params.scenario, 'b')
+          const answerB = await getExaminationAnswer(
+            params.scenario,
+            transcript,
+            questionB,
+            'b',
+            assignment,
+            params.promptB,
+            modelB,
+            {
+              ...runTraceTarget,
+              userId: params.userIdB,
+            },
+            params.signal,
+          )
 
-      judgeTranscriptB.push(answerB)
-      await params.onJudgeTranscriptB?.(judgeTranscriptB)
-    }
+          judgeTranscriptB.push(answerB)
+          await params.onJudgeTranscriptB?.(judgeTranscriptB)
+        }
+      },
+    )
   }
 
   // ── Phase 3: Judge decision (free-form output) ────────────────────────
-  const judgeDecision = await getJudgeDecision(
-    params.scenario,
-    assignment,
-    transcript,
-    judgeTranscriptA,
-    judgeTranscriptB,
-    runTraceTarget,
-    params.signal,
+  const judgeDecision = await withLlmPhaseTrace(
+    { ...runTraceTarget, phase: 'judgment' },
+    () =>
+      getJudgeDecision(
+        params.scenario,
+        assignment,
+        transcript,
+        judgeTranscriptA,
+        judgeTranscriptB,
+        runTraceTarget,
+        params.signal,
+      ),
   )
 
   // ── Phase 4: Scorer ───────────────────────────────────────────────────
-  const programmaticScore = computeProgrammaticScore({
-    assignment,
-    examinationA: judgeTranscriptA,
-    examinationB: judgeTranscriptB,
-    judgeOutput: judgeDecision,
-    scenario: params.scenario,
-  })
+  const { scoreA, scoreB, reasoning, winner } = await withLlmPhaseTrace(
+    { ...runTraceTarget, phase: 'scoring' },
+    async () => {
+      const programmaticScore = computeProgrammaticScore({
+        assignment,
+        examinationA: judgeTranscriptA,
+        examinationB: judgeTranscriptB,
+        judgeOutput: judgeDecision,
+        scenario: params.scenario,
+      })
 
-  const { scoreA, scoreB, reasoning, winner } =
-    programmaticScore ??
-    (await getScoreFromScorer(
-      params.scenario,
-      assignment,
-      judgeDecision,
-      transcript,
-      judgeTranscriptA,
-      judgeTranscriptB,
-      runTraceTarget,
-      params.signal,
-    ))
+      return (
+        programmaticScore ??
+        (await getScoreFromScorer(
+          params.scenario,
+          assignment,
+          judgeDecision,
+          transcript,
+          judgeTranscriptA,
+          judgeTranscriptB,
+          runTraceTarget,
+          params.signal,
+        ))
+      )
+    },
+  )
 
   return {
     infoAssignment: assignment,
@@ -1162,4 +1189,14 @@ export async function executeMatchSession(
     transcript,
     winner,
   }
+}
+
+export async function executeMatchSession(
+  params: MatchExecutionParams,
+): Promise<MatchExecutionResult> {
+  const runTraceTarget = buildMatchTraceTarget(params)
+
+  return await withLlmRunTrace(runTraceTarget, () =>
+    executeMatchSessionWithinTrace(params, runTraceTarget),
+  )
 }

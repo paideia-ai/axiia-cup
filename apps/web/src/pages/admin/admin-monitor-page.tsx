@@ -59,8 +59,9 @@ function formatTokenCount(tokens: number): string {
 
 function formatDuration(ms: number): string {
   if (ms >= 60_000) {
-    const minutes = Math.floor(ms / 60_000)
-    const seconds = Math.round((ms % 60_000) / 1000)
+    const roundedSeconds = Math.round(ms / 1000)
+    const minutes = Math.floor(roundedSeconds / 60)
+    const seconds = roundedSeconds % 60
     return `${minutes}分${seconds.toString().padStart(2, '0')}秒`
   }
 
@@ -144,11 +145,10 @@ export function AdminMonitorPage() {
   const latencySummary = useMemo(() => {
     if (!latencyReport || latencyReport.aggregates.length === 0) {
       return {
-        avgDurationMs: 0,
+        avgCallDurationMs: 0,
+        avgRunDurationMs: 0,
         callCount: 0,
-        modelCount: 0,
-        p95DurationMs: 0,
-        runCount: 0,
+        runSampleCount: 0,
         totalDurationMs: 0,
       }
     }
@@ -161,23 +161,17 @@ export function AdminMonitorPage() {
       (sum, row) => sum + row.totalDurationMs,
       0,
     )
-    const modelCount = new Set(
-      latencyReport.aggregates.map(
-        (row) => `${row.provider}:${row.model}:${row.phase}`,
-      ),
-    ).size
+    const runSampleCount = latencyReport.aggregates.reduce(
+      (sum, row) => sum + row.runCount,
+      0,
+    )
 
     return {
-      avgDurationMs: callCount > 0 ? totalDurationMs / callCount : 0,
+      avgCallDurationMs: callCount > 0 ? totalDurationMs / callCount : 0,
+      avgRunDurationMs:
+        runSampleCount > 0 ? totalDurationMs / runSampleCount : 0,
       callCount,
-      modelCount,
-      p95DurationMs: Math.max(
-        ...latencyReport.aggregates.map((row) => row.p95DurationMs),
-      ),
-      runCount: latencyReport.aggregates.reduce(
-        (sum, row) => sum + row.runCount,
-        0,
-      ),
+      runSampleCount,
       totalDurationMs,
     }
   }, [latencyReport])
@@ -268,7 +262,7 @@ export function AdminMonitorPage() {
             LLM 耗时监控
           </h2>
           <p className="text-sm text-(--foreground-subtle)">
-            按场景、阶段、模型汇总已完成运行的成功调用。
+            按场景、阶段、模型比较已完成运行的模型耗时与单次调用延迟。
           </p>
         </div>
         <Button
@@ -389,7 +383,7 @@ export function AdminMonitorPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-3">
           <p className="text-xs text-(--foreground-subtle)">成功调用</p>
           <p className="mt-1 text-xl font-semibold text-(--foreground)">
@@ -397,15 +391,21 @@ export function AdminMonitorPage() {
           </p>
         </div>
         <div className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-3">
-          <p className="text-xs text-(--foreground-subtle)">平均耗时</p>
+          <p className="text-xs text-(--foreground-subtle)">运行阶段样本</p>
           <p className="mt-1 text-xl font-semibold text-(--foreground)">
-            {formatDuration(latencySummary.avgDurationMs)}
+            {latencySummary.runSampleCount}
           </p>
         </div>
         <div className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-3">
-          <p className="text-xs text-(--foreground-subtle)">最高 P95</p>
+          <p className="text-xs text-(--foreground-subtle)">平均每局模型时间</p>
           <p className="mt-1 text-xl font-semibold text-(--foreground)">
-            {formatDuration(latencySummary.p95DurationMs)}
+            {formatDuration(latencySummary.avgRunDurationMs)}
+          </p>
+        </div>
+        <div className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-3">
+          <p className="text-xs text-(--foreground-subtle)">平均单次调用</p>
+          <p className="mt-1 text-xl font-semibold text-(--foreground)">
+            {formatDuration(latencySummary.avgCallDurationMs)}
           </p>
         </div>
         <div className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-3">
@@ -449,12 +449,19 @@ export function AdminMonitorPage() {
                 <th className="px-4 py-3 font-medium">场景</th>
                 <th className="px-4 py-3 font-medium">阶段</th>
                 <th className="px-4 py-3 font-medium">模型</th>
-                <th className="px-4 py-3 font-medium text-right">调用</th>
-                <th className="px-4 py-3 font-medium text-right">Avg</th>
-                <th className="px-4 py-3 font-medium text-right">P50</th>
-                <th className="px-4 py-3 font-medium text-right">P95</th>
-                <th className="px-4 py-3 font-medium text-right">Max</th>
-                <th className="px-4 py-3 font-medium text-right">总耗时</th>
+                <th className="px-4 py-3 font-medium text-right">
+                  调用 / 运行
+                </th>
+                <th className="px-4 py-3 font-medium text-right">平均 / 局</th>
+                <th className="px-4 py-3 font-medium text-right">P50 / 局</th>
+                <th className="px-4 py-3 font-medium text-right">P95 / 局</th>
+                <th className="px-4 py-3 font-medium text-right">
+                  平均 / 调用
+                </th>
+                <th className="px-4 py-3 font-medium text-right">P95 / 调用</th>
+                <th className="px-4 py-3 font-medium text-right">
+                  累计模型时间
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -492,22 +499,22 @@ export function AdminMonitorPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                      {row.callCount}
-                      <span className="ml-1 text-xs text-(--foreground-subtle)">
-                        / {row.runCount} run
-                      </span>
+                      {row.callCount} / {row.runCount}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                      {formatDuration(row.avgDurationMs)}
+                      {formatDuration(row.avgRunDurationMs)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                      {formatDuration(row.p50DurationMs)}
+                      {formatDuration(row.p50RunDurationMs)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
-                      {formatDuration(row.p95DurationMs)}
+                      {formatDuration(row.p95RunDurationMs)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
-                      {formatDuration(row.maxDurationMs)}
+                      {formatDuration(row.avgCallDurationMs)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                      {formatDuration(row.p95CallDurationMs)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
                       {formatDuration(row.totalDurationMs)}
@@ -526,6 +533,104 @@ export function AdminMonitorPage() {
 
       <div className="space-y-3">
         <h3 className="text-base font-semibold text-(--foreground)">
+          最近运行阶段
+        </h3>
+        {latencyReport && latencyReport.runs.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-(--border-soft)">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-(--border-soft) bg-white/3 text-left text-xs text-(--foreground-subtle)">
+                  <th className="px-4 py-3 font-medium">Run</th>
+                  <th className="px-4 py-3 font-medium">场景</th>
+                  <th className="px-4 py-3 font-medium">阶段</th>
+                  <th className="px-4 py-3 font-medium">模型</th>
+                  <th className="px-4 py-3 font-medium text-right">调用</th>
+                  <th className="px-4 py-3 font-medium">Trace</th>
+                  <th className="px-4 py-3 font-medium text-right">模型时间</th>
+                  <th className="px-4 py-3 font-medium text-right">Token</th>
+                  <th className="px-4 py-3 font-medium text-right">完成</th>
+                </tr>
+              </thead>
+              <tbody>
+                {latencyReport.runs.map((run) => {
+                  const gatewayLabel = formatGatewayProviders(
+                    run.provider,
+                    run.gatewayProviders,
+                  )
+
+                  return (
+                    <tr
+                      key={`${run.source}:${run.runId}:${run.phase}:${run.provider}:${run.model}`}
+                      className="border-b border-(--border-soft) last:border-b-0 transition hover:bg-white/3"
+                    >
+                      <td className="px-4 py-3 tabular-nums text-(--foreground)">
+                        {run.source === 'tournament' ? '赛事' : 'PG'} #
+                        {run.runId}
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground)">
+                        {run.scenarioTitle}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge tone="info">{phaseLabels[run.phase]}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-(--foreground)">
+                        {run.model}
+                        <span className="ml-2 text-xs text-(--foreground-subtle)">
+                          {run.provider}
+                          {gatewayLabel ? (
+                            <span className="ml-2">{gatewayLabel}</span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                        {run.callCount}
+                        {run.maxAttempt > 1 ? (
+                          <span className="ml-2 text-xs text-(--warning)">
+                            尝试 #{run.maxAttempt}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {run.langfuseTraceUrl ? (
+                          <a
+                            className="inline-flex items-center gap-1 text-(--accent) transition hover:opacity-80"
+                            href={run.langfuseTraceUrl}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Langfuse
+                          </a>
+                        ) : (
+                          <span className="text-(--foreground-subtle)">--</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-semibold text-(--foreground)">
+                        {formatDuration(run.durationMs)}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums text-(--foreground)">
+                        {formatTokenCount(
+                          run.promptTokens + run.completionTokens,
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-(--foreground-subtle)">
+                        {formatAbsoluteTime(run.completedAt)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="rounded-lg border border-(--border-soft) bg-white/3 px-4 py-5 text-sm text-(--foreground-subtle)">
+            暂无最近运行阶段。
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-(--foreground)">
           最近成功调用
         </h3>
         {latencyReport && latencyReport.calls.length > 0 ? (
@@ -537,6 +642,7 @@ export function AdminMonitorPage() {
                   <th className="px-4 py-3 font-medium">场景</th>
                   <th className="px-4 py-3 font-medium">阶段</th>
                   <th className="px-4 py-3 font-medium">Side</th>
+                  <th className="px-4 py-3 font-medium">回合 / 尝试</th>
                   <th className="px-4 py-3 font-medium">模型</th>
                   <th className="px-4 py-3 font-medium">Trace</th>
                   <th className="px-4 py-3 font-medium text-right">耗时</th>
@@ -568,6 +674,10 @@ export function AdminMonitorPage() {
                       </td>
                       <td className="px-4 py-3 text-(--foreground-subtle)">
                         {sideLabels[call.side]}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-(--foreground-subtle)">
+                        {call.turnIndex == null ? '--' : call.turnIndex + 1} / #
+                        {call.attempt}
                       </td>
                       <td className="px-4 py-3 text-(--foreground)">
                         {call.model}

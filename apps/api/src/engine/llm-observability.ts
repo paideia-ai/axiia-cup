@@ -7,17 +7,25 @@ import {
 import type { LlmCallPhase, LlmCallSide } from '../db/schema'
 
 export type LlmRunSource = 'playground' | 'tournament'
+export type LlmCallPurpose = 'game' | 'rejudge'
 
-export type LlmCallTraceContext = {
-  attempt?: number
+export type LlmRunTraceContext = {
   matchId?: number
-  phase: LlmCallPhase
   playgroundRunId?: number
+  purpose: LlmCallPurpose
   scenarioId?: string
-  side: LlmCallSide
   source?: LlmRunSource
-  turnIndex?: number | null
   userId?: number | null
+}
+
+export type LlmPhaseTraceContext = LlmRunTraceContext & {
+  phase: LlmCallPhase
+}
+
+export type LlmCallTraceContext = LlmPhaseTraceContext & {
+  attempt?: number
+  side: LlmCallSide
+  turnIndex?: number | null
 }
 
 type OtelAttributeValue = boolean | number | string
@@ -36,7 +44,15 @@ export type LlmObservabilityMetadata = {
   underlyingProvider: string
 }
 
-function getRunSource(trace: LlmCallTraceContext | undefined) {
+export type LlmRunObservabilityMetadata = {
+  metadata: Record<string, string>
+  otelAttributes: Record<string, OtelAttributeValue>
+  sessionId: string | undefined
+  tags: string[]
+  traceName: string
+}
+
+function getRunSource(trace: LlmRunTraceContext | undefined) {
   if (trace?.source) {
     return trace.source
   }
@@ -52,12 +68,56 @@ function getRunSource(trace: LlmCallTraceContext | undefined) {
   return null
 }
 
-export function getLangfuseSessionId(trace: LlmCallTraceContext | undefined) {
+export function getLangfuseSessionId(trace: LlmRunTraceContext | undefined) {
   return trace?.matchId != null
     ? `match:${trace.matchId}`
     : trace?.playgroundRunId != null
       ? `playground:${trace.playgroundRunId}`
       : undefined
+}
+
+export function buildLlmRunObservabilityMetadata(
+  trace: LlmRunTraceContext | LlmPhaseTraceContext,
+): LlmRunObservabilityMetadata {
+  const source = getRunSource(trace)
+  const sessionId = getLangfuseSessionId(trace)
+  const phase = 'phase' in trace ? trace.phase : null
+  const metadata: Record<string, string> = {
+    purpose: trace.purpose,
+  }
+
+  setStringIfPresent(metadata, 'matchId', trace.matchId)
+  setStringIfPresent(metadata, 'phase', phase)
+  setStringIfPresent(metadata, 'playgroundRunId', trace.playgroundRunId)
+  setStringIfPresent(metadata, 'scenarioId', trace.scenarioId)
+  setStringIfPresent(metadata, 'source', source)
+
+  const otelAttributes: Record<string, OtelAttributeValue> = {
+    'axiia.call.purpose': trace.purpose,
+  }
+
+  setAttributeIfPresent(otelAttributes, 'axiia.match.id', trace.matchId)
+  setAttributeIfPresent(otelAttributes, 'axiia.phase', phase)
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.playground_run.id',
+    trace.playgroundRunId,
+  )
+  setAttributeIfPresent(otelAttributes, 'axiia.run.source', source ?? undefined)
+  setAttributeIfPresent(otelAttributes, 'axiia.scenario.id', trace.scenarioId)
+
+  return {
+    metadata,
+    otelAttributes,
+    sessionId,
+    tags: [
+      `purpose:${trace.purpose}`,
+      trace.scenarioId ? `scenario:${trace.scenarioId}` : null,
+      source ? `source:${source}` : null,
+      phase ? `phase:${phase}` : null,
+    ].filter((value): value is string => value !== null),
+    traceName: sessionId ?? 'axiia:run',
+  }
 }
 
 function getLangfuseGenerationName(trace: LlmCallTraceContext | undefined) {
@@ -122,6 +182,7 @@ export function buildLlmObservabilityMetadata(params: {
     'playgroundRunId',
     params.trace?.playgroundRunId,
   )
+  setStringIfPresent(propagatedMetadata, 'purpose', params.trace?.purpose)
   setStringIfPresent(propagatedMetadata, 'scenarioId', params.trace?.scenarioId)
   setStringIfPresent(propagatedMetadata, 'side', params.trace?.side)
   setStringIfPresent(propagatedMetadata, 'source', source)
@@ -158,6 +219,11 @@ export function buildLlmObservabilityMetadata(params: {
     'axiia.playground_run.id',
     params.trace?.playgroundRunId,
   )
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.call.purpose',
+    params.trace?.purpose,
+  )
   setAttributeIfPresent(otelAttributes, 'axiia.run.source', source ?? undefined)
   setAttributeIfPresent(
     otelAttributes,
@@ -186,6 +252,7 @@ export function buildLlmObservabilityMetadata(params: {
       `gateway:${gatewayProvider}`,
       `model:${params.model}`,
       params.trace?.scenarioId ? `scenario:${params.trace.scenarioId}` : null,
+      params.trace?.purpose ? `purpose:${params.trace.purpose}` : null,
       source ? `source:${source}` : null,
       params.trace?.phase ? `phase:${params.trace.phase}` : null,
       params.trace?.side ? `side:${params.trace.side}` : null,

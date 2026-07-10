@@ -16,6 +16,7 @@ import { submissionsRouter } from './routes/submissions'
 import { tournamentRouter } from './routes/tournaments'
 import { db } from './db/client'
 import { scenarios } from './db/schema'
+import { shutdownLangfuseTracing } from './lib/langfuse'
 
 const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173')
   .split(',')
@@ -85,10 +86,33 @@ app.route('/', tournamentRouter)
 
 const port = Number(process.env.PORT ?? 3001)
 
-Bun.serve({
+const server = Bun.serve({
   port,
   fetch: app.fetch,
 })
+
+let isShuttingDown = false
+
+async function shutdown(signal: 'SIGINT' | 'SIGTERM') {
+  if (isShuttingDown) {
+    return
+  }
+
+  isShuttingDown = true
+  console.log(`[api] ${signal} received, shutting down`)
+
+  try {
+    await server.stop(true)
+    await shutdownLangfuseTracing()
+  } catch (error) {
+    console.error('[api] graceful shutdown failed', error)
+  } finally {
+    process.exit(0)
+  }
+}
+
+process.once('SIGINT', () => void shutdown('SIGINT'))
+process.once('SIGTERM', () => void shutdown('SIGTERM'))
 
 startWorker()
 console.log(`[api] listening on http://localhost:${port}`)

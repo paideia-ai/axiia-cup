@@ -884,10 +884,14 @@ export const adminLlmLatencyAggregateSchema = z.object({
   model: z.string(),
   callCount: z.number().int().nonnegative(),
   runCount: z.number().int().nonnegative(),
-  avgDurationMs: z.number().nonnegative(),
-  p50DurationMs: z.number().nonnegative(),
-  p95DurationMs: z.number().nonnegative(),
-  maxDurationMs: z.number().nonnegative(),
+  avgCallDurationMs: z.number().nonnegative(),
+  p50CallDurationMs: z.number().nonnegative(),
+  p95CallDurationMs: z.number().nonnegative(),
+  maxCallDurationMs: z.number().nonnegative(),
+  avgRunDurationMs: z.number().nonnegative(),
+  p50RunDurationMs: z.number().nonnegative(),
+  p95RunDurationMs: z.number().nonnegative(),
+  maxRunDurationMs: z.number().nonnegative(),
   totalDurationMs: z.number().nonnegative(),
   totalPromptTokens: z.number().int().nonnegative(),
   totalCompletionTokens: z.number().int().nonnegative(),
@@ -904,12 +908,32 @@ export const adminLlmLatencyCallSchema = z.object({
   provider: z.string(),
   gatewayProvider: z.string().nullable(),
   model: z.string(),
+  attempt: z.number().int().positive(),
+  turnIndex: z.number().int().nonnegative().nullable(),
   durationMs: z.number().int().nonnegative(),
   promptTokens: z.number().int().nonnegative(),
   completionTokens: z.number().int().nonnegative(),
   langfuseTraceUrl: z.string().nullable(),
   completedAt: z.string().nullable(),
   createdAt: z.string(),
+})
+
+export const adminLlmLatencyRunSchema = z.object({
+  source: z.enum(['playground', 'tournament']),
+  runId: z.number().int().positive(),
+  scenarioId: z.string(),
+  scenarioTitle: z.string(),
+  phase: adminLlmLatencyPhaseSchema,
+  provider: z.string(),
+  gatewayProviders: z.array(z.string()),
+  model: z.string(),
+  callCount: z.number().int().positive(),
+  maxAttempt: z.number().int().positive(),
+  durationMs: z.number().int().nonnegative(),
+  promptTokens: z.number().int().nonnegative(),
+  completionTokens: z.number().int().nonnegative(),
+  langfuseTraceUrl: z.string().nullable(),
+  completedAt: z.string(),
 })
 
 export const adminLlmLatencyReportSchema = z.object({
@@ -935,6 +959,7 @@ export const adminLlmLatencyReportSchema = z.object({
     models: z.array(z.string()),
   }),
   aggregates: z.array(adminLlmLatencyAggregateSchema),
+  runs: z.array(adminLlmLatencyRunSchema),
   calls: z.array(adminLlmLatencyCallSchema),
 })
 
@@ -1033,6 +1058,7 @@ export type AdminLlmLatencyAggregate = z.infer<
   typeof adminLlmLatencyAggregateSchema
 >
 export type AdminLlmLatencyCall = z.infer<typeof adminLlmLatencyCallSchema>
+export type AdminLlmLatencyRun = z.infer<typeof adminLlmLatencyRunSchema>
 export type AdminLlmLatencyReport = z.infer<typeof adminLlmLatencyReportSchema>
 export type AdminStats = z.infer<typeof adminStatsSchema>
 export type AdminErroredMatch = z.infer<typeof adminErroredMatchSchema>

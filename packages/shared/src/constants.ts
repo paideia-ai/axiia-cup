@@ -161,6 +161,7 @@ export const modelCatalog = [
     apiModel: 'zai-org/GLM-5.2',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'zai',
   },
   {
     id: 'gpt-4.1',

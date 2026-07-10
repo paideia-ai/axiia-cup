@@ -5,6 +5,7 @@ import {
 } from '@axiia/shared'
 import {
   propagateAttributes,
+  startActiveObservation,
   startObservation,
   type LangfuseGeneration,
   type LangfuseGenerationAttributes,
@@ -24,8 +25,11 @@ import {
 import {
   buildLangfuseTraceUrl,
   buildLlmObservabilityMetadata,
+  buildLlmRunObservabilityMetadata,
   type LlmCallTraceContext,
   type LlmObservabilityMetadata,
+  type LlmPhaseTraceContext,
+  type LlmRunTraceContext,
 } from './llm-observability'
 
 const SILICONFLOW_BASE_URL =
@@ -174,6 +178,80 @@ function withLangfusePropagation<T>(
     getLangfusePropagationAttributes(trace, observability),
     fn,
   )
+}
+
+async function withLangfuseRunSpan<T>(
+  name: string,
+  trace: LlmRunTraceContext | LlmPhaseTraceContext,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (!initializeLangfuseTracing()) {
+    return await fn()
+  }
+
+  const observability = buildLlmRunObservabilityMetadata(trace)
+  let operationStarted = false
+  let operationCompleted = false
+  let operationFailed = false
+  let operationError: unknown
+  let operationResult: T | undefined
+
+  try {
+    return await propagateAttributes(
+      {
+        metadata: observability.metadata,
+        sessionId: observability.sessionId,
+        tags: observability.tags,
+        traceName: observability.traceName,
+      },
+      () =>
+        startActiveObservation(name, async (span) => {
+          span.update({ metadata: observability.metadata })
+          span.otelSpan.setAttributes(observability.otelAttributes)
+          operationStarted = true
+
+          try {
+            operationResult = await fn()
+            operationCompleted = true
+            return operationResult
+          } catch (error) {
+            operationFailed = true
+            operationError = error
+            throw error
+          }
+        }),
+    )
+  } catch (error) {
+    if (operationFailed) {
+      throw operationError
+    }
+
+    if (operationCompleted) {
+      console.error(`[langfuse] failed to finish ${name} span`, error)
+      return operationResult as T
+    }
+
+    if (operationStarted) {
+      throw error
+    }
+
+    console.error(`[langfuse] failed to start ${name} span`, error)
+    return await fn()
+  }
+}
+
+export function withLlmRunTrace<T>(
+  trace: LlmRunTraceContext,
+  fn: () => Promise<T>,
+) {
+  return withLangfuseRunSpan('axiia:run', trace, fn)
+}
+
+export function withLlmPhaseTrace<T>(
+  trace: LlmPhaseTraceContext,
+  fn: () => Promise<T>,
+) {
+  return withLangfuseRunSpan(`axiia:phase:${trace.phase}`, trace, fn)
 }
 
 function startOpenAILangfuseSpan(
@@ -380,6 +458,7 @@ async function persistLlmCall(
         playgroundRunId: trace.playgroundRunId,
         promptTokens,
         provider: record.gatewayProvider,
+        purpose: trace.purpose,
         requestJson: record.requestJson,
         responseContent: record.responseContent,
         responseJson: record.responseJson,
