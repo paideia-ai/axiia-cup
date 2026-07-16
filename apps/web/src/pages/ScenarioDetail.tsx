@@ -739,6 +739,14 @@ export function ScenarioDetailPage() {
                       {scenario.judgePrompt}
                     </p>
                   </AccordionItem>
+
+                  {scenario.judgeOsPrompt.trim() ? (
+                    <AccordionItem value="judge-os" title="秦孝公内心 OS 规则">
+                      <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                        {scenario.judgeOsPrompt}
+                      </p>
+                    </AccordionItem>
+                  ) : null}
                 </Accordion>
               </CardContent>
             </Card>

@@ -27,13 +27,13 @@ const matchStatuses = [
 const matchWinners = ['a', 'b', 'draw'] as const
 const llmCallPhases = [
   'dialogue',
+  'judge_os',
   'examination',
   'judgment',
   'scoring',
 ] as const
 const llmCallSides = ['a', 'b', 'judge', 'scorer'] as const
-// NOTE: CHECK constraints in DB updated in 0005_llm_calls_telemetry.sql
-// to match these enums (previously missing 'scoring' and 'scorer').
+// NOTE: CHECK constraints in DB are kept in sync by migrations 0005 and 0016.
 
 const currentTimestamp = sql`CURRENT_TIMESTAMP`
 
@@ -70,6 +70,7 @@ export const scenarios = sqliteTable('scenarios', {
     .notNull()
     .default(''),
   judgePrompt: text('judge_prompt').notNull(),
+  judgeOsPrompt: text('judge_os_prompt').notNull().default(''),
   scorerPrompt: text('scorer_prompt').notNull().default(''),
   // Role A
   roleAName: text('role_a_name').notNull(),
@@ -166,6 +167,7 @@ export const playgroundRuns = sqliteTable(
     actualPromptA: text('actual_prompt_a'),
     actualPromptB: text('actual_prompt_b'),
     transcript: text('transcript').notNull().default('[]'),
+    judgeOs: text('judge_os').notNull().default('[]'),
     judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
     judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
     infoAssignment: text('info_assignment'),
@@ -258,6 +260,7 @@ export const matches = sqliteTable(
     status: text('status', { enum: matchStatuses }).notNull().default('queued'),
     currentTurn: integer('current_turn').notNull().default(0),
     transcript: text('transcript').notNull().default('[]'),
+    judgeOs: text('judge_os').notNull().default('[]'),
     judgeTranscriptA: text('judge_transcript_a').notNull().default('[]'),
     judgeTranscriptB: text('judge_transcript_b').notNull().default('[]'),
     infoAssignment: text('info_assignment'),
@@ -322,7 +325,7 @@ export const llmCalls = sqliteTable(
     userIdx: index('llm_calls_user_id_idx').on(table.userId),
     phaseCheck: check(
       'llm_calls_phase_check',
-      sql`${table.phase} in ('dialogue', 'examination', 'judgment', 'scoring')`,
+      sql`${table.phase} in ('dialogue', 'judge_os', 'examination', 'judgment', 'scoring')`,
     ),
     sideCheck: check(
       'llm_calls_side_check',

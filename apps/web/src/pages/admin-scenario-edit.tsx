@@ -32,6 +32,7 @@ function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
     judgeModel: scenario.judgeModel,
     scorerModel: scenario.scorerModel,
     judgePrompt: scenario.judgePrompt,
+    judgeOsPrompt: scenario.judgeOsPrompt,
     openingLine: scenario.openingLine,
     agentPromptTemplate: scenario.agentPromptTemplate,
     examinationQuestionTemplate: scenario.examinationQuestionTemplate,
@@ -1171,6 +1172,22 @@ export function AdminScenarioEditPage() {
                     }
                     value={draft.judgePrompt}
                   />
+                </label>
+
+                <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                  <span>裁判内心 OS 提示词</span>
+                  <Textarea
+                    className="min-h-48"
+                    onChange={(event) =>
+                      setDraft((c) =>
+                        c ? { ...c, judgeOsPrompt: event.target.value } : c,
+                      )
+                    }
+                    value={draft.judgeOsPrompt}
+                  />
+                  <span className="text-[11px] leading-5 text-(--foreground-muted)">
+                    仅商鞅场景使用；留空即关闭每两回合生成一次的秦孝公内心 OS。
+                  </span>
                 </label>
 
                 <label className="block space-y-2 text-sm text-(--foreground-subtle)">

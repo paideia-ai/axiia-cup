@@ -13,6 +13,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { JudgeDecisionPanel } from '../components/judge-decision-panel'
+import { JudgeOsTimeline } from '../components/judge-os-timeline'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import {
@@ -119,6 +120,7 @@ function createMatchProgressSnapshot(match: MatchDetail): MatchProgress {
     hasInfoAssignment: match.infoAssignment != null,
     hasJudgeDecision: match.judgeDecision != null,
     id: match.id,
+    judgeOsLength: match.judgeOs.length,
     judgeTranscriptALength: match.judgeTranscriptA.length,
     judgeTranscriptBLength: match.judgeTranscriptB.length,
     scoreA: match.scoreA,
@@ -143,6 +145,7 @@ function hasMatchProgressChanged(
   return (
     previous.status !== next.status ||
     previous.currentTurn !== next.currentTurn ||
+    previous.judgeOsLength !== next.judgeOsLength ||
     previous.judgeTranscriptALength !== next.judgeTranscriptALength ||
     previous.judgeTranscriptBLength !== next.judgeTranscriptBLength ||
     previous.hasInfoAssignment !== next.hasInfoAssignment ||
@@ -607,6 +610,15 @@ export function MatchDetailPage() {
           </Card>
         ) : null}
       </div>
+
+      {displayScenario?.id === 'shangyang-court' &&
+      displayScenario.judgeOsPrompt.trim().length > 0 ? (
+        <JudgeOsTimeline
+          entries={match.judgeOs}
+          expectedCount={Math.floor(match.transcript.length / 2)}
+          isComplete={match.status === 'scored' || match.status === 'error'}
+        />
+      ) : null}
 
       {/* Judge QA — collapsed by default */}
       <Card>

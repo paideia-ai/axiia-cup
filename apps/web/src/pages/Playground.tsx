@@ -19,6 +19,7 @@ import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { JudgeDecisionPanel } from '../components/judge-decision-panel'
+import { JudgeOsTimeline } from '../components/judge-os-timeline'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import {
@@ -337,6 +338,17 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
               {scenario.judgePrompt}
             </p>
           </AccordionItem>
+          {scenario.judgeOsPrompt.trim() ? (
+            <AccordionItem
+              value="judge-os"
+              title="裁判内心 OS 规则"
+              triggerClassName="text-xs"
+            >
+              <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
+                {scenario.judgeOsPrompt}
+              </p>
+            </AccordionItem>
+          ) : null}
         </Accordion>
       </CardContent>
     </Card>
@@ -679,6 +691,15 @@ function RunResult({
           waitingMessage="裁判模块已就位，待审讯完成后展示最终裁决。"
         />
       </div>
+
+      {scenario.id === 'shangyang-court' &&
+      scenario.judgeOsPrompt.trim().length > 0 ? (
+        <JudgeOsTimeline
+          entries={run.judgeOs}
+          expectedCount={Math.floor(run.transcript.length / 2)}
+          isComplete={isRunFinished(run)}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>

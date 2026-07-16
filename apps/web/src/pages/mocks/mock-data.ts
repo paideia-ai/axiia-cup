@@ -256,6 +256,7 @@ export const mockMatchDetail = {
       { requestId: 'RB3', granted: true },
     ],
   },
+  judgeOs: [],
   judgeTranscriptA: [
     {
       round: 1,

@@ -67,6 +67,7 @@ export function exportPlaygroundRun(params: {
         run: {
           ...rawRun,
           transcript: parseJsonField(rawRun.transcript as string | null, []),
+          judge_os: parseJsonField(rawRun.judge_os as string | null, []),
           judge_transcript_a: parseJsonField(
             rawRun.judge_transcript_a as string | null,
             [],
@@ -144,6 +145,7 @@ export function exportMatch(params: {
         match: {
           ...rawMatch,
           transcript: parseJsonField(rawMatch.transcript as string | null, []),
+          judge_os: parseJsonField(rawMatch.judge_os as string | null, []),
           judge_transcript_a: parseJsonField(
             rawMatch.judge_transcript_a as string | null,
             [],

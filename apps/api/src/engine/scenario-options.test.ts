@@ -34,6 +34,7 @@ const baseScenario: ScenarioRecord = {
   judgeModel: 'deepseek-v3.2',
   scorerModel: 'claude-sonnet-4-5',
   judgePrompt: 'judge',
+  judgeOsPrompt: '',
   scorerPrompt: 'scorer',
   openingLine: '先陈杀信长之议。',
   agentPromptTemplate: '你是{{roleName}}',

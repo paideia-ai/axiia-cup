@@ -83,6 +83,7 @@ const scenarioBase: ScenarioRecord = {
   id: 'base',
   judgeModel: 'deepseek-v3.2',
   judgePrompt: 'judge',
+  judgeOsPrompt: '',
   openingLine: '请开始辩论。',
   roleAHiddenInfo: '[]',
   roleAName: 'roleA',

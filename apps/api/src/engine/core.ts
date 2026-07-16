@@ -3,6 +3,7 @@ import {
   examinationAnswerSchema,
   hiddenInfoItemSchema,
   infoAssignmentSchema,
+  type JudgeOsEntry,
   judgeQASchema,
   matchWinnerSchema,
   requestItemSchema,
@@ -27,6 +28,13 @@ import {
 import type { ScenarioRecord } from '../db/schema'
 import { chatCompletion, type ChatCompletionTrace } from './llm'
 import {
+  buildJudgeOsUserMessage,
+  createJudgeOsSidecar,
+  SHANGYANG_JUDGE_OS_SCENARIO_ID,
+  type JudgeOsGenerationRequest,
+  validateJudgeOsResponse,
+} from './judge-os'
+import {
   getPlaygroundInterruptMessage,
   isPlaygroundRunInterruptedError,
   PlaygroundRunInterruptedError,
@@ -45,6 +53,7 @@ export const DEFAULT_SCORER_MODEL =
 
 type MatchExecutionParams = {
   infoAssignment?: InfoAssignment
+  judgeOs?: JudgeOsEntry[]
   judgeTranscriptA?: JudgeQA[]
   judgeTranscriptB?: JudgeQA[]
   matchId?: number
@@ -52,6 +61,7 @@ type MatchExecutionParams = {
   modelB: string
   onDialogueTurn?: (transcript: TranscriptTurn[]) => Promise<void> | void
   onInfoAssignment?: (assignment: InfoAssignment) => Promise<void> | void
+  onJudgeOs?: (judgeOs: JudgeOsEntry[]) => Promise<void> | void
   onJudgeTranscriptA?: (judgeTranscriptA: JudgeQA[]) => Promise<void> | void
   onJudgeTranscriptB?: (judgeTranscriptB: JudgeQA[]) => Promise<void> | void
   onJudgingStart?: (transcript: TranscriptTurn[]) => Promise<void> | void
@@ -69,6 +79,7 @@ type MatchExecutionParams = {
 export type MatchExecutionResult = {
   infoAssignment: InfoAssignment
   judgeDecision: string
+  judgeOs: JudgeOsEntry[]
   judgeTranscriptA: JudgeQA[]
   judgeTranscriptB: JudgeQA[]
   reasoning: string
@@ -594,6 +605,48 @@ export function formatDebateTranscriptForJudge(
     .join('\n\n')
 }
 
+async function getJudgeOsEntry(
+  scenario: ScenarioRecord,
+  request: JudgeOsGenerationRequest,
+  traceTarget: Pick<
+    ChatCompletionTrace,
+    'matchId' | 'playgroundRunId' | 'userId'
+  >,
+  signal?: AbortSignal,
+): Promise<JudgeOsEntry> {
+  const judgeModel = parseEvaluationModelId(
+    scenario.judgeModel ?? DEFAULT_JUDGE_MODEL,
+  )
+
+  return withRetry(async (attempt) => {
+    const response = await chatCompletion({
+      jsonMode: true,
+      messages: [
+        {
+          role: 'user',
+          content: buildJudgeOsUserMessage(request),
+        },
+      ],
+      model: judgeModel,
+      signal,
+      systemPrompt: scenario.judgeOsPrompt,
+      temperature: 0,
+      trace: {
+        ...traceTarget,
+        attempt,
+        phase: 'judge_os',
+        side: 'judge',
+        turnIndex: request.afterTurn,
+      },
+    })
+
+    return validateJudgeOsResponse(
+      JSON.parse(sanitizeJsonResponse(response)),
+      request.afterTurn,
+    )
+  }, signal)
+}
+
 // ── Phase 2: Examination ────────────────────────────────────────────────────
 
 export function buildExaminationQuestion(
@@ -986,6 +1039,28 @@ export async function executeMatchSession(
   await params.onInfoAssignment?.(assignment)
   throwIfPlaygroundRunInterrupted(params.signal)
 
+  const judgeOsSidecar = createJudgeOsSidecar({
+    enabled:
+      params.scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
+      params.scenario.judgeOsPrompt.trim().length > 0,
+    generate: (request) =>
+      getJudgeOsEntry(
+        params.scenario,
+        request,
+        {
+          matchId: params.matchId,
+          playgroundRunId: params.playgroundRunId,
+        },
+        params.signal,
+      ),
+    initialEntries: params.judgeOs,
+    onUpdate: params.onJudgeOs,
+  })
+
+  // Recover any complete dialogue pairs that were persisted before their OS.
+  // Scheduling is intentionally not awaited, so resumed dialogue can continue.
+  judgeOsSidecar.schedule(transcript)
+
   // ── Phase 1: Dialogue ──────────────────────────────────────────────────
   const dialogueTurnLimit = getScenarioDialogueTurnLimit(
     params.scenario,
@@ -1049,11 +1124,17 @@ export async function executeMatchSession(
     )
 
     await params.onDialogueTurn?.(transcript)
+    judgeOsSidecar.schedule(transcript)
     throwIfPlaygroundRunInterrupted(params.signal)
   }
 
   throwIfPlaygroundRunInterrupted(params.signal)
   await params.onJudgingStart?.(transcript)
+  throwIfPlaygroundRunInterrupted(params.signal)
+
+  // Dialogue never waits for the sidecar. Before post-debate phases begin,
+  // require every scheduled OS entry to be validated and durably persisted.
+  const judgeOs = await judgeOsSidecar.wait()
   throwIfPlaygroundRunInterrupted(params.signal)
 
   // ── Phase 2: Examination (optional) ────────────────────────────────────
@@ -1148,6 +1229,7 @@ export async function executeMatchSession(
   return {
     infoAssignment: assignment,
     judgeDecision,
+    judgeOs,
     judgeTranscriptA,
     judgeTranscriptB,
     reasoning,

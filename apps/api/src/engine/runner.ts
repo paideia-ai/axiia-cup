@@ -1,5 +1,10 @@
 import { and, eq } from 'drizzle-orm'
-import type { InfoAssignment, JudgeQA, TranscriptTurn } from '@axiia/shared'
+import type {
+  InfoAssignment,
+  JudgeOsEntry,
+  JudgeQA,
+  TranscriptTurn,
+} from '@axiia/shared'
 
 import { db } from '../db/client'
 import {
@@ -80,6 +85,7 @@ export async function runMatch(
   }
 
   let transcript = parseJsonField<TranscriptTurn[]>(match.transcript, [])
+  let judgeOs = parseJsonField<JudgeOsEntry[]>(match.judgeOs, [])
   let judgeTranscriptA = parseJsonField<JudgeQA[]>(match.judgeTranscriptA, [])
   let judgeTranscriptB = parseJsonField<JudgeQA[]>(match.judgeTranscriptB, [])
   const infoAssignment = parseJsonField<InfoAssignment | null>(
@@ -111,6 +117,7 @@ export async function runMatch(
 
     const result = await executeMatchSession({
       infoAssignment: infoAssignment ?? undefined,
+      judgeOs,
       judgeTranscriptA,
       judgeTranscriptB,
       matchId,
@@ -126,6 +133,12 @@ export async function runMatch(
       onInfoAssignment: async (assignment) => {
         await updateLeasedMatch(matchId, leaseToken, {
           infoAssignment: JSON.stringify(assignment),
+        })
+      },
+      onJudgeOs: async (nextJudgeOs) => {
+        judgeOs = nextJudgeOs
+        await updateLeasedMatch(matchId, leaseToken, {
+          judgeOs: JSON.stringify(nextJudgeOs),
         })
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
@@ -167,6 +180,7 @@ export async function runMatch(
       finishedAt: new Date().toISOString(),
       infoAssignment: JSON.stringify(result.infoAssignment),
       judgeDecision: result.judgeDecision,
+      judgeOs: JSON.stringify(result.judgeOs),
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,
@@ -184,6 +198,7 @@ export async function runMatch(
     await updateLeasedMatch(matchId, leaseToken, {
       error: error instanceof Error ? error.message : 'Unknown engine failure',
       finishedAt: new Date().toISOString(),
+      judgeOs: JSON.stringify(judgeOs),
       judgeTranscriptA: JSON.stringify(judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(judgeTranscriptB),
       leaseToken: null,

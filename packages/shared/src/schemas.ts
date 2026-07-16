@@ -409,6 +409,7 @@ const scenarioBaseSchema = z.object({
   agentPromptTemplate: z.string(),
   examinationQuestionTemplate: z.string(),
   judgePrompt: z.string(),
+  judgeOsPrompt: z.string(),
   scorerPrompt: z.string(),
   // Role A
   roleAName: z.string(),
@@ -440,6 +441,7 @@ const updateScenarioBaseSchema = z.object({
   agentPromptTemplate: z.string().min(1),
   examinationQuestionTemplate: z.string(), // empty = skip examination
   judgePrompt: z.string().min(1),
+  judgeOsPrompt: z.string(), // empty = disable periodic judge OS
   scorerPrompt: z.string().min(1),
   // Roles
   roleAName: z.string().min(1),
@@ -515,6 +517,20 @@ export const transcriptTurnSchema = z.object({
   content: z.string(),
 })
 
+export const judgeOsTendencySchema = z.enum(['商鞅', '甘龙'])
+
+export const judgeOsEntrySchema = z
+  .object({
+    afterTurn: z
+      .number()
+      .int()
+      .positive()
+      .refine((value) => value % 2 === 0, 'afterTurn 必须是偶数'),
+    tendency: judgeOsTendencySchema,
+    reason: z.string().trim().min(1),
+  })
+  .strict()
+
 export const judgeQASchema = z.object({
   round: z.number().int().positive(),
   question: z.string(),
@@ -564,6 +580,7 @@ export const matchSchema = z.object({
   status: matchStatusSchema,
   currentTurn: z.number().int().nonnegative(),
   transcript: z.array(transcriptTurnSchema),
+  judgeOs: z.array(judgeOsEntrySchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
   infoAssignment: infoAssignmentSchema.nullable(),
@@ -660,6 +677,7 @@ export const matchProgressSchema = z.object({
   id: z.number().int().positive(),
   status: matchStatusSchema,
   currentTurn: z.number().int().nonnegative(),
+  judgeOsLength: z.number().int().nonnegative(),
   judgeTranscriptALength: z.number().int().nonnegative(),
   judgeTranscriptBLength: z.number().int().nonnegative(),
   hasInfoAssignment: z.boolean(),
@@ -706,6 +724,7 @@ export const playgroundRunSchema = z.object({
   actualPromptA: z.string().nullable(),
   actualPromptB: z.string().nullable(),
   transcript: z.array(transcriptTurnSchema),
+  judgeOs: z.array(judgeOsEntrySchema),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
   infoAssignment: infoAssignmentSchema.nullable(),
@@ -913,6 +932,8 @@ export type ExaminationAnswer = z.infer<typeof examinationAnswerSchema>
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>
 export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>
 export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>
+export type JudgeOsTendency = z.infer<typeof judgeOsTendencySchema>
+export type JudgeOsEntry = z.infer<typeof judgeOsEntrySchema>
 export type JudgeQA = z.infer<typeof judgeQASchema>
 export type JudgeScoring = z.infer<typeof judgeScoringSchema>
 export type Submission = z.infer<typeof submissionSchema>
