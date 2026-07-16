@@ -56,6 +56,8 @@ function serializePlaygroundRun(row: typeof playgroundRuns.$inferSelect) {
     infoAssignment: parseJsonField(row.infoAssignment, null),
     judgeDecision: row.judgeDecision ?? null,
     judgeOs: parseJsonField(row.judgeOs, []),
+    judgeOsFailedTurns: parseJsonField(row.judgeOsFailedTurns, []),
+    judgeOsProvenance: parseJsonField(row.judgeOsProvenance, null),
     judgeTranscriptA: parseJsonField(row.judgeTranscriptA, []),
     judgeTranscriptB: parseJsonField(row.judgeTranscriptB, []),
     opponentMode: row.opponentMode ?? 'self',

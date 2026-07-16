@@ -1,6 +1,8 @@
 import {
+  getJudgeOsExpectedCount,
   getTrolleyCasesByIds,
   modelOptions,
+  SHANGYANG_JUDGE_OS_SCENARIO_ID,
   TROLLEY_SCENARIO_ID,
   type InfoAssignment,
   type OpponentMode,
@@ -338,7 +340,8 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
               {scenario.judgePrompt}
             </p>
           </AccordionItem>
-          {scenario.judgeOsPrompt.trim() ? (
+          {scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
+          scenario.judgeOsPrompt.trim() ? (
             <AccordionItem
               value="judge-os"
               title="裁判内心 OS 规则"
@@ -616,6 +619,16 @@ function RunResult({
     scenario,
   )
   const scoringReasoning = formatScoringReasoning(run.reasoning)
+  const showJudgeOs =
+    scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
+    (scenario.judgeOsPrompt.trim().length > 0 ||
+      run.judgeOsProvenance !== null ||
+      run.judgeOs.length > 0 ||
+      run.judgeOsFailedTurns.length > 0)
+  const judgeOsExpectedCount = getJudgeOsExpectedCount(
+    run.transcript.length,
+    run.judgeOsProvenance?.dialogueTurnCount ?? scenario.turnCount,
+  )
 
   return (
     <div className="space-y-6">
@@ -692,60 +705,67 @@ function RunResult({
         />
       </div>
 
-      {scenario.id === 'shangyang-court' &&
-      scenario.judgeOsPrompt.trim().length > 0 ? (
-        <JudgeOsTimeline
-          entries={run.judgeOs}
-          expectedCount={Math.floor(run.transcript.length / 2)}
-          isComplete={isRunFinished(run)}
-        />
-      ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            对话记录
-            {trolleyTranscriptSections
-              ? ` · ${run.transcript.length}/${scenario.turnCount * trolleyTranscriptSections.length} 轮`
-              : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {trolleyTranscriptSections ? (
-            <div className="space-y-5">
-              {trolleyTranscriptSections.map((section) => (
-                <section
-                  key={section.caseInfo.id}
-                  className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
-                >
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-xs font-semibold text-(--foreground)">
-                        案件 {section.caseInfo.id} · {section.caseInfo.title}
-                      </p>
-                      <p className="mt-1 text-[11px] text-(--foreground-muted)">
-                        {section.transcript.length}/{scenario.turnCount} 轮
-                      </p>
+      <div
+        className={`grid items-start gap-6 ${
+          showJudgeOs ? 'xl:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]' : ''
+        }`}
+      >
+        <Card className="min-w-0">
+          <CardHeader>
+            <CardTitle>
+              对话记录
+              {trolleyTranscriptSections
+                ? ` · ${run.transcript.length}/${scenario.turnCount * trolleyTranscriptSections.length} 轮`
+                : ''}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {trolleyTranscriptSections ? (
+              <div className="space-y-5">
+                {trolleyTranscriptSections.map((section) => (
+                  <section
+                    key={section.caseInfo.id}
+                    className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
+                  >
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-(--foreground)">
+                          案件 {section.caseInfo.id} · {section.caseInfo.title}
+                        </p>
+                        <p className="mt-1 text-[11px] text-(--foreground-muted)">
+                          {section.transcript.length}/{scenario.turnCount} 轮
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-4">
-                    <TranscriptTurnList
-                      scenario={scenario}
-                      startIndex={section.startIndex}
-                      transcript={section.transcript}
-                    />
-                  </div>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <TranscriptTurnList
-              scenario={scenario}
-              transcript={run.transcript}
-            />
-          )}
-        </CardContent>
-      </Card>
+                    <div className="space-y-4">
+                      <TranscriptTurnList
+                        scenario={scenario}
+                        startIndex={section.startIndex}
+                        transcript={section.transcript}
+                      />
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <TranscriptTurnList
+                scenario={scenario}
+                transcript={run.transcript}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {showJudgeOs ? (
+          <JudgeOsTimeline
+            key={run.id}
+            entries={run.judgeOs}
+            expectedCount={judgeOsExpectedCount}
+            failedTurns={run.judgeOsFailedTurns}
+            isComplete={isRunFinished(run)}
+          />
+        ) : null}
+      </div>
 
       {showExaminationResults ? (
         <div className="grid gap-6 xl:grid-cols-2">

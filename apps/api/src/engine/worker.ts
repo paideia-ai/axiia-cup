@@ -1,6 +1,7 @@
 import type {
   InfoAssignment,
   JudgeOsEntry,
+  JudgeOsProvenance,
   JudgeQA,
   TranscriptTurn,
 } from '@axiia/shared'
@@ -197,6 +198,8 @@ async function runClaimedMatch(matchId: number, leaseToken: string) {
 async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
   let transcript: TranscriptTurn[] = []
   let judgeOs: JudgeOsEntry[] = []
+  let judgeOsFailedTurns: number[] = []
+  let judgeOsProvenance: JudgeOsProvenance | null = null
   let judgeTranscriptA: JudgeQA[] = []
   let judgeTranscriptB: JudgeQA[] = []
   const abortController = new AbortController()
@@ -310,6 +313,11 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
 
     transcript = parseJsonField<TranscriptTurn[]>(run.transcript, [])
     judgeOs = parseJsonField<JudgeOsEntry[]>(run.judgeOs, [])
+    judgeOsFailedTurns = parseJsonField<number[]>(run.judgeOsFailedTurns, [])
+    judgeOsProvenance = parseJsonField<JudgeOsProvenance | null>(
+      run.judgeOsProvenance,
+      null,
+    )
     judgeTranscriptA = parseJsonField<JudgeQA[]>(run.judgeTranscriptA, [])
     judgeTranscriptB = parseJsonField<JudgeQA[]>(run.judgeTranscriptB, [])
     const resolvedScenario = resolveScenarioRoleOptions(scenario, {
@@ -347,6 +355,8 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
     const result = await executeMatchSession({
       infoAssignment,
       judgeOs,
+      judgeOsFailedTurns,
+      judgeOsProvenance,
       judgeTranscriptA,
       judgeTranscriptB,
       modelA: submission.modelA,
@@ -360,9 +370,19 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       onInfoAssignment: async (assignment) => {
         await persist({ infoAssignment: JSON.stringify(assignment) })
       },
-      onJudgeOs: async (nextJudgeOs) => {
-        judgeOs = nextJudgeOs
-        await persist({ judgeOs: JSON.stringify(nextJudgeOs) })
+      onJudgeOsProvenance: async (nextJudgeOsProvenance) => {
+        judgeOsProvenance = nextJudgeOsProvenance
+        await persist({
+          judgeOsProvenance: JSON.stringify(nextJudgeOsProvenance),
+        })
+      },
+      onJudgeOsState: async (state) => {
+        judgeOs = state.entries
+        judgeOsFailedTurns = state.failedTurns
+        await persist({
+          judgeOs: JSON.stringify(state.entries),
+          judgeOsFailedTurns: JSON.stringify(state.failedTurns),
+        })
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
         judgeTranscriptA = nextJudgeTranscriptA
@@ -390,6 +410,10 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
       infoAssignment: JSON.stringify(result.infoAssignment),
       judgeDecision: result.judgeDecision,
       judgeOs: JSON.stringify(result.judgeOs),
+      judgeOsFailedTurns: JSON.stringify(result.judgeOsFailedTurns),
+      judgeOsProvenance: result.judgeOsProvenance
+        ? JSON.stringify(result.judgeOsProvenance)
+        : null,
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,
@@ -414,6 +438,10 @@ async function runClaimedPlaygroundRun(runId: number, leaseToken: string) {
         error: errorMessage,
         finishedAt: nowIso(),
         judgeOs: JSON.stringify(judgeOs),
+        judgeOsFailedTurns: JSON.stringify(judgeOsFailedTurns),
+        judgeOsProvenance: judgeOsProvenance
+          ? JSON.stringify(judgeOsProvenance)
+          : null,
         judgeTranscriptA: JSON.stringify(judgeTranscriptA),
         judgeTranscriptB: JSON.stringify(judgeTranscriptB),
         leaseToken: null,

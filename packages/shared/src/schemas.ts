@@ -519,17 +519,45 @@ export const transcriptTurnSchema = z.object({
 
 export const judgeOsTendencySchema = z.enum(['商鞅', '甘龙'])
 
+export const judgeOsTurnSchema = z
+  .number()
+  .int()
+  .positive()
+  .refine((value) => value % 2 === 0, 'Judge OS 回合必须是偶数')
+
 export const judgeOsEntrySchema = z
   .object({
-    afterTurn: z
-      .number()
-      .int()
-      .positive()
-      .refine((value) => value % 2 === 0, 'afterTurn 必须是偶数'),
+    afterTurn: judgeOsTurnSchema,
     tendency: judgeOsTendencySchema,
     reason: z.string().trim().min(1),
   })
   .strict()
+
+export const judgeOsProvenanceSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    contextVariant: z.literal('C0'),
+    dialogueTurnCount: z.number().int().positive(),
+    finalTurnExcluded: z.literal(true),
+    model: evaluationModelIdSchema,
+    systemPrompt: z.string().min(1),
+    systemPromptSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    temperature: z.literal(0),
+    jsonMode: z.literal(true),
+    thinkingMode: z.enum(['disabled', 'provider-default']),
+  })
+  .strict()
+
+export function getJudgeOsExpectedCount(
+  completedTurnCount: number,
+  dialogueTurnCount: number,
+) {
+  const completedTurns = Math.max(0, Math.floor(completedTurnCount))
+  const totalTurns = Math.max(0, Math.floor(dialogueTurnCount))
+  const eligibleTurns = Math.min(completedTurns, Math.max(0, totalTurns - 1))
+
+  return Math.floor(eligibleTurns / 2)
+}
 
 export const judgeQASchema = z.object({
   round: z.number().int().positive(),
@@ -581,6 +609,8 @@ export const matchSchema = z.object({
   currentTurn: z.number().int().nonnegative(),
   transcript: z.array(transcriptTurnSchema),
   judgeOs: z.array(judgeOsEntrySchema),
+  judgeOsFailedTurns: z.array(judgeOsTurnSchema),
+  judgeOsProvenance: judgeOsProvenanceSchema.nullable(),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
   infoAssignment: infoAssignmentSchema.nullable(),
@@ -678,6 +708,7 @@ export const matchProgressSchema = z.object({
   status: matchStatusSchema,
   currentTurn: z.number().int().nonnegative(),
   judgeOsLength: z.number().int().nonnegative(),
+  judgeOsFailedCount: z.number().int().nonnegative(),
   judgeTranscriptALength: z.number().int().nonnegative(),
   judgeTranscriptBLength: z.number().int().nonnegative(),
   hasInfoAssignment: z.boolean(),
@@ -725,6 +756,8 @@ export const playgroundRunSchema = z.object({
   actualPromptB: z.string().nullable(),
   transcript: z.array(transcriptTurnSchema),
   judgeOs: z.array(judgeOsEntrySchema),
+  judgeOsFailedTurns: z.array(judgeOsTurnSchema),
+  judgeOsProvenance: judgeOsProvenanceSchema.nullable(),
   judgeTranscriptA: z.array(judgeQASchema),
   judgeTranscriptB: z.array(judgeQASchema),
   infoAssignment: infoAssignmentSchema.nullable(),
@@ -934,6 +967,7 @@ export type MatchTranscriptTurn = z.infer<typeof matchTranscriptTurnSchema>
 export type TranscriptTurn = z.infer<typeof transcriptTurnSchema>
 export type JudgeOsTendency = z.infer<typeof judgeOsTendencySchema>
 export type JudgeOsEntry = z.infer<typeof judgeOsEntrySchema>
+export type JudgeOsProvenance = z.infer<typeof judgeOsProvenanceSchema>
 export type JudgeQA = z.infer<typeof judgeQASchema>
 export type JudgeScoring = z.infer<typeof judgeScoringSchema>
 export type Submission = z.infer<typeof submissionSchema>

@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import type {
   InfoAssignment,
   JudgeOsEntry,
+  JudgeOsProvenance,
   JudgeQA,
   TranscriptTurn,
 } from '@axiia/shared'
@@ -86,6 +87,14 @@ export async function runMatch(
 
   let transcript = parseJsonField<TranscriptTurn[]>(match.transcript, [])
   let judgeOs = parseJsonField<JudgeOsEntry[]>(match.judgeOs, [])
+  let judgeOsFailedTurns = parseJsonField<number[]>(
+    match.judgeOsFailedTurns,
+    [],
+  )
+  let judgeOsProvenance = parseJsonField<JudgeOsProvenance | null>(
+    match.judgeOsProvenance,
+    null,
+  )
   let judgeTranscriptA = parseJsonField<JudgeQA[]>(match.judgeTranscriptA, [])
   let judgeTranscriptB = parseJsonField<JudgeQA[]>(match.judgeTranscriptB, [])
   const infoAssignment = parseJsonField<InfoAssignment | null>(
@@ -118,6 +127,8 @@ export async function runMatch(
     const result = await executeMatchSession({
       infoAssignment: infoAssignment ?? undefined,
       judgeOs,
+      judgeOsFailedTurns,
+      judgeOsProvenance,
       judgeTranscriptA,
       judgeTranscriptB,
       matchId,
@@ -135,10 +146,18 @@ export async function runMatch(
           infoAssignment: JSON.stringify(assignment),
         })
       },
-      onJudgeOs: async (nextJudgeOs) => {
-        judgeOs = nextJudgeOs
+      onJudgeOsProvenance: async (nextJudgeOsProvenance) => {
+        judgeOsProvenance = nextJudgeOsProvenance
         await updateLeasedMatch(matchId, leaseToken, {
-          judgeOs: JSON.stringify(nextJudgeOs),
+          judgeOsProvenance: JSON.stringify(nextJudgeOsProvenance),
+        })
+      },
+      onJudgeOsState: async (state) => {
+        judgeOs = state.entries
+        judgeOsFailedTurns = state.failedTurns
+        await updateLeasedMatch(matchId, leaseToken, {
+          judgeOs: JSON.stringify(state.entries),
+          judgeOsFailedTurns: JSON.stringify(state.failedTurns),
         })
       },
       onJudgeTranscriptA: async (nextJudgeTranscriptA) => {
@@ -181,6 +200,10 @@ export async function runMatch(
       infoAssignment: JSON.stringify(result.infoAssignment),
       judgeDecision: result.judgeDecision,
       judgeOs: JSON.stringify(result.judgeOs),
+      judgeOsFailedTurns: JSON.stringify(result.judgeOsFailedTurns),
+      judgeOsProvenance: result.judgeOsProvenance
+        ? JSON.stringify(result.judgeOsProvenance)
+        : null,
       judgeTranscriptA: JSON.stringify(result.judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(result.judgeTranscriptB),
       leaseToken: null,
@@ -199,6 +222,10 @@ export async function runMatch(
       error: error instanceof Error ? error.message : 'Unknown engine failure',
       finishedAt: new Date().toISOString(),
       judgeOs: JSON.stringify(judgeOs),
+      judgeOsFailedTurns: JSON.stringify(judgeOsFailedTurns),
+      judgeOsProvenance: judgeOsProvenance
+        ? JSON.stringify(judgeOsProvenance)
+        : null,
       judgeTranscriptA: JSON.stringify(judgeTranscriptA),
       judgeTranscriptB: JSON.stringify(judgeTranscriptB),
       leaseToken: null,

@@ -257,6 +257,8 @@ export const mockMatchDetail = {
     ],
   },
   judgeOs: [],
+  judgeOsFailedTurns: [],
+  judgeOsProvenance: null,
   judgeTranscriptA: [
     {
       round: 1,

@@ -69,6 +69,8 @@ describe('resolvePlaygroundSession', () => {
         infoAssignment: null,
         judgeDecision: null,
         judgeOs: [],
+        judgeOsFailedTurns: [],
+        judgeOsProvenance: null,
         judgeTranscriptA: [],
         judgeTranscriptB: [],
         opponentMode: 'self' as const,

@@ -36,8 +36,8 @@ async function applyMigration(database: Database, name: string) {
   })()
 }
 
-describe('0016 judge OS migration', () => {
-  it('preserves telemetry while adding OS storage, prompt, and phase', async () => {
+describe('judge OS migrations', () => {
+  it('preserves telemetry while adding OS storage, provenance, prompt, and phase', async () => {
     const database = new Database(':memory:')
 
     for (const migrationName of migrationNames) {
@@ -85,6 +85,7 @@ describe('0016 judge OS migration', () => {
     `)
 
     await applyMigration(database, '0016_judge_os.sql')
+    await applyMigration(database, '0017_judge_os_state.sql')
 
     const scenario = database
       .query(
@@ -112,7 +113,11 @@ describe('0016 judge OS migration', () => {
       responseContent: 'existing response',
     })
     expect(columnsFor('matches')).toContain('judge_os')
+    expect(columnsFor('matches')).toContain('judge_os_failed_turns')
+    expect(columnsFor('matches')).toContain('judge_os_provenance')
     expect(columnsFor('playground_runs')).toContain('judge_os')
+    expect(columnsFor('playground_runs')).toContain('judge_os_failed_turns')
+    expect(columnsFor('playground_runs')).toContain('judge_os_provenance')
 
     expect(() =>
       database.exec(`

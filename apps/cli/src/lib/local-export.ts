@@ -68,6 +68,14 @@ export function exportPlaygroundRun(params: {
           ...rawRun,
           transcript: parseJsonField(rawRun.transcript as string | null, []),
           judge_os: parseJsonField(rawRun.judge_os as string | null, []),
+          judge_os_failed_turns: parseJsonField(
+            rawRun.judge_os_failed_turns as string | null,
+            [],
+          ),
+          judge_os_provenance: parseJsonField(
+            rawRun.judge_os_provenance as string | null,
+            null,
+          ),
           judge_transcript_a: parseJsonField(
             rawRun.judge_transcript_a as string | null,
             [],
@@ -146,6 +154,14 @@ export function exportMatch(params: {
           ...rawMatch,
           transcript: parseJsonField(rawMatch.transcript as string | null, []),
           judge_os: parseJsonField(rawMatch.judge_os as string | null, []),
+          judge_os_failed_turns: parseJsonField(
+            rawMatch.judge_os_failed_turns as string | null,
+            [],
+          ),
+          judge_os_provenance: parseJsonField(
+            rawMatch.judge_os_provenance as string | null,
+            null,
+          ),
           judge_transcript_a: parseJsonField(
             rawMatch.judge_transcript_a as string | null,
             [],
