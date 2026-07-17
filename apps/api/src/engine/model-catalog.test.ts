@@ -18,6 +18,7 @@ const chosenPlayerModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
+  'minimax-m3',
   'glm-5.2',
 ] as const
 
@@ -31,7 +32,7 @@ describe('model catalog', () => {
       'deepseek-v3.2',
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
-      'minimax-m3',
+      'minimax-m2.5',
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'glm-5.1',
@@ -136,7 +137,41 @@ describe('model catalog', () => {
       apiModel: 'glm-5.2',
       provider: 'zhipu',
     })
-    expect(getModelDefinition('minimax-m2.5').provider).toBe('siliconflow')
+    // MiniMax goes through their Anthropic-compatible endpoint.
+    expect(getModelDefinition('minimax-m3')).toMatchObject({
+      apiModel: 'MiniMax-M3',
+      provider: 'minimax',
+    })
+    expect(getModelDefinition('minimax-m2.5')).toMatchObject({
+      apiModel: 'MiniMax-M2.5',
+      provider: 'minimax',
+    })
+  })
+
+  it('keeps legacy evaluation models off the dead SiliconFlow account', () => {
+    expect(getModelDefinition('kimi-k2.5')).toMatchObject({
+      apiModel: 'kimi-k2.5',
+      provider: 'moonshot',
+    })
+    expect(getModelDefinition('qwen3.5-397b-a17b')).toMatchObject({
+      apiModel: 'qwen3.5-27b',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('qwen3.5-397b')).toMatchObject({
+      apiModel: 'qwen3.5-397b-a17b',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('glm-4.6')).toMatchObject({
+      apiModel: 'glm-4.6',
+      provider: 'zhipu',
+    })
+    // deepseek-v3.2 lives on Aliyun-hosted DashScope (the official DeepSeek
+    // API retires v3-era models on 2026-07-24). Nothing remains on
+    // SiliconFlow.
+    expect(getModelDefinition('deepseek-v3.2')).toMatchObject({
+      apiModel: 'deepseek-v3.2',
+      provider: 'dashscope',
+    })
   })
 
   it('does not change the default evaluation model order', () => {

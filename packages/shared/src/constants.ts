@@ -6,23 +6,22 @@ export const submissionModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
+  'minimax-m3',
   'glm-5.1',
   'glm-5.2',
   'deepseek-v4-flash',
 ] as const
 
-// minimax-m2.5 was withdrawn from player selection when the shared
-// SiliconFlow account died: zero recorded LLM calls ever, not worth a
-// dedicated MiniMax account. The catalog entry stays for historical records.
 export const playerSelectableModelIds = [
   'deepseek-v4-pro',
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
+  'minimax-m3',
   'glm-5.2',
 ] as const
 
-export const retiredModelIds = ['minimax-m3'] as const
+export const retiredModelIds = [] as const
 
 export const evaluationOnlyModelIds = [
   'gpt-4.1',
@@ -94,25 +93,27 @@ type ModelDefinition = {
 }
 
 export const modelCatalog = [
+  // Aliyun-hosted: the official DeepSeek API retires v3-era models on
+  // 2026-07-24, and several scenario judges are tuned to V3.2's voice.
   {
     id: 'deepseek-v3.2',
     label: 'DeepSeek V3.2',
-    apiModel: 'deepseek-ai/DeepSeek-V3.2',
-    provider: 'siliconflow',
+    apiModel: 'deepseek-v3.2',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'kimi-k2.5',
     label: 'Kimi K2.5',
-    apiModel: 'Pro/moonshotai/Kimi-K2.5',
-    provider: 'siliconflow',
+    apiModel: 'kimi-k2.5',
+    provider: 'moonshot',
     surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'qwen3.5-397b-a17b',
     label: 'Qwen3.5',
-    apiModel: 'Qwen/Qwen3.5-27B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.5-27b',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
   },
   {
@@ -149,15 +150,15 @@ export const modelCatalog = [
   {
     id: 'minimax-m3',
     label: 'MiniMax M3',
-    apiModel: 'MiniMaxAI/MiniMax-M3',
-    provider: 'siliconflow',
-    surfaces: [],
+    apiModel: 'MiniMax-M3',
+    provider: 'minimax',
+    surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'minimax-m2.5',
     label: 'MiniMax M2.5',
-    apiModel: 'MiniMaxAI/MiniMax-M2.5',
-    provider: 'siliconflow',
+    apiModel: 'MiniMax-M2.5',
+    provider: 'minimax',
     surfaces: ['submission', 'evaluation'],
   },
   {
@@ -226,16 +227,16 @@ export const modelCatalog = [
   {
     id: 'qwen3.5-397b',
     label: 'Qwen3.5 397B',
-    apiModel: 'Qwen/Qwen3.5-397B-A17B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.5-397b-a17b',
+    provider: 'dashscope',
     surfaces: ['evaluation'],
     thinking: 'disabled',
   },
   {
     id: 'glm-4.6',
     label: 'GLM-4.6',
-    apiModel: 'zai-org/GLM-4.6',
-    provider: 'siliconflow',
+    apiModel: 'glm-4.6',
+    provider: 'zhipu',
     surfaces: ['evaluation'],
   },
 ] as const satisfies readonly ModelDefinition[]

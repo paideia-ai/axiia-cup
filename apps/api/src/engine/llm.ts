@@ -49,7 +49,6 @@ type ChatMessage = {
 
 type OpenAICompatibleProvider =
   | 'dashscope'
-  | 'minimax'
   | 'moonshot'
   | 'openai'
   | 'siliconflow'
@@ -68,11 +67,6 @@ const openAiCompatibleConfigs: Record<
       process.env.DASHSCOPE_BASE_URL ||
       'https://dashscope.aliyuncs.com/compatible-mode/v1',
     label: 'DashScope',
-  },
-  minimax: {
-    apiKeyEnv: 'MINIMAX_API_KEY',
-    baseUrl: process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/v1',
-    label: 'MiniMax',
   },
   moonshot: {
     apiKeyEnv: 'MOONSHOT_API_KEY',
@@ -98,7 +92,7 @@ const openAiCompatibleConfigs: Record<
   },
 }
 
-type AnthropicCompatibleProvider = 'anthropic' | 'deepseek'
+type AnthropicCompatibleProvider = 'anthropic' | 'deepseek' | 'minimax'
 
 const anthropicCompatibleConfigs: Record<
   AnthropicCompatibleProvider,
@@ -113,6 +107,14 @@ const anthropicCompatibleConfigs: Record<
     apiKeyEnv: 'DEEPSEEK_API_KEY',
     baseUrl: DEEPSEEK_BASE_URL,
     label: 'DeepSeek',
+  },
+  // MiniMax recommends their Anthropic-compatible endpoint over the OpenAI
+  // one; M2.x thinking arrives as typed thinking blocks there.
+  minimax: {
+    apiKeyEnv: 'MINIMAX_API_KEY',
+    baseUrl:
+      process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/anthropic',
+    label: 'MiniMax',
   },
 }
 
@@ -450,9 +452,12 @@ export function buildAnthropicRequest(params: {
   temperature?: number
 }) {
   const modelDefinition = getModelDefinition(params.model)
-  const maxTokens = modelDefinition.effort
-    ? THINKING_MAX_TOKENS
-    : ANTHROPIC_MAX_TOKENS
+  // Models that always think (DeepSeek with effort set, MiniMax M2.x with
+  // interleaved thinking) spend reasoning tokens inside max_tokens; give them
+  // the larger budget or the visible answer gets truncated.
+  const alwaysThinks =
+    modelDefinition.effort != null || modelDefinition.provider === 'minimax'
+  const maxTokens = alwaysThinks ? THINKING_MAX_TOKENS : ANTHROPIC_MAX_TOKENS
 
   return {
     max_tokens: Number.isFinite(maxTokens) ? Math.max(1, maxTokens) : 4096,
@@ -757,7 +762,6 @@ export async function chatCompletion(params: {
 
   switch (provider) {
     case 'dashscope':
-    case 'minimax':
     case 'moonshot':
     case 'openai':
     case 'siliconflow':
@@ -767,6 +771,8 @@ export async function chatCompletion(params: {
       return callAnthropicChatCompletion(params, 'anthropic')
     case 'deepseek':
       return callAnthropicChatCompletion(params, 'deepseek')
+    case 'minimax':
+      return callAnthropicChatCompletion(params, 'minimax')
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
