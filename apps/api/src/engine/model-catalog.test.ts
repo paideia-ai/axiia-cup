@@ -161,10 +161,13 @@ describe('model catalog', () => {
       apiModel: 'glm-4.6',
       provider: 'zhipu',
     })
-    // The only remaining SiliconFlow tenants are deepseek-v3.2 (no official
-    // home: v3-era retires from the DeepSeek API on 2026-07-24) and the
-    // retired minimax-m3.
-    expect(getModelDefinition('deepseek-v3.2').provider).toBe('siliconflow')
+    // deepseek-v3.2 lives on Aliyun-hosted DashScope (the official DeepSeek
+    // API retires v3-era models on 2026-07-24). The only remaining
+    // SiliconFlow tenant is the retired minimax-m3.
+    expect(getModelDefinition('deepseek-v3.2')).toMatchObject({
+      apiModel: 'deepseek-v3.2',
+      provider: 'dashscope',
+    })
   })
 
   it('does not change the default evaluation model order', () => {

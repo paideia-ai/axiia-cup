@@ -92,11 +92,13 @@ type ModelDefinition = {
 }
 
 export const modelCatalog = [
+  // Aliyun-hosted: the official DeepSeek API retires v3-era models on
+  // 2026-07-24, and several scenario judges are tuned to V3.2's voice.
   {
     id: 'deepseek-v3.2',
     label: 'DeepSeek V3.2',
-    apiModel: 'deepseek-ai/DeepSeek-V3.2',
-    provider: 'siliconflow',
+    apiModel: 'deepseek-v3.2',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
   },
   {
