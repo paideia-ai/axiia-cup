@@ -22,7 +22,7 @@ This document was checked against:
 - `.github/workflows/ci.yml`
 - `.github/workflows/build.yml`
 - `.github/workflows/deploy.yml`
-- live GitHub branch protection for `master`
+- live GitHub branch protection for `main`
 - live production server files:
   - `/srv/axiia-cup/deploy-webhook/server.py`
   - `axiia-deploy-webhook.service`
@@ -94,7 +94,7 @@ The webhook now accepts deploy requests asynchronously:
 
 ## 2. Branch protection
 
-Current `master` protection was verified live from GitHub.
+Current `main` protection was verified live from GitHub.
 
 - required status check: `Check`
 - strict status checks: enabled
@@ -107,14 +107,14 @@ Operationally, this means normal changes should land via PR and squash/linear hi
 
 ## 3. Standard release and deploy flow
 
-### 3.1 CI on `master` and PRs
+### 3.1 CI on `main` and PRs
 
 Workflow: `.github/workflows/ci.yml`
 
 Triggers:
 
-- push to `master`
-- pull request targeting `master`
+- push to `main`
+- pull request targeting `main`
 
 Docs-only skip rule:
 
@@ -138,12 +138,12 @@ Workflow: `.github/workflows/build.yml`
 
 Triggers:
 
-- push to `master`
+- push to `main`
 - manual `workflow_dispatch`
 
 Docs-only skip rule:
 
-- the build workflow still runs a light classify step on push to `master`
+- the build workflow still runs a light classify step on push to `main`
 - heavy image build/push is skipped only when the same docs-only rule from CI matches
 - `workflow_dispatch` always forces a real build
 
@@ -152,7 +152,7 @@ What it does when not skipped:
 - authenticates GitHub Actions to Aliyun via OIDC
 - logs into Aliyun ACR
 - builds and pushes two images tagged by commit SHA
-- on push to `master`, starts an async deploy for that same SHA to the **dev** stack
+- on push to `main`, starts an async deploy for that same SHA to the **dev** stack
 - the workflow polls the webhook status endpoint using the returned `deploymentId` until the deploy reaches `success` or `failed`
 
 Registry details:
@@ -186,7 +186,7 @@ git push origin release/2026-04-14.1
 
 Deploy sequence:
 
-1. `master` already contains the commit.
+1. `main` already contains the commit.
 2. Build workflow has pushed images for that commit SHA to ACR.
 3. Deploy workflow resolves the commit SHA for the pushed release tag.
 4. Deploy workflow signs a short-lived JWT using `DEPLOY_WEBHOOK_SECRET`.
@@ -294,7 +294,7 @@ git push origin release/2026-04-14.2
 Constraint:
 
 - the target commit's images must already exist in ACR
-- in practice this means the commit must previously have been built from `master`
+- in practice this means the commit must previously have been built from `main`
 
 ## 6. Secret and config inventory
 

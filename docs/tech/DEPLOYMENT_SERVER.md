@@ -145,11 +145,11 @@ If you prefer to drive the flow from your local machine instead of SSHing in man
 cd /path/to/local/axiia-cup
 ./deploy/deploy-master.sh
 ./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
-./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
+./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/main
 ./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
 ```
 
-`deploy-master.sh` syncs a committed Git snapshot from your local repo to the remote checkout path, optionally uploads a local env file to the remote env path, and then runs the remote scripts there. By default it deploys `origin/master`, so uncommitted local changes are not published unless you commit them and point `--ref` at that commit.
+`deploy-master.sh` syncs a committed Git snapshot from your local repo to the remote checkout path, optionally uploads a local env file to the remote env path, and then runs the remote scripts there. By default it deploys `origin/main`, so uncommitted local changes are not published unless you commit them and point `--ref` at that commit.
 
 ## 6. Build And Start
 
