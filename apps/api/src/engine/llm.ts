@@ -377,7 +377,9 @@ const emptyTokenUsage: ExtractedTokenUsage = {
   reasoningTokens: null,
 }
 
-function extractTokenUsage(responseJson: string | null): ExtractedTokenUsage {
+export function extractTokenUsage(
+  responseJson: string | null,
+): ExtractedTokenUsage {
   if (!responseJson) {
     return emptyTokenUsage
   }
@@ -399,16 +401,27 @@ function extractTokenUsage(responseJson: string | null): ExtractedTokenUsage {
       }
     }
     const usage = parsed.usage
+    const cachedTokens =
+      usage?.prompt_tokens_details?.cached_tokens ??
+      usage?.prompt_cache_hit_tokens ??
+      usage?.cache_read_input_tokens ??
+      null
+    // OpenAI-dialect prompt_tokens includes cache hits; Anthropic-dialect
+    // input_tokens EXCLUDES cache reads (observed: DeepSeek returns
+    // input_tokens 124 with cache_read_input_tokens 2048). Normalize
+    // promptTokens to the full prompt so downstream cost math and Langfuse
+    // buckets can always treat cached as a subset.
+    const promptTokens =
+      usage?.prompt_tokens ??
+      (usage?.input_tokens != null
+        ? usage.input_tokens + (usage.cache_read_input_tokens ?? 0)
+        : null)
 
     return {
-      cachedTokens:
-        usage?.prompt_tokens_details?.cached_tokens ??
-        usage?.prompt_cache_hit_tokens ??
-        usage?.cache_read_input_tokens ??
-        null,
+      cachedTokens,
       completionTokens:
         usage?.completion_tokens ?? usage?.output_tokens ?? null,
-      promptTokens: usage?.prompt_tokens ?? usage?.input_tokens ?? null,
+      promptTokens,
       reasoningTokens:
         usage?.completion_tokens_details?.reasoning_tokens ?? null,
     }
