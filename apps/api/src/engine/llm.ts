@@ -430,16 +430,231 @@ export function extractTokenUsage(
   }
 }
 
+export type StreamTimings = {
+  /** ms from request start to the first non-reasoning content token. */
+  firstContentMs: number | null
+  /** ms from request start to the first streamed token of any kind. */
+  ttftMs: number | null
+}
+
+export type OpenAIStreamState = StreamTimings & {
+  content: string
+  finishReason: string | null
+  reasoning: string
+  usage: unknown
+}
+
+export function createOpenAIStreamState(): OpenAIStreamState {
+  return {
+    content: '',
+    finishReason: null,
+    firstContentMs: null,
+    reasoning: '',
+    ttftMs: null,
+    usage: null,
+  }
+}
+
+type OpenAIStreamChunk = {
+  choices?: Array<{
+    delta?: { content?: string | null; reasoning_content?: string | null }
+    finish_reason?: string | null
+  }>
+  usage?: unknown
+}
+
+export function foldOpenAIStreamChunk(
+  state: OpenAIStreamState,
+  chunk: OpenAIStreamChunk,
+  elapsedMs: number,
+) {
+  if (chunk.usage) {
+    state.usage = chunk.usage
+  }
+
+  const choice = chunk.choices?.[0]
+
+  if (!choice) {
+    return
+  }
+
+  if (choice.finish_reason) {
+    state.finishReason = choice.finish_reason
+  }
+
+  const reasoning = choice.delta?.reasoning_content
+
+  if (reasoning) {
+    state.reasoning += reasoning
+    state.ttftMs ??= elapsedMs
+  }
+
+  const content = choice.delta?.content
+
+  if (content) {
+    state.content += content
+    state.ttftMs ??= elapsedMs
+    state.firstContentMs ??= elapsedMs
+  }
+}
+
+type AnthropicStreamBlock = { text: string; thinking: string; type: string }
+
+export type AnthropicStreamResult = StreamTimings & {
+  response: AnthropicResponse
+}
+
+/**
+ * Minimal parser for the Anthropic-dialect SSE stream (DeepSeek, MiniMax).
+ * Reconstructs a non-streaming-shaped response so raw persistence and usage
+ * extraction stay identical to the old path.
+ */
+export async function readAnthropicStream(
+  body: ReadableStream<Uint8Array>,
+  elapsed: () => number,
+): Promise<AnthropicStreamResult> {
+  const decoder = new TextDecoder()
+  const blocks: AnthropicStreamBlock[] = []
+  const usage: {
+    cache_read_input_tokens?: number
+    input_tokens?: number
+    output_tokens?: number
+  } = {}
+  let stopReason: string | undefined
+  let ttftMs: number | null = null
+  let firstContentMs: number | null = null
+  let buffer = ''
+
+  const handleEvent = (payload: string) => {
+    const event = JSON.parse(payload) as {
+      content_block?: { type?: string }
+      delta?: {
+        stop_reason?: string
+        text?: string
+        thinking?: string
+        type?: string
+      }
+      error?: { message?: string; type?: string }
+      index?: number
+      message?: { usage?: typeof usage }
+      type?: string
+      usage?: { output_tokens?: number }
+    }
+
+    switch (event.type) {
+      case 'message_start': {
+        Object.assign(usage, event.message?.usage ?? {})
+        break
+      }
+      case 'content_block_start': {
+        blocks[event.index ?? blocks.length] = {
+          text: '',
+          thinking: '',
+          type: event.content_block?.type ?? 'text',
+        }
+        break
+      }
+      case 'content_block_delta': {
+        const block = blocks[event.index ?? blocks.length - 1]
+
+        if (!block) {
+          break
+        }
+
+        if (event.delta?.type === 'thinking_delta' && event.delta.thinking) {
+          block.thinking += event.delta.thinking
+          ttftMs ??= elapsed()
+        }
+
+        if (event.delta?.type === 'text_delta' && event.delta.text) {
+          block.text += event.delta.text
+          ttftMs ??= elapsed()
+          firstContentMs ??= elapsed()
+        }
+
+        break
+      }
+      case 'message_delta': {
+        if (event.usage?.output_tokens != null) {
+          usage.output_tokens = event.usage.output_tokens
+        }
+
+        if (event.delta?.stop_reason) {
+          stopReason = event.delta.stop_reason
+        }
+
+        break
+      }
+      case 'error': {
+        throw new Error(
+          `stream error: ${event.error?.type ?? 'unknown'}: ${event.error?.message ?? payload.slice(0, 200)}`,
+        )
+      }
+      default:
+        break
+    }
+  }
+
+  const reader = body.getReader()
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+
+      if (done) {
+        break
+      }
+
+      buffer += decoder.decode(value, { stream: true })
+
+      let newlineIndex = buffer.indexOf('\n')
+
+      while (newlineIndex >= 0) {
+        const line = buffer.slice(0, newlineIndex).trim()
+        buffer = buffer.slice(newlineIndex + 1)
+
+        if (line.startsWith('data:')) {
+          const payload = line.slice(5).trim()
+
+          if (payload && payload !== '[DONE]') {
+            handleEvent(payload)
+          }
+        }
+
+        newlineIndex = buffer.indexOf('\n')
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  return {
+    firstContentMs,
+    response: {
+      content: blocks.map((block) =>
+        block.type === 'thinking'
+          ? { thinking: block.thinking, type: block.type }
+          : { text: block.text, type: block.type },
+      ),
+      stop_reason: stopReason,
+      usage,
+    },
+    ttftMs,
+  }
+}
+
 async function persistLlmCall(
   trace: ChatCompletionTrace | undefined,
   record: {
     durationMs: number
     error: string | null
+    firstContentMs?: number | null
     model: ModelId
     provider: ModelProvider
     requestJson: string
     responseContent: string | null
     responseJson: string | null
+    ttftMs?: number | null
   },
 ) {
   if (!trace) {
@@ -476,7 +691,9 @@ async function persistLlmCall(
         requestJson: record.requestJson,
         responseContent: record.responseContent,
         responseJson: record.responseJson,
+        firstContentMs: record.firstContentMs ?? null,
         side: trace.side,
+        ttftMs: record.ttftMs ?? null,
         turnIndex: trace.turnIndex ?? null,
         userId: trace.userId ?? null,
       })
@@ -588,37 +805,74 @@ async function callOpenAICompatibleChatCompletion(
   })
 
   try {
-    const response = await client.chat.completions.create(requestPayload, {
-      signal: params.signal,
-    })
+    const stream = await client.chat.completions.create(
+      {
+        ...requestPayload,
+        stream: true,
+        // Zhipu's dialect emits usage in the final chunk on its own and is
+        // the one holdout we have not verified accepts stream_options.
+        ...(provider === 'zhipu'
+          ? {}
+          : { stream_options: { include_usage: true } }),
+      },
+      { signal: params.signal },
+    )
 
-    const message = response.choices[0]?.message
-    const content = message?.content
+    const state = createOpenAIStreamState()
+
+    for await (const chunk of stream) {
+      foldOpenAIStreamChunk(state, chunk, Date.now() - startedAt)
+    }
+
+    const content = state.content
 
     if (!content) {
       throw new Error('Empty completion response')
     }
 
-    const responseJson = safeStringify(response)
+    // Reconstruct a non-streaming-shaped payload so llm_calls keeps raw-ish
+    // provider data and the usage extractor stays dialect-agnostic.
+    const responseJson = safeStringify({
+      choices: [
+        {
+          finish_reason: state.finishReason,
+          message: {
+            content,
+            ...(state.reasoning ? { reasoning_content: state.reasoning } : {}),
+          },
+        },
+      ],
+      streamed: true,
+      usage: state.usage,
+    })
     const tokenUsage = extractTokenUsage(responseJson)
-    // Zhipu / DashScope surface thinking as reasoning_content on the message.
-    const reasoning = (message as { reasoning_content?: string })
-      .reasoning_content
 
     finishLlmLangfuseGeneration(langfuseGeneration, {
+      ...(state.ttftMs != null
+        ? { completionStartTime: new Date(startedAt + state.ttftMs) }
+        : {}),
       costDetails: toLangfuseCostDetails(params.model, tokenUsage),
-      output: reasoning ? { text: content, thinking: reasoning } : content,
+      metadata: {
+        ...getLangfuseGenerationMetadata(params.trace, params.model, provider),
+        firstContentMs: state.firstContentMs,
+        ttftMs: state.ttftMs,
+      },
+      output: state.reasoning
+        ? { text: content, thinking: state.reasoning }
+        : content,
       usageDetails: toLangfuseUsageDetails(tokenUsage),
     })
 
     await persistLlmCall(params.trace, {
       durationMs: Date.now() - startedAt,
       error: null,
+      firstContentMs: state.firstContentMs,
       model: params.model,
       provider,
       requestJson,
       responseContent: content,
       responseJson,
+      ttftMs: state.ttftMs,
     })
 
     return content
@@ -743,20 +997,28 @@ async function callAnthropicChatCompletion(
           'content-type': 'application/json',
           'x-api-key': getRequiredEnv(providerConfig.apiKeyEnv),
         },
-        body: requestJson,
+        body: safeStringify({ ...requestPayload, stream: true }),
         signal: withRequestTimeout(params.signal),
       },
     )
 
-    responseText = await response.text()
-
     if (!response.ok) {
+      responseText = await response.text()
       throw new Error(
         `${providerConfig.label} request failed (${response.status}): ${responseText.slice(0, 400)}`,
       )
     }
 
-    const parsed = JSON.parse(responseText) as AnthropicResponse
+    if (!response.body) {
+      throw new Error(`${providerConfig.label} returned an empty stream body`)
+    }
+
+    const streamed = await readAnthropicStream(
+      response.body,
+      () => Date.now() - startedAt,
+    )
+    const parsed = streamed.response
+    responseText = safeStringify({ ...parsed, streamed: true })
 
     if (parsed.stop_reason === 'max_tokens') {
       throw new Error(
@@ -784,7 +1046,15 @@ async function callAnthropicChatCompletion(
     const tokenUsage = extractTokenUsage(responseText)
 
     finishLlmLangfuseGeneration(langfuseGeneration, {
+      ...(streamed.ttftMs != null
+        ? { completionStartTime: new Date(startedAt + streamed.ttftMs) }
+        : {}),
       costDetails: toLangfuseCostDetails(params.model, tokenUsage),
+      metadata: {
+        ...getLangfuseGenerationMetadata(params.trace, params.model, provider),
+        firstContentMs: streamed.firstContentMs,
+        ttftMs: streamed.ttftMs,
+      },
       output: thinking ? { text: content, thinking } : content,
       usageDetails: toLangfuseUsageDetails(tokenUsage),
     })
@@ -792,11 +1062,13 @@ async function callAnthropicChatCompletion(
     await persistLlmCall(params.trace, {
       durationMs: Date.now() - startedAt,
       error: null,
+      firstContentMs: streamed.firstContentMs,
       model: params.model,
       provider,
       requestJson,
       responseContent: content,
       responseJson: responseText,
+      ttftMs: streamed.ttftMs,
     })
 
     return content
