@@ -409,7 +409,6 @@ const scenarioBaseSchema = z.object({
   agentPromptTemplate: z.string(),
   examinationQuestionTemplate: z.string(),
   judgePrompt: z.string(),
-  judgeOsPrompt: z.string(),
   scorerPrompt: z.string(),
   // Role A
   roleAName: z.string(),
@@ -465,6 +464,9 @@ export const updateScenarioSchema = updateScenarioBaseSchema.superRefine(
 
 export const adminScenarioSchema = scenarioBaseSchema
   .extend({
+    // Judge OS prompt is admin-only: the player scenario endpoint must not
+    // expose the judge's hidden inner-monologue instructions.
+    judgeOsPrompt: z.string(),
     locked: z.boolean(),
   })
   .superRefine((scenario, context) => {
@@ -542,8 +544,10 @@ export const judgeOsProvenanceSchema = z
     model: evaluationModelIdSchema,
     systemPrompt: z.string().min(1),
     systemPromptSha256: z.string().regex(/^[a-f0-9]{64}$/),
-    temperature: z.literal(0),
-    jsonMode: z.literal(true),
+    // These describe the *request* we sent, not guaranteed provider behavior:
+    // Anthropic-dialect providers drop jsonMode and may ignore temperature.
+    temperature: z.number(),
+    jsonMode: z.boolean(),
     thinkingMode: z.enum(['disabled', 'provider-default']),
   })
   .strict()

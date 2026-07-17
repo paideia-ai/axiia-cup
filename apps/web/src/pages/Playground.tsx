@@ -609,8 +609,7 @@ function RunResult({
   const scoringReasoning = formatScoringReasoning(run.reasoning)
   const showJudgeOs =
     scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
-    (scenario.judgeOsPrompt.trim().length > 0 ||
-      run.judgeOsProvenance !== null ||
+    (run.judgeOsProvenance !== null ||
       run.judgeOs.length > 0 ||
       run.judgeOsFailedTurns.length > 0)
   const judgeOsExpectedCount = getJudgeOsExpectedCount(

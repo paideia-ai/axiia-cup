@@ -273,6 +273,16 @@ describe('PUT /api/admin/scenarios/:id', () => {
   })
 })
 
+describe('GET /api/scenarios/:id', () => {
+  it('never exposes the Judge OS prompt to players', async () => {
+    const res = await req('GET', '/api/scenarios/test-scenario')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as Record<string, unknown>
+    expect(json.id).toBe('test-scenario')
+    expect('judgeOsPrompt' in json).toBe(false)
+  })
+})
+
 describe('GET /api/admin/scenarios locked field', () => {
   it('returns locked=false when no tournament exists', async () => {
     const res = await req('GET', '/api/admin/scenarios', adminToken)

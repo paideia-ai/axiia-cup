@@ -346,8 +346,7 @@ export function MatchDetailPage() {
   const scoringReasoning = formatScoringReasoning(match.reasoning)
   const showJudgeOs =
     displayScenario?.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
-    (displayScenario.judgeOsPrompt.trim().length > 0 ||
-      match.judgeOsProvenance !== null ||
+    (match.judgeOsProvenance !== null ||
       match.judgeOs.length > 0 ||
       match.judgeOsFailedTurns.length > 0)
   const judgeOsExpectedCount = getJudgeOsExpectedCount(

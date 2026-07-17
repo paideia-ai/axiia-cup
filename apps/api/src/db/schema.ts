@@ -33,7 +33,9 @@ const llmCallPhases = [
   'scoring',
 ] as const
 const llmCallSides = ['a', 'b', 'judge', 'scorer'] as const
-// NOTE: CHECK constraints in DB are kept in sync by migrations 0005 and 0016.
+// NOTE: migration 0016 dropped the DB CHECK constraints for phase/side so
+// adding a phase never needs another llm_calls table rebuild; the enums above
+// are enforced at the application layer only.
 
 const currentTimestamp = sql`CURRENT_TIMESTAMP`
 
@@ -327,14 +329,6 @@ export const llmCalls = sqliteTable(
       table.playgroundRunId,
     ),
     userIdx: index('llm_calls_user_id_idx').on(table.userId),
-    phaseCheck: check(
-      'llm_calls_phase_check',
-      sql`${table.phase} in ('dialogue', 'judge_os', 'examination', 'judgment', 'scoring')`,
-    ),
-    sideCheck: check(
-      'llm_calls_side_check',
-      sql`${table.side} in ('a', 'b', 'judge', 'scorer')`,
-    ),
     attemptCheck: check('llm_calls_attempt_check', sql`${table.attempt} > 0`),
     durationCheck: check(
       'llm_calls_duration_ms_check',

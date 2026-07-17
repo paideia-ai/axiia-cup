@@ -131,6 +131,9 @@ describe('judge OS migrations', () => {
         ) VALUES (100, 'judge_os', 'judge', 'glm-5.1', '{}', 8)
       `),
     ).not.toThrow()
+    // The rebuild deliberately drops the phase/side CHECK constraints so
+    // future phases never need another llm_calls table rebuild; the enums
+    // are enforced at the application layer instead.
     expect(() =>
       database.exec(`
         INSERT INTO llm_calls (
@@ -142,7 +145,7 @@ describe('judge OS migrations', () => {
           duration_ms
         ) VALUES (101, 'unknown', 'judge', 'glm-5.1', '{}', 8)
       `),
-    ).toThrow()
+    ).not.toThrow()
 
     database.close()
   })
