@@ -34,6 +34,19 @@ describe('buildAnthropicRequest', () => {
     expect(request.max_tokens).toBe(16_384)
   })
 
+  it('gives MiniMax the thinking budget without DeepSeek output_config', () => {
+    const request = buildAnthropicRequest({
+      ...baseParams,
+      model: 'minimax-m2.5',
+    })
+
+    expect(request.model).toBe('MiniMax-M2.5')
+    expect('output_config' in request).toBe(false)
+    expect('thinking' in request).toBe(false)
+    // M2.x always thinks; reasoning tokens count toward max_tokens.
+    expect(request.max_tokens).toBe(16_384)
+  })
+
   it('omits output_config for models without an effort setting', () => {
     const request = buildAnthropicRequest({
       ...baseParams,

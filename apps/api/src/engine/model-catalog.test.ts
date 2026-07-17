@@ -18,6 +18,7 @@ const chosenPlayerModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
+  'minimax-m2.5',
   'glm-5.2',
 ] as const
 
@@ -136,7 +137,34 @@ describe('model catalog', () => {
       apiModel: 'glm-5.2',
       provider: 'zhipu',
     })
-    expect(getModelDefinition('minimax-m2.5').provider).toBe('siliconflow')
+    // MiniMax goes through their Anthropic-compatible endpoint.
+    expect(getModelDefinition('minimax-m2.5')).toMatchObject({
+      apiModel: 'MiniMax-M2.5',
+      provider: 'minimax',
+    })
+  })
+
+  it('keeps legacy evaluation models off the dead SiliconFlow account', () => {
+    expect(getModelDefinition('kimi-k2.5')).toMatchObject({
+      apiModel: 'kimi-k2.5',
+      provider: 'moonshot',
+    })
+    expect(getModelDefinition('qwen3.5-397b-a17b')).toMatchObject({
+      apiModel: 'qwen3.5-27b',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('qwen3.5-397b')).toMatchObject({
+      apiModel: 'qwen3.5-397b-a17b',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('glm-4.6')).toMatchObject({
+      apiModel: 'glm-4.6',
+      provider: 'zhipu',
+    })
+    // The only remaining SiliconFlow tenants are deepseek-v3.2 (no official
+    // home: v3-era retires from the DeepSeek API on 2026-07-24) and the
+    // retired minimax-m3.
+    expect(getModelDefinition('deepseek-v3.2').provider).toBe('siliconflow')
   })
 
   it('does not change the default evaluation model order', () => {

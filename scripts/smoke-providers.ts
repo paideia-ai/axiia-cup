@@ -71,27 +71,32 @@ async function smokeOpenAICompatible(params: {
   }
 }
 
-async function smokeDeepSeekAnthropic(): Promise<SmokeResult> {
-  const apiKey = env('DEEPSEEK_API_KEY')
-  if (!apiKey) {
-    return { detail: 'no API key set', name: 'deepseek', ok: true, skipped: true }
+async function smokeAnthropicCompatible(params: {
+  apiKey: string | null
+  baseUrl: string
+  extraBody?: Record<string, unknown>
+  maxTokens: number
+  model: string
+  name: string
+}): Promise<SmokeResult> {
+  if (!params.apiKey) {
+    return { detail: 'no API key set', name: params.name, ok: true, skipped: true }
   }
 
-  const baseUrl = env('DEEPSEEK_BASE_URL') || 'https://api.deepseek.com/anthropic'
   const startedAt = Date.now()
   try {
-    const response = await fetch(`${baseUrl}/v1/messages`, {
+    const response = await fetch(`${params.baseUrl}/v1/messages`, {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
+        'x-api-key': params.apiKey,
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-v4-flash',
-        max_tokens: 64,
-        thinking: { type: 'disabled' },
+        model: params.model,
+        max_tokens: params.maxTokens,
         messages: [{ role: 'user', content: SMOKE_PROMPT }],
+        ...params.extraBody,
       }),
       signal: AbortSignal.timeout(60_000),
     })
@@ -100,7 +105,7 @@ async function smokeDeepSeekAnthropic(): Promise<SmokeResult> {
     if (!response.ok) {
       return {
         detail: `HTTP ${response.status} ${body.slice(0, 160)}`,
-        name: 'deepseek',
+        name: params.name,
         ok: false,
       }
     }
@@ -110,14 +115,14 @@ async function smokeDeepSeekAnthropic(): Promise<SmokeResult> {
       .map((block: { text?: string }) => block.text ?? '')
       .join('')
     return {
-      detail: `${Date.now() - startedAt}ms, deepseek-v4-flash said ${JSON.stringify(text.slice(0, 20))}`,
-      name: 'deepseek',
+      detail: `${Date.now() - startedAt}ms, ${params.model} said ${JSON.stringify(text.slice(0, 20))}`,
+      name: params.name,
       ok: text.length > 0,
     }
   } catch (error) {
     return {
       detail: `fetch failed: ${(error as Error).message}`,
-      name: 'deepseek',
+      name: params.name,
       ok: false,
     }
   }
@@ -154,7 +159,22 @@ const results = await Promise.all([
     model: 'deepseek-ai/DeepSeek-V3.2',
     name: 'siliconflow',
   }),
-  smokeDeepSeekAnthropic(),
+  smokeAnthropicCompatible({
+    apiKey: env('DEEPSEEK_API_KEY'),
+    baseUrl: env('DEEPSEEK_BASE_URL') || 'https://api.deepseek.com/anthropic',
+    extraBody: { thinking: { type: 'disabled' } },
+    maxTokens: 64,
+    model: 'deepseek-v4-flash',
+    name: 'deepseek',
+  }),
+  smokeAnthropicCompatible({
+    apiKey: env('MINIMAX_API_KEY'),
+    baseUrl: env('MINIMAX_BASE_URL') || 'https://api.minimaxi.com/anthropic',
+    // M2.x always thinks; thinking tokens count toward max_tokens.
+    maxTokens: 512,
+    model: 'MiniMax-M2.5',
+    name: 'minimax',
+  }),
 ])
 
 let failed = 0

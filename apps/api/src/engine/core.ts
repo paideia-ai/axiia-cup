@@ -51,11 +51,13 @@ const RETRY_DELAY_MS = 2000
 // gets this long after scoring before it is tombstoned as failed.
 const JUDGE_OS_FINALIZE_TIMEOUT_MS = 120_000
 
+// deepseek-v3.2 is stranded on the dead SiliconFlow account and the official
+// DeepSeek API retires v3-era models on 2026-07-24; default to V4 instead.
 export const DEFAULT_JUDGE_MODEL =
-  'deepseek-v3.2' as const satisfies EvaluationModelId
+  'deepseek-v4-pro' as const satisfies EvaluationModelId
 
 export const DEFAULT_SCORER_MODEL =
-  'deepseek-v3.2' as const satisfies EvaluationModelId
+  'deepseek-v4-flash' as const satisfies EvaluationModelId
 
 type MatchExecutionParams = {
   completeChat?: typeof chatCompletion
