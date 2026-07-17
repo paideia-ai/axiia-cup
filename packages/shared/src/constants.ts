@@ -8,6 +8,10 @@ export const submissionModelIds = [
   'minimax-m2.5',
   'glm-5.1',
   'glm-5.2',
+  'deepseek-v4-pro-high',
+  'deepseek-v4-pro-max',
+  'deepseek-v4-flash-high',
+  'deepseek-v4-flash-max',
 ] as const
 
 export const playerSelectableModelIds = [
@@ -58,13 +62,17 @@ export type ModelId = EvaluationModelId
 export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ProgrammaticScorerScenarioId =
   (typeof programmaticScorerScenarioIds)[number]
-export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
+export type ModelProvider = 'anthropic' | 'deepseek' | 'openai' | 'siliconflow'
 
 type ModelSurface = 'evaluation' | 'submission'
 type CatalogModelId = ModelId | RetiredModelId
 
 type ModelDefinition = {
   apiModel: string
+  // Reasoning effort for Anthropic-compatible providers that support
+  // output_config.effort (DeepSeek official API: 'high' is the default,
+  // 'max' is the only other level).
+  effort?: 'high' | 'max'
   id: CatalogModelId
   label: string
   provider: ModelProvider
@@ -143,6 +151,38 @@ export const modelCatalog = [
     apiModel: 'zai-org/GLM-5.2',
     provider: 'siliconflow',
     surfaces: ['submission', 'evaluation'],
+  },
+  {
+    id: 'deepseek-v4-pro-high',
+    label: 'DeepSeek V4 Pro 官方 (high)',
+    apiModel: 'deepseek-v4-pro',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'high',
+  },
+  {
+    id: 'deepseek-v4-pro-max',
+    label: 'DeepSeek V4 Pro 官方 (max)',
+    apiModel: 'deepseek-v4-pro',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'max',
+  },
+  {
+    id: 'deepseek-v4-flash-high',
+    label: 'DeepSeek V4 Flash 官方 (high)',
+    apiModel: 'deepseek-v4-flash',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'high',
+  },
+  {
+    id: 'deepseek-v4-flash-max',
+    label: 'DeepSeek V4 Flash 官方 (max)',
+    apiModel: 'deepseek-v4-flash',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'max',
   },
   {
     id: 'gpt-4.1',
