@@ -25,10 +25,21 @@ const SILICONFLOW_BASE_URL =
   process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
 const OPENAI_BASE_URL =
   process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'
+// `||` (not `??`): docker-compose passes unset variables through as empty
+// strings, which must still fall back to the defaults.
 const ANTHROPIC_BASE_URL =
-  process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com'
-const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
+  process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com'
+const DEEPSEEK_BASE_URL =
+  process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/anthropic'
+const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION || '2023-06-01'
 const ANTHROPIC_MAX_TOKENS = Number(process.env.ANTHROPIC_MAX_TOKENS ?? 4096)
+// Thinking tokens count toward max_tokens on Anthropic-compatible APIs, so
+// reasoning models need a much larger budget or the visible answer gets
+// truncated (observed: DeepSeek effort=max spends >4096 tokens thinking).
+const THINKING_MAX_TOKENS = Number(process.env.THINKING_MAX_TOKENS ?? 16_384)
+const LLM_REQUEST_TIMEOUT_MS = Number(
+  process.env.LLM_REQUEST_TIMEOUT_MS ?? 180_000,
+)
 
 let _dbModulePromise: Promise<typeof import('../db/client')> | null = null
 let _openAiClients: Partial<Record<'openai' | 'siliconflow', OpenAI>> = {}
@@ -42,8 +53,27 @@ type ChatMessage = {
 
 type OpenAICompatibleProvider = 'openai' | 'siliconflow'
 
+type AnthropicCompatibleProvider = 'anthropic' | 'deepseek'
+
+const anthropicCompatibleConfigs: Record<
+  AnthropicCompatibleProvider,
+  { apiKeyEnv: string; baseUrl: string; label: string }
+> = {
+  anthropic: {
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
+    baseUrl: ANTHROPIC_BASE_URL,
+    label: 'Anthropic',
+  },
+  deepseek: {
+    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    baseUrl: DEEPSEEK_BASE_URL,
+    label: 'DeepSeek',
+  },
+}
+
 type AnthropicResponse = {
   content?: Array<{ text?: string; type: string }>
+  stop_reason?: string
   usage?: { input_tokens?: number; output_tokens?: number }
 }
 
@@ -205,6 +235,7 @@ function getAnthropicUsageDetails(
 
 function startAnthropicLangfuseGeneration(params: {
   model: ModelId
+  provider: AnthropicCompatibleProvider
   requestPayload: AnthropicRequestPayload
   trace: ChatCompletionTrace | undefined
 }): LangfuseGeneration | null {
@@ -213,7 +244,7 @@ function startAnthropicLangfuseGeneration(params: {
   }
 
   try {
-    const provider: ModelProvider = 'anthropic'
+    const provider: ModelProvider = params.provider
 
     return propagateAttributes(
       getLangfuseTraceAttributes(params.trace, params.model, provider),
@@ -375,7 +406,7 @@ function resolveUrl(baseUrl: string, pathname: string) {
   return new URL(pathname.replace(/^\/+/, ''), normalizedBase).toString()
 }
 
-function buildAnthropicRequest(params: {
+export function buildAnthropicRequest(params: {
   jsonMode?: boolean
   messages: ChatMessage[]
   model: ModelId
@@ -383,11 +414,12 @@ function buildAnthropicRequest(params: {
   temperature?: number
 }) {
   const modelDefinition = getModelDefinition(params.model)
+  const maxTokens = modelDefinition.effort
+    ? THINKING_MAX_TOKENS
+    : ANTHROPIC_MAX_TOKENS
 
   return {
-    max_tokens: Number.isFinite(ANTHROPIC_MAX_TOKENS)
-      ? Math.max(1, ANTHROPIC_MAX_TOKENS)
-      : 4096,
+    max_tokens: Number.isFinite(maxTokens) ? Math.max(1, maxTokens) : 4096,
     messages: params.messages.map((message) => ({
       role: message.role,
       content: message.content,
@@ -395,7 +427,24 @@ function buildAnthropicRequest(params: {
     model: modelDefinition.apiModel,
     system: params.systemPrompt,
     temperature: params.temperature ?? 0,
+    // DeepSeek's Anthropic-compatible API exposes reasoning effort via
+    // output_config; it only supports 'high' (default) and 'max'.
+    ...(modelDefinition.effort
+      ? { output_config: { effort: modelDefinition.effort } }
+      : {}),
+    ...(modelDefinition.thinking === 'disabled'
+      ? { thinking: { type: 'disabled' as const } }
+      : {}),
   }
+}
+
+function withRequestTimeout(signal: AbortSignal | undefined) {
+  if (!Number.isFinite(LLM_REQUEST_TIMEOUT_MS) || LLM_REQUEST_TIMEOUT_MS <= 0) {
+    return signal
+  }
+
+  const timeoutSignal = AbortSignal.timeout(LLM_REQUEST_TIMEOUT_MS)
+  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
 }
 
 async function callOpenAICompatibleChatCompletion(
@@ -493,21 +542,25 @@ async function callOpenAICompatibleChatCompletion(
   }
 }
 
-async function callAnthropicChatCompletion(params: {
-  model: ModelId
-  systemPrompt: string
-  messages: ChatMessage[]
-  temperature?: number
-  jsonMode?: boolean
-  signal?: AbortSignal
-  trace?: ChatCompletionTrace
-}) {
-  const provider: ModelProvider = 'anthropic'
+async function callAnthropicChatCompletion(
+  params: {
+    model: ModelId
+    systemPrompt: string
+    messages: ChatMessage[]
+    temperature?: number
+    jsonMode?: boolean
+    signal?: AbortSignal
+    trace?: ChatCompletionTrace
+  },
+  provider: AnthropicCompatibleProvider,
+) {
+  const providerConfig = anthropicCompatibleConfigs[provider]
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
   const langfuseGeneration = startAnthropicLangfuseGeneration({
     model: params.model,
+    provider,
     requestPayload,
     trace: params.trace,
   })
@@ -515,16 +568,16 @@ async function callAnthropicChatCompletion(params: {
 
   try {
     const response = await fetch(
-      resolveUrl(ANTHROPIC_BASE_URL, 'v1/messages'),
+      resolveUrl(providerConfig.baseUrl, 'v1/messages'),
       {
         method: 'POST',
         headers: {
           'anthropic-version': ANTHROPIC_VERSION,
           'content-type': 'application/json',
-          'x-api-key': getRequiredEnv('ANTHROPIC_API_KEY'),
+          'x-api-key': getRequiredEnv(providerConfig.apiKeyEnv),
         },
         body: requestJson,
-        signal: params.signal,
+        signal: withRequestTimeout(params.signal),
       },
     )
 
@@ -532,11 +585,18 @@ async function callAnthropicChatCompletion(params: {
 
     if (!response.ok) {
       throw new Error(
-        `Anthropic request failed (${response.status}): ${responseText.slice(0, 400)}`,
+        `${providerConfig.label} request failed (${response.status}): ${responseText.slice(0, 400)}`,
       )
     }
 
     const parsed = JSON.parse(responseText) as AnthropicResponse
+
+    if (parsed.stop_reason === 'max_tokens') {
+      throw new Error(
+        `${providerConfig.label} response truncated: max_tokens (${requestPayload.max_tokens}) reached before the answer completed`,
+      )
+    }
+
     const content = parsed.content
       ?.filter((block) => block.type === 'text' && block.text)
       .map((block) => block.text?.trim() ?? '')
@@ -608,7 +668,7 @@ async function callAnthropicChatCompletion(params: {
       throw error
     }
 
-    const message = 'Anthropic request failed (unknown): non-Error thrown'
+    const message = `${providerConfig.label} request failed (unknown): non-Error thrown`
 
     finishAnthropicLangfuseGeneration(langfuseGeneration, {
       level: 'ERROR',
@@ -647,7 +707,9 @@ export async function chatCompletion(params: {
     case 'siliconflow':
       return callOpenAICompatibleChatCompletion(params, 'siliconflow')
     case 'anthropic':
-      return callAnthropicChatCompletion(params)
+      return callAnthropicChatCompletion(params, 'anthropic')
+    case 'deepseek':
+      return callAnthropicChatCompletion(params, 'deepseek')
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
