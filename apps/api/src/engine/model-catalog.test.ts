@@ -18,7 +18,7 @@ const chosenPlayerModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m2.5',
+  'minimax-m3',
   'glm-5.2',
 ] as const
 
@@ -32,7 +32,7 @@ describe('model catalog', () => {
       'deepseek-v3.2',
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
-      'minimax-m3',
+      'minimax-m2.5',
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'glm-5.1',
@@ -138,6 +138,10 @@ describe('model catalog', () => {
       provider: 'zhipu',
     })
     // MiniMax goes through their Anthropic-compatible endpoint.
+    expect(getModelDefinition('minimax-m3')).toMatchObject({
+      apiModel: 'MiniMax-M3',
+      provider: 'minimax',
+    })
     expect(getModelDefinition('minimax-m2.5')).toMatchObject({
       apiModel: 'MiniMax-M2.5',
       provider: 'minimax',
@@ -162,8 +166,8 @@ describe('model catalog', () => {
       provider: 'zhipu',
     })
     // deepseek-v3.2 lives on Aliyun-hosted DashScope (the official DeepSeek
-    // API retires v3-era models on 2026-07-24). The only remaining
-    // SiliconFlow tenant is the retired minimax-m3.
+    // API retires v3-era models on 2026-07-24). Nothing remains on
+    // SiliconFlow.
     expect(getModelDefinition('deepseek-v3.2')).toMatchObject({
       apiModel: 'deepseek-v3.2',
       provider: 'dashscope',

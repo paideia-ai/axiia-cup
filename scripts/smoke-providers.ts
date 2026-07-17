@@ -172,7 +172,7 @@ const results = await Promise.all([
     baseUrl: env('MINIMAX_BASE_URL') || 'https://api.minimaxi.com/anthropic',
     // M2.x always thinks; thinking tokens count toward max_tokens.
     maxTokens: 512,
-    model: 'MiniMax-M2.5',
+    model: 'MiniMax-M3',
     name: 'minimax',
   }),
 ])

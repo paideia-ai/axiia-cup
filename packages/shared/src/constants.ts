@@ -6,6 +6,7 @@ export const submissionModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
+  'minimax-m3',
   'glm-5.1',
   'glm-5.2',
   'deepseek-v4-flash',
@@ -16,11 +17,11 @@ export const playerSelectableModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m2.5',
+  'minimax-m3',
   'glm-5.2',
 ] as const
 
-export const retiredModelIds = ['minimax-m3'] as const
+export const retiredModelIds = [] as const
 
 export const evaluationOnlyModelIds = [
   'gpt-4.1',
@@ -149,9 +150,9 @@ export const modelCatalog = [
   {
     id: 'minimax-m3',
     label: 'MiniMax M3',
-    apiModel: 'MiniMaxAI/MiniMax-M3',
-    provider: 'siliconflow',
-    surfaces: [],
+    apiModel: 'MiniMax-M3',
+    provider: 'minimax',
+    surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'minimax-m2.5',
