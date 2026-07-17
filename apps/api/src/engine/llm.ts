@@ -72,7 +72,7 @@ const anthropicCompatibleConfigs: Record<
 }
 
 type AnthropicResponse = {
-  content?: Array<{ text?: string; type: string }>
+  content?: Array<{ text?: string; thinking?: string; type: string }>
   stop_reason?: string
   usage?: { input_tokens?: number; output_tokens?: number }
 }
@@ -607,8 +607,15 @@ async function callAnthropicChatCompletion(
       throw new Error('Empty completion response')
     }
 
+    // The engine only consumes the text, but the thinking blocks are what
+    // you want when debugging a verdict — surface them in the trace.
+    const thinking = parsed.content
+      ?.filter((block) => block.type === 'thinking' && block.thinking)
+      .map((block) => block.thinking ?? '')
+      .join('\n')
+
     finishAnthropicLangfuseGeneration(langfuseGeneration, {
-      output: content,
+      output: thinking ? { text: content, thinking } : content,
       usageDetails: getAnthropicUsageDetails(parsed),
     })
 
