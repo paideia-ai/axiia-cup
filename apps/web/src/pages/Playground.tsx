@@ -705,11 +705,17 @@ function RunResult({
         />
       </div>
 
-      <div
-        className={`grid items-start gap-6 ${
-          showJudgeOs ? 'xl:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]' : ''
-        }`}
-      >
+      <div className="space-y-6">
+        {showJudgeOs ? (
+          <JudgeOsTimeline
+            key={run.id}
+            entries={run.judgeOs}
+            expectedCount={judgeOsExpectedCount}
+            failedTurns={run.judgeOsFailedTurns}
+            isComplete={isRunFinished(run)}
+          />
+        ) : null}
+
         <Card className="min-w-0">
           <CardHeader>
             <CardTitle>
@@ -755,16 +761,6 @@ function RunResult({
             )}
           </CardContent>
         </Card>
-
-        {showJudgeOs ? (
-          <JudgeOsTimeline
-            key={run.id}
-            entries={run.judgeOs}
-            expectedCount={judgeOsExpectedCount}
-            failedTurns={run.judgeOsFailedTurns}
-            isComplete={isRunFinished(run)}
-          />
-        ) : null}
       </div>
 
       {showExaminationResults ? (

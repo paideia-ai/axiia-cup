@@ -747,12 +747,18 @@ export function MatchDetailPage() {
         </div>
       ) : null}
 
-      {/* Transcript + live Judge OS */}
-      <div
-        className={`grid items-start gap-6 ${
-          showJudgeOs ? 'xl:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]' : ''
-        }`}
-      >
+      {/* Live Judge OS above the transcript */}
+      <div className="space-y-6">
+        {showJudgeOs ? (
+          <JudgeOsTimeline
+            key={match.id}
+            entries={match.judgeOs}
+            expectedCount={judgeOsExpectedCount}
+            failedTurns={match.judgeOsFailedTurns}
+            isComplete={match.status === 'scored' || match.status === 'error'}
+          />
+        ) : null}
+
         <Card className="min-w-0">
           <CardHeader>
             <button
@@ -809,16 +815,6 @@ export function MatchDetailPage() {
             </CardContent>
           ) : null}
         </Card>
-
-        {showJudgeOs ? (
-          <JudgeOsTimeline
-            key={match.id}
-            entries={match.judgeOs}
-            expectedCount={judgeOsExpectedCount}
-            failedTurns={match.judgeOsFailedTurns}
-            isComplete={match.status === 'scored' || match.status === 'error'}
-          />
-        ) : null}
       </div>
     </div>
   )

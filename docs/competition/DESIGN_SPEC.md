@@ -125,7 +125,7 @@
 - 使用场景配置的裁判模型；生产商鞅场景为 GLM-5.1，并继承生产秦孝公裁判 prompt 的人设与初始立场。
 - 严格 JSON 输出 `afterTurn`、`tendency`、`reason`。`tendency` 只能是“商鞅”或“甘龙”；`reason` 每次都必须输出，不以倾向是否改变为条件。
 - OS 是 best-effort 展示功能：单条失败或最终收尾超时只记录为不可用，不得让对局失败。辩论结束后，赛后问询和最终裁判立即继续，不等待 OS；计分完成后再对仍在运行的 OS 做有界收尾。
-- 前端在宽屏将紧凑、可展开原因的 OS 倾向轨迹放在辩论框右侧；本版本不额外加入“仅供展示/非最终裁决/非 chain-of-thought”的短说明文案。
+- 前端将紧凑、可展开原因的 OS 倾向轨迹放在对话记录框正上方；本版本不额外加入“仅供展示/非最终裁决/非 chain-of-thought”的短说明文案。
 - OS prompt 与普通裁判 prompt 一样公开并可由管理员维护；OS 仅用于展示，不进入最终裁决或计分输入。每场运行保存 OS prompt 快照及 hash、模型、thinking 模式、temperature、JSON mode、Context 版本和回合配置。
 - 详细产品语义、Context 备选方案和一致性实验计划见 [judge-os-feature-spec.md](judge-os-feature-spec.md)。其中未标为当前决定的方案仍属实验，不自动改变本规范以上规则。
 
