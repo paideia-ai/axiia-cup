@@ -16,7 +16,7 @@ import OpenAI from 'openai'
 
 import type { LlmCallPhase, LlmCallSide } from '../db/schema'
 import { llmCalls } from '../db/schema'
-import { initializeLangfuseTracing, observeOpenAIClient } from '../lib/langfuse'
+import { initializeLangfuseTracing } from '../lib/langfuse'
 import {
   getPlaygroundInterruptMessage,
   isPlaygroundRunInterruptedError,
@@ -238,23 +238,6 @@ function getLangfuseTraceAttributes(
   }
 }
 
-function getObservedOpenAIClient(
-  trace: ChatCompletionTrace | undefined,
-  model: ModelId,
-  provider: OpenAICompatibleProvider,
-) {
-  const sessionId = getLangfuseSessionId(trace)
-
-  return observeOpenAIClient(getOpenAICompatibleClient(provider), {
-    generationMetadata: getLangfuseGenerationMetadata(trace, model, provider),
-    generationName: getLangfuseGenerationName(trace),
-    sessionId,
-    tags: getLangfuseTags(trace, model, provider),
-    traceName: sessionId ?? 'axiia:llm',
-    userId: trace?.userId != null ? String(trace.userId) : undefined,
-  })
-}
-
 function getAnthropicModelParameters(
   requestPayload: AnthropicRequestPayload,
 ): Record<string, number> {
@@ -264,41 +247,45 @@ function getAnthropicModelParameters(
   }
 }
 
-function getAnthropicUsageDetails(
-  response: AnthropicResponse,
+// Langfuse buckets usage under flat, MUTUALLY EXCLUSIVE keys. Keys
+// containing "input"/"output" group into the UI's input/output totals, and
+// anything else lands in "Other" and double-counts the total — so cached and
+// reasoning tokens are carved OUT of the base buckets, not repeated beside
+// them.
+export function toLangfuseUsageDetails(
+  usage: ExtractedTokenUsage,
 ): Record<string, number> | undefined {
-  // Langfuse buckets usage under the flat keys `input`/`output`/`total`
-  // (plus special keys like cache_read_input_tokens that its UI groups
-  // automatically). Anything else lands in an "Other" bucket and gets
-  // double-counted into the total.
-  const input = response.usage?.input_tokens
-  const output = response.usage?.output_tokens
-  const cacheRead = response.usage?.cache_read_input_tokens
+  const prompt = usage.promptTokens
+  const completion = usage.completionTokens
 
-  if (input == null && output == null) {
+  if (prompt == null && completion == null) {
     return undefined
   }
 
+  const cached = Math.min(usage.cachedTokens ?? 0, prompt ?? 0)
+  const reasoning = Math.min(usage.reasoningTokens ?? 0, completion ?? 0)
+
   return {
-    ...(input != null ? { input } : {}),
-    ...(output != null ? { output } : {}),
-    ...(cacheRead != null && cacheRead > 0
-      ? { cache_read_input_tokens: cacheRead }
+    ...(prompt != null ? { input: prompt - cached } : {}),
+    ...(cached > 0 ? { input_cached_tokens: cached } : {}),
+    ...(completion != null ? { output: completion - reasoning } : {}),
+    ...(reasoning > 0 ? { output_reasoning_tokens: reasoning } : {}),
+    ...(prompt != null && completion != null
+      ? { total: prompt + completion }
       : {}),
-    ...(input != null && output != null ? { total: input + output } : {}),
   }
 }
 
-function getAnthropicCostDetails(
+function toLangfuseCostDetails(
   model: ModelId,
-  response: AnthropicResponse,
+  usage: ExtractedTokenUsage,
 ): Record<string, number> | undefined {
   const costCny = computeCallCostCny({
     at: new Date(),
-    cachedTokens: response.usage?.cache_read_input_tokens ?? null,
-    inputTokens: response.usage?.input_tokens ?? null,
+    cachedTokens: usage.cachedTokens,
+    inputTokens: usage.promptTokens,
     modelId: model,
-    outputTokens: response.usage?.output_tokens ?? null,
+    outputTokens: usage.completionTokens,
   })
 
   if (costCny == null) {
@@ -310,10 +297,12 @@ function getAnthropicCostDetails(
   return { total: costCny / CNY_PER_USD }
 }
 
-function startAnthropicLangfuseGeneration(params: {
+function startLlmLangfuseGeneration(params: {
+  apiModel: string
+  input: unknown
   model: ModelId
-  provider: AnthropicCompatibleProvider
-  requestPayload: AnthropicRequestPayload
+  modelParameters: Record<string, number>
+  provider: ModelProvider
   trace: ChatCompletionTrace | undefined
 }): LangfuseGeneration | null {
   if (!initializeLangfuseTracing()) {
@@ -321,33 +310,31 @@ function startAnthropicLangfuseGeneration(params: {
   }
 
   try {
-    const provider: ModelProvider = params.provider
-
     return propagateAttributes(
-      getLangfuseTraceAttributes(params.trace, params.model, provider),
+      getLangfuseTraceAttributes(params.trace, params.model, params.provider),
       () =>
         startObservation(
           getLangfuseGenerationName(params.trace),
           {
-            input: params.requestPayload,
+            input: params.input,
             metadata: getLangfuseGenerationMetadata(
               params.trace,
               params.model,
-              provider,
+              params.provider,
             ),
-            model: params.requestPayload.model,
-            modelParameters: getAnthropicModelParameters(params.requestPayload),
+            model: params.apiModel,
+            modelParameters: params.modelParameters,
           },
           { asType: 'generation' },
         ),
     )
   } catch (error) {
-    console.error('[langfuse] failed to start Anthropic generation', error)
+    console.error('[langfuse] failed to start generation', error)
     return null
   }
 }
 
-function finishAnthropicLangfuseGeneration(
+function finishLlmLangfuseGeneration(
   generation: LangfuseGeneration | null,
   attributes: LangfuseGenerationAttributes,
 ) {
@@ -358,13 +345,13 @@ function finishAnthropicLangfuseGeneration(
   try {
     generation.update(attributes)
   } catch (error) {
-    console.error('[langfuse] failed to update Anthropic generation', error)
+    console.error('[langfuse] failed to update generation', error)
   }
 
   try {
     generation.end()
   } catch (error) {
-    console.error('[langfuse] failed to end Anthropic generation', error)
+    console.error('[langfuse] failed to end generation', error)
   }
 }
 
@@ -574,21 +561,42 @@ async function callOpenAICompatibleChatCompletion(
   },
   provider: OpenAICompatibleProvider,
 ) {
-  const client = getObservedOpenAIClient(params.trace, params.model, provider)
+  const client = getOpenAICompatibleClient(provider)
   const requestPayload = buildOpenAICompatibleRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
+  const langfuseGeneration = startLlmLangfuseGeneration({
+    apiModel: requestPayload.model,
+    input: requestPayload,
+    model: params.model,
+    modelParameters: { temperature: requestPayload.temperature },
+    provider,
+    trace: params.trace,
+  })
 
   try {
     const response = await client.chat.completions.create(requestPayload, {
       signal: params.signal,
     })
 
-    const content = response.choices[0]?.message?.content
+    const message = response.choices[0]?.message
+    const content = message?.content
 
     if (!content) {
       throw new Error('Empty completion response')
     }
+
+    const responseJson = safeStringify(response)
+    const tokenUsage = extractTokenUsage(responseJson)
+    // Zhipu / DashScope surface thinking as reasoning_content on the message.
+    const reasoning = (message as { reasoning_content?: string })
+      .reasoning_content
+
+    finishLlmLangfuseGeneration(langfuseGeneration, {
+      costDetails: toLangfuseCostDetails(params.model, tokenUsage),
+      output: reasoning ? { text: content, thinking: reasoning } : content,
+      usageDetails: toLangfuseUsageDetails(tokenUsage),
+    })
 
     await persistLlmCall(params.trace, {
       durationMs: Date.now() - startedAt,
@@ -597,7 +605,7 @@ async function callOpenAICompatibleChatCompletion(
       provider,
       requestJson,
       responseContent: content,
-      responseJson: safeStringify(response),
+      responseJson,
     })
 
     return content
@@ -606,6 +614,12 @@ async function callOpenAICompatibleChatCompletion(
 
     if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
       const message = getPlaygroundInterruptMessage(params.signal)
+
+      finishLlmLangfuseGeneration(langfuseGeneration, {
+        level: 'ERROR',
+        output: { error: message },
+        statusMessage: message,
+      })
 
       await persistLlmCall(params.trace, {
         durationMs,
@@ -639,6 +653,12 @@ async function callOpenAICompatibleChatCompletion(
           : ''
       const message = `${providerLabel} request failed (${status}): ${error.message}${bodyDetail}`
 
+      finishLlmLangfuseGeneration(langfuseGeneration, {
+        level: 'ERROR',
+        output: { error: message },
+        statusMessage: message,
+      })
+
       await persistLlmCall(params.trace, {
         durationMs,
         error: message,
@@ -653,6 +673,12 @@ async function callOpenAICompatibleChatCompletion(
     }
 
     const message = `${provider} request failed (unknown): non-Error thrown`
+
+    finishLlmLangfuseGeneration(langfuseGeneration, {
+      level: 'ERROR',
+      output: { error: message },
+      statusMessage: message,
+    })
 
     await persistLlmCall(params.trace, {
       durationMs,
@@ -684,10 +710,12 @@ async function callAnthropicChatCompletion(
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
-  const langfuseGeneration = startAnthropicLangfuseGeneration({
+  const langfuseGeneration = startLlmLangfuseGeneration({
+    apiModel: requestPayload.model,
+    input: requestPayload,
     model: params.model,
+    modelParameters: getAnthropicModelParameters(requestPayload),
     provider,
-    requestPayload,
     trace: params.trace,
   })
   let responseText: string | null = null
@@ -740,10 +768,12 @@ async function callAnthropicChatCompletion(
       .map((block) => block.thinking ?? '')
       .join('\n')
 
-    finishAnthropicLangfuseGeneration(langfuseGeneration, {
-      costDetails: getAnthropicCostDetails(params.model, parsed),
+    const tokenUsage = extractTokenUsage(responseText)
+
+    finishLlmLangfuseGeneration(langfuseGeneration, {
+      costDetails: toLangfuseCostDetails(params.model, tokenUsage),
       output: thinking ? { text: content, thinking } : content,
-      usageDetails: getAnthropicUsageDetails(parsed),
+      usageDetails: toLangfuseUsageDetails(tokenUsage),
     })
 
     await persistLlmCall(params.trace, {
@@ -763,7 +793,7 @@ async function callAnthropicChatCompletion(
     if (isPlaygroundRunInterruptedError(error) || params.signal?.aborted) {
       const message = getPlaygroundInterruptMessage(params.signal)
 
-      finishAnthropicLangfuseGeneration(langfuseGeneration, {
+      finishLlmLangfuseGeneration(langfuseGeneration, {
         level: 'ERROR',
         output: responseText ?? { error: message },
         statusMessage: message,
@@ -783,7 +813,7 @@ async function callAnthropicChatCompletion(
     }
 
     if (error instanceof Error) {
-      finishAnthropicLangfuseGeneration(langfuseGeneration, {
+      finishLlmLangfuseGeneration(langfuseGeneration, {
         level: 'ERROR',
         output: responseText ?? { error: error.message },
         statusMessage: error.message,
@@ -804,7 +834,7 @@ async function callAnthropicChatCompletion(
 
     const message = `${providerConfig.label} request failed (unknown): non-Error thrown`
 
-    finishAnthropicLangfuseGeneration(langfuseGeneration, {
+    finishLlmLangfuseGeneration(langfuseGeneration, {
       level: 'ERROR',
       output: responseText ?? { error: message },
       statusMessage: message,
