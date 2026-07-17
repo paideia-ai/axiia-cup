@@ -3,6 +3,10 @@ import {
   examinationAnswerSchema,
   hiddenInfoItemSchema,
   infoAssignmentSchema,
+  judgeOsProvenanceSchema,
+  SHANGYANG_JUDGE_OS_SCENARIO_ID,
+  type JudgeOsEntry,
+  type JudgeOsProvenance,
   judgeQASchema,
   matchWinnerSchema,
   requestItemSchema,
@@ -27,6 +31,13 @@ import {
 import type { ScenarioRecord } from '../db/schema'
 import { chatCompletion, type ChatCompletionTrace } from './llm'
 import {
+  buildJudgeOsProvenance,
+  buildJudgeOsUserMessage,
+  createJudgeOsSidecar,
+  type JudgeOsGenerationRequest,
+  validateJudgeOsResponse,
+} from './judge-os'
+import {
   getPlaygroundInterruptMessage,
   isPlaygroundRunInterruptedError,
   PlaygroundRunInterruptedError,
@@ -36,6 +47,9 @@ import { computeProgrammaticScore } from './programmatic-scorer'
 
 const RETRY_COUNT = 3
 const RETRY_DELAY_MS = 2000
+// Judge-model calls have been observed at 33-55s; a straggling final OS call
+// gets this long after scoring before it is tombstoned as failed.
+const JUDGE_OS_FINALIZE_TIMEOUT_MS = 120_000
 
 export const DEFAULT_JUDGE_MODEL =
   'deepseek-v3.2' as const satisfies EvaluationModelId
@@ -44,7 +58,11 @@ export const DEFAULT_SCORER_MODEL =
   'deepseek-v3.2' as const satisfies EvaluationModelId
 
 type MatchExecutionParams = {
+  completeChat?: typeof chatCompletion
   infoAssignment?: InfoAssignment
+  judgeOs?: JudgeOsEntry[]
+  judgeOsFailedTurns?: number[]
+  judgeOsProvenance?: JudgeOsProvenance | null
   judgeTranscriptA?: JudgeQA[]
   judgeTranscriptB?: JudgeQA[]
   matchId?: number
@@ -52,6 +70,11 @@ type MatchExecutionParams = {
   modelB: string
   onDialogueTurn?: (transcript: TranscriptTurn[]) => Promise<void> | void
   onInfoAssignment?: (assignment: InfoAssignment) => Promise<void> | void
+  onJudgeOsState?: (state: {
+    entries: JudgeOsEntry[]
+    failedTurns: number[]
+  }) => Promise<void> | void
+  onJudgeOsProvenance?: (provenance: JudgeOsProvenance) => Promise<void> | void
   onJudgeTranscriptA?: (judgeTranscriptA: JudgeQA[]) => Promise<void> | void
   onJudgeTranscriptB?: (judgeTranscriptB: JudgeQA[]) => Promise<void> | void
   onJudgingStart?: (transcript: TranscriptTurn[]) => Promise<void> | void
@@ -69,6 +92,9 @@ type MatchExecutionParams = {
 export type MatchExecutionResult = {
   infoAssignment: InfoAssignment
   judgeDecision: string
+  judgeOs: JudgeOsEntry[]
+  judgeOsFailedTurns: number[]
+  judgeOsProvenance: JudgeOsProvenance | null
   judgeTranscriptA: JudgeQA[]
   judgeTranscriptB: JudgeQA[]
   reasoning: string
@@ -594,6 +620,47 @@ export function formatDebateTranscriptForJudge(
     .join('\n\n')
 }
 
+async function getJudgeOsEntry(
+  provenance: JudgeOsProvenance,
+  request: JudgeOsGenerationRequest,
+  traceTarget: Pick<
+    ChatCompletionTrace,
+    'matchId' | 'playgroundRunId' | 'userId'
+  >,
+  signal?: AbortSignal,
+  completeChat: typeof chatCompletion = chatCompletion,
+): Promise<JudgeOsEntry> {
+  const judgeModel = parseEvaluationModelId(provenance.model)
+
+  return withRetry(async (attempt) => {
+    const response = await completeChat({
+      jsonMode: true,
+      messages: [
+        {
+          role: 'user',
+          content: buildJudgeOsUserMessage(request),
+        },
+      ],
+      model: judgeModel,
+      signal,
+      systemPrompt: provenance.systemPrompt,
+      temperature: provenance.temperature,
+      trace: {
+        ...traceTarget,
+        attempt,
+        phase: 'judge_os',
+        side: 'judge',
+        turnIndex: request.afterTurn,
+      },
+    })
+
+    return validateJudgeOsResponse(
+      JSON.parse(sanitizeJsonResponse(response)),
+      request.afterTurn,
+    )
+  }, signal)
+}
+
 // ── Phase 2: Examination ────────────────────────────────────────────────────
 
 export function buildExaminationQuestion(
@@ -693,6 +760,7 @@ async function getExaminationAnswer(
     'matchId' | 'playgroundRunId' | 'userId'
   >,
   signal?: AbortSignal,
+  completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<JudgeQA> {
   const validIds = getExaminationValidIds(scenario, roleSide)
   const rawAnswer = await withRetry(async (attempt) => {
@@ -709,7 +777,7 @@ async function getExaminationAnswer(
       content: buildExaminationPrompt(question, validIds),
     })
 
-    const response = await chatCompletion({
+    const response = await completeChat({
       jsonMode: true,
       messages,
       model,
@@ -775,6 +843,7 @@ async function getJudgeDecision(
     'matchId' | 'playgroundRunId' | 'userId'
   >,
   signal?: AbortSignal,
+  completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<string> {
   const debateText = formatDebateTranscriptForJudge(
     scenario,
@@ -801,7 +870,7 @@ async function getJudgeDecision(
   )
 
   const raw = await withRetry(async (attempt) => {
-    return await chatCompletion({
+    return await completeChat({
       messages: [{ role: 'user', content: '请做出你的裁决。' }],
       model: judgeModel,
       signal,
@@ -901,6 +970,7 @@ async function getScoreFromScorer(
     'matchId' | 'playgroundRunId' | 'userId'
   >,
   signal?: AbortSignal,
+  completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<{
   scoreA: number
   scoreB: number
@@ -924,7 +994,7 @@ async function getScoreFromScorer(
   )
 
   const result = await withRetry(async (attempt) => {
-    const response = await chatCompletion({
+    const response = await completeChat({
       jsonMode: true,
       messages: [{ role: 'user', content: '请根据以上信息计算双方得分。' }],
       model: scorerModel,
@@ -974,6 +1044,7 @@ export async function executeMatchSession(
   )
   const modelA = parseSubmissionModelId(params.modelA)
   const modelB = parseSubmissionModelId(params.modelB)
+  const completeChat = params.completeChat ?? chatCompletion
 
   // Randomize or restore assignment
   const assignment = params.infoAssignment
@@ -986,155 +1057,198 @@ export async function executeMatchSession(
   await params.onInfoAssignment?.(assignment)
   throwIfPlaygroundRunInterrupted(params.signal)
 
-  // ── Phase 1: Dialogue ──────────────────────────────────────────────────
   const dialogueTurnLimit = getScenarioDialogueTurnLimit(
     params.scenario,
     assignment,
   )
-  for (
-    let turnIndex = transcript.length;
-    turnIndex < dialogueTurnLimit;
-    turnIndex += 1
-  ) {
-    throwIfPlaygroundRunInterrupted(params.signal)
-
-    const trolleyScope = getTrolleyDialogueScope(
-      params.scenario,
-      assignment,
-      transcript,
-    )
-    const speakerTurnIndex = trolleyScope
-      ? trolleyScope.caseTranscript.length
-      : turnIndex
-    const speaker = speakerTurnIndex % 2 === 0 ? 'a' : 'b'
-    const { systemPrompt, messages } = buildDialogueContext(
-      transcript,
-      params.scenario,
-      speaker,
-      assignment,
-      speaker === 'a' ? params.promptA : params.promptB,
-      trolleyScope,
-    )
-
-    const response = await withRetry(
-      (attempt) =>
-        chatCompletion({
-          messages,
-          model: speaker === 'a' ? modelA : modelB,
-          signal: params.signal,
-          systemPrompt,
-          temperature: 0,
-          trace: {
-            attempt,
-            matchId: params.matchId,
-            phase: 'dialogue',
-            playgroundRunId: params.playgroundRunId,
-            side: speaker,
-            turnIndex,
-            userId: speaker === 'a' ? params.userIdA : params.userIdB,
-          },
-        }),
-      params.signal,
-    )
-
-    transcript.push(
-      transcriptTurnSchema.parse({
-        speaker,
-        role:
-          speaker === 'a'
-            ? params.scenario.roleAName
-            : params.scenario.roleBName,
-        content: response.trim(),
-      }),
-    )
-
-    await params.onDialogueTurn?.(transcript)
-    throwIfPlaygroundRunInterrupted(params.signal)
-  }
-
-  throwIfPlaygroundRunInterrupted(params.signal)
-  await params.onJudgingStart?.(transcript)
-  throwIfPlaygroundRunInterrupted(params.signal)
-
-  // ── Phase 2: Examination (optional) ────────────────────────────────────
-  const hasExamination =
-    params.scenario.examinationQuestionTemplate.trim().length > 0
-
-  if (hasExamination) {
-    if (judgeTranscriptA.length === 0) {
-      const questionA = buildExaminationQuestion(params.scenario, 'a')
-      const answerA = await getExaminationAnswer(
-        params.scenario,
-        transcript,
-        questionA,
-        'a',
-        assignment,
-        params.promptA,
-        modelA,
-        {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
-          userId: params.userIdA,
-        },
-        params.signal,
-      )
-
-      judgeTranscriptA.push(answerA)
-      await params.onJudgeTranscriptA?.(judgeTranscriptA)
-    }
-
-    if (judgeTranscriptB.length === 0) {
-      const questionB = buildExaminationQuestion(params.scenario, 'b')
-      const answerB = await getExaminationAnswer(
-        params.scenario,
-        transcript,
-        questionB,
-        'b',
-        assignment,
-        params.promptB,
-        modelB,
-        {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
-          userId: params.userIdB,
-        },
-        params.signal,
-      )
-
-      judgeTranscriptB.push(answerB)
-      await params.onJudgeTranscriptB?.(judgeTranscriptB)
-    }
-  }
-
-  // ── Phase 3: Judge decision (free-form output) ────────────────────────
-  const judgeDecision = await getJudgeDecision(
-    params.scenario,
-    assignment,
-    transcript,
-    judgeTranscriptA,
-    judgeTranscriptB,
-    {
-      matchId: params.matchId,
-      playgroundRunId: params.playgroundRunId,
-    },
-    params.signal,
+  const configuredJudgeOs =
+    params.scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
+    params.scenario.judgeOsPrompt.trim().length > 0
+  const persistedJudgeOsProvenance = judgeOsProvenanceSchema.safeParse(
+    params.judgeOsProvenance,
   )
+  const judgeOsProvenance =
+    params.scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID
+      ? ((persistedJudgeOsProvenance.success
+          ? persistedJudgeOsProvenance.data
+          : null) ??
+        (configuredJudgeOs
+          ? buildJudgeOsProvenance({
+              dialogueTurnCount: dialogueTurnLimit,
+              model: params.scenario.judgeModel ?? DEFAULT_JUDGE_MODEL,
+              systemPrompt: params.scenario.judgeOsPrompt,
+            })
+          : null))
+      : null
 
-  // ── Phase 4: Scorer ───────────────────────────────────────────────────
-  const programmaticScore = computeProgrammaticScore({
-    assignment,
-    examinationA: judgeTranscriptA,
-    examinationB: judgeTranscriptB,
-    judgeOutput: judgeDecision,
-    scenario: params.scenario,
+  if (judgeOsProvenance && !persistedJudgeOsProvenance.success) {
+    try {
+      void Promise.resolve(
+        params.onJudgeOsProvenance?.(judgeOsProvenance),
+      ).catch(() => undefined)
+    } catch {
+      // Provenance is persisted again with the final result. Judge OS metadata
+      // must not block the debate or final judgment.
+    }
+  }
+
+  const judgeOsAbortController = new AbortController()
+  const judgeOsSignal = params.signal
+    ? AbortSignal.any([params.signal, judgeOsAbortController.signal])
+    : judgeOsAbortController.signal
+
+  const judgeOsSidecar = createJudgeOsSidecar({
+    enabled: judgeOsProvenance !== null,
+    generate: (request) => {
+      if (!judgeOsProvenance) {
+        throw new Error('Judge OS provenance is unavailable')
+      }
+
+      return getJudgeOsEntry(
+        judgeOsProvenance,
+        request,
+        {
+          matchId: params.matchId,
+          playgroundRunId: params.playgroundRunId,
+        },
+        judgeOsSignal,
+        completeChat,
+      )
+    },
+    initialEntries: params.judgeOs,
+    initialFailedTurns: params.judgeOsFailedTurns,
+    maxAfterTurnExclusive: dialogueTurnLimit,
+    onUpdate: params.onJudgeOsState,
   })
 
-  const { scoreA, scoreB, reasoning, winner } =
-    programmaticScore ??
-    (await getScoreFromScorer(
+  // Recover any complete dialogue pairs that were persisted before their OS.
+  // Scheduling is intentionally not awaited, so resumed dialogue can continue.
+  judgeOsSidecar.schedule(transcript)
+
+  try {
+    // ── Phase 1: Dialogue ──────────────────────────────────────────────────
+    for (
+      let turnIndex = transcript.length;
+      turnIndex < dialogueTurnLimit;
+      turnIndex += 1
+    ) {
+      throwIfPlaygroundRunInterrupted(params.signal)
+
+      const trolleyScope = getTrolleyDialogueScope(
+        params.scenario,
+        assignment,
+        transcript,
+      )
+      const speakerTurnIndex = trolleyScope
+        ? trolleyScope.caseTranscript.length
+        : turnIndex
+      const speaker = speakerTurnIndex % 2 === 0 ? 'a' : 'b'
+      const { systemPrompt, messages } = buildDialogueContext(
+        transcript,
+        params.scenario,
+        speaker,
+        assignment,
+        speaker === 'a' ? params.promptA : params.promptB,
+        trolleyScope,
+      )
+
+      const response = await withRetry(
+        (attempt) =>
+          completeChat({
+            messages,
+            model: speaker === 'a' ? modelA : modelB,
+            signal: params.signal,
+            systemPrompt,
+            temperature: 0,
+            trace: {
+              attempt,
+              matchId: params.matchId,
+              phase: 'dialogue',
+              playgroundRunId: params.playgroundRunId,
+              side: speaker,
+              turnIndex,
+              userId: speaker === 'a' ? params.userIdA : params.userIdB,
+            },
+          }),
+        params.signal,
+      )
+
+      transcript.push(
+        transcriptTurnSchema.parse({
+          speaker,
+          role:
+            speaker === 'a'
+              ? params.scenario.roleAName
+              : params.scenario.roleBName,
+          content: response.trim(),
+        }),
+      )
+
+      await params.onDialogueTurn?.(transcript)
+      judgeOsSidecar.schedule(transcript)
+      throwIfPlaygroundRunInterrupted(params.signal)
+    }
+
+    throwIfPlaygroundRunInterrupted(params.signal)
+    await params.onJudgingStart?.(transcript)
+    throwIfPlaygroundRunInterrupted(params.signal)
+
+    // ── Phase 2: Examination (optional) ────────────────────────────────────
+    const hasExamination =
+      params.scenario.examinationQuestionTemplate.trim().length > 0
+
+    if (hasExamination) {
+      if (judgeTranscriptA.length === 0) {
+        const questionA = buildExaminationQuestion(params.scenario, 'a')
+        const answerA = await getExaminationAnswer(
+          params.scenario,
+          transcript,
+          questionA,
+          'a',
+          assignment,
+          params.promptA,
+          modelA,
+          {
+            matchId: params.matchId,
+            playgroundRunId: params.playgroundRunId,
+            userId: params.userIdA,
+          },
+          params.signal,
+          completeChat,
+        )
+
+        judgeTranscriptA.push(answerA)
+        await params.onJudgeTranscriptA?.(judgeTranscriptA)
+      }
+
+      if (judgeTranscriptB.length === 0) {
+        const questionB = buildExaminationQuestion(params.scenario, 'b')
+        const answerB = await getExaminationAnswer(
+          params.scenario,
+          transcript,
+          questionB,
+          'b',
+          assignment,
+          params.promptB,
+          modelB,
+          {
+            matchId: params.matchId,
+            playgroundRunId: params.playgroundRunId,
+            userId: params.userIdB,
+          },
+          params.signal,
+          completeChat,
+        )
+
+        judgeTranscriptB.push(answerB)
+        await params.onJudgeTranscriptB?.(judgeTranscriptB)
+      }
+    }
+
+    // ── Phase 3: Judge decision (free-form output) ────────────────────────
+    const judgeDecision = await getJudgeDecision(
       params.scenario,
       assignment,
-      judgeDecision,
       transcript,
       judgeTranscriptA,
       judgeTranscriptB,
@@ -1143,17 +1257,61 @@ export async function executeMatchSession(
         playgroundRunId: params.playgroundRunId,
       },
       params.signal,
-    ))
+      completeChat,
+    )
 
-  return {
-    infoAssignment: assignment,
-    judgeDecision,
-    judgeTranscriptA,
-    judgeTranscriptB,
-    reasoning,
-    scoreA,
-    scoreB,
-    transcript,
-    winner,
+    // ── Phase 4: Scorer ───────────────────────────────────────────────────
+    const programmaticScore = computeProgrammaticScore({
+      assignment,
+      examinationA: judgeTranscriptA,
+      examinationB: judgeTranscriptB,
+      judgeOutput: judgeDecision,
+      scenario: params.scenario,
+    })
+
+    const { scoreA, scoreB, reasoning, winner } =
+      programmaticScore ??
+      (await getScoreFromScorer(
+        params.scenario,
+        assignment,
+        judgeDecision,
+        transcript,
+        judgeTranscriptA,
+        judgeTranscriptB,
+        {
+          matchId: params.matchId,
+          playgroundRunId: params.playgroundRunId,
+        },
+        params.signal,
+        completeChat,
+      ))
+
+    // Final judging never waits for display-only Judge OS. Join the sidecar only
+    // after scoring, and convert any stragglers into ordered unavailable slots.
+    const judgeOsState = await judgeOsSidecar.wait({
+      onTimeout: () =>
+        judgeOsAbortController.abort('Judge OS finalization timeout'),
+      timeoutMs: JUDGE_OS_FINALIZE_TIMEOUT_MS,
+    })
+
+    return {
+      infoAssignment: assignment,
+      judgeDecision,
+      judgeOs: judgeOsState.entries,
+      judgeOsFailedTurns: judgeOsState.failedTurns,
+      judgeOsProvenance,
+      judgeTranscriptA,
+      judgeTranscriptB,
+      reasoning,
+      scoreA,
+      scoreB,
+      transcript,
+      winner,
+    }
+  } catch (error) {
+    // The session failed or was interrupted: cancel any in-flight Judge OS
+    // generations so they stop consuming LLM quota in the background.
+    judgeOsAbortController.abort('Match session ended before Judge OS settled')
+    throw error
   }
 }

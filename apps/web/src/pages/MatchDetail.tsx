@@ -1,6 +1,8 @@
 import {
+  getJudgeOsExpectedCount,
   getTrolleyCasesByIds,
   modelOptions,
+  SHANGYANG_JUDGE_OS_SCENARIO_ID,
   TROLLEY_SCENARIO_ID,
   type MatchDetail,
   type MatchProgress,
@@ -13,6 +15,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { JudgeDecisionPanel } from '../components/judge-decision-panel'
+import { JudgeOsTimeline } from '../components/judge-os-timeline'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import {
@@ -119,6 +122,8 @@ function createMatchProgressSnapshot(match: MatchDetail): MatchProgress {
     hasInfoAssignment: match.infoAssignment != null,
     hasJudgeDecision: match.judgeDecision != null,
     id: match.id,
+    judgeOsFailedCount: match.judgeOsFailedTurns.length,
+    judgeOsLength: match.judgeOs.length,
     judgeTranscriptALength: match.judgeTranscriptA.length,
     judgeTranscriptBLength: match.judgeTranscriptB.length,
     scoreA: match.scoreA,
@@ -143,6 +148,8 @@ function hasMatchProgressChanged(
   return (
     previous.status !== next.status ||
     previous.currentTurn !== next.currentTurn ||
+    previous.judgeOsFailedCount !== next.judgeOsFailedCount ||
+    previous.judgeOsLength !== next.judgeOsLength ||
     previous.judgeTranscriptALength !== next.judgeTranscriptALength ||
     previous.judgeTranscriptBLength !== next.judgeTranscriptBLength ||
     previous.hasInfoAssignment !== next.hasInfoAssignment ||
@@ -337,6 +344,17 @@ export function MatchDetailPage() {
     ? buildTrolleyTranscriptSections(match, displayScenario)
     : null
   const scoringReasoning = formatScoringReasoning(match.reasoning)
+  const showJudgeOs =
+    displayScenario?.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
+    (match.judgeOsProvenance !== null ||
+      match.judgeOs.length > 0 ||
+      match.judgeOsFailedTurns.length > 0)
+  const judgeOsExpectedCount = getJudgeOsExpectedCount(
+    match.transcript.length,
+    match.judgeOsProvenance?.dialogueTurnCount ??
+      displayScenario?.turnCount ??
+      match.transcript.length,
+  )
 
   return (
     <div className="space-y-6">
@@ -728,62 +746,75 @@ export function MatchDetailPage() {
         </div>
       ) : null}
 
-      {/* Transcript — collapsed by default, reference material */}
-      <Card>
-        <CardHeader>
-          <button
-            type="button"
-            className="flex w-full items-center justify-between"
-            onClick={() => setShowTranscript((v) => !v)}
-          >
-            <CardTitle>
-              完整 Transcript · {match.transcript.length} 回合
-            </CardTitle>
-            <ChevronDown
-              className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showTranscript ? 'rotate-180' : ''}`}
-            />
-          </button>
-        </CardHeader>
-        {showTranscript ? (
-          <CardContent className="space-y-4">
-            {trolleyTranscriptSections ? (
-              <div className="space-y-5">
-                {trolleyTranscriptSections.map((section) => (
-                  <section
-                    key={section.caseInfo.id}
-                    className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
-                  >
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-semibold text-(--foreground)">
-                          案件 {section.caseInfo.id} · {section.caseInfo.title}
-                        </p>
-                        <p className="mt-1 text-[11px] text-(--foreground-muted)">
-                          {section.transcript.length}/{section.turnCount} 轮
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <TranscriptTurnList
-                        playerALabel={playerALabel}
-                        playerBLabel={playerBLabel}
-                        startIndex={section.startIndex}
-                        transcript={section.transcript}
-                      />
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <TranscriptTurnList
-                playerALabel={playerALabel}
-                playerBLabel={playerBLabel}
-                transcript={match.transcript}
-              />
-            )}
-          </CardContent>
+      {/* Live Judge OS above the transcript */}
+      <div className="space-y-6">
+        {showJudgeOs ? (
+          <JudgeOsTimeline
+            key={match.id}
+            entries={match.judgeOs}
+            expectedCount={judgeOsExpectedCount}
+            failedTurns={match.judgeOsFailedTurns}
+            isComplete={match.status === 'scored' || match.status === 'error'}
+          />
         ) : null}
-      </Card>
+
+        <Card className="min-w-0">
+          <CardHeader>
+            <button
+              type="button"
+              className="flex w-full items-center justify-between"
+              onClick={() => setShowTranscript((v) => !v)}
+            >
+              <CardTitle>
+                完整 Transcript · {match.transcript.length} 回合
+              </CardTitle>
+              <ChevronDown
+                className={`h-4 w-4 text-(--foreground-muted) transition-transform ${showTranscript ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </CardHeader>
+          {showTranscript ? (
+            <CardContent className="space-y-4">
+              {trolleyTranscriptSections ? (
+                <div className="space-y-5">
+                  {trolleyTranscriptSections.map((section) => (
+                    <section
+                      key={section.caseInfo.id}
+                      className="rounded-xl border border-(--border-soft) bg-white/2 p-4"
+                    >
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-(--foreground)">
+                            案件 {section.caseInfo.id} ·{' '}
+                            {section.caseInfo.title}
+                          </p>
+                          <p className="mt-1 text-[11px] text-(--foreground-muted)">
+                            {section.transcript.length}/{section.turnCount} 轮
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <TranscriptTurnList
+                          playerALabel={playerALabel}
+                          playerBLabel={playerBLabel}
+                          startIndex={section.startIndex}
+                          transcript={section.transcript}
+                        />
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <TranscriptTurnList
+                  playerALabel={playerALabel}
+                  playerBLabel={playerBLabel}
+                  transcript={match.transcript}
+                />
+              )}
+            </CardContent>
+          ) : null}
+        </Card>
+      </div>
     </div>
   )
 }

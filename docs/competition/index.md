@@ -5,6 +5,7 @@ Competition design: product requirements, problem scenarios, judging criteria, a
 ## Files
 
 - **[DESIGN_SPEC.md](DESIGN_SPEC.md) — 唯一标准文档：完整设计规范（中文），所有已确认决策和待定事项**
+- [judge-os-feature-spec.md](judge-os-feature-spec.md) — Judge OS 产品语义、已实现行为、Context 方案与最终裁决一致性实验计划
 - [PRD_v1.md](PRD_v1.md) — (历史) Product requirements document v1
 - [judge-design-discussion.md](judge-design-discussion.md) — (历史) 裁判系统设计讨论
 - [tournament-format.md](tournament-format.md) — (历史) 赛制设计讨论

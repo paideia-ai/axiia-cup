@@ -47,6 +47,8 @@ export const programmaticScorerScenarioIds = [
   'trolley-problem',
 ] as const
 
+export const SHANGYANG_JUDGE_OS_SCENARIO_ID = 'shangyang-court'
+
 export function scenarioUsesProgrammaticScorer(scenarioId: string) {
   return (programmaticScorerScenarioIds as readonly string[]).includes(
     scenarioId,

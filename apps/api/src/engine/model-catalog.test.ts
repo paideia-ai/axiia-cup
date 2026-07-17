@@ -53,6 +53,7 @@ describe('model catalog', () => {
         falseInfoCount: 0,
         judgeModel: 'deepseek-v4-pro',
         judgePrompt: 'judge',
+        judgeOsPrompt: '',
         openingLine: 'opening',
         roleAHiddenInfo: [],
         roleAName: 'A',

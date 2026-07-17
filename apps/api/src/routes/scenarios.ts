@@ -54,6 +54,7 @@ scenariosRouter.get(
         falseInfoCount: scenarios.falseInfoCount,
         id: scenarios.id,
         judgeModel: scenarios.judgeModel,
+        judgeOsPrompt: scenarios.judgeOsPrompt,
         judgePrompt: scenarios.judgePrompt,
         locked: lockedExpression,
         openingLine: scenarios.openingLine,

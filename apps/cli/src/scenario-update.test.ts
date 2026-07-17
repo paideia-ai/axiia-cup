@@ -12,6 +12,7 @@ function buildUpdateScenario(): UpdateScenario {
     agentPromptTemplate: 'agent prompt',
     examinationQuestionTemplate: '',
     judgePrompt: 'judge prompt',
+    judgeOsPrompt: '',
     scorerPrompt: 'scorer prompt',
     roleAName: 'Role A',
     roleAHiddenInfo: [{ id: 'S1', content: 'Role A hidden info' }],

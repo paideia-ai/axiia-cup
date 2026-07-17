@@ -5,6 +5,7 @@ import { hashPassword } from '../lib/auth'
 import { db, sqliteFilePath } from './client'
 import { ensureHonnojiScenario } from './honnoji-scenario'
 import { scenarios, users } from './schema'
+import { shangyangJudgeOsPrompt } from './shangyang-judge-os-prompt'
 import { ensureTrolleyScenario } from './trolley-scenario'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
@@ -236,6 +237,7 @@ async function main() {
       agentPromptTemplate,
       examinationQuestionTemplate,
       judgePrompt,
+      judgeOsPrompt: shangyangJudgeOsPrompt,
       scorerPrompt,
     })
     .onConflictDoNothing()

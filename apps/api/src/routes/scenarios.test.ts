@@ -75,6 +75,7 @@ beforeAll(async () => {
       judgeModel: 'deepseek-v3.2',
       scorerModel: 'deepseek-v3.2',
       judgePrompt: '原始裁判提示词',
+      judgeOsPrompt: '',
       scorerPrompt: '原始计分提示词',
       agentPromptTemplate: '模板',
       examinationQuestionTemplate: '问题模板',
@@ -115,6 +116,7 @@ const validUpdate = {
   judgeModel: 'kimi-k2.5',
   scorerModel: 'gpt-4.1',
   judgePrompt: '更新后的裁判提示词',
+  judgeOsPrompt: '更新后的内心 OS 提示词',
   scorerPrompt: '更新后的计分提示词',
   openingLine: '请开始辩论。',
   agentPromptTemplate: '更新后模板',
@@ -238,6 +240,7 @@ describe('PUT /api/admin/scenarios/:id', () => {
     expect(res.status).toBe(200)
     const json = (await res.json()) as Record<string, unknown>
     expect(json.judgePrompt).toBe('更新后的裁判提示词')
+    expect(json.judgeOsPrompt).toBe('更新后的内心 OS 提示词')
     expect(json.turnCount).toBe(15)
     expect(json.judgeModel).toBe('kimi-k2.5')
     expect(json.scorerModel).toBe('gpt-4.1')
@@ -267,6 +270,16 @@ describe('PUT /api/admin/scenarios/:id', () => {
     db.delete(tournamentsTable)
       .where(eq(tournamentsTable.scenarioId, 'test-scenario'))
       .run()
+  })
+})
+
+describe('GET /api/scenarios/:id', () => {
+  it('never exposes the Judge OS prompt to players', async () => {
+    const res = await req('GET', '/api/scenarios/test-scenario')
+    expect(res.status).toBe(200)
+    const json = (await res.json()) as Record<string, unknown>
+    expect(json.id).toBe('test-scenario')
+    expect('judgeOsPrompt' in json).toBe(false)
   })
 })
 

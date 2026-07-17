@@ -31,6 +31,7 @@ const baseScenario: ScenarioRecord = {
   agentPromptTemplate: 'agent',
   examinationQuestionTemplate: 'question',
   judgePrompt: 'judge',
+  judgeOsPrompt: '',
   scorerPrompt: 'scorer',
   falseInfoCount: 0,
   trueRequestCount: 1,
