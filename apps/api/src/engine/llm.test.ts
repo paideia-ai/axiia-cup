@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 
-import { buildAnthropicRequest } from './llm'
+import { buildAnthropicRequest, toLangfuseUsageDetails } from './llm'
 
 describe('buildAnthropicRequest', () => {
   const baseParams = {
@@ -67,5 +67,48 @@ describe('buildAnthropicRequest', () => {
     })
 
     expect(request.temperature).toBe(0.7)
+  })
+})
+
+describe('toLangfuseUsageDetails', () => {
+  it('uses the input/output/total keys Langfuse buckets by', () => {
+    expect(
+      toLangfuseUsageDetails({
+        cachedTokens: null,
+        completionTokens: 97,
+        promptTokens: 167,
+        reasoningTokens: null,
+      }),
+    ).toEqual({ input: 167, output: 97, total: 264 })
+  })
+
+  it('carves cached and reasoning tokens out of the base buckets', () => {
+    // Buckets must be mutually exclusive or Langfuse double-counts the
+    // total (the original promptTokens/completionTokens bug, reborn).
+    expect(
+      toLangfuseUsageDetails({
+        cachedTokens: 100,
+        completionTokens: 300,
+        promptTokens: 1000,
+        reasoningTokens: 120,
+      }),
+    ).toEqual({
+      input: 900,
+      input_cached_tokens: 100,
+      output: 180,
+      output_reasoning_tokens: 120,
+      total: 1300,
+    })
+  })
+
+  it('returns undefined when the provider reported no usage', () => {
+    expect(
+      toLangfuseUsageDetails({
+        cachedTokens: null,
+        completionTokens: null,
+        promptTokens: null,
+        reasoningTokens: null,
+      }),
+    ).toBeUndefined()
   })
 })

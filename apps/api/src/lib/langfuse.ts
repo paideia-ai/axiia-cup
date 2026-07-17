@@ -1,6 +1,3 @@
-import type OpenAI from 'openai'
-
-import { observeOpenAI, type LangfuseConfig } from '@langfuse/openai'
 import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 
@@ -86,15 +83,4 @@ export async function shutdownLangfuseTracing() {
   state.sdk = null
   state.enabled = false
   state.initialized = false
-}
-
-export function observeOpenAIClient(
-  client: OpenAI,
-  config?: LangfuseConfig,
-): OpenAI {
-  if (!initializeLangfuseTracing()) {
-    return client
-  }
-
-  return observeOpenAI(client, config)
 }
