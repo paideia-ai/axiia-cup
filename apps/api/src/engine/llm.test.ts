@@ -8,14 +8,14 @@ describe('buildAnthropicRequest', () => {
     systemPrompt: '你是秦孝公。',
   }
 
-  it('maps DeepSeek official models with reasoning effort', () => {
+  it('routes DeepSeek models to the official API with effort high', () => {
     const request = buildAnthropicRequest({
       ...baseParams,
-      model: 'deepseek-v4-pro-max',
+      model: 'deepseek-v4-pro',
     })
 
     expect(request.model).toBe('deepseek-v4-pro')
-    expect(request.output_config).toEqual({ effort: 'max' })
+    expect(request.output_config).toEqual({ effort: 'high' })
     expect(request.system).toBe('你是秦孝公。')
     expect(request.temperature).toBe(0)
     // Thinking models need headroom beyond the default 4096: reasoning
@@ -23,14 +23,15 @@ describe('buildAnthropicRequest', () => {
     expect(request.max_tokens).toBe(16_384)
   })
 
-  it('uses effort high for the high variants', () => {
+  it('routes DeepSeek V4 Flash the same way', () => {
     const request = buildAnthropicRequest({
       ...baseParams,
-      model: 'deepseek-v4-flash-high',
+      model: 'deepseek-v4-flash',
     })
 
     expect(request.model).toBe('deepseek-v4-flash')
     expect(request.output_config).toEqual({ effort: 'high' })
+    expect(request.max_tokens).toBe(16_384)
   })
 
   it('omits output_config for models without an effort setting', () => {
@@ -48,7 +49,7 @@ describe('buildAnthropicRequest', () => {
   it('passes an explicit temperature through', () => {
     const request = buildAnthropicRequest({
       ...baseParams,
-      model: 'deepseek-v4-pro-high',
+      model: 'deepseek-v4-flash',
       temperature: 0.7,
     })
 
