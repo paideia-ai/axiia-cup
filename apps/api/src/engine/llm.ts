@@ -21,10 +21,6 @@ import {
   PlaygroundRunInterruptedError,
 } from './playground-interrupt'
 
-const SILICONFLOW_BASE_URL =
-  process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
-const OPENAI_BASE_URL =
-  process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'
 // `||` (not `??`): docker-compose passes unset variables through as empty
 // strings, which must still fall back to the defaults.
 const ANTHROPIC_BASE_URL =
@@ -42,7 +38,7 @@ const LLM_REQUEST_TIMEOUT_MS = Number(
 )
 
 let _dbModulePromise: Promise<typeof import('../db/client')> | null = null
-let _openAiClients: Partial<Record<'openai' | 'siliconflow', OpenAI>> = {}
+let _openAiClients: Partial<Record<OpenAICompatibleProvider, OpenAI>> = {}
 
 initializeLangfuseTracing()
 
@@ -51,7 +47,56 @@ type ChatMessage = {
   content: string
 }
 
-type OpenAICompatibleProvider = 'openai' | 'siliconflow'
+type OpenAICompatibleProvider =
+  | 'dashscope'
+  | 'minimax'
+  | 'moonshot'
+  | 'openai'
+  | 'siliconflow'
+  | 'zhipu'
+
+// Each lab's own OpenAI-compatible endpoint. Base URLs are overridable via
+// env; verify each default against the vendor docs at cutover time before
+// flipping a catalog entry to that provider.
+const openAiCompatibleConfigs: Record<
+  OpenAICompatibleProvider,
+  { apiKeyEnv: string; baseUrl: string; label: string }
+> = {
+  dashscope: {
+    apiKeyEnv: 'DASHSCOPE_API_KEY',
+    baseUrl:
+      process.env.DASHSCOPE_BASE_URL ||
+      'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    label: 'DashScope',
+  },
+  minimax: {
+    apiKeyEnv: 'MINIMAX_API_KEY',
+    baseUrl: process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/v1',
+    label: 'MiniMax',
+  },
+  moonshot: {
+    apiKeyEnv: 'MOONSHOT_API_KEY',
+    baseUrl: process.env.MOONSHOT_BASE_URL || 'https://api.moonshot.cn/v1',
+    label: 'Moonshot',
+  },
+  openai: {
+    apiKeyEnv: 'OPENAI_API_KEY',
+    baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    label: 'OpenAI',
+  },
+  siliconflow: {
+    apiKeyEnv: 'SILICONFLOW_API_KEY',
+    baseUrl:
+      process.env.SILICONFLOW_BASE_URL || 'https://api.siliconflow.cn/v1',
+    label: 'SiliconFlow',
+  },
+  zhipu: {
+    apiKeyEnv: 'ZHIPU_API_KEY',
+    baseUrl:
+      process.env.ZHIPU_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4',
+    label: 'Zhipu',
+  },
+}
 
 type AnthropicCompatibleProvider = 'anthropic' | 'deepseek'
 
@@ -107,16 +152,6 @@ function getRequiredEnv(name: string) {
   return value
 }
 
-function getOpenAICompatibleBaseUrl(provider: OpenAICompatibleProvider) {
-  return provider === 'openai' ? OPENAI_BASE_URL : SILICONFLOW_BASE_URL
-}
-
-function getOpenAICompatibleApiKey(provider: OpenAICompatibleProvider) {
-  return provider === 'openai'
-    ? getRequiredEnv('OPENAI_API_KEY')
-    : getRequiredEnv('SILICONFLOW_API_KEY')
-}
-
 function getOpenAICompatibleClient(provider: OpenAICompatibleProvider) {
   const existing = _openAiClients[provider]
 
@@ -124,9 +159,10 @@ function getOpenAICompatibleClient(provider: OpenAICompatibleProvider) {
     return existing
   }
 
+  const providerConfig = openAiCompatibleConfigs[provider]
   const client = new OpenAI({
-    apiKey: getOpenAICompatibleApiKey(provider),
-    baseURL: getOpenAICompatibleBaseUrl(provider),
+    apiKey: getRequiredEnv(providerConfig.apiKeyEnv),
+    baseURL: providerConfig.baseUrl,
   })
 
   _openAiClients[provider] = client
@@ -510,8 +546,19 @@ async function callOpenAICompatibleChatCompletion(
         'status' in error
           ? String((error as { status?: number }).status ?? 'unknown')
           : 'unknown'
-      const providerLabel = provider === 'openai' ? 'OpenAI' : 'SiliconFlow'
-      const message = `${providerLabel} request failed (${status}): ${error.message}`
+      const providerLabel = openAiCompatibleConfigs[provider].label
+      // The OpenAI SDK's message can be as vague as "403 status code (no
+      // body)" even when the provider returned a useful JSON body (observed
+      // with SiliconFlow's balance-insufficient 30001). Append the parsed
+      // error payload when the SDK captured one.
+      const serializedBody = safeStringify((error as { error?: unknown }).error)
+      const bodyDetail =
+        serializedBody &&
+        serializedBody !== 'null' &&
+        !error.message.includes(serializedBody)
+          ? ` ${serializedBody}`
+          : ''
+      const message = `${providerLabel} request failed (${status}): ${error.message}${bodyDetail}`
 
       await persistLlmCall(params.trace, {
         durationMs,
@@ -709,10 +756,13 @@ export async function chatCompletion(params: {
   const provider = getModelDefinition(params.model).provider
 
   switch (provider) {
+    case 'dashscope':
+    case 'minimax':
+    case 'moonshot':
     case 'openai':
-      return callOpenAICompatibleChatCompletion(params, 'openai')
     case 'siliconflow':
-      return callOpenAICompatibleChatCompletion(params, 'siliconflow')
+    case 'zhipu':
+      return callOpenAICompatibleChatCompletion(params, provider)
     case 'anthropic':
       return callAnthropicChatCompletion(params, 'anthropic')
     case 'deepseek':

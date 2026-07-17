@@ -62,7 +62,18 @@ export type ModelId = EvaluationModelId
 export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ProgrammaticScorerScenarioId =
   (typeof programmaticScorerScenarioIds)[number]
-export type ModelProvider = 'anthropic' | 'deepseek' | 'openai' | 'siliconflow'
+// 'moonshot' | 'zhipu' | 'minimax' | 'dashscope' are the labs' own
+// OpenAI-compatible endpoints, replacing the shared SiliconFlow account so
+// each vendor fails (and bills) independently.
+export type ModelProvider =
+  | 'anthropic'
+  | 'dashscope'
+  | 'deepseek'
+  | 'minimax'
+  | 'moonshot'
+  | 'openai'
+  | 'siliconflow'
+  | 'zhipu'
 
 type ModelSurface = 'evaluation' | 'submission'
 type CatalogModelId = ModelId | RetiredModelId
