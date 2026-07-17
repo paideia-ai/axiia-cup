@@ -321,6 +321,13 @@ export const llmCalls = sqliteTable(
     durationMs: integer('duration_ms').notNull(),
     promptTokens: integer('prompt_tokens'),
     completionTokens: integer('completion_tokens'),
+    // Cache-hit prompt tokens and reasoning output tokens, when the provider
+    // reports the split; both are subsets of the totals above.
+    cachedTokens: integer('cached_tokens'),
+    reasoningTokens: integer('reasoning_tokens'),
+    // List-price cost in CNY at call time (time-of-day aware for providers
+    // with off-peak pricing). Null when the model has no pricing entry.
+    costCny: real('cost_cny'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({

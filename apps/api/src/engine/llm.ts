@@ -1,4 +1,6 @@
 import {
+  CNY_PER_USD,
+  computeCallCostCny,
   getModelDefinition,
   type ModelId,
   type ModelProvider,
@@ -121,7 +123,11 @@ const anthropicCompatibleConfigs: Record<
 type AnthropicResponse = {
   content?: Array<{ text?: string; thinking?: string; type: string }>
   stop_reason?: string
-  usage?: { input_tokens?: number; output_tokens?: number }
+  usage?: {
+    cache_read_input_tokens?: number
+    input_tokens?: number
+    output_tokens?: number
+  }
 }
 
 type AnthropicRequestPayload = ReturnType<typeof buildAnthropicRequest>
@@ -131,6 +137,7 @@ export type ChatCompletionTrace = {
   matchId?: number
   phase: LlmCallPhase
   playgroundRunId?: number
+  scenarioId?: string
   side: LlmCallSide
   turnIndex?: number | null
   userId?: number | null
@@ -193,6 +200,7 @@ function getLangfuseTags(
     `model:${model}`,
     trace?.phase ? `phase:${trace.phase}` : null,
     trace?.side ? `side:${trace.side}` : null,
+    trace?.scenarioId ? `scenario:${trace.scenarioId}` : null,
   ].filter((value): value is string => value !== null)
 }
 
@@ -208,8 +216,10 @@ function getLangfuseGenerationMetadata(
     phase: trace?.phase,
     playgroundRunId: trace?.playgroundRunId,
     provider,
+    scenarioId: trace?.scenarioId ?? null,
     side: trace?.side,
     turnIndex: trace?.turnIndex ?? null,
+    userId: trace?.userId ?? null,
   }
 }
 
@@ -224,6 +234,7 @@ function getLangfuseTraceAttributes(
     sessionId,
     tags: getLangfuseTags(trace, model, provider),
     traceName: sessionId ?? 'axiia:llm',
+    userId: trace?.userId != null ? String(trace.userId) : undefined,
   }
 }
 
@@ -240,6 +251,7 @@ function getObservedOpenAIClient(
     sessionId,
     tags: getLangfuseTags(trace, model, provider),
     traceName: sessionId ?? 'axiia:llm',
+    userId: trace?.userId != null ? String(trace.userId) : undefined,
   })
 }
 
@@ -255,20 +267,47 @@ function getAnthropicModelParameters(
 function getAnthropicUsageDetails(
   response: AnthropicResponse,
 ): Record<string, number> | undefined {
-  const promptTokens = response.usage?.input_tokens
-  const completionTokens = response.usage?.output_tokens
+  // Langfuse buckets usage under the flat keys `input`/`output`/`total`
+  // (plus special keys like cache_read_input_tokens that its UI groups
+  // automatically). Anything else lands in an "Other" bucket and gets
+  // double-counted into the total.
+  const input = response.usage?.input_tokens
+  const output = response.usage?.output_tokens
+  const cacheRead = response.usage?.cache_read_input_tokens
 
-  if (promptTokens == null && completionTokens == null) {
+  if (input == null && output == null) {
     return undefined
   }
 
   return {
-    ...(promptTokens != null ? { promptTokens } : {}),
-    ...(completionTokens != null ? { completionTokens } : {}),
-    ...(promptTokens != null && completionTokens != null
-      ? { totalTokens: promptTokens + completionTokens }
+    ...(input != null ? { input } : {}),
+    ...(output != null ? { output } : {}),
+    ...(cacheRead != null && cacheRead > 0
+      ? { cache_read_input_tokens: cacheRead }
       : {}),
+    ...(input != null && output != null ? { total: input + output } : {}),
   }
+}
+
+function getAnthropicCostDetails(
+  model: ModelId,
+  response: AnthropicResponse,
+): Record<string, number> | undefined {
+  const costCny = computeCallCostCny({
+    at: new Date(),
+    cachedTokens: response.usage?.cache_read_input_tokens ?? null,
+    inputTokens: response.usage?.input_tokens ?? null,
+    modelId: model,
+    outputTokens: response.usage?.output_tokens ?? null,
+  })
+
+  if (costCny == null) {
+    return undefined
+  }
+
+  // Langfuse displays costs as USD; the CNY source of truth lives in
+  // llm_calls.cost_cny.
+  return { total: costCny / CNY_PER_USD }
 }
 
 function startAnthropicLangfuseGeneration(params: {
@@ -337,31 +376,57 @@ function safeStringify(value: unknown) {
   }
 }
 
-function extractTokenUsage(responseJson: string | null): {
-  promptTokens: number | null
+type ExtractedTokenUsage = {
+  cachedTokens: number | null
   completionTokens: number | null
-} {
+  promptTokens: number | null
+  reasoningTokens: number | null
+}
+
+const emptyTokenUsage: ExtractedTokenUsage = {
+  cachedTokens: null,
+  completionTokens: null,
+  promptTokens: null,
+  reasoningTokens: null,
+}
+
+function extractTokenUsage(responseJson: string | null): ExtractedTokenUsage {
   if (!responseJson) {
-    return { promptTokens: null, completionTokens: null }
+    return emptyTokenUsage
   }
 
   try {
     const parsed = JSON.parse(responseJson) as {
       usage?: {
+        // Anthropic-dialect cache accounting (DeepSeek, MiniMax)
+        cache_read_input_tokens?: number
         completion_tokens?: number
+        // OpenAI-dialect reasoning/cache splits (DashScope, Moonshot, Zhipu)
+        completion_tokens_details?: { reasoning_tokens?: number }
         input_tokens?: number
         output_tokens?: number
+        // DeepSeek OpenAI-dialect cache accounting
+        prompt_cache_hit_tokens?: number
         prompt_tokens?: number
+        prompt_tokens_details?: { cached_tokens?: number }
       }
     }
+    const usage = parsed.usage
+
     return {
-      promptTokens:
-        parsed.usage?.prompt_tokens ?? parsed.usage?.input_tokens ?? null,
+      cachedTokens:
+        usage?.prompt_tokens_details?.cached_tokens ??
+        usage?.prompt_cache_hit_tokens ??
+        usage?.cache_read_input_tokens ??
+        null,
       completionTokens:
-        parsed.usage?.completion_tokens ?? parsed.usage?.output_tokens ?? null,
+        usage?.completion_tokens ?? usage?.output_tokens ?? null,
+      promptTokens: usage?.prompt_tokens ?? usage?.input_tokens ?? null,
+      reasoningTokens:
+        usage?.completion_tokens_details?.reasoning_tokens ?? null,
     }
   } catch {
-    return { promptTokens: null, completionTokens: null }
+    return emptyTokenUsage
   }
 }
 
@@ -383,14 +448,22 @@ async function persistLlmCall(
 
   try {
     const { db } = await getDbModule()
-    const { promptTokens, completionTokens } = extractTokenUsage(
-      record.responseJson,
-    )
+    const { promptTokens, completionTokens, cachedTokens, reasoningTokens } =
+      extractTokenUsage(record.responseJson)
+    const costCny = computeCallCostCny({
+      at: new Date(),
+      cachedTokens,
+      inputTokens: promptTokens,
+      modelId: record.model,
+      outputTokens: completionTokens,
+    })
 
     db.insert(llmCalls)
       .values({
         attempt: trace.attempt ?? 1,
+        cachedTokens,
         completionTokens,
+        costCny,
         durationMs: record.durationMs,
         error: record.error,
         matchId: trace.matchId,
@@ -399,6 +472,7 @@ async function persistLlmCall(
         playgroundRunId: trace.playgroundRunId,
         promptTokens,
         provider: record.provider,
+        reasoningTokens,
         requestJson: record.requestJson,
         responseContent: record.responseContent,
         responseJson: record.responseJson,
@@ -667,6 +741,7 @@ async function callAnthropicChatCompletion(
       .join('\n')
 
     finishAnthropicLangfuseGeneration(langfuseGeneration, {
+      costDetails: getAnthropicCostDetails(params.model, parsed),
       output: thinking ? { text: content, thinking } : content,
       usageDetails: getAnthropicUsageDetails(parsed),
     })
