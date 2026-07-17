@@ -91,13 +91,13 @@ Scripted flow from your local machine:
 ./deploy/deploy-master.sh
 ./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
 ./deploy/deploy-master.sh --host ubuntu@cup-server --local-env ./deploy/production.env
-./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/master
+./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/main
 ./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
 ./deploy/dump-production-db.sh
 ```
 
 In this repository, `./deploy/deploy-master.sh` with no arguments deploys
-`origin/master` to the default production host and then runs the public smoke
+`origin/main` to the default production host and then runs the public smoke
 check. Use `--ref HEAD` if you intentionally want to deploy your current local
 commit instead.
 

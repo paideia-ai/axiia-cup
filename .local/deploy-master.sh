@@ -7,10 +7,10 @@ usage() {
 Usage: bash .local/deploy-master.sh [options]
 
 Deploy a committed Git ref to the production server using rsync + Docker Compose.
-By default, this deploys origin/master and preserves existing SQLite data.
+By default, this deploys origin/main and preserves existing SQLite data.
 
 Options:
-  --ref <git-ref>              Git ref to deploy. Default: origin/master
+  --ref <git-ref>              Git ref to deploy. Default: origin/main
   --host <ssh-target>          SSH target. Default: anna@120.55.38.143
   --app-dir <remote-path>      Remote app dir. Default: /srv/axiia-cup/current
   --env-file <remote-path>     Remote production env file.
@@ -37,7 +37,7 @@ require_cmd() {
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 
-REF="${DEPLOY_REF:-origin/master}"
+REF="${DEPLOY_REF:-origin/main}"
 HOST="${DEPLOY_HOST:-anna@120.55.38.143}"
 APP_DIR="${DEPLOY_APP_DIR:-/srv/axiia-cup/current}"
 ENV_FILE="${DEPLOY_ENV_FILE:-/srv/axiia-cup/shared/config/production.env}"
