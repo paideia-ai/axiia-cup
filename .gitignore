@@ -17,6 +17,9 @@ coverage/
 deploy/production.env
 deploy/data/
 .gstack/
-.local/prod-login.sh
-.local/prod.env
-.local/prod-prompts/
+# Local operator files: never commit anything under .local/ (a tracked
+# .local script leaked an admin JWT once already).
+.local/
+
+# Wuhu wallet state (machine-local)
+.wuhu/

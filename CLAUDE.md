@@ -80,6 +80,7 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - `AXIIA_DB_PATH` — SQLite database path (API)
 - `SILICONFLOW_API_KEY` — LLM API key (API)
 - `DEEPSEEK_API_KEY` — DeepSeek official API key, used for `deepseek` provider models via the Anthropic-compatible endpoint (API)
+- `MOONSHOT_API_KEY` / `ZHIPU_API_KEY` / `MINIMAX_API_KEY` / `DASHSCOPE_API_KEY` — lab-direct OpenAI-compatible provider keys (Kimi / GLM / MiniMax / Qwen); each has an optional `*_BASE_URL` override (API)
 - `JWT_SECRET` — JWT signing secret (API)
 - `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `axiia_cup`; DB value takes priority)
 - `AXIIA_API_URL` — API base URL for CLI (default `http://localhost:3001`)
