@@ -328,6 +328,10 @@ export const llmCalls = sqliteTable(
     // List-price cost in CNY at call time (time-of-day aware for providers
     // with off-peak pricing). Null when the model has no pricing entry.
     costCny: real('cost_cny'),
+    // Streaming latency: first token of any kind, and first non-reasoning
+    // content token. Null for calls made before streaming landed.
+    ttftMs: integer('ttft_ms'),
+    firstContentMs: integer('first_content_ms'),
     createdAt: text('created_at').notNull().default(currentTimestamp),
   },
   (table) => ({

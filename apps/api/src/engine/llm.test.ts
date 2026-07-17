@@ -2,7 +2,10 @@ import { describe, expect, it } from 'bun:test'
 
 import {
   buildAnthropicRequest,
+  createOpenAIStreamState,
   extractTokenUsage,
+  foldOpenAIStreamChunk,
+  readAnthropicStream,
   toLangfuseUsageDetails,
 } from './llm'
 
@@ -149,5 +152,117 @@ describe('toLangfuseUsageDetails', () => {
         reasoningTokens: null,
       }),
     ).toBeUndefined()
+  })
+})
+
+describe('foldOpenAIStreamChunk', () => {
+  it('accumulates content and captures both latency marks', () => {
+    const state = createOpenAIStreamState()
+
+    foldOpenAIStreamChunk(
+      state,
+      { choices: [{ delta: { reasoning_content: '先想' } }] },
+      120,
+    )
+    foldOpenAIStreamChunk(
+      state,
+      { choices: [{ delta: { reasoning_content: '一想' } }] },
+      150,
+    )
+    foldOpenAIStreamChunk(
+      state,
+      { choices: [{ delta: { content: '好' } }] },
+      900,
+    )
+    foldOpenAIStreamChunk(
+      state,
+      { choices: [{ delta: { content: '的' }, finish_reason: 'stop' }] },
+      950,
+    )
+    foldOpenAIStreamChunk(state, { usage: { prompt_tokens: 10 } }, 960)
+
+    expect(state.content).toBe('好的')
+    expect(state.reasoning).toBe('先想一想')
+    expect(state.ttftMs).toBe(120)
+    expect(state.firstContentMs).toBe(900)
+    expect(state.finishReason).toBe('stop')
+    expect(state.usage).toEqual({ prompt_tokens: 10 })
+  })
+
+  it('marks ttft and first content together for non-thinking models', () => {
+    const state = createOpenAIStreamState()
+
+    foldOpenAIStreamChunk(state, { choices: [{ delta: { content: 'A' } }] }, 80)
+
+    expect(state.ttftMs).toBe(80)
+    expect(state.firstContentMs).toBe(80)
+  })
+})
+
+function sseBody(events: string[]): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder()
+
+  return new ReadableStream({
+    start(controller) {
+      for (const event of events) {
+        controller.enqueue(encoder.encode(event))
+      }
+
+      controller.close()
+    },
+  })
+}
+
+describe('readAnthropicStream', () => {
+  it('reconstructs blocks, usage, and latency from the event stream', async () => {
+    let tick = 0
+    const clock = () => {
+      tick += 100
+      return tick
+    }
+
+    const result = await readAnthropicStream(
+      sseBody([
+        'event: message_start\n',
+        'data: {"type":"message_start","message":{"usage":{"input_tokens":124,"cache_read_input_tokens":2048}}}\n\n',
+        'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking"}}\n\n',
+        'data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"推理"}}\n\n',
+        // Chunk boundary splitting a data line must not break parsing.
+        'data: {"type":"content_block_start","index":1,"content_bl',
+        'ock":{"type":"text"}}\n\n',
+        'data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"裁决"}}\n\n',
+        'data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"如下"}}\n\n',
+        'data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":215}}\n\n',
+        'data: {"type":"message_stop"}\n\n',
+      ]),
+      clock,
+    )
+
+    expect(result.response.content).toEqual([
+      { thinking: '推理', type: 'thinking' },
+      { text: '裁决如下', type: 'text' },
+    ])
+    expect(result.response.stop_reason).toBe('end_turn')
+    expect(result.response.usage).toEqual({
+      cache_read_input_tokens: 2048,
+      input_tokens: 124,
+      output_tokens: 215,
+    })
+    // First delta of any kind was the thinking delta; first content came
+    // later.
+    expect(result.ttftMs).not.toBeNull()
+    expect(result.firstContentMs).not.toBeNull()
+    expect(result.firstContentMs).toBeGreaterThan(result.ttftMs ?? 0)
+  })
+
+  it('throws on an error event', async () => {
+    await expect(
+      readAnthropicStream(
+        sseBody([
+          'data: {"type":"error","error":{"type":"overloaded_error","message":"服务繁忙"}}\n\n',
+        ]),
+        () => 1,
+      ),
+    ).rejects.toThrow('overloaded_error')
   })
 })
