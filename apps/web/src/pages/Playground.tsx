@@ -340,18 +340,6 @@ function ScenarioInfoPanel({ scenario }: { scenario: Scenario }) {
               {scenario.judgePrompt}
             </p>
           </AccordionItem>
-          {scenario.id === SHANGYANG_JUDGE_OS_SCENARIO_ID &&
-          scenario.judgeOsPrompt.trim() ? (
-            <AccordionItem
-              value="judge-os"
-              title="裁判内心 OS 规则"
-              triggerClassName="text-xs"
-            >
-              <p className="whitespace-pre-wrap text-xs leading-5 text-(--foreground-subtle)">
-                {scenario.judgeOsPrompt}
-              </p>
-            </AccordionItem>
-          ) : null}
         </Accordion>
       </CardContent>
     </Card>
