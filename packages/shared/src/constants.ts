@@ -11,12 +11,14 @@ export const submissionModelIds = [
   'deepseek-v4-flash',
 ] as const
 
+// minimax-m2.5 was withdrawn from player selection when the shared
+// SiliconFlow account died: zero recorded LLM calls ever, not worth a
+// dedicated MiniMax account. The catalog entry stays for historical records.
 export const playerSelectableModelIds = [
   'deepseek-v4-pro',
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m2.5',
   'glm-5.2',
 ] as const
 
@@ -132,15 +134,15 @@ export const modelCatalog = [
   {
     id: 'kimi-k2.6',
     label: 'Kimi K2.6',
-    apiModel: 'Pro/moonshotai/Kimi-K2.6',
-    provider: 'siliconflow',
+    apiModel: 'kimi-k2.6',
+    provider: 'moonshot',
     surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'qwen3.6-27b',
     label: 'Qwen3.6 27B',
-    apiModel: 'Qwen/Qwen3.6-27B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.6-27b',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
     thinking: 'disabled',
   },
@@ -161,15 +163,15 @@ export const modelCatalog = [
   {
     id: 'glm-5.1',
     label: 'GLM-5.1',
-    apiModel: 'Pro/zai-org/GLM-5.1',
-    provider: 'siliconflow',
+    apiModel: 'glm-5.1',
+    provider: 'zhipu',
     surfaces: ['submission', 'evaluation'],
   },
   {
     id: 'glm-5.2',
     label: 'GLM-5.2',
-    apiModel: 'zai-org/GLM-5.2',
-    provider: 'siliconflow',
+    apiModel: 'glm-5.2',
+    provider: 'zhipu',
     surfaces: ['submission', 'evaluation'],
   },
   {
