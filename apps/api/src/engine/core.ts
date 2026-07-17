@@ -627,7 +627,7 @@ async function getJudgeOsEntry(
   request: JudgeOsGenerationRequest,
   traceTarget: Pick<
     ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
+    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
   >,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
@@ -759,7 +759,7 @@ async function getExaminationAnswer(
   model: SubmissionModelId,
   traceTarget: Pick<
     ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
+    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
   >,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
@@ -842,7 +842,7 @@ async function getJudgeDecision(
   examinationB: JudgeQA[],
   traceTarget: Pick<
     ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
+    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
   >,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
@@ -969,7 +969,7 @@ async function getScoreFromScorer(
   examinationB: JudgeQA[],
   traceTarget: Pick<
     ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'userId'
+    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
   >,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
@@ -1112,6 +1112,7 @@ export async function executeMatchSession(
         {
           matchId: params.matchId,
           playgroundRunId: params.playgroundRunId,
+          scenarioId: params.scenario.id,
         },
         judgeOsSignal,
         completeChat,
@@ -1167,6 +1168,7 @@ export async function executeMatchSession(
               matchId: params.matchId,
               phase: 'dialogue',
               playgroundRunId: params.playgroundRunId,
+              scenarioId: params.scenario.id,
               side: speaker,
               turnIndex,
               userId: speaker === 'a' ? params.userIdA : params.userIdB,
@@ -1213,6 +1215,7 @@ export async function executeMatchSession(
           {
             matchId: params.matchId,
             playgroundRunId: params.playgroundRunId,
+            scenarioId: params.scenario.id,
             userId: params.userIdA,
           },
           params.signal,
@@ -1236,6 +1239,7 @@ export async function executeMatchSession(
           {
             matchId: params.matchId,
             playgroundRunId: params.playgroundRunId,
+            scenarioId: params.scenario.id,
             userId: params.userIdB,
           },
           params.signal,
@@ -1257,6 +1261,7 @@ export async function executeMatchSession(
       {
         matchId: params.matchId,
         playgroundRunId: params.playgroundRunId,
+        scenarioId: params.scenario.id,
       },
       params.signal,
       completeChat,
@@ -1283,6 +1288,7 @@ export async function executeMatchSession(
         {
           matchId: params.matchId,
           playgroundRunId: params.playgroundRunId,
+          scenarioId: params.scenario.id,
         },
         params.signal,
         completeChat,
