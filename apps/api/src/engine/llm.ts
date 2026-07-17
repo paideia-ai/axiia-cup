@@ -33,6 +33,10 @@ const DEEPSEEK_BASE_URL =
   process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/anthropic'
 const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION || '2023-06-01'
 const ANTHROPIC_MAX_TOKENS = Number(process.env.ANTHROPIC_MAX_TOKENS ?? 4096)
+// Thinking tokens count toward max_tokens on Anthropic-compatible APIs, so
+// reasoning models need a much larger budget or the visible answer gets
+// truncated (observed: DeepSeek effort=max spends >4096 tokens thinking).
+const THINKING_MAX_TOKENS = Number(process.env.THINKING_MAX_TOKENS ?? 16_384)
 const LLM_REQUEST_TIMEOUT_MS = Number(
   process.env.LLM_REQUEST_TIMEOUT_MS ?? 180_000,
 )
@@ -69,6 +73,7 @@ const anthropicCompatibleConfigs: Record<
 
 type AnthropicResponse = {
   content?: Array<{ text?: string; type: string }>
+  stop_reason?: string
   usage?: { input_tokens?: number; output_tokens?: number }
 }
 
@@ -409,11 +414,12 @@ export function buildAnthropicRequest(params: {
   temperature?: number
 }) {
   const modelDefinition = getModelDefinition(params.model)
+  const maxTokens = modelDefinition.effort
+    ? THINKING_MAX_TOKENS
+    : ANTHROPIC_MAX_TOKENS
 
   return {
-    max_tokens: Number.isFinite(ANTHROPIC_MAX_TOKENS)
-      ? Math.max(1, ANTHROPIC_MAX_TOKENS)
-      : 4096,
+    max_tokens: Number.isFinite(maxTokens) ? Math.max(1, maxTokens) : 4096,
     messages: params.messages.map((message) => ({
       role: message.role,
       content: message.content,
@@ -584,6 +590,13 @@ async function callAnthropicChatCompletion(
     }
 
     const parsed = JSON.parse(responseText) as AnthropicResponse
+
+    if (parsed.stop_reason === 'max_tokens') {
+      throw new Error(
+        `${providerConfig.label} response truncated: max_tokens (${requestPayload.max_tokens}) reached before the answer completed`,
+      )
+    }
+
     const content = parsed.content
       ?.filter((block) => block.type === 'text' && block.text)
       .map((block) => block.text?.trim() ?? '')

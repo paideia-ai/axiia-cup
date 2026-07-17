@@ -18,6 +18,9 @@ describe('buildAnthropicRequest', () => {
     expect(request.output_config).toEqual({ effort: 'max' })
     expect(request.system).toBe('你是秦孝公。')
     expect(request.temperature).toBe(0)
+    // Thinking models need headroom beyond the default 4096: reasoning
+    // tokens count toward max_tokens and can truncate the visible answer.
+    expect(request.max_tokens).toBe(16_384)
   })
 
   it('uses effort high for the high variants', () => {
@@ -39,6 +42,7 @@ describe('buildAnthropicRequest', () => {
     expect(request.model).toBe('claude-opus-4-6')
     expect('output_config' in request).toBe(false)
     expect('thinking' in request).toBe(false)
+    expect(request.max_tokens).toBe(4096)
   })
 
   it('passes an explicit temperature through', () => {
