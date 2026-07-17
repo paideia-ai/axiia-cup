@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'bun:test'
 
-import { buildAnthropicRequest, toLangfuseUsageDetails } from './llm'
+import {
+  buildAnthropicRequest,
+  extractTokenUsage,
+  toLangfuseUsageDetails,
+} from './llm'
 
 describe('buildAnthropicRequest', () => {
   const baseParams = {
@@ -67,6 +71,41 @@ describe('buildAnthropicRequest', () => {
     })
 
     expect(request.temperature).toBe(0.7)
+  })
+})
+
+describe('extractTokenUsage', () => {
+  it('treats OpenAI-dialect prompt_tokens as cache-inclusive', () => {
+    const usage = extractTokenUsage(
+      JSON.stringify({
+        usage: {
+          completion_tokens: 100,
+          prompt_cache_hit_tokens: 800,
+          prompt_tokens: 1000,
+        },
+      }),
+    )
+
+    expect(usage.promptTokens).toBe(1000)
+    expect(usage.cachedTokens).toBe(800)
+  })
+
+  it('normalizes Anthropic-dialect input_tokens, which exclude cache reads', () => {
+    // Observed on DeepSeek's Anthropic endpoint: input_tokens 124 with
+    // cache_read_input_tokens 2048 — the full prompt is the sum.
+    const usage = extractTokenUsage(
+      JSON.stringify({
+        usage: {
+          cache_read_input_tokens: 2048,
+          input_tokens: 124,
+          output_tokens: 215,
+        },
+      }),
+    )
+
+    expect(usage.promptTokens).toBe(2172)
+    expect(usage.cachedTokens).toBe(2048)
+    expect(usage.completionTokens).toBe(215)
   })
 })
 
