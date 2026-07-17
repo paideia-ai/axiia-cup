@@ -15,6 +15,7 @@ import {
 
 const chosenPlayerModelIds = [
   'deepseek-v4-pro',
+  'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
@@ -105,10 +106,20 @@ describe('model catalog', () => {
     ).toBe(false)
   })
 
-  it('maps the chosen ids to the intended SiliconFlow models', () => {
-    expect(getModelDefinition('deepseek-v4-pro').apiModel).toBe(
-      'deepseek-ai/DeepSeek-V4-Pro',
-    )
+  it('maps the chosen ids to the intended providers and API models', () => {
+    // DeepSeek models go through the official Anthropic-compatible API
+    // with standard (high) reasoning effort; everything else stays on
+    // SiliconFlow for now.
+    expect(getModelDefinition('deepseek-v4-pro')).toMatchObject({
+      apiModel: 'deepseek-v4-pro',
+      provider: 'deepseek',
+      effort: 'high',
+    })
+    expect(getModelDefinition('deepseek-v4-flash')).toMatchObject({
+      apiModel: 'deepseek-v4-flash',
+      provider: 'deepseek',
+      effort: 'high',
+    })
     expect(getModelDefinition('kimi-k2.6').apiModel).toBe(
       'Pro/moonshotai/Kimi-K2.6',
     )

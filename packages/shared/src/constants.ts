@@ -8,10 +8,12 @@ export const submissionModelIds = [
   'minimax-m2.5',
   'glm-5.1',
   'glm-5.2',
+  'deepseek-v4-flash',
 ] as const
 
 export const playerSelectableModelIds = [
   'deepseek-v4-pro',
+  'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
@@ -60,13 +62,17 @@ export type ModelId = EvaluationModelId
 export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ProgrammaticScorerScenarioId =
   (typeof programmaticScorerScenarioIds)[number]
-export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
+export type ModelProvider = 'anthropic' | 'deepseek' | 'openai' | 'siliconflow'
 
 type ModelSurface = 'evaluation' | 'submission'
 type CatalogModelId = ModelId | RetiredModelId
 
 type ModelDefinition = {
   apiModel: string
+  // Reasoning effort for Anthropic-compatible providers that support
+  // output_config.effort (DeepSeek official API: 'high' is the default,
+  // 'max' is the only other level).
+  effort?: 'high' | 'max'
   id: CatalogModelId
   label: string
   provider: ModelProvider
@@ -99,9 +105,18 @@ export const modelCatalog = [
   {
     id: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro',
-    apiModel: 'deepseek-ai/DeepSeek-V4-Pro',
-    provider: 'siliconflow',
+    apiModel: 'deepseek-v4-pro',
+    provider: 'deepseek',
     surfaces: ['submission', 'evaluation'],
+    effort: 'high',
+  },
+  {
+    id: 'deepseek-v4-flash',
+    label: 'DeepSeek V4 Flash',
+    apiModel: 'deepseek-v4-flash',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'high',
   },
   {
     id: 'kimi-k2.6',
