@@ -18,7 +18,6 @@ const chosenPlayerModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m2.5',
   'glm-5.2',
 ] as const
 
@@ -107,9 +106,9 @@ describe('model catalog', () => {
   })
 
   it('maps the chosen ids to the intended providers and API models', () => {
-    // DeepSeek models go through the official Anthropic-compatible API
-    // with standard (high) reasoning effort; everything else stays on
-    // SiliconFlow for now.
+    // Every current model runs on its lab's own API: DeepSeek via the
+    // official Anthropic-compatible endpoint, Kimi/GLM/Qwen via each lab's
+    // OpenAI-compatible endpoint. SiliconFlow only serves legacy ids.
     expect(getModelDefinition('deepseek-v4-pro')).toMatchObject({
       apiModel: 'deepseek-v4-pro',
       provider: 'deepseek',
@@ -120,17 +119,24 @@ describe('model catalog', () => {
       provider: 'deepseek',
       effort: 'high',
     })
-    expect(getModelDefinition('kimi-k2.6').apiModel).toBe(
-      'Pro/moonshotai/Kimi-K2.6',
-    )
+    expect(getModelDefinition('kimi-k2.6')).toMatchObject({
+      apiModel: 'kimi-k2.6',
+      provider: 'moonshot',
+    })
     expect(getModelDefinition('qwen3.6-27b')).toMatchObject({
-      apiModel: 'Qwen/Qwen3.6-27B',
+      apiModel: 'qwen3.6-27b',
+      provider: 'dashscope',
       thinking: 'disabled',
     })
-    expect(getModelDefinition('minimax-m2.5').apiModel).toBe(
-      'MiniMaxAI/MiniMax-M2.5',
-    )
-    expect(getModelDefinition('glm-5.2').apiModel).toBe('zai-org/GLM-5.2')
+    expect(getModelDefinition('glm-5.1')).toMatchObject({
+      apiModel: 'glm-5.1',
+      provider: 'zhipu',
+    })
+    expect(getModelDefinition('glm-5.2')).toMatchObject({
+      apiModel: 'glm-5.2',
+      provider: 'zhipu',
+    })
+    expect(getModelDefinition('minimax-m2.5').provider).toBe('siliconflow')
   })
 
   it('does not change the default evaluation model order', () => {
