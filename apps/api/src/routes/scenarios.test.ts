@@ -274,8 +274,15 @@ describe('PUT /api/admin/scenarios/:id', () => {
 })
 
 describe('GET /api/scenarios/:id', () => {
-  it('never exposes the Judge OS prompt to players', async () => {
+  it('rejects unauthenticated requests', async () => {
+    // Scenario details include judge prompts and hidden-info pools; they are
+    // player-facing but must never be readable without an account.
     const res = await req('GET', '/api/scenarios/test-scenario')
+    expect(res.status).toBe(401)
+  })
+
+  it('never exposes the Judge OS prompt to players', async () => {
+    const res = await req('GET', '/api/scenarios/test-scenario', userToken)
     expect(res.status).toBe(200)
     const json = (await res.json()) as Record<string, unknown>
     expect(json.id).toBe('test-scenario')
