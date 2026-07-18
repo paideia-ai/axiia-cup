@@ -703,7 +703,7 @@ async function persistLlmCall(
   }
 }
 
-function buildOpenAICompatibleRequest(params: {
+export function buildOpenAICompatibleRequest(params: {
   jsonMode?: boolean
   messages: ChatMessage[]
   model: ModelId
@@ -721,7 +721,12 @@ function buildOpenAICompatibleRequest(params: {
     response_format: params.jsonMode
       ? { type: 'json_object' as const }
       : undefined,
-    temperature: params.temperature ?? 0,
+    // Moonshot rejects any temperature other than 1 with HTTP 400 ("invalid
+    // temperature: only 1 is allowed for this model"); omit the field so the
+    // API applies its forced default.
+    ...(modelDefinition.provider === 'moonshot'
+      ? {}
+      : { temperature: params.temperature ?? 0 }),
     // Some SiliconFlow models (e.g. Qwen3 thinking variants) require explicitly
     // disabling thinking mode; otherwise the API returns 400.
     ...(modelDefinition.thinking === 'disabled'
@@ -799,7 +804,10 @@ async function callOpenAICompatibleChatCompletion(
     apiModel: requestPayload.model,
     input: requestPayload,
     model: params.model,
-    modelParameters: { temperature: requestPayload.temperature },
+    modelParameters:
+      requestPayload.temperature != null
+        ? { temperature: requestPayload.temperature }
+        : {},
     provider,
     trace: params.trace,
   })
