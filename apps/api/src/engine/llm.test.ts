@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 
 import {
   buildAnthropicRequest,
+  buildOpenAICompatibleRequest,
   createOpenAIStreamState,
   extractTokenUsage,
   foldOpenAIStreamChunk,
@@ -70,6 +71,45 @@ describe('buildAnthropicRequest', () => {
     const request = buildAnthropicRequest({
       ...baseParams,
       model: 'deepseek-v4-flash',
+      temperature: 0.7,
+    })
+
+    expect(request.temperature).toBe(0.7)
+  })
+})
+
+describe('buildOpenAICompatibleRequest', () => {
+  const baseParams = {
+    messages: [{ role: 'user' as const, content: '请做出你的裁决。' }],
+    systemPrompt: '你是秦孝公。',
+  }
+
+  it('omits temperature entirely for Moonshot models', () => {
+    // Moonshot's kimi-k2.x endpoint returns HTTP 400 for any temperature
+    // other than 1; omitting the field lets the API apply its forced
+    // default.
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      model: 'kimi-k2.6',
+      temperature: 0.7,
+    })
+
+    expect('temperature' in request).toBe(false)
+  })
+
+  it('defaults temperature to 0 for non-Moonshot models', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      model: 'qwen3.6-27b',
+    })
+
+    expect(request.temperature).toBe(0)
+  })
+
+  it('passes an explicit temperature through for non-Moonshot models', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      model: 'qwen3.6-27b',
       temperature: 0.7,
     })
 
