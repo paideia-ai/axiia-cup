@@ -217,9 +217,17 @@ function getOpponentHiddenInfo(
 // ── Randomization ───────────────────────────────────────────────────────────
 
 /** Pick `count` random items from `items` and return their IDs. */
-function pickRandomIds(items: { id: string }[], count: number): string[] {
+export function pickRandomIds(
+  items: { id: string }[],
+  count: number,
+): string[] {
   if (count >= items.length) return items.map((i) => i.id)
-  const shuffled = [...items].sort(() => Math.random() - 0.5)
+  // Fisher–Yates partial shuffle: sort with a random comparator is biased.
+  const shuffled = [...items]
+  for (let i = 0; i < count; i++) {
+    const j = i + Math.floor(Math.random() * (shuffled.length - i))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
   return shuffled.slice(0, count).map((i) => i.id)
 }
 
