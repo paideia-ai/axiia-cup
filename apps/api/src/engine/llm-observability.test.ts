@@ -26,7 +26,7 @@ describe('buildLlmObservabilityMetadata', () => {
   it('separates gateway provider from underlying provider for gateway models', () => {
     const metadata = buildLlmObservabilityMetadata({
       jsonMode: true,
-      model: 'deepseek-v4-pro',
+      model: 'deepseek-v3.2',
       trace: {
         attempt: 2,
         matchId: 42,
@@ -39,7 +39,7 @@ describe('buildLlmObservabilityMetadata', () => {
       },
     })
 
-    expect(metadata.gatewayProvider).toBe('siliconflow')
+    expect(metadata.gatewayProvider).toBe('dashscope')
     expect(metadata.underlyingProvider).toBe('deepseek')
     expect(metadata.source).toBe('tournament')
     expect(metadata.sessionId).toBe('match:42')
@@ -47,9 +47,9 @@ describe('buildLlmObservabilityMetadata', () => {
     expect(metadata.generationName).toBe('axiia:scoring:scorer')
     expect(metadata.propagatedMetadata).toMatchObject({
       attempt: '2',
-      gatewayProvider: 'siliconflow',
+      gatewayProvider: 'dashscope',
       matchId: '42',
-      modelId: 'deepseek-v4-pro',
+      modelId: 'deepseek-v3.2',
       outputType: 'json',
       phase: 'scoring',
       scenarioId: 'trolley-problem',
@@ -65,9 +65,9 @@ describe('buildLlmObservabilityMetadata', () => {
     })
     expect(metadata.otelAttributes).toMatchObject({
       'axiia.attempt': 2,
-      'axiia.gateway.provider': 'siliconflow',
+      'axiia.gateway.provider': 'dashscope',
       'axiia.match.id': 42,
-      'axiia.model.id': 'deepseek-v4-pro',
+      'axiia.model.id': 'deepseek-v3.2',
       'axiia.phase': 'scoring',
       'axiia.provider.underlying': 'deepseek',
       'axiia.run.source': 'tournament',
@@ -77,13 +77,13 @@ describe('buildLlmObservabilityMetadata', () => {
       'gen_ai.operation.name': 'chat',
       'gen_ai.output.type': 'json',
       'gen_ai.provider.name': 'deepseek',
-      'gen_ai.request.model': 'deepseek-ai/DeepSeek-V4-Pro',
+      'gen_ai.request.model': 'deepseek-v3.2',
       'user.id': 7,
     })
     expect(metadata.tags).toEqual(
       expect.arrayContaining([
-        'gateway:siliconflow',
-        'model:deepseek-v4-pro',
+        'gateway:dashscope',
+        'model:deepseek-v3.2',
         'phase:scoring',
         'provider:deepseek',
         'scenario:trolley-problem',

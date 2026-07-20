@@ -1,6 +1,3 @@
-import type OpenAI from 'openai'
-
-import { observeOpenAI, type LangfuseConfig } from '@langfuse/openai'
 import { LangfuseSpanProcessor } from '@langfuse/otel'
 import { NodeSDK } from '@opentelemetry/sdk-node'
 
@@ -47,6 +44,13 @@ export function initializeLangfuseTracing() {
     return false
   }
 
+  // The build bakes the git SHA into the image as APP_BUILD_SHA; surface it
+  // as the Langfuse release so traces are attributable to a deploy. An
+  // explicit LANGFUSE_RELEASE still wins.
+  if (!process.env.LANGFUSE_RELEASE && process.env.APP_BUILD_SHA) {
+    process.env.LANGFUSE_RELEASE = process.env.APP_BUILD_SHA
+  }
+
   try {
     const sdk = new NodeSDK({
       spanProcessors: [new LangfuseSpanProcessor()],
@@ -79,15 +83,4 @@ export async function shutdownLangfuseTracing() {
   state.sdk = null
   state.enabled = false
   state.initialized = false
-}
-
-export function observeOpenAIClient(
-  client: OpenAI,
-  config?: LangfuseConfig,
-): OpenAI {
-  if (!initializeLangfuseTracing()) {
-    return client
-  }
-
-  return observeOpenAI(client, config)
 }

@@ -1,6 +1,7 @@
 import {
   evaluationModelOptions,
   scenarioUsesProgrammaticScorer,
+  SHANGYANG_JUDGE_OS_SCENARIO_ID,
   type AdminScenario,
   type PresetOpponent,
   type RoleOption,
@@ -32,6 +33,7 @@ function getScenarioUpdateInput(scenario: AdminScenario): UpdateScenario {
     judgeModel: scenario.judgeModel,
     scorerModel: scenario.scorerModel,
     judgePrompt: scenario.judgePrompt,
+    judgeOsPrompt: scenario.judgeOsPrompt,
     openingLine: scenario.openingLine,
     agentPromptTemplate: scenario.agentPromptTemplate,
     examinationQuestionTemplate: scenario.examinationQuestionTemplate,
@@ -1172,6 +1174,25 @@ export function AdminScenarioEditPage() {
                     value={draft.judgePrompt}
                   />
                 </label>
+
+                {scenarioId === SHANGYANG_JUDGE_OS_SCENARIO_ID ? (
+                  <label className="block space-y-2 text-sm text-(--foreground-subtle)">
+                    <span>裁判内心 OS 提示词</span>
+                    <Textarea
+                      className="min-h-48"
+                      onChange={(event) =>
+                        setDraft((c) =>
+                          c ? { ...c, judgeOsPrompt: event.target.value } : c,
+                        )
+                      }
+                      value={draft.judgeOsPrompt}
+                    />
+                    <span className="text-[11px] leading-5 text-(--foreground-muted)">
+                      留空即关闭秦孝公内心
+                      OS；修改普通裁判提示词后，也应复核此处的人设是否仍一致。
+                    </span>
+                  </label>
+                ) : null}
 
                 <label className="block space-y-2 text-sm text-(--foreground-subtle)">
                   <span>审讯问题模板</span>

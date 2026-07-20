@@ -6,19 +6,22 @@ export const submissionModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'minimax-m2.5',
+  'minimax-m3',
   'glm-5.1',
   'glm-5.2',
+  'deepseek-v4-flash',
 ] as const
 
 export const playerSelectableModelIds = [
   'deepseek-v4-pro',
+  'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.6-27b',
-  'minimax-m2.5',
+  'minimax-m3',
   'glm-5.2',
 ] as const
 
-export const retiredModelIds = ['minimax-m3'] as const
+export const retiredModelIds = [] as const
 
 export const evaluationOnlyModelIds = [
   'gpt-4.1',
@@ -45,6 +48,8 @@ export const programmaticScorerScenarioIds = [
   'trolley-problem',
 ] as const
 
+export const SHANGYANG_JUDGE_OS_SCENARIO_ID = 'shangyang-court'
+
 export function scenarioUsesProgrammaticScorer(scenarioId: string) {
   return (programmaticScorerScenarioIds as readonly string[]).includes(
     scenarioId,
@@ -58,7 +63,18 @@ export type ModelId = EvaluationModelId
 export type RetiredModelId = (typeof retiredModelIds)[number]
 export type ProgrammaticScorerScenarioId =
   (typeof programmaticScorerScenarioIds)[number]
-export type ModelProvider = 'anthropic' | 'openai' | 'siliconflow'
+// 'moonshot' | 'zhipu' | 'minimax' | 'dashscope' are the labs' own
+// OpenAI-compatible endpoints, replacing the shared SiliconFlow account so
+// each vendor fails (and bills) independently.
+export type ModelProvider =
+  | 'anthropic'
+  | 'dashscope'
+  | 'deepseek'
+  | 'minimax'
+  | 'moonshot'
+  | 'openai'
+  | 'siliconflow'
+  | 'zhipu'
 export type UnderlyingModelProvider =
   | 'anthropic'
   | 'deepseek'
@@ -73,6 +89,10 @@ type CatalogModelId = ModelId | RetiredModelId
 
 type ModelDefinition = {
   apiModel: string
+  // Reasoning effort for Anthropic-compatible providers that support
+  // output_config.effort (DeepSeek official API: 'high' is the default,
+  // 'max' is the only other level).
+  effort?: 'high' | 'max'
   id: CatalogModelId
   label: string
   provider: ModelProvider
@@ -82,51 +102,63 @@ type ModelDefinition = {
 }
 
 export const modelCatalog = [
+  // Aliyun-hosted: the official DeepSeek API retires v3-era models on
+  // 2026-07-24, and several scenario judges are tuned to V3.2's voice.
   {
     id: 'deepseek-v3.2',
     label: 'DeepSeek V3.2',
-    apiModel: 'deepseek-ai/DeepSeek-V3.2',
-    provider: 'siliconflow',
+    apiModel: 'deepseek-v3.2',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'deepseek',
   },
   {
     id: 'kimi-k2.5',
     label: 'Kimi K2.5',
-    apiModel: 'Pro/moonshotai/Kimi-K2.5',
-    provider: 'siliconflow',
+    apiModel: 'kimi-k2.5',
+    provider: 'moonshot',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'moonshot',
   },
   {
     id: 'qwen3.5-397b-a17b',
     label: 'Qwen3.5',
-    apiModel: 'Qwen/Qwen3.5-27B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.5-27b',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'qwen',
   },
   {
     id: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro',
-    apiModel: 'deepseek-ai/DeepSeek-V4-Pro',
-    provider: 'siliconflow',
+    apiModel: 'deepseek-v4-pro',
+    provider: 'deepseek',
     surfaces: ['submission', 'evaluation'],
+    effort: 'high',
+    underlyingProvider: 'deepseek',
+  },
+  {
+    id: 'deepseek-v4-flash',
+    label: 'DeepSeek V4 Flash',
+    apiModel: 'deepseek-v4-flash',
+    provider: 'deepseek',
+    surfaces: ['submission', 'evaluation'],
+    effort: 'high',
     underlyingProvider: 'deepseek',
   },
   {
     id: 'kimi-k2.6',
     label: 'Kimi K2.6',
-    apiModel: 'Pro/moonshotai/Kimi-K2.6',
-    provider: 'siliconflow',
+    apiModel: 'kimi-k2.6',
+    provider: 'moonshot',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'moonshot',
   },
   {
     id: 'qwen3.6-27b',
     label: 'Qwen3.6 27B',
-    apiModel: 'Qwen/Qwen3.6-27B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.6-27b',
+    provider: 'dashscope',
     surfaces: ['submission', 'evaluation'],
     thinking: 'disabled',
     underlyingProvider: 'qwen',
@@ -134,33 +166,34 @@ export const modelCatalog = [
   {
     id: 'minimax-m3',
     label: 'MiniMax M3',
-    apiModel: 'MiniMaxAI/MiniMax-M3',
-    provider: 'siliconflow',
-    surfaces: [],
+    apiModel: 'MiniMax-M3',
+    provider: 'minimax',
+    surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'minimax',
   },
   {
     id: 'minimax-m2.5',
     label: 'MiniMax M2.5',
-    apiModel: 'MiniMaxAI/MiniMax-M2.5',
-    provider: 'siliconflow',
+    apiModel: 'MiniMax-M2.5',
+    provider: 'minimax',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'minimax',
   },
   {
     id: 'glm-5.1',
     label: 'GLM-5.1',
-    apiModel: 'Pro/zai-org/GLM-5.1',
-    provider: 'siliconflow',
+    apiModel: 'glm-5.1',
+    provider: 'zhipu',
     surfaces: ['submission', 'evaluation'],
     underlyingProvider: 'zai',
   },
   {
     id: 'glm-5.2',
     label: 'GLM-5.2',
-    apiModel: 'zai-org/GLM-5.2',
-    provider: 'siliconflow',
+    apiModel: 'glm-5.2',
+    provider: 'zhipu',
     surfaces: ['submission', 'evaluation'],
+    underlyingProvider: 'zai',
   },
   {
     id: 'gpt-4.1',
@@ -221,8 +254,8 @@ export const modelCatalog = [
   {
     id: 'qwen3.5-397b',
     label: 'Qwen3.5 397B',
-    apiModel: 'Qwen/Qwen3.5-397B-A17B',
-    provider: 'siliconflow',
+    apiModel: 'qwen3.5-397b-a17b',
+    provider: 'dashscope',
     surfaces: ['evaluation'],
     thinking: 'disabled',
     underlyingProvider: 'qwen',
@@ -230,8 +263,8 @@ export const modelCatalog = [
   {
     id: 'glm-4.6',
     label: 'GLM-4.6',
-    apiModel: 'zai-org/GLM-4.6',
-    provider: 'siliconflow',
+    apiModel: 'glm-4.6',
+    provider: 'zhipu',
     surfaces: ['evaluation'],
     underlyingProvider: 'zai',
   },

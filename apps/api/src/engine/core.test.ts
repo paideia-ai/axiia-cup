@@ -60,6 +60,7 @@ const scenario: ScenarioRecord = {
   scorerModel: 'deepseek-v3.2',
   judgePrompt:
     'A={{roleAName}} B={{roleBName}} 辩论：{{debate}} 问询A：{{examinationA}} 问询B：{{examinationB}} 请求A：{{roleARequests}} 请求B：{{roleBRequests}}',
+  judgeOsPrompt: '',
   scorerPrompt: '计分。{{judgeOutput}}',
   openingLine: '请开始辩论。',
   agentPromptTemplate:

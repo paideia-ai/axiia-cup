@@ -117,8 +117,36 @@
     {
       "idx": 16,
       "version": "16",
-      "when": 1776340000000,
-      "tag": "0016_llm_observability_links",
+      "when": 1783915200000,
+      "tag": "0016_judge_os",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "17",
+      "when": 1784260800000,
+      "tag": "0017_judge_os_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "18",
+      "when": 1784644800000,
+      "tag": "0018_llm_call_costs",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "19",
+      "when": 1784649600000,
+      "tag": "0019_llm_call_stream_timings",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "20",
+      "when": 1784653200000,
+      "tag": "0020_llm_observability_links",
       "breakpoints": true
     }
   ]

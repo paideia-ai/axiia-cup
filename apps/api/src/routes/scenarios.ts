@@ -54,6 +54,7 @@ scenariosRouter.get(
         falseInfoCount: scenarios.falseInfoCount,
         id: scenarios.id,
         judgeModel: scenarios.judgeModel,
+        judgeOsPrompt: scenarios.judgeOsPrompt,
         judgePrompt: scenarios.judgePrompt,
         locked: lockedExpression,
         openingLine: scenarios.openingLine,
@@ -185,7 +186,7 @@ scenariosRouter.put(
   },
 )
 
-scenariosRouter.get('/api/scenarios/:id', (context) => {
+scenariosRouter.get('/api/scenarios/:id', requireAuth, (context) => {
   const id = context.req.param('id')
   const row = db.select().from(scenarios).where(eq(scenarios.id, id)).get()
 

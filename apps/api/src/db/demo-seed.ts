@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm'
 import { hashPassword } from '../lib/auth'
 import { db, sqlite, sqliteFilePath } from './client'
 import { scenarios, submissions, users } from './schema'
+import { shangyangJudgeOsPrompt } from './shangyang-judge-os-prompt'
 import { ensureTrolleyScenario } from './trolley-scenario'
 
 const migrationsFolder = new URL('./migrations', import.meta.url).pathname
@@ -196,6 +197,7 @@ const scenarioSeed = {
   agentPromptTemplate,
   examinationQuestionTemplate,
   judgePrompt,
+  judgeOsPrompt: shangyangJudgeOsPrompt,
   scorerPrompt,
   // v2: 无隐藏信息
   roleAName: '商鞅',
