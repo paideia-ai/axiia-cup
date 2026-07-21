@@ -1,0 +1,118 @@
+{
+  "agentModelPolicy": "saved",
+  "characterPairs": [
+    {
+      "id": "chosokabe__akechi_ashigaru",
+      "roleAName": "长宗我部元亲阵营",
+      "roleAOptionId": "chosokabe",
+      "roleBName": "明智军中的足轻",
+      "roleBOptionId": "akechi_ashigaru"
+    },
+    {
+      "id": "yoshiaki_envoy__akechi_ashigaru",
+      "roleAName": "足利义昭的使者",
+      "roleAOptionId": "yoshiaki_envoy",
+      "roleBName": "明智军中的足轻",
+      "roleBOptionId": "akechi_ashigaru"
+    }
+  ],
+  "concurrency": 2,
+  "dbPath": null,
+  "dryRun": false,
+  "inventoryPath": "docs/competition/prompts/honnoji-user-samples/inventory.json",
+  "judgeModel": "deepseek-v3.2",
+  "judgeModelPolicy": "scenario-current",
+  "judgePromptHash": "780aa199af835a1703238091bdea3e4547516b31d419fcb70e4a8398d0fb95bd",
+  "jobTimeoutMs": 900000,
+  "outputDir": "docs/bench/runs/honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+  "persistLlmCalls": false,
+  "runId": "honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+  "savedModelUpgradePolicy": {
+    "enabled": true,
+    "mappings": {
+      "deepseek-v3.2": "deepseek-v4-pro",
+      "kimi-k2.5": "kimi-k2.6",
+      "minimax-m3": "minimax-m2.5",
+      "qwen3.5-397b-a17b": "qwen3.6-27b"
+    }
+  },
+  "scenarioId": "honnoji-decision",
+  "scenarioSource": "inventory",
+  "scenarioSnapshotHash": "4f517b198c4cf909afc7a48b575e47c3467f1ce669d80f8c99aa8ed1f59ce410",
+  "selectedPairs": [
+    "chosokabe__akechi_ashigaru",
+    "yoshiaki_envoy__akechi_ashigaru"
+  ],
+  "selectedSamples": {
+    "attack": [
+      {
+        "displayName": "yisiliu",
+        "email": "yisiliu@gmail.com",
+        "model": "deepseek-v4-pro",
+        "modelWasUpgraded": false,
+        "promptChars": 851,
+        "promptHash": "fb4e6add8ad7c8aa539b72cd9c37cbcda69da81be2290c1ca2e9a2290db8bbcf",
+        "roleAOptionId": "chosokabe",
+        "roleBOptionId": "akechi_ashigaru",
+        "sampleId": "sub-487-v22-u19-a-chosokabe",
+        "savedModel": "deepseek-v4-pro",
+        "side": "a",
+        "sourceSubmissionId": 487,
+        "userId": 19,
+        "version": 22
+      },
+      {
+        "displayName": "Kurt",
+        "email": "fymidi@gmail.com",
+        "model": "deepseek-v4-pro",
+        "modelWasUpgraded": true,
+        "promptChars": 826,
+        "promptHash": "775e6a6a9f979b697b854759f568263da6a6184f196d57229d1cf825838cba84",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBOptionId": "akechi_ashigaru",
+        "sampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+        "savedModel": "deepseek-v3.2",
+        "side": "a",
+        "sourceSubmissionId": 372,
+        "userId": 23,
+        "version": 26
+      }
+    ],
+    "defense": [
+      {
+        "displayName": "yisiliu",
+        "email": "yisiliu@gmail.com",
+        "model": "deepseek-v4-pro",
+        "modelWasUpgraded": false,
+        "promptChars": 776,
+        "promptHash": "d987b9eb2c169893d0e216ca65c64b13ee48efb39cc51f9430ec0f76df813364",
+        "roleAOptionId": "chosokabe",
+        "roleBOptionId": "akechi_ashigaru",
+        "sampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+        "savedModel": "deepseek-v4-pro",
+        "side": "b",
+        "sourceSubmissionId": 398,
+        "userId": 19,
+        "version": 5
+      },
+      {
+        "displayName": "yisiliu",
+        "email": "yisiliu@gmail.com",
+        "model": "deepseek-v4-pro",
+        "modelWasUpgraded": false,
+        "promptChars": 776,
+        "promptHash": "d987b9eb2c169893d0e216ca65c64b13ee48efb39cc51f9430ec0f76df813364",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBOptionId": "akechi_ashigaru",
+        "sampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+        "savedModel": "deepseek-v4-pro",
+        "side": "b",
+        "sourceSubmissionId": 398,
+        "userId": 19,
+        "version": 5
+      }
+    ]
+  },
+  "selectedSamplesPath": "docs/competition/prompts/honnoji-user-samples/selected-samples.akechi-deepseek.json",
+  "trueRequestPairCount": 18
+}

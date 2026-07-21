@@ -1,0 +1,13 @@
+{
+  "dryRun": true,
+  "generatedAt": "2026-07-09T08:56:57.346Z",
+  "kind": "judge_sensitivity.judge_results",
+  "plannedJobs": 80,
+  "results": [],
+  "summary": {
+    "completed": 0,
+    "errored": 0,
+    "expected": 80,
+    "parseFailures": 0
+  }
+}

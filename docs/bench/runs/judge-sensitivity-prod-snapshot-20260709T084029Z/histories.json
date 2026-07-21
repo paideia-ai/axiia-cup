@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-07-09T08:40:42.660Z",
+  "histories": [],
+  "kind": "judge_sensitivity.histories",
+  "summary": {
+    "completed": 0,
+    "errored": 0,
+    "expected": 80,
+    "executableExpected": 70,
+    "reused": 0,
+    "totalRows": 0
+  }
+}

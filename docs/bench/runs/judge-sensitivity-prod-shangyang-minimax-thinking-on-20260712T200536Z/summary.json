@@ -1,0 +1,239 @@
+{
+  "config": {
+    "benchmarkName": "judge-sensitivity",
+    "caseFilter": null,
+    "command": "judge",
+    "concurrency": 10,
+    "dryRun": false,
+    "git": {
+      "branch": "trolley-bench",
+      "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+      "dirty": true
+    },
+    "historyCountExpected": 8,
+    "historyExecutionCountExpected": 8,
+    "jobTimeoutMs": 1200000,
+    "judgeConcurrency": 30,
+    "judgeModels": [
+      "minimax-m2.5-thinking-explicitly-on"
+    ],
+    "judgeModelDefinitions": [
+      {
+        "apiModel": "MiniMaxAI/MiniMax-M2.5",
+        "id": "minimax-m2.5-thinking-explicitly-on",
+        "label": "MiniMax M2.5 (thinking explicitly on)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOnRequest": "enable-thinking-true",
+        "underlyingProvider": "minimax",
+        "verifyReasoningEnabled": true
+      }
+    ],
+    "judgeRepeats": 10,
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "llmCallTimeoutMs": 300000,
+    "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-minimax-thinking-on-20260712T200536Z",
+    "pairFilter": null,
+    "persistLlmCalls": false,
+    "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+    "playerModel": "glm-5.2",
+    "playerModelDefinition": {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+    "resume": true,
+    "runId": "f0a3aacf-3cde-489e-a25a-c0f027245a94",
+    "scenarioIds": [
+      "shangyang-court"
+    ],
+    "scenarioSource": {
+      "apiUrl": "https://axiia-cup.isofucius.cn",
+      "type": "api",
+      "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z; Seven Level-3 repeat-1 judge rows imported from verified thinking-on preflight"
+    },
+    "selectedSamplePaths": {
+      "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+      "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+    },
+    "temperature": 0,
+    "runLabel": "Shangyang judge sensitivity: MiniMax M2.5 thinking explicitly on; reuses 8 histories from judge-sensitivity-prod-20260708T200403Z"
+  },
+  "generatedAt": "2026-07-12T20:11:42.544Z",
+  "histories": {
+    "byScenario": {
+      "shangyang-court": {
+        "completed": 8,
+        "errored": 0,
+        "expected": 8,
+        "rows": 8
+      },
+      "honnoji-decision": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "trolley-problem": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      }
+    },
+    "byStatus": {
+      "ok": 8
+    },
+    "summary": {
+      "completed": 8,
+      "errored": 0,
+      "expected": 8,
+      "executableExpected": 8,
+      "reused": 1,
+      "totalRows": 8
+    }
+  },
+  "judge": {
+    "plannedJobs": 80,
+    "results": {
+      "completed": 80,
+      "errored": 0,
+      "expected": 80,
+      "parseFailures": 0,
+      "reasoningVerifiedOff": 0,
+      "reasoningVerifiedOn": 80
+    },
+    "sensitivity": {
+      "details": [
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 0.6,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 8,
+          "variedSideWinRate": 0.8
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 0.8,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 1,
+          "variedSideWinRate": 0.1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        }
+      ],
+      "modelLevel": [
+        {
+          "averageAbsoluteSensitivity": 0.3166666666666667,
+          "badToGoodSensitivity": 0.425,
+          "fixedHistoryInstability": 0.031249999999999993,
+          "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+          "level3To4Sensitivity": 0.09999999999999998
+        }
+      ]
+    }
+  },
+  "kind": "judge_sensitivity.summary"
+}

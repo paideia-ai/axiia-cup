@@ -61,6 +61,9 @@ export const DEFAULT_SCORER_MODEL =
 
 type MatchExecutionParams = {
   completeChat?: typeof chatCompletion
+  benchmarkCaseId?: string
+  benchmarkName?: string
+  benchmarkRunId?: string
   infoAssignment?: InfoAssignment
   judgeOs?: JudgeOsEntry[]
   judgeOsFailedTurns?: number[]
@@ -90,6 +93,18 @@ type MatchExecutionParams = {
   userIdA?: number
   userIdB?: number
 }
+
+type MatchTraceTarget = Pick<
+  ChatCompletionTrace,
+  | 'benchmarkCaseId'
+  | 'benchmarkName'
+  | 'benchmarkRunId'
+  | 'matchId'
+  | 'playgroundRunId'
+  | 'scenarioId'
+  | 'source'
+  | 'userId'
+>
 
 export type MatchExecutionResult = {
   infoAssignment: InfoAssignment
@@ -212,6 +227,27 @@ function getOpponentHiddenInfo(
   return parseHiddenInfo(
     roleSide === 'a' ? scenario.roleBHiddenInfo : scenario.roleAHiddenInfo,
   )
+}
+
+function buildMatchTraceTarget(params: MatchExecutionParams): MatchTraceTarget {
+  const target: MatchTraceTarget = {
+    benchmarkCaseId: params.benchmarkCaseId,
+    benchmarkName: params.benchmarkName,
+    benchmarkRunId: params.benchmarkRunId,
+    scenarioId: params.scenario.id,
+  }
+
+  if (params.matchId != null) {
+    target.matchId = params.matchId
+    target.source = 'tournament'
+  }
+
+  if (params.playgroundRunId != null) {
+    target.playgroundRunId = params.playgroundRunId
+    target.source ??= 'playground'
+  }
+
+  return target
 }
 
 // ── Randomization ───────────────────────────────────────────────────────────
@@ -632,10 +668,7 @@ export function formatDebateTranscriptForJudge(
 async function getJudgeOsEntry(
   provenance: JudgeOsProvenance,
   request: JudgeOsGenerationRequest,
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<JudgeOsEntry> {
@@ -764,10 +797,7 @@ async function getExaminationAnswer(
   assignment: InfoAssignment,
   submissionPrompt: string,
   model: SubmissionModelId,
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<JudgeQA> {
@@ -824,7 +854,10 @@ async function getExaminationAnswer(
 
 // ── Phase 3: Judge Decision ─────────────────────────────────────────────────
 
-function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
+export function buildExaminationSummary(
+  roleName: string,
+  examination: JudgeQA[],
+) {
   if (examination.length === 0) {
     return `【${roleName}】未完成问询。`
   }
@@ -841,39 +874,37 @@ function buildExaminationSummary(roleName: string, examination: JudgeQA[]) {
     .join('\n\n')
 }
 
+export function buildJudgeRuntimeSystemPrompt(
+  scenario: ScenarioRecord,
+  assignment: InfoAssignment,
+  transcript: TranscriptTurn[],
+  examinationA: JudgeQA[],
+  examinationB: JudgeQA[],
+) {
+  return buildJudgePrompt(scenario, assignment, {
+    debate: formatDebateTranscriptForJudge(scenario, assignment, transcript),
+    examinationA: buildExaminationSummary(scenario.roleAName, examinationA),
+    examinationB: buildExaminationSummary(scenario.roleBName, examinationB),
+  })
+}
+
 async function getJudgeDecision(
   scenario: ScenarioRecord,
   assignment: InfoAssignment,
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<string> {
-  const debateText = formatDebateTranscriptForJudge(
+  const judgePrompt = buildJudgeRuntimeSystemPrompt(
     scenario,
     assignment,
     transcript,
-  )
-
-  const examinationAText = buildExaminationSummary(
-    scenario.roleAName,
     examinationA,
-  )
-  const examinationBText = buildExaminationSummary(
-    scenario.roleBName,
     examinationB,
   )
-
-  const judgePrompt = buildJudgePrompt(scenario, assignment, {
-    debate: debateText,
-    examinationA: examinationAText,
-    examinationB: examinationBText,
-  })
   const judgeModel = parseEvaluationModelId(
     scenario.judgeModel ?? DEFAULT_JUDGE_MODEL,
   )
@@ -974,10 +1005,7 @@ async function getScoreFromScorer(
   transcript: TranscriptTurn[],
   examinationA: JudgeQA[],
   examinationB: JudgeQA[],
-  traceTarget: Pick<
-    ChatCompletionTrace,
-    'matchId' | 'playgroundRunId' | 'scenarioId' | 'userId'
-  >,
+  traceTarget: MatchTraceTarget,
   signal?: AbortSignal,
   completeChat: typeof chatCompletion = chatCompletion,
 ): Promise<{
@@ -1054,6 +1082,7 @@ export async function executeMatchSession(
   const modelA = parseSubmissionModelId(params.modelA)
   const modelB = parseSubmissionModelId(params.modelB)
   const completeChat = params.completeChat ?? chatCompletion
+  const runTraceTarget = buildMatchTraceTarget(params)
 
   // Randomize or restore assignment
   const assignment = params.infoAssignment
@@ -1116,11 +1145,7 @@ export async function executeMatchSession(
       return getJudgeOsEntry(
         judgeOsProvenance,
         request,
-        {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
-          scenarioId: params.scenario.id,
-        },
+        runTraceTarget,
         judgeOsSignal,
         completeChat,
       )
@@ -1171,11 +1196,9 @@ export async function executeMatchSession(
             systemPrompt,
             temperature: 0,
             trace: {
+              ...runTraceTarget,
               attempt,
-              matchId: params.matchId,
               phase: 'dialogue',
-              playgroundRunId: params.playgroundRunId,
-              scenarioId: params.scenario.id,
               side: speaker,
               turnIndex,
               userId: speaker === 'a' ? params.userIdA : params.userIdB,
@@ -1220,9 +1243,7 @@ export async function executeMatchSession(
           params.promptA,
           modelA,
           {
-            matchId: params.matchId,
-            playgroundRunId: params.playgroundRunId,
-            scenarioId: params.scenario.id,
+            ...runTraceTarget,
             userId: params.userIdA,
           },
           params.signal,
@@ -1244,9 +1265,7 @@ export async function executeMatchSession(
           params.promptB,
           modelB,
           {
-            matchId: params.matchId,
-            playgroundRunId: params.playgroundRunId,
-            scenarioId: params.scenario.id,
+            ...runTraceTarget,
             userId: params.userIdB,
           },
           params.signal,
@@ -1265,11 +1284,7 @@ export async function executeMatchSession(
       transcript,
       judgeTranscriptA,
       judgeTranscriptB,
-      {
-        matchId: params.matchId,
-        playgroundRunId: params.playgroundRunId,
-        scenarioId: params.scenario.id,
-      },
+      runTraceTarget,
       params.signal,
       completeChat,
     )
@@ -1292,11 +1307,7 @@ export async function executeMatchSession(
         transcript,
         judgeTranscriptA,
         judgeTranscriptB,
-        {
-          matchId: params.matchId,
-          playgroundRunId: params.playgroundRunId,
-          scenarioId: params.scenario.id,
-        },
+        runTraceTarget,
         params.signal,
         completeChat,
       ))

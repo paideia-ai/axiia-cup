@@ -10,6 +10,9 @@ export type LlmRunSource = 'playground' | 'tournament'
 
 export type LlmCallTraceContext = {
   attempt?: number
+  benchmarkCaseId?: string
+  benchmarkName?: string
+  benchmarkRunId?: string
   matchId?: number
   phase: LlmCallPhase
   playgroundRunId?: number
@@ -53,6 +56,10 @@ function getRunSource(trace: LlmCallTraceContext | undefined) {
 }
 
 export function getLangfuseSessionId(trace: LlmCallTraceContext | undefined) {
+  if (trace?.benchmarkRunId) {
+    return `benchmark:${trace.benchmarkRunId}`
+  }
+
   return trace?.matchId != null
     ? `match:${trace.matchId}`
     : trace?.playgroundRunId != null
@@ -115,6 +122,21 @@ export function buildLlmObservabilityMetadata(params: {
     'attempt',
     params.trace?.attempt ?? null,
   )
+  setStringIfPresent(
+    propagatedMetadata,
+    'benchmarkCaseId',
+    params.trace?.benchmarkCaseId,
+  )
+  setStringIfPresent(
+    propagatedMetadata,
+    'benchmarkName',
+    params.trace?.benchmarkName,
+  )
+  setStringIfPresent(
+    propagatedMetadata,
+    'benchmarkRunId',
+    params.trace?.benchmarkRunId,
+  )
   setStringIfPresent(propagatedMetadata, 'matchId', params.trace?.matchId)
   setStringIfPresent(propagatedMetadata, 'phase', params.trace?.phase)
   setStringIfPresent(
@@ -134,6 +156,9 @@ export function buildLlmObservabilityMetadata(params: {
   const generationMetadata: Record<string, unknown> = {
     ...propagatedMetadata,
     attempt: params.trace?.attempt,
+    benchmarkCaseId: params.trace?.benchmarkCaseId,
+    benchmarkName: params.trace?.benchmarkName,
+    benchmarkRunId: params.trace?.benchmarkRunId,
     matchId: params.trace?.matchId,
     playgroundRunId: params.trace?.playgroundRunId,
     turnIndex: params.trace?.turnIndex ?? null,
@@ -151,6 +176,21 @@ export function buildLlmObservabilityMetadata(params: {
   }
 
   setAttributeIfPresent(otelAttributes, 'axiia.attempt', params.trace?.attempt)
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.benchmark.case_id',
+    params.trace?.benchmarkCaseId,
+  )
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.benchmark.name',
+    params.trace?.benchmarkName,
+  )
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.benchmark.run_id',
+    params.trace?.benchmarkRunId,
+  )
   setAttributeIfPresent(otelAttributes, 'axiia.match.id', params.trace?.matchId)
   setAttributeIfPresent(otelAttributes, 'axiia.phase', params.trace?.phase)
   setAttributeIfPresent(
@@ -186,6 +226,12 @@ export function buildLlmObservabilityMetadata(params: {
       `gateway:${gatewayProvider}`,
       `model:${params.model}`,
       params.trace?.scenarioId ? `scenario:${params.trace.scenarioId}` : null,
+      params.trace?.benchmarkName
+        ? `benchmark:${params.trace.benchmarkName}`
+        : null,
+      params.trace?.benchmarkRunId
+        ? `benchmarkRun:${params.trace.benchmarkRunId}`
+        : null,
       source ? `source:${source}` : null,
       params.trace?.phase ? `phase:${params.trace.phase}` : null,
       params.trace?.side ? `side:${params.trace.side}` : null,

@@ -1,0 +1,309 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": false,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 32,
+  "historyExecutionCountExpected": 28,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 30,
+  "judgeModels": [
+    "deepseek-v4-pro-thinking-explicitly-on",
+    "deepseek-v4-flash-thinking-explicitly-on",
+    "deepseek-v4-flash-thinking-explicitly-off",
+    "deepseek-v3.2-thinking-explicitly-on",
+    "deepseek-v3.2-thinking-explicitly-off",
+    "kimi-k2.7-code-thinking-always-on",
+    "kimi-k2.6-thinking-explicitly-on",
+    "kimi-k2.6-thinking-explicitly-off",
+    "qwen3.6-35b-a3b-thinking-explicitly-on",
+    "qwen3.6-35b-a3b-thinking-explicitly-off",
+    "qwen3.6-27b-thinking-explicitly-on",
+    "qwen3.6-27b-thinking-explicitly-off",
+    "qwen3.5-397b-thinking-explicitly-on",
+    "qwen3.5-397b-thinking-explicitly-off",
+    "glm-5.2-thinking-explicitly-on",
+    "glm-5.2-thinking-explicitly-off",
+    "glm-5.1-thinking-explicitly-on",
+    "glm-5.1-thinking-explicitly-off",
+    "minimax-m2.5-thinking-explicitly-on"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "id": "deepseek-v4-pro-thinking-explicitly-on",
+      "label": "DeepSeek V4 Pro (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Flash",
+      "id": "deepseek-v4-flash-thinking-explicitly-on",
+      "label": "DeepSeek V4 Flash (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Flash",
+      "id": "deepseek-v4-flash-thinking-explicitly-off",
+      "label": "DeepSeek V4 Flash (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V3.2",
+      "id": "deepseek-v3.2-thinking-explicitly-on",
+      "label": "DeepSeek V3.2 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V3.2",
+      "id": "deepseek-v3.2-thinking-explicitly-off",
+      "label": "DeepSeek V3.2 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "moonshotai/Kimi-K2.7-Code",
+      "id": "kimi-k2.7-code-thinking-always-on",
+      "label": "Kimi K2.7 Code (thinking always on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "moonshot",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "id": "kimi-k2.6-thinking-explicitly-on",
+      "label": "Kimi K2.6 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "both",
+      "underlyingProvider": "moonshot",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "id": "kimi-k2.6-thinking-explicitly-off",
+      "label": "Kimi K2.6 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "both",
+      "underlyingProvider": "moonshot",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-35B-A3B",
+      "id": "qwen3.6-35b-a3b-thinking-explicitly-on",
+      "label": "Qwen3.6 35B A3B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "allowMissingReasoningTokensWhenDisabled": true,
+      "apiModel": "Qwen/Qwen3.6-35B-A3B",
+      "id": "qwen3.6-35b-a3b-thinking-explicitly-off",
+      "label": "Qwen3.6 35B A3B (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "qwen",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "id": "qwen3.6-27b-thinking-explicitly-on",
+      "label": "Qwen3.6 27B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "allowMissingReasoningTokensWhenDisabled": true,
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "id": "qwen3.6-27b-thinking-explicitly-off",
+      "label": "Qwen3.6 27B (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "qwen",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.5-397B-A17B",
+      "id": "qwen3.5-397b-thinking-explicitly-on",
+      "label": "Qwen3.5 397B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.5-397B-A17B",
+      "id": "qwen3.5-397b-thinking-explicitly-off",
+      "label": "Qwen3.5 397B (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "qwen",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "zai-org/GLM-5.2",
+      "id": "glm-5.2-thinking-explicitly-on",
+      "label": "GLM 5.2 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "native-thinking-enabled",
+      "underlyingProvider": "zai",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "zai-org/GLM-5.2",
+      "id": "glm-5.2-thinking-explicitly-off",
+      "label": "GLM 5.2 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "native-thinking-disabled",
+      "underlyingProvider": "zai",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "Pro/zai-org/GLM-5.1",
+      "id": "glm-5.1-thinking-explicitly-on",
+      "label": "GLM 5.1 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "zai",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Pro/zai-org/GLM-5.1",
+      "id": "glm-5.1-thinking-explicitly-off",
+      "label": "GLM 5.1 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "zai",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "MiniMaxAI/MiniMax-M2.5",
+      "id": "minimax-m2.5-thinking-explicitly-on",
+      "label": "MiniMax M2.5 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "minimax",
+      "verifyReasoningEnabled": true
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 300000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-honnoji-thinking-matrix-20260713T040900Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": true,
+  "runId": "d389bf7b-15b9-4556-9a8e-22caf00ef0ef",
+  "scenarioIds": [
+    "honnoji-decision"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0,
+  "judgeCacheStrategy": "warm-first-per-model-history"
+}

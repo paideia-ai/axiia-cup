@@ -1,0 +1,258 @@
+{
+  "config": {
+    "benchmarkName": "judge-sensitivity",
+    "caseFilter": null,
+    "command": "judge",
+    "concurrency": 10,
+    "dryRun": false,
+    "git": {
+      "branch": "trolley-bench",
+      "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+      "dirty": true
+    },
+    "historyCountExpected": 32,
+    "historyExecutionCountExpected": 28,
+    "jobTimeoutMs": 1200000,
+    "judgeConcurrency": 5,
+    "judgeModels": [
+      "deepseek-r1-thinking-explicitly-on",
+      "deepseek-r1-thinking-explicitly-off"
+    ],
+    "judgeModelDefinitions": [
+      {
+        "apiModel": "deepseek-ai/DeepSeek-R1",
+        "id": "deepseek-r1-thinking-explicitly-on",
+        "label": "DeepSeek R1 (thinking explicitly on)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOnRequest": "enable-thinking-true",
+        "underlyingProvider": "deepseek",
+        "verifyReasoningEnabled": true
+      },
+      {
+        "apiModel": "deepseek-ai/DeepSeek-R1",
+        "id": "deepseek-r1-thinking-explicitly-off",
+        "label": "DeepSeek R1 (thinking explicitly off)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOffRequest": "enable-thinking-false",
+        "underlyingProvider": "deepseek",
+        "verifyReasoningDisabled": true
+      }
+    ],
+    "judgeRepeats": 10,
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "llmCallTimeoutMs": 300000,
+    "outputDir": "docs/bench/runs/judge-sensitivity-prod-honnoji-r1-lane-20260713T044912Z",
+    "pairFilter": null,
+    "persistLlmCalls": false,
+    "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+    "playerModel": "glm-5.2",
+    "playerModelDefinition": {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+    "resume": true,
+    "runId": "6e87f6c9-e6f5-4564-af4d-06812e03bee2",
+    "scenarioIds": [
+      "honnoji-decision"
+    ],
+    "scenarioSource": {
+      "apiUrl": "https://axiia-cup.isofucius.cn",
+      "type": "api",
+      "note": "production API scenario snapshot via admin CLI token; three-sentence constrained"
+    },
+    "selectedSamplePaths": {
+      "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+      "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+    },
+    "temperature": 0
+  },
+  "generatedAt": "2026-07-13T04:51:26.826Z",
+  "histories": {
+    "byScenario": {
+      "shangyang-court": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "honnoji-decision": {
+        "completed": 32,
+        "errored": 0,
+        "expected": 32,
+        "rows": 32
+      },
+      "trolley-problem": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      }
+    },
+    "byStatus": {
+      "ok": 32
+    },
+    "summary": {
+      "completed": 32,
+      "errored": 0,
+      "expected": 32,
+      "executableExpected": 28,
+      "reused": 4,
+      "totalRows": 32
+    }
+  },
+  "judge": {
+    "plannedJobs": 640,
+    "results": {
+      "completed": 80,
+      "errored": 60,
+      "expected": 640,
+      "parseFailures": 0,
+      "reasoningVerifiedOff": 40,
+      "reasoningVerifiedOn": 40
+    },
+    "sensitivity": {
+      "details": [
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-off",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": -1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-on",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": -1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-off",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": -1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-on",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": -1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-off",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": 1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-on",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": 0,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 5,
+          "variedSideWinRate": 0.5
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-off",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": 1,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-r1-thinking-explicitly-on",
+          "pairId": "chosokabe__hosokawa_fujitaka",
+          "rawMargin": 0,
+          "scenarioId": "honnoji-decision",
+          "total": 10,
+          "unit": "chosokabe__hosokawa_fujitaka",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 5,
+          "variedSideWinRate": 0.5
+        }
+      ],
+      "modelLevel": [
+        {
+          "averageAbsoluteSensitivity": 0.6666666666666666,
+          "badToGoodSensitivity": 1,
+          "fixedHistoryInstability": 0,
+          "judgeModel": "deepseek-r1-thinking-explicitly-off",
+          "level3To4Sensitivity": 0
+        },
+        {
+          "averageAbsoluteSensitivity": 0.3333333333333333,
+          "badToGoodSensitivity": 0.5,
+          "fixedHistoryInstability": 0.125,
+          "judgeModel": "deepseek-r1-thinking-explicitly-on",
+          "level3To4Sensitivity": 0
+        }
+      ]
+    }
+  },
+  "kind": "judge_sensitivity.summary"
+}

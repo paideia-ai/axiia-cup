@@ -1,0 +1,74 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": false,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 8,
+  "historyExecutionCountExpected": 8,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 30,
+  "judgeModels": [
+    "minimax-m2.5-thinking-explicitly-on"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "apiModel": "MiniMaxAI/MiniMax-M2.5",
+      "id": "minimax-m2.5-thinking-explicitly-on",
+      "label": "MiniMax M2.5 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "minimax",
+      "verifyReasoningEnabled": true
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 300000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-minimax-thinking-on-20260712T200536Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": true,
+  "runId": "f0a3aacf-3cde-489e-a25a-c0f027245a94",
+  "scenarioIds": [
+    "shangyang-court"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z; Seven Level-3 repeat-1 judge rows imported from verified thinking-on preflight"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0,
+  "runLabel": "Shangyang judge sensitivity: MiniMax M2.5 thinking explicitly on; reuses 8 histories from judge-sensitivity-prod-20260708T200403Z"
+}

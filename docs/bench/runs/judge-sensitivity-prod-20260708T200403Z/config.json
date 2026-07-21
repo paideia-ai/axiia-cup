@@ -1,0 +1,238 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": true,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 80,
+  "historyExecutionCountExpected": 70,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 20,
+  "judgeModels": [
+    "deepseek-v3.2",
+    "deepseek-v4-pro",
+    "kimi-k2.6",
+    "qwen3.6-27b",
+    "minimax-m2.5",
+    "glm-5.1",
+    "glm-5.2",
+    "qwen3.5-397b",
+    "deepseek-v4-flash",
+    "deepseek-r1",
+    "qwen3.6-35b-a3b",
+    "glm-4.5-air",
+    "kimi-k2.7-code",
+    "gpt-4.1",
+    "gpt-5.4-mini"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "id": "deepseek-v3.2",
+      "label": "DeepSeek V3.2",
+      "apiModel": "deepseek-ai/DeepSeek-V3.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "id": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "moonshot"
+    },
+    {
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "id": "minimax-m2.5",
+      "label": "MiniMax M2.5",
+      "apiModel": "MiniMaxAI/MiniMax-M2.5",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "minimax"
+    },
+    {
+      "id": "glm-5.1",
+      "label": "GLM-5.1",
+      "apiModel": "Pro/zai-org/GLM-5.1",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    {
+      "id": "qwen3.5-397b",
+      "label": "Qwen3.5 397B",
+      "apiModel": "Qwen/Qwen3.5-397B-A17B",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Flash",
+      "id": "deepseek-v4-flash",
+      "label": "DeepSeek V4 Flash",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-R1",
+      "id": "deepseek-r1",
+      "label": "DeepSeek R1",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-35B-A3B",
+      "id": "qwen3.6-35b-a3b",
+      "label": "Qwen3.6 35B A3B",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "apiModel": "zai-org/GLM-4.5-Air",
+      "id": "glm-4.5-air",
+      "label": "GLM-4.5 Air",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    {
+      "apiModel": "moonshotai/Kimi-K2.7-Code",
+      "id": "kimi-k2.7-code",
+      "label": "Kimi K2.7 Code",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "moonshot"
+    },
+    {
+      "id": "gpt-4.1",
+      "label": "GPT-4.1",
+      "apiModel": "gpt-4.1",
+      "provider": "openai",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "openai"
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "label": "GPT-5.4 mini",
+      "apiModel": "gpt-5.4-mini",
+      "provider": "openai",
+      "surfaces": [
+        "evaluation"
+      ],
+      "underlyingProvider": "openai"
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 180000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-20260708T200403Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": true,
+  "runId": "a021c932-766b-45f8-8b40-2d80b40a932b",
+  "scenarioIds": [
+    "shangyang-court",
+    "honnoji-decision",
+    "trolley-problem"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0
+}

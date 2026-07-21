@@ -1,0 +1,486 @@
+{
+  "config": {
+    "benchmarkName": "judge-sensitivity",
+    "caseFilter": null,
+    "command": "judge",
+    "concurrency": 10,
+    "dryRun": false,
+    "git": {
+      "branch": "trolley-bench",
+      "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+      "dirty": true
+    },
+    "historyCountExpected": 8,
+    "historyExecutionCountExpected": 8,
+    "jobTimeoutMs": 1200000,
+    "judgeConcurrency": 30,
+    "judgeModels": [
+      "glm-5.1-thinking-explicitly-off",
+      "glm-5.2-thinking-explicitly-off",
+      "kimi-k2.6-thinking-explicitly-off"
+    ],
+    "judgeModelDefinitions": [
+      {
+        "apiModel": "Pro/zai-org/GLM-5.1",
+        "id": "glm-5.1-thinking-explicitly-off",
+        "label": "GLM 5.1 (thinking explicitly off)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOffRequest": "enable-thinking-false",
+        "underlyingProvider": "zai",
+        "verifyReasoningDisabled": true
+      },
+      {
+        "apiModel": "zai-org/GLM-5.2",
+        "id": "glm-5.2-thinking-explicitly-off",
+        "label": "GLM 5.2 (thinking explicitly off)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOffRequest": "native-thinking-disabled",
+        "underlyingProvider": "zai",
+        "verifyReasoningDisabled": true
+      },
+      {
+        "apiModel": "Pro/moonshotai/Kimi-K2.6",
+        "id": "kimi-k2.6-thinking-explicitly-off",
+        "label": "Kimi K2.6 (thinking explicitly off)",
+        "provider": "siliconflow",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOffRequest": "both",
+        "underlyingProvider": "moonshot",
+        "verifyReasoningDisabled": true
+      }
+    ],
+    "judgeRepeats": 10,
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "llmCallTimeoutMs": 180000,
+    "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-thinking-off-20260712T084436Z",
+    "pairFilter": null,
+    "persistLlmCalls": false,
+    "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+    "playerModel": "glm-5.2",
+    "playerModelDefinition": {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+    "resume": false,
+    "runId": "57251724-3b5d-46f0-925c-f19810ab766c",
+    "scenarioIds": [
+      "shangyang-court"
+    ],
+    "scenarioSource": {
+      "apiUrl": "https://axiia-cup.isofucius.cn",
+      "type": "api",
+      "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z"
+    },
+    "selectedSamplePaths": {
+      "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+      "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+    },
+    "temperature": 0,
+    "runLabel": "Shangyang judge sensitivity: thinking explicitly off; reuses 8 histories from judge-sensitivity-prod-20260708T200403Z"
+  },
+  "generatedAt": "2026-07-12T08:50:40.335Z",
+  "histories": {
+    "byScenario": {
+      "shangyang-court": {
+        "completed": 8,
+        "errored": 0,
+        "expected": 8,
+        "rows": 8
+      },
+      "honnoji-decision": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "trolley-problem": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      }
+    },
+    "byStatus": {
+      "ok": 8
+    },
+    "summary": {
+      "completed": 8,
+      "errored": 0,
+      "expected": 8,
+      "executableExpected": 8,
+      "reused": 1,
+      "totalRows": 8
+    }
+  },
+  "judge": {
+    "plannedJobs": 240,
+    "results": {
+      "completed": 240,
+      "errored": 0,
+      "expected": 240,
+      "parseFailures": 0,
+      "reasoningVerifiedOff": 240
+    },
+    "sensitivity": {
+      "details": [
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -0.8,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 1,
+          "variedSideWinRate": 0.1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 0.2,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 6,
+          "variedSideWinRate": 0.6
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": -0.2,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 6,
+          "variedSideWinRate": 0.6
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        }
+      ],
+      "modelLevel": [
+        {
+          "averageAbsoluteSensitivity": 0.3333333333333333,
+          "badToGoodSensitivity": 0.5,
+          "fixedHistoryInstability": 0,
+          "judgeModel": "glm-5.1-thinking-explicitly-off",
+          "level3To4Sensitivity": 0
+        },
+        {
+          "averageAbsoluteSensitivity": 0.31666666666666665,
+          "badToGoodSensitivity": 0.475,
+          "fixedHistoryInstability": 0.011250000000000001,
+          "judgeModel": "glm-5.2-thinking-explicitly-off",
+          "level3To4Sensitivity": 0
+        },
+        {
+          "averageAbsoluteSensitivity": 0.3666666666666667,
+          "badToGoodSensitivity": 0.25,
+          "fixedHistoryInstability": 0.06,
+          "judgeModel": "kimi-k2.6-thinking-explicitly-off",
+          "level3To4Sensitivity": 0.2
+        }
+      ]
+    }
+  },
+  "kind": "judge_sensitivity.summary"
+}

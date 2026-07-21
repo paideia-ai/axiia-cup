@@ -1,0 +1,973 @@
+{
+  "config": {
+    "agentModelPolicy": "saved",
+    "characterPairs": [
+      {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      }
+    ],
+    "concurrency": 2,
+    "dbPath": null,
+    "dryRun": false,
+    "inventoryPath": "docs/competition/prompts/honnoji-user-samples/inventory.json",
+    "judgeModel": "deepseek-v3.2",
+    "judgeModelPolicy": "scenario-current",
+    "judgePromptHash": "780aa199af835a1703238091bdea3e4547516b31d419fcb70e4a8398d0fb95bd",
+    "jobTimeoutMs": 900000,
+    "outputDir": "docs/bench/runs/honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+    "persistLlmCalls": false,
+    "runId": "honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+    "savedModelUpgradePolicy": {
+      "enabled": true,
+      "mappings": {
+        "deepseek-v3.2": "deepseek-v4-pro",
+        "kimi-k2.5": "kimi-k2.6",
+        "minimax-m3": "minimax-m2.5",
+        "qwen3.5-397b-a17b": "qwen3.6-27b"
+      }
+    },
+    "scenarioId": "honnoji-decision",
+    "scenarioSource": "inventory",
+    "scenarioSnapshotHash": "4f517b198c4cf909afc7a48b575e47c3467f1ce669d80f8c99aa8ed1f59ce410",
+    "selectedPairs": [
+      "chosokabe__akechi_ashigaru",
+      "yoshiaki_envoy__akechi_ashigaru"
+    ],
+    "selectedSamples": {
+      "attack": [
+        {
+          "displayName": "yisiliu",
+          "email": "yisiliu@gmail.com",
+          "model": "deepseek-v4-pro",
+          "modelWasUpgraded": false,
+          "promptChars": 851,
+          "promptHash": "fb4e6add8ad7c8aa539b72cd9c37cbcda69da81be2290c1ca2e9a2290db8bbcf",
+          "roleAOptionId": "chosokabe",
+          "roleBOptionId": "akechi_ashigaru",
+          "sampleId": "sub-487-v22-u19-a-chosokabe",
+          "savedModel": "deepseek-v4-pro",
+          "side": "a",
+          "sourceSubmissionId": 487,
+          "userId": 19,
+          "version": 22
+        },
+        {
+          "displayName": "Kurt",
+          "email": "fymidi@gmail.com",
+          "model": "deepseek-v4-pro",
+          "modelWasUpgraded": true,
+          "promptChars": 826,
+          "promptHash": "775e6a6a9f979b697b854759f568263da6a6184f196d57229d1cf825838cba84",
+          "roleAOptionId": "yoshiaki_envoy",
+          "roleBOptionId": "akechi_ashigaru",
+          "sampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+          "savedModel": "deepseek-v3.2",
+          "side": "a",
+          "sourceSubmissionId": 372,
+          "userId": 23,
+          "version": 26
+        }
+      ],
+      "defense": [
+        {
+          "displayName": "yisiliu",
+          "email": "yisiliu@gmail.com",
+          "model": "deepseek-v4-pro",
+          "modelWasUpgraded": false,
+          "promptChars": 776,
+          "promptHash": "d987b9eb2c169893d0e216ca65c64b13ee48efb39cc51f9430ec0f76df813364",
+          "roleAOptionId": "chosokabe",
+          "roleBOptionId": "akechi_ashigaru",
+          "sampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+          "savedModel": "deepseek-v4-pro",
+          "side": "b",
+          "sourceSubmissionId": 398,
+          "userId": 19,
+          "version": 5
+        },
+        {
+          "displayName": "yisiliu",
+          "email": "yisiliu@gmail.com",
+          "model": "deepseek-v4-pro",
+          "modelWasUpgraded": false,
+          "promptChars": 776,
+          "promptHash": "d987b9eb2c169893d0e216ca65c64b13ee48efb39cc51f9430ec0f76df813364",
+          "roleAOptionId": "yoshiaki_envoy",
+          "roleBOptionId": "akechi_ashigaru",
+          "sampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+          "savedModel": "deepseek-v4-pro",
+          "side": "b",
+          "sourceSubmissionId": 398,
+          "userId": 19,
+          "version": 5
+        }
+      ]
+    },
+    "selectedSamplesPath": "docs/competition/prompts/honnoji-user-samples/selected-samples.akechi-deepseek.json",
+    "trueRequestPairCount": 18
+  },
+  "generatedAt": "2026-07-02T17:10:10.306Z",
+  "kind": "honnoji.win_rate_results",
+  "results": [
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4411,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:37.594Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM1-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM1-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4397,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:37.582Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM1-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM1-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4100,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:41.687Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM1-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM1-AS3",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4091,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:41.687Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM2-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM2-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4103,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:45.791Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM2-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM2-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4100,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:45.791Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM2-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM2-AS3",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4094,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:49.888Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM3-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM3-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4104,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:49.900Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM3-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM3-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-487-v22-u19-a-chosokabe",
+      "characterPair": {
+        "id": "chosokabe__akechi_ashigaru",
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4087,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:53.978Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "CM3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "chosokabe__akechi_ashigaru__sub-487-v22-u19-a-chosokabe__sub-398-v5-u19-b-akechi_ashigaru__CM3-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "CM3-AS3",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4075,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:53.978Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA1-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA1-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4086,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:58.065Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA1-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA1-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4089,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:09:58.070Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA1"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA1-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA1-AS3",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4082,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:02.149Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA2-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA2-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4081,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:02.153Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA2-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA2-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4077,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:06.228Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA2"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA2-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA2-AS3",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4075,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:06.229Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS1"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA3-AS1",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA3-AS1",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4071,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:10.300Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS2"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA3-AS2",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA3-AS2",
+      "winner": null
+    },
+    {
+      "attackSampleId": "sub-372-v26-u23-a-yoshiaki_envoy",
+      "characterPair": {
+        "id": "yoshiaki_envoy__akechi_ashigaru",
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru"
+      },
+      "defenseSampleId": "sub-398-v5-u19-b-akechi_ashigaru",
+      "durationMs": 4075,
+      "error": "SiliconFlow request failed (403): 403 status code (no body)",
+      "generatedAt": "2026-07-02T17:10:10.306Z",
+      "infoAssignment": {
+        "roleAFalseInfoIds": [],
+        "roleATrueRequestIds": [
+          "YA3"
+        ],
+        "roleBFalseInfoIds": [],
+        "roleBTrueRequestIds": [
+          "AS3"
+        ],
+        "selectedCaseIds": []
+      },
+      "jobId": "yoshiaki_envoy__akechi_ashigaru__sub-372-v26-u23-a-yoshiaki_envoy__sub-398-v5-u19-b-akechi_ashigaru__YA3-AS3",
+      "judgeDecision": null,
+      "judgeTranscriptA": null,
+      "judgeTranscriptB": null,
+      "judgment": null,
+      "judgmentParseError": null,
+      "langfuseSessionId": "benchmark:honnoji-win-rate-20260702T154153Z-akechi-deepseek",
+      "models": {
+        "agentA": "deepseek-v4-pro",
+        "agentB": "deepseek-v4-pro",
+        "judge": "deepseek-v3.2"
+      },
+      "policyWinner": "unknown",
+      "requestDecisions": {},
+      "scoreA": null,
+      "scoreB": null,
+      "status": "error",
+      "transcript": null,
+      "trueRequestPairId": "YA3-AS3",
+      "winner": null
+    }
+  ],
+  "summary": {
+    "byPair": {
+      "chosokabe__akechi_ashigaru": {
+        "completed": 0,
+        "errored": 9,
+        "pairId": "chosokabe__akechi_ashigaru",
+        "policyAssassinationWins": 0,
+        "policyAvoidWins": 0,
+        "policyUnknown": 0,
+        "roleAName": "长宗我部元亲阵营",
+        "roleAOptionId": "chosokabe",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru",
+        "scoreAssassinationWins": 0,
+        "scoreAvoidWins": 0,
+        "scoreDraws": 0,
+        "total": 9
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "completed": 0,
+        "errored": 9,
+        "pairId": "yoshiaki_envoy__akechi_ashigaru",
+        "policyAssassinationWins": 0,
+        "policyAvoidWins": 0,
+        "policyUnknown": 0,
+        "roleAName": "足利义昭的使者",
+        "roleAOptionId": "yoshiaki_envoy",
+        "roleBName": "明智军中的足轻",
+        "roleBOptionId": "akechi_ashigaru",
+        "scoreAssassinationWins": 0,
+        "scoreAvoidWins": 0,
+        "scoreDraws": 0,
+        "total": 9
+      }
+    },
+    "completed": 0,
+    "errored": 18,
+    "totalJobs": 18
+  }
+}

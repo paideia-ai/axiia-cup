@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Judge Sensitivity Benchmark</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; color: #111827; }
+    h1, h2 { margin-bottom: 8px; }
+    .meta { color: #4b5563; line-height: 1.55; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0 28px; font-size: 14px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: left; }
+    th { background: #f3f4f6; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Judge Sensitivity Benchmark</h1>
+  <div class="meta">
+    <div>Run ID: <code>f0a3aacf-3cde-489e-a25a-c0f027245a94</code></div>
+    <div>Scenarios: shangyang-court</div>
+    <div>Histories: 8/8 completed</div>
+    <div>Planned judge calls: 80; completed: 80</div>
+    <div>Reasoning-off verifications: 0</div>
+    <div>Reasoning-on verifications: 80</div>
+  </div>
+  <h2>Model-Level Sensitivity</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Avg abs sensitivity</th><th>Bad to good</th><th>Level 3 to 4</th><th>Fixed-history instability</th></tr></thead>
+    <tbody><tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>31.7%</td><td>42.5%</td><td>10.0%</td><td>3.1%</td></tr></tbody>
+  </table>
+  <h2>Scenario / Pair / Case Details</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Scenario</th><th>Unit</th><th>Varied side</th><th>Level</th><th>Varied-side win rate</th><th>Raw A-B margin</th><th>N</th></tr></thead>
+    <tbody><tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>a</td><td>1</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>a</td><td>2</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>a</td><td>3</td><td>80.0%</td><td>0.600</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>a</td><td>4</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>b</td><td>1</td><td>10.0%</td><td>0.800</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>b</td><td>3</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>MiniMax M2.5 (thinking explicitly on)</td><td>shangyang-court</td><td>shangyang-court</td><td>b</td><td>4</td><td>0.0%</td><td>1.000</td><td>10</td></tr></tbody>
+  </table>
+</body>
+</html>

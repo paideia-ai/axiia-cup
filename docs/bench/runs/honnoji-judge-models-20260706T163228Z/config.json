@@ -1,0 +1,67 @@
+{
+  "concurrency": 2,
+  "dryRun": false,
+  "inputPath": "docs/bench/runs/honnoji-win-rate-20260702T154153Z/results.json",
+  "inventoryPath": "docs/competition/prompts/honnoji-user-samples/inventory.json",
+  "jobTimeoutMs": 900000,
+  "judgeModels": [
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "gatewayProvider": "siliconflow",
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "gatewayProvider": "siliconflow",
+      "id": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "underlyingProvider": "moonshot"
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "gatewayProvider": "siliconflow",
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "apiModel": "Pro/zai-org/GLM-5.1",
+      "gatewayProvider": "siliconflow",
+      "id": "glm-5.1",
+      "label": "GLM-5.1",
+      "underlyingProvider": "zai"
+    },
+    {
+      "apiModel": "MiniMaxAI/MiniMax-M2.5",
+      "gatewayProvider": "siliconflow",
+      "id": "minimax-m2.5",
+      "label": "MiniMax M2.5",
+      "underlyingProvider": "minimax"
+    },
+    {
+      "apiModel": "gpt-5.4",
+      "gatewayProvider": "openai",
+      "id": "gpt-5.4",
+      "label": "GPT-5.4",
+      "underlyingProvider": "openai"
+    },
+    {
+      "apiModel": "claude-opus-4-6",
+      "gatewayProvider": "anthropic",
+      "id": "claude-opus-4-6",
+      "label": "Claude Opus 4.6",
+      "underlyingProvider": "anthropic"
+    }
+  ],
+  "limitHistories": null,
+  "outputDir": "docs/bench/runs/honnoji-judge-models-20260706T163228Z",
+  "repeats": 1,
+  "resume": true,
+  "runId": "honnoji-judge-models-20260706T163228Z",
+  "scenarioId": "honnoji-decision",
+  "scenarioSnapshotHash": "3013b0f6062404d4561fcda8e7f9e9887798ca9fb33f20d08ed1f92ca62d1b0b",
+  "sourceJudgeModel": "deepseek-v3.2",
+  "sourceRunId": "honnoji-win-rate-20260702T154153Z"
+}

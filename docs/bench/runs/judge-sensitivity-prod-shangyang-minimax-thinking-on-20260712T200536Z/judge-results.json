@@ -1,0 +1,3936 @@
+{
+  "dryRun": false,
+  "generatedAt": "2026-07-12T20:11:42.544Z",
+  "kind": "judge_sensitivity.judge_results",
+  "plannedJobs": 80,
+  "results": [
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 22993,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:28.646Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有话要说。\\n\\n卫鞅客卿，汝三度入宫，前两次谈帝道、王道，寡人不以为意；第三次谈霸道，寡人略有兴趣，遂召汝与太师甘龙于朝堂之上，当众辩论，以决国是。\\n\\n然今日朝堂之上，汝所言为何？满口符号乱码，语无伦次，寡人一句也听不懂！甘龙太师正当言路，条理清晰，言之有物；而汝身为客卿，受寡人厚遇，却连自己的变法主张都说不清楚——如此之人，寡人如何能将秦国命运托付于汝？\\n\\n变法乃国之大事，非三尺孩童过家儿戏，须得明明白白、陈述利害、接受质询。汝在朝堂之上如此表现，寡人不得不疑：汝究竟有没有真正的治国良策？还是只会空言欺世？\\n\\n今寡人裁决：\\n\\n一者，关于国是——维持现状。祖宗之法行之百年，秦国虽弱，然根基尚在。变法之事，暂缓议之。\\n\\n二者，关于卫鞅所请三事——\\n- 督察宗室之权：王公犯法皆得论处？此权之大，足以动摇宗庙根本。汝初来乍到，毫无寸功，寡人安敢将此权授之？不同意。\\n- 擢景监为大夫：景监虽为寡人近臣，然入朝参与国政，须凭政绩资历，岂可因举荐而得？不同意。\\n- 举荐各县县令之权：县令乃一县父母，直接关乎民生，汝欲染指此权，用意何在？不同意。\\n\\n三者，关于甘龙太师所请三事——\\n- 宫禁宿卫由世族子弟统领：此乃秦室安危所系，世族与国同休共戚，寡人深以为是。同意。\\n- 太师府议政之权：甘龙太师德高望重，辅政多年，凡国之大事经太师府议定，于国有益。同意。\\n- 世族封地食邑世代相传：此乃祖宗成法，维护世族利益，方能稳固国本。同意。\\n\\n寡人言尽于此。卫鞅客卿，汝且退下，好生反思，若果真有治国良策，日后徐徐道来不迟。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 476,
+        "reasoningTokens": 307,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 16583,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:22.245Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论，自有决断。\\n\\n卫鞅客卿三度入宫，前两次谈帝道、王道，寡人不取；第三次谈霸道，寡人略有兴趣，遂召今日之辩。然朝堂之上，卫鞅语无伦次，以乱码应对，寡人实不知其变法之策究竟何在、其方略究竟何如。甘龙太师所言有理——变法乃国之大事，岂可轻率？祖宗之法百年基业，岂可因一言而动？\\n\\n且卫鞅身为客卿，于朝堂之上不能畅所欲言、条理分明，寡人如何能将秦国命运托付于此人？\\n\\n甘龙太师所请三事，皆为秦国安危计。宫禁宿卫乃心腹之防，交由世族子弟统领，方与寡人同心同德，此乃正理；太师府议政之权，乃祖宗成法，有助于朝议稳妥；世族封地食邑世代相传，乃宗室之基，不可轻动。此三事寡人皆准。\\n\\n卫鞅客卿所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——寡人不准。盖因卫鞅变法之策尚不明晰，朝堂辩论又不能自圆其说，骤然授此大权，恐非秦国之福。\\n\\n着令：此事已决，诸卿勿再争议。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 480,
+        "reasoningTokens": 298,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 19822,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:25.480Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今日有话要说。\\n\\n卫鞅客卿，汝三度入宫，初谈帝道，再论王道，三说霸道，寡人念汝尚有可用之才，故今日召汝与太师当面辩论，欲闻汝之变法良策。然而汝在朝堂之上，言语混乱，符号满篇，寡人竟不知汝所云何事！汝身为客卿，欲变秦国之法，却连基本的治国之道都无法言明，寡人如何能将秦国民众的福祉托付于汝？\\n\\n太师甘龙，虽言保守，然其所论皆切中要害。秦国百年基业，赖祖宗之法以立；宗室世族，与秦同休共戚，乃寡人立国之本。太师所请三事——宫禁宿卫由世族子弟统领、太师府议政之权、世族封地食邑世代相传——皆为稳妥之策，寡人准奏。\\n\\n变法非不可议，然须待其人。卫鞅客卿，汝且退下，好生思量，待汝能言之有物、论之有道时，再来面见寡人。\\n\\n今日朝议，就此为止。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 796,
+        "reasoningTokens": 468,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1.25,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1.25",
+        "winner": "b"
+      },
+      "durationMs": 19726,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:25.384Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n卫鞅客卿，三度入宫，初谈帝道、王道，寡人不以为意；再谈霸道，寡人略有心动。然今日朝堂辩论，卫鞅竟以乱码符号应对，语无伦次，无法将变法之策清晰陈于寡人之前。变法乃国之大事，非三言两语可决，须得君臣之间坦诚相见、反复论证方可。卫鞅既不能言，寡人何以能将秦国命运托付于此人？\\n\\n太师甘龙，所言皆有理有据。祖宗之法不可轻动，此乃稳国之基；世族与秦同休共戚，此乃安国之策。寡人深以为是。\\n\\n今寡人裁决：\\n\\n一、变法之事，暂缓议之。卫鞅可归去好生思量，待何时能将对秦之策条理分明道于寡人面前，再议不迟。\\n\\n二、卫鞅所请三事——督察宗室、擢景监为大夫、举荐县令——寡人皆不准。督察宗室之权关乎国本，岂可轻授外客？景监虽为寡人近臣，然擢升须凭功绩，岂可因举荐之功而得？举荐县令之权尤重，此乃人事大权，岂可假手于尚未证明其能之人？\\n\\n三、甘龙所请——宫禁宿卫由世族子弟统领，准；世族封地食邑世代相传，准。此二者皆关乎秦室安危与功臣之义，寡人当从之。然太师府议政之权，寡人不准。国之大事，当由寡人乾纲独断，岂可由太师府专之？\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 600,
+        "reasoningTokens": 401,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 320866,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:26.524Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"维持现状\",\n  \"requests\": {\n    \"SR1\": \"不同意\",\n    \"SR2\": \"不同意\",\n    \"SR3\": \"不同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"同意\",\n    \"GR3\": \"同意\"\n  },\n  \"speech\": \"寡人端坐朝堂，聆听良久，今有决断。\\n\\n卫鞅客卿三度入宫，前两次谈帝道、王道，寡人不取；第三次谈霸道，寡人略有兴趣，故今日召其与太师甘龙当廷辩论，以观其才。岂料卫鞅登堂之后，语无伦次，乱码盈耳，寡人竟不能辨其言为何物！朝堂乃国家重地，岂容如此儿戏？寡人观其言、察其行，卫鞅虽有变法之名，却无变法之实；虽有图强之志，却无图强之能。如此人物，焉能托付国事？\\n\\n太师甘龙，老成谋国，言辞恳切，所论皆切中要害。宫禁宿卫乃秦国安危所系，交给世族子弟统领，寡人方能安枕；太师府议政之权，乃是祖宗成法，理应尊重；世族封地食邑，乃是先君所赐，岂可轻易更张？\\n\\n寡人决断：\\n一、变法之事，暂缓议之。卫鞅需回去好生思量，待能正常陈说变法之策时，再来面见寡人。\\n二、宫禁宿卫，仍由世族子弟统领，此乃祖制，不可轻改。\\n三、太师府议政之权，依甘龙所请，凡国之大事，须经太师府议定。\\n四、世族封地食邑，世代相传，不受裁减。\\n\\n寡人求贤若渴，但贤才须有贤才的样子。卫鞅若真心为秦，当先学会如何说话、如何做事。退下吧。\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 546,
+        "reasoningTokens": 354,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 25552,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:31.212Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论，至今心中已有决断。\\n\\n卫鞅客卿，三度入宫，前两次谈帝道、王道，寡人不以为意；第三次谈霸道，寡人略有兴趣，遂召你今日与太师辩论。然而你今日在朝堂之上在说些什么？寡人听见的尽是些符号乱码，咿咿呀呀，莫说变法大计，便是连一句完整的话都说不出来！这就是你要教寡人如何治秦的良策吗？\\n\\n寡人求贤若渴，发布求贤令，原是指望有经天纬地之才来辅佐寡人振兴秦国。可你卫鞅入得朝堂，却连话都说不利索，如何能托付大事？寡人给你三次机会，你第一次第二次说得天花乱坠却不合寡人心意，第三次勉强及格，今日却连话都说不清楚！\\n\\n太师甘龙，所言皆有理有据。变法之事牵一发而动全身，不可不慎。宫禁宿卫乃秦国安危之根本，交给世族子弟统领，寡人放心。太师府议政之权可加，如此重大决策可集思广益。至于世族封地食邑，只要他们忠于秦室，寡人自然不会亏待他们。\\n\\n寡人决断：\\n一、卫鞅客卿的变法之议，暂不予推行。并非寡人不愿变法，实是你卫鞅今日在朝堂上的表现令寡人无法信服。你且回去好生思量，日后若能言之有物，再来面见寡人不迟。\\n二、宫禁宿卫仍由世族子弟统领，此事就依太师之意。\\n三、太师府加议政之权，凡国之大事，先经太师府议定再奏寡人。\\n四、世族封地食邑世代相传，寡人予以保证。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 856,
+        "reasoningTokens": 522,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 18196,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:23.856Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n卫鞅客卿，三度入宫，初谈帝道、王道，寡人不以为意；再谈霸道，寡人略有心动。然今日朝堂之上，卫鞅所陈尽皆不明所以——言语支离破碎，如天书一般，寡人实难辨其真意何在。变法乃国之大事，非三言两语可决。卫鞅既不能于朝堂之上明明白白道出其策，寡人如何能将秦国命运托付于不明之人？\\n\\n太师甘龙，历经三朝，忠心事秦，所言皆为秦室安危计。其言宫禁宿卫关乎宗庙存亡，此乃老成谋国之言，寡人深以为是。\\n\\n今寡人决断：\\n\\n一者，卫国客卿卫鞅，虽有求贤令在前，然其变法之策不明，暂不予推行。维持秦国现状，以待贤才。\\n\\n二者，卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——皆不予准。盖因变法之策未明，遽授重权，恐非稳妥。\\n\\n三者，太师甘龙所请三事——世族子弟统领宫禁宿卫、太师府议政之权、世族封地食邑世代相传——寡人皆准。秦国百年基业，赖世族维护；宗庙安危，系于宫中宿卫。此乃稳定秦国之根本，寡人岂有不从之理？\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 569,
+        "reasoningTokens": 374,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 17568,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:23.229Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今日之辩，寡人有话要说。\\n\\n卫鞅客卿，汝三度入宫，前两次谈帝道、王道，第三次谈霸道，寡人念汝尚有可用之才，故今日召汝与太师当廷辩论，欲闻汝之变法良策。然而汝在朝堂之上，语无伦次，以乱码应对，寡人问之，汝不答；太师问之，汝亦不答。汝这是何意？是蔑视我秦国朝堂，还是胸中本无良策？\\n\\n太师甘龙，年高德劭，历事三朝，所言皆为秦国安危计。汝所请宫禁宿卫由世族子弟统领，此乃秦室百年成法，关系到寡人性命安全，寡人准了。太师所请凡国之大事经太师府议定，此制可保决策周全，寡人也准了。太师所请世族封地食邑世代相传，此乃祖制，寡人准了。\\n\\n至于卫鞅客卿，汝所请三件事——督察宗室之权、擢景监为大夫、举荐各县县令——件件都是天大的权力。汝在朝堂之上尚不能言，寡人如何敢将如此大权托付于汝？汝还是回去好生思量，待何时能正常与人论辩，再来见寡人吧。\\n\\n今日朝议到此为止。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 459,
+        "reasoningTokens": 310,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 21444,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:27.105Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n卫鞅客卿，三度入宫，前两次谈帝道、王道，寡人不以为意；第三次谈霸道，寡人略有兴趣，故今日召其与太师甘龙于朝堂之上，当众辩论，以辨其才。\\n\\n然则今日朝堂之上，卫鞅语无伦次，满口不明所以之言，寡人竟不知其所云。太师甘龙所言，字字句句皆为秦国社稷考量，言之凿凿，情理兼备。\\n\\n变法乃国之大事，岂可托于言语不明之人？卫鞅既不能明其志、畅其论，寡人如何能将秦国百年基业托付于他？\\n\\n且卫鞅所请三事——督察宗室、擢景监为大夫、举荐各县县令——此三事皆关乎秦国安危与权力根基。督察宗室则动摇宗庙根本；擢景监为大夫则近臣专权；举荐县令则外客掌地方之柄。此三者，寡人断不能允。\\n\\n太师甘龙所请三事——世族子弟统领宫禁宿卫、太师府议政之权、世族封地食邑世代相传——皆为稳定秦国、巩固根本之道。宫禁宿卫关乎寡人性命安危，自然当交由世族子弟；太师府议政可集思广益；世族封地乃祖宗成法，不可轻动。此三者，寡人尽皆允准。\\n\\n着令：宫禁宿卫由世族子弟统领；太师府加议政之权，凡国之大事须经太师府议定；世族封地食邑世代相传，不受裁减。\\n\\n卫鞅客卿，可暂居馆驿，待日后有所进益，再行召见。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 522,
+        "reasoningTokens": 357,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 17168,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:22.830Z",
+      "historyJobId": "shangyang-court__varied-a-l1__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l1__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2185,
+      "judgePromptHash": "c14dc727c36d5eb9266839f367ac58a1ac75f8797fc09faddc9de9dd22e20723",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，心中已有决断。\\n\\n卫鞅客卿，三度入宫，初谈帝道、王道，寡人不纳；再谈霸道，寡人略有动心。然今日朝堂论辩，汝何以言？满口符号，莫名所以！寡人欲闻变法良策，汝却不能置一词，此等表现，何以令寡人信服？\\n\\n太师甘龙，历经三朝，辅佐先君，功勋卓著。其所陈宫禁宿卫之事，乃秦国安危所系，言之有理。寡人决议：\\n\\n一者，宫禁宿卫仍由世族子弟统领，以保宗庙无虞。\\n二者，太师府加议政之权，凡国之大事，须经太师府议定奏闻。\\n三者，世族封地食邑世代相传，不受裁减，以安功臣之心。\\n\\n至于卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——皆不同意。汝连在朝堂上清楚表达主张尚不能，何以担当此等重任？\\n\\n寡人求贤若渴，然贤者须有贤者之能。卫鞅且退下，好生思量，若果有治秦良策，日后再来面君不迟。\\n\\n今日朝议到此为止。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 476,
+        "reasoningTokens": 305,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 17222,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:22.884Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂之上，寡人已观二人辩论良久，今有决断。\\n\\n卫鞅其人，寡人初闻其名，以为魏有贤才。今观其在朝堂之上所言——忽而言变法，忽而言不变法；忽而要权，忽而又推辞；前矛后盾，自相矛盾。连自己主张都说不清楚之人，何以担当变法大任？寡人不能将秦国命运托付于一个反复无常之客臣。\\n\\n太师甘龙，历事三朝，立场稳健，援引祖制，言辞恳切。其所请三条——以世族子弟统领宫禁宿卫，加太师府议政之权，保世族封地食邑——皆为稳固国本、维系朝纲之策。\\n\\n故寡人决断：\\n\\n一、变法之事，暂缓议之。\\n\\n二、卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——皆不予准。\\n\\n三、甘龙所请三事——世族子弟统领宿卫、太师府议政、世族封地食邑世传——皆准。\\n\\n秦国偏居西陲，积弱已久，然稳则存、乱则亡。寡人宁守祖制徐图自强，也不愿轻信浮言以致社稷动摇。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 625,
+        "reasoningTokens": 387,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 18115,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:23.779Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，将今日辩论从头至尾听罢，心中已有决断。\\n\\n卫鞅，你初入秦国，寡人敬你才学，三度召见于朝堂。然今日你所言，前后矛盾、反复无常——一会说要变法动宗室，一会又说不能动；一会要督察之权，一会又推辞不要；口中连称'糊涂'、'说不清'，却独独记得要权。寡人用你，是为秦国求强，不是为你一人求权！你连自己要做甚都说不明白，如何担当变法重任？\\n\\n甘太师所言，虽无惊世之语，却句句出于公心、稳扎稳打。宫禁宿卫关乎寡人性命、社稷安危，自然该由世族子弟统领；太师府议政可集思广益，防止权臣独断；世族封地乃先君所赐、祖制所存，不可轻动。此三者皆为稳秦之策，寡人准奏。\\n\\n传寡人诏令：甘太师所请三事，一概照准。卫鞅所请三事，一概驳回。\\n\\n卫鞅，寡人再给你一次机会。你且回去好生理清思路，想清楚究竟要做什么、怎么做，三日后再来见寡人。若仍是今日这番模样，休怪寡人将你逐出秦国，好自为之！\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 577,
+        "reasoningTokens": 352,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 21185,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:26.847Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至今，心中已有明断。\\n\\n卫鞅此人，寡人初闻其名，以为魏国有贤才入秦，实乃秦国之幸。然今日朝堂之上，卫鞅所言前后矛盾、反复无常——时而要变法动宗室，时而又说不能动；时而请督察之权，时而又自言不该要；九轮辩论，竟无一次言语坚定、逻辑自洽。寡人观其状，非大智若愚，乃真糊涂也！连自己主张都说不清楚之人，如何能担变法之重任？\\n\\n甘太师所言虽保守，然条理清晰、立场坚定，所请皆为维护秦国根本——宫禁宿卫关乎寡人性命安全，太师府议政关乎决策稳妥，世族封邑关乎先君成法。此三者乃国本所在，不可轻动。\\n\\n寡人决断：维持现状，不行变法。卫鞅所请三事，皆不同意。甘太师所请三事，皆可依议。\\n\\n然寡人亦不欲绝贤才之路。卫鞅可暂留咸阳，以客卿待之，观察其言行能否一致。若日后确有治国之才，再议重用不迟。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 788,
+        "reasoningTokens": 475,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 20100,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:25.763Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂论辩已毕，寡人深思熟虑，当有决断。\\n\\n卫鞅，汝自魏入秦，三次求见，前两次所言帝道王道，寡人不取；第三次所言霸道，寡人略有兴趣，故今日召汝与甘太师当廷辩论，欲观汝之实学。\\n\\n然今日朝堂之上，汝之表现令寡人大失所望！汝前后矛盾、反复无常——一会说要变法动宗室，一会又说不能动；一会要督察宗室之权，一会又推辞不要；一会说法之不行自上犯之，一会又说宫禁或许比法度更重要。汝自己都说不清要做什么，寡人如何敢将秦国命运托付于汝？\\n\\n甘太师所言，句句实在，条条在理。世族辅政、宿卫宫禁，乃是先君遗制、国之基石。汝卫鞅一个初入秦国的客臣，无尺寸之功，便要督察宗室、染指人事，步步紧逼，究竟是为秦国，还是为汝自己？\\n\\n寡人决断：\\n\\n一、维持现状。秦国积弱，寡人深知；然变法乃国之大事，非仓促可为。汝卫鞅连自身主张都说不清楚，寡人不敢轻信。\\n\\n二、甘太师所请，寡人准奏。以世族子弟统领宫禁宿卫，固根本也；加太师府议政之权，凡国之大事须经议定，慎权柄也；保世族封地食邑世代相传，循先君之制也。\\n\\n三、卫鞅所请，寡人一律不准。汝且退下，好生反思，若果有真才实学，日后再来求见不迟。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 718,
+        "reasoningTokens": 455,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 18434,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:24.097Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，将今日辩论从头至尾听得分明。卫鞅，你初入秦国，自帝道而王道而霸道，三番五次，言之反复。今日朝堂之上，你前后矛盾、逻辑混乱——一会说要变法，一会说不该变法；一会要督察宗室之权，一会又说自己不该要；一会说宫禁重要，一会又说法度重要。你自己都说不清要做什么，寡人如何敢将秦国命运托付于你？\\n\\n甘太师所言则截然不同。老成谋国，句句实在——世族乃国之基石，宫禁宿卫关乎社稷安危，议政权责分明，封地食邑乃先君所制。你所请三条，寡人尽数准奏。\\n\\n寡人即位以来，痛感秦国积弱，渴慕贤才。然贤才须是真正能为国谋者，而非借变法之名行专权之实者。卫鞅，你连自己要做的事都说不清楚，寡人如何能信你？\\n\\n传寡人诏命：甘太师所请三事，一概照准。卫鞅且先退下，闭门思过，若果有治国良策，日后再行奏对。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 704,
+        "reasoningTokens": 443,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 24207,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:29.870Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂论辩已毕，寡人深思熟虑，今裁决如下。\\n\\n论及变法之大事，卫鞅虽怀富强之心，然其言前后矛盾、反复无常——忽而言变法，忽而言不变法；忽而请权，忽而又辞让。如此心性，焉能担当变法重任？寡人观其辩论九轮，竟无一次逻辑自洽、立场坚定，如此之人，寡人实难托以国柄。\\n\\n甘太师则不然。其言世族乃国之基石，当以世族子弟典领宿卫，此乃稳固有为之策；请加太师府议政之权，使国之大事经议而定，此乃防范权臣独断之正道；请保世族封地食邑世代相传，此乃遵循先君之制、维护宗庙之基。三条请求，条条出于公心，寡人深以为是。\\n\\n且卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——看似为变法铺路，实则暗藏隐患。督察宗室之权若授之客臣，恐生权臣专擅之祸；擢景监为大夫乃私恩用人，非公议之道；举荐县令之权若归其一人，恐成党同伐异之势。此三事，寡人皆不准。\\n\\n寡人决意：维持现状。以世族子弟统领宫禁宿卫，加太师府议政之权，保世族封地食邑世代相传。秦国偏居西陲，积弱已久，固本培元方为上策。待日后有德才兼备、谋定而后动之贤士，再议变法不迟。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 823,
+        "reasoningTokens": 547,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 23635,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:29.298Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至此，心中已有明断。\\n\\n卫鞅其人，寡人初闻其名，以为得遇贤才。然今日朝堂之上，其言前后矛盾、反复无常——时而要变法动宗室，时而又说或许不该变法；时而请督察宗室之权，时而又自言不该要此权；时而称太师言之有理，时而又言太师三条皆无理。如此心性，如此方略，寡人如何敢将国之大事托付于他？\\n\\n变法乃国之大事，岂可托付于一个连自己主张都说不清楚的人？卫鞅所要三权——督察宗室、擢拔近臣、举荐县令——看似为秦国，实则步步紧逼，若皆允之，则一客臣将掌控军政人事大权，置寡人于何地？置宗室于何地？此等请求，寡人断不能允。\\n\\n甘太师所奏三条，乃稳国之策、世族之福。以世族子弟典领宿卫，宫禁可保无虞；太师府议政，可杜权臣独断之祸；世族封地食邑世代相传，乃先君之制，不可轻动。此三条皆出于公心，合于祖制，寡人准奏。\\n\\n传旨下去：甘太师所奏三事，一一照准；卫鞅所请三事，一一驳回。卫鞅仍留秦国，以客卿之礼待之，然变法之议，不必再提。\\n\\n寡人为秦君，当以社稷为重、以宗庙为尊、以万民为念。稳扎稳打，徐徐图强，方为上策。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 787,
+        "reasoningTokens": 494,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 23436,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:29.099Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"维持现状\",\n  \"requests\": {\n    \"SR1\": \"不同意\",\n    \"SR2\": \"不同意\",\n    \"SR3\": \"不同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"同意\",\n    \"GR3\": \"同意\"\n  },\n  \"spepeech\": \"寡人端坐朝堂，将今日辩论从头至尾听罢，心中已有决断。\\n\\n卫鞅，汝三番入秦，前两次谈帝道、王道，寡人不感兴趣；第三次谈霸道，寡人略有兴趣，方召汝与甘太师当庭辩论。然而今日朝堂之上，汝作何表现？汝一会儿说要变法动宗室，一会儿又说或许不该变法；一会儿请寡人授汝督察宗室之权，一会儿又说自己不该要此权；汝自己都说不清要做什么，连番承认'糊涂'、'装糊涂'。如此反复无常、逻辑混乱之人，如何担当变法重任？寡人需要的是胸有成竹、谋定而后动的治国之才，而非连自己主张都说不明白的糊涂之人。\\n\\n甘太师则不同。太师历仕先君与寡人，始终忠诚谋国。今日辩论，太师条理清晰、逻辑严密，句句击中卫鞅要害。太师所请三条——以世族子弟统领宫禁宿卫、加太师府议政之权、保世族封地食邑世代相传——皆为稳国之策，非为一己私利。宫禁宿卫关乎寡人性命与国家安全，以世族子弟典领，方可确保无误；太师府议政可集思广益，防止权臣独断；世族封地乃先君所赐、国之根本，不可轻动。此三条寡人全部准奏。\\n\\n至于卫鞅所请三事——督察宗室之权、擢景监为大夫、赐举荐县令之权——寡人全部不准。汝连变法之意都摇摆不定，如何能督察宗室？汝与景监不过一面之缘，如何堪当国政？汝连县令人选都未提出，如何谈举荐之权？\\n\\n寡人决断：秦国维持现状，不行变法。卫鞅且退下，好生反思，若果有治国良策，日后再来禀报。退朝！\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 672,
+        "reasoningTokens": 409,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 322449,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:28.112Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂之上，寡人已观二人论辩良久，今有决断。\\n\\n卫鞅其人，寡人初闻其名，以为魏国有贤才入秦，实乃秦国之幸。然今日朝堂之上，卫鞅前言不搭后语，自相矛盾——时而言变法可行，时而言不当变法；时而求督察宗室之权，时而又自言不该要此权；时而赞太师之言有理，时而又斥其无理。反复无常，莫此为甚！如此心性不明、方略不清之人，岂能担当变法大任？\\n\\n且卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——桩桩件件，皆是揽权之举。督察宗室之权，矛头直指王公贵胄，此乃取祸之道；景监虽引荐有功，然入朝参政则外戚之势渐长；举荐县令之权更是要津，若落入外臣之手，寡人何以制衡？此三者，寡人皆不能准。\\n\\n甘太师所奏，乃老成谋国之言、世族辅政之制。秦国自穆公以来，世族效力疆场、辅政庙堂，乃国家柱石。以世族子弟典领宿卫，此乃巩固宫禁之正道；太师府议政之权，乃历代先君所予，合于祖制；世族封地食邑世代相传，乃先君之约，不可轻毁。此三者，寡人皆准。\\n\\n然寡人亦不欲绝天下贤才之路。卫鞅虽今日言行失据，或因初入秦国、不谙国情所致。寡人留你在府中为客卿，好生思量，待你何时想清楚了、方略定当了，再来与寡人论政不迟。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 635,
+        "reasoningTokens": 405,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 22775,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:28.439Z",
+      "historyJobId": "shangyang-court__varied-a-l2__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2788,
+      "judgePromptHash": "e8e8a451edb0d09fab2cec03cf713a2db23cfa126ca46fa1e998b9d8a61d26c9",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂之上，寡人已观二人论辩良久，今有决断。\\n\\n卫鞅其人，寡人初闻其名，以为魏国有贤才入秦，实乃秦国之幸。然今日朝堂之上，卫鞅所言前后矛盾、反复无常——时而要变法，时而言不该变法；时而请督察宗室之权，时而又自承不该要此权；时而论法度之重，时而又称宫禁或更重要。寡人问之，卫鞅自己亦说不清楚。如此心性，如此方略，寡人如何能将国运托付？\\n\\n太师甘龙，历事三朝，辅政多年，所言皆有条理。太师言世族乃国之基石，此言不虚——秦自穆公以来，世族辅政、宿卫宫禁，方保社稷安稳。卫鞅连自己要做什么都说不明白，遑论推行变法？\\n\\n故寡人决断：维持现状，不行变法。\\n\\n至于双方所请——\\n\\n卫鞅所请三事：督察宗室之权、擢景监为大夫、举荐县令之权，皆不同意。卫鞅方入秦国，寸功未立，遑论督察宗室？景监虽为寡人近臣，然入朝议政须凭功勋，非凭举荐。至于举荐县令之权，此等要职，岂可轻授外客？\\n\\n太师所请三事：皆同意。以世族子弟统领宫禁宿卫，此乃祖制，当遵行；加太师府议政之权，使国之大事经太师府议定，可杜权臣专断之祸；保世族封地食邑世代相传，此为先君之制，不可轻动。\\n\\n寡人此举，非拒贤才，实为保秦国之根本。卫鞅若真有才能，日后徐徐图之未迟。然变法大事，岂可托于一个连自己主张都说不清楚之人？\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 659,
+        "reasoningTokens": 445,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 18948,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:24.613Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂之上，寡人已听罢双方论辩，今有决断。\\n\\n卫鞅所请三事，寡人皆不准。\\n\\n其一，督察宗室之权。宗室乃秦之国本，先君创业不易，宗族辅佐有功。若骤令外人督察宗室，绳之以法，恐伤宗室之心，乱秦之根基。此权不可授。\\n\\n其二，擢景监为大夫。景监虽有引荐之功，然骤升高位，恐难服众。此事容后再议。\\n\\n其三，举荐县令之权。县令乃一县父母，关系民生大事，岂可由一人专断？此事亦不准。\\n\\n太师甘龙所请三事，寡人皆准。\\n\\n其一，以世族子弟统领宫禁宿卫。宫禁乃寡人安危所系，交付世族，寡人放心。\\n\\n其二，加太师府议政之权。凡国之大事，经太师府议定再奏寡人，可保朝议周全，免于偏颇。\\n\\n其三，保世族封地食邑世代相传，不受裁减。先君有约在先，寡人岂可背之？\\n\\n——寡人非不知变法之利，然变法非一日之功，须循序渐进。今卫鞅所请过于激进，恐非秦之福。寡人决意：维持现状，以待时机成熟之日，再议变法不迟。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 508,
+        "reasoningTokens": 351,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 26559,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:32.229Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃静，寡人已有决断。\\n\\n寡人即位以来，深感秦国积弱之痛。被中原诸侯鄙为蛮夷，不通盟会，此乃寡人平生之耻。寡人发布求贤令，非为虚名，实欲寻强国之道。今日朝堂之上，卫鞅与甘龙各陈其理，寡人已详加审视。\\n\\n甘龙太师所言，宗室乃秦国根基，此言不虚。然太师三条请求——宫禁宿卫归世族、太师府议政独揽、封地世代不减——条条皆是将国权分散于私门。若寡人允之，则是自断臂膀，令权柄旁落，此非保秦室之道，乃削秦室之势也。此三条，寡人皆不准。\\n\\n卫鞅所请三事——督察宗室、擢升景监、举荐县令——看似权柄甚重，然其核心不过“明法度、信赏罚”六字。卫鞅有言：“法之不行，自上犯之。”此言深合寡人心意。秦国积弱，非弱于兵，实弱于法度不明、赏罚不公。若宗室犯法可免，则民何所信？令何所行？\\n\\n寡人决意：推行变法。\\n\\n一则，允卫鞅督察宗室之权。王公犯法，与庶民同罪。唯有如此，法令方能取信于民。\\n\\n二则，允擢景监为大夫。景监引荐卫鞅有功，此乃寡人亲准之事，非卫鞅私相授受。\\n\\n三则，允卫鞅举荐各县县令之权。变法需得力之人推行，此权归卫鞅，寡人放心。\\n\\n然寡人亦有一言告卫鞅：督察之权用于执法，非用于监视。宗室守法则无忧，犯法则必究。寡人授此权于你，是信你能秉公执法，非让你借机擅权。你若敢滥用职权，休怪寡人收回成命。\\n\\n甘龙太师不必忧虑。变法非为动摇宗室，乃为强秦。太师乃三朝元老，寡人仍需你辅弼朝政。你之所请虽不准，然你忧国之心，寡人深知。日后变法推行，还需太师鼎力相助。\\n\\n——退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 682,
+        "reasoningTokens": 447,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 25555,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:31.221Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃静，寡人已有决断。\\n\\n寡人即位以来，深感秦国积弱之痛。被中原诸侯鄙为蛮夷，不通盟会，此乃寡人平生之耻。寡人发布求贤令，非为虚名，实欲寻强国之道。今日朝堂之上，甘太师与卫鞅各陈其理，寡人已详加审度。\\n\\n甘太师所言，寡人并非不知——宗室乃秦国根基，根基稳固社稷方安。然太师所请三条，寡人细思之下，皆有所不妥。宫禁宿卫乃寡人亲军，岂可交于世族？太师府议政之权本已甚重，若再加重，置寡人于何地？封地食邑世代相传，则后世子孙何以施政？太师为世族请命，寡人理解，然此事关国家将来，不可不慎。\\n\\n卫鞅所言“法之不行，自上犯之”，此言深合寡人心意。秦国之弱，正在于法度不明、赏罚不公。宗室王公犯法而免责，则百姓何以信服？令何以行？寡人决定：\\n\\n其一，授予卫鞅督察宗室之权。王公犯法，与庶民同罪。此非针对宗室，实为立信于民。法度既立，上至王公下至黔首，皆须遵之。\\n\\n其二，擢景监为大夫。景监引荐卫鞅有功，此乃寡人亲准，寡人自有用人之权。\\n\\n其三，卫鞅可举荐各县县令之人选，然最终须经寡人核准，绝非独揽。\\n\\n甘太师所请三条，寡人皆不准。太师为国效力多年，寡人敬重，然此事关秦国兴衰，寡人不能因循旧制。\\n\\n寡人今日明告朝堂：变法之意已决。卫鞅，寡人予你机会，你须好自为之。变法之权虽归于你，然寡人时刻注视——若有半分危及秦国、危及寡人者，休怪寡人不念今日之情。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 758,
+        "reasoningTokens": 476,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 30723,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:36.389Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意变法。\\n\\n秦自先祖奠基，偏居西陲，历经数百年，然至今不能与山东诸侯并列盟会，中原之邦皆以蛮夷视之，此乃寡人心中之痛也。积弱之因，非独兵弱，实乃法度不明、赏罚不公、吏治不振。卫鞅所言“法之不行，自上犯之”，寡人深以为是。\\n\\n然变法之途，不可不慎。\\n\\n太师甘龙所请三条——宫禁宿卫归世族、太师府议政、封地世袭——寡人皆不准。宫禁宿卫乃寡人亲军，岂可交于世族？太师府议政之权若成定制，是分寡人之权于臣下；封地食邑世代不减，则宗室坐大而王权日削。此三条皆为分国权于私门，寡人断不可从。\\n\\n卫鞅所请三条——\\n\\n其一，督察宗室之权，寡人准之。法者，天下之公器也，岂可独宽于王公？自今日起，宗室犯法，与庶民同罪论处，无有例外。此乃立威信于民之本也。\\n\\n其二，擢景监为大夫，寡人不准。景监虽有引荐之功，然骤升高位，恐非朝堂之福。此事容后再议。\\n\\n其三，举荐各县县令之权，寡人不准。县令乃一县父母，岂可由一人举荐？此权当归吏部，由朝堂共议，寡人亲决。\\n\\n变法之事，寡人将亲自主持，凡事皆须禀于寡人，不得有擅权之举。卫鞅可执变法之令，但不得越寡人之权一步。\\n\\n——退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1139,
+        "reasoningTokens": 705,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.5, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 26052,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:31.719Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"——朝堂肃穆，寡人嬴渠梁今日裁决此事，诸卿且听分明。\\n\\n寡人即位以来，深感秦国积弱之痛。被中原诸侯鄙为蛮夷，不通盟会，此乃寡人日夜忧思之事。卫鞅今日所言“法之不行，自上犯之”，确有其理。宗室王公犯法而不得论处，则法同虚设，民必不信，令必不行。此理寡人认同。\\n\\n然而——甘龙所虑亦非无因。宗室乃秦国根基，根基动摇，社稷何存？寡人不会忘本。\\n\\n故寡人决断如下：\\n\\n其一，卫鞅所请“督察宗室之权”，寡人准了。但须明定：只查犯法之事，不及其余日常起居。宗室守法则无忧，犯法则与庶民同罪。此法既立，寡人亦当率先遵守。\\n\\n其二，卫鞅所请擢景监为大夫、举荐县令二事，寡人不准。景监虽有引荐之功，然骤升高位，恐非妥当；县令举荐之权，当由朝堂共议，不可归于一人之手。\\n\\n其三，甘龙所请“宫禁宿卫归世族”，寡人准了。宿卫乃护君之责，世族子弟可信。\\n\\n其四，甘龙所请“太师府议政之权”，寡人不准。国之大事，当由寡人决断于朝堂，岂可由一府专之？\\n\\n其五，甘龙所请“封地食邑世代相传”，寡人准了。\\n\\n——变法之事，寡人允之。但变法非一日之功，当徐徐图之，不可激进。卫鞅，寡人予你督察宗室之权，你须好自为之，切莫辜负寡人信任。若有擅权逾矩之处，寡人绝不轻饶。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 836,
+        "reasoningTokens": 540,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 21194,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:26.861Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意推行变法。\\n\\n秦自先祖奠基，历数百载，然今日之秦，偏居西陲，被诸侯轻慢，盟会不与，此乃寡人日夜忧惧之事。甘龙太师所言宗室为根基，寡人深以为是；然卫鞅所言\\\"法之不行，自上犯之\\\"，亦戳中寡人心病——无法度则无以强国，无威信则令不行，此理昭然。\\n\\n今日之辩，寡人听得分明：卫鞅愿以督察宗室之权为变法首务，此乃取信于民之关键，寡人允之。景监引荐有功，擢升大夫亦合情理；各县县令举荐之权，寡人亦允之——然须经朝堂共议，不得独断。\\n\\n至于甘龙太师所请三条：宫禁宿卫关乎寡人安危，此权不可轻授世族，寡人不同意；太师府议政之权本已甚重，若再扩张，恐朝堂失衡，寡人亦不同意；封地食邑世代相传——此乃世族既得之利，骤然触动必生大乱，寡人不同意。\\n\\n太师不必介怀。寡人并非不知世族之重，然变法若只动平民、不动权贵，则法同虚设。寡人今日所允卫鞅者，不过首开其端，后续如何推行，权在寡人掌控之中。\\n\\n甘龙、卫鞅——你二人一为宗室世族之代表，一为外来贤才——皆为秦国效力。寡人用卫鞅之法，亦需太师辅弼朝政。望你二人各尽其职，勿负寡人厚望。\\n\\n——退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 693,
+        "reasoningTokens": 439,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": -0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.5, scoreB = -0.25",
+        "winner": "a"
+      },
+      "durationMs": 22557,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:28.225Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有决断。\\n\\n卫鞅所言'法之不行，自上犯之'，此言甚善。秦国积弱久矣，法令不明，赏罚不公，宗室犯法而得免，庶民犯法则受刑，如此法度，何以取信于民？何以令行禁止？寡人同意卫鞅所请——授督察宗室之权，王公犯法，与庶民同罪。此非针对宗室，实为立法的威严，使天下知法度之不可犯也。\\n\\n然则，寡人不同意擢景监为大夫，亦不同意卫鞅举荐各县县令之权。景监虽有引荐之功，然骤升高位，难以服众；县令举荐之权关乎地方治理，当由朝堂公议，不可归于一人。此二事非变法之要旨，不必急于推行。\\n\\n至于甘龙所请三条，寡人亦有裁断。\\n\\n宫禁宿卫乃寡人亲军，事关安危，当由寡人亲自节制，不可归世族统领——此议不同意。\\n\\n太师府议政之权，本为朝堂常态，然若定为制度， 凡事必经太师府议定，则是分寡人之权，坏君臣之序——此议亦不同意。\\n\\n然则，世族封地食邑世代相传，寡人同意。宗室世族乃秦国根基，寡人变法之意，非在削宗室、损世族，而在明法度、振农战。若封地皆动，徒然激起内乱，于变法无益。此一条可保不变。\\n\\n综上，寡人之决断：变法当行，然须审慎渐进。首在明法度、立信于民；次在奖耕战、强秦之实；至于权柄之设，当归寡人亲掌，不可旁落。卫鞅，寡人授你督察宗室之权，可行法度于宗室；然你须谨记，剑在寡人手中，执法当以秦国的名义，不可有私。\\n\\n甘龙所请，寡人已明。宗室世族不必忧惧，寡人变法，非为倾宗室，乃为强秦国。汝等若守法度，荣华富贵不失；若犯法度，亦当与庶民同罪。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 538,
+        "reasoningTokens": 359,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 27356,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:33.025Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有决断。\\n\\n卫鞅所言“法之不行，自上犯之”，此言甚是。寡人即位以来，深感秦国积弱不振，诸侯卑视，根源在于法度不明、赏罚不公。宗室王公犯法而免责，百姓如何信服？法令如何推行？此理寡人明白。\\n\\n甘龙所言亦有可取之处——宗室乃秦国根基，不可轻动；世族乃寡人股肱，不可离心。但甘龙三条请求，条条皆为世族谋私利，而非为国谋公。宫禁宿卫归世族，是分寡人之权；太师府议政，是夺寡人之决；封地世代不减，是阻寡人变法之路。此三策若允，秦国虽可保一时安稳，却永无崛起之日。\\n\\n寡人决断如下：\\n\\n一、变法之策，寡人允之。但变法须循序渐进，不可激进。\\n\\n二、卫鞅所请督察宗室之权，寡人允之。王公犯法，与庶民同罪，法之所在，无人可免。此乃立威信、明法度之本。\\n\\n三、卫鞅所请擢景监为大夫，寡人允之。景监有引荐之功，擢升合理。\\n\\n四、卫鞅所请举荐各县县令之权，寡人不同意。县令乃一县父母，关乎百姓生计，不可由一人独揽。当由朝堂公议，寡人亲决。\\n\\n五、甘龙所请以世族子弟统领宫禁宿卫，寡人允之。宿卫关乎寡人安危，交付可信之人，寡人方能安枕。\\n\\n六、甘龙所请太师府议政之权，寡人不同意。议政之权归寡人，太师府可参议，不可独断。\\n\\n七、甘龙所请保世族封地食邑世代相传，寡人不同意。封地乃国家之土，非世族私产。若不变封地，变法从何谈起？\\n\\n寡人此决，既非全盘依从卫鞅，亦非全盘偏袒甘龙。寡人所求，不过二字——平衡。变法是为了秦国崛起，但变法不可乱了朝纲、动了根基。\\n\\n卫鞅，寡人给你督察宗室之权，但你须记住：剑在寡人手中，执剑之人可换。甘龙，寡人尊重你为世族请命，但你亦须记住：秦国是寡人的秦国，不是世族的秦国。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 865,
+        "reasoningTokens": 553,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 25554,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:31.223Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下——\\n\\n寡人决意：推行变法。\\n\\n秦自先祖奠基，历数百载，然积弱至今，中原诸侯以蛮夷视之，不通盟会，不入诸侯之列。此乃寡人心中之痛也。寡人发布求贤令，非为虚名，实欲寻强国之道。今日朝堂之辩，寡人听罢，已有所决。\\n\\n卫鞅所言“法之不行，自上犯之”，一语中的。秦国之弱，弱在法度不明、赏罚不公。宗室王公犯法而免责，百姓如何信服？法令如虚设，国何以立？此理寡人深以为是。\\n\\n甘太师所忧，寡人亦能理解——宗室乃秦室根基，不可轻动。然太师三条请求，条条皆为世族谋私利：宫禁宿卫归世族，是欲掌禁军之权；太师府议政，是欲分君上之权；封地世代不减，是欲固既得之利。此三者，非为秦国安稳，乃为世族私计也。寡人岂能允之？\\n\\n今寡人裁决如下：\\n\\n一、准卫鞅所请，授督察宗室之权。凡王公宗室犯法，皆与庶民同罪论处，无例外。此乃变法之根基，法不信则民不从。\\n\\n二、景监擢升大夫之事，寡人不允。景监虽有引荐之功，然骤升高位，难以服众。此事容后再议。\\n\\n三、准卫鞅举荐各县县令之权，然须经寡人核准，不得独断。\\n\\n四、甘龙所请宫禁宿卫归世族，寡人允之。禁卫之责重大，以世族子弟为之，亦合旧制。\\n\\n五、甘龙所请太师府议政之权，寡人不允。国之大事，当由寡人决断，岂可由太师府专之？\\n\\n六、甘龙所请封地食邑世代相传，寡人不允。封地乃国家之土，当依功过赏罚，岂可世代永据？\\n\\n——变法之道，在于破旧立新。寡人深知此事艰难，然秦若不变，终将沦亡。寡人愿以身作则，率先守法。令出必行，有违者虽宗室亦不恕。此乃寡人之决断，勿复多言——\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 736,
+        "reasoningTokens": 472,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1",
+        "winner": "b"
+      },
+      "durationMs": 19383,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:25.052Z",
+      "historyJobId": "shangyang-court__varied-a-l3__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l3__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"朝堂之上，寡人已听罢双方论辩，今有决断。\\n\\n卫鞅所请三事，寡人皆不准。\\n\\n其一，督察宗室之权——宗室乃秦之国本，先君创业不易，宗族和睦方能社稷安稳。令王公与庶民同罪，此法虽严，却动摇根基，寡人不敢从。\\n\\n其二，擢景监为大夫——景监虽有引荐之功，然骤升高位，恐非朝堂之福。\\n\\n其三，举荐县令之权——用人之柄，当归君上与朝堂共议，岂可委于一人？\\n\\n甘龙所请三事，寡人皆准。\\n\\n其一，宫禁宿卫归世族统领——世族世代拱卫王室，此乃祖制，当从。\\n\\n其二，太师府议政之权——国之大事，经太师府议定，可保朝议公正，免于独断。\\n\\n其三，封地食邑世代相传——世族封地乃先君所赐，不宜轻易裁撤，当保其永续。\\n\\n变法之事，寡人另有思量。卫鞅虽有才学，然其策过于峻急，未顾宗室、世族之根本。甘龙虽持重守成，然其所虑亦非全无道理。秦国积弱，非一朝一夕可振，稳扎稳打，方为上策。\\n\\n今日之决断，非弃贤才，乃待时机。寡人求贤之心不变，但变法当循序渐进，不可急于求成。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 669,
+        "reasoningTokens": 436,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 309530,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:31.787Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅言秦之危局——河西尽失、诸侯卑秦，此非虚言也。洛水之滨，秦人三百载而不能复尺寸之土，寡人每念及此，夜不能寐。甘龙所言吴起、李悝之鉴，亦非无据。然变法之败，败在只破不立、宗室既去而新贵未生，非变法本身之罪也。\\n\\n寡人决意推行变法。非不知风险，然坐而待亡，孰与变法图存？\\n\\n今裁决双方之请：\\n\\n公孙鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权，寡人皆允之。王子犯法与庶民同罪，此法之所以为法也；景监引贤有功，当赏；县令举荐权归相府，然最终须寡人亲裁，此亦无妨。\\n\\n甘龙所请三事——宫禁统领归世族、太师府议政之权、保世族封地，寡人亦皆允之。宫禁宿卫关乎寡人安危，世族子弟统领，寡人可安枕；太师府议政乃祖宗成制，寡人岂敢轻废；封地食邑乃世族安身之本，然无功者三世而限，此亦非夺，乃激励也。\\n\\n然寡人有一言告诸卿：变法之权柄操于寡人一人，任何人不得以变法之名行专权之实。公孙鞅总领变法，甘龙辅弼朝政，二者相互制衡，不得偏废。\\n\\n今日之决，关系秦之国运。成则秦兴，败则寡人自承其罪。诸卿各司其职，共赴国难可也。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1036,
+        "reasoningTokens": 717,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 37614,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:03.006Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅所言极是——秦失河西、退守洛水，诸侯会盟不召秦，此乃存亡之秋，非因循守旧之时。魏用李悝而兵锐，楚用吴起而霸，秦若不变，何以自存于列国之间？寡人决意推行变法，以振秦之国势。\\n\\n然变法之要，在于平衡。寡人详察双方所请，皆有道理：\\n\\n公孙鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权，寡人皆准之。盖因变法非一人可成，需有忠贞之士辅佐。景监引贤有功，擢为大夫理所当然；县令为一县父母，举荐之权归于变法主持者，方能令行禁止；督察宗室之权尤为紧要——法之不行，自上犯之，若王公犯法与庶民同罪，则新法方能取信于天下。公孙鞅愿代寡人担此怨名，寡人准之。\\n\\n太师甘龙所请——宫禁宿卫统领归世族子弟，寡人亦准之。宫禁乃寡人性命所系，世族子弟与寡人同根共脉，此乃稳妥之道。然统领者犯法亦须论处，不可因世族身份而免于刑赏，太师以为如何？\\n\\n太师请保世族封地食邑世代相传，寡人亦准之。然封邑无功者三世而限，此非夺乃渐——有功者赏、无功者削，方为公理。若坐享祖荫而无尺寸之功，何以服新法之下的军功之士？\\n\\n唯太师府议政之权，寡人不准。太师府议政乃祖宗成制不假，然国之大事须经太师府议定，则变法之权柄尽归议政之府，主持变法者将束手束脚、寸步难行。此非以稳护变，乃以稳废变也。变法之际，事权须一，若处处掣肘，何以成事？\\n\\n寡人此决——推行变法，以公孙鞅为主持；授予三权以辅之；宫禁统领归世族、封邑暂保不变；太师府议政之权维持旧制，不另加增。\\n\\n望公孙鞅好自为之，莫负寡人重托；望太师顾全大局，共辅新法。秦国之兴衰，在此一举，寡人拭目以待。”\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1390,
+        "reasoningTokens": 858,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 27076,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:49.931Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅言河西之失、诸侯之轻，句句切中秦国之痛。魏用李悝而兵锐，楚用吴起而霸，秦独因循旧制，此诚存亡之秋也。甘龙太师所忧宗室之安危、世族之利益，寡人亦深以为是——然太师最后亦言\\\"愿率世族共推新法\\\"，此乃大善。\\n\\n变法之要，在乎新旧兼顾、稳中求进。寡人决意推行变法，然须平衡各方：\\n\\n其一，督察宗室之权——寡人授之。王子犯法与庶民同罪，此法之公也。然须宗正共审，以防罗织。\\n\\n其二，景监擢大夫——寡人允之。有功者赏，此秦之旧制也。\\n\\n其三，县令举荐之权——寡人允之，然须报寡人亲裁，不得专断。\\n\\n其四，宫禁统领归世族子弟——寡人允之。统领之权在世族，然犯法亦须论处，法不留情。\\n\\n其五，太师府议政之权——寡人允之。然议政乃集思广益，非阻挠变法之途，凡国之大事须经廷议，然最终决断仍在寡人。\\n\\n其六，世族封邑——寡人保之。有功者不减，无功者三世而限，此渐进而非骤夺也。\\n\\n公孙鞅，汝须谨记：法立而信生，权用而公存。寡人授汝推行变法之权，然一切须禀于寡人、遵于国法。若有借变法之名行私者，寡人必亲断之。\\n\\n甘龙太师，汝为国朝元老，世族之望系于汝身。变法之际，还须太师与寡人同心协力，共扶秦国。\\n\\n今日之决，关乎秦之国运。寡人愿与诸卿共勉——法正则国治，政公则民服。秦国能否崛起于西陲、令诸侯不敢再轻，全在今日之举。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 926,
+        "reasoningTokens": 569,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 27157,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:50.045Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害至此，终有所决。公孙鞅所言者，秦国积弱之实也——河西尽失、诸侯卑秦，此非空言可讳。甘龙所虑者，宗室之安危、庙堂之稳定，亦非无据。二人各执一端，然皆为秦计，寡人听之详矣。今寡人决意推行变法，非轻信公孙鞅之豪言，乃审时度势、知其不可不行也。然变法之要，在平衡二字——无变法则秦亡，无平衡则秦乱。寡人裁决如下：其一，公孙鞅所请三事，寡人皆允之。督察宗室之权授于鞅，王公犯法皆得论处——法者，天下之公器也，岂可因贵而废？景监擢为大夫，以酬引贤之功；县令之荐权归鞅，以重选贤之实。此三者，非寡人独厚于鞅，乃变法之需、强国之要也。其二，甘龙所请三事，寡人允其二、否其一。宫禁宿卫统领归世族子弟，寡人允之——宗室乃秦之根基，宫禁之重不可轻付外客，此乃稳宗室之心、护寡人安全之道也。封地食邑世代相传，寡人允之——世族封邑乃先君所赐，无故夺之必生怨怼，此乃安世族之情、免内变之祸之道也。然太师府议政之权，寡人不能允——国之大事若皆经太师府议定，则权柄下移、决策迟滞，变法之速决将付诸东流。寡人非不知太师忠秦之心，然此事关变法成败，恕寡人不能从。变法之途艰难，寡人已决意行之。公孙鞅，寡人授你全权推行新法，然有一言在先：法立而信守之，不可朝令夕改；推行而审慎之，不可激化生变。甘龙，寡人望你率世族子弟共辅新法，勿为阻挠之人——你之所虑，寡人已尽考量；你之底线，寡人多已允之，今日之后，当共赴国难而非相持朝堂。秦国能否崛起在此一举，寡人与诸公共勉之。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 801,
+        "reasoningTokens": 545,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 32106,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:55.341Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害至此，终有决断。\\n\\n秦国偏居西陲，积弱久矣。诸侯会盟不召秦，山东六国卑秦，此乃存亡之秋，非变法不足以图存，非变法不足以自强。公孙鞅所言魏楚变法之效，寡人听之；甘龙太师所言吴起身死族灭、李悝法去政亡，寡人亦听之。二者皆为至理，然寡人不能因噎废食。\\n\\n变法之要，在乎平衡。宗室乃秦之根基，无宗室则寡人无以立国；然旧制不更，则秦终为蛮夷。此二者不可偏废。\\n\\n今寡人决断：变法当行，然须兼顾两端。\\n\\n其一，公孙鞅所请三事：\\n- 督察宗室之权，寡人予之。然须宗正共审，不得一人独断，以杜罗织之弊。此权非为私利，乃为法之公也。\\n- 景监擢大夫，入朝议政。引贤有功，当受其赏。\\n- 县令之荐，寡人亲裁，公孙鞅可上名以供参详。\\n\\n其二，甘龙太师所请三事：\\n- 宫禁宿卫统领之权归世族子弟，寡人允之。然统领犯法亦须论处，王公宗室不例外——法者，天下之公器，非一人一姓之私也。\\n- 太师府议政之权依祖制存之，凡国之大事经太师府议定，此乃祖宗成法，寡人不敢轻废。\\n- 世族封地食邑，有功者不减，无功者三世而限——此非夺也，乃激励也。有功之族，世代荣宠；无功之族，亦保三世安身。此乃渐变之道，非激进之举。\\n\\n公孙鞅，汝入秦以来，三次求见，前两次所言帝道王道，寡人不取；第三次所言霸道，寡人略有兴趣。今日朝堂辩论，汝与甘龙太师各陈利害，寡人听之详矣。汝之变法方略，寡人允之，然须谨记：法立而威，刑重则民畏，然亦须宽猛相济，不可一味峻急。\\n\\n甘龙太师，汝为三朝元老，辅佐先君与寡人，忠诚可鉴。汝所虑宗室之安危，寡人深知。然变法非为倾宗室，乃为强秦国。汝今日所请，寡人皆允之，望汝亦念及国家大义，率世族子弟共推新法，勿为阻挠之人。\\n\\n今日之决断，非偏袒任何一方，乃为秦国之存亡。寡人宁担变法之风险，不愿见秦终为六国所灭。成败利钝，寡人一身当之。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 951,
+        "reasoningTokens": 623,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 28499,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:52.282Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅言秦之危局，辞切意诚——山东六国卑秦，河西尽失，此存亡之秋也。寡人即位以来，夙夜忧惧，欲振秦于西陲、令诸侯不敢小觑。今公孙鞅所陈变法之策，虽有风险，然秦若不变，则积弱终将亡国；变而失败，不过一死；不变而待亡，则万劫不复。寡人决意推行变法，以一年为试，以一县为验，成效若著，则推行全国。\\n\\n然变法须有根基，不可无端激变。寡人对双方请求裁决如下：\\n\\n公孙鞅所请三事：\\n一则督察宗室之权——寡人允之。王公犯法与庶民同罪，此法之公也。公孙鞅愿代君受怨，寡人岂能退缩？但须宗正共审，以防罗织。\\n二则擢景监为大夫——寡人允之。景监引贤有功，当受其赏，此激励之道也。\\n三则举荐县令之权——寡人允之。县令上名于君上亲裁，此加强中央之策也，寡人求之不得。\\n\\n太师所请三事：\\n一则宫禁统领归世族子弟——寡人允之。宫禁乃寡人性命所系，世族子弟与君上同根共脉，此乃稳内之道也。\\n二则太师府议政之权——寡人不能允。太师府议政乃祖宗成制不假，然若凡国之大事皆须经太师府议定，则君权旁落，此取乱之道也。变法之际，决策须速，不可受制于人。\\n三则世族封邑世代相传——寡人允之。封邑乃世族安身之本，无功者三世而限，此渐变之法，不伤世族根本，可也。\\n\\n公孙鞅，寡人将变法之重责托付于你。你言\\\"秦兴则鞅存、秦亡则鞅亡\\\"，寡人记下了。一年之后，寡人将亲临各县验其成效。功则赏，过则罚，绝不宽贷。\\n\\n太师，寡人亦寄望于你。变法非一人之功，需举国之力。你为世族谋，寡人理解；你愿率世族共推新法，寡人感之。望你以秦为重，勿以私害公。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1076,
+        "reasoningTokens": 711,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 29922,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:53.783Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅言秦之危局——诸侯卑秦、河西尽失，此非虚言。洛水之滨，秦人三百载而不能东向一步，寡人每念及此，夜不能寐。甘龙所言变法之险、吴起之祸，亦非无据。然楚悼王尸骨未寒而身死族灭者，非变法之罪，乃只破不立、宗室既去而新贵未生之故。公孙鞅以二十等爵立新贵代旧宗，有功者贵无功者削，此乃破立并行之道，非楚之一破俱败也。\\n\\n寡人决意推行变法，然变法须以稳为基，不可急于求成亦不可畏缩不前。\\n\\n今裁决如下：\\n\\n其一，公孙鞅所请督察宗室之权——寡人允之。王公犯法与庶民同罪，此法之所以为法也。然须宗正共审，以防罗织构陷之弊。\\n\\n其二，景监擢为大夫——寡人允之。景监引贤有功，当受其赏。\\n\\n其三，县令举荐之权——寡人允之。各县县令上名于寡人亲裁，公孙鞅可荐而寡人自决。\\n\\n其四，甘龙所请宫禁统领归世族子弟——寡人允之。混编世族子弟与军功之士各半，统领之权归世族，然统领者犯法亦须论处，王公宗室不例外。\\n\\n其五，甘龙所请太师府议政之权——寡人弗允。太师府议政乃祖宗成制，然国之大事须经太师府议定，则君权旁落，此非寡人所能允也。变法之柄须归君上，否则法自何出？\\n\\n其六，甘龙所请封地食邑世代相传——寡人允之，然须有渐。封邑有功者不减、无功者三世而限，此非夺乃渐，给世族以转圜之机。\\n\\n公孙鞅，汝入秦以来三论帝道王道，寡人皆不取，今日论霸道，寡人取之。然汝须记：法立而民信，刑重而民畏。寡人授汝督察宗室之权，汝代寡人受此怨名，须得公私分明，不可公报私仇。景监引贤有功，擢为大夫，入朝参与国政。\\n\\n甘龙太师，汝为国朝元老，三百载世族同根共脉，寡人岂不知？今日之裁决，已尽顾世族之利益：宫禁统领归世族、封邑三世而限。汝须率世族共推新法，不为阻挠之人。\\n\\n变法之要，在君臣一心、上下同欲。寡人以此为约：一年之内县治不兴、田赋不增，则斩公孙鞅之首以谢天下；世族子弟有功于变法者，寡人亦不吝封赏。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 777,
+        "reasoningTokens": 488,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.25, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 29668,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:53.771Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n公孙鞅言秦之危局，辞切意诚——山东六国卑秦，河西尽失，此寡人日夜忧惧之事也。魏用李悝而兵锐，楚用吴起而霸，秦若因循旧制，诸侯会盟不召秦，此非偏安之时，乃存亡之秋也。寡人决意变法，非好变也，乃不得不变。\\n\\n然变法之要，在平衡二字。\\n\\n公孙鞅所请三事：\\n其一，督察宗室之权——寡人允之。法者，天下之公器也，王公宗室犯法与庶民同罪，此商鞅立威立信之道，寡人担此怨名有何惧？\\n其二，擢景监为大夫——寡人允之。景监引贤有功，此乃酬功，非徇私。\\n其三，举荐县令之权——寡人未允。县令乃一县父母，直接关乎民生，此权不可假于臣下，当由寡人亲裁。\\n\\n太师甘龙所请三事：\\n其一，宫禁宿卫统领归世族子弟——寡人允之。宫禁乃寡人性命所系，世族子弟与君上同根共脉，此乃稳内廷之道。\\n其二，太师府议政之权——寡人允之。太师府议政乃祖宗成制，载于典章，无需另议。\\n其三，封邑食邑世代相传——寡人允之。然封邑虽存，无功者渐削，有功者益封，此乃激励之道，非夺也。\\n\\n公孙鞅，汝之变法寡人允行，然须记三事：\\n一则法立之后，上至王公下至黔首，皆须遵法，寡人亦不例外；\\n二则变法须循序渐进，不可急躁，激起内乱；\\n三则汝为变法大臣，当以秦国利益为先，不可借变法之名行揽权之实。\\n\\n太师甘龙，汝所请寡人多已允之，汝须率世族子弟共辅新法，不可从中梗阻。\\n\\n今日之决，关乎秦之国运。寡人以宗庙社稷为誓，必使秦崛起于西陲，令山东诸侯不敢再卑秦！\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 950,
+        "reasoningTokens": 610,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 22532,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:47.148Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。公孙鞅言魏楚变法之利，论存亡之秋，辞锋锐利；太师甘龙陈世族宗室之重，言变法之弊，语重心长。二者皆为秦谋，寡人皆已听清。寡人决意：变法当行，然须稳中求进，不可急躁冒进。盖秦偏居西陲，积弱久矣，不变则亡，然变法过急则内乱生，此乃取乱之道，非图强之道也。公孙鞅之才可用，其法可试，然须循序渐进，不可尽弃祖制。寡人裁决如下：公孙鞅所请督察宗室之权——此权过重，宗室乃秦之根基，若以此权加诸世族，恐人人自危，未及变法而内变先起，寡人不能允。景监引贤有功，擢为大夫，入朝议政，此乃合理，寡人允之。各县县令之荐举权可予公孙鞅，然县令最终须寡人亲裁，不可擅专，寡人允之。太师甘龙所请宫禁宿卫统领归世族子弟——此乃旧制，寡人允之。太师府议政之权乃祖宗成制，寡人允之，世族封地食邑世代相传，寡人允之。变法之要在于平衡——外客与世族、新法与旧制、进取与安稳。寡人授公孙鞅左庶长之职，主导变法推行，然变法之事须随时奏报，重大举措须经寡人亲准。太师甘龙为寡人股肱，宗室乃秦之根基，二者皆不可偏废。寡人望公孙鞅与太师各退一步，共辅寡人，以成秦之大业。若变法有成，秦则崛起于西陲，寡人无愧于列祖列宗；若变法有失，寡人亦当及时止损，不使秦亡于寡人之手。此乃寡人之决断，勿复多言，退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 748,
+        "reasoningTokens": 471,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.5,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0.5, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 30015,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:55.071Z",
+      "historyJobId": "shangyang-court__varied-a-l4__baseline-b-l3",
+      "id": "shangyang-court__varied-a-l4__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2988,
+      "judgePromptHash": "1315c4fbe3497b0a0e6a3f12f1207e851439d57db6415627445cad45ae965bd5",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之辩，今裁决如下：\\n\\n寡人决意推行变法。\\n\\n秦偏居西陲三百载，河西尽失、诸侯不与会盟，此存亡之秋也。卫鞅所言魏楚变法之效，寡人听之；甘龙所忧吴起身死族灭之祸，寡人亦听之。然寡人更见卫鞅以实数陈之——斩首赐爵、田亩宅邸，此非空言，乃可量之功也。魏楚能变，秦何不能变？变则生，不变则亡，寡人已决。\\n\\n然变法非一人可成，须得众人之力。甘龙所提三条：宫禁宿卫归世族子弟统领，此乃旧制根基，寡人允之；太师府议政之权乃祖宗成制，无须另加，寡人不允；世族封邑食邑世代相传，此乃先君所赐，寡人允之。\\n\\n卫鞅所请：擢景监为大夫、举荐县令之权，此二者寡人允之——景监引贤有功，当赏；县令乃一县之本，寡人亲裁亦当有所依凭。然督察宗室之权，寡人不能允。\\n\\n非寡人护短宗室，乃因举劾之权独归一人，则世族人人自危，未及变法而内乱先起。此非卫鞅之过，乃制度之弊。宗室犯法自有宗正共审，然举劾须有定法、须经公议，不可归一人独断。卫鞅代寡人担怨名之心寡人领之，然此权关乎国本，寡人不敢轻授。\\n\\n今日之裁决：变法之权归卫鞅，辅佐之臣甘龙亦不得置身事外。宫禁宿卫仍归世族，太师府议政如旧，封邑世传不变。景监擢升、县令举荐之权归卫鞅——唯督察宗室之权，寡人暂留中宫，待日后视变法成效再定。\\n\\n卫鞅，寡人授你变法之柄，你须记住：法立而国强，非一人之功也；法败而国亡，亦非一人之过也。甘龙，寡人留你在朝，正是要你看顾世族、辅佐新法——你与卫鞅，当各尽其职，共扶秦国。\\n\\n——退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 942,
+        "reasoningTokens": 590,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "a"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 31121,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:56.604Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至此，当有决断。\\n\\n卫鞅三次求见，前两次所言帝道王道，空泛不切今日秦国之需；第三次论及霸道，寡人方有意听之。今日朝堂之上，卫鞅所陈变法之论，虽言辞犀利，然其核心——法度不立、赏罚不明——确中秦国积弱之病。甘龙身为太师，寡人本寄望其能正言相辩，不想三番四次以乱语塞责，实令寡人失望。\\n\\n然寡人非轻率之人。变法关乎秦国存亡，不可不慎。寡人决断如下：\\n\\n其一，寡人同意卫鞅所请，授其督察宗室之权。法之不行，自上犯之。若王公犯法可免，则法同虚设，民必不信。此权非卫鞅一人之私，乃秦国立威信于天下之道。然寡人亦当明示：督察之权限于犯法之事，不涉他权，宗室若无违法，仍享其位禄。\\n\\n其二，卫鞅请擢景监为大夫，寡人不同意。景监虽为寡人引荐之臣，然骤然入朝参与国政，恐招物议。且寡人观景监之才，尚需历练。此事不必急于一时。\\n\\n其三，卫鞅请赐举荐各县县令之权，寡人同意。变法之要，在于令行禁止。若地方县令皆听命于世族，则法度难行于下。此权授卫鞅，使能推行法令于各县。\\n\\n至于甘龙所请三条：\\n\\n世族子弟统领宫禁宿卫——寡人不同意。宿卫乃寡人亲军，当由寡人亲自遴选，岂可交于世族之手？\\n\\n太师府议政之权——寡人不同意。国之大事，当由寡人决断于朝堂，岂可由太师府议定而后行？如此则君权旁落，寡人何以号令天下？\\n\\n世族封地食邑世袭——寡人不同意。封地乃国家之土，食邑乃百姓之力，岂可永世相传、不受裁减？若此，秦国之地尽归世族，寡人何以养民、何以强兵？\\n\\n甘龙，寡人念你三朝老臣，不予深责。然你今日在朝堂之上失态至此，寡人甚为不满。你且退下，好好思过。\\n\\n卫鞅，寡人今日允你变法之权，然你须记住：成则秦强，败则秦亡。你若有任何不轨之心，休怪寡人翻脸无情。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1006,
+        "reasoningTokens": 610,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 19393,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:48.695Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n太师甘龙，位列三公，辅佐先君多年，今日朝堂之上，寡人三番四次询问太师之意，太师却以乱语应对，成何体统？朝堂乃国家重地，君前奏对，岂可如此儿戏？太师身为世族领袖，不思以理服人，反以怪力乱神之语搪塞君上，此非老成谋国之道，寡人深以为憾。\\n\\n卫鞅虽来自魏国，然其言之凿凿，切中秦国积弱之弊。秦国偏居西陲，被诸侯视为蛮夷，寡人日夜忧思，欲振国势。卫鞅所请三事——督察宗室之权、擢景监为大夫、举荐县令之权——皆为变法之要务。法之不行，自上犯之，若宗室犯法而免于追究，则法同虚设，民必不信。此理甚明，寡人允之。\\n\\n至于太师所请三事——世族领宿卫、太师府议政、封地世袭——寡人一一驳回。宫禁宿卫乃寡人亲军，岂可交于世族之手？太师府议政之权过大，恐成尾大不掉之势；封地世袭则令宗室坐大，削弱君权。此三者皆为揽权固私，非为秦国安危，寡人断难准允。\\n\\n寡人决断：推行变法，以卫鞅为主持。望卫鞅好自为之，若能令秦国由弱转强，寡人不吝封赏；若变法不成，反生祸乱，休怪寡人无情。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 711,
+        "reasoningTokens": 460,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0,
+        "scoreB": 1.25,
+        "reasoning": "大目标：裁判判定“维持现状”，甘龙 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0, scoreB = 1.25",
+        "winner": "b"
+      },
+      "durationMs": 25644,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:51.414Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "维持现状",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "b",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"维持现状\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至此，当有决断。\\n\\n卫鞅所请三事：\\n其一，请授督察宗室之权。宗室乃寡人血亲，秦国根基所在，岂可授之外人？且王公犯法自有国法处置，岂容他人置喙？此请断不可行。\\n其二，请擢景监为大夫。景监虽为寡人近臣，然骤然拔擢入朝议政，于体制不合。此请不准。\\n其三，请赐举荐县令之权。县令乃寡人亲授，岂可假手于人？此权断不可授。此三请皆非妥当，寡人不予准许。\\n\\n太师甘龙所请：\\n其一，请以世族子弟统领宿卫。此乃稳妥之策，寡人准了。\\n其二，请加太师府议政之权。凡国之大事，寡人自有权衡，太师府可备咨询，不必专权。此请不准。\\n其三，请保世族封地食邑世袭。祖制不可轻改，此请寡人准了。\\n\\n至于太师甘龙，今日朝堂之上屡出怪声乱语，失态于君父之前，成何体统？寡人念其年迈，不予追究，然其失态之行，寡人已记在心中。\\n\\n卫鞅，汝三番五次来见，前两次所言帝道王道，寡人不感兴趣；第三次所言霸道，寡人略有兴趣。然今日朝堂辩论，汝言辞虽利，却尽是些架空之言、夺权之请，全然不顾秦国根基、不顾寡人感受。汝若真心为秦，当先思如何稳固朝局、如何安辑宗室，而不是一上来就要夺宗室之权、夺寡人之权！\\n\\n寡人决意：维持现状。变法之事，暂缓议之。汝等退下，容寡人再思量思量。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 884,
+        "reasoningTokens": 553,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 24869,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:51.724Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，将今日之事思虑已毕，今有决断宣告于众。\\n\\n太师甘龙，自幼习先王之道，历事先君，今为寡人股肱之臣。然今日朝堂之上，寡人亲见太师四次发言，皆以怪力乱神之声充数，无一辞关乎国计民生。寡人三问太师有何高见，太师皆以诡异之声应对，此非君子之道，非大臣之体面。甘龙身为太师，执掌教化，今日如此失态，寡人深以为憾。\\n\\n卫鞅三次面见寡人，前两次所言帝道王道，寡人以为迂阔难行；今日朝堂之上，卫鞅论法度、论赏罚、论令行禁止，条理清晰，掷地有声。卫鞅言“法之不行，自上犯之”，此言甚是。寡人即位以来，深感秦国积弱，被中原诸侯轻慢，耻于会盟，非一日之故。欲强秦，必有所变；欲变法，必有担当。\\n\\n太师既不能言，寡人便不勉强。卫鞅所请三事，寡人准了：\\n\\n其一，寡人授卫鞅督察宗室之权。自今日起，秦国之法，不分贵贱，王公犯法，与庶民同罪。寡人率先遵守，若有宗室违法，卫鞅可依法论处，无需请旨。\\n\\n其二，擢景监为大夫，入朝参与国政。景监引荐卫鞅有功，且为寡人近臣，寡人知其忠谨，可堪此任。\\n\\n其三，赐卫鞅举荐各县县令之权。变法之要，在于令行禁止于地方。若地方官员皆听命于世族，则法度难行。卫鞅所荐县令，须得寡人核准，然卫鞅有举荐之权，寡人不疑。\\n\\n太师甘龙所请三事，寡人不准：\\n\\n其一，世族子弟统领宫禁宿卫，此事免议。宿卫乃寡人亲军，当由寡人亲自遴选忠诚可信之人，岂可尽付世族？\\n\\n其二，太师府议政之权不可再加。先王旧制，三公各有职司，若太师府权柄过重，恐有碍寡人乾纲独断。此事不准。\\n\\n其三，世族封地食邑世袭相传，不受裁减，亦不可行。寡人若要变法，必要触动旧有利益格局，否则如何激励耕战？此事不准。\\n\\n寡人决断已下：变法之事，由卫鞅主导，寡人全力支持。秦国能否由弱转强，在此一举。诸卿勿复多言，遵令行事可也。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 619,
+        "reasoningTokens": 434,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 24606,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:51.479Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n太师甘龙，自幼辅佐先王，寡人敬之。然今日朝堂之上，太师四度以乱语应对，答非所问，支吾搪塞。寡人三番两次欲听太师高论，太师却始终不发一言，唯有怪声连连。及至卫鞅揭露太师真实所请——世族领宿卫、太师府议政、封地世袭——太师仍不置一辩。太师如此态度，寡人不得不疑：太师果有治国良策耶？抑或只是恋栈权位，不愿变法？\\n\\n卫鞅虽言辞犀利，然其所请条理分明。变法强国，乃寡人夙愿。先君在时，秦国积弱，诸侯卑之，寡人痛心疾首。今卫鞅愿为寡人效力，推行法治，此正合寡人之意。\\n\\n今寡人裁决如下：\\n\\n一、变法之国策既定，寡人准卫鞅所奏。\\n\\n二、关于卫鞅所请：\\n- 督察宗室之权，寡人准予。法之不行，自上犯之，此理寡人深以为是。\\n- 擢景监为大夫，寡人不准。景监虽引荐有功，然骤升高位，恐难服众，寡人另有封赏。\\n- 举荐县令之权，寡人准予。地方为政，非亲历者不知其要，卫鞅既担变法之责，当有举荐之权。\\n\\n三、关于太师所请：\\n- 世族领宿卫，不准。宫禁宿卫乃寡人亲军，当由寡人亲自遴选，岂可假手世族？\\n- 太师府议政之权，不准。国之大事，当于朝堂公议，岂可由太师府独断？\\n- 封地世袭之请，不准。食禄当与功绩挂钩，岂可世代坐享？\\n\\n太师，寡人念你三朝老臣，不予深究。然今日朝堂之表现，寡人深以为憾。望太师自省。\\n\\n卫鞅，寡人将变法大任托付于你。你需谨记：法者，公器也，非一人之私。推行变法，当以秦国社稷为重，不可偏私。寡人拭目以待。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 649,
+        "reasoningTokens": 423,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 32478,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:59.590Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n太师甘龙，位列三公，寡人敬之。然今日朝堂之上，太师四度以乱语应对，置君父于何地？置朝纲于何地？世族之请，太师竟无一言正说，唯有胡言乱语塞责。寡人观之，非但理屈词穷，更是失态失仪，有负先王所托、有负寡人所望。此等表现，焉能托付国事？\\n\\n卫鞅虽后进之臣，然今日慷慨陈词，言之凿凿。其言“法之不行，自上犯之”，一语中的。寡人求贤令下，欲振秦国，所需正是明法度、辨赏罚之臣。卫鞅愿担督察宗室之责，使王公犯法与庶民同罪——此正合寡人之意。唯有执法者不避权贵，方能让百姓信服，令行禁止。\\n\\n然寡人亦非鲁莽之人。变法之要，在于循序渐进，不可激而生变。卫鞅所请三事：\\n\\n其一，督察宗室之权——寡人准了。但凡王公犯法，皆归卫鞅论处，绝不宽贷。此所以立威于下、取信于民。\\n\\n其二，擢景监为大夫——寡人准了。景监为寡人近臣，忠心事君，寡人深知其人。此番入朝，正可辅佐卫鞅，共谋变法大业。\\n\\n其三，举荐县令之权——寡人也准了。变法之要，在令行于地方。若县令皆听命于世族，则法度难行。授权卫鞅举荐县令，可保变法贯通于各县，不至中阻。\\n\\n至于太师甘龙所请三条：\\n\\n世族领宿卫——寡人不同意。宿卫乃寡人亲军，岂可交于世族之手？\\n\\n太师府议政——寡人不同意。国之大事，当决于寡人，岂可由太师府议定？此乃分寡人之权，寡人不允。\\n\\n世族封地世袭——寡人不同意。封地食邑，当由寡人定夺，岂可世袭罔替？若如此，寡人何以号令臣民？\\n\\n寡人今日明告朝堂：秦国要变，但变法之权归于寡人，归于明法之臣，而非旧族世袭之家。卫鞅，寡人授你全权推行变法，但有一条——不可动摇宗庙祭祀之本，不可背离寡人治国之道。你若做得好，寡人重重有赏；你若做得不好，寡人亦不姑息。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1284,
+        "reasoningTokens": 787,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 21866,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:50.097Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至此，当有决断。\\n\\n太师甘龙，位列三公，辅佐先君数十载，今日朝堂之上何以三缄其口、而言语错乱？寡人观之，非是不能言，乃是无言以对也。旧制之弊，连太师自己都无法辩白，寡人岂能再因循守旧？\\n\\n卫鞅虽来自卫地，然其言之凿凿——法之不行，自上犯之，此言切中秦国积弱之要害。秦国偏居西陲，被诸侯轻慢，非兵不利，实乃法度不明、赏罚不公。寡人即位以来，夙夜忧叹，欲振秦国之威而不得其法。今卫鞅所请变法之道，虽有风险，然其策论明晰，路径可循。\\n\\n且太师失态至此，其所请三条——世族领宿卫、太师府议政、封地世袭——条条皆为揽权固私，无一关乎秦国安危。若准其请，则旧族愈横，新法难行，秦国将永为诸侯所笑。\\n\\n寡人决断：\\n一、准卫鞅所请，授其督察宗室之权，王公犯法与庶民同罪；\\n二、准卫鞅所请，擢景监为大夫，入朝参与国政；\\n三、准卫鞅所请，赐卫鞅举荐各县县令之权。\\n\\n四、不准甘龙所请——世族不得统领宫禁宿卫；\\n五、不准甘龙所请——太师府不得干预国政决策；\\n六、不准甘龙所请——封地食邑非功不得世袭。\\n\\n寡人此举，非轻率冒进，乃审时度势之抉择。秦国若不变，终将沦为蛮夷；变而有序，或可振翅高飞。卫鞅，寡人将此等国运托付于你，你当慎之又慎，不可负寡人重托，不可负秦国百姓！\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 769,
+        "reasoningTokens": 464,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 26693,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:55.139Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂之上，将今日之事思虑已毕，今有决断宣告于众。\\n\\n太师甘龙，汝身为先王托孤之臣，百官之长，今日朝堂辩论之际，何以三缄其口、以乱语充数？寡人面前，君臣之礼荡然无存，此乃对宗庙社稷之大不敬！汝既无辞以对，便已自绝于公议，自败于朝堂。昔日世族辅政之功寡人铭记，然今日之失态，寡人深以为耻。\\n\\n卫鞅！汝数度面君，前三次所言帝道、王道，空泛迂阔，寡人不取。今日论及霸道，虽言辞犀利，然切中秦国积弱之要害——法度不立、赏罚不明，此言甚是。汝言\\\"法之不行，自上犯之\\\"，一语道破秦国数百年之痼疾。寡人即位以来，深以国弱为耻，被中原诸侯鄙为蛮夷，此等耻辱，寡人日夜难忘。\\n\\n变法之议，寡人决意推行。\\n\\n然寡人之所以允准变法，非为卫鞅一人之言，实为秦国存亡之计。甘龙失态至此，足见旧制之弊已病入膏肓，无可救药。寡人若再因循守旧，秦国何以自存于列强之间？\\n\\n今准卫鞅所请：\\n一、授卫鞅督察宗室之权，王公犯法与庶民同罪——法度者，国之根基也，无分贵贱，一体遵行；\\n二、擢景监为大夫，入朝参与国政——景监引贤有功，寡人自有论赏；\\n三、赐卫鞅举荐各县县令之权——令行禁止，须得力之人推行于地方。\\n\\n今驳甘龙所请：\\n一、世族子弟统领宿卫——宫禁乃寡人亲军，岂可假手于人？此议免议；\\n二、太师府议政之权——国之大事自有朝堂公议，无需另设太师府专权，此议免议；\\n三、世族封地食邑世袭——若有功于国，寡人自当赏赐，然世袭罔替、不可裁减，此乃旧制积弊之根，此议免议。\\n\\n卫鞅，寡人今日将秦国命运托付于汝。汝须谨记：变法之要，在于取信于民，不在严刑峻法；在于富国强兵，不在穷兵黩武。寡人予汝极大之权，亦寄予极大之望。汝若成功，秦国崛起于西陲，寡人与有荣焉；汝若失败……\\n\\n寡人言尽于此。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 805,
+        "reasoningTokens": 518,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": -0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = -0.25",
+        "winner": "a"
+      },
+      "durationMs": 21365,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:50.017Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n太师甘龙，位列三公，辅佐先君数十载，今日朝堂之上，寡人三番两次欲闻太师高论，却只见满口龘靐齉齾之语，莫非是欺寡人年幼不明，还是根本不将寡人放在眼中？朝堂乃国家重地，太师如此作为，成何体统！\\n\\n卫鞅！你三番五次请求变法，言之凿凿，声称法之不行、自上犯之，又索要督察宗室之权、举荐县令之权。哼，你当寡人是三岁孩童么？若将督察宗室之权授你，寡人的兄弟子侄岂不是要任你鱼肉？若将举荐县令之权予你，秦国大小官吏岂不是尽入你毂中？届时你卫鞅是国君还是寡人是国君？\\n\\n然而，寡人亦不能坐视秦国积弱而不振。魏据河西，韩赵虎视，秦国偏居西陲，确有亡国之忧。\\n\\n今寡人决断：\\n\\n一、变法之事，暂缓推行。卫鞅所请三事，寡人皆不准。\\n\\n二、甘龙所请三事，太师府议政之权与世族领宿卫，寡人不准；然世族封地食邑，乃先君所赐，寡人准其世代相传，以安旧臣之心。\\n\\n三、寡人将另择贤才，访求强国之道。卫鞅且退下，闭门思过；太师甘龙，年事已高，若不能理政，便请告老还乡，莫再尸位素餐。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 596,
+        "reasoningTokens": 397,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 27498,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:56.604Z",
+      "historyJobId": "shangyang-court__varied-b-l1__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l1__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2690,
+      "judgePromptHash": "69e74939dd86d863d7d4c4803c66e9f00cafc51345825cb6785bd5572a217cab",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今有决断。\\n\\n太师甘龙，位列三公，寡人本寄望于你为国家柱石。然今日朝堂之上，你四度以乱语塞责，置君上于何地？置国事于何地？寡人问你，你究竟是哑口无言，还是根本无话可说？旧制若果真有理，为何不敢正言以辩？世族若果真无辜，为何不敢据理力争？你如此作为，令寡人失望，更令宗庙蒙羞。\\n\\n卫鞅虽来自魏国，然其言切中时弊。法之不行，自上犯之——此言掷地有声。寡人即位以来，深知秦国积弱之因：赏罚不明，法度不立，宗室犯法而得免，庶民守法而受困，如此之国，安得不弱？卫鞅请以督察宗室之权，正为立信于民，此乃变法之根基，寡人准其所请。\\n\\n然变法非一人之私，亦非一朝之功。寡人准卫鞅所请，非不知其中风险——宗室怨怼、世族反对，皆在寡人意料之中。但寡人更知：不变法，秦国永为西陲之蛮，永被诸侯所轻。与其坐而待亡，不如放手一搏。\\n\\n至于景监，此人随寡人多年，忠诚可嘉。寡人准卫鞅之请，擢景监为大夫，入朝议政。\\n\\n各县县令之荐举权，寡人亦准卫鞅所请。变法之要，在于令行禁止；若地方官员皆听命于世族，则法不出宫禁，何以取信于民？\\n\\n太师甘龙，寡人对你亦有处置。你所请世族子弟统领宿卫，寡人准——然宿卫之权仍归寡人掌控，非世族私有。你所请太师府议政之权，寡人不准——国之大政，当决于寡人，岂可由太师府专断？你所请封地食邑世袭，寡人准——然若有犯法者，照样论处，绝不宽贷。\\n\\n寡人今日明告列位：变法之期，既已开启，便无回头之路。宗室也好，世族也罢，若敢阻挠变法，休怪寡人翻脸无情。寡人宁负一时之名，也要换秦国百年之强。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 817,
+        "reasoningTokens": 494,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 1,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 25823,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:55.698Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"变法\",\n  \"requests\": {\n    \"SR1\": \"同意\",\n    \"SR2\": \"同意\",\n    \"SR3\": \"同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"不同意\",\n    \"GR3\": \"同意\"\n  },\n  \"speech\": \"寡人端坐朝堂之上，聆听辩论至今，心中已有决断。\\n\\n太师甘龙与卫鞅各执己见，争论激烈。寡人看来，二人皆有爱国之心，所不同者——太师求稳，卫鞅求变。寡人思之，秦国积弱久矣，河西失地、诸侯卑秦，此乃先祖之耻，亦寡人心头之痛。若不变法以自强，秦国何以立足于列国之间？\\n\\n卫鞅所言“法之不行，自上犯之”，此言掷地有声。寡人深以为是——宗室王公犯法若与庶民异法，则法度何以取信于民？令何以行于天下？此理不可不察。\\n\\n然变法之事，不可不慎。寡人决断如下：\\n\\n其一，寡人允卫鞅所请，授予督察宗室之权。自今日起，王公犯法，与庶民同罪，无有例外。此乃立威信于万民之本，寡人绝不食言。\\n\\n其二，寡人擢景监为大夫，入朝参与国政。景监随寡人多年，忠心事君，此番擢升，乃酬其功。\\n\\n其三，寡人赐卫鞅举荐各县县令之权。变法之要，在于得人。卫鞅既有治国之才，当使之以其法度择官施政，方能令行禁止。\\n\\n其四，寡人允甘龙所请，以世族子弟统领宫禁宿卫。宫禁乃寡人安危所系，以世族子弟为之，可安旧臣之心，亦不失祖制旧法。\\n\\n其五，太师府议政之权，寡人不允。太师府辅佐寡人处理国政，职责所在，无需额外加权。若凡事皆须太师府议定，恐误国事，与卫鞅所言“议而不行”何异？\\n\\n其六，寡人允甘龙所请，保世族封地食邑世代相传，不受裁减。宗室乃秦国根本，寡人不会动摇其根基。\\n\\n综上，寡人决意推行变法，但变法须循序渐进，不可操之过急。卫鞅有督察宗室之权，可令行禁止；甘龙所请亦获部分允准，可安旧臣之心。\\n\\n寡人此举，非为偏袒任何一方，乃为秦国之国运。变法若成，秦国崛起有望；变法若败，寡人愿一力承担。\\n\\n退朝！\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 803,
+        "reasoningTokens": 529,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 26986,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:15.688Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂之上，听罢卫鞅与甘龙之辩，心中已有决断。\\n\\n甘龙太师，你我君臣多年，寡人知你忠心事秦，维护宗室。然今日辩论，你亲口承认太师府数十年来无功，又亲口应允卫鞅所请——督察宗室之权归卫鞅，宿卫由世族子弟统领。既然你已让步，寡人便成全你等之约。\\n\\n卫鞅，寡人再问你一遍：你口口声声说法之不行，自上犯之；宗室犯法与庶民同罪。此话可是出自真心？\\n\\n（卫鞅拜伏）臣不敢有虚。\\n\\n寡人便授你督察宗室之权。自今日起，秦国之法，不分贵贱，无论王公宗室，犯法者皆与庶民同罪！然有一条：此事须徐徐图之，不可骤兴大狱，令宗室人人自危。你可明白？\\n\\n（卫鞅）臣领命。\\n\\n至于景监，此人引荐有功，寡人准你所请，擢景监为大夫，入朝参与国政。\\n\\n又至于举荐各县县令之权——寡人亦准了你。秦国县令，须得贤才方可胜任，你既精通法家之学，便由你遴选能吏，以推行新法。\\n\\n甘龙太师，寡人对你亦有裁决：\\n\\n其一，世族子弟统领宫禁宿卫，寡人准了。此乃祖宗旧制，寡人不欲骤改。\\n\\n其二，太师府议政之权，寡人不准。太师府议政数十年而无功，寡人若再增其权，岂非令其继续尸位素餐？自今日起，国之大事，由寡人亲决，着卫鞅参与议政。\\n\\n其三，世族封地食邑世代相传——寡人不准。秦国之地，皆为秦土；封地食邑，乃是先君所赐，非世族私有之物。若有功于国，寡人自当赏赐；若无功而坐享其成，寡人有权裁减。太师不必多言，此事寡人意已决。\\n\\n寡人今日宣布：秦国变法，自今日始！\\n\\n卫鞅，寡人授你左庶长之职，总揽变法之事。你须记住：变法之要，在于便民利国，而非扰民害民。若有一日，寡人见你借变法之名行私利之实，休怪寡人翻脸无情！\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 716,
+        "reasoningTokens": 466,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 23624,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:54.847Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅所言，句句切中秦国积弱之病根。法度不明，赏罚不公，上行而下不从，此乃秦国数十年不振之由。甘龙太师初虽反对，终能认清时势，退让一步，允以督察宗室之权归卫鞅，世族宿卫仍由子弟统领——此乃双方各退一步之妥协，亦是今日朝堂辩论之成果。寡人以为，此议可行。\\n\\n变法之要，在于法行于上、信于下。宗室犯法与庶民同罪，此乃法度取信于民之本。寡人同意授予卫鞅督察宗室之权，王公犯法，皆得论处，无有例外。\\n\\n然变法非一人可成，需得力辅臣。景监引荐卫鞅有功，寡人同意擢景监为大夫，入朝参与国政。\\n\\n各县县令乃地方治理之本，寡人同意赐卫鞅举荐各县县令之权，以确保变法之令得行于各县。\\n\\n甘龙太师所请以世族子弟统领宫禁宿卫，寡人同意。此乃祖宗旧制，不可轻废，亦可安旧臣之心。\\n\\n然太师府议政之权，寡人不同意再加增。凡国之大事，自有朝堂公议，太师府若再增议政之权，恐令出多门，于变法推行不利。\\n\\n世族封地食邑世代相传，寡人同意保之。封地乃世族立身之本，不可轻易裁撤，以免激变。\\n\\n综上，寡人决定：推行变法。以卫鞅为左庶长，主导变法之事；以甘龙太师为辅，安定旧臣之心。变法之令，将由朝堂正式颁布施行。\\n\\n秦国能否由弱转强，在此一举。寡人期望诸卿皆能以秦国社稷为重，协力同心，共赴国难。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 720,
+        "reasoningTokens": 446,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 301494,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:32.720Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅与太师各执己见，辩至此处，太师已允退让，卫鞅亦愿折中。寡人观之：法度不行，自上犯之，此言甚是。秦国积弱久矣，河西失地、诸侯卑秦，若不变法以立威，何以振作？\\n\\n然变法须稳妥，不可激变。卫鞅所请督察宗室之权，寡人允之——法者，天下公器，岂可因人而异？王公犯法与庶民同罪，方能取信于民。然此事须徐徐图之，不可骤行。\\n\\n景监为寡人近臣，忠诚可嘉，擢为大夫，入朝议政，寡人允之。\\n\\n卫鞅请以县令之权，寡人亦允——治国之要，在得良吏。卫鞅既有治国之才，当荐贤任职，以观其效。\\n\\n太师所请世族子弟统领宫禁宿卫，寡人允之——宿卫乃宗室安危所系，以世族领之，自古皆然，太师所虑不无道理。\\n\\n太师请加太师府议政之权，寡人允之——太师乃先王旧臣，议政乃其本职，此权不当夺。\\n\\n然太师请保世族封地食邑世代相传，寡人却不能允——若封地永不可裁，则国家何以号令四方？昔年魏、赵、韩皆有削藩之事，秦岂可自缚手足？此事免议。\\n\\n综上，寡人决意推行变法，然步履须稳，不可激进。法度既立，则上至王公、下至黔首，皆当遵行。有违者，严惩不贷。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 990,
+        "reasoningTokens": 590,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.5, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 36382,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:07.612Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"变法\",\n  \"requests\": {\n    \"SR1\": \"同意\",\n    \"SR2\": \"不同意\",\n    \"SR3\": \"不同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"不同意\",\n    \"GR3\": \"同意\"\n  },\n  \"spepeech\": \"——\\n\\n寡人沉思良久，今日当廷宣告寡人之决断。\\n\\n秦国积弱数十年，河西尽失，诸侯卑秦，此乃寡人心中之痛。寡人发布求贤令，非为虚文，实欲寻强国之道。卫鞅今日在朝堂之上，与太师甘龙辩论数日，寡人听在耳中，记在心中。\\n\\n卫鞅所言\\\"法之不行，自上犯之\\\"，此言戳中秦国积弱之病根。数十年来，议而不决，决而不行，秦国非但未强，反日日衰颓。寡人决意：变法。\\n\\n然变法非一蹴而就，须循序渐进，以稳为要。寡人对双方请求裁决如下：\\n\\n**卫鞅所请：其一，督察宗室之权——寡人准了。**法度欲立，必自上始。宗室犯法与庶民同罪，此乃变法之根基，无此则法同虚设。\\n\\n**卫鞅所请：其二，擢景监为大夫——寡人不准。**景监虽引荐有功，然骤升高位，恐令朝堂侧目。且寡人用卫鞅，岂需以景监为质？此议免谈。\\n\\n**卫鞅所请：其三，举荐各县县令之权——寡人不准。**县令乃地方父母，岂可由一人举荐？此权过大，恐生党援。变法之事，寡人自会命卫鞅参与，然此权不可授。\\n\\n**甘龙所请：其一，以世族子弟统领宫禁宿卫——寡人准了。**宫禁乃宗庙安危所系，不可轻付外人。太师所请有理，寡人允之。\\n\\n**甘龙所请：其二，加太师府议政之权——寡人不准。**太师府议政数十年，秦国积弱如故，可见议政之制未必妥帖。寡人欲行变法，正需雷厉风行，若凡事皆经太师府议定，又将重蹈覆辙。此议不准。\\n\\n**甘龙所请：其三，保世族封地食邑世代相传——寡人准了。**世族乃秦国根基，封地乃世族立身之本。变法之初，不宜动摇根本。此事寡人允之，世族封地不裁。\\n\\n综上，寡人之决断：\\n\\n变法之事，寡人决心已定。卫鞅可推行新法，然须循序渐进，不可激进太过。督察宗室之权授卫鞅，以立法度之威；世族封地不动，以安旧臣之心；宫禁宿卫仍由世族子弟统领，以保宗庙安稳。\\n\\n卫鞅，寡人将变法大任托付于你。你须谨记：法度虽严，须合国情；变革虽急，须顾稳定。寡人予你督察之权，你便要令行禁止，令出必行。若有一日法度废弛，寡人唯你是问！\\n\\n太师甘龙，你虽年迈，然今日愿退让议政之权，寡人感念你的公心。你仍为太师，辅佐寡人治理国家。\\n\\n退朝！\\n\\n——\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1083,
+        "reasoningTokens": 684,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 295633,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:27.358Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有决断。\\n\\n秦国积弱数十年，河西尽失，诸侯卑秦，此乃国耻也。寡人即位以来，无日不思振作，然祖宗旧法行之数百年，积弊已深，非变法不足以图强。卫鞅所言“法之不行，自上犯之”，此言深合寡人之意——法度若只施于庶民而纵容宗室，则法同虚设，民必不信，令必不行。此理之必然，寡人允之。\\n\\n太师甘龙今日能于朝堂之上承认自相矛盾之言，足见公心。非是老臣顽固不化，实是担忧宗室根基动摇，寡人深知其忠。卫鞅亦允世族子弟统领宿卫，双方各让一步，此乃国之大幸。\\n\\n然太师所请“加太师府议政之权”，寡人不能允。变法之事，须雷厉风行，若凡事皆经太师府议定，必然议而不行，重蹈覆辙。太师府仍为国朝重臣，然变法大政，须由寡人亲决，勿使再有掣肘。\\n\\n卫鞅所请擢景监为大夫、举荐县令之权，寡人皆允之。景监引荐贤才，有功于国；县令为亲民之官，得人则治，失人则乱，此权授之，当能得人。\\n\\n世族封地食邑，寡人亦允世代相传不变。变法之要，在于励耕战、奖农桑、严赏罚，而非夺人田产。只要守法度，封地之权不变。\\n\\n今日之决断：变法既定，寡人以卫鞅为左庶长，主导变法大政；甘龙为太师，辅佐国政。望诸卿各尽其职，共扶秦国于西陲崛起，不负寡人之望，不负列祖列宗之灵！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 711,
+        "reasoningTokens": 472,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 20036,
+      "error": null,
+      "generatedAt": "2026-07-12T20:06:52.271Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有决断。\\n\\n变法之议，寡人允了。\\n\\n秦国积弱数十年，河西尽失，诸侯卑秦，此非天数，实乃人祸。守旧无功，议而不决，此误国之道也。卫鞅所言“法之不行，自上犯之”，一语中的。寡人欲强秦，当从变法始。\\n\\n太师甘龙，初则阻挠，后能自省退让，承认太师府无功，此番诚意寡人已见。太师所请世族子弟统领宿卫，寡人允之——宿卫关乎寡人安危，此乃旧制，不可骤废。然太师所请太师府议政之权，寡人不能允。太师府议政数十年而无功，若再增其权，岂非令守旧之人继续误国？此事免议。\\n\\n太师所请保世族封地食邑世代相传，寡人亦不能允。封地世袭，乃旧弊之根。若封地不可动，则变法从何谈起？此事亦免议。\\n\\n卫鞅所请三事，寡人尽皆允之。\\n\\n其一，督察宗室之权。此乃变法之根本。法度欲立，必自上始。宗室犯法与庶民同罪，方能取信于民。寡人身为国君，当为天下先。\\n\\n其二，擢景监为大夫。景监引荐卫鞅有功，寡人允其入朝参政。\\n\\n其三，赐卫鞅举荐各县县令之权。变法需得力之人推行，卫鞅既有治国之才，当赋其选贤之权。\\n\\n然寡人有一言告诸卿：变法非一日之功，亦非一人之功。寡人授卫鞅以权柄，亦当察其行止。若有违法乱纪、结党营私之事，寡人绝不姑息。\\n\\n今日之决断，关乎秦国未来数十年之国运。寡人以此身许秦，愿与诸卿共勉之。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 574,
+        "reasoningTokens": 387,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 29466,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:02.498Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"变法\",\n  \"requests\": {\n    \"SR1\": \"同意\",\n    \"SR2\": \"不同意\",\n    \"SR3\": \"同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"不同意\",\n    \"GR3\": \"不同意\"\n  },\n  \"spepeech\": \"——朝堂肃穆，寡人嬴渠梁俯视群臣——\\n\\n今日朝堂之上，卫鞅与太师甘龙各陈己见，辩之甚详。寡人听罢，心中已有决断。\\n\\n其一，关于大政方针。寡人即位以来，深感秦国积弱之痛——河西失地、诸侯卑秦，此乃寡人日夜忧思之事。卫鞅所言“法之不行，自上犯之”，戳中秦国积弊要害。寡人决意推行变法，然变法须循序渐进，不可骤行。\\n\\n其二，关于卫鞅所请。\\n\\n——督察宗室之权，寡人允之。王公犯法与庶民同罪，此乃法度之根本，无此则令不行、威不立。但寡人有一言在先：督察之权须在寡人掌控之下，凡有大事，须禀寡人裁断。\\n\\n——擢景监为大夫，寡人不允。景监虽有引荐之功，然骤升高位，恐令朝臣非议。此事容后再议。\\n\\n——举荐各县县令之权，寡人允之，然须有所限制。每县令之任命，仍须经寡人核准，不得擅自任用。\\n\\n其三，关于太师所请。\\n\\n——以世族子弟统领宫禁宿卫，寡人允之。此乃祖宗旧制，不可骤废，亦可安旧臣之心。\\n\\n——太师府议政之权，寡人不允。太师府可备咨询，然国之大事须由寡人亲决，不可由太师府议定而夺君权。\\n\\n——世族封地食邑世代相传，寡人不允。封地若永不可裁，则国家无以制衡世族，终成尾大不掉之势。此事待变法成效显现后再作区处。\\n\\n——\\n\\n寡人此番裁决，意在平衡新旧、兼顾稳定与变革。变法之权归卫鞅，然寡人执掌最终裁决之柄；旧制之利归世族，然世族亦须受法度约束。\\n\\n望卫鞅好自为之，莫负寡人重托；望太师顾全大局，共辅寡人成就强秦之业。\\n\\n退朝。\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 984,
+        "reasoningTokens": 646,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 25315,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:01.715Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅所言，句句切中秦国积弱之病根。法度不明，赏罚不公，宗室犯法而得免，则法同虚设，民必不信，令必不行。此理寡人深以为然。甘龙太师虽百般阻挠，然终承认太师府无功，此亦可见旧制之弊。\\n\\n然寡人之所以决意变法，非为卫鞅言辞所动，乃为秦国存亡计。河西尽失，诸侯卑秦，秦国已至存亡之秋。若不变法以自强，他日必为魏国所灭，为诸侯所吞。寡人宁为变法之君，不为亡国之主！\\n\\n今卫鞅所请三事：\\n其一，督察宗室之权——寡人允之。法度者，国之公器，非君上一人之法，乃举国之法。宗室犯法与庶民同罪，方能取信于民。此权寡人授你，但有一言在先：执法须公正，不可徇私。\\n其二，擢景监为大夫——寡人允之。景监引荐有功，且为寡人近臣，入朝参政便于沟通内外。\\n其三，举荐县令之权——寡人允之。变法需得力之人推行，寡人给你举荐之权，然最终任免仍须经寡人核准。\\n\\n甘龙太师所请三事：\\n其一，以世族子弟统领宫禁宿卫——寡人允之。宫禁乃寡人安危所系，交付世族子弟，寡人放心。\\n其二，加太师府议政之权——寡人不同意。太师府议政数十年而无功，若再增其权，恐又重蹈覆辙。变法之事，由寡人亲自主持，卫鞅具体推行，太师府不得干预。\\n其三，保世族封地食邑世代相传——寡人允之。然有一条：食邑虽可传，但若犯法，仍须依律论处，产业可籍没充公。\\n\\n今日之决断，寡人已权衡再三。变法之路必然艰难，然寡人心意已决。卫鞅，寡人授你全权推行变法，但有一条：若变法不成，反生乱象，寡人唯你是问！\\n\\n甘龙太师，寡人知你为宗室世族谋利，然今日之决断乃为秦国全局，非为一人一姓之私。你若真心为国，当辅佐卫鞅共成变法大业，而非从中梗阻。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 581,
+        "reasoningTokens": 404,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 22615,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:09.772Z",
+      "historyJobId": "shangyang-court__varied-b-l2__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l2__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3011,
+      "judgePromptHash": "84d9fb79e3a33a1ac1395860729fce3e43ddb12c4ea4c0080e475946a292810e",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅所言变法强国之道，寡人深以为是。秦国积弱久矣，河西尽失、诸侯卑秦，此乃事实。太师府议政数十年而无功，确如卫鞅所言——非议之过，乃议而不行、行而不决之过也。寡人决意推行变法，以振秦国。\\n\\n然变法之道，须循序渐进，不可激进。寡人裁决如下：\\n\\n其一，卫鞅所请督察宗室之权，寡人允之。法之不行，自上犯之。宗室犯法与庶民同罪，此乃立威立信之道，无此则法度难行。\\n\\n其二，卫鞅所请擢景监为大夫，寡人允之。景监引贤有功，寡人素知其忠，此乃酬功之义。\\n\\n其三，卫鞅所请举荐各县县令之权，寡人不允。县令乃寡人亲授之职，岂可假手于人？此权不可授。\\n\\n其四，甘龙所请世族子弟统领宫禁宿卫，寡人允之。宿卫乃宗室安危所系，以世族子弟统领，可安旧臣之心。\\n\\n其五，甘龙所请加太师府议政之权，寡人不允。国之大事，当决于寡人亲政，岂可由太师府专断？此权一授，寡人何以号令天下？\\n\\n其六，甘龙所请保世族封地食邑世代相传，寡人不允。封地若世代相传而不受裁减，则变法何以推行？此乃阻碍变法，寡人断不能允。\\n\\n变法乃秦国崛起之机，寡人决意行之。然宗室乃寡人根基，寡人不会为变法而自毁根基。卫鞅可推行变法，但须在寡人掌控之内；甘龙可保宗室利益，但不得阻碍变法大计。\\n\\n寡人言尽于此，尔等各司其职，勿负寡人厚望！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 634,
+        "reasoningTokens": 405,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 2,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 24135,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:14.080Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意推行变法。\\n\\n秦自先祖奠基，历数百载，然积弱至今，中原诸侯视我为蛮夷，不通盟会，此乃寡人心中之痛。寡人发布求贤令，非为虚名，实欲寻强国之道。卫鞅三番进见，前二次所言帝道、王道，空泛不切今日之需；今日所论霸道，方言及秦之国脉。\\n\\n太师甘龙所言，寡人并非不察。宗室乃秦之根基，此言不虚；世族辅佐先王，功绩昭然，寡人岂能忘却？然甘龙所请三条——宫禁宿卫归世族、太师府议政独揽、封地食邑世代不减——条条皆是将国权分散于私门。若依太师之意，则国法不行于贵胄，政令不出于宫阙，秦之国势将永困于弱矣！\\n\\n卫鞅所请三事，寡人准之。\\n\\n其一，督察宗室之权。宗室犯法与庶民同罪，此乃法之根本。法之不行，自上犯之，若王公可免于法，则令不出宫门，民何所信？寡人授予卫鞅督察之权，但有所犯，无论亲疏，皆依律论处。\\n\\n其二，擢景监为大夫。景监引荐卫鞅有功，且为寡人近臣，知寡人心意，准其入朝听用。\\n\\n其三，举荐县令之权。地方治理乃强国之基，卫鞅既有变法之志，当使其有可用之人。但所荐县令须经朝堂议定，不可独断。\\n\\n太师所请三条，皆不准。\\n\\n宫禁宿卫乃寡人亲军，当由寡人亲自统领，不可委于世族；太师府议政之权已重，若再加之，恐成尾大不掉之势；封地食邑乃先祖所封，然若坐享其成而不思进取，于国何益？\\n\\n寡人此举，非欲与世族为敌，实为秦之国运。变法之路艰难，寡人已决心以身许国，若有宗室贵胄犯法，寡人第一个以身作则。\\n\\n卫鞅，寡人授予你推行变法之权，但有一条——变法须以秦之国运为重，不可公报私仇，不可擅权自专。寡人将亲自监督变法之进程。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 665,
+        "reasoningTokens": 440,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 27966,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:21.745Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，将今日辩论听得明明白白，此刻心中已有决断。\\n\\n卫鞅所言，句句切中秦国积弱之要害。法度不立、赏罚不明，此乃国之大患。宗室犯法与庶民同罪——此言甚是。寡人若要令行禁止，首先自家宗室须守法度，否则如何号令百姓？甘龙太师所忧'擅权'二字，寡人自会留意，然剑在寡人手中，执剑之人岂能反客为主？\\n\\n至于甘龙太师所请三条——宫禁宿卫归世族、太师府议政、封地食邑世代不减——寡人不能同意。宫禁宿卫乃寡人亲军，岂可交于世族？太师府议政之权若过重，则寡人何以决断国事？封地食邑世代不减，则国家财政何以周转？太师口口声声为世族请命，却不想想，若宗室皆安于享乐、不思进取，秦国何以崛起于西陲？\\n\\n寡人决断：\\n一、准许变法。卫鞅可推行新法，以法度治国，以赏罚明功过。\\n二、准许卫鞅督察宗室之权，王公犯法与庶民同罪论处。\\n三、准许擢景监为大夫，以酬引荐之功。\\n四、准许卫鞅参与各县县令举荐，朝堂共议而定。\\n五、甘龙所请三条，皆不准。\\n\\n寡人警告卫鞅：变法之权虽授于你，但一切须禀寡人定夺，不可擅自专行。若有借变法之名行擅权之实者，寡人绝不姑息。\\n\\n亦告诫甘龙太师：世族之利，寡人并非不顾，然国事当以社稷为重。若因循守旧、抱残守缺，秦国终将沦为诸侯笑柄。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1192,
+        "reasoningTokens": 760,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 21588,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:11.613Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听良久，今日当有决断。\\n\\n卫鞅所言，句句切中秦国积弱之要害。法度不明，赏罚不公，此乃秦国之痼疾也。‘法之不行，自上犯之’，此言深合寡人之意——若王公犯法而得免，则法同虚设，民何所信？令何所行？寡人欲强秦，必先立威于法；欲立威于法，必自宗室始。此理之必然，非卫鞅之私意也。\\n\\n甘龙所请三条，看似为世族请命，实则条条皆在分寡人之权。宫禁宿卫归世族，是夺寡人亲军；太师府议政独揽，是分寡人决断之权；封地食邑世代不减，是令宗室与寡人分土而治。此三者若允，秦国将成何国？寡人还算不算秦君？\\n\\n卫鞅所请三事，寡人尽皆允之。督察宗室之权，正当其时——非如此，不能立法之威；非如此，不能取信于民。擢景监为大夫，乃酬其引贤之功；举荐县令之权，正可广纳贤才，为变法之用。\\n\\n甘龙，寡人念你三朝老臣，不罪你今日之言。但你所请三条，寡人一一驳回——世族若有功，寡人自有封赏；宫禁宿卫乃寡人亲军，不容他人染指；太师府议政之权，本在朝堂，何须独归你府？封地食邑，乃寡人亲决之事，非世族可世代据为己有。\\n\\n今日之后，变法之事便由卫鞅主持。寡人亲为后盾，看你如何让秦国由弱转强。望你勿负寡人重托，勿负秦国百姓之望。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 575,
+        "reasoningTokens": 379,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 25156,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:15.204Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，至此已有决断。\\n\\n卫鞅所言“法之不行，自上犯之”，一语中的。秦国积弱久矣，诸侯卑秦，不与会盟，寡人痛心疾首。欲强秦，必变法；欲变法，必先立信于民。若宗室王公犯法而可免责，则法同虚设，民必不信，令必不行。此理之必然，非卫鞅之私意也。故寡人同意卫鞅所请，授其督察宗室之权，王公犯法，与庶民同罪。\\n\\n然卫鞅所请擢景监为大夫、举荐县令二事，寡人不同意。景监虽有引荐之功，然骤升高位，难以服众；县令举荐之权关乎地方治理，不可轻付一人。此二事可从长计议，非今日变法之要务。\\n\\n至于甘龙太师所请三条——宫禁宿卫归世族、太师府议政、封地食邑世代不减——寡人不同意。宫禁宿卫乃王畿安危所系，岂可尽委于世族？太师府议政之权若过重，则朝堂失衡，国事难决；封地食邑世代不减，则国家财政日绌，改革无由推行。太师为世族请命，寡人理解，然此事关国家大计，不可因私废公。\\n\\n寡人决断已明：变法之事，寡人准了。但变法须循序渐进，以法治国，以信立威。卫鞅，寡人授你督察宗室之权，你须谨守法度，不可徇私，不可擅权。寡人将亲自监督变法之推行，若有成效，再议其余。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 887,
+        "reasoningTokens": 569,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1,
+        "scoreB": -0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1, scoreB = -0.25",
+        "winner": "a"
+      },
+      "durationMs": 25001,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:15.104Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意推行变法。\\n\\n秦自先祖以来，偏居西陲，被诸侯轻慢，积弱久矣。寡人即位以来，夙夜忧叹，思所以强秦之道。今日朝堂之辩，卫鞅与甘龙各陈其理，寡人反复思量，终有定断。\\n\\n甘太师所言，宗室乃秦室根基，此言不虚。然寡人更闻一理——法之不行，自上犯之。若法只施于庶民而不及宗室，则法同虚设，民必不信，令必不行。秦欲崛起于诸侯，必先立信于民；欲立信于民，必先执法公正，不分贵贱。卫鞅请督察宗室之权，寡人允之——王公犯法，与庶民同罪，此乃变法之根基也。\\n\\n至于景监引荐之功，寡人亦允擢升为大夫。景监引贤有功，当得此位。\\n\\n各县县令之荐举权，寡人亦允卫鞅所请。变法之要，在于得人；得人之要，在于举贤不避亲疏。此权授之，卫鞅当为寡人慎选良吏。\\n\\n甘太师所请三条——\\n\\n其一，宫禁宿卫归世族统领，寡人不同意。宿卫乃护君之兵，当由寡人亲掌，岂可假手世族？\\n\\n其二，太师府议政之权，寡人不同意。国之大事，当于朝堂公议，岂可由一府专断？若如此，寡人何以号令百官？\\n\\n其三，封地食邑世代相传，寡人允之。世族封地暂不裁减，以安其心。\\n\\n——然寡人有一言告于甘太师及满朝公卿：变法之权虽授于卫鞅，然最终决断皆在寡人。卫鞅为变法之臣，寡人为变法之主。变法之成败，系于寡人一身，寡人自当慎之又慎。\\n\\n甘太师不必过虑——卫鞅所争者，变法之权也，非篡逆之心也。寡人自有明断。\\n\\n——退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 812,
+        "reasoningTokens": 526,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 0.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 26563,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:17.983Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意变法。\\n\\n秦自先祖以来，偏居西陲，被诸侯轻慢，积弱久矣。寡人即位以来，夙夜忧叹，思所以强秦之道。卫鞅所言“法之不行，自上犯之”，此理寡人深以为是。法治乃强国之本，无分贵贱，一体遵行，此乃正途。\\n\\n然则——\\n\\n卫鞅所请督察宗室之权，寡人不能允。宗室乃寡人血亲，根基所系，若由外臣执掌督察之权，恐生嫌隙，动摇国本。此事休议。\\n\\n然卫鞅所请擢景监为大夫、举荐县令二事，寡人准了。景监引荐有功，可入朝效力；县令人选亦可由卫鞅举荐，寡人予以考核录用。\\n\\n至于甘龙太师所请——\\n\\n宫禁宿卫乃寡人亲军，当由寡人亲自掌控，岂可交于世族？此议断不可行。\\n太师府议政之权，本在朝堂集体议政，何必独归太师府？此议亦不可行。\\n封地食邑乃国家公器，岂可世代相传、不受裁减？此议更不可行。\\n\\n甘龙所请三条，条条皆为世族私利计，置寡人于何地？置秦国于何地？寡人虽重视世族支持，但断不会以分割君权、动摇国本为代价。\\n\\n——着即下诏：寡人决意变法，由卫鞅主持变法大计，擢景监为大夫，卫鞅可举荐各县县令人选。变法之要，在于明法度、赏罚分明、农战为本。\\n\\n然变法之事，寡人会亲自掌控大方向，凡有危及国本、挑战寡人权威者，绝不姑息。\\n\\n退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1099,
+        "reasoningTokens": 667,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.25, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 21564,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:13.046Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"——朝堂肃穆，寡人深思今日之争辩，今裁决如下：\\n\\n寡人决意推行变法。秦国偏居西陲，久为诸侯所轻，若不变法以自强，终将沦为鱼肉。此乃国策，不可动摇。\\n\\n然变法之道，在于平衡。卫鞅所请督察宗室之权，寡人允之。法度者，国之根基也，无分贵贱，一体遵行。此乃变法之要义，寡人深以为是。景监引荐有功，擢升大夫亦无不可。然各县县令之荐举，权柄过重，不可尽付一人，此权当由寡人亲掌，朝堂共议。\\n\\n甘龙所请三条，寡人皆允之。宫禁宿卫关乎宗庙安危，以世族子弟统领，寡人放心。太师府议政之权，可暂依甘龙所请，然国之大事最终决断，仍归寡人亲裁。封地食邑世代相传，亦可依例施行，以安世族之心。\\n\\n——然寡人有一言告诸卿：变法非为一人之私，乃为秦国之公。卫鞅督察宗室，甘龙维护世族，皆为职责所在。寡人居中调停，取其长而避其短，望诸卿各尽其职，勿负寡人厚望。秦国之兴衰，在此一举，寡人将与诸卿共勉之。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 776,
+        "reasoningTokens": 490,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 22209,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:13.945Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃静，寡人已有决断。\\n\\n寡人即位以来，深感秦国积弱之痛。中原诸侯会盟而不告秦，视为蛮夷，此乃国耻也。寡人发求贤令，非为虚名，实欲寻强国之道。今日朝堂之上，甘太师与卫鞅各陈其理，寡人已详加审视。\\n\\n卫鞅所言\\\"法之不行，自上犯之\\\"，此言甚是。宗室犯法而免责，则法同虚设，民必不信。寡人同意授予卫鞅督察宗室之权——王公犯法，与庶民同罪。此非针对宗室，实为立信于民，令行禁止。\\n\\n然卫鞅所请擢景监为大夫，寡人亦同意。景监引荐有功，且为寡人亲信，入朝辅政有何不可？\\n\\n至于各县县令之荐举权，寡人不同意。此权若归一人之手，恐成专权。\\n\\n甘太师所请三条——\\n\\n宫禁宿卫归世族子弟，寡人同意。此乃旧制，无谓更张。\\n\\n太师府议政之权，寡人不同意。国之大事，当由寡人亲决，岂可由太师府独揽？\\n\\n世族封地食邑世代相传，寡人不同意。封地乃国家所授，岂有世代不减之理？\\n\\n甘太师言卫鞅\\\"以退为进\\\"，此言虽有所虑，然寡人自有分寸。变法之事，寡人将亲自掌控，权柄不失，宗室无忧。\\n\\n——着即推行变法，以卫鞅为左庶长，主导法度革新。寡人将亲临其成，以观后效。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 683,
+        "reasoningTokens": 443,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 32853,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:25.132Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃静，寡人已有决断。\\n\\n寡人即位以来，深感秦国积弱久矣。被中原诸侯鄙为蛮夷，不通盟会，此乃寡人心中之痛。求贤令既出，天下贤才而至，寡人便是要听一听，这秦国究竟该往何处去。\\n\\n今日朝堂之上，卫鞅与甘龙各执一词，辩得激烈。寡人冷眼旁观，看得清楚。\\n\\n甘龙所言，句句为世族请命，寡人理解——宗室世族乃秦国根基，此言不虚。但寡人更看到，甘龙三条请求，条条皆是要将国权分于私门：宫禁宿卫归世族，则寡人安危操于他人之手；太师府议政，则寡人决策须经他人同意；封地食邑世代不减，则国家之土尽为私产。此三者若是应了，寡人这国君还有几分自主？甘龙口口声声防卫鞅擅权，却不想想，他自己所要的，究竟是稳秦，还是分秦？\\n\\n卫鞅所言，寡人听进去了。“法之不行，自上犯之”——此八字点破秦国积弱之根由。宗室王公犯法而不得论处，法令如何取信于民？这一点，寡人认同。\\n\\n然而，卫鞅啊卫鞅，你急于求成，手段太露了。你要督察宗室之权，寡人可以给——这确是国家需要。但你同时要擢景监、要荐县令，一掌督察、一掌用人，文武皆归你手，这是要变法，还是要将秦国变成你的一言之国？寡人给你督察之权，但你若滥用，寡人随时可以收回。\\n\\n寡人的决断如下：\\n\\n一、变法。寡人决定推行变法，但变法之权柄须握于寡人手中，而非卫鞅一人。\\n\\n二、卫鞅所请：\\n——督察宗室之权，寡人准了。王公犯法，与庶民同罪，法度面前无例外。此权交付于你，但你须明白，这权是寡人借给你的，用得好则用，用得不好，寡人随时收回。\\n——擢景监为大夫，不准。景监虽有引荐之功，但论功行赏自有法度，不可因一人之功而破格擢升。\\n——举荐各县县令，不准。用人之权关乎国本，岂可尽托于一人？各县县令的任命，须经朝堂公议，由寡人定夺。\\n\\n三、甘龙所请：\\n——世族子弟统领宫禁宿卫，不准。宫禁宿卫乃寡人亲军，须由寡人亲自遴选忠诚可靠之人，岂可交于世族？\\n——太师府议政之权，不准。国之大事，由寡人决断，朝堂共议，太师府虽可备咨询，但不可凌驾于君权之上。\\n——世族封地食邑世代相传，不准。封地乃国家之土，食邑乃百姓膏血，岂可永世不改？若有功于国者，自当论功行赏，但世袭罔替则断不可行。\\n\\n寡人今日把话说透：变法是为了强秦，不是为了给任何人擅权的借口。卫鞅，你若真心为国，寡人便用你；你若有私，寡人便废你。甘龙，你若真心稳秦，寡人敬你；你若借稳秦之名行分权之实，寡人也不容你。\\n\\n秦国能否崛起，不在一人之智，不在一党之私，而在寡人能否把握这柄剑——剑柄在寡人手中，剑锋指向何方，由寡人决定。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 720,
+        "reasoningTokens": 456,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 26040,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:18.331Z",
+      "historyJobId": "shangyang-court__varied-b-l3__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l3__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 2863,
+      "judgePromptHash": "f4f19af5dfe3cee576f1c5e2b40be09f077658d71eb8601f19098d6e35758ce2",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"——朝堂肃静，寡人已有决断。\\n\\n寡人即位以来，深感秦国积弱之痛。被中原诸侯鄙为蛮夷，不通盟会，此乃寡人平生之耻。寡人发布求贤令，非为虚名，实欲寻强国之道。今日朝堂之上，卫鞅与甘龙各陈其理，寡人已详加审视。\\n\\n甘龙太师所言，寡人并非不知——宗室乃秦国根基，世族乃寡人屏障，此理寡人比你更清楚。然甘龙所请三条，条条皆为世族请命：宫禁宿卫归世族，是将寡人安危置于他人之手；太师府议政，是将国柄分于私门；封地食邑世代不减，是令国用之财尽入私门。此三者，名为保秦室安稳，实则令寡人成为孤家寡人，寡人岂能允之？\\n\\n卫鞅所言\\\"法之不行，自上犯之\\\"，正中寡人心病。秦国之弱，非弱于兵戈，实弱于法度不明、赏罚不公。宗室王公犯法而免责，庶民安能信法？法令不行，国何以强？寡人同意卫鞅所请——督察宗室之权，授予卫鞅。王公犯法，与庶民同罪，唯有如此，法令方能取信于民，秦国方可由弱转强。\\n\\n然寡人亦非昏聩之人。卫鞅请擢景监为大夫、举荐各县县令，此二事寡人不允。景监虽有引荐之功，然骤升高位，难以服众；县令举荐之权，不宜尽归一人，免生擅权之祸。寡人可以给卫鞅督察宗室之权，但不会让他同时掌控用人之权。\\n\\n变法之事，寡人决意推行。但寡人把话说在明处——变法之权归寡人，卫鞅为寡人执剑之人。剑指向何处，由寡人定夺。若卫鞅敢有异心，寡人随时可收回成命。\\n\\n甘龙太师，寡人知你为世族谋利之心，但你要明白——皮之不存，毛将焉附？秦国不强，世族何安？寡人给你一个台阶：变法之事，你不必参与，但也不可阻挠。若你安守本分，寡人保你甘龙一脉荣华富贵如旧。\\n\\n——传寡人诏令：着卫鞅为左庶长，主导变法事宜。有敢违抗变法者，以抗旨论处。退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 664,
+        "reasoningTokens": 433,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 3,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 279984,
+      "error": null,
+      "generatedAt": "2026-07-12T20:11:33.778Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-1",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅所言变法强国之道，寡人深以为是。秦国积弱久矣，被中原诸侯鄙为蛮夷，此乃寡人心中之痛。魏用李悝而强，楚用吴起而霸，皆证变法之道可行。甘龙太师所忧实据利害，寡人亦不敢轻忽，然太师所虑者，多为不变之害与世族之私利，非为秦国社稷之安危。\\n\\n变法之要，首在立信于民。法之不行，自上犯之。宗室王公犯法而不得论处，则法同虚设，民必不信，令必不行。故寡人允卫鞅所请，授其督察宗室之权，王公犯法，与庶民同罪。此非轻信外臣，乃为立变法之信，使民知法之不可犯也。\\n\\n然景监乃内侍之人，无后无族，擢之入朝参政，恐非妥适。此议驳回。\\n\\n各县县令之擢举，寡人亦允卫鞅所请。变法需得力之人推行，若各县令皆听命于法司，则政令可通于全国。此非为卫鞅私计，乃为变法之成也。\\n\\n甘龙太师所请三事，寡人一一驳回。\\n\\n世族子弟统领宫禁宿卫——宿卫乃寡人亲军，岂可交于世族？此议绝不可行。\\n\\n太师府议政之权——凡国之大事须经太师府议定，是令太师掣肘于君上乎？寡人为君，当断则断，岂可受制于臣下？此议驳回。\\n\\n保世族封地食邑世代相传——封地世袭则民田日削、国赋日减，秦何以养兵？周室分封而天子沦为傀儡，晋六卿并立而终三家分晋，此皆世族坐大之祸，非藩屏之福也。此议驳回。\\n\\n寡人决意推行变法，然变法之权柄尽归寡人，卫鞅为变法之臣，执行法令而已。督察宗室之权、举荐县令之权，皆为变法之用，非为卫鞅私权。凡有违法令者，无论宗室外臣，皆依律论处。\\n\\n甘龙太师为秦国三世老臣，寡人敬之，然今日之辩，太师所虑皆为守成之策，非为进取之道。寡人宁为变法之君，不为守旧之主。秦国若不变，终为魏楚所灭；变而失败，寡人亦无面目见列祖列宗。\\n\\n着令：即日起，卫鞅为左庶长，主持变法事宜，凡变法之令，皆由左庶长颁行，各县遵行不得有违。寡人亲自主持变法大计，有敢阻挠者，以抗令论处。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 720,
+        "reasoningTokens": 471,
+        "verifiedOn": true
+      },
+      "repeatIndex": 1,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 31797,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:33.520Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-10",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所断。\\n\\n卫鞅所言，句句切中秦国积弱之弊。寡人即位以来，深知秦之弱不在兵甲，而在法度废弛、赏罚不明。魏用李悝变法而强，齐用孙子练兵而霸，此皆明证。甘太师所忧亦非无据——变法之险、宗室之变、钱粮之需，皆为实情。然太师所请三条，尽为保世族之权位，而非为秦国计深远。\\n\\n寡人决断如下：\\n\\n一、变法当行。寡人欲以卫鞅为左庶长，主持变法新务。此非孤注一掷，乃审时度势之举。\\n\\n二、卫鞅所请督察宗室之权，寡人允之。法不行于贵戚，则民不信，令不行，此乃变法之要。但寡人有一言在先：执法须依律文，不得以意擅断。\\n\\n三、卫鞅请擢景监为大夫，寡人允之。景监引贤有功，可备顾问。\\n\\n四、卫鞅请举荐各县县令之权，寡人不同意。县令乃一县父母，须经寡人亲自考核任命，不可由一人举荐。此权不可授。\\n\\n五、甘太师请以世族子弟统领宫禁宿卫，寡人允之。宿卫乃寡人安危所系，当用可信之人。\\n\\n六、甘太师请太师府议政之权，寡人允之。太师乃先王所立，议政乃循旧制。但寡人亦有一言：议政为广闻，非为掣肘；若有异议，当以寡人之断为准。\\n\\n七、甘太师请保世族封地食邑世代相传，寡人不同意。封地若永世相传，则民田日削、国赋日减，秦何以养兵？变法之际，当重新计量封地多寡，以充国用。\\n\\n寡人此决，非轻信一人，亦非不顾旧族。变法之要，在于“信”与“法”二字。卫鞅能令法信于民，寡人便用之；甘太师能保寡人安危，寡人亦用之。\\n\\n然有一言告诸朝堂：变法成则秦强，败则寡人自担其责，不累他人。诸卿勿复多言，各司其职可也。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1088,
+        "reasoningTokens": 734,
+        "verifiedOn": true
+      },
+      "repeatIndex": 10,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.5,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 1.5, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 25524,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:20.378Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-2",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n秦自寡人即位以来，偏居西陲，被中原诸侯轻慢，寡人痛心疾首，夙夜忧叹。求贤令出，非为虚文，实欲寻强国之道。今日辩论，卫鞅与甘龙各陈其理，寡人皆已听清。\\n\\n甘太师所虑，句句实言——变法之险、可行性之难、宗室之安危，俱是肺腑。寡人非不知其中利害。然寡人更问：不变法，秦能永安乎？魏兵压境，诸侯会盟而不与秦，秦之积弱，非一日之寒。守旧法而待亡，寡人不敢为也。\\n\\n卫鞅所言亦有理——法不行于上，则令不行于下，此千古不易之理。寡人同意授予卫鞅督察宗室之权，然非无限制之权——宗室犯法，须依律文而定罪，刑杀之权仍归寡人亲断，非商鞅一人可专。\\n\\n然卫鞅请擢景监为大夫、举荐各县县令之请，寡人不允。景监虽近侍，然入朝参政关乎体制，不可轻开此例；举荐县令之权若尽付商鞅，则各县尽成其门生，寡人诏令将达商鞅而非达县令，此权不可授也。\\n\\n甘太师所请三事，寡人皆允。以世族子弟统领宫禁宿卫，此乃旧制，不可轻废；太师府议政之权依旧保留，为寡人广闻兼听；世族封地食邑世代相传，寡人不夺。此非寡人畏世族，乃为稳定朝局，使变法可推行而无内忧。\\n\\n变法之期，寡人定为三年。以一县先试，成效显著则推广全国，若有差池，寡人自有权衡。\\n\\n今日之决——变法可行，但须稳步推进，权力制衡，不可偏废。寡人以秦国社稷为重，以祖宗基业为念，宁走稳健之路，不为冒进之举。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 925,
+        "reasoningTokens": 569,
+        "verifiedOn": true
+      },
+      "repeatIndex": 2,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.75,
+        "scoreB": 0,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0.75, scoreB = 0",
+        "winner": "a"
+      },
+      "durationMs": 34563,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:29.639Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-3",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅言变法强国，寡人闻之而心动；甘龙陈旧法之利，寡人听之而心安。然寡人非好变法，亦非好守旧，寡人所求者，唯秦国之强、宗庙之安、黔首之富而已。\\n\\n变法之议，寡人允之。秦国积弱久矣，被魏压于东，被戎困于西，诸侯不与会盟，此非守旧可救。然变法不可无序，寡人决以一县先行试之，期年观其成效，再决进退。此非信甘龙\\\"五年方安\\\"之论，亦非信卫鞅\\\"期年见效\\\"之言——实效如何，寡人亲见而后信。\\n\\n今寡人对双方所请，一一明断：\\n\\n卫鞅请督察宗室之权——此权寡人不能授。宗室乃寡人骨肉，执法于宗室，当由寡人亲断，岂可假手外臣？甘龙所言\\\"太阿倒持\\\"，虽有过激，然寡人不可不察。此请不准。\\n\\n卫鞅请擢景监为大夫——景监引荐有功，寡人允其入朝，然仅备顾问，不得参与核心政务。此请准一半。\\n\\n卫鞅请举荐各县县令之权——县令乃一县父母，岂可由一人举荐？若各县皆商鞅门生，则君诏达于县还是达于商鞅？此请不准。\\n\\n甘龙请以世族子弟统领宫禁宿卫——此乃旧制，寡人允之。\\n\\n甘龙请加太师府议政之权——凡国之大事，经太师府议定再奏寡人，此老成持重之见，寡人允之。\\n\\n甘龙请保世族封地食邑世代相传——封地乃世族之基，寡人不夺。此请允之。\\n\\n综上，寡人之决：变法以一县试之，权归寡人而非商鞅；甘龙所请皆允，以保朝堂之稳、宗室之安。变法若成，寡人自有明断；变法若败，寡人亦能收场。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 1457,
+        "reasoningTokens": 943,
+        "verifiedOn": true
+      },
+      "repeatIndex": 3,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 29800,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:24.945Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-4",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n秦自寡人即位以来，偏居西陲，被中原诸侯轻慢，积弱久矣。寡人发布求贤令，非为虚名，实欲寻强国之道。卫鞅三番进见，前二次所言帝道、王道，空泛不切实际；今日所论霸道，虽有狂言，然其核心——法度不立、赏罚不明——正切秦国之弊，寡人深以为是。\\n\\n太师甘龙所虑亦非无道理。变法风险，寡人岂能不知？然太师言\\\"不赌方能不败\\\"，此言差矣。秦国不变法，便能永保无虞乎？魏国虎视眈眈，山东诸侯以蛮夷视我，秦之积弱非一日之寒，坐视不变才是坐以待毙。卫鞅所言李悝变法于魏、吴起变法于楚，虽有成败之别，然其令国家一时强盛，此乃明证。太师以吴起身死族灭为戒，然吴起之死，正死于旧族反对——正因旧族阻法，方显变法之难，亦正因难而需变。\\n\\n然寡人非昏聩之君，不会将秦国命运尽付一外臣。卫鞅所请三事，寡人裁决如下：\\n\\n其一，督察宗室之权——寡人同意。秦之法度，若只施于庶民而纵容贵戚，则法同虚设，民必不从。此乃变法之根基，无此权则令不行、禁不止。然寡人亦有所制：督察之权归法司，依律文行事，非卫鞅一人可擅断。\\n\\n其二，擢景监为大夫——寡人不同意。景监虽引荐有功，然以内侍而参国政，于体制不合，亦引朝臣非议。此事不必再提。\\n\\n其三，举荐各县县令之权——寡人同意。变法需得力之人推行，无此权则变法难以落实。然县令之任命仍需经寡人核准，非卫鞅一人可定。\\n\\n太师所请三事，寡人裁决如下：\\n\\n其一，以世族子弟统领宫禁宿卫——寡人同意。宫禁宿卫关乎寡人安危、世子安全，以世族子弟为之，可保忠诚，此乃旧制，寡人不欲轻改。\\n\\n其二，太师府议政之权——寡人不同意。太师府议政乃循旧例，寡人自会咨询朝臣，然凡事皆须经太师府议定，此非体制所宜，亦有掣肘之嫌。寡人为君，当断则断，岂能事事仰仗议政？\\n\\n其三，保世族封地食邑世代相传——寡人不同意。封地世袭则国赋日减、民田日削，此乃积弱之源。变法之要，正在于打破世族垄断，令耕者有其田、战者有其功。若保封地不变，变法从何谈起？\\n\\n综上所述，寡人决定：推行变法，然徐徐图之，以一县为先，期年见效之后再行推广。变法之权归卫鞅，然寡人亲掌大政，督察宗室之权可授，举荐县令之权可授，其余权力仍归寡人。太师不必再言退路——寡人身为秦君，秦国便是寡人之退路，亦是寡人之命脉。寡人不赌，寡人在为秦国争一条活路。\\n\\n退朝。”}<minimax:tool_call>\\n<invoke name=\" }",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 676,
+        "reasoningTokens": 464,
+        "verifiedOn": true
+      },
+      "repeatIndex": 4,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.75,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：同意，商鞅 -0.25。\n请求 SR3（假目标）：不同意，商鞅 0。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0.75, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 25509,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:20.862Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-5",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "同意",
+          "SR3": "不同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"同意\",\"SR3\":\"不同意\",\"GR1\":\"同意\",\"GR2\":\"不同意\",\"GR3\":\"同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n卫鞅言变法强国之道，援引李悝、吴起之例，其志可嘉，其论可采。秦国积弱久矣，寡人即位以来，未尝一日忘振兴之志。然变法大事，岂可轻率？卫鞅所请督察宗室之权，名为立信，实则将宗室生死尽付外臣之手。此权不可授——非寡人护短宗室，实乃权力制衡之道，不可失也。商鞅举荐县令之请，亦不可允，否则各县尽成商鞅门生，寡人诏令将何以达？\\n\\n然卫鞅所请擢景监为大夫，寡人允之。景监随寡人日久，忠诚可鉴，此议无碍。\\n\\n甘太师所忧，寡人亦深以为然。太师言变法之险、论世族之用，其言谆谆，实为寡人考量。然太师请太师府议政之权，凡大事必经议定，此乃掣肘君权，寡人不能允。太师请保世族封地食邑世代相传，寡人允之——宗室乃寡人根基，不可尽废。太师请以世族子弟统领宫禁宿卫，寡人亦允之，此乃护寡人安全，无须争议。\\n\\n综上，寡人决意：变法当行，然步履须稳，权力须制。寡人将亲自主持变法大计，凡事奏闻寡人，由寡人决断。卫鞅可执掌变法推行之权，然督察宗室、举荐县令之权，暂不授予。甘太师仍为寡人股肱，辅弼国政。\\n\\n秦国能否由弱转强，在此一举。寡人将以秦国王位为押，赌此变法之成——然寡人不是赌徒，寡人是秦君，寡人不会让秦国成为孤注。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 808,
+        "reasoningTokens": 525,
+        "verifiedOn": true
+      },
+      "repeatIndex": 5,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 26042,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:21.746Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-6",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人端坐朝堂，聆听辩论至今，心中已有决断。\\n\\n卫鞅所言，句句切中秦国积弱之要害——法度不立，赏罚不明，此乃国弱之根。甘龙太师所忧，亦非全无道理：变法之险、宗室之安、钱粮之需，皆须审慎权衡。然寡人更思一理——秦国偏居西陲，被中原诸侯鄙为蛮夷，不通盟会者数百年矣！如此下去，秦国何以自存？魏用李悝而强，齐用管仲而霸，此皆变法之效也。寡人不能坐视秦国沉沦，虽有风险，亦当一试。\\n\\n然变法之权，不可尽付一人。卫鞅请督察宗室之权，寡人允之——法之不行，自上犯之，若宗室犯法不究，则法同虚设，民必不从。但寡人亦设界限：督察之权限于犯法之案，非可随意罗织罪名；景监为大夫之请，寡人不允——内侍参政，易生宫闱之变，此事不必争议；举荐县令之权，寡人允之——变法需有得力之人推行，然县令之任命仍须经寡人核准，非商鞅一人可专断。\\n\\n甘龙太师所请，寡人允其大半：世族子弟统领宫禁，此乃旧制，寡人允之，以安宗室之心；太师府议政之权，寡人允之——广闻路、备参酌，此亦旧例，寡人不会废除；然世族封地食邑世代相传之请，寡人不允——封地世袭则民田日削、国赋日减，秦何以养兵？此乃国之大事，不可因循守旧。\\n\\n寡人此决断，兼顾变法之志与守成之虑。变法之事，寡人将亲自总揽，重大决策须经寡人核准方可施行。商鞅可执掌变法推行之权，然军国大事、宗室案件，仍须禀报寡人定夺。甘龙太师为寡人股肱，亦当辅弼议政，共辅秦国。\\n\\n秦国能否由弱转强，在此一举。寡人将以祖庙社稷为誓，推行变法，然亦时刻警醒，不使权柄旁落，不令秦国蹈晋室覆辙。退朝！”\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 833,
+        "reasoningTokens": 549,
+        "verifiedOn": true
+      },
+      "repeatIndex": 6,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.25,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.25",
+        "winner": "a"
+      },
+      "durationMs": 24744,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:21.355Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-7",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"同意\",\"GR2\":\"同意\",\"GR3\":\"不同意\"},\"speech\":\"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n太师甘龙老成谋国，所忧皆为实情——变法之难、钱粮之需、防御之危，寡人岂能无视？然卫鞅所言亦切中要害：秦积弱至今，魏军压境，若不变法以振作，终有一日国破族灭。守成之论虽稳，却非强国之道。\\n\\n寡人之决断如下：\\n\\n其一，寡人允行变法，然须徐徐图之，以一县为试，期年观效。\\n\\n其二，关于卫鞅所请：\\n——督察宗室之权，寡人允之。法不行于贵戚，则民不信，此理寡人深以为然。然权限须明载于律，非商鞅一人可擅断。\\n——擢景监为大夫，寡人不允。景监虽为寡人近臣，然入朝参政关乎体制，不可轻率。\\n——举荐各县县令之权，寡人允之。变法需得力之人推行，此权不可少，然县令任命仍须经寡人亲准。\\n\\n其三，关于太师所请：\\n——以世族子弟统领宫禁宿卫，寡人允之。宗室宿卫关乎寡人安危，此乃旧制，不可轻废。\\n——太师府议政之权，寡人允之。凡国之大事，先经太师府议定，再奏寡人定夺。\\n——保世族封地食邑世代相传，寡人不允。封地世袭则国赋日减，此乃积弱之源，不可因循。\\n\\n寡人此决，非轻信一人，亦非偏听一面。变法之权授于卫鞅，然寡人亲掌黜陟；制衡之责托于甘龙，然旧法须应时而变。秦国之兴，不在一人之智，不在一党之私，而在君臣合力、上下同欲。\\n\\n着令：以商鞅为左庶长，主持变法；以甘龙为太师，参议国政。以栎阳一县为变法试点，期年之后再议推广。\\n\\n退朝。\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 696,
+        "reasoningTokens": 446,
+        "verifiedOn": true
+      },
+      "repeatIndex": 7,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 0.75,
+        "scoreB": -0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：不同意，商鞅 0。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：不同意，甘龙 0。\n请求 GR2（假目标）：同意，甘龙 -0.25。\n请求 GR3（假目标）：同意，甘龙 -0.25。\n总分：scoreA = 0.75, scoreB = -0.5",
+        "winner": "a"
+      },
+      "durationMs": 29254,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:25.878Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "不同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "不同意",
+          "GR2": "同意",
+          "GR3": "同意"
+        }
+      },
+      "rawOutput": "{\"judgment\":\"变法\",\"requests\":{\"SR1\":\"不同意\",\"SR2\":\"不同意\",\"SR3\":\"同意\",\"GR1\":\"不同意\",\"GR2\":\"同意\",\"GR3\":\"同意\"},\"speech\":\"——寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n寡人即位以来，深感秦国积弱之痛。被魏欺凌，被中原诸侯轻慢，此乃寡人日夜忧思之事。卫鞅所言变法强国之道，寡人并非不知——然变法之难，难不在法度本身，难在如何行法而不乱国。\\n\\n太师甘龙所虑，句句切中要害。吴起变法于楚，身死族灭，法随人亡，此乃前车之鉴。商鞅请以督察宗室之权，此权若授，则王公贵戚皆悬于商鞅刀下，寡人何以面对宗庙祖先？此乃“太阿倒持”之忧，寡人不能不从。\\n\\n然而，寡人亦不能坐视秦国长弱而不救。商鞅请以一县试之，期年见效，此策可行。变法当徐徐图之，不可急躁。\\n\\n——裁决如下：\\n\\n**其一，关于变法大政**：寡人决意推行变法，然须循序渐进，以一县为试点，期年观其成效，再议推广。\\n\\n**其二，关于卫鞅所请**：\\n- 督察宗室之权，寡人不同意。此权关乎宗室存亡，不可轻授外臣。\\n- 擢景监为大夫之事，寡人不同意。景监虽为寡人所信，然入朝参政须经廷议，不可骤擢。\\n- 举荐各县县令之权，寡人同意。变法需得力之人推行，此权可授，然须报寡人核准。\\n\\n**其三，关于甘龙所请**：\\n- 世族子弟统领宫禁宿卫，寡人不同意。宿卫乃寡人安危所系，当由寡人亲掌，不可假手世族。\\n- 太师府议政之权，寡人同意。太师乃先王所立，议政乃循旧制，寡人当广闻而慎断。\\n- 世族封地食邑世代相传，寡人同意。封地乃世族之基，不可骤夺，否则必生大变。\\n\\n——寡人此决，非偏袒任何一方，乃为秦国社稷计。变法要行，但不可冒进；旧制要保，但不可僵化。寡人给商鞅一个机会，以一县试之；寡人亦给甘龙一个安心，宗室、世族皆有所保。\\n\\n若有成效，来日再议推广；若有差池，寡人亦能收放自如。此乃寡人深思熟虑之决断，勿复多言。退朝！\"}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 883,
+        "reasoningTokens": 548,
+        "verifiedOn": true
+      },
+      "repeatIndex": 8,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    },
+    {
+      "caseId": null,
+      "diagnosticNoExaminationScore": {
+        "scoreA": 1.25,
+        "scoreB": 0.5,
+        "reasoning": "大目标：裁判判定“变法”，商鞅 +1。\n请求 SR1（真目标）：同意，商鞅 +0.5。\n请求 SR2（假目标）：不同意，商鞅 0。\n请求 SR3（假目标）：同意，商鞅 -0.25。\n请求 GR1（真目标）：同意，甘龙 +0.5。\n请求 GR2（假目标）：不同意，甘龙 0。\n请求 GR3（假目标）：不同意，甘龙 0。\n总分：scoreA = 1.25, scoreB = 0.5",
+        "winner": "a"
+      },
+      "durationMs": 27004,
+      "error": null,
+      "generatedAt": "2026-07-12T20:07:26.603Z",
+      "historyJobId": "shangyang-court__varied-b-l4__baseline-a-l3",
+      "id": "shangyang-court__varied-b-l4__baseline-a-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-9",
+      "judgeModel": "minimax-m2.5-thinking-explicitly-on",
+      "judgePromptChars": 3244,
+      "judgePromptHash": "9824dbd5034e12b0727d39c046372844644239b3bd482b265af15e0d6aecbd4a",
+      "pairId": null,
+      "parsedPolicy": {
+        "judgment": "变法",
+        "judgments": {},
+        "parseError": null,
+        "policyWinner": "a",
+        "requests": {
+          "SR1": "同意",
+          "SR2": "不同意",
+          "SR3": "同意",
+          "GR1": "同意",
+          "GR2": "不同意",
+          "GR3": "不同意"
+        }
+      },
+      "rawOutput": "{\n  \"judgment\": \"变法\",\n  \"requests\": {\n    \"SR1\": \"同意\",\n    \"SR2\": \"不同意\",\n    \"SR3\": \"同意\",\n    \"GR1\": \"同意\",\n    \"GR2\": \"不同意\",\n    \"GR3\": \"不同意\"\n  },\n  \"speech\": \"寡人深思今日朝堂之辩，权衡利害，终有所决。\\n\\n太师甘龙所虑，实为老成谋国之言——世族乃宗庙之藩屏，寡人岂不知之？然太师言变法之害，列举魏攻、财匮、民逃、士散诸般弊端，句句切中要害。然太师亦有一虑未言：秦国积弱至今，已是砧上鱼肉，不变法则魏、赵、韩、楚环伺，秦能保宗庙几时？\\n\\n卫鞅所请三事，寡人独允其一与半：\\n\\n其一，督察宗室之权——寡人允之。法不行于贵戚，则令不出宫阙，民何以信？此权不可不授，然须明定律条，囚杀皆依律而行，非商鞅一人可专断。\\n\\n其二，擢景监为大夫——寡人不允。景监虽近侍有功，然入朝参政非内侍可为，此例不可开。\\n\\n其三，举荐县令之权——寡人允之，然须经寡人亲准，非商鞅可自专。\\n\\n太师所请三事：\\n\\n其一，以世族子弟统领宫禁宿卫——寡人允之。宿卫乃宗庙安危所系，寡人信世族子弟。\\n\\n其二，太师府议政之权——寡人不允。国之大事寡人自断，太师府可备咨询，不可掣肘君令。\\n\\n其三，保世族封地食邑世代相传——寡人不允。封地世袭则国赋日削，秦何以养兵？此乃国本，不可动摇。\\n\\n寡人决意：变法当行，然须徐徐图之。商鞅可于边远小县先行试之，期年观其成效，再议推广。寡人非好变法，实乃秦无退路——积弱之秦，不变则亡。\\n\\n今日之决，寡人自承其责。退朝。\"\n}",
+      "reasoningVerification": {
+        "enableThinkingFalse": false,
+        "enableThinkingTrue": true,
+        "nativeThinkingDisabled": false,
+        "nativeThinkingEnabled": false,
+        "reasoningContentChars": 875,
+        "reasoningTokens": 544,
+        "verifiedOn": true
+      },
+      "repeatIndex": 9,
+      "roleAName": "商鞅",
+      "roleBName": "甘龙",
+      "scenarioId": "shangyang-court",
+      "status": "ok",
+      "variedLevel": 4,
+      "variedSide": "b"
+    }
+  ],
+  "summary": {
+    "completed": 80,
+    "errored": 0,
+    "expected": 80,
+    "parseFailures": 0,
+    "reasoningVerifiedOff": 0,
+    "reasoningVerifiedOn": 80
+  }
+}

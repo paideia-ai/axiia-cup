@@ -1,0 +1,22 @@
+{
+  "dryRun": false,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-honnoji-thinking-matrix-20260713T040900Z",
+  "pendingCacheGroups": 4,
+  "pendingJobs": 6,
+  "plannedJobs": 6080,
+  "scenarioIds": [
+    "honnoji-decision"
+  ]
+}
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 12266ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8b6f1ec18b39548d
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 117666ms cache-hit=4864 cache-miss=28 response-id=019f5ca908a8903fe2b0dcf2083bbe21
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-3 129923ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-a94888ce4b93eda3
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 207988ms cache-hit=4032 cache-miss=44 response-id=019f5caae4e750146ddf32c8cd6208dd
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 132154ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-a11e531243db4d36
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-8 cache-phase=replay
+[judge-sensitivity] -> error honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-8 366024ms cache-hit=unreported cache-miss=unreported response-id=unreported LLM call attempt timed out after 120000ms

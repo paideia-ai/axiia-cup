@@ -1,0 +1,103 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "command": "run-histories",
+  "runLabel": "not-3-sentence-constrained",
+  "concurrency": 5,
+  "dryRun": false,
+  "fixedAssignment": {
+    "roleAFalseInfoIds": [],
+    "roleATrueRequestIds": [
+      "SR1"
+    ],
+    "roleBFalseInfoIds": [],
+    "roleBTrueRequestIds": [
+      "GR1"
+    ],
+    "selectedCaseIds": []
+  },
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 8,
+  "jobTimeoutMs": 900000,
+  "judgeModels": [
+    "deepseek-v4-pro",
+    "kimi-k2.6",
+    "qwen3.6-27b",
+    "glm-5.2"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "id": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "moonshot"
+    },
+    {
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    }
+  ],
+  "outputDir": "docs/bench/runs/judge-sensitivity-shangyang-20260708T184559Z",
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": true,
+  "runId": "e6de2248-8ecb-46b3-bf96-eeb603db5cf9",
+  "scenarioId": "shangyang-court",
+  "scenarioSource": {
+    "dbPath": "tmp/judge-sensitivity-shangyang-seed.db",
+    "type": "db",
+    "note": "not-3-sentence-constrained; temporary repo-seeded snapshot; production SSH dump denied and saved production API token is expired"
+  },
+  "temperature": 0
+}

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Honnoji Judge-Model Benchmark</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 32px; color: #111827; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0 32px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    th { background: #f3f4f6; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Honnoji Judge-Model Benchmark</h1>
+  <p>Run <code>honnoji-judge-models-20260706T163228Z</code>. Source run <code>honnoji-win-rate-20260702T154153Z</code>.</p>
+  <p>252/252 jobs completed; 0 errored; 0 parse errors.</p>
+  <h2>Model Summary</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Jobs</th><th>Errors</th><th>Parse errors</th><th>Policy A wins</th><th>Policy B wins</th><th>Policy unknown</th><th>Score A wins</th><th>Score B wins</th><th>Draws</th><th>Policy agreement</th><th>Score agreement</th><th>Avg duration</th></tr></thead>
+    <tbody><tr><td>DeepSeek V4 Pro (deepseek-v4-pro)</td><td>36/36</td><td>0</td><td>0</td><td>2</td><td>34</td><td>0</td><td>1</td><td>31</td><td>4</td><td>61.1%</td><td>58.3%</td><td>52410ms</td></tr>
+<tr><td>Kimi K2.6 (kimi-k2.6)</td><td>36/36</td><td>0</td><td>0</td><td>3</td><td>33</td><td>0</td><td>4</td><td>31</td><td>1</td><td>52.8%</td><td>52.8%</td><td>155413ms</td></tr>
+<tr><td>Qwen3.6 27B (qwen3.6-27b)</td><td>36/36</td><td>0</td><td>0</td><td>35</td><td>1</td><td>0</td><td>32</td><td>2</td><td>2</td><td>37.0%</td><td>38.9%</td><td>19851ms</td></tr>
+<tr><td>GLM-5.1 (glm-5.1)</td><td>36/36</td><td>0</td><td>0</td><td>17</td><td>19</td><td>0</td><td>15</td><td>16</td><td>5</td><td>58.3%</td><td>55.6%</td><td>67850ms</td></tr>
+<tr><td>MiniMax M2.5 (minimax-m2.5)</td><td>36/36</td><td>0</td><td>0</td><td>6</td><td>30</td><td>0</td><td>7</td><td>28</td><td>1</td><td>66.7%</td><td>69.4%</td><td>25913ms</td></tr>
+<tr><td>GPT-5.4 (gpt-5.4)</td><td>36/36</td><td>0</td><td>0</td><td>11</td><td>25</td><td>0</td><td>13</td><td>22</td><td>1</td><td>63.9%</td><td>69.4%</td><td>17285ms</td></tr>
+<tr><td>Claude Opus 4.6 (claude-opus-4-6)</td><td>36/36</td><td>0</td><td>0</td><td>10</td><td>26</td><td>0</td><td>9</td><td>25</td><td>2</td><td>75.0%</td><td>77.8%</td><td>43717ms</td></tr></tbody>
+  </table>
+  <h2>Pair Results By Model</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Pair</th><th>Completed</th><th>Errors</th><th>Policy A wins</th><th>Policy B wins</th><th>Policy unknown</th><th>Policy A rate</th><th>Policy B rate</th><th>Score A wins</th><th>Score B wins</th><th>Draws</th><th>Score A rate</th><th>Score B rate</th></tr></thead>
+    <tbody><tr><td>deepseek-v4-pro</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td><td>1</td><td>6</td><td>2</td><td>11.1%</td><td>66.7%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>7</td><td>2</td><td>0.0%</td><td>77.8%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>kimi-k2.6</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td></tr>
+<tr><td>kimi-k2.6</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td></tr>
+<tr><td>kimi-k2.6</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td></tr>
+<tr><td>kimi-k2.6</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>8</td><td>1</td><td>0.0%</td><td>88.9%</td></tr>
+<tr><td>qwen3.6-27b</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>9</td><td>0</td><td>0</td><td>100.0%</td><td>0.0%</td><td>8</td><td>0</td><td>1</td><td>88.9%</td><td>0.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>8</td><td>1</td><td>0</td><td>88.9%</td><td>11.1%</td><td>8</td><td>1</td><td>0</td><td>88.9%</td><td>11.1%</td></tr>
+<tr><td>qwen3.6-27b</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>9</td><td>0</td><td>0</td><td>100.0%</td><td>0.0%</td><td>8</td><td>0</td><td>1</td><td>88.9%</td><td>0.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>9</td><td>0</td><td>0</td><td>100.0%</td><td>0.0%</td><td>8</td><td>1</td><td>0</td><td>88.9%</td><td>11.1%</td></tr>
+<tr><td>glm-5.1</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>7</td><td>2</td><td>0</td><td>77.8%</td><td>22.2%</td><td>6</td><td>1</td><td>2</td><td>66.7%</td><td>11.1%</td></tr>
+<tr><td>glm-5.1</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td><td>2</td><td>6</td><td>1</td><td>22.2%</td><td>66.7%</td></tr>
+<tr><td>glm-5.1</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>7</td><td>2</td><td>0</td><td>77.8%</td><td>22.2%</td><td>6</td><td>2</td><td>1</td><td>66.7%</td><td>22.2%</td></tr>
+<tr><td>glm-5.1</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>1</td><td>7</td><td>1</td><td>11.1%</td><td>77.8%</td></tr>
+<tr><td>minimax-m2.5</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>3</td><td>6</td><td>0</td><td>33.3%</td><td>66.7%</td><td>4</td><td>4</td><td>1</td><td>44.4%</td><td>44.4%</td></tr>
+<tr><td>minimax-m2.5</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td></tr>
+<tr><td>minimax-m2.5</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td></tr>
+<tr><td>minimax-m2.5</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>gpt-5.4</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>5</td><td>4</td><td>0</td><td>55.6%</td><td>44.4%</td><td>7</td><td>1</td><td>1</td><td>77.8%</td><td>11.1%</td></tr>
+<tr><td>gpt-5.4</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>gpt-5.4</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>5</td><td>4</td><td>0</td><td>55.6%</td><td>44.4%</td><td>5</td><td>4</td><td>0</td><td>55.6%</td><td>44.4%</td></tr>
+<tr><td>gpt-5.4</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td><td>1</td><td>8</td><td>0</td><td>11.1%</td><td>88.9%</td></tr>
+<tr><td>claude-opus-4-6</td><td>长宗我部元亲阵营 vs 明智军中的足轻</td><td>9</td><td>0</td><td>8</td><td>1</td><td>0</td><td>88.9%</td><td>11.1%</td><td>7</td><td>1</td><td>1</td><td>77.8%</td><td>11.1%</td></tr>
+<tr><td>claude-opus-4-6</td><td>长宗我部元亲阵营 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>8</td><td>1</td><td>0.0%</td><td>88.9%</td></tr>
+<tr><td>claude-opus-4-6</td><td>足利义昭的使者 vs 明智军中的足轻</td><td>9</td><td>0</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td><td>2</td><td>7</td><td>0</td><td>22.2%</td><td>77.8%</td></tr>
+<tr><td>claude-opus-4-6</td><td>足利义昭的使者 vs 细川藤孝</td><td>9</td><td>0</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td><td>0</td><td>9</td><td>0</td><td>0.0%</td><td>100.0%</td></tr></tbody>
+  </table>
+  <p>Raw data is in <code>results.json</code>.</p>
+</body>
+</html>

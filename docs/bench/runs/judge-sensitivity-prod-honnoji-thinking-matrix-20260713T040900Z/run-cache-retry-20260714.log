@@ -1,0 +1,149 @@
+{
+  "dryRun": false,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-honnoji-thinking-matrix-20260713T040900Z",
+  "pendingCacheGroups": 48,
+  "pendingJobs": 71,
+  "plannedJobs": 6080,
+  "scenarioIds": [
+    "honnoji-decision"
+  ]
+}
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-glm-5.1-thinking-explicitly-on__repeat-9 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-2 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-8 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-9 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.5-397b-thinking-explicitly-on__repeat-4 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-4 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-7 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.1-thinking-explicitly-on__repeat-7 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-8 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-1 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-deepseek-v4-pro-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-9 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-5 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-8 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l1__baseline-b-l3__judge-glm-5.1-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-4 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-1 cache-phase=warmup
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-9 7499ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b608a367f834904b
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-10 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-minimax-m2.5-thinking-explicitly-on__repeat-8 28206ms cache-hit=0 cache-miss=3698 response-id=019f5c88b4801b2cf6d0c4ccb5e3ac8a
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-qwen3.5-397b-thinking-explicitly-on__repeat-2 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.5-397b-thinking-explicitly-on__repeat-4 32871ms cache-hit=0 cache-miss=4496 response-id=019f5c88b43725f85ba9c264604d89c6
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-deepseek-v4-pro-thinking-explicitly-on__repeat-3 42373ms cache-hit=0 cache-miss=4788 response-id=019f5c88b4a949a8c3bdba1b2c9e5612
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.1-thinking-explicitly-on__repeat-7 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-glm-5.1-thinking-explicitly-on__repeat-9 45707ms cache-hit=0 cache-miss=8915 response-id=019f5c88b49fe62df2d24c58c6a06da6
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l2__baseline-a-l3__judge-deepseek-v4-pro-thinking-explicitly-on__repeat-4 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l1__baseline-b-l3__judge-glm-5.1-thinking-explicitly-on__repeat-6 57155ms cache-hit=0 cache-miss=10180 response-id=019f5c88b4bc5047681a6a69afe4bb19
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-2 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-qwen3.5-397b-thinking-explicitly-on__repeat-2 33744ms cache-hit=36864 cache-miss=1360 response-id=019f5c8922dd1e8213fbf34303638c77
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-5 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.1-thinking-explicitly-on__repeat-7 62728ms cache-hit=0 cache-miss=11868 response-id=019f5c88b4d1325aa8463497fd7cb7f1
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-6 75503ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b494f716e4505bb3
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-2 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-7 79664ms cache-hit=0 cache-miss=11342 response-id=019f5c88b4c89af4ebb2aa446b21aa4c
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-3 80892ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8de4e13a46b24666
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-off__repeat-1 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-8 86729ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-89485aeb50ae28f5
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.1-thinking-explicitly-on__repeat-7 44357ms cache-hit=0 cache-miss=38134 response-id=019f5c895a10bd3bd41b6c7af0e0fc1d
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 87209ms cache-hit=0 cache-miss=11875 response-id=019f5c88b4abd6d7536e9cb3fa06c132
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-8 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-9 89524ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-958210a3e6f3af3c
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-kimi-k2.7-code-thinking-always-on__repeat-4 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 15691ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-bdbf891239f74f08
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-3 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-3 35031ms cache-hit=4096 cache-miss=57 response-id=019f5c89a91929a13657a5fb627a7006
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-8 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l2__baseline-a-l3__judge-deepseek-v4-pro-thinking-explicitly-on__repeat-4 52699ms cache-hit=0 cache-miss=4020 response-id=019f5c89676be133a95b696a9d1afe26
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-6 100041ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-adae99b1bdb62b07
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-4 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 104928ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8bea0033da69f89b
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-4 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 108845ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b857de97b259c47b
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-off__repeat-1 30538ms cache-hit=0 cache-miss=10457 response-id=019f5c89f0272ca99120b9e0be548663
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 115011ms cache-hit=0 cache-miss=4892 response-id=019f5c88b4c0469214d0202f089efdbf No JSON object parsed
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-1 117264ms cache-hit=0 cache-miss=4348 response-id=019f5c88b4bfe5c84cad37f01dd70d70
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-4 14394ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-ace16f3aabab7865
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-6 128299ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-be1adb6b508eaa21
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-9 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 128563ms cache-hit=0 cache-miss=5161 response-id=019f5c88b4d0f8668b72be07a096e93b
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-4 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-6 132749ms cache-hit=0 cache-miss=11486 response-id=019f5c88b50defc2ccbba9578a3c91c0
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-4 137695ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-a497d57ceb3b61bb
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-4 140724ms cache-hit=0 cache-miss=4570 response-id=019f5c88b4ade1cb53e2f322b521be5f
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-5 146459ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-96a65fcb0f369f3a
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-8 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l3__baseline-b-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-8 166776ms cache-hit=0 cache-miss=4553 response-id=019f5c88b4d9eb1a91621da842dfc776
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-deepseek-v4-flash-thinking-explicitly-on__repeat-8 70957ms cache-hit=0 cache-miss=4232 response-id=019f5c8a334e85c37f609071985ad499
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-2 144960ms cache-hit=384 cache-miss=37757 response-id=019f5c8935277b103c7d3e1c96975719
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-2 116217ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b457d27db3ea094d
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-9 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 119195ms cache-hit=4096 cache-miss=50 response-id=019f5c8a081331bb7fa22d985953c733
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-5 121125ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b985cb3ce3b7406b
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-on__repeat-9 91531ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-817673788b60cbba
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l3__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 117119ms cache-hit=4288 cache-miss=60 response-id=019f5c8a7ee33de692c67b058a90fbc6
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-4 112638ms cache-hit=5120 cache-miss=41 response-id=019f5c8aaaa356eb4681253f5c64e17c
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-7 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 144719ms cache-hit=4288 cache-miss=4 response-id=019f5c8a5e08b40e659243e42235b4b4
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-kimi-k2.6-thinking-explicitly-on__repeat-3 168026ms cache-hit=3712 cache-miss=53 response-id=019f5c8a2a854189ffe304cb6b812a3f
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l4__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 158557ms cache-hit=384 cache-miss=4186 response-id=019f5c8ada26aa30cad71c8d794d68d7
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-9 107722ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8de923f669fce86f
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-5 128859ms cache-hit=38080 cache-miss=61 response-id=019f5c8b6c9c286b83391c9106ee37cf
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-2 313849ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-89eb305839c158be
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-9 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-5 314375ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8223e77632e47594
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__hosokawa_fujitaka__varied-a-l2__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-on__repeat-8 171889ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b0dc2854417f55db
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-kimi-k2.7-code-thinking-always-on__repeat-4 247818ms cache-hit=3712 cache-miss=53 response-id=019f5c8a123b759e779efb2968bfe5df
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-9 26689ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-83a57ed3d5d1a1d5
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 283110ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-9a3c5893e9cbf3a1
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-4 273017ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b96c22784b4d93f5
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-6 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-1 409969ms cache-hit=4608 cache-miss=36 response-id=019f5c8d4f5af5b742d12444a9ab488d
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-8 458464ms cache-hit=4864 cache-miss=28 response-id=019f5c8d4fb0c88ec2a6b22f1278882c
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-10 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l2__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 159264ms cache-hit=4608 cache-miss=36 response-id=019f5c8ef62c32db51216de2939f601c
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-10 125228ms cache-hit=0 cache-miss=4892 response-id=019f5c8fb389a63d233ebf44c5fa8afc
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-10 605192ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-8fb856f891d25aa5
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-2 556410ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-a2fc388ec5d53eb2
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-3 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-5 612509ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b19e27161890fd06
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-8 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-27b-thinking-explicitly-off__repeat-8 12210ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-b1403a5de0b324f8
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l1__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-8 693834ms cache-hit=11840 cache-miss=35 response-id=019f5c92d59e310b568efeaa3f764704
+[judge-sensitivity] -> error honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-3 900018ms cache-hit=unreported cache-miss=unreported response-id=unreported The operation timed out.
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-7 692074ms cache-hit=5120 cache-miss=41 response-id=019f5c9594811d9b29a21acfd3874e4d
+[judge-sensitivity] judge honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-9 cache-phase=replay
+[judge-sensitivity] -> error honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 840203ms cache-hit=unreported cache-miss=unreported response-id=unreported The operation timed out.
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-b-l3__baseline-a-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-6 595815ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-ba390da355516776
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-a-l2__baseline-b-l3__judge-glm-5.2-thinking-explicitly-on__repeat-6 78498ms cache-hit=4032 cache-miss=44 response-id=019f5c967083b0af2f223637419fd95c
+[judge-sensitivity] -> ok honnoji-decision__chosokabe__akechi_ashigaru__varied-b-l4__baseline-a-l3__judge-glm-5.2-thinking-explicitly-on__repeat-9 384465ms cache-hit=5120 cache-miss=41 response-id=019f5c9b0b1203de65515d7f6853b718
+[judge-sensitivity] -> error honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-3 885970ms cache-hit=unreported cache-miss=unreported response-id=unreported The operation timed out.
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-6 cache-phase=replay
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-6 8520ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-980fbea2341955f1
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-7 cache-phase=replay

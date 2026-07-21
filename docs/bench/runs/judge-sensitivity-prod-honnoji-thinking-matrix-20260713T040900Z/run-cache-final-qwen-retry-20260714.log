@@ -1,0 +1,12 @@
+{
+  "dryRun": false,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-honnoji-thinking-matrix-20260713T040900Z",
+  "pendingCacheGroups": 1,
+  "pendingJobs": 1,
+  "plannedJobs": 6080,
+  "scenarioIds": [
+    "honnoji-decision"
+  ]
+}
+[judge-sensitivity] judge honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-8 cache-phase=warmup
+[judge-sensitivity] -> ok honnoji-decision__yoshiaki_envoy__akechi_ashigaru__varied-a-l1__baseline-b-l3__judge-qwen3.6-35b-a3b-thinking-explicitly-off__repeat-8 15346ms cache-hit=unreported cache-miss=unreported response-id=chatcmpl-935c3a6b30e73afd

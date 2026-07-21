@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trolley Judge-Model Benchmark</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 32px; color: #111827; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0 32px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+    th { background: #f3f4f6; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Trolley Judge-Model Benchmark</h1>
+  <p>Run <code>trolley-judge-models-20260702T145707Z</code>. Source run <code>trolley-win-rate-20260702T060024Z</code>.</p>
+  <p>168/168 jobs completed; 0 errored; 0 parse errors.</p>
+  <h2>Model Summary</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Jobs</th><th>Errors</th><th>Parse errors</th><th>One-side match wins</th><th>Five-side match wins</th><th>Draws</th><th>Case one-side wins</th><th>Case five-side wins</th><th>Unknown cases</th><th>Baseline agreement</th><th>Avg duration</th></tr></thead>
+    <tbody><tr><td>DeepSeek V4 Pro (deepseek-v4-pro)</td><td>24/24</td><td>0</td><td>0</td><td>21</td><td>3</td><td>0</td><td>59</td><td>13</td><td>0</td><td>69.4%</td><td>39610ms</td></tr>
+<tr><td>Kimi K2.6 (kimi-k2.6)</td><td>24/24</td><td>0</td><td>0</td><td>23</td><td>1</td><td>0</td><td>55</td><td>17</td><td>0</td><td>72.2%</td><td>125191ms</td></tr>
+<tr><td>Qwen3.6 27B (qwen3.6-27b)</td><td>24/24</td><td>0</td><td>0</td><td>23</td><td>1</td><td>0</td><td>47</td><td>25</td><td>0</td><td>86.1%</td><td>23195ms</td></tr>
+<tr><td>GLM-5.1 (glm-5.1)</td><td>24/24</td><td>0</td><td>0</td><td>17</td><td>7</td><td>0</td><td>46</td><td>26</td><td>0</td><td>73.6%</td><td>73020ms</td></tr>
+<tr><td>MiniMax M2.5 (minimax-m2.5)</td><td>24/24</td><td>0</td><td>0</td><td>20</td><td>4</td><td>0</td><td>57</td><td>15</td><td>0</td><td>63.9%</td><td>37007ms</td></tr>
+<tr><td>GPT-5.4 (gpt-5.4)</td><td>24/24</td><td>0</td><td>0</td><td>14</td><td>10</td><td>0</td><td>38</td><td>34</td><td>0</td><td>76.4%</td><td>14115ms</td></tr>
+<tr><td>Claude Opus 4.6 (claude-opus-4-6)</td><td>24/24</td><td>0</td><td>0</td><td>15</td><td>9</td><td>0</td><td>39</td><td>33</td><td>0</td><td>75.0%</td><td>40207ms</td></tr></tbody>
+  </table>
+  <h2>Mini-Case Results By Model</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Case</th><th>One-side wins</th><th>Five-side wins</th><th>Unknown</th><th>Total</th><th>One-side rate</th><th>Five-side rate</th></tr></thead>
+    <tbody><tr><td>deepseek-v4-pro</td><td>A 原始电车</td><td>17</td><td>7</td><td>0</td><td>24</td><td>70.8%</td><td>29.2%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>C 地下室婴儿</td><td>11</td><td>1</td><td>0</td><td>12</td><td>91.7%</td><td>8.3%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>D 自动驾驶车</td><td>9</td><td>3</td><td>0</td><td>12</td><td>75.0%</td><td>25.0%</td></tr>
+<tr><td>deepseek-v4-pro</td><td>E 缸中之脑</td><td>10</td><td>2</td><td>0</td><td>12</td><td>83.3%</td><td>16.7%</td></tr>
+<tr><td>kimi-k2.6</td><td>A 原始电车</td><td>12</td><td>12</td><td>0</td><td>24</td><td>50.0%</td><td>50.0%</td></tr>
+<tr><td>kimi-k2.6</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>kimi-k2.6</td><td>C 地下室婴儿</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>kimi-k2.6</td><td>D 自动驾驶车</td><td>7</td><td>5</td><td>0</td><td>12</td><td>58.3%</td><td>41.7%</td></tr>
+<tr><td>kimi-k2.6</td><td>E 缸中之脑</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>A 原始电车</td><td>0</td><td>24</td><td>0</td><td>24</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>C 地下室婴儿</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>qwen3.6-27b</td><td>D 自动驾驶车</td><td>11</td><td>1</td><td>0</td><td>12</td><td>91.7%</td><td>8.3%</td></tr>
+<tr><td>qwen3.6-27b</td><td>E 缸中之脑</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>glm-5.1</td><td>A 原始电车</td><td>7</td><td>17</td><td>0</td><td>24</td><td>29.2%</td><td>70.8%</td></tr>
+<tr><td>glm-5.1</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>glm-5.1</td><td>C 地下室婴儿</td><td>11</td><td>1</td><td>0</td><td>12</td><td>91.7%</td><td>8.3%</td></tr>
+<tr><td>glm-5.1</td><td>D 自动驾驶车</td><td>4</td><td>8</td><td>0</td><td>12</td><td>33.3%</td><td>66.7%</td></tr>
+<tr><td>glm-5.1</td><td>E 缸中之脑</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>minimax-m2.5</td><td>A 原始电车</td><td>19</td><td>5</td><td>0</td><td>24</td><td>79.2%</td><td>20.8%</td></tr>
+<tr><td>minimax-m2.5</td><td>B 器官移植</td><td>11</td><td>1</td><td>0</td><td>12</td><td>91.7%</td><td>8.3%</td></tr>
+<tr><td>minimax-m2.5</td><td>C 地下室婴儿</td><td>11</td><td>1</td><td>0</td><td>12</td><td>91.7%</td><td>8.3%</td></tr>
+<tr><td>minimax-m2.5</td><td>D 自动驾驶车</td><td>7</td><td>5</td><td>0</td><td>12</td><td>58.3%</td><td>41.7%</td></tr>
+<tr><td>minimax-m2.5</td><td>E 缸中之脑</td><td>9</td><td>3</td><td>0</td><td>12</td><td>75.0%</td><td>25.0%</td></tr>
+<tr><td>gpt-5.4</td><td>A 原始电车</td><td>0</td><td>24</td><td>0</td><td>24</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>gpt-5.4</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>gpt-5.4</td><td>C 地下室婴儿</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>gpt-5.4</td><td>D 自动驾驶车</td><td>2</td><td>10</td><td>0</td><td>12</td><td>16.7%</td><td>83.3%</td></tr>
+<tr><td>gpt-5.4</td><td>E 缸中之脑</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>claude-opus-4-6</td><td>A 原始电车</td><td>0</td><td>24</td><td>0</td><td>24</td><td>0.0%</td><td>100.0%</td></tr>
+<tr><td>claude-opus-4-6</td><td>B 器官移植</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>claude-opus-4-6</td><td>C 地下室婴儿</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr>
+<tr><td>claude-opus-4-6</td><td>D 自动驾驶车</td><td>3</td><td>9</td><td>0</td><td>12</td><td>25.0%</td><td>75.0%</td></tr>
+<tr><td>claude-opus-4-6</td><td>E 缸中之脑</td><td>12</td><td>0</td><td>0</td><td>12</td><td>100.0%</td><td>0.0%</td></tr></tbody>
+  </table>
+  <p>Raw data is in <code>results.json</code>.</p>
+</body>
+</html>

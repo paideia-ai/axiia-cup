@@ -1,0 +1,152 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": false,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 8,
+  "historyExecutionCountExpected": 8,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 30,
+  "judgeModels": [
+    "deepseek-v4-pro-thinking-explicitly-on",
+    "deepseek-v4-flash-thinking-explicitly-on",
+    "deepseek-v3.2-thinking-explicitly-on",
+    "deepseek-r1-thinking-explicitly-on",
+    "qwen3.6-35b-a3b-thinking-explicitly-on",
+    "qwen3.6-27b-thinking-explicitly-on",
+    "qwen3.5-397b-thinking-explicitly-on"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "id": "deepseek-v4-pro-thinking-explicitly-on",
+      "label": "DeepSeek V4 Pro (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V4-Flash",
+      "id": "deepseek-v4-flash-thinking-explicitly-on",
+      "label": "DeepSeek V4 Flash (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-V3.2",
+      "id": "deepseek-v3.2-thinking-explicitly-on",
+      "label": "DeepSeek V3.2 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "deepseek-ai/DeepSeek-R1",
+      "id": "deepseek-r1-thinking-explicitly-on",
+      "label": "DeepSeek R1 (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "deepseek",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-35B-A3B",
+      "id": "qwen3.6-35b-a3b-thinking-explicitly-on",
+      "label": "Qwen3.6 35B A3B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "id": "qwen3.6-27b-thinking-explicitly-on",
+      "label": "Qwen3.6 27B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    },
+    {
+      "apiModel": "Qwen/Qwen3.5-397B-A17B",
+      "id": "qwen3.5-397b-thinking-explicitly-on",
+      "label": "Qwen3.5 397B (thinking explicitly on)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOnRequest": "enable-thinking-true",
+      "underlyingProvider": "qwen",
+      "verifyReasoningEnabled": true
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 300000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-thinking-on-20260712T091045Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": true,
+  "runId": "074e7818-ff4f-4ae4-9bd3-fa475e1e9ee4",
+  "scenarioIds": [
+    "shangyang-court"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z; Seven Level-3 repeat-1 judge rows imported from verified thinking-on preflight"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0,
+  "runLabel": "Shangyang judge sensitivity: DeepSeek and Qwen thinking explicitly on; reuses 8 histories from judge-sensitivity-prod-20260708T200403Z"
+}

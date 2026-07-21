@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Honnoji Judge Model Win Rates</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --border: #d6dee7;
+      --text: #172033;
+      --muted: #637083;
+      --attack: #b4233a;
+      --attack-soft: #ffe1e7;
+      --avoid: #0f766e;
+      --avoid-soft: #d7f3ef;
+      --neutral: #737b87;
+      --neutral-soft: #edf0f3;
+      --gold: #d4af37;
+      --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header { display: grid; gap: 8px; margin-bottom: 24px; }
+    h1 { margin: 0; font-size: 40px; line-height: 1.05; letter-spacing: 0; }
+    h2 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: 0; }
+
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 14px; }
+    .pill { border: 1px solid var(--border); border-radius: 6px; background: #fff; padding: 6px 10px; white-space: nowrap; }
+    .bench-note { margin: 4px 0 0; max-width: 980px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+    .global-toolbar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      align-items: end;
+      gap: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      min-width: min(260px, 100%);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .label-note { color: var(--muted); font-weight: 700; text-transform: none; }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      line-height: 1.2;
+      padding: 10px 34px 10px 11px;
+    }
+
+    .model-summary {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .summary-cell {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fbfcfe;
+      padding: 10px 12px;
+    }
+
+    .summary-cell span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .summary-cell strong { display: block; margin-top: 4px; font-size: 18px; line-height: 1.2; }
+
+    .pair-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+    .pair-panel {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .pair-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .pair-title { display: grid; gap: 3px; min-width: 0; }
+    .pair-kicker { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+
+    .pair-body { display: grid; grid-template-columns: minmax(190px, 240px) minmax(0, 1fr); gap: 18px; align-items: center; }
+    .pie-wrap { display: grid; place-items: center; min-height: 220px; }
+
+    .pie {
+      position: relative;
+      width: min(220px, 100%);
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background: conic-gradient(var(--attack) 0 50%, var(--avoid) 50% 100%);
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.1), 0 12px 26px rgba(23, 32, 51, 0.12);
+    }
+
+    .pie::after {
+      content: "";
+      position: absolute;
+      inset: 24%;
+      border-radius: inherit;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.06);
+    }
+
+    .pie-center {
+      position: absolute;
+      inset: 30%;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .pie-center span { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .pie-center strong { display: block; color: var(--text); font-size: 24px; font-weight: 900; }
+
+    .metrics { display: grid; gap: 10px; min-width: 0; }
+
+    .metric {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .metric[data-side="attack"] { background: var(--attack-soft); border-color: #f4adbc; }
+    .metric[data-side="avoid"] { background: var(--avoid-soft); border-color: #a8d8d0; }
+    .metric[data-side="neutral"] { background: var(--neutral-soft); }
+
+    .metric-label { display: flex; align-items: center; min-width: 0; gap: 8px; font-weight: 800; }
+    .swatch { width: 12px; height: 12px; flex: 0 0 auto; border-radius: 999px; }
+    .swatch.attack { background: var(--attack); }
+    .swatch.avoid { background: var(--avoid); }
+    .swatch.neutral { background: var(--neutral); }
+    .metric-count { color: var(--muted); font-size: 13px; }
+    .metric-rate { font-variant-numeric: tabular-nums; font-size: 24px; font-weight: 900; }
+
+    .spectrum-section { display: grid; gap: 16px; margin-top: 28px; }
+    .section-head { display: grid; gap: 4px; }
+    .section-head h2 { margin: 0; font-size: 24px; line-height: 1.2; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 14px; }
+    .balance-toolbar {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .balance-toolbar label { width: min(360px, 100%); }
+
+    .matchup-bars { display: grid; gap: 12px; }
+
+    .matchup-row {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .matchup-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .matchup-title { min-width: 0; font-size: 16px; font-weight: 900; line-height: 1.25; }
+    .matchup-total { color: var(--muted); font-size: 13px; font-weight: 800; white-space: nowrap; }
+
+    .model-spectrum-wrap {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 2px 4px;
+    }
+
+    .model-spectrum-inner { width: 100%; min-width: 760px; }
+
+    .model-spectrum {
+      position: relative;
+      height: 96px;
+      margin: 154px 0 44px;
+      border-radius: 8px;
+      background: linear-gradient(to right, var(--avoid) 0%, #6f747d 50%, var(--attack) 100%);
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.12);
+    }
+
+    .spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .spectrum-labels .left { color: var(--avoid); }
+    .spectrum-labels .right { color: var(--attack); text-align: right; }
+
+    .model-marker {
+      position: absolute;
+      top: -8px;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .model-marker.edge-left { transform: translateX(0); text-align: left; }
+    .model-marker.edge-right { transform: translateX(-100%); text-align: right; }
+
+    .model-marker-pin {
+      width: 2px;
+      height: 100px;
+      margin: 0 auto;
+      background: #172033;
+      opacity: 0.72;
+    }
+
+    .model-marker-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--text);
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(23, 32, 51, 0.08);
+    }
+
+    .model-marker.edge-left .model-marker-label { left: 0; transform: translateX(0); }
+    .model-marker.edge-right .model-marker-label { left: 100%; transform: translateX(-100%); }
+
+    .model-marker-rate {
+      position: absolute;
+      top: 104px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .model-marker.edge-left .model-marker-rate { left: 0; transform: translateX(0); }
+    .model-marker.edge-right .model-marker-rate { left: 100%; transform: translateX(-100%); }
+    .model-marker.current .model-marker-label { border-color: var(--gold); background: #fff8db; color: #6f5200; }
+    .model-marker.current .model-marker-pin { background: #9b7400; opacity: 0.95; }
+
+    @media (max-width: 860px) {
+      .global-toolbar, .pair-grid, .model-summary { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { width: min(100vw - 24px, 1180px); padding: 20px 0 36px; }
+      .pair-panel { padding: 14px; }
+      h1 { font-size: 30px; }
+      .pair-head, .pair-body { grid-template-columns: 1fr; }
+      .pair-head { display: grid; }
+      .pie-wrap { min-height: 190px; }
+      .pie { width: min(190px, 82vw); }
+      .matchup-row { padding: 14px; }
+      .matchup-head { grid-template-columns: 1fr; }
+      .matchup-total { white-space: normal; }
+      .model-spectrum { margin-top: 174px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>Honnoji Judge Model Win Rates</h1>
+      <div class="meta">
+        <span class="pill">Baseline run honnoji-win-rate-20260702T154153Z</span>
+        <span class="pill">Judge replay run honnoji-judge-models-20260706T163228Z</span>
+        <span class="pill">8 judge models</span>
+        <span class="pill">288/288 jobs completed</span>
+        <span class="pill">0 parse errors</span>
+      </div>
+      <p class="bench-note">A camp is the assassination side: 光秀袭击本能寺. B camp is the avoid-assassination side: 光秀西进毛利. The deepseek-v3.2 model is the original full benchmark run; other judge models reuse the same 36 debate histories.</p>
+      <div class="global-toolbar">
+        <label>
+          <span>Judge model <span class="label-note">(v3.2 baseline kept)</span></span>
+          <select id="judge-model-select" data-model-select></select>
+        </label>
+        <label>
+          <span>Set all pairs to metric <span class="label-note">(Hover to scroll)</span></span>
+          <select id="global-metric-select" data-global-metric-select></select>
+        </label>
+        <div class="model-summary" data-model-summary></div>
+      </div>
+    </header>
+
+    <section class="pair-grid" id="pair-grid"></section>
+
+    <section class="spectrum-section">
+      <div class="section-head">
+        <h2>Pair Matchup Balance</h2>
+        <p>Select one result type, then compare all judge models inside each character-pair matchup.</p>
+      </div>
+      <div class="balance-toolbar">
+        <label>
+          <span>Bottom chart metric</span>
+          <select id="balance-metric-select" data-balance-metric-select></select>
+        </label>
+      </div>
+      <div class="matchup-bars" id="balance-bars"></div>
+    </section>
+  </main>
+
+  <script>
+    const REPORT_DATA = {
+  "baselineRunId": "honnoji-win-rate-20260702T154153Z",
+  "generatedAt": "2026-07-06T17:42:42.845Z",
+  "judgeReplayRunId": "honnoji-judge-models-20260706T163228Z",
+  "totalCompleted": 288,
+  "totalErrors": 0,
+  "totalJobs": 288,
+  "totalParseErrors": 0,
+  "camps": {
+    "a": "袭击本能寺",
+    "b": "西进毛利"
+  },
+  "metrics": [
+    {
+      "id": "policy",
+      "label": "Policy judgment",
+      "neutralLabel": "Unknown"
+    },
+    {
+      "id": "score",
+      "label": "Programmatic score",
+      "neutralLabel": "Draw"
+    }
+  ],
+  "modelOrder": [
+    {
+      "id": "deepseek-v3.2",
+      "label": "DeepSeek V3.2",
+      "source": "Original full debate run",
+      "runId": "honnoji-win-rate-20260702T154153Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "glm-5.1",
+      "label": "GLM-5.1",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "minimax-m2.5",
+      "label": "MiniMax M2.5",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "gpt-5.4",
+      "label": "GPT-5.4",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    },
+    {
+      "id": "claude-opus-4-6",
+      "label": "Claude Opus 4.6",
+      "source": "Rejudged from saved debates",
+      "runId": "honnoji-judge-models-20260706T163228Z",
+      "completed": 36,
+      "totalJobs": 36,
+      "errored": 0,
+      "parseErrors": 0
+    }
+  ],
+  "pairs": [
+    {
+      "id": "chosokabe__hosokawa_fujitaka",
+      "label": "长宗我部元亲阵营 vs 细川藤孝",
+      "roleAName": "长宗我部元亲阵营",
+      "roleBName": "细川藤孝",
+      "roleAOptionId": "chosokabe",
+      "roleBOptionId": "hosokawa_fujitaka"
+    },
+    {
+      "id": "chosokabe__akechi_ashigaru",
+      "label": "长宗我部元亲阵营 vs 明智军中的足轻",
+      "roleAName": "长宗我部元亲阵营",
+      "roleBName": "明智军中的足轻",
+      "roleAOptionId": "chosokabe",
+      "roleBOptionId": "akechi_ashigaru"
+    },
+    {
+      "id": "yoshiaki_envoy__hosokawa_fujitaka",
+      "label": "足利义昭的使者 vs 细川藤孝",
+      "roleAName": "足利义昭的使者",
+      "roleBName": "细川藤孝",
+      "roleAOptionId": "yoshiaki_envoy",
+      "roleBOptionId": "hosokawa_fujitaka"
+    },
+    {
+      "id": "yoshiaki_envoy__akechi_ashigaru",
+      "label": "足利义昭的使者 vs 明智军中的足轻",
+      "roleAName": "足利义昭的使者",
+      "roleBName": "明智军中的足轻",
+      "roleAOptionId": "yoshiaki_envoy",
+      "roleBOptionId": "akechi_ashigaru"
+    }
+  ],
+  "statsByModel": {
+    "deepseek-v3.2": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 7,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 3,
+          "b": 6,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 3,
+          "b": 6,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 3,
+          "b": 6,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 3,
+          "b": 6,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    },
+    "deepseek-v4-pro": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 7,
+          "neutral": 2,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 6,
+          "neutral": 2,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    },
+    "kimi-k2.6": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 8,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    },
+    "qwen3.6-27b": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 9,
+          "b": 0,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 8,
+          "b": 0,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 9,
+          "b": 0,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 9,
+          "b": 0,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 8,
+          "b": 0,
+          "neutral": 1,
+          "total": 9
+        }
+      }
+    },
+    "glm-5.1": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 2,
+          "b": 6,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 7,
+          "b": 2,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 6,
+          "b": 1,
+          "neutral": 2,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 7,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 7,
+          "b": 2,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 6,
+          "b": 2,
+          "neutral": 1,
+          "total": 9
+        }
+      }
+    },
+    "minimax-m2.5": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 3,
+          "b": 6,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 4,
+          "b": 4,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    },
+    "gpt-5.4": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 5,
+          "b": 4,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 7,
+          "b": 1,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 1,
+          "b": 8,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 5,
+          "b": 4,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 5,
+          "b": 4,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    },
+    "claude-opus-4-6": {
+      "chosokabe__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 8,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "chosokabe__akechi_ashigaru": {
+        "policy": {
+          "a": 8,
+          "b": 1,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 7,
+          "b": 1,
+          "neutral": 1,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__hosokawa_fujitaka": {
+        "policy": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 0,
+          "b": 9,
+          "neutral": 0,
+          "total": 9
+        }
+      },
+      "yoshiaki_envoy__akechi_ashigaru": {
+        "policy": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        },
+        "score": {
+          "a": 2,
+          "b": 7,
+          "neutral": 0,
+          "total": 9
+        }
+      }
+    }
+  }
+};
+
+    const chartColors = {
+      attack: getComputedStyle(document.documentElement).getPropertyValue("--attack").trim(),
+      avoid: getComputedStyle(document.documentElement).getPropertyValue("--avoid").trim(),
+      neutral: getComputedStyle(document.documentElement).getPropertyValue("--neutral").trim(),
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function formatPercent(value, total) {
+      if (!total) return "0.0%";
+      return ((value / total) * 100).toFixed(1) + "%";
+    }
+
+    function getCurrentModelId() {
+      const select = document.querySelector("[data-model-select]");
+      return select ? select.value : REPORT_DATA.modelOrder[0].id;
+    }
+
+    function getCurrentModel() {
+      const modelId = getCurrentModelId();
+      return REPORT_DATA.modelOrder.find(function(model) { return model.id === modelId; }) || REPORT_DATA.modelOrder[0];
+    }
+
+    function getCurrentStats() {
+      return REPORT_DATA.statsByModel[getCurrentModelId()] || REPORT_DATA.statsByModel[REPORT_DATA.modelOrder[0].id];
+    }
+
+    function getMetric(metricId) {
+      return REPORT_DATA.metrics.find(function(metric) { return metric.id === metricId; }) || REPORT_DATA.metrics[0];
+    }
+
+    function getLeader(stat) {
+      if (stat.a > stat.b) return { side: REPORT_DATA.camps.a, rate: formatPercent(stat.a, stat.total) };
+      if (stat.b > stat.a) return { side: REPORT_DATA.camps.b, rate: formatPercent(stat.b, stat.total) };
+      return { side: "Tie", rate: formatPercent(stat.a, stat.total) };
+    }
+
+    function getPieBackground(stat) {
+      if (!stat.total) return chartColors.neutral;
+      const attackEnd = (stat.a / stat.total) * 100;
+      const avoidEnd = attackEnd + (stat.b / stat.total) * 100;
+      return "conic-gradient(" + chartColors.attack + " 0 " + attackEnd + "%, " + chartColors.avoid + " " + attackEnd + "% " + avoidEnd + "%, " + chartColors.neutral + " " + avoidEnd + "% 100%)";
+    }
+
+    function getMetricOptions() {
+      return REPORT_DATA.metrics.map(function(metric) {
+        return '<option value="' + escapeHtml(metric.id) + '">' + escapeHtml(metric.label) + '</option>';
+      }).join("");
+    }
+
+    function attachWheelSelect(select) {
+      select.addEventListener("wheel", function(event) {
+        const direction = Math.sign(event.deltaY || event.deltaX);
+        if (direction === 0 || select.options.length <= 1) return;
+        event.preventDefault();
+        const optionCount = select.options.length;
+        const nextIndex = (select.selectedIndex + direction + optionCount) % optionCount;
+        select.selectedIndex = nextIndex;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }, { passive: false });
+    }
+
+    function renderModelSelect() {
+      const select = document.querySelector("[data-model-select]");
+      select.innerHTML = REPORT_DATA.modelOrder.map(function(model) {
+        return '<option value="' + escapeHtml(model.id) + '">' + escapeHtml(model.label + ' (' + model.id + ')') + '</option>';
+      }).join("");
+      select.value = REPORT_DATA.modelOrder[0].id;
+      select.addEventListener("change", function() {
+        updateAllPanelsForCurrentSelections();
+        updateModelSummary();
+        renderBalanceBars();
+      });
+      attachWheelSelect(select);
+    }
+
+    function renderGlobalSelect() {
+      const select = document.querySelector("[data-global-metric-select]");
+      select.innerHTML = '<option value="mixed">Mixed metrics</option>' + getMetricOptions();
+      select.addEventListener("change", function() {
+        if (select.value === "mixed") {
+          return;
+        }
+        updateAllPanels(select.value);
+      });
+      attachWheelSelect(select);
+    }
+
+    function renderBalanceMetricSelect() {
+      const select = document.querySelector("[data-balance-metric-select]");
+      select.innerHTML = getMetricOptions();
+      select.value = REPORT_DATA.metrics[0].id;
+      select.addEventListener("change", renderBalanceBars);
+      attachWheelSelect(select);
+    }
+
+    function updateModelSummary() {
+      const model = getCurrentModel();
+      const cells = [
+        ["Source", model.source],
+        ["Run", model.runId],
+        ["Jobs", model.completed + "/" + model.totalJobs],
+        ["Errors", model.errored + " errors, " + model.parseErrors + " parse errors"],
+      ];
+      document.querySelector("[data-model-summary]").innerHTML = cells.map(function(cell) {
+        return '<div class="summary-cell"><span>' + escapeHtml(cell[0]) + '</span><strong>' + escapeHtml(cell[1]) + '</strong></div>';
+      }).join("");
+    }
+
+    function updateAllPanels(metricId) {
+      for (const panel of document.querySelectorAll(".pair-panel")) {
+        panel.querySelector("[data-metric-select]").value = metricId;
+        updatePanel(panel);
+      }
+      updateGlobalSelect();
+    }
+
+    function updateAllPanelsForCurrentSelections() {
+      for (const panel of document.querySelectorAll(".pair-panel")) updatePanel(panel);
+    }
+
+    function updateGlobalSelect() {
+      const globalSelect = document.querySelector("[data-global-metric-select]");
+      const selectedMetrics = Array.from(document.querySelectorAll("[data-metric-select]")).map(function(select) { return select.value; });
+      const uniqueMetrics = new Set(selectedMetrics);
+      globalSelect.value = uniqueMetrics.size === 1 ? selectedMetrics[0] : "mixed";
+    }
+
+    function renderPanel(pairInfo) {
+      const panel = document.createElement("article");
+      panel.className = "pair-panel";
+      panel.dataset.pairId = pairInfo.id;
+      panel.innerHTML = [
+        '<div class="pair-head">',
+          '<div class="pair-title">',
+            '<div class="pair-kicker">' + escapeHtml(pairInfo.roleAOptionId + ' vs ' + pairInfo.roleBOptionId) + '</div>',
+            '<h2>' + escapeHtml(pairInfo.label) + '</h2>',
+          '</div>',
+          '<label>Metric<select data-metric-select>' + getMetricOptions() + '</select></label>',
+        '</div>',
+        '<div class="pair-body">',
+          '<div class="pie-wrap"><div class="pie" data-pie role="img"><div class="pie-center"><span data-center-side></span><strong data-center-rate></strong></div></div></div>',
+          '<div class="metrics">',
+            '<div class="metric" data-side="attack"><div><div class="metric-label"><span class="swatch attack"></span><span>' + escapeHtml(REPORT_DATA.camps.a) + '</span></div><div class="metric-count" data-attack-count></div></div><div class="metric-rate" data-attack-rate></div></div>',
+            '<div class="metric" data-side="avoid"><div><div class="metric-label"><span class="swatch avoid"></span><span>' + escapeHtml(REPORT_DATA.camps.b) + '</span></div><div class="metric-count" data-avoid-count></div></div><div class="metric-rate" data-avoid-rate></div></div>',
+            '<div class="metric" data-side="neutral" data-neutral-row><div><div class="metric-label"><span class="swatch neutral"></span><span data-neutral-label></span></div><div class="metric-count" data-neutral-count></div></div><div class="metric-rate" data-neutral-rate></div></div>',
+          '</div>',
+        '</div>',
+      ].join("");
+
+      const select = panel.querySelector("[data-metric-select]");
+      select.addEventListener("change", function() {
+        updatePanel(panel);
+        updateGlobalSelect();
+      });
+      attachWheelSelect(select);
+      updatePanel(panel);
+      return panel;
+    }
+
+    function updatePanel(panel) {
+      const pairId = panel.dataset.pairId;
+      const metricId = panel.querySelector("[data-metric-select]").value;
+      const metric = getMetric(metricId);
+      const pairInfo = REPORT_DATA.pairs.find(function(item) { return item.id === pairId; });
+      const stat = getCurrentStats()[pairId][metricId];
+      const attackRate = formatPercent(stat.a, stat.total);
+      const avoidRate = formatPercent(stat.b, stat.total);
+      const neutralRate = formatPercent(stat.neutral, stat.total);
+      const leader = getLeader(stat);
+
+      panel.querySelector("[data-pie]").style.background = getPieBackground(stat);
+      panel.querySelector("[data-pie]").setAttribute("aria-label", pairInfo.label + ", " + metric.label + ": " + REPORT_DATA.camps.a + " " + attackRate + ", " + REPORT_DATA.camps.b + " " + avoidRate + ", " + metric.neutralLabel + " " + neutralRate);
+      panel.querySelector("[data-center-side]").textContent = leader.side;
+      panel.querySelector("[data-center-rate]").textContent = leader.rate;
+      panel.querySelector("[data-attack-count]").textContent = stat.a + " of " + stat.total + " decisions";
+      panel.querySelector("[data-avoid-count]").textContent = stat.b + " of " + stat.total + " decisions";
+      panel.querySelector("[data-neutral-label]").textContent = metric.neutralLabel;
+      panel.querySelector("[data-neutral-count]").textContent = stat.neutral + " of " + stat.total + " decisions";
+      panel.querySelector("[data-attack-rate]").textContent = attackRate;
+      panel.querySelector("[data-avoid-rate]").textContent = avoidRate;
+      panel.querySelector("[data-neutral-rate]").textContent = neutralRate;
+      panel.querySelector("[data-neutral-row]").hidden = stat.neutral === 0;
+    }
+
+    function getModelMarkerTiers(points) {
+      const tiers = new Map();
+      const placed = [];
+      for (const point of points) {
+        let tier = 0;
+        while (placed.some(function(placedPoint) { return Math.abs(placedPoint.rate - point.rate) < 0.09 && placedPoint.tier === tier; })) tier += 1;
+        tiers.set(point.model.id, tier);
+        placed.push({ rate: point.rate, tier: tier });
+      }
+      return tiers;
+    }
+
+    function renderBalanceBars() {
+      const select = document.querySelector("[data-balance-metric-select]");
+      const metric = getMetric(select.value);
+      const currentModelId = getCurrentModelId();
+      const bars = document.querySelector("#balance-bars");
+      bars.innerHTML = REPORT_DATA.pairs.map(function(pair) {
+        const points = REPORT_DATA.modelOrder.map(function(model) {
+          const stat = REPORT_DATA.statsByModel[model.id][pair.id][metric.id];
+          return {
+            model: model,
+            stat: stat,
+            rate: stat.total ? stat.a / stat.total : 0,
+          };
+        }).sort(function(a, b) { return a.rate - b.rate || a.model.id.localeCompare(b.model.id); });
+        const tiers = getModelMarkerTiers(points);
+        const tierTops = [-28, -52, -76, -100, -124, -148, -172, -196];
+        const markers = points.map(function(point) {
+          const attackRate = formatPercent(point.stat.a, point.stat.total);
+          const avoidRate = formatPercent(point.stat.b, point.stat.total);
+          const neutralRate = formatPercent(point.stat.neutral, point.stat.total);
+          const tier = tiers.get(point.model.id) || 0;
+          const edgeClass = point.rate <= 0.001 ? " edge-left" : point.rate >= 0.999 ? " edge-right" : "";
+          const currentClass = point.model.id === currentModelId ? " current" : "";
+          const title = point.model.label + " (" + point.model.id + "): " + REPORT_DATA.camps.a + " " + point.stat.a + "/" + point.stat.total + " (" + attackRate + "), " + REPORT_DATA.camps.b + " " + point.stat.b + "/" + point.stat.total + " (" + avoidRate + "), " + metric.neutralLabel + " " + point.stat.neutral + "/" + point.stat.total + " (" + neutralRate + ")";
+          return [
+            '<div class="model-marker' + edgeClass + currentClass + '" style="left: ' + (point.rate * 100).toFixed(3) + '%;" title="' + escapeHtml(title) + '">',
+              '<div class="model-marker-label" style="top: ' + tierTops[tier] + 'px;">' + escapeHtml(point.model.id) + '</div>',
+              '<div class="model-marker-pin"></div>',
+              '<div class="model-marker-rate">' + point.stat.a + '/' + point.stat.total + ' (' + attackRate + ')</div>',
+            '</div>',
+          ].join("");
+        }).join("");
+        return [
+          '<article class="matchup-row">',
+            '<div class="matchup-head">',
+              '<div class="matchup-title">' + escapeHtml(pair.label) + '</div>',
+              '<div class="matchup-total">' + escapeHtml(metric.label) + ' · ' + REPORT_DATA.modelOrder.length + ' judge models</div>',
+            '</div>',
+            '<div class="model-spectrum-wrap"><div class="model-spectrum-inner">',
+              '<div class="model-spectrum" role="img" aria-label="' + escapeHtml(pair.label + ', ' + metric.label + ' win-rate spectrum across judge models') + '">' + markers + '</div>',
+              '<div class="spectrum-labels"><span class="left">' + escapeHtml(REPORT_DATA.camps.b) + '</span><span class="right">' + escapeHtml(REPORT_DATA.camps.a) + '</span></div>',
+            '</div></div>',
+          '</article>',
+        ].join("");
+      }).join("");
+    }
+
+    const grid = document.querySelector("#pair-grid");
+    renderModelSelect();
+    renderGlobalSelect();
+    renderBalanceMetricSelect();
+    for (const pairInfo of REPORT_DATA.pairs) grid.appendChild(renderPanel(pairInfo));
+    updateGlobalSelect();
+    updateModelSummary();
+    renderBalanceBars();
+  </script>
+</body>
+</html>

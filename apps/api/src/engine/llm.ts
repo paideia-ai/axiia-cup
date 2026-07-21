@@ -47,9 +47,43 @@ let _openAiClients: Partial<Record<OpenAICompatibleProvider, OpenAI>> = {}
 
 initializeLangfuseTracing()
 
-type ChatMessage = {
+export type ChatMessage = {
   role: 'assistant' | 'user'
   content: string
+}
+
+export type ChatCompletionThinkingMode =
+  | 'disabled'
+  | 'enabled'
+  | 'provider-default'
+
+export type ChatCompletionCapture = {
+  apiModel: string
+  content: string
+  durationMs: number
+  firstContentMs: number | null
+  provider: ModelProvider
+  providerCreatedAt: number | null
+  providerResponseId: string | null
+  reasoningContentChars: number
+  requestJson: string
+  responseJson: string
+  thinkingMode: ChatCompletionThinkingMode
+  thinkingRequestControl: Record<string, unknown> | null
+  tokenUsage: ExtractedTokenUsage
+  ttftMs: number | null
+}
+
+export type ChatCompletionParams = {
+  capture?: (capture: ChatCompletionCapture) => void
+  jsonMode?: boolean
+  messages: ChatMessage[]
+  model: ModelId
+  signal?: AbortSignal
+  systemPrompt: string
+  temperature?: number
+  thinkingMode?: ChatCompletionThinkingMode
+  trace?: ChatCompletionTrace
 }
 
 type OpenAICompatibleProvider =
@@ -125,6 +159,8 @@ const anthropicCompatibleConfigs: Record<
 
 type AnthropicResponse = {
   content?: Array<{ text?: string; thinking?: string; type: string }>
+  id?: string
+  model?: string
   stop_reason?: string
   usage?: {
     cache_read_input_tokens?: number
@@ -348,7 +384,7 @@ function safeStringify(value: unknown) {
   }
 }
 
-type ExtractedTokenUsage = {
+export type ExtractedTokenUsage = {
   cachedTokens: number | null
   completionTokens: number | null
   promptTokens: number | null
@@ -425,6 +461,8 @@ export type StreamTimings = {
 export type OpenAIStreamState = StreamTimings & {
   content: string
   finishReason: string | null
+  providerCreatedAt: number | null
+  providerResponseId: string | null
   reasoning: string
   usage: unknown
 }
@@ -434,6 +472,8 @@ export function createOpenAIStreamState(): OpenAIStreamState {
     content: '',
     finishReason: null,
     firstContentMs: null,
+    providerCreatedAt: null,
+    providerResponseId: null,
     reasoning: '',
     ttftMs: null,
     usage: null,
@@ -445,6 +485,8 @@ type OpenAIStreamChunk = {
     delta?: { content?: string | null; reasoning_content?: string | null }
     finish_reason?: string | null
   }>
+  created?: number
+  id?: string
   usage?: unknown
 }
 
@@ -453,6 +495,9 @@ export function foldOpenAIStreamChunk(
   chunk: OpenAIStreamChunk,
   elapsedMs: number,
 ) {
+  state.providerResponseId ??= chunk.id ?? null
+  state.providerCreatedAt ??= chunk.created ?? null
+
   if (chunk.usage) {
     state.usage = chunk.usage
   }
@@ -505,6 +550,8 @@ export async function readAnthropicStream(
     input_tokens?: number
     output_tokens?: number
   } = {}
+  let responseId: string | undefined
+  let responseModel: string | undefined
   let stopReason: string | undefined
   let ttftMs: number | null = null
   let firstContentMs: number | null = null
@@ -521,7 +568,7 @@ export async function readAnthropicStream(
       }
       error?: { message?: string; type?: string }
       index?: number
-      message?: { usage?: typeof usage }
+      message?: { id?: string; model?: string; usage?: typeof usage }
       type?: string
       usage?: { output_tokens?: number }
     }
@@ -529,6 +576,8 @@ export async function readAnthropicStream(
     switch (event.type) {
       case 'message_start': {
         Object.assign(usage, event.message?.usage ?? {})
+        responseId = event.message?.id
+        responseModel = event.message?.model
         break
       }
       case 'content_block_start': {
@@ -621,6 +670,8 @@ export async function readAnthropicStream(
           ? { thinking: block.thinking, type: block.type }
           : { text: block.text, type: block.type },
       ),
+      id: responseId,
+      model: responseModel,
       stop_reason: stopReason,
       usage,
     },
@@ -643,7 +694,16 @@ async function persistLlmCall(
     ttftMs?: number | null
   },
 ) {
-  if (!trace) {
+  const benchmarkOnlyTrace =
+    trace?.benchmarkRunId &&
+    trace.matchId == null &&
+    trace.playgroundRunId == null
+
+  if (
+    !trace ||
+    benchmarkOnlyTrace ||
+    process.env.AXIIA_DISABLE_LLM_CALL_PERSISTENCE === '1'
+  ) {
     return
   }
 
@@ -702,12 +762,64 @@ async function persistLlmCall(
   }
 }
 
+function buildOpenAICompatibleThinkingControl(params: {
+  model: ModelId
+  thinkingMode?: ChatCompletionThinkingMode
+}): {
+  enable_thinking?: boolean
+  thinking?: { type: 'disabled' | 'enabled' }
+} {
+  const modelDefinition = getModelDefinition(params.model)
+  const thinkingMode = params.thinkingMode ?? 'provider-default'
+
+  if (thinkingMode === 'provider-default') {
+    return modelDefinition.thinking === 'disabled'
+      ? { enable_thinking: false }
+      : {}
+  }
+
+  if (modelDefinition.provider === 'zhipu') {
+    return { thinking: { type: thinkingMode } }
+  }
+
+  if (
+    modelDefinition.provider === 'dashscope' ||
+    modelDefinition.provider === 'moonshot' ||
+    modelDefinition.provider === 'siliconflow'
+  ) {
+    return { enable_thinking: thinkingMode === 'enabled' }
+  }
+
+  throw new Error(
+    `Explicit thinking mode is not implemented for ${modelDefinition.provider}/${params.model}`,
+  )
+}
+
+function extractThinkingRequestControl(
+  requestPayload: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if ('thinking' in requestPayload) {
+    return { thinking: requestPayload.thinking }
+  }
+
+  if ('enable_thinking' in requestPayload) {
+    return { enable_thinking: requestPayload.enable_thinking }
+  }
+
+  if ('output_config' in requestPayload) {
+    return { output_config: requestPayload.output_config }
+  }
+
+  return null
+}
+
 export function buildOpenAICompatibleRequest(params: {
   jsonMode?: boolean
   messages: ChatMessage[]
   model: ModelId
   systemPrompt: string
   temperature?: number
+  thinkingMode?: ChatCompletionThinkingMode
 }) {
   const modelDefinition = getModelDefinition(params.model)
 
@@ -726,11 +838,7 @@ export function buildOpenAICompatibleRequest(params: {
     ...(modelDefinition.provider === 'moonshot'
       ? {}
       : { temperature: params.temperature ?? 0 }),
-    // Some SiliconFlow models (e.g. Qwen3 thinking variants) require explicitly
-    // disabling thinking mode; otherwise the API returns 400.
-    ...(modelDefinition.thinking === 'disabled'
-      ? { enable_thinking: false }
-      : {}),
+    ...buildOpenAICompatibleThinkingControl(params),
   }
 }
 
@@ -784,15 +892,7 @@ function withRequestTimeout(signal: AbortSignal | undefined) {
 }
 
 async function callOpenAICompatibleChatCompletion(
-  params: {
-    model: ModelId
-    systemPrompt: string
-    messages: ChatMessage[]
-    temperature?: number
-    jsonMode?: boolean
-    signal?: AbortSignal
-    trace?: ChatCompletionTrace
-  },
+  params: ChatCompletionParams,
   provider: OpenAICompatibleProvider,
 ) {
   const client = getOpenAICompatibleClient(provider)
@@ -849,6 +949,8 @@ async function callOpenAICompatibleChatCompletion(
           },
         },
       ],
+      created: state.providerCreatedAt,
+      id: state.providerResponseId,
       streamed: true,
       usage: state.usage,
     })
@@ -884,6 +986,25 @@ async function callOpenAICompatibleChatCompletion(
       requestJson,
       responseContent: content,
       responseJson,
+      ttftMs: state.ttftMs,
+    })
+
+    params.capture?.({
+      apiModel: requestPayload.model,
+      content,
+      durationMs: Date.now() - startedAt,
+      firstContentMs: state.firstContentMs,
+      provider,
+      providerCreatedAt: state.providerCreatedAt,
+      providerResponseId: state.providerResponseId,
+      reasoningContentChars: state.reasoning.length,
+      requestJson,
+      responseJson,
+      thinkingMode: params.thinkingMode ?? 'provider-default',
+      thinkingRequestControl: extractThinkingRequestControl(
+        requestPayload as Record<string, unknown>,
+      ),
+      tokenUsage,
       ttftMs: state.ttftMs,
     })
 
@@ -977,18 +1098,18 @@ async function callOpenAICompatibleChatCompletion(
 }
 
 async function callAnthropicChatCompletion(
-  params: {
-    model: ModelId
-    systemPrompt: string
-    messages: ChatMessage[]
-    temperature?: number
-    jsonMode?: boolean
-    signal?: AbortSignal
-    trace?: ChatCompletionTrace
-  },
+  params: ChatCompletionParams,
   provider: AnthropicCompatibleProvider,
 ) {
   const providerConfig = anthropicCompatibleConfigs[provider]
+  if (
+    params.thinkingMode != null &&
+    params.thinkingMode !== 'provider-default'
+  ) {
+    throw new Error(
+      `Explicit thinking mode is not implemented for ${provider}/${params.model}`,
+    )
+  }
   const requestPayload = buildAnthropicRequest(params)
   const requestJson = safeStringify(requestPayload)
   const startedAt = Date.now()
@@ -1091,6 +1212,25 @@ async function callAnthropicChatCompletion(
       ttftMs: streamed.ttftMs,
     })
 
+    params.capture?.({
+      apiModel: requestPayload.model,
+      content,
+      durationMs: Date.now() - startedAt,
+      firstContentMs: streamed.firstContentMs,
+      provider,
+      providerCreatedAt: null,
+      providerResponseId: parsed.id ?? null,
+      reasoningContentChars: thinking?.length ?? 0,
+      requestJson,
+      responseJson: responseText,
+      thinkingMode: params.thinkingMode ?? 'provider-default',
+      thinkingRequestControl: extractThinkingRequestControl(
+        requestPayload as Record<string, unknown>,
+      ),
+      tokenUsage,
+      ttftMs: streamed.ttftMs,
+    })
+
     return content
   } catch (error) {
     const durationMs = Date.now() - startedAt
@@ -1162,15 +1302,9 @@ async function callAnthropicChatCompletion(
   }
 }
 
-export async function chatCompletion(params: {
-  model: ModelId
-  systemPrompt: string
-  messages: ChatMessage[]
-  temperature?: number
-  jsonMode?: boolean
-  signal?: AbortSignal
-  trace?: ChatCompletionTrace
-}): Promise<string> {
+export async function chatCompletion(
+  params: ChatCompletionParams,
+): Promise<string> {
   const provider = getModelDefinition(params.model).provider
 
   switch (provider) {

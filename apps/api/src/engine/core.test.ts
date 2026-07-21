@@ -8,6 +8,7 @@ let sanitizeJsonResponse: (typeof import('./core'))['sanitizeJsonResponse']
 let buildAgentSystemMessage: (typeof import('./core'))['buildAgentSystemMessage']
 let buildAgentRuntimeSystemPrompt: (typeof import('./core'))['buildAgentRuntimeSystemPrompt']
 let buildJudgePrompt: (typeof import('./core'))['buildJudgePrompt']
+let buildJudgeRuntimeSystemPrompt: (typeof import('./core'))['buildJudgeRuntimeSystemPrompt']
 let buildExaminationQuestion: (typeof import('./core'))['buildExaminationQuestion']
 let formatDebateTranscriptForJudge: (typeof import('./core'))['formatDebateTranscriptForJudge']
 let getScenarioDialogueTurnLimit: (typeof import('./core'))['getScenarioDialogueTurnLimit']
@@ -20,6 +21,7 @@ beforeAll(async () => {
   buildAgentSystemMessage = core.buildAgentSystemMessage
   buildAgentRuntimeSystemPrompt = core.buildAgentRuntimeSystemPrompt
   buildJudgePrompt = core.buildJudgePrompt
+  buildJudgeRuntimeSystemPrompt = core.buildJudgeRuntimeSystemPrompt
   buildExaminationQuestion = core.buildExaminationQuestion
   formatDebateTranscriptForJudge = core.formatDebateTranscriptForJudge
   getScenarioDialogueTurnLimit = core.getScenarioDialogueTurnLimit
@@ -244,6 +246,39 @@ describe('buildJudgePrompt', () => {
     expect(message).toContain('轮数=8')
     expect(message).toContain('请封商鞅为左庶长，委以军政重任')
     expect(message).toContain('请加太师府议政之权')
+  })
+})
+
+describe('buildJudgeRuntimeSystemPrompt', () => {
+  it('renders the production transcript and examination summaries together', () => {
+    const message = buildJudgeRuntimeSystemPrompt(
+      scenario,
+      {
+        roleAFalseInfoIds: ['S2'],
+        roleATrueRequestIds: ['SR1'],
+        roleBFalseInfoIds: ['G2'],
+        roleBTrueRequestIds: ['GR1'],
+        selectedCaseIds: [],
+      },
+      [
+        { content: '变法当行。', role: '商鞅', speaker: 'a' },
+        { content: '祖制不可轻改。', role: '甘龙', speaker: 'b' },
+      ],
+      [
+        {
+          answer: '我猜 G2。',
+          isCorrect: true,
+          question: '哪条是假？',
+          round: 1,
+          selectedInfoId: 'G2',
+        },
+      ],
+      [],
+    )
+
+    expect(message).toContain('[第1轮] 商鞅：变法当行。')
+    expect(message).toContain('指认编号：G2')
+    expect(message).toContain('【甘龙】未完成问询。')
   })
 })
 

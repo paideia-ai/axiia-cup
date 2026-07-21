@@ -115,6 +115,27 @@ describe('buildOpenAICompatibleRequest', () => {
 
     expect(request.temperature).toBe(0.7)
   })
+
+  it('explicitly enables GLM thinking with the Zhipu-native control', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      model: 'glm-5.1',
+      thinkingMode: 'enabled',
+    })
+
+    expect(request.thinking).toEqual({ type: 'enabled' })
+    expect('enable_thinking' in request).toBe(false)
+  })
+
+  it('lets an explicit mode override a catalog thinking default', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      model: 'qwen3.6-27b',
+      thinkingMode: 'enabled',
+    })
+
+    expect(request.enable_thinking).toBe(true)
+  })
 })
 
 describe('extractTokenUsage', () => {
@@ -220,6 +241,11 @@ describe('foldOpenAIStreamChunk', () => {
       950,
     )
     foldOpenAIStreamChunk(state, { usage: { prompt_tokens: 10 } }, 960)
+    foldOpenAIStreamChunk(
+      state,
+      { choices: [], created: 1_700_000_000, id: 'response-1' },
+      970,
+    )
 
     expect(state.content).toBe('好的')
     expect(state.reasoning).toBe('先想一想')
@@ -227,6 +253,8 @@ describe('foldOpenAIStreamChunk', () => {
     expect(state.firstContentMs).toBe(900)
     expect(state.finishReason).toBe('stop')
     expect(state.usage).toEqual({ prompt_tokens: 10 })
+    expect(state.providerCreatedAt).toBe(1_700_000_000)
+    expect(state.providerResponseId).toBe('response-1')
   })
 
   it('marks ttft and first content together for non-thinking models', () => {

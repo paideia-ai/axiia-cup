@@ -127,6 +127,52 @@ describe('buildLlmObservabilityMetadata', () => {
       'gen_ai.request.model': 'claude-opus-4-5-20251101',
     })
   })
+
+  it('tags benchmark traces without assigning them to gameplay sources', () => {
+    const metadata = buildLlmObservabilityMetadata({
+      model: 'deepseek-v4-pro',
+      trace: {
+        benchmarkCaseId: 'vivian-yisiliu-ABC',
+        benchmarkName: 'trolley-win-rate',
+        benchmarkRunId: 'bench-run-1',
+        phase: 'dialogue',
+        scenarioId: 'trolley-problem',
+        side: 'a',
+        turnIndex: 0,
+        userId: 14,
+      },
+    })
+
+    expect(metadata.source).toBeNull()
+    expect(metadata.sessionId).toBe('benchmark:bench-run-1')
+    expect(metadata.traceName).toBe('benchmark:bench-run-1')
+    expect(metadata.propagatedMetadata).toMatchObject({
+      benchmarkCaseId: 'vivian-yisiliu-ABC',
+      benchmarkName: 'trolley-win-rate',
+      benchmarkRunId: 'bench-run-1',
+      modelId: 'deepseek-v4-pro',
+      phase: 'dialogue',
+      scenarioId: 'trolley-problem',
+      side: 'a',
+      turnIndex: '0',
+    })
+    expect(metadata.propagatedMetadata).not.toHaveProperty('source')
+    expect(metadata.otelAttributes).toMatchObject({
+      'axiia.benchmark.case_id': 'vivian-yisiliu-ABC',
+      'axiia.benchmark.name': 'trolley-win-rate',
+      'axiia.benchmark.run_id': 'bench-run-1',
+    })
+    expect(metadata.otelAttributes).not.toHaveProperty('axiia.run.source')
+    expect(metadata.tags).toEqual(
+      expect.arrayContaining([
+        'benchmark:trolley-win-rate',
+        'benchmarkRun:bench-run-1',
+        'scenario:trolley-problem',
+      ]),
+    )
+    expect(metadata.tags).not.toContain('source:playground')
+    expect(metadata.tags).not.toContain('source:tournament')
+  })
 })
 
 describe('buildLangfuseTraceUrl', () => {

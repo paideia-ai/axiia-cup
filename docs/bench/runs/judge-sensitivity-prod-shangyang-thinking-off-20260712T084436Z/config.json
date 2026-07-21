@@ -1,0 +1,100 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": false,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 8,
+  "historyExecutionCountExpected": 8,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 30,
+  "judgeModels": [
+    "glm-5.1-thinking-explicitly-off",
+    "glm-5.2-thinking-explicitly-off",
+    "kimi-k2.6-thinking-explicitly-off"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "apiModel": "Pro/zai-org/GLM-5.1",
+      "id": "glm-5.1-thinking-explicitly-off",
+      "label": "GLM 5.1 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "enable-thinking-false",
+      "underlyingProvider": "zai",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "zai-org/GLM-5.2",
+      "id": "glm-5.2-thinking-explicitly-off",
+      "label": "GLM 5.2 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "native-thinking-disabled",
+      "underlyingProvider": "zai",
+      "verifyReasoningDisabled": true
+    },
+    {
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "id": "kimi-k2.6-thinking-explicitly-off",
+      "label": "Kimi K2.6 (thinking explicitly off)",
+      "provider": "siliconflow",
+      "surfaces": [
+        "evaluation"
+      ],
+      "thinkingOffRequest": "both",
+      "underlyingProvider": "moonshot",
+      "verifyReasoningDisabled": true
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 180000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-thinking-off-20260712T084436Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": false,
+  "runId": "57251724-3b5d-46f0-925c-f19810ab766c",
+  "scenarioIds": [
+    "shangyang-court"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0,
+  "runLabel": "Shangyang judge sensitivity: thinking explicitly off; reuses 8 histories from judge-sensitivity-prod-20260708T200403Z"
+}

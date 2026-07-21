@@ -1,0 +1,38 @@
+{
+  "kind": "honnoji.selected_samples",
+  "sourceInventory": "inventory.json",
+  "pairSelections": [
+    {
+      "roleAOptionId": "chosokabe",
+      "roleAName": "长宗我部元亲阵营",
+      "roleBOptionId": "hosokawa_fujitaka",
+      "roleBName": "细川藤孝",
+      "attackSamples": [],
+      "defenseSamples": []
+    },
+    {
+      "roleAOptionId": "chosokabe",
+      "roleAName": "长宗我部元亲阵营",
+      "roleBOptionId": "akechi_ashigaru",
+      "roleBName": "明智军中的足轻",
+      "attackSamples": [],
+      "defenseSamples": []
+    },
+    {
+      "roleAOptionId": "yoshiaki_envoy",
+      "roleAName": "足利义昭的使者",
+      "roleBOptionId": "hosokawa_fujitaka",
+      "roleBName": "细川藤孝",
+      "attackSamples": [],
+      "defenseSamples": []
+    },
+    {
+      "roleAOptionId": "yoshiaki_envoy",
+      "roleAName": "足利义昭的使者",
+      "roleBOptionId": "akechi_ashigaru",
+      "roleBName": "明智军中的足轻",
+      "attackSamples": [],
+      "defenseSamples": []
+    }
+  ]
+}

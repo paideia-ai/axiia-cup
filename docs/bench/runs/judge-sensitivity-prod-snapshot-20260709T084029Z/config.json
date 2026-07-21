@@ -1,0 +1,111 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "plan",
+  "concurrency": 2,
+  "dryRun": true,
+  "git": {
+    "branch": "trolley-bench",
+    "commit": "4a5502e71906be17965e3f763b50a63de568a77c",
+    "dirty": true
+  },
+  "historyCountExpected": 80,
+  "historyExecutionCountExpected": 70,
+  "jobTimeoutMs": 900000,
+  "judgeConcurrency": 4,
+  "judgeModels": [
+    "deepseek-v4-pro",
+    "kimi-k2.6",
+    "qwen3.6-27b",
+    "glm-5.2"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "apiModel": "deepseek-ai/DeepSeek-V4-Pro",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "deepseek"
+    },
+    {
+      "id": "kimi-k2.6",
+      "label": "Kimi K2.6",
+      "apiModel": "Pro/moonshotai/Kimi-K2.6",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "moonshot"
+    },
+    {
+      "id": "qwen3.6-27b",
+      "label": "Qwen3.6 27B",
+      "apiModel": "Qwen/Qwen3.6-27B",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "thinking": "disabled",
+      "underlyingProvider": "qwen"
+    },
+    {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 120000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-snapshot-20260709T084029Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": false,
+  "runId": "01c0ca1a-6aee-430b-868b-7391bdf394b4",
+  "scenarioIds": [
+    "shangyang-court",
+    "honnoji-decision",
+    "trolley-problem"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot after Trolley judge prompt winner removal"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0
+}

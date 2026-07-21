@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trolley Case Win Rates</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --border: #d6dee7;
+      --text: #172033;
+      --muted: #637083;
+      --one: #0f766e;
+      --one-soft: #d7f3ef;
+      --five: #c2410c;
+      --five-soft: #ffe3d4;
+      --unknown: #737b87;
+      --unknown-soft: #edf0f3;
+      --shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .global-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .global-toolbar label {
+      min-width: min(320px, 100%);
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    .bench-note {
+      margin: 4px 0 0;
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .case-panel {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .case-panel:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    .case-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .case-title {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .case-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      min-width: min(260px, 100%);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .label-note {
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      line-height: 1.2;
+      padding: 10px 34px 10px 11px;
+    }
+
+    .case-body {
+      display: grid;
+      grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .pie-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 220px;
+    }
+
+    .pie {
+      position: relative;
+      width: min(220px, 100%);
+      aspect-ratio: 1;
+      border-radius: 999px;
+      background: conic-gradient(var(--one) 0 50%, var(--five) 50% 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(23, 32, 51, 0.1),
+        0 12px 26px rgba(23, 32, 51, 0.12);
+    }
+
+    .pie::after {
+      content: "";
+      position: absolute;
+      inset: 24%;
+      border-radius: inherit;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.06);
+    }
+
+    .pie-center {
+      position: absolute;
+      inset: 30%;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .pie-center span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pie-center strong {
+      display: block;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .metrics {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .metric[data-side="one"] {
+      background: var(--one-soft);
+      border-color: #a8d8d0;
+    }
+
+    .metric[data-side="five"] {
+      background: var(--five-soft);
+      border-color: #fac2a6;
+    }
+
+    .metric[data-side="unknown"] {
+      background: var(--unknown-soft);
+    }
+
+    .metric-label {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 8px;
+      font-weight: 800;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+    }
+
+    .swatch.one {
+      background: var(--one);
+    }
+
+    .swatch.five {
+      background: var(--five);
+    }
+
+    .swatch.unknown {
+      background: var(--unknown);
+    }
+
+    .metric-count {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-rate {
+      font-variant-numeric: tabular-nums;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .bias-section {
+      display: grid;
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .section-head {
+      display: grid;
+      gap: 4px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .bias-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .bias-panel {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .bias-panel h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .bias-scroll {
+      width: 100%;
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 2px 4px;
+    }
+
+    .bias-scroll-inner {
+      width: 100%;
+      min-width: 760px;
+    }
+
+    .bias-spectrum {
+      position: relative;
+      height: 132px;
+      margin: 204px 0 44px;
+      border-radius: 8px;
+      background: linear-gradient(to right, var(--five) 0%, #6f747d 50%, var(--one) 100%);
+      box-shadow: inset 0 0 0 1px rgba(23, 32, 51, 0.12);
+    }
+
+    .bias-spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .bias-spectrum-labels .left {
+      color: var(--five);
+    }
+
+    .bias-spectrum-labels .right {
+      color: var(--one);
+      text-align: right;
+    }
+
+    .bias-marker {
+      position: absolute;
+      top: -8px;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .bias-marker.edge-left {
+      transform: translateX(0);
+      text-align: left;
+    }
+
+    .bias-marker.edge-right {
+      transform: translateX(-100%);
+      text-align: right;
+    }
+
+    .bias-marker-pin {
+      width: 2px;
+      height: 136px;
+      margin: 0 auto;
+      background: #172033;
+      opacity: 0.72;
+    }
+
+    .bias-marker-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--text);
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(23, 32, 51, 0.08);
+    }
+
+    .bias-marker.edge-left .bias-marker-label {
+      left: 0;
+      transform: translateX(0);
+    }
+
+    .bias-marker.edge-right .bias-marker-label {
+      left: 100%;
+      transform: translateX(-100%);
+    }
+
+    .bias-marker-rate {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .bias-marker.edge-left .bias-marker-rate {
+      left: 0;
+      transform: translateX(0);
+    }
+
+    .bias-marker.edge-right .bias-marker-rate {
+      left: 100%;
+      transform: translateX(-100%);
+    }
+
+    .bias-marker.selected .bias-marker-label {
+      border-color: #d4af37;
+      background: #fff8db;
+      color: #6f5200;
+    }
+
+    .bias-marker.selected .bias-marker-pin {
+      background: #9b7400;
+      opacity: 0.95;
+    }
+
+    @media (max-width: 860px) {
+      .case-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .case-panel:last-child:nth-child(odd) {
+        grid-column: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100vw - 24px, 1180px);
+        padding: 20px 0 36px;
+      }
+
+      .case-panel {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .case-head,
+      .case-body {
+        grid-template-columns: 1fr;
+      }
+
+      .case-head {
+        display: grid;
+      }
+
+      .pie-wrap {
+        min-height: 190px;
+      }
+
+      .pie {
+        width: min(190px, 82vw);
+      }
+
+      .bias-panel {
+        padding: 14px;
+      }
+
+      .bias-spectrum {
+        height: 120px;
+        margin-top: 216px;
+      }
+
+      .bias-marker-pin {
+        height: 124px;
+      }
+
+      .bias-marker-rate {
+        top: 128px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <h1>Trolley Case Win Rates</h1>
+      <div class="meta">
+        <span class="pill">Run trolley-judge-models-20260702T145707Z</span>
+        <span class="pill">Source trolley-win-rate-20260702T060024Z</span>
+        <span class="pill">8 judge models</span>
+        <span class="pill">0 parse errors</span>
+      </div>
+      <p class="bench-note">
+        Benchmark setup: Vivian and yisiliu prompts are cross-paired on both sides across 6 three-case sets, producing 24 DeepSeek V4 Pro debate histories first judged by DeepSeek V3.2. The judge-model benchmark reuses those same transcripts and swaps only the judge model; rates below count per-case judgments.
+      </p>
+      <div class="global-toolbar">
+        <label>
+          <span>Set all cases to judge model <span class="label-note">(Hover to scroll)</span></span>
+          <select id="global-model-select" data-global-model-select></select>
+        </label>
+      </div>
+    </header>
+
+    <section class="case-grid" id="case-grid"></section>
+
+    <section class="bias-section">
+      <div class="section-head">
+        <h2>Judge Bias Spectrum by Case</h2>
+        <p>Left favors 五人侧; right favors 一人侧.</p>
+      </div>
+      <div class="bias-list" id="bias-spectrums"></div>
+    </section>
+  </main>
+
+  <script>
+    const REPORT_DATA = {
+      "runId": "trolley-judge-models-20260702T145707Z",
+      "sourceRunId": "trolley-win-rate-20260702T060024Z",
+      "cases": [
+        { "id": "A", "label": "A 原始电车" },
+        { "id": "B", "label": "B 器官移植" },
+        { "id": "C", "label": "C 地下室婴儿" },
+        { "id": "D", "label": "D 自动驾驶车" },
+        { "id": "E", "label": "E 缸中之脑" }
+      ],
+      "models": [
+        { "id": "deepseek-v4-pro", "label": "DeepSeek V4 Pro", "provider": "deepseek" },
+        { "id": "deepseek-v3.2", "label": "DeepSeek V3.2", "provider": "deepseek" },
+        { "id": "kimi-k2.6", "label": "Kimi K2.6", "provider": "moonshot" },
+        { "id": "qwen3.6-27b", "label": "Qwen3.6 27B", "provider": "qwen" },
+        { "id": "glm-5.1", "label": "GLM-5.1", "provider": "zai" },
+        { "id": "minimax-m2.5", "label": "MiniMax M2.5", "provider": "minimax" },
+        { "id": "gpt-5.4", "label": "GPT-5.4", "provider": "openai" },
+        { "id": "claude-opus-4-6", "label": "Claude Opus 4.6", "provider": "anthropic" }
+      ],
+      "stats": {
+        "A": {
+          "deepseek-v4-pro": { "one": 17, "five": 7, "unknown": 0, "total": 24 },
+          "deepseek-v3.2": { "one": 4, "five": 20, "unknown": 0, "total": 24 },
+          "kimi-k2.6": { "one": 12, "five": 12, "unknown": 0, "total": 24 },
+          "qwen3.6-27b": { "one": 0, "five": 24, "unknown": 0, "total": 24 },
+          "glm-5.1": { "one": 7, "five": 17, "unknown": 0, "total": 24 },
+          "minimax-m2.5": { "one": 19, "five": 5, "unknown": 0, "total": 24 },
+          "gpt-5.4": { "one": 0, "five": 24, "unknown": 0, "total": 24 },
+          "claude-opus-4-6": { "one": 0, "five": 24, "unknown": 0, "total": 24 }
+        },
+        "B": {
+          "deepseek-v4-pro": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "deepseek-v3.2": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "kimi-k2.6": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "qwen3.6-27b": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "glm-5.1": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "minimax-m2.5": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "gpt-5.4": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "claude-opus-4-6": { "one": 12, "five": 0, "unknown": 0, "total": 12 }
+        },
+        "C": {
+          "deepseek-v4-pro": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "deepseek-v3.2": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "kimi-k2.6": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "qwen3.6-27b": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "glm-5.1": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "minimax-m2.5": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "gpt-5.4": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "claude-opus-4-6": { "one": 12, "five": 0, "unknown": 0, "total": 12 }
+        },
+        "D": {
+          "deepseek-v4-pro": { "one": 9, "five": 3, "unknown": 0, "total": 12 },
+          "deepseek-v3.2": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "kimi-k2.6": { "one": 7, "five": 5, "unknown": 0, "total": 12 },
+          "qwen3.6-27b": { "one": 11, "five": 1, "unknown": 0, "total": 12 },
+          "glm-5.1": { "one": 4, "five": 8, "unknown": 0, "total": 12 },
+          "minimax-m2.5": { "one": 7, "five": 5, "unknown": 0, "total": 12 },
+          "gpt-5.4": { "one": 2, "five": 10, "unknown": 0, "total": 12 },
+          "claude-opus-4-6": { "one": 3, "five": 9, "unknown": 0, "total": 12 }
+        },
+        "E": {
+          "deepseek-v4-pro": { "one": 10, "five": 2, "unknown": 0, "total": 12 },
+          "deepseek-v3.2": { "one": 8, "five": 4, "unknown": 0, "total": 12 },
+          "kimi-k2.6": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "qwen3.6-27b": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "glm-5.1": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "minimax-m2.5": { "one": 9, "five": 3, "unknown": 0, "total": 12 },
+          "gpt-5.4": { "one": 12, "five": 0, "unknown": 0, "total": 12 },
+          "claude-opus-4-6": { "one": 12, "five": 0, "unknown": 0, "total": 12 }
+        }
+      }
+    };
+
+    const chartColors = {
+      one: getComputedStyle(document.documentElement).getPropertyValue("--one").trim(),
+      five: getComputedStyle(document.documentElement).getPropertyValue("--five").trim(),
+      unknown: getComputedStyle(document.documentElement).getPropertyValue("--unknown").trim(),
+    };
+
+    function formatPercent(value, total) {
+      if (!total) return "0.0%";
+      return `${((value / total) * 100).toFixed(1)}%`;
+    }
+
+    function getLeader(stat) {
+      if (stat.one > stat.five) {
+        return { side: "一人侧", rate: formatPercent(stat.one, stat.total) };
+      }
+      if (stat.five > stat.one) {
+        return { side: "五人侧", rate: formatPercent(stat.five, stat.total) };
+      }
+      return { side: "平局", rate: formatPercent(stat.one, stat.total) };
+    }
+
+    function getPieBackground(stat) {
+      if (!stat.total) return chartColors.unknown;
+      const oneEnd = (stat.one / stat.total) * 100;
+      const fiveEnd = oneEnd + (stat.five / stat.total) * 100;
+      return [
+        "conic-gradient(",
+        `${chartColors.one} 0 ${oneEnd}%, `,
+        `${chartColors.five} ${oneEnd}% ${fiveEnd}%, `,
+        `${chartColors.unknown} ${fiveEnd}% 100%`,
+        ")",
+      ].join("");
+    }
+
+    function getModelOptions() {
+      return REPORT_DATA.models
+        .map((model) => `<option value="${model.id}">${model.label}</option>`)
+        .join("");
+    }
+
+    function attachWheelSelect(select) {
+      select.addEventListener(
+        "wheel",
+        (event) => {
+          const direction = Math.sign(event.deltaY || event.deltaX);
+          if (direction === 0 || select.options.length <= 1) return;
+
+          event.preventDefault();
+          const optionCount = select.options.length;
+          const nextIndex = (select.selectedIndex + direction + optionCount) % optionCount;
+          select.selectedIndex = nextIndex;
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        },
+        { passive: false },
+      );
+    }
+
+    function renderGlobalSelect() {
+      const select = document.querySelector("[data-global-model-select]");
+      select.innerHTML = `<option value="mixed">Mixed models</option>${getModelOptions()}`;
+      select.addEventListener("change", () => {
+        if (select.value === "mixed") {
+          updateSpectrumHighlight();
+          return;
+        }
+        updateAllPanels(select.value);
+      });
+      attachWheelSelect(select);
+    }
+
+    function updateAllPanels(modelId) {
+      for (const panel of document.querySelectorAll(".case-panel")) {
+        panel.querySelector("[data-model-select]").value = modelId;
+        updatePanel(panel);
+      }
+      updateGlobalSelect();
+    }
+
+    function updateGlobalSelect() {
+      const globalSelect = document.querySelector("[data-global-model-select]");
+      const selectedModels = Array.from(document.querySelectorAll("[data-model-select]")).map(
+        (select) => select.value,
+      );
+      const uniqueModels = new Set(selectedModels);
+      globalSelect.value = uniqueModels.size === 1 ? selectedModels[0] : "mixed";
+      updateSpectrumHighlight();
+    }
+
+    function updateSpectrumHighlight() {
+      const globalSelect = document.querySelector("[data-global-model-select]");
+      const selectedModelId = globalSelect?.value;
+      for (const marker of document.querySelectorAll(".bias-marker")) {
+        marker.classList.toggle(
+          "selected",
+          Boolean(selectedModelId && selectedModelId !== "mixed" && marker.dataset.modelId === selectedModelId),
+        );
+      }
+    }
+
+    function renderPanel(caseInfo) {
+      const panel = document.createElement("article");
+      panel.className = "case-panel";
+      panel.dataset.caseId = caseInfo.id;
+      panel.innerHTML = `
+        <div class="case-head">
+          <div class="case-title">
+            <div class="case-kicker">Case ${caseInfo.id}</div>
+            <h2>${caseInfo.label}</h2>
+          </div>
+          <label>
+            Judge model
+            <select data-model-select>
+              ${getModelOptions()}
+            </select>
+          </label>
+        </div>
+        <div class="case-body">
+          <div class="pie-wrap">
+            <div class="pie" data-pie role="img">
+              <div class="pie-center">
+                <span data-center-side></span>
+                <strong data-center-rate></strong>
+              </div>
+            </div>
+          </div>
+          <div class="metrics">
+            <div class="metric" data-side="one">
+              <div>
+                <div class="metric-label"><span class="swatch one"></span><span>一人侧</span></div>
+                <div class="metric-count" data-one-count></div>
+              </div>
+              <div class="metric-rate" data-one-rate></div>
+            </div>
+            <div class="metric" data-side="five">
+              <div>
+                <div class="metric-label"><span class="swatch five"></span><span>五人侧</span></div>
+                <div class="metric-count" data-five-count></div>
+              </div>
+              <div class="metric-rate" data-five-rate></div>
+            </div>
+            <div class="metric" data-side="unknown" data-unknown-row>
+              <div>
+                <div class="metric-label"><span class="swatch unknown"></span><span>Unknown</span></div>
+                <div class="metric-count" data-unknown-count></div>
+              </div>
+              <div class="metric-rate" data-unknown-rate></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const select = panel.querySelector("[data-model-select]");
+      select.addEventListener("change", () => {
+        updatePanel(panel);
+        updateGlobalSelect();
+      });
+      attachWheelSelect(select);
+      updatePanel(panel);
+      return panel;
+    }
+
+    function updatePanel(panel) {
+      const caseId = panel.dataset.caseId;
+      const modelId = panel.querySelector("[data-model-select]").value;
+      const model = REPORT_DATA.models.find((item) => item.id === modelId);
+      const stat = REPORT_DATA.stats[caseId][modelId];
+      const oneRate = formatPercent(stat.one, stat.total);
+      const fiveRate = formatPercent(stat.five, stat.total);
+      const unknownRate = formatPercent(stat.unknown, stat.total);
+      const leader = getLeader(stat);
+
+      panel.querySelector("[data-pie]").style.background = getPieBackground(stat);
+      panel.querySelector("[data-pie]").setAttribute(
+        "aria-label",
+        `${caseId}, ${model.label}: 一人侧 ${oneRate}, 五人侧 ${fiveRate}, Unknown ${unknownRate}`,
+      );
+      panel.querySelector("[data-center-side]").textContent = leader.side;
+      panel.querySelector("[data-center-rate]").textContent = leader.rate;
+      panel.querySelector("[data-one-count]").textContent = `${stat.one} of ${stat.total} decisions`;
+      panel.querySelector("[data-five-count]").textContent = `${stat.five} of ${stat.total} decisions`;
+      panel.querySelector("[data-unknown-count]").textContent = `${stat.unknown} of ${stat.total} decisions`;
+      panel.querySelector("[data-one-rate]").textContent = oneRate;
+      panel.querySelector("[data-five-rate]").textContent = fiveRate;
+      panel.querySelector("[data-unknown-rate]").textContent = unknownRate;
+      panel.querySelector("[data-unknown-row]").hidden = stat.unknown === 0;
+    }
+
+    function getSpectrumPoints(caseId) {
+      return REPORT_DATA.models
+        .map((model) => {
+          const stat = REPORT_DATA.stats[caseId][model.id];
+          const rate = stat.total ? stat.one / stat.total : 0;
+          return { model, stat, rate };
+        })
+        .sort((a, b) => a.rate - b.rate || a.model.label.localeCompare(b.model.label));
+    }
+
+    function getMarkerTiers(points) {
+      const tiers = new Map();
+      const placed = [];
+      for (const point of points) {
+        let tier = 0;
+        while (
+          placed.some(
+            (placedPoint) => Math.abs(placedPoint.rate - point.rate) < 0.12 && placedPoint.tier === tier,
+          )
+        ) {
+          tier += 1;
+        }
+        tiers.set(point.model.id, tier);
+        placed.push({ rate: point.rate, tier });
+      }
+      return tiers;
+    }
+
+    function renderBiasSpectrum(caseInfo) {
+      const panel = document.createElement("article");
+      panel.className = "bias-panel";
+      const points = getSpectrumPoints(caseInfo.id);
+      const tiers = getMarkerTiers(points);
+      const tierTops = [-28, -52, -76, -100, -124, -148, -172, -196];
+      const markers = points
+        .map((point) => {
+          const oneRate = formatPercent(point.stat.one, point.stat.total);
+          const tier = tiers.get(point.model.id) || 0;
+          const edgeClass =
+            point.rate <= 0.001 ? " edge-left" : point.rate >= 0.999 ? " edge-right" : "";
+          return `
+            <div class="bias-marker${edgeClass}" data-model-id="${point.model.id}" style="left: ${(point.rate * 100).toFixed(3)}%;">
+              <div class="bias-marker-label" style="top: ${tierTops[tier]}px;">${point.model.label}</div>
+              <div class="bias-marker-pin"></div>
+              <div class="bias-marker-rate">${point.stat.one}/${point.stat.total} (${oneRate})</div>
+            </div>
+          `;
+        })
+        .join("");
+
+      panel.innerHTML = `
+        <h3>${caseInfo.label}</h3>
+        <div class="bias-scroll">
+          <div class="bias-scroll-inner">
+            <div class="bias-spectrum" role="img" aria-label="${caseInfo.label} judge bias spectrum by one-side win rate">
+              ${markers}
+            </div>
+            <div class="bias-spectrum-labels">
+              <span class="left">五人侧</span>
+              <span class="right">一人侧</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return panel;
+    }
+
+    const grid = document.querySelector("#case-grid");
+    renderGlobalSelect();
+    for (const caseInfo of REPORT_DATA.cases) {
+      grid.appendChild(renderPanel(caseInfo));
+    }
+    updateGlobalSelect();
+
+    const biasSpectrums = document.querySelector("#bias-spectrums");
+    for (const caseInfo of REPORT_DATA.cases) {
+      biasSpectrums.appendChild(renderBiasSpectrum(caseInfo));
+    }
+    updateSpectrumHighlight();
+  </script>
+</body>
+</html>

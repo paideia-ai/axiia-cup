@@ -1,0 +1,73 @@
+{
+  "agentModelPolicy": "saved",
+  "caseSets": [
+    "ABC"
+  ],
+  "concurrency": 1,
+  "dbPath": null,
+  "dryRun": false,
+  "fiveSideSamples": [
+    {
+      "displayName": "Vivian",
+      "email": "viviancao201103@hotmail.com",
+      "model": "deepseek-v4-pro",
+      "promptChars": 767,
+      "promptHash": "9d8cf31d2ff8f08647b21beba55047f7e37b0ee4934ea179f6638f6de7a05de6",
+      "sampleId": "sub-438-v2-u14",
+      "side": "b",
+      "sourceSubmissionId": 438,
+      "userId": 14,
+      "version": 2
+    },
+    {
+      "displayName": "yisiliu",
+      "email": "yisiliu@gmail.com",
+      "model": "deepseek-v4-pro",
+      "promptChars": 899,
+      "promptHash": "5b44bf0aa21470fcd619d34b5f15cec76eb3521f3c64bbfa15c5d5a09c4a5cf4",
+      "sampleId": "sub-476-v49-u19",
+      "side": "b",
+      "sourceSubmissionId": 476,
+      "userId": 19,
+      "version": 49
+    }
+  ],
+  "inventoryPath": "docs/competition/prompts/trolley-user-samples/inventory.json",
+  "judgeModel": "deepseek-v3.2",
+  "judgeModelPolicy": "scenario-current",
+  "judgePromptHash": "0f457bcfaec153aacc56af1d5dea254e2339b5e1948f69c42cd2f33efe0c8fd7",
+  "jobTimeoutMs": 900000,
+  "oneSideSamples": [
+    {
+      "displayName": "Vivian",
+      "email": "viviancao201103@hotmail.com",
+      "model": "deepseek-v4-pro",
+      "promptChars": 741,
+      "promptHash": "cc9c325cc8464d4d82c675517d5dce1d3bc38fbbe4fb6339f38126ba3763ed37",
+      "sampleId": "sub-438-v2-u14",
+      "side": "a",
+      "sourceSubmissionId": 438,
+      "userId": 14,
+      "version": 2
+    },
+    {
+      "displayName": "yisiliu",
+      "email": "yisiliu@gmail.com",
+      "model": "deepseek-v4-pro",
+      "promptChars": 740,
+      "promptHash": "e102c7b488314972943f3473edf72877657e9bb12dcd42354b7edea51d1c127c",
+      "sampleId": "sub-476-v49-u19",
+      "side": "a",
+      "sourceSubmissionId": 476,
+      "userId": 19,
+      "version": 49
+    }
+  ],
+  "outputDir": "docs/bench/runs/trolley-win-rate-smoke-20260702T053153Z",
+  "persistLlmCalls": false,
+  "runId": "trolley-win-rate-smoke-20260702T053153Z",
+  "scenarioId": "trolley-problem",
+  "scenarioSource": "inventory",
+  "scenarioSnapshotHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "selectedSamplesPath": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+}
