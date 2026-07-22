@@ -1,0 +1,3 @@
+1) 我认为添加meta prompt builder prompts这个feature很大程度增加了游戏的娱乐性和potential educational factor. 比如对题材不熟悉的玩家可以在和builder讨论的过程中学习历史背景，而且在被反问的时候也会有一个更immersive的gaming experience.
+2) 反问的重复性有些高，已经确认过的内容可以不用再提及，否则反问次数超过一定次数探索性太窄，并且对话次数太长会导致玩家没耐心。
+3) 因为大部分时候比赛的题材可能是玩家不熟悉的，所以反问的方式可能会太开放，或许可以让builder incorporate一些multiple choice的选项，让小白玩家在build prompt的时候体验更顺畅。
