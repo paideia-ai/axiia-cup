@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-07-21T23:14:30.000Z",
+  "kind": "judge_prompt_balance.cost_adjustments",
+  "missingCalls": [
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:20260722071245c3058dfe4c12458a",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:20260722071245875a3fd9c4314f52",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:202607220712450fd656066644483f",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:202607220712459b4c7a0a3f604cec",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:2026072207124599503485900b48ef",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:202607220712454d0653eb25e54c63",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:20260722071245f8678f647e254064",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:2026072207124571384edfdb3e417f",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:202607220712456522174361ec4304",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:20260722071245a4206262347344cf",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    },
+    {
+      "billingPhase": "judge",
+      "callId": "interrupted:TR-P0:202607220712457b2c5ef6a19b4bcb",
+      "candidateId": "TR-P0",
+      "model": "glm-5.2"
+    }
+  ],
+  "note": "Eleven successful TR-P0 warmup responses completed after the last persisted checkpoint and before the concurrency-100 run was interrupted due to Zhipu 429 responses. Token usage was not persisted, so the cost monitor estimates them from the observed TR-P0 judge-call average."
+}

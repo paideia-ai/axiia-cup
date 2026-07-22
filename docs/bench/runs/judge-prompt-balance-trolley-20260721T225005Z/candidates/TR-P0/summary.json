@@ -1,0 +1,477 @@
+{
+  "balanceStopConditionMet": false,
+  "cache": {
+    "cachedCalls": 43,
+    "reportedUncachedAverageDurationMs": 41153.558375634515,
+    "reportedUncachedCalls": 197,
+    "replayAverageDurationMsExcludedFromUncachedLatency": 42066.39,
+    "usageReportedCalls": 240,
+    "warmupAverageDurationMs": 40001.225
+  },
+  "candidateId": "TR-P0",
+  "candidatePass": false,
+  "generatedAt": "2026-07-22T00:15:49.640Z",
+  "judgeModel": "glm-5.2",
+  "kind": "judge_prompt_balance.candidate_summary",
+  "responseGenerationCheck": {
+    "duplicateProviderResponseIds": [],
+    "missingProviderResponseIds": 0,
+    "passed": true
+  },
+  "runCompleteAndValid": true,
+  "scenarioId": "trolley-problem",
+  "stabilityAffectsPass": false,
+  "units": [
+    {
+      "canonicalRate": 0.16666666666666666,
+      "canonicalWins": 8,
+      "expectedJudgments": 48,
+      "fixedHistoryInstability": 0.02777777777777778,
+      "histories": [
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__deepseek-v4-pro__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 0.6666666666666667,
+          "canonicalRate": 0.3333333333333333,
+          "historyJobId": "trolley-problem__case-A__deepseek-v4-pro__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__kimi-k2.6__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__kimi-k2.6__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__minimax-m3__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-A__minimax-m3__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__glm-5.2__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-A__glm-5.2__history-2",
+          "validJudgments": 6
+        }
+      ],
+      "label": "A. 原始电车",
+      "modelRates": [
+        {
+          "canonicalRate": 0.16666666666666666,
+          "canonicalWins": 2,
+          "expectedJudgments": 12,
+          "playerModel": "deepseek-v4-pro",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0,
+          "canonicalWins": 0,
+          "expectedJudgments": 12,
+          "playerModel": "kimi-k2.6",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0.5,
+          "canonicalWins": 6,
+          "expectedJudgments": 12,
+          "playerModel": "minimax-m3",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0,
+          "canonicalWins": 0,
+          "expectedJudgments": 12,
+          "playerModel": "glm-5.2",
+          "validJudgments": 12
+        }
+      ],
+      "pass": false,
+      "unitId": "case-A",
+      "validJudgments": 48
+    },
+    {
+      "canonicalRate": 1,
+      "canonicalWins": 48,
+      "expectedJudgments": 48,
+      "fixedHistoryInstability": 0,
+      "histories": [
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__deepseek-v4-pro__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__deepseek-v4-pro__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__kimi-k2.6__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__kimi-k2.6__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__minimax-m3__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__minimax-m3__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__glm-5.2__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-B__glm-5.2__history-2",
+          "validJudgments": 6
+        }
+      ],
+      "label": "B. 器官移植",
+      "modelRates": [
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "deepseek-v4-pro",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "kimi-k2.6",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "minimax-m3",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "glm-5.2",
+          "validJudgments": 12
+        }
+      ],
+      "pass": false,
+      "unitId": "case-B",
+      "validJudgments": 48
+    },
+    {
+      "canonicalRate": 0.875,
+      "canonicalWins": 42,
+      "expectedJudgments": 48,
+      "fixedHistoryInstability": 0.08333333333333331,
+      "histories": [
+        {
+          "agreementRate": 0.8333333333333334,
+          "canonicalRate": 0.8333333333333334,
+          "historyJobId": "trolley-problem__case-C__deepseek-v4-pro__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 0.5,
+          "canonicalRate": 0.5,
+          "historyJobId": "trolley-problem__case-C__deepseek-v4-pro__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 0.8333333333333334,
+          "canonicalRate": 0.8333333333333334,
+          "historyJobId": "trolley-problem__case-C__kimi-k2.6__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 0.8333333333333334,
+          "canonicalRate": 0.8333333333333334,
+          "historyJobId": "trolley-problem__case-C__kimi-k2.6__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-C__minimax-m3__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-C__minimax-m3__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-C__glm-5.2__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-C__glm-5.2__history-2",
+          "validJudgments": 6
+        }
+      ],
+      "label": "C. 地下室婴儿",
+      "modelRates": [
+        {
+          "canonicalRate": 0.6666666666666666,
+          "canonicalWins": 8,
+          "expectedJudgments": 12,
+          "playerModel": "deepseek-v4-pro",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0.8333333333333334,
+          "canonicalWins": 10,
+          "expectedJudgments": 12,
+          "playerModel": "kimi-k2.6",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "minimax-m3",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "glm-5.2",
+          "validJudgments": 12
+        }
+      ],
+      "pass": false,
+      "unitId": "case-C",
+      "validJudgments": 48
+    },
+    {
+      "canonicalRate": 0.25,
+      "canonicalWins": 12,
+      "expectedJudgments": 48,
+      "fixedHistoryInstability": 0.0625,
+      "histories": [
+        {
+          "agreementRate": 0.5,
+          "canonicalRate": 0.5,
+          "historyJobId": "trolley-problem__case-D__deepseek-v4-pro__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-D__deepseek-v4-pro__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-D__kimi-k2.6__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-D__kimi-k2.6__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 0.5,
+          "canonicalRate": 0.5,
+          "historyJobId": "trolley-problem__case-D__minimax-m3__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-D__minimax-m3__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-D__glm-5.2__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 0,
+          "historyJobId": "trolley-problem__case-D__glm-5.2__history-2",
+          "validJudgments": 6
+        }
+      ],
+      "label": "D. 自动驾驶车",
+      "modelRates": [
+        {
+          "canonicalRate": 0.25,
+          "canonicalWins": 3,
+          "expectedJudgments": 12,
+          "playerModel": "deepseek-v4-pro",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0,
+          "canonicalWins": 0,
+          "expectedJudgments": 12,
+          "playerModel": "kimi-k2.6",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0.75,
+          "canonicalWins": 9,
+          "expectedJudgments": 12,
+          "playerModel": "minimax-m3",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 0,
+          "canonicalWins": 0,
+          "expectedJudgments": 12,
+          "playerModel": "glm-5.2",
+          "validJudgments": 12
+        }
+      ],
+      "pass": false,
+      "unitId": "case-D",
+      "validJudgments": 48
+    },
+    {
+      "canonicalRate": 1,
+      "canonicalWins": 48,
+      "expectedJudgments": 48,
+      "fixedHistoryInstability": 0,
+      "histories": [
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__deepseek-v4-pro__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__deepseek-v4-pro__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__kimi-k2.6__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__kimi-k2.6__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__minimax-m3__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__minimax-m3__history-2",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__glm-5.2__history-1",
+          "validJudgments": 6
+        },
+        {
+          "agreementRate": 1,
+          "canonicalRate": 1,
+          "historyJobId": "trolley-problem__case-E__glm-5.2__history-2",
+          "validJudgments": 6
+        }
+      ],
+      "label": "E. 缸中之脑",
+      "modelRates": [
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "deepseek-v4-pro",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "kimi-k2.6",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "minimax-m3",
+          "validJudgments": 12
+        },
+        {
+          "canonicalRate": 1,
+          "canonicalWins": 12,
+          "expectedJudgments": 12,
+          "playerModel": "glm-5.2",
+          "validJudgments": 12
+        }
+      ],
+      "pass": false,
+      "unitId": "case-E",
+      "validJudgments": 48
+    }
+  ],
+  "worstUnitDeviationFromFifty": 0.5
+}

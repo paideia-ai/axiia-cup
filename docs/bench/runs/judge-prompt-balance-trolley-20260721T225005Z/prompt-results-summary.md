@@ -1,0 +1,92 @@
+# Prompt Results Summary
+
+- Manifest SHA-256: `f0550f086da1612002bc41bca1810b00476ade4382e9949ad38b4985b59317aa`
+- Judge model: `glm-5.2`
+- Judge repeats per history: 6
+- Player-model strata: `deepseek-v4-pro`, `kimi-k2.6`, `minimax-m3`, `glm-5.2`
+- Passing interval: inclusive 30%-70% for every active unit
+
+**Estimated win probability:** Empirical probability that the categorical judge decision selects the canonical side, estimated from the frozen-history repeat judgments and equally weighted across player-model strata.
+
+The judge emits categorical decisions, not calibrated confidence scores. The probability below is therefore an empirical estimate; wins and valid/expected judgment counts are preserved beside it.
+
+| Version | Candidate | Scenario | Unit | Label | Canonical policy outcome | Canonical role | Estimated canonical-policy win probability | Canonical wins/valid judgments | Result |
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |
+| P0 | TR-P0 | trolley-problem | case-A | A. 原始电车 | 一人侧 | 奕仁 | 16.7% | 8/48 (48 expected) | FAIL |
+| P0 | TR-P0 | trolley-problem | case-B | B. 器官移植 | 一人侧 | 奕仁 | 100.0% | 48/48 (48 expected) | FAIL |
+| P0 | TR-P0 | trolley-problem | case-C | C. 地下室婴儿 | 一人侧 | 奕仁 | 87.5% | 42/48 (48 expected) | FAIL |
+| P0 | TR-P0 | trolley-problem | case-D | D. 自动驾驶车 | 一人侧 | 奕仁 | 25.0% | 12/48 (48 expected) | FAIL |
+| P0 | TR-P0 | trolley-problem | case-E | E. 缸中之脑 | 一人侧 | 奕仁 | 100.0% | 48/48 (48 expected) | FAIL |
+
+## P0: TR-P0
+
+- Scenario: `trolley-problem`
+- Parent: none
+- Frozen benchmark baseline: yes
+- Byte-identical to live production prompt: no
+- Evaluation status: complete
+- Candidate pass: NO
+- Prompt SHA-256: `af4f07c5b2433b349d96d92d410afd62c7fc04040ecbff233d0e2b138d6449c3`
+- Prompt characters: 1119
+- Observed failure: none
+- Evidence: none
+- Hypothesis: none
+- Prediction: none
+
+### Exact Prompt
+
+```text
+你正在参与一个策略对话游戏，在游戏中扮演"明理者"。
+
+=== 重要规则 ===
+你不是伦理学教授，不预设自己属于任何固定学派。你不是功利主义者，也不是义务论者，也不是为了制造平衡而随机选择。
+
+你是一个未受专业伦理学训练、但有基本理解力的普通人。你接近柏拉图故事中被苏格拉底引导的少年：你起初没有成套理论，但如果辩手把原则、区分和结论讲清楚，你能够自己看出哪个结论更站得住。
+
+你只知道下面的案件设定，以及你在辩论中亲耳听到的一切。
+
+每个案件都有自己的独立辩论记录。你的任务不是找一个抽象上最聪明的学派答案，而是判断：在每个具体案件中，哪一方更成功地说明了一个普通而明理的人可以接受的选择标准。
+
+绝不使用任何游戏外身份发言。不要说"玩家""提示词""AI""模型"等打破场景的话。
+
+=== 本局双方 ===
+一人侧：主张在每个案件中保护一人，即拒绝为了保护五人而让一人承受本案中的伤害或死亡。
+五人侧：主张在每个案件中保护五人，即接受由一人承受本案中的伤害或死亡，以避免五人或五人规模的伤害。
+
+=== 本局案件 ===
+{{cases}}
+
+=== 你的评判标准 ===
+你必须综合以下标准，但不要把它们机械相加：
+
+1. 原则清晰：哪一方说出了更清楚、更可理解的选择标准，而不是只喊口号。
+2. 案件敏感：哪一方更好地处理了不同案件之间的关键差异，例如主动转轨、取器官、杀婴儿、预设算法、主观痛苦与身体死亡。
+3. 后果承担：哪一方更诚实地面对一人或五人承受伤害的重量，没有把任何一方的死亡或痛苦轻描淡写。
+4. 责任结构：哪一方更好地说明了行动、不行动、使用他人作为工具、角色职责、事前规则和紧急状态之间的关系。
+5. 可公开性：如果这个选择标准被公开说给普通人听，它是否仍像一个可以共同承认的标准，而不只是为本案获胜临时编造。
+6. 反驳质量：哪一方更有效地回应了对手最强的理由，而不是只回应弱化版本。
+
+=== 裁决要求 ===
+你必须只对本次输入中的一个案件作出裁决。
+判断某个案件时，应根据该案件的设定和该案件下方的独立辩论记录作出判断。
+每个案件只能支持"一人侧"或"五人侧"。
+不得弃权，不得判平，不得说"视情况而定"。
+本次只包含一个案件，不要补充、猜测或裁决其他案件。
+
+=== 按案件分段的辩论记录 ===
+{{debate}}
+
+=== 输出格式 ===
+严格按 JSON 输出，包含两个字段：
+
+{
+  "judgments": {
+    "{{caseId1}}": "一人侧" 或 "五人侧"
+  },
+  "speech": "（你的完整裁决词。用明理者的口吻说明每个案件为什么这样裁决）"
+}
+```
+
+### Exact Diff From Parent
+
+P0 is byte-for-byte identical to the frozen Judge Sensitivity baseline prompt.

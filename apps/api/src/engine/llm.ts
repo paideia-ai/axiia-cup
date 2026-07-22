@@ -77,6 +77,7 @@ export type ChatCompletionCapture = {
 export type ChatCompletionParams = {
   capture?: (capture: ChatCompletionCapture) => void
   jsonMode?: boolean
+  maxTokens?: number
   messages: ChatMessage[]
   model: ModelId
   signal?: AbortSignal
@@ -815,6 +816,7 @@ function extractThinkingRequestControl(
 
 export function buildOpenAICompatibleRequest(params: {
   jsonMode?: boolean
+  maxTokens?: number
   messages: ChatMessage[]
   model: ModelId
   systemPrompt: string
@@ -829,6 +831,7 @@ export function buildOpenAICompatibleRequest(params: {
       { role: 'system' as const, content: params.systemPrompt },
       ...params.messages,
     ],
+    ...(params.maxTokens != null ? { max_tokens: params.maxTokens } : {}),
     response_format: params.jsonMode
       ? { type: 'json_object' as const }
       : undefined,
@@ -849,6 +852,7 @@ function resolveUrl(baseUrl: string, pathname: string) {
 
 export function buildAnthropicRequest(params: {
   jsonMode?: boolean
+  maxTokens?: number
   messages: ChatMessage[]
   model: ModelId
   systemPrompt: string
@@ -863,7 +867,12 @@ export function buildAnthropicRequest(params: {
   const maxTokens = alwaysThinks ? THINKING_MAX_TOKENS : ANTHROPIC_MAX_TOKENS
 
   return {
-    max_tokens: Number.isFinite(maxTokens) ? Math.max(1, maxTokens) : 4096,
+    max_tokens:
+      params.maxTokens != null
+        ? Math.max(1, params.maxTokens)
+        : Number.isFinite(maxTokens)
+          ? Math.max(1, maxTokens)
+          : 4096,
     messages: params.messages.map((message) => ({
       role: message.role,
       content: message.content,

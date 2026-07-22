@@ -76,6 +76,16 @@ describe('buildAnthropicRequest', () => {
 
     expect(request.temperature).toBe(0.7)
   })
+
+  it('honors an explicit completion ceiling', () => {
+    const request = buildAnthropicRequest({
+      ...baseParams,
+      maxTokens: 12_345,
+      model: 'deepseek-v4-pro',
+    })
+
+    expect(request.max_tokens).toBe(12_345)
+  })
 })
 
 describe('buildOpenAICompatibleRequest', () => {
@@ -83,6 +93,16 @@ describe('buildOpenAICompatibleRequest', () => {
     messages: [{ role: 'user' as const, content: '请做出你的裁决。' }],
     systemPrompt: '你是秦孝公。',
   }
+
+  it('passes an explicit completion ceiling to direct APIs', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      maxTokens: 16_384,
+      model: 'glm-5.2',
+    })
+
+    expect(request.max_tokens).toBe(16_384)
+  })
 
   it('omits temperature entirely for Moonshot models', () => {
     // Moonshot's kimi-k2.x endpoint returns HTTP 400 for any temperature

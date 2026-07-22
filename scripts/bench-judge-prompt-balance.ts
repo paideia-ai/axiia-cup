@@ -6,7 +6,9 @@ import { dirname, join, relative, resolve } from 'node:path'
 
 import {
   evaluationModelIds,
+  computeCallCostCny,
   getModelDefinition,
+  getModelPricing,
   playerSelectableModelIds,
   roleOptionSchema,
   submissionModelIds,
@@ -14,6 +16,7 @@ import {
   type EvaluationModelId,
   type InfoAssignment,
   type JudgeQA,
+  type ModelId,
   type RoleOption,
   type SubmissionModelId,
   type TranscriptTurn,
@@ -52,6 +55,8 @@ const DEFAULT_JUDGE_CONCURRENCY = 100
 const DEFAULT_JUDGE_MODEL = 'glm-5.2' as const satisfies EvaluationModelId
 const DEFAULT_JOB_TIMEOUT_MS = 3_600_000
 const DEFAULT_JUDGE_CALL_TIMEOUT_MS = 240_000
+const DEFAULT_JUDGE_MAX_TOKENS = 16_384
+const DEFAULT_COST_CAP_CNY = 300
 const MAX_ATTEMPTS = 3
 export const DEFAULT_JUDGE_PROMPT_SNAPSHOT_PATH =
   'docs/bench/runs/judge-sensitivity-prod-20260708T200403Z/scenario-snapshots.json'
@@ -61,6 +66,7 @@ export type PolicySide = 'a' | 'b' | 'unknown'
 export type RequestItem = { content: string; id: string }
 type Command =
   | 'add-candidate'
+  | 'cost'
   | 'judge'
   | 'preflight'
   | 'prepare'
@@ -129,6 +135,7 @@ export type CalibrationManifest = {
 
 type RunConfig = {
   benchmarkName: typeof BENCHMARK_NAME
+  costCapCny: number
   createdAt: string
   git: {
     branch: string | null
@@ -139,6 +146,7 @@ type RunConfig = {
   historyConcurrency: number
   judgeCallTimeoutMs: number
   judgeConcurrency: number
+  judgeMaxTokens: number
   judgeModel: EvaluationModelId
   judgePromptSource: JudgePromptSource
   judgeRepeats: number
@@ -208,6 +216,7 @@ export type HistoryResult = {
   jobId: string
   judgeTranscriptA: JudgeQA[]
   judgeTranscriptB: JudgeQA[]
+  llmCalls: CostCallUsage[]
   models: { agentA: SubmissionModelId; agentB: SubmissionModelId }
   playerModel: SubmissionModelId
   promptA: typeof LEVEL_3_PROMPT
@@ -225,6 +234,81 @@ export type HistoryResult = {
   transcript: TranscriptTurn[]
   unitId: string
   unitLabel: string
+}
+
+export type CostBillingPhase = 'history' | 'judge' | 'preflight'
+
+export type CostCallUsage = {
+  apiModel: string
+  attempt: number | null
+  billingPhase: CostBillingPhase
+  cachedTokens: number | null
+  callId: string
+  candidateId: string | null
+  completionTokens: number | null
+  model: ModelId
+  promptTokens: number | null
+  provider: ChatCompletionCapture['provider']
+  reasoningTokens: number | null
+  recordedAt: string
+  requestPhase: string
+  side: string | null
+  turnIndex: number | null
+}
+
+export type MissingCostCall = Pick<
+  CostCallUsage,
+  'billingPhase' | 'callId' | 'candidateId' | 'model'
+>
+
+export type CostBreakdownRow = {
+  billingPhase: CostBillingPhase
+  cachedTokens: number
+  callsWithUsage: number
+  callsWithoutUsage: number
+  candidateId: string | null
+  completionTokens: number
+  estimatedCostCny: number
+  estimatedMissingCostCny: number
+  knownCostCny: number
+  model: ModelId
+  partialInputCalls: number
+  promptTokens: number
+  reasoningTokens: number
+  unpricedCalls: number
+}
+
+export type CostMonitorArtifact = {
+  assumptions: string[]
+  breakdown: CostBreakdownRow[]
+  capCny: number
+  capReached: boolean
+  callsWithUsage: number
+  callsWithoutUsage: number
+  estimatedCostCny: number
+  estimatedMissingCostCny: number
+  generatedAt: string
+  kind: 'judge_prompt_balance.cost_monitor'
+  knownCostCny: number
+  partialInputCalls: number
+  pricing: Array<{
+    cacheHitInputPer1M: number | null
+    inputPer1M: number
+    largeInputFromTokens: number | null
+    model: ModelId
+    outputPer1M: number
+    source: 'packages/shared/src/pricing.ts'
+  }>
+  remainingEstimatedCny: number
+  runId: string
+  unpricedCalls: number
+}
+
+type CostAdjustmentsArtifact = {
+  generatedAt: string
+  kind: 'judge_prompt_balance.cost_adjustments'
+  missingCalls: MissingCostCall[]
+  note: string
 }
 
 type HistoriesArtifact = {
@@ -449,6 +533,7 @@ function usage(exitCode = 1): never {
   bun scripts/bench-judge-prompt-balance.ts add-candidate --output-dir <run-dir> --scenario <id> --id <id> --parent <id> --prompt-file <path> --evidence-file <path>
   bun scripts/bench-judge-prompt-balance.ts judge --output-dir <run-dir> --candidate <id> [options]
   bun scripts/bench-judge-prompt-balance.ts report --output-dir <run-dir> --candidate <id>
+  bun scripts/bench-judge-prompt-balance.ts cost --output-dir <run-dir>
 
 Prepare options:
   --scenario <id|csv>          Required. shangyang-court, honnoji-decision, trolley-problem
@@ -461,7 +546,9 @@ Prepare options:
   --judge-model <id>           Default: ${DEFAULT_JUDGE_MODEL}
   --history-concurrency <n>    Default: ${DEFAULT_HISTORY_CONCURRENCY}
   --judge-concurrency <n>      Default: ${DEFAULT_JUDGE_CONCURRENCY}
+  --judge-max-tokens <n>       Completion ceiling including reasoning. Default: ${DEFAULT_JUDGE_MAX_TOKENS}
   --judge-prompt-snapshot <p>  Default: ${DEFAULT_JUDGE_PROMPT_SNAPSHOT_PATH}
+  --max-cost-cny <amount>      Cumulative paid-call cap. Default: ${DEFAULT_COST_CAP_CNY}
   --source-note <text>         Optional provenance note
 
 Execution options:
@@ -469,6 +556,7 @@ Execution options:
   --judge-concurrency <n>      Override configured judge concurrency
   --job-timeout-ms <n>         Default: ${DEFAULT_JOB_TIMEOUT_MS}
   --judge-call-timeout-ms <n>  Default: ${DEFAULT_JUDGE_CALL_TIMEOUT_MS}
+  --judge-max-tokens <n>       Override configured completion ceiling
 
 prepare only performs an authenticated GET, reads the local Judge Sensitivity
 prompt snapshot, and writes a dry-run manifest. It does not call a player or
@@ -487,6 +575,7 @@ function parseArgs() {
   if (command === '--help' || command === '-h') usage(0)
   const commands: Command[] = [
     'add-candidate',
+    'cost',
     'judge',
     'preflight',
     'prepare',
@@ -533,6 +622,14 @@ function positiveInteger(value: string, label: string) {
   const parsed = Number(value)
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`${label} must be a positive integer`)
+  }
+  return parsed
+}
+
+function positiveNumber(value: string, label: string) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive number`)
   }
   return parsed
 }
@@ -1164,8 +1261,440 @@ function promptResultsSummaryMarkdownPath(outputDir: string) {
   return join(outputDir, 'prompt-results-summary.md')
 }
 
-function preflightPath(outputDir: string) {
-  return join(outputDir, 'thinking-preflight.json')
+function costMonitorJsonPath(outputDir: string) {
+  return join(outputDir, 'cost-monitor.json')
+}
+
+function costMonitorMarkdownPath(outputDir: string) {
+  return join(outputDir, 'cost-monitor.md')
+}
+
+function costAdjustmentsPath(outputDir: string) {
+  return join(outputDir, 'cost-adjustments.json')
+}
+
+function preflightPath(outputDir: string, candidateId: string) {
+  return join(candidateDir(outputDir, candidateId), 'thinking-preflight.json')
+}
+
+function preflightMarkdownPath(outputDir: string, candidateId: string) {
+  return join(candidateDir(outputDir, candidateId), 'thinking-preflight.md')
+}
+
+function costCallFromCapture(params: {
+  billingPhase: CostBillingPhase
+  callId: string
+  candidateId?: string | null
+  capture: ChatCompletionCapture
+  model: ModelId
+  recordedAt?: string
+  requestPhase?: string
+  trace?: Parameters<typeof chatCompletion>[0]['trace']
+}): CostCallUsage {
+  return {
+    apiModel: params.capture.apiModel,
+    attempt: params.trace?.attempt ?? null,
+    billingPhase: params.billingPhase,
+    cachedTokens: params.capture.tokenUsage.cachedTokens,
+    callId: params.callId,
+    candidateId: params.candidateId ?? null,
+    completionTokens: params.capture.tokenUsage.completionTokens,
+    model: params.model,
+    promptTokens: params.capture.tokenUsage.promptTokens,
+    provider: params.capture.provider,
+    reasoningTokens: params.capture.tokenUsage.reasoningTokens,
+    recordedAt: params.recordedAt ?? new Date().toISOString(),
+    requestPhase:
+      params.requestPhase ?? params.trace?.phase ?? params.billingPhase,
+    side: params.trace?.side ?? null,
+    turnIndex: params.trace?.turnIndex ?? null,
+  }
+}
+
+function roughMissingCallCostCny(
+  model: ModelId,
+  billingPhase: CostBillingPhase,
+  at: Date,
+) {
+  const history = billingPhase === 'history'
+  return computeCallCostCny({
+    at,
+    cachedTokens: 0,
+    inputTokens: history ? 12_000 : 20_000,
+    modelId: model,
+    outputTokens: history ? 2_000 : 4_000,
+  })
+}
+
+export function buildCostMonitorArtifact(params: {
+  calls: CostCallUsage[]
+  capCny: number
+  generatedAt?: string
+  missingCalls?: MissingCostCall[]
+  models?: ModelId[]
+  runId: string
+}): CostMonitorArtifact {
+  const generatedAt = params.generatedAt ?? new Date().toISOString()
+  const uniqueCalls = new Map(
+    params.calls.map((call) => [call.callId, call] as const),
+  )
+  const uniqueMissingCalls = new Map(
+    (params.missingCalls ?? []).map((call) => [call.callId, call] as const),
+  )
+  for (const callId of uniqueCalls.keys()) uniqueMissingCalls.delete(callId)
+
+  type MutableCostRow = CostBreakdownRow & { pricedCalls: number }
+  const rows = new Map<string, MutableCostRow>()
+  const rowFor = (call: {
+    billingPhase: CostBillingPhase
+    candidateId: string | null
+    model: ModelId
+  }) => {
+    const key = [call.billingPhase, call.candidateId ?? '', call.model].join(
+      '\0',
+    )
+    const existing = rows.get(key)
+    if (existing) return existing
+    const row: MutableCostRow = {
+      billingPhase: call.billingPhase,
+      cachedTokens: 0,
+      callsWithUsage: 0,
+      callsWithoutUsage: 0,
+      candidateId: call.candidateId,
+      completionTokens: 0,
+      estimatedCostCny: 0,
+      estimatedMissingCostCny: 0,
+      knownCostCny: 0,
+      model: call.model,
+      partialInputCalls: 0,
+      pricedCalls: 0,
+      promptTokens: 0,
+      reasoningTokens: 0,
+      unpricedCalls: 0,
+    }
+    rows.set(key, row)
+    return row
+  }
+
+  for (const call of uniqueCalls.values()) {
+    const row = rowFor(call)
+    const hasUsage = call.promptTokens != null || call.completionTokens != null
+    if (!hasUsage) {
+      row.callsWithoutUsage += 1
+      continue
+    }
+    row.callsWithUsage += 1
+    row.cachedTokens += call.cachedTokens ?? 0
+    row.completionTokens += call.completionTokens ?? 0
+    row.promptTokens += call.promptTokens ?? 0
+    row.reasoningTokens += call.reasoningTokens ?? 0
+    if (call.promptTokens === 0 && (call.completionTokens ?? 0) > 0) {
+      row.partialInputCalls += 1
+    }
+    const cost = computeCallCostCny({
+      at: new Date(call.recordedAt),
+      cachedTokens: call.cachedTokens,
+      inputTokens: call.promptTokens,
+      modelId: call.model,
+      outputTokens: call.completionTokens,
+    })
+    if (cost == null) row.unpricedCalls += 1
+    else {
+      row.knownCostCny += cost
+      row.pricedCalls += 1
+    }
+  }
+
+  for (const call of uniqueMissingCalls.values()) {
+    rowFor(call).callsWithoutUsage += 1
+  }
+
+  for (const row of rows.values()) {
+    const observedAverage =
+      row.pricedCalls > 0 ? row.knownCostCny / row.pricedCalls : null
+    const fallback = roughMissingCallCostCny(
+      row.model,
+      row.billingPhase,
+      new Date(generatedAt),
+    )
+    const conservativePerMissingCall = observedAverage ?? fallback ?? 1
+    const history = row.billingPhase === 'history'
+    const conservativeMissingInputCost =
+      computeCallCostCny({
+        at: new Date(generatedAt),
+        cachedTokens: 0,
+        inputTokens: history ? 12_000 : 20_000,
+        modelId: row.model,
+        outputTokens: 0,
+      }) ?? 1
+    row.estimatedMissingCostCny =
+      (row.callsWithoutUsage + row.unpricedCalls) * conservativePerMissingCall +
+      row.partialInputCalls * conservativeMissingInputCost
+    row.estimatedCostCny = row.knownCostCny + row.estimatedMissingCostCny
+  }
+
+  const breakdown = [...rows.values()]
+    .sort(
+      (left, right) =>
+        left.billingPhase.localeCompare(right.billingPhase) ||
+        (left.candidateId ?? '').localeCompare(right.candidateId ?? '') ||
+        left.model.localeCompare(right.model),
+    )
+    .map(({ pricedCalls: _pricedCalls, ...row }) => row)
+  const knownCostCny = breakdown.reduce(
+    (total, row) => total + row.knownCostCny,
+    0,
+  )
+  const estimatedMissingCostCny = breakdown.reduce(
+    (total, row) => total + row.estimatedMissingCostCny,
+    0,
+  )
+  const estimatedCostCny = knownCostCny + estimatedMissingCostCny
+  const models = [
+    ...new Set(
+      [...uniqueCalls.values(), ...uniqueMissingCalls.values()]
+        .map((call) => call.model)
+        .concat(params.models ?? []),
+    ),
+  ].sort()
+
+  return {
+    assumptions: [
+      'Known cost uses provider token usage and the direct-lab CNY rates in packages/shared/src/pricing.ts.',
+      'Cached prompt tokens are charged at the configured cache-hit rate and remain part of promptTokens.',
+      'Reasoning tokens are already included in completionTokens and are not charged a second time.',
+      'A call without usage is conservatively estimated from its row average; before an average exists, history assumes 12k input/2k output and judging assumes 20k input/4k output.',
+      'When a provider reports completion usage but zero prompt tokens for a nonempty request, known cost includes the output and estimated cost adds the same conservative input assumption.',
+      'Provider failures that never return capture metadata may be unbilled; the monitor still estimates recorded missing attempts conservatively.',
+    ],
+    breakdown,
+    capCny: params.capCny,
+    capReached: estimatedCostCny >= params.capCny,
+    callsWithUsage: breakdown.reduce(
+      (total, row) => total + row.callsWithUsage,
+      0,
+    ),
+    callsWithoutUsage: breakdown.reduce(
+      (total, row) => total + row.callsWithoutUsage,
+      0,
+    ),
+    estimatedCostCny,
+    estimatedMissingCostCny,
+    generatedAt,
+    kind: 'judge_prompt_balance.cost_monitor',
+    knownCostCny,
+    partialInputCalls: breakdown.reduce(
+      (total, row) => total + row.partialInputCalls,
+      0,
+    ),
+    pricing: models.flatMap((model) => {
+      const pricing = getModelPricing(model)
+      return pricing
+        ? [
+            {
+              cacheHitInputPer1M: pricing.cacheHitInputPer1M ?? null,
+              inputPer1M: pricing.inputPer1M,
+              largeInputFromTokens: pricing.largeInput?.fromInputTokens ?? null,
+              model,
+              outputPer1M: pricing.outputPer1M,
+              source: 'packages/shared/src/pricing.ts' as const,
+            },
+          ]
+        : []
+    }),
+    remainingEstimatedCny: Math.max(0, params.capCny - estimatedCostCny),
+    runId: params.runId,
+    unpricedCalls: breakdown.reduce(
+      (total, row) => total + row.unpricedCalls,
+      0,
+    ),
+  }
+}
+
+function currencyCny(value: number) {
+  return `¥${value.toFixed(4)}`
+}
+
+function renderCostMonitorMarkdown(artifact: CostMonitorArtifact) {
+  const rows = artifact.breakdown.map(
+    (row) =>
+      `| ${row.billingPhase} | ${row.candidateId ?? '-'} | ${row.model} | ${row.callsWithUsage} | ${row.callsWithoutUsage} | ${row.partialInputCalls} | ${row.promptTokens.toLocaleString('en-US')} | ${row.cachedTokens.toLocaleString('en-US')} | ${row.completionTokens.toLocaleString('en-US')} | ${currencyCny(row.knownCostCny)} | ${currencyCny(row.estimatedCostCny)} |`,
+  )
+  const pricingRows = artifact.pricing.map(
+    (pricing) =>
+      `| ${pricing.model} | ${pricing.inputPer1M} | ${pricing.cacheHitInputPer1M ?? 'n/a'} | ${pricing.outputPer1M} | ${pricing.largeInputFromTokens?.toLocaleString('en-US') ?? 'n/a'} |`,
+  )
+  return [
+    '# Benchmark Cost Monitor',
+    '',
+    `- Known token-based cost: **${currencyCny(artifact.knownCostCny)}**`,
+    `- Conservative estimated total: **${currencyCny(artifact.estimatedCostCny)}**`,
+    `- Estimated cost without token usage: ${currencyCny(artifact.estimatedMissingCostCny)}`,
+    `- Cost cap: **${currencyCny(artifact.capCny)}**`,
+    `- Estimated remaining budget: **${currencyCny(artifact.remainingEstimatedCny)}**`,
+    `- Cap reached: **${artifact.capReached ? 'YES' : 'NO'}**`,
+    `- Calls with token usage: ${artifact.callsWithUsage}`,
+    `- Recorded calls/attempts without usage: ${artifact.callsWithoutUsage}`,
+    `- Calls reporting output but zero prompt tokens: ${artifact.partialInputCalls}`,
+    `- Calls with token usage but no catalog price: ${artifact.unpricedCalls}`,
+    '',
+    '## Cost By Phase',
+    '',
+    '| Phase | Candidate | Model | Usage calls | Missing usage | Missing input | Prompt tokens | Cached prompt tokens | Completion tokens | Known cost | Estimated cost |',
+    '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ...rows,
+    '',
+    '## Pricing Assumptions',
+    '',
+    '| Model | Input ¥/1M | Cache-hit input ¥/1M | Output ¥/1M | Large-input threshold |',
+    '| --- | ---: | ---: | ---: | ---: |',
+    ...pricingRows,
+    '',
+    ...artifact.assumptions.map((assumption) => `- ${assumption}`),
+    '',
+  ].join('\n')
+}
+
+async function collectCostInputs(outputDir: string) {
+  const calls: CostCallUsage[] = []
+  const missingCalls: MissingCostCall[] = []
+  if (existsSync(costAdjustmentsPath(outputDir))) {
+    const adjustments = await readJson<CostAdjustmentsArtifact>(
+      costAdjustmentsPath(outputDir),
+    )
+    if (adjustments.kind !== 'judge_prompt_balance.cost_adjustments') {
+      throw new Error('Invalid benchmark cost-adjustments artifact')
+    }
+    missingCalls.push(...adjustments.missingCalls)
+  }
+  if (existsSync(historiesPath(outputDir))) {
+    const histories = await readJson<HistoriesArtifact>(
+      historiesPath(outputDir),
+    )
+    for (const history of histories.histories) {
+      calls.push(...(history.llmCalls ?? []))
+      if (history.status === 'error') {
+        missingCalls.push({
+          billingPhase: 'history',
+          callId: `missing:history:${history.jobId}`,
+          candidateId: null,
+          model: history.playerModel,
+        })
+      }
+    }
+  }
+
+  const candidatesPath = join(outputDir, 'candidates')
+  if (!existsSync(candidatesPath)) return { calls, missingCalls }
+  const candidateEntries = await readdir(candidatesPath, {
+    withFileTypes: true,
+  })
+  for (const entry of candidateEntries.filter((item) => item.isDirectory())) {
+    const candidateId = entry.name
+    const candidatePreflightPath = preflightPath(outputDir, candidateId)
+    if (existsSync(candidatePreflightPath)) {
+      const preflight = await readJson<PreflightArtifact>(
+        candidatePreflightPath,
+      )
+      if (preflight.capture) {
+        calls.push(
+          costCallFromCapture({
+            billingPhase: 'preflight',
+            callId: `preflight:${candidateId}:${preflight.capture.providerResponseId ?? preflight.generatedAt}`,
+            candidateId,
+            capture: preflight.capture,
+            model: preflight.judgeModel,
+            recordedAt: preflight.generatedAt,
+            requestPhase: 'judgment',
+          }),
+        )
+      } else {
+        missingCalls.push({
+          billingPhase: 'preflight',
+          callId: `missing:preflight:${candidateId}:${preflight.generatedAt}`,
+          candidateId,
+          model: preflight.judgeModel,
+        })
+      }
+    }
+
+    const judgeResultsPath = candidateResultsPath(outputDir, candidateId)
+    if (!existsSync(judgeResultsPath)) continue
+    const artifact = await readJson<JudgeResultsArtifact>(judgeResultsPath)
+    for (const result of artifact.results) {
+      for (const attempt of result.attempts) {
+        const callId = `judge:${result.id}:attempt-${attempt.attempt}`
+        if (attempt.capture) {
+          calls.push(
+            costCallFromCapture({
+              billingPhase: 'judge',
+              callId,
+              candidateId,
+              capture: attempt.capture,
+              model: result.judgeModel,
+              recordedAt: result.generatedAt,
+              requestPhase: 'judgment',
+            }),
+          )
+        } else {
+          missingCalls.push({
+            billingPhase: 'judge',
+            callId,
+            candidateId,
+            model: result.judgeModel,
+          })
+        }
+      }
+    }
+  }
+  return { calls, missingCalls }
+}
+
+async function refreshCostMonitor(outputDir: string) {
+  const config = await readJson<RunConfig>(join(outputDir, 'config.json'))
+  const inputs = await collectCostInputs(outputDir)
+  const artifact = buildCostMonitorArtifact({
+    calls: inputs.calls,
+    capCny: config.costCapCny ?? DEFAULT_COST_CAP_CNY,
+    missingCalls: inputs.missingCalls,
+    models: [...config.playerModels, config.judgeModel],
+    runId: config.runId,
+  })
+  await Promise.all([
+    writeJsonAtomic(costMonitorJsonPath(outputDir), artifact),
+    writeTextAtomic(
+      costMonitorMarkdownPath(outputDir),
+      renderCostMonitorMarkdown(artifact),
+    ),
+  ])
+  console.log(
+    `[judge-prompt-balance] cost known=${currencyCny(artifact.knownCostCny)} estimated=${currencyCny(artifact.estimatedCostCny)} cap=${currencyCny(artifact.capCny)}`,
+  )
+  return artifact
+}
+
+async function assertCostCapAvailable(
+  outputDir: string,
+  projectedIncrementCny = 0,
+  phase = 'paid phase',
+) {
+  const artifact = await refreshCostMonitor(outputDir)
+  if (artifact.capReached) {
+    throw new Error(
+      `Benchmark cost cap reached: estimated ${currencyCny(artifact.estimatedCostCny)} >= ${currencyCny(artifact.capCny)}`,
+    )
+  }
+  if (artifact.estimatedCostCny + projectedIncrementCny > artifact.capCny) {
+    throw new Error(
+      `Refusing ${phase}: current estimate ${currencyCny(artifact.estimatedCostCny)} + projected ${currencyCny(projectedIncrementCny)} exceeds ${currencyCny(artifact.capCny)}`,
+    )
+  }
+  if (projectedIncrementCny > 0) {
+    console.log(
+      `[judge-prompt-balance] projected ${phase} cost=${currencyCny(projectedIncrementCny)} projected-total=${currencyCny(artifact.estimatedCostCny + projectedIncrementCny)}`,
+    )
+  }
+  return artifact
 }
 
 function candidatePrefix(scenarioId: CalibrationScenarioId) {
@@ -1423,6 +1952,7 @@ async function writeCandidate(outputDir: string, candidate: CandidateRecord) {
 function renderManifestMarkdown(
   manifest: CalibrationManifest,
   judgePromptSource: JudgePromptSource,
+  costCapCny: number,
 ) {
   const scenarioRows = ALL_SCENARIO_IDS.map(
     (scenarioId) =>
@@ -1448,6 +1978,7 @@ function renderManifestMarkdown(
     `- Judge repeats per history: ${manifest.judgeRepeats}`,
     `- Level 3 prompt: \`${manifest.level3Prompt}\``,
     `- Judge prompt baseline: \`${judgePromptSource.path}\``,
+    `- Cumulative benchmark cost cap: ¥${costCapCny.toFixed(2)}`,
     '- Stability gate: disabled (diagnostic only)',
     '- Validation: deferred',
     '',
@@ -1535,6 +2066,10 @@ async function runPrepare(options: Record<string, string>) {
   }
   const config: RunConfig = {
     benchmarkName: BENCHMARK_NAME,
+    costCapCny: positiveNumber(
+      option(options, 'max-cost-cny', String(DEFAULT_COST_CAP_CNY)),
+      '--max-cost-cny',
+    ),
     createdAt: retrievedAt,
     git: gitState(),
     historiesPerModel,
@@ -1557,6 +2092,10 @@ async function runPrepare(options: Record<string, string>) {
     judgeConcurrency: positiveInteger(
       option(options, 'judge-concurrency', String(DEFAULT_JUDGE_CONCURRENCY)),
       '--judge-concurrency',
+    ),
+    judgeMaxTokens: positiveInteger(
+      option(options, 'judge-max-tokens', String(DEFAULT_JUDGE_MAX_TOKENS)),
+      '--judge-max-tokens',
     ),
     judgeModel,
     judgePromptSource,
@@ -1595,7 +2134,7 @@ async function runPrepare(options: Record<string, string>) {
     writeJsonAtomic(manifestPath(outputDir), manifest),
     writeTextAtomic(
       join(outputDir, 'manifest.md'),
-      renderManifestMarkdown(manifest, judgePromptSource),
+      renderManifestMarkdown(manifest, judgePromptSource, config.costCapCny),
     ),
   ])
 
@@ -1626,6 +2165,7 @@ async function runPrepare(options: Record<string, string>) {
     })
   }
   await writePromptResultsSummary(outputDir)
+  await refreshCostMonitor(outputDir)
 
   console.log(
     `[judge-prompt-balance] dry-run manifest: ${join(outputDir, 'manifest.md')}`,
@@ -1752,6 +2292,8 @@ async function runHistoryJob(params: {
   let transcript = [...(params.existing?.transcript ?? [])]
   let judgeTranscriptA = [...(params.existing?.judgeTranscriptA ?? [])]
   let judgeTranscriptB = [...(params.existing?.judgeTranscriptB ?? [])]
+  const llmCalls = [...(params.existing?.llmCalls ?? [])]
+  const recordedCallIds = new Set(llmCalls.map((call) => call.callId))
   const controller = new AbortController()
   const timeout = setTimeout(
     () =>
@@ -1767,7 +2309,35 @@ async function runHistoryJob(params: {
         'Unexpected external scorer call during history generation',
       )
     }
-    return chatCompletion(completionParams)
+    const originalCapture = completionParams.capture
+    return chatCompletion({
+      ...completionParams,
+      capture: (capture) => {
+        originalCapture?.(capture)
+        const trace = completionParams.trace
+        const callId = capture.providerResponseId
+          ? `${capture.provider}:${capture.providerResponseId}`
+          : [
+              'history',
+              params.job.jobId,
+              trace?.phase ?? 'unknown',
+              trace?.side ?? 'unknown',
+              trace?.turnIndex ?? 'unknown',
+              trace?.attempt ?? 'unknown',
+            ].join(':')
+        if (recordedCallIds.has(callId)) return
+        recordedCallIds.add(callId)
+        llmCalls.push(
+          costCallFromCapture({
+            billingPhase: 'history',
+            callId,
+            capture,
+            model: completionParams.model,
+            trace,
+          }),
+        )
+      },
+    })
   }
 
   try {
@@ -1802,6 +2372,7 @@ async function runHistoryJob(params: {
       error: null,
       judgeTranscriptA: result.judgeTranscriptA,
       judgeTranscriptB: result.judgeTranscriptB,
+      llmCalls,
       status: 'ok',
       transcript: result.transcript,
     })
@@ -1812,6 +2383,7 @@ async function runHistoryJob(params: {
       error: error instanceof Error ? error.message : String(error),
       judgeTranscriptA,
       judgeTranscriptB,
+      llmCalls,
       status: 'error',
       transcript,
     })
@@ -1826,6 +2398,7 @@ function historyResult(
     | 'error'
     | 'judgeTranscriptA'
     | 'judgeTranscriptB'
+    | 'llmCalls'
     | 'status'
     | 'transcript'
   >,
@@ -1839,6 +2412,7 @@ function historyResult(
     jobId: job.jobId,
     judgeTranscriptA: result.judgeTranscriptA,
     judgeTranscriptB: result.judgeTranscriptB,
+    llmCalls: result.llmCalls,
     models: { agentA: job.playerModel, agentB: job.playerModel },
     playerModel: job.playerModel,
     promptA: LEVEL_3_PROMPT,
@@ -2008,6 +2582,25 @@ async function runHistories(options: Record<string, string>) {
   const pending = manifest.jobs.filter(
     (job) => resultMap.get(job.jobId)?.status !== 'ok',
   )
+  const projectedHistoryCostCny = pending.reduce((total, job) => {
+    const snapshot = snapshots.scenarios[job.scenarioId]
+    if (!snapshot) throw new Error(`Missing snapshot: ${job.scenarioId}`)
+    const expectedCalls =
+      snapshot.turnCount +
+      (snapshot.examinationQuestionTemplate.trim().length > 0 ? 2 : 0)
+    const capturedCalls = resultMap.get(job.jobId)?.llmCalls?.length ?? 0
+    const remainingCalls = Math.max(0, expectedCalls - capturedCalls)
+    return (
+      total +
+      remainingCalls *
+        (roughMissingCallCostCny(job.playerModel, 'history', new Date()) ?? 1)
+    )
+  }, 0)
+  await assertCostCapAvailable(
+    outputDir,
+    projectedHistoryCostCny,
+    'history generation',
+  )
   let writeQueue = Promise.resolve()
   const persist = () => {
     const artifact = historiesArtifact([...resultMap.values()], manifest)
@@ -2049,6 +2642,7 @@ async function runHistories(options: Record<string, string>) {
   await persist()
   await writeQueue
   const finalArtifact = historiesArtifact([...resultMap.values()], manifest)
+  await refreshCostMonitor(outputDir)
   if (
     finalArtifact.summary.completed !== finalArtifact.summary.expected ||
     finalArtifact.summary.errored > 0
@@ -2308,6 +2902,11 @@ function renderPreflightMarkdown(artifact: PreflightArtifact) {
 async function runPreflight(options: Record<string, string>) {
   const outputDir = resolve(requiredOption(options, 'output-dir'))
   const { config, manifest, snapshots } = await loadRun(outputDir)
+  await assertCostCapAvailable(
+    outputDir,
+    roughMissingCallCostCny(config.judgeModel, 'preflight', new Date()) ?? 1,
+    'candidate preflight',
+  )
   const histories = await loadHistoriesComplete(outputDir, manifest)
   const candidateId = option(
     options,
@@ -2331,6 +2930,7 @@ async function runPreflight(options: Record<string, string>) {
   try {
     const completion = await capturedCompletion({
       messages: [{ role: 'user', content: '请做出你的裁决。' }],
+      maxTokens: config.judgeMaxTokens ?? DEFAULT_JUDGE_MAX_TOKENS,
       model: config.judgeModel,
       systemPrompt: judgePrompt,
       temperature: 0,
@@ -2379,12 +2979,13 @@ async function runPreflight(options: Record<string, string>) {
     }
   }
   await Promise.all([
-    writeJsonAtomic(preflightPath(outputDir), artifact),
+    writeJsonAtomic(preflightPath(outputDir, candidateId), artifact),
     writeTextAtomic(
-      join(outputDir, 'thinking-preflight.md'),
+      preflightMarkdownPath(outputDir, candidateId),
       renderPreflightMarkdown(artifact),
     ),
   ])
+  await refreshCostMonitor(outputDir)
   if (artifact.status !== 'passed') {
     throw new Error(`Judge preflight failed: ${artifact.error}`)
   }
@@ -2511,6 +3112,7 @@ async function runAddCandidate(options: Record<string, string>) {
     scenarioId,
   })
   await writePromptResultsSummary(outputDir)
+  await refreshCostMonitor(outputDir)
   console.log(`[judge-prompt-balance] added ${candidateId}`)
 }
 
@@ -2543,6 +3145,7 @@ async function runJudgeJob(params: {
     try {
       const completion = await capturedCompletion({
         messages: [{ role: 'user', content: '请做出你的裁决。' }],
+        maxTokens: params.config.judgeMaxTokens,
         model: params.config.judgeModel,
         signal: AbortSignal.timeout(params.config.judgeCallTimeoutMs),
         systemPrompt: judgePrompt,
@@ -3019,10 +3622,12 @@ async function assertPassedPreflight(
   config: RunConfig,
   candidateId: string,
 ) {
-  if (!existsSync(preflightPath(outputDir))) {
+  if (!existsSync(preflightPath(outputDir, candidateId))) {
     throw new Error('Run the candidate judge preflight before judge replay')
   }
-  const preflight = await readJson<PreflightArtifact>(preflightPath(outputDir))
+  const preflight = await readJson<PreflightArtifact>(
+    preflightPath(outputDir, candidateId),
+  )
   if (
     preflight.status !== 'passed' ||
     preflight.candidateId !== candidateId ||
@@ -3103,7 +3708,15 @@ async function runJudge(options: Record<string, string>) {
     option(options, 'judge-call-timeout-ms', String(config.judgeCallTimeoutMs)),
     '--judge-call-timeout-ms',
   )
-  const effectiveConfig = { ...config, judgeCallTimeoutMs }
+  const judgeMaxTokens = positiveInteger(
+    option(
+      options,
+      'judge-max-tokens',
+      String(config.judgeMaxTokens ?? DEFAULT_JUDGE_MAX_TOKENS),
+    ),
+    '--judge-max-tokens',
+  )
+  const effectiveConfig = { ...config, judgeCallTimeoutMs, judgeMaxTokens }
   const candidateHistories = histories.histories.filter(
     (history) => history.scenarioId === candidate.scenarioId,
   )
@@ -3123,6 +3736,29 @@ async function runJudge(options: Record<string, string>) {
   }
   const resultMap = new Map(
     (existingArtifact?.results ?? []).map((result) => [result.id, result]),
+  )
+  const completedResultCount = [...resultMap.values()].filter(
+    (result) => result.status === 'ok',
+  ).length
+  const preflightCostCny = preflight.capture
+    ? computeCallCostCny({
+        at: new Date(preflight.generatedAt),
+        cachedTokens: preflight.capture.tokenUsage.cachedTokens,
+        inputTokens: preflight.capture.tokenUsage.promptTokens,
+        modelId: config.judgeModel,
+        outputTokens: preflight.capture.tokenUsage.completionTokens,
+      })
+    : null
+  const projectedJudgeCostCny =
+    Math.max(0, expected - completedResultCount) *
+    (preflightCostCny ??
+      roughMissingCallCostCny(config.judgeModel, 'judge', new Date()) ??
+      1) *
+    1.1
+  await assertCostCapAvailable(
+    outputDir,
+    projectedJudgeCostCny,
+    `${candidateId} judge replay`,
   )
   let achievedConcurrency = existingArtifact?.summary.achievedConcurrency ?? 0
   let writeQueue = Promise.resolve()
@@ -3163,6 +3799,7 @@ async function runJudge(options: Record<string, string>) {
     warmupPool.achievedConcurrency,
   )
   await writeQueue
+  await refreshCostMonitor(outputDir)
   const warmupResults = [...resultMap.values()].filter(
     (result) => result.candidateId === candidateId && result.repeatIndex === 1,
   )
@@ -3217,6 +3854,7 @@ async function runJudge(options: Record<string, string>) {
   )
   await persist(achievedConcurrency)
   await writeQueue
+  await refreshCostMonitor(outputDir)
 
   const finalResults = [...resultMap.values()]
   const duplicateIds = duplicateResponseIds(finalResults)
@@ -3258,6 +3896,12 @@ async function runReport(options: Record<string, string>) {
   console.log(
     `[judge-prompt-balance] report ${candidateId} pass=${summary.candidatePass}`,
   )
+  await refreshCostMonitor(outputDir)
+}
+
+async function runCost(options: Record<string, string>) {
+  const outputDir = resolve(requiredOption(options, 'output-dir'))
+  await refreshCostMonitor(outputDir)
 }
 
 async function main() {
@@ -3267,6 +3911,7 @@ async function main() {
   if (command === 'preflight') return runPreflight(options)
   if (command === 'add-candidate') return runAddCandidate(options)
   if (command === 'judge') return runJudge(options)
+  if (command === 'cost') return runCost(options)
   return runReport(options)
 }
 

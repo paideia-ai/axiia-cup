@@ -6,12 +6,14 @@ import {
   LEVEL_3_PROMPT,
   applyJudgeSensitivityPromptSnapshot,
   buildCalibrationManifest,
+  buildCostMonitorArtifact,
   buildPromptResultsSummaryArtifact,
   parseJudgeOutput,
   renderPromptResultsSummary,
   summarizeCandidateResults,
   verifyThinkingCapture,
   type CandidateRecord,
+  type CostCallUsage,
   type HistoryResult,
   type JudgeResult,
   type ScenarioSnapshot,
@@ -271,6 +273,7 @@ function historyFromJob(
     jobId: job.jobId,
     judgeTranscriptA: [],
     judgeTranscriptB: [],
+    llmCalls: [],
     models: { agentA: job.playerModel, agentB: job.playerModel },
     playerModel: job.playerModel,
     promptA: LEVEL_3_PROMPT,
@@ -290,6 +293,88 @@ function historyFromJob(
     unitLabel: job.label,
   }
 }
+
+function costCall(callId: string, cachedTokens: number): CostCallUsage {
+  return {
+    apiModel: 'glm-5.2',
+    attempt: 1,
+    billingPhase: 'judge',
+    cachedTokens,
+    callId,
+    candidateId: 'TR-P0',
+    completionTokens: 500,
+    model: 'glm-5.2',
+    promptTokens: 1_000,
+    provider: 'zhipu',
+    reasoningTokens: 300,
+    recordedAt: '2026-07-22T00:00:00.000Z',
+    requestPhase: 'judgment',
+    side: 'judge',
+    turnIndex: 10,
+  }
+}
+
+describe('cost monitor', () => {
+  it('uses cache rates, estimates missing attempts, and enforces the cap', () => {
+    const artifact = buildCostMonitorArtifact({
+      calls: [costCall('call-1', 0), costCall('call-2', 800)],
+      capCny: 0.04,
+      generatedAt: '2026-07-22T00:00:00.000Z',
+      missingCalls: [
+        {
+          billingPhase: 'judge',
+          callId: 'call-3',
+          candidateId: 'TR-P0',
+          model: 'glm-5.2',
+        },
+      ],
+      runId: 'cost-run',
+    })
+
+    expect(artifact.knownCostCny).toBeCloseTo(0.03224, 8)
+    expect(artifact.estimatedMissingCostCny).toBeCloseTo(0.01612, 8)
+    expect(artifact.estimatedCostCny).toBeCloseTo(0.04836, 8)
+    expect(artifact.capReached).toBe(true)
+    expect(artifact.breakdown[0]?.cachedTokens).toBe(800)
+    expect(artifact.breakdown[0]?.reasoningTokens).toBe(600)
+  })
+
+  it('deduplicates resumed calls by stable call id', () => {
+    const artifact = buildCostMonitorArtifact({
+      calls: [costCall('same-call', 0), costCall('same-call', 0)],
+      capCny: 300,
+      runId: 'cost-run',
+    })
+
+    expect(artifact.callsWithUsage).toBe(1)
+    expect(artifact.knownCostCny).toBeCloseTo(0.018, 8)
+  })
+
+  it('estimates missing input when a provider reports only output usage', () => {
+    const artifact = buildCostMonitorArtifact({
+      calls: [
+        {
+          ...costCall('minimax-partial', 0),
+          apiModel: 'MiniMax-M3',
+          billingPhase: 'history',
+          candidateId: null,
+          completionTokens: 100,
+          model: 'minimax-m3',
+          promptTokens: 0,
+          provider: 'minimax',
+        },
+      ],
+      capCny: 300,
+      generatedAt: '2026-07-22T00:00:00.000Z',
+      runId: 'cost-run',
+    })
+
+    expect(artifact.partialInputCalls).toBe(1)
+    expect(artifact.knownCostCny).toBeCloseTo(0.00084, 8)
+    expect(artifact.estimatedMissingCostCny).toBeCloseTo(0.0252, 8)
+    expect(artifact.estimatedCostCny).toBeCloseTo(0.02604, 8)
+  })
+})
 
 function judgeResult(params: {
   history: HistoryResult

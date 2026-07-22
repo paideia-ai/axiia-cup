@@ -1,0 +1,52 @@
+{
+  "benchmarkName": "judge-prompt-balance",
+  "costCapCny": 300,
+  "createdAt": "2026-07-21T22:50:11.775Z",
+  "git": {
+    "branch": "benchmarks",
+    "commit": "cf8ea764163654fed74b50cf0181cb063f811e5d",
+    "dirty": true
+  },
+  "historiesPerModel": 2,
+  "historyConcurrency": 5,
+  "judgeCallTimeoutMs": 240000,
+  "judgeConcurrency": 100,
+  "judgeMaxTokens": 16384,
+  "judgeModel": "glm-5.2",
+  "judgePromptSource": {
+    "generatedAt": "2026-07-09T13:42:10.107Z",
+    "kind": "judge-sensitivity-snapshot",
+    "path": "docs/bench/runs/judge-sensitivity-prod-20260708T200403Z/scenario-snapshots.json",
+    "scenarios": {
+      "trolley-problem": {
+        "byteIdenticalToProduction": false,
+        "productionPromptChars": 1307,
+        "productionPromptHash": "0f457bcfaec153aacc56af1d5dea254e2339b5e1948f69c42cd2f33efe0c8fd7",
+        "promptChars": 1119,
+        "promptHash": "af4f07c5b2433b349d96d92d410afd62c7fc04040ecbff233d0e2b138d6449c3"
+      }
+    }
+  },
+  "judgeRepeats": 6,
+  "kind": "judge_prompt_balance.config",
+  "level3Prompt": "-",
+  "outputDir": "/home/kesou/axiia-cup/docs/bench/runs/judge-prompt-balance-trolley-20260721T225005Z",
+  "playerModels": [
+    "deepseek-v4-pro",
+    "kimi-k2.6",
+    "minimax-m3",
+    "glm-5.2"
+  ],
+  "productionSource": {
+    "apiOrigin": "https://axiia-cup.isofucius.cn",
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "retrievedAt": "2026-07-21T22:50:11.775Z",
+    "sourceNote": "Read-only production snapshot for trolley prompt balance calibration; one-case P0 comes from the pinned judge-sensitivity snapshot."
+  },
+  "runId": "7e2453f8-a424-4d25-bc85-0c533acb32d1",
+  "scenarioIds": [
+    "trolley-problem"
+  ],
+  "stabilityGate": false,
+  "validationDeferred": true
+}
