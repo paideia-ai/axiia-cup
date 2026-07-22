@@ -1,0 +1,1024 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trolley Judge Prompt Balance Calibration</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #23272f;
+        --muted: #66706f;
+        --line: #d9ddd8;
+        --paper: #ffffff;
+        --canvas: #f7f8f5;
+        --green: #2f7d62;
+        --green-soft: #dfeee7;
+        --rust: #b85c3b;
+        --rust-soft: #f6e7e1;
+        --amber: #b67a20;
+        --amber-soft: #f5ecd9;
+        --blue: #3d6f8e;
+        --blue-soft: #e2edf3;
+        --charcoal: #30363d;
+      }
+
+      * { box-sizing: border-box; }
+
+      html { background: var(--canvas); }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0;
+      }
+
+      a { color: #285f78; text-underline-offset: 3px; }
+      a:hover { color: #173f51; }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 4px;
+        color: #344054;
+        background: #ecefe9;
+        font-size: .94em;
+      }
+
+      header {
+        padding: 28px 32px 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--paper);
+      }
+
+      .header-inner,
+      main,
+      footer {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.18;
+        font-weight: 750;
+      }
+
+      .header-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #87452f;
+      }
+
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--rust);
+        box-shadow: 0 0 0 3px var(--rust-soft);
+      }
+
+      main { padding: 26px 32px 44px; }
+
+      .notice {
+        display: grid;
+        grid-template-columns: 5px 1fr;
+        margin-bottom: 24px;
+        border: 1px solid #e8c9bd;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fffaf8;
+      }
+
+      .notice-bar { background: var(--rust); }
+
+      .notice-body { padding: 14px 16px; }
+      .notice-body strong { display: block; margin-bottom: 4px; }
+      .notice-body p { margin: 0; color: #704b3f; font-size: 13px; line-height: 1.55; }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(140px, 1fr));
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+
+      .stat {
+        min-height: 88px;
+        padding: 13px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+      }
+
+      .stat span {
+        display: block;
+        min-height: 30px;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 24px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      section {
+        padding: 26px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      section:first-of-type { border-top: 0; }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+        line-height: 1.25;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        line-height: 1.3;
+      }
+
+      p {
+        margin: 0 0 12px;
+        line-height: 1.65;
+      }
+
+      .lede {
+        max-width: 900px;
+        color: #3f474f;
+        font-size: 15px;
+      }
+
+      .section-note {
+        max-width: 920px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .method-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px 24px;
+        margin-top: 18px;
+      }
+
+      .method-item {
+        padding-left: 14px;
+        border-left: 3px solid var(--line);
+      }
+
+      .method-item:nth-child(1),
+      .method-item:nth-child(4) { border-left-color: var(--green); }
+      .method-item:nth-child(2),
+      .method-item:nth-child(5) { border-left-color: var(--rust); }
+      .method-item:nth-child(3),
+      .method-item:nth-child(6) { border-left-color: var(--blue); }
+
+      .method-item strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+
+      .method-item span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .formula {
+        margin-top: 18px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--paper);
+        color: #3d4650;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .spectrum-head,
+      .spectrum-row {
+        display: grid;
+        grid-template-columns: minmax(155px, 205px) minmax(340px, 1fr) minmax(165px, 205px);
+        gap: 16px;
+        align-items: center;
+      }
+
+      .spectrum-head {
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .axis-labels {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .spectrum-row {
+        padding: 11px 0;
+        border-bottom: 1px solid #e9ece7;
+      }
+
+      .spectrum-row:last-of-type { border-bottom: 0; }
+
+      .case-label strong { display: block; font-size: 14px; }
+      .case-label span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+
+      .track {
+        position: relative;
+        height: 48px;
+        border: 1px solid #cfd5cf;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #eceeea;
+      }
+
+      .target-band {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 30%;
+        width: 40%;
+        background: var(--green-soft);
+      }
+
+      .target-edge,
+      .midline {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: rgba(47, 125, 98, .52);
+      }
+
+      .target-edge.left { left: 30%; }
+      .target-edge.right { left: 70%; }
+      .midline { left: 50%; background: rgba(35, 39, 47, .35); }
+
+      .marker {
+        position: absolute;
+        width: 4px;
+        height: 11px;
+        margin-left: -2px;
+        border-radius: 2px;
+      }
+
+      .marker.p0 { top: 4px; background: var(--charcoal); }
+      .marker.p1 { top: 18px; background: var(--amber); }
+      .marker.p2 {
+        top: 32px;
+        width: 0;
+        margin-left: -1px;
+        border-left: 3px dashed var(--blue);
+        border-radius: 0;
+        opacity: .86;
+      }
+
+      .rate-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .rate-list span { white-space: nowrap; }
+      .rate-list b { font-weight: 750; }
+      .provisional { color: var(--blue); }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+      .legend-line { width: 22px; height: 4px; border-radius: 2px; }
+      .legend-line.p0 { background: var(--charcoal); }
+      .legend-line.p1 { background: var(--amber); }
+      .legend-line.p2 { border-top: 3px dashed var(--blue); border-radius: 0; }
+      .legend-band { width: 22px; height: 12px; border: 1px solid #a9cdbb; background: var(--green-soft); }
+
+      .table-wrap {
+        width: 100%;
+        margin-top: 18px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      caption {
+        padding: 12px 13px;
+        color: #3e474f;
+        text-align: left;
+        font-weight: 700;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+        border-top: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #4d565e;
+        background: #f2f4f0;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      td.numeric,
+      th.numeric {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .fail { color: #9a462e; font-weight: 750; }
+      .pass { color: var(--green); font-weight: 750; }
+      .paused { color: var(--blue); font-weight: 750; }
+
+      .candidate-list { margin-top: 8px; }
+
+      details {
+        border-bottom: 1px solid var(--line);
+      }
+
+      details:first-child { border-top: 1px solid var(--line); }
+
+      summary {
+        display: grid;
+        grid-template-columns: 80px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 13px 2px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      summary strong { font-size: 14px; }
+      summary span { color: var(--muted); }
+
+      .details-body {
+        max-width: 930px;
+        padding: 0 2px 16px 92px;
+        color: #465058;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .finding-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .finding {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+      }
+
+      .finding p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .cost-bar {
+        position: relative;
+        height: 15px;
+        margin: 16px 0 8px;
+        border: 1px solid #d5d8d2;
+        border-radius: 5px;
+        overflow: hidden;
+        background: #ebede9;
+      }
+
+      .cost-known,
+      .cost-estimated {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+      }
+
+      .cost-estimated { width: 27.12%; background: var(--amber-soft); }
+      .cost-known { width: 20.78%; background: var(--green); }
+
+      .cost-axis {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .next-step {
+        padding: 16px;
+        border-left: 4px solid var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .next-step p { margin: 0; font-size: 13px; }
+
+      .artifact-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+
+      footer {
+        padding: 0 32px 34px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 1040px) {
+        .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .method-grid, .finding-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .spectrum-head, .spectrum-row { grid-template-columns: 150px 1fr; }
+        .spectrum-head > :last-child, .rate-list { grid-column: 2; }
+      }
+
+      @media (max-width: 700px) {
+        header, main, footer { padding-left: 16px; padding-right: 16px; }
+        h1 { font-size: 24px; }
+        .stats, .method-grid, .finding-grid { grid-template-columns: 1fr; }
+        .spectrum-head { display: none; }
+        .spectrum-row { grid-template-columns: 1fr; gap: 8px; }
+        .rate-list { grid-column: 1; }
+        summary { grid-template-columns: 58px 1fr; }
+        summary > :last-child { grid-column: 2; }
+        .details-body { padding-left: 2px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <p class="eyebrow">Judge calibration / trolley problem</p>
+        <h1>Trolley Judge Prompt Balance Calibration</h1>
+        <div class="header-meta">
+          <span class="status"
+            ><span class="status-dot" aria-hidden="true"></span>Paused: provider
+            balance depleted</span
+          >
+          <span
+            >Run
+            <code>judge-prompt-balance-trolley-20260721T225005Z</code></span
+          >
+          <span>Judge <code>glm-5.2</code>, thinking explicitly on</span>
+          <span>Snapshot 2026-07-22</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="notice" role="status">
+        <div class="notice-bar" aria-hidden="true"></div>
+        <div class="notice-body">
+          <strong>No balanced prompt has been selected yet.</strong>
+          <p>
+            P0 and P1 are complete and fail all five case gates. P2 stopped at
+            196/240 judgments after Zhipu returned HTTP 429, code 1113, for
+            insufficient balance. Its partial rates are shown only as
+            provisional diagnostics.
+          </p>
+        </div>
+      </div>
+
+      <div class="stats" aria-label="Benchmark status">
+        <div class="stat">
+          <span>Frozen debate histories</span><strong>40</strong>
+        </div>
+        <div class="stat">
+          <span>Judgments per complete candidate</span><strong>240</strong>
+        </div>
+        <div class="stat">
+          <span>Completed candidates</span><strong>2</strong>
+        </div>
+        <div class="stat"><span>P2 progress</span><strong>196/240</strong></div>
+        <div class="stat">
+          <span>Known token cost</span><strong>¥62.34</strong>
+        </div>
+        <div class="stat">
+          <span>Conservative estimate / cap</span><strong>¥81.36 / ¥300</strong>
+        </div>
+      </div>
+
+      <section>
+        <h2>What This Benchmark Measures</h2>
+        <p class="lede">
+          This benchmark searches for a trolley-problem judge prompt that does
+          not impose a strong policy preference before considering the debate.
+          Both sides receive the same near-empty prompt and use the same player
+          model inside each history. A judge prompt passes only when the
+          one-person side wins between 30% and 70% in every mini-case
+          independently.
+        </p>
+        <p class="section-note">
+          All rates use the one-person side as the canonical outcome. A low
+          value favors the five-person side; a high value favors the one-person
+          side. The ideal calibration point is 50%.
+        </p>
+      </section>
+
+      <section>
+        <h2>Methodology</h2>
+        <div class="method-grid">
+          <div class="method-item">
+            <strong>Five independent units</strong
+            ><span
+              >A 原始电车, B 器官移植, C 地下室婴儿, D 自动驾驶车, and E
+              缸中之脑 are judged separately.</span
+            >
+          </div>
+          <div class="method-item">
+            <strong>Four player-model strata</strong
+            ><span
+              >DeepSeek V4 Pro, Kimi K2.6, MiniMax M3, and GLM-5.2. Both sides
+              use the same model within a history.</span
+            >
+          </div>
+          <div class="method-item">
+            <strong>Neutral user prompts</strong
+            ><span
+              >Both sides receive the Level 3 prompt <code>-</code>. The only
+              intended difference is the policy position they defend.</span
+            >
+          </div>
+          <div class="method-item">
+            <strong>Frozen history reuse</strong
+            ><span
+              >Two histories per case/model combination produce 40 histories.
+              Every prompt candidate reuses those exact histories.</span
+            >
+          </div>
+          <div class="method-item">
+            <strong>Six repeated judgments</strong
+            ><span
+              >Each history is judged six times: 48 judgments per case and 240
+              normal judgments per candidate.</span
+            >
+          </div>
+          <div class="method-item">
+            <strong>Verified thinking mode</strong
+            ><span
+              >GLM-5.2 runs through Zhipu's direct API with thinking explicitly
+              enabled and checked in a candidate-specific preflight.</span
+            >
+          </div>
+        </div>
+        <div class="formula">
+          <strong>Case rate:</strong> average the six one-person-side judgments
+          within each history, average the two histories in each player-model
+          stratum, then average the four strata equally.
+          <strong>Pass:</strong> every case must satisfy
+          <code>0.30 ≤ W(case) ≤ 0.70</code>, with all calls complete and valid.
+        </div>
+      </section>
+
+      <section>
+        <h2>Five-Case Balance Spectrum</h2>
+        <p class="section-note">
+          Each row shows three candidate markers on the same 0%-100% policy
+          spectrum. The green band is the inclusive acceptance interval. P2
+          markers are dashed because the candidate is incomplete.
+        </p>
+
+        <div class="spectrum-head" aria-hidden="true">
+          <span>Mini-case</span>
+          <span class="axis-labels"
+            ><span>Five-person side 0%</span><span>Target 30%-70%</span
+            ><span>One-person side 100%</span></span
+          >
+          <span>Exact rates</span>
+        </div>
+
+        <div class="spectrum-row">
+          <div class="case-label">
+            <strong>A. 原始电车</strong><span>46/48 P2 judgments valid</span>
+          </div>
+          <div
+            class="track"
+            role="img"
+            aria-label="Case A: P0 16.7%, P1 14.6%, P2 provisional 18.3%, target 30% to 70%"
+          >
+            <span class="target-band"></span
+            ><span class="target-edge left"></span
+            ><span class="target-edge right"></span
+            ><span class="midline"></span>
+            <span class="marker p0" style="left:16.7%"></span
+            ><span class="marker p1" style="left:14.6%"></span
+            ><span class="marker p2" style="left:18.3%"></span>
+          </div>
+          <div class="rate-list">
+            <span>P0 <b>16.7%</b></span
+            ><span>P1 <b>14.6%</b></span
+            ><span class="provisional">P2 <b>18.3%</b></span>
+          </div>
+        </div>
+
+        <div class="spectrum-row">
+          <div class="case-label">
+            <strong>B. 器官移植</strong><span>48/48 P2 judgments valid</span>
+          </div>
+          <div
+            class="track"
+            role="img"
+            aria-label="Case B: P0 100%, P1 100%, P2 provisional 91.7%, target 30% to 70%"
+          >
+            <span class="target-band"></span
+            ><span class="target-edge left"></span
+            ><span class="target-edge right"></span
+            ><span class="midline"></span>
+            <span class="marker p0" style="left:99.5%"></span
+            ><span class="marker p1" style="left:98.8%"></span
+            ><span class="marker p2" style="left:91.7%"></span>
+          </div>
+          <div class="rate-list">
+            <span>P0 <b>100%</b></span
+            ><span>P1 <b>100%</b></span
+            ><span class="provisional">P2 <b>91.7%</b></span>
+          </div>
+        </div>
+
+        <div class="spectrum-row">
+          <div class="case-label">
+            <strong>C. 地下室婴儿</strong><span>44/48 P2 judgments valid</span>
+          </div>
+          <div
+            class="track"
+            role="img"
+            aria-label="Case C: P0 87.5%, P1 79.2%, P2 provisional 58.7%, target 30% to 70%"
+          >
+            <span class="target-band"></span
+            ><span class="target-edge left"></span
+            ><span class="target-edge right"></span
+            ><span class="midline"></span>
+            <span class="marker p0" style="left:87.5%"></span
+            ><span class="marker p1" style="left:79.2%"></span
+            ><span class="marker p2" style="left:58.7%"></span>
+          </div>
+          <div class="rate-list">
+            <span>P0 <b>87.5%</b></span
+            ><span>P1 <b>79.2%</b></span
+            ><span class="provisional">P2 <b>58.7%</b></span>
+          </div>
+        </div>
+
+        <div class="spectrum-row">
+          <div class="case-label">
+            <strong>D. 自动驾驶车</strong><span>47/48 P2 judgments valid</span>
+          </div>
+          <div
+            class="track"
+            role="img"
+            aria-label="Case D: P0 25%, P1 14.6%, P2 provisional 27.1%, target 30% to 70%"
+          >
+            <span class="target-band"></span
+            ><span class="target-edge left"></span
+            ><span class="target-edge right"></span
+            ><span class="midline"></span>
+            <span class="marker p0" style="left:25%"></span
+            ><span class="marker p1" style="left:14.6%"></span
+            ><span class="marker p2" style="left:27.1%"></span>
+          </div>
+          <div class="rate-list">
+            <span>P0 <b>25.0%</b></span
+            ><span>P1 <b>14.6%</b></span
+            ><span class="provisional">P2 <b>27.1%</b></span>
+          </div>
+        </div>
+
+        <div class="spectrum-row">
+          <div class="case-label">
+            <strong>E. 缸中之脑</strong><span>11/48 P2 judgments valid</span>
+          </div>
+          <div
+            class="track"
+            role="img"
+            aria-label="Case E: P0 100%, P1 97.9%, P2 provisional 95%, target 30% to 70%"
+          >
+            <span class="target-band"></span
+            ><span class="target-edge left"></span
+            ><span class="target-edge right"></span
+            ><span class="midline"></span>
+            <span class="marker p0" style="left:99.5%"></span
+            ><span class="marker p1" style="left:97.9%"></span
+            ><span class="marker p2" style="left:95%"></span>
+          </div>
+          <div class="rate-list">
+            <span>P0 <b>100%</b></span
+            ><span>P1 <b>97.9%</b></span
+            ><span class="provisional">P2 <b>95.0%</b></span>
+          </div>
+        </div>
+
+        <div class="legend" aria-label="Spectrum legend">
+          <span class="legend-item"
+            ><span class="legend-line p0"></span>P0 complete</span
+          >
+          <span class="legend-item"
+            ><span class="legend-line p1"></span>P1 complete</span
+          >
+          <span class="legend-item"
+            ><span class="legend-line p2"></span>P2 provisional</span
+          >
+          <span class="legend-item"
+            ><span class="legend-band"></span>30%-70% acceptance band</span
+          >
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>
+              Exact candidate results
+            </caption>
+            <thead>
+              <tr>
+                <th>Mini-case</th>
+                <th class="numeric">P0 complete</th>
+                <th class="numeric">P1 complete</th>
+                <th class="numeric">P2 provisional</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A. 原始电车</td>
+                <td class="numeric">16.7% (8/48)</td>
+                <td class="numeric">14.6% (7/48)</td>
+                <td class="numeric">18.3% (46/48 valid)</td>
+                <td class="fail">P0/P1 fail</td>
+              </tr>
+              <tr>
+                <td>B. 器官移植</td>
+                <td class="numeric">100.0% (48/48)</td>
+                <td class="numeric">100.0% (48/48)</td>
+                <td class="numeric">91.7% (48/48 valid)</td>
+                <td class="fail">P0/P1 fail</td>
+              </tr>
+              <tr>
+                <td>C. 地下室婴儿</td>
+                <td class="numeric">87.5% (42/48)</td>
+                <td class="numeric">79.2% (38/48)</td>
+                <td class="numeric">58.7% (44/48 valid)</td>
+                <td class="fail">P0/P1 fail</td>
+              </tr>
+              <tr>
+                <td>D. 自动驾驶车</td>
+                <td class="numeric">25.0% (12/48)</td>
+                <td class="numeric">14.6% (7/48)</td>
+                <td class="numeric">27.1% (47/48 valid)</td>
+                <td class="fail">P0/P1 fail</td>
+              </tr>
+              <tr>
+                <td>E. 缸中之脑</td>
+                <td class="numeric">100.0% (48/48)</td>
+                <td class="numeric">97.9% (47/48)</td>
+                <td class="numeric">95.0% (11/48 valid)</td>
+                <td class="fail">P0/P1 fail</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="section-note">
+          P2 rates are equal-model-weighted provisional estimates. Missing calls
+          are not counted as losses, but P2 cannot pass or fail the balance gate
+          until all 240 judgments are complete. Case E is especially incomplete
+          and must not be read as a final estimate.
+        </p>
+      </section>
+
+      <section>
+        <h2>Candidate Timeline</h2>
+        <div class="candidate-list">
+          <details>
+            <summary>
+              <strong>TR-P0</strong><span>Frozen one-case baseline</span
+              ><span class="fail">240/240 · rejected</span>
+            </summary>
+            <div class="details-body">
+              The exact Judge Sensitivity one-mini-case adaptation of the recent
+              production trolley judge prompt. It produced 0 of 5 cases in
+              range, with strong five-person-side preference in A/D and strong
+              one-person-side preference in B/C/E.
+            </div>
+          </details>
+          <details>
+            <summary>
+              <strong>TR-P1</strong><span>No automatic moral trump</span
+              ><span class="fail">240/240 · rejected</span>
+            </summary>
+            <div class="details-body">
+              Criterion 2 was changed so numbers, action/inaction, tool-use,
+              role duty, prior rules, and real-versus-simulated harm could not
+              decide a case without argument. It changed only 18 of 240 paired
+              P0 judgments, left B unchanged, moved E once, and pushed A/D
+              farther from the target.
+            </div>
+          </details>
+          <details open>
+            <summary>
+              <strong>TR-P2</strong
+              ><span>Persuasive gain relative to difficulty</span
+              ><span class="paused">196/240 · paused</span>
+            </summary>
+            <div class="details-body">
+              P2 asks the judge to compare how much each debater advances a
+              position relative to that position's inherent difficulty, without
+              awarding points merely for holding the intuitive default or merely
+              for being the underdog. Partial data shows more movement,
+              especially in C, but no decision is valid until 44 remaining
+              judgments complete.
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section>
+        <h2>What The Completed Results Show</h2>
+        <div class="finding-grid">
+          <article class="finding">
+            <h3>Case-dependent priors</h3>
+            <p>
+              P0 does not show one global side-label bias. It favors five in A/D
+              and one in B/C/E, consistent with familiar moral defaults attached
+              to each case.
+            </p>
+          </article>
+          <article class="finding">
+            <h3>P1 was insufficient</h3>
+            <p>
+              The generic no-trump rule did not overcome those defaults. C
+              improved from 87.5% to 79.2%, while A and D moved farther away.
+            </p>
+          </article>
+          <article class="finding">
+            <h3>No winner yet</h3>
+            <p>
+              Neither completed candidate has any case passing all required
+              conditions. P2 remains an experiment in progress, not a selected
+              prompt.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cost And Budget</h2>
+        <p class="lede">
+          Known token-based cost is ¥62.34. The conservative estimate is ¥81.36
+          against a self-imposed ¥300 cap, leaving ¥218.64 of benchmark
+          allowance. The provider account balance is a separate limit and is
+          currently exhausted.
+        </p>
+        <div
+          class="cost-bar"
+          role="img"
+          aria-label="Known cost 62.34 yuan, conservative estimate 81.36 yuan, cap 300 yuan"
+        >
+          <span class="cost-estimated"></span><span class="cost-known"></span>
+        </div>
+        <div class="cost-axis">
+          <span>¥0</span><span>Known ¥62.34</span><span>Estimated ¥81.36</span
+          ><span>Cap ¥300</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>
+              Cost by benchmark phase
+            </caption>
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th class="numeric">Known</th>
+                <th class="numeric">Conservative estimate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>One-time history generation</td>
+                <td class="numeric">¥5.43</td>
+                <td class="numeric">¥7.95</td>
+              </tr>
+              <tr>
+                <td>TR-P0 judge calls</td>
+                <td class="numeric">¥18.56</td>
+                <td class="numeric">¥20.89</td>
+              </tr>
+              <tr>
+                <td>TR-P1 judge calls</td>
+                <td class="numeric">¥21.08</td>
+                <td class="numeric">¥22.97</td>
+              </tr>
+              <tr>
+                <td>TR-P2 judge calls so far</td>
+                <td class="numeric">¥17.11</td>
+                <td class="numeric">¥29.39</td>
+              </tr>
+              <tr>
+                <td>Three candidate preflights</td>
+                <td class="numeric">¥0.17</td>
+                <td class="numeric">¥0.17</td>
+              </tr>
+              <tr>
+                <td><strong>Total</strong></td>
+                <td class="numeric"><strong>¥62.34</strong></td>
+                <td class="numeric"><strong>¥81.36</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="section-note">
+          The conservative estimate assigns observed or fallback cost to
+          attempts without returned token usage. Some failed provider attempts
+          may not have been billed, so this estimate intentionally errs high.
+        </p>
+      </section>
+
+      <section>
+        <h2>Current Status And Next Step</h2>
+        <div class="next-step">
+          <p>
+            <strong>Resume condition:</strong> recharge the Zhipu account or
+            replace <code>ZHIPU_API_KEY</code>. Then resume TR-P2. The runner
+            will reuse the same 40 histories and all 196 successful P2
+            judgments, issuing only the 44 incomplete jobs. Diagnose the final
+            five-case result before deciding whether to retain P2 or create
+            TR-P3.
+          </p>
+        </div>
+        <div class="artifact-links">
+          <a href="report.md">Markdown report</a>
+          <a href="manifest.md">Manifest</a>
+          <a href="histories.md">Frozen histories</a>
+          <a href="prompt-results-summary.md">Prompt results</a>
+          <a href="cost-monitor.md">Cost monitor</a>
+          <a href="candidates/TR-P0/summary.md">TR-P0</a>
+          <a href="candidates/TR-P1/summary.md">TR-P1</a>
+          <a href="candidates/TR-P2/summary.md">TR-P2 provisional</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Static report generated from the saved run artifacts. P2 is incomplete;
+      its provisional values must be refreshed after the remaining calls are
+      resumed.
+    </footer>
+  </body>
+</html>

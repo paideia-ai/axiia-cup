@@ -89,6 +89,38 @@
       "unpricedCalls": 0
     },
     {
+      "billingPhase": "judge",
+      "cachedTokens": 30528,
+      "callsWithUsage": 245,
+      "callsWithoutUsage": 22,
+      "candidateId": "TR-P1",
+      "completionTokens": 770016,
+      "estimatedCostCny": 22.974009986938768,
+      "estimatedMissingCostCny": 1.892989586938775,
+      "knownCostCny": 21.081020399999993,
+      "model": "glm-5.2",
+      "partialInputCalls": 0,
+      "promptTokens": 457353,
+      "reasoningTokens": 609166,
+      "unpricedCalls": 0
+    },
+    {
+      "billingPhase": "judge",
+      "cachedTokens": 16640,
+      "callsWithUsage": 202,
+      "callsWithoutUsage": 145,
+      "candidateId": "TR-P2",
+      "completionTokens": 619662,
+      "estimatedCostCny": 29.386000772277228,
+      "estimatedMissingCostCny": 12.279452772277228,
+      "knownCostCny": 17.106548,
+      "model": "glm-5.2",
+      "partialInputCalls": 0,
+      "promptTokens": 385478,
+      "reasoningTokens": 480882,
+      "unpricedCalls": 0
+    },
+    {
       "billingPhase": "preflight",
       "cachedTokens": 0,
       "callsWithUsage": 1,
@@ -103,17 +135,49 @@
       "promptTokens": 1400,
       "reasoningTokens": 899,
       "unpricedCalls": 0
+    },
+    {
+      "billingPhase": "preflight",
+      "cachedTokens": 0,
+      "callsWithUsage": 1,
+      "callsWithoutUsage": 0,
+      "candidateId": "TR-P1",
+      "completionTokens": 1887,
+      "estimatedCostCny": 0.05394,
+      "estimatedMissingCostCny": 0,
+      "knownCostCny": 0.05394,
+      "model": "glm-5.2",
+      "partialInputCalls": 0,
+      "promptTokens": 1442,
+      "reasoningTokens": 1261,
+      "unpricedCalls": 0
+    },
+    {
+      "billingPhase": "preflight",
+      "cachedTokens": 0,
+      "callsWithUsage": 1,
+      "callsWithoutUsage": 0,
+      "candidateId": "TR-P2",
+      "completionTokens": 2593,
+      "estimatedCostCny": 0.071058,
+      "estimatedMissingCostCny": 0,
+      "knownCostCny": 0.071058,
+      "model": "glm-5.2",
+      "partialInputCalls": 0,
+      "promptTokens": 1471,
+      "reasoningTokens": 1919,
+      "unpricedCalls": 0
     }
   ],
   "capCny": 300,
   "capReached": false,
-  "callsWithUsage": 648,
-  "callsWithoutUsage": 31,
-  "estimatedCostCny": 28.874896588663958,
-  "estimatedMissingCostCny": 4.849126388663967,
-  "generatedAt": "2026-07-22T00:15:49.632Z",
+  "callsWithUsage": 1097,
+  "callsWithoutUsage": 198,
+  "estimatedCostCny": 81.35990534787996,
+  "estimatedMissingCostCny": 19.021568747879968,
+  "generatedAt": "2026-07-22T01:39:34.944Z",
   "kind": "judge_prompt_balance.cost_monitor",
-  "knownCostCny": 24.025770199999993,
+  "knownCostCny": 62.33833659999999,
   "partialInputCalls": 100,
   "pricing": [
     {
@@ -149,7 +213,7 @@
       "source": "packages/shared/src/pricing.ts"
     }
   ],
-  "remainingEstimatedCny": 271.12510341133606,
+  "remainingEstimatedCny": 218.64009465212004,
   "runId": "7e2453f8-a424-4d25-bc85-0c533acb32d1",
   "unpricedCalls": 0
 }
