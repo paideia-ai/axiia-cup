@@ -30,6 +30,7 @@ import {
   chatCompletion,
   type ChatCompletionCapture,
 } from '../../../apps/api/src/engine/llm'
+import { shutdownLangfuseTracing } from '../../../apps/api/src/lib/langfuse'
 
 export const BENCHMARK_NAME = 'judge-prompt-balance'
 export const LEVEL_3_PROMPT = '-'
@@ -2959,6 +2960,7 @@ async function runPreflight(options: Record<string, string>) {
         benchmarkCaseId: 'thinking-preflight',
         benchmarkName: BENCHMARK_NAME,
         benchmarkRunId: config.runId,
+        judgePromptCandidateId: candidate.candidateId,
         phase: 'judgment',
         scenarioId: candidate.scenarioId,
         side: 'judge',
@@ -3176,6 +3178,7 @@ async function runJudgeJob(params: {
           benchmarkCaseId: id,
           benchmarkName: BENCHMARK_NAME,
           benchmarkRunId: params.config.runId,
+          judgePromptCandidateId: params.candidate.candidateId,
           phase: 'judgment',
           scenarioId: params.history.scenarioId,
           side: 'judge',
@@ -3936,10 +3939,16 @@ async function main() {
 }
 
 if (import.meta.main) {
-  main().catch((error) => {
+  try {
+    await main()
+  } catch (error) {
     console.error(
       `[judge-prompt-balance] failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
     )
-    process.exit(1)
-  })
+    process.exitCode = 1
+  } finally {
+    await shutdownLangfuseTracing().catch((error) => {
+      console.error('[judge-prompt-balance] Langfuse shutdown failed', error)
+    })
+  }
 }

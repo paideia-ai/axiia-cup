@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-22",
+  "scenarioId": "trolley-problem",
+  "cases": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "judgeModel": "glm-5.2",
+  "judgePromptCandidateId": "TR-P2",
+  "judgePromptVersion": "P2",
+  "judgePromptHash": "ee0dbb07a3560a0202b45e29f70ab7d21a15e6c74751ce8ff2fc597afbd05763",
+  "historiesPerCase": 8,
+  "histories": 40,
+  "repeatsPerHistory": 10,
+  "retainedJudgmentsPerEffort": 400,
+  "results": {
+    "high": {
+      "averageAbsoluteSensitivity": 0.36666666666666664,
+      "badToGoodSensitivity": 0.5399999999999999,
+      "fixedHistoryInstability": 0.0385,
+      "level3To4Sensitivity": 0.12,
+      "uncachedLatency": {
+        "calls": 289,
+        "meanSeconds": 28.87700346020761,
+        "medianSeconds": 27.857,
+        "p90Seconds": 42.373,
+        "maxSeconds": 107.206
+      },
+      "cache": {
+        "hitCalls": 111,
+        "hitPromptTokens": 56896
+      },
+      "cost": {
+        "actualBillableGenerations": 407,
+        "langfuseRecordedBillableGenerations": 406,
+        "zeroCostTimeoutTraces": 2,
+        "langfuseRecordedUsd": 2.5961667308310012,
+        "langfuseRecordedCny": 18.82220879852476,
+        "estimatedMissingTraceUsd": 0.0057393103445,
+        "estimatedTotalUsd": 2.6019060411755013,
+        "estimatedTotalCny": 18.863818798522384
+      }
+    },
+    "max": {
+      "averageAbsoluteSensitivity": 0.37666666666666676,
+      "badToGoodSensitivity": 0.5650000000000001,
+      "fixedHistoryInstability": 0.040749999999999995,
+      "level3To4Sensitivity": 0.16,
+      "uncachedLatency": {
+        "calls": 274,
+        "meanSeconds": 53.832463503649635,
+        "medianSeconds": 39.862,
+        "p90Seconds": 83.192,
+        "maxSeconds": 367.256
+      },
+      "cache": {
+        "hitCalls": 126,
+        "hitPromptTokens": 58944
+      },
+      "cost": {
+        "billableGenerations": 406,
+        "zeroCostTimeoutTraces": 24,
+        "usd": 4.243889544633,
+        "cny": 30.76819919858925
+      }
+    }
+  },
+  "maxVsHigh": {
+    "estimatedCostRatio": 1.6310694842445872,
+    "uncachedMeanLatencyRatio": 1.864196299585237,
+    "badToGoodSensitivityDelta": 0.025000000000000133,
+    "averageAbsoluteSensitivityDelta": 0.01000000000000012,
+    "level3To4SensitivityDelta": 0.04,
+    "fixedHistoryInstabilityDelta": 0.002249999999999995
+  },
+  "sourceRuns": {
+    "highADE": "docs/bench/judge-sensitivity/runs/trolley/judge-sensitivity-trolley-glm52-high-p2-20260722T122846Z",
+    "highBC": "docs/bench/judge-sensitivity/runs/trolley/judge-sensitivity-trolley-glm52-high-bc-p2-20260722T125231Z",
+    "maxAE": "docs/bench/judge-sensitivity/runs/trolley/judge-sensitivity-trolley-glm52-max-p2-20260722T125231Z"
+  }
+}

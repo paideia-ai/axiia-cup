@@ -19,6 +19,12 @@ For Trolley, each of the five mini-cases is a separate gate.
 The runner places a one-scenario run under `runs/<scenario>` and a combined run
 under `runs/multi-scenario` unless `--output-dir` is supplied.
 
+Judge and thinking-preflight calls send the exact candidate identity to
+Langfuse. For example, candidate `TR-P2` produces generation and trace metadata
+`judgePromptCandidateId=TR-P2` and `judgePromptVersion=P2`, plus corresponding
+`judgePromptCandidate:TR-P2` and `judgePromptVersion:P2` tags. Historical traces
+are not rewritten.
+
 ## Current Trolley Run
 
 [judge-prompt-balance-trolley-20260721T225005Z](runs/trolley/judge-prompt-balance-trolley-20260721T225005Z)

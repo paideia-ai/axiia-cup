@@ -1,0 +1,402 @@
+{
+  "config": {
+    "benchmarkName": "judge-sensitivity",
+    "caseFilter": null,
+    "command": "judge",
+    "concurrency": 10,
+    "dryRun": false,
+    "git": {
+      "branch": "benchmarks",
+      "commit": "1dc0622fe1dcbad8733b8bc43938cd0622d70a44",
+      "dirty": true
+    },
+    "historyCountExpected": 16,
+    "historyExecutionCountExpected": 14,
+    "jobTimeoutMs": 1200000,
+    "judgeConcurrency": 30,
+    "judgeRepairConcurrency": 3,
+    "judgeModels": [
+      "glm-5.2-reasoning-high"
+    ],
+    "judgeModelDefinitions": [
+      {
+        "allowMissingReasoningWhenEnabled": true,
+        "apiModel": "glm-5.2",
+        "baseModel": "glm-5.2",
+        "id": "glm-5.2-reasoning-high",
+        "label": "GLM-5.2 (reasoning high)",
+        "provider": "zhipu",
+        "reasoningEffort": "high",
+        "surfaces": [
+          "evaluation"
+        ],
+        "thinkingOnRequest": "native-thinking-enabled",
+        "underlyingProvider": "zai",
+        "verifyReasoningEnabled": true
+      }
+    ],
+    "judgeRepeats": 10,
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "llmCallTimeoutMs": 180000,
+    "outputDir": "docs/bench/judge-sensitivity/runs/trolley/judge-sensitivity-trolley-glm52-high-bc-p2-20260722T125231Z",
+    "pairFilter": null,
+    "persistLlmCalls": false,
+    "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+    "playerModel": "glm-5.2",
+    "playerModelDefinition": {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+    "resume": false,
+    "runId": "a8237da6-e3fe-4e52-9c37-3bf26ed87210",
+    "scenarioIds": [
+      "trolley-problem"
+    ],
+    "scenarioSource": {
+      "apiUrl": "https://axiia-cup.isofucius.cn",
+      "type": "api",
+      "note": "production API scenario snapshot via admin CLI token; three-sentence constrained"
+    },
+    "selectedSamplePaths": {
+      "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+      "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+    },
+    "temperature": 0,
+    "caseFilters": [
+      "B",
+      "C"
+    ],
+    "judgeCaseFilters": [
+      "B",
+      "C"
+    ],
+    "judgeScenarioIds": [
+      "trolley-problem"
+    ],
+    "judgeThinkingMode": "enabled",
+    "glmReasoningEfforts": [
+      "high"
+    ],
+    "runLabel": "Trolley B/C GLM-5.2 reasoning high with TR-P2",
+    "judgeCacheStrategy": "warm-first-per-model-history",
+    "trolleyJudgePromptOverride": {
+      "candidateId": "TR-P2",
+      "originalJudgePromptHash": "af4f07c5b2433b349d96d92d410afd62c7fc04040ecbff233d0e2b138d6449c3",
+      "overrideJudgePromptHash": "ee0dbb07a3560a0202b45e29f70ab7d21a15e6c74751ce8ff2fc597afbd05763",
+      "parentCandidateId": "TR-P1",
+      "scenarioId": "trolley-problem",
+      "sourceHash": "ee0dbb07a3560a0202b45e29f70ab7d21a15e6c74751ce8ff2fc597afbd05763",
+      "sourcePath": "docs/bench/judge-prompt-winrate-balancer/runs/trolley/judge-prompt-balance-trolley-20260721T225005Z/candidates/TR-P2/prompt.txt"
+    }
+  },
+  "generatedAt": "2026-07-22T13:02:30.248Z",
+  "histories": {
+    "byScenario": {
+      "shangyang-court": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "honnoji-decision": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "trolley-problem": {
+        "completed": 16,
+        "errored": 0,
+        "expected": 16,
+        "rows": 16
+      }
+    },
+    "byStatus": {
+      "ok": 16
+    },
+    "summary": {
+      "completed": 16,
+      "errored": 0,
+      "expected": 16,
+      "executableExpected": 14,
+      "reused": 2,
+      "totalRows": 16
+    }
+  },
+  "judge": {
+    "plannedJobs": 160,
+    "requestProfiles": [
+      {
+        "apiModels": [
+          "glm-5.2"
+        ],
+        "calls": 160,
+        "callsWithReasoning": 160,
+        "efforts": [
+          "high"
+        ],
+        "judgeModel": "glm-5.2-reasoning-high",
+        "providers": [
+          "zhipu"
+        ],
+        "reasoningTokensReported": 160,
+        "requestControls": [
+          "{\"reasoning_effort\":\"high\",\"thinking\":{\"type\":\"enabled\"}}"
+        ],
+        "thinkingModes": [
+          "enabled"
+        ]
+      }
+    ],
+    "results": {
+      "completed": 160,
+      "duplicateProviderResponseIds": 0,
+      "errored": 0,
+      "expected": 160,
+      "promptCacheHitCalls": 67,
+      "promptCacheHitTokens": 29632,
+      "promptCacheMissCalls": 0,
+      "promptCacheMissTokens": 0,
+      "promptCacheUsageReported": 160,
+      "parseFailures": 0,
+      "reasoningVerifiedOff": 0,
+      "reasoningVerifiedOn": 160,
+      "providerResponseIdsRecorded": 160
+    },
+    "sensitivity": {
+      "details": [
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": -0.2,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 4,
+          "variedSideWinRate": 0.4
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "B",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 0.8,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-B",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 1,
+          "variedSideWinRate": 0.1
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": -0.8,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 1,
+          "variedSideWinRate": 0.1
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 0.8,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 9,
+          "variedSideWinRate": 0.9
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": "C",
+          "judgeModel": "glm-5.2-reasoning-high",
+          "pairId": null,
+          "rawMargin": -0.2,
+          "scenarioId": "trolley-problem",
+          "total": 10,
+          "unit": "case-C",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 6,
+          "variedSideWinRate": 0.6
+        }
+      ],
+      "modelLevel": [
+        {
+          "averageAbsoluteSensitivity": 0.34166666666666673,
+          "badToGoodSensitivity": 0.5125,
+          "fixedHistoryInstability": 0.046875,
+          "judgeModel": "glm-5.2-reasoning-high",
+          "level3To4Sensitivity": 0.19999999999999998
+        }
+      ]
+    }
+  },
+  "kind": "judge_sensitivity.summary"
+}

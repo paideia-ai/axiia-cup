@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Judge Sensitivity Benchmark</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 32px; color: #111827; }
+    h1, h2 { margin-bottom: 8px; }
+    .meta { color: #4b5563; line-height: 1.55; }
+    table { border-collapse: collapse; width: 100%; margin: 16px 0 28px; font-size: 14px; }
+    th, td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: left; }
+    th { background: #f3f4f6; }
+    code { background: #f3f4f6; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Judge Sensitivity Benchmark</h1>
+  <div class="meta">
+    <div>Run ID: <code>abe3345e-a77e-4e89-87f2-b6a684a8b9a3</code></div>
+    <div>Scenarios: trolley-problem</div>
+    <div>Histories: 40/40 completed</div>
+    <div>Planned judge calls: 400; completed: 400</div>
+    <div>Reasoning-off verifications: 0</div>
+    <div>Reasoning-on verifications: 400</div>
+    <div>Prompt-cache usage reports: 400</div>
+    <div>Prompt-cache hit calls / tokens: 126 / 58944</div>
+    <div>Prompt-cache miss calls / tokens: 0 / 0</div>
+    <div>Provider response IDs / duplicates: 400 / 0</div>
+  </div>
+  <h2>Model-Level Sensitivity</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Avg abs sensitivity</th><th>Bad to good</th><th>Level 3 to 4</th><th>Fixed-history instability</th></tr></thead>
+    <tbody><tr><td>GLM-5.2 (reasoning max)</td><td>37.7%</td><td>56.5%</td><td>16.0%</td><td>4.1%</td></tr></tbody>
+  </table>
+  <h2>Scenario / Pair / Case Details</h2>
+  <table>
+    <thead><tr><th>Judge model</th><th>Scenario</th><th>Unit</th><th>Varied side</th><th>Level</th><th>Varied-side win rate</th><th>Raw A-B margin</th><th>N</th></tr></thead>
+    <tbody><tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>a</td><td>1</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>a</td><td>2</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>a</td><td>3</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>a</td><td>4</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>b</td><td>1</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>b</td><td>3</td><td>100.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-A</td><td>b</td><td>4</td><td>100.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>a</td><td>1</td><td>40.0%</td><td>-0.200</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>a</td><td>2</td><td>30.0%</td><td>-0.400</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>a</td><td>3</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>a</td><td>4</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>b</td><td>1</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>b</td><td>3</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-B</td><td>b</td><td>4</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>a</td><td>1</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>a</td><td>2</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>a</td><td>3</td><td>70.0%</td><td>0.400</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>a</td><td>4</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>b</td><td>1</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>b</td><td>3</td><td>30.0%</td><td>0.400</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-C</td><td>b</td><td>4</td><td>50.0%</td><td>0.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>a</td><td>1</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>a</td><td>2</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>a</td><td>3</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>a</td><td>4</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>b</td><td>1</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>b</td><td>3</td><td>100.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-D</td><td>b</td><td>4</td><td>100.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>a</td><td>1</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>a</td><td>2</td><td>0.0%</td><td>-1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>a</td><td>3</td><td>90.0%</td><td>0.800</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>a</td><td>4</td><td>100.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>b</td><td>1</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>b</td><td>2</td><td>0.0%</td><td>1.000</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>b</td><td>3</td><td>30.0%</td><td>0.400</td><td>10</td></tr>
+<tr><td>GLM-5.2 (reasoning max)</td><td>trolley-problem</td><td>case-E</td><td>b</td><td>4</td><td>30.0%</td><td>0.400</td><td>10</td></tr></tbody>
+  </table>
+</body>
+</html>

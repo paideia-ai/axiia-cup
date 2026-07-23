@@ -1,0 +1,422 @@
+{
+  "config": {
+    "benchmarkName": "judge-sensitivity",
+    "caseFilter": null,
+    "command": "judge",
+    "concurrency": 10,
+    "dryRun": false,
+    "git": {
+      "branch": "benchmarks",
+      "commit": "cf8ea764163654fed74b50cf0181cb063f811e5d",
+      "dirty": true
+    },
+    "historyCountExpected": 8,
+    "historyExecutionCountExpected": 8,
+    "jobTimeoutMs": 1200000,
+    "judgeConcurrency": 8,
+    "judgeModels": [
+      "glm-5.2",
+      "deepseek-v4-pro"
+    ],
+    "judgeModelDefinitions": [
+      {
+        "id": "glm-5.2",
+        "label": "GLM-5.2",
+        "apiModel": "glm-5.2",
+        "provider": "zhipu",
+        "surfaces": [
+          "submission",
+          "evaluation"
+        ],
+        "underlyingProvider": "zai"
+      },
+      {
+        "id": "deepseek-v4-pro",
+        "label": "DeepSeek V4 Pro",
+        "apiModel": "deepseek-v4-pro",
+        "provider": "deepseek",
+        "surfaces": [
+          "submission",
+          "evaluation"
+        ],
+        "effort": "high",
+        "underlyingProvider": "deepseek"
+      }
+    ],
+    "judgeRepeats": 10,
+    "levels": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "llmCallTimeoutMs": 240000,
+    "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-patch5-direct-20260721T223939Z",
+    "pairFilter": null,
+    "persistLlmCalls": false,
+    "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+    "playerModel": "glm-5.2",
+    "playerModelDefinition": {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "zai-org/GLM-5.2",
+      "provider": "siliconflow",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+    "resume": false,
+    "runId": "dc153013-e9b2-47f9-b00c-c26cfbe78d06",
+    "scenarioIds": [
+      "shangyang-court"
+    ],
+    "scenarioSource": {
+      "apiUrl": "https://axiia-cup.isofucius.cn",
+      "type": "api",
+      "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z"
+    },
+    "selectedSamplePaths": {
+      "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+      "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+    },
+    "temperature": 0,
+    "runLabel": "Shangyang patch5 direct-API judge sensitivity: GLM-5.2 + DeepSeek V4 Pro, thinking on/high effort; frozen 20260708 histories",
+    "judgeCacheStrategy": "warm-first-per-model-history",
+    "judgePromptPatch": {
+      "block1Hash": "7558da4cdac598e78f3af90c1584d5c24774bb947b61f4cdc2133b8ab629e2bd",
+      "block2Hash": "6d2275e94079f594109ff03b92a2c941716609db406157951b4f1227d6150da5",
+      "originalJudgePromptHash": "34d855678ba23aaeabd4d21946783b867e752b22a9c61f27352835bd68e8759a",
+      "patchedJudgePromptHash": "05a7153477a0184c21a7bd046c94de0ad7e347105e0ce21d965f104b94bdcb19",
+      "scenarioId": "shangyang-court",
+      "sourceHash": "a303169eaa3a47c254c791134f7b8dfdcf43f3b28a4d2fd11c0845531ebd9331",
+      "sourcePath": "docs/competition/scratchpad/shangyang-court-judge-prompt-sensitivity-patch-ms.md"
+    },
+    "judgeThinkingMode": "enabled"
+  },
+  "generatedAt": "2026-07-21T23:23:23.552Z",
+  "histories": {
+    "byScenario": {
+      "shangyang-court": {
+        "completed": 8,
+        "errored": 0,
+        "expected": 8,
+        "rows": 8
+      },
+      "honnoji-decision": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      },
+      "trolley-problem": {
+        "completed": 0,
+        "errored": 0,
+        "expected": 0,
+        "rows": 0
+      }
+    },
+    "byStatus": {
+      "ok": 8
+    },
+    "summary": {
+      "completed": 8,
+      "errored": 0,
+      "expected": 8,
+      "executableExpected": 8,
+      "reused": 1,
+      "totalRows": 8
+    }
+  },
+  "judge": {
+    "plannedJobs": 160,
+    "requestProfiles": [
+      {
+        "apiModels": [
+          "deepseek-v4-pro"
+        ],
+        "calls": 80,
+        "callsWithReasoning": 80,
+        "efforts": [
+          "high"
+        ],
+        "judgeModel": "deepseek-v4-pro",
+        "providers": [
+          "deepseek"
+        ],
+        "reasoningTokensReported": 0,
+        "requestControls": [
+          "{\"output_config\":{\"effort\":\"high\"}}"
+        ],
+        "thinkingModes": [
+          "provider-default"
+        ]
+      },
+      {
+        "apiModels": [
+          "glm-5.2"
+        ],
+        "calls": 80,
+        "callsWithReasoning": 80,
+        "efforts": [],
+        "judgeModel": "glm-5.2",
+        "providers": [
+          "zhipu"
+        ],
+        "reasoningTokensReported": 80,
+        "requestControls": [
+          "{\"thinking\":{\"type\":\"enabled\"}}"
+        ],
+        "thinkingModes": [
+          "enabled"
+        ]
+      }
+    ],
+    "results": {
+      "completed": 160,
+      "duplicateProviderResponseIds": 0,
+      "errored": 0,
+      "expected": 160,
+      "promptCacheHitCalls": 78,
+      "promptCacheHitTokens": 178688,
+      "promptCacheMissCalls": 0,
+      "promptCacheMissTokens": 0,
+      "promptCacheUsageReported": 160,
+      "parseFailures": 0,
+      "reasoningVerifiedOff": 0,
+      "reasoningVerifiedOn": 160,
+      "providerResponseIdsRecorded": 160
+    },
+    "sensitivity": {
+      "details": [
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "a",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": 0,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 5,
+          "variedSideWinRate": 0.5
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": 0.8,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "a",
+          "variedWins": 9,
+          "variedSideWinRate": 0.9
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "a",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 1,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 2,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": 0.4,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 3,
+          "variedSideWinRate": 0.3
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": 1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 3,
+          "variedSide": "b",
+          "variedWins": 0,
+          "variedSideWinRate": 0
+        },
+        {
+          "caseId": null,
+          "judgeModel": "deepseek-v4-pro",
+          "pairId": null,
+          "rawMargin": -1,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 10,
+          "variedSideWinRate": 1
+        },
+        {
+          "caseId": null,
+          "judgeModel": "glm-5.2",
+          "pairId": null,
+          "rawMargin": -0.8,
+          "scenarioId": "shangyang-court",
+          "total": 10,
+          "unit": "shangyang-court",
+          "variedLevel": 4,
+          "variedSide": "b",
+          "variedWins": 9,
+          "variedSideWinRate": 0.9
+        }
+      ],
+      "modelLevel": [
+        {
+          "averageAbsoluteSensitivity": 0.4666666666666666,
+          "badToGoodSensitivity": 0.7,
+          "fixedHistoryInstability": 0.0575,
+          "judgeModel": "deepseek-v4-pro",
+          "level3To4Sensitivity": 0.6
+        },
+        {
+          "averageAbsoluteSensitivity": 0.4666666666666666,
+          "badToGoodSensitivity": 0.7,
+          "fixedHistoryInstability": 0.0225,
+          "judgeModel": "glm-5.2",
+          "level3To4Sensitivity": 0.5
+        }
+      ]
+    }
+  },
+  "kind": "judge_sensitivity.summary"
+}

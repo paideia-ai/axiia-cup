@@ -147,6 +147,42 @@ describe('buildOpenAICompatibleRequest', () => {
     expect('enable_thinking' in request).toBe(false)
   })
 
+  it.each(['high', 'max'] as const)(
+    'sets GLM-5.2 reasoning effort to %s',
+    (reasoningEffort) => {
+      const request = buildOpenAICompatibleRequest({
+        ...baseParams,
+        model: 'glm-5.2',
+        reasoningEffort,
+        thinkingMode: 'enabled',
+      })
+
+      expect(request.thinking).toEqual({ type: 'enabled' })
+      expect(request.reasoning_effort).toBe(reasoningEffort)
+    },
+  )
+
+  it('rejects GLM reasoning effort without explicit thinking', () => {
+    expect(() =>
+      buildOpenAICompatibleRequest({
+        ...baseParams,
+        model: 'glm-5.2',
+        reasoningEffort: 'high',
+      }),
+    ).toThrow('reasoning effort requires thinkingMode=enabled')
+  })
+
+  it('rejects GLM reasoning effort on other providers', () => {
+    expect(() =>
+      buildOpenAICompatibleRequest({
+        ...baseParams,
+        model: 'qwen3.6-27b',
+        reasoningEffort: 'high',
+        thinkingMode: 'enabled',
+      }),
+    ).toThrow('only implemented for Zhipu GLM-5.2')
+  })
+
   it('lets an explicit mode override a catalog thinking default', () => {
     const request = buildOpenAICompatibleRequest({
       ...baseParams,

@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Direct-API judge bias and sensitivity results for the Shangyang Court patch5 prompt, evaluated with GLM-5.2 and DeepSeek V4 Pro."
+    />
+    <title>Shangyang Court · Judge Bias & Sensitivity</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #f4f0e7;
+        --paper-deep: #e8e0d0;
+        --card: #fffdf8;
+        --ink: #17231d;
+        --muted: #667068;
+        --rule: #d9d2c4;
+        --forest: #173f35;
+        --forest-soft: #dce9e2;
+        --cinnabar: #b84a32;
+        --cinnabar-soft: #f3ded8;
+        --gold: #d79a34;
+        --teal: #287c72;
+        --teal-soft: #d8ece8;
+        --shadow: 0 18px 55px rgba(43, 50, 43, 0.09);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(
+            circle at 8% 3%,
+            rgba(215, 154, 52, 0.13),
+            transparent 24rem
+          ),
+          linear-gradient(180deg, #f8f5ee 0, var(--paper) 42rem);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .masthead {
+        position: relative;
+        overflow: hidden;
+        padding: 34px 0 74px;
+        background: var(--forest);
+        color: #fffdf8;
+      }
+
+      .masthead::before,
+      .masthead::after {
+        position: absolute;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        content: "";
+      }
+
+      .masthead::before {
+        width: 520px;
+        height: 520px;
+        top: -330px;
+        right: -100px;
+      }
+
+      .masthead::after {
+        width: 360px;
+        height: 360px;
+        right: 80px;
+        bottom: -300px;
+      }
+
+      .nav,
+      .hero {
+        position: relative;
+        z-index: 1;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding-bottom: 70px;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-weight: 750;
+      }
+
+      .seal {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        border-radius: 9px;
+        color: #f3c36d;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 19px;
+        transform: rotate(-3deg);
+      }
+
+      .run-state {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .run-state::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #73d5aa;
+        box-shadow: 0 0 0 5px rgba(115, 213, 170, 0.12);
+        content: "";
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+        gap: 72px;
+        align-items: end;
+      }
+
+      .eyebrow {
+        margin: 0 0 18px;
+        color: #f3c36d;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 780px;
+        margin-bottom: 22px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(44px, 7vw, 82px);
+        font-weight: 500;
+        letter-spacing: -0.045em;
+        line-height: 0.98;
+      }
+
+      .lede {
+        max-width: 710px;
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: clamp(17px, 2vw, 21px);
+      }
+
+      .hero-verdict {
+        padding: 24px 0 6px 25px;
+        border-left: 1px solid rgba(255, 255, 255, 0.22);
+      }
+
+      .hero-verdict strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #fff;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 26px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      .hero-verdict span {
+        color: rgba(255, 255, 255, 0.63);
+        font-size: 14px;
+      }
+
+      main {
+        padding: 42px 0 76px;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: -70px;
+        margin-bottom: 72px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .stat {
+        min-height: 154px;
+        padding: 24px;
+        border: 1px solid rgba(23, 63, 53, 0.08);
+        border-radius: 17px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .stat-value {
+        display: block;
+        margin: 8px 0 7px;
+        color: var(--forest);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 38px;
+        line-height: 1;
+      }
+
+      .stat-note {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      section {
+        margin-top: 76px;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: 1fr minmax(280px, 0.52fr);
+        gap: 48px;
+        align-items: end;
+        margin-bottom: 26px;
+      }
+
+      .kicker {
+        margin-bottom: 8px;
+        color: var(--cinnabar);
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(31px, 4vw, 48px);
+        font-weight: 500;
+        letter-spacing: -0.025em;
+        line-height: 1.08;
+      }
+
+      .section-note {
+        margin-bottom: 2px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .chart-grid,
+      .provenance-grid,
+      .conclusion-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .panel {
+        border: 1px solid var(--rule);
+        border-radius: var(--radius);
+        background: rgba(255, 253, 248, 0.88);
+        box-shadow: 0 10px 35px rgba(43, 50, 43, 0.04);
+      }
+
+      .chart-card {
+        padding: 26px 26px 18px;
+      }
+
+      .chart-title {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      h3 {
+        margin-bottom: 3px;
+        font-size: 19px;
+        letter-spacing: -0.015em;
+      }
+
+      .subtle {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .score-pill {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--forest-soft);
+        color: var(--forest);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .legend {
+        display: flex;
+        gap: 18px;
+        margin-top: -4px;
+        padding-left: 36px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .legend span {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .legend i {
+        display: inline-block;
+        width: 18px;
+        height: 3px;
+        border-radius: 99px;
+        background: var(--cinnabar);
+      }
+
+      .legend .b i {
+        background: var(--teal);
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+
+      .grid-line {
+        stroke: #ded8cc;
+        stroke-width: 1;
+      }
+      .axis-label {
+        fill: #7c827d;
+        font:
+          12px Inter,
+          system-ui,
+          sans-serif;
+      }
+      .point-label {
+        fill: #354139;
+        font:
+          700 11px Inter,
+          system-ui,
+          sans-serif;
+      }
+      .line-a {
+        fill: none;
+        stroke: var(--cinnabar);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 4;
+      }
+      .line-b {
+        fill: none;
+        stroke: var(--teal);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 4;
+      }
+      .dot-a {
+        fill: var(--card);
+        stroke: var(--cinnabar);
+        stroke-width: 3;
+      }
+      .dot-b {
+        fill: var(--card);
+        stroke: var(--teal);
+        stroke-width: 3;
+      }
+
+      .bias-panel {
+        padding: 30px;
+      }
+
+      .bias-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 0.78fr) minmax(320px, 1.22fr);
+        gap: 46px;
+        align-items: center;
+      }
+
+      .bias-copy p {
+        color: var(--muted);
+      }
+
+      .same-history {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--forest);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .same-history::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--gold);
+        content: "";
+        transform: rotate(45deg);
+      }
+
+      .bias-row + .bias-row {
+        margin-top: 26px;
+      }
+
+      .bias-labels {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .bias-labels span:last-child {
+        color: var(--muted);
+      }
+
+      .bias-bar {
+        display: flex;
+        height: 34px;
+        overflow: hidden;
+        border-radius: 9px;
+        background: var(--paper-deep);
+        color: white;
+        font-size: 12px;
+        font-weight: 850;
+        line-height: 34px;
+        text-align: center;
+      }
+
+      .bias-a {
+        background: var(--cinnabar);
+      }
+      .bias-b {
+        background: var(--teal);
+      }
+
+      .bias-callout {
+        margin-top: 26px;
+        padding: 14px 16px;
+        border-left: 3px solid var(--cinnabar);
+        background: var(--cinnabar-soft);
+        color: #6d2e21;
+        font-size: 13px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--rule);
+        border-radius: var(--radius);
+        background: var(--card);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 15px 17px;
+        border-bottom: 1px solid #e5dfd4;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      th {
+        background: #eee8dc;
+        color: #4f5b53;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr:hover {
+        background: #faf7f0;
+      }
+      .curve {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+      }
+
+      .delta-up {
+        color: var(--forest);
+        font-weight: 850;
+      }
+
+      .patch-card {
+        display: grid;
+        grid-template-columns: minmax(250px, 0.62fr) minmax(0, 1.38fr);
+        gap: 32px;
+        padding: 30px;
+      }
+
+      .patch-verdict {
+        padding: 22px;
+        border-radius: 14px;
+        background: var(--forest);
+        color: white;
+      }
+
+      .patch-verdict .big {
+        display: block;
+        margin: 7px 0 9px;
+        color: #f3c36d;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 31px;
+        line-height: 1.05;
+      }
+
+      .patch-verdict p {
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+      }
+
+      .mini-table td:first-child {
+        font-weight: 750;
+      }
+      .mini-table .measured {
+        background: #f2f7f3;
+      }
+
+      .provenance-card {
+        padding: 26px;
+      }
+
+      .provider-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+      }
+
+      .provider-badge {
+        padding: 5px 9px;
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .code-block {
+        overflow-x: auto;
+        margin-bottom: 20px;
+        padding: 13px 14px;
+        border-radius: 10px;
+        background: #19241f;
+        color: #d8e9df;
+        font:
+          12px/1.5 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        white-space: nowrap;
+      }
+
+      .check-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .check-list li {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+      }
+
+      .check-list li::before {
+        display: grid;
+        flex: 0 0 18px;
+        width: 18px;
+        height: 18px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--teal-soft);
+        color: var(--teal);
+        content: "✓";
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .integrity {
+        display: grid;
+        grid-template-columns: 1.2fr repeat(3, 0.6fr);
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid var(--rule);
+        border-radius: var(--radius);
+        background: var(--rule);
+      }
+
+      .integrity > div {
+        min-height: 140px;
+        padding: 24px;
+        background: var(--card);
+      }
+
+      .integrity .integrity-copy {
+        background: var(--forest);
+        color: white;
+      }
+
+      .integrity-copy p {
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.67);
+        font-size: 13px;
+      }
+
+      .integrity-number {
+        display: block;
+        margin: 10px 0 6px;
+        color: var(--forest);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 38px;
+        line-height: 1;
+      }
+
+      .integrity-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .caveat {
+        padding: 24px 26px;
+        border: 1px solid #e2ca9f;
+        border-radius: 16px;
+        background: #fff5df;
+      }
+
+      .caveat strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #76501c;
+      }
+
+      .caveat p {
+        margin-bottom: 0;
+        color: #7d6847;
+        font-size: 14px;
+      }
+
+      .artifact-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .artifact-links a {
+        padding: 9px 12px;
+        border: 1px solid var(--rule);
+        border-radius: 9px;
+        background: var(--card);
+        color: var(--forest);
+        font-size: 12px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .artifact-links a:hover {
+        border-color: var(--forest);
+      }
+
+      footer {
+        padding: 30px 0 44px;
+        border-top: 1px solid var(--rule);
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .footer-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.94em;
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .section-head,
+        .bias-intro,
+        .patch-card {
+          grid-template-columns: 1fr;
+        }
+        .hero {
+          gap: 38px;
+        }
+        .hero-verdict {
+          max-width: 480px;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .chart-grid,
+        .provenance-grid {
+          grid-template-columns: 1fr;
+        }
+        .integrity {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .integrity-copy {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .shell {
+          width: min(100% - 24px, 1180px);
+        }
+        .masthead {
+          padding-top: 22px;
+        }
+        .nav {
+          padding-bottom: 48px;
+        }
+        .run-state {
+          display: none;
+        }
+        .stat-grid {
+          grid-template-columns: 1fr;
+          margin-top: -48px;
+        }
+        .stat {
+          min-height: auto;
+        }
+        section {
+          margin-top: 58px;
+        }
+        .chart-card,
+        .bias-panel,
+        .patch-card,
+        .provenance-card {
+          padding: 20px;
+        }
+        .integrity {
+          grid-template-columns: 1fr;
+        }
+        .integrity-copy {
+          grid-column: auto;
+        }
+        .footer-row {
+          flex-direction: column;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+        .masthead {
+          padding-bottom: 54px;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .stat-grid {
+          margin-top: -36px;
+        }
+        .panel,
+        .stat {
+          box-shadow: none;
+          break-inside: avoid;
+        }
+        section {
+          break-inside: avoid;
+        }
+        .artifact-links {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="shell">
+        <nav class="nav" aria-label="Report identity">
+          <div class="brand">
+            <span class="seal" aria-hidden="true">商</span> Axiia benchmark
+            report
+          </div>
+          <div class="run-state">160 / 160 calls verified</div>
+        </nav>
+
+        <div class="hero">
+          <div>
+            <p class="eyebrow">Shangyang Court · Patch 5 · Direct API</p>
+            <h1>Judge bias &amp; sensitivity</h1>
+            <p class="lede">
+              A frozen-history replay of GLM-5.2 and DeepSeek V4 Pro, with
+              reasoning enabled and the proposed sensitivity patch applied
+              exactly at its two prompt anchors.
+            </p>
+          </div>
+          <div class="hero-verdict">
+            <strong>Both judges were sharply sensitive under patch5.</strong>
+            <span
+              >But GLM-5.2 retained a strong Shangyang preference at the equal
+              L3 midpoint.</span
+            >
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div class="stat-grid" aria-label="Benchmark highlights">
+        <article class="stat">
+          <span class="stat-label">Valid judge calls</span>
+          <span class="stat-value">160/160</span>
+          <span class="stat-note"
+            >Zero errors or parse failures in the final matrix</span
+          >
+        </article>
+        <article class="stat">
+          <span class="stat-label">Sensitivity</span>
+          <span class="stat-value">46.7%</span>
+          <span class="stat-note"
+            >Average absolute sensitivity for both judges</span
+          >
+        </article>
+        <article class="stat">
+          <span class="stat-label">DeepSeek L3 bias</span>
+          <span class="stat-value">60 / 40</span>
+          <span class="stat-note"
+            >Shangyang versus Ganlong on the identical transcript</span
+          >
+        </article>
+        <article class="stat">
+          <span class="stat-label">GLM L3 bias</span>
+          <span class="stat-value">95 / 5</span>
+          <span class="stat-note"
+            >A pronounced Shangyang-side decision skew</span
+          >
+        </article>
+      </div>
+
+      <section aria-labelledby="sensitivity-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">01 · Sensitivity curves</p>
+            <h2 id="sensitivity-title">
+              Clear thresholds, different midpoints
+            </h2>
+          </div>
+          <p class="section-note">
+            Each point is the varied side’s policy win rate across ten judge
+            replays. A = 商鞅; B = 甘龙.
+          </p>
+        </div>
+
+        <div class="chart-grid">
+          <article class="panel chart-card">
+            <div class="chart-title">
+              <div>
+                <h3>DeepSeek V4 Pro</h3>
+                <span class="subtle">Direct DeepSeek API · high effort</span>
+              </div>
+              <span class="score-pill">L3→L4 +60 pp</span>
+            </div>
+            <svg
+              viewBox="0 0 620 300"
+              role="img"
+              aria-labelledby="deepseek-chart-title deepseek-chart-desc"
+            >
+              <title id="deepseek-chart-title">
+                DeepSeek sensitivity curves
+              </title>
+              <desc id="deepseek-chart-desc">
+                Shangyang varied win rates are 0, 0, 50, and 100 percent.
+                Ganlong varied win rates are 0, 0, 30, and 100 percent.
+              </desc>
+              <line class="grid-line" x1="70" y1="40" x2="570" y2="40" />
+              <line class="grid-line" x1="70" y1="145" x2="570" y2="145" />
+              <line class="grid-line" x1="70" y1="250" x2="570" y2="250" />
+              <text class="axis-label" x="24" y="44">100%</text>
+              <text class="axis-label" x="31" y="149">50%</text>
+              <text class="axis-label" x="38" y="254">0%</text>
+              <text class="axis-label" x="75" y="280">L1</text>
+              <text class="axis-label" x="235" y="280">L2</text>
+              <text class="axis-label" x="395" y="280">L3</text>
+              <text class="axis-label" x="555" y="280">L4</text>
+              <polyline class="line-a" points="80,250 240,250 400,145 560,40" />
+              <polyline class="line-b" points="80,250 240,250 400,187 560,40" />
+              <g aria-hidden="true">
+                <circle class="dot-a" cx="80" cy="250" r="6" />
+                <circle class="dot-a" cx="240" cy="250" r="6" />
+                <circle class="dot-a" cx="400" cy="145" r="6" />
+                <circle class="dot-a" cx="560" cy="40" r="6" />
+                <circle class="dot-b" cx="80" cy="250" r="4" />
+                <circle class="dot-b" cx="240" cy="250" r="4" />
+                <circle class="dot-b" cx="400" cy="187" r="6" />
+                <circle class="dot-b" cx="560" cy="40" r="4" />
+                <text class="point-label" x="387" y="130">50%</text>
+                <text class="point-label" x="387" y="211">30%</text>
+                <text class="point-label" x="538" y="25">100%</text>
+              </g>
+            </svg>
+            <div class="legend" aria-hidden="true">
+              <span><i></i> Shangyang varied</span
+              ><span class="b"><i></i> Ganlong varied</span>
+            </div>
+          </article>
+
+          <article class="panel chart-card">
+            <div class="chart-title">
+              <div>
+                <h3>GLM-5.2</h3>
+                <span class="subtle">Direct Zhipu API · thinking enabled</span>
+              </div>
+              <span class="score-pill">L3→L4 +50 pp</span>
+            </div>
+            <svg
+              viewBox="0 0 620 300"
+              role="img"
+              aria-labelledby="glm-chart-title glm-chart-desc"
+            >
+              <title id="glm-chart-title">GLM-5.2 sensitivity curves</title>
+              <desc id="glm-chart-desc">
+                Shangyang varied win rates are 0, 0, 90, and 100 percent.
+                Ganlong varied win rates are 0, 0, 0, and 90 percent.
+              </desc>
+              <line class="grid-line" x1="70" y1="40" x2="570" y2="40" />
+              <line class="grid-line" x1="70" y1="145" x2="570" y2="145" />
+              <line class="grid-line" x1="70" y1="250" x2="570" y2="250" />
+              <text class="axis-label" x="24" y="44">100%</text>
+              <text class="axis-label" x="31" y="149">50%</text>
+              <text class="axis-label" x="38" y="254">0%</text>
+              <text class="axis-label" x="75" y="280">L1</text>
+              <text class="axis-label" x="235" y="280">L2</text>
+              <text class="axis-label" x="395" y="280">L3</text>
+              <text class="axis-label" x="555" y="280">L4</text>
+              <polyline class="line-a" points="80,250 240,250 400,61 560,40" />
+              <polyline class="line-b" points="80,250 240,250 400,250 560,61" />
+              <g aria-hidden="true">
+                <circle class="dot-a" cx="80" cy="250" r="6" />
+                <circle class="dot-a" cx="240" cy="250" r="6" />
+                <circle class="dot-a" cx="400" cy="61" r="6" />
+                <circle class="dot-a" cx="560" cy="40" r="6" />
+                <circle class="dot-b" cx="80" cy="250" r="4" />
+                <circle class="dot-b" cx="240" cy="250" r="4" />
+                <circle class="dot-b" cx="400" cy="250" r="6" />
+                <circle class="dot-b" cx="560" cy="61" r="6" />
+                <text class="point-label" x="387" y="46">90%</text>
+                <text class="point-label" x="387" y="236">0%</text>
+                <text class="point-label" x="538" y="25">100%</text>
+                <text class="point-label" x="540" y="84">90%</text>
+              </g>
+            </svg>
+            <div class="legend" aria-hidden="true">
+              <span><i></i> Shangyang varied</span
+              ><span class="b"><i></i> Ganlong varied</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="bias-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">02 · Judge bias</p>
+            <h2 id="bias-title">The equal case exposes the difference</h2>
+          </div>
+          <p class="section-note">
+            At L3/L3, both orientations use the exact same frozen debate
+            transcript. Combining the two ten-call replay sets gives a clean
+            observed role preference.
+          </p>
+        </div>
+
+        <article class="panel bias-panel">
+          <div class="bias-intro">
+            <div class="bias-copy">
+              <h3>Policy winner on identical evidence</h3>
+              <p>
+                DeepSeek is comparatively balanced, while GLM almost always
+                resolves the midpoint in Shangyang’s favor.
+              </p>
+              <span class="same-history"
+                >Same transcript hash in both orientations</span
+              >
+            </div>
+            <div>
+              <div class="bias-row">
+                <div class="bias-labels">
+                  <span>DeepSeek V4 Pro</span><span>12 A wins · 8 B wins</span>
+                </div>
+                <div
+                  class="bias-bar"
+                  aria-label="DeepSeek: Shangyang 60 percent, Ganlong 40 percent"
+                >
+                  <div class="bias-a" style="width: 60%">商鞅 60%</div>
+                  <div class="bias-b" style="width: 40%">甘龙 40%</div>
+                </div>
+              </div>
+              <div class="bias-row">
+                <div class="bias-labels">
+                  <span>GLM-5.2</span><span>19 A wins · 1 B win</span>
+                </div>
+                <div
+                  class="bias-bar"
+                  aria-label="GLM-5.2: Shangyang 95 percent, Ganlong 5 percent"
+                >
+                  <div class="bias-a" style="width: 95%">商鞅 95%</div>
+                  <div
+                    class="bias-b"
+                    style="width: 5%"
+                    title="Ganlong 5%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bias-callout">
+            <strong>Interpretation:</strong> the two judges share the same
+            aggregate sensitivity score, but not the same decision boundary.
+            GLM’s 90-point mirror gap at L3 is the main residual bias signal.
+          </div>
+        </article>
+      </section>
+
+      <section aria-labelledby="numbers-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">03 · Exact results</p>
+            <h2 id="numbers-title">The complete comparison</h2>
+          </div>
+          <p class="section-note">
+            Percentages are descriptive results on one frozen history per
+            condition; repeat judgments measure replay variance, not
+            debate-generation variance.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Judge</th>
+                <th>Shangyang varied · L1/L2/L3/L4</th>
+                <th>Ganlong varied · L1/L2/L3/L4</th>
+                <th>Avg abs sensitivity</th>
+                <th>Bad→good</th>
+                <th>L3→L4</th>
+                <th>Instability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>DeepSeek V4 Pro</strong></td>
+                <td class="curve">0 / 0 / 50 / 100%</td>
+                <td class="curve">0 / 0 / 30 / 100%</td>
+                <td>46.7%</td>
+                <td>70.0%</td>
+                <td class="delta-up">60.0%</td>
+                <td>5.8%</td>
+              </tr>
+              <tr>
+                <td><strong>GLM-5.2</strong></td>
+                <td class="curve">0 / 0 / 90 / 100%</td>
+                <td class="curve">0 / 0 / 0 / 90%</td>
+                <td>46.7%</td>
+                <td>70.0%</td>
+                <td class="delta-up">50.0%</td>
+                <td>2.3%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="replication-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">04 · DeepSeek verification</p>
+            <h2 id="replication-title">Patch5’s shape reproduced</h2>
+          </div>
+          <p class="section-note">
+            The exact percentages moved under the new direct provider route, but
+            the intended threshold pattern—and the L4 recovery—held.
+          </p>
+        </div>
+        <article class="panel patch-card">
+          <div class="patch-verdict">
+            <span class="stat-label">Replication verdict</span>
+            <span class="big">Directionally confirmed</span>
+            <p>
+              Both orientations stay at 0% for L1/L2, become responsive at L3,
+              and reach 100% at L4.
+            </p>
+          </div>
+          <div class="table-wrap">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>DeepSeek V4 Pro</th>
+                  <th>Patch document</th>
+                  <th>Direct-API measurement</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Shangyang varied</td>
+                  <td class="curve">0 / 0 / 62 / 88%</td>
+                  <td class="curve measured">0 / 0 / 50 / 100%</td>
+                </tr>
+                <tr>
+                  <td>Ganlong varied</td>
+                  <td class="curve">0 / 0 / 38 / 100%</td>
+                  <td class="curve measured">0 / 0 / 30 / 100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section aria-labelledby="provenance-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">05 · Direct-API provenance</p>
+            <h2 id="provenance-title">Thinking was verified, not assumed</h2>
+          </div>
+          <p class="section-note">
+            Every raw result stores the resolved provider, API model, request
+            control, reasoning evidence, and provider response ID.
+          </p>
+        </div>
+        <div class="provenance-grid">
+          <article class="panel provenance-card">
+            <div class="provider-line">
+              <div>
+                <h3>DeepSeek V4 Pro</h3>
+                <span class="subtle">apiModel: deepseek-v4-pro</span>
+              </div>
+              <span class="provider-badge">DeepSeek direct</span>
+            </div>
+            <div class="code-block">{"output_config":{"effort":"high"}}</div>
+            <ul class="check-list">
+              <li>
+                Provider-default thinking, with high effort explicitly requested
+              </li>
+              <li>Reasoning content present in 80 of 80 calls</li>
+              <li>Minimum observed reasoning content: 257 characters</li>
+              <li>80 distinct provider response IDs</li>
+            </ul>
+          </article>
+          <article class="panel provenance-card">
+            <div class="provider-line">
+              <div>
+                <h3>GLM-5.2</h3>
+                <span class="subtle">apiModel: glm-5.2</span>
+              </div>
+              <span class="provider-badge">Zhipu direct</span>
+            </div>
+            <div class="code-block">{"thinking":{"type":"enabled"}}</div>
+            <ul class="check-list">
+              <li>Native thinking explicitly enabled on every request</li>
+              <li>Reasoning content present in 80 of 80 calls</li>
+              <li>Reasoning-token telemetry reported in all 80 calls</li>
+              <li>80 distinct provider response IDs</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="integrity-title">
+        <div class="section-head">
+          <div>
+            <p class="kicker">06 · Integrity &amp; limits</p>
+            <h2 id="integrity-title">A complete replay, with a narrow claim</h2>
+          </div>
+          <p class="section-note">
+            Invalid transport or JSON rows were retried under the same job IDs
+            and replaced in place, preserving the planned 160-cell matrix.
+          </p>
+        </div>
+
+        <div class="integrity">
+          <div class="integrity-copy">
+            <h3>Final artifact audit</h3>
+            <p>
+              Eight reporting histories, seven unique generated debates, two
+              judges, four levels, both varied-side orientations, and ten
+              replays per cell.
+            </p>
+          </div>
+          <div>
+            <span class="stat-label">Parse failures</span
+            ><span class="integrity-number">0</span
+            ><span class="integrity-label">after bounded cleanup</span>
+          </div>
+          <div>
+            <span class="stat-label">Duplicate IDs</span
+            ><span class="integrity-number">0</span
+            ><span class="integrity-label">across provider responses</span>
+          </div>
+          <div>
+            <span class="stat-label">Reasoning on</span
+            ><span class="integrity-number">160</span
+            ><span class="integrity-label">verified calls</span>
+          </div>
+        </div>
+
+        <div class="caveat" style="margin-top: 18px">
+          <strong>Validity boundary</strong>
+          <p>
+            This is a judge replay over frozen July 8 debates, not 160
+            independent debates. Patch5 was developed on these histories, so
+            held-out histories are still required before claiming
+            generalization. The older SiliconFlow benchmark is also not a causal
+            patch-only control because both the provider route and prompt
+            changed.
+          </p>
+        </div>
+
+        <div class="artifact-links" aria-label="Benchmark artifacts">
+          <a href="summary.md">Summary · Markdown</a>
+          <a href="summary.json">Summary · JSON</a>
+          <a href="judge-results.json">Raw judge results</a>
+          <a href="config.json">Run configuration</a>
+          <a href="scenario-snapshots.json">Patched scenario snapshot</a>
+          <a
+            href="../../../competition/scratchpad/shangyang-court-judge-prompt-sensitivity-patch-ms.md"
+            >Patch5 source</a
+          >
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-row">
+        <span>Generated from audited benchmark artifacts · 22 July 2026</span>
+        <span>Run <code>dc153013-e9b2-47f9-b00c-c26cfbe78d06</code></span>
+      </div>
+    </footer>
+  </body>
+</html>

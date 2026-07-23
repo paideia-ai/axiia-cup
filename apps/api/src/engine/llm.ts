@@ -53,9 +53,8 @@ export type ChatMessage = {
 }
 
 export type ChatCompletionThinkingMode =
-  | 'disabled'
-  | 'enabled'
-  | 'provider-default'
+  'disabled' | 'enabled' | 'provider-default'
+export type ChatCompletionReasoningEffort = 'high' | 'max'
 
 export type ChatCompletionCapture = {
   apiModel: string
@@ -80,6 +79,7 @@ export type ChatCompletionParams = {
   maxTokens?: number
   messages: ChatMessage[]
   model: ModelId
+  reasoningEffort?: ChatCompletionReasoningEffort
   signal?: AbortSignal
   systemPrompt: string
   temperature?: number
@@ -88,11 +88,7 @@ export type ChatCompletionParams = {
 }
 
 type OpenAICompatibleProvider =
-  | 'dashscope'
-  | 'moonshot'
-  | 'openai'
-  | 'siliconflow'
-  | 'zhipu'
+  'dashscope' | 'moonshot' | 'openai' | 'siliconflow' | 'zhipu'
 
 // Each lab's own OpenAI-compatible endpoint. Base URLs are overridable via
 // env; verify each default against the vendor docs at cutover time before
@@ -799,19 +795,47 @@ function buildOpenAICompatibleThinkingControl(params: {
 function extractThinkingRequestControl(
   requestPayload: Record<string, unknown>,
 ): Record<string, unknown> | null {
+  const control: Record<string, unknown> = {}
+
   if ('thinking' in requestPayload) {
-    return { thinking: requestPayload.thinking }
+    control.thinking = requestPayload.thinking
   }
 
   if ('enable_thinking' in requestPayload) {
-    return { enable_thinking: requestPayload.enable_thinking }
+    control.enable_thinking = requestPayload.enable_thinking
   }
 
   if ('output_config' in requestPayload) {
-    return { output_config: requestPayload.output_config }
+    control.output_config = requestPayload.output_config
   }
 
-  return null
+  if ('reasoning_effort' in requestPayload) {
+    control.reasoning_effort = requestPayload.reasoning_effort
+  }
+
+  return Object.keys(control).length > 0 ? control : null
+}
+
+function buildOpenAICompatibleReasoningEffort(params: {
+  model: ModelId
+  reasoningEffort?: ChatCompletionReasoningEffort
+  thinkingMode?: ChatCompletionThinkingMode
+}) {
+  if (!params.reasoningEffort) {
+    return {}
+  }
+
+  const definition = getModelDefinition(params.model)
+  if (definition.provider !== 'zhipu' || definition.apiModel !== 'glm-5.2') {
+    throw new Error(
+      `Explicit reasoning effort is only implemented for Zhipu GLM-5.2, received ${definition.provider}/${definition.apiModel}`,
+    )
+  }
+  if (params.thinkingMode !== 'enabled') {
+    throw new Error('GLM-5.2 reasoning effort requires thinkingMode=enabled')
+  }
+
+  return { reasoning_effort: params.reasoningEffort }
 }
 
 export function buildOpenAICompatibleRequest(params: {
@@ -819,6 +843,7 @@ export function buildOpenAICompatibleRequest(params: {
   maxTokens?: number
   messages: ChatMessage[]
   model: ModelId
+  reasoningEffort?: ChatCompletionReasoningEffort
   systemPrompt: string
   temperature?: number
   thinkingMode?: ChatCompletionThinkingMode
@@ -842,6 +867,7 @@ export function buildOpenAICompatibleRequest(params: {
       ? {}
       : { temperature: params.temperature ?? 0 }),
     ...buildOpenAICompatibleThinkingControl(params),
+    ...buildOpenAICompatibleReasoningEffort(params),
   }
 }
 
@@ -921,16 +947,19 @@ async function callOpenAICompatibleChatCompletion(
   })
 
   try {
+    const streamRequest = {
+      ...requestPayload,
+      stream: true as const,
+      // Zhipu's dialect emits usage in the final chunk on its own and is
+      // the one holdout we have not verified accepts stream_options.
+      ...(provider === 'zhipu'
+        ? {}
+        : { stream_options: { include_usage: true } }),
+    }
+    // The OpenAI SDK's reasoning_effort union does not include Zhipu's
+    // documented "max" dialect value, although the compatible endpoint does.
     const stream = await client.chat.completions.create(
-      {
-        ...requestPayload,
-        stream: true,
-        // Zhipu's dialect emits usage in the final chunk on its own and is
-        // the one holdout we have not verified accepts stream_options.
-        ...(provider === 'zhipu'
-          ? {}
-          : { stream_options: { include_usage: true } }),
-      },
+      streamRequest as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming,
       { signal: params.signal },
     )
 

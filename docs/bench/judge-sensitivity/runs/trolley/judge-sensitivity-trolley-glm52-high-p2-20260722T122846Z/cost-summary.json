@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-07-22T12:47:52Z",
+  "runId": "94e076e3-c8ac-4916-8edd-8ef5091dc6d0",
+  "langfuseSessionId": "benchmark:94e076e3-c8ac-4916-8edd-8ef5091dc6d0",
+  "source": "Langfuse public traces API totalCost",
+  "pricingNote": "Langfuse cost details supplied by the repository pricing table; CNY converted for Langfuse at 7.25 CNY/USD",
+  "cnyPerUsd": 7.25,
+  "totals": {
+    "traces": 246,
+    "billableTraces": 244,
+    "zeroCostTimeoutTraces": 2,
+    "retainedJudgments": 240,
+    "costUsd": 1.4945554757390005,
+    "costCny": 10.835527199107753
+  },
+  "byPass": {
+    "main": {
+      "concurrency": 30,
+      "traces": 242,
+      "billableTraces": 240,
+      "zeroCostTimeoutTraces": 2,
+      "costUsd": 1.4576947860860001,
+      "costCny": 10.568287199123501
+    },
+    "repair": {
+      "concurrency": 4,
+      "traces": 4,
+      "billableTraces": 4,
+      "zeroCostTimeoutTraces": 0,
+      "costUsd": 0.036860689653,
+      "costCny": 0.26723999998425
+    }
+  },
+  "byCase": {
+    "A": {
+      "traces": 83,
+      "billableTraces": 82,
+      "costUsd": 0.5178852413379998,
+      "costCny": 3.754667999700499
+    },
+    "D": {
+      "traces": 80,
+      "billableTraces": 80,
+      "costUsd": 0.44717417926700015,
+      "costCny": 3.2420127996857513
+    },
+    "E": {
+      "traces": 83,
+      "billableTraces": 82,
+      "costUsd": 0.5294960551340001,
+      "costCny": 3.838846399721501
+    }
+  },
+  "timeouts": [
+    {
+      "benchmarkCaseId": "trolley-problem__case-A__varied-a-l4__baseline-b-l3__judge-glm-5.2-reasoning-high__repeat-2",
+      "latencySeconds": 180.02,
+      "langfuseCostUsd": 0
+    },
+    {
+      "benchmarkCaseId": "trolley-problem__case-E__varied-a-l3__baseline-b-l3__judge-glm-5.2-reasoning-high__repeat-6",
+      "latencySeconds": 180.015,
+      "langfuseCostUsd": 0
+    }
+  ],
+  "latency": {
+    "uncachedRetainedCalls": 196,
+    "uncachedMeanSeconds": 27.377734693877553,
+    "uncachedMedianSeconds": 25.687,
+    "uncachedP90Seconds": 41.073,
+    "uncachedMaxSeconds": 107.206
+  }
+}

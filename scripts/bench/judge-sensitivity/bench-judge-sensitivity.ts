@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import { Database } from 'bun:sqlite'
 
@@ -17,6 +17,7 @@ import {
   type EvaluationModelId,
   type InfoAssignment,
   type JudgeQA,
+  type ModelProvider,
   type RequestItem,
   type RoleOption,
   type SubmissionModelId,
@@ -29,11 +30,17 @@ import {
   formatDebateTranscriptForJudge,
   getScenarioDialogueTurnLimit,
 } from '../../../apps/api/src/engine/core'
-import { chatCompletion } from '../../../apps/api/src/engine/llm'
+import {
+  chatCompletion,
+  type ChatCompletionCapture,
+  type ChatCompletionReasoningEffort,
+  type ChatCompletionThinkingMode,
+} from '../../../apps/api/src/engine/llm'
 import {
   computeProgrammaticScore,
   type ProgrammaticScoreResult,
 } from '../../../apps/api/src/engine/programmatic-scorer'
+import { shutdownLangfuseTracing } from '../../../apps/api/src/lib/langfuse'
 
 const BENCHMARK_NAME = 'judge-sensitivity'
 const SHANGYANG_SCENARIO_ID = 'shangyang-court'
@@ -44,6 +51,7 @@ const ALL_SCENARIO_IDS = [
   TROLLEY_SCENARIO_ID,
 ] as const
 const PROMPT_LEVELS = [1, 2, 3, 4] as const
+const GLM_REASONING_EFFORTS = ['high', 'max'] as const
 const DEFAULT_PLAYER_MODEL = 'glm-5.2' satisfies SubmissionModelId
 const DOMESTIC_JUDGE_MODELS = [
   'deepseek-v3.2',
@@ -200,6 +208,32 @@ const EXPERIMENTAL_BENCH_JUDGE_MODELS = {
     underlyingProvider: 'zai',
     verifyReasoningEnabled: true,
   },
+  'glm-5.2-reasoning-high': {
+    allowMissingReasoningWhenEnabled: true,
+    apiModel: 'glm-5.2',
+    baseModel: 'glm-5.2',
+    id: 'glm-5.2-reasoning-high',
+    label: 'GLM-5.2 (reasoning high)',
+    provider: 'zhipu',
+    reasoningEffort: 'high',
+    surfaces: ['evaluation'],
+    thinkingOnRequest: 'native-thinking-enabled',
+    underlyingProvider: 'zai',
+    verifyReasoningEnabled: true,
+  },
+  'glm-5.2-reasoning-max': {
+    allowMissingReasoningWhenEnabled: true,
+    apiModel: 'glm-5.2',
+    baseModel: 'glm-5.2',
+    id: 'glm-5.2-reasoning-max',
+    label: 'GLM-5.2 (reasoning max)',
+    provider: 'zhipu',
+    reasoningEffort: 'max',
+    surfaces: ['evaluation'],
+    thinkingOnRequest: 'native-thinking-enabled',
+    underlyingProvider: 'zai',
+    verifyReasoningEnabled: true,
+  },
   'kimi-k2.6-thinking-explicitly-on': {
     apiModel: 'Pro/moonshotai/Kimi-K2.6',
     id: 'kimi-k2.6-thinking-explicitly-on',
@@ -324,6 +358,8 @@ const OPENAI_BASE_URL =
   process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1'
 const SILICONFLOW_BASE_URL =
   process.env.SILICONFLOW_BASE_URL ?? 'https://api.siliconflow.cn/v1'
+const ZHIPU_BASE_URL =
+  process.env.ZHIPU_BASE_URL ?? 'https://open.bigmodel.cn/api/paas/v4'
 const ANTHROPIC_BASE_URL =
   process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com'
 const ANTHROPIC_VERSION = process.env.ANTHROPIC_VERSION ?? '2023-06-01'
@@ -360,24 +396,24 @@ type ScenarioId = (typeof ALL_SCENARIO_IDS)[number]
 type ScenarioSource = 'api' | 'db'
 type Side = 'a' | 'b'
 type PromptLevel = (typeof PROMPT_LEVELS)[number]
+type GlmReasoningEffort = (typeof GLM_REASONING_EFFORTS)[number]
 type PolicyWinner = Side | 'unknown'
-type BenchJudgeProvider = 'anthropic' | 'openai' | 'siliconflow'
+type BenchJudgeProvider = 'anthropic' | 'openai' | 'siliconflow' | 'zhipu'
 type BenchJudgeModelDefinition = {
+  allowMissingReasoningWhenEnabled?: boolean
   allowMissingReasoningTokensWhenDisabled?: boolean
   apiModel: string
+  baseModel?: EvaluationModelId
   id: string
   label: string
   provider: BenchJudgeProvider
+  reasoningEffort?: ChatCompletionReasoningEffort
   surfaces: readonly ['evaluation']
   thinking?: 'disabled'
   thinkingOffRequest?:
-    | 'both'
-    | 'enable-thinking-false'
-    | 'native-thinking-disabled'
+    'both' | 'enable-thinking-false' | 'native-thinking-disabled'
   thinkingOnRequest?:
-    | 'both'
-    | 'enable-thinking-true'
-    | 'native-thinking-enabled'
+    'both' | 'enable-thinking-true' | 'native-thinking-enabled'
   underlyingProvider: string
   verifyReasoningDisabled?: boolean
   verifyReasoningEnabled?: boolean
@@ -390,8 +426,7 @@ type BenchChatMessage = {
   role: 'assistant' | 'user'
 }
 type BenchJudgeModelDefinitionRecord =
-  | BenchJudgeModelDefinition
-  | ReturnType<typeof getModelDefinition>
+  BenchJudgeModelDefinition | ReturnType<typeof getModelDefinition>
 
 type ScenarioSnapshot = ScenarioRecord & {
   agentPromptTemplateHash: string
@@ -505,7 +540,8 @@ type HistoryResult = {
 
 type BenchmarkRunConfig = {
   benchmarkName: string
-  caseFilter: string | null
+  caseFilter?: string | null
+  caseFilters?: string[] | null
   command: Command
   concurrency: number
   dryRun: boolean
@@ -519,9 +555,15 @@ type BenchmarkRunConfig = {
   jobTimeoutMs: number
   judgeCacheStrategy?: 'warm-first-per-model-history'
   judgeConcurrency: number
+  judgeCaseFilters?: string[] | null
   judgeModels: BenchJudgeModelId[]
   judgeModelDefinitions: BenchJudgeModelDefinitionRecord[]
+  judgePromptPatch?: JudgePromptPatchMetadata
+  trolleyJudgePromptOverride?: TrolleyJudgePromptOverrideMetadata
   judgeRepeats: number
+  judgeScenarioIds?: ScenarioId[] | null
+  judgeThinkingMode?: BenchJudgeThinkingMode
+  glmReasoningEfforts?: GlmReasoningEffort[] | null
   levels: PromptLevel[]
   llmCallTimeoutMs: number
   outputDir: string
@@ -589,6 +631,7 @@ type JudgeResult = {
   providerResponseId: string | null
   rawOutput: string | null
   reasoningVerification: ReasoningVerification | null
+  requestProvenance?: JudgeRequestProvenance | null
   repeatIndex: number
   roleAName: string
   roleBName: string
@@ -613,10 +656,48 @@ type ReasoningVerification = {
   nativeThinkingDisabled: boolean
   nativeThinkingEnabled: boolean
   reasoningContentChars: number
+  effort?: 'high' | 'max'
   reasoningTokensOmittedAllowed?: true
   reasoningTokens: number | null
+  requestControlVerifiedOn?: true
+  reasoningSkippedByModelAllowed?: true
   verifiedOff?: true
   verifiedOn?: true
+}
+
+type BenchJudgeThinkingMode = Extract<
+  ChatCompletionThinkingMode,
+  'enabled' | 'provider-default'
+>
+
+type JudgePromptPatchMetadata = {
+  block1Hash: string
+  block2Hash: string
+  originalJudgePromptHash: string
+  patchedJudgePromptHash: string
+  scenarioId: typeof SHANGYANG_SCENARIO_ID
+  sourceHash: string
+  sourcePath: string
+}
+
+type TrolleyJudgePromptOverrideMetadata = {
+  candidateId: string | null
+  originalJudgePromptHash: string
+  overrideJudgePromptHash: string
+  parentCandidateId: string | null
+  scenarioId: typeof TROLLEY_SCENARIO_ID
+  sourceHash: string
+  sourcePath: string
+}
+
+type JudgeRequestProvenance = {
+  apiModel: string
+  configuredEffort: 'high' | 'max' | null
+  provider: ModelProvider
+  reasoningContentChars: number
+  reasoningTokens: number | null
+  thinkingMode: ChatCompletionThinkingMode
+  thinkingRequestControl: Record<string, unknown> | null
 }
 
 type BenchJudgeCompletion = {
@@ -625,6 +706,7 @@ type BenchJudgeCompletion = {
   providerCreatedAt: number | null
   providerResponseId: string | null
   reasoningVerification: ReasoningVerification | null
+  requestProvenance: JudgeRequestProvenance | null
 }
 
 type JudgeResultsArtifact = {
@@ -732,9 +814,16 @@ Options:
   --judge-concurrency <n>   Judge replay concurrency. Default: ${DEFAULT_JUDGE_CONCURRENCY}
   --judge-repeats <n>       Default: ${DEFAULT_JUDGE_REPEATS}
   --judge-models <ids>      Comma-separated. Default: ${DEFAULT_JUDGE_MODELS.join(',')}
+  --judge-thinking <mode>   provider-default or enabled. Default: provider-default
+  --glm-reasoning-efforts <efforts>
+                            GLM-5.2 only: high,max. Requires --judge-thinking enabled
+  --judge-prompt-patch <p>  Judge-only Shangyang patch Markdown with Block 1/2 quotes
+  --trolley-judge-prompt <p>
+                            Trolley single-case judge prompt.txt override
   --levels <ids>            Prompt levels to vary. Default: 1,2,3,4
   --pair <a:b>              Honnoji smoke filter, e.g. chosokabe:hosokawa_fujitaka
-  --case <id>               Trolley smoke filter, e.g. A
+  --cases <ids>             Trolley case filter for histories or judge replay, e.g. A,D,E
+  --case <id>               Backward-compatible single-case alias
   --job-timeout-ms <n>      Default: 900000
   --llm-call-timeout-ms <n> Per model call timeout. Default: ${DEFAULT_LLM_CALL_TIMEOUT_MS}
   --prompt-source <path>    Default: ${DEFAULT_SCRATCHPAD_PROMPT}
@@ -742,6 +831,7 @@ Options:
   --honnoji-samples <path>  Default: ${DEFAULT_HONNOJI_SELECTED_SAMPLES}
   --trolley-samples <path>  Default: ${DEFAULT_TROLLEY_SELECTED_SAMPLES}
   --source-note <text>      Optional note saved next to the scenario source
+  --run-label <text>        Optional human-readable run label
   --auth-token <token>      API token; falls back to AXIIA_AUTH_TOKEN
   --dry-run                 Write artifacts without model calls
   --resume                  Reuse completed rows in output-dir
@@ -830,6 +920,72 @@ function parsePromptLevels(raw: string): PromptLevel[] {
   return [...new Set(levels)]
 }
 
+export function parseTrolleyCaseIds(raw: string) {
+  const requested = raw
+    .split(',')
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean)
+
+  if (requested.length === 0) {
+    throw new Error('--cases must include at least one Trolley case id')
+  }
+
+  const available = new Set(trolleyCases.map((item) => item.id))
+  for (const caseId of requested) {
+    if (!available.has(caseId)) {
+      throw new Error(
+        `Unsupported Trolley case id: ${caseId}. Expected one of ${[...available].join(',')}`,
+      )
+    }
+  }
+
+  const requestedSet = new Set(requested)
+  return trolleyCases
+    .map((item) => item.id)
+    .filter((caseId) => requestedSet.has(caseId))
+}
+
+export function parseTrolleyCaseFilters(
+  options: Record<string, string | true>,
+) {
+  const single = getStringOption(options, 'case')
+  const multiple = getStringOption(options, 'cases')
+
+  if (single && multiple) {
+    throw new Error('Use either --case or --cases, not both')
+  }
+
+  return single || multiple ? parseTrolleyCaseIds(multiple || single) : null
+}
+
+function configuredHistoryCaseFilters(config: BenchmarkRunConfig) {
+  if (config.caseFilters?.length) {
+    return config.caseFilters
+  }
+  return config.caseFilter ? [config.caseFilter] : null
+}
+
+export function parseGlmReasoningEfforts(raw: string): GlmReasoningEffort[] {
+  const efforts = raw
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean)
+
+  if (efforts.length === 0) {
+    throw new Error('--glm-reasoning-efforts must include high or max')
+  }
+
+  for (const effort of efforts) {
+    if (!GLM_REASONING_EFFORTS.includes(effort as GlmReasoningEffort)) {
+      throw new Error(
+        `Unsupported GLM-5.2 reasoning effort: ${effort}. Expected high or max`,
+      )
+    }
+  }
+
+  return [...new Set(efforts)] as GlmReasoningEffort[]
+}
+
 function parseScenarioIds(raw: string): ScenarioId[] {
   if (raw === 'all') {
     return [...ALL_SCENARIO_IDS]
@@ -885,6 +1041,52 @@ function parseJudgeModels(raw: string): BenchJudgeModelId[] {
   }
 
   return modelIds as BenchJudgeModelId[]
+}
+
+function glmReasoningVariantId(
+  effort: GlmReasoningEffort,
+): ExperimentalBenchJudgeModelId {
+  return `glm-5.2-reasoning-${effort}`
+}
+
+export function expandGlmReasoningEffortModels(
+  models: BenchJudgeModelId[],
+  efforts: GlmReasoningEffort[] | null,
+) {
+  if (!efforts?.length) {
+    return models
+  }
+
+  if (models.length !== 1 || models[0] !== 'glm-5.2') {
+    throw new Error('--glm-reasoning-efforts requires --judge-models glm-5.2')
+  }
+
+  return efforts.map(glmReasoningVariantId)
+}
+
+function modelsRequireExplicitThinking(models: BenchJudgeModelId[]) {
+  return models.some((model) => model.startsWith('glm-5.2-reasoning-'))
+}
+
+function assertCompatibleThinkingMode(
+  models: BenchJudgeModelId[],
+  thinkingMode: BenchJudgeThinkingMode,
+) {
+  if (modelsRequireExplicitThinking(models) && thinkingMode !== 'enabled') {
+    throw new Error(
+      'GLM-5.2 reasoning-effort lanes require --judge-thinking enabled',
+    )
+  }
+}
+
+function parseBenchJudgeThinkingMode(raw: string): BenchJudgeThinkingMode {
+  if (raw === 'enabled' || raw === 'provider-default') {
+    return raw
+  }
+
+  throw new Error(
+    `--judge-thinking must be provider-default or enabled, received: ${raw}`,
+  )
 }
 
 function timestampSlug(date = new Date()) {
@@ -1012,6 +1214,250 @@ function scenarioWithHashes(scenario: ScenarioRecord): ScenarioSnapshot {
   }
 }
 
+type LoadedJudgePromptPatch = {
+  block1: string
+  block2: string
+  sourceHash: string
+  sourcePath: string
+}
+
+function extractQuotedPatchBlock(raw: string, heading: string) {
+  const lines = raw.split(/\r?\n/u)
+  const headingIndex = lines.findIndex((line) => line.startsWith(heading))
+  if (headingIndex < 0) {
+    throw new Error(`Judge prompt patch is missing heading: ${heading}`)
+  }
+
+  const nextHeadingIndex = lines.findIndex(
+    (line, index) => index > headingIndex && line.startsWith('## '),
+  )
+  const section = lines.slice(
+    headingIndex + 1,
+    nextHeadingIndex < 0 ? undefined : nextHeadingIndex,
+  )
+  const quoteStart = section.findIndex((line) => line.startsWith('>'))
+  if (quoteStart < 0) {
+    throw new Error(`Judge prompt patch has no quoted block under: ${heading}`)
+  }
+
+  const quotedLines: string[] = []
+  for (const line of section.slice(quoteStart)) {
+    if (!line.startsWith('>')) {
+      break
+    }
+    quotedLines.push(line.replace(/^> ?/u, ''))
+  }
+
+  const block = quotedLines.join('\n').trim()
+  if (!block) {
+    throw new Error(`Judge prompt patch block is empty under: ${heading}`)
+  }
+  return block
+}
+
+async function loadJudgePromptPatch(
+  sourcePath: string,
+): Promise<LoadedJudgePromptPatch> {
+  const raw = await readFile(sourcePath, 'utf8')
+  return {
+    block1: extractQuotedPatchBlock(raw, '## Block 1'),
+    block2: extractQuotedPatchBlock(raw, '## Block 2'),
+    sourceHash: sha256(raw),
+    sourcePath,
+  }
+}
+
+function insertPromptBlockBeforeAnchor(params: {
+  anchor: string
+  block: string
+  prompt: string
+}) {
+  if (params.prompt.includes(params.block)) {
+    return params.prompt
+  }
+
+  const anchorIndex = params.prompt.indexOf(params.anchor)
+  if (anchorIndex < 0) {
+    throw new Error(`Judge prompt patch anchor not found: ${params.anchor}`)
+  }
+  if (params.prompt.indexOf(params.anchor, anchorIndex + 1) >= 0) {
+    throw new Error(`Judge prompt patch anchor is not unique: ${params.anchor}`)
+  }
+
+  return [
+    params.prompt.slice(0, anchorIndex).trimEnd(),
+    '',
+    params.block,
+    '',
+    params.prompt.slice(anchorIndex),
+  ].join('\n')
+}
+
+function scenarioRecordFromSnapshot(
+  snapshot: ScenarioSnapshot,
+): ScenarioRecord {
+  const {
+    agentPromptTemplateHash: _agentPromptTemplateHash,
+    examinationQuestionTemplateHash: _examinationQuestionTemplateHash,
+    judgePromptChars: _judgePromptChars,
+    judgePromptHash: _judgePromptHash,
+    scenarioSnapshotHash: _scenarioSnapshotHash,
+    scorerPromptHash: _scorerPromptHash,
+    ...scenario
+  } = snapshot
+  return scenario
+}
+
+function applyShangyangJudgePromptPatch(params: {
+  patch: LoadedJudgePromptPatch
+  snapshot: ScenarioSnapshot
+}) {
+  const scenario = scenarioRecordFromSnapshot(params.snapshot)
+  const originalJudgePromptHash = sha256(scenario.judgePrompt)
+  const withVerdictStandard = insertPromptBlockBeforeAnchor({
+    anchor: '**二、双方请求**',
+    block: params.patch.block1,
+    prompt: scenario.judgePrompt,
+  })
+  const patchedJudgePrompt = insertPromptBlockBeforeAnchor({
+    anchor: '=== 输出格式 ===',
+    block: params.patch.block2,
+    prompt: withVerdictStandard,
+  })
+  const patchedSnapshot = scenarioWithHashes({
+    ...scenario,
+    judgePrompt: patchedJudgePrompt,
+  })
+
+  return {
+    metadata: {
+      block1Hash: sha256(params.patch.block1),
+      block2Hash: sha256(params.patch.block2),
+      originalJudgePromptHash,
+      patchedJudgePromptHash: patchedSnapshot.judgePromptHash,
+      scenarioId: SHANGYANG_SCENARIO_ID,
+      sourceHash: params.patch.sourceHash,
+      sourcePath: params.patch.sourcePath,
+    } satisfies JudgePromptPatchMetadata,
+    snapshot: patchedSnapshot,
+  }
+}
+
+type LoadedTrolleyJudgePromptOverride = {
+  candidateId: string | null
+  parentCandidateId: string | null
+  prompt: string
+  sourceHash: string
+  sourcePath: string
+}
+
+export function assertTrolleySingleCaseJudgePrompt(prompt: string) {
+  const requiredPlaceholders = ['{{cases}}', '{{debate}}', '{{caseId1}}']
+  for (const placeholder of requiredPlaceholders) {
+    if (!prompt.includes(placeholder)) {
+      throw new Error(
+        `Trolley judge prompt is missing required single-case placeholder: ${placeholder}`,
+      )
+    }
+  }
+
+  if (/\{\{caseId(?:2|3)\}\}/u.test(prompt)) {
+    throw new Error(
+      'Trolley judge prompt still expects multiple mini-cases (caseId2/caseId3)',
+    )
+  }
+}
+
+async function loadTrolleyJudgePromptOverride(
+  sourcePath: string,
+): Promise<LoadedTrolleyJudgePromptOverride> {
+  const prompt = await readFile(sourcePath, 'utf8')
+  assertTrolleySingleCaseJudgePrompt(prompt)
+  const sourceHash = sha256(prompt)
+  const candidatePath = join(dirname(sourcePath), 'candidate.json')
+
+  if (!existsSync(candidatePath)) {
+    return {
+      candidateId: null,
+      parentCandidateId: null,
+      prompt,
+      sourceHash,
+      sourcePath,
+    }
+  }
+
+  const candidate = await readJsonFile<{
+    candidateId?: unknown
+    parentCandidateId?: unknown
+    prompt?: unknown
+    promptHash?: unknown
+    scenarioId?: unknown
+  }>(candidatePath)
+  if (candidate.scenarioId !== TROLLEY_SCENARIO_ID) {
+    throw new Error(
+      `Trolley judge prompt candidate has scenarioId ${String(candidate.scenarioId)}`,
+    )
+  }
+  if (
+    typeof candidate.candidateId !== 'string' ||
+    candidate.candidateId !== basename(dirname(sourcePath))
+  ) {
+    throw new Error(
+      'Trolley judge prompt candidateId does not match its directory name',
+    )
+  }
+  if (candidate.prompt !== prompt || candidate.promptHash !== sourceHash) {
+    throw new Error(
+      'Trolley judge prompt.txt does not match its candidate.json provenance',
+    )
+  }
+  if (
+    candidate.parentCandidateId !== null &&
+    typeof candidate.parentCandidateId !== 'string'
+  ) {
+    throw new Error('Trolley judge prompt parentCandidateId is invalid')
+  }
+
+  return {
+    candidateId: candidate.candidateId,
+    parentCandidateId: candidate.parentCandidateId,
+    prompt,
+    sourceHash,
+    sourcePath,
+  }
+}
+
+export function applyTrolleyJudgePromptOverride(params: {
+  override: LoadedTrolleyJudgePromptOverride
+  snapshot: ScenarioSnapshot
+}) {
+  if (params.snapshot.id !== TROLLEY_SCENARIO_ID) {
+    throw new Error(
+      `Trolley judge prompt override cannot be applied to ${params.snapshot.id}`,
+    )
+  }
+
+  const scenario = scenarioRecordFromSnapshot(params.snapshot)
+  const originalJudgePromptHash = sha256(scenario.judgePrompt)
+  const overrideSnapshot = scenarioWithHashes({
+    ...scenario,
+    judgePrompt: params.override.prompt,
+  })
+
+  return {
+    metadata: {
+      candidateId: params.override.candidateId,
+      originalJudgePromptHash,
+      overrideJudgePromptHash: overrideSnapshot.judgePromptHash,
+      parentCandidateId: params.override.parentCandidateId,
+      scenarioId: TROLLEY_SCENARIO_ID,
+      sourceHash: params.override.sourceHash,
+      sourcePath: params.override.sourcePath,
+    } satisfies TrolleyJudgePromptOverrideMetadata,
+    snapshot: overrideSnapshot,
+  }
+}
+
 function openReadonlyDb(dbPath: string) {
   if (!existsSync(dbPath)) {
     throw new Error(`DB not found: ${dbPath}`)
@@ -1027,7 +1473,8 @@ function loadScenarioFromDb(dbPath: string, scenarioId: string) {
 
   try {
     const row = db
-      .query<ScenarioRecord, [string]>(`
+      .query<ScenarioRecord, [string]>(
+        `
         SELECT
           id,
           title,
@@ -1053,7 +1500,8 @@ function loadScenarioFromDb(dbPath: string, scenarioId: string) {
           created_at AS createdAt
         FROM scenarios
         WHERE id = ?
-      `)
+      `,
+      )
       .get(scenarioId)
 
     if (!row) {
@@ -1602,7 +2050,7 @@ function findTrolleySample(
 }
 
 async function addTrolleyDesign(params: {
-  caseFilter: string | null
+  caseFilters: string[] | null
   jobs: HistoryJob[]
   levels: PromptLevel[]
   promptLevels: PromptLevelsByScenario
@@ -1655,12 +2103,14 @@ async function addTrolleyDesign(params: {
     },
   }
 
-  const cases = params.caseFilter
-    ? trolleyCases.filter((item) => item.id === params.caseFilter)
+  const cases = params.caseFilters
+    ? trolleyCases.filter((item) => params.caseFilters!.includes(item.id))
     : trolleyCases
 
   if (cases.length === 0) {
-    throw new Error(`No Trolley mini-case matched --case ${params.caseFilter}`)
+    throw new Error(
+      `No Trolley mini-case matched --cases ${params.caseFilters?.join(',') ?? ''}`,
+    )
   }
 
   for (const trolleyCase of cases) {
@@ -1690,7 +2140,7 @@ async function addTrolleyDesign(params: {
 }
 
 async function buildBenchmarkDesign(params: {
-  caseFilter: string | null
+  caseFilters: string[] | null
   levels: PromptLevel[]
   pairFilter: string | null
   promptSourcePath: string
@@ -1723,7 +2173,7 @@ async function buildBenchmarkDesign(params: {
 
   if (params.scenarios[TROLLEY_SCENARIO_ID]) {
     await addTrolleyDesign({
-      caseFilter: params.caseFilter,
+      caseFilters: params.caseFilters,
       jobs,
       levels: params.levels,
       promptLevels,
@@ -2293,11 +2743,20 @@ async function writeRunArtifacts(params: {
     (job) => !job.reusedFromJobId,
   ).length
   const histories = sortHistories(params.histories, params.jobs)
-  const plannedJudgeJobs =
-    histories.filter((history) => history.status === 'ok').length *
-    params.config.judgeModels.length *
-    params.config.judgeRepeats
   const judgeResults = sortJudgeResults(params.judgeResults ?? [])
+  const plannedReplayJobs = buildJudgeReplayJobs({
+    caseFilters: params.config.judgeCaseFilters ?? null,
+    histories,
+    judgeModels: params.config.judgeModels,
+    repeats: params.config.judgeRepeats,
+    scenarioIds:
+      params.config.judgeScenarioIds ?? params.config.scenarioIds ?? undefined,
+  })
+  const plannedJudgeJobs = plannedReplayJobs.length
+  const plannedJudgeIds = new Set(plannedReplayJobs.map((job) => job.id))
+  const activeJudgeResults = judgeResults.filter((result) =>
+    plannedJudgeIds.has(result.id),
+  )
   const historiesArtifact: HistoriesArtifact = {
     generatedAt: new Date().toISOString(),
     histories,
@@ -2314,12 +2773,12 @@ async function writeRunArtifacts(params: {
     kind: 'judge_sensitivity.judge_results',
     plannedJobs: plannedJudgeJobs,
     results: judgeResults,
-    summary: summarizeJudgeResults(judgeResults, plannedJudgeJobs),
+    summary: summarizeJudgeResults(activeJudgeResults, plannedJudgeJobs),
   }
   const summary = buildSummaryArtifact({
     config: params.config,
     histories,
-    judgeResults,
+    judgeResults: activeJudgeResults,
     plannedJudgeJobs,
   })
 
@@ -2575,6 +3034,75 @@ function buildJudgeSensitivitySummary(results: JudgeResult[]) {
   }
 }
 
+function buildJudgeRequestProfiles(results: JudgeResult[]) {
+  const profiles = new Map<
+    BenchJudgeModelId,
+    {
+      apiModels: Set<string>
+      calls: number
+      callsWithReasoning: number
+      efforts: Set<string>
+      judgeModel: BenchJudgeModelId
+      providers: Set<string>
+      reasoningTokensReported: number
+      requestControls: Set<string>
+      thinkingModes: Set<string>
+    }
+  >()
+
+  for (const result of results.filter((item) => item.status === 'ok')) {
+    const provenance = result.requestProvenance
+    if (!provenance) {
+      continue
+    }
+    const row = profiles.get(result.judgeModel) ?? {
+      apiModels: new Set<string>(),
+      calls: 0,
+      callsWithReasoning: 0,
+      efforts: new Set<string>(),
+      judgeModel: result.judgeModel,
+      providers: new Set<string>(),
+      reasoningTokensReported: 0,
+      requestControls: new Set<string>(),
+      thinkingModes: new Set<string>(),
+    }
+    row.apiModels.add(provenance.apiModel)
+    row.calls += 1
+    if (
+      provenance.reasoningContentChars > 0 ||
+      (provenance.reasoningTokens ?? 0) > 0
+    ) {
+      row.callsWithReasoning += 1
+    }
+    if (provenance.configuredEffort) {
+      row.efforts.add(provenance.configuredEffort)
+    }
+    row.providers.add(provenance.provider)
+    if (provenance.reasoningTokens != null) {
+      row.reasoningTokensReported += 1
+    }
+    row.requestControls.add(
+      provenance.thinkingRequestControl == null
+        ? 'none'
+        : stableStringify(provenance.thinkingRequestControl),
+    )
+    row.thinkingModes.add(provenance.thinkingMode)
+    profiles.set(result.judgeModel, row)
+  }
+
+  return [...profiles.values()].map((row) => ({
+    apiModels: [...row.apiModels].sort(),
+    calls: row.calls,
+    callsWithReasoning: row.callsWithReasoning,
+    efforts: [...row.efforts].sort(),
+    judgeModel: row.judgeModel,
+    providers: [...row.providers].sort(),
+    reasoningTokensReported: row.reasoningTokensReported,
+    requestControls: [...row.requestControls].sort(),
+    thinkingModes: [...row.thinkingModes].sort(),
+  }))
+}
+
 function buildSummaryArtifact(params: {
   config: BenchmarkRunConfig
   histories: HistoryResult[]
@@ -2586,6 +3114,7 @@ function buildSummaryArtifact(params: {
     params.config.historyCountExpected,
     params.config.historyExecutionCountExpected,
   )
+  const configuredTrolleyCases = configuredHistoryCaseFilters(params.config)
   const historyByScenario = ALL_SCENARIO_IDS.reduce<
     Record<
       string,
@@ -2602,8 +3131,8 @@ function buildSummaryArtifact(params: {
         ? 8
         : params.config.scenarioIds.includes(TROLLEY_SCENARIO_ID) &&
             scenarioId === TROLLEY_SCENARIO_ID &&
-            params.config.caseFilter
-          ? 8
+            configuredTrolleyCases
+          ? configuredTrolleyCases.length * 8
           : scenarioId === SHANGYANG_SCENARIO_ID
             ? 8
             : scenarioId === HONNOJI_SCENARIO_ID
@@ -2636,6 +3165,7 @@ function buildSummaryArtifact(params: {
     },
     judge: {
       plannedJobs: params.plannedJudgeJobs,
+      requestProfiles: buildJudgeRequestProfiles(params.judgeResults),
       results: judgeSummary,
       sensitivity: buildJudgeSensitivitySummary(params.judgeResults),
     },
@@ -2684,6 +3214,28 @@ function renderSummaryMarkdown(summary: SummaryArtifact) {
     `Player model: ${config.playerModel}`,
     `Judge models: ${config.judgeModels.map((model) => judgeModelLabel(config, model)).join(', ')}`,
     `Judge repeats: ${config.judgeRepeats}`,
+    `Judge thinking mode: ${config.judgeThinkingMode ?? 'provider-default'}`,
+    config.judgePromptPatch
+      ? `Judge prompt patch: ${config.judgePromptPatch.sourcePath}`
+      : null,
+    config.judgePromptPatch
+      ? `Judge prompt patch source SHA-256: ${config.judgePromptPatch.sourceHash}`
+      : null,
+    config.judgePromptPatch
+      ? `Patched judge prompt SHA-256: ${config.judgePromptPatch.patchedJudgePromptHash}`
+      : null,
+    config.trolleyJudgePromptOverride
+      ? `Trolley judge prompt candidate: ${config.trolleyJudgePromptOverride.candidateId ?? 'unlabeled'}`
+      : null,
+    config.trolleyJudgePromptOverride
+      ? `Trolley judge prompt source: ${config.trolleyJudgePromptOverride.sourcePath}`
+      : null,
+    config.trolleyJudgePromptOverride
+      ? `Trolley baseline judge prompt SHA-256: ${config.trolleyJudgePromptOverride.originalJudgePromptHash}`
+      : null,
+    config.trolleyJudgePromptOverride
+      ? `Trolley active judge prompt SHA-256: ${config.trolleyJudgePromptOverride.overrideJudgePromptHash}`
+      : null,
     `Judge cache strategy: ${config.judgeCacheStrategy ?? 'legacy-unrecorded'}`,
     `History concurrency: ${config.concurrency}`,
     `Judge concurrency: ${config.judgeConcurrency}`,
@@ -2721,6 +3273,22 @@ function renderSummaryMarkdown(summary: SummaryArtifact) {
     `Provider response IDs / duplicates: ${summary.judge.results.providerResponseIdsRecorded} / ${summary.judge.results.duplicateProviderResponseIds}`,
     '',
   )
+
+  if (summary.judge.requestProfiles.length > 0) {
+    lines.push(
+      '## Judge Request / Reasoning Provenance',
+      '',
+      '| Judge model | Provider | API model | Thinking mode | Request control | Configured effort | Calls with reasoning | Reasoning tokens reported | Calls |',
+      '| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: |',
+    )
+
+    for (const row of summary.judge.requestProfiles) {
+      lines.push(
+        `| ${judgeModelLabel(config, row.judgeModel)} | ${row.providers.join(', ') || 'n/a'} | ${row.apiModels.join(', ') || 'n/a'} | ${row.thinkingModes.join(', ') || 'n/a'} | ${row.requestControls.map((control) => markdownInlineCode(control)).join(', ')} | ${row.efforts.join(', ') || 'n/a'} | ${row.callsWithReasoning} | ${row.reasoningTokensReported} | ${row.calls} |`,
+      )
+    }
+    lines.push('')
+  }
 
   if (summary.judge.results.completed === 0) {
     lines.push(
@@ -3150,6 +3718,9 @@ function providerBaseUrl(provider: BenchJudgeProvider) {
   if (provider === 'siliconflow') {
     return SILICONFLOW_BASE_URL
   }
+  if (provider === 'zhipu') {
+    return ZHIPU_BASE_URL
+  }
   return ANTHROPIC_BASE_URL
 }
 
@@ -3159,6 +3730,9 @@ function providerApiKey(provider: BenchJudgeProvider) {
   }
   if (provider === 'siliconflow') {
     return getRequiredEnv('SILICONFLOW_API_KEY')
+  }
+  if (provider === 'zhipu') {
+    return getRequiredEnv('ZHIPU_API_KEY')
   }
   return getRequiredEnv('ANTHROPIC_API_KEY')
 }
@@ -3251,6 +3825,7 @@ function extractOpenAICompatibleContent(
     content,
     providerCreatedAt: finiteNumberOrNull(record.created),
     providerResponseId: typeof record.id === 'string' ? record.id : null,
+    requestProvenance: null,
   }
 
   if (
@@ -3350,6 +3925,125 @@ function extractAnthropicContent(payload: unknown): BenchJudgeCompletion {
     providerCreatedAt: null,
     providerResponseId: null,
     reasoningVerification: null,
+    requestProvenance: null,
+  }
+}
+
+function configuredEffort(
+  definition: BenchJudgeModelDefinitionRecord,
+): 'high' | 'max' | null {
+  if (
+    'reasoningEffort' in definition &&
+    (definition.reasoningEffort === 'high' ||
+      definition.reasoningEffort === 'max')
+  ) {
+    return definition.reasoningEffort
+  }
+  if (!('effort' in definition)) {
+    return null
+  }
+  return definition.effort === 'high' || definition.effort === 'max'
+    ? definition.effort
+    : null
+}
+
+function directJudgeThinkingMode(params: {
+  definition: BenchJudgeModelDefinitionRecord
+  requested: BenchJudgeThinkingMode
+}): ChatCompletionThinkingMode {
+  if (params.requested === 'provider-default') {
+    return 'provider-default'
+  }
+
+  if (
+    params.definition.provider === 'zhipu' ||
+    params.definition.provider === 'dashscope' ||
+    params.definition.provider === 'moonshot' ||
+    params.definition.provider === 'siliconflow'
+  ) {
+    return 'enabled'
+  }
+
+  if (
+    configuredEffort(params.definition) != null ||
+    params.definition.provider === 'minimax'
+  ) {
+    return 'provider-default'
+  }
+
+  throw new Error(
+    `Thinking-on benchmark mode is not implemented for ${params.definition.provider}/${params.definition.id}`,
+  )
+}
+
+export function completionFromCapture(params: {
+  capture: ChatCompletionCapture
+  definition: BenchJudgeModelDefinitionRecord
+  requestedThinkingMode: BenchJudgeThinkingMode
+}): BenchJudgeCompletion {
+  const effort = configuredEffort(params.definition)
+  const reasoningTokens = params.capture.tokenUsage.reasoningTokens
+  const reasoningObserved =
+    params.capture.reasoningContentChars > 0 ||
+    (reasoningTokens != null && reasoningTokens > 0)
+  const thinkingControl = params.capture.thinkingRequestControl
+  const nativeThinkingEnabled =
+    isRecord(thinkingControl?.thinking) &&
+    thinkingControl.thinking.type === 'enabled'
+  const enableThinkingTrue = thinkingControl?.enable_thinking === true
+  const allowMissingReasoning =
+    'allowMissingReasoningWhenEnabled' in params.definition &&
+    params.definition.allowMissingReasoningWhenEnabled === true
+
+  if (
+    params.requestedThinkingMode === 'enabled' &&
+    !reasoningObserved &&
+    (!allowMissingReasoning || (!nativeThinkingEnabled && !enableThinkingTrue))
+  ) {
+    throw new Error(
+      `Reasoning-enable verification failed for ${params.definition.id}: ` +
+        `reasoning_content=${params.capture.reasoningContentChars} chars, ` +
+        `reasoning_tokens=${reasoningTokens ?? 'missing'}`,
+    )
+  }
+
+  return {
+    cacheUsage: {
+      cachedPromptTokens: params.capture.tokenUsage.cachedTokens,
+      promptCacheHitTokens: params.capture.tokenUsage.cachedTokens,
+      promptCacheMissTokens: null,
+      promptTokens: params.capture.tokenUsage.promptTokens,
+    },
+    content: params.capture.content,
+    providerCreatedAt: params.capture.providerCreatedAt,
+    providerResponseId: params.capture.providerResponseId,
+    reasoningVerification:
+      params.requestedThinkingMode === 'enabled'
+        ? {
+            effort: effort ?? undefined,
+            enableThinkingFalse: false,
+            enableThinkingTrue,
+            nativeThinkingDisabled: false,
+            nativeThinkingEnabled,
+            reasoningContentChars: params.capture.reasoningContentChars,
+            reasoningTokens,
+            ...(reasoningObserved
+              ? { verifiedOn: true as const }
+              : {
+                  reasoningSkippedByModelAllowed: true as const,
+                  requestControlVerifiedOn: true as const,
+                }),
+          }
+        : null,
+    requestProvenance: {
+      apiModel: params.capture.apiModel,
+      configuredEffort: effort,
+      provider: params.capture.provider,
+      reasoningContentChars: params.capture.reasoningContentChars,
+      reasoningTokens,
+      thinkingMode: params.capture.thinkingMode,
+      thinkingRequestControl: params.capture.thinkingRequestControl,
+    },
   }
 }
 
@@ -3449,6 +4143,7 @@ async function runBenchJudgeCompletion(params: {
   signal?: AbortSignal
   systemPrompt: string
   temperature: number
+  thinkingMode: BenchJudgeThinkingMode
   trace: Parameters<typeof chatCompletion>[0]['trace']
 }) {
   const experimentalDefinition = getExperimentalBenchJudgeModel(params.model)
@@ -3460,22 +4155,85 @@ async function runBenchJudgeCompletion(params: {
       )
     }
     const definition = getBenchJudgeModelDefinition(params.model)
+    const thinkingMode = directJudgeThinkingMode({
+      definition,
+      requested: params.thinkingMode,
+    })
+    let capture: ChatCompletionCapture | null = null
     const content = await chatCompletion({
+      capture: (value) => {
+        capture = value
+      },
       jsonMode: supportsBenchJsonMode(definition),
       messages: params.messages,
       model: params.model,
       signal: params.signal,
       systemPrompt: params.systemPrompt,
       temperature: params.temperature,
+      thinkingMode,
       trace: params.trace,
     })
-    return {
-      cacheUsage: null,
-      content,
-      providerCreatedAt: null,
-      providerResponseId: null,
-      reasoningVerification: null,
+    if (!capture) {
+      throw new Error(`Missing completion capture for ${params.model}`)
     }
+    if (capture.content !== content) {
+      throw new Error(`Completion capture mismatch for ${params.model}`)
+    }
+    return completionFromCapture({
+      capture,
+      definition,
+      requestedThinkingMode: params.thinkingMode,
+    })
+  }
+
+  if (experimentalDefinition.baseModel) {
+    if (
+      experimentalDefinition.reasoningEffort &&
+      params.thinkingMode !== 'enabled'
+    ) {
+      throw new Error(
+        `${experimentalDefinition.id} requires --judge-thinking enabled`,
+      )
+    }
+
+    let capture: ChatCompletionCapture | null = null
+    const content = await chatCompletion({
+      capture: (value) => {
+        capture = value
+      },
+      jsonMode: supportsBenchJsonMode(experimentalDefinition),
+      messages: params.messages,
+      model: experimentalDefinition.baseModel,
+      reasoningEffort: experimentalDefinition.reasoningEffort,
+      signal: params.signal,
+      systemPrompt: params.systemPrompt,
+      temperature: params.temperature,
+      thinkingMode: directJudgeThinkingMode({
+        definition: experimentalDefinition,
+        requested: params.thinkingMode,
+      }),
+      trace: params.trace,
+    })
+    if (!capture) {
+      throw new Error(`Missing completion capture for ${params.model}`)
+    }
+    if (capture.content !== content) {
+      throw new Error(`Completion capture mismatch for ${params.model}`)
+    }
+    return completionFromCapture({
+      capture,
+      definition: experimentalDefinition,
+      requestedThinkingMode: params.thinkingMode,
+    })
+  }
+
+  if (
+    params.thinkingMode === 'enabled' &&
+    !experimentalDefinition.verifyReasoningEnabled
+  ) {
+    throw new Error(
+      `Experimental judge ${params.model} does not verify thinking-on mode`,
+    )
   }
 
   if (experimentalDefinition.provider === 'anthropic') {
@@ -3497,23 +4255,11 @@ async function runBenchJudgeCompletion(params: {
   })
 }
 
-async function runJudgeJob(params: {
-  cachePhase: PromptCachePhase
+function prepareJudgeReplayPrompt(params: {
   history: HistoryResult
-  jobTimeoutMs: number
   judgeModel: BenchJudgeModelId
-  llmCallTimeoutMs: number
-  repeatIndex: number
-  runId: string
   scenario: ScenarioRecord
 }) {
-  const startedAt = Date.now()
-  const abortController = new AbortController()
-  const timeout = setTimeout(() => {
-    abortController.abort(
-      `Benchmark judge job timed out after ${params.jobTimeoutMs}ms`,
-    )
-  }, params.jobTimeoutMs)
   const scenario = scenarioForJob(
     params.scenario,
     params.history,
@@ -3529,6 +4275,30 @@ async function runJudgeJob(params: {
     examinationA: buildExaminationSummary(scenario.roleAName, []),
     examinationB: buildExaminationSummary(scenario.roleBName, []),
   })
+
+  return { judgePrompt, scenario }
+}
+
+async function runJudgeJob(params: {
+  cachePhase: PromptCachePhase
+  history: HistoryResult
+  jobTimeoutMs: number
+  judgeModel: BenchJudgeModelId
+  judgePromptCandidateId: string | null
+  judgeThinkingMode: BenchJudgeThinkingMode
+  llmCallTimeoutMs: number
+  repeatIndex: number
+  runId: string
+  scenario: ScenarioRecord
+}) {
+  const startedAt = Date.now()
+  const abortController = new AbortController()
+  const timeout = setTimeout(() => {
+    abortController.abort(
+      `Benchmark judge job timed out after ${params.jobTimeoutMs}ms`,
+    )
+  }, params.jobTimeoutMs)
+  const { judgePrompt, scenario } = prepareJudgeReplayPrompt(params)
   const id = [
     params.history.jobId,
     `judge-${params.judgeModel}`,
@@ -3544,11 +4314,13 @@ async function runJudgeJob(params: {
           signal,
           systemPrompt: judgePrompt,
           temperature: 0,
+          thinkingMode: params.judgeThinkingMode,
           trace: {
             attempt,
             benchmarkCaseId: id,
             benchmarkName: BENCHMARK_NAME,
             benchmarkRunId: params.runId,
+            judgePromptCandidateId: params.judgePromptCandidateId ?? undefined,
             phase: 'judgment',
             scenarioId: scenario.id,
             side: 'judge',
@@ -3599,6 +4371,7 @@ async function runJudgeJob(params: {
       providerResponseId: completion.providerResponseId,
       rawOutput,
       reasoningVerification: completion.reasoningVerification,
+      requestProvenance: completion.requestProvenance,
       repeatIndex: params.repeatIndex,
       roleAName: params.history.roleAName,
       roleBName: params.history.roleBName,
@@ -3634,6 +4407,7 @@ async function runJudgeJob(params: {
       providerResponseId: null,
       rawOutput: null,
       reasoningVerification: null,
+      requestProvenance: null,
       repeatIndex: params.repeatIndex,
       roleAName: params.history.roleAName,
       roleBName: params.history.roleBName,
@@ -3661,9 +4435,42 @@ async function buildRunState(
     throw new Error(`Invalid --agent-model: ${playerModel}`)
   }
 
-  const judgeModels = parseJudgeModels(
+  const caseFilters = parseTrolleyCaseFilters(options)
+  if (caseFilters && !scenarioIds.includes(TROLLEY_SCENARIO_ID)) {
+    throw new Error('--cases requires the trolley-problem scenario')
+  }
+  const trolleyJudgePromptPath = getStringOption(
+    options,
+    'trolley-judge-prompt',
+  )
+  if (trolleyJudgePromptPath && !scenarioIds.includes(TROLLEY_SCENARIO_ID)) {
+    throw new Error(
+      '--trolley-judge-prompt requires the trolley-problem scenario',
+    )
+  }
+  const rawGlmReasoningEfforts = getStringOption(
+    options,
+    'glm-reasoning-efforts',
+  )
+  if (rawGlmReasoningEfforts && !getStringOption(options, 'judge-models')) {
+    throw new Error(
+      '--glm-reasoning-efforts requires an explicit --judge-models glm-5.2',
+    )
+  }
+  const glmReasoningEfforts = rawGlmReasoningEfforts
+    ? parseGlmReasoningEfforts(rawGlmReasoningEfforts)
+    : null
+  const requestedJudgeModels = parseJudgeModels(
     getStringOption(options, 'judge-models', DEFAULT_JUDGE_MODELS.join(',')),
   )
+  const judgeModels = expandGlmReasoningEffortModels(
+    requestedJudgeModels,
+    glmReasoningEfforts,
+  )
+  const judgeThinkingMode = parseBenchJudgeThinkingMode(
+    getStringOption(options, 'judge-thinking', 'provider-default'),
+  )
+  assertCompatibleThinkingMode(judgeModels, judgeThinkingMode)
   const outputDir = getStringOption(
     options,
     'output-dir',
@@ -3752,7 +4559,7 @@ async function buildRunState(
     trolley: trolleySamplesPath,
   }
   const { jobs, promptLevels } = await buildBenchmarkDesign({
-    caseFilter: getStringOption(options, 'case') || null,
+    caseFilters,
     levels,
     pairFilter: getStringOption(options, 'pair') || null,
     promptSourcePath,
@@ -3765,10 +4572,29 @@ async function buildRunState(
       scenarioWithHashes(scenario),
     ]),
   )
+  let trolleyJudgePromptOverride: TrolleyJudgePromptOverrideMetadata | undefined
+  if (trolleyJudgePromptPath) {
+    const trolleySnapshot = scenarioSnapshots[TROLLEY_SCENARIO_ID]
+    if (!trolleySnapshot) {
+      throw new Error(
+        `Trolley judge prompt override requires ${TROLLEY_SCENARIO_ID} in scenario snapshots`,
+      )
+    }
+    const applied = applyTrolleyJudgePromptOverride({
+      override: await loadTrolleyJudgePromptOverride(trolleyJudgePromptPath),
+      snapshot: trolleySnapshot,
+    })
+    scenarioSnapshots[TROLLEY_SCENARIO_ID] = applied.snapshot
+    scenarios[TROLLEY_SCENARIO_ID] = scenarioRecordFromSnapshot(
+      applied.snapshot,
+    )
+    trolleyJudgePromptOverride = applied.metadata
+  }
 
   const config: BenchmarkRunConfig = {
     benchmarkName: BENCHMARK_NAME,
-    caseFilter: getStringOption(options, 'case') || null,
+    caseFilter: caseFilters?.length === 1 ? caseFilters[0]! : null,
+    caseFilters,
     command,
     concurrency,
     dryRun: options['dry-run'] === true,
@@ -3777,10 +4603,14 @@ async function buildRunState(
     historyExecutionCountExpected: jobs.filter((job) => !job.reusedFromJobId)
       .length,
     jobTimeoutMs,
+    judgeCaseFilters: caseFilters,
     judgeConcurrency,
     judgeModels,
     judgeModelDefinitions: assertJudgeModelDefinitions(judgeModels),
     judgeRepeats,
+    judgeScenarioIds: scenarioIds,
+    judgeThinkingMode,
+    glmReasoningEfforts,
     levels,
     llmCallTimeoutMs,
     outputDir,
@@ -3797,6 +4627,7 @@ async function buildRunState(
     scenarioSource,
     selectedSamplePaths,
     temperature: 0,
+    trolleyJudgePromptOverride,
   }
 
   return {
@@ -3936,7 +4767,23 @@ type JudgeReplayGroup = {
   jobs: JudgeReplayJob[]
 }
 
-function buildJudgeReplayJobs(params: {
+export function historyMatchesTrolleyCaseFilters(
+  history: Pick<HistoryResult, 'caseId' | 'scenarioId'>,
+  caseFilters: string[] | null,
+) {
+  if (!caseFilters) {
+    return true
+  }
+
+  return (
+    history.scenarioId === TROLLEY_SCENARIO_ID &&
+    history.caseId != null &&
+    caseFilters.includes(history.caseId)
+  )
+}
+
+export function buildJudgeReplayJobs(params: {
+  caseFilters?: string[] | null
   histories: HistoryResult[]
   judgeModels: BenchJudgeModelId[]
   repeats: number
@@ -3951,7 +4798,8 @@ function buildJudgeReplayJobs(params: {
   for (const history of params.histories.filter(
     (item) =>
       item.status === 'ok' &&
-      (!scenarioFilter || scenarioFilter.has(item.scenarioId)),
+      (!scenarioFilter || scenarioFilter.has(item.scenarioId)) &&
+      historyMatchesTrolleyCaseFilters(item, params.caseFilters ?? null),
   )) {
     for (const judgeModel of params.judgeModels) {
       for (
@@ -4012,8 +4860,24 @@ async function runJudge(options: Record<string, string | true>) {
     scenarios: PromptLevelsByScenario
   }>(join(outputDir, 'prompt-levels.json'))
 
-  const judgeModels = parseJudgeModels(
+  const rawGlmReasoningEfforts = getStringOption(
+    options,
+    'glm-reasoning-efforts',
+  )
+  if (rawGlmReasoningEfforts && !getStringOption(options, 'judge-models')) {
+    throw new Error(
+      '--glm-reasoning-efforts requires an explicit --judge-models glm-5.2',
+    )
+  }
+  const explicitGlmReasoningEfforts = rawGlmReasoningEfforts
+    ? parseGlmReasoningEfforts(rawGlmReasoningEfforts)
+    : null
+  const requestedJudgeModels = parseJudgeModels(
     getStringOption(options, 'judge-models', config.judgeModels.join(',')),
+  )
+  const judgeModels = expandGlmReasoningEffortModels(
+    requestedJudgeModels,
+    explicitGlmReasoningEfforts,
   )
   const judgeRepeats = parsePositiveInteger(
     getStringOption(options, 'judge-repeats', String(config.judgeRepeats)),
@@ -4027,6 +4891,14 @@ async function runJudge(options: Record<string, string | true>) {
     ),
     '--judge-concurrency',
   )
+  const judgeThinkingMode = parseBenchJudgeThinkingMode(
+    getStringOption(
+      options,
+      'judge-thinking',
+      config.judgeThinkingMode ?? 'provider-default',
+    ),
+  )
+  assertCompatibleThinkingMode(judgeModels, judgeThinkingMode)
   const jobTimeoutMs = parsePositiveInteger(
     getStringOption(options, 'job-timeout-ms', String(config.jobTimeoutMs)),
     '--job-timeout-ms',
@@ -4043,20 +4915,140 @@ async function runJudge(options: Record<string, string | true>) {
   const scenarioIds = getStringOption(options, 'scenario')
     ? parseScenarioIds(getStringOption(options, 'scenario'))
     : undefined
+  const judgeScenarioIds =
+    scenarioIds ?? config.judgeScenarioIds ?? config.scenarioIds
+  const explicitJudgeCaseFilters = parseTrolleyCaseFilters(options)
+  const judgeCaseFilters =
+    explicitJudgeCaseFilters ??
+    config.judgeCaseFilters ??
+    configuredHistoryCaseFilters(config)
+  if (judgeCaseFilters && !judgeScenarioIds.includes(TROLLEY_SCENARIO_ID)) {
+    throw new Error('--cases requires the trolley-problem scenario')
+  }
+  const judgePromptPatchPath = getStringOption(options, 'judge-prompt-patch')
+  let judgePromptPatch = config.judgePromptPatch
+
+  if (judgePromptPatchPath) {
+    const loadedPatch = await loadJudgePromptPatch(judgePromptPatchPath)
+    const shangyangSnapshot = scenarioSnapshots.scenarios[SHANGYANG_SCENARIO_ID]
+    if (!shangyangSnapshot) {
+      throw new Error(
+        `Judge prompt patch requires ${SHANGYANG_SCENARIO_ID} in scenario snapshots`,
+      )
+    }
+
+    if (judgePromptPatch) {
+      if (judgePromptPatch.sourceHash !== loadedPatch.sourceHash) {
+        throw new Error(
+          'Judge prompt patch source changed since this run was prepared',
+        )
+      }
+      if (
+        shangyangSnapshot.judgePromptHash !==
+        judgePromptPatch.patchedJudgePromptHash
+      ) {
+        throw new Error(
+          'Patched Shangyang prompt hash no longer matches the run config',
+        )
+      }
+    } else {
+      const patched = applyShangyangJudgePromptPatch({
+        patch: loadedPatch,
+        snapshot: shangyangSnapshot,
+      })
+      scenarioSnapshots.scenarios[SHANGYANG_SCENARIO_ID] = patched.snapshot
+      judgePromptPatch = patched.metadata
+    }
+  }
+  const trolleyJudgePromptPath = getStringOption(
+    options,
+    'trolley-judge-prompt',
+    config.trolleyJudgePromptOverride?.sourcePath ?? '',
+  )
+  let trolleyJudgePromptOverride = config.trolleyJudgePromptOverride
+
+  if (trolleyJudgePromptPath) {
+    if (!judgeScenarioIds.includes(TROLLEY_SCENARIO_ID)) {
+      throw new Error(
+        '--trolley-judge-prompt requires the trolley-problem scenario',
+      )
+    }
+    const loadedOverride = await loadTrolleyJudgePromptOverride(
+      trolleyJudgePromptPath,
+    )
+    const trolleySnapshot = scenarioSnapshots.scenarios[TROLLEY_SCENARIO_ID]
+    if (!trolleySnapshot) {
+      throw new Error(
+        `Trolley judge prompt override requires ${TROLLEY_SCENARIO_ID} in scenario snapshots`,
+      )
+    }
+
+    if (trolleyJudgePromptOverride) {
+      if (
+        trolleyJudgePromptOverride.sourceHash !== loadedOverride.sourceHash ||
+        trolleyJudgePromptOverride.overrideJudgePromptHash !==
+          loadedOverride.sourceHash ||
+        trolleyJudgePromptOverride.candidateId !== loadedOverride.candidateId ||
+        trolleyJudgePromptOverride.parentCandidateId !==
+          loadedOverride.parentCandidateId
+      ) {
+        throw new Error(
+          'Trolley judge prompt source or candidate lineage changed since this run was prepared',
+        )
+      }
+      if (
+        trolleySnapshot.judgePromptHash !==
+        trolleyJudgePromptOverride.overrideJudgePromptHash
+      ) {
+        throw new Error(
+          'Active Trolley judge prompt hash no longer matches the run config',
+        )
+      }
+    } else {
+      const applied = applyTrolleyJudgePromptOverride({
+        override: loadedOverride,
+        snapshot: trolleySnapshot,
+      })
+      scenarioSnapshots.scenarios[TROLLEY_SCENARIO_ID] = applied.snapshot
+      trolleyJudgePromptOverride = applied.metadata
+    }
+  }
   let judgeResults = config.resume
     ? await readExistingJudgeResults(outputDir)
     : await readExistingJudgeResults(outputDir)
 
   const replayJobs = buildJudgeReplayJobs({
+    caseFilters: judgeCaseFilters,
     histories: historiesArtifact.histories,
     judgeModels,
     repeats: judgeRepeats,
-    scenarioIds,
+    scenarioIds: judgeScenarioIds,
   })
+  const activeJudgePromptHashes = new Map(
+    replayJobs.map((job) => {
+      const scenario = scenarioSnapshots.scenarios[job.history.scenarioId]
+      if (!scenario) {
+        throw new Error(`Missing scenario snapshot: ${job.history.scenarioId}`)
+      }
+      return [
+        job.id,
+        sha256(
+          prepareJudgeReplayPrompt({
+            history: job.history,
+            judgeModel: job.judgeModel,
+            scenario,
+          }).judgePrompt,
+        ),
+      ] as const
+    }),
+  )
   const completed = new Set(
     judgeResults
       .filter(
-        (result) => result.status === 'ok' && !result.parsedPolicy.parseError,
+        (result) =>
+          result.status === 'ok' &&
+          !result.parsedPolicy.parseError &&
+          result.judgePromptHash === activeJudgePromptHashes.get(result.id),
       )
       .map((result) => result.id),
   )
@@ -4067,13 +5059,24 @@ async function runJudge(options: Record<string, string | true>) {
     ...config,
     command: 'judge',
     dryRun,
+    git: getGitState(),
     judgeCacheStrategy: 'warm-first-per-model-history',
+    judgeCaseFilters,
     judgeConcurrency,
     judgeModels,
     judgeModelDefinitions: assertJudgeModelDefinitions(judgeModels),
+    judgePromptPatch,
     judgeRepeats,
+    judgeScenarioIds,
+    judgeThinkingMode,
+    glmReasoningEfforts:
+      explicitGlmReasoningEfforts ?? config.glmReasoningEfforts ?? null,
     jobTimeoutMs,
     llmCallTimeoutMs,
+    outputDir,
+    runId: getStringOption(options, 'run-id', config.runId),
+    runLabel: getStringOption(options, 'run-label', config.runLabel ?? ''),
+    trolleyJudgePromptOverride,
   }
 
   await writeRunArtifacts({
@@ -4094,7 +5097,8 @@ async function runJudge(options: Record<string, string | true>) {
         pendingCacheGroups: pendingJobGroups.length,
         pendingJobs: pendingJobs.length,
         plannedJobs: replayJobs.length,
-        scenarioIds: scenarioIds ?? config.scenarioIds,
+        selectedCases: judgeCaseFilters,
+        scenarioIds: judgeScenarioIds,
       },
       null,
       2,
@@ -4131,6 +5135,11 @@ async function runJudge(options: Record<string, string | true>) {
         history: job.history,
         jobTimeoutMs: judgeConfig.jobTimeoutMs,
         judgeModel: job.judgeModel,
+        judgePromptCandidateId:
+          job.history.scenarioId === TROLLEY_SCENARIO_ID
+            ? (judgeConfig.trolleyJudgePromptOverride?.candidateId ?? null)
+            : null,
+        judgeThinkingMode: judgeConfig.judgeThinkingMode ?? 'provider-default',
         llmCallTimeoutMs: judgeConfig.llmCallTimeoutMs,
         repeatIndex: job.repeatIndex,
         runId: judgeConfig.runId,
@@ -4275,4 +5284,12 @@ async function main() {
   await runReport(options)
 }
 
-await main()
+if (import.meta.main) {
+  try {
+    await main()
+  } finally {
+    await shutdownLangfuseTracing().catch((error) => {
+      console.error('[judge-sensitivity] Langfuse shutdown failed', error)
+    })
+  }
+}

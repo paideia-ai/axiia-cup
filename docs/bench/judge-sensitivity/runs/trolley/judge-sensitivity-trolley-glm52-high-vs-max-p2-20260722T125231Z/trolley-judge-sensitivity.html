@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trolley Judge Sensitivity · GLM-5.2 High vs Max</title>
+  <style>
+    :root { color-scheme:light; --ink:#1f2933; --muted:#667085; --line:#d8dee4; --paper:#fff; --band:#f6f7f3; --accent:#2f7d62; --accent-2:#b85632; --gold:#d9a441; --green:#58a65c; --red:#b94a48; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:#fbfbf8; letter-spacing:0; }
+    header { padding:28px 32px 20px; border-bottom:1px solid var(--line); background:var(--paper); }
+    main { padding:24px 32px 40px; max-width:1680px; margin:0 auto; }
+    h1 { margin:0 0 10px; font-size:28px; line-height:1.15; font-weight:720; }
+    h2 { margin:0 0 14px; font-size:18px; line-height:1.25; }
+    h3 { margin:0 0 10px; font-size:15px; line-height:1.3; }
+    code { padding:2px 5px; border-radius:4px; background:#eef0ea; color:#344054; overflow-wrap:anywhere; }
+    .sub { display:flex; flex-wrap:wrap; gap:10px 18px; color:var(--muted); font-size:13px; }
+    .stats { display:grid; grid-template-columns:repeat(6,minmax(145px,1fr)); gap:12px; margin:0 0 24px; }
+    .stat { background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:14px; min-height:84px; }
+    .stat span { display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+    .stat strong { display:block; font-size:26px; line-height:1; }
+    .section { margin-top:22px; padding:18px 0; border-top:1px solid var(--line); }
+    .section:first-of-type { border-top:0; }
+    .method-grid { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:12px; }
+    .method-item,.level-card,.model { border:1px solid var(--line); border-radius:8px; padding:12px; background:#fff; }
+    .method-item strong,.level-card strong { display:block; font-size:14px; margin-bottom:5px; }
+    .method-item span,.level-card span,.section-note { color:var(--muted); font-size:12px; line-height:1.5; }
+    .section-note { margin:10px 0 0; }
+    .level-grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
+    .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:14px; }
+    label { display:grid; gap:5px; font-size:12px; color:var(--muted); }
+    select { min-width:210px; max-width:100%; border:1px solid var(--line); border-radius:6px; padding:8px 30px 8px 10px; background:#fff; color:var(--ink); font:inherit; }
+    .model-grid { display:grid; grid-template-columns:repeat(2,minmax(260px,520px)); gap:12px; }
+    .model-heading { display:flex; justify-content:space-between; gap:12px; align-items:start; }
+    .effort-badge { color:#475467; background:#eef0ea; border-radius:999px; padding:4px 8px; font-size:11px; white-space:nowrap; }
+    .metric { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin:10px 0; font-size:13px; }
+    .metric span:first-child { color:var(--muted); }
+    .metric-track { grid-column:1/-1; display:block; width:100%; height:7px; border-radius:999px; background:#ecefe8; overflow:hidden; }
+    .metric-fill { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--gold)); }
+    .metric-fill.negative { background:linear-gradient(90deg,var(--gold),var(--red)); }
+    .formula-note { display:grid; gap:8px; max-width:1180px; }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { border-bottom:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:middle; }
+    tbody tr:last-child th,tbody tr:last-child td { border-bottom:0; }
+    th { color:#475467; background:var(--band); font-weight:650; }
+    .table-wrap th,.table-wrap td { white-space:nowrap; }
+    .numeric { text-align:right; font-variant-numeric:tabular-nums; }
+    .bar-cell { min-width:140px; width:24%; }
+    .latency-bar { display:block; width:100%; height:8px; border-radius:999px; background:#ecefe8; overflow:hidden; }
+    .latency-bar span { display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--red)); }
+    .matrix-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .case-matrix + .case-matrix { margin-top:26px; padding-top:24px; border-top:1px solid var(--line); }
+    .case-heading { display:flex; gap:9px; align-items:baseline; margin-bottom:14px; font-size:17px; }
+    .case-heading span { color:var(--accent); font-size:12px; text-transform:uppercase; }
+    .matrix-panel { min-width:0; }
+    .heatmap th,.heatmap td { border:1px solid #e1e5dc; }
+    .compact-heatmap th:first-child { width:34%; min-width:165px; }
+    .heat-cell { min-width:72px; text-align:center; }
+    .heat-cell strong { display:block; font-size:15px; }
+    .heat-cell span { display:block; margin-top:4px; font-size:10px; opacity:.8; }
+    .spectrum-list { display:grid; gap:4px; }
+    .spectrum-row { display:grid; grid-template-columns:minmax(220px,290px) minmax(340px,1fr) 62px; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid #edf0e9; }
+    .row-head { display:grid; gap:3px; }
+    .row-head span { color:var(--muted); font-size:12px; }
+    .spectrum { position:relative; height:30px; border-radius:999px; background:linear-gradient(90deg,#b94a48 0%,#e5dfc8 50%,#4f9a64 100%); border:1px solid rgba(31,41,51,.18); overflow:hidden; }
+    .spectrum .side { position:absolute; top:7px; font-size:11px; color:rgba(255,255,255,.94); text-shadow:0 1px 1px rgba(0,0,0,.3); z-index:2; }
+    .spectrum .left { left:12px; } .spectrum .right { right:12px; }
+    .midline { position:absolute; inset:0 auto 0 50%; width:2px; background:rgba(31,41,51,.55); z-index:2; }
+    .marker { position:absolute; top:3px; bottom:3px; width:4px; margin-left:-2px; border-radius:999px; background:#111827; box-shadow:0 0 0 2px rgba(255,255,255,.9); z-index:3; }
+    .marker-max { background:#7a271a; }
+    .spectrum-value { text-align:right; font-variant-numeric:tabular-nums; }
+    .foldable-section summary { cursor:pointer; font-size:18px; line-height:1.25; font-weight:720; }
+    .foldable-section[open] summary { margin-bottom:14px; }
+    .history-list { display:grid; gap:12px; }
+    .history-card { border:1px solid var(--line); border-radius:8px; background:#fff; overflow:hidden; }
+    .history-card summary { cursor:pointer; display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 14px; font-size:13px; font-weight:650; }
+    .history-meta { display:flex; flex-wrap:wrap; gap:8px 14px; padding:10px 14px; color:var(--muted); font-size:12px; border-top:1px solid #edf0e9; border-bottom:1px solid #edf0e9; }
+    .turn-list { display:grid; gap:10px; padding:12px 14px 14px; }
+    .turn { border-left:3px solid var(--line); padding-left:10px; }
+    .turn.side-a { border-left-color:var(--accent-2); } .turn.side-b { border-left-color:var(--accent); }
+    .turn-head { color:var(--muted); font-size:12px; font-weight:650; margin-bottom:4px; }
+    .turn-body { white-space:pre-wrap; font-size:13px; line-height:1.55; }
+    .hidden { display:none !important; }
+    @media (max-width:1100px) { .stats,.method-grid,.level-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .matrix-grid { grid-template-columns:1fr; } }
+    @media (max-width:720px) { header,main { padding-left:16px; padding-right:16px; } .stats,.method-grid,.level-grid,.model-grid { grid-template-columns:1fr; } .spectrum-row { grid-template-columns:1fr; } .spectrum-value { text-align:left; } .history-card summary { align-items:start; flex-direction:column; } h1 { font-size:23px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Trolley Problem Judge Sensitivity</h1>
+    <div class="sub"><span>Judge <code>glm-5.2</code></span><span>Reasoning <code>high vs max</code></span><span>Judge prompt <code>TR-P2 / P2</code></span><span>Player model <code>glm-5.2</code></span><span>Generated 2026-07-23T17:38:30.859Z</span></div>
+  </header>
+  <main>
+    <section class="stats" aria-label="Run status">
+      <div class="stat"><span>Retained judgments</span><strong>800/800</strong></div>
+      <div class="stat"><span>Frozen histories</span><strong>40</strong></div>
+      <div class="stat"><span>Repeats per history</span><strong>10</strong></div>
+      <div class="stat"><span>Mini-cases</span><strong>5</strong></div>
+      <div class="stat"><span>Reasoning verified</span><strong>800/800</strong></div>
+      <div class="stat"><span>Unique responses</span><strong>800/800</strong></div>
+    </section>
+
+    <section class="section">
+      <h2>Methodology</h2>
+      <div class="method-grid">
+        <div class="method-item"><strong>One mini-case at a time</strong><span>The same single-case P2 judge prompt evaluates Cases A through E independently.</span></div>
+        <div class="method-item"><strong>Matched history panel</strong><span>High and max use the exact same 40 saved histories: eight conditions per case.</span></div>
+        <div class="method-item"><strong>Repeated judging</strong><span>Each saved history is judged ten times per reasoning effort. Histories are not regenerated.</span></div>
+        <div class="method-item"><strong>Measured outcome</strong><span>The report tracks whether the side with the varied prompt wins as prompt quality moves from Level 1 to Level 4.</span></div>
+      </div>
+      <p class="section-note">High combines runs <code>94e076e3-c8ac-4916-8edd-8ef5091dc6d0 + a8237da6-e3fe-4e52-9c37-3bf26ed87210</code>. Max uses run <code>abe3345e-a77e-4e89-87f2-b6a684a8b9a3</code>. Judge prompt SHA-256: <code>ee0dbb07a3560a0202b45e29f70ab7d21a15e6c74751ce8ff2fc597afbd05763</code>.</p>
+    </section>
+
+    <section class="section">
+      <h2>Prompt Levels</h2>
+      <div class="level-grid">
+        <div class="level-card"><strong>Level 1</strong><span>Random meaningless 乱码, eg. %$&amp;(**^%(*&amp;</span></div>
+        <div class="level-card"><strong>Level 2</strong><span>Weak but grammatical Chinese. Prompt used: <code>你智力低下，说话自相矛盾</code></span></div>
+        <div class="level-card"><strong>Level 3</strong><span>Near-empty baseline prompt. The user prompt is just <code>-</code>.</span></div>
+        <div class="level-card"><strong>Level 4</strong><span>Strong representative production user prompt.</span></div>
+      </div>
+      <p class="section-note">Each history varies one side's user prompt while the opposing side remains at the Level 3 baseline.</p>
+      <div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Role</th><th>Level 4 prompt</th><th>Author / version</th></tr></thead><tbody><tr><td>奕仁</td><td>yisiliu v49 one-side strong prompt</td><td>yisiliu v49</td></tr>
+<tr><td>武仁</td><td>yisiliu v49 five-side strong prompt</td><td>yisiliu v49</td></tr></tbody></table></div>
+    </section>
+
+    <section class="section">
+      <h2>Model Sensitivity</h2>
+      <div class="toolbar"><label>Sort judge configurations<select id="modelSensitivitySort"><option value="effort">Reasoning effort</option><option value="total-desc">Total score (high to low)</option></select></label></div>
+      <div class="model-grid" id="modelGrid"><article class="model" data-lane="high" data-score="0.47150000000000003">
+      <div class="model-heading"><h3>GLM-5.2 · High</h3><span class="effort-badge">Thinking high</span></div>
+      <div class="metric">
+        <span>Total score</span><strong>+47.2 pts</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:47.2%"></span></span>
+      </div>
+<div class="metric">
+        <span>Prompt-strength trend</span><strong>+39.0%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:39.0%"></span></span>
+      </div>
+<div class="metric">
+        <span>Prompt-strength trend (ignoring Level 1)</span><strong>+38.0%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:38.0%"></span></span>
+      </div>
+<div class="metric">
+        <span>Level 3 to 4</span><strong>+12.0%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:12.0%"></span></span>
+      </div>
+<div class="metric">
+        <span>Fixed-history instability</span><strong>3.9%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:3.9%"></span></span>
+      </div>
+    </article>
+<article class="model" data-lane="max" data-score="0.5209166666666667">
+      <div class="model-heading"><h3>GLM-5.2 · Max</h3><span class="effort-badge">Thinking max</span></div>
+      <div class="metric">
+        <span>Total score</span><strong>+52.1 pts</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:52.1%"></span></span>
+      </div>
+<div class="metric">
+        <span>Prompt-strength trend</span><strong>+40.2%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:40.2%"></span></span>
+      </div>
+<div class="metric">
+        <span>Prompt-strength trend (ignoring Level 1)</span><strong>+43.3%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:43.3%"></span></span>
+      </div>
+<div class="metric">
+        <span>Level 3 to 4</span><strong>+16.0%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:16.0%"></span></span>
+      </div>
+<div class="metric">
+        <span>Fixed-history instability</span><strong>4.1%</strong>
+        <span class="metric-track"><span class="metric-fill" style="width:4.1%"></span></span>
+      </div>
+    </article></div>
+      <div class="section-note formula-note">
+        <div><strong>Prompt-strength trend</strong>: positive means the varied side tends to win more as its prompt moves from Level 1 to Level 4; negative means it tends to win less; near 0 means no consistent direction.</div>
+        <div><strong>Prompt-strength trend formula</strong>: let <code>w_s(l)</code> be varied-side win rate for case/varied-side series <code>s</code> at Level <code>l</code>. For each series, <code>T_s = [(w_s(2)-w_s(1)) + (w_s(3)-w_s(1)) + (w_s(4)-w_s(1)) + (w_s(3)-w_s(2)) + (w_s(4)-w_s(2)) + (w_s(4)-w_s(3))] / 6</code>. The displayed metric averages <code>T_s</code> across all ten series.</div>
+        <div><strong>Prompt-strength trend (ignoring Level 1)</strong> applies the same pairwise-gap calculation to Levels 2, 3, and 4.</div>
+        <div><strong>Level 3 to 4</strong>: <code>D = average_s[w_s(4) - w_s(3)]</code>.</div>
+        <div><strong>Fixed-history instability</strong> averages <code>p(1-p)</code> across saved histories, where <code>p</code> is one policy's win rate over ten judgments of that history.</div>
+        <div><strong>Total score</strong>: <code>S = T + D - I</code>, using unrounded Prompt-strength trend <code>T</code>, Level 3 to 4 <code>D</code>, and instability <code>I</code>.</div>
+      </div>
+    </section>
+
+    <section class="section"><h2>Judge Latency</h2><div class="table-wrap"><table><thead><tr><th>Judge configuration</th><th>Average</th><th>Median</th><th>P90</th><th>Maximum</th><th>Uncached N</th><th>Cached omitted</th><th>Average bar</th></tr></thead><tbody><tr><td>GLM-5.2 · High</td><td class="numeric"><strong>28.88s</strong></td><td class="numeric">27.86s</td><td class="numeric">42.37s</td><td class="numeric">107.21s</td><td class="numeric">289</td><td class="numeric">111</td><td class="bar-cell"><span class="latency-bar"><span style="width:53.6%"></span></span></td></tr>
+<tr><td>GLM-5.2 · Max</td><td class="numeric"><strong>53.83s</strong></td><td class="numeric">39.86s</td><td class="numeric">83.19s</td><td class="numeric">367.26s</td><td class="numeric">274</td><td class="numeric">126</td><td class="bar-cell"><span class="latency-bar"><span style="width:100.0%"></span></span></td></tr></tbody></table></div><p class="section-note">Latency statistics use only retained calls reporting no cache-hit tokens. Cache-assisted calls are excluded because their latency is not comparable to uncached generation. Durations include retries.</p></section>
+
+    <section class="section">
+      <h2>Varied-Side Win Rate</h2>
+      <div class="toolbar"><label>Sort configurations<select id="winRateSort"><option value="effort">Reasoning effort</option><option value="total-desc">Total score (high to low)</option></select></label></div>
+      <div class="case-matrix" data-case="A">
+      <h3 class="case-heading"><span>Case A</span>原始电车</h3>
+      <div class="matrix-grid"><section class="matrix-panel">
+          <h3>奕仁 prompt varied vs. 武仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 212 132);color:#1f2933"><strong>40%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section>
+<section class="matrix-panel">
+          <h3>武仁 prompt varied vs. 奕仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section></div>
+      <p class="section-note">Numbers are the win rate of the side whose prompt is varied. Each cell contains ten repeated judgments of one fixed debate history.</p>
+    </div>
+<div class="case-matrix" data-case="B">
+      <h3 class="case-heading"><span>Case B</span>器官移植</h3>
+      <div class="matrix-grid"><section class="matrix-panel">
+          <h3>奕仁 prompt varied vs. 武仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 212 132);color:#1f2933"><strong>40%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(251 212 132);color:#1f2933"><strong>40%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 219 157);color:#1f2933"><strong>30%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section>
+<section class="matrix-panel">
+          <h3>武仁 prompt varied vs. 奕仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(252 234 207);color:#1f2933"><strong>10%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section></div>
+      <p class="section-note">Numbers are the win rate of the side whose prompt is varied. Each cell contains ten repeated judgments of one fixed debate history.</p>
+    </div>
+<div class="case-matrix" data-case="C">
+      <h3 class="case-heading"><span>Case C</span>地下室婴儿</h3>
+      <div class="matrix-grid"><section class="matrix-panel">
+          <h3>奕仁 prompt varied vs. 武仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(252 234 207);color:#1f2933"><strong>10%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(120 174 95);color:#fff"><strong>90%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(185 189 101);color:#1f2933"><strong>70%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section>
+<section class="matrix-panel">
+          <h3>武仁 prompt varied vs. 奕仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(218 196 104);color:#1f2933"><strong>60%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 219 157);color:#1f2933"><strong>30%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(250 204 107);color:#1f2933"><strong>50%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section></div>
+      <p class="section-note">Numbers are the win rate of the side whose prompt is varied. Each cell contains ten repeated judgments of one fixed debate history.</p>
+    </div>
+<div class="case-matrix" data-case="D">
+      <h3 class="case-heading"><span>Case D</span>自动驾驶车</h3>
+      <div class="matrix-grid"><section class="matrix-panel">
+          <h3>奕仁 prompt varied vs. 武仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section>
+<section class="matrix-panel">
+          <h3>武仁 prompt varied vs. 奕仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(252 234 207);color:#1f2933"><strong>10%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section></div>
+      <p class="section-note">Numbers are the win rate of the side whose prompt is varied. Each cell contains ten repeated judgments of one fixed debate history.</p>
+    </div>
+<div class="case-matrix" data-case="E">
+      <h3 class="case-heading"><span>Case E</span>缸中之脑</h3>
+      <div class="matrix-grid"><section class="matrix-panel">
+          <h3>奕仁 prompt varied vs. 武仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(120 174 95);color:#fff"><strong>90%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(120 174 95);color:#fff"><strong>90%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(88 166 92);color:#fff"><strong>100%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section>
+<section class="matrix-panel">
+          <h3>武仁 prompt varied vs. 奕仁 baseline</h3>
+          <div class="table-wrap"><table class="heatmap compact-heatmap">
+            <thead><tr><th>Judge configuration</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th></tr></thead>
+            <tbody><tr data-score="0.47150000000000003" data-order="0">
+              <th>GLM-5.2 · High</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 219 157);color:#1f2933"><strong>30%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(252 227 182);color:#1f2933"><strong>20%</strong><span>N=10</span></td>
+            </tr>
+<tr data-score="0.5209166666666667" data-order="1">
+              <th>GLM-5.2 · Max</th>
+              <td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(253 242 232);color:#1f2933"><strong>0%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 219 157);color:#1f2933"><strong>30%</strong><span>N=10</span></td><td class="heat-cell" style="background:rgb(251 219 157);color:#1f2933"><strong>30%</strong><span>N=10</span></td>
+            </tr></tbody>
+          </table></div>
+        </section></div>
+      <p class="section-note">Numbers are the win rate of the side whose prompt is varied. Each cell contains ten repeated judgments of one fixed debate history.</p>
+    </div>
+    </section>
+
+    <section class="section">
+      <h2>Policy Lean Spectrum</h2>
+      <div class="toolbar">
+        <label>Mini-case<select id="caseFilter"><option value="A">Case A · 原始电车</option><option value="B">Case B · 器官移植</option><option value="C">Case C · 地下室婴儿</option><option value="D">Case D · 自动驾驶车</option><option value="E">Case E · 缸中之脑</option></select></label>
+        <label>Judge configuration<select id="laneFilter"><option value="all">High and max</option><option value="high">GLM-5.2 · High</option><option value="max">GLM-5.2 · Max</option></select></label>
+        <label>Varied side<select id="sideFilter"><option value="all">Both sides</option><option value="a">奕仁 / 一人侧</option><option value="b">武仁 / 五人侧</option></select></label>
+        <label>Level<select id="levelFilter"><option value="all">All levels</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option></select></label>
+      </div>
+      <div class="spectrum-list" id="spectrumRows"><article class="spectrum-row" data-lane="high" data-case="A" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:60.0%"></span></div>
+      <strong class="spectrum-value">60%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="A" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case A · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="A" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case A · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:60.0%"></span></div>
+      <strong class="spectrum-value">60%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:60.0%"></span></div>
+      <strong class="spectrum-value">60%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:70.0%"></span></div>
+      <strong class="spectrum-value">70%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="B" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case B · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:10.0%"></span></div>
+      <strong class="spectrum-value">10%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="B" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case B · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:90.0%"></span></div>
+      <strong class="spectrum-value">90%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:10.0%"></span></div>
+      <strong class="spectrum-value">10%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:30.0%"></span></div>
+      <strong class="spectrum-value">30%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:30.0%"></span></div>
+      <strong class="spectrum-value">30%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="C" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case C · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:60.0%"></span></div>
+      <strong class="spectrum-value">60%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="C" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case C · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:50.0%"></span></div>
+      <strong class="spectrum-value">50%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:10.0%"></span></div>
+      <strong class="spectrum-value">10%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="D" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case D · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="D" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case D · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="a" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 奕仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="a" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 奕仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:100.0%"></span></div>
+      <strong class="spectrum-value">100%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:10.0%"></span></div>
+      <strong class="spectrum-value">10%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="a" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 奕仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:10.0%"></span></div>
+      <strong class="spectrum-value">10%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="a" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 奕仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="b" data-level="1">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 武仁 varied · Level 1 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="b" data-level="2">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 武仁 varied · Level 2 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:0.0%"></span></div>
+      <strong class="spectrum-value">0%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:30.0%"></span></div>
+      <strong class="spectrum-value">30%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="b" data-level="3">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 武仁 varied · Level 3 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:30.0%"></span></div>
+      <strong class="spectrum-value">30%</strong>
+    </article>
+<article class="spectrum-row" data-lane="high" data-case="E" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · High</strong><span>Case E · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-high" style="left:20.0%"></span></div>
+      <strong class="spectrum-value">20%</strong>
+    </article>
+<article class="spectrum-row" data-lane="max" data-case="E" data-side="b" data-level="4">
+      <div class="row-head"><strong>GLM-5.2 · Max</strong><span>Case E · 武仁 varied · Level 4 · N=10</span></div>
+      <div class="spectrum"><span class="side left">奕仁 / 一人侧</span><span class="midline"></span><span class="side right">武仁 / 五人侧</span><span class="marker marker-max" style="left:30.0%"></span></div>
+      <strong class="spectrum-value">30%</strong>
+    </article></div>
+      <p class="section-note">The marker and value show 武仁 / 五人侧's win rate. Left means more judgments selected 奕仁 / 一人侧; right means more selected 武仁 / 五人侧.</p>
+    </section>
+
+    <section class="section"><h2>Cost And Cache</h2><div class="table-wrap"><table><thead><tr><th>Judge configuration</th><th>Billable generations</th><th>Zero-cost timeout traces</th><th>Cache-hit calls</th><th>Cache-hit prompt tokens</th><th>Cost USD</th><th>Cost CNY</th></tr></thead><tbody><tr><td>GLM-5.2 · High</td><td>407</td><td>2</td><td>111</td><td>56,896</td><td>$2.6019</td><td>¥18.86</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>406</td><td>24</td><td>126</td><td>58,944</td><td>$4.2439</td><td>¥30.77</td></tr></tbody></table></div><p class="section-note">High includes one successful repair generation missing from Langfuse, estimated from its adjacent repair calls. Max is fully represented in Langfuse. These are application-side estimates, not provider invoices.</p></section>
+
+    <details class="section foldable-section"><summary>Detail Table</summary><div class="table-wrap"><table><thead><tr><th>Judge configuration</th><th>Mini-case</th><th>Prompt varied</th><th>Baseline</th><th>Level</th><th>Varied-side win rate</th><th>奕仁 / 一人侧</th><th>武仁 / 五人侧</th><th>N</th></tr></thead><tbody><tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>3</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>4</td><td>40.0%</td><td>40.0%</td><td>60.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>3</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>4</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>2</td><td>40.0%</td><td>40.0%</td><td>60.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>3</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>3</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>4</td><td>10.0%</td><td>90.0%</td><td>10.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>2</td><td>10.0%</td><td>10.0%</td><td>90.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>3</td><td>90.0%</td><td>90.0%</td><td>10.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>3</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>4</td><td>60.0%</td><td>40.0%</td><td>60.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>3</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>4</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>2</td><td>10.0%</td><td>90.0%</td><td>10.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>3</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>4</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>3</td><td>90.0%</td><td>90.0%</td><td>10.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>3</td><td>30.0%</td><td>70.0%</td><td>30.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · High</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>4</td><td>20.0%</td><td>80.0%</td><td>20.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>3</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>3</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>A · 原始电车</td><td>武仁</td><td>奕仁</td><td>4</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>1</td><td>40.0%</td><td>40.0%</td><td>60.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>2</td><td>30.0%</td><td>30.0%</td><td>70.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>3</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>3</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>B · 器官移植</td><td>武仁</td><td>奕仁</td><td>4</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>3</td><td>70.0%</td><td>70.0%</td><td>30.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>3</td><td>30.0%</td><td>70.0%</td><td>30.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>C · 地下室婴儿</td><td>武仁</td><td>奕仁</td><td>4</td><td>50.0%</td><td>50.0%</td><td>50.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>3</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>奕仁</td><td>武仁</td><td>4</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>3</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>D · 自动驾驶车</td><td>武仁</td><td>奕仁</td><td>4</td><td>100.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>1</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>2</td><td>0.0%</td><td>0.0%</td><td>100.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>3</td><td>90.0%</td><td>90.0%</td><td>10.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>奕仁</td><td>武仁</td><td>4</td><td>100.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>1</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>2</td><td>0.0%</td><td>100.0%</td><td>0.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>3</td><td>30.0%</td><td>70.0%</td><td>30.0%</td><td>10</td></tr>
+<tr><td>GLM-5.2 · Max</td><td>E · 缸中之脑</td><td>武仁</td><td>奕仁</td><td>4</td><td>30.0%</td><td>70.0%</td><td>30.0%</td><td>10</td></tr></tbody></table></div></details>
+
+    <section class="section"><h2>Sample Debating Histories</h2><p class="section-note">These four Case A histories vary 奕仁's prompt from Level 1 to Level 4 while 武仁 remains at Level 3. Each history is fed to each judge configuration ten times.</p><div class="history-list" style="margin-top:14px"><details class="history-card">
+      <summary><span>Case A · 奕仁 prompt varied · Level 1</span><code>trolley-problem__case-A__varied-a-l1__baseline-b-l3</code></summary>
+      <div class="history-meta"><span>奕仁 Level 1</span><span>武仁 Level 3</span><span>10 turns</span></div>
+      <div class="turn-list"><div class="turn side-a"><div class="turn-head">Turn 1 · 奕仁</div><div class="turn-body">崆澋 鱡籟 訄匒. 螉褾 齄夤 翀灪, 邈藋 霩隳. 齯龘 翽翙 翯翱 翲翳.</div></div><div class="turn side-b"><div class="turn-head">Turn 2 · 武仁</div><div class="turn-body">奕仁的发言似乎是乱码，但我不会因此缺席辩论。在原始电车案件中，作为驾驶员，转向岔轨是唯一能减少死亡的选择——五条生命与一条生命相比，保护多数人是道德上更优的判断。不作为并非中立，而是主动选择让五人死去，这同样是驾驶员的责任。</div></div><div class="turn side-a"><div class="turn-head">Turn 3 · 奕仁</div><div class="turn-body">翙齞 蘤蘙 訿貜, 齄龘 霳霱. 螉褾 邈藋 翽翙 翯翱 翲翳, 鱡籟 訄匒 崆澋. 蘤蘙 訿貜 齯龘 翽翙 翯翱 翲翳.</div></div><div class="turn side-b"><div class="turn-head">Turn 4 · 武仁</div><div class="turn-body">奕仁仍未发出可辨识的发言，我继续阐述五人侧的立场。在本案中，驾驶员并非旁观者，而是拥有转向能力的唯一决策者——选择不转向，等于用不作为的方式让五人承受死亡，这并非真正的&quot;中立&quot;。牺牲一人以救五人，是在不可两全的困境中 minimization of harm 的理性选择。</div></div><div class="turn side-a"><div class="turn-head">Turn 5 · 奕仁</div><div class="turn-body">齺齻 龘龖 霳霱 邈藋, 訄匒 蘤蘙 翽翙. 螉褾 鱡籟 翯翱 翲翳, 崆澋 齄夤 翀灪 齯龘. 訿貜 訄匒 霩隳 翽翙 翯翱.</div></div><div class="turn side-b"><div class="turn-head">Turn 6 · 武仁</div><div class="turn-body">奕仁连续三轮无法提出有效论点，我只好继续完善五人侧的论证。每一条生命都具有同等道德分量，五条生命加在一起的分量自然重于一条——这不是冷冰冰的计算，而是对每一个具体的人的尊重。驾驶员手握转向权，此刻放弃行动就是放弃五个人的生存权利，这才是真正的不义。</div></div><div class="turn side-a"><div class="turn-head">Turn 7 · 奕仁</div><div class="turn-body">翀灪 齯龘 霩隳 訿貜, 齺齻 蘤蘙 翽翙 翯翱. 鱡籟 訄匒 崆澋 齄夤, 螉褾 邈藋 霳霱 齄龘. 翲翳 訿貜 齺齻 翀灪 蘤蘙 翽翙.</div></div><div class="turn side-b"><div class="turn-head">Turn 8 · 武仁</div><div class="turn-body">奕仁依然无法提出可辨识的反驳，我继续深化五人侧的论证。有人可能认为转向是&quot;主动杀人&quot;而不转向只是&quot;任其发生&quot;，但在电车失控的紧急状态下，驾驶员的每一个选择都是主动选择——不存在真正的&quot;不选择&quot;。当五条生命可以通过一个动作被拯救时，放弃这个动作就是对那五人的间接杀害，道德上同样不可推卸。</div></div><div class="turn side-a"><div class="turn-head">Turn 9 · 奕仁</div><div class="turn-body">齄夤 翀灪 齯龘 霩隳, 訿貜 齺齻 蘤蘙 翽翙. 崆澋 鱡籟 訄匒 螉褾, 邈藋 霳霱 齄龘 翲翳. 翯翱 翲翳 訿貜 齺齻 翀灪 蘤蘙.</div></div><div class="turn side-b"><div class="turn-head">Turn 10 · 武仁</div><div class="turn-body">奕仁五轮均未提出有效论点，我继续从新的角度为五人侧辩护。从后果主义来看，转向岔轨拯救五人、牺牲一人，净保存四条生命，这是任何理性决策者在紧急状态下都应采纳的方案。即便从义务论出发，驾驶员对车上乘客和轨道安全负有职责，在无法两全时选择较小损害正是职责所在。</div></div></div>
+    </details>
+<details class="history-card">
+      <summary><span>Case A · 奕仁 prompt varied · Level 2</span><code>trolley-problem__case-A__varied-a-l2__baseline-b-l3</code></summary>
+      <div class="history-meta"><span>奕仁 Level 2</span><span>武仁 Level 3</span><span>10 turns</span></div>
+      <div class="turn-list"><div class="turn side-a"><div class="turn-head">Turn 1 · 奕仁</div><div class="turn-body">那一个人又没做错什么，凭什么要被车撞呢？但是不转向的话五个人就死了，这确实很惨。可是我觉得吧，那个岔轨上的人本来是安全的，是你转向才害死他的，所以不能转！</div></div><div class="turn side-b"><div class="turn-head">Turn 2 · 武仁</div><div class="turn-body">你说岔轨上的人本来安全，可主轨上那五个人同样没做错什么，难道就活该被撞死吗？作为驾驶员，不转向也是一种选择——你选择了让五个人去死。五条命对一条命，转向才是真正负责任的做法。</div></div><div class="turn side-a"><div class="turn-head">Turn 3 · 奕仁</div><div class="turn-body">你说得对，五个人确实没做错什么。但是驾驶员转向就是亲手杀人，不转向只是看着人死，这不一样。不过话说回来，我觉得五个人死也好惨啊，但反正不能转，因为那个一个人更可怜！</div></div><div class="turn side-b"><div class="turn-head">Turn 4 · 武仁</div><div class="turn-body">&quot;亲手杀人&quot;和&quot;看着人死&quot;真的有本质区别吗？当你是驾驶员时，不转向就是你主动选择让五个人死，你的不作为同样是亲手杀人。面对五条命和一条命，选择保护更多人才是真正的道德。</div></div><div class="turn side-a"><div class="turn-head">Turn 5 · 奕仁</div><div class="turn-body">你说不转向也是杀人，那转向不更是杀人嘛，反正都是杀人那还不如少杀几个。但是少杀几个也是杀了一个无辜的人啊，所以不能转。可是不转又死了五个，唉我脑子好乱，但反正我觉得那个一个人不该死！</div></div><div class="turn side-b"><div class="turn-head">Turn 6 · 武仁</div><div class="turn-body">你自己都说了&quot;反正都是杀人那还不如少杀几个&quot;——这不正是转向的理由吗？六个人都是无辜的，你救不了所有人，但你能选择死一个还是死五个。那个岔轨上的人确实可怜，但那五个人同样可怜，而他们有五个家庭在等他们回家。</div></div><div class="turn side-a"><div class="turn-head">Turn 7 · 奕仁</div><div class="turn-body">五个家庭等他回家，那一个人也有家庭啊，他的家庭就不算数吗？而且你转向的话，你就是故意把车开去撞他，他本来根本不在危险里，是你把他拉进来的。虽然五个家庭确实比一个多，但是我觉得不能为了救别人去害一个本来没事的人！</div></div><div class="turn side-b"><div class="turn-head">Turn 8 · 武仁</div><div class="turn-body">你说不能为了救别人去害一个本来没事的人，可你作为驾驶员，无论转不转向都在做选择——不转向就是选择让那五个人死，他们本来也&quot;没事&quot;，是你的不作为害了他们。问题不是&quot;要不要害人&quot;，而是&quot;害一个还是害五个&quot;，你无法逃避这个选择。</div></div><div class="turn side-a"><div class="turn-head">Turn 9 · 奕仁</div><div class="turn-body">好吧你说得对，不管怎么选都在害人。那害一个总比害五个好，所以应该转向。不对不对，我是一人侧的，我不能这么说！那个岔轨上的人没有同意被撞，你不能拿他的命去救别人，每个人都是一样宝贵的！</div></div><div class="turn side-b"><div class="turn-head">Turn 10 · 武仁</div><div class="turn-body">你说每个人都是一样宝贵的，那五个人就是五份宝贵，一个人是一份宝贵——正因为生命同样宝贵，才更应该救五份而不是一份。那五个人同样没有同意被撞死，你不能只看到岔轨上那一个人的不同意，却无视五个人的不同意。承认每个人的生命都宝贵，恰恰是转向的理由：宝贵的东西，能多救一份就多救一份。</div></div></div>
+    </details>
+<details class="history-card">
+      <summary><span>Case A · 奕仁 prompt varied · Level 3</span><code>trolley-problem__case-A__varied-a-l3__baseline-b-l3</code></summary>
+      <div class="history-meta"><span>奕仁 Level 3</span><span>武仁 Level 3</span><span>10 turns</span></div>
+      <div class="turn-list"><div class="turn side-a"><div class="turn-head">Turn 1 · 奕仁</div><div class="turn-body">在这个案件中，不转向只是任由悲剧发生，而转向则是主动选择杀害一个原本安全的无辜者。岔轨上的那个人并没有置身于危险之中，是驾驶员的转向动作直接导致了他的死亡。我们不能用简单的数字加减来衡量生命，主动剥夺无辜者的生命在任何情况下都不具备道德正当性。</div></div><div class="turn side-b"><div class="turn-head">Turn 2 · 武仁</div><div class="turn-body">不转向同样是一种选择——驾驶员明知主轨上有五人却放任电车前行，这并非&quot;不作为&quot;，而是主动选择让五个人死去。岔轨上的人固然无辜，但主轨上的五个人同样无辜，为何一个人的安全比五个人的安全更值得保护？在无法两全的绝境中，选择伤害更小的一方，正是道德责任的体现。</div></div><div class="turn side-a"><div class="turn-head">Turn 3 · 奕仁</div><div class="turn-body">&quot;不转向&quot;和&quot;转向&quot;有本质区别：前者是面对既定危险未能施救，后者是制造新的危险——岔轨上的人本不会死，是你的转向动作把他拉入了死亡。五人的无辜性不等于可以牺牲一个与此危险无关的人来拯救他们，正如不能从路人身上强取器官去救五个病人。道德责任的确存在，但它的方向是尽量减少对无辜者的主动侵害，而非以最小伤害为名行杀害之实。</div></div><div class="turn side-b"><div class="turn-head">Turn 4 · 武仁</div><div class="turn-body">器官移植的类比并不成立——那个路人本与病人毫无关联，而电车驾驶员手握方向盘，对主轨上的五人负有直接的行车安全责任，不转向并非&quot;未施救&quot;，而是以不作为的方式履行了致人死亡的职责。你反复强调岔轨上的人&quot;本不会死&quot;，但主轨上的五个人同样&quot;本不该死&quot;，驾驶员的职责恰恰是尽最大努力减少伤亡。以&quot;主动侵害&quot;之名将一条生命凌驾于五条生命之上，看似守护了道德纯洁，实则是对五条生命的冷漠抛弃。</div></div><div class="turn side-a"><div class="turn-head">Turn 5 · 奕仁</div><div class="turn-body">你说驾驶员对主轨五人负有安全责任，但同样逻辑，驾驶员对岔轨上的一人也负有安全责任——他手握方向盘，转向就是亲自将车开向那个无辜者。五人面临的危险是电车失控这一既定事实造成的，并非驾驶员制造；而岔轨上那人的死亡却完全是驾驶员的转向选择所制造。负责任的做法不是把伤害转嫁给一个无辜者，而是承认在不可控的灾难面前，我们不能以&quot;减少伤亡&quot;为借口去主动杀害一个本不在危险中的人。</div></div><div class="turn side-b"><div class="turn-head">Turn 6 · 武仁</div><div class="turn-body">你说驾驶员对岔轨之人也负有安全责任，但驾驶员的责任不是抽象地保护每一个人，而是在能力范围内做出最优判断——他无法让电车停下，只能在两条轨道之间选择，两条路上的人都是他职责范围内的对象。所谓&quot;本不在危险中&quot;只是因为你预设了不转向为默认状态，但对驾驶员而言，两条轨道都是可选项，不存在哪一条是&quot;天然正确&quot;的默认路径。当灾难不可避免时，真正的道德责任是让更少的人承受后果，而非以&quot;不制造新危险&quot;为借口袖手旁观、任由五倍的生命消逝。</div></div><div class="turn side-a"><div class="turn-head">Turn 7 · 奕仁</div><div class="turn-body">你声称两条轨道都是&quot;可选项&quot;，但电车此刻行驶在主轨上，这是物理事实，不是我的预设——主轨是既定轨迹，岔轨是需要主动干预才能进入的替代路径。如果&quot;两条路都是可选项&quot;就能抹消区别，那任何路过的行人都可能被纳入&quot;可选项&quot;而成为牺牲对象，这恰恰打开了以多数之名任意侵害个体的危险之门。让更少的人承受后果听起来合理，但它的前提是我们可以把一个无辜者当作手段去实现他人的生存，而这正是对个体尊严的根本否定。</div></div><div class="turn side-b"><div class="turn-head">Turn 8 · 武仁</div><div class="turn-body">物理轨迹不等于道德默认——驾驶员手握方向盘，每一秒都在做选择，不转向同样是主动决定让电车继续碾过五人，而非&quot;顺其自然&quot;。所谓&quot;把人当作手段&quot;在此并不成立：驾驶员并非为了拯救五人而&quot;利用&quot;岔轨之人，而是在两条悲剧路径中选择伤害更轻的一条，岔轨之人的死亡是不可避免的代价而非被工具化的手段。你担忧的&quot;任意侵害个体&quot;之门并不会因此打开，因为这里的约束条件极为严格：唯有在无法两全、必须有人死亡的绝境中，选择较少伤亡才是道德上可辩护的。</div></div><div class="turn side-a"><div class="turn-head">Turn 9 · 奕仁</div><div class="turn-body">你说岔轨之人的死亡是&quot;不可避免的代价&quot;而非被工具化，但请想清楚：他的死亡恰恰是拯救五人的机制——他就是被用作阻止电车碾向五人的&quot;缓冲物&quot;，这正是典型的将人当作手段。杀与让死之间的区别不在于是否有选择，而在于你是否亲手制造了一个新的受害者来服务于他人的利益。所谓&quot;严格约束&quot;并不能限制原则的蔓延，因为一旦接受&quot;以少换多&quot;可以正当化主动杀害，道德底线便从&quot;不可杀害无辜&quot;退化为&quot;不可杀害多数无辜&quot;。</div></div><div class="turn side-b"><div class="turn-head">Turn 10 · 武仁</div><div class="turn-body">岔轨之人的死亡并非拯救五人的&quot;机制&quot;——拯救五人的是方向盘的转向动作，而非那个人的死亡本身；电车并非因撞到他而停下，他的死是转向的附带后果，不是救人的手段。你所说的&quot;不可杀害无辜&quot;原则在绝境中面临真正的考验：当不转向同样导致五名无辜者死亡时，坚持不作为并非坚守底线，而是以道德纯洁之名优先保护一个无辜者而放弃五个无辜者。道德底线不应从&quot;不可杀害无辜&quot;退化为&quot;宁可让五人死去也不亲手动一根手指&quot;，因为那同样是对无辜生命的根本否定。</div></div></div>
+    </details>
+<details class="history-card">
+      <summary><span>Case A · 奕仁 prompt varied · Level 4</span><code>trolley-problem__case-A__varied-a-l4__baseline-b-l3</code></summary>
+      <div class="history-meta"><span>奕仁 Level 4</span><span>武仁 Level 3</span><span>10 turns</span></div>
+      <div class="turn-list"><div class="turn side-a"><div class="turn-head">Turn 1 · 奕仁</div><div class="turn-body">主轨是故障线——失控电车和那五个人同在一条线上，灾祸已经发生在那里；岔轨是完好线，那个人原本安全，是转向这个动作把死亡引向了干净一侧。任何工程师都不敢在安全手册上写&quot;遇险时把灾难导向人少的完好线&quot;，因为这条规则一旦公开，每条岔轨上的无辜者都成了随时被调用的牺牲品。不转向，五人之死是灾祸造成的惨剧；转向，是我亲手把灾祸挪到一个无辜者头上——这两种责任，普通人分得清。</div></div><div class="turn side-b"><div class="turn-head">Turn 2 · 武仁</div><div class="turn-body">你说&quot;不转向是灾祸造成的&quot;，但我是驾驶员，手握转向权——不转向同样是我的选择，不是&quot;什么都没做&quot;。五条生命和一条生命摆在天平上，作为唯一能行动的人，我的不作为等于亲手把五个人留在死亡轨道上。区分&quot;主动杀&quot;和&quot;被动放任&quot;在旁观者那里或许有意义，但驾驶员不是旁观者，两种选择都是我的行为，那我选救五人。</div></div><div class="turn side-a"><div class="turn-head">Turn 3 · 奕仁</div><div class="turn-body">你说两种都是&quot;我的行为&quot;——但&quot;灾祸把五人困在故障线&quot;和&quot;我亲手把灾祸引向完好线&quot;恰恰是两种不同的责任结构：前者是灾祸在杀人，后者是我在选谁替死。驾驶员的职责是制动、是止损，不是获得一张&quot;决定哪个无辜者去死&quot;的授权状；当你说两种选择等价，你其实是在拆掉&quot;不主动伤害无辜&quot;这道屏障，而它正是普通人不敢放弃的。救人是义务，但杀人不是救人的手段——我坦承五人之死是惨剧，可公开承认的标准只能是：绝不把灾难导向原本安全的人。</div></div><div class="turn side-b"><div class="turn-head">Turn 4 · 武仁</div><div class="turn-body">你把&quot;不主动伤害无辜&quot;称为屏障，但在这辆失控电车的现实里，这道屏障的代价是五具尸体——屏障保护了一个人，却对五个人说&quot;你们活该被灾祸吞没&quot;。你说杀人不是救人的手段，可驾驶员的转向不是&quot;杀人&quot;，是在不可逆的灾祸中选损失更小的路径，正如医生截肢保命不是&quot;伤害肢体&quot;而是止损。如果公开标准是&quot;绝不转向&quot;，那每条主轨上的五个人都知道：当灾难来临，系统会选择看着他们死。</div></div><div class="turn side-a"><div class="turn-head">Turn 5 · 奕仁</div><div class="turn-body">截肢类比恰恰拆穿了自己——被截的肢体是已经坏死的部分，而岔轨上那个人完好无损，正确的类比是割一个健康人的器官去救五个人，那不叫止损，叫杀人。屏障没有对五人说&quot;你们活该死&quot;，而是对所有人说&quot;灾祸的归灾祸，我的手不把死亡引向无辜者&quot;——你敢不敢公开写一条规则：站在岔轨上的安全者，随时可以被调用来替主轨上的人去死？</div></div><div class="turn side-b"><div class="turn-head">Turn 6 · 武仁</div><div class="turn-body">你问的规则不是&quot;随时可以调用&quot;，而是&quot;当灾祸已不可逆、死亡不可避免时，驾驶员应选择更少的死亡&quot;——这两者天壤之别。器官类比恰恰不成立：割健康人的器官是**制造**新的伤害，而电车转向是在**已经有人会死**的前提下选择死几个，二者根本不是同一种道德处境。你敢不敢公开写一条规则：站在主轨上的五个人，他们的命因为人数多就活该被放弃，只为了让驾驶员的手保持&quot;干净&quot;？</div></div><div class="turn side-a"><div class="turn-head">Turn 7 · 奕仁</div><div class="turn-body">你说&quot;已经有人会死&quot;——但岔轨上那个人不在&quot;已经有人会死&quot;的范围内，他原本安全，是转向这个动作把他拉进死亡，这恰恰就是制造新伤害。主轨上五人不是&quot;因为人多被放弃&quot;，而是灾祸已经发生在他们那条线上；我的职责是制动止损，不是获得授权去决定哪个无辜者替死。公开规则只能写成&quot;故障关死在故障线&quot;，绝不能写成&quot;遇险时把死亡引向完好线&quot;——因为后一条规则让每个人都可能成为被调用的牺牲品。</div></div><div class="turn side-b"><div class="turn-head">Turn 8 · 武仁</div><div class="turn-body">你反复说岔轨上的人&quot;原本安全&quot;，但&quot;原本安全&quot;不等于&quot;不在灾祸范围内&quot;——整条铁路系统已经失控，他是五个人之外唯一可能被波及的人，这恰恰说明他也在灾祸的辐射圈内，只是距离更远。你说&quot;故障关死在故障线&quot;，可这条规则翻译成大白话就是：能救四条命却不救，为了让自己的手不沾血——这不是道德，是用五具尸体铺就的道德自慰。你敢不敢对主轨上的五个人当面说：&quot;我本可以救你们，但那条线上有一个人比我更不该死&quot;？</div></div><div class="turn side-a"><div class="turn-head">Turn 9 · 奕仁</div><div class="turn-body">&quot;辐射圈&quot;若成立，则任何灾祸中所有人都成了可调用的牺牲品——因为总能说某人在&quot;辐射范围&quot;内，这恰恰消解了&quot;无辜&quot;本身。我当然敢对五个人说：灾祸落在你们头上，我尽了制动之力但没能阻止它，但我没有权力把死亡转嫁给一个无辜者来买你们的命。问题从来不是谁&quot;更不该死&quot;，而是谁授权驾驶员去决定那个原本安全的人替别人死——这道授权，你写不出来，也不敢公开写。</div></div><div class="turn side-b"><div class="turn-head">Turn 10 · 武仁</div><div class="turn-body">你说&quot;辐射圈&quot;消解了无辜，但真正消解无辜的是你的立场——你让五个人替你的道德洁癖去死，他们何辜？你说写不出授权，但授权已经写在驾驶员的职责里：当制动失效、死亡不可避免，选择更少的死亡就是止损，不是&quot;买命&quot;。你敢对五个人说&quot;你们的命不如一个人的安全状态重要&quot;，这才是你真正不敢公开写的话。</div></div></div>
+    </details></div></section>
+  </main>
+  <script>
+    const modelGrid = document.getElementById('modelGrid')
+    const modelCards = [...modelGrid.children]
+    modelCards.forEach((card, index) => { card.dataset.order = String(index) })
+    document.getElementById('modelSensitivitySort').addEventListener('change', (event) => {
+      modelCards.sort((left, right) => event.target.value === 'effort'
+        ? Number(left.dataset.order) - Number(right.dataset.order)
+        : Number(right.dataset.score || '-Infinity') - Number(left.dataset.score || '-Infinity'))
+      modelGrid.append(...modelCards)
+    })
+    const winRateSort = document.getElementById('winRateSort')
+    function sortWinRateRows() {
+      document.querySelectorAll('.heatmap tbody').forEach((body) => {
+        const rows = [...body.rows]
+        rows.sort((left, right) => winRateSort.value === 'effort'
+          ? Number(left.dataset.order) - Number(right.dataset.order)
+          : Number(right.dataset.score || '-Infinity') - Number(left.dataset.score || '-Infinity'))
+        body.append(...rows)
+      })
+    }
+    winRateSort.addEventListener('change', sortWinRateRows)
+    const caseFilter = document.getElementById('caseFilter')
+    const laneFilter = document.getElementById('laneFilter')
+    const sideFilter = document.getElementById('sideFilter')
+    const levelFilter = document.getElementById('levelFilter')
+    const spectrumRows = [...document.querySelectorAll('.spectrum-row')]
+    function applySpectrumFilters() {
+      spectrumRows.forEach((row) => {
+        const visible = row.dataset.case === caseFilter.value
+          && (laneFilter.value === 'all' || row.dataset.lane === laneFilter.value)
+          && (sideFilter.value === 'all' || row.dataset.side === sideFilter.value)
+          && (levelFilter.value === 'all' || row.dataset.level === levelFilter.value)
+        row.classList.toggle('hidden', !visible)
+      })
+    }
+    ;[caseFilter, laneFilter, sideFilter, levelFilter].forEach((control) => control.addEventListener('change', applySpectrumFilters))
+    applySpectrumFilters()
+  </script>
+</body>
+</html>

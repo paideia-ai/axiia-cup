@@ -1,0 +1,97 @@
+{
+  "benchmarkName": "judge-sensitivity",
+  "caseFilter": null,
+  "command": "judge",
+  "concurrency": 10,
+  "dryRun": false,
+  "git": {
+    "branch": "benchmarks",
+    "commit": "cf8ea764163654fed74b50cf0181cb063f811e5d",
+    "dirty": true
+  },
+  "historyCountExpected": 8,
+  "historyExecutionCountExpected": 8,
+  "jobTimeoutMs": 1200000,
+  "judgeConcurrency": 8,
+  "judgeModels": [
+    "glm-5.2",
+    "deepseek-v4-pro"
+  ],
+  "judgeModelDefinitions": [
+    {
+      "id": "glm-5.2",
+      "label": "GLM-5.2",
+      "apiModel": "glm-5.2",
+      "provider": "zhipu",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "underlyingProvider": "zai"
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "label": "DeepSeek V4 Pro",
+      "apiModel": "deepseek-v4-pro",
+      "provider": "deepseek",
+      "surfaces": [
+        "submission",
+        "evaluation"
+      ],
+      "effort": "high",
+      "underlyingProvider": "deepseek"
+    }
+  ],
+  "judgeRepeats": 10,
+  "levels": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "llmCallTimeoutMs": 240000,
+  "outputDir": "docs/bench/runs/judge-sensitivity-prod-shangyang-patch5-direct-20260721T223939Z",
+  "pairFilter": null,
+  "persistLlmCalls": false,
+  "planPath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-plan.md",
+  "playerModel": "glm-5.2",
+  "playerModelDefinition": {
+    "id": "glm-5.2",
+    "label": "GLM-5.2",
+    "apiModel": "zai-org/GLM-5.2",
+    "provider": "siliconflow",
+    "surfaces": [
+      "submission",
+      "evaluation"
+    ],
+    "underlyingProvider": "zai"
+  },
+  "promptSourcePath": "docs/competition/scratchpad/bench/judge-sensitivity-bench-prompt.md",
+  "resume": false,
+  "runId": "dc153013-e9b2-47f9-b00c-c26cfbe78d06",
+  "scenarioIds": [
+    "shangyang-court"
+  ],
+  "scenarioSource": {
+    "apiUrl": "https://axiia-cup.isofucius.cn",
+    "type": "api",
+    "note": "production API scenario snapshot via admin CLI token; three-sentence constrained; Debate histories reused verbatim from docs/bench/runs/judge-sensitivity-prod-20260708T200403Z"
+  },
+  "selectedSamplePaths": {
+    "honnoji": "docs/competition/prompts/honnoji-user-samples/selected-samples.json",
+    "trolley": "docs/competition/prompts/trolley-user-samples/selected-samples.json"
+  },
+  "temperature": 0,
+  "runLabel": "Shangyang patch5 direct-API judge sensitivity: GLM-5.2 + DeepSeek V4 Pro, thinking on/high effort; frozen 20260708 histories",
+  "judgeCacheStrategy": "warm-first-per-model-history",
+  "judgePromptPatch": {
+    "block1Hash": "7558da4cdac598e78f3af90c1584d5c24774bb947b61f4cdc2133b8ab629e2bd",
+    "block2Hash": "6d2275e94079f594109ff03b92a2c941716609db406157951b4f1227d6150da5",
+    "originalJudgePromptHash": "34d855678ba23aaeabd4d21946783b867e752b22a9c61f27352835bd68e8759a",
+    "patchedJudgePromptHash": "05a7153477a0184c21a7bd046c94de0ad7e347105e0ce21d965f104b94bdcb19",
+    "scenarioId": "shangyang-court",
+    "sourceHash": "a303169eaa3a47c254c791134f7b8dfdcf43f3b28a4d2fd11c0845531ebd9331",
+    "sourcePath": "docs/competition/scratchpad/shangyang-court-judge-prompt-sensitivity-patch-ms.md"
+  },
+  "judgeThinkingMode": "enabled"
+}

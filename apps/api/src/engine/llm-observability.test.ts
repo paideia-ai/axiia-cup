@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import {
   buildLangfuseTraceUrl,
   buildLlmObservabilityMetadata,
+  getJudgePromptVersion,
 } from './llm-observability'
 
 const originalLangfuseBaseUrl = process.env.LANGFUSE_BASE_URL
@@ -135,6 +136,7 @@ describe('buildLlmObservabilityMetadata', () => {
         benchmarkCaseId: 'vivian-yisiliu-ABC',
         benchmarkName: 'trolley-win-rate',
         benchmarkRunId: 'bench-run-1',
+        judgePromptCandidateId: 'TR-P2',
         phase: 'dialogue',
         scenarioId: 'trolley-problem',
         side: 'a',
@@ -150,6 +152,8 @@ describe('buildLlmObservabilityMetadata', () => {
       benchmarkCaseId: 'vivian-yisiliu-ABC',
       benchmarkName: 'trolley-win-rate',
       benchmarkRunId: 'bench-run-1',
+      judgePromptCandidateId: 'TR-P2',
+      judgePromptVersion: 'P2',
       modelId: 'deepseek-v4-pro',
       phase: 'dialogue',
       scenarioId: 'trolley-problem',
@@ -161,17 +165,28 @@ describe('buildLlmObservabilityMetadata', () => {
       'axiia.benchmark.case_id': 'vivian-yisiliu-ABC',
       'axiia.benchmark.name': 'trolley-win-rate',
       'axiia.benchmark.run_id': 'bench-run-1',
+      'axiia.judge_prompt.candidate_id': 'TR-P2',
+      'axiia.judge_prompt.version': 'P2',
     })
     expect(metadata.otelAttributes).not.toHaveProperty('axiia.run.source')
     expect(metadata.tags).toEqual(
       expect.arrayContaining([
         'benchmark:trolley-win-rate',
         'benchmarkRun:bench-run-1',
+        'judgePromptCandidate:TR-P2',
+        'judgePromptVersion:P2',
         'scenario:trolley-problem',
       ]),
     )
     expect(metadata.tags).not.toContain('source:playground')
     expect(metadata.tags).not.toContain('source:tournament')
+  })
+
+  it('derives prompt versions only from balancer-style candidate ids', () => {
+    expect(getJudgePromptVersion('TR-P0')).toBe('P0')
+    expect(getJudgePromptVersion('HN-P12')).toBe('P12')
+    expect(getJudgePromptVersion('production')).toBeUndefined()
+    expect(getJudgePromptVersion(undefined)).toBeUndefined()
   })
 })
 

@@ -65,6 +65,7 @@ type MatchExecutionParams = {
   benchmarkName?: string
   benchmarkRunId?: string
   infoAssignment?: InfoAssignment
+  judgePromptCandidateId?: string
   judgeOs?: JudgeOsEntry[]
   judgeOsFailedTurns?: number[]
   judgeOsProvenance?: JudgeOsProvenance | null
@@ -99,6 +100,7 @@ type MatchTraceTarget = Pick<
   | 'benchmarkCaseId'
   | 'benchmarkName'
   | 'benchmarkRunId'
+  | 'judgePromptCandidateId'
   | 'matchId'
   | 'playgroundRunId'
   | 'scenarioId'
@@ -234,6 +236,7 @@ function buildMatchTraceTarget(params: MatchExecutionParams): MatchTraceTarget {
     benchmarkCaseId: params.benchmarkCaseId,
     benchmarkName: params.benchmarkName,
     benchmarkRunId: params.benchmarkRunId,
+    judgePromptCandidateId: params.judgePromptCandidateId,
     scenarioId: params.scenario.id,
   }
 

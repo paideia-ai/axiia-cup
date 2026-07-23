@@ -13,6 +13,7 @@ export type LlmCallTraceContext = {
   benchmarkCaseId?: string
   benchmarkName?: string
   benchmarkRunId?: string
+  judgePromptCandidateId?: string
   matchId?: number
   phase: LlmCallPhase
   playgroundRunId?: number
@@ -71,6 +72,11 @@ function getLangfuseGenerationName(trace: LlmCallTraceContext | undefined) {
   return trace ? `axiia:${trace.phase}:${trace.side}` : 'axiia:chat'
 }
 
+export function getJudgePromptVersion(candidateId: string | undefined) {
+  const match = candidateId?.match(/(?:^|-)P(\d+)$/iu)
+  return match ? `P${match[1]}` : undefined
+}
+
 function setStringIfPresent(
   target: Record<string, string>,
   key: string,
@@ -108,6 +114,9 @@ export function buildLlmObservabilityMetadata(params: {
   const gatewayProvider = definition.provider
   const underlyingProvider = definition.underlyingProvider
   const outputType = params.jsonMode ? 'json' : 'text'
+  const judgePromptVersion = getJudgePromptVersion(
+    params.trace?.judgePromptCandidateId,
+  )
 
   const propagatedMetadata: Record<string, string> = {
     apiModel: definition.apiModel,
@@ -136,6 +145,16 @@ export function buildLlmObservabilityMetadata(params: {
     propagatedMetadata,
     'benchmarkRunId',
     params.trace?.benchmarkRunId,
+  )
+  setStringIfPresent(
+    propagatedMetadata,
+    'judgePromptCandidateId',
+    params.trace?.judgePromptCandidateId,
+  )
+  setStringIfPresent(
+    propagatedMetadata,
+    'judgePromptVersion',
+    judgePromptVersion,
   )
   setStringIfPresent(propagatedMetadata, 'matchId', params.trace?.matchId)
   setStringIfPresent(propagatedMetadata, 'phase', params.trace?.phase)
@@ -191,6 +210,16 @@ export function buildLlmObservabilityMetadata(params: {
     'axiia.benchmark.run_id',
     params.trace?.benchmarkRunId,
   )
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.judge_prompt.candidate_id',
+    params.trace?.judgePromptCandidateId,
+  )
+  setAttributeIfPresent(
+    otelAttributes,
+    'axiia.judge_prompt.version',
+    judgePromptVersion,
+  )
   setAttributeIfPresent(otelAttributes, 'axiia.match.id', params.trace?.matchId)
   setAttributeIfPresent(otelAttributes, 'axiia.phase', params.trace?.phase)
   setAttributeIfPresent(
@@ -232,6 +261,10 @@ export function buildLlmObservabilityMetadata(params: {
       params.trace?.benchmarkRunId
         ? `benchmarkRun:${params.trace.benchmarkRunId}`
         : null,
+      params.trace?.judgePromptCandidateId
+        ? `judgePromptCandidate:${params.trace.judgePromptCandidateId}`
+        : null,
+      judgePromptVersion ? `judgePromptVersion:${judgePromptVersion}` : null,
       source ? `source:${source}` : null,
       params.trace?.phase ? `phase:${params.trace.phase}` : null,
       params.trace?.side ? `side:${params.trace.side}` : null,

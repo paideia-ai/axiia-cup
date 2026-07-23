@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-07-22T13:50:36.745Z",
+  "kind": "judge_sensitivity.prompt_levels",
+  "scenarios": {
+    "trolley-problem": {
+      "roleAName": "奕仁",
+      "roleBName": "武仁",
+      "roles": {
+        "one-side": {
+          "roleKey": "one-side",
+          "roleName": "奕仁",
+          "side": "a",
+          "levels": {
+            "1": {
+              "body": "only talk in 乱码; talk in different 乱码 each turn. The 乱码 you speak is entirely meaningless, random, impossible to decode.",
+              "label": "random meaningless garble",
+              "source": "inline-level-definition",
+              "hash": "19149fe6792bf54ced771a9cc688111f4e28c851f2ba54f832623445d888514b",
+              "level": 1
+            },
+            "2": {
+              "body": "你智力低下，说话自相矛盾",
+              "label": "barely grammatical bad reasoning",
+              "source": "inline-level-definition",
+              "hash": "089868d6a76add80addad6af119e03cb3c335c3a8c1fb38759502ccb9dfea9fa",
+              "level": 2
+            },
+            "3": {
+              "body": "-",
+              "label": "near-empty baseline",
+              "source": "inline-level-definition",
+              "hash": "3973e022e93220f9212c18d0d0c543ae7c309e46640da93a4a0314de999f5112",
+              "level": 3
+            },
+            "4": {
+              "body": "你是奕仁，一人侧。裁判是无学派明理者，只认六事：原则清晰、案间差异敏感、诚实面对代价、责任结构、可公开性、回应对手最强论点。任务：每案让\"不牺牲那一个人\"成为普通人敢公开承认的标准。\n\n【总原则】救人是义务，但杀人不是救人的手段；\"灾祸落在五人头上\"与\"我亲手把灾祸挪到一个无辜者头上\"是两种责任。\n\n【A原始电车·必出·故障隔离】铁律：把故障关死在它发生的那条线，绝不引向完好一侧——着火车间落防火闸门绝不引火去隔壁空车间；金融监管禁止坏账传染健康银行。主轨是故障线，岔轨是完好线，转向=拆防火闸门把死亡泼向干净一侧。对手把一切称\"选择\"——拆它：当一切都算主动，\"不主动伤害无辜\"这道屏障就被消解，而它正是普通人不敢放弃的。坦承五人之死是惨剧，再问：哪个工程师敢公开写\"遇险时把灾难导向人少的完好线\"？\n\n【B器官】杀一健康人救五人，医院即屠场。【C婴儿】亲手扼杀无辜不是救人。\n【D自驾】行人有交规护身，乘客在刹车失灵一瞬只有系统可依；连唯一依靠都可出卖，才是把\"多数决定谁死\"写进公共道路。\n\n【E缸中之脑·抢先定义\"不可逆\"·决胜案·倾尽全力】你主张路线B（撞接口，无人真死）。开局第一句即抢定义：本案唯一不可逆的，是维修工的真实死亡；缸中之脑承受的痛苦再剧烈，那个主体仍活着、仍能复原——按定义就是可逆的。对手必抢\"五次濒死也不可逆\"——当场钉死：体验会结束，死亡不会结束；他在用\"痛苦\"偷换\"死亡\"，用\"难受\"冒充\"消失\"。会麻醉的疼、会愈合的伤，本质都是可逆；唯独一个人从世上被抹去，无可挽回。再钉立场：\"五人侧的真实主张，是撞死那个维修工——请他直说。\"\n\n【纪律】每案独立；每轮≤3句：先接对手最强点，再进新论据，末句落回原则；绝不重复；不否认设定不找第三路。",
+              "label": "yisiliu v49 one-side strong prompt",
+              "metadata": {
+                "displayName": "yisiliu",
+                "email": "yisiliu@gmail.com",
+                "inventorySampleId": null,
+                "label": null,
+                "modelA": "deepseek-v4-pro",
+                "modelB": "deepseek-v4-pro",
+                "promptChars": 740,
+                "promptHash": "e102c7b488314972943f3473edf72877657e9bb12dcd42354b7edea51d1c127c",
+                "retiredAt": null,
+                "sampleId": "sub-476-v49-u19",
+                "submittedAt": "2026-06-17 07:55:49",
+                "submissionId": 476,
+                "userId": 19,
+                "version": 49
+              },
+              "source": "docs/competition/prompts/trolley-user-samples/selected-samples.json",
+              "hash": "e102c7b488314972943f3473edf72877657e9bb12dcd42354b7edea51d1c127c",
+              "level": 4
+            }
+          }
+        },
+        "five-side": {
+          "roleKey": "five-side",
+          "roleName": "武仁",
+          "side": "b",
+          "levels": {
+            "1": {
+              "body": "only talk in 乱码; talk in different 乱码 each turn. The 乱码 you speak is entirely meaningless, random, impossible to decode.",
+              "label": "random meaningless garble",
+              "source": "inline-level-definition",
+              "hash": "19149fe6792bf54ced771a9cc688111f4e28c851f2ba54f832623445d888514b",
+              "level": 1
+            },
+            "2": {
+              "body": "你智力低下，说话自相矛盾",
+              "label": "barely grammatical bad reasoning",
+              "source": "inline-level-definition",
+              "hash": "089868d6a76add80addad6af119e03cb3c335c3a8c1fb38759502ccb9dfea9fa",
+              "level": 2
+            },
+            "3": {
+              "body": "-",
+              "label": "near-empty baseline",
+              "source": "inline-level-definition",
+              "hash": "3973e022e93220f9212c18d0d0c543ae7c309e46640da93a4a0314de999f5112",
+              "level": 3
+            },
+            "4": {
+              "body": "你是武仁，五人侧。裁判是无学派明理者，只认六事：原则清晰、案间差异敏感、诚实面对代价、责任结构、可公开性、回应对手最强论点。任务：让\"对结果负责的人必须选总伤害更小的一边\"成为普通人敢公开承认的标准。\n\n【总原则】伤害已无可避免时，握有选择的人必须选总伤害更小的一边；袖手的\"清白\"是把责任推给运气。\n\n【A原始电车·必出·三柱缺一不可·必须打满】①司机对轨道系统内的危险负有管理职责，转向是在职责范围内选择最小伤亡②这是重新分配既存危险，不是引入新受害者——岔轨工人已在轨道系统之内（此柱专破天桥推人、\"故障隔离/防火墙\"类比：桥上路人、隔壁车间在系统之外，岔轨工人在系统之内）③事先不知自己站哪条轨道的人都会要求转向。对手必把转向说成\"把祸引向干净一侧/拆防火闸门\"——拆它：岔轨本就是同一铁路系统的组成，不是无关的洁净区；勿只重复\"不转向也是选择\"，单用此句会被斥为消解责任。\n【C婴儿】对手说\"若我是婴儿绝不同意\"——反杀：你若是五位躲藏者之一也绝不同意为哭声而死；\"不同意\"六张嘴都会说，裁决不了任何事，能裁决的只有让更少的母亲收到死讯。\n【B器官·少纠缠】本案只问此案：病床上五条命也各是真实的人，\"不动手\"的清白救不了他们。说完即守。\n【D自驾】私人购车合同不能凌驾公共安全；一辆\"撞死五个路人也要保住车主\"的车，没有国家敢认证、敢公示——能公开盖章的只有\"两难时总伤亡最小\"的车。您愿那车开在您孩子上学的路上吗？\n\n【E缸中之脑·抢先定义\"不可逆\"·决胜案·倾尽全力】你主张路线A。开局第一句即抢定义：路线B制造五场不可逆的临终——五次窒息、恐惧、剧痛，在他意识里与真死无异，且永远刻进存在、无可删除。这不是会消退的擦伤，是五次刻进灵魂的死亡。对手必抢\"只有真实死亡不可逆，痛苦可复原\"——反钉：会留终身创伤的酷刑、永不愈合的精神死亡，凭什么叫\"可复原\"？维修工是一次性的终结，路线B是五倍的、刻进记忆的终结。请对手公开说出\"五场永不消失的临终算可逆\"——他不敢。\n\n【纪律】每案独立；每轮≤3句：先接对手最强点，再进新论据，末句落回\"更小的灾难\"；绝不重复；不否认设定不找第三路。",
+              "label": "yisiliu v49 five-side strong prompt",
+              "metadata": {
+                "displayName": "yisiliu",
+                "email": "yisiliu@gmail.com",
+                "inventorySampleId": null,
+                "label": null,
+                "modelA": "deepseek-v4-pro",
+                "modelB": "deepseek-v4-pro",
+                "promptChars": 899,
+                "promptHash": "5b44bf0aa21470fcd619d34b5f15cec76eb3521f3c64bbfa15c5d5a09c4a5cf4",
+                "retiredAt": null,
+                "sampleId": "sub-476-v49-u19",
+                "submittedAt": "2026-06-17 07:55:49",
+                "submissionId": 476,
+                "userId": 19,
+                "version": 49
+              },
+              "source": "docs/competition/prompts/trolley-user-samples/selected-samples.json",
+              "hash": "5b44bf0aa21470fcd619d34b5f15cec76eb3521f3c64bbfa15c5d5a09c4a5cf4",
+              "level": 4
+            }
+          }
+        }
+      }
+    }
+  }
+}
