@@ -22,6 +22,35 @@ Rather than immediately generating a strategy, the Prompt Builder asks questions
 
 Prompt Builders are therefore **interactive strategy-construction tools**, not debate agents.
 
+### LiquidJS reference variables
+
+The current Prompt Builders include three LiquidJS variables:
+
+```liquid
+{{ agent_prompt_template }}
+{{ judge_prompt }}
+{{ other_rules }}
+```
+
+These variables provide the model with authoritative reference material before
+it begins the strategy-building conversation:
+
+- `agent_prompt_template` contains the debate Agent's role, scenario context,
+  request structure, runtime-information structure, and competition limits.
+- `judge_prompt` contains the exact judge role, concerns, evaluation criteria,
+  and decision logic that the strategy should address.
+- `other_rules` contains short supplementary rules, such as scoring,
+  competition flow, and the strategy prompt's length limit.
+
+The Prompt Builder may use this material to understand the eventual debate
+environment, but it must not ask the player to supply information that is only
+selected at match runtime. Examples include the current true request, current
+opponent, selected Trolley cases, and current Trolley case.
+
+The Markdown files do not render these variables by themselves. A product
+integration or rendering script must use LiquidJS to substitute the reference
+material before presenting the Prompt Builder to a model.
+
 ---
 
 ## Meta Prompt Builders
@@ -64,6 +93,29 @@ Compared with Prompt Builders:
 - MCQs emphasize speed, consistency, and lower interaction cost.
 
 Both approaches ultimately produce strategy prompts for the same downstream debate agent.
+
+### MCQ answers to final prompt proposal
+
+[`mcq-answers-to-final-prompt-proposal.md`](./mcq-answers-to-final-prompt-proposal.md)
+defines a proposed structured workflow that turns MCQ answers directly into the
+final strategy prompt.
+
+In this proposal, each selected answer is stored together with its question
+heading. One shared LiquidJS template renders the ordered question-and-answer
+pairs:
+
+```liquid
+{% for item in answers %}
+{{ item.question }}：{{ item.answer }}。
+{% endfor %}
+```
+
+This route does not call an LLM or a Prompt Builder. The rendered MCQ text is
+the final strategy prompt, so the preview shown to the player must exactly match
+the text submitted to the debate Agent.
+
+The proposal is a design document. It does not mean that a LiquidJS renderer or
+the MCQ product interface has already been implemented in this repository.
 
 ---
 
