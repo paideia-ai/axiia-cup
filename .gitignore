@@ -23,3 +23,6 @@ deploy/data/
 
 # Wuhu wallet state (machine-local)
 .wuhu/
+
+# Copyrighted research material: keep the local study copy out of the public repo.
+/docs/competition/problems/event-materials/twelve-angry-men/12-angry-men-1957-screenplay.pdf
