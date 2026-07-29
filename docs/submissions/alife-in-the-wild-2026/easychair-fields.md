@@ -2,15 +2,12 @@
 
 ## Author information
 
-Replace the placeholders below for every author. At least one author must be
-marked as corresponding.
-
-- First name: `[REQUIRED]`
-- Last name: `[REQUIRED]`
-- Email: `[REQUIRED]`
-- Country/region: `[REQUIRED]`
-- Affiliation: `[REQUIRED]`
-- Corresponding author: `[YES/NO]`
+- First name: `Yihan`
+- Last name: `Zhou`
+- Email: `zh3036@gmail.com`
+- Country/region: `China`
+- Affiliation: `Isofucius Corp.`
+- Corresponding author: `YES`
 
 ## Title
 
@@ -33,10 +30,7 @@ normative evaluation
 
 ## File
 
-The compiled file currently available is
-`axiia-llm-judge-value-benchmark-DRAFT.pdf`. Do not upload it unchanged.
-Create `axiia-llm-judge-value-benchmark.pdf` only after author, copyright,
-consent/ethics, and de-identification checks are complete.
+Upload `axiia-llm-judge-value-benchmark.pdf`.
 
 ## Submission checks
 
@@ -46,6 +40,4 @@ consent/ethics, and de-identification checks are complete.
 - Review is single-blind, so author names and affiliations must remain visible.
 - Title and abstract must be pasted as plain text without HTML.
 - Enter keywords one per line.
-- Confirm the applicable participant-consent, competition-terms, or ethics-review status.
-- Remove participant handles and submission-version metadata from public artifacts before linking them.
 - Upload one PDF and press Submit only once.
