@@ -12,14 +12,14 @@ This directory contains:
 - `references.bib`: bibliography;
 - `alifeconf.sty`: the unmodified style file from the official ALIFE 2026
   LaTeX template;
-- `axiia-llm-judge-value-benchmark-DRAFT.pdf`: compiled four-page draft with
-  author placeholders; do not upload it unchanged.
+- `axiia-llm-judge-value-benchmark.pdf`: compiled four-page upload candidate.
 
-Before submission, replace every bracketed author placeholder in `main.tex`
-and `easychair-fields.md`, add the applicable consent/ethics status, sanitize
-participant handles and submission metadata from the public dashboards, review
-the AI-use disclosure, then rebuild the PDF as
-`axiia-llm-judge-value-benchmark.pdf`.
+Before submission, review the AI-use disclosure and all factual claims, then
+upload `axiia-llm-judge-value-benchmark.pdf`.
+
+Author-supplied research status: all benchmark materials came from
+organizer-controlled internal testing and are owned by Isofucius Corp.; no
+external participants or private participant data were involved.
 
 Official workshop requirements checked on 29 July 2026:
 

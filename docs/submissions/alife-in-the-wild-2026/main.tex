@@ -3,7 +3,13 @@
 \usepackage{natbib,alifeconf}  %% The order is important.
 \usepackage{url,hyperref,cleveref}
 \usepackage{booktabs,tabularx,array}
-\hypersetup{hidelinks}
+\hypersetup{
+  hidelinks,
+  pdftitle={The Judge Shapes the Fitness Landscape: Value Profiles and Prompt-Ladder Sensitivity in a Live LLM-Agent Tournament},
+  pdfauthor={Yihan Zhou},
+  pdfsubject={Extended abstract for the Artificial Life in the Wild workshop at ALIFE 2026},
+  pdfkeywords={artificial life, LLM-as-a-judge, machine behaviour, digital ethology, value profiles, prompt sensitivity, agent ecology, normative evaluation}
+}
 
 \newcommand\blfootnote[1]{%
   \begingroup
@@ -18,10 +24,10 @@
 
 % SINGLE-blind review: replace every author placeholder before submission.
 \author{
-  \textbf{[AUTHOR NAME(S) REQUIRED]} \\
+  \textbf{Yihan Zhou} \\
   \mbox{}\\
-  \mbox{[Affiliation(s), Country/Region]} \\
-  \mbox{[corresponding.author@email]}
+  \mbox{Isofucius Corp., China} \\
+  \mbox{zh3036@gmail.com}
 }
 
 \begin{document}
@@ -33,7 +39,7 @@ LLM agents compete in sociotechnical environments whose success criteria are sup
 \end{abstract}
 
 Submission type: \textbf{Extended Abstract}\\
-\blfootnote{\textcopyright\ 2026 [AUTHORS' NAMES REQUIRED]. Published under a Creative Commons Attribution 4.0 International (CC BY 4.0) license.}
+\blfootnote{\textcopyright\ 2026 Yihan Zhou. Published under a Creative Commons Attribution 4.0 International (CC BY 4.0) license.}
 
 \section{From Referee to Habitat}
 
@@ -122,16 +128,15 @@ Governance should likewise avoid a false neutrality objective. We recommend (1) 
 
 The panels are small at the independent-history level, Chinese-language, and concentrated in three constructed scenarios. We report descriptive rates without history-level confidence intervals or mixed-effects inference. L1--L4 is a coarse prompt ladder whose ordering has not been validated by independent human ratings. Judge personas themselves encode legitimate preferences, while the sensitivity design changes whole dialogue phenotypes; neither protocol identifies an intrinsic value of a base model. Some reasoning comparisons also depend on provider routing and caching. Patch results are development-set evidence only.
 
-The organizer-generated benchmark histories use selected human-authored competition prompts; they are not production match traces. \textbf{[CONSENT/ETHICS STATUS REQUIRED BEFORE SUBMISSION.]}
-The live platform may include young participants, so releases must remove names, handles, emails, user identifiers, private prompts, submission versions, and other traceable metadata. This draft reports aggregate results only. Finally, Axiia Cup does not yet demonstrate autonomous persistence, reproduction, or open-ended evolution. The immediate claim is methodological: once LLM agents are selected partly by LLM infrastructure, observing the selector is part of observing the ecology.
+All benchmark inputs and resulting histories were produced in organizer-controlled internal testing and are owned by Isofucius Corp.; no external participants or private participant data were involved. The author therefore determined that participant consent and institutional human-subject review were not applicable. Finally, Axiia Cup does not yet demonstrate autonomous persistence, reproduction, or open-ended evolution. The immediate claim is methodological: once LLM agents are selected partly by LLM infrastructure, observing the selector is part of observing the ecology.
 
 \section{Artifact Availability}
 
-Six interactive reports expose aggregate counts, model/configuration labels, and run status. Direct links are omitted from this draft because some deployed pages retain participant handles or submission-version metadata. A versioned, aggregate-only archive documenting routes, dates, prompt/scenario hashes, counts, and run status will be linked after de-identification and consent/ethics review. Raw histories and judgments are not part of this submission.
+Interactive reports expose counts, model/configuration labels, and run status for the \href{https://honnoji-judge-bias.vercel.app/}{Honn\={o}-ji judge swap}, \href{https://trolley-problem-judge-bias.vercel.app/}{trolley judge swap}, \href{https://shangyang-judge-sensitivity.vercel.app/}{Shang Yang sensitivity}, \href{https://honnoji-judge-sensitivity.vercel.app/}{Honn\={o}-ji sensitivity}, \href{https://shangyang-judge-sensitivity-ms-fable5-patch.vercel.app/}{Shang Yang patch}, and \href{https://trolley-judge-prompt-winrate-balanc.vercel.app/}{trolley balancing study}. All linked materials derive from company-owned internal testing. A versioned aggregate-only archive is future work.
 
 \section{Acknowledgements}
 
-OpenAI Codex was used to assist with literature discovery, language editing, consistency checking, and LaTeX preparation. The human authors are responsible for verifying the analyses and all claims.
+OpenAI Codex was used to assist with literature discovery, language editing, consistency checking, and LaTeX preparation. The human author is responsible for verifying the analyses and all claims.
 
 \footnotesize
 \bibliography{references}
