@@ -1,0 +1,63 @@
+load("//bazel/rules:deno.bzl", "deno_bundle", "deno_task_test")
+load("//bazel/rules:rules.bzl", "wuhu_platforms")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            ".env*",
+            ".react-router/**",
+            "BUILD.bazel",
+            "build/**",
+            "node_modules/**",
+            "**/.DS_Store",
+        ],
+    ),
+)
+
+deno_bundle(
+    name = "bundle",
+    srcs = [":srcs"],
+    output_dir = "build/client",
+    tags = ["requires-network"],
+    target_compatible_with = wuhu_platforms([
+        "linux",
+        "mac",
+    ]),
+)
+
+deno_task_test(
+    name = "fmt",
+    srcs = [":srcs"],
+    tags = ["requires-network"],
+    task = "fmt",
+    target_compatible_with = wuhu_platforms([
+        "linux",
+        "mac",
+    ]),
+)
+
+deno_task_test(
+    name = "typecheck",
+    srcs = [":srcs"],
+    tags = ["requires-network"],
+    task = "typecheck",
+    target_compatible_with = wuhu_platforms([
+        "linux",
+        "mac",
+    ]),
+)
+
+deno_task_test(
+    name = "lint",
+    srcs = [":srcs"],
+    tags = ["requires-network"],
+    task = "lint",
+    target_compatible_with = wuhu_platforms([
+        "linux",
+        "mac",
+    ]),
+)

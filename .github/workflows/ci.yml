@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
+      legacy_changed: ${{ steps.classify.outputs.legacy_changed }}
+      v2_changed: ${{ steps.classify.outputs.v2_changed }}
 
     steps:
       - name: Checkout
@@ -33,7 +35,7 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     needs: classify
-    if: needs.classify.outputs.docs_only != 'true'
+    if: needs.classify.outputs.legacy_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -60,12 +62,43 @@ jobs:
         run: bun test
         working-directory: apps/api
 
+  v2-web:
+    name: v2 web
+    runs-on: ubuntu-latest
+    needs: classify
+    if: needs.classify.outputs.v2_changed == 'true'
+    defaults:
+      run:
+        working-directory: v2/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+
+      - run: deno install --frozen
+
+      - name: Format check
+        run: deno task fmt
+
+      - name: Lint
+        run: deno task lint
+
+      - name: Typecheck
+        run: deno task typecheck
+
+      - name: Build
+        run: deno task build
+
   check:
     name: Check
     runs-on: ubuntu-latest
     needs:
       - classify
       - ci
+      - v2-web
     if: always()
 
     steps:
@@ -73,20 +106,34 @@ jobs:
         shell: bash
         env:
           DOCS_ONLY: ${{ needs.classify.outputs.docs_only }}
+          LEGACY_CHANGED: ${{ needs.classify.outputs.legacy_changed }}
+          V2_CHANGED: ${{ needs.classify.outputs.v2_changed }}
           CI_RESULT: ${{ needs.ci.result }}
+          V2_RESULT: ${{ needs.v2-web.result }}
         run: |
           set -euo pipefail
 
-          echo "docs_only=$DOCS_ONLY"
-          echo "ci=$CI_RESULT"
+          echo "docs_only=$DOCS_ONLY legacy_changed=$LEGACY_CHANGED v2_changed=$V2_CHANGED"
+          echo "ci=$CI_RESULT v2-web=$V2_RESULT"
 
           if [[ "$DOCS_ONLY" == "true" ]]; then
             echo "Docs-only change detected; heavy CI skipped."
             exit 0
           fi
 
-          if [[ "$CI_RESULT" != "success" ]]; then
+          failed=0
+
+          if [[ "$LEGACY_CHANGED" == "true" && "$CI_RESULT" != "success" ]]; then
             echo "CI job must pass."
+            failed=1
+          fi
+
+          if [[ "$V2_CHANGED" == "true" && "$V2_RESULT" != "success" ]]; then
+            echo "v2 web job must pass."
+            failed=1
+          fi
+
+          if [[ "$failed" != "0" ]]; then
             exit 1
           fi
 
