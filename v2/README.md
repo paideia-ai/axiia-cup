@@ -1,10 +1,26 @@
-# v2 — the frontend for the Swift axiia server
+# v2 — the frontend and scenarios for the Swift axiia server
 
 `v2/web` is the SPA that talks to the new Swift server behind
 `axiia-cup-2.isofucius.cn`. It is independent of the bun API and web app in
 `apps/`: different toolchain (deno + vite), different CI job, different image,
 different host. A commit that touches only `v2/` never builds or deploys the
 legacy stack, and vice versa.
+
+`v2/scenarios` is where prompt engineers author the game scripts the server
+runs. It is its own stack again: `v2_scenarios_changed` and `v2_web_changed` are
+separate classifier flags, so a prompt edit never rebuilds the SPA and an SPA
+edit never runs the scenario checks. See `v2/scenarios/SKILL.md` for the
+authoring guide; the whole toolchain is deno 2.9.1.
+
+```sh
+cd v2/scenarios
+deno task validate   # typecheck + meta extraction over every scenario
+deno task fmt
+deno task lint
+```
+
+Scenarios have no deploy job yet: a script reaches the server through the admin
+API, and automated delivery from this repo is still being wired.
 
 ## Working on it
 
