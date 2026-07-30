@@ -5,13 +5,23 @@ usage() {
   cat <<'EOF'
 Usage: .github/classify-changes.sh
 
-Classifies the current GitHub Actions event as docs-only or not.
+Classifies the current GitHub Actions event by which stack it touches.
 Outputs the following GitHub Actions outputs when GITHUB_OUTPUT is set:
   - docs_only=true|false
+  - legacy_changed=true|false
+  - v2_changed=true|false
 
 Docs-only means every changed file is either:
   - under docs/
   - or a root-level Markdown file such as README.md / AGENTS.md / CLAUDE.md
+
+The two stacks are independent: v2_changed covers v2/ (the Swift-server frontend,
+built with deno and deployed to axiia-cup-2-web), legacy_changed covers every
+other non-docs file (the bun API and web). A commit can set both.
+
+Jobs gate on these flags rather than the workflow using paths-ignore: the branch
+ruleset requires the `Check` context, and a workflow skipped by a path filter
+never reports it, which blocks the PR forever.
 EOF
 }
 
@@ -86,22 +96,41 @@ mapfile -d '' files < <(
     "$PR_HEAD_SHA"
 )
 
+is_v2_path() {
+  [[ "$1" == v2/* ]]
+}
+
 if [[ ${#files[@]} -eq 0 ]]; then
   docs_only=false
-  echo "No changed files detected; defaulting to docs_only=false." >&2
+  legacy_changed=true
+  v2_changed=false
+  echo "No changed files detected; building the legacy stack to stay safe." >&2
 else
   docs_only=true
+  legacy_changed=false
+  v2_changed=false
   echo "Changed files:" >&2
   for file in "${files[@]}"; do
     echo " - ${file}" >&2
-    if ! is_docs_only_path "$file"; then
-      docs_only=false
+    if is_docs_only_path "$file"; then
+      continue
+    fi
+    docs_only=false
+    if is_v2_path "$file"; then
+      v2_changed=true
+    else
+      legacy_changed=true
     fi
   done
 fi
 
-if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-  echo "docs_only=${docs_only}" >> "$GITHUB_OUTPUT"
-fi
+emit() {
+  echo "$1=$2"
+  if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    echo "$1=$2" >> "$GITHUB_OUTPUT"
+  fi
+}
 
-echo "docs_only=${docs_only}"
+emit docs_only "$docs_only"
+emit legacy_changed "$legacy_changed"
+emit v2_changed "$v2_changed"

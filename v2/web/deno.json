@@ -1,0 +1,21 @@
+{
+  "owner": "axiia",
+  "exclude": ["build", "dist"],
+  "fmt": { "semiColons": false, "singleQuote": true },
+  "lint": {
+    "rules": {
+      "tags": ["recommended", "react"],
+      "exclude": ["no-sloppy-imports"]
+    }
+  },
+  "nodeModulesDir": "manual",
+  "nodeModulesLinker": "hoisted",
+  "tasks": {
+    "dev": "deno run -A npm:vite",
+    "build": "deno run -A npm:vite build",
+    "typecheck": "deno run -A npm:typescript/tsc -p tsconfig.check.json",
+    "seed-dev": "deno run -A e2e/seed-dev.ts",
+    "fmt": "deno fmt --check .",
+    "lint": "deno lint src"
+  }
+}

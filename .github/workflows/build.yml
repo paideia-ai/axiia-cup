@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
+      legacy_changed: ${{ steps.classify.outputs.legacy_changed }}
+      v2_changed: ${{ steps.classify.outputs.v2_changed }}
 
     steps:
       - name: Checkout
@@ -36,8 +38,12 @@ jobs:
           GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            echo "docs_only=false" >> "$GITHUB_OUTPUT"
-            echo "Manual build: forcing docs_only=false"
+            {
+              echo "docs_only=false"
+              echo "legacy_changed=true"
+              echo "v2_changed=true"
+            } >> "$GITHUB_OUTPUT"
+            echo "Manual build: building every image from this commit"
             exit 0
           fi
 
@@ -48,7 +54,7 @@ jobs:
     name: Build and Push
     runs-on: ubuntu-latest
     needs: classify
-    if: github.event_name == 'workflow_dispatch' || needs.classify.outputs.docs_only != 'true'
+    if: needs.classify.outputs.legacy_changed == 'true'
 
     steps:
       - name: Checkout code
@@ -99,7 +105,7 @@ jobs:
     needs:
       - classify
       - build
-    if: github.event_name == 'push' && needs.classify.outputs.docs_only != 'true' && needs.build.result == 'success'
+    if: github.event_name == 'push' && needs.classify.outputs.legacy_changed == 'true' && needs.build.result == 'success'
     concurrency:
       group: axiia-cup-dev-deploy
       cancel-in-progress: true
@@ -198,4 +204,149 @@ jobs:
           done
 
           echo "Timed out waiting for dev deploy $deployment_id"
+          exit 1
+
+  build_v2_web:
+    name: Build and Push v2 Web
+    runs-on: ubuntu-latest
+    needs: classify
+    if: needs.classify.outputs.v2_changed == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure Aliyun credentials
+        uses: aliyun/configure-aliyun-credentials-action@v1
+        with:
+          oidc-provider-arn: acs:ram::1805039414054707:oidc-provider/GitHub
+          role-to-assume: acs:ram::1805039414054707:role/githubactions-axiiacup
+
+      - name: Install Aliyun CLI
+        uses: aliyun/setup-aliyun-cli-action@v1
+
+      - name: Login to ACR
+        run: |
+          auth_info=$(aliyun cr GetAuthorizationToken --InstanceId ${{ env.ACR_INSTANCE_ID }})
+          username=$(echo "$auth_info" | jq -r .TempUsername)
+          password=$(echo "$auth_info" | jq -r .AuthorizationToken)
+          echo "$password" | docker login --username "$username" --password-stdin ${{ env.REGISTRY_URL }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push v2 web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: v2/deploy/Dockerfile.web
+          push: true
+          tags: ${{ env.REGISTRY_URL }}/apps/axiia-web2:${{ github.sha }}
+          provenance: false
+
+  deploy_v2_web:
+    name: Auto Deploy v2 Web
+    runs-on: ubuntu-latest
+    needs:
+      - classify
+      - build_v2_web
+    if: github.event_name == 'push' && needs.classify.outputs.v2_changed == 'true' && needs.build_v2_web.result == 'success'
+    concurrency:
+      group: axiia-web2-deploy
+      cancel-in-progress: true
+
+    steps:
+      - name: Generate deploy token
+        id: token
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          NOW=$(date +%s)
+          EXP=$((NOW + 900))
+
+          HEADER=$(echo -n '{"alg":"HS256","typ":"JWT"}' | base64 | tr -d '\n=' | tr '+/' '-_')
+          PAYLOAD=$(printf '{"tag":"%s","target":"web2","repo":"%s","iat":%s,"exp":%s}' \
+            '${{ github.sha }}' \
+            '${{ github.repository }}' \
+            "$NOW" \
+            "$EXP" | base64 | tr -d '\n=' | tr '+/' '-_')
+          SIGNATURE=$(printf '%s' "${HEADER}.${PAYLOAD}" | openssl dgst -sha256 -hmac '${{ secrets.DEPLOY_WEBHOOK_SECRET }}' -binary | base64 | tr -d '\n=' | tr '+/' '-_')
+
+          echo "jwt=${HEADER}.${PAYLOAD}.${SIGNATURE}" >> "$GITHUB_OUTPUT"
+
+      - name: Start deploy
+        id: start
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          response=$(curl -s -w "\n%{http_code}" --max-time 30 -X POST "${{ env.DEPLOY_WEBHOOK_URL }}" \
+            -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}" \
+            -H "Content-Type: application/json")
+
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+
+          echo "Response: $body"
+          echo "Status: $status"
+
+          if [[ "$status" != "202" ]]; then
+            echo "v2 web deploy start failed with status $status"
+            exit 1
+          fi
+
+          deployment_id=$(echo "$body" | jq -r '.deploymentId // empty')
+          if [[ -z "$deployment_id" ]]; then
+            echo "Missing deploymentId in start response"
+            exit 1
+          fi
+
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Started v2 web deployment $deployment_id"
+
+      - name: Wait for deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deployment_id='${{ steps.start.outputs.deployment_id }}'
+          status_url="${{ env.DEPLOY_WEBHOOK_URL }}/status?id=${deployment_id}"
+
+          for attempt in $(seq 1 120); do
+            response=$(curl -s -w "\n%{http_code}" --max-time 30 "$status_url" \
+              -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}")
+
+            body=$(echo "$response" | head -n -1)
+            http_status=$(echo "$response" | tail -n 1)
+
+            echo "Poll #$attempt HTTP $http_status: $body"
+
+            if [[ "$http_status" != "200" ]]; then
+              echo "v2 web deploy status check failed with HTTP $http_status"
+              exit 1
+            fi
+
+            deploy_status=$(echo "$body" | jq -r '.status // empty')
+            case "$deploy_status" in
+              success)
+                echo "✅ Deployed v2 web for commit ${{ github.sha }}"
+                exit 0
+                ;;
+              failed)
+                error_message=$(echo "$body" | jq -r '.error // "unknown deploy failure"')
+                echo "v2 web deploy failed: $error_message"
+                exit 1
+                ;;
+              accepted|running)
+                sleep 5
+                ;;
+              *)
+                echo "Unexpected deploy status: $deploy_status"
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "Timed out waiting for v2 web deploy $deployment_id"
           exit 1
