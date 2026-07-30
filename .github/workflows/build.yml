@@ -352,3 +352,28 @@ jobs:
 
           echo "Timed out waiting for v2 web deploy $deployment_id"
           exit 1
+
+  deploy_v2_scenarios:
+    name: Deploy v2 Scenarios
+    runs-on: ubuntu-latest
+    needs: classify
+    if: github.event_name == 'push' && needs.classify.outputs.v2_scenarios_changed == 'true'
+    concurrency:
+      group: axiia-scenarios-deploy
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: v2/scenarios
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+
+      - name: Push scenarios
+        env:
+          AXIIA_BASE_URL: ${{ secrets.AXIIA_BASE_URL }}
+          AXIIA_TOKEN: ${{ secrets.AXIIA_TOKEN }}
+        run: deno task push

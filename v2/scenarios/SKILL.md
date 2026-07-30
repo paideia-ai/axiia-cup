@@ -260,9 +260,21 @@ API, which is exactly why this repo exists.
 There is no registration list; the directory name is the manifest. Practically:
 
 - **New scenario** — a new `scenarios/<id>/` directory, id matching `meta.id`.
-- **Editing a shipped scenario** — the edit lands here, and an operator pushes
-  it to the server through the admin API. Automated delivery from this repo is
-  not wired yet.
+- **Editing a shipped scenario** — edit the file here and merge to `main`.
+- **Retiring one** — delete its directory; the slot is set to `retired` on the
+  next deploy, which hides it from the catalog without destroying anything.
+
+Merging to `main` with anything under `v2/scenarios/` changed runs
+`deno task
+push`, which uploads every script and then repoints every slot.
+Scripts are content-addressed, so re-pushing an unchanged one costs nothing, and
+the whole set is uploaded before any slot moves — the server evaluates each
+script's `meta` in its own sandbox as it arrives, so one bad script fails the
+deploy instead of leaving half the scenarios updated.
+
+To push by hand, set `AXIIA_BASE_URL` and `AXIIA_TOKEN` and run
+`deno task push
+--dry-run` to see the plan, then without the flag.
 
 Anything else you want to keep next to a scenario (design notes, prompt drafts)
 can live in its directory; only `script.js` is the program.
