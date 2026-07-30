@@ -361,6 +361,11 @@ jobs:
     concurrency:
       group: axiia-scenarios-deploy
       cancel-in-progress: false
+    # The OIDC assertion is the credential: no long-lived token is stored here.
+    # The server trusts this exact subject, so only main can publish scenarios.
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: v2/scenarios
@@ -372,8 +377,25 @@ jobs:
         with:
           deno-version: "2.9.1"
 
+      - name: Exchange the OIDC assertion for a short-lived token
+        id: token
+        env:
+          AXIIA_BASE_URL: ${{ vars.AXIIA_BASE_URL }}
+        run: |
+          set -euo pipefail
+          assertion="$(curl -sS --max-time 30 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AXIIA_BASE_URL" | jq -r '.value')"
+          [ -n "$assertion" ] && [ "$assertion" != "null" ] || { echo "no OIDC assertion"; exit 1; }
+          token="$(curl -sS --max-time 30 -X POST "$AXIIA_BASE_URL/v1/auth/federated" \
+            -H 'content-type: application/json' \
+            --data "$(jq -nc --arg a "$assertion" '{assertion: $a}')" | jq -r '.accessToken // empty')"
+          [ -n "$token" ] || { echo "federated exchange refused"; exit 1; }
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
       - name: Push scenarios
         env:
-          AXIIA_BASE_URL: ${{ secrets.AXIIA_BASE_URL }}
-          AXIIA_TOKEN: ${{ secrets.AXIIA_TOKEN }}
+          AXIIA_BASE_URL: ${{ vars.AXIIA_BASE_URL }}
+          AXIIA_TOKEN: ${{ steps.token.outputs.token }}
         run: deno task push
