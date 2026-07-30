@@ -272,6 +272,11 @@ the whole set is uploaded before any slot moves — the server evaluates each
 script's `meta` in its own sandbox as it arrives, so one bad script fails the
 deploy instead of leaving half the scenarios updated.
 
+CI needs no stored credential: GitHub signs a short-lived assertion for the
+workflow, and the server exchanges it for a ten-minute token only if the
+assertion's repository, owner, and branch match exactly what it was configured
+to trust. Nothing to rotate, nothing to leak.
+
 To push by hand, set `AXIIA_BASE_URL` and `AXIIA_TOKEN` and run
 `deno task push
 --dry-run` to see the plan, then without the flag.
