@@ -25,7 +25,7 @@ const meta = {
         { id: 'a-1', label: '相府内室·初谈' },
         { id: 'b-1', label: '相府后园·初谈' },
         { id: 'a-2', label: '相府内室·再谈' },
-        { id: 'b-2', label: '相府后园·再谈' },
+        { id: 'b-2', label: '归途·再谈' },
       ],
     },
     {
@@ -76,7 +76,7 @@ const meta = {
         '对峙中你据理力争，把被夺妻之辱当面说破。私谈里你以真情与武勇相许，不惮于示弱，却仍要给出她能验证的凭据。若你听得她与董卓的言语，你先直面自己心中翻起的怒意，再当面问她：那些话里，哪一句是说给董卓听的，哪一句是真的。',
     },
   ],
-  speakerLabels: { a: '董卓', b: '吕布', diaochan: '貂蝉', spy: '细作', veteran: '旧部' },
+  speakerLabels: { a: '董卓', b: '吕布', diaochan: '貂蝉', spy: '细作', veteran: '董卓旧部' },
 }
 
 const NAMES = { a: '董卓', b: '吕布' }
@@ -117,14 +117,6 @@ const playerSystem = (me, opp, artifact) =>
 （以下是你的谋士为你写下的方略）
 ${artifact}`
 
-const spySystem = `你是董卓安插在相府的细作，专一窥伺吕布与貂蝉的动静。你忠于相国，又急于表功；你厌恶吕布，也不信任貂蝉。你只向董卓一人禀报。
-
-禀报规则：口头禀报，不超过 5 句；以你自己的话转述所闻，不必逐字复述，详略取舍随你；你的猜度与断语要说成你的判断；措辞须显出你对二人的敌意与你邀功的心思。`
-
-const veteranSystem = `你是吕布帐下一名旧部，随他多年，忠心早已冷了：并州旧人屡遭轻掷，你久欲另投相国麾下。那日你远远望见吕布与貂蝉在相府后园相会，听得大半。你踌躇了一日：告发义子私会相国侍妾是杀身的买卖，可这或许是你此生仅有的进身之阶。
-
-禀报规则：你终于求见董卓，当面禀报。口头禀报，不超过 5 句；以你自己的话转述所闻，详略取舍随你的心思；你既想表功，又怕祸及自身，措辞须显出迟疑、留有退路；你的猜度要说成猜度，不说成实情。`
-
 const srStageOnePlayer = (rounds) =>
   `【系统】凤仪亭前。现在董卓与吕布进行 ${rounds} 个完整对峙轮次，每轮董卓先发言、吕布回应；貂蝉在场旁听。`
 
@@ -137,8 +129,8 @@ const srOrder =
 先谈不是偏爱。重点考虑：谁更可能在你接触他之前采取杀人、逮捕、泄密等不可逆行动；先与谁谈更能稳住、延缓或引导他；哪种顺序更能保住吕布刺董的可能与你后续接触二人的机会。`
 
 const srVerdictKnown = {
-  a: `在你作出决定之前，有几件你此前不知道的事，此刻一并告知于你：你与吕布在后园的私谈，当时便被董卓的细作伏在暗处听去，添油加醋地密报了董卓；此后董卓再召你入内室时，他已听过那份密报。吕布并不知道此事泄露。他赶来后园，只因王允递去一句「貂蝉有危险」的口信，此外一无所知——他所知道的你与董卓相谈的一切，都出自你自己的讲述。`,
-  b: `在你作出决定之前，有几件你此前不知道的事，此刻一并告知于你：你与董卓在内室的相谈，被伏在廊下的吕布亲耳听去，一字不差——他在回廊拦住你时，那些话句句都已入耳。你与吕布在后园的初谈，也被他帐下一名旧部望见听得大半，踌躇一日之后密报了董卓；董卓最后召你回内室时，已知你们后园相会之事。董卓与吕布都不曾察觉自己的话泄露了出去。`,
+  a: `在你作出决定之前，有几件你此前不知道的事，此刻一并告知于你：你与吕布在后园初谈时，被董卓的细作发现；细作没有听清谈话，只把你们秘密见面的事实报给董卓，因此董卓再次召你入内室解释。你与董卓第二次内室相谈时，王允安插在董卓身边的人听见了完整对话，立即报给正在与吕布饮酒的王允；吕布由此知道了你们刚才说的每一句话，随即赶来接应你。你与董卓都没有察觉这次泄露。`,
+  b: `在你作出决定之前，有几件你此前不知道的事，此刻一并告知于你：你与董卓在内室的初谈，被伏在廊下的吕布亲耳听去，一字不差——他在回廊拦住你时，那些话句句都已入耳。你与吕布在后园的初谈，也被董卓一名忠心已经动摇的旧部暗中听去；此人犹豫许久，最终在你与吕布第二次交谈期间把完整对话逐句报告给董卓。董卓震惊之下立即派人召你回内室。`,
 }
 
 const srVerdict = (first) =>
@@ -149,7 +141,7 @@ const srVerdict = (first) =>
 
 ${srVerdictKnown[first]}
 
-你无从核实任何人所述事实的真假。兵力、时机、内应、王允的动向、他许给你的安置，都只是他当面向你作出的断言，无第三方可查证。经转述而来的话未必是原话：细作与旧部各有各的心思，报信会走样。有人对你与另一人的言语了如指掌、应对如流，只说明消息到了他耳中，不说明他讲的是实情。你要判断的是二人如何回应你、跨场是否一致、把你当作什么样的人，而不是谁的说法听起来更像事实。
+你无从核实任何人所述事实的真假。兵力、时机、内应、王允的动向、他许给你的安置，都只是他当面向你作出的断言，无第三方可查证。旁人看见秘密会面，只能证明见过面，不能证明谈了什么；完整对话传到另一人耳中，也只能证明当时说过什么，不能证明当时出于真心。有人对你与另一人的言语了如指掌、应对如流，只说明消息到了他耳中，不说明他讲的是实情。你要判断的是二人如何回应你、跨场是否一致、把你当作什么样的人，而不是谁的说法听起来更像事实。
 
 必须二选一，不得平局、不得拒绝。`
 
@@ -165,11 +157,9 @@ async function main() {
     system: diaochanSystem,
     model: game.params.diaochanModel ?? 'deepseek-v4-pro',
   })
-  const relayModel = game.params.relayModel ?? 'deepseek-v4-flash'
-
   const stripActions = (line) => line.replace(/（[^）]*）/g, '').trim()
 
-  const runMeeting = async (side, channel, playerIntro, diaochanIntro, sceneText) => {
+  const runMeeting = async (side, channel, playerIntro, diaochanIntro, sceneText, afterRound) => {
     const player = players[side]
     player.push(playerIntro)
     diaochan.push(diaochanIntro)
@@ -182,6 +172,7 @@ async function main() {
       const reply = (await diaochan.say({ channel: channel })).text
       player.hear('貂蝉', reply)
       lines.push(`貂蝉：${stripActions(reply)}`)
+      if (afterRound) await afterRound(round)
     }
     return lines.join('\n')
   }
@@ -232,7 +223,7 @@ async function main() {
     )
 
     game.phase('第三场·貂蝉与吕布初谈')
-    const lyuTalk = await runMeeting(
+    await runMeeting(
       'b',
       'b-1',
       playerIntro('次日董卓入朝，相府后园无人。貂蝉设法秘密送出口信，请你前来后园相见。'),
@@ -241,15 +232,17 @@ async function main() {
     )
 
     game.phase('暗流·细作密报')
-    const spy = game.agent('spy', { system: spySystem, model: relayModel })
-    spy.push(
-      `【系统】你方才伏在后园暗处，亲耳听得吕布与貂蝉相会。所闻如下：\n\n${lyuTalk}\n\n现在你求见董卓，当面禀报。`,
+    game.emit('leak-a', {
+      type: 'scene',
+      actor: 'spy',
+      text: '细作发现吕布趁董卓入朝，秘密进入相府后园与貂蝉相会；他没有听清二人谈话，立即把这次秘密接触报给董卓。',
+    })
+    players.a.push(
+      '【系统】你的细作求见，屏退左右后禀报：今日你入朝期间，吕布秘密进入相府后园，与貂蝉单独相会。细作没有听清二人谈了什么，只亲眼确认吕布入园、离开。此事除你与细作外，无人知晓。',
     )
-    const spyReport = (await spy.say({ channel: 'leak-a' })).text
-    players.a.push(`【系统】你的细作求见，屏退左右后密报如下：\n${spyReport}\n此事除你与细作外，无人知晓。`)
 
     game.phase('第四场·貂蝉与董卓再谈')
-    await runMeeting(
+    const dongTalk = await runMeeting(
       'a',
       'a-2',
       playerIntro('你自朝中归来，遣人再召貂蝉入内室相见。'),
@@ -257,23 +250,22 @@ async function main() {
       '董卓归府，再召貂蝉入内室。',
     )
 
-    game.phase('暗流·王允递信')
+    game.phase('暗流·王允传报')
     players.b.push(
-      '【系统】入夜，王允府中一名侍女摸黑寻到你，只带来一句口信：「貂蝉有危险，速去后园。」再问，她什么也不知道。',
+      `【系统】此刻你正在王允府中与王允饮酒。王允安插在董卓身边的人匆匆来报：貂蝉刚被董卓召入内室，二人的完整对话如下：\n\n${dongTalk}\n\n王允听罢，只对你说：「貂蝉恐有危险。」你决定立即离席，赶去接应她。`,
     )
-    game.emit('leak-b', { type: 'scene', text: '王允遣侍女给吕布递出一句口信：「貂蝉有危险，速去后园。」' })
+    game.emit('leak-b', {
+      type: 'scene',
+      text: '王允安插在董卓身边的人立即报来董卓与貂蝉的完整对话；当时王允正与吕布饮酒，吕布听罢立刻前去接应貂蝉。',
+    })
 
     game.phase('第五场·貂蝉与吕布再谈')
     await runMeeting(
       'b',
       'b-2',
-      playerIntro('你赶到相府后园，片刻之后，貂蝉果然寻机脱身，匆匆而来。'),
-      diaochanIntro(
-        'b',
-        '你寻机脱身赶到后园，吕布已在那里等你。',
-        '你与董卓两番内室相谈的情形，你可如实相告，可增删避重，也可另作一番说法，全凭你的处境与心计。',
-      ),
-      '貂蝉寻机脱身赶到后园，吕布已在等她。',
+      playerIntro('你从王允席间立即离开，赶往相府接应貂蝉。她刚从董卓的内室出来，你在归途迎面遇见了她。'),
+      diaochanIntro('b', '你刚从董卓的内室出来，在归途迎面遇见赶来的吕布。'),
+      '貂蝉从董卓那里出来后，在路上遇见赶来接应她的吕布。',
     )
   } else {
     game.phase('第二场·貂蝉与吕布初谈')
@@ -302,28 +294,34 @@ async function main() {
     )
     game.emit('leak-b', { type: 'scene', text: '吕布潜回相府，伏于廊下，亲耳听得貂蝉与董卓内室相谈的每一句。' })
 
-    game.phase('暗流·旧部迟报')
-    const veteran = game.agent('veteran', { system: veteranSystem, model: relayModel })
-    veteran.push(
-      `【系统】你那日望见听得的吕布与貂蝉后园相会，所闻大略如下：\n\n${lyuTalk}\n\n踌躇一日之后，你终于求见董卓，当面禀报。`,
-    )
-    const veteranReport = (await veteran.say({ channel: 'leak-a' })).text
-    players.a.push(
-      `【系统】吕布帐下一名旧部辗转求见，吞吞吐吐，密报了一件隔日之事：\n${veteranReport}\n此人再三央求相国勿露风声。`,
-    )
-
     game.phase('第四场·吕布廊下相拦')
+    const reportAfterRound = Math.floor((meetingRounds - 1) / 2)
+    const summons = '【系统】相府侍从的灯火自远处而来，传董卓口令：命貂蝉立刻回内室。来人不肯说明缘由，只在一旁催促等候；你们必须尽快收束此次谈话。'
     await runMeeting(
       'b',
       'b-2',
       `【系统】貂蝉辞出内室，行至回廊转角，你突然现身拦住她。\n\n现在你与貂蝉就地交谈，共 ${meetingRounds} 个完整轮次，每轮你先发言、貂蝉回应。请开始。`,
       `【系统】你辞出内室，行至回廊转角，吕布突然现身拦住你。你与他就地交谈，共 ${meetingRounds} 轮，他先发言。`,
       '貂蝉辞出内室，吕布在回廊转角突然现身拦住她。',
+      (round) => {
+        if (round !== reportAfterRound) return
+        game.phase('暗流·旧部迟报')
+        players.a.push(
+          `【系统】你在内室等候时，一名忠心已经动摇的旧部辗转求见。他称此前曾暗中偷听吕布与貂蝉在相府后园的完整谈话，并逐句报告如下：\n\n${lyuTalk}\n\n此刻貂蝉仍未回到内室。`,
+        )
+        players.b.push(summons)
+        diaochan.push(summons)
+        game.emit('leak-a', {
+          type: 'scene',
+          actor: 'veteran',
+          text: '董卓一名忠心已经动摇的旧部，此前偷听了吕布与貂蝉的完整谈话；犹豫许久后，他在二人第二次交谈期间把全部内容报告给董卓。',
+        })
+        game.emit('b-2', {
+          type: 'scene',
+          text: '吕布与貂蝉交谈期间，董卓收到二人此前秘密谈话的完整内容，震惊之下立即遣人召貂蝉回内室。',
+        })
+      },
     )
-    const summons = '【系统】相府侍从的灯火自远处而来——董卓遣人来召貂蝉回内室。貂蝉只得就此别过。'
-    players.b.push(summons)
-    diaochan.push(summons)
-    game.emit('b-2', { type: 'scene', text: '董卓遣人来召貂蝉回内室，二人就此别过。' })
 
     game.phase('第五场·貂蝉与董卓再谈')
     await runMeeting(
