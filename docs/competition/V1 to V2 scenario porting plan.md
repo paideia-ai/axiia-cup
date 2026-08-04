@@ -1,23 +1,22 @@
 # V1 to V2 Scenario Porting Plan
 
-> 状态：场景产品决策已完成，尚未授权执行最终 porting；本能寺平台侧四角色支持由 coworker 负责
+> 状态：场景产品决策与 script-only porting 已完成，待 PR review；本能寺平台侧四角色支持由 coworker 负责，不属于本 PR
 >
 > 范围：`honnoji-decision`、`shangyang-court`、`trolley-problem`
+>
+> PR 边界：只提交三个 scenario scripts、这份决策记录及其 production prompt 基线；不提交 local runner、`.local`、runner logs、Web/Swift/server 或其他平台改动
 
 ## 1. 目标
 
 这份文件是 V1 到 V2 场景移植的决策记录。
 
-接下来将逐项比较 V1 production 与当前 V2 的每一个相关差异。每 review 一个差异，就在本文件记录决定及理由。所有差异点 review 完成后，再按照已记录的决定统一实施 porting。
-
-除非用户明确要求提前修改，`待决定` 项目在完整 review 结束前不进入 implementation。
+本文件记录 V1 production 与 V2 的差异、逐项产品决定，以及按照这些决定完成的 script-only implementation。三个场景的 porting 已获授权并完成；剩余平台工作继续由 coworker 负责。
 
 ## 2. 相关材料
 
 - [V2 三个场景的玩家提示词模板](prompts/v2-player-prompt-templates.md)
 - [V1 production PvE preset prompts 快照](prompts/v1-production-pve-preset-prompts.md)
 - [V1 production Judge Prompts 快照](prompts/v1-production-judge-prompts.md)
-- [V1 到 V2 的场景移植与融合](v1-to-v2-scenario-porting.md)
 - [产品设计规范](DESIGN_SPEC.md)
 
 V1 prompt 的最终比较基线必须来自 V1 live production 数据或已经验证的 production 历史导出，不能仅以本地 seed 或旧代码代替。
@@ -30,13 +29,13 @@ V1 prompt 的最终比较基线必须来自 V1 live production 数据或已经�
 - `v2/scenarios/scenarios/shangyang-court/script.js`
 - `v2/scenarios/scenarios/trolley-problem/script.js`
 
-本能寺仍必须完整恢复 V1 四角色选择：玩家能在每个阵营的两个角色中任选一个，并与另一阵营的任意角色对战；PvE preset 也必须携带并使用所属角色。但实现这项能力所需的 Swift contract/server、V2 Web builder、DTO/type mirror、持久化和 match binding 修改由 coworker 负责，不由当前执行者修改。
+本能寺仍必须完整恢复 V1 四角色选择：玩家能在每个阵营的两个角色中任选一个，并与另一阵营的任意角色对战；PvE preset 也必须携带并使用所属角色。实现这项能力所需的 Swift contract/server、V2 Web builder、DTO/type mirror、持久化和 match binding 修改由 coworker 负责，不由本 PR 修改。
 
-当前执行者只实施三个 scripts 内能够完成的部分，并按 coworker 最终提供的 contract 读取角色选择。不得用 prompt 文本或 label 猜测普通玩家的角色，也不得修改 Swift、Web、server、runtime、programmatic scorer、数据库、tools、tests、CI/CD 或其他 implementation 文件。没有可用的平台 contract 时，可以准备角色表、V1 prompts、请求、计分和兼容 fallback，但不得宣称 per-player role selection 已完整实现。
+本次实现只修改三个 scripts，并通过现有 `game.side(side).options.role` contract 读取角色选择；同时兼容 production canonical role ID、V2 UI 短 key 和旧 slot params。不得用 prompt 文本或 label 猜测普通玩家的角色，也不得修改 Swift、Web、server、runtime、programmatic scorer、数据库、tools、tests、CI/CD 或其他 implementation 文件。
 
 ### 3.1 本能寺平台依赖与 coworker 交接
 
-Coworker 负责的平台实现至少需要满足以下行为契约；具体字段名由双方在 implementation 前确认：
+Coworker 负责的平台实现至少需要满足以下行为契约。相关平台改动独立于本次 scenario porting PR；本 PR 只消费已经由 main 提供的 role options contract：
 
 - 场景详情向 builder 暴露 A/B 两方各自的两个 canonical role options。
 - 玩家选择的 role option 与 prompt/model 一起保存，并冻结在具体 version；修改当前选择不得改变旧 version 或旧 match。
@@ -68,19 +67,19 @@ Coworker 负责的平台实现至少需要满足以下行为契约；具体字�
 
 | ID | 场景 | 差异点 | 决定 | 最终规则 | 状态 |
 |---|---|---|---|---|---|
-| COMMON-001 | 本能寺 | 辩论轮数 | 融合 | V2 每轮 A、B 各发言一次，共 10 轮 | 已确认，无需修改 |
+| COMMON-001 | 本能寺 | 辩论轮数 | 融合 | V2 每轮 A、B 各发言一次，共 10 轮 | 已实施 |
 | COMMON-002 | 商鞅 | 辩论轮数 | 融合 | V2 每轮 A、B 各发言一次，共 5 轮 | 已实施 |
 | TR-001 | 电车 | 每案辩论轮数 | 融合 | 每案 5 轮，每轮 A、B 各发言一次 | 已实施 |
 | TR-002 | 电车 | 案件集合 | 融合 | 删除原 B、C，仅保留原 A、D、E | 已实施 |
 | TR-003 | 电车 | 案件编号与顺序 | 融合 | 新 A = 原 A，新 B = 原 D，新 C = 原 E；每局固定按新 A → B → C 辩论 | 已实施 |
 | TR-004 | 电车 | 随机抽案 | 融合 | 取消随机抽选，每局使用固定三个案件 | 已实施 |
-| COMMON-003 | 三个场景 | PvE preset prompts | 对齐 V1 | 保留 V1 live production 当前全部 24 个 PvE preset 及其 prompt 内容、label、side 和角色绑定；以 2026-08-04 live API 快照为基线。电车旧案件引用的必要适配由 TR-020 单独决定 | 已决定，待统一实施 |
-| COMMON-004 | 三个场景 | Judge Prompt 基线与 prompt-injection 防护 | 融合 | 以 V1 live production Judge Prompt 原文为主体；不增加 V2 防护，并删除 V1 中显式的 `处理异常`/prompt-injection 防护；只做 V2 接口和已决定规则所必需的适配 | 已决定，待统一实施 |
-| COMMON-005 | 本能寺、商鞅 | Examination | 融合 | 保留 V2 persistent player session 和 `act()`；对齐 V1 问题语义、合法 ID 与计分；字段固定先 `reason`、后 `guess` | 已决定，待统一实施 |
-| TR-005 | 电车 | V1 PvE prompt 案件适配 | 融合 | 删除旧 B/C 案件段，把旧 D/E 机械改为新 B/C；其余 prompt 策略内容不改写 | 已决定，待统一实施 |
-| COMMON-006 | 本能寺、商鞅 | Judge OS 与最终 Judge session | 保留 V2 | Judge OS 与最终裁决继续使用同一 Judge session；明确接受 Judge OS 和此前 Judge 上下文进入最终裁判信息集 | 已决定，待统一实施 |
-| COMMON-007 | 本能寺、商鞅 | 强制破平 | 保留 V2 | 总分相等时不返回 `draw`，继续按大政方针裁决映射 winner | 已决定，待统一实施 |
-| TR-006 | 电车 | 跨案件玩家 Agent 上下文 | 保留 V2 | A、B 两方各自复用同一个 Agent session，后续案件保留此前案件上下文 | 已决定，待统一实施 |
+| COMMON-003 | 三个场景 | PvE preset prompts | 对齐 V1 | 保留 V1 live production 当前全部 24 个 PvE preset 及其 prompt 内容、label、side 和角色绑定；以 2026-08-04 live API 快照为基线。电车旧案件引用的必要适配由 TR-020 单独决定 | 已实施 |
+| COMMON-004 | 三个场景 | Judge Prompt 基线与 prompt-injection 防护 | 融合 | 以 V1 live production Judge Prompt 原文为主体；不增加 V2 防护，并删除 V1 中显式的 `处理异常`/prompt-injection 防护；只做 V2 接口和已决定规则所必需的适配 | 已实施 |
+| COMMON-005 | 本能寺、商鞅 | Examination | 融合 | 保留 V2 persistent player session 和 `act()`；对齐 V1 问题语义、合法 ID 与计分；字段固定先 `reason`、后 `guess` | 已实施 |
+| TR-005 | 电车 | V1 PvE prompt 案件适配 | 融合 | 删除旧 B/C 案件段，把旧 D/E 机械改为新 B/C；其余 prompt 策略内容不改写 | 已实施 |
+| COMMON-006 | 本能寺、商鞅 | Judge OS 与最终 Judge session | 保留 V2 | Judge OS 与最终裁决继续使用同一 Judge session；明确接受 Judge OS 和此前 Judge 上下文进入最终裁判信息集 | 已实施 |
+| COMMON-007 | 本能寺、商鞅 | 强制破平 | 保留 V2 | 总分相等时不返回 `draw`，继续按大政方针裁决映射 winner | 已实施 |
+| TR-006 | 电车 | 跨案件玩家 Agent 上下文 | 保留 V2 | A、B 两方各自复用同一个 Agent session，后续案件保留此前案件上下文 | 已实施 |
 | TR-007 | 电车 | 案件顺序 | 融合 | 不再抽案或执行抽案后排序；固定按新 A → B → C 辩论 | 已实施 |
 
 ## 6. 共同差异 Review
@@ -158,7 +157,7 @@ Coworker 负责的平台实现至少需要满足以下行为契约；具体字�
 | TR-020 | 旧 PvE prompt 的案件引用 | 高级 prompts 引用旧 A–E，包括已删除的 B/C，并把自动驾驶、缸中之脑称为 D/E | 当前案件是原 A、D、E，并重新编号为 A、B、C | 融合 | 做机械适配：删除旧 B/C 案件段，把旧 D/E 改为新 B/C；不得改写其余策略内容 |
 | TR-021 | 抽案后排序 | V1 从旧 B–E 随机抽两个，并保留抽取顺序 | 旧 V2 抽取后按题库顺序排序 | 不适用 | 当前已取消抽案；固定案件为新 A/B/C，辩论顺序固定为 A → B → C |
 
-## 10. Review 顺序
+## 10. Review 与实施顺序
 
 1. 三个场景的 Agent Template。
 2. 三个场景的 Judge Prompt。
@@ -171,23 +170,23 @@ Coworker 负责的平台实现至少需要满足以下行为契约；具体字�
 9. Platform gaps 和 script-only 近似方案。
 10. 全表复核并明确授权 implementation。
 
-## 11. 开始实施的条件
+## 11. 实施授权记录
 
-只有在以下条件全部满足后，才开始最终 porting：
+开始最终 porting 所需的条件均已满足：
 
 - Review 表中没有未解释的 `待决定` 项。
-- 三个场景的 V1 production 基线已经标明来源。
-- 所有 `融合` 项都写明最终规则，而不只写方向。
-- 所有 `Platform gap` 都有接受的近似方案或明确延后。
-- 用户明确确认：按照本文件中的决定开始 implementation。
+- 三个场景的 V1 production 基线来自 2026-08-04 live API 快照及已验证的 production prompt 历史。
+- 所有 `融合` 项均已写明最终规则。
+- Platform gap 已明确交由 coworker 处理，且不进入本 PR。
+- 用户已明确授权按照本文件中的决定开始 implementation。
 
 ## 12. 最终验收记录
 
-实施完成后在这里记录：
+Script-only implementation 已完成：
 
-- 修改过的三个 script 文件
-- 每项决定对应的代码位置
-- 静态验证结果
-- local runner 的代表性运行结果
-- 与 V1 production 的已知剩余差异
-- 未解决的 Platform gaps
+- `honnoji-decision/script.js`：阵营名称改为“主张杀信长 / 主张不杀信长”；对齐 V1 四角色、请求、8 条 PvE presets、Agent/Judge prompts、examination 与计分；保留 V2 Judge OS、session、timeline、结构化输出与强制破平。
+- `shangyang-court/script.js`：对齐 V1 请求、12 条 PvE presets、Agent/Judge prompts、examination 和 `-1` 识破扣分；保留 V2 Judge OS、session、timeline、结构化输出与强制破平。
+- `trolley-problem/script.js`：固定使用新 A/B/C 三案，每案 5 轮；对齐 V1 prompts 与 4 条 PvE presets，并机械适配旧 D/E 为新 B/C；保留 V2 跨案 session、timeline 和结构化输出。
+- PR 不包含 local runner、`.local`、runner logs 或任何 Web/Swift/server 改动。
+- 静态验证通过：`deno task validate`、`deno task fmt`、`deno task lint` 和 `git diff --check` 均成功。
+- 平台侧边界：本能寺 per-player 四角色 UI、持久化与 match binding 由 coworker 的独立改动提供；本 PR 只消费 `options.role`，平台端到端行为不属于本 PR 的实现或验收范围。
