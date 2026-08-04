@@ -72,6 +72,9 @@ export interface PresetOpponentDTO {
   side: string
   label: string
   modelID: string
+  // The scenario-private blob this bot is cast with; opaque to the server, and
+  // absent on a scenario whose presets declare none.
+  options?: JSONValue | string | null
 }
 
 export interface ScenarioDetail {
@@ -121,10 +124,15 @@ export interface FieldMutationRequest {
   value: string
 }
 
+// `options` is a JSON-encoded string the server stores and hands back to the
+// script untouched; its vocabulary is the scenario's own (see src/scenarios).
+// Omitting it is always valid, and a scenario the SPA has no module for never
+// sends it.
 export interface SaveVersionRequest {
   prompt: string
   modelID: string
   parentVersionID?: number | null
+  options?: string | null
 }
 
 export interface AgentVersionDTO {
@@ -135,6 +143,7 @@ export interface AgentVersionDTO {
   parentVersionID?: number | null
   isEntry: boolean
   snapshotSeq: number
+  options?: string | null
 }
 
 export interface DraftResponse {
