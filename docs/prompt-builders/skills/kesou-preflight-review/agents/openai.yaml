@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kesou Preflight Review"
+  short_description: "Preflight MCQs and Prompt Builders for Kesou"
+  default_prompt: "Use $kesou-preflight-review to check this MCQ or Prompt Builder before I send it to Kesou."
