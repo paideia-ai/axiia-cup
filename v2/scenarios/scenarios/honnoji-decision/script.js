@@ -1,5 +1,6 @@
 const ROLES = {
   chosokabe: {
+    side: 'a',
     name: '长宗我部元亲的密使',
     identity:
       '你代表四国大名长宗我部元亲而来。织田政权对四国的政策正在转硬，元亲已感到切身威胁。你主张说服明智光秀立刻袭击本能寺，杀死织田信长。',
@@ -15,6 +16,7 @@ const ROLES = {
 - 追问：他能解决杀后的京都、近畿诸将与织田旧臣问题吗？`,
   },
   yoshiaki: {
+    side: 'a',
     name: '足利义昭的使者',
     identity:
       '你是流亡在鞆的第十五代将军足利义昭的使者。义昭本人不在京都，你不是带兵者，而是带来政治名分的人。你的核心说法是：杀信长不是私谋叛逆，而是奉公方归洛、重建中央政治秩序。你主张说服明智光秀袭击本能寺，杀死织田信长。',
@@ -30,6 +32,7 @@ const ROLES = {
 - 追问：名分是否足以弥补兵力、同盟和执行速度的不足？`,
   },
   hosokawa: {
+    side: 'b',
     name: '细川藤孝',
     identity:
       '你是细川藤孝，又名细川幽斋。你与光秀关系密切，熟悉京都、公家、旧幕府网络和近畿诸将的现实反应。你并不是替信长空喊忠义，而是提醒光秀：杀死信长之后，谁会承认你，谁会跟随你，谁会立刻来讨伐你。你主张说服明智光秀按原命令西进支援羽柴秀吉，暂不举兵。',
@@ -45,6 +48,7 @@ const ROLES = {
 - 但也要警惕他可能过度自保，以谨慎之名回避机会`,
   },
   ashigaru: {
+    side: 'b',
     name: '明智军中的足轻',
     identity:
       '你是明智光秀军中的一名足轻。你出身低微，但极其聪明、敏锐、野心很重。你没有资格以身份压倒光秀，只能靠自己听见的军令、看见的军心，以及对明日后果的判断来说服他。你主张说服明智光秀不要把全军带入一场军心未明的夜袭，按原命令西进支援羽柴秀吉。',
@@ -104,37 +108,42 @@ const meta = {
       side: 'a',
       label: '危局迫人的密使',
       modelID: 'deepseek-v4-flash',
+      options: { role: 'chosokabe' },
       prompt:
         '你以四国存亡陈说利害：织田对元亲的政策已经转硬，今夜不动手，明智家与长宗我部都将被各个剪除。你善用具体的兵力、时机与地理，把“机会只有今夜”说成军机而非煽动。',
     },
     {
-      key: 'chosokabe-bargainer',
+      key: 'yoshiaki-legitimacy',
       side: 'a',
-      label: '许诺周全的密使',
+      label: '奉公方名分的使者',
       modelID: 'deepseek-v4-flash',
+      options: { role: 'yoshiaki' },
       prompt:
-        '你不急于催促举兵，而是先把杀后之局摆给光秀看：元亲可以提供的策应、四国方向的牵制、事后互保的盟约。你把每一项承诺都说得可验证，并主动回答“杀后如何自处”的追问。',
+        '你不谈私怨，只谈名分：今夜之举若奉公方归洛，便不是弑主，而是拨乱反正。你把将军名义能召来的公家、寺社与旧幕府奉公众一一说给光秀听，也不回避自己带不来一兵一卒。',
     },
     {
       key: 'hosokawa-realist',
       side: 'b',
       label: '洞察近畿的藤孝',
       modelID: 'deepseek-v4-flash',
+      options: { role: 'hosokawa' },
       prompt:
         '你逐一点名近畿诸将、朝廷与公家的现实反应，提醒光秀：杀信长易，收拾杀后之局难。你不空喊忠义，只问一句：事成之后，谁承认你，谁讨伐你。',
     },
     {
-      key: 'hosokawa-friend',
+      key: 'ashigaru-soldier',
       side: 'b',
-      label: '故人相劝的藤孝',
+      label: '直陈军心的足轻',
       modelID: 'deepseek-v4-flash',
+      options: { role: 'ashigaru' },
       prompt:
-        '你以多年交谊直言相劝：怨望可以申诉，前程可以另图，但今夜一动，明智家上下再无回头之路。你承认机会确实存在，正因如此才要光秀想清楚自己是否承受得起失败与成功各自的代价。',
+        '你只说你亲眼看见、亲耳听见的事：军令改了几次、队伍在夜里走得多乱、兵粮与赏罚都还没有着落。你不敢替诸将作保，也不替朝廷说话，但你敢说今夜的军心撑不住一场没有明白军令的转向。',
     },
   ],
   speakerLabels: {
-    a: ROLES[DEFAULT_ROLE_A].name,
-    b: ROLES[DEFAULT_ROLE_B].name,
+    ...Object.fromEntries(
+      Object.entries(ROLES).map(([key, role]) => [key, role.name]),
+    ),
     judge: '明智光秀',
   },
 }
@@ -306,11 +315,24 @@ const srVerdict = (roleA, roleB) => `【系统】你已听完军议。现在你�
 
 你以明智光秀的口吻宣布你的决断，阐明理由。`
 
+// The player casts himself: `options` is his own JSON blob, `{"role": "<key>"}`
+// here. A key that is not a role of his side is a typo, not a preference — fail
+// the match rather than quietly seat the default.
+const pickRole = (which, fallback) => {
+  const options = game.side(which).options
+  const key = (options && options.role) ?? fallback
+  const role = ROLES[key]
+  if (!role || role.side !== which) {
+    throw new Error(`${which} 方角色不存在：${key}`)
+  }
+  return key
+}
+
 async function main() {
   const rounds = game.params.roundCount ?? 10
   const pullInterval = game.params.judgePullInterval ?? 2
-  const roleAKey = (game.params.roles && game.params.roles.a) ?? DEFAULT_ROLE_A
-  const roleBKey = (game.params.roles && game.params.roles.b) ?? DEFAULT_ROLE_B
+  const roleAKey = pickRole('a', DEFAULT_ROLE_A)
+  const roleBKey = pickRole('b', DEFAULT_ROLE_B)
   const roleA = ROLES[roleAKey]
   const roleB = ROLES[roleBKey]
 
@@ -319,7 +341,7 @@ async function main() {
   const trueA = roleA.requests[Math.floor(drawA * roleA.requests.length)].id
   const trueB = roleB.requests[Math.floor(drawB * roleB.requests.length)].id
 
-  const a = game.agent('a', {
+  const a = game.agent(roleAKey, {
     system: playerSystem({
       role: roleA,
       roleA: roleA,
@@ -332,7 +354,7 @@ async function main() {
     }),
     side: 'a',
   })
-  const b = game.agent('b', {
+  const b = game.agent(roleBKey, {
     system: playerSystem({
       role: roleB,
       roleA: roleA,
