@@ -116,7 +116,10 @@ export function BuilderPage() {
   const [newName, setNewName] = useState('')
 
   // 模式逐版本，一版同时做两方（#16）；默认 MCQ（#15 全场景上线）
-  const [mode, setMode] = useState<BuildMode>(queryVersion?.mode ?? 'mcq')
+  const queryMode = params.get('mode')
+  const [mode, setMode] = useState<BuildMode>(
+    queryVersion?.mode ?? (queryMode === 'basic' || queryMode === 'meta' || queryMode === 'mcq' ? queryMode : 'mcq'),
+  )
   const [mcqSel, setMcqSel] = useState<Record<string, string[]>>(() =>
     scenario && queryVersion?.mode === 'mcq'
       ? deriveMcqSelections(scenario, queryVersion.promptA, queryVersion.promptB)

@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { Badge, Button, Card, EmptyState, KeyValue } from '../components/ui'
 import { cn } from '../lib/cn'
@@ -276,6 +276,33 @@ export function MatchPage() {
               <p className='panel-copy text-sm'>{match.result.judgeProse}</p>
             </Card>
           </div>
+
+          {/* 首战结束后展示三个模式 tab，进入正常迭代循环（#12） */}
+          {match.isFirstBattle && (
+            <Card className='border-(--accent)/30'>
+              <p className='panel-label'>首战完成 · 三种构建模式已解锁</p>
+              <p className='panel-copy mb-4 text-sm'>
+                从现在起你可以用任意模式迭代你的智能体，双方提示词都可以编写，并解锁 PVE 之外的进阶路线。
+              </p>
+              <div className='flex flex-wrap gap-2'>
+                {(
+                  [
+                    { mode: 'mcq', label: 'MCQ 选择题拼装' },
+                    { mode: 'basic', label: 'Basic 直接写提示词' },
+                    { mode: 'meta', label: '元提示词（用你自己的 AI）' },
+                  ] as const
+                ).map((m) => (
+                  <Link
+                    key={m.mode}
+                    to={`/scenarios/${match.scenarioId}/build?mode=${m.mode}`}
+                    className='inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/4 px-4 py-2 text-sm font-medium text-(--foreground) transition hover:bg-white/8'
+                  >
+                    {m.label}
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* 计分推导（#26）：精确权重全公开；LLM 软判断如实展示 */}
           <section className='app-panel'>
