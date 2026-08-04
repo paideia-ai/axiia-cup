@@ -2,7 +2,7 @@ import type { LiveBubble } from '../../api/sse'
 import type { TurnDTO } from '../../api/types'
 import { Card, CardContent } from '../ui/card'
 import type { SpeakerLabels } from './labels'
-import { speakerAccent, speakerName } from './labels'
+import { speakerAccent, speakerName, speakerSide } from './labels'
 import { ReasoningFold } from './reasoning-fold'
 
 function Speaker({
@@ -16,7 +16,7 @@ function Speaker({
   seq: number
   live: boolean
 }) {
-  const isSide = speaker === 'a' || speaker === 'b'
+  const isSide = speakerSide(labels, speaker) != null
   return (
     <div className='flex items-center gap-2 text-xs text-(--foreground-muted)'>
       <span className='font-semibold text-(--foreground-subtle)'>
@@ -50,7 +50,7 @@ export function DialogueRow({
   labels: SpeakerLabels
 }) {
   return (
-    <Card className={`border-l-2 ${speakerAccent(turn.speaker)}`}>
+    <Card className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}>
       <CardContent className='space-y-1 py-4'>
         <Speaker
           speaker={turn.speaker}
@@ -80,7 +80,7 @@ export function LiveDialogueRow({
   return (
     <Card
       className={`border-l-2 ${
-        speakerAccent(bubble.speaker)
+        speakerAccent(labels, bubble.speaker)
       } border-dashed bg-white/1`}
     >
       <CardContent className='space-y-1 py-4'>

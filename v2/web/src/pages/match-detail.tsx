@@ -4,7 +4,11 @@ import { Link, useParams } from 'react-router-dom'
 import { matches } from '../api/client'
 import { useMatchStream } from '../api/sse'
 import type { SpeakerLabels } from '../components/timeline/labels'
-import { speakerName } from '../components/timeline/labels'
+import {
+  sideName,
+  speakerLabels,
+  speakerName,
+} from '../components/timeline/labels'
 import { ReasoningFold } from '../components/timeline/reasoning-fold'
 import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
@@ -23,9 +27,15 @@ export function MatchDetailPage() {
     () => matches.detail(matchID),
     [matchID],
   )
-  const labels: SpeakerLabels = data?.speakerLabels ?? {}
-  const sideA = labels.a ?? '甲方'
-  const sideB = labels.b ?? '乙方'
+  const labels: SpeakerLabels = speakerLabels(
+    data?.summary.scenarioID,
+    data?.speakerLabels ?? {},
+  )
+  // A role-cast match names its lanes after the roles, so which role stood for
+  // which side is read back off the transcript rather than off the labels.
+  const speakers = data?.turns.map((turn) => turn.speaker) ?? []
+  const sideA = sideName(labels, 'a', speakers)
+  const sideB = sideName(labels, 'b', speakers)
 
   const live = data != null && !data.summary.finished
   const stream = useMatchStream(matchID, live)

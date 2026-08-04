@@ -3,12 +3,9 @@ import type { ReactNode } from 'react'
 import type { VerdictDTO } from '../api/types'
 import { parseVerdict, verdictLabel } from '../lib/verdict'
 import type { SpeakerLabels } from './timeline/labels'
+import { speakerName } from './timeline/labels'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
-
-function resolveSide(value: string, labels: SpeakerLabels): string {
-  return labels[value] ?? value
-}
 
 export function VerdictCard({
   verdict,
@@ -51,7 +48,7 @@ export function VerdictCard({
                 className='whitespace-pre-wrap text-sm text-(--foreground)'
               >
                 {field.key === 'winner' || field.key === 'selectedSide'
-                  ? resolveSide(line, labels)
+                  ? speakerName(labels, line)
                   : line}
               </p>
             ))}
