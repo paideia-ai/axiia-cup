@@ -7,12 +7,14 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { messageOf, useAsync } from '../lib/use-async'
+import { roleOfOptions, scenarioModule } from '../scenarios'
 
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
   const [side, setSide] = useState<Side>('a')
   const [building, setBuilding] = useState(false)
+  const roleModule = scenarioModule(scenarioId)
   const [buildError, setBuildError] = useState<string | null>(null)
 
   const { data, error, loading } = useAsync(
@@ -161,9 +163,11 @@ export function ScenarioDetailPage() {
                   <div className='flex flex-wrap gap-2'>
                     {data.presets.map((preset) => (
                       <Badge key={preset.key} tone='info'>
-                        {preset.label} · {preset.side === 'a'
-                          ? data.summary.sideAName
-                          : data.summary.sideBName} · {preset.modelID}
+                        {preset.label} ·{' '}
+                        {roleOfOptions(roleModule, preset.options)?.name ??
+                          (preset.side === 'a'
+                            ? data.summary.sideAName
+                            : data.summary.sideBName)} · {preset.modelID}
                       </Badge>
                     ))}
                   </div>

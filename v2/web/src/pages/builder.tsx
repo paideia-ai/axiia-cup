@@ -17,6 +17,13 @@ import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { messageOf } from '../lib/use-async'
+import {
+  roleByKey,
+  roleOfOptions,
+  roleOptions,
+  rolesForSide,
+  scenarioModule,
+} from '../scenarios'
 
 const PROMPT_FIELD = 'prompt'
 
@@ -44,6 +51,7 @@ export function BuilderPage() {
   )
 
   const [prompt, setPrompt] = useState('')
+  const [roleKey, setRoleKey] = useState<string | null>(null)
   const [models, setModels] = useState<ModelDTO[]>([])
   const [modelID, setModelID] = useState<string | null>(null)
   const [versions, setVersions] = useState<AgentVersionDTO[]>([])
@@ -87,6 +95,26 @@ export function BuilderPage() {
       live = false
     }
   }, [agentID])
+
+  // A scenario the SPA carries a module for lets the player cast his own side; the
+  // choice rides along the saved version as the options blob the script parses.
+  const roleModule = scenarioModule(scenarioID)
+  const roles = rolesForSide(roleModule, side)
+
+  useEffect(() => {
+    if (roles.length === 0) {
+      setRoleKey(null)
+      return
+    }
+    setRoleKey((current) => {
+      if (roles.some((role) => role.key === current)) return current
+      const saved = roleOfOptions(
+        roleModule,
+        versions[versions.length - 1]?.options,
+      )
+      return saved?.side === side ? saved.key : roles[0].key
+    })
+  }, [scenarioID, side, versions])
 
   useEffect(() => {
     void catalog.models().then((list) => {
@@ -165,6 +193,7 @@ export function BuilderPage() {
         prompt,
         modelID,
         parentVersionID: entryVersionID,
+        ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
       })
       setStatus(`已保存版本 #${version.id}`)
       await refreshVersions()
@@ -184,8 +213,14 @@ export function BuilderPage() {
     ? '例如：先明确你的立场，再用裁判最难忽视的风险和利益组织论点…'
     : '例如：先拆解对方方案的成本，再把你的真诉求藏在可执行的条件中…'
 
+  const selectedRole = roleByKey(roleModule, roleKey)
   const opponentPresets: PresetOpponentDTO[] =
     scenario?.presets.filter((preset) => preset.side !== side) ?? []
+  // A preset cast for a role says so; one without options is just its own label.
+  const presetLabel = (preset: PresetOpponentDTO) => {
+    const role = roleOfOptions(roleModule, preset.options)
+    return role ? `${preset.label} · ${role.name}` : preset.label
+  }
   const rivalAgents = opponents.filter((opponent) => !opponent.isSelf)
   const ownOppositeAgents = opponents.filter((opponent) => opponent.isSelf)
   const modeOpponents = mode === 'hotseat' ? ownOppositeAgents : rivalAgents
@@ -246,6 +281,31 @@ export function BuilderPage() {
             />
           </label>
           <div className='flex flex-wrap items-end gap-3'>
+            {roles.length > 0
+              ? (
+                <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
+                  <span
+                    className='block'
+                    title='角色决定你在这一局里的身份与筹码'
+                  >
+                    出场角色
+                  </span>
+                  <div className='w-56'>
+                    <Select
+                      placeholder='选择角色'
+                      value={roleKey ?? undefined}
+                      onValueChange={(v) => v && setRoleKey(v)}
+                    >
+                      {roles.map((role) => (
+                        <SelectItem key={role.key} value={role.key}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </div>
+                </label>
+              )
+              : null}
             <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
               <span
                 className='block'
@@ -284,6 +344,13 @@ export function BuilderPage() {
               )
               : null}
           </div>
+          {selectedRole
+            ? (
+              <p className='text-xs text-(--foreground-muted)'>
+                {selectedRole.pitch}
+              </p>
+            )
+            : null}
         </CardContent>
       </Card>
 
@@ -376,7 +443,7 @@ export function BuilderPage() {
                   >
                     {opponentPresets.map((preset) => (
                       <SelectItem key={preset.key} value={preset.key}>
-                        {preset.label}
+                        {presetLabel(preset)}
                       </SelectItem>
                     ))}
                   </Select>

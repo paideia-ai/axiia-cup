@@ -165,7 +165,14 @@ function ScoreRow({
   const winner = eventString(event, 'winner')
   const trueRequests = eventRecord(event, 'trueRequests')
   const guesses = eventRecord(event, 'guesses')
-  const sides: Array<'a' | 'b'> = ['a', 'b']
+  // Whichever keys the script chose to break the ledger down by — sides in one
+  // scenario, role or NPC lanes in the next.
+  const sides = [
+    ...new Set([
+      ...Object.keys(trueRequests ?? {}),
+      ...Object.keys(guesses ?? {}),
+    ]),
+  ]
   return (
     <div className='rounded-xl border border-(--border) bg-white/2 px-4 py-4'>
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>

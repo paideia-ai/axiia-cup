@@ -30,6 +30,7 @@ interface PresetOpponent {
   label: string
   prompt: string
   modelID: string
+  options?: SideOptions
 }
 
 interface ScenarioMeta {
@@ -62,10 +63,19 @@ interface ScenarioParams {
   readonly [key: string]: any
 }
 
+// The player's own JSON blob for one side, already parsed; `null` when the player
+// set none. Opaque to the server and untyped by construction, exactly like params:
+// the vocabulary is the scenario's own.
+interface SideOptions {
+  // deno-lint-ignore no-explicit-any
+  readonly [key: string]: any
+}
+
 interface SideBinding {
   readonly prompt: string
   readonly model: string
   readonly label: string
+  readonly options: SideOptions | null
 }
 
 interface SayReply {
