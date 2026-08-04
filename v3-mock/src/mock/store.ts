@@ -48,7 +48,11 @@ export interface AppState {
   debugMode: boolean
 }
 
-const STORAGE_KEY = 'axiia-v3-mock-state-v1'
+const STORAGE_KEY = 'axiia-v3-mock-state-v2'
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10)
+}
 
 let idCounter = 1000
 export function nextId(prefix: string): string {
@@ -122,14 +126,43 @@ function seedState(): AppState {
   const veteranAgent: Agent = {
     id: 'agent-zy',
     ownerId: 'me',
+    ownerName: '琢玉',
     scenarioId: 'shangyang',
     name: '琢玉的策论',
     versions: [veteranAgentVersion1, veteranAgentVersion2],
     tournamentVersionId: 'ver-zy-2',
     createdAt: '2026-07-20T08:00:00Z',
   }
+  // 公开玩家 agent：EA 公开视图 / 排名页 / 战报「查看该智能体」入口的演示对象
+  const moAgent: Agent = {
+    id: 'agent-mo',
+    ownerId: 'ext-mo',
+    ownerName: '墨白',
+    scenarioId: 'shangyang',
+    name: '变法七策',
+    versions: [
+      {
+        id: 'ver-mo-4',
+        num: 4,
+        promptA: '（公开视图不可见）',
+        promptB: '（公开视图不可见）',
+        model: 'kimi-k2.5',
+        mode: 'basic',
+        note: '',
+        createdAt: '2026-07-18T08:00:00Z',
+        record: { A: { wins: 9, losses: 2 }, B: { wins: 5, losses: 3 } },
+      },
+    ],
+    tournamentVersionId: 'ver-mo-4',
+    createdAt: '2026-07-01T08:00:00Z',
+  }
   const demoA = seedDemoMatch('demo-1', 'shangyang', '墨白·变法七策 v4', '疏影·老甘龙 v2')
   const demoB = seedDemoMatch('demo-2', 'fengyi', '青梧·连环记 v3', '止水·毒士 v5')
+  // 战报版本 id 必须能贴进 OS 面板按 id 约战（#25 闭环）：用公开版本 id
+  demoA.participants.A = { ...demoA.participants.A, refId: 'agent-mo', versionId: 'ver-mo-4', ownerId: 'ext-mo' }
+  demoA.participants.B = { ...demoA.participants.B, versionId: 'ver-sy-2', ownerId: 'ext-sy' }
+  demoB.participants.A = { ...demoB.participants.A, versionId: 'ver-qw-3', ownerId: 'ext-qw' }
+  demoB.participants.B = { ...demoB.participants.B, versionId: 'ver-zs-5', ownerId: 'ext-zs' }
   const historyDone: Match = seedDemoMatch('m-hist-1', 'shangyang', '琢玉的策论 v2', '老成持重·甘龙')
   historyDone.kind = 'pve'
   historyDone.initiatorId = 'me'
@@ -144,12 +177,14 @@ function seedState(): AppState {
       expressPending: false,
       firstBattleDone: true,
       battlesToday: 2,
+      pvpBattlesToday: 0,
+      battlesDate: today(),
       progress: [
         { scenarioId: 'shangyang', npcsBeaten: ['npc-shangyang-baoshou', 'npc-shangyang-jinji'], ladderScore: null },
         { scenarioId: 'cough', npcsBeaten: ['npc-cough-easy'], ladderScore: null },
       ],
     },
-    agents: [veteranAgent],
+    agents: [veteranAgent, moAgent],
     matches: [demoA, demoB, historyDone],
     notifications: [
       {
@@ -215,6 +250,7 @@ function seedState(): AppState {
       { versionId: 'ver-mo-4', playerName: '墨白', agentName: '墨白的商鞅变法', scenarioId: 'shangyang', model: 'kimi-k2.5' },
       { versionId: 'ver-zs-5', playerName: '止水', agentName: '止水的凤仪亭之夜', scenarioId: 'fengyi', model: 'glm-5' },
       { versionId: 'ver-sy-2', playerName: '疏影', agentName: '疏影的商鞅变法', scenarioId: 'shangyang', model: 'qwen3-max' },
+      { versionId: 'ver-qw-3', playerName: '青梧', agentName: '青梧的凤仪亭之夜', scenarioId: 'fengyi', model: 'deepseek-v3.2' },
     ],
     trialsBlocked: false,
     debugMode: false,
@@ -296,6 +332,8 @@ class MockStore {
         expressPending: true,
         firstBattleDone: false,
         battlesToday: 0,
+        pvpBattlesToday: 0,
+        battlesDate: today(),
         progress: [],
       }
       s.agents = []
@@ -328,6 +366,7 @@ class MockStore {
     const agent: Agent = {
       id: nextId('agent'),
       ownerId: this.state.user?.id ?? 'me',
+      ownerName: this.state.user?.name ?? '选手',
       scenarioId,
       name,
       versions: [],
@@ -381,8 +420,18 @@ class MockStore {
 
   // ---------- 派发 ----------
 
+  /** 跨日清零（「明天再来」#52 的兑现）：日期变了就重置每日计数 */
+  private rolloverDaily() {
+    const user = this.state.user
+    if (!user || user.battlesDate === today()) return
+    this.commit((s) => {
+      if (s.user) s.user = { ...s.user, battlesToday: 0, pvpBattlesToday: 0, battlesDate: today() }
+    })
+  }
+
   /** 每日上限检查（#45/#52：只计发起人；触顶＝可点→提示→拒绝入队） */
   dailyLimitReached(): boolean {
+    this.rolloverDaily()
     return (this.state.user?.battlesToday ?? 0) >= CONFIG.dailyBattleLimit
   }
 
@@ -394,9 +443,21 @@ class MockStore {
     mySide: Side
     opponent: { npcId?: string; publicVersionId?: string }
     firstBattle?: boolean
-  }): { ok: true; match: Match } | { ok: false; reason: 'daily-limit' | 'trials-blocked' | 'bad-opponent' } {
+  }):
+    | { ok: true; match: Match }
+    | { ok: false; reason: 'daily-limit' | 'pvp-daily-limit' | 'concurrency' | 'trials-blocked' | 'bad-opponent' } {
     if (this.state.trialsBlocked) return { ok: false, reason: 'trials-blocked' }
     if (this.dailyLimitReached()) return { ok: false, reason: 'daily-limit' }
+    // #46 PVP 每日限次（只计发起人）
+    const isPvp = opts.kind === 'pvp-friendly' || opts.kind === 'pvp-ranked'
+    if (isPvp && (this.state.user?.pvpBattlesToday ?? 0) >= CONFIG.pvpDailyLimit) {
+      return { ok: false, reason: 'pvp-daily-limit' }
+    }
+    // #46 并发上限：同时排队/进行中的自发对局数
+    const active = this.state.matches.filter(
+      (m) => m.initiatorId === this.state.user?.id && m.status !== 'done',
+    ).length
+    if (!opts.firstBattle && active >= CONFIG.concurrencyLimit) return { ok: false, reason: 'concurrency' }
     const agent = this.state.agents.find((a) => a.id === opts.agentId)
     const version = agent?.versions.find((v) => v.id === opts.versionId)
     if (!agent || !version) return { ok: false, reason: 'bad-opponent' }
@@ -442,7 +503,13 @@ class MockStore {
     }
     this.commit((s) => {
       s.matches = [match, ...s.matches]
-      if (s.user) s.user = { ...s.user, battlesToday: s.user.battlesToday + 1 }
+      if (s.user) {
+        s.user = {
+          ...s.user,
+          battlesToday: s.user.battlesToday + 1,
+          pvpBattlesToday: s.user.pvpBattlesToday + (isPvp ? 1 : 0),
+        }
+      }
     })
     this.schedule.set(match.id, Date.now() + (opts.firstBattle ? 1200 : 2500))
     this.ensureTimer()
@@ -532,8 +599,34 @@ class MockStore {
     if (match.isFirstBattle && this.state.user) {
       this.state.user = { ...this.state.user, firstBattleDone: true, expressPending: false }
     }
-    // ① 对局完成通知 → 深链战报
-    this.pushNotification('match-done', '对局完成', `你发起的对局已出结果：${match.result?.winner === 'draw' ? '平局' : won ? '你赢了' : '你输了'}（${scenarioOf(match.scenarioId).name}）。`, `/matches/${match.id}`)
+    const outcomeText = match.result?.winner === 'draw' ? '平局' : won ? '你赢了' : '你输了'
+    if (match.kind === 'pvp-ranked') {
+      // 计分 PVP：更新天梯（mock 计分 ±25/−15）并发 ③ 自动匹配结果通知（#53）
+      const cur = this.state.user
+      if (cur) {
+        const progress = cur.progress.find((p) => p.scenarioId === match.scenarioId)
+        const prev = progress?.ladderScore ?? 1000
+        const next = prev + (won ? 25 : match.result?.winner === 'draw' ? 0 : -15)
+        if (progress) progress.ladderScore = next
+        else cur.progress = [...cur.progress, { scenarioId: match.scenarioId, npcsBeaten: [], ladderScore: next }]
+        this.state.user = { ...cur }
+        const others = this.state.ladder.filter((r) => !(r.player === cur.name && r.scenarioId === match.scenarioId))
+        const rows = [
+          ...others,
+          { rank: 0, player: cur.name, scenarioId: match.scenarioId, score: next, agentDisplay: `${cur.name}的${scenarioOf(match.scenarioId).name}` },
+        ].toSorted((a, b) => b.score - a.score)
+        this.state.ladder = rows.map((r, i) => ({ ...r, rank: i + 1 }))
+        this.pushNotification(
+          'automatch-result',
+          '自动匹配结果',
+          `计分对战${outcomeText}（${scenarioOf(match.scenarioId).name}）。天梯分 ${prev} → ${next}。`,
+          `/matches/${match.id}`,
+        )
+      }
+    } else {
+      // ① 对局完成通知 → 深链战报
+      this.pushNotification('match-done', '对局完成', `你发起的对局已出结果：${outcomeText}（${scenarioOf(match.scenarioId).name}）。`, `/matches/${match.id}`)
+    }
   }
 
   pushNotification(kind: NotificationKind, title: string, body: string, link: string | null) {

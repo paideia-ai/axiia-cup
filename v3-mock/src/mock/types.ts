@@ -105,6 +105,8 @@ export interface AgentVersion {
 export interface Agent {
   id: string
   ownerId: string
+  /** 所有者昵称（EA 展示名「xx的yy场景」用，#36；真实系统由后端下发） */
+  ownerName: string
   scenarioId: string
   /** 玩家给这套策略起的名字；EA 展示名按场景组合（#36） */
   name: string
@@ -229,8 +231,12 @@ export interface CurrentUser {
   /** 首战快速通道状态：注册后 true，首战完成后 false（#12） */
   expressPending: boolean
   firstBattleDone: boolean
-  /** 今日已发起的对战数（#45/#52） */
+  /** 今日已发起的对战数（#45/#52）；battlesDate 变更日自动清零 */
   battlesToday: number
+  /** 今日已发起的 PVP 对战数（#46 每日限次） */
+  pvpBattlesToday: number
+  /** battlesToday 对应的日期（YYYY-MM-DD），跨日重置 */
+  battlesDate: string
   progress: PlayerScenarioProgress[]
 }
 

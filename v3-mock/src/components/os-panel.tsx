@@ -65,8 +65,10 @@ export function OsPanel({
     setAlert(null)
     const result = store.dispatch({ kind, scenarioId: agent.scenarioId, agentId: agent.id, versionId, mySide, opponent })
     if (!result.ok) {
-      // #52 触顶：按钮可点 → 提示 → 拒绝入队；#47 赛事阻挡
+      // #52 触顶：按钮可点 → 提示 → 拒绝入队；#46 限次/并发；#47 赛事阻挡
       if (result.reason === 'daily-limit') setAlert(`今日次数已用完（${CONFIG.dailyBattleLimit}/${CONFIG.dailyBattleLimit}），明天再来`)
+      else if (result.reason === 'pvp-daily-limit') setAlert(`PVP 每日限次已用完（${CONFIG.pvpDailyLimit}/${CONFIG.pvpDailyLimit}），明天再来`)
+      else if (result.reason === 'concurrency') setAlert(`同时进行的对战已达上限（${CONFIG.concurrencyLimit} 场），等一场结束再派发`)
       else if (result.reason === 'trials-blocked') setAlert('赛事运行期间，试炼暂时关闭')
       else setAlert('对手无效：请检查版本 id（需与本场景匹配）')
       return
@@ -98,7 +100,7 @@ export function OsPanel({
           >
             {agent.versions.map((v) => (
               <option key={v.id} value={v.id}>
-                v{v.num} · {v.model}{v.note ? ` · ${v.note}` : ''}
+                v{v.num} · {v.model}{v.id === agent.tournamentVersionId ? ' · ★参赛版本' : ''}{v.note ? ` · ${v.note}` : ''}
               </option>
             ))}
           </select>
@@ -203,6 +205,23 @@ export function OsPanel({
               {idInput.trim() && !idMatch && (
                 <p className='text-xs text-amber-300'>未找到该版本 id（需属于本场景「{scenario.name}」）。</p>
               )}
+              {/* A5：默认打对方最新版——不填 id 也可以直接选玩家 */}
+              {!idInput.trim() && rankedCandidates.length > 0 && (
+                <div className='flex flex-col gap-2'>
+                  <p className='text-[11px] text-(--foreground-muted)'>或直接选玩家（默认打其最新版）：</p>
+                  {rankedCandidates.map((p) => (
+                    <div key={p.versionId} className='flex flex-wrap items-center gap-3 rounded-xl border border-(--border-soft) bg-white/[0.02] px-4 py-2.5'>
+                      <div className='min-w-0 flex-1'>
+                        <span className='text-sm font-semibold text-(--foreground)'>{p.playerName}</span>
+                        <p className='mt-0.5 text-xs text-(--foreground-subtle)'>{p.agentName} · 最新版 · {p.model}</p>
+                      </div>
+                      <Button size='sm' variant='secondary' disabled={dispatching} onClick={() => run('pvp-friendly', { publicVersionId: p.versionId })}>
+                        发起友谊赛
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {idMatch && (
                 <div className='flex flex-wrap items-center gap-3 rounded-xl border border-(--border-soft) bg-white/[0.02] px-4 py-3'>
                   <div className='min-w-0 flex-1'>
@@ -219,7 +238,7 @@ export function OsPanel({
               <ul className='flex flex-col gap-1 text-[11px] text-(--foreground-muted)'>
                 <li>友谊赛不计分。对方会收到通知，无需同意、不能拒绝。{/* #29 */}</li>
                 <li>默认打对方最新版，按 id 可指定版本。</li>
-                <li>每日限次（发起方计次，被挑战不消耗对方次数）。{/* #46/#52 */}</li>
+                <li>PVP 每日限 {CONFIG.pvpDailyLimit} 场（发起方计次，被挑战不消耗对方次数）。{/* #46/#52 */}</li>
               </ul>
             </div>
           )}

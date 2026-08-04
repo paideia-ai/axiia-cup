@@ -17,14 +17,19 @@ function usePresetScenario() {
   return SCENARIOS.find((s) => s.id === preset.scenarioId)
 }
 
-/** 快速通道只对首战开放：打完（expressPending=false）就回正常轨道 */
+/** 快速通道只对首战开放：打完（expressPending=false）就回正常轨道；
+ *  首战已发起但还没打完时，回到实况而不是允许再开一场 */
 function useExpressGuard() {
-  const { user } = useAppState()
+  const { user, matches } = useAppState()
   const navigate = useNavigate()
+  const pendingFirstBattle = matches.find(
+    (m) => m.initiatorId === user?.id && m.isFirstBattle && m.status !== 'done',
+  )
   useEffect(() => {
     if (user && !user.expressPending) navigate('/scenarios', { replace: true })
-  }, [user, navigate])
-  return user?.expressPending === true
+    else if (pendingFirstBattle) navigate(`/matches/${pendingFirstBattle.id}`, { replace: true })
+  }, [user, pendingFirstBattle, navigate])
+  return user?.expressPending === true && !pendingFirstBattle
 }
 
 /** 简化版 DA（#11）：比正常场景介绍省略得多的首屏 */
@@ -137,11 +142,15 @@ export function ExpressBuildPage() {
       return
     }
     if (store.dailyLimitReached()) {
-      setError(`今日次数已用完（${CONFIG.dailyBattleLimit}/${CONFIG.dailyBattleLimit}），明天再来。`)
+      setError(`今日次数已用完（${CONFIG.dailyBattleLimit}/${CONFIG.dailyBattleLimit}），明天再来`)
       return
     }
     setSubmitting(true)
-    const agent = store.createAgent(scenario.id, '我的第一个智能体')
+    // 派发失败重试时复用已建的 agent，避免遗留孤儿
+    const existing = store
+      .getState()
+      .agents.find((a) => a.ownerId === store.getState().user?.id && a.scenarioId === scenario.id && a.name === '我的第一个智能体')
+    const agent = existing ?? store.createAgent(scenario.id, '我的第一个智能体')
     // 首战只写一方（#8）：未执的一方存空串，正式参赛前再补全
     const version = store.saveVersion(agent.id, {
       promptA: preset.side === 'A' ? assembled : '',
@@ -167,7 +176,7 @@ export function ExpressBuildPage() {
     setSubmitting(false)
     setError(
       res.reason === 'daily-limit'
-        ? `今日次数已用完（${CONFIG.dailyBattleLimit}/${CONFIG.dailyBattleLimit}），明天再来。`
+        ? `今日次数已用完（${CONFIG.dailyBattleLimit}/${CONFIG.dailyBattleLimit}），明天再来`
         : res.reason === 'trials-blocked'
           ? '赛事正在运行，全部试炼暂时关闭，请稍后再来。'
           : '派发失败：对手配置无效。',

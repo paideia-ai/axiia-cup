@@ -145,13 +145,14 @@ export function genJudgeQa(match: Match): JudgeQaEntry[] {
 export function genResult(match: Match): MatchResult {
   const sc = scenarioOf(match.scenarioId)
   const h = hash(match.id)
+  // 首战让新手（发起人执的那一侧）小胜，降低挫败感（mock 决定，见 DECISIONS.md）
+  const bootSide: Side | null = match.isFirstBattle
+    ? match.participants.A.ownerId === match.initiatorId ? 'A' : 'B'
+    : null
   const breakdown: ScoreBreakdown[] = sc.scoring.map((dim, i) => {
     const hi = hash(match.id + dim.key)
-    // 首战让新手小胜，降低挫败感（mock 决定，见 DECISIONS.md）
-    const bias = match.isFirstBattle ? 8 : 0
-    const scoreA = Math.min(10, 4 + (hi % 5) + (match.isFirstBattle ? 2 : 0))
-    const scoreB = Math.min(10, 4 + ((hi >> 3) % 5) - (match.isFirstBattle ? 1 : 0))
-    void bias
+    const scoreA = Math.min(10, 4 + (hi % 5) + (bootSide === 'A' ? 2 : 0) - (bootSide === 'B' ? 1 : 0))
+    const scoreB = Math.min(10, 4 + ((hi >> 3) % 5) + (bootSide === 'B' ? 2 : 0) - (bootSide === 'A' ? 1 : 0))
     return {
       key: dim.key,
       label: dim.label,

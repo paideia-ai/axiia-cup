@@ -11,6 +11,18 @@ function scenarioName(id: string): string {
   return SCENARIOS.find((s) => s.id === id)?.name ?? id
 }
 
+/** EA 入口（B3 EA-4「G 里玩家的对局列表」）：有公开 agent 记录的玩家名可点进 EA */
+function PlayerName({ name, scenarioId, className }: { name: string; scenarioId: string; className?: string }) {
+  const { agents } = useAppState()
+  const agent = agents.find((a) => a.ownerName === name && a.scenarioId === scenarioId)
+  if (!agent) return <span className={className}>{name}</span>
+  return (
+    <Link to={`/agents/${agent.id}`} className={`${className ?? ''} underline-offset-2 hover:underline`}>
+      {name}
+    </Link>
+  )
+}
+
 const TOURNAMENT_STATUS: Record<Tournament['status'], { label: string; tone: 'info' | 'success' | 'neutral' }> = {
   upcoming: { label: '未开始', tone: 'info' },
   running: { label: '进行中', tone: 'success' },
@@ -52,9 +64,9 @@ function TournamentTab() {
               {round.matches.map((m, i) => (
                 <li key={`${m.matchId}-${i}`} className='flex flex-wrap items-center gap-3 py-3'>
                   <span className='min-w-0 flex-1 text-sm font-semibold text-(--foreground)'>
-                    <span className='text-(--side-a)'>{m.playerA}</span>
+                    <PlayerName name={m.playerA} scenarioId={tournament.scenarioId} className='text-(--side-a)' />
                     <span className='mx-2 text-(--foreground-muted)'>vs</span>
-                    <span className='text-(--side-b)'>{m.playerB}</span>
+                    <PlayerName name={m.playerB} scenarioId={tournament.scenarioId} className='text-(--side-b)' />
                   </span>
                   {m.winner ? (
                     <Badge tone='success'>
@@ -110,7 +122,9 @@ function LadderTab() {
               {ladder.map((row) => (
                 <tr key={`${row.player}-${row.scenarioId}`} className='border-b border-(--border-soft) last:border-b-0'>
                   <td className='px-5 py-3 text-lg font-black text-(--foreground-muted)'>{row.rank}</td>
-                  <td className='px-5 py-3 font-semibold text-(--foreground)'>{row.player}</td>
+                  <td className='px-5 py-3 font-semibold text-(--foreground)'>
+                    <PlayerName name={row.player} scenarioId={row.scenarioId} />
+                  </td>
                   <td className='px-5 py-3 text-(--foreground-subtle)'>{scenarioName(row.scenarioId)}</td>
                   <td className='px-5 py-3 font-bold text-(--accent)'>{row.score}</td>
                   <td className='px-5 py-3 text-(--foreground-subtle)'>{row.agentDisplay}</td>

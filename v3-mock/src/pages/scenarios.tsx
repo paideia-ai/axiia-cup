@@ -124,6 +124,12 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
           >
             <Bot className='h-3 w-3' />
             我的智能体 · {agent.name}
+            {/* #33 参赛版本处处可见 */}
+            {agent.tournamentVersionId && (
+              <span className='text-(--accent)'>
+                ★v{agent.versions.find((v) => v.id === agent.tournamentVersionId)?.num ?? '?'}
+              </span>
+            )}
           </Link>
         ))}
         {pvpUnlocked ? (

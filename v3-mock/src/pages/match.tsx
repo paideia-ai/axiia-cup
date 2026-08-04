@@ -431,11 +431,24 @@ function ParticipantCard({
   onCopy: (key: string, text: string) => void
 }) {
   const copyKey = `vid-${side}`
+  const { agents } = useAppState()
+  // EA 入口：战报「查看该智能体」（B3 EA-4）；NPC 侧进 NPC 聚合视图
+  const linkedAgent = participant.kind === 'player' ? agents.find((a) => a.id === participant.refId) : null
+  const agentLink = linkedAgent ? `/agents/${linkedAgent.id}` : participant.kind === 'npc' ? `/agents/${participant.refId}` : null
+  const isTournamentVersion = linkedAgent !== null && linkedAgent !== undefined &&
+    participant.versionId !== null && linkedAgent.tournamentVersionId === participant.versionId
   return (
     <Card className={cn('border-l-2', side === 'A' ? 'border-l-(--side-a)' : 'border-l-(--side-b)')}>
       <div className='flex flex-wrap items-center gap-2'>
         <Badge tone={side === 'A' ? 'sideA' : 'sideB'}>执{side} · {sideName}</Badge>
         <span className='font-semibold text-(--foreground)'>{participant.displayName}</span>
+        {/* #33 参赛版本处处可见 */}
+        {isTournamentVersion && <Badge tone='accent'>参赛版本</Badge>}
+        {agentLink && (
+          <Link to={agentLink} className='ml-auto text-xs text-(--foreground-subtle) underline-offset-2 transition hover:text-(--foreground) hover:underline'>
+            查看该智能体
+          </Link>
+        )}
       </div>
       <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {/* 模型永远公开（#21） */}

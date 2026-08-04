@@ -5,10 +5,12 @@ import { Link } from 'react-router-dom'
 
 import { Badge, Button, Card } from '../components/ui'
 import { cn } from '../lib/cn'
+import { SCENARIO_BATTLE_COUNTS } from '../mock/data'
 import { SCENARIOS, useAppState } from '../mock/store'
 import type { Match } from '../mock/types'
 
-const TOTAL_BATTLES = 373
+// 总对战数：真实系统由后端聚合下发；mock 用各场景计数之和
+const TOTAL_BATTLES = Object.values(SCENARIO_BATTLE_COUNTS).reduce((a, b) => a + b, 0)
 
 function scenarioName(id: string): string {
   return SCENARIOS.find((s) => s.id === id)?.name ?? id

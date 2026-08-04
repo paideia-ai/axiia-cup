@@ -6,8 +6,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { OsPanel } from '../components/os-panel'
 import { Badge, Button, Card, EmptyState, KeyValue } from '../components/ui'
 import { cn } from '../lib/cn'
-import { SCENARIOS, store, useAppState } from '../mock/store'
-import type { AgentVersion, BuildMode, Match, Side } from '../mock/types'
+import { NPCS, SCENARIOS, store, useAppState } from '../mock/store'
+import type { AgentVersion, BuildMode, Match, Npc, Side } from '../mock/types'
 
 const MODE_LABEL: Record<BuildMode, string> = { mcq: 'MCQ', basic: 'Basic', meta: '元提示词' }
 
@@ -46,14 +46,17 @@ export function AgentViewPage() {
   const agent = state.agents.find((a) => a.id === id)
   const scenario = SCENARIOS.find((s) => s.id === agent?.scenarioId)
 
+  // B3：PVE-NPC 的视图（聚合数据，含两侧胜率语义 #34）
+  const npc = !agent ? NPCS.find((n) => n.id === id) : undefined
+  if (npc) return <NpcView npc={npc} />
+
   if (!agent || !scenario) {
     return <EmptyState title='未找到该智能体' hint='它可能已被删除，或链接有误。' />
   }
 
   const user = state.user
   const isOwner = user !== null && agent.ownerId === user.id
-  // mock：非所有者的展示名后端应下发所有者昵称，这里回退到 ownerId
-  const ownerName = user !== null && agent.ownerId === user.id ? user.name : agent.ownerId
+  const ownerName = agent.ownerName
   const versions = agent.versions.toSorted((a, b) => b.num - a.num)
   const tournamentVersion = agent.versions.find((v) => v.id === agent.tournamentVersionId)
   const agentMatches = state.matches
@@ -161,6 +164,47 @@ export function AgentViewPage() {
 
 function formatDelta(d: number): string {
   return d >= 0 ? `+${d}` : `${d}`
+}
+
+/** B3：PVE-NPC 的聚合视图——无版本/提示词，只有场景、两侧胜率（#34 语义）与对局记录 */
+function NpcView({ npc }: { npc: Npc }) {
+  const navigate = useNavigate()
+  const state = useAppState()
+  const scenario = SCENARIOS.find((s) => s.id === npc.scenarioId)
+  const npcMatches = state.matches
+    .filter((m) => m.participants.A.refId === npc.id || m.participants.B.refId === npc.id)
+    .toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
+  return (
+    <div className='flex flex-col gap-6'>
+      <div>
+        <h1 className='text-2xl font-bold text-(--foreground)'>{npc.name}</h1>
+        <div className='mt-1 flex flex-wrap items-center gap-2'>
+          <Badge tone='neutral'>PVE-NPC</Badge>
+          <Badge tone='accent'>{scenario?.name ?? npc.scenarioId}</Badge>
+          {npc.easeRank === 1 && <Badge tone='success'>最容易</Badge>}
+          <span className='text-sm text-(--foreground-subtle)'>{npc.tagline}</span>
+        </div>
+      </div>
+      <Card>
+        <p className='panel-label'>聚合战绩</p>
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <KeyValue label={`执A（${scenario?.sideA.name ?? 'A'}）胜率`}>{Math.round(npc.sideWinRate.A * 100)}%</KeyValue>
+          <KeyValue label={`执B（${scenario?.sideB.name ?? 'B'}）胜率`}>{Math.round(npc.sideWinRate.B * 100)}%</KeyValue>
+        </div>
+        {/* #34：显示的是该 NPC 两侧出战的胜率，不是玩家胜率 */}
+        <p className='mt-3 text-xs text-(--foreground-muted)'>两侧胜率＝该 NPC 分别执 A/B 出战的胜率（非玩家胜率）；难度标注与胜率不冲突。</p>
+      </Card>
+      <section className='flex flex-col gap-3'>
+        <h2 className='panel-title'>对局记录（{npcMatches.length}）</h2>
+        {npcMatches.length === 0 && <EmptyState title='还没有对局' />}
+        <div className='flex flex-col gap-2'>
+          {npcMatches.map((m) => (
+            <MatchRow key={m.id} match={m} agentId={npc.id} onOpen={() => navigate(`/matches/${m.id}`)} />
+          ))}
+        </div>
+      </section>
+    </div>
+  )
 }
 
 function MatchRow({ match, agentId, onOpen }: { match: Match; agentId: string; onOpen: () => void }) {
