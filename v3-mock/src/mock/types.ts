@@ -213,6 +213,8 @@ export interface Match {
   scenarioId: string
   status: MatchStatus
   createdAt: string
+  /** 完成时间；未完成为 null。「刚完成」卡 15 分钟过期的依据（#72 评审补） */
+  finishedAt: string | null
   /** 发起人（每日上限只计发起人 #52） */
   initiatorId: string | null
   isFirstBattle: boolean

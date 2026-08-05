@@ -26,6 +26,8 @@ import type {
 
 export interface PublicVersionRef {
   versionId: string
+  /** 所属 agent —— 战报「查看对手智能体」按 agent 解析（refId 契约＝agent id） */
+  agentId: string
   playerName: string
   agentName: string
   scenarioId: string
@@ -86,6 +88,7 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
       B: { kind: 'player', refId: 'ext', versionId: `${id}-vb`, ownerId: 'ext-b', displayName: bName, model: 'deepseek-v3.2' },
     },
     transcript: [],
+    finishedAt: null,
     totalTurns: Math.min(sc.dialogueTurns, 8),
     judgeOs: [],
     judgeTrace: null,
@@ -102,6 +105,7 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
   match.judgeTrace = genJudgeTrace(match)
   match.selfTrace = { A: genSelfTrace(match, 'A'), B: genSelfTrace(match, 'B') }
   match.status = 'done'
+  match.finishedAt = match.createdAt
   return match
 }
 
@@ -207,13 +211,35 @@ function seedState(): AppState {
     tournamentVersionId: 'ver-mo-4',
     createdAt: '2026-07-01T08:00:00Z',
   }
+
+  // 其余公开玩家的 agent 档案（评审补 R1-3）：refId 契约＝agent id 后，
+  // 战报「查看对手智能体」要能对任何公开对手解析出 EA 公开视图——每个公开版本都有宿主 agent。
+  const pubAgent = (
+    id: string, ownerName: string, scenarioId: string, side: 'A' | 'B', name: string,
+    versionId: string, num: number, model: string, record: { wins: number; losses: number },
+  ): Agent => ({
+    id,
+    ownerId: `ext-${id}`,
+    ownerName,
+    scenarioId,
+    side,
+    name,
+    versions: [{ id: versionId, num, prompt: '（公开视图不可见）', model, mode: 'basic', note: '', createdAt: '2026-07-15T08:00:00Z', record }],
+    tournamentVersionId: versionId,
+    createdAt: '2026-07-02T08:00:00Z',
+  })
+  const moAgentB = pubAgent('agent-mo-b', '墨白', 'shangyang', 'B', '守旧之问', 'ver-mo-b2', 2, 'deepseek-v3.2', { wins: 6, losses: 3 })
+  const syAgent = pubAgent('agent-sy', '疏影', 'shangyang', 'B', '老甘龙', 'ver-sy-2', 2, 'qwen3-max', { wins: 9, losses: 4 })
+  const zsAgent = pubAgent('agent-zs', '止水', 'fengyi', 'B', '毒士', 'ver-zs-5', 5, 'glm-5', { wins: 11, losses: 3 })
+  const qwAgentA = pubAgent('agent-qw-a', '青梧', 'fengyi', 'A', '连环记', 'ver-qw-3', 3, 'deepseek-v3.2', { wins: 7, losses: 5 })
+  const qwAgentB = pubAgent('agent-qw-b', '青梧', 'fengyi', 'B', '连环反制', 'ver-qw-b1', 1, 'qwen3-max', { wins: 2, losses: 1 })
   const demoA = seedDemoMatch('demo-1', 'shangyang', '墨白·变法七策 v4', '疏影·老甘龙 v2')
   const demoB = seedDemoMatch('demo-2', 'fengyi', '青梧·连环记 v3', '止水·毒士 v5')
   // 战报版本 id 必须能贴进 OS 面板按 id 约战（#25 闭环）：用公开版本 id；双方分属对侧 agent（#62/#64）
   demoA.participants.A = { ...demoA.participants.A, refId: 'agent-mo', versionId: 'ver-mo-4', ownerId: 'ext-mo' }
-  demoA.participants.B = { ...demoA.participants.B, versionId: 'ver-sy-2', ownerId: 'ext-sy' }
-  demoB.participants.A = { ...demoB.participants.A, versionId: 'ver-qw-3', ownerId: 'ext-qw' }
-  demoB.participants.B = { ...demoB.participants.B, versionId: 'ver-zs-5', ownerId: 'ext-zs' }
+  demoA.participants.B = { ...demoA.participants.B, refId: 'agent-sy', versionId: 'ver-sy-2', ownerId: 'ext-sy' }
+  demoB.participants.A = { ...demoB.participants.A, refId: 'agent-qw-a', versionId: 'ver-qw-3', ownerId: 'ext-qw' }
+  demoB.participants.B = { ...demoB.participants.B, refId: 'agent-zs', versionId: 'ver-zs-5', ownerId: 'ext-zs' }
   const historyDone: Match = seedDemoMatch('m-hist-1', 'shangyang', '铁腕变法 v2', '老成持重·甘龙')
   historyDone.kind = 'pve'
   historyDone.initiatorId = 'me'
@@ -236,7 +262,7 @@ function seedState(): AppState {
         { scenarioId: 'cough', npcsBeaten: { A: ['npc-cough-easy'], B: [] }, ladderScore: null },
       ],
     },
-    agents: [myShangAgent, myGanAgent, myCoughAgent, moAgent],
+    agents: [myShangAgent, myGanAgent, myCoughAgent, moAgent, moAgentB, syAgent, zsAgent, qwAgentA, qwAgentB],
     matches: [demoA, demoB, historyDone],
     notifications: [
       {
@@ -301,12 +327,12 @@ function seedState(): AppState {
     ],
     publicVersions: [
       // agent 按侧（#55）；#66 约战按「玩家」成对——墨白/青梧双侧齐备（可被约战），疏影/止水单侧（演示「对方未双侧齐备」拒绝）
-      { versionId: 'ver-mo-4', playerName: '墨白', agentName: '变法七策', scenarioId: 'shangyang', side: 'A', model: 'kimi-k2.5' },
-      { versionId: 'ver-mo-b2', playerName: '墨白', agentName: '守旧之问', scenarioId: 'shangyang', side: 'B', model: 'deepseek-v3.2' },
-      { versionId: 'ver-zs-5', playerName: '止水', agentName: '毒士', scenarioId: 'fengyi', side: 'B', model: 'glm-5' },
-      { versionId: 'ver-sy-2', playerName: '疏影', agentName: '老甘龙', scenarioId: 'shangyang', side: 'B', model: 'qwen3-max' },
-      { versionId: 'ver-qw-3', playerName: '青梧', agentName: '连环记', scenarioId: 'fengyi', side: 'A', model: 'deepseek-v3.2' },
-      { versionId: 'ver-qw-b1', playerName: '青梧', agentName: '连环反制', scenarioId: 'fengyi', side: 'B', model: 'qwen3-max' },
+      { versionId: 'ver-mo-4', agentId: 'agent-mo', playerName: '墨白', agentName: '变法七策', scenarioId: 'shangyang', side: 'A', model: 'kimi-k2.5' },
+      { versionId: 'ver-mo-b2', agentId: 'agent-mo-b', playerName: '墨白', agentName: '守旧之问', scenarioId: 'shangyang', side: 'B', model: 'deepseek-v3.2' },
+      { versionId: 'ver-zs-5', agentId: 'agent-zs', playerName: '止水', agentName: '毒士', scenarioId: 'fengyi', side: 'B', model: 'glm-5' },
+      { versionId: 'ver-sy-2', agentId: 'agent-sy', playerName: '疏影', agentName: '老甘龙', scenarioId: 'shangyang', side: 'B', model: 'qwen3-max' },
+      { versionId: 'ver-qw-3', agentId: 'agent-qw-a', playerName: '青梧', agentName: '连环记', scenarioId: 'fengyi', side: 'A', model: 'deepseek-v3.2' },
+      { versionId: 'ver-qw-b1', agentId: 'agent-qw-b', playerName: '青梧', agentName: '连环反制', scenarioId: 'fengyi', side: 'B', model: 'qwen3-max' },
     ],
     trialsBlocked: false,
     debugMode: false,
@@ -601,6 +627,7 @@ class MockStore {
       challengeLeg: null,
       participants: mySide === 'A' ? { A: mine, B: theirs } : { A: theirs, B: mine },
       transcript: [],
+      finishedAt: null,
       totalTurns: opts.firstBattle ? CONFIG.expressTurns : Math.min(sc.dialogueTurns, 10),
       judgeOs: [],
       judgeTrace: null,
@@ -666,7 +693,7 @@ class MockStore {
     if (!refA || !refB) return { ok: false, reason: 'opponent-both-sides-required' }
     const theirsOf = (ref: PublicVersionRef): MatchParticipant => ({
       kind: 'player',
-      refId: ref.versionId,
+      refId: ref.agentId,
       versionId: ref.versionId,
       ownerId: `ext-${ref.playerName}`,
       displayName: `${ref.agentName}（${ref.playerName}）`,
@@ -684,6 +711,7 @@ class MockStore {
       isFirstBattle: false,
       challengeId,
       transcript: [],
+      finishedAt: null,
       totalTurns: Math.min(sc.dialogueTurns, 10),
       judgeOs: [],
       judgeTrace: null,
@@ -744,6 +772,7 @@ class MockStore {
           B: match.participants.B.kind === 'player' ? genSelfTrace(match, 'B') : null,
         }
         match.status = 'done'
+        match.finishedAt = now()
         this.schedule.delete(id)
         this.onMatchDone(match)
       }

@@ -2,7 +2,7 @@
 // mock 简化：不做侧抽屉观战，点卡片直达战报（FA 覆盖观战）。
 // #72：只在有派发功能的页面渲染（DA/构建器/EA·OS 上下文/我的智能体），不再全局；
 //      空则自动隐藏；折叠开关状态持久（localStorage）。
-import { ChevronDown, History } from 'lucide-react'
+import { ChevronDown, History, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
@@ -12,6 +12,18 @@ import type { Match, Side } from '../mock/types'
 import { Badge } from './ui'
 
 const COLLAPSE_KEY = 'axiia-v3-mock-ongoing-collapsed'
+const DISMISS_KEY = 'axiia-v3-mock-ongoing-dismissed'
+/** 「刚完成」卡的存活窗口（评审补 R1-1）：过期自动退场，让空态隐藏真正可达 */
+const RECENT_DONE_MS = 15 * 60_000
+
+function loadDismissed(): string[] {
+  try {
+    const raw = localStorage.getItem(DISMISS_KEY)
+    return raw ? (JSON.parse(raw) as string[]) : []
+  } catch {
+    return []
+  }
+}
 
 /** #72：派发处可见（A1/A5 原意）——取代 v3.3 决定 S1 的「全局渲染」 */
 const DISPATCH_ROUTES = [
@@ -33,15 +45,35 @@ export function OngoingBar() {
       return false
     }
   })
+  const [dismissed, setDismissed] = useState<string[]>(loadDismissed)
+
+  const dismiss = (id: string) => {
+    setDismissed((prev) => {
+      const next = [...prev.filter((x) => x !== id), id].slice(-50)
+      try {
+        localStorage.setItem(DISMISS_KEY, JSON.stringify(next))
+      } catch {
+        // 忽略存储失败
+      }
+      return next
+    })
+  }
 
   if (!user) return null
   if (!DISPATCH_ROUTES.some((r) => r.test(location.pathname))) return null
 
   const mine = matches.filter((m) => m.initiatorId === user.id)
   const active = mine.filter((m) => m.status !== 'done')
+  // 刚完成＝15 分钟内完局且未被清除（评审补 R1-1）；旧完局自然退场，条可以真正变空
   const recentDone = mine
-    .filter((m) => m.status === 'done')
-    .toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .filter((m) =>
+      m.status === 'done' &&
+      !dismissed.includes(m.id) &&
+      m.finishedAt !== null &&
+      m.finishedAt !== undefined &&
+      Date.now() - Date.parse(m.finishedAt) < RECENT_DONE_MS,
+    )
+    .toSorted((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''))
     .slice(0, 3)
   const cards = [...active, ...recentDone]
 
@@ -82,7 +114,20 @@ export function OngoingBar() {
       {!collapsed && (
         <div className='flex gap-3 overflow-x-auto pb-1'>
           {cards.map((m) => (
-            <MatchCard key={m.id} match={m} userId={user.id} onOpen={() => navigate(`/matches/${m.id}`)} />
+            <div key={m.id} className='relative shrink-0'>
+              <MatchCard match={m} userId={user.id} onOpen={() => navigate(`/matches/${m.id}`)} />
+              {m.status === 'done' && (
+                <button
+                  type='button'
+                  aria-label='从对战条清除'
+                  title='从对战条清除（历史页仍可见）'
+                  onClick={() => dismiss(m.id)}
+                  className='absolute -right-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-(--border) bg-(--background) text-(--foreground-muted) transition hover:text-(--foreground)'
+                >
+                  <X className='h-3 w-3' />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

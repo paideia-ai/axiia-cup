@@ -157,3 +157,4 @@
 | V32 | fixture 商鞅场景数据改为 legacy 真实语义：`hiddenInfoTruthConfig`＝无隐藏信息/一真两假请求、`postGameInquiry`＝逐项裁决+秘密猜测+策略评估、`judgePrompt` 融入「不得用现代词汇」约束；其余三场景请求清单为仿写（id 风格 CR/YR/LR/RR/UR/DR） | §C1 场景内容本就 mock 自拟，但形态对齐真实 schema |
 | V33 | **V-5 修复**：终局一条裁判 OS 强制收束——文本不再「我还需再听」，倾向与最终判决同源对齐（`computeBreakdown` 提取为 genResult/终局 OS 共用）；平局时收束为「胜负系于问询」 | — |
 | V34 | localStorage key v4→v5（MatchResult/Scenario 形状又变，旧演示存档丢弃） | — |
+| V35 | **R1 评审补**（多人设评审 Round 1，见 uiux 仓 rfc/ks-fix-multi-persona-review.md）：① `Match.finishedAt` 落库，「刚完成」卡 15 分钟自动过期 + 单卡 × 清除（localStorage `ongoing-dismissed`，历史页不受影响）——空态自动隐藏真正可达；② 历史页入口补位：我的智能体页头 +「设置 · 我的 agents」卡头「全部对战历史」（原先唯一入口在对战条内，条隐藏即断路）；③ `participant.refId` 契约统一＝agent id（约战对手侧原误写 versionId → 「查看对手智能体」在真实派发的 PVP 局永不渲染）；`PublicVersionRef` 增 `agentId`，公开玩家（墨白B/疏影/止水/青梧×2）补齐 agent 档案，demo 局 refId 修正 | 旧存档无 finishedAt → 按已过期处理，无需 bump storage key；my-agents eyebrow 去重（迭代中枢） |

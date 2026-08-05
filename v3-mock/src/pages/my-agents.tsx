@@ -1,6 +1,6 @@
 // 我的智能体（#73）：一级导航页——全部自有 agent 按场景分组，
 // 每组显示双侧完成度徽章（#64）+ 参赛资格，逐 agent 快捷入口（EA / 编辑 / 出战）。
-import { Bot, Eye, Hammer, Pencil, Swords } from 'lucide-react'
+import { Bot, Eye, Hammer, History, Pencil, Swords } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -62,13 +62,22 @@ export function MyAgentsPage() {
     <div className='flex flex-col gap-6'>
       <header className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <p className='page-eyebrow'>我的智能体</p>
+          <p className='page-eyebrow'>迭代中枢</p>
           <h1 className='page-title'>我的智能体</h1>
           <p className='page-subtitle'>按场景分组；每个智能体执一侧，参赛需两侧各标一个参赛版本。</p>
         </div>
-        <Link to='/scenarios' className='text-sm font-medium text-(--accent) hover:underline'>
-          去场景选择，开新战场 →
-        </Link>
+        <div className='flex items-center gap-4'>
+          <Link
+            to='/history'
+            className='inline-flex items-center gap-1 text-sm text-(--foreground-muted) transition hover:text-(--foreground)'
+          >
+            <History className='h-3.5 w-3.5' />
+            对战历史
+          </Link>
+          <Link to='/scenarios' className='text-sm font-medium text-(--accent) hover:underline'>
+            去场景选择，开新战场 →
+          </Link>
+        </div>
       </header>
 
       {groups.length === 0 ? (
