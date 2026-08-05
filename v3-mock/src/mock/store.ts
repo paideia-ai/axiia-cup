@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react'
 
 import { CONFIG } from './config'
-import { NPCS, SCENARIOS } from './data'
+import { NPCS, SCENARIOS, otherSide } from './data'
 import { genJudgeOs, genJudgeQa, genResult, genSelfTrace, genJudgeTrace, genTurn, scenarioOf } from './engine'
 import type {
   Agent,
@@ -29,6 +29,8 @@ export interface PublicVersionRef {
   playerName: string
   agentName: string
   scenarioId: string
+  /** 该公开版本所属 agent 的侧（#55）；约战必须选对手对侧的版本（#62） */
+  side: Side
   model: string
 }
 
@@ -48,7 +50,8 @@ export interface AppState {
   debugMode: boolean
 }
 
-const STORAGE_KEY = 'axiia-v3-mock-state-v2'
+// v3 后缀：v3.4 per-side 重构改变了 Agent/AgentVersion 形状，旧存档直接丢弃（规格「无迁移」，mock 等价物＝换 key）
+const STORAGE_KEY = 'axiia-v3-mock-state-v3'
 
 function today(): string {
   return new Date().toISOString().slice(0, 10)
@@ -101,56 +104,102 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
 }
 
 function seedState(): AppState {
-  const veteranAgentVersion1: AgentVersion = {
-    id: 'ver-zy-1',
+  // per-side 种子（#55）：琢玉在商鞅变法两侧各有一个 agent（→ 满足参赛双侧 #58），
+  // 在御前咳嗽案只有 A 侧（→ 同侧第二个 agent 触发引导门 #59，EA 显示 御医 ✗ #64）。
+  const myShangV1: AgentVersion = {
+    id: 'ver-zya-1',
     num: 1,
-    promptA: '你是商鞅。以强国实效为最高论据……（v1 初版策略）',
-    promptB: '你是甘龙。以稳定压倒一切为核心防线……（v1 初版策略）',
+    prompt: '你是商鞅。以强国实效为最高论据……（v1 初版策略）',
     model: 'kimi-k2.5',
     mode: 'mcq',
     note: '首战版本',
     createdAt: '2026-07-20T08:00:00Z',
-    record: { A: { wins: 1, losses: 1 }, B: { wins: 0, losses: 1 } },
+    record: { wins: 1, losses: 1 },
   }
-  const veteranAgentVersion2: AgentVersion = {
-    id: 'ver-zy-2',
+  const myShangV2: AgentVersion = {
+    id: 'ver-zya-2',
     num: 2,
-    promptA: '你是商鞅。以强国实效为最高论据，遇祖制之辩即转向质问对方强国之策；魏国情报压轴使用……',
-    promptB: '你是甘龙。以三朝老臣姿态构筑稳定防线，攻击对方客卿身份；情报谨慎存疑……',
+    prompt: '你是商鞅。以强国实效为最高论据，遇祖制之辩即转向质问对方强国之策；魏国情报压轴使用……',
     model: 'deepseek-v3.2',
     mode: 'basic',
     note: '强化了情报使用时机',
     createdAt: '2026-07-26T10:00:00Z',
-    record: { A: { wins: 2, losses: 0 }, B: { wins: 1, losses: 1 } },
+    record: { wins: 2, losses: 0 },
   }
-  const veteranAgent: Agent = {
-    id: 'agent-zy',
+  const myShangAgent: Agent = {
+    id: 'agent-zy-a',
     ownerId: 'me',
     ownerName: '琢玉',
     scenarioId: 'shangyang',
-    name: '琢玉的策论',
-    versions: [veteranAgentVersion1, veteranAgentVersion2],
-    tournamentVersionId: 'ver-zy-2',
+    side: 'A',
+    name: '铁腕变法',
+    versions: [myShangV1, myShangV2],
+    tournamentVersionId: 'ver-zya-2',
     createdAt: '2026-07-20T08:00:00Z',
   }
-  // 公开玩家 agent：EA 公开视图 / 排名页 / 战报「查看该智能体」入口的演示对象
+  const myGanAgent: Agent = {
+    id: 'agent-zy-b',
+    ownerId: 'me',
+    ownerName: '琢玉',
+    scenarioId: 'shangyang',
+    side: 'B',
+    name: '老成谋国',
+    versions: [
+      {
+        id: 'ver-zyb-1',
+        num: 1,
+        prompt: '你是甘龙。以三朝老臣姿态构筑稳定防线，攻击对方客卿身份；情报谨慎存疑……',
+        model: 'kimi-k2.5',
+        mode: 'basic',
+        note: '守旧防线初版',
+        createdAt: '2026-07-24T09:00:00Z',
+        record: { wins: 1, losses: 1 },
+      },
+    ],
+    tournamentVersionId: 'ver-zyb-1',
+    createdAt: '2026-07-24T09:00:00Z',
+  }
+  // 御前咳嗽案：只有侍酒官（A）侧——再建一个侍酒官会被 #59 引导门拦住
+  const myCoughAgent: Agent = {
+    id: 'agent-zy-cough',
+    ownerId: 'me',
+    ownerName: '琢玉',
+    scenarioId: 'cough',
+    side: 'A',
+    name: '时间线卫士',
+    versions: [
+      {
+        id: 'ver-zyc-1',
+        num: 1,
+        prompt: '你是侍酒官。以完整时间线自证，每一步都给出人证；把疑点引向御医的毒理知识……',
+        model: 'glm-5',
+        mode: 'mcq',
+        note: '',
+        createdAt: '2026-07-27T08:00:00Z',
+        record: { wins: 1, losses: 0 },
+      },
+    ],
+    tournamentVersionId: 'ver-zyc-1',
+    createdAt: '2026-07-27T08:00:00Z',
+  }
+  // 公开玩家 agent（单侧 #55）：EA 公开视图 / 排名页 / 战报「查看该智能体」入口的演示对象
   const moAgent: Agent = {
     id: 'agent-mo',
     ownerId: 'ext-mo',
     ownerName: '墨白',
     scenarioId: 'shangyang',
+    side: 'A',
     name: '变法七策',
     versions: [
       {
         id: 'ver-mo-4',
         num: 4,
-        promptA: '（公开视图不可见）',
-        promptB: '（公开视图不可见）',
+        prompt: '（公开视图不可见）',
         model: 'kimi-k2.5',
         mode: 'basic',
         note: '',
         createdAt: '2026-07-18T08:00:00Z',
-        record: { A: { wins: 9, losses: 2 }, B: { wins: 5, losses: 3 } },
+        record: { wins: 9, losses: 2 },
       },
     ],
     tournamentVersionId: 'ver-mo-4',
@@ -158,15 +207,15 @@ function seedState(): AppState {
   }
   const demoA = seedDemoMatch('demo-1', 'shangyang', '墨白·变法七策 v4', '疏影·老甘龙 v2')
   const demoB = seedDemoMatch('demo-2', 'fengyi', '青梧·连环记 v3', '止水·毒士 v5')
-  // 战报版本 id 必须能贴进 OS 面板按 id 约战（#25 闭环）：用公开版本 id
+  // 战报版本 id 必须能贴进 OS 面板按 id 约战（#25 闭环）：用公开版本 id；双方分属对侧 agent（#62/#64）
   demoA.participants.A = { ...demoA.participants.A, refId: 'agent-mo', versionId: 'ver-mo-4', ownerId: 'ext-mo' }
   demoA.participants.B = { ...demoA.participants.B, versionId: 'ver-sy-2', ownerId: 'ext-sy' }
   demoB.participants.A = { ...demoB.participants.A, versionId: 'ver-qw-3', ownerId: 'ext-qw' }
   demoB.participants.B = { ...demoB.participants.B, versionId: 'ver-zs-5', ownerId: 'ext-zs' }
-  const historyDone: Match = seedDemoMatch('m-hist-1', 'shangyang', '琢玉的策论 v2', '老成持重·甘龙')
+  const historyDone: Match = seedDemoMatch('m-hist-1', 'shangyang', '铁腕变法 v2', '老成持重·甘龙')
   historyDone.kind = 'pve'
   historyDone.initiatorId = 'me'
-  historyDone.participants.A = { kind: 'player', refId: 'agent-zy', versionId: 'ver-zy-2', ownerId: 'me', displayName: '琢玉的策论 v2', model: 'deepseek-v3.2' }
+  historyDone.participants.A = { kind: 'player', refId: 'agent-zy-a', versionId: 'ver-zya-2', ownerId: 'me', displayName: '铁腕变法 v2', model: 'deepseek-v3.2' }
   historyDone.participants.B = { kind: 'npc', refId: 'npc-shangyang-baoshou', versionId: null, ownerId: null, displayName: '老成持重·甘龙', model: 'kimi-k2.5' }
 
   return {
@@ -184,14 +233,14 @@ function seedState(): AppState {
         { scenarioId: 'cough', npcsBeaten: ['npc-cough-easy'], ladderScore: null },
       ],
     },
-    agents: [veteranAgent, moAgent],
+    agents: [myShangAgent, myGanAgent, myCoughAgent, moAgent],
     matches: [demoA, demoB, historyDone],
     notifications: [
       {
         id: 'n-1',
         kind: 'challenged',
         title: '友谊赛来袭',
-        body: '墨白 用「变法七策 v4」向你的「琢玉的策论」发起了友谊赛（无需同意，结果出来会通知你）。',
+        body: '墨白 用「变法七策 v4」（执商鞅）向你的对侧智能体「老成谋国」（甘龙）发起了友谊赛（无需同意，结果出来会通知你）。',
         link: null,
         read: false,
         createdAt: '2026-08-04T02:10:00Z',
@@ -247,10 +296,11 @@ function seedState(): AppState {
       { name: '疏影', wins: 9, scenarioId: 'shangyang', versionRef: 'ver-sy-2' },
     ],
     publicVersions: [
-      { versionId: 'ver-mo-4', playerName: '墨白', agentName: '墨白的商鞅变法', scenarioId: 'shangyang', model: 'kimi-k2.5' },
-      { versionId: 'ver-zs-5', playerName: '止水', agentName: '止水的凤仪亭之夜', scenarioId: 'fengyi', model: 'glm-5' },
-      { versionId: 'ver-sy-2', playerName: '疏影', agentName: '疏影的商鞅变法', scenarioId: 'shangyang', model: 'qwen3-max' },
-      { versionId: 'ver-qw-3', playerName: '青梧', agentName: '青梧的凤仪亭之夜', scenarioId: 'fengyi', model: 'deepseek-v3.2' },
+      // agent 按侧（#55）：约战需选对手对侧的 agent-version（#62），OS 面板据 side 过滤
+      { versionId: 'ver-mo-4', playerName: '墨白', agentName: '变法七策', scenarioId: 'shangyang', side: 'A', model: 'kimi-k2.5' },
+      { versionId: 'ver-zs-5', playerName: '止水', agentName: '毒士', scenarioId: 'fengyi', side: 'B', model: 'glm-5' },
+      { versionId: 'ver-sy-2', playerName: '疏影', agentName: '老甘龙', scenarioId: 'shangyang', side: 'B', model: 'qwen3-max' },
+      { versionId: 'ver-qw-3', playerName: '青梧', agentName: '连环记', scenarioId: 'fengyi', side: 'A', model: 'deepseek-v3.2' },
     ],
     trialsBlocked: false,
     debugMode: false,
@@ -362,12 +412,51 @@ class MockStore {
 
   // ---------- agent / 版本 ----------
 
-  createAgent(scenarioId: string, name: string): Agent {
+  /** 当前用户在某场景两侧各有哪些 agent（#59/#64 的判定基础） */
+  myAgentsBySide(scenarioId: string): { A: Agent[]; B: Agent[] } {
+    const uid = this.state.user?.id
+    const mine = this.state.agents.filter((a) => a.scenarioId === scenarioId && a.ownerId === uid)
+    return { A: mine.filter((a) => a.side === 'A'), B: mine.filter((a) => a.side === 'B') }
+  }
+
+  /**
+   * 同侧第二个 agent 引导门（#59）：已有 1 个该侧 agent、想再建同侧 → 必须先有 ≥1 个对侧 agent；
+   * 两侧都有后不再限制。版本迭代永不受此门限（解读 D16）——本检查只在「新建 agent」时调用。
+   */
+  canCreateAgent(scenarioId: string, side: Side): { ok: boolean; sameSideCount: number; otherSideCount: number } {
+    const by = this.myAgentsBySide(scenarioId)
+    const sameSideCount = by[side].length
+    const otherSideCount = by[otherSide(side)].length
+    return { ok: sameSideCount === 0 || otherSideCount >= 1, sameSideCount, otherSideCount }
+  }
+
+  /** 参赛资格＝双侧各有一个显式标记的参赛版本（#58）；供 D/DA/EA/G 的完成度徽章（#64） */
+  entryReadiness(scenarioId: string): {
+    A: { agent: Agent; version: AgentVersion } | null
+    B: { agent: Agent; version: AgentVersion } | null
+    eligible: boolean
+  } {
+    const by = this.myAgentsBySide(scenarioId)
+    const pick = (side: Side) => {
+      for (const a of by[side]) {
+        const v = a.versions.find((x) => x.id === a.tournamentVersionId)
+        if (v) return { agent: a, version: v }
+      }
+      return null
+    }
+    const A = pick('A')
+    const B = pick('B')
+    return { A, B, eligible: A !== null && B !== null }
+  }
+
+  createAgent(scenarioId: string, name: string, side: Side): { ok: true; agent: Agent } | { ok: false; reason: 'sibling-gate' } {
+    if (!this.canCreateAgent(scenarioId, side).ok) return { ok: false, reason: 'sibling-gate' }
     const agent: Agent = {
       id: nextId('agent'),
       ownerId: this.state.user?.id ?? 'me',
       ownerName: this.state.user?.name ?? '选手',
       scenarioId,
+      side,
       name,
       versions: [],
       tournamentVersionId: null,
@@ -376,24 +465,23 @@ class MockStore {
     this.commit((s) => {
       s.agents = [...s.agents, agent]
     })
-    return agent
+    return { ok: true, agent }
   }
 
-  /** 保存＝存版本，不派发（#17）。返回新版本。 */
+  /** 保存＝存版本，不派发（#17）；单侧提示词（#55/#57）。版本迭代不受 #59 门限（D16）。返回新版本。 */
   saveVersion(
     agentId: string,
-    input: { promptA: string; promptB: string; model: string; mode: BuildMode; note?: string },
+    input: { prompt: string; model: string; mode: BuildMode; note?: string },
   ): AgentVersion {
     const version: AgentVersion = {
       id: nextId('ver'),
       num: 0,
-      promptA: input.promptA,
-      promptB: input.promptB,
+      prompt: input.prompt,
       model: input.model,
       mode: input.mode,
       note: input.note ?? '',
       createdAt: now(),
-      record: { A: { wins: 0, losses: 0 }, B: { wins: 0, losses: 0 } },
+      record: { wins: 0, losses: 0 },
     }
     this.commit((s) => {
       s.agents = s.agents.map((a) => {
@@ -440,15 +528,16 @@ class MockStore {
     scenarioId: string
     agentId: string
     versionId: string
-    mySide: Side
-    opponent: { npcId?: string; publicVersionId?: string }
+    /** 执方由所选 agent 隐含（#62）——不再接收 side 参数。
+     *  对手三选一：NPC（补对侧槽位）/ 对手对侧的公开版本 / 自己对侧的 agent-version（hotseat #61） */
+    opponent: { npcId?: string; publicVersionId?: string; myVersion?: { agentId: string; versionId: string } }
     firstBattle?: boolean
   }):
     | { ok: true; match: Match }
-    | { ok: false; reason: 'daily-limit' | 'pvp-daily-limit' | 'concurrency' | 'trials-blocked' | 'bad-opponent' } {
+    | { ok: false; reason: 'daily-limit' | 'pvp-daily-limit' | 'concurrency' | 'trials-blocked' | 'bad-opponent' | 'wrong-side' } {
     if (this.state.trialsBlocked) return { ok: false, reason: 'trials-blocked' }
     if (this.dailyLimitReached()) return { ok: false, reason: 'daily-limit' }
-    // #46 PVP 每日限次（只计发起人）
+    // #46 PVP 每日限次（只计发起人）；hotseat 自打不算 PVP
     const isPvp = opts.kind === 'pvp-friendly' || opts.kind === 'pvp-ranked'
     if (isPvp && (this.state.user?.pvpBattlesToday ?? 0) >= CONFIG.pvpDailyLimit) {
       return { ok: false, reason: 'pvp-daily-limit' }
@@ -462,6 +551,8 @@ class MockStore {
     const version = agent?.versions.find((v) => v.id === opts.versionId)
     if (!agent || !version) return { ok: false, reason: 'bad-opponent' }
     const sc = scenarioOf(opts.scenarioId)
+    const mySide: Side = agent.side
+    const oppSide: Side = otherSide(mySide)
 
     const mine: MatchParticipant = {
       kind: 'player',
@@ -478,8 +569,26 @@ class MockStore {
       theirs = { kind: 'npc', refId: npc.id, versionId: null, ownerId: null, displayName: npc.name, model: 'kimi-k2.5' }
     } else if (opts.opponent.publicVersionId) {
       const ref = this.state.publicVersions.find((p) => p.versionId === opts.opponent.publicVersionId)
-      if (!ref) return { ok: false, reason: 'bad-opponent' }
+      if (!ref || ref.scenarioId !== opts.scenarioId) return { ok: false, reason: 'bad-opponent' }
+      // 约战＝选对手「对侧」的 agent-version（#62）
+      if (ref.side !== oppSide) return { ok: false, reason: 'wrong-side' }
       theirs = { kind: 'player', refId: ref.versionId, versionId: ref.versionId, ownerId: `ext-${ref.playerName}`, displayName: `${ref.agentName}（${ref.playerName}）`, model: ref.model }
+    } else if (opts.opponent.myVersion) {
+      // hotseat（#61）：打自己对侧的 agent；对侧多个时由 OS 面板选定
+      const oppAgent = this.state.agents.find((a) => a.id === opts.opponent.myVersion?.agentId)
+      const oppVersion = oppAgent?.versions.find((v) => v.id === opts.opponent.myVersion?.versionId)
+      if (!oppAgent || !oppVersion || oppAgent.ownerId !== agent.ownerId || oppAgent.scenarioId !== opts.scenarioId) {
+        return { ok: false, reason: 'bad-opponent' }
+      }
+      if (oppAgent.side !== oppSide) return { ok: false, reason: 'wrong-side' }
+      theirs = {
+        kind: 'player',
+        refId: oppAgent.id,
+        versionId: oppVersion.id,
+        ownerId: oppAgent.ownerId,
+        displayName: `${oppAgent.name} v${oppVersion.num}`,
+        model: oppVersion.model,
+      }
     } else {
       return { ok: false, reason: 'bad-opponent' }
     }
@@ -492,7 +601,7 @@ class MockStore {
       createdAt: now(),
       initiatorId: this.state.user?.id ?? 'me',
       isFirstBattle: opts.firstBattle ?? false,
-      participants: opts.mySide === 'A' ? { A: mine, B: theirs } : { A: theirs, B: mine },
+      participants: mySide === 'A' ? { A: mine, B: theirs } : { A: theirs, B: mine },
       transcript: [],
       totalTurns: opts.firstBattle ? CONFIG.expressTurns : Math.min(sc.dialogueTurns, 10),
       judgeOs: [],
@@ -563,22 +672,29 @@ class MockStore {
   private onMatchDone(match: Match) {
     const user = this.state.user
     if (!user || match.initiatorId !== user.id) return
-    const mySide: Side | null = match.participants.A.ownerId === user.id ? 'A' : match.participants.B.ownerId === user.id ? 'B' : null
+    const winner = match.result?.winner
+    // 逐版本战绩天然按侧（#55/#63）：属于我的每个参与者更新其单侧版本战绩。
+    // hotseat（#61）两侧都是我的 agent——两个版本各记一笔。
+    for (const side of ['A', 'B'] as const) {
+      const p = match.participants[side]
+      if (p.kind !== 'player' || p.ownerId !== user.id) continue
+      const w = winner === side
+      const l = winner !== undefined && winner !== 'draw' && !w
+      this.state.agents = this.state.agents.map((a) =>
+        a.id !== p.refId ? a : {
+          ...a,
+          versions: a.versions.map((v) =>
+            v.id !== p.versionId ? v : { ...v, record: { wins: v.record.wins + (w ? 1 : 0), losses: v.record.losses + (l ? 1 : 0) } },
+          ),
+        },
+      )
+    }
+    const mySides = (['A', 'B'] as const).filter((s) => match.participants[s].ownerId === user.id)
+    const isHotseat = mySides.length === 2
+    const mySide: Side | null = mySides[0] ?? null
     if (!mySide) return
-    const won = match.result?.winner === mySide
-    // 逐版本按侧战绩（#35）
-    const myP = match.participants[mySide]
-    this.state.agents = this.state.agents.map((a) =>
-      a.id !== myP.refId ? a : {
-        ...a,
-        versions: a.versions.map((v) => {
-          if (v.id !== myP.versionId) return v
-          const rec = { ...v.record, [mySide]: { wins: v.record[mySide].wins + (won ? 1 : 0), losses: v.record[mySide].losses + (won ? 0 : 1) } }
-          return { ...v, record: rec }
-        }),
-      },
-    )
-    // 「玩家赢过某 NPC」事实（A6）+ 门槛通知
+    const won = winner === mySide
+    // 「玩家赢过某 NPC」事实（A6）+ 门槛通知；任一侧的胜利都算（#60）——progress 本就按（玩家,场景），不分侧
     const oppSide: Side = mySide === 'A' ? 'B' : 'A'
     const opp = match.participants[oppSide]
     if (won && opp.kind === 'npc') {
@@ -592,14 +708,17 @@ class MockStore {
         progress.npcsBeaten = [...progress.npcsBeaten, opp.refId]
       }
       if (before < CONFIG.pvpUnlockDistinctNpcs && progress.npcsBeaten.length >= CONFIG.pvpUnlockDistinctNpcs) {
-        this.pushNotification('gate-unlocked', 'PVP 已解锁', `你已赢过 ${CONFIG.pvpUnlockDistinctNpcs} 个不同 NPC，「${scenarioOf(match.scenarioId).name}」的 PVP 对战已解锁。`, `/scenarios/${match.scenarioId}`)
+        this.pushNotification('gate-unlocked', 'PVP 已解锁', `你已赢过 ${CONFIG.pvpUnlockDistinctNpcs} 个不同 NPC（任一侧的胜利都算），「${scenarioOf(match.scenarioId).name}」的 PVP 对战已解锁。`, `/scenarios/${match.scenarioId}`)
       }
       this.state.user = { ...user }
     }
     if (match.isFirstBattle && this.state.user) {
       this.state.user = { ...this.state.user, firstBattleDone: true, expressPending: false }
     }
-    const outcomeText = match.result?.winner === 'draw' ? '平局' : won ? '你赢了' : '你输了'
+    // hotseat 两侧都是你——胜负按侧报（#61）
+    const outcomeText = isHotseat
+      ? winner === 'draw' ? '平局' : `你的「${match.participants[winner as Side].displayName}」胜`
+      : winner === 'draw' ? '平局' : won ? '你赢了' : '你输了'
     if (match.kind === 'pvp-ranked') {
       // 计分 PVP：更新天梯（mock 计分 ±25/−15）并发 ③ 自动匹配结果通知（#53）
       const cur = this.state.user
@@ -625,7 +744,12 @@ class MockStore {
       }
     } else {
       // ① 对局完成通知 → 深链战报
-      this.pushNotification('match-done', '对局完成', `你发起的对局已出结果：${outcomeText}（${scenarioOf(match.scenarioId).name}）。`, `/matches/${match.id}`)
+      this.pushNotification(
+        'match-done',
+        '对局完成',
+        `你发起的${isHotseat ? '自打' : ''}对局已出结果：${outcomeText}（${scenarioOf(match.scenarioId).name}）。`,
+        `/matches/${match.id}`,
+      )
     }
   }
 

@@ -21,12 +21,13 @@ import { cn } from '../lib/cn'
 import { SCENARIOS, store, useAppState } from '../mock/store'
 import type { DialogueTurn, JudgeOsEntry, Match, MatchParticipant, Scenario, Side } from '../mock/types'
 
-// 赛事/PVP/PVE 全部用同一个视图（#27）——kind 只是徽章
+// 赛事/PVP/PVE/自打 全部用同一个视图（#27）——kind 只是徽章
 const KIND_LABEL: Record<Match['kind'], string> = {
   tournament: '赛事',
   'pvp-friendly': '友谊赛',
   'pvp-ranked': '天梯',
   pve: 'PVE',
+  hotseat: '自打',
 }
 
 const STATUS_LABEL: Record<Match['status'], string> = {
@@ -277,12 +278,12 @@ export function MatchPage() {
             </Card>
           </div>
 
-          {/* 首战结束后展示三个模式 tab，进入正常迭代循环（#12） */}
+          {/* 首战结束后展示三个模式 tab，进入正常迭代循环（#12）+ 引导创建对侧（#59/#64） */}
           {match.isFirstBattle && (
             <Card className='border-(--accent)/30'>
               <p className='panel-label'>首战完成 · 三种构建模式已解锁</p>
               <p className='panel-copy mb-4 text-sm'>
-                从现在起你可以用任意模式迭代你的智能体，双方提示词都可以编写，并解锁 PVE 之外的进阶路线。
+                从现在起你可以用任意模式迭代这个智能体——它只执一侧。想拿到参赛资格、把这个场景吃透，去把对侧也建起来（参赛需两侧各标一个参赛版本）。
               </p>
               <div className='flex flex-wrap gap-2'>
                 {(
@@ -300,6 +301,22 @@ export function MatchPage() {
                     {m.label}
                   </Link>
                 ))}
+                {(() => {
+                  // 我执的那一侧 → 对侧预选进构建器（#59/#64 双侧引导）
+                  const mySide: Side | null =
+                    match.participants.A.ownerId === userId ? 'A' : match.participants.B.ownerId === userId ? 'B' : null
+                  if (!mySide || !scenario) return null
+                  const opp: Side = mySide === 'A' ? 'B' : 'A'
+                  const oppName = (opp === 'A' ? scenario.sideA.name : scenario.sideB.name).split('（')[0]
+                  return (
+                    <Link
+                      to={`/scenarios/${match.scenarioId}/build?side=${opp}`}
+                      className='inline-flex items-center gap-2 rounded-full border border-(--accent)/50 bg-(--accent)/10 px-4 py-2 text-sm font-semibold text-(--accent) transition hover:bg-(--accent)/20'
+                    >
+                      去创建对侧（{oppName}）
+                    </Link>
+                  )
+                })()}
               </div>
             </Card>
           )}

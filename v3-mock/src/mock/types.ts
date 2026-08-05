@@ -1,5 +1,5 @@
-// v3.3 规格核心概念的类型定义（mock 层）。
-// 引用形如 (#13) 的编号对应 UI-Doc-v3.3.md §−2 变更清单。
+// v3.4 规格核心概念的类型定义（mock 层）。
+// 引用形如 (#13) 的编号对应 UI-Doc-v3.4.md §−2 变更清单；#55–#64 为 per-side 反转。
 
 export type Side = 'A' | 'B'
 
@@ -88,35 +88,37 @@ export interface Npc {
 
 export type BuildMode = 'mcq' | 'basic' | 'meta'
 
-/** 版本快照两方提示词 + 所选模型（#13）；模式逐版本（#16）。 */
+/** 版本快照＝单侧提示词 + 所选模型（#55/#13）；模式逐版本、每版单侧（#57）。 */
 export interface AgentVersion {
   id: string
   num: number
-  promptA: string
-  promptB: string
+  /** 单侧提示词——agent 属于一侧，版本天然只有一段（#55） */
+  prompt: string
   model: string
   mode: BuildMode
   note: string
   createdAt: string
-  /** 按侧显示的逐版本胜负（#35/#36） */
-  record: { A: { wins: number; losses: number }; B: { wins: number; losses: number } }
+  /** 逐版本胜负——agent 即一侧，战绩天然单侧（#55/#63） */
+  record: { wins: number; losses: number }
 }
 
 export interface Agent {
   id: string
   ownerId: string
-  /** 所有者昵称（EA 展示名「xx的yy场景」用，#36；真实系统由后端下发） */
+  /** 所有者昵称（真实系统由后端下发） */
   ownerName: string
   scenarioId: string
-  /** 玩家给这套策略起的名字；EA 展示名按场景组合（#36） */
+  /** agent 属于场景的一侧（#55）；执方由 agent 隐含（#62） */
+  side: Side
+  /** 玩家给这套策略起的名字；EA 展示名＝侧角色名 + 场景（#63） */
   name: string
   versions: AgentVersion[]
-  /** 参赛版本显式标记（#33），迁移默认最新 */
+  /** 参赛版本显式标记（#33）；参赛需两侧各标一个（#58），本字段是「该侧的参赛版本」 */
   tournamentVersionId: string | null
   createdAt: string
 }
 
-export type MatchKind = 'pve' | 'pvp-friendly' | 'pvp-ranked' | 'tournament'
+export type MatchKind = 'pve' | 'pvp-friendly' | 'pvp-ranked' | 'tournament' | 'hotseat'
 export type MatchStatus = 'queued' | 'running' | 'done'
 
 export interface MatchParticipant {

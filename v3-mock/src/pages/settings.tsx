@@ -5,10 +5,18 @@ import { Link } from 'react-router-dom'
 
 import { Badge, Button, Card, KeyValue } from '../components/ui'
 import { cn } from '../lib/cn'
+import { sideRoleShort } from '../mock/data'
 import { SCENARIOS, store, useAppState } from '../mock/store'
+import type { Agent } from '../mock/types'
 
 function scenarioName(id: string): string {
   return SCENARIOS.find((s) => s.id === id)?.name ?? id
+}
+
+/** agent 名天然含侧（#63）：侧角色名 + 自起名 */
+function agentRole(a: Agent): string {
+  const sc = SCENARIOS.find((s) => s.id === a.scenarioId)
+  return sc ? sideRoleShort(sc, a.side) : `执${a.side}`
 }
 
 function Toggle({ on, onClick, disabled }: { on: boolean; onClick?: () => void; disabled?: boolean }) {
@@ -35,6 +43,7 @@ function Toggle({ on, onClick, disabled }: { on: boolean; onClick?: () => void; 
 
 export function SettingsPage() {
   const { user, agents, trialsBlocked } = useAppState()
+  const myAgents = agents.filter((a) => a.ownerId === user?.id)
 
   return (
     <div className='flex flex-col gap-6'>
@@ -74,18 +83,20 @@ export function SettingsPage() {
           <Bot className='mr-1 inline h-3.5 w-3.5' />
           我的 agents
         </p>
-        {agents.length === 0 ? (
+        {myAgents.length === 0 ? (
           <p className='panel-copy text-sm'>还没有 agent——去场景页构建一个。</p>
         ) : (
           <ul className='flex flex-col divide-y divide-(--border-soft)'>
-            {agents.map((a) => (
+            {myAgents.map((a) => (
               <li key={a.id}>
                 <Link to={`/agents/${a.id}`} className='flex items-center gap-3 py-3 transition hover:bg-white/[0.03]'>
                   <div className='min-w-0 flex-1'>
-                    <p className='text-sm font-semibold text-(--foreground)'>{a.name}</p>
+                    <p className='text-sm font-semibold text-(--foreground)'>
+                      {agentRole(a)} · {a.name}
+                    </p>
                     <p className='text-xs text-(--foreground-subtle)'>
-                      {scenarioName(a.scenarioId)} · {a.versions.length} 个版本
-                      {a.tournamentVersionId && ' · 已标记参赛版本'}
+                      {scenarioName(a.scenarioId)} · 执{a.side} · {a.versions.length} 个版本
+                      {a.tournamentVersionId && ' · 已标记本侧参赛版本'}
                     </p>
                   </div>
                   <ArrowRight className='h-4 w-4 text-(--foreground-muted)' />

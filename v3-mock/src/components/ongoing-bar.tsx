@@ -54,8 +54,10 @@ function MatchCard({ match, userId, onOpen }: { match: Match; userId: string; on
     )
   } else {
     const winner = match.result?.winner
-    const hint = winner === 'draw' ? '平局' : winner === mySide ? '你赢了' : '你输了'
-    status = <Badge tone={winner === mySide ? 'success' : 'neutral'}>已完成 · {hint}</Badge>
+    // hotseat（#61）：两侧都是你——按侧报胜负
+    const isHotseat = match.kind === 'hotseat'
+    const hint = winner === 'draw' ? '平局' : isHotseat ? `${winner} 侧胜` : winner === mySide ? '你赢了' : '你输了'
+    status = <Badge tone={!isHotseat && winner === mySide ? 'success' : 'neutral'}>已完成 · {hint}</Badge>
   }
 
   return (

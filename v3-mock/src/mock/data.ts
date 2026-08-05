@@ -1,7 +1,22 @@
-import type { Npc, Scenario } from './types'
+import type { Npc, Scenario, ScenarioSideCard, Side } from './types'
 
 // 场景内容属 §C1（规格不管），这里的文案是 mock——展示系统形态用。
 // MCQ 全场景上线（#15），所以每个场景都配 deck；deck 内容按场景配置。
+
+// ---------- per-side 小工具（#55/#62/#63） ----------
+
+export function otherSide(side: Side): Side {
+  return side === 'A' ? 'B' : 'A'
+}
+
+export function sideCardOf(sc: Scenario, side: Side): ScenarioSideCard {
+  return side === 'A' ? sc.sideA : sc.sideB
+}
+
+/** 侧角色短名（去掉「（变法派）」类括注）——EA 展示名 / 徽章用（#63/#64） */
+export function sideRoleShort(sc: Scenario, side: Side): string {
+  return sideCardOf(sc, side).name.split('（')[0]
+}
 
 export const SCENARIOS: Scenario[] = [
   {

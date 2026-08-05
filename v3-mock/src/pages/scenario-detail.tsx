@@ -7,7 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Badge, Button, Card, EmptyState, KeyValue, ProgressDots, Tabs } from '../components/ui'
 import { cn } from '../lib/cn'
-import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE } from '../mock/data'
+import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE, sideRoleShort } from '../mock/data'
 import { CONFIG, SCENARIOS, store, useAppState } from '../mock/store'
 import { DIFFICULTY_LABEL, type Scenario, type ScenarioSideCard, type Side } from '../mock/types'
 
@@ -118,7 +118,7 @@ function SideCard({ side, card, victory }: { side: Side; card: ScenarioSideCard;
 export function ScenarioDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { agents } = useAppState()
+  const { agents, user } = useAppState()
   const [mode, setMode] = useState<ViewMode>('narrative')
   const [openLayers, setOpenLayers] = useState<{ e1: boolean; e2: boolean; deep: boolean }>({
     e1: false,
@@ -143,7 +143,11 @@ export function ScenarioDetailPage() {
   const npcs = store.npcsFor(scenario.id)
   const pvpUnlocked = store.pvpUnlocked(scenario.id)
   const pvpProgress = store.pvpProgress(scenario.id)
-  const myAgents = agents.filter((a) => a.scenarioId === scenario.id)
+  const myAgents = agents.filter((a) => a.scenarioId === scenario.id && a.ownerId === user?.id)
+  // 双侧完成度 + 参赛资格（#58/#64）
+  const bySide = store.myAgentsBySide(scenario.id)
+  const readiness = store.entryReadiness(scenario.id)
+  const missingSide = bySide.A.length === 0 ? 'A' : bySide.B.length === 0 ? 'B' : null
   const toggle = (key: 'e1' | 'e2' | 'deep') => setOpenLayers((o) => ({ ...o, [key]: !o[key] }))
 
   // 原始规则模式的数据切片（同一数据，按四层切分；judgeOsPrompt 维持不公开 #51，不在任何层出现）
@@ -408,11 +412,37 @@ export function ScenarioDetailPage() {
         <div className='flex flex-col gap-4'>
           <Card className='flex flex-col gap-3'>
             <p className='panel-title text-base'>准备好了？</p>
-            <p className='panel-copy text-sm'>为这个场景构建你的智能体：一版同时写两方，保存后即可派发对战。</p>
+            {/* per-side（#55/#58）：每个智能体执一侧；参赛需两侧各标一个参赛版本 */}
+            <p className='panel-copy text-sm'>每个智能体执一侧。两侧都建、各标一个参赛版本，才能参加锦标赛。</p>
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='text-[11px] font-semibold uppercase tracking-[0.14em] text-(--foreground-muted)'>双侧完成度</span>
+              {(['A', 'B'] as const).map((side) => (
+                <Badge key={side} tone={bySide[side].length > 0 ? 'success' : 'neutral'}>
+                  {sideRoleShort(scenario, side)} {bySide[side].length > 0 ? '✓' : '✗'}
+                </Badge>
+              ))}
+            </div>
+            <p className='m-0 text-xs text-(--foreground-muted)'>
+              参赛资格：
+              {readiness.eligible
+                ? '已具备（双侧参赛版本已标）。'
+                : missingSide !== null
+                  ? `未具备——还没有${sideRoleShort(scenario, missingSide)}侧的智能体。`
+                  : '未具备——双侧智能体都有了，还差参赛版本标记。'}
+            </p>
             <Button size='lg' className='w-full' onClick={() => navigate(`/scenarios/${scenario.id}/build`)}>
               <Hammer className='h-4 w-4' />
               去构建
             </Button>
+            {missingSide !== null && myAgents.length > 0 && (
+              <Button
+                variant='secondary'
+                className='w-full'
+                onClick={() => navigate(`/scenarios/${scenario.id}/build?side=${missingSide}`)}
+              >
+                去创建对侧（{sideRoleShort(scenario, missingSide)}）
+              </Button>
+            )}
           </Card>
 
           {/* PVP 门槛状态条（A6） */}
@@ -429,7 +459,8 @@ export function ScenarioDetailPage() {
                   赢过 {pvpProgress.beaten}/{pvpProgress.needed} 个不同 NPC 解锁 PVP
                 </div>
                 <ProgressDots done={pvpProgress.beaten} total={pvpProgress.needed} />
-                <p className='text-xs text-(--foreground-muted)'>可切换执方打 NPC，两侧都算数。</p>
+                {/* #60：任一侧的 distinct NPC 胜利都算 */}
+                <p className='text-xs text-(--foreground-muted)'>用任一侧的智能体赢 NPC 都算数（测另一侧＝换用对侧智能体）。</p>
               </>
             )}
           </Card>
@@ -474,6 +505,8 @@ export function ScenarioDetailPage() {
                 >
                   <span className='inline-flex items-center gap-2 text-sm font-semibold text-(--foreground)'>
                     <Bot className='h-4 w-4 text-(--foreground-subtle)' />
+                    {/* agent 名天然含侧（#63） */}
+                    <Badge tone={agent.side === 'A' ? 'sideA' : 'sideB'}>{sideRoleShort(scenario, agent.side)}</Badge>
                     {agent.name}
                   </span>
                   <span className='text-xs text-(--foreground-muted)'>{agent.versions.length} 个版本</span>

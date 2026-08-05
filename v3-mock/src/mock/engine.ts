@@ -1,5 +1,7 @@
 // 假对局引擎：生成对话轮、裁判 OS、问询与判决。
 // 真实系统由后端 worker + LLM 完成（见 docs/BACKEND_REQUIREMENTS.md）。
+// per-side（#55）：每个参与者的提示词来自其「自己那一侧」的单侧版本（participants[side].versionId）；
+// mock 台词是预写的，不消费提示词，但槽位语义与真实系统一致。
 
 import { SCENARIOS } from './data'
 import type {

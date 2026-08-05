@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { Badge, Card, ProgressDots } from '../components/ui'
 import { cn } from '../lib/cn'
-import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE } from '../mock/data'
+import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE, sideRoleShort } from '../mock/data'
 import { CONFIG, SCENARIOS, store, useAppState } from '../mock/store'
 import { DIFFICULTY_LABEL, type Scenario } from '../mock/types'
 
@@ -44,13 +44,13 @@ function SideSplitBar({ scenario }: { scenario: Scenario }) {
 
 function ScenarioCard({ scenario }: { scenario: Scenario }) {
   const navigate = useNavigate()
-  const { agents } = useAppState()
+  const { agents, user } = useAppState()
 
   const battleCount = SCENARIO_BATTLE_COUNTS[scenario.id] ?? 0
   // (#39) 统计展示门槛只按对局数（按 agent 计），阈值走配置、不写死前端
   const statsVisible = battleCount >= CONFIG.statsDisplayThreshold
 
-  const myAgents = agents.filter((a) => a.scenarioId === scenario.id)
+  const myAgents = agents.filter((a) => a.scenarioId === scenario.id && a.ownerId === user?.id)
   const pvpUnlocked = store.pvpUnlocked(scenario.id)
   const pvpProgress = store.pvpProgress(scenario.id)
 
@@ -123,7 +123,8 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
             className='inline-flex items-center gap-1.5 rounded-full border border-(--border) bg-white/4 px-2.5 py-1 text-[11px] font-semibold text-(--foreground-subtle) transition hover:border-(--accent)/50 hover:text-(--foreground)'
           >
             <Bot className='h-3 w-3' />
-            我的智能体 · {agent.name}
+            {/* agent 名天然含侧（#63）：侧角色名 + 自起名 */}
+            我的{sideRoleShort(scenario, agent.side)} · {agent.name}
             {/* #33 参赛版本处处可见 */}
             {agent.tournamentVersionId && (
               <span className='text-(--accent)'>

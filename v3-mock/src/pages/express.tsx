@@ -1,5 +1,5 @@
-// §A3 首战快速通道（流程，非页面组）：简化版 DA（#11）→ E express 形态（#8/#12）
-// → 保存自动派发最容易 NPC（#10/#17 例外）→ 直接进实况（#9）。
+// §A3 首战快速通道（流程，非页面组）：简化版 DA（#11）→ E express 形态（#12/#57，单侧 agent）
+// → 保存自动派发最容易 NPC（#10/#17 例外）→ 直接进实况（#9）→ 首战后引导创建对侧（#59/#64）。
 import { CheckCircle2, ChevronRight, Circle, Gavel, Clock3, Sparkles, Swords } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -88,14 +88,14 @@ export function ExpressIntroPage() {
           去构建
         </Button>
         <p className='m-0 text-center text-xs text-(--foreground-muted)'>
-          首战只需写你这一方，保存后立刻开打、直接观看实况。
+          首战＝创建一个执{myCard.name}的单侧智能体，保存后立刻开打、直接观看实况。打完再去建对侧。
         </p>
       </Card>
     </div>
   )
 }
 
-/** E express 形态（#8/#12）：只填一方的 MCQ + 保存自动派发（#17 唯一例外） */
+/** E express 形态（#12/#57）：单侧 agent 的 MCQ + 保存自动派发（#17 唯一例外） */
 export function ExpressBuildPage() {
   const navigate = useNavigate()
   const active = useExpressGuard()
@@ -150,11 +150,17 @@ export function ExpressBuildPage() {
     const existing = store
       .getState()
       .agents.find((a) => a.ownerId === store.getState().user?.id && a.scenarioId === scenario.id && a.name === '我的第一个智能体')
-    const agent = existing ?? store.createAgent(scenario.id, '我的第一个智能体')
-    // 首战只写一方（#8）：未执的一方存空串，正式参赛前再补全
+    // 首战＝创建一个单侧 agent（#57，执方来自新手预设）——没有「半满」概念；首战后引导创建对侧（#59/#64）
+    const created = existing ? { ok: true as const, agent: existing } : store.createAgent(scenario.id, '我的第一个智能体', preset.side)
+    if (!created.ok) {
+      // 新用户首个 agent 不会触发 #59 引导门；防御分支仅为完备
+      setSubmitting(false)
+      setError('创建智能体失败，请稍后再试。')
+      return
+    }
+    const agent = created.agent
     const version = store.saveVersion(agent.id, {
-      promptA: preset.side === 'A' ? assembled : '',
-      promptB: preset.side === 'B' ? assembled : '',
+      prompt: assembled,
       model,
       mode: 'mcq',
       note: '首战 express 版本',
@@ -164,7 +170,6 @@ export function ExpressBuildPage() {
       scenarioId: scenario.id,
       agentId: agent.id,
       versionId: version.id,
-      mySide: preset.side,
       opponent: { npcId: preset.npcId },
       firstBattle: true,
     })
@@ -189,7 +194,7 @@ export function ExpressBuildPage() {
         <p className='page-eyebrow'>首战快速通道 · 构建</p>
         <h1 className='page-title'>{scenario.name}</h1>
         <p className='page-subtitle'>
-          首战只需写你这一方（{myCard.name}）。每题选一个方向，就拼成你的提示词——保存即开战。
+          首战＝一个单侧智能体（执{myCard.name}）。每题选一个方向，就拼成它的提示词——保存即开战。
         </p>
       </header>
 

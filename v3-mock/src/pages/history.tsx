@@ -12,6 +12,7 @@ function scenarioName(id: string): string {
 
 const KIND_META: Record<MatchKind, { label: string; tone: 'neutral' | 'info' | 'accent' | 'warning' }> = {
   pve: { label: 'PVE', tone: 'neutral' },
+  hotseat: { label: '自打', tone: 'info' },
   'pvp-friendly': { label: '友谊赛', tone: 'info' },
   'pvp-ranked': { label: '天梯', tone: 'accent' },
   tournament: { label: '赛事', tone: 'warning' },
@@ -26,8 +27,13 @@ function mySide(match: Match, userId: string): Side | null {
 function StatusBadge({ match, userId }: { match: Match; userId: string }) {
   if (match.status === 'queued') return <Badge tone='neutral'>排队中</Badge>
   if (match.status === 'running') return <Badge tone='info'>进行中</Badge>
-  const side = mySide(match, userId)
   const winner = match.result?.winner
+  // hotseat（#61）：两侧都是你的 agent——胜负按侧报
+  if (match.kind === 'hotseat') {
+    if (!winner) return <Badge tone='neutral'>完成</Badge>
+    return winner === 'draw' ? <Badge tone='warning'>完成 · 平局</Badge> : <Badge tone='info'>完成 · {winner} 侧胜</Badge>
+  }
+  const side = mySide(match, userId)
   if (!side || !winner) return <Badge tone='neutral'>完成</Badge>
   if (winner === 'draw') return <Badge tone='warning'>完成 · 平局</Badge>
   return winner === side ? <Badge tone='success'>完成 · 胜</Badge> : <Badge tone='neutral'>完成 · 负</Badge>

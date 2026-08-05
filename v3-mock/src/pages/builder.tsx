@@ -1,5 +1,7 @@
-// E 构建器（§A2）：独立页面绑定场景；三种构建模式逐版本（#16）；
-// 逐方 ≤1000 字（#14）；模型属于版本（#13）；保存≠派发（#17）；无构建内快测（§A2）。
+// E 构建器（§A2）：独立页面绑定场景；三种构建模式逐版本、每版单侧（#57）；
+// agent 按侧（#55），执方由所选/新建的 agent 决定；单侧 ≤1000 字（#14）；
+// 模型属于版本（#13）；保存≠派发（#17）；无构建内快测（§A2）；
+// 同侧第二个 agent 受引导门约束（#59），版本迭代不受限（D16）。
 import {
   BadgeCheck,
   Check,
@@ -19,13 +21,13 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Badge, Button, Card, EmptyState, Tabs } from '../components/ui'
 import { cn } from '../lib/cn'
 import { CONFIG, countPromptUnits } from '../mock/config'
-import { SCENARIOS } from '../mock/data'
+import { SCENARIOS, otherSide, sideCardOf, sideRoleShort } from '../mock/data'
 import { store, useAppState } from '../mock/store'
 import type { AgentVersion, BuildMode, McqQuestion, Scenario, Side } from '../mock/types'
 
 const NEW_AGENT = '__new__'
 
-/** MCQ 拼装：选中选项的 fragment 按 deck 顺序换行连接（§A2 模式 1） */
+/** MCQ 拼装：选中选项的 fragment 按 deck 顺序换行连接（§A2 模式 1）；deck 按 agent 的侧过滤（#57） */
 function assemblePrompt(sc: Scenario, side: Side, sel: Record<string, string[]>): string {
   const parts: string[] = []
   for (const q of sc.mcqDeck) {
@@ -37,20 +39,19 @@ function assemblePrompt(sc: Scenario, side: Side, sel: Record<string, string[]>)
   return parts.join('\n')
 }
 
-/** 从既有版本（mode=mcq）的提示词反推选项勾选，用于「从版本继续编辑」入口 */
-function deriveMcqSelections(sc: Scenario, promptA: string, promptB: string): Record<string, string[]> {
-  const lines = new Set(
-    [...promptA.split('\n'), ...promptB.split('\n')].map((l) => l.trim()).filter(Boolean),
-  )
+/** 从既有版本（mode=mcq）的单侧提示词反推选项勾选，用于「从版本继续编辑」入口 */
+function deriveMcqSelections(sc: Scenario, side: Side, prompt: string): Record<string, string[]> {
+  const lines = new Set(prompt.split('\n').map((l) => l.trim()).filter(Boolean))
   const sel: Record<string, string[]> = {}
   for (const q of sc.mcqDeck) {
+    if (q.side !== side) continue
     const picked = q.options.filter((o) => lines.has(o.fragment)).map((o) => o.id)
     if (picked.length > 0) sel[q.id] = q.multi ? picked : [picked[0]]
   }
   return sel
 }
 
-/** 逐方 1000 计数器（#14：按汉字或英文词计，非 token） */
+/** 单侧 1000 计数器（#14：按汉字或英文词计，非 token） */
 function LimitCounter({ units }: { units: number }) {
   const over = units > CONFIG.promptCharLimit
   return (
@@ -107,26 +108,30 @@ export function BuilderPage() {
     [agents, id, user?.id],
   )
 
-  // 可选入口：?agent=<id>&version=<id>——从某版本的内容继续编辑
+  // 可选入口：?agent=<id>&version=<id>——从某版本的内容继续编辑；?side=A|B——预选新建侧（「去创建对侧」CTA）
   const queryAgent = myAgents.find((a) => a.id === params.get('agent'))
   const queryVersion = queryAgent?.versions.find((v) => v.id === params.get('version'))
+  const querySideRaw = params.get('side')
+  const querySide: Side | null = querySideRaw === 'A' || querySideRaw === 'B' ? querySideRaw : null
 
-  // 玩家每场景可建多个 agent（§0）：选一个已有的，或新建
-  const [agentChoice, setAgentChoice] = useState<string>(() => queryAgent?.id ?? myAgents[0]?.id ?? NEW_AGENT)
+  // 玩家每场景每侧可建多个 agent（#56，受 #59 引导门）：选一个已有的，或新建（新建需选侧）
+  const [agentChoice, setAgentChoice] = useState<string>(() =>
+    queryAgent?.id ?? (querySide !== null ? NEW_AGENT : myAgents[0]?.id ?? NEW_AGENT),
+  )
   const [newName, setNewName] = useState('')
+  const [newSide, setNewSide] = useState<Side>(querySide ?? 'A')
 
-  // 模式逐版本，一版同时做两方（#16）；默认 MCQ（#15 全场景上线）
+  // 模式逐版本，每版单侧（#57）；默认 MCQ（#15 全场景上线）
   const queryMode = params.get('mode')
   const [mode, setMode] = useState<BuildMode>(
     queryVersion?.mode ?? (queryMode === 'basic' || queryMode === 'meta' || queryMode === 'mcq' ? queryMode : 'mcq'),
   )
   const [mcqSel, setMcqSel] = useState<Record<string, string[]>>(() =>
-    scenario && queryVersion?.mode === 'mcq'
-      ? deriveMcqSelections(scenario, queryVersion.promptA, queryVersion.promptB)
+    scenario && queryAgent && queryVersion?.mode === 'mcq'
+      ? deriveMcqSelections(scenario, queryAgent.side, queryVersion.prompt)
       : {},
   )
-  const [textA, setTextA] = useState(queryVersion?.promptA ?? '')
-  const [textB, setTextB] = useState(queryVersion?.promptB ?? '')
+  const [text, setText] = useState(queryVersion?.prompt ?? '')
 
   // 模型属于版本，随版本快照（#13）
   const [model, setModel] = useState(queryVersion?.model ?? CONFIG.modelList[0].id)
@@ -137,11 +142,12 @@ export function BuilderPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState<{ agentId: string; version: AgentVersion } | null>(null)
 
-  const promptA = scenario && mode === 'mcq' ? assemblePrompt(scenario, 'A', mcqSel) : textA
-  const promptB = scenario && mode === 'mcq' ? assemblePrompt(scenario, 'B', mcqSel) : textB
-  const unitsA = countPromptUnits(promptA)
-  const unitsB = countPromptUnits(promptB)
-  const overLimit = unitsA > CONFIG.promptCharLimit || unitsB > CONFIG.promptCharLimit
+  const currentAgent = myAgents.find((a) => a.id === agentChoice)
+  // 执方由所选 agent 隐含（#62）；新建时由玩家选侧
+  const currentSide: Side = currentAgent?.side ?? newSide
+  const prompt = scenario && mode === 'mcq' ? assemblePrompt(scenario, currentSide, mcqSel) : text
+  const units = countPromptUnits(prompt)
+  const overLimit = units > CONFIG.promptCharLimit
 
   if (!scenario) {
     return (
@@ -153,15 +159,28 @@ export function BuilderPage() {
     )
   }
 
+  const myCard = sideCardOf(scenario, currentSide)
+  const oppCard = sideCardOf(scenario, otherSide(currentSide))
+  const myRole = sideRoleShort(scenario, currentSide)
+  const oppRole = sideRoleShort(scenario, otherSide(currentSide))
+
+  // 同侧第二个 agent 引导门（#59）——只约束「新建」；版本迭代永不受限（D16）
+  const gate = store.canCreateAgent(scenario.id, newSide)
+  const gateBlocked = agentChoice === NEW_AGENT && !gate.ok
+
+  // 双侧完成度徽章（#64）+ 参赛资格（#58）
+  const bySide = store.myAgentsBySide(scenario.id)
+  const readiness = store.entryReadiness(scenario.id)
+
   const metaPrompt = [
-    `我在参加「Axiia Cup」的对战场景「${scenario.name}」，请帮我写两段智能体提示词（每方不超过 ${CONFIG.promptCharLimit} 字，按汉字或英文词计）。`,
+    `我在参加「Axiia Cup」的对战场景「${scenario.name}」，执${myCard.name}。请帮我写一段智能体提示词（不超过 ${CONFIG.promptCharLimit} 字，按汉字或英文词计）。`,
     '',
     `【场景背景】${scenario.background}`,
     '',
-    `【方 A · ${scenario.sideA.name}】目标：${scenario.sideA.publicRequirements}`,
-    `【方 B · ${scenario.sideB.name}】目标：${scenario.sideB.publicRequirements}`,
+    `【我的角色 · ${myCard.name}】目标：${myCard.publicRequirements}`,
+    `【对手 · ${oppCard.name}】目标：${oppCard.publicRequirements}`,
     '',
-    '请分别输出「方 A 提示词」与「方 B 提示词」两段纯文本：写清核心论证路线、应对对方攻击的策略、隐藏情报的使用时机。不要输出多余解释。',
+    '请输出一段纯文本提示词：写清核心论证路线、应对对方攻击的策略、隐藏情报的使用时机。不要输出多余解释。',
   ].join('\n')
 
   function toggleOption(q: McqQuestion, optId: string) {
@@ -189,7 +208,7 @@ export function BuilderPage() {
     if (!scenario) return
     setSaveError(null)
     if (overLimit) {
-      setSaveError(`逐方上限 ${CONFIG.promptCharLimit}（按汉字或英文词计，非 token），请先精简超限一方。`)
+      setSaveError(`单侧上限 ${CONFIG.promptCharLimit}（按汉字或英文词计，非 token），请先精简。`)
       return
     }
     let agentId = agentChoice
@@ -199,14 +218,18 @@ export function BuilderPage() {
         setSaveError('请先给新智能体起一个名字。')
         return
       }
-      const agent = store.createAgent(scenario.id, name)
-      agentId = agent.id
-      setAgentChoice(agent.id)
+      const created = store.createAgent(scenario.id, name, newSide)
+      if (!created.ok) {
+        // #59 引导门（文案为 mock 自拟）
+        setSaveError(`想再建一个${myRole}？先创建一个${oppRole}——两边都要会写才是真本事。`)
+        return
+      }
+      agentId = created.agent.id
+      setAgentChoice(created.agent.id)
       setNewName('')
     }
     const version = store.saveVersion(agentId, {
-      promptA,
-      promptB,
+      prompt,
       model,
       mode,
       note: note.trim() || undefined,
@@ -216,78 +239,67 @@ export function BuilderPage() {
   }
 
   const modelLabel = CONFIG.modelList.find((m) => m.id === model)?.label ?? model
+  const questions = scenario.mcqDeck.filter((q) => q.side === currentSide)
 
-  const sideColumn = (side: Side) => {
-    const card = side === 'A' ? scenario.sideA : scenario.sideB
-    const units = side === 'A' ? unitsA : unitsB
-    const assembled = side === 'A' ? promptA : promptB
-    const questions = scenario.mcqDeck.filter((q) => q.side === side)
-    return (
-      <div className='flex flex-col gap-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <Badge tone={side === 'A' ? 'sideA' : 'sideB'}>方 {side}</Badge>
-            <span className='text-sm font-semibold text-(--foreground)'>{card.name}</span>
-          </div>
-          <LimitCounter units={units} />
+  const mcqColumn = (
+    <div className='flex flex-col gap-4'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-2'>
+          <Badge tone={currentSide === 'A' ? 'sideA' : 'sideB'}>执{currentSide}</Badge>
+          <span className='text-sm font-semibold text-(--foreground)'>{myCard.name}</span>
         </div>
-        <div className='flex flex-col gap-3'>
-          {questions.map((q) => (
-            <div key={q.id} className='app-panel'>
-              <p className='panel-label'>
-                {q.title}
-                {q.multi ? '（可多选）' : '（单选）'}
-              </p>
-              <div className='flex flex-col gap-2'>
-                {q.options.map((o) => (
-                  <McqOptionRow
-                    key={o.id}
-                    question={q}
-                    label={o.label}
-                    fragment={o.fragment}
-                    selected={(mcqSel[q.id] ?? []).includes(o.id)}
-                    onToggle={() => toggleOption(q, o.id)}
-                  />
-                ))}
-              </div>
+        <LimitCounter units={units} />
+      </div>
+      <div className='flex flex-col gap-3'>
+        {questions.map((q) => (
+          <div key={q.id} className='app-panel'>
+            <p className='panel-label'>
+              {q.title}
+              {q.multi ? '（可多选）' : '（单选）'}
+            </p>
+            <div className='flex flex-col gap-2'>
+              {q.options.map((o) => (
+                <McqOptionRow
+                  key={o.id}
+                  question={q}
+                  label={o.label}
+                  fragment={o.fragment}
+                  selected={(mcqSel[q.id] ?? []).includes(o.id)}
+                  onToggle={() => toggleOption(q, o.id)}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-        <div className='app-panel'>
-          <p className='panel-label'>拼装预览（只读）</p>
-          {assembled ? (
-            <pre className='m-0 font-[inherit] text-sm leading-relaxed whitespace-pre-wrap text-(--foreground-subtle)'>{assembled}</pre>
-          ) : (
-            <p className='m-0 text-sm text-(--foreground-muted)'>还没有选择任何选项——上面每答一题，这里就拼进一句。</p>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  const textColumn = (side: Side) => {
-    const card = side === 'A' ? scenario.sideA : scenario.sideB
-    const value = side === 'A' ? textA : textB
-    const setValue = side === 'A' ? setTextA : setTextB
-    const units = side === 'A' ? unitsA : unitsB
-    return (
-      <div className='flex flex-col gap-2'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <Badge tone={side === 'A' ? 'sideA' : 'sideB'}>方 {side}</Badge>
-            <span className='text-sm font-semibold text-(--foreground)'>{card.name} 提示词</span>
           </div>
-          <LimitCounter units={units} />
-        </div>
-        <textarea
-          className='app-textarea'
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={`写给「${card.name}」的纯文本提示词：论证路线、应对策略、隐藏情报的使用时机……`}
-        />
+        ))}
       </div>
-    )
-  }
+      <div className='app-panel'>
+        <p className='panel-label'>拼装预览（只读）</p>
+        {prompt ? (
+          <pre className='m-0 font-[inherit] text-sm leading-relaxed whitespace-pre-wrap text-(--foreground-subtle)'>{prompt}</pre>
+        ) : (
+          <p className='m-0 text-sm text-(--foreground-muted)'>还没有选择任何选项——上面每答一题，这里就拼进一句。</p>
+        )}
+      </div>
+    </div>
+  )
+
+  const textColumn = (
+    <div className='flex flex-col gap-2'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-2'>
+          <Badge tone={currentSide === 'A' ? 'sideA' : 'sideB'}>执{currentSide}</Badge>
+          <span className='text-sm font-semibold text-(--foreground)'>{myCard.name} 提示词</span>
+        </div>
+        <LimitCounter units={units} />
+      </div>
+      <textarea
+        className='app-textarea'
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder={`写给「${myCard.name}」的纯文本提示词：论证路线、应对策略、隐藏情报的使用时机……`}
+      />
+    </div>
+  )
 
   return (
     <div className='flex flex-col gap-6'>
@@ -295,7 +307,7 @@ export function BuilderPage() {
         <p className='page-eyebrow'>构建器 · {scenario.subject}</p>
         <h1 className='page-title'>{scenario.name}</h1>
         <p className='page-subtitle'>
-          一个版本同时写两方；逐方上限 {CONFIG.promptCharLimit}（按汉字或英文词计，非 token）。这里不做快测——保存后去「选择对手」用 PVE 检验。
+          每个智能体执一侧，一个版本＝单侧提示词 + 模型；上限 {CONFIG.promptCharLimit}（按汉字或英文词计，非 token）。这里不做快测——保存后去「选择对手」用 PVE 检验。
         </p>
       </header>
 
@@ -321,6 +333,7 @@ export function BuilderPage() {
                   <div className='mb-2 flex items-center gap-2'>
                     <Badge tone={side === 'A' ? 'sideA' : 'sideB'}>方 {side}</Badge>
                     <span className='text-sm font-semibold text-(--foreground)'>{card.name}</span>
+                    {side === currentSide && <Badge tone='accent'>你这一侧</Badge>}
                   </div>
                   <p className='m-0 text-xs leading-relaxed text-(--foreground-subtle)'>{card.publicRequirements}</p>
                   <p className='mt-1.5 mb-0 text-xs leading-relaxed text-(--foreground-muted)'>
@@ -336,7 +349,7 @@ export function BuilderPage() {
         )}
       </Card>
 
-      {/* 智能体选择：每场景可多个（§0） */}
+      {/* 智能体选择：每场景每侧可多个（#56）；新建需选侧，受 #59 引导门 */}
       <Card className='flex flex-col gap-3'>
         <p className='panel-label'>保存到哪个智能体</p>
         <div className='grid gap-3 md:grid-cols-2'>
@@ -346,11 +359,12 @@ export function BuilderPage() {
             onChange={(e) => {
               setAgentChoice(e.target.value)
               setSaved(null)
+              setSaveError(null)
             }}
           >
             {myAgents.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name}（{a.versions.length} 个版本）
+                {sideRoleShort(scenario, a.side)} · {a.name}（{a.versions.length} 个版本）
               </option>
             ))}
             <option value={NEW_AGENT}>＋ 新建智能体</option>
@@ -360,14 +374,74 @@ export function BuilderPage() {
               className='app-input'
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder='新智能体的名字，如「铁腕商鞅」'
+              placeholder={`新智能体的名字，如「铁腕${myRole}」`}
             />
           )}
         </div>
-        <p className='m-0 text-xs text-(--foreground-muted)'>同一场景可以建多个智能体，各自独立迭代版本。</p>
+        {agentChoice === NEW_AGENT ? (
+          <div className='flex flex-wrap items-center gap-3'>
+            <span className='text-[11px] font-semibold uppercase tracking-[0.14em] text-(--foreground-muted)'>选择执方（agent 属于一侧）</span>
+            <div className='flex items-center gap-1 rounded-full border border-(--border-soft) bg-white/[0.02] p-1'>
+              {(['A', 'B'] as const).map((side) => (
+                <button
+                  key={side}
+                  type='button'
+                  onClick={() => {
+                    setNewSide(side)
+                    setSaveError(null)
+                  }}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-semibold transition',
+                    newSide === side
+                      ? side === 'A' ? 'bg-sky-950/60 text-sky-300' : 'bg-amber-950/60 text-amber-300'
+                      : 'text-(--foreground-subtle) hover:text-(--foreground)',
+                  )}
+                >
+                  执{side}（{sideRoleShort(scenario, side)}）
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          currentAgent && (
+            <p className='m-0 flex items-center gap-2 text-xs text-(--foreground-muted)'>
+              <Badge tone={currentAgent.side === 'A' ? 'sideA' : 'sideB'}>执{currentAgent.side} · {myRole}</Badge>
+              执方由智能体决定；版本迭代不受任何门限。
+            </p>
+          )
+        )}
+        {/* #59 引导门：同侧第 2 个 agent 需先有对侧（文案为 mock 自拟）；版本迭代不受限（D16） */}
+        {gateBlocked && (
+          <div className='flex flex-col gap-2 rounded-xl border border-amber-800/60 bg-amber-950/25 px-4 py-3'>
+            <p className='m-0 text-sm font-semibold text-amber-300'>
+              想再建一个{myRole}？先创建一个{oppRole}——两边都要会写才是真本事。
+            </p>
+            <p className='m-0 text-xs text-(--foreground-muted)'>
+              你已有 {gate.sameSideCount} 个{myRole}智能体、0 个{oppRole}。两侧都有后就不再限制；迭代现有智能体的版本不受此门约束。
+            </p>
+            <div>
+              <Button size='sm' variant='secondary' onClick={() => { setNewSide(otherSide(newSide)); setSaveError(null) }}>
+                先创建{oppRole}
+              </Button>
+            </div>
+          </div>
+        )}
+        {/* 双侧完成度徽章（#64）+ 参赛资格（#58） */}
+        <p className='m-0 flex flex-wrap items-center gap-2 border-t border-(--border-soft) pt-3 text-xs text-(--foreground-muted)'>
+          <span className='font-semibold text-(--foreground-subtle)'>双侧完成度：</span>
+          {(['A', 'B'] as const).map((side) => (
+            <Badge key={side} tone={bySide[side].length > 0 ? 'success' : 'neutral'}>
+              {sideRoleShort(scenario, side)} {bySide[side].length > 0 ? '✓' : '✗'}
+            </Badge>
+          ))}
+          <span>
+            参赛需两侧各标一个参赛版本——
+            {readiness.eligible ? '已具备参赛资格' : `还差${readiness.A === null ? sideRoleShort(scenario, 'A') : ''}${readiness.A === null && readiness.B === null ? '与' : ''}${readiness.B === null ? sideRoleShort(scenario, 'B') : ''}的参赛版本`}
+          </span>
+        </p>
       </Card>
 
-      {/* 三种构建模式，逐版本（#16） */}
+      {/* 三种构建模式，逐版本、每版单侧（#57） */}
       <Tabs
         value={mode}
         onChange={(k) => setMode(k as BuildMode)}
@@ -378,25 +452,10 @@ export function BuilderPage() {
         ]}
       />
 
-      {mode === 'mcq' && (
-        <div className='grid gap-6 lg:grid-cols-2'>
-          <div>
-            <p className='panel-label'>A 的题目</p>
-            {sideColumn('A')}
-          </div>
-          <div>
-            <p className='panel-label'>B 的题目</p>
-            {sideColumn('B')}
-          </div>
-        </div>
-      )}
+      {/* MCQ deck 按 agent 的侧过滤（#57） */}
+      {mode === 'mcq' && mcqColumn}
 
-      {mode === 'basic' && (
-        <div className='grid gap-6 lg:grid-cols-2'>
-          {textColumn('A')}
-          {textColumn('B')}
-        </div>
-      )}
+      {mode === 'basic' && textColumn}
 
       {mode === 'meta' && (
         <div className='flex flex-col gap-6'>
@@ -410,13 +469,10 @@ export function BuilderPage() {
             </div>
             <textarea className='app-textarea min-h-[10rem] text-xs' readOnly value={metaPrompt} />
             <p className='m-0 text-xs text-(--foreground-muted)'>
-              产品内不提供聊天：把这段话交给你常用的 AI，把它产出的两段提示词粘回下面。
+              产品内不提供聊天：把这段话交给你常用的 AI，把它产出的单侧提示词粘回下面。
             </p>
           </Card>
-          <div className='grid gap-6 lg:grid-cols-2'>
-            {textColumn('A')}
-            {textColumn('B')}
-          </div>
+          {textColumn}
         </div>
       )}
 
@@ -445,12 +501,12 @@ export function BuilderPage() {
           </label>
         </div>
         <div className='flex flex-wrap items-center gap-3 border-t border-(--border-soft) pt-4'>
-          <Button onClick={handleSave} disabled={overLimit}>
+          <Button onClick={handleSave} disabled={overLimit || gateBlocked}>
             <Save className='h-4 w-4' />
             保存版本
           </Button>
           <span className='text-xs text-(--foreground-muted)'>
-            保存＝存一个版本，不会派发对战；派发去「选择对手」。字数：A {unitsA} / B {unitsB}（上限逐方 {CONFIG.promptCharLimit}，按汉字或英文词计，非 token）。
+            保存＝存一个版本，不会派发对战；派发去「选择对手」。字数：{units}（单侧上限 {CONFIG.promptCharLimit}，按汉字或英文词计，非 token）。
           </span>
         </div>
         {saveError && (
@@ -460,7 +516,7 @@ export function BuilderPage() {
           <div className='flex flex-col gap-3 rounded-xl border border-emerald-800/60 bg-emerald-950/25 px-4 py-4'>
             <p className='m-0 flex items-center gap-2 text-sm font-semibold text-emerald-300'>
               <BadgeCheck className='h-4 w-4' />
-              已保存 v{saved.version.num} · 版本 id：{saved.version.id}
+              已保存 v{saved.version.num}（执{myRole}） · 版本 id：{saved.version.id}
             </p>
             <p className='m-0 text-xs text-(--foreground-subtle)'>
               模式 {saved.version.mode === 'mcq' ? 'MCQ' : saved.version.mode === 'basic' ? 'Basic' : '元提示词'} · 模型 {modelLabel}（已随版本快照）。保存≠派发——这个版本还没有发起任何对战。
