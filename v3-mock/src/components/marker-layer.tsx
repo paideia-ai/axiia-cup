@@ -174,7 +174,7 @@ export function MarkerLayer() {
                   top: Math.max(0, p.y - 9),
                   zIndex: 9991,
                   pointerEvents: 'auto',
-                  font: '600 9px/1.4 ui-monospace,Menlo,monospace',
+                  font: '600 9px/1.4 ui-monospace,Menlo,"PingFang SC","Noto Sans CJK SC","Microsoft Yahei",monospace',
                   background: copied === p.code ? '#2f7d4f' : 'rgba(224,74,47,.92)',
                   color: '#fff',
                   border: 'none',
@@ -207,7 +207,7 @@ export function MarkerLayer() {
       >
         <div
           style={{
-            font: '600 10px/1.5 ui-monospace,Menlo,monospace',
+            font: '600 10px/1.5 ui-monospace,Menlo,"PingFang SC","Noto Sans CJK SC","Microsoft Yahei",monospace',
             background: 'rgba(10,10,10,.82)',
             border: '1px solid rgba(255,255,255,.16)',
             color: 'rgba(255,255,255,.85)',
@@ -225,7 +225,7 @@ export function MarkerLayer() {
           title='标记模式：为所有元素显示可复制的定位码（快捷键 M）'
           style={{
             pointerEvents: 'auto',
-            font: '700 11px/1 ui-monospace,Menlo,monospace',
+            font: '700 11px/1 ui-monospace,Menlo,"PingFang SC","Noto Sans CJK SC","Microsoft Yahei",monospace',
             background: on ? '#e04a2f' : 'rgba(10,10,10,.82)',
             color: on ? '#fff' : 'rgba(255,255,255,.75)',
             border: '1px solid ' + (on ? '#e04a2f' : 'rgba(255,255,255,.2)'),
