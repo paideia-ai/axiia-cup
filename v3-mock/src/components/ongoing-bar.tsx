@@ -70,7 +70,11 @@ function MatchCard({ match, userId, onOpen }: { match: Match; userId: string; on
       )}
     >
       <div className='flex w-full items-center justify-between gap-3'>
-        <span className='text-[11px] font-semibold uppercase tracking-[0.14em] text-(--foreground-muted)'>{scenario?.name ?? match.scenarioId}</span>
+        <span className='inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-(--foreground-muted)'>
+          {scenario?.name ?? match.scenarioId}
+          {/* #66：双侧成对约战的两场标 ①/②，让这一对可见 */}
+          {match.challengeLeg !== null && <Badge tone='accent'>约战{match.challengeLeg === 1 ? '①' : '②'}</Badge>}
+        </span>
         {status}
       </div>
       <span className='max-w-56 truncate text-sm font-medium text-(--foreground)'>

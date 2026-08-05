@@ -140,6 +140,22 @@ export function MatchPage() {
             {STATUS_LABEL[match.status]}
           </Badge>
           {match.isFirstBattle && <Badge tone='warning'>首战</Badge>}
+          {/* #66：双侧成对约战——标出这是一对中的第几场，并给出另一场入口 */}
+          {match.challengeLeg !== null && (
+            <Badge tone='accent'>双侧约战 {match.challengeLeg === 1 ? '①（正）' : '②（反）'}</Badge>
+          )}
+          {match.challengeId !== null && (() => {
+            const sibling = state.matches.find((m) => m.challengeId === match.challengeId && m.id !== match.id)
+            if (!sibling) return null
+            return (
+              <Link
+                to={`/matches/${sibling.id}`}
+                className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
+              >
+                查看另一场（{sibling.challengeLeg === 1 ? '①' : '②'}）→
+              </Link>
+            )
+          })()}
         </div>
         <div className='mt-4 flex flex-wrap items-center gap-2'>
           {/* 分享：一切可分享内容均已公开，无需隐藏信息打码（A7 分享 · #20） */}

@@ -3,7 +3,7 @@
 import { Bot, Clock, Lock, Sparkles, Swords, Unlock } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { Badge, Card, ProgressDots } from '../components/ui'
+import { Badge, Card } from '../components/ui'
 import { cn } from '../lib/cn'
 import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE, sideRoleShort } from '../mock/data'
 import { CONFIG, SCENARIOS, store, useAppState } from '../mock/store'
@@ -139,10 +139,13 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
             PVP 已解锁
           </span>
         ) : (
+          /* #65：门槛按侧——每侧各赢 ≥N 场 PVE */
           <span className='inline-flex items-center gap-1.5 text-[11px] text-(--foreground-muted)'>
             <Lock className='h-3 w-3' />
-            <ProgressDots done={pvpProgress.beaten} total={pvpProgress.needed} />
-            赢过 {pvpProgress.beaten}/{pvpProgress.needed} 个不同 NPC 解锁 PVP
+            解锁 PVP：{sideRoleShort(scenario, 'A')} {Math.min(pvpProgress.A.beaten, pvpProgress.A.needed)}/{pvpProgress.A.needed}
+            {pvpProgress.A.beaten >= pvpProgress.A.needed ? ' ✓' : ''} · {sideRoleShort(scenario, 'B')}{' '}
+            {Math.min(pvpProgress.B.beaten, pvpProgress.B.needed)}/{pvpProgress.B.needed}
+            {pvpProgress.B.beaten >= pvpProgress.B.needed ? ' ✓' : ''}（每侧各赢 ≥{pvpProgress.A.needed} 场 PVE）
           </span>
         )}
       </div>

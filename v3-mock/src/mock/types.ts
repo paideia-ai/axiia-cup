@@ -185,6 +185,10 @@ export interface Match {
   /** 发起人（每日上限只计发起人 #52） */
   initiatorId: string | null
   isFirstBattle: boolean
+  /** #66 双侧成对约战：一次 PVP 约战产生两场，共享同一 challengeId；非约战对局为 null */
+  challengeId: string | null
+  /** 成对约战中的场次：1＝正（我 A vs 他 B）/ 2＝反（他 A vs 我 B）；非约战为 null */
+  challengeLeg: 1 | 2 | null
   participants: { A: MatchParticipant; B: MatchParticipant }
   /** 进行中：已生成的对话轮 */
   transcript: DialogueTurn[]
@@ -221,8 +225,8 @@ export interface AppNotification {
 
 export interface PlayerScenarioProgress {
   scenarioId: string
-  /** 「玩家赢过某 NPC」事实记录（A6 门槛判定依据） */
-  npcsBeaten: string[]
+  /** 「玩家赢过某 NPC」事实记录，按侧归因（#65 取代 #60）：每侧一份去重的 NPC id 列表 */
+  npcsBeaten: { A: string[]; B: string[] }
   ladderScore: number | null
 }
 

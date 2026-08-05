@@ -10,8 +10,8 @@ export const CONFIG = {
   statsDisplayThreshold: 20,
   /** 每日对战次数上限（每玩家，只计发起人，#45/#52） */
   dailyBattleLimit: 10,
-  /** PVP 解锁门槛：赢过 N 个不同 NPC（#46，参考 2） */
-  pvpUnlockDistinctNpcs: 2,
+  /** PVP 解锁门槛：每侧各赢 ≥N 场 PVE（#65，默认 1/侧；取代 #60「任一侧都算」的不同-NPC 计数） */
+  pvpUnlockPerSideWins: 1,
   /** 每场景 PVE-NPC 数量（#28） */
   npcsPerScenario: 2,
   /** 新手预设三元组（场景/执方/对手 NPC，#10；建议商鞅） */

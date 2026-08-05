@@ -5,7 +5,7 @@ import { Bot, ChevronDown, Clock, Hammer, Lock, Sparkles, Swords, Unlock } from 
 import { useState, type PropsWithChildren } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { Badge, Button, Card, EmptyState, KeyValue, ProgressDots, Tabs } from '../components/ui'
+import { Badge, Button, Card, EmptyState, KeyValue, Tabs } from '../components/ui'
 import { cn } from '../lib/cn'
 import { SCENARIO_BATTLE_COUNTS, SCENARIO_SIDE_WINRATE, sideRoleShort } from '../mock/data'
 import { CONFIG, SCENARIOS, store, useAppState } from '../mock/store'
@@ -445,22 +445,29 @@ export function ScenarioDetailPage() {
             )}
           </Card>
 
-          {/* PVP 门槛状态条（A6） */}
+          {/* PVP 门槛状态条（A6）；#65：每侧各赢 ≥N 场 PVE */}
           <Card className='flex flex-col gap-2'>
             {pvpUnlocked ? (
               <div className='flex items-center gap-2 text-sm font-semibold text-(--success)'>
                 <Unlock className='h-4 w-4' />
-                PVP 已解锁
+                PVP 已解锁（两侧 PVE 门槛均已达成）
               </div>
             ) : (
               <>
                 <div className='flex items-center gap-2 text-sm font-semibold text-(--foreground)'>
                   <Lock className='h-4 w-4 text-(--foreground-subtle)' />
-                  赢过 {pvpProgress.beaten}/{pvpProgress.needed} 个不同 NPC 解锁 PVP
+                  每侧各赢 ≥{pvpProgress.A.needed} 场 PVE 解锁 PVP
                 </div>
-                <ProgressDots done={pvpProgress.beaten} total={pvpProgress.needed} />
-                {/* #60：任一侧的 distinct NPC 胜利都算 */}
-                <p className='text-xs text-(--foreground-muted)'>用任一侧的智能体赢 NPC 都算数（测另一侧＝换用对侧智能体）。</p>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {(['A', 'B'] as const).map((side) => (
+                    <Badge key={side} tone={pvpProgress[side].beaten >= pvpProgress[side].needed ? 'success' : 'neutral'}>
+                      {sideRoleShort(scenario, side)} {Math.min(pvpProgress[side].beaten, pvpProgress[side].needed)}/{pvpProgress[side].needed}
+                      {pvpProgress[side].beaten >= pvpProgress[side].needed ? ' ✓' : ''}
+                    </Badge>
+                  ))}
+                </div>
+                {/* #65：胜利按执的侧归因——两侧都要打 */}
+                <p className='text-xs text-(--foreground-muted)'>胜场按你执的侧计：用{sideRoleShort(scenario, 'A')}赢点亮左格，用{sideRoleShort(scenario, 'B')}赢点亮右格。</p>
               </>
             )}
           </Card>

@@ -81,6 +81,8 @@ export function HistoryPage() {
                     <div className='flex flex-wrap items-center gap-2'>
                       <span className='text-sm font-semibold text-(--foreground)'>{scenarioName(m.scenarioId)}</span>
                       <Badge tone={KIND_META[m.kind].tone}>{KIND_META[m.kind].label}</Badge>
+                      {/* #66：双侧成对约战——两场共享 challengeId，标 ①/② 让配对可见 */}
+                      {m.challengeLeg !== null && <Badge tone='accent'>约战{m.challengeLeg === 1 ? '①' : '②'}</Badge>}
                     </div>
                     <p className='mt-1 truncate text-sm text-(--foreground-subtle)'>
                       <span className='text-(--side-a)'>{m.participants.A.displayName}</span>

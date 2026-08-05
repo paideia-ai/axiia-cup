@@ -50,8 +50,8 @@ export interface AppState {
   debugMode: boolean
 }
 
-// v3 后缀：v3.4 per-side 重构改变了 Agent/AgentVersion 形状，旧存档直接丢弃（规格「无迁移」，mock 等价物＝换 key）
-const STORAGE_KEY = 'axiia-v3-mock-state-v3'
+// v4 后缀：#65（npcsBeaten 按侧）/#66（Match 增 challengeId/Leg）又改了形状，旧存档直接丢弃
+const STORAGE_KEY = 'axiia-v3-mock-state-v4'
 
 function today(): string {
   return new Date().toISOString().slice(0, 10)
@@ -79,6 +79,8 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
     createdAt: '2026-07-28T09:00:00Z',
     initiatorId: null,
     isFirstBattle: false,
+    challengeId: null,
+    challengeLeg: null,
     participants: {
       A: { kind: 'player', refId: 'ext', versionId: `${id}-va`, ownerId: 'ext-a', displayName: aName, model: 'kimi-k2.5' },
       B: { kind: 'player', refId: 'ext', versionId: `${id}-vb`, ownerId: 'ext-b', displayName: bName, model: 'deepseek-v3.2' },
@@ -229,18 +231,20 @@ function seedState(): AppState {
       pvpBattlesToday: 0,
       battlesDate: today(),
       progress: [
-        { scenarioId: 'shangyang', npcsBeaten: ['npc-shangyang-baoshou', 'npc-shangyang-jinji'], ladderScore: null },
-        { scenarioId: 'cough', npcsBeaten: ['npc-cough-easy'], ladderScore: null },
+        // #65 门槛按侧：商鞅变法两侧各有 PVE 胜 → 已解锁；御前咳嗽案只有 A 侧 → 锁定态显示 御医 0/1
+        { scenarioId: 'shangyang', npcsBeaten: { A: ['npc-shangyang-baoshou'], B: ['npc-shangyang-jinji'] }, ladderScore: null },
+        { scenarioId: 'cough', npcsBeaten: { A: ['npc-cough-easy'], B: [] }, ladderScore: null },
       ],
     },
     agents: [myShangAgent, myGanAgent, myCoughAgent, moAgent],
     matches: [demoA, demoB, historyDone],
     notifications: [
       {
+        // #66：一次约战＝两场（正/反），被挑战方收到一条合并通知（mock 决定，见 DECISIONS）
         id: 'n-1',
         kind: 'challenged',
-        title: '友谊赛来袭',
-        body: '墨白 用「变法七策 v4」（执商鞅）向你的对侧智能体「老成谋国」（甘龙）发起了友谊赛（无需同意，结果出来会通知你）。',
+        title: '双侧约战来袭',
+        body: '墨白 向你发起了双侧约战（两场）：他的「变法七策 v4」（商鞅）vs 你的「老成谋国」，你的「铁腕变法」vs 他的「守旧之问 v2」（甘龙）。无需同意，两场结果出来会通知你。',
         link: null,
         read: false,
         createdAt: '2026-08-04T02:10:00Z',
@@ -249,7 +253,7 @@ function seedState(): AppState {
         id: 'n-2',
         kind: 'gate-unlocked',
         title: 'PVP 已解锁：商鞅变法',
-        body: '你已赢过 2 个不同 NPC，达成门槛，「商鞅变法」的 PVP 对战已解锁。',
+        body: '你已在两侧各赢下 ≥1 场 PVE（商鞅 ✓ / 甘龙 ✓），「商鞅变法」的 PVP 对战已解锁。',
         link: '/scenarios/shangyang',
         read: true,
         createdAt: '2026-07-25T12:00:00Z',
@@ -296,11 +300,13 @@ function seedState(): AppState {
       { name: '疏影', wins: 9, scenarioId: 'shangyang', versionRef: 'ver-sy-2' },
     ],
     publicVersions: [
-      // agent 按侧（#55）：约战需选对手对侧的 agent-version（#62），OS 面板据 side 过滤
+      // agent 按侧（#55）；#66 约战按「玩家」成对——墨白/青梧双侧齐备（可被约战），疏影/止水单侧（演示「对方未双侧齐备」拒绝）
       { versionId: 'ver-mo-4', playerName: '墨白', agentName: '变法七策', scenarioId: 'shangyang', side: 'A', model: 'kimi-k2.5' },
+      { versionId: 'ver-mo-b2', playerName: '墨白', agentName: '守旧之问', scenarioId: 'shangyang', side: 'B', model: 'deepseek-v3.2' },
       { versionId: 'ver-zs-5', playerName: '止水', agentName: '毒士', scenarioId: 'fengyi', side: 'B', model: 'glm-5' },
       { versionId: 'ver-sy-2', playerName: '疏影', agentName: '老甘龙', scenarioId: 'shangyang', side: 'B', model: 'qwen3-max' },
       { versionId: 'ver-qw-3', playerName: '青梧', agentName: '连环记', scenarioId: 'fengyi', side: 'A', model: 'deepseek-v3.2' },
+      { versionId: 'ver-qw-b1', playerName: '青梧', agentName: '连环反制', scenarioId: 'fengyi', side: 'B', model: 'qwen3-max' },
     ],
     trialsBlocked: false,
     debugMode: false,
@@ -523,25 +529,21 @@ class MockStore {
     return (this.state.user?.battlesToday ?? 0) >= CONFIG.dailyBattleLimit
   }
 
+  /** 单场派发：PVE / hotseat（#61）。PVP 一律走 dispatchPairedPvp（#66 双侧成对）。 */
   dispatch(opts: {
     kind: MatchKind
     scenarioId: string
     agentId: string
     versionId: string
     /** 执方由所选 agent 隐含（#62）——不再接收 side 参数。
-     *  对手三选一：NPC（补对侧槽位）/ 对手对侧的公开版本 / 自己对侧的 agent-version（hotseat #61） */
-    opponent: { npcId?: string; publicVersionId?: string; myVersion?: { agentId: string; versionId: string } }
+     *  对手二选一：NPC（补对侧槽位）/ 自己对侧的 agent-version（hotseat #61） */
+    opponent: { npcId?: string; myVersion?: { agentId: string; versionId: string } }
     firstBattle?: boolean
   }):
     | { ok: true; match: Match }
-    | { ok: false; reason: 'daily-limit' | 'pvp-daily-limit' | 'concurrency' | 'trials-blocked' | 'bad-opponent' | 'wrong-side' } {
+    | { ok: false; reason: 'daily-limit' | 'concurrency' | 'trials-blocked' | 'bad-opponent' | 'wrong-side' } {
     if (this.state.trialsBlocked) return { ok: false, reason: 'trials-blocked' }
     if (this.dailyLimitReached()) return { ok: false, reason: 'daily-limit' }
-    // #46 PVP 每日限次（只计发起人）；hotseat 自打不算 PVP
-    const isPvp = opts.kind === 'pvp-friendly' || opts.kind === 'pvp-ranked'
-    if (isPvp && (this.state.user?.pvpBattlesToday ?? 0) >= CONFIG.pvpDailyLimit) {
-      return { ok: false, reason: 'pvp-daily-limit' }
-    }
     // #46 并发上限：同时排队/进行中的自发对局数
     const active = this.state.matches.filter(
       (m) => m.initiatorId === this.state.user?.id && m.status !== 'done',
@@ -567,12 +569,6 @@ class MockStore {
       const npc = NPCS.find((n) => n.id === opts.opponent.npcId)
       if (!npc) return { ok: false, reason: 'bad-opponent' }
       theirs = { kind: 'npc', refId: npc.id, versionId: null, ownerId: null, displayName: npc.name, model: 'kimi-k2.5' }
-    } else if (opts.opponent.publicVersionId) {
-      const ref = this.state.publicVersions.find((p) => p.versionId === opts.opponent.publicVersionId)
-      if (!ref || ref.scenarioId !== opts.scenarioId) return { ok: false, reason: 'bad-opponent' }
-      // 约战＝选对手「对侧」的 agent-version（#62）
-      if (ref.side !== oppSide) return { ok: false, reason: 'wrong-side' }
-      theirs = { kind: 'player', refId: ref.versionId, versionId: ref.versionId, ownerId: `ext-${ref.playerName}`, displayName: `${ref.agentName}（${ref.playerName}）`, model: ref.model }
     } else if (opts.opponent.myVersion) {
       // hotseat（#61）：打自己对侧的 agent；对侧多个时由 OS 面板选定
       const oppAgent = this.state.agents.find((a) => a.id === opts.opponent.myVersion?.agentId)
@@ -601,6 +597,8 @@ class MockStore {
       createdAt: now(),
       initiatorId: this.state.user?.id ?? 'me',
       isFirstBattle: opts.firstBattle ?? false,
+      challengeId: null,
+      challengeLeg: null,
       participants: mySide === 'A' ? { A: mine, B: theirs } : { A: theirs, B: mine },
       transcript: [],
       totalTurns: opts.firstBattle ? CONFIG.expressTurns : Math.min(sc.dialogueTurns, 10),
@@ -613,16 +611,100 @@ class MockStore {
     this.commit((s) => {
       s.matches = [match, ...s.matches]
       if (s.user) {
-        s.user = {
-          ...s.user,
-          battlesToday: s.user.battlesToday + 1,
-          pvpBattlesToday: s.user.pvpBattlesToday + (isPvp ? 1 : 0),
-        }
+        s.user = { ...s.user, battlesToday: s.user.battlesToday + 1 }
       }
     })
     this.schedule.set(match.id, Date.now() + (opts.firstBattle ? 1200 : 2500))
     this.ensureTimer()
     return { ok: true, match }
+  }
+
+  /**
+   * #66 双侧成对约战：一次 PVP 约战产生两场——正（我 A vs 他 B）+ 反（他 A vs 我 B），共享 challengeId。
+   * 双方都必须双侧齐备（每侧 ≥1 个有版本的 agent）；单侧玩家既不能约战也不能被约战。
+   * 每日/PVP 计数对发起人记 2 场（解读 Q7，待确认——见 DECISIONS/SPEC_ISSUES）；配额不足 2 场时整对拒绝。
+   */
+  dispatchPairedPvp(opts: {
+    kind: 'pvp-friendly' | 'pvp-ranked'
+    scenarioId: string
+    /** 发起人自选的双侧出战阵容（各侧一个 agent+version，默认参赛版本/最新版由 UI 决定） */
+    mine: { A: { agentId: string; versionId: string }; B: { agentId: string; versionId: string } }
+    /** 对手＝玩家（#66）；pinnedVersionId＝按 id 约战时固定其对应侧的版本，另一侧取其最新公开版 */
+    opponent: { playerName: string; pinnedVersionId?: string }
+  }):
+    | { ok: true; matches: [Match, Match] }
+    | { ok: false; reason: 'daily-limit' | 'pvp-daily-limit' | 'concurrency' | 'trials-blocked' | 'both-sides-required' | 'opponent-both-sides-required' | 'bad-opponent' } {
+    if (this.state.trialsBlocked) return { ok: false, reason: 'trials-blocked' }
+    this.rolloverDaily()
+    const user = this.state.user
+    if (!user) return { ok: false, reason: 'bad-opponent' }
+    // 配额按 2 场检查（Q7 解读：两场都计发起人）
+    if (user.battlesToday + 2 > CONFIG.dailyBattleLimit) return { ok: false, reason: 'daily-limit' }
+    if (user.pvpBattlesToday + 2 > CONFIG.pvpDailyLimit) return { ok: false, reason: 'pvp-daily-limit' }
+    const active = this.state.matches.filter((m) => m.initiatorId === user.id && m.status !== 'done').length
+    if (active + 2 > CONFIG.concurrencyLimit) return { ok: false, reason: 'concurrency' }
+
+    // 我方双侧阵容校验
+    const mineFor = (side: Side): MatchParticipant | null => {
+      const a = this.state.agents.find((x) => x.id === opts.mine[side].agentId)
+      const v = a?.versions.find((x) => x.id === opts.mine[side].versionId)
+      if (!a || !v || a.ownerId !== user.id || a.scenarioId !== opts.scenarioId || a.side !== side) return null
+      return { kind: 'player', refId: a.id, versionId: v.id, ownerId: a.ownerId, displayName: `${a.name} v${v.num}`, model: v.model }
+    }
+    const mineA = mineFor('A')
+    const mineB = mineFor('B')
+    if (!mineA || !mineB) return { ok: false, reason: 'both-sides-required' }
+
+    // 对手双侧解析：按玩家取每侧公开版本；按 id 约战只固定该 id 所属侧
+    const refs = this.state.publicVersions.filter((p) => p.scenarioId === opts.scenarioId && p.playerName === opts.opponent.playerName)
+    const pinned = opts.opponent.pinnedVersionId ? refs.find((r) => r.versionId === opts.opponent.pinnedVersionId) : undefined
+    if (opts.opponent.pinnedVersionId && !pinned) return { ok: false, reason: 'bad-opponent' }
+    const refFor = (side: Side): PublicVersionRef | undefined =>
+      pinned?.side === side ? pinned : refs.find((r) => r.side === side)
+    const refA = refFor('A')
+    const refB = refFor('B')
+    if (!refA || !refB) return { ok: false, reason: 'opponent-both-sides-required' }
+    const theirsOf = (ref: PublicVersionRef): MatchParticipant => ({
+      kind: 'player',
+      refId: ref.versionId,
+      versionId: ref.versionId,
+      ownerId: `ext-${ref.playerName}`,
+      displayName: `${ref.agentName}（${ref.playerName}）`,
+      model: ref.model,
+    })
+
+    const sc = scenarioOf(opts.scenarioId)
+    const challengeId = nextId('chal')
+    const base = {
+      kind: opts.kind,
+      scenarioId: opts.scenarioId,
+      status: 'queued' as const,
+      createdAt: now(),
+      initiatorId: user.id,
+      isFirstBattle: false,
+      challengeId,
+      transcript: [],
+      totalTurns: Math.min(sc.dialogueTurns, 10),
+      judgeOs: [],
+      judgeTrace: null,
+      selfTrace: { A: null, B: null },
+      judgeQa: [],
+      result: null,
+    }
+    const leg1: Match = { ...base, id: nextId('m'), challengeLeg: 1, participants: { A: mineA, B: theirsOf(refB) } }
+    const leg2: Match = { ...base, id: nextId('m'), challengeLeg: 2, participants: { A: theirsOf(refA), B: mineB } }
+    this.commit((s) => {
+      s.matches = [leg1, leg2, ...s.matches]
+      if (s.user) {
+        // Q7（待确认）：一次约战对发起人计 2 场
+        s.user = { ...s.user, battlesToday: s.user.battlesToday + 2, pvpBattlesToday: s.user.pvpBattlesToday + 2 }
+      }
+    })
+    this.schedule.set(leg1.id, Date.now() + 2500)
+    this.schedule.set(leg2.id, Date.now() + 3400)
+    this.ensureTimer()
+    // 被挑战方通知：真实系统应向对方发一条合并通知（#29/#66）；mock 无对方收件箱，语义记录在 BACKEND_REQUIREMENTS
+    return { ok: true, matches: [leg1, leg2] }
   }
 
   // ---------- 对局推进（假 worker） ----------
@@ -694,21 +776,26 @@ class MockStore {
     const mySide: Side | null = mySides[0] ?? null
     if (!mySide) return
     const won = winner === mySide
-    // 「玩家赢过某 NPC」事实（A6）+ 门槛通知；任一侧的胜利都算（#60）——progress 本就按（玩家,场景），不分侧
+    // 「玩家赢过某 NPC」事实（A6）+ 门槛通知；#65：胜利按「我执的侧」归因，门槛＝每侧各赢 ≥N 场
     const oppSide: Side = mySide === 'A' ? 'B' : 'A'
     const opp = match.participants[oppSide]
     if (won && opp.kind === 'npc') {
+      const N = CONFIG.pvpUnlockPerSideWins
       let progress: PlayerScenarioProgress | undefined = user.progress.find((p) => p.scenarioId === match.scenarioId)
-      const before = progress?.npcsBeaten.length ?? 0
+      const wasUnlocked = progress !== undefined && progress.npcsBeaten.A.length >= N && progress.npcsBeaten.B.length >= N
       if (!progress) {
-        progress = { scenarioId: match.scenarioId, npcsBeaten: [], ladderScore: null }
+        progress = { scenarioId: match.scenarioId, npcsBeaten: { A: [], B: [] }, ladderScore: null }
         user.progress = [...user.progress, progress]
       }
-      if (!progress.npcsBeaten.includes(opp.refId)) {
-        progress.npcsBeaten = [...progress.npcsBeaten, opp.refId]
+      if (!progress.npcsBeaten[mySide].includes(opp.refId)) {
+        progress.npcsBeaten = { ...progress.npcsBeaten, [mySide]: [...progress.npcsBeaten[mySide], opp.refId] }
       }
-      if (before < CONFIG.pvpUnlockDistinctNpcs && progress.npcsBeaten.length >= CONFIG.pvpUnlockDistinctNpcs) {
-        this.pushNotification('gate-unlocked', 'PVP 已解锁', `你已赢过 ${CONFIG.pvpUnlockDistinctNpcs} 个不同 NPC（任一侧的胜利都算），「${scenarioOf(match.scenarioId).name}」的 PVP 对战已解锁。`, `/scenarios/${match.scenarioId}`)
+      const nowUnlocked = progress.npcsBeaten.A.length >= N && progress.npcsBeaten.B.length >= N
+      if (!wasUnlocked && nowUnlocked) {
+        const sc = scenarioOf(match.scenarioId)
+        const roleA = sc.sideA.name.split('（')[0]
+        const roleB = sc.sideB.name.split('（')[0]
+        this.pushNotification('gate-unlocked', 'PVP 已解锁', `你已在两侧各赢下 ≥${N} 场 PVE（${roleA} ✓ / ${roleB} ✓），「${sc.name}」的 PVP 对战已解锁。`, `/scenarios/${match.scenarioId}`)
       }
       this.state.user = { ...user }
     }
@@ -727,7 +814,7 @@ class MockStore {
         const prev = progress?.ladderScore ?? 1000
         const next = prev + (won ? 25 : match.result?.winner === 'draw' ? 0 : -15)
         if (progress) progress.ladderScore = next
-        else cur.progress = [...cur.progress, { scenarioId: match.scenarioId, npcsBeaten: [], ladderScore: next }]
+        else cur.progress = [...cur.progress, { scenarioId: match.scenarioId, npcsBeaten: { A: [], B: [] }, ladderScore: next }]
         this.state.user = { ...cur }
         const others = this.state.ladder.filter((r) => !(r.player === cur.name && r.scenarioId === match.scenarioId))
         const rows = [
@@ -784,14 +871,40 @@ class MockStore {
     return NPCS.filter((n) => n.scenarioId === scenarioId).toSorted((a, b) => a.easeRank - b.easeRank)
   }
 
+  /** #65：门槛按侧——每侧各赢 ≥N 场 PVE 才解锁 PVP */
   pvpUnlocked(scenarioId: string): boolean {
-    const p = this.state.user?.progress.find((x) => x.scenarioId === scenarioId)
-    return (p?.npcsBeaten.length ?? 0) >= CONFIG.pvpUnlockDistinctNpcs
+    const p = this.pvpProgress(scenarioId)
+    return p.A.beaten >= p.A.needed && p.B.beaten >= p.B.needed
   }
 
-  pvpProgress(scenarioId: string): { beaten: number; needed: number } {
+  /** 每侧进度（#65）；beaten＝该侧赢过的不同 NPC 数 */
+  pvpProgress(scenarioId: string): { A: { beaten: number; needed: number }; B: { beaten: number; needed: number } } {
     const p = this.state.user?.progress.find((x) => x.scenarioId === scenarioId)
-    return { beaten: p?.npcsBeaten.length ?? 0, needed: CONFIG.pvpUnlockDistinctNpcs }
+    const needed = CONFIG.pvpUnlockPerSideWins
+    return {
+      A: { beaten: p?.npcsBeaten.A.length ?? 0, needed },
+      B: { beaten: p?.npcsBeaten.B.length ?? 0, needed },
+    }
+  }
+
+  /** #66：发起 PVP 约战的资格＝我方双侧各有 ≥1 个有版本的 agent */
+  pvpLineupReady(scenarioId: string): { A: boolean; B: boolean; ready: boolean } {
+    const by = this.myAgentsBySide(scenarioId)
+    const A = by.A.some((a) => a.versions.length > 0)
+    const B = by.B.some((a) => a.versions.length > 0)
+    return { A, B, ready: A && B }
+  }
+
+  /** #66：对手（公开玩家）在某场景的双侧公开版本分组 */
+  publicPlayersFor(scenarioId: string): { name: string; A: PublicVersionRef | null; B: PublicVersionRef | null }[] {
+    const map = new Map<string, { name: string; A: PublicVersionRef | null; B: PublicVersionRef | null }>()
+    for (const p of this.state.publicVersions) {
+      if (p.scenarioId !== scenarioId) continue
+      const g = map.get(p.playerName) ?? { name: p.playerName, A: null, B: null }
+      g[p.side] = p
+      map.set(p.playerName, g)
+    }
+    return [...map.values()]
   }
 }
 
