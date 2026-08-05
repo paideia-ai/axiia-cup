@@ -48,6 +48,7 @@ export function Button({
 export function Card({ children, className, onClick }: PropsWithChildren<{ className?: string; onClick?: () => void }>) {
   return (
     <div
+      data-card=''
       onClick={onClick}
       className={cn(
         'rounded-2xl border border-(--border-soft) bg-white/[0.02] p-5',
