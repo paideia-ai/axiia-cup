@@ -2,6 +2,7 @@ import type { PropsWithChildren } from 'react'
 import { BrowserRouter, Link, Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { AppShell } from './components/layout/app-shell'
+import { MarkerLayer } from './components/marker-layer'
 import { useAppState } from './mock/store'
 import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
@@ -56,6 +57,7 @@ function MatchRoute() {
 export function App() {
   return (
     <BrowserRouter>
+      <MarkerLayer />
       <Routes>
         <Route path='/' element={<LandingPage />} />
         <Route path='/login' element={<LoginPage />} />

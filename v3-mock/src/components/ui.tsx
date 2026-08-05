@@ -49,6 +49,7 @@ export function Card({ children, className, onClick, id }: PropsWithChildren<{ c
   return (
     <div
       id={id}
+      data-card=''
       onClick={onClick}
       className={cn(
         'rounded-2xl border border-(--border-soft) bg-white/[0.02] p-5',
