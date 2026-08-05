@@ -53,6 +53,13 @@ function slugOf(el: Element): string {
 
 export function MarkerLayer() {
   const location = useLocation()
+  // 移动端底栏占据屏幕底部——角标/开关上移，避免盖住底栏 tab（尤其最右的「历史」）
+  const [lift, setLift] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 768 ? 72 : 12))
+  useEffect(() => {
+    const onR = () => setLift(window.innerWidth < 768 ? 72 : 12)
+    window.addEventListener('resize', onR)
+    return () => window.removeEventListener('resize', onR)
+  }, [])
   const [on, setOn] = useState(() => {
     try {
       return localStorage.getItem(MARK_KEY) === '1'
@@ -189,7 +196,7 @@ export function MarkerLayer() {
         style={{
           position: 'fixed',
           right: 12,
-          bottom: 12,
+          bottom: lift,
           zIndex: 9995,
           display: 'flex',
           flexDirection: 'column',
