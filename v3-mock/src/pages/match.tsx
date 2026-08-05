@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Badge, Button, Card, EmptyState, KeyValue } from '../components/ui'
 import { cn } from '../lib/cn'
@@ -464,10 +464,12 @@ function ParticipantCard({
   onCopy: (key: string, text: string) => void
 }) {
   const copyKey = `vid-${side}`
-  const { agents } = useAppState()
-  // EA 入口：战报「查看该智能体」（B3 EA-4）；NPC 侧进 NPC 聚合视图
+  const { agents, user } = useAppState()
+  const navigate = useNavigate()
+  // ks 图2：两个「查看该智能体」不能长一样——我方＝高频（回自己的版本页迭代），对手＝低频。
+  // 我方：醒目「← 我的智能体」按钮；对手（玩家）：低调文字链；PVE NPC：不给链接。
   const linkedAgent = participant.kind === 'player' ? agents.find((a) => a.id === participant.refId) : null
-  const agentLink = linkedAgent ? `/agents/${linkedAgent.id}` : participant.kind === 'npc' ? `/agents/${participant.refId}` : null
+  const isMine = participant.kind === 'player' && participant.ownerId !== null && participant.ownerId === user?.id
   const isTournamentVersion = linkedAgent !== null && linkedAgent !== undefined &&
     participant.versionId !== null && linkedAgent.tournamentVersionId === participant.versionId
   return (
@@ -477,11 +479,18 @@ function ParticipantCard({
         <span className='font-semibold text-(--foreground)'>{participant.displayName}</span>
         {/* #33 参赛版本处处可见 */}
         {isTournamentVersion && <Badge tone='accent'>参赛版本</Badge>}
-        {agentLink && (
-          <Link to={agentLink} className='ml-auto text-xs text-(--foreground-subtle) underline-offset-2 transition hover:text-(--foreground) hover:underline'>
-            查看该智能体
+        {isMine && linkedAgent ? (
+          <Button size='sm' variant='secondary' className='ml-auto' onClick={() => navigate(`/agents/${linkedAgent.id}`)}>
+            ← 我的智能体（{linkedAgent.name}）
+          </Button>
+        ) : !isMine && participant.kind === 'player' && linkedAgent ? (
+          <Link
+            to={`/agents/${linkedAgent.id}`}
+            className='ml-auto text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
+          >
+            查看对手智能体
           </Link>
-        )}
+        ) : null}
       </div>
       <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {/* 模型永远公开（#21） */}

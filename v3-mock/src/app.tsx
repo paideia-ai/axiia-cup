@@ -7,6 +7,7 @@ import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { ExpressBuildPage, ExpressIntroPage } from './pages/express'
 import { HistoryPage } from './pages/history'
+import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
 import { MatchPage } from './pages/match'
@@ -70,6 +71,7 @@ export function App() {
         <Route path='/notifications' element={<Protected><NotificationsPage /></Protected>} />
         <Route path='/settings' element={<Protected><SettingsPage /></Protected>} />
         <Route path='/history' element={<Protected><HistoryPage /></Protected>} />
+        <Route path='/my-agents' element={<Protected><MyAgentsPage /></Protected>} />
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
     </BrowserRouter>

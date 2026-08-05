@@ -79,10 +79,15 @@ export function SettingsPage() {
       </div>
 
       <Card>
-        <p className='panel-label'>
-          <Bot className='mr-1 inline h-3.5 w-3.5' />
-          我的 agents
-        </p>
+        <div className='flex items-center justify-between'>
+          <p className='panel-label'>
+            <Bot className='mr-1 inline h-3.5 w-3.5' />
+            我的 agents
+          </p>
+          <Link to='/history' className='text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'>
+            全部对战历史 →
+          </Link>
+        </div>
         {myAgents.length === 0 ? (
           <p className='panel-copy text-sm'>还没有 agent——去场景页构建一个。</p>
         ) : (

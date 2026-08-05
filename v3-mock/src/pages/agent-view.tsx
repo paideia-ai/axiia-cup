@@ -1,7 +1,7 @@
 // EA — 智能体视图（§B3，可选点开）。
 // v3.4：展示名＝侧角色名 + 场景（#63）；逐版本胜负天然按侧（#63）；
 // 双侧完成度徽章 + 缺侧「去创建对侧」引导（#64）。
-import { ArrowLeftRight, ChevronRight, Copy, Star, Swords } from 'lucide-react'
+import { ArrowLeftRight, ChevronRight, Copy, Pencil, Star, Swords } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -85,10 +85,23 @@ export function AgentViewPage() {
           </div>
         </div>
         {isOwner && (
-          <Button onClick={() => setOsOpen(true)}>
-            <Swords className='h-4 w-4' />
-            出战
-          </Button>
+          <div className='flex items-center gap-2'>
+            {/* ks 图1 手绘：编辑在页头、出战旁边——直达构建器载入最新版本，保存即另存新版本 */}
+            <Button
+              variant='secondary'
+              onClick={() =>
+                navigate(
+                  `/scenarios/${agent.scenarioId}/build?agent=${agent.id}${versions[0] ? `&version=${versions[0].id}` : ''}`,
+                )}
+            >
+              <Pencil className='h-4 w-4' />
+              编辑
+            </Button>
+            <Button onClick={() => setOsOpen(true)}>
+              <Swords className='h-4 w-4' />
+              出战
+            </Button>
+          </div>
         )}
       </div>
 
@@ -157,8 +170,17 @@ export function AgentViewPage() {
                       （完整 diff 仅所有者可见，mock 未实现）
                     </p>
                   )}
-                  <div className='mt-3 flex items-center gap-2'>
-                    <label className='inline-flex cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle)'>
+                  <div className='mt-3 flex flex-wrap items-center gap-2'>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      onClick={() => navigate(`/scenarios/${agent.scenarioId}/build?agent=${agent.id}&version=${v.id}`)}
+                    >
+                      <Pencil className='h-3.5 w-3.5' />
+                      编辑此版本
+                    </Button>
+                    <span className='text-[11px] text-(--foreground-muted)'>保存会另存为新版本</span>
+                    <label className='ml-auto inline-flex cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle)'>
                       <input
                         type='radio'
                         name='tournament-version'

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Trophy, UserRound, History } from 'lucide-react'
+import { Bot, History, LayoutDashboard, Trophy, UserRound } from 'lucide-react'
 import type { PropsWithChildren } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
@@ -8,9 +8,11 @@ import { OngoingBar } from '../ongoing-bar'
 import { Button } from '../ui'
 import { BellIndicator } from './bell'
 
-// 全局头部承载 D / G / I / K 入口（B8）；I 走铃铛。
+// 全局头部（B8）；#73（按 ks 截图草案修订）：一级导航＝场景 · 我的智能体 · 排名 · 历史。
+// ks 原始草图（08-05 08:38 图3）在底栏保留了「历史」tab——#73 初版误删，此分支恢复。
 const navigation = [
   { to: '/scenarios', label: '场景', icon: LayoutDashboard },
+  { to: '/my-agents', label: '我的智能体', icon: Bot },
   { to: '/rankings', label: '排名', icon: Trophy },
   { to: '/history', label: '历史', icon: History },
 ]
@@ -21,43 +23,44 @@ export function AppShell({ children }: PropsWithChildren) {
 
   return (
     <div className='flex min-h-screen flex-col bg-(--background)'>
-      <header className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'>
-        <div className='mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
-          <NavLink to='/scenarios' className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'>
+      {/* #72：顶栏减噪——更薄（h-12）、去玻璃重感、导航更安静 */}
+      <header className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.9)] backdrop-blur-md'>
+        <div className='mx-auto flex h-12 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
+          <NavLink to='/scenarios' className='mr-3 text-xs font-black tracking-[0.24em] text-(--accent)'>
             AXIIA CUP
           </NavLink>
-          <nav className='hidden items-center gap-1 md:flex'>
+          <nav className='hidden items-center gap-0.5 md:flex'>
             {navigation.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/4 hover:text-(--foreground)',
-                    isActive && 'bg-white/6 text-(--foreground)',
+                    'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-(--foreground-muted) transition hover:text-(--foreground)',
+                    isActive && 'text-(--foreground)',
                   )}
               >
-                <item.icon className='h-4 w-4' />
+                <item.icon className='h-3.5 w-3.5' />
                 {item.label}
               </NavLink>
             ))}
           </nav>
-          <div className='ml-auto flex items-center gap-2'>
+          <div className='ml-auto flex items-center gap-1.5'>
             <BellIndicator />
             <NavLink
               to='/settings'
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)',
-                  isActive && 'bg-white/8 text-(--foreground)',
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-medium text-(--foreground-muted) transition hover:text-(--foreground)',
+                  isActive && 'text-(--foreground)',
                 )}
             >
-              <UserRound className='h-4 w-4' />
+              <UserRound className='h-3.5 w-3.5' />
               <span>{user?.name ?? '选手'}</span>
             </NavLink>
             <Button
               size='sm'
-              variant='secondary'
+              variant='ghost'
               onClick={() => {
                 store.logout()
                 navigate('/', { replace: true })
@@ -69,7 +72,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>
       </header>
       <main className='mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8'>
-        {/* 「进行中的对战」条：派发处可见（A1/A5）。mock 决定：所有登录页可见（见 DECISIONS.md） */}
+        {/* 「进行中的对战」条（#72）：仅派发处渲染、空则隐藏、可折叠——判断在组件内部 */}
         <OngoingBar />
         {children}
       </main>
