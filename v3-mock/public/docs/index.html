@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v3.3 Mock — 文档与待拍板项</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+  :root{
+    --bg:#0c0c0c; --surface:#161616; --elev:#1e1e1e; --fg:#e8e8e8; --sub:#8b8b8b; --mut:#5b5b5b;
+    --accent:#e04a2f; --accent-h:#f25a3f; --border:#2a2a2a; --border-soft:#232323;
+    --ok:#34d399; --warn:#fbbf24; --info:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(circle at top,rgba(224,74,47,.08),transparent 24%),linear-gradient(180deg,#0c0c0c,#090909);color:var(--fg);font-family:'Noto Sans SC',system-ui,sans-serif;line-height:1.75}
+  a{color:var(--info);text-decoration:none} a:hover{text-decoration:underline}
+  header{position:sticky;top:0;z-index:20;background:rgba(12,12,12,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-soft)}
+  .hwrap{max-width:960px;margin:0 auto;padding:.7rem 1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+  .logo{font-weight:900;letter-spacing:.22em;color:var(--accent);font-size:.8rem}
+  .htitle{font-size:.85rem;color:var(--sub)}
+  nav{display:flex;gap:.25rem;flex-wrap:wrap;margin-left:auto}
+  nav button{border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--sub);border-radius:999px;padding:.32rem .8rem;font:inherit;font-size:.8rem;cursor:pointer}
+  nav button.on{background:rgba(255,255,255,.1);color:var(--fg);border-color:var(--border)}
+  nav button .n{color:var(--accent);font-weight:700}
+  #idbtn{border:1px solid var(--border);background:transparent;color:var(--sub);border-radius:999px;padding:.32rem .7rem;font:inherit;font-size:.78rem;cursor:pointer}
+  main{max-width:960px;margin:0 auto;padding:1.4rem 1rem 5rem}
+  .tab{display:none}.tab.on{display:block}
+  h1{font-size:1.55rem;line-height:1.3;margin:.4rem 0 .3rem;font-weight:900;letter-spacing:-.02em}
+  .lede{color:var(--sub);font-size:.92rem;margin:0 0 1.4rem}
+  .lede code{background:rgba(255,255,255,.06);padding:.05rem .35rem;border-radius:.35rem;font-size:.85em}
+  /* question cards */
+  .card{border:1px solid var(--border-soft);background:rgba(255,255,255,.02);border-radius:1rem;padding:1rem 1.1rem;margin:0 0 1rem;position:relative}
+  .card .qno{position:absolute;top:-.65rem;left:1rem;background:var(--accent);color:#fff;font-weight:900;font-size:.7rem;border-radius:999px;padding:.1rem .55rem;letter-spacing:.05em}
+  .card h3{margin:.35rem 0 .3rem;font-size:1.02rem}
+  .refs{font-size:.72rem;color:var(--mut);letter-spacing:.04em}
+  .ctx{color:var(--sub);font-size:.86rem;margin:.4rem 0}
+  .mock{font-size:.8rem;color:var(--warn);background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:.6rem;padding:.35rem .6rem;margin:.5rem 0;display:inline-block}
+  .opts{display:flex;flex-direction:column;gap:.45rem;margin:.7rem 0 .4rem}
+  .opt{display:flex;gap:.6rem;align-items:flex-start;border:1px solid var(--border);background:rgba(255,255,255,.02);border-radius:.7rem;padding:.5rem .7rem;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:rgba(224,74,47,.5)}
+  .opt.sel{border-color:var(--accent);background:rgba(224,74,47,.08)}
+  .opt .k{flex:none;width:1.5rem;height:1.5rem;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:var(--sub)}
+  .opt.sel .k{background:var(--accent);border-color:var(--accent);color:#fff}
+  .opt .t{font-size:.86rem}
+  .opt .t small{display:block;color:var(--mut);font-size:.76rem}
+  .votebar{display:flex;flex-wrap:wrap;gap:.35rem;margin:.3rem 0 .1rem}
+  .votechip{font-size:.72rem;border:1px solid var(--border);border-radius:999px;padding:.08rem .55rem;color:var(--sub)}
+  .votechip b{color:var(--fg)}
+  /* comment area */
+  .cbox{margin-top:.6rem;border-top:1px dashed var(--border-soft);padding-top:.6rem}
+  .cbox textarea{width:100%;min-height:2.6rem;border:1px solid var(--border);border-radius:.6rem;background:rgba(255,255,255,.02);color:var(--fg);padding:.5rem .7rem;font:inherit;font-size:.85rem;resize:vertical}
+  .cbox textarea:focus{outline:none;border-color:rgba(224,74,47,.6)}
+  .crow{display:flex;gap:.5rem;align-items:center;margin-top:.4rem}
+  .post{border:0;background:var(--accent);color:#fff;font:inherit;font-size:.8rem;font-weight:700;border-radius:999px;padding:.38rem 1rem;cursor:pointer}
+  .post:hover{background:var(--accent-h)}
+  .chint{font-size:.72rem;color:var(--mut)}
+  .cmt{border-left:2px solid var(--border);margin:.55rem 0 0;padding:.1rem 0 .1rem .7rem;position:relative}
+  .cmt .who{font-weight:700;font-size:.78rem}
+  .cmt .when{color:var(--mut);font-size:.7rem;margin-left:.45rem}
+  .cmt .body{font-size:.84rem;color:var(--fg);white-space:pre-wrap;word-break:break-word}
+  .cmt .del{position:absolute;right:0;top:.1rem;border:0;background:none;color:var(--mut);cursor:pointer;font-size:.75rem}
+  .cmt .del:hover{color:#f87171}
+  .cmt .body .pick{color:var(--accent);font-weight:800}
+  /* markdown render */
+  .md h1{font-size:1.35rem;margin:1.2rem 0 .5rem}
+  .md h2{font-size:1.12rem;margin:1.6rem 0 .5rem;border-bottom:1px solid var(--border-soft);padding-bottom:.3rem}
+  .md h3{font-size:.98rem;margin:1.2rem 0 .35rem}
+  .md p,.md li{font-size:.88rem;color:#cfcfcf}
+  .md blockquote{border-left:3px solid var(--accent);margin:0.6rem 0;padding:.2rem .9rem;color:var(--sub);background:rgba(255,255,255,.02);border-radius:0 .5rem .5rem 0}
+  .md code{background:rgba(255,255,255,.07);padding:.05rem .35rem;border-radius:.3rem;font-size:.82em}
+  .md table{border-collapse:collapse;width:100%;display:block;overflow-x:auto;font-size:.82rem;margin:.7rem 0}
+  .md th,.md td{border:1px solid var(--border-soft);padding:.4rem .6rem;text-align:left;vertical-align:top;min-width:5rem}
+  .md th{background:rgba(255,255,255,.04);white-space:nowrap}
+  .md strong{color:var(--fg)}
+  .md hr{border:0;border-top:1px solid var(--border-soft);margin:1.4rem 0}
+  /* identity modal + toast */
+  #idmask{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50}
+  #idmask.open{display:flex}
+  .idcard{background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.3rem;width:min(92vw,22rem)}
+  .idcard h3{margin:0 0 .6rem}
+  .idcard input{width:100%;border:1px solid var(--border);border-radius:.6rem;background:rgba(255,255,255,.02);color:var(--fg);padding:.5rem .7rem;font:inherit;font-size:.88rem;margin:.25rem 0 .7rem}
+  .idcard .hint{font-size:.74rem;color:var(--mut);margin:-.3rem 0 .7rem}
+  #toast{position:fixed;left:50%;bottom:1.4rem;transform:translateX(-50%);background:var(--elev);border:1px solid var(--border);color:var(--fg);border-radius:999px;padding:.5rem 1.1rem;font-size:.82rem;display:none;z-index:60}
+  #cmtbanner{display:none;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);color:var(--warn);border-radius:.7rem;padding:.5rem .8rem;font-size:.8rem;margin:0 0 1rem}
+  .backlink{font-size:.8rem}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <span class="logo">AXIIA CUP</span>
+  <span class="htitle">v3.3 mock · 文档 &amp; 待拍板</span>
+  <nav>
+    <button data-tab="ask" class="on">需要拍板 <span class="n">14</span></button>
+    <button data-tab="decisions">决定与假设</button>
+    <button data-tab="backend">后端需求</button>
+    <button data-tab="issues">规格问题</button>
+  </nav>
+  <button id="idbtn" onclick="openId()">💬 设置身份</button>
+</div></header>
+<main>
+<div id="cmtbanner">评论服务暂时连不上——选项与评论会失败，稍后刷新再试。</div>
+
+<!-- ============ TAB: 待拍板 ============ -->
+<section class="tab on" id="tab-ask">
+  <h1>需要你拍板的 14 个点</h1>
+  <p class="lede">
+    mock 前端（<a href="https://axiia-v3-mock.vercel.app" target="_blank">axiia-v3-mock.vercel.app</a>）实现 v3.3 规格时，这些地方规格没说死，我按标注的「mock 现状」先做了。
+    每张卡：<b>点选项</b> → 可补一句理由 → <b>发表</b>（会以评论形式记录，用与 /v3-3 相同的共享口令）。不选选项、只留评论也行。
+    完整背景见另外三个 tab（DECISIONS / 后端需求 / 规格问题）。
+  </p>
+  <div id="qwrap"></div>
+</section>
+
+<!-- ============ TAB: docs ============ -->
+<section class="tab" id="tab-decisions">
+  <h1>DECISIONS — 实现决定与假设</h1>
+  <p class="lede backlink">源文件：<code>v3-mock/docs/DECISIONS.md</code>（<a href="./DECISIONS.md" target="_blank">raw</a>）</p>
+  <div class="md" id="md-decisions">加载中…</div>
+  <div class="card" id="doc-decisions"><h3>对这份文档整体的评论</h3><div class="cslot"></div></div>
+</section>
+<section class="tab" id="tab-backend">
+  <h1>BACKEND_REQUIREMENTS — 需要的后端支持</h1>
+  <p class="lede backlink">源文件：<code>v3-mock/docs/BACKEND_REQUIREMENTS.md</code>（<a href="./BACKEND_REQUIREMENTS.md" target="_blank">raw</a>）</p>
+  <div class="md" id="md-backend">加载中…</div>
+  <div class="card" id="doc-backend"><h3>对这份文档整体的评论</h3><div class="cslot"></div></div>
+</section>
+<section class="tab" id="tab-issues">
+  <h1>SPEC_ISSUES — 实现中发现的规格问题</h1>
+  <p class="lede backlink">源文件：<code>v3-mock/docs/SPEC_ISSUES.md</code>（<a href="./SPEC_ISSUES.md" target="_blank">raw</a>）</p>
+  <div class="md" id="md-issues">加载中…</div>
+  <div class="card" id="doc-issues"><h3>对这份文档整体的评论</h3><div class="cslot"></div></div>
+</section>
+</main>
+
+<div id="idmask"><div class="idcard">
+  <h3>身份与口令</h3>
+  <input id="id-name" placeholder="你的名字（如 yihan）">
+  <input id="id-pw" type="password" placeholder="共享口令（与 /v3-3 评论相同）">
+  <p class="hint">名字随评论公开显示；口令仅用于发表/删除，服务端校验，不会显示。</p>
+  <div style="display:flex;gap:.5rem;justify-content:flex-end">
+    <button class="post" style="background:transparent;border:1px solid var(--border);color:var(--sub)" onclick="closeId()">取消</button>
+    <button class="post" onclick="saveId()">保存</button>
+  </div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+/* ============ 待拍板问题（选项由 mock 实现方给出；「mock 现状」= 当前上线行为） ============ */
+var QUESTIONS=[
+ {id:'q1',t:'PVE 是否计入每日对战上限？',refs:'#45 · #52 · SPEC_ISSUES #3',
+  ctx:'每日上限的动机是成本（#45），但门槛进阶要求「PVE 练两侧」——若 PVE 计入同一上限，新手练习会被上限卡住。',
+  mock:'PVE 与 PVP 合计一个上限',
+  opts:[['合计一个上限','按 #45 字面「对战次数」，最简单'],['PVE / PVP 分开计','练习不挤占 PVP 额度，成本仍可控'],['PVE 不限次','上限只管 PVP；成本靠并发上限兜底']]},
+ {id:'q2',t:'只写一方的版本，能走到哪一步？',refs:'#8 · #33 · SPEC_ISSUES #2',
+  ctx:'首战只填一方（#8），这个单方版本会成为 v1。「正式参赛仍需双方齐全」——但校验落在哪个动作上没说。',
+  mock:'单方版本正常入库，任何动作都不拦',
+  opts:[['标参赛/发 PVP 时校验','保存随意；关键动作要求双方齐全（推荐）'],['保存时就校验','除首战外，保存即要求双方齐全'],['都不校验','让对局结果自己说话']]},
+ {id:'q3',t:'赛事阻挡试炼（#47）是否包含首战快速通道？',refs:'#47 · A3 · SPEC_ISSUES #1',
+  ctx:'赛事运行期间可阻挡全部试炼。赛事期间注册的新用户，首战是否也被挡？挡的话 express 需要一个被阻挡态设计（W4）。',
+  mock:'包含——首战同样被挡，express 页显示提示',
+  opts:[['包含首战','规格字面「全部试炼」；W4 补被阻挡态'],['首战豁免','新注册体验优先，首战只打 NPC 成本可控']]},
+ {id:'q4',t:'「逐方 1000，按汉字或英文词计」的精确算法',refs:'#14 · SPEC_ISSUES #4',
+  ctx:'前后端必须逐字节一致，否则「前端放行、后端拒绝」。mock 算法：每个 CJK 字符计 1，每个连续拉丁/数字串计 1，标点空白不计。',
+  mock:'CJK 每字 1 + 拉丁词每串 1，标点不计',
+  opts:[['就用 mock 算法','写进规格并给测试用例'],['改为纯字符数','最不易歧义，但英文吃亏'],['其他','在评论里给定义']]},
+ {id:'q5',t:'实况进行中，裁判 OS ① 何时可见？',refs:'#22 · A7 · SPEC_ISSUES #5',
+  ctx:'裁判 OS 生成层默认公开。实况阶段实时逐条显示的话，观战者（包括对手玩家）能实时看到裁判倾向。',
+  mock:'实时逐条显示（对所有观众）',
+  opts:[['实时逐条','教学价值最大；双方都是 agent，无操作影响'],['完成后才显示','实况只看对话，判决揭晓更有仪式感']]},
+ {id:'q6',t:'W11 未设计时，OS 面板的「顶尖玩家」「自动匹配」tab 怎么办？',refs:'A5 · #18 · W11 · SPEC_ISSUES #6/#7',
+  ctx:'A5 要求四个 tab；#18 要求未完成控件完全隐藏；这两个 tab 的核心逻辑（排序、匹配）都在 W11 待设计——冲突。',
+  mock:'保留两个 tab：顶尖玩家按近期锦标赛战绩临时排序，自动匹配随机选同场景对手（均标注临时）',
+  opts:[['保留 + 临时逻辑','结构完整，标注 W11 待定（mock 现状）'],['按 #18 先隐藏两个 tab','W11 落地再上'],['只留顶尖玩家','临时排序可接受，假匹配不可接受']]},
+ {id:'q7',t:'EA 展示名「按场景」——正式确认',refs:'#36 · B3 · SPEC_ISSUES #8',
+  ctx:'规格里唯一遗留的问句：「是否处处改成按场景展示名」。mock 按「琢玉的商鞅变法」实现，agent 自起名降为副标题。',
+  mock:'按场景展示名，自起名为副标题',
+  opts:[['确认按场景','处处「xx的yy场景」'],['用 agent 自起名','玩家起的名字是身份感的一部分'],['场景名+自起名并列','如「琢玉的商鞅变法 · 策论」']]},
+ {id:'q8',t:'「进行中的对战」条显示在哪些页面？',refs:'A1 · A5 · DECISIONS S1',
+  ctx:'规格说「派发处可见」但条要「可留可走」跨页面存在。mock 图省事全局显示。',
+  mock:'所有登录页面顶部（空时隐藏）',
+  opts:[['所有登录页','随时可回看，最省心（mock 现状）'],['仅派发相关页','D / DA / EA / 构建器；其他页靠通知铃'],['可折叠的全局条','全局显示但默认折成一行小徽标']]},
+ {id:'q9',t:'统计展示门槛「对局数按 agent 计」的口径',refs:'#39 · SPEC_ISSUES #12',
+  ctx:'一场对局两个 agent——计 1 还是计 2？PVE 局算不算？',
+  mock:'每场对局计 1，含 PVE 局',
+  opts:[['每场计 1 含 PVE','最直觉的「该场景发生了多少场」'],['每场计 1 不含 PVE','只数玩家对玩家'],['按参战 agent 计 2','字面「按 agent 计」']]},
+ {id:'q10',t:'未过统计门槛的场景，侧方胜率也隐藏吗？',refs:'#38 · #39 · #54 · SPEC_ISSUES #13',
+  ctx:'#38 把侧方胜率提为 glance 级钩子，但它也是统计——样本极小时显示会误导。',
+  mock:'一并隐藏，进入 #54 的空态轮廓',
+  opts:[['一并隐藏','小样本胜率就是噪音（mock 现状）'],['胜率仍显示','钩子价值优先，标注样本量']]},
+ {id:'q11',t:'「每日」按哪个时区切换？',refs:'#45 · #52 · SPEC_ISSUES #25',
+  ctx:'「明天再来」的「明天」何时到来。目标用户在国内，但服务器/浏览器时区可能不同。',
+  mock:'按浏览器本地日期（mock 无后端）',
+  opts:[['固定 UTC+8','目标用户在国内，语义最稳定'],['用户本地时区','跨时区用户各自的「明天」'],['服务器时区','实现最简单']]},
+ {id:'q12',t:'计分 PVP 完成时发哪种通知？',refs:'#53 ①×③ · SPEC_ISSUES #26',
+  ctx:'①「对局完成」与③「自动匹配结果」都覆盖计分 PVP——同一事件命中两类。',
+  mock:'只发③（含天梯分变动），其余对局发①',
+  opts:[['只发③','一事一通知，③信息量更大（mock 现状）'],['①③都发','③进 PVP 组、①进对局组，各有语义']]},
+ {id:'q13',t:'express 简化版 DA 的 mock 形态可以先用吗？',refs:'#11 · W4 · DECISIONS S4',
+  ctx:'W4（express UI 组）还没有设计产出。mock 自拟：场景名+一句话+短背景+仅己方角色卡+裁判一句话+预计时长。',
+  mock:'如上自拟形态（见线上 /express）',
+  opts:[['可以先用','作为 W4 的基线，Vivian/keso 后续迭代'],['等 W4 设计','先不作为参考'],['方向对但要改','具体改法写评论']]},
+ {id:'q14',t:'PVE-NPC 的模型是否公开？',refs:'#21 · #48 · §C1 · SPEC_ISSUES #14',
+  ctx:'「模型永远公开」说的是玩家版本；NPC 提示词属场景内容不公开，模型没提。',
+  mock:'NPC 模型照常公开显示',
+  opts:[['公开','与 #21 一致（mock 现状）'],['不公开','NPC 整体属场景内容']]},
+];
+
+/* ============ render question cards ============ */
+(function(){
+  var wrap=document.getElementById('qwrap');
+  wrap.innerHTML=QUESTIONS.map(function(q,qi){
+    return '<div class="card" id="'+q.id+'">'+
+      '<span class="qno">Q'+(qi+1)+'</span>'+
+      '<h3>'+esc(q.t)+'</h3>'+
+      '<div class="refs">'+esc(q.refs)+'</div>'+
+      '<p class="ctx">'+esc(q.ctx)+'</p>'+
+      '<span class="mock">mock 现状：'+esc(q.mock)+'</span>'+
+      '<div class="opts">'+q.opts.map(function(o,i){
+        var k=String.fromCharCode(65+i);
+        return '<div class="opt" data-q="'+q.id+'" data-k="'+k+'" onclick="pickOpt(this)">'+
+          '<span class="k">'+k+'</span><span class="t">'+esc(o[0])+'<small>'+esc(o[1])+'</small></span></div>';
+      }).join('')+'</div>'+
+      '<div class="votebar" id="votes-'+q.id+'"></div>'+
+      '<div class="cslot"></div>'+
+    '</div>';
+  }).join('');
+})();
+
+/* ============ shared comments (same Supabase backend + identity as /v3-3) ============ */
+var SB_URL="https://xxfaohdyljlwhdbwjqmr.supabase.co";
+var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmFvaGR5bGpsd2hkYndqcW1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NjkxMDgsImV4cCI6MjA5ODU0NTEwOH0.I2ps861GN43rXe2E4mjAG5_Lz6-7hxoYLitKvwG9G0w";
+var NAME_KEY='axiia-decisions:me', PW_KEY='axiia-decisions:pw';
+var CPREFIX='v3mock:';
+var CMTS=[];
+function myName(){try{return localStorage.getItem(NAME_KEY)||''}catch(e){return ''}}
+function myPw(){try{return localStorage.getItem(PW_KEY)||''}catch(e){return ''}}
+function esc(s){return(''+s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(toast._x);toast._x=setTimeout(function(){t.style.display='none'},2400)}
+function sbHeaders(json){var h={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};if(json)h['Content-Type']='application/json';return h}
+function sbRpc(fn,args){return fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:sbHeaders(true),body:JSON.stringify(args)}).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});return null})}
+function loadCmts(){
+  return fetch(SB_URL+'/rest/v1/comments?select=id,card_id,author,body,created_at&order=created_at.asc',{headers:sbHeaders(false)})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json()})
+    .then(function(all){CMTS=all.filter(function(c){return(c.card_id||'').indexOf(CPREFIX)===0});document.getElementById('cmtbanner').style.display='none';renderAllCmts()})
+    .catch(function(){document.getElementById('cmtbanner').style.display='block'})
+}
+function cmtsFor(id){return CMTS.filter(function(c){return c.card_id===CPREFIX+id})}
+function agoStr(iso){try{var s=Math.floor((Date.now()-new Date(iso).getTime())/1000);if(s<60)return'刚刚';if(s<3600)return Math.floor(s/60)+' 分钟前';if(s<86400)return Math.floor(s/3600)+' 小时前';var d=Math.floor(s/86400);if(d<7)return d+' 天前';return new Date(iso).toLocaleDateString()}catch(e){return''}}
+function authorColor(a){var h=0;for(var i=0;i<a.length;i++){h=(h*31+a.charCodeAt(i))>>>0}return'hsl('+(h%360)+',48%,58%)'}
+
+/* comment slot UI（每张卡通用） */
+function slotHtml(id){
+  return '<div class="cbox">'+
+    '<div id="cmtlist-'+id+'"></div>'+
+    '<textarea id="ta-'+id+'" placeholder="评论（选了选项会自动带上【选X】前缀；也可以只评论不选）"></textarea>'+
+    '<div class="crow"><button class="post" onclick="postCmt(\''+id+'\')">发表</button>'+
+    '<span class="chint">身份与口令与 /v3-3 页面共用</span></div></div>';
+}
+document.querySelectorAll('.card').forEach(function(card){
+  var slot=card.querySelector('.cslot'); if(slot) slot.innerHTML=slotHtml(card.id);
+});
+
+var PICKED={};
+function pickOpt(el){
+  var q=el.getAttribute('data-q'),k=el.getAttribute('data-k');
+  var already=PICKED[q]===k;
+  PICKED[q]=already?null:k;
+  document.querySelectorAll('.opt[data-q="'+q+'"]').forEach(function(o){o.classList.toggle('sel',o.getAttribute('data-k')===PICKED[q])});
+  var ta=document.getElementById('ta-'+q);
+  if(PICKED[q]&&ta&&!ta.value.trim()) ta.placeholder='已选 '+k+'，可补一句理由（可选），然后点发表';
+}
+function renderAllCmts(){
+  document.querySelectorAll('.card[id]').forEach(function(card){
+    renderCmtList(card.id); renderVotes(card.id);
+  });
+  refreshIdBtn();
+}
+function renderCmtList(id){
+  var box=document.getElementById('cmtlist-'+id);if(!box)return;
+  var ps=cmtsFor(id);
+  box.innerHTML=ps.map(function(c){
+    var body=esc(c.body||'').replace(/^【选([A-E])】/,'<span class="pick">【选$1】</span>');
+    return '<div class="cmt"><button class="del" onclick="delCmt('+c.id+')" title="删除">✕</button>'+
+      '<span class="who" style="color:'+authorColor(c.author||'?')+'">'+esc(c.author||'?')+'</span>'+
+      '<span class="when">'+agoStr(c.created_at)+'</span>'+
+      '<div class="body">'+body+'</div></div>';
+  }).join('');
+}
+function renderVotes(id){
+  var bar=document.getElementById('votes-'+id);if(!bar)return;
+  var latest={};
+  cmtsFor(id).forEach(function(c){var m=/^【选([A-E])】/.exec(c.body||'');if(m)latest[c.author]=m[1]});
+  var ks=Object.keys(latest);
+  bar.innerHTML=ks.length?ks.map(function(a){return '<span class="votechip"><b>'+esc(a)+'</b> 选 '+latest[a]+'</span>'}).join(''):'';
+}
+function refreshIdBtn(){var b=document.getElementById('idbtn');if(b)b.textContent=myName()?('💬 '+myName()):'💬 设置身份'}
+function openId(){document.getElementById('id-name').value=myName();document.getElementById('id-pw').value=myPw();document.getElementById('idmask').classList.add('open')}
+function closeId(){document.getElementById('idmask').classList.remove('open')}
+function saveId(){
+  var n=(document.getElementById('id-name').value||'').trim(),p=document.getElementById('id-pw').value||'';
+  if(!n){document.getElementById('id-name').focus();return}
+  try{localStorage.setItem(NAME_KEY,n);if(p)localStorage.setItem(PW_KEY,p)}catch(e){}
+  closeId();refreshIdBtn();toast('身份已保存')
+}
+function ensureIdentity(){if(myName()&&myPw())return true;openId();return false}
+function postCmt(id){
+  var ta=document.getElementById('ta-'+id);var body=(ta.value||'').trim();
+  var pick=PICKED[id];
+  if(pick){var q=QUESTIONS.filter(function(x){return x.id===id})[0];var label=q?q.opts[pick.charCodeAt(0)-65][0]:'';body='【选'+pick+'】'+label+(body?(' — '+body):'')}
+  if(!body){ta.focus();return}
+  if(!ensureIdentity())return;
+  sbRpc('post_comment',{p_card:CPREFIX+id,p_author:myName(),p_body:body,p_parent:null,p_pwd:myPw()})
+    .then(function(){ta.value='';if(pick){PICKED[id]=null;document.querySelectorAll('.opt[data-q="'+id+'"]').forEach(function(o){o.classList.remove('sel')})}toast('已记录');return loadCmts()})
+    .catch(function(e){var m=(''+e).toLowerCase();if(m.indexOf('password')>-1){try{localStorage.removeItem(PW_KEY)}catch(x){}toast('口令不对——重新输入');openId()}else toast('发表失败')})
+}
+function delCmt(cid){
+  if(!myPw()){openId();return}
+  if(!confirm('删除这条评论？'))return;
+  sbRpc('delete_comment',{p_id:cid,p_pwd:myPw()})
+    .then(function(){toast('已删除');return loadCmts()})
+    .catch(function(e){var m=(''+e).toLowerCase();if(m.indexOf('password')>-1){try{localStorage.removeItem(PW_KEY)}catch(x){}toast('口令不对');openId()}else toast('删除失败')})
+}
+
+/* ============ tabs ============ */
+document.querySelectorAll('nav button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('nav button').forEach(function(x){x.classList.remove('on')});
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');
+    document.getElementById('tab-'+b.getAttribute('data-tab')).classList.add('on');
+    window.scrollTo(0,0);
+  });
+});
+
+/* ============ tiny markdown renderer（标题/表格/列表/引用/粗体/行内码/分割线） ============ */
+function mdRender(src){
+  src=src.replace(/^---[\s\S]*?---\n/,'');           // strip frontmatter
+  var lines=src.split('\n'),out=[],i=0;
+  function inline(s){
+    s=esc(s);
+    s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+    s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    s=s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+    s=s.replace(/\[\[([^\]]+)\]\]/g,'<code>$1</code>');
+    return s;
+  }
+  while(i<lines.length){
+    var l=lines[i];
+    if(/^\s*$/.test(l)){i++;continue}
+    if(/^---+\s*$/.test(l)){out.push('<hr>');i++;continue}
+    var h=/^(#{1,4})\s+(.*)/.exec(l);
+    if(h){out.push('<h'+h[1].length+'>'+inline(h[2])+'</h'+h[1].length+'>');i++;continue}
+    if(/^>/.test(l)){var q=[];while(i<lines.length&&/^>/.test(lines[i])){q.push(inline(lines[i].replace(/^>\s?/,'')));i++}out.push('<blockquote><p>'+q.join('<br>')+'</p></blockquote>');continue}
+    if(/^\|/.test(l)){
+      var rows=[];while(i<lines.length&&/^\|/.test(lines[i])){rows.push(lines[i]);i++}
+      var cells=rows.map(function(r){return r.replace(/^\||\|$/g,'').split('|').map(function(c){return c.trim()})});
+      var body=cells.filter(function(r,ri){return !(ri===1&&/^:?-+:?$/.test(r[0].replace(/\s/g,'')))});
+      var html='<table>';
+      body.forEach(function(r,ri){html+='<tr>'+r.map(function(c){return(ri===0?'<th>':'<td>')+inline(c)+(ri===0?'</th>':'</td>')}).join('')+'</tr>'});
+      out.push(html+'</table>');continue}
+    if(/^\s*[-*]\s+/.test(l)){var li=[];while(i<lines.length&&/^\s*[-*]\s+/.test(lines[i])){li.push('<li>'+inline(lines[i].replace(/^\s*[-*]\s+/,''))+'</li>');i++}out.push('<ul>'+li.join('')+'</ul>');continue}
+    if(/^\s*\d+\.\s+/.test(l)){var ol=[];while(i<lines.length&&/^\s*\d+\.\s+/.test(lines[i])){ol.push('<li>'+inline(lines[i].replace(/^\s*\d+\.\s+/,''))+'</li>');i++}out.push('<ol>'+ol.join('')+'</ol>');continue}
+    var p=[];while(i<lines.length&&!/^\s*$|^#|^\||^>|^\s*[-*]\s|^---+\s*$|^\s*\d+\.\s/.test(lines[i])){p.push(inline(lines[i]));i++}
+    out.push('<p>'+p.join('<br>')+'</p>');
+  }
+  return out.join('\n');
+}
+[['DECISIONS.md','md-decisions'],['BACKEND_REQUIREMENTS.md','md-backend'],['SPEC_ISSUES.md','md-issues']].forEach(function(pair){
+  fetch('./'+pair[0]).then(function(r){return r.text()}).then(function(t){document.getElementById(pair[1]).innerHTML=mdRender(t)})
+    .catch(function(){document.getElementById(pair[1]).textContent='加载失败：'+pair[0]});
+});
+
+refreshIdBtn();
+loadCmts();
+setInterval(loadCmts,30000);
+</script>
+</body>
+</html>

@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run docs:sync && vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:sync": "cp docs/*.md public/docs/"
   },
   "dependencies": {
     "clsx": "^2.1.1",
