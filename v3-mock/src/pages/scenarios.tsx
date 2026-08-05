@@ -114,25 +114,18 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
         </div>
       )}
 
+      {/* #73：D 回归纯场景发现——我的智能体清单移到一级导航「我的智能体」页，此处只留极简入口 */}
       <div className='mt-auto flex flex-wrap items-center gap-2 border-t border-(--border-soft) pt-3'>
-        {myAgents.map((agent) => (
+        {myAgents.length > 0 && (
           <Link
-            key={agent.id}
-            to={`/agents/${agent.id}`}
+            to='/my-agents'
             onClick={(e) => e.stopPropagation()}
-            className='inline-flex items-center gap-1.5 rounded-full border border-(--border) bg-white/4 px-2.5 py-1 text-[11px] font-semibold text-(--foreground-subtle) transition hover:border-(--accent)/50 hover:text-(--foreground)'
+            className='inline-flex items-center gap-1.5 text-[11px] font-semibold text-(--foreground-subtle) transition hover:text-(--foreground)'
           >
             <Bot className='h-3 w-3' />
-            {/* agent 名天然含侧（#63）：侧角色名 + 自起名 */}
-            我的{sideRoleShort(scenario, agent.side)} · {agent.name}
-            {/* #33 参赛版本处处可见 */}
-            {agent.tournamentVersionId && (
-              <span className='text-(--accent)'>
-                ★v{agent.versions.find((v) => v.id === agent.tournamentVersionId)?.num ?? '?'}
-              </span>
-            )}
+            我的智能体（{myAgents.length}）→
           </Link>
-        ))}
+        )}
         {pvpUnlocked ? (
           <span className='inline-flex items-center gap-1.5 text-[11px] font-semibold text-(--success)'>
             <Unlock className='h-3 w-3' />

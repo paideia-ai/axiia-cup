@@ -50,8 +50,8 @@ export interface AppState {
   debugMode: boolean
 }
 
-// v4 后缀：#65（npcsBeaten 按侧）/#66（Match 增 challengeId/Leg）又改了形状，旧存档直接丢弃
-const STORAGE_KEY = 'axiia-v3-mock-state-v4'
+// v5 后缀：#69（MatchResult.hiddenGoals 五步结构取代 hiddenGoalReveal）+ 场景数据增 requests/agentPromptTemplate，旧存档直接丢弃
+const STORAGE_KEY = 'axiia-v3-mock-state-v5'
 
 function today(): string {
   return new Date().toISOString().slice(0, 10)

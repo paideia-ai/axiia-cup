@@ -10,6 +10,7 @@ import { HistoryPage } from './pages/history'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
 import { MatchPage } from './pages/match'
+import { MyAgentsPage } from './pages/my-agents'
 import { NotificationsPage } from './pages/notifications'
 import { RankingsPage } from './pages/rankings'
 import { RegisterPage } from './pages/register'
@@ -66,6 +67,7 @@ export function App() {
         <Route path='/express/build' element={<Protected><ExpressBuildPage /></Protected>} />
         <Route path='/matches/:id' element={<MatchRoute />} />
         <Route path='/agents/:id' element={<Protected><AgentViewPage /></Protected>} />
+        <Route path='/my-agents' element={<Protected><MyAgentsPage /></Protected>} />
         <Route path='/rankings' element={<Protected><RankingsPage /></Protected>} />
         <Route path='/notifications' element={<Protected><NotificationsPage /></Protected>} />
         <Route path='/settings' element={<Protected><SettingsPage /></Protected>} />

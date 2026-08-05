@@ -31,6 +31,12 @@ export interface ScenarioSideCard {
   openingStatement: string
 }
 
+/** 请求清单条目（对齐 legacy roleA/BRequests：内容公开、每局随机指派其一为真目标） */
+export interface RoleRequest {
+  id: string
+  content: string
+}
+
 /** 计分规则从场景数据读取（#42），精确权重全公开（#26）。 */
 export interface ScoringDimension {
   key: string
@@ -71,6 +77,10 @@ export interface Scenario {
   scoringModel: string
   scoring: ScoringDimension[]
   hiddenGoalsHowTo: string
+  /** #68：系统角色模板（对齐 legacy agentPromptTemplate）——玩家策略在比赛时与它合并；构建器只读展示 */
+  agentPromptTemplate: string
+  /** 双方请求清单（对齐 legacy roleA/BRequests）：内容公开，每局随机指派其一为真目标（#69 五步复盘数据源） */
+  requests: { A: RoleRequest[]; B: RoleRequest[] }
   mcqDeck: McqQuestion[]
 }
 
@@ -166,6 +176,26 @@ export interface ScoreBreakdown {
   reasoning: string
 }
 
+/** #69 隐藏目标五步复盘（按侧）：①真目标 → ②是否达成 → ③对手猜了什么 → ④是否被识破 → ⑤得分变化。
+ *  语义对齐 legacy 请求真假 + examination 猜测（apps/api seed.ts 的 scorerPrompt 计分规则）。 */
+export interface HiddenGoalReveal {
+  roleName: string
+  /** ① 真目标是什么 */
+  trueRequestId: string
+  trueRequestContent: string
+  /** ② 辩论中是否达成（裁判是否准允真请求） */
+  achieved: boolean
+  achievedNote: string
+  /** ③ 对手猜了什么（examination 秘密猜测的选择） */
+  opponentGuessId: string
+  opponentGuessContent: string
+  /** ④ 是否被识破（真目标被猜中 → −1） */
+  exposed: boolean
+  /** ⑤ 最终得分变化（真请求获准 +0.5 / 假请求被准 −0.25 / 被识破 −1） */
+  scoreDelta: number
+  deltaBreakdown: string
+}
+
 export interface MatchResult {
   winner: Side | 'draw'
   totalScore: { A: number; B: number }
@@ -173,7 +203,8 @@ export interface MatchResult {
   judgeProse: string
   /** 计分推导（#26）——如实反映包括 LLM 软判断的每一步 */
   breakdown: ScoreBreakdown[]
-  hiddenGoalReveal: string
+  /** 隐藏目标五步结构（#69，取代旧 hiddenGoalReveal 散文） */
+  hiddenGoals: { A: HiddenGoalReveal; B: HiddenGoalReveal }
 }
 
 export interface Match {

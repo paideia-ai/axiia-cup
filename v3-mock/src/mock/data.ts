@@ -54,22 +54,59 @@ export const SCENARIOS: Scenario[] = [
     boundaries: ['不得跳出角色', '不得引用辩论时点之后的史实', '不得攻击对方玩家本人'],
     dialogueTurns: 12,
     phases: null,
-    hiddenInfoTruthConfig: '双方各有一条隐藏情报，每局开局独立随机真/假（各 50%）。',
-    postGameInquiry: '对话结束后，孝公分别向双方各提 2 问，再给出裁决。',
+    // 对齐 legacy shangyang-court（apps/api/src/db/seed.ts）：无隐藏信息，有请求（一真两假）
+    hiddenInfoTruthConfig: '无隐藏信息。双方各提三条公开请求，每局随机指派其中一条为「真目标」（一真两假），真假只有本人知道。',
+    postGameInquiry:
+      '辩论结束后，秦孝公先对六条请求逐一裁决（同意/不同意）；随后问询双方——每人须从对方三条请求中猜出哪条是真目标并说明理由（猜中则对方 −1 分），再各答一问策略评估。',
     judgePersona: '秦孝公——务实、多疑，渴望强国但畏惧动荡。',
-    judgePromptSummary: '以强国实效为最高标准评判，兼顾可行性与风险；对空谈斥之。',
+    judgePromptSummary: '以强国实效为最高标准评判，兼顾可行性与风险；对空谈斥之。逐项裁决双方请求，再作大政决断。',
     judgePrompt:
-      '你是秦孝公。你听完变法派与守旧派的殿前辩论。你最关心：秦国能否变强？代价几何？谁的论证扎实、谁在虚张声势？先分别问询双方，再按计分维度逐项给分，最后以散文说明裁决理由。',
+      '你是秦孝公嬴渠梁。你听完变法派与守旧派的殿前辩论。你最关心：秦国能否变强？代价几何？谁的论证扎实、谁在虚张声势？先对双方各三条请求逐一裁决（同意/不同意），再决断大政（变法/维持现状），最后以国君口吻宣读判词。不得使用任何现代词汇或游戏用语。',
     judgeModel: 'kimi-k2.5',
     scoringModel: 'kimi-k2.5',
     scoring: [
       { key: 'argument', label: '论证强度', weight: 0.4, kind: 'llm', description: '论点是否扎实、回应是否切中对方要害（LLM 软判断）。' },
       { key: 'persona', label: '角色贴合', weight: 0.2, kind: 'llm', description: '言辞是否符合人物身份与时代。' },
-      { key: 'hidden', label: '隐藏目标', weight: 0.3, kind: 'structured', description: '是否达成本局分配的隐藏目标（结构化判定）。' },
+      { key: 'hidden', label: '隐藏目标（请求）', weight: 0.3, kind: 'structured', description: '真请求被准 +0.5；假请求被准每条 −0.25；真目标被对手识破 −1（结构化判定）。' },
       { key: 'boundary', label: '边界违规', weight: 0.1, kind: 'structured', description: '违反边界约束按次扣分（结构化判定）。' },
     ],
     hiddenGoalsHowTo:
-      '每局开局系统从场景目标池给双方各随机分配一个隐藏目标（如「诱使对方引用假情报」）。对人公开 how-to，对对手 agent 隐藏具体分配。',
+      '每侧三条公开请求、每局随机指派一条为真目标。辩后秦孝公逐项裁决：真请求被准 +0.5，假请求被准 −0.25；随后双方互猜对方真目标，被猜中 −1。你要说服孝公准你的真请求，同时让对手猜不透你。',
+    // #68：系统角色模板（改写自 legacy agentPromptTemplate，占位符与真实实现一致）
+    agentPromptTemplate: `你是{{roleName}}。你正在参与一个策略对话游戏。
+
+=== 场景背景 ===
+公元前359年。秦孝公即位以来，痛感秦国积弱，发布求贤令招揽天下人才。今日，秦孝公召卫鞅与太师甘龙于朝堂之上，就是否推行变法一事公开辩论，听完后将做出决断。
+
+=== 你的请求清单 ===
+辩论结束后，秦孝公将对你的每项请求逐一裁决（同意或不同意）。以下标注了真假——真请求被同意 +0.5 分，假请求被同意 −0.25 分，不同意 0 分。辩论结束后，对手将猜测你的三条请求中哪条才是你的真目标——被猜中你将 −1 分。
+{{requests}}
+
+=== 对手信息 ===
+对手角色：{{opponentName}}；其向秦孝公提出的请求（内容公开，真假未知）：
+{{opponentRequests}}
+
+=== 辩论规则 ===
+本次对话共 {{turnCount}} 轮，你与{{opponentName}}在秦孝公面前交替发言（孝公旁听不插话）。阐述立场、为己方请求铺垫、反驳对手请求、互相质询，同时观察对方论述重心以推断其真目标。
+
+=== 边界约束 ===
+不得跳出战国秦国背景；不得承认自己是 AI；不得引用现代知识；必须始终以角色身份发言。
+
+=== 你的策略 ===
+{{strategy}}`,
+    // 对齐 legacy roleARequests / roleBRequests（真实数据原文）
+    requests: {
+      A: [
+        { id: 'SR1', content: '请封商鞅为左庶长，委以军政重任' },
+        { id: 'SR2', content: '请擢景监为大夫，入朝参与国政' },
+        { id: 'SR3', content: '请赐商鞅举荐各县县令之权' },
+      ],
+      B: [
+        { id: 'GR1', content: '请封甘龙之子为陇西郡守' },
+        { id: 'GR2', content: '请加太师府议政之权，凡国之大事须经太师府议定' },
+        { id: 'GR3', content: '请保世族封地食邑世代相传，不受裁减' },
+      ],
+    },
     mcqDeck: [
       {
         id: 'sy-a-1', side: 'A', title: '商鞅的核心论证路线', multi: false,
@@ -167,7 +204,41 @@ export const SCENARIOS: Scenario[] = [
       { key: 'hidden', label: '隐藏目标', weight: 0.3, kind: 'structured', description: '本局隐藏目标达成判定。' },
       { key: 'boundary', label: '边界违规', weight: 0.1, kind: 'structured', description: '违规按次扣分。' },
     ],
-    hiddenGoalsHowTo: '每局从目标池随机分配（如「让对方在问询中改口一次」）。',
+    hiddenGoalsHowTo:
+      '每侧三条公开请求（如「传守卫对质」「查采买名录」），每局随机指派一条为真目标。女王逐项裁决：真请求被准 +0.5，假请求被准 −0.25；问询时互猜对方真目标，被猜中 −1。',
+    agentPromptTemplate: `你是{{roleName}}。你正在参与一个策略对话游戏。
+
+=== 场景背景 ===
+宫宴之上，女王杯中之酒被验出微毒。侍酒官与御医各执一词，女王亲审二人，限一炷香内断案。
+
+=== 你的请求清单 ===
+对质结束后，女王将对你的每项请求逐一裁决（准/不准）。以下标注了真假——真请求被准 +0.5 分，假请求被准 −0.25 分。对质结束后对手将猜你的真目标——被猜中 −1 分。
+{{requests}}
+
+=== 对手信息 ===
+对手角色：{{opponentName}}；其向女王提出的请求（内容公开，真假未知）：
+{{opponentRequests}}
+
+=== 对质规则 ===
+共 {{turnCount}} 轮交替陈词与对质（女王旁听）。自证清白、指认对方、为己方请求铺垫、拆对方请求，并推断对方真目标。
+
+=== 边界约束 ===
+不得跳出角色；不得虚构殿外证人到场；不得宣称掌握未分配的物证。
+
+=== 你的策略 ===
+{{strategy}}`,
+    requests: {
+      A: [
+        { id: 'CR1', content: '请传三门守卫当庭对质，核验时间线' },
+        { id: 'CR2', content: '请彻查酒窖当值名录与钥匙交接记录' },
+        { id: 'CR3', content: '请查验膳房与御前酒器的经手清单' },
+      ],
+      B: [
+        { id: 'YR1', content: '请查西市药行的采买名录，追索毒物来源' },
+        { id: 'YR2', content: '请当众复验残酒，以证毒发时辰' },
+        { id: 'YR3', content: '请彻查宴前试毒流程的疏漏之责' },
+      ],
+    },
     mcqDeck: [
       {
         id: 'ch-a-1', side: 'A', title: '侍酒官的辩护重心', multi: false,
@@ -234,7 +305,41 @@ export const SCENARIOS: Scenario[] = [
       { key: 'hidden', label: '隐藏目标', weight: 0.35, kind: 'structured', description: '本局隐藏目标达成判定。' },
       { key: 'boundary', label: '边界违规', weight: 0.1, kind: 'structured', description: '违规按次扣分。' },
     ],
-    hiddenGoalsHowTo: '每局从情报池随机抽取分配，真假独立随机；达成判定结构化。',
+    hiddenGoalsHowTo:
+      '每侧三条公开请求，每局随机指派一条为真目标。董卓逐项裁决：真请求被准 +0.5，假请求被准 −0.25；对质后互猜对方真目标，被猜中 −1。情报池的真假线索另行随机（不计入请求分）。',
+    agentPromptTemplate: `你是{{roleName}}。你正在参与一个策略对话游戏。
+
+=== 场景背景 ===
+凤仪亭掷戟之后，董卓盛怒未消。你与{{opponentName}}先后面见董卓陈情、当面对质，各怀真假难辨的密报与目的。
+
+=== 你的请求清单 ===
+对质结束后，董卓将对你的每项请求逐一裁决（准/不准）。真请求被准 +0.5 分，假请求被准 −0.25 分；对手猜中你的真目标你将 −1 分。
+{{requests}}
+
+=== 对手信息 ===
+对手角色：{{opponentName}}；其向董卓提出的请求（内容公开，真假未知）：
+{{opponentRequests}}
+
+=== 对质规则 ===
+共 {{turnCount}} 轮：单独陈情 → 当面对质 → 相国问询。取信董卓、拆穿对方、为己方请求铺垫，并推断对方真目标。
+
+=== 边界约束 ===
+不得跳出角色；不得引用演义时间线之后的事件；不得直接杀死对方角色。
+
+=== 你的策略 ===
+{{strategy}}`,
+    requests: {
+      A: [
+        { id: 'LR1', content: '请相国彻查城中通袁书信，揪出内奸' },
+        { id: 'LR2', content: '请调离李儒安插在温侯府周围的细作' },
+        { id: 'LR3', content: '请准吕布自领并州旧部，独立成军' },
+      ],
+      B: [
+        { id: 'RR1', content: '请以貂蝉赐布，以安其心' },
+        { id: 'RR2', content: '请增派细作，监视司徒府往来' },
+        { id: 'RR3', content: '请相国暂缓迁都之议，稳住朝局' },
+      ],
+    },
     mcqDeck: [
       {
         id: 'fy-a-1', side: 'A', title: '吕布的主策略', multi: false,
@@ -301,7 +406,41 @@ export const SCENARIOS: Scenario[] = [
       { key: 'hidden', label: '隐藏目标', weight: 0.2, kind: 'structured', description: '本局隐藏目标达成判定。' },
       { key: 'boundary', label: '边界违规', weight: 0.1, kind: 'structured', description: '违规按次扣分。' },
     ],
-    hiddenGoalsHowTo: '每局随机分配（如「迫使对方承认框架存在例外」）。',
+    hiddenGoalsHowTo:
+      '每侧三条公开诉求（写入准则的条款），每局随机指派一条为真目标。主席逐项裁决：真诉求被采纳 +0.5，假诉求被采纳 −0.25；质询后互猜对方真目标，被猜中 −1。',
+    agentPromptTemplate: `你是{{roleName}}。你正在参与一个策略对话游戏。
+
+=== 场景背景 ===
+自动驾驶事故后的伦理听证会。你与{{opponentName}}就「系统应如何取舍」当面辩论，委员会主席将裁定哪一方的框架写入行业准则。
+
+=== 你的诉求清单 ===
+听证结束后，主席将对你的每项诉求逐一裁决（采纳/不采纳）。真诉求被采纳 +0.5 分，假诉求被采纳 −0.25 分；对手猜中你的真目标你将 −1 分。
+{{requests}}
+
+=== 对手信息 ===
+对手角色：{{opponentName}}；其提交的诉求（内容公开，真假未知）：
+{{opponentRequests}}
+
+=== 听证规则 ===
+共 {{turnCount}} 轮交替发言（主席旁听）。论证框架、处理边界情形、为己方诉求铺垫、拆对方诉求，并推断对方真目标。
+
+=== 边界约束 ===
+不得人身攻击；不得虚构不存在的法规条文。
+
+=== 你的策略 ===
+{{strategy}}`,
+    requests: {
+      A: [
+        { id: 'UR1', content: '将「整体伤害最小化」写入准则第一条' },
+        { id: 'UR2', content: '设立事故模拟数据的强制公开制度' },
+        { id: 'UR3', content: '由工程委员会主导后续规则修订' },
+      ],
+      B: [
+        { id: 'DR1', content: '将「不得主动选定牺牲对象」写入底线条款' },
+        { id: 'DR2', content: '设立独立伦理审查席位，一票暂缓权' },
+        { id: 'DR3', content: '要求算法取舍决策全程可追溯、可问责' },
+      ],
+    },
     mcqDeck: [
       {
         id: 'tr-a-1', side: 'A', title: '功利主义的论证路线', multi: false,

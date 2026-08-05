@@ -2,10 +2,17 @@
 // 真实系统由后端 worker + LLM 完成（见 docs/BACKEND_REQUIREMENTS.md）。
 // per-side（#55）：每个参与者的提示词来自其「自己那一侧」的单侧版本（participants[side].versionId）；
 // mock 台词是预写的，不消费提示词，但槽位语义与真实系统一致。
+//
+// fixture 真实感（Yihan：参照原始实现的数据形态）来源：
+// - 商鞅台词：docs/competition/mock-runs/option-f.json 的真实模拟对局（节选改写）
+// - 赛后问询：apps/api/src/db/seed.ts 的 examinationQuestionTemplate（秘密猜测——猜对方真目标）+ 策略评估
+// - 隐藏目标五步：seed.ts scorerPrompt 计分规则（真请求 +0.5 / 假请求 −0.25 / 被识破 −1）
+// - 流程：apps/api/src/engine/core.ts（对话 → examination → scoring）
 
-import { SCENARIOS } from './data'
+import { SCENARIOS, sideCardOf } from './data'
 import type {
   DialogueTurn,
+  HiddenGoalReveal,
   JudgeOsEntry,
   JudgeQaEntry,
   Match,
@@ -16,22 +23,23 @@ import type {
 } from './types'
 
 const LINES: Record<string, { A: string[]; B: string[] }> = {
+  // 商鞅台词改写自 mock-runs/option-f.json（真实模拟对局）
   shangyang: {
     A: [
-      '君上，治世不一道，便国不法古。今秦地广人稀，井田束缚民力，此弊不除，国无以强。',
-      '甘龙公言祖制，敢问祖制可曾使秦东出函谷一步？魏筑长城而拒秦，此即守旧之代价。',
-      '臣请立军功爵：斩一首者爵一级。民知战之有赏，则秦人皆虎狼之师。',
-      '公言民不习新法，然民可与乐成，不可与虑始。待三年法成，民自知其利。',
-      '臣有一言：魏人已窥河西，若今岁不变法聚粟练兵，来岁何以御之？',
-      '君上明鉴：臣所言者皆有实数——垦田几何、增粟几何、得兵几何，皆可核验。',
+      '甘龙大人，久仰。今日朝堂之议关乎秦之国运，臣虽为客卿，然一心为秦谋强。变法之要，在于赏罚分明、军功定爵，使有能者上、无功者下。',
+      '变法并非废旧立新，乃去其弊而存其善。世卿世禄使贵族日益骄奢，而秦之锐士战死沙场却无寸功之赏——此等不公，百姓早已心生怨愤。以军功授爵，正是顺应民心之举。',
+      '甘龙大人所虑世袭封地，臣可承诺：对有功宗室优先封赏。然无功者之封地须逐步收归国有，否则新法无粮可赏、无田可封，徒有其名。',
+      '十年为期：十年之内现有封地不强制收归，但无军功者不得新增封赏。十年之后视变法成效再作调整。此已是臣能做的最大让步。',
+      '杜挚之辈，臣自有应对。变法成败在于朝堂能否统一号令——君上明断即可，无须理会流言。',
+      '臣在魏不得志，入秦为求施展抱负之地。臣不讳言功名之心——然臣之功名系于秦之强盛。秦强则臣功成，秦弱则臣身败。臣与秦，实为一体。',
     ],
     B: [
-      '君上，圣人不易民而教，知者不变法而治。因民而教者，不劳而功成。',
-      '商君之言虽辩，然变法者，弃祖宗之成宪也。宗室勋旧，人心一摇，乱自内生。',
-      '缘法而治者，吏习而民安。今尽废之，吏茫然无所守，民惶然无所从，此取乱之道。',
-      '客卿入秦方数月，安知秦地民情？纸上之法易立，关中之俗难移。',
-      '老臣事三朝，非为一己之私。变法若败，商君可去他国，君上与秦，退向何处？',
-      '强国之道，在积不在骤。垦田练兵，祖制之内皆可为之，何必尽毁成法而后快？',
+      '卫鞅远道而来，其志可嘉。然秦之制度历经百年而成，非一朝一夕可轻废。臣世代食秦禄，所虑者非一己之私，乃宗庙社稷之安。',
+      '军功授爵听来公正，然如何定军功之大小？一颗首级一爵位？如此则秦军必成嗜杀之师，杀良冒功之事必层出不穷。',
+      '逐步收归？何为逐步——三年、五年，还是一纸诏令便可夺人祖业？卫鞅在魏时便以急切闻名，老臣岂能轻信「逐步」之诺？',
+      '宗室历代镇守边疆，十年后被一纸文书夺去封地，岂非过河拆桥？若真有诚意，当立明文写入诏令，而非空口相许。',
+      '纵然老臣缄口，朝中杜挚等人也会反对。只封住老臣一人之口，于大局何益？此正见新法根基之薄。',
+      '老臣最后问一句：卫鞅之变法，当真只为秦之强盛？远离故土、只身入秦，图的是功名，还是当真以社稷为己任？老臣最怕的不是变法之害，而是变法者之私心。',
     ],
   },
   cough: {
@@ -47,7 +55,7 @@ const LINES: Record<string, { A: string[]; B: string[] }> = {
       '侍酒官言酒器未离手，然斟酒入杯之际，袖口拂过杯沿，殿上众目可证。',
       '臣行医三十载，此毒非宫中药房所有。若查采买名录，即知何人近月出入西市药行。',
       '臣并未改口，半刻至一刻乃剂量之差，正说明投毒者用量精准，深谙其性。',
-      '陛下，臣若为凶手，何必当场验出毒物、自陷嫌疑？隐而不报岂非更safe——恕臣失言，岂非更稳妥。',
+      '陛下，臣若为凶手，何必当场验出毒物、自陷嫌疑？隐而不报岂非更稳妥？',
     ],
   },
   fengyi: {
@@ -83,7 +91,7 @@ const LINES: Record<string, { A: string[]; B: string[] }> = {
 }
 
 const ATTENTIONS: Record<string, string[]> = {
-  shangyang: ['变法的可行性论证', '祖制与强国的张力', '魏国威胁情报的真伪', '军功爵的激励设计', '宗室反弹的风险'],
+  shangyang: ['变法的可行性论证', '祖制与强国的张力', '封地收归的过渡安排', '军功爵的激励设计', '宗室反弹的风险'],
   cough: ['时间线的完整性', '毒理细节的可信度', '双方说辞的前后一致', '验酒官环节的漏洞'],
   fengyi: ['通袁书信的真伪', '吕布夜访者的身份', '李儒之策的动机', '双方情报的互证关系'],
   trolley: ['模拟数据的方法论', '滑坡论证的有效性', '规则与个案的区分', '边界情形的处理'],
@@ -101,6 +109,13 @@ export function scenarioOf(id: string): Scenario {
   return s
 }
 
+/** 首战偏置侧：让新手小胜（mock 决定 S7/S35） */
+function bootSideOf(match: Match): Side | null {
+  return match.isFirstBattle
+    ? match.participants.A.ownerId === match.initiatorId ? 'A' : 'B'
+    : null
+}
+
 export function genTurn(match: Match, turnIndex: number): DialogueTurn {
   const side: Side = turnIndex % 2 === 0 ? 'A' : 'B'
   const pool = LINES[match.scenarioId]?.[side] ?? ['……']
@@ -109,49 +124,12 @@ export function genTurn(match: Match, turnIndex: number): DialogueTurn {
   return { turn: turnIndex + 1, side, speaker: card.name, text }
 }
 
-/** 裁判 OS ①：每两轮生成一条，含结构化倾向（#24，schema → W7） */
-export function genJudgeOs(match: Match, afterTurn: number): JudgeOsEntry {
-  const h = hash(match.id + afterTurn)
-  const favorPool: (Side | 'even')[] = ['A', 'B', 'even', 'A', 'B']
-  const favor = favorPool[h % favorPool.length]
-  const attention = (ATTENTIONS[match.scenarioId] ?? ['双方论证'])[h % (ATTENTIONS[match.scenarioId]?.length ?? 1)]
-  const prevFavor = match.judgeOs.at(-1)?.tendency.favor
-  const texts: Record<string, string> = {
-    A: `${scenarioOf(match.scenarioId).sideA.name}这一番话说到点子上了，${attention}正是我所关心的。`,
-    B: `${scenarioOf(match.scenarioId).sideB.name}的应对颇为老练，${attention}上占了上风。`,
-    even: `双方在${attention}上各执一词，我还需再听。`,
-  }
-  return {
-    afterTurn,
-    text: texts[favor],
-    tendency: {
-      favor,
-      strength: 0.3 + (h % 60) / 100,
-      changed: prevFavor !== undefined && prevFavor !== favor,
-      attention,
-    },
-  }
-}
+// ---------- 计分推导（genResult 与终局裁判 OS 共用，保证倾向与判决一致） ----------
 
-export function genJudgeQa(match: Match): JudgeQaEntry[] {
+function computeBreakdown(match: Match): { breakdown: ScoreBreakdown[]; totalA: number; totalB: number; winner: Side | 'draw' } {
   const sc = scenarioOf(match.scenarioId)
-  const mk = (side: Side, q: string, a: string): JudgeQaEntry => ({ side, question: q, answer: a })
-  return [
-    mk('A', `你方才所言${ATTENTIONS[sc.id]?.[0] ?? '论点'}，有何凭据？`, `${sc.sideA.name}援引先前陈词中的事实链作答，补充了两处细节。`),
-    mk('B', `若我依你所言而行，最大的风险是什么？`, `${sc.sideB.name}坦承一处风险，随即论证其可控。`),
-    mk('A', `对方指出的矛盾，你如何解释？`, `${sc.sideA.name}以时序重述化解了大半质疑。`),
-    mk('B', `你有何隐情未曾言明？`, `${sc.sideB.name}选择部分披露，姿态谨慎。`),
-  ]
-}
-
-export function genResult(match: Match): MatchResult {
-  const sc = scenarioOf(match.scenarioId)
-  const h = hash(match.id)
-  // 首战让新手（发起人执的那一侧）小胜，降低挫败感（mock 决定，见 DECISIONS.md）
-  const bootSide: Side | null = match.isFirstBattle
-    ? match.participants.A.ownerId === match.initiatorId ? 'A' : 'B'
-    : null
-  const breakdown: ScoreBreakdown[] = sc.scoring.map((dim, i) => {
+  const bootSide = bootSideOf(match)
+  const breakdown: ScoreBreakdown[] = sc.scoring.map((dim) => {
     const hi = hash(match.id + dim.key)
     const scoreA = Math.min(10, 4 + (hi % 5) + (bootSide === 'A' ? 2 : 0) - (bootSide === 'B' ? 1 : 0))
     const scoreB = Math.min(10, 4 + ((hi >> 3) % 5) + (bootSide === 'B' ? 2 : 0) - (bootSide === 'A' ? 1 : 0))
@@ -171,26 +149,184 @@ export function genResult(match: Match): MatchResult {
   const totalA = breakdown.reduce((s, b) => s + b.scoreA * b.weight, 0)
   const totalB = breakdown.reduce((s, b) => s + b.scoreB * b.weight, 0)
   const winner: Side | 'draw' = Math.abs(totalA - totalB) < 0.05 ? 'draw' : totalA > totalB ? 'A' : 'B'
+  return { breakdown, totalA, totalB, winner }
+}
+
+// ---------- 隐藏目标事实（#69 五步复盘的数据源；genJudgeQa 与 genResult 共用保证一致） ----------
+
+interface GoalFacts {
+  trueIdx: number
+  /** 真请求是否被裁判准允（+0.5） */
+  achieved: boolean
+  /** 是否另有一条假请求被准（−0.25） */
+  falseApproved: boolean
+  /** 对手的猜测指向哪条请求 */
+  guessIdx: number
+  /** 猜中真目标（−1） */
+  exposed: boolean
+  delta: number
+}
+
+function goalFactsFor(match: Match, side: Side): GoalFacts {
+  const sc = scenarioOf(match.scenarioId)
+  const reqs = sc.requests[side]
+  const n = Math.max(1, reqs.length)
+  const boot = bootSideOf(match)
+  const trueIdx = hash(match.id + 'true' + side) % n
+  let achieved = hash(match.id + 'ach' + side) % 3 !== 0
+  const falseApproved = hash(match.id + 'false' + side) % 4 === 0
+  let exposed = hash(match.id + 'guess' + side) % 3 === 0
+  // 首战偏置：新手侧真请求获准且不被识破（S7/S35 的延伸，降低挫败感）
+  if (boot === side) {
+    achieved = true
+    exposed = false
+  }
+  const guessIdx = exposed ? trueIdx : (trueIdx + 1 + (hash(match.id + 'g2' + side) % Math.max(1, n - 1))) % n
+  const delta = (achieved ? 0.5 : 0) + (falseApproved ? -0.25 : 0) + (exposed ? -1 : 0)
+  return { trueIdx, achieved, falseApproved, guessIdx, exposed, delta }
+}
+
+/** 裁判 OS ①：每两轮生成一条，含结构化倾向（#24，schema → W7）。
+ *  V-5 修复：终局一条必须收束（不再「我还需再听」），且倾向与最终判决一致。 */
+export function genJudgeOs(match: Match, afterTurn: number): JudgeOsEntry {
+  const sc = scenarioOf(match.scenarioId)
+  const h = hash(match.id + afterTurn)
+  const attentions = ATTENTIONS[match.scenarioId] ?? ['双方论证']
+  const prevFavor = match.judgeOs.at(-1)?.tendency.favor
+  const isFinal = afterTurn >= match.totalTurns
+
+  if (isFinal) {
+    // 终局收束：倾向对齐最终判决（computeBreakdown 与 genResult 同源）
+    const { winner } = computeBreakdown(match)
+    const favor: Side | 'even' = winner === 'draw' ? 'even' : winner
+    const attention = '全局论证与请求可行性的权衡'
+    const text =
+      winner === 'draw'
+        ? `两造言辞至此，各有得失，难分轩轾。胜负当系于问询之应对与请求之裁决——且听最后一问。`
+        : `听至此处，我心中已有权衡：${sideCardOf(sc, winner).name}之论更胜一筹，高下已分。且待问询相验，便作最终裁决。`
+    return {
+      afterTurn,
+      text,
+      tendency: {
+        favor,
+        strength: 0.75 + (h % 20) / 100,
+        changed: prevFavor !== undefined && prevFavor !== favor,
+        attention,
+      },
+    }
+  }
+
+  const favorPool: (Side | 'even')[] = ['A', 'B', 'even', 'A', 'B']
+  const favor = favorPool[h % favorPool.length]
+  const attention = attentions[h % attentions.length]
+  const texts: Record<string, string> = {
+    A: `${sc.sideA.name}这一番话说到点子上了，${attention}正是我所关心的。`,
+    B: `${sc.sideB.name}的应对颇为老练，${attention}上占了上风。`,
+    even: `双方在${attention}上各执一词，我还需再听。`,
+  }
+  return {
+    afterTurn,
+    text: texts[favor],
+    tendency: {
+      favor,
+      strength: 0.3 + (h % 60) / 100,
+      changed: prevFavor !== undefined && prevFavor !== favor,
+      attention,
+    },
+  }
+}
+
+/** 赛后问询（examination）——对齐 legacy examinationQuestionTemplate：
+ *  每方先答「秘密猜测」（猜对方三条请求中哪条是真目标，被猜中 −1），再答一问策略评估。 */
+export function genJudgeQa(match: Match): JudgeQaEntry[] {
+  const sc = scenarioOf(match.scenarioId)
+  const mk = (side: Side, q: string, a: string): JudgeQaEntry => ({ side, question: q, answer: a })
+  const guessEntry = (guesser: Side): JudgeQaEntry => {
+    const target: Side = guesser === 'A' ? 'B' : 'A'
+    const guesserName = sideCardOf(sc, guesser).name
+    const targetName = sideCardOf(sc, target).name
+    const targetReqs = sc.requests[target]
+    const facts = goalFactsFor(match, target)
+    const guessed = targetReqs[facts.guessIdx]
+    const ids = targetReqs.map((r) => r.id).join('/')
+    // 秘密猜测题干＝examinationQuestionTemplate 的形态
+    const q = `你与${targetName}同殿论政。依你之见，${targetName}所求三事（${ids}）之中，哪件才是其念兹在兹、志在必得的？请从中选一条作答，并简要说明理由。`
+    const reason = facts.exposed
+      ? `其于此事着墨最深、寸步不让，反复回护，必是真心所求。`
+      : `其言辞看似绕开此事，实则多次暗中铺垫；余者恐为烟幕。`
+    const a = `${guesserName}选 ${guessed.id}「${guessed.content}」。理由：${reason}`
+    return mk(guesser, q, a)
+  }
+  const riskEntry = (side: Side): JudgeQaEntry => {
+    const card = sideCardOf(sc, side)
+    return mk(
+      side,
+      `若依你所言而行，最大的风险何在？你当如何应对？`,
+      `${card.name}坦承一处风险，随即以「${card.actionFocus.replace(/。$/, '')}」为据论证其可控，并给出补救之策。`,
+    )
+  }
+  return [guessEntry('A'), guessEntry('B'), riskEntry('A'), riskEntry('B')]
+}
+
+export function genResult(match: Match): MatchResult {
+  const sc = scenarioOf(match.scenarioId)
+  const { breakdown, totalA, totalB, winner } = computeBreakdown(match)
+  const factsA = goalFactsFor(match, 'A')
+  const factsB = goalFactsFor(match, 'B')
+  const judgeShort = sc.judgePersona.split('—')[0]
+
+  // 隐藏目标五步复盘（#69）：真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分变化
+  const reveal = (side: Side, facts: GoalFacts): HiddenGoalReveal => {
+    const reqs = sc.requests[side]
+    const trueReq = reqs[facts.trueIdx]
+    const guessed = reqs[facts.guessIdx]
+    const parts = [
+      facts.achieved ? '真请求获准 +0.5' : '真请求未获准 0',
+      ...(facts.falseApproved ? ['一条假请求被准 −0.25'] : []),
+      facts.exposed ? '真目标被识破 −1' : '未被识破 0',
+    ]
+    return {
+      roleName: sideCardOf(sc, side).name,
+      trueRequestId: trueReq.id,
+      trueRequestContent: trueReq.content,
+      achieved: facts.achieved,
+      achievedNote: facts.achieved ? `${judgeShort}准了此请` : `${judgeShort}驳回此请`,
+      opponentGuessId: guessed.id,
+      opponentGuessContent: guessed.content,
+      exposed: facts.exposed,
+      scoreDelta: Math.round(facts.delta * 100) / 100,
+      deltaBreakdown: `${parts.join('；')} → 净 ${facts.delta > 0 ? '+' : ''}${facts.delta}`,
+    }
+  }
+  const hiddenGoals = { A: reveal('A', factsA), B: reveal('B', factsB) }
+
+  // 「隐藏目标」维度的判定说明如实引用五步事实（#26 如实反映每一步）
+  for (const row of breakdown) {
+    if (row.key !== 'hidden') continue
+    row.reasoning = `结构化判定：${sc.sideA.name} 真目标（${hiddenGoals.A.trueRequestId}）${factsA.achieved ? '获准' : '被驳'}${factsA.exposed ? '且被识破' : '、未被识破'}（净 ${hiddenGoals.A.scoreDelta}）；${sc.sideB.name} 真目标（${hiddenGoals.B.trueRequestId}）${factsB.achieved ? '获准' : '被驳'}${factsB.exposed ? '且被识破' : '、未被识破'}（净 ${hiddenGoals.B.scoreDelta}）。表内分数为归一化展示。`
+  }
+
   const winName = winner === 'draw' ? '双方' : winner === 'A' ? sc.sideA.name : sc.sideB.name
   return {
     winner,
     totalScore: { A: Math.round(totalA * 10) / 10, B: Math.round(totalB * 10) / 10 },
     judgeProse:
-      `${sc.judgePersona.split('—')[0]}沉吟良久：本局${winName}更得我心。` +
+      `${judgeShort}沉吟良久：本局${winName}更得我心。` +
       `${winner !== 'draw' ? `其于${breakdown.toSorted((a, b) => (b.scoreA - b.scoreB) - (a.scoreA - a.scoreB))[0]?.label}上的表现尤为关键。` : '双方势均力敌，难分高下。'}` +
-      `问询之中的应对亦在裁量之内。以上判语为散文裁决，逐项分数见计分推导。`,
+      `双方所请，我已逐项裁断；问询之中的应对与真目标之隐显，皆在裁量之内。以上判语为散文裁决，逐项分数见计分推导。`,
     breakdown,
-    hiddenGoalReveal: `本局隐藏目标：${sc.sideA.name}——「${sc.hiddenGoalsHowTo.slice(0, 24)}…」（${h % 2 === 0 ? '已达成' : '未达成'}）；${sc.sideB.name}——随机分配目标（${h % 3 === 0 ? '已达成' : '未达成'}）。`,
+    hiddenGoals,
   }
 }
 
 export function genJudgeTrace(match: Match): string {
   const sc = scenarioOf(match.scenarioId)
-  return `[thinking] 综合全部 ${match.totalTurns} 轮对话。首先核对双方与场景边界的符合情况……\n[thinking] ${sc.sideA.name}的核心论证链：${ATTENTIONS[sc.id]?.[0] ?? ''}——中段第 5 轮的回应是转折点。\n[thinking] ${sc.sideB.name}在问询环节的第二答有回避嫌疑，但不足以定性。\n[thinking] 按计分维度逐项打分，加权求和，与散文裁决交叉校验一致。`
+  return `[thinking] 综合全部 ${match.totalTurns} 轮对话。首先核对双方与场景边界的符合情况……\n[thinking] ${sc.sideA.name}的核心论证链：${ATTENTIONS[sc.id]?.[0] ?? ''}——中段第 5 轮的回应是转折点。\n[thinking] 逐条裁决双方请求：以辩论中是否有过有力论述为据。\n[thinking] ${sc.sideB.name}在问询「秘密猜测」环节的选择与其对局中的试探方向一致。\n[thinking] 按计分维度逐项打分，加权求和，与散文裁决交叉校验一致。`
 }
 
 export function genSelfTrace(match: Match, side: Side): string {
   const sc = scenarioOf(match.scenarioId)
   const card = side === 'A' ? sc.sideA : sc.sideB
-  return `[thinking] 我的身份是${card.name}。当前策略：${card.actionFocus}\n[thinking] 对方上一轮试图把话题引向对其有利的领域，我应当拉回主线。\n[thinking] 隐藏信息的可信度存疑，先以公开论据立足，伺机使用。\n[thinking] 裁判人设重视${sc.judgePromptSummary.slice(0, 18)}……措辞应与之对齐。`
+  const myReqs = sc.requests[side]
+  return `[thinking] 我的身份是${card.name}。当前策略：${card.actionFocus}\n[thinking] 我的三条请求（${myReqs.map((r) => r.id).join('/')}）中只有一条是真目标——既要为它铺垫，又不能让对手看出重心。\n[thinking] 对方上一轮试图把话题引向对其有利的领域，我应当拉回主线。\n[thinking] 裁判人设重视${sc.judgePromptSummary.slice(0, 18)}……措辞应与之对齐。`
 }

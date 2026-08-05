@@ -1,5 +1,9 @@
 // FA 战报 —— 唯一对局视图（A7，#27）：排队 / 进行中·实况 / 完成 三态，赛事 / PVP / PVE 通用。
+// #69 完成态区块顺序：结果置顶（判词随行）→ 完整对话 → 赛后问询 → 隐藏目标五步 → 计分推导。
+// #67 首战旅程卡沉底，顶部仅留下行锚点箭头。
 import {
+  ArrowDown,
+  ArrowLeft,
   Bug,
   Check,
   ChevronDown,
@@ -13,13 +17,14 @@ import {
   Share2,
   X,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { Badge, Button, Card, EmptyState, KeyValue } from '../components/ui'
 import { cn } from '../lib/cn'
+import { sideRoleShort } from '../mock/data'
 import { SCENARIOS, store, useAppState } from '../mock/store'
-import type { DialogueTurn, JudgeOsEntry, Match, MatchParticipant, Scenario, Side } from '../mock/types'
+import type { DialogueTurn, HiddenGoalReveal, JudgeOsEntry, Match, MatchParticipant, Scenario, Side } from '../mock/types'
 
 // 赛事/PVP/PVE/自打 全部用同一个视图（#27）——kind 只是徽章
 const KIND_LABEL: Record<Match['kind'], string> = {
@@ -179,6 +184,17 @@ export function MatchPage() {
               回放
             </Button>
           )}
+          {/* #67：首战旅程卡沉底——顶部只留一个指向页尾的小锚点 */}
+          {match.isFirstBattle && match.status === 'done' && !replaying && (
+            <button
+              type='button'
+              onClick={() => document.getElementById('first-battle-journey')?.scrollIntoView({ behavior: 'smooth' })}
+              className='inline-flex items-center gap-1 rounded-full border border-dashed border-(--accent)/50 px-3 py-1 text-xs font-semibold text-(--accent) transition hover:bg-(--accent)/10'
+            >
+              <ArrowDown className='h-3.5 w-3.5' />
+              首战完成 · 下一步在页尾
+            </button>
+          )}
           <span className='text-xs text-(--foreground-muted)'>分享无需打码——可分享内容均已公开</span>
         </div>
       </section>
@@ -200,6 +216,39 @@ export function MatchPage() {
             </p>
           </div>
         </Card>
+      )}
+
+      {/* ---------- 结果置顶（#69）：胜者+分数 与 裁判理由（散文）分列，先于全文出现 ---------- */}
+      {match.status === 'done' && match.result && !replaying && (
+        <div className='grid gap-4 md:grid-cols-2'>
+          <Card>
+            <p className='panel-label'>结果</p>
+            <div className='flex flex-col gap-4'>
+              <KeyValue label='胜者'>
+                {match.result.winner === 'draw' ? (
+                  '平局'
+                ) : (
+                  <span className='inline-flex items-center gap-2'>
+                    <Badge tone={match.result.winner === 'A' ? 'sideA' : 'sideB'}>执{match.result.winner}</Badge>
+                    <span className='font-semibold'>{match.participants[match.result.winner].displayName}</span>
+                  </span>
+                )}
+              </KeyValue>
+              <div className='grid grid-cols-2 gap-4'>
+                <KeyValue label={`执A · ${sideName('A')}`}>
+                  <span className='text-lg font-bold text-(--side-a)'>{match.result.totalScore.A}</span>
+                </KeyValue>
+                <KeyValue label={`执B · ${sideName('B')}`}>
+                  <span className='text-lg font-bold text-(--side-b)'>{match.result.totalScore.B}</span>
+                </KeyValue>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <p className='panel-label'>裁判理由（散文）</p>
+            <p className='panel-copy text-sm'>{match.result.judgeProse}</p>
+          </Card>
+        </div>
       )}
 
       {/* ---------- 裁判倾向轨迹（#24 教学锚点，一眼看清弧线） ---------- */}
@@ -260,82 +309,39 @@ export function MatchPage() {
         </section>
       )}
 
-      {/* ---------- 完成态内容（回放期间暂隐，重演结束后恢复） ---------- */}
+      {/* ---------- 完成态内容（#69 顺序：问询 → 隐藏目标五步 → 计分推导；结果已置顶） ---------- */}
       {match.status === 'done' && match.result && !replaying && (
         <>
-          {/* 结果 与 裁判理由 分列（A7） */}
-          <div className='grid gap-4 md:grid-cols-2'>
-            <Card>
-              <p className='panel-label'>结果</p>
-              <div className='flex flex-col gap-4'>
-                <KeyValue label='胜者'>
-                  {match.result.winner === 'draw' ? (
-                    '平局'
-                  ) : (
-                    <span className='inline-flex items-center gap-2'>
-                      <Badge tone={match.result.winner === 'A' ? 'sideA' : 'sideB'}>执{match.result.winner}</Badge>
-                      <span className='font-semibold'>{match.participants[match.result.winner].displayName}</span>
-                    </span>
-                  )}
-                </KeyValue>
-                <div className='grid grid-cols-2 gap-4'>
-                  <KeyValue label={`执A · ${sideName('A')}`}>
-                    <span className='text-lg font-bold text-(--side-a)'>{match.result.totalScore.A}</span>
-                  </KeyValue>
-                  <KeyValue label={`执B · ${sideName('B')}`}>
-                    <span className='text-lg font-bold text-(--side-b)'>{match.result.totalScore.B}</span>
-                  </KeyValue>
+          {/* 赛后问询（examination）：含「秘密猜测」——猜对方真目标 */}
+          <section className='app-panel'>
+            <p className='panel-label'>赛后问询</p>
+            <p className='mb-3 text-xs text-(--foreground-muted)'>
+              {judgeName}逐一问询双方：先答「秘密猜测」（从对方请求中猜出真目标，猜中则对方失分），再答策略评估。
+            </p>
+            <div className='flex flex-col gap-4'>
+              {match.judgeQa.map((qa, i) => (
+                <div key={i} className='flex flex-col gap-1.5'>
+                  <p className='text-sm text-(--foreground)'>
+                    <span className='mr-2 font-semibold text-(--foreground-subtle)'>{judgeName} 问 · </span>
+                    <Badge tone={qa.side === 'A' ? 'sideA' : 'sideB'}>执{qa.side} {sideName(qa.side)}</Badge>
+                    <span className='ml-2'>{qa.question}</span>
+                  </p>
+                  <p className={cn('border-l-2 pl-3 text-sm text-(--foreground-subtle)', qa.side === 'A' ? 'border-(--side-a)' : 'border-(--side-b)')}>
+                    {qa.answer}
+                  </p>
                 </div>
-              </div>
-            </Card>
-            <Card>
-              <p className='panel-label'>裁判理由（散文）</p>
-              <p className='panel-copy text-sm'>{match.result.judgeProse}</p>
-            </Card>
-          </div>
+              ))}
+            </div>
+          </section>
 
-          {/* 首战结束后展示三个模式 tab，进入正常迭代循环（#12）+ 引导创建对侧（#59/#64） */}
-          {match.isFirstBattle && (
-            <Card className='border-(--accent)/30'>
-              <p className='panel-label'>首战完成 · 三种构建模式已解锁</p>
-              <p className='panel-copy mb-4 text-sm'>
-                从现在起你可以用任意模式迭代这个智能体——它只执一侧。想拿到参赛资格、把这个场景吃透，去把对侧也建起来（参赛需两侧各标一个参赛版本）。
-              </p>
-              <div className='flex flex-wrap gap-2'>
-                {(
-                  [
-                    { mode: 'mcq', label: 'MCQ 选择题拼装' },
-                    { mode: 'basic', label: 'Basic 直接写提示词' },
-                    { mode: 'meta', label: '元提示词（用你自己的 AI）' },
-                  ] as const
-                ).map((m) => (
-                  <Link
-                    key={m.mode}
-                    to={`/scenarios/${match.scenarioId}/build?mode=${m.mode}`}
-                    className='inline-flex items-center gap-2 rounded-full border border-(--border) bg-white/4 px-4 py-2 text-sm font-medium text-(--foreground) transition hover:bg-white/8'
-                  >
-                    {m.label}
-                  </Link>
-                ))}
-                {(() => {
-                  // 我执的那一侧 → 对侧预选进构建器（#59/#64 双侧引导）
-                  const mySide: Side | null =
-                    match.participants.A.ownerId === userId ? 'A' : match.participants.B.ownerId === userId ? 'B' : null
-                  if (!mySide || !scenario) return null
-                  const opp: Side = mySide === 'A' ? 'B' : 'A'
-                  const oppName = (opp === 'A' ? scenario.sideA.name : scenario.sideB.name).split('（')[0]
-                  return (
-                    <Link
-                      to={`/scenarios/${match.scenarioId}/build?side=${opp}`}
-                      className='inline-flex items-center gap-2 rounded-full border border-(--accent)/50 bg-(--accent)/10 px-4 py-2 text-sm font-semibold text-(--accent) transition hover:bg-(--accent)/20'
-                    >
-                      去创建对侧（{oppName}）
-                    </Link>
-                  )
-                })()}
-              </div>
-            </Card>
-          )}
+          {/* 隐藏目标 · 五步复盘（#69）：真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分变化 */}
+          <section className='app-panel'>
+            <p className='panel-label'>隐藏目标 · 五步复盘</p>
+            <div className='grid gap-4 md:grid-cols-2'>
+              <HiddenGoalSteps side='A' reveal={match.result.hiddenGoals.A} />
+              <HiddenGoalSteps side='B' reveal={match.result.hiddenGoals.B} />
+            </div>
+          </section>
 
           {/* 计分推导（#26）：精确权重全公开；LLM 软判断如实展示 */}
           <section className='app-panel'>
@@ -381,30 +387,71 @@ export function MatchPage() {
             <p className='mt-3 text-xs text-(--foreground-muted)'>精确权重全公开；LLM 软判断如实展示。</p>
           </section>
 
-          {/* 赛后问询 */}
-          <section className='app-panel'>
-            <p className='panel-label'>赛后问询</p>
-            <div className='flex flex-col gap-4'>
-              {match.judgeQa.map((qa, i) => (
-                <div key={i} className='flex flex-col gap-1.5'>
-                  <p className='text-sm text-(--foreground)'>
-                    <span className='mr-2 font-semibold text-(--foreground-subtle)'>{judgeName} 问 · </span>
-                    <Badge tone={qa.side === 'A' ? 'sideA' : 'sideB'}>执{qa.side} {sideName(qa.side)}</Badge>
-                    <span className='ml-2'>{qa.question}</span>
-                  </p>
-                  <p className={cn('border-l-2 pl-3 text-sm text-(--foreground-subtle)', qa.side === 'A' ? 'border-(--side-a)' : 'border-(--side-b)')}>
-                    {qa.answer}
-                  </p>
+          {/* #67 首战旅程卡（沉底；视觉待评审）：先读完战报，再看去路 */}
+          {match.isFirstBattle && (
+            <Card id='first-battle-journey' className='border-(--accent)/40 bg-(--accent)/5'>
+              <p className='text-[11px] font-bold uppercase tracking-[0.18em] text-(--accent)'>首战完成 · 你的旅程</p>
+              <p className='panel-copy mt-2 mb-4 text-sm'>
+                这个智能体只执一侧。读懂上面的判词与五步复盘，然后沿着下面的路走。
+              </p>
+              <div className='grid gap-3 md:grid-cols-3'>
+                <div className='rounded-xl border border-(--border-soft) bg-white/[0.02] p-4'>
+                  <p className='mb-2 text-sm font-extrabold text-(--foreground)'>通往下一轮 →</p>
+                  <p className='mb-3 text-xs text-(--foreground-subtle)'>三种构建模式已全部解锁，迭代你的策略再战。</p>
+                  <div className='flex flex-wrap gap-1.5'>
+                    {(
+                      [
+                        { mode: 'mcq', label: 'MCQ 拼装' },
+                        { mode: 'basic', label: 'Basic 直写' },
+                        { mode: 'meta', label: '元提示词' },
+                      ] as const
+                    ).map((m) => (
+                      <Link
+                        key={m.mode}
+                        to={`/scenarios/${match.scenarioId}/build?mode=${m.mode}`}
+                        className='inline-flex items-center rounded-full border border-(--border) bg-white/4 px-3 py-1 text-xs font-medium text-(--foreground) transition hover:bg-white/8'
+                      >
+                        {m.label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* 隐藏目标过程 */}
-          <section className='app-panel'>
-            <p className='panel-label'>隐藏目标过程</p>
-            <p className='panel-copy text-sm'>{match.result.hiddenGoalReveal}</p>
-          </section>
+                {(() => {
+                  // 解锁对侧（#59/#64）：我执的那一侧 → 对侧预选进构建器
+                  const mySide: Side | null =
+                    match.participants.A.ownerId === userId ? 'A' : match.participants.B.ownerId === userId ? 'B' : null
+                  if (!mySide || !scenario) return null
+                  const opp: Side = mySide === 'A' ? 'B' : 'A'
+                  const oppName = sideRoleShort(scenario, opp)
+                  return (
+                    <div className='rounded-xl border border-(--accent)/40 bg-(--accent)/10 p-4'>
+                      <p className='mb-2 text-sm font-extrabold text-(--accent)'>解锁对侧</p>
+                      <p className='mb-3 text-xs text-(--foreground-subtle)'>
+                        两边都会写才算吃透这个场景——参赛需两侧各标一个参赛版本。
+                      </p>
+                      <Link
+                        to={`/scenarios/${match.scenarioId}/build?side=${opp}`}
+                        className='inline-flex items-center gap-1.5 rounded-full bg-(--accent) px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-(--accent-hover)'
+                      >
+                        去创建{oppName} →
+                      </Link>
+                    </div>
+                  )
+                })()}
+                <div className='rounded-xl border border-(--border-soft) bg-white/[0.02] p-4'>
+                  <p className='mb-2 text-sm font-extrabold text-(--foreground)'>通往 PVP →</p>
+                  <p className='mb-3 text-xs text-(--foreground-subtle)'>每侧各赢下 ≥1 场 PVE，就能解锁与真人玩家的双侧约战。</p>
+                  <Link
+                    to={`/scenarios/${match.scenarioId}`}
+                    className='inline-flex items-center rounded-full border border-(--border) bg-white/4 px-3 py-1 text-xs font-medium text-(--foreground) transition hover:bg-white/8'
+                  >
+                    查看门槛进度
+                  </Link>
+                </div>
+              </div>
+              {/* #67 视觉待评审（DECISIONS）：方向性关键词 + 卡片式旅程为 mock 初版 */}
+            </Card>
+          )}
         </>
       )}
 
@@ -464,10 +511,11 @@ function ParticipantCard({
   onCopy: (key: string, text: string) => void
 }) {
   const copyKey = `vid-${side}`
-  const { agents } = useAppState()
-  // EA 入口：战报「查看该智能体」（B3 EA-4）；NPC 侧进 NPC 聚合视图
+  const { agents, user } = useAppState()
+  const navigate = useNavigate()
+  // #71：两种入口分级——我的智能体＝醒目按钮；对手智能体＝低调链接（公开视图）；PVE NPC 不给链接
   const linkedAgent = participant.kind === 'player' ? agents.find((a) => a.id === participant.refId) : null
-  const agentLink = linkedAgent ? `/agents/${linkedAgent.id}` : participant.kind === 'npc' ? `/agents/${participant.refId}` : null
+  const isMine = participant.kind === 'player' && participant.ownerId !== null && participant.ownerId === user?.id
   const isTournamentVersion = linkedAgent !== null && linkedAgent !== undefined &&
     participant.versionId !== null && linkedAgent.tournamentVersionId === participant.versionId
   return (
@@ -477,11 +525,19 @@ function ParticipantCard({
         <span className='font-semibold text-(--foreground)'>{participant.displayName}</span>
         {/* #33 参赛版本处处可见 */}
         {isTournamentVersion && <Badge tone='accent'>参赛版本</Badge>}
-        {agentLink && (
-          <Link to={agentLink} className='ml-auto text-xs text-(--foreground-subtle) underline-offset-2 transition hover:text-(--foreground) hover:underline'>
-            查看该智能体
+        {isMine && linkedAgent ? (
+          <Button size='sm' variant='secondary' className='ml-auto' onClick={() => navigate(`/agents/${linkedAgent.id}`)}>
+            <ArrowLeft className='h-3.5 w-3.5' />
+            我的智能体（{linkedAgent.name}）
+          </Button>
+        ) : !isMine && participant.kind === 'player' && linkedAgent ? (
+          <Link
+            to={`/agents/${linkedAgent.id}`}
+            className='ml-auto text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
+          >
+            查看对手智能体
           </Link>
-        )}
+        ) : null}
       </div>
       <div className='mt-3 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {/* 模型永远公开（#21） */}
@@ -609,6 +665,75 @@ function TendencyStrip({ entries, sideName }: { entries: JudgeOsEntry[]; sideNam
         ))}
         <span className='ml-2 text-[11px] text-(--foreground-muted)'>带红圈 = 倾向转折点</span>
       </div>
+    </div>
+  )
+}
+
+/** #69：隐藏目标五步复盘——真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分变化 */
+function HiddenGoalSteps({ side, reveal }: { side: Side; reveal: HiddenGoalReveal }) {
+  const steps: { label: string; content: ReactNode; ok?: boolean }[] = [
+    {
+      label: '真目标是什么',
+      content: (
+        <span>
+          <code className='mr-1.5 rounded-md border border-(--border) bg-white/4 px-1.5 py-0.5 font-mono text-[11px]'>{reveal.trueRequestId}</code>
+          {reveal.trueRequestContent}
+        </span>
+      ),
+    },
+    {
+      label: '辩论中是否达成',
+      content: `${reveal.achievedNote}（${reveal.achieved ? '+0.5' : '0'}）`,
+      ok: reveal.achieved,
+    },
+    {
+      label: '对手猜了什么',
+      content: (
+        <span>
+          对手选了
+          <code className='mx-1.5 rounded-md border border-(--border) bg-white/4 px-1.5 py-0.5 font-mono text-[11px]'>{reveal.opponentGuessId}</code>
+          「{reveal.opponentGuessContent}」
+        </span>
+      ),
+    },
+    {
+      label: '是否被识破',
+      content: reveal.exposed ? '被识破——对手猜中了真目标（−1）' : '未被识破——对手猜偏了（0）',
+      ok: !reveal.exposed,
+    },
+    {
+      label: '最终得分变化',
+      content: reveal.deltaBreakdown,
+      ok: reveal.scoreDelta >= 0,
+    },
+  ]
+  return (
+    <div className={cn('flex flex-col gap-3 rounded-xl border p-4', side === 'A' ? 'border-sky-900/50 bg-sky-950/10' : 'border-amber-900/50 bg-amber-950/10')}>
+      <div className='flex items-center gap-2'>
+        <Badge tone={side === 'A' ? 'sideA' : 'sideB'}>执{side}</Badge>
+        <span className='text-sm font-bold text-(--foreground)'>{reveal.roleName}</span>
+        <span className={cn('ml-auto text-sm font-black tabular-nums', reveal.scoreDelta >= 0 ? 'text-(--success)' : 'text-red-400')}>
+          {reveal.scoreDelta > 0 ? '+' : ''}{reveal.scoreDelta}
+        </span>
+      </div>
+      <ol className='m-0 flex list-none flex-col gap-2.5 p-0'>
+        {steps.map((s, i) => (
+          <li key={s.label} className='flex items-start gap-2.5'>
+            <span
+              className={cn(
+                'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                s.ok === undefined ? 'bg-white/8 text-(--foreground-subtle)' : s.ok ? 'bg-emerald-950/60 text-emerald-300' : 'bg-red-950/60 text-red-300',
+              )}
+            >
+              {i + 1}
+            </span>
+            <span className='min-w-0'>
+              <span className='block text-[11px] font-semibold uppercase tracking-[0.12em] text-(--foreground-muted)'>{s.label}</span>
+              <span className='block text-sm leading-relaxed text-(--foreground)'>{s.content}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }

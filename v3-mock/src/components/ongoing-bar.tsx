@@ -1,18 +1,41 @@
 // 「进行中的对战」条（核心组件，A1/A5）：装着你已发起对局卡的横条，可留可走。
 // mock 简化：不做侧抽屉观战，点卡片直达战报（FA 覆盖观战）。
-import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+// #72：只在有派发功能的页面渲染（DA/构建器/EA·OS 上下文/我的智能体），不再全局；
+//      空则自动隐藏；折叠开关状态持久（localStorage）。
+import { ChevronDown, History } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { cn } from '../lib/cn'
 import { SCENARIOS, useAppState } from '../mock/store'
 import type { Match, Side } from '../mock/types'
 import { Badge } from './ui'
 
+const COLLAPSE_KEY = 'axiia-v3-mock-ongoing-collapsed'
+
+/** #72：派发处可见（A1/A5 原意）——取代 v3.3 决定 S1 的「全局渲染」 */
+const DISPATCH_ROUTES = [
+  /^\/scenarios\/[^/]+$/, // DA 场景介绍
+  /^\/scenarios\/[^/]+\/build$/, // E 构建器
+  /^\/agents\/[^/]+$/, // EA（OS 面板上下文）
+  /^\/my-agents$/, // 我的智能体（含出战入口，#73）
+  /^\/express/, // 首战快速通道
+]
+
 export function OngoingBar() {
   const { user, matches } = useAppState()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
 
   if (!user) return null
+  if (!DISPATCH_ROUTES.some((r) => r.test(location.pathname))) return null
 
   const mine = matches.filter((m) => m.initiatorId === user.id)
   const active = mine.filter((m) => m.status !== 'done')
@@ -22,15 +45,47 @@ export function OngoingBar() {
     .slice(0, 3)
   const cards = [...active, ...recentDone]
 
+  // 空则自动隐藏（#72）
   if (cards.length === 0) return null
 
+  const toggle = () => {
+    setCollapsed((c) => {
+      const next = !c
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0')
+      } catch {
+        // 忽略存储失败
+      }
+      return next
+    })
+  }
+
   return (
-    <section aria-label='进行中的对战'>
-      <div className='flex gap-3 overflow-x-auto pb-1'>
-        {cards.map((m) => (
-          <MatchCard key={m.id} match={m} userId={user.id} onOpen={() => navigate(`/matches/${m.id}`)} />
-        ))}
+    <section aria-label='进行中的对战' className='flex flex-col gap-2'>
+      <div className='flex items-center gap-2'>
+        <button
+          type='button'
+          onClick={toggle}
+          className='inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-(--foreground-muted) transition hover:text-(--foreground)'
+        >
+          <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', collapsed && '-rotate-90')} />
+          进行中的对战（{active.length} 进行 · {recentDone.length} 刚完成）
+        </button>
+        <Link
+          to='/history'
+          className='ml-auto inline-flex items-center gap-1 text-[11px] text-(--foreground-muted) transition hover:text-(--foreground)'
+        >
+          <History className='h-3 w-3' />
+          全部历史
+        </Link>
       </div>
+      {!collapsed && (
+        <div className='flex gap-3 overflow-x-auto pb-1'>
+          {cards.map((m) => (
+            <MatchCard key={m.id} match={m} userId={user.id} onOpen={() => navigate(`/matches/${m.id}`)} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

@@ -241,6 +241,33 @@ export function BuilderPage() {
   const modelLabel = CONFIG.modelList.find((m) => m.id === model)?.label ?? model
   const questions = scenario.mcqDeck.filter((q) => q.side === currentSide)
 
+  // #68：系统角色模板预览（只读）——把占位符替换成本侧语境，便于理解「策略会被合并到哪里」
+  const templatePreview = scenario.agentPromptTemplate
+    .replaceAll('{{roleName}}', myCard.name)
+    .replaceAll('{{opponentName}}', oppCard.name)
+    .replaceAll('{{turnCount}}', String(scenario.dialogueTurns))
+    .replaceAll('{{requests}}', scenario.requests[currentSide].map((r) => `- ${r.id}：${r.content}（真/假 每局随机指派）`).join('\n'))
+    .replaceAll('{{opponentRequests}}', scenario.requests[otherSide(currentSide)].map((r) => `- ${r.id}：${r.content}`).join('\n'))
+    .replaceAll('{{strategy}}', '（← 你在下方编写的策略会填进这里）')
+
+  // #68：固定说明 + 可折叠只读模板
+  const roleTemplateNote = (
+    <div className='flex flex-col gap-2 rounded-xl border border-(--border-soft) bg-white/[0.02] px-4 py-3'>
+      <p className='m-0 text-xs text-(--foreground-subtle)'>
+        <span className='font-semibold text-(--foreground)'>你只需编写策略；比赛时系统会自动把它与角色模板合并。</span>
+        场景背景、请求清单、辩论规则与边界约束都已在模板里。
+      </p>
+      <details className='group'>
+        <summary className='cursor-pointer text-xs font-semibold text-(--foreground-muted) transition hover:text-(--foreground)'>
+          查看系统角色模板（仅供查看，无需在策略中重复）
+        </summary>
+        <pre className='mt-2 max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg border border-(--border-soft) bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-(--foreground-subtle)'>
+          {templatePreview}
+        </pre>
+      </details>
+    </div>
+  )
+
   const mcqColumn = (
     <div className='flex flex-col gap-4'>
       <div className='flex items-center justify-between'>
@@ -250,6 +277,7 @@ export function BuilderPage() {
         </div>
         <LimitCounter units={units} />
       </div>
+      {roleTemplateNote}
       <div className='flex flex-col gap-3'>
         {questions.map((q) => (
           <div key={q.id} className='app-panel'>
@@ -288,15 +316,16 @@ export function BuilderPage() {
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
           <Badge tone={currentSide === 'A' ? 'sideA' : 'sideB'}>执{currentSide}</Badge>
-          <span className='text-sm font-semibold text-(--foreground)'>{myCard.name} 提示词</span>
+          <span className='text-sm font-semibold text-(--foreground)'>{myCard.name} 策略</span>
         </div>
         <LimitCounter units={units} />
       </div>
+      {roleTemplateNote}
       <textarea
         className='app-textarea'
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={`写给「${myCard.name}」的纯文本提示词：论证路线、应对策略、隐藏情报的使用时机……`}
+        placeholder={`你的策略（只写策略，无需重复模板内容）：论证路线、为真目标铺垫的节奏、应对${oppCard.name}攻击的方式……`}
       />
     </div>
   )
