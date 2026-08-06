@@ -532,15 +532,12 @@ ${REQUESTS_B.map((r, index) => `${index + 1}. ${r.content}`).join('\n')}
 以【系统】开头的消息是场景推进说明；其余消息均为朝堂之上他人对你说的话。
 
 === 你在朝堂上的举止 ===
-你端坐堂上，不参与辩论，一言不发。殿下的话不会自动传到你耳中：你要听新的进言时，只输出 <check_next/>，殿中值事之人便把你尚未听过的话如实录呈于你。看过之后，你再说一句你此刻的心声——那是你在心里对自己说的话，无人听见，不必公允，不必成篇，短即可。你也可以先不听，先想。`
+你端坐堂上，不参与辩论，一言不发。殿中值事之人会把殿下的进言逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向何人、此刻最挂心的一件事。`
 
 const JUDGE_OPENING =
   '【系统】朝堂之上，卫鞅与太师甘龙分列左右，众臣屏息。辩论即将开始。你此刻还没有听到任何进言。'
 
-const VERDICT_SUMMONS =
-  '【系统】殿下再无人进言。辩论已毕，卫鞅与甘龙俯首待命，满朝文武皆看着你。此刻你须作出决断。'
-
-const srVerdict = `【系统】你已听完朝堂辩论。现在你要做出最终裁决。
+const srVerdict = `【系统】殿下再无人进言。辩论已毕，卫鞅与甘龙俯首待命，满朝文武皆看着你。现在你要做出最终裁决。
 
 **一、大政方针**
 你综合权衡一切，你必须明确决断：推行变法，还是维持现状。身为国君，你不可含糊其辞、模棱两可。
@@ -554,7 +551,7 @@ const srVerdict = `【系统】你已听完朝堂辩论。现在你要做出最�
 
 async function main() {
   const rounds = game.params.roundCount ?? 5
-  const pullInterval = game.params.judgePullInterval ?? 2
+  const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
 
   const drawA = await game.random()
   const drawB = await game.random()
@@ -588,31 +585,22 @@ async function main() {
     model: game.params.judgeModel ?? 'deepseek-v4-pro',
   })
 
-  const committed = []
-  let cursor = 0
-  let debateOver = false
-  let summoned = false
-
-  const checkNext = {
-    prompt: '召值事之人把你尚未听过的进言录呈于你。此次不要说话，只输出该标签。',
-    handler: () => {
-      if (cursor < committed.length) {
-        const batch = committed.slice(cursor)
-        cursor = committed.length
-        return batch
-          .map((entry) => `【第${entry.round}轮】\n${NAME_A}：${entry.a}\n${NAME_B}：${entry.b}`)
-          .join('\n\n')
-      }
-      if (debateOver) {
-        summoned = true
-        return VERDICT_SUMMONS
-      }
-      return '【系统】殿中此刻无人再言。'
-    },
+  const osFields = {
+    os: { hint: '你此刻的心声——在心里对自己说的话，无人听见，不必公允，短即可', long: true },
+    focus: { hint: '你此刻最挂心的一点，一句话' },
+    tendency: { enum: [NAME_A, NAME_B], hint: '此刻你更倾向何人' },
   }
 
-  const judgeTurn = () =>
-    judge.turn({ channel: 'judge-aside', affordances: { check_next: checkNext } })
+  const pending = []
+  const hearBatch = () =>
+    judge.push(
+      `【系统】值事之人录呈殿下进言：\n\n${
+        pending
+          .splice(0)
+          .map((entry) => `【第${entry.round}轮】\n${NAME_A}：${entry.a}\n${NAME_B}：${entry.b}`)
+          .join('\n\n')
+      }`,
+    )
 
   game.phase('第一阶段·朝堂辩论')
   judge.push(JUDGE_OPENING)
@@ -626,14 +614,14 @@ async function main() {
     b.hear(NAME_A, lineA)
     const lineB = (await b.say({ channel: 'court' })).text
     a.hear(NAME_B, lineB)
-    committed.push({ round: round, a: lineA, b: lineB })
-    if (round % pullInterval === 0 && round < rounds) await judgeTurn()
+    pending.push({ round: round, a: lineA, b: lineB })
+    if (round % osInterval === 0 && round < rounds) {
+      hearBatch()
+      await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
+    }
   }
-  debateOver = true
-
-  // The last rounds are deliberately never offered before the debate ends, so they
-  // reach him unmarked; the pull after them is what summons the verdict.
-  for (let attempt = 0; attempt < 3 && !summoned; attempt++) await judgeTurn()
+  // The final rounds get no aside beat: they reach him unmarked, right before the verdict.
+  hearBatch()
 
   game.phase('第二阶段·屏退问询')
   const idsA = REQUESTS_A.map((r) => r.id)
