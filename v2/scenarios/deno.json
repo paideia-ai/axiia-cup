@@ -1,0 +1,23 @@
+{
+  "owner": "axiia",
+  "fmt": {
+    "semiColons": false,
+    "singleQuote": true,
+    "exclude": [
+      "scenarios"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    }
+  },
+  "tasks": {
+    "validate": "deno run --allow-read --allow-env tools/validate.ts",
+    "fmt": "deno fmt --check .",
+    "lint": "deno lint --rules-exclude=no-unused-vars scenarios && deno lint tools types",
+    "push": "deno run --allow-read --allow-env --allow-net tools/push.ts"
+  }
+}
