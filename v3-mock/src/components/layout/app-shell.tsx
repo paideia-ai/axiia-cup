@@ -1,4 +1,4 @@
-import { Bot, LayoutDashboard, Trophy, UserRound } from 'lucide-react'
+import { Bot, History, LayoutDashboard, Trophy, UserRound } from 'lucide-react'
 import type { PropsWithChildren } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
@@ -8,12 +8,13 @@ import { OngoingBar } from '../ongoing-bar'
 import { Button } from '../ui'
 import { BellIndicator } from './bell'
 
-// 全局头部（B8）；#73：一级导航＝场景 · 我的智能体 · 排名（+ 铃铛＝通知、头像＝设置）。
-// 历史页从一级导航移除（入口在「进行中的对战」条，#72）。
+// 全局头部（B8）；#73/#74：一级导航＝场景 · 我的智能体 · 排名 · 历史（+ 铃铛＝通知、头像＝设置）。
+// #74（ks 原图纠偏，Yihan ✅ 08-07）：历史保留一级导航、居最右；桌面与移动底栏一致。
 const navigation = [
   { to: '/scenarios', label: '场景', icon: LayoutDashboard },
   { to: '/my-agents', label: '我的智能体', icon: Bot },
   { to: '/rankings', label: '排名', icon: Trophy },
+  { to: '/history', label: '历史', icon: History },
 ]
 
 export function AppShell({ children }: PropsWithChildren) {

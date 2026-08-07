@@ -85,10 +85,23 @@ export function AgentViewPage() {
           </div>
         </div>
         {isOwner && (
-          <Button onClick={() => setOsOpen(true)}>
-            <Swords className='h-4 w-4' />
-            出战
-          </Button>
+          <div className='flex items-center gap-2'>
+            {/* #75（ks 手绘位置）：页头编辑——载最新版本进构建器，保存即另存新版本 */}
+            <Button
+              variant='secondary'
+              onClick={() =>
+                navigate(
+                  `/scenarios/${agent.scenarioId}/build?agent=${agent.id}${versions[0] ? `&version=${versions[0].id}` : ''}`,
+                )}
+            >
+              <Pencil className='h-4 w-4' />
+              编辑
+            </Button>
+            <Button onClick={() => setOsOpen(true)}>
+              <Swords className='h-4 w-4' />
+              出战
+            </Button>
+          </div>
         )}
       </div>
 
