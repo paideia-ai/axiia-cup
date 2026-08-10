@@ -230,8 +230,10 @@ export interface Match {
   judgeOs: JudgeOsEntry[]
   /** 裁判 OS ②trace 层：真实 thinking trace，debug mode 公开（#22 修订） */
   judgeTrace: string | null
-  /** 己方 OS：真实 thinking trace，仅所有者 + debug mode（#20/#22） */
+  /** 己方 OS：真实 thinking trace，仅所有者 + debug mode（#20/#22）；NPC 侧＝官方运行，trace 公开（#80） */
   selfTrace: { A: string | null; B: string | null }
+  /** trace 来源（R11/D10 如实标注）：native=模型原生 thinking；generated=独立 prompt 生成回退 */
+  traceKind: { judge: 'native' | 'generated'; A: 'native' | 'generated' | null; B: 'native' | 'generated' | null }
   judgeQa: JudgeQaEntry[]
   result: MatchResult | null
 }

@@ -1,6 +1,6 @@
-# v3-mock — Axiia Cup v3.3 规格的纯前端 mock
+# v3-mock — Axiia Cup v3.4 规格的纯前端 mock
 
-按 `axiia-cup-uiux/UI-Doc-v3.3.md`（2026-08-04 CONFIRMED 版）实现的**完整前端 mock**：
+按 `axiia-cup-uiux/UI-Doc-v3.4.md`（per-side，#55–#80 全部确认）实现的**完整前端 mock**（v3.3 双侧模型已被推翻）：
 无后端，所有数据与「对局执行」由内置假引擎模拟（localStorage 持久化）。
 参考 `v2/web` 的技术栈与视觉语言，但**不共享任何代码**。
 
@@ -19,7 +19,7 @@ npm run build
 - **老玩家闭环**：`/login` → 「使用演示账号登录」→ 场景 D → DA 四层 → 构建器 E → 保存 →
   EA「选择对手」→ OS 面板派发 → 进行中的对战条 → 战报 FA（实况/回放/debug mode）。
 - **新手快速通道**（A3）：`/register` 注册（任意邀请码）→ 自动落入 `/express` 简化版 DA →
-  express 构建（只填一方，MCQ 预填）→ 保存并开战 → 直接进实况 → 首战完成后解锁三模式。
+  express 构建（创建单侧 agent #57，执方来自新手预设，MCQ 预填）→ 保存并开战 → 直接进实况 → 首战完成后解锁三模式。
 - 演示控制在 `/settings`（重置数据、模拟赛事阻挡试炼 #47）。
 
 ## 文档

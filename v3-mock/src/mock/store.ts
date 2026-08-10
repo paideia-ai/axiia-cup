@@ -71,6 +71,11 @@ function now(): string {
 
 // ---------- 种子数据 ----------
 
+/** trace 来源判定（mock 简化，R11/D10）：deepseek/kimi 系有原生 thinking，其余走独立 prompt 生成回退 */
+function traceKindFor(model: string): 'native' | 'generated' {
+  return model.includes('deepseek') || model.includes('kimi') ? 'native' : 'generated'
+}
+
 function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: string): Match {
   const sc = scenarioOf(scenarioId)
   const match: Match = {
@@ -93,6 +98,7 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
     judgeOs: [],
     judgeTrace: null,
     selfTrace: { A: null, B: null },
+    traceKind: { judge: 'generated', A: null, B: null },
     judgeQa: [],
     result: null,
   }
@@ -104,6 +110,7 @@ function seedDemoMatch(id: string, scenarioId: string, aName: string, bName: str
   match.result = genResult(match)
   match.judgeTrace = genJudgeTrace(match)
   match.selfTrace = { A: genSelfTrace(match, 'A'), B: genSelfTrace(match, 'B') }
+  match.traceKind = { judge: 'native', A: traceKindFor(match.participants.A.model), B: traceKindFor(match.participants.B.model) }
   match.status = 'done'
   match.finishedAt = match.createdAt
   return match
@@ -632,6 +639,7 @@ class MockStore {
       judgeOs: [],
       judgeTrace: null,
       selfTrace: { A: null, B: null },
+      traceKind: { judge: 'generated' as const, A: null, B: null },
       judgeQa: [],
       result: null,
     }
@@ -716,6 +724,7 @@ class MockStore {
       judgeOs: [],
       judgeTrace: null,
       selfTrace: { A: null, B: null },
+      traceKind: { judge: 'generated' as const, A: null, B: null },
       judgeQa: [],
       result: null,
     }
@@ -767,9 +776,12 @@ class MockStore {
       } else {
         match.result = genResult(match)
         match.judgeTrace = genJudgeTrace(match)
-        match.selfTrace = {
-          A: match.participants.A.kind === 'player' ? genSelfTrace(match, 'A') : null,
-          B: match.participants.B.kind === 'player' ? genSelfTrace(match, 'B') : null,
+        // #80：NPC 侧＝官方运行，trace 同样生成（debug 下公开）
+        match.selfTrace = { A: genSelfTrace(match, 'A'), B: genSelfTrace(match, 'B') }
+        match.traceKind = {
+          judge: 'native',
+          A: traceKindFor(match.participants.A.model),
+          B: traceKindFor(match.participants.B.model),
         }
         match.status = 'done'
         match.finishedAt = now()

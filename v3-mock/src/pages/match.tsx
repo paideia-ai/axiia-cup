@@ -176,7 +176,7 @@ export function MatchPage() {
             title='受限项只有三样：提示词、diff、己方 OS trace（仅所有者）；其余一律可见'
           >
             <Bug className='h-3.5 w-3.5' />
-            {state.debugMode ? 'debug mode 开' : 'debug mode'}
+            {state.debugMode ? '调试模式 · 开' : '调试模式'}
           </Button>
           {match.status === 'done' && !replaying && (
             <Button size='sm' variant='secondary' onClick={() => setReplay({ active: true, cursor: 0, paused: false, anchor: null })}>
@@ -460,11 +460,12 @@ export function MatchPage() {
         <section className='flex flex-col gap-4 rounded-2xl border border-dashed border-(--border) p-5'>
           <p className='panel-label mb-0 flex items-center gap-2'>
             <Bug className='h-3.5 w-3.5' />
-            debug mode · 内心 OS trace 层
+            调试模式 · 内心 OS trace 层（trace 来源如实标注：原生 / 生成）
           </p>
           <TraceBlock
             title={`裁判真实 thinking trace（公开）`}
             trace={match.judgeTrace}
+            kind={match.traceKind?.judge ?? 'generated'}
             emptyNote='裁判 trace 在判决生成后可见。'
           />
           {(['A', 'B'] as const).map((s) => {
@@ -477,9 +478,10 @@ export function MatchPage() {
                   {p.displayName} · 己方 OS trace
                 </p>
                 {p.kind === 'npc' ? (
-                  <p className='text-xs text-(--foreground-muted)'>PVE-NPC 侧无己方 OS trace。</p>
+                  /* #80：NPC 即官方运行——trace 归官方层，debug 下公开（同裁判 trace ②） */
+                  <TraceBlock title='NPC（官方）真实 thinking trace（公开）' trace={match.selfTrace[s]} kind={match.traceKind?.[s] ?? 'generated'} emptyNote='对局完成后生成。' />
                 ) : isOwner ? (
-                  <TraceBlock title='己方真实 thinking trace（仅你可见）' trace={match.selfTrace[s]} emptyNote='对局完成后生成。' />
+                  <TraceBlock title='己方真实 thinking trace（仅你可见）' trace={match.selfTrace[s]} kind={match.traceKind?.[s] ?? 'generated'} emptyNote='对局完成后生成。' />
                 ) : (
                   <p className='inline-flex items-center gap-1.5 text-xs text-(--foreground-muted)'>
                     <Lock className='h-3.5 w-3.5' />
@@ -738,7 +740,7 @@ function HiddenGoalSteps({ side, reveal }: { side: Side; reveal: HiddenGoalRevea
   )
 }
 
-function TraceBlock({ title, trace, emptyNote }: { title: string; trace: string | null; emptyNote: string }) {
+function TraceBlock({ title, trace, kind, emptyNote }: { title: string; trace: string | null; kind?: 'native' | 'generated' | null; emptyNote: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div className='rounded-xl border border-(--border-soft) bg-white/[0.02]'>
@@ -747,7 +749,12 @@ function TraceBlock({ title, trace, emptyNote }: { title: string; trace: string 
         onClick={() => setOpen((o) => !o)}
         className='flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs font-semibold text-(--foreground-subtle) transition hover:text-(--foreground)'
       >
-        {title}
+        <span className='inline-flex items-center gap-2'>
+          {title}
+          {/* R11/D10：trace 来源徽标——generated 必须如实标注，不冒充原生思考 */}
+          {kind === 'native' && <Badge tone='success'>原生</Badge>}
+          {kind === 'generated' && <Badge tone='accent'>生成</Badge>}
+        </span>
         <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
       </button>
       {open &&
