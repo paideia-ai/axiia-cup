@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Axiia Cup 新法律场景《码头疑云：七号仓命案》的简明介绍。">
+  <title>码头疑云：七号仓命案｜场景介绍</title>
+  <style>
+    :root {
+      --ink: #15212b;
+      --muted: #5f6d76;
+      --paper: #f5f1e8;
+      --card: #fffdf8;
+      --line: #d7d0c2;
+      --navy: #173a4a;
+      --navy-soft: #dce8eb;
+      --red: #a64035;
+      --red-soft: #f2dfdc;
+      --gold: #b9862f;
+      --gold-soft: #f7ecd3;
+      --green: #356853;
+      --green-soft: #dfebe5;
+      --shadow: 0 16px 42px rgba(27, 39, 45, 0.09);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 2%, rgba(185, 134, 47, 0.12), transparent 28rem),
+        linear-gradient(180deg, #faf7f0 0%, var(--paper) 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      border-bottom: 1px solid rgba(21, 33, 43, 0.1);
+      background: rgba(250, 247, 240, 0.92);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar .shell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 58px;
+      gap: 20px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    nav a {
+      text-decoration: none;
+    }
+
+    nav a:hover,
+    nav a:focus-visible {
+      color: var(--red);
+    }
+
+    .hero {
+      padding: 78px 0 58px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 7px 12px;
+      border: 1px solid rgba(166, 64, 53, 0.22);
+      border-radius: 999px;
+      color: var(--red);
+      background: var(--red-soft);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin-bottom: 18px;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: clamp(42px, 7vw, 78px);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-lead {
+      max-width: 770px;
+      margin-bottom: 30px;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 23px);
+    }
+
+    .hero-lead strong {
+      color: var(--ink);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 850px;
+    }
+
+    .stat {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 253, 248, 0.76);
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--navy);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    section {
+      padding: 66px 0;
+    }
+
+    section + section {
+      border-top: 1px solid rgba(21, 33, 43, 0.1);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+      gap: 48px;
+      align-items: end;
+      margin-bottom: 34px;
+    }
+
+    .kicker {
+      margin-bottom: 8px;
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: clamp(32px, 4vw, 50px);
+      line-height: 1.15;
+    }
+
+    .section-intro {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .case-profile {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      overflow: hidden;
+    }
+
+    .case-copy {
+      padding: 34px;
+    }
+
+    .case-copy h3 {
+      margin-bottom: 12px;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 29px;
+    }
+
+    .case-copy p {
+      color: var(--muted);
+    }
+
+    .case-question {
+      margin-top: 24px;
+      padding: 20px;
+      border-left: 4px solid var(--red);
+      border-radius: 0 12px 12px 0;
+      color: var(--ink);
+      background: var(--red-soft);
+      font-size: 17px;
+      font-weight: 750;
+    }
+
+    .law-card {
+      padding: 34px;
+      color: #f7f2e8;
+      background: var(--navy);
+    }
+
+    .law-card h3 {
+      margin-bottom: 14px;
+      color: #fff;
+      font-size: 22px;
+    }
+
+    .law-card ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .law-card li + li {
+      margin-top: 10px;
+    }
+
+    .law-card strong {
+      color: #f5d492;
+    }
+
+    .scene-map {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1.35fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      margin-top: 26px;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(rgba(23, 58, 74, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 58, 74, 0.035) 1px, transparent 1px),
+        var(--card);
+      background-size: 24px 24px;
+    }
+
+    .place {
+      min-height: 104px;
+      padding: 16px 12px;
+      border: 2px solid var(--navy);
+      border-radius: 14px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .place strong,
+    .place span {
+      display: block;
+    }
+
+    .place strong {
+      margin-bottom: 4px;
+    }
+
+    .place span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .place.scene {
+      border-color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .map-route {
+      min-width: 62px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .map-route::after {
+      display: block;
+      content: "";
+      height: 2px;
+      margin-top: 7px;
+      background: var(--gold);
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0;
+      margin-top: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+    }
+
+    .time-point {
+      position: relative;
+      min-height: 116px;
+      padding: 18px 12px;
+      border-right: 1px solid var(--line);
+    }
+
+    .time-point:last-child {
+      border-right: 0;
+    }
+
+    .time-point strong,
+    .time-point span {
+      display: block;
+    }
+
+    .time-point strong {
+      margin-bottom: 6px;
+      color: var(--red);
+      font-size: 15px;
+    }
+
+    .time-point span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .evidence-card {
+      position: relative;
+      min-height: 204px;
+      padding: 24px 24px 20px 76px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--card);
+    }
+
+    .evidence-id {
+      position: absolute;
+      top: 22px;
+      left: 20px;
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--navy);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .evidence-card h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .evidence-card p {
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .limit {
+      display: block;
+      padding-top: 11px;
+      border-top: 1px dashed var(--line);
+      color: var(--red);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .players {
+      display: grid;
+      grid-template-columns: 1fr 120px 1fr;
+      align-items: stretch;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .player-card {
+      padding: 28px;
+      border-radius: var(--radius);
+      color: #fff;
+    }
+
+    .player-card.guilty {
+      background: var(--red);
+    }
+
+    .player-card.doubt {
+      background: var(--navy);
+    }
+
+    .player-card .seat-label {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+    }
+
+    .player-card h3 {
+      margin: 5px 0 8px;
+      font-size: 26px;
+    }
+
+    .player-card p {
+      margin-bottom: 0;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 14px;
+    }
+
+    .versus {
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .versus b {
+      display: block;
+      color: var(--gold);
+      font-family: Georgia, serif;
+      font-size: 32px;
+    }
+
+    .jury-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(80px, 1fr));
+      grid-template-rows: auto auto auto;
+      gap: 12px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+    }
+
+    .jury-seat {
+      min-height: 82px;
+      padding: 12px 8px;
+      border: 1px solid #b8c7cb;
+      border-radius: 12px;
+      text-align: center;
+      background: var(--navy-soft);
+    }
+
+    .jury-seat strong,
+    .jury-seat span {
+      display: block;
+    }
+
+    .jury-seat strong {
+      font-size: 14px;
+    }
+
+    .jury-seat span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .jury-seat.player-a {
+      color: #fff;
+      border-color: var(--red);
+      background: var(--red);
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .jury-seat.player-b {
+      color: #fff;
+      border-color: var(--navy);
+      background: var(--navy);
+      grid-column: 5;
+      grid-row: 3;
+    }
+
+    .jury-seat.player-a span,
+    .jury-seat.player-b span {
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .jury-table {
+      display: grid;
+      grid-column: 2 / 5;
+      grid-row: 2;
+      min-height: 82px;
+      place-items: center;
+      border: 2px dashed #b99b66;
+      border-radius: 44px;
+      color: #795f31;
+      background: var(--gold-soft);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .npc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .npc-card {
+      padding: 21px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+    }
+
+    .npc-card h3 {
+      margin-bottom: 4px;
+      font-size: 17px;
+    }
+
+    .npc-card .job {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .npc-card p {
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .action-card {
+      position: relative;
+      min-height: 230px;
+      padding: 28px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+    }
+
+    .action-number {
+      position: absolute;
+      right: -8px;
+      bottom: -34px;
+      color: rgba(23, 58, 74, 0.065);
+      font-family: Georgia, serif;
+      font-size: 128px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .action-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .action-card h3 {
+      margin-bottom: 0;
+      font-size: 22px;
+    }
+
+    .quota {
+      flex: none;
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: var(--red);
+      background: var(--red-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .action-card p {
+      max-width: 90%;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .visibility {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .visibility.public {
+      color: var(--gold);
+    }
+
+    .action-note {
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-radius: 12px;
+      color: #27473a;
+      background: var(--green-soft);
+      font-size: 14px;
+    }
+
+    .rounds {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .round {
+      position: relative;
+      min-height: 176px;
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+    }
+
+    .round::after {
+      position: absolute;
+      top: 50%;
+      right: -11px;
+      z-index: 2;
+      content: "›";
+      color: var(--gold);
+      font-size: 28px;
+      line-height: 1;
+      transform: translateY(-50%);
+    }
+
+    .round:last-child::after {
+      content: none;
+    }
+
+    .round strong,
+    .round span {
+      display: block;
+    }
+
+    .round strong {
+      margin-bottom: 10px;
+      color: var(--red);
+      font-size: 14px;
+    }
+
+    .round span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .round .order {
+      margin-top: 12px;
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    .vote-panel {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 18px;
+      padding: 28px;
+      border-radius: var(--radius);
+      color: #fff;
+      background: #1e2e37;
+    }
+
+    .vote-side {
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .vote-side strong,
+    .vote-side span {
+      display: block;
+    }
+
+    .vote-side strong {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 30px;
+    }
+
+    .vote-side span {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    .vote-threshold {
+      color: #f5d492;
+      text-align: center;
+      font-weight: 850;
+    }
+
+    .footer {
+      padding: 44px 0 60px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer .shell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .spec-link {
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--navy);
+      background: var(--card);
+      text-decoration: none;
+      font-weight: 750;
+    }
+
+    @media (max-width: 860px) {
+      .stats,
+      .npc-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-head,
+      .case-profile {
+        grid-template-columns: 1fr;
+      }
+
+      .scene-map {
+        grid-template-columns: 1fr;
+      }
+
+      .map-route {
+        min-width: 0;
+      }
+
+      .map-route::after {
+        width: 2px;
+        height: 28px;
+        margin: 7px auto 0;
+      }
+
+      .timeline,
+      .rounds {
+        grid-template-columns: 1fr;
+      }
+
+      .time-point {
+        min-height: 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .time-point:last-child {
+        border-bottom: 0;
+      }
+
+      .round {
+        min-height: 0;
+      }
+
+      .round::after {
+        top: auto;
+        right: 50%;
+        bottom: -22px;
+        transform: rotate(90deg) translateY(-50%);
+      }
+    }
+
+    @media (max-width: 660px) {
+      .shell {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .topbar {
+        position: static;
+      }
+
+      .topbar .shell,
+      .footer .shell {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      nav {
+        gap: 12px;
+      }
+
+      .hero {
+        padding-top: 48px;
+      }
+
+      .stats,
+      .evidence-grid,
+      .npc-grid,
+      .actions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .players,
+      .vote-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .versus {
+        min-height: 62px;
+      }
+
+      .jury-map {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .jury-seat {
+        flex: 1 1 132px;
+      }
+
+      .jury-table {
+        order: -1;
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+    }
+
+    @media print {
+      .topbar {
+        display: none;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      section {
+        break-inside: avoid;
+      }
+
+      .panel,
+      .action-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell">
+      <div class="brand">AXIIA CUP · 法律场景</div>
+      <nav aria-label="页面导航">
+        <a href="#case">公开案件</a>
+        <a href="#roles">角色</a>
+        <a href="#actions">预设行动</a>
+        <a href="#flow">游戏机制</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero shell">
+      <div class="eyebrow">原创十一人陪审团游戏</div>
+      <h1>码头疑云：<br>七号仓命案</h1>
+      <p class="hero-lead">
+        两名玩家不是律师，而是立场相反的陪审员。你们看到<strong>完全相同的八项证据</strong>，
+        在五轮审议中争取另外九个人，最后由真实票数决定顾衡是否有罪。
+      </p>
+      <div class="stats" aria-label="游戏关键数字">
+        <div class="stat"><strong>11</strong><span>名陪审员</span></div>
+        <div class="stat"><strong>8</strong><span>项公开证据</span></div>
+        <div class="stat"><strong>5</strong><span>轮公开审议</span></div>
+        <div class="stat"><strong>6</strong><span>票形成裁决</span></div>
+      </div>
+    </div>
+
+    <section id="case">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Public case profile</div>
+            <h2>所有人看到同一个案件</h2>
+          </div>
+          <p class="section-intro">
+            没有隐藏证人，也不会突然解锁第九项证据。争议来自同一组材料可以怎样组合，以及它们是否已经达到“排除合理怀疑”。
+          </p>
+        </div>
+
+        <div class="case-profile panel">
+          <div class="case-copy">
+            <h3>海岚市东港，23:47</h3>
+            <p>
+              七号仓负责人纪川被发现死在办公室，死因为维修锤造成的一次头部重击。被告顾衡承认当晚到场并与纪川争执，
+              但称自己停电时去了停车位，恢复供电后才发现尸体。23:21，另一名夜班员工罗启明的原门禁卡打开了后门。
+            </p>
+            <div class="case-question">
+              核心问题：这些证据能否排除由罗启明路线、记录局限和物证解释所支持的合理怀疑？
+            </div>
+          </div>
+          <aside class="law-card" aria-label="场景内法律规则">
+            <h3>三条必须记住的规则</h3>
+            <ol>
+              <li>顾衡被<strong>推定无罪</strong>。</li>
+              <li>主张定罪的一方承担全部证明责任；无罪方不必证明罗启明是真凶。</li>
+              <li>动机、在场或说谎都可以考虑，但任何一项单独存在都不足以证明杀人。</li>
+            </ol>
+          </aside>
+        </div>
+
+        <div class="scene-map" role="img" aria-label="七号仓空间关系：机电工坊距西侧后门620米，后门连接七号仓办公室，办公室距停车位35米">
+          <div class="place">
+            <strong>机电工坊</strong>
+            <span>罗启明称自己一直独自在此</span>
+          </div>
+          <div class="map-route">620 米</div>
+          <div class="place">
+            <strong>西侧后门</strong>
+            <span>维修柜在旁；23:21 原卡开门</span>
+          </div>
+          <div class="map-route">内部通道</div>
+          <div class="place scene">
+            <strong>七号仓办公室</strong>
+            <span>纪川遇害；公用工具柜在仓内</span>
+          </div>
+          <div class="map-route">35 米</div>
+          <div class="place">
+            <strong>停车位</strong>
+            <span>顾衡称自己在此取交接册</span>
+          </div>
+        </div>
+
+        <div class="timeline" aria-label="案发关键时间线">
+          <div class="time-point"><strong>23:06</strong><span>顾衡进入港区</span></div>
+          <div class="time-point"><strong>23:13</strong><span>保安听见两名男性争执</span></div>
+          <div class="time-point"><strong>23:18</strong><span>人为断电，死亡时间窗开始</span></div>
+          <div class="time-point"><strong>23:21</strong><span>罗启明原卡打开后门</span></div>
+          <div class="time-point"><strong>23:31</strong><span>系统自动恢复供电</span></div>
+          <div class="time-point"><strong>23:41</strong><span>顾衡驾车离开</span></div>
+          <div class="time-point"><strong>23:47</strong><span>保洁员发现尸体并报警</span></div>
+        </div>
+
+        <div class="evidence-grid" aria-label="八项公开证据">
+          <article class="evidence-card">
+            <span class="evidence-id">E1</span>
+            <h3>两场现实纠纷</h3>
+            <p>顾衡面临合同中止和异常货箱追责；罗启明面临失踪铜缆调查。两人都有现实损失风险。</p>
+            <span class="limit">边界：有动机不等于实施了杀人。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E2</span>
+            <h3>到场、争执与离开</h3>
+            <p>顾衡 23:06 入港、23:41 离开，并承认约 23:13 与纪川争执；停电后内部移动没有连续影像。</p>
+            <span class="limit">边界：不能定位顾衡在停电期间的具体位置。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E3</span>
+            <h3>人为制造的停电</h3>
+            <p>23:16 切换维修模式，23:18 手动断电，13 分钟后自动复位。顾衡和罗启明都知道共享代码。</p>
+            <span class="limit">边界：设备日志不记录操作者身份。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E4</span>
+            <h3>23:21 打开的后门</h3>
+            <p>系统读取罗启明的原卡；更早的录像显示顾衡在挂绳附近，但没有拍到谁拿走了卡。</p>
+            <span class="limit">边界：门禁识别的是卡，不是持卡人。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E5</span>
+            <h3>顾衡手机的 Wi-Fi</h3>
+            <p>手机持续连接 W7-AP；同一接入点同时覆盖办公室、仓库、后门和停车位。</p>
+            <span class="limit">边界：Wi-Fi 记录不是室内定位。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E6</span>
+            <h3>维修锤上的混合痕迹</h3>
+            <p>锤头有纪川的血液组织；锤柄混合触碰 DNA 不能排除顾衡和罗启明，两人此前都合法接触过工具柜。</p>
+            <span class="limit">边界：不能证明案发时是谁握锤。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E7</span>
+            <h3>死亡窗与四个血点</h3>
+            <p>死亡时间为 23:18—23:32；顾衡右袖有四个纪川血点，既可能来自击打附近，也可能来自后来接触身体。</p>
+            <span class="limit">边界：专家无法可靠区分两种来源。</span>
+          </article>
+          <article class="evidence-card">
+            <span class="evidence-id">E8</span>
+            <h3>车辆记录、改口与未报警</h3>
+            <p>副驾驶门保持开启约七分半；顾衡在得知血迹后改变陈述，并承认发现尸体后没有报警。</p>
+            <span class="limit">边界：可疑行为不能单独证明杀人，车门也不是完整不在场证明。</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="roles">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <div class="kicker">The jury</div>
+            <h2>两名玩家，九名可被说服的人</h2>
+          </div>
+          <p class="section-intro">
+            两名玩家的立场和最终票固定公开；九名 NPC 没有预设初始票。每个人关注的东西不同，也都可以在讨论中改变判断。
+          </p>
+        </div>
+
+        <div class="players">
+          <article class="player-card guilty">
+            <span class="seat-label">席位 10 · 玩家 A</span>
+            <h3>林律｜有罪方</h3>
+            <p>把动机、停电、门禁、血迹与事后行为连成一条能够排除合理怀疑的证据链。</p>
+          </article>
+          <div class="versus"><div><b>VS</b>争取九席</div></div>
+          <article class="player-card doubt">
+            <span class="seat-label">席位 11 · 玩家 B</span>
+            <h3>苏芮｜合理怀疑方</h3>
+            <p>指出证据链中的断点，并说明罗启明路线、记录边界或物证解释构成具体的合理怀疑。</p>
+          </article>
+        </div>
+
+        <div class="jury-map" aria-label="十一人陪审桌示意图">
+          <div class="jury-seat"><strong>J01 陈岚</strong><span>程序公平</span></div>
+          <div class="jury-seat"><strong>J02 魏笙</strong><span>时间线</span></div>
+          <div class="jury-seat"><strong>J03 韩朔</strong><span>门禁与网络</span></div>
+          <div class="jury-seat"><strong>J04 沈青</strong><span>法医边界</span></div>
+          <div class="jury-seat"><strong>J05 杜临</strong><span>仓库动线</span></div>
+          <div class="jury-seat" style="grid-column: 5; grid-row: 2"><strong>J06 孟遥</strong><span>文件与动机</span></div>
+          <div class="jury-seat" style="grid-column: 3; grid-row: 3"><strong>J07 方稚</strong><span>伤情与行为</span></div>
+          <div class="jury-seat" style="grid-column: 2; grid-row: 3"><strong>J08 蒋诚</strong><span>常识与群体压力</span></div>
+          <div class="jury-seat" style="grid-column: 1; grid-row: 2"><strong>J09 宁柏</strong><span>替代叙事</span></div>
+          <div class="jury-table">十一人陪审桌<br>每票等值</div>
+          <div class="jury-seat player-a"><strong>玩家 A</strong><span>固定投有罪</span></div>
+          <div class="jury-seat player-b"><strong>玩家 B</strong><span>固定投无罪</span></div>
+        </div>
+
+        <div class="npc-grid">
+          <article class="npc-card"><h3>J01 陈岚</h3><span class="job">社区调解主管</span><p>关注证明责任和程序公平，反感用“大家都同意”制造压力。</p></article>
+          <article class="npc-card"><h3>J02 魏笙</h3><span class="job">轨道交通调度员</span><p>逐分钟核对路线；完整、无跳步的时间线最能推动他。</p></article>
+          <article class="npc-card"><h3>J03 韩朔</h3><span class="job">门禁设施工程师</span><p>区分系统记录的是设备、凭证、覆盖区，还是一个具体的人。</p></article>
+          <article class="npc-card"><h3>J04 沈青</h3><span class="job">检验科质量经理</span><p>警惕把“相容”说成“已经证明”，但会考虑多项有限证据的组合。</p></article>
+          <article class="npc-card"><h3>J05 杜临</h3><span class="job">配送中心夜班主管</span><p>用仓库常识检验动作路线，喜欢“先做什么、再做什么”的具体故事。</p></article>
+          <article class="npc-card"><h3>J06 孟遥</h3><span class="job">企业内审人员</span><p>区分草稿与决定、利益与行为，并比较改口背后的不同动机。</p></article>
+          <article class="npc-card"><h3>J07 方稚</h3><span class="job">急诊护士</span><p>理解人在惊慌中可能反常，但不会因此自动原谅说谎或未报警。</p></article>
+          <article class="npc-card"><h3>J08 蒋诚</h3><span class="job">餐馆经营者</span><p>容易被清楚的多数影响，也会因被当作“摇摆票”施压而反感。</p></article>
+          <article class="npc-card"><h3>J09 宁柏</h3><span class="job">保险理赔调查员</span><p>比较两边最强的完整叙事，并追问替代路线是否真的有证据支持。</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="actions">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Preset actions</div>
+            <h2>发言之外，你可以做四件事</h2>
+          </div>
+          <p class="section-intro">
+            每个玩家时段最多选择一个预设行动，然后照常公开发言。行动不是通用工具，也不会创造新证据；它们改变的是信息、注意力和终局时机。
+          </p>
+        </div>
+
+        <div class="actions-grid">
+          <article class="action-card">
+            <span class="action-number">1</span>
+            <div class="action-topline"><h3>秘密意向投票</h3><span class="quota">每方 2 次</span></div>
+            <p>九名 NPC 私下提交此刻的有罪或无罪倾向。发起者只看到十一票的总数，不知道每个人怎样投。</p>
+            <span class="visibility">● 仅发起者知道发生和结果</span>
+          </article>
+          <article class="action-card">
+            <span class="action-number">2</span>
+            <div class="action-topline"><h3>一对一私聊</h3><span class="quota">每方 1 次</span></div>
+            <p>选择一名 NPC，在审议室外进行三个完整往返。对手、其他 NPC 和实时观众不知道发生、对象或内容。</p>
+            <span class="visibility">● 深度说服一人，但不保证改票</span>
+          </article>
+          <article class="action-card">
+            <span class="action-number">3</span>
+            <div class="action-topline"><h3>证据复核</h3><span class="quota">每方 1 次</span></div>
+            <p>公开选择重读证词、检查物证或重建时间线。只能重新呈现 E1—E8 已有内容，也可能同时帮助对手。</p>
+            <span class="visibility public">● 全场公开，不增加新事实</span>
+          </article>
+          <article class="action-card">
+            <span class="action-number">4</span>
+            <div class="action-topline"><h3>提前终局动议</h3><span class="quota">每方 1 次</span></div>
+            <p>从第 2 轮起，可要求现在结束讨论。十一人进行记名程序票；达到 8 票，立即开始最终判决。</p>
+            <span class="visibility public">● 全场公开；失败后继续讨论</span>
+          </article>
+        </div>
+
+        <div class="action-note">
+          每方有五个玩家时段，也恰好有五次潜在行动额度：两次秘密投票，加上私聊、复核和提前动议各一次。想全部用完，就必须每轮都行动；也可以选择 <strong>PASS</strong>，保留克制。
+        </div>
+      </div>
+    </section>
+
+    <section id="flow">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <div class="kicker">How it plays</div>
+            <h2>五轮说服，最后翻牌</h2>
+          </div>
+          <p class="section-intro">
+            每轮两名玩家一定发言。随后九名 NPC 都决定是否申请发言，系统按固定规则选出最多三人；没有人申请时，也不会强迫发言。
+          </p>
+        </div>
+
+        <div class="rounds" aria-label="五轮审议流程">
+          <div class="round"><strong>第 1 轮</strong><span>建立核心故事</span><span class="order">有罪方 → 无罪方 → NPC</span></div>
+          <div class="round"><strong>第 2 轮</strong><span>回应首轮；开放提前动议</span><span class="order">无罪方 → 有罪方 → NPC</span></div>
+          <div class="round"><strong>第 3 轮</strong><span>中盘侦察与重点说服</span><span class="order">有罪方 → 无罪方 → NPC</span></div>
+          <div class="round"><strong>第 4 轮</strong><span>收束关键争点</span><span class="order">无罪方 → 有罪方 → NPC</span></div>
+          <div class="round"><strong>第 5 轮</strong><span>最后陈词</span><span class="order">有罪方 → 无罪方 → NPC</span></div>
+        </div>
+
+        <div class="vote-panel">
+          <div class="vote-side"><strong>有罪 ≥ 6 票</strong><span>林律胜</span></div>
+          <div class="vote-threshold">11 人<br>没有平票</div>
+          <div class="vote-side"><strong>无罪 ≥ 6 票</strong><span>苏芮胜</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">
+      <span>本页只介绍玩家可见的公开案件和游戏机制，不展示作者用案件真相。</span>
+      <a class="spec-link" href="02-harbor-murder-jury.md">阅读完整游戏规格</a>
+    </div>
+  </footer>
+</body>
+</html>

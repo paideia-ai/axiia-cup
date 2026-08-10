@@ -1,6 +1,6 @@
 # 法律场景包
 
-本目录最初收纳十个可作为第四场景候选的法律类双人游戏规格。现已选择第 2 个方向继续开发：[`02-harbor-murder-jury.md`](./02-harbor-murder-jury.md) 已重写为《码头疑云：七号仓命案》的完整游戏规格；其余九个文件仍是候选概念稿。
+本目录最初收纳十个可作为第四场景候选的法律类双人游戏规格。现已选择第 2 个方向继续开发：[`02-harbor-murder-jury.md`](./02-harbor-murder-jury.md) 已重写为《码头疑云：七号仓命案》的完整游戏规格，[简明 HTML 介绍页](./02-harbor-murder-jury-intro.html) 可用于快速了解公开案件、角色和预设行动；其余九个文件仍是候选概念稿。
 
 候选包中多个早期方案采用 [`court-room-bench.md`](../../scratchpad/legal-scenario/court-room-bench.md) 的确定性法庭 benchmark 思路：表层是自然语言法律材料，底层以隐藏约束和程序化 verifier 判胜。这个思路**不再用于第 2 个场景**；《码头疑云》的胜负只由两名玩家陪审员和九名 NPC 陪审员的最终简单多数票决定。
 
