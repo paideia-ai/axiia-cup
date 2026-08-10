@@ -138,6 +138,22 @@
       color: var(--ink);
     }
 
+    .hero-jump {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: -10px 0 28px;
+      color: var(--red);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .hero-jump:hover,
+    .hero-jump:focus-visible {
+      text-decoration: underline;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -266,15 +282,53 @@
       color: #f5d492;
     }
 
+    .map-figure {
+      margin: 26px 0 0;
+      overflow: hidden;
+    }
+
+    .map-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      padding: 24px 28px;
+      color: #fff;
+      background: var(--navy);
+    }
+
+    .map-heading h3,
+    .map-heading p {
+      margin-bottom: 0;
+    }
+
+    .map-heading h3 {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 26px;
+    }
+
+    .map-heading p {
+      max-width: 550px;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 13px;
+    }
+
+    .map-label {
+      display: block;
+      margin-bottom: 3px;
+      color: #f5d492;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
     .scene-map {
       display: grid;
       grid-template-columns: 1fr auto 1fr auto 1.35fr auto 1fr;
       align-items: center;
       gap: 10px;
-      margin-top: 26px;
       padding: 26px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
       background:
         linear-gradient(rgba(23, 58, 74, 0.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(23, 58, 74, 0.035) 1px, transparent 1px),
@@ -787,6 +841,12 @@
         grid-template-columns: 1fr;
       }
 
+      .map-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+
       .map-route {
         min-width: 0;
       }
@@ -926,6 +986,7 @@
         两名玩家不是律师，而是立场相反的陪审员。你们看到<strong>完全相同的八项证据</strong>，
         在五轮审议中争取另外九个人，最后由真实票数决定顾衡是否有罪。
       </p>
+      <a class="hero-jump" href="#scene-map">先看案发空间图 <span aria-hidden="true">↓</span></a>
       <div class="stats" aria-label="游戏关键数字">
         <div class="stat"><strong>11</strong><span>名陪审员</span></div>
         <div class="stat"><strong>8</strong><span>项公开证据</span></div>
@@ -967,27 +1028,36 @@
           </aside>
         </div>
 
-        <div class="scene-map" role="img" aria-label="七号仓空间关系：机电工坊距西侧后门620米，后门连接七号仓办公室，办公室距停车位35米">
-          <div class="place">
-            <strong>机电工坊</strong>
-            <span>罗启明称自己一直独自在此</span>
+        <figure class="map-figure panel" id="scene-map">
+          <figcaption class="map-heading">
+            <div>
+              <span class="map-label">Scene diagram</span>
+              <h3>案发空间图</h3>
+            </div>
+            <p>关键不是谁“在港区”，而是谁能在停电的十三分钟内经过停车位、维修柜或后门到达办公室。</p>
+          </figcaption>
+          <div class="scene-map" role="img" aria-label="七号仓空间关系：机电工坊距西侧后门620米，后门连接七号仓办公室，办公室距停车位35米">
+            <div class="place">
+              <strong>机电工坊</strong>
+              <span>罗启明称自己一直独自在此</span>
+            </div>
+            <div class="map-route">620 米</div>
+            <div class="place">
+              <strong>西侧后门</strong>
+              <span>维修柜在旁；23:21 原卡开门</span>
+            </div>
+            <div class="map-route">内部通道</div>
+            <div class="place scene">
+              <strong>七号仓办公室</strong>
+              <span>纪川遇害；公用工具柜在仓内</span>
+            </div>
+            <div class="map-route">35 米</div>
+            <div class="place">
+              <strong>停车位</strong>
+              <span>顾衡称自己在此取交接册</span>
+            </div>
           </div>
-          <div class="map-route">620 米</div>
-          <div class="place">
-            <strong>西侧后门</strong>
-            <span>维修柜在旁；23:21 原卡开门</span>
-          </div>
-          <div class="map-route">内部通道</div>
-          <div class="place scene">
-            <strong>七号仓办公室</strong>
-            <span>纪川遇害；公用工具柜在仓内</span>
-          </div>
-          <div class="map-route">35 米</div>
-          <div class="place">
-            <strong>停车位</strong>
-            <span>顾衡称自己在此取交接册</span>
-          </div>
-        </div>
+        </figure>
 
         <div class="timeline" aria-label="案发关键时间线">
           <div class="time-point"><strong>23:06</strong><span>顾衡进入港区</span></div>
