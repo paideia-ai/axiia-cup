@@ -1,0 +1,2314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A complete field guide to every registered two-player and multiplayer TextArena game: rules, action formats, AI experience, variants, and evaluation skills."
+    />
+    <meta name="theme-color" content="#f3f0e8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TextArena: How 66 AI games actually play" />
+    <meta
+      property="og:description"
+      content="Explore all 49 head-to-head and 17 multiplayer TextArena game families through the eyes of an AI agent."
+    />
+    <meta property="og:url" content="https://axiia-textarena-ai-games.vercel.app/" />
+    <meta property="og:image" content="https://axiia-textarena-ai-games.vercel.app/og.png" />
+    <meta
+      property="og:image:alt"
+      content="How 66 AI games actually play — a TextArena field manual."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://axiia-textarena-ai-games.vercel.app/og.png" />
+    <link rel="canonical" href="https://axiia-textarena-ai-games.vercel.app/" />
+    <title>TextArena — How 66 AI Games Actually Play</title>
+    <style>
+      :root {
+        --paper: #f3f0e8;
+        --paper-strong: #fffdf7;
+        --ink: #171820;
+        --ink-soft: #343642;
+        --muted: #74716a;
+        --line: rgba(23, 24, 32, 0.18);
+        --line-strong: rgba(23, 24, 32, 0.48);
+        --orange: #ff5b35;
+        --orange-soft: #ffd2c5;
+        --violet: #635bff;
+        --violet-soft: #dddafe;
+        --acid: #d9ff66;
+        --teal: #1c806a;
+        --gold: #f3bb38;
+        --shadow: 6px 6px 0 var(--ink);
+        --radius: 22px;
+        --page: min(1320px, calc(100vw - 40px));
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(rgba(23, 24, 32, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 24, 32, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 32px 32px;
+        font-family:
+          Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+        text-rendering: optimizeLegibility;
+      }
+
+      body.dialog-open {
+        overflow: hidden;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button,
+      a,
+      input,
+      select {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      code,
+      .mono {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      }
+
+      .skip-link {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        z-index: 200;
+        padding: 10px 14px;
+        color: white;
+        background: var(--ink);
+        transform: translateY(-160%);
+        transition: transform 150ms ease;
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 30;
+        width: var(--page);
+        margin: 18px auto 0;
+        padding: 11px 13px 11px 17px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        background: rgba(255, 253, 247, 0.88);
+        box-shadow: 3px 3px 0 var(--ink);
+        backdrop-filter: blur(14px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+        text-decoration: none;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .brand-mark {
+        width: 29px;
+        height: 29px;
+        display: grid;
+        place-items: center;
+        border-radius: 9px;
+        color: white;
+        background: var(--ink);
+        font-size: 0.65rem;
+        letter-spacing: 0;
+        transform: rotate(-4deg);
+      }
+
+      .topnav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .topnav a {
+        padding: 8px 11px;
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .topnav a:hover,
+      .topnav a:focus-visible {
+        color: var(--ink);
+        background: var(--acid);
+        outline: none;
+      }
+
+      .snapshot {
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      main {
+        overflow: clip;
+      }
+
+      .hero {
+        width: var(--page);
+        min-height: 720px;
+        margin: 0 auto;
+        padding: clamp(72px, 9vw, 126px) 0 80px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+        align-items: center;
+        gap: clamp(36px, 6vw, 90px);
+      }
+
+      .eyebrow,
+      .section-kicker {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .hero h1 {
+        max-width: 900px;
+        margin: 0;
+        font-size: clamp(3.6rem, 8.3vw, 8rem);
+        font-weight: 950;
+        letter-spacing: -0.075em;
+        line-height: 0.86;
+      }
+
+      .hero h1 .count {
+        color: var(--orange);
+        text-shadow: 3px 3px 0 var(--ink);
+      }
+
+      .hero h1 .play {
+        position: relative;
+        display: inline-block;
+        color: var(--violet);
+      }
+
+      .hero h1 .play::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -0.04em;
+        left: 0.03em;
+        height: 0.1em;
+        border-radius: 999px;
+        background: var(--acid);
+        box-shadow: 0 2px 0 var(--ink);
+        transform: rotate(-1deg);
+      }
+
+      .hero-lede {
+        max-width: 760px;
+        margin: 34px 0 0;
+        font-size: clamp(1.08rem, 1.8vw, 1.42rem);
+        letter-spacing: -0.025em;
+        line-height: 1.43;
+      }
+
+      .hero-actions {
+        margin-top: 31px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 11px;
+      }
+
+      .button {
+        min-height: 46px;
+        padding: 12px 17px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        color: var(--ink);
+        background: var(--paper-strong);
+        box-shadow: 3px 3px 0 var(--ink);
+        font-size: 0.81rem;
+        font-weight: 900;
+        text-decoration: none;
+        transition:
+          transform 140ms ease,
+          box-shadow 140ms ease;
+        cursor: pointer;
+      }
+
+      .button:hover,
+      .button:focus-visible {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 var(--ink);
+        outline: none;
+      }
+
+      .button.primary {
+        background: var(--acid);
+      }
+
+      .button.dark {
+        color: white;
+        background: var(--ink);
+      }
+
+      .hero-stats {
+        margin: 36px 0 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        max-width: 660px;
+      }
+
+      .hero-stat {
+        padding: 14px 14px 13px;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: clamp(1.6rem, 3vw, 2.35rem);
+        font-weight: 950;
+        letter-spacing: -0.055em;
+        line-height: 1;
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 750;
+      }
+
+      .terminal-card {
+        position: relative;
+        border: 1px solid var(--ink);
+        border-radius: 28px;
+        background: var(--ink);
+        box-shadow: 10px 10px 0 var(--violet);
+        color: white;
+        overflow: hidden;
+        transform: rotate(1deg);
+      }
+
+      .terminal-head {
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.17);
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.69rem;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .terminal-dots {
+        display: flex;
+        gap: 5px;
+      }
+
+      .terminal-dots i {
+        width: 8px;
+        height: 8px;
+        display: block;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+
+      .terminal-dots i:nth-child(2) {
+        background: var(--gold);
+      }
+
+      .terminal-dots i:nth-child(3) {
+        background: var(--acid);
+      }
+
+      .terminal-body {
+        padding: 25px 22px 24px;
+      }
+
+      .turn-row {
+        position: relative;
+        padding: 0 0 25px 47px;
+      }
+
+      .turn-row:last-child {
+        padding-bottom: 0;
+      }
+
+      .turn-row:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 28px;
+        bottom: 3px;
+        left: 15px;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .turn-number {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 31px;
+        height: 31px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 50%;
+        color: var(--acid);
+        font-size: 0.68rem;
+        font-weight: 900;
+      }
+
+      .turn-row strong {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .turn-row p {
+        margin: 5px 0 0;
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+
+      .turn-row code {
+        color: var(--acid);
+      }
+
+      .proof-strip {
+        border-block: 1px solid var(--ink);
+        background: var(--acid);
+      }
+
+      .proof-inner {
+        width: var(--page);
+        margin: 0 auto;
+        padding: 15px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        font-size: 0.74rem;
+        font-weight: 800;
+      }
+
+      .proof-inner p {
+        margin: 0;
+      }
+
+      .proof-inner a {
+        text-underline-offset: 3px;
+      }
+
+      .section {
+        width: var(--page);
+        margin: 0 auto;
+        padding: clamp(84px, 10vw, 132px) 0;
+      }
+
+      .section-head {
+        max-width: 900px;
+        margin-bottom: 42px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: clamp(2.7rem, 5.8vw, 5.8rem);
+        font-weight: 950;
+        letter-spacing: -0.065em;
+        line-height: 0.95;
+      }
+
+      .section-head p:not(.section-kicker) {
+        max-width: 740px;
+        margin: 22px 0 0;
+        color: var(--ink-soft);
+        font-size: clamp(1rem, 1.5vw, 1.22rem);
+      }
+
+      .ai-loop {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .loop-step {
+        min-height: 250px;
+        padding: 22px 20px;
+        border: 1px solid var(--ink);
+        border-radius: var(--radius);
+        background: var(--paper-strong);
+        box-shadow: 5px 5px 0 var(--ink);
+      }
+
+      .loop-step:nth-child(2) {
+        background: var(--orange-soft);
+      }
+
+      .loop-step:nth-child(3) {
+        background: var(--violet-soft);
+      }
+
+      .loop-step:nth-child(4) {
+        background: var(--acid);
+      }
+
+      .loop-index {
+        width: 39px;
+        height: 39px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--ink);
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 950;
+      }
+
+      .loop-step h3 {
+        margin: 31px 0 0;
+        font-size: 1.4rem;
+        font-weight: 930;
+        letter-spacing: -0.04em;
+      }
+
+      .loop-step p {
+        margin: 10px 0 0;
+        color: var(--ink-soft);
+        font-size: 0.88rem;
+      }
+
+      .loop-step code {
+        display: inline-block;
+        margin-top: 17px;
+        padding: 6px 8px;
+        border: 1px solid rgba(23, 24, 32, 0.22);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.52);
+        font-size: 0.72rem;
+      }
+
+      .mode-contrast {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .mode-panel {
+        min-height: 360px;
+        padding: clamp(25px, 3vw, 39px);
+        border: 1px solid var(--ink);
+        border-radius: 30px;
+        color: var(--ink);
+        background: var(--orange-soft);
+        box-shadow: var(--shadow);
+      }
+
+      .mode-panel.multi {
+        background: var(--violet-soft);
+      }
+
+      .mode-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.55);
+        font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .mode-label::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+
+      .mode-panel.multi .mode-label::before {
+        background: var(--violet);
+      }
+
+      .mode-panel h3 {
+        margin: 28px 0 0;
+        font-size: clamp(2rem, 3.5vw, 3.7rem);
+        font-weight: 950;
+        letter-spacing: -0.06em;
+        line-height: 0.98;
+      }
+
+      .mode-panel > p {
+        max-width: 610px;
+        margin: 18px 0 0;
+        font-size: 1rem;
+      }
+
+      .mode-metrics {
+        margin: 30px 0 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        list-style: none;
+      }
+
+      .mode-metrics li {
+        padding: 12px 14px;
+        border-left: 1px solid rgba(23, 24, 32, 0.24);
+        color: var(--ink-soft);
+        font-size: 0.76rem;
+      }
+
+      .mode-metrics strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--ink);
+        font-size: 0.88rem;
+      }
+
+      .explorer-shell {
+        width: min(1440px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: clamp(28px, 4vw, 52px);
+        border: 1px solid var(--ink);
+        border-radius: 36px;
+        background: var(--paper-strong);
+        box-shadow: 9px 9px 0 var(--ink);
+      }
+
+      .explorer-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 30px;
+      }
+
+      .explorer-head h2 {
+        max-width: 860px;
+        margin: 0;
+        font-size: clamp(3rem, 7vw, 7rem);
+        font-weight: 950;
+        letter-spacing: -0.072em;
+        line-height: 0.88;
+      }
+
+      .explorer-head h2 span {
+        color: var(--violet);
+      }
+
+      .explorer-count {
+        min-width: 150px;
+        padding: 16px 18px;
+        border: 1px solid var(--ink);
+        border-radius: 18px;
+        background: var(--acid);
+        text-align: center;
+      }
+
+      .explorer-count strong {
+        display: block;
+        font-size: 2rem;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+        line-height: 1;
+      }
+
+      .explorer-count span {
+        color: var(--ink-soft);
+        font-size: 0.7rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        margin: 38px 0 0;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) auto;
+        gap: 10px;
+        border: 1px solid var(--ink);
+        border-radius: 22px;
+        background: rgba(243, 240, 232, 0.94);
+        box-shadow: 3px 3px 0 var(--ink);
+        backdrop-filter: blur(16px);
+      }
+
+      .search-wrap {
+        position: relative;
+      }
+
+      .search-wrap::before {
+        content: "⌕";
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        color: var(--muted);
+        font-size: 1.4rem;
+        transform: translateY(-54%);
+        pointer-events: none;
+      }
+
+      .search-wrap input {
+        width: 100%;
+        height: 47px;
+        padding: 0 15px 0 44px;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        color: var(--ink);
+        background: white;
+        outline: none;
+      }
+
+      .search-wrap input:focus {
+        border-color: var(--violet);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.16);
+      }
+
+      .mode-tabs {
+        padding: 4px;
+        display: flex;
+        border: 1px solid var(--line-strong);
+        border-radius: 14px;
+        background: white;
+      }
+
+      .mode-tabs button {
+        min-height: 37px;
+        padding: 7px 12px;
+        border: 0;
+        border-radius: 10px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 0.72rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .mode-tabs button[aria-pressed="true"] {
+        color: white;
+        background: var(--ink);
+      }
+
+      .filter-row {
+        margin-top: 11px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 9px;
+      }
+
+      .select-wrap {
+        position: relative;
+      }
+
+      .select-wrap label {
+        position: absolute;
+        top: 6px;
+        left: 12px;
+        z-index: 1;
+        color: var(--muted);
+        font-size: 0.57rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      .select-wrap select {
+        width: 100%;
+        height: 52px;
+        padding: 20px 30px 5px 11px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--ink);
+        background: var(--paper);
+        font-size: 0.76rem;
+        font-weight: 800;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .select-wrap select:focus {
+        border-color: var(--violet);
+        box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.12);
+      }
+
+      .reset-button {
+        min-width: 98px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 0.72rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .reset-button:hover,
+      .reset-button:focus-visible {
+        color: var(--ink);
+        border-color: var(--ink);
+        background: var(--acid);
+        outline: none;
+      }
+
+      .results-meta {
+        margin-top: 27px;
+        padding-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 800;
+      }
+
+      .results-meta strong {
+        color: var(--ink);
+      }
+
+      .game-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+      }
+
+      .game-card {
+        min-height: 390px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--ink);
+        border-radius: 22px;
+        background: white;
+        transition:
+          transform 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .game-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 5px 5px 0 var(--ink);
+      }
+
+      .game-card[data-mode="two-player"] {
+        border-top: 7px solid var(--orange);
+      }
+
+      .game-card[data-mode="multiplayer"] {
+        border-top: 7px solid var(--violet);
+      }
+
+      .card-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .mode-chip,
+      .micro-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-soft);
+        background: var(--paper);
+        font-size: 0.62rem;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .mode-chip::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+
+      .game-card[data-mode="multiplayer"] .mode-chip::before,
+      .dialog-mode.multiplayer::before {
+        background: var(--violet);
+      }
+
+      .card-id {
+        color: var(--muted);
+        font-size: 0.65rem;
+      }
+
+      .game-card h3 {
+        margin: 22px 0 0;
+        font-size: 1.55rem;
+        font-weight: 950;
+        letter-spacing: -0.045em;
+        line-height: 1.04;
+      }
+
+      .category-label {
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 0.66rem;
+        font-weight: 850;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .card-summary {
+        margin: 15px 0 0;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        line-height: 1.48;
+      }
+
+      .card-actions {
+        margin-top: 18px;
+      }
+
+      .mini-label {
+        margin: 0 0 7px;
+        color: var(--muted);
+        font-size: 0.58rem;
+        font-weight: 900;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .token-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .action-token {
+        max-width: 100%;
+        padding: 5px 7px;
+        border: 1px solid rgba(23, 24, 32, 0.16);
+        border-radius: 7px;
+        color: var(--ink);
+        background: var(--acid);
+        font-size: 0.66rem;
+        overflow-wrap: anywhere;
+      }
+
+      .card-meta {
+        margin-top: auto;
+        padding-top: 21px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .card-footer {
+        margin-top: 14px;
+        padding-top: 14px;
+        display: flex;
+        gap: 8px;
+        border-top: 1px solid var(--line);
+      }
+
+      .card-button {
+        min-height: 38px;
+        padding: 8px 11px;
+        border: 1px solid var(--ink);
+        border-radius: 10px;
+        background: var(--paper-strong);
+        font-size: 0.69rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .card-button.open {
+        flex: 1;
+        color: white;
+        background: var(--ink);
+      }
+
+      .card-button:hover,
+      .card-button:focus-visible {
+        background: var(--acid);
+        color: var(--ink);
+        outline: none;
+      }
+
+      .empty-state,
+      .loading-state {
+        grid-column: 1 / -1;
+        padding: 70px 20px;
+        border: 1px dashed var(--line-strong);
+        border-radius: 22px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .empty-state strong,
+      .loading-state strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+        font-size: 1.25rem;
+      }
+
+      .pathway {
+        display: grid;
+        grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
+        gap: clamp(28px, 6vw, 85px);
+        align-items: start;
+      }
+
+      .pathway-copy {
+        position: sticky;
+        top: 38px;
+      }
+
+      .pathway-copy h2 {
+        margin: 0;
+        font-size: clamp(2.7rem, 5.3vw, 5.5rem);
+        font-weight: 950;
+        letter-spacing: -0.065em;
+        line-height: 0.93;
+      }
+
+      .pathway-copy p {
+        margin: 21px 0 0;
+        color: var(--ink-soft);
+      }
+
+      .path-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: pathway;
+      }
+
+      .path-item {
+        counter-increment: pathway;
+        padding: 25px 0 27px;
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 18px;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .path-item:last-child {
+        border-bottom: 1px solid var(--line-strong);
+      }
+
+      .path-item::before {
+        content: "0" counter(pathway);
+        width: 46px;
+        height: 46px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--ink);
+        border-radius: 15px;
+        background: var(--acid);
+        font-size: 0.72rem;
+        font-weight: 950;
+      }
+
+      .path-item h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 930;
+        letter-spacing: -0.035em;
+      }
+
+      .path-item p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .path-open {
+        padding: 8px 10px;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        background: transparent;
+        font-size: 0.66rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .path-open:hover,
+      .path-open:focus-visible {
+        background: var(--violet);
+        color: white;
+        outline: none;
+      }
+
+      .registry-note {
+        padding: clamp(28px, 4vw, 46px);
+        display: grid;
+        grid-template-columns: 0.75fr 1.25fr;
+        gap: 35px;
+        border: 1px solid var(--ink);
+        border-radius: 28px;
+        color: white;
+        background: var(--ink);
+        box-shadow: 8px 8px 0 var(--orange);
+      }
+
+      .registry-note h2 {
+        margin: 0;
+        color: var(--acid);
+        font-size: clamp(2rem, 4vw, 4rem);
+        font-weight: 950;
+        letter-spacing: -0.055em;
+        line-height: 0.98;
+      }
+
+      .registry-note p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .registry-note p + p {
+        margin-top: 13px;
+      }
+
+      .registry-note a {
+        color: white;
+        text-underline-offset: 3px;
+      }
+
+      footer {
+        margin-top: 30px;
+        border-top: 1px solid var(--ink);
+        background: var(--paper-strong);
+      }
+
+      .footer-inner {
+        width: var(--page);
+        margin: 0 auto;
+        padding: 34px 0 40px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 26px;
+      }
+
+      .footer-inner p {
+        max-width: 620px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 14px;
+      }
+
+      .footer-links a {
+        font-size: 0.75rem;
+        font-weight: 850;
+        text-underline-offset: 3px;
+      }
+
+      dialog {
+        width: min(880px, calc(100vw - 28px));
+        max-height: min(880px, calc(100vh - 28px));
+        margin: auto;
+        padding: 0;
+        border: 1px solid var(--ink);
+        border-radius: 26px;
+        color: var(--ink);
+        background: var(--paper-strong);
+        box-shadow: 10px 10px 0 var(--ink);
+        overflow: hidden;
+      }
+
+      dialog::backdrop {
+        background: rgba(23, 24, 32, 0.76);
+        backdrop-filter: blur(5px);
+      }
+
+      .dialog-scroll {
+        max-height: min(880px, calc(100vh - 28px));
+        overflow-y: auto;
+      }
+
+      .dialog-head {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding: 14px 15px 13px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--ink);
+        background: rgba(255, 253, 247, 0.95);
+        backdrop-filter: blur(12px);
+      }
+
+      .dialog-mode {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 0.67rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .dialog-mode::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--orange);
+      }
+
+      .dialog-close {
+        width: 39px;
+        height: 39px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--ink);
+        border-radius: 50%;
+        color: var(--ink);
+        background: white;
+        font-size: 1rem;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .dialog-close:hover,
+      .dialog-close:focus-visible {
+        background: var(--acid);
+        outline: none;
+      }
+
+      .dialog-body {
+        padding: clamp(25px, 4vw, 45px);
+      }
+
+      .dialog-id {
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      .dialog-title {
+        margin: 10px 0 0;
+        font-size: clamp(2.5rem, 6vw, 5rem);
+        font-weight: 950;
+        letter-spacing: -0.07em;
+        line-height: 0.9;
+      }
+
+      .dialog-one-line {
+        max-width: 720px;
+        margin: 23px 0 0;
+        color: var(--ink-soft);
+        font-size: 1.08rem;
+      }
+
+      .dialog-badges {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .detail-grid {
+        margin-top: 34px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .detail-block {
+        padding: 23px 20px 24px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .detail-block:nth-child(even) {
+        padding-right: 0;
+        padding-left: 20px;
+        border-left: 1px solid var(--line);
+      }
+
+      .detail-block.full {
+        grid-column: 1 / -1;
+        padding-right: 0;
+        padding-left: 0;
+        border-left: 0;
+      }
+
+      .detail-block h3 {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.66rem;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .detail-block p {
+        margin: 10px 0 0;
+        font-size: 0.9rem;
+        line-height: 1.56;
+      }
+
+      .detail-block .token-list,
+      .detail-block .skill-list {
+        margin-top: 12px;
+      }
+
+      .skill-list,
+      .variant-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .skill-pill,
+      .variant-pill {
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--paper);
+        font-size: 0.68rem;
+        font-weight: 800;
+      }
+
+      .variant-pill {
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-weight: 600;
+      }
+
+      .dialog-actions {
+        margin-top: 25px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+
+      .dialog-actions .button {
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 300;
+        padding: 11px 14px;
+        border: 1px solid var(--ink);
+        border-radius: 12px;
+        color: var(--ink);
+        background: var(--acid);
+        box-shadow: 3px 3px 0 var(--ink);
+        font-size: 0.74rem;
+        font-weight: 900;
+        opacity: 0;
+        transform: translateY(15px);
+        pointer-events: none;
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 1080px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .terminal-card {
+          max-width: 650px;
+          transform: none;
+        }
+
+        .ai-loop {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .game-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .filter-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .reset-button {
+          min-height: 47px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        :root {
+          --page: min(100% - 24px, 1320px);
+        }
+
+        .topbar {
+          margin-top: 10px;
+          border-radius: 18px;
+        }
+
+        .topnav,
+        .snapshot {
+          display: none;
+        }
+
+        .hero {
+          min-height: auto;
+          padding-top: 76px;
+          padding-bottom: 68px;
+        }
+
+        .hero h1 {
+          font-size: clamp(3.35rem, 18vw, 5.7rem);
+        }
+
+        .hero-stats {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-stat {
+          display: flex;
+          align-items: baseline;
+          gap: 11px;
+        }
+
+        .hero-stat span {
+          margin: 0;
+        }
+
+        .proof-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .section {
+          padding: 78px 0;
+        }
+
+        .ai-loop,
+        .mode-contrast,
+        .game-grid,
+        .pathway,
+        .registry-note,
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .loop-step {
+          min-height: 220px;
+        }
+
+        .mode-metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .mode-metrics li {
+          border-top: 1px solid rgba(23, 24, 32, 0.2);
+          border-left: 0;
+        }
+
+        .explorer-shell {
+          width: calc(100vw - 14px);
+          padding: 24px 12px 28px;
+          border-radius: 25px;
+          box-shadow: 5px 5px 0 var(--ink);
+        }
+
+        .explorer-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .toolbar {
+          position: relative;
+          top: auto;
+          grid-template-columns: 1fr;
+        }
+
+        .mode-tabs button {
+          flex: 1;
+        }
+
+        .filter-row {
+          grid-template-columns: 1fr;
+        }
+
+        .game-card {
+          min-height: 370px;
+        }
+
+        .pathway-copy {
+          position: static;
+        }
+
+        .path-list {
+          margin-top: 8px;
+        }
+
+        .path-item {
+          grid-template-columns: 48px minmax(0, 1fr);
+        }
+
+        .path-open {
+          grid-column: 2;
+          justify-self: start;
+        }
+
+        .registry-note {
+          gap: 23px;
+        }
+
+        .footer-inner {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .footer-links {
+          justify-content: flex-start;
+        }
+
+        .detail-block,
+        .detail-block:nth-child(even) {
+          padding: 20px 0;
+          border-left: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to the guide</a>
+
+    <header class="topbar">
+      <a class="brand" href="#main" aria-label="TextArena AI Game Atlas home">
+        <span class="brand-mark" aria-hidden="true">TA</span>
+        AI Game Atlas
+      </a>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="#how-ai-plays">AI turn loop</a>
+        <a href="#modes">Game modes</a>
+        <a href="#explorer">Explore all games</a>
+        <a href="#start">Start here</a>
+      </nav>
+      <span class="snapshot">Registry snapshot · 03 Feb 2026</span>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">TextArena field manual · two-player + multiplayer</p>
+          <h1 id="hero-title">
+            How <span class="count">66</span> AI games actually <span class="play">play.</span>
+          </h1>
+          <p class="hero-lede">
+            Every registered head-to-head and multi-agent TextArena family, translated into
+            <strong>what the AI sees, what it must decide, and the exact text it sends.</strong>
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#explorer">Explore all 66 games <span aria-hidden="true">↓</span></a>
+            <a
+              class="button"
+              href="https://github.com/TextArena/TextArena"
+              target="_blank"
+              rel="noreferrer"
+            >Open TextArena source <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-stats" aria-label="Guide statistics">
+            <div class="hero-stat"><strong>49</strong><span>head-to-head families</span></div>
+            <div class="hero-stat"><strong>17</strong><span>multiplayer families</span></div>
+            <div class="hero-stat"><strong>724</strong><span>concrete environment IDs</span></div>
+          </div>
+        </div>
+
+        <aside class="terminal-card" aria-label="An AI turn in TextArena">
+          <div class="terminal-head">
+            <span>One TextArena turn</span>
+            <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+          <div class="terminal-body">
+            <div class="turn-row">
+              <span class="turn-number">01</span>
+              <strong>Observe</strong>
+              <p>Read the rules, board, dialogue, private hand, role, or valid moves.</p>
+            </div>
+            <div class="turn-row">
+              <span class="turn-number">02</span>
+              <strong>Reason</strong>
+              <p>Plan against one rival—or infer alliances, beliefs, and incentives across a group.</p>
+            </div>
+            <div class="turn-row">
+              <span class="turn-number">03</span>
+              <strong>Act in text</strong>
+              <p>Return one parseable command such as <code>[e2e4]</code> or <code>[Accept]</code>.</p>
+            </div>
+            <div class="turn-row">
+              <span class="turn-number">04</span>
+              <strong>Receive feedback</strong>
+              <p>The environment validates the move, advances state, and eventually assigns reward.</p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="proof-strip">
+        <div class="proof-inner">
+          <p>Verified against the callable registry at commit <span class="mono">a2c896c</span>.</p>
+          <p>
+            <a
+              href="https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/__init__.py"
+              target="_blank"
+              rel="noreferrer"
+            >Inspect the pinned registry ↗</a>
+          </p>
+        </div>
+      </div>
+
+      <section class="section" id="how-ai-plays" aria-labelledby="loop-title">
+        <div class="section-head">
+          <p class="section-kicker">The shared interface</p>
+          <h2 id="loop-title">No mouse. No controller. Just state → text → reward.</h2>
+          <p>
+            The games feel radically different, but the AI contract stays small: accept a textual
+            observation and return a textual action. The hard part is understanding what the text
+            means—and formatting the move so the environment accepts it.
+          </p>
+        </div>
+        <div class="ai-loop">
+          <article class="loop-step">
+            <span class="loop-index">01</span>
+            <h3>Observation</h3>
+            <p>
+              A game prompt combines instructions with the current public state and any information
+              private to that seat.
+            </p>
+            <code>player_id, observation</code>
+          </article>
+          <article class="loop-step">
+            <span class="loop-index">02</span>
+            <h3>Policy</h3>
+            <p>
+              An LLM, local model, human, or custom policy turns that observation into a strategic
+              response.
+            </p>
+            <code>agent(observation)</code>
+          </article>
+          <article class="loop-step">
+            <span class="loop-index">03</span>
+            <h3>Action</h3>
+            <p>
+              Most structured games parse the first bracketed command. Conversational games may mix
+              free text with a control token.
+            </p>
+            <code>[Offer: 1 Ore -&gt; 2 Wood]</code>
+          </article>
+          <article class="loop-step">
+            <span class="loop-index">04</span>
+            <h3>Outcome</h3>
+            <p>
+              The environment applies the move, emits new observations, and ends with win/loss,
+              rank, score, or task-completion reward.
+            </p>
+            <code>done, info = env.step(action)</code>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="modes" aria-labelledby="modes-title">
+        <div class="section-head">
+          <p class="section-kicker">Two evaluation regimes</p>
+          <h2 id="modes-title">A duel isolates strategy. A table reveals society.</h2>
+        </div>
+        <div class="mode-contrast">
+          <article class="mode-panel">
+            <span class="mode-label">49 two-player families</span>
+            <h3>One rival. Cleaner causality.</h3>
+            <p>
+              Head-to-head games make tactical errors legible. Seat order, invalid-action rate,
+              planning depth, deception, and adaptation can be compared without coalition noise.
+            </p>
+            <ul class="mode-metrics">
+              <li><strong>Best signal</strong>Win / loss / draw</li>
+              <li><strong>Core stress</strong>Opponent modelling</li>
+              <li><strong>Typical state</strong>Alternating turns</li>
+            </ul>
+          </article>
+          <article class="mode-panel multi">
+            <span class="mode-label">17 multiplayer families</span>
+            <h3>Many incentives. Emergent behavior.</h3>
+            <p>
+              Multi-agent games add ranking, teams, hidden roles, simultaneous choices, negotiation,
+              coalition pressure, public persuasion, and longer social memory.
+            </p>
+            <ul class="mode-metrics">
+              <li><strong>Best signal</strong>Rank / team outcome</li>
+              <li><strong>Core stress</strong>Social inference</li>
+              <li><strong>Typical state</strong>Phases + private views</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="explorer" aria-labelledby="explorer-title">
+        <div class="explorer-shell">
+          <div class="explorer-head">
+            <div>
+              <p class="section-kicker">Complete callable catalog</p>
+              <h2 id="explorer-title">Find the right <span>arena.</span></h2>
+            </div>
+            <div class="explorer-count" aria-live="polite">
+              <strong id="visible-count">66</strong>
+              <span>games shown</span>
+            </div>
+          </div>
+
+          <div class="toolbar" aria-label="Game search and mode filters">
+            <div class="search-wrap">
+              <label class="skip-link" for="game-search">Search games</label>
+              <input
+                id="game-search"
+                type="search"
+                placeholder="Search by game, skill, action, or mechanic…"
+                autocomplete="off"
+              />
+            </div>
+            <div class="mode-tabs" role="group" aria-label="Filter by player mode">
+              <button type="button" data-mode-filter="all" aria-pressed="true">All</button>
+              <button type="button" data-mode-filter="two-player" aria-pressed="false">2-player</button>
+              <button type="button" data-mode-filter="multiplayer" aria-pressed="false">Multiplayer</button>
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <div class="select-wrap">
+              <label for="category-filter">Category</label>
+              <select id="category-filter">
+                <option value="all">All categories</option>
+                <option value="Board & spatial">Board &amp; spatial</option>
+                <option value="Cards & chance">Cards &amp; chance</option>
+                <option value="Word & communication">Word &amp; communication</option>
+                <option value="Negotiation & social">Negotiation &amp; social</option>
+                <option value="Game theory & economics">Game theory &amp; economics</option>
+              </select>
+            </div>
+            <div class="select-wrap">
+              <label for="information-filter">Information</label>
+              <select id="information-filter">
+                <option value="all">Open + hidden</option>
+                <option value="Open">Open information</option>
+                <option value="Hidden">Hidden information</option>
+                <option value="Mixed">Mixed information</option>
+              </select>
+            </div>
+            <div class="select-wrap">
+              <label for="complexity-filter">Complexity</label>
+              <select id="complexity-filter">
+                <option value="all">All levels</option>
+                <option value="Starter">Starter</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="select-wrap">
+              <label for="sort-filter">Sort</label>
+              <select id="sort-filter">
+                <option value="name">A–Z</option>
+                <option value="mode">Player mode</option>
+                <option value="complexity">Complexity</option>
+                <option value="information">Information</option>
+              </select>
+            </div>
+            <button class="reset-button" id="reset-filters" type="button">Reset filters</button>
+          </div>
+
+          <div class="results-meta">
+            <span id="results-label"><strong>66 games</strong> across every non-solo registered family</span>
+            <span>Open a card for the full AI experience</span>
+          </div>
+
+          <div class="game-grid" id="game-grid">
+            <div class="loading-state">
+              <strong>Loading the registry guide…</strong>
+              Verifying 66 game profiles.
+            </div>
+          </div>
+          <noscript>
+            <p class="empty-state">
+              This searchable catalog requires JavaScript. The source game registry remains available
+              on GitHub.
+            </p>
+          </noscript>
+        </div>
+      </section>
+
+      <section class="section pathway" id="start" aria-labelledby="path-title">
+        <div class="pathway-copy">
+          <p class="section-kicker">A useful progression</p>
+          <h2 id="path-title">Start small. Add uncertainty. Then add society.</h2>
+          <p>
+            These five environments expose a model to increasingly rich coordination demands without
+            jumping straight into the deepest rulesets.
+          </p>
+        </div>
+        <ol class="path-list">
+          <li class="path-item">
+            <div>
+              <h3>TicTacToe · parse the contract</h3>
+              <p>Open board, nine actions, immediate feedback. The cleanest integration smoke test.</p>
+            </div>
+            <button class="path-open" type="button" data-open-game="TicTacToe-v0">View game</button>
+          </li>
+          <li class="path-item">
+            <div>
+              <h3>PigDice · manage risk</h3>
+              <p>Only roll or hold, but every choice trades expected value against catastrophic loss.</p>
+            </div>
+            <button class="path-open" type="button" data-open-game="PigDice-v0">View game</button>
+          </li>
+          <li class="path-item">
+            <div>
+              <h3>SimpleNegotiation · price language</h3>
+              <p>Private valuations turn natural-language persuasion into measurable utility.</p>
+            </div>
+            <button class="path-open" type="button" data-open-game="SimpleNegotiation-v0">View game</button>
+          </li>
+          <li class="path-item">
+            <div>
+              <h3>Codenames · coordinate through roles</h3>
+              <p>Four agents must maintain team identity, asymmetric knowledge, and clue discipline.</p>
+            </div>
+            <button class="path-open" type="button" data-open-game="Codenames-v0">View game</button>
+          </li>
+          <li class="path-item">
+            <div>
+              <h3>SecretMafia · reason about beliefs</h3>
+              <p>Hidden roles, public speech, night actions, voting, deception, and social memory collide.</p>
+            </div>
+            <button class="path-open" type="button" data-open-game="SecretMafia-v0">View game</button>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="registry-title">
+        <div class="registry-note">
+          <h2 id="registry-title">Why “66,” when TextArena says “100+”?</h2>
+          <div>
+            <p>
+              The current source contains <strong>97 callable game families</strong>: 31 solo, 49
+              two-player, and 17 multiplayer. This guide deliberately covers the 66 games in which
+              multiple agents interact.
+            </p>
+            <p>
+              TextArena declares 242 base configurations and expands almost each one into normal,
+              <span class="mono">-train</span>, and <span class="mono">-raw</span> forms—724 concrete
+              environment IDs. Its older handbook still says “99,” so this guide treats the Python
+              registry as the source of truth.
+            </p>
+            <p>
+              See the
+              <a
+                href="https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/registration.py#L30-L38"
+                target="_blank"
+                rel="noreferrer"
+              >version-expansion logic</a>
+              and
+              <a
+                href="https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/README.md"
+                target="_blank"
+                rel="noreferrer"
+              >legacy game handbook</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-inner">
+        <p>
+          Independent research interface for Axiia Cup planning. Game descriptions are concise
+          interpretations of TextArena’s pinned source prompts and environment logic; follow each
+          card’s source link for implementation details.
+        </p>
+        <div class="footer-links">
+          <a href="https://github.com/TextArena/TextArena" target="_blank" rel="noreferrer">Repository ↗</a>
+          <a href="https://www.textarena.ai/environments" target="_blank" rel="noreferrer">Web catalog ↗</a>
+          <a href="https://www.textarena.ai/docs/first-game" target="_blank" rel="noreferrer">First-game guide ↗</a>
+        </div>
+      </div>
+    </footer>
+
+    <dialog id="game-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-scroll">
+        <div class="dialog-head">
+          <span class="dialog-mode" id="dialog-mode">Two-player field guide</span>
+          <button class="dialog-close" id="dialog-close" type="button" aria-label="Close game details">×</button>
+        </div>
+        <div class="dialog-body" id="dialog-body"></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const DATA_FILES = [
+        "./data/two-player-a.json",
+        "./data/two-player-b.json",
+        "./data/multiplayer.json"
+      ];
+
+      const state = {
+        games: [],
+        filtered: [],
+        mode: "all",
+        category: "all",
+        information: "all",
+        complexity: "all",
+        sort: "name",
+        query: ""
+      };
+
+      const grid = document.querySelector("#game-grid");
+      const searchInput = document.querySelector("#game-search");
+      const categoryFilter = document.querySelector("#category-filter");
+      const informationFilter = document.querySelector("#information-filter");
+      const complexityFilter = document.querySelector("#complexity-filter");
+      const sortFilter = document.querySelector("#sort-filter");
+      const resetButton = document.querySelector("#reset-filters");
+      const visibleCount = document.querySelector("#visible-count");
+      const resultsLabel = document.querySelector("#results-label");
+      const dialog = document.querySelector("#game-dialog");
+      const dialogBody = document.querySelector("#dialog-body");
+      const dialogMode = document.querySelector("#dialog-mode");
+      const dialogClose = document.querySelector("#dialog-close");
+      const toast = document.querySelector("#toast");
+
+      const complexityOrder = { Starter: 0, Intermediate: 1, Advanced: 2 };
+      let toastTimer;
+
+      function escapeHtml(value = "") {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function modeLabel(game) {
+        return game.mode === "two-player" ? `${game.players} · head-to-head` : `${game.players} · multiplayer`;
+      }
+
+      function searchableText(game) {
+        return [
+          game.id,
+          game.name,
+          game.category,
+          game.oneLine,
+          game.objective,
+          game.turnFlow,
+          game.aiExperience,
+          game.information,
+          game.interaction,
+          ...(game.actions || []),
+          ...(game.skills || []),
+          ...(game.variants || [])
+        ]
+          .join(" ")
+          .toLowerCase();
+      }
+
+      function cardTemplate(game) {
+        const actionTokens = (game.actions || [])
+          .slice(0, 3)
+          .map((action) => `<code class="action-token">${escapeHtml(action)}</code>`)
+          .join("");
+
+        return `
+          <article class="game-card" data-mode="${escapeHtml(game.mode)}">
+            <div class="card-topline">
+              <span class="mode-chip">${escapeHtml(modeLabel(game))}</span>
+              <code class="card-id">${escapeHtml(game.id)}</code>
+            </div>
+            <h3>${escapeHtml(game.name)}</h3>
+            <div class="category-label">${escapeHtml(game.category)}</div>
+            <p class="card-summary">${escapeHtml(game.oneLine)}</p>
+            <div class="card-actions">
+              <p class="mini-label">Example AI output</p>
+              <div class="token-list">${actionTokens || '<span class="micro-chip">Free text</span>'}</div>
+            </div>
+            <div class="card-meta">
+              <span class="micro-chip">${escapeHtml(game.information)} info</span>
+              <span class="micro-chip">${escapeHtml(game.interaction)}</span>
+              <span class="micro-chip">${escapeHtml(game.complexity)}</span>
+            </div>
+            <div class="card-footer">
+              <button class="card-button open" type="button" data-open-game="${escapeHtml(game.id)}">
+                Open field guide
+              </button>
+              <button class="card-button" type="button" data-copy-id="${escapeHtml(game.id)}" aria-label="Copy ${escapeHtml(game.id)}">
+                Copy ID
+              </button>
+            </div>
+          </article>
+        `;
+      }
+
+      function render() {
+        const query = state.query.trim().toLowerCase();
+        const games = state.games
+          .filter((game) => state.mode === "all" || game.mode === state.mode)
+          .filter((game) => state.category === "all" || game.category === state.category)
+          .filter((game) => state.information === "all" || game.information === state.information)
+          .filter((game) => state.complexity === "all" || game.complexity === state.complexity)
+          .filter((game) => !query || searchableText(game).includes(query));
+
+        games.sort((a, b) => {
+          if (state.sort === "mode") {
+            return a.mode.localeCompare(b.mode) || a.name.localeCompare(b.name);
+          }
+          if (state.sort === "complexity") {
+            return complexityOrder[a.complexity] - complexityOrder[b.complexity] || a.name.localeCompare(b.name);
+          }
+          if (state.sort === "information") {
+            return a.information.localeCompare(b.information) || a.name.localeCompare(b.name);
+          }
+          return a.name.localeCompare(b.name);
+        });
+
+        state.filtered = games;
+        visibleCount.textContent = games.length;
+        resultsLabel.innerHTML = `<strong>${games.length} ${games.length === 1 ? "game" : "games"}</strong> matching this lens`;
+
+        if (!games.length) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <strong>No arena matches that combination.</strong>
+              Try a broader search or reset the filters.
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = games.map(cardTemplate).join("");
+      }
+
+      function getGame(id) {
+        return state.games.find((game) => game.id === id);
+      }
+
+      function detailTemplate(game) {
+        const actions = (game.actions || [])
+          .map((action) => `<code class="action-token">${escapeHtml(action)}</code>`)
+          .join("");
+        const skills = (game.skills || [])
+          .map((skill) => `<span class="skill-pill">${escapeHtml(skill)}</span>`)
+          .join("");
+        const variants = (game.variants || [])
+          .map((variant) => `<span class="variant-pill">${escapeHtml(variant)}</span>`)
+          .join("");
+
+        return `
+          <code class="dialog-id">${escapeHtml(game.id)}</code>
+          <h2 class="dialog-title" id="dialog-title">${escapeHtml(game.name)}</h2>
+          <p class="dialog-one-line">${escapeHtml(game.oneLine)}</p>
+          <div class="dialog-badges">
+            <span class="micro-chip">${escapeHtml(game.players)}</span>
+            <span class="micro-chip">${escapeHtml(game.category)}</span>
+            <span class="micro-chip">${escapeHtml(game.information)} information</span>
+            <span class="micro-chip">${escapeHtml(game.interaction)}</span>
+            <span class="micro-chip">${escapeHtml(game.complexity)}</span>
+          </div>
+          <div class="detail-grid">
+            <section class="detail-block">
+              <h3>Objective</h3>
+              <p>${escapeHtml(game.objective)}</p>
+            </section>
+            <section class="detail-block">
+              <h3>How turns work</h3>
+              <p>${escapeHtml(game.turnFlow)}</p>
+            </section>
+            <section class="detail-block full">
+              <h3>What playing feels like to the AI</h3>
+              <p>${escapeHtml(game.aiExperience)}</p>
+            </section>
+            <section class="detail-block">
+              <h3>Example accepted actions</h3>
+              <div class="token-list">${actions || '<span class="skill-pill">Free-form text</span>'}</div>
+            </section>
+            <section class="detail-block">
+              <h3>Capabilities under test</h3>
+              <div class="skill-list">${skills}</div>
+            </section>
+            <section class="detail-block full">
+              <h3>Registered configurations</h3>
+              <div class="variant-list">${variants}</div>
+            </section>
+          </div>
+          <div class="dialog-actions">
+            <button class="button primary" type="button" data-copy-id="${escapeHtml(game.id)}">
+              Copy environment ID
+            </button>
+            <button class="button" type="button" data-copy-link="${escapeHtml(game.id)}">
+              Copy direct link
+            </button>
+            <a class="button dark" href="${escapeHtml(game.source)}" target="_blank" rel="noreferrer">
+              Inspect official source ↗
+            </a>
+          </div>
+        `;
+      }
+
+      function openGame(id, updateHash = true) {
+        const game = getGame(id);
+        if (!game) return;
+
+        dialogBody.innerHTML = detailTemplate(game);
+        dialogMode.textContent = game.mode === "two-player" ? "Two-player field guide" : "Multiplayer field guide";
+        dialogMode.classList.toggle("multiplayer", game.mode === "multiplayer");
+
+        if (!dialog.open) dialog.showModal();
+        document.body.classList.add("dialog-open");
+        if (updateHash) {
+          history.replaceState(null, "", `#game=${encodeURIComponent(game.id)}`);
+        }
+      }
+
+      function closeGame(updateHash = true) {
+        if (dialog.open) dialog.close();
+        document.body.classList.remove("dialog-open");
+        if (updateHash && location.hash.startsWith("#game=")) {
+          history.replaceState(null, "", `${location.pathname}${location.search}`);
+        }
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+      }
+
+      async function copyText(text, message) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast(message);
+        } catch {
+          const temp = document.createElement("textarea");
+          temp.value = text;
+          temp.setAttribute("readonly", "");
+          temp.style.position = "fixed";
+          temp.style.opacity = "0";
+          document.body.append(temp);
+          temp.select();
+          document.execCommand("copy");
+          temp.remove();
+          showToast(message);
+        }
+      }
+
+      function resetFilters() {
+        state.mode = "all";
+        state.category = "all";
+        state.information = "all";
+        state.complexity = "all";
+        state.sort = "name";
+        state.query = "";
+
+        searchInput.value = "";
+        categoryFilter.value = "all";
+        informationFilter.value = "all";
+        complexityFilter.value = "all";
+        sortFilter.value = "name";
+        document.querySelectorAll("[data-mode-filter]").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.modeFilter === "all"));
+        });
+        render();
+        searchInput.focus();
+      }
+
+      document.addEventListener("click", (event) => {
+        const openButton = event.target.closest("[data-open-game]");
+        if (openButton) {
+          openGame(openButton.dataset.openGame);
+          return;
+        }
+
+        const copyIdButton = event.target.closest("[data-copy-id]");
+        if (copyIdButton) {
+          copyText(copyIdButton.dataset.copyId, `${copyIdButton.dataset.copyId} copied`);
+          return;
+        }
+
+        const copyLinkButton = event.target.closest("[data-copy-link]");
+        if (copyLinkButton) {
+          const url = new URL(location.href);
+          url.hash = `game=${encodeURIComponent(copyLinkButton.dataset.copyLink)}`;
+          copyText(url.toString(), "Direct link copied");
+        }
+      });
+
+      document.querySelectorAll("[data-mode-filter]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.mode = button.dataset.modeFilter;
+          document.querySelectorAll("[data-mode-filter]").forEach((candidate) => {
+            candidate.setAttribute("aria-pressed", String(candidate === button));
+          });
+          render();
+        });
+      });
+
+      searchInput.addEventListener("input", () => {
+        state.query = searchInput.value;
+        render();
+      });
+
+      categoryFilter.addEventListener("change", () => {
+        state.category = categoryFilter.value;
+        render();
+      });
+
+      informationFilter.addEventListener("change", () => {
+        state.information = informationFilter.value;
+        render();
+      });
+
+      complexityFilter.addEventListener("change", () => {
+        state.complexity = complexityFilter.value;
+        render();
+      });
+
+      sortFilter.addEventListener("change", () => {
+        state.sort = sortFilter.value;
+        render();
+      });
+
+      resetButton.addEventListener("click", resetFilters);
+      dialogClose.addEventListener("click", () => closeGame());
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) closeGame();
+      });
+      dialog.addEventListener("close", () => {
+        document.body.classList.remove("dialog-open");
+      });
+
+      window.addEventListener("hashchange", () => {
+        if (location.hash.startsWith("#game=")) {
+          openGame(decodeURIComponent(location.hash.slice(6)), false);
+        } else {
+          closeGame(false);
+        }
+      });
+
+      Promise.all(
+        DATA_FILES.map(async (file) => {
+          const response = await fetch(file);
+          if (!response.ok) throw new Error(`Could not load ${file}`);
+          return response.json();
+        })
+      )
+        .then((collections) => {
+          state.games = collections.flat().sort((a, b) => a.name.localeCompare(b.name));
+          render();
+          if (location.hash.startsWith("#game=")) {
+            openGame(decodeURIComponent(location.hash.slice(6)), false);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          grid.innerHTML = `
+            <div class="empty-state">
+              <strong>The catalog could not load.</strong>
+              Refresh the page or inspect the pinned TextArena registry on GitHub.
+            </div>
+          `;
+          visibleCount.textContent = "—";
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,713 @@
+[
+  {
+    "id": "LinesOfAction-v0",
+    "name": "Lines of Action",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Move by the number of pieces on a line and connect your entire army before your opponent does.",
+    "objective": "Make all of your pieces one 8-neighbour-connected group; landing on an opposing piece captures it.",
+    "turnFlow": "Players alternate one horizontal, vertical, or diagonal move. Move distance must equal the total number of pieces of either color on that line; friendly pieces may be jumped, enemy pieces may not.",
+    "actions": [
+      "[b1b3]"
+    ],
+    "aiExperience": "Observation: an open 8×8 coordinate board and move history → reasoning: count pieces on each line, reject blocked paths, and compare capture versus connectivity → text action: emit a source and destination such as `[b1b3]`.",
+    "skills": [
+      "spatial search",
+      "connectivity planning",
+      "tactical capture",
+      "opponent modeling"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "LinesOfAction-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/LinesOfAction/env.py"
+  },
+  {
+    "id": "MemoryGame-v0",
+    "name": "Memory Game",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "Reveal two concealed cells at a time and remember where matching symbols appeared.",
+    "objective": "Finish with more matched pairs than the opponent.",
+    "turnFlow": "Select two different unmatched coordinates. A match scores a point, stays face up, and grants another turn; a mismatch is revealed in the observation, then concealed again as play passes.",
+    "actions": [
+      "[0 1 1 0]"
+    ],
+    "aiExperience": "Observation: a mostly hidden grid, matched cells, scores, and prior flip results → reasoning: maintain an external memory map and choose known pairs or information-rich probes → text action: emit four indices such as `[0 1 1 0]`.",
+    "skills": [
+      "episodic memory",
+      "coordinate tracking",
+      "probability",
+      "turn optimization"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "MemoryGame-v0",
+      "MemoryGame-v0-medium",
+      "MemoryGame-v0-hard"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/MemoryGame/env.py"
+  },
+  {
+    "id": "NewRecruit-v0",
+    "name": "New Recruit",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "A recruiter and candidate bargain over eight job-package issues with private point tables.",
+    "objective": "Reach an accepted package that maximizes your own private utility; no agreement by the turn limit gives both players zero points.",
+    "turnFlow": "On a turn, give a rationale and propose one A–E choice for each of eight ordered issues. When a proposal is pending, the other player may accept, reject, or replace it with a new proposal.",
+    "actions": [
+      "I believe this proposal is fair because it balances our interests. [Propose] CCAACCCC",
+      "[Accept]",
+      "[Reject]"
+    ],
+    "aiExperience": "Observation: role, own private utilities, issue-to-letter mapping, and public proposal/rationale history → reasoning: estimate the unseen preference table, search integrative trades, and manage the deadline → text action: emit persuasion plus an eight-letter `[Propose]` code, or `[Accept]`/`[Reject]`.",
+    "skills": [
+      "multi-issue optimization",
+      "preference inference",
+      "persuasion",
+      "deadline management",
+      "integrative bargaining"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "NewRecruit-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/NewRecruit/env.py"
+  },
+  {
+    "id": "Nim-v0",
+    "name": "Nim",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Remove any positive number of objects from one pile; whoever takes the last object wins.",
+    "objective": "Take the final object by leaving the opponent a losing pile configuration.",
+    "turnFlow": "Players alternate choosing one pile index and a quantity no greater than that pile. The chosen quantity is removed and the public pile counts are updated.",
+    "actions": [
+      "[0 3]"
+    ],
+    "aiExperience": "Observation: open pile sizes → reasoning: compute the nim-sum and select a move toward zero when possible → text action: emit pile index and removal count such as `[0 3]`.",
+    "skills": [
+      "nim-sum calculation",
+      "combinatorial reasoning",
+      "lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Nim-v0",
+      "Nim-v0-medium",
+      "Nim-v0-large"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Nim/env.py"
+  },
+  {
+    "id": "Othello-v0",
+    "name": "Othello",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Place a disc to bracket enemy lines, flipping them to your color.",
+    "objective": "Have more discs of your color when neither player can make another legal move.",
+    "turnFlow": "Players alternate placing on an empty cell that flanks at least one opposing disc in any direction; every bracketed line flips automatically. A player with no valid move is skipped.",
+    "actions": [
+      "[2, 3]"
+    ],
+    "aiExperience": "Observation: open board, disc counts, and—except in the hard variant—a valid-move list → reasoning: compare mobility, corners, frontier exposure, and flip consequences → text action: emit `[row, col]`.",
+    "skills": [
+      "positional evaluation",
+      "mobility planning",
+      "corner control",
+      "lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Othello-v0-tiny",
+      "Othello-v0-small",
+      "Othello-v0",
+      "Othello-v0-big",
+      "Othello-v0-huge",
+      "Othello-v0-hard"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Othello/env.py"
+  },
+  {
+    "id": "PigDice-v0",
+    "name": "Pig Dice",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "Keep rolling to grow an unbanked turn total, or hold before a one wipes it out.",
+    "objective": "Be first to reach the target score by balancing expected gain against bust risk.",
+    "turnFlow": "Within a turn, `[roll]` repeats without changing player unless the die shows one; two through six add to the turn total. `[hold]` banks that total and passes play, while rolling one loses it and passes automatically.",
+    "actions": [
+      "[roll]",
+      "[hold]"
+    ],
+    "aiExperience": "Observation: both scores, current unbanked total, and this turn’s roll history → reasoning: apply a risk threshold based on score pressure and target distance → text action: emit `[roll]` or `[hold]`.",
+    "skills": [
+      "risk management",
+      "expected value",
+      "adaptive thresholds",
+      "score awareness"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "PigDice-v0",
+      "PigDice-v0-short",
+      "PigDice-v0-long",
+      "PigDice-v0-50",
+      "PigDice-v0-100",
+      "PigDice-v0-150",
+      "PigDice-v0-200",
+      "PigDice-v0-250",
+      "PigDice-v0-300",
+      "PigDice-v0-350",
+      "PigDice-v0-400",
+      "PigDice-v0-450",
+      "PigDice-v0-500"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/PigDice/env.py"
+  },
+  {
+    "id": "QuantumTicTacToe-v0",
+    "name": "Quantum Tic-Tac-Toe",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Entangle each mark across two cells; graph cycles trigger automatic collapses into classical marks.",
+    "objective": "Create a line of three classical marks, with move-number tie-breaking if a collapse forms lines for both players.",
+    "turnFlow": "Each turn places one spooky mark in two distinct, non-collapsed cells. A newly formed cycle collapses automatically, then dependent marks resolve; play continues until a classical line or turn limit.",
+    "actions": [
+      "[0,4]"
+    ],
+    "aiExperience": "Observation: classical cells, labeled superpositions, and move log → reasoning: model the entanglement graph, forecast cycle collapse, and compare dual-line tie-breaks → text action: emit two cell indices such as `[0,4]`.",
+    "skills": [
+      "graph reasoning",
+      "collapse forecasting",
+      "spatial tactics",
+      "multi-step lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "QuantumTicTacToe-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/QuantumTicTacToe/env.py"
+  },
+  {
+    "id": "ReverseTicTacToe-v0",
+    "name": "Reverse Tic-Tac-Toe",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Misère tic-tac-toe: completing your own three-in-a-row makes you lose.",
+    "objective": "Avoid being the first player to form a horizontal, vertical, or diagonal line with your symbol.",
+    "turnFlow": "Players alternate placing their fixed symbol in an empty numbered cell. A completed line immediately awards the game to the opponent; a full board without a line is a draw.",
+    "actions": [
+      "[4]"
+    ],
+    "aiExperience": "Observation: open 3×3 board and available cells → reasoning: identify poisoned squares and force the opponent toward a line → text action: emit a cell such as `[4]`.",
+    "skills": [
+      "misère reasoning",
+      "threat avoidance",
+      "forcing moves"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "ReverseTicTacToe-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ReverseTicTacToe/env.py"
+  },
+  {
+    "id": "ScenarioPlanning-v0",
+    "name": "Scenario Planning",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Word & communication",
+    "oneLine": "Write the most convincing survival plan for a randomly selected crisis scenario.",
+    "objective": "Earn more votes from an LLM jury by presenting the more effective and feasible survival strategy.",
+    "turnFlow": "Each player submits one free-form strategy without a special command. After both independent submissions, an 11-member OpenRouter jury compares them and the higher vote count wins.",
+    "actions": [
+      "Prioritize potable water, shelter, medical triage, and a defensible evacuation route."
+    ],
+    "aiExperience": "Observation: the shared scenario, but not the rival’s submitted plan → reasoning: prioritize constraints, feasibility, contingencies, and persuasive specificity → text action: emit a complete free-form strategy; judging begins after both submissions.",
+    "skills": [
+      "scenario analysis",
+      "contingency planning",
+      "persuasive writing",
+      "resource prioritization"
+    ],
+    "information": "Hidden",
+    "interaction": "Simultaneous",
+    "variants": [
+      "ScenarioPlanning-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ScenarioPlanning/env.py"
+  },
+  {
+    "id": "SimpleBlindAuction-v0",
+    "name": "Simple Blind Auction",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "Talk publicly, then allocate a private budget across items whose values differ by player.",
+    "objective": "Finish with the higher net worth: unspent capital plus your private value for items won.",
+    "turnFlow": "Players first alternate public conversation for the configured rounds. In the bidding phase, each gets one private submission containing zero or more item bids; high bid wins, while ties leave an item unsold.",
+    "actions": [
+      "I suggest we focus on different items.",
+      "[Bid on Item 0: 250]",
+      "[Bid on Item 0: 150] [Bid on Item 2: 200] [Bid on Item 4: 350]"
+    ],
+    "aiExperience": "Observation: own private item values and budget plus public conversation; opposing values and sealed bids stay hidden → reasoning: infer intent, optimize a budget under uncertainty, and decide whether talk is credible → text action: converse during phase one, then emit all `[Bid on Item X: amount]` commands once.",
+    "skills": [
+      "budget allocation",
+      "value estimation",
+      "signal interpretation",
+      "sealed-bid strategy"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "SimpleBlindAuction-v0-quick",
+      "SimpleBlindAuction-v0",
+      "SimpleBlindAuction-v0-rich"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SimpleBlindAuction/env.py"
+  },
+  {
+    "id": "SimpleNegotiation-v0",
+    "name": "Simple Negotiation",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "Trade five resource types whose quantities and unit values differ privately between players.",
+    "objective": "Produce a larger increase in your own inventory value than the opponent by the turn limit.",
+    "turnFlow": "Players alternate conversation and offers. A pending trade can be accepted or denied; accepted resources transfer immediately, and further offers can be negotiated until the configured total turn limit.",
+    "actions": [
+      "[Offer: 3 Sheep, 2 Ore -> 5 Brick, 2 Sheep]",
+      "[Accept]",
+      "[Deny]"
+    ],
+    "aiExperience": "Observation: own quantities and private values plus public offers and trade history → reasoning: identify surplus, infer the opponent’s unseen valuations, and verify both sides can deliver → text action: emit an `[Offer: give -> request]`, `[Accept]`, or `[Deny]` token, optionally with persuasive text.",
+    "skills": [
+      "utility calculation",
+      "preference inference",
+      "trade construction",
+      "persuasion"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "SimpleNegotiation-v0-short",
+      "SimpleNegotiation-v0",
+      "SimpleNegotiation-v0-long"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SimpleNegotiation/env.py"
+  },
+  {
+    "id": "SimpleTak-v0",
+    "name": "Simple Tak",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Place one stone per turn and race to connect opposite edges of a square grid.",
+    "objective": "Build a four-neighbour path of your stones from top to bottom or left to right.",
+    "turnFlow": "Players alternate placing their fixed symbol in any empty numbered cell. The environment checks both possible edge-to-edge paths after every placement.",
+    "actions": [
+      "[12]"
+    ],
+    "aiExperience": "Observation: open indexed grid and all legal placements → reasoning: grow multiple connection fronts while cutting the opponent’s shortest paths → text action: emit one available cell such as `[12]`.",
+    "skills": [
+      "path planning",
+      "blocking",
+      "connectivity",
+      "spatial evaluation"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "SimpleTak-v0",
+      "SimpleTak-v0-medium",
+      "SimpleTak-v0-large",
+      "SimpleTak-v0-extreme"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SimpleTak/env.py"
+  },
+  {
+    "id": "SpellingBee-v0",
+    "name": "Spelling Bee",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Word & communication",
+    "oneLine": "Alternate valid English words built only from a random allowed-letter set.",
+    "objective": "Keep producing unrepeated words that are at least as long as the previous word, outlasting the opponent.",
+    "turnFlow": "A random set of allowed letters is shared. Each player submits one bracketed word; it must be English, use only those letters, not repeat, and never be shorter than the last accepted word.",
+    "actions": [
+      "[example]"
+    ],
+    "aiExperience": "Observation: allowed letters and accepted word history → reasoning: search a lexicon for legal words while preserving longer future options → text action: emit one candidate in brackets, such as `[example]` when its letters are allowed.",
+    "skills": [
+      "lexical retrieval",
+      "constraint satisfaction",
+      "vocabulary planning"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "SpellingBee-v0-small",
+      "SpellingBee-v0",
+      "SpellingBee-v0-large"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SpellingBee/env.py"
+  },
+  {
+    "id": "SpiteAndMalice-v0",
+    "name": "Spite and Malice",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "Build shared Ace-to-Queen piles while racing to empty your private payoff pile.",
+    "objective": "Be first to play every card from your 20-card payoff pile.",
+    "turnFlow": "A turn has draw, play, and discard phases: refill the hand to five, make any number of legal plays from hand/payoff/discard tops to four center piles, then discard one hand card to end the turn. Kings are wild and completed center sequences clear.",
+    "actions": [
+      "[draw]",
+      "[play A♠ 0]",
+      "[discard 3♥ 2]"
+    ],
+    "aiExperience": "Observation: own hidden hand and payoff top, own discard tops, public center piles, and limited opponent activity → reasoning: sequence multi-action plays, expose payoff cards, preserve wild kings, and infer opposing resources → text action: emit phase-correct `[draw]`, one or more `[play Card Pile]`, then `[discard Card Pile]`.",
+    "skills": [
+      "card sequencing",
+      "hand management",
+      "hidden-information inference",
+      "multi-action planning"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "SpiteAndMalice-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SpiteAndMalice/env.py"
+  },
+  {
+    "id": "Stratego-v0",
+    "name": "Stratego",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Maneuver a concealed army, reveal ranks through battle, and hunt the enemy Flag.",
+    "objective": "Capture the opposing Flag or leave the opponent with no movable pieces.",
+    "turnFlow": "Armies are placed automatically. Players alternate orthogonal moves; most pieces move one cell, Scouts may travel along a clear line, and moving onto an enemy resolves rank combat with special Bomb, Miner, Spy, and Marshal rules.",
+    "actions": [
+      "[D0 E0]",
+      "[E8 E9]"
+    ],
+    "aiExperience": "Observation: own ranks, enemy locations shown as unknown, lakes, and battle revelations → reasoning: maintain beliefs over hidden ranks, probe with Scouts, protect the Flag, and evaluate asymmetric combat → text action: emit source and destination such as `[D0 E0]`.",
+    "skills": [
+      "belief tracking",
+      "deception",
+      "tactical movement",
+      "risk-sensitive combat",
+      "long-term planning"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "Stratego-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Stratego/env.py"
+  },
+  {
+    "id": "Tak-v0",
+    "name": "Tak",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Place and redistribute flat stones, walls, and capstones to build an edge-to-edge road.",
+    "objective": "Connect opposite edges with visible flat stones or capstones while blocking the opponent’s road.",
+    "turnFlow": "Players alternate either placing a piece on an empty coordinate or moving a controlled stack along a straight path with specified drops. Walls block roads, capstones count as road pieces and may flatten walls, and stack tops determine control.",
+    "actions": [
+      "[place () {(3,2): [C0]}]",
+      "[move (2,2) {(2,3): [F0]}]",
+      "[move (2,2) {(2,3): [F0, F0], (2,4): [W0, F0, C0]}]"
+    ],
+    "aiExperience": "Observation: open stack-by-stack board plus remaining stones and capstones → reasoning: validate ownership and drop paths, forecast stack control, wall flattening, and road connectivity → text action: serialize a precise `[place ...]` or `[move ...]` allocation dictionary.",
+    "skills": [
+      "stack planning",
+      "road search",
+      "resource management",
+      "blocking tactics",
+      "precise serialization"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Tak-v0",
+      "Tak-v0-medium",
+      "Tak-v0-hard"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Tak/env.py"
+  },
+  {
+    "id": "TicTacToe-v0",
+    "name": "Tic-Tac-Toe",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Claim numbered cells and make three of your symbol in a row.",
+    "objective": "Complete a horizontal, vertical, or diagonal line before the opponent.",
+    "turnFlow": "Players alternate placing their fixed X or O in one empty cell numbered zero through eight. Three in a row wins; a full board without one is a draw.",
+    "actions": [
+      "[4]"
+    ],
+    "aiExperience": "Observation: open board and enumerated legal moves → reasoning: take wins, block immediate threats, then prefer fork-producing cells → text action: emit one cell such as `[4]`.",
+    "skills": [
+      "threat detection",
+      "fork planning",
+      "basic lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "TicTacToe-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/TicTacToe/env.py"
+  },
+  {
+    "id": "TruthAndDeception-v0",
+    "name": "Truth and Deception",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "A knowledgeable Deceiver tries to make a Guesser choose the false member of a fact pair.",
+    "objective": "Deceiver: induce the wrong final choice. Guesser: identify the true fact after the conversation.",
+    "turnFlow": "The fixed roles converse in alternating free text for the configured turn budget. In the final phase, the Guesser must choose Fact 1 or Fact 2; a correct guess wins for the Guesser, otherwise the Deceiver wins.",
+    "actions": [
+      "Fact 1 sounds more plausible because its timeline is internally consistent.",
+      "[Fact 1]",
+      "[Fact 2]"
+    ],
+    "aiExperience": "Observation: both fact texts and dialogue, with truth labels visible only to the Deceiver → reasoning: the Deceiver crafts misleading evidence while the Guesser checks consistency and conversational signals → text action: converse freely, then the Guesser emits `[Fact 1]` or `[Fact 2]` in the guess phase.",
+    "skills": [
+      "deception detection",
+      "persuasion",
+      "fact comparison",
+      "role-conditioned reasoning"
+    ],
+    "information": "Hidden",
+    "interaction": "Phased",
+    "variants": [
+      "TruthAndDeception-v0",
+      "TruthAndDeception-v0-long",
+      "TruthAndDeception-v0-extreme"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/TruthAndDeception/env.py"
+  },
+  {
+    "id": "TwoDollar-v0",
+    "name": "Two Dollar",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "Negotiate a $2 split while obeying a randomly assigned private role and behavioral constraint.",
+    "objective": "Reach an acceptable split that satisfies your secret victory condition; without agreement both receive zero.",
+    "turnFlow": "Players alternate one proposal, acceptance, or rejection, with rationale before the bracketed action. Proposals specify the proposer’s share; acceptance ends the game, while the round limit ends unresolved bargaining.",
+    "actions": [
+      "I think this is fair because we both benefit. [Propose] $1.00",
+      "This works for me because it meets my needs. [Accept]",
+      "I cannot accept this split. [Reject]"
+    ],
+    "aiExperience": "Observation: shared $2 pool, public offer history, and a private role containing thresholds or behavioral rules → reasoning: satisfy the hidden constraint, infer the rival’s constraint, and manage concessions → text action: put persuasion before exactly one `[Propose] $X.XX`, `[Accept]`, or `[Reject]`.",
+    "skills": [
+      "constraint following",
+      "bargaining",
+      "opponent modeling",
+      "concession strategy",
+      "persuasion"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "TwoDollar-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/TwoDollar/env.py"
+  },
+  {
+    "id": "UltimateTicTacToe-v0",
+    "name": "Ultimate Tic-Tac-Toe",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Win mini-boards to claim a macro line, while each move dictates the opponent’s next board.",
+    "objective": "Complete three claimed mini-boards in a row on the macro board.",
+    "turnFlow": "A move chooses a mini-board and one cell within it. The chosen cell index forces the opponent’s next mini-board unless that board is closed, in which case the opponent may play anywhere.",
+    "actions": [
+      "[7 8]"
+    ],
+    "aiExperience": "Observation: all nine micro-boards, macro ownership, and forced next board → reasoning: evaluate local tactics together with the board sent to the opponent → text action: emit macro and micro indices such as `[7 8]`.",
+    "skills": [
+      "hierarchical planning",
+      "forced-board tactics",
+      "threat evaluation",
+      "multi-scale lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "UltimateTicTacToe-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/UltimateTicTacToe/env.py"
+  },
+  {
+    "id": "UsedCarNegotiation-v0",
+    "name": "Used Car Negotiation",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "A buyer and seller negotiate one car price under private strong or weak alternatives.",
+    "objective": "Agree on a price that maximizes role-specific normalized value: lower for the buyer, higher for the seller.",
+    "turnFlow": "Randomly assigned buyer and seller roles may discuss or make offers. A player can accept or reject an opponent’s pending offer; acceptance ends the game, and reaching the round cap ends bargaining.",
+    "actions": [
+      "[Offer: 8500]",
+      "[Accept]",
+      "[Reject]",
+      "[Discuss: The inspection supports a price closer to $8,500.]"
+    ],
+    "aiExperience": "Observation: own buyer/seller role, private BATNA instructions, shared blue-book facts, and public negotiation history → reasoning: estimate the rival’s unseen alternative and choose credible anchors without misrepresentation → text action: emit `[Discuss: ...]`, `[Offer: price]`, `[Accept]`, or `[Reject]`.",
+    "skills": [
+      "anchoring",
+      "BATNA reasoning",
+      "price bargaining",
+      "ethical persuasion"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "UsedCarNegotiation-v0",
+      "UsedCarNegotiation-v0-strong-buyer",
+      "UsedCarNegotiation-v0-strong-seller",
+      "UsedCarNegotiation-v0-balanced"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/UsedCarNegotiation/env.py"
+  },
+  {
+    "id": "VendorNegotiation-v0",
+    "name": "Vendor Negotiation",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "A Brand Specialist and Vendor bargain over a vector of product discounts with different economic goals.",
+    "objective": "Brand seeks a target sales level; Vendor seeks profit above a baseline. An accepted discount package can let either, both, or neither side meet its objective.",
+    "turnFlow": "Players alternate free-text conversation, full discount-vector proposals in the displayed product order, and responses to pending proposals. Acceptance triggers Monte Carlo sales/profit evaluation; no deal by the round cap makes both fail.",
+    "actions": [
+      "A balanced promotion can grow volume without eroding every margin.",
+      "[Propose] 10%, 5%, 10%, 20%, 0%",
+      "[Accept]",
+      "[Reject]"
+    ],
+    "aiExperience": "Observation: role-specific private economics and objective, allowed discounts, product order, and public dialogue/proposals → reasoning: model demand–margin tradeoffs, infer the other side’s threshold, and search a Pareto-feasible vector → text action: communicate freely or end with `[Propose]` plus one percentage per product, `[Accept]`, or `[Reject]`.",
+    "skills": [
+      "multi-variable optimization",
+      "threshold inference",
+      "economic reasoning",
+      "persuasion",
+      "Pareto search"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "VendorNegotiation-v0",
+      "VendorNegotiation-v0-lite",
+      "VendorNegotiation-v0-heavy"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/VendorNegotiation/env.py"
+  },
+  {
+    "id": "WildTicTacToe-v0",
+    "name": "Wild Tic-Tac-Toe",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Either player may place X or O, and the mover wins by completing a line of either symbol.",
+    "objective": "Be the player who places the third identical mark in any row, column, or diagonal.",
+    "turnFlow": "Players alternate choosing both a symbol and an empty numbered cell. Ownership belongs to the mover, not the symbol, so either X or O can deliver either player’s win.",
+    "actions": [
+      "[X 4]",
+      "[O 2]"
+    ],
+    "aiExperience": "Observation: open 3×3 board and every symbol-cell combination → reasoning: evaluate threats for both marks, create dual-symbol forks, and avoid gifting a completion → text action: emit symbol and cell such as `[X 4]`.",
+    "skills": [
+      "dual-symbol threat detection",
+      "fork planning",
+      "tactical lookahead"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "WildTicTacToe-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/WildTicTacToe/env.py"
+  },
+  {
+    "id": "WordChains-v0",
+    "name": "Word Chains",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Word & communication",
+    "oneLine": "Each new English word must begin with the last letter of the previous word and be exactly one letter longer.",
+    "objective": "Continue the chain with unused legal words until the opponent cannot satisfy the next letter-and-length constraint.",
+    "turnFlow": "The environment supplies a random starting word. Players alternate one bracketed word that starts with the required letter, has exactly the required length, is in the dictionary, and has not appeared before.",
+    "actions": [
+      "[apple]",
+      "[monkey]"
+    ],
+    "aiExperience": "Observation: current word, required initial, required exact length, and used-word history → reasoning: search a lexicon while considering which final letter and next length will constrain the opponent → text action: emit one word in brackets, such as `[apple]` when state-valid.",
+    "skills": [
+      "lexical retrieval",
+      "constraint satisfaction",
+      "adversarial word choice",
+      "working memory"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "WordChains-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/WordChains/env.py"
+  }
+]

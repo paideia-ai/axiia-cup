@@ -1,0 +1,538 @@
+[
+  {
+    "id": "CharacterConclave-v0",
+    "name": "Character Conclave",
+    "mode": "multiplayer",
+    "players": "3–15",
+    "category": "Negotiation & social",
+    "oneLine": "Win the room with memorable conversation, then survive a private popularity vote.",
+    "objective": "Earn the most votes from other players after everyone exhausts a limited discussion-character budget; self-voting is forbidden.",
+    "turnFlow": "Players rotate through a public discussion and may spread their character allowance across multiple turns. When every budget reaches zero, each player privately submits one vote; players are ranked by vote count.",
+    "actions": [
+      "I can reconcile the strongest ideas into one clear plan.",
+      "[player 2]",
+      "[2]"
+    ],
+    "aiExperience": "Receives the shared transcript and its remaining character budget → reasons about persuasion, distinctiveness, and alliances → emits free-form public text; in the voting phase it converts its judgment into one bracketed player ID.",
+    "skills": [
+      "Persuasion",
+      "Social inference",
+      "Message budgeting",
+      "Coalition awareness"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "CharacterConclave-v0",
+      "CharacterConclave-v0-long",
+      "CharacterConclave-v0-extreme"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/CharacterConclave/env.py"
+  },
+  {
+    "id": "Codenames-v0",
+    "name": "Codenames",
+    "mode": "multiplayer",
+    "players": "4",
+    "category": "Word & communication",
+    "oneLine": "Two AI teams translate one-word clues into risky guesses on a hidden word map.",
+    "objective": "Reveal every word belonging to your team before the opponent does, without selecting the assassin.",
+    "turnFlow": "Each team has a Spymaster and an Operative. A Spymaster gives one word plus a number; its Operative may guess up to that number plus one, stopping on a miss, the limit, or a pass, after which the other team acts.",
+    "actions": [
+      "[wind 2]",
+      "[breeze]",
+      "[pass]"
+    ],
+    "aiExperience": "A Spymaster observes the full secret team/neutral/assassin mapping → searches for a safe semantic bridge → emits `[clue number]`; an Operative sees only revealed labels and the clue → ranks candidate associations and risk → emits one `[word]` at a time or `[pass]`.",
+    "skills": [
+      "Semantic association",
+      "Pragmatic inference",
+      "Risk control",
+      "Team coordination"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "Codenames-v0",
+      "Codenames-v0-hardcore"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Codenames/env.py"
+  },
+  {
+    "id": "LiarsDice-v0",
+    "name": "Liar's Dice",
+    "mode": "multiplayer",
+    "players": "2–15",
+    "category": "Cards & chance",
+    "oneLine": "Infer a table-wide dice total from one private roll and an escalating chain of bluffs.",
+    "objective": "Be the last player with dice by making credible higher bids and correctly challenging impossible claims.",
+    "turnFlow": "Every surviving player privately receives a fresh roll. Turns alternate between a bid that cannot lower quantity or face value and a call; a call reveals all dice, makes the losing bidder or caller lose one die, then starts a new round.",
+    "actions": [
+      "[Bid: 3, 4]",
+      "[Call]"
+    ],
+    "aiExperience": "Observes its private dice, every player's remaining dice, and the public current bid → estimates likelihoods and opponents' bluff incentives → emits a higher `[Bid: quantity, face]` or `[Call]`; all rolls become public only when challenged.",
+    "skills": [
+      "Probabilistic inference",
+      "Bluffing",
+      "Opponent modeling",
+      "Risk calibration"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "LiarsDice-v0-small",
+      "LiarsDice-v0",
+      "LiarsDice-v0-large"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/LiarsDice/env.py"
+  },
+  {
+    "id": "MarketEntryGame-v0",
+    "name": "Market Entry Game",
+    "mode": "multiplayer",
+    "players": "4 (registered default; source does not enforce a range)",
+    "category": "Game theory & economics",
+    "oneLine": "Talk openly, then secretly decide whether an already crowded market is worth entering.",
+    "objective": "Finish five rounds with the highest total payoff by entering when no more than two players enter and taking the safe payoff otherwise.",
+    "turnFlow": "Each round has three simultaneous communication cycles: messages are withheld until every player submits. All players then secretly choose Enter or Stay Out, decisions reveal together, and entrants receive 15 points if capacity is respected or −5 if overcrowded while non-entrants receive 5.",
+    "actions": [
+      "{I think only 2 of us should enter this round}",
+      "[E]",
+      "[S]"
+    ],
+    "aiExperience": "Observes public batch-revealed messages, past entry choices, and cumulative scores → reasons about congestion, credibility, and mixed strategies → emits `{public message}` during discussion and a hidden `[E]` or `[S]` during decision.",
+    "skills": [
+      "Congestion reasoning",
+      "Strategic communication",
+      "Belief modeling",
+      "Repeated-game adaptation"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "MarketEntryGame-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/MarketEntryGame/env.py"
+  },
+  {
+    "id": "Poker-v0",
+    "name": "Texas Hold'em Poker",
+    "mode": "multiplayer",
+    "players": "2–15",
+    "category": "Cards & chance",
+    "oneLine": "Navigate hidden cards, public betting, and multi-street uncertainty across a fixed match.",
+    "objective": "End the configured number of hands with the largest chip stack by winning showdowns or making opponents fold.",
+    "turnFlow": "Each hand posts blinds and deals two private hole cards. Players bet in turn through pre-flop, flop, turn, and river; remaining hands go to showdown, the button advances, and the match ranks final chip stacks.",
+    "actions": [
+      "[Check]",
+      "[Call]",
+      "[Fold]",
+      "[Bet 100]",
+      "[Raise 200]"
+    ],
+    "aiExperience": "Observes private hole cards plus the public board, pot, bets, stacks, positions, and action history → estimates hand equity and opponent ranges → emits one legal bracketed betting action; later streets reveal community cards but never opponents' live hole cards before showdown.",
+    "skills": [
+      "Probabilistic reasoning",
+      "Bet sizing",
+      "Bluff detection",
+      "Position awareness",
+      "Bankroll management"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "Poker-v0-small",
+      "Poker-v0",
+      "Poker-v0-long",
+      "Poker-v0-extreme"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Poker/env.py"
+  },
+  {
+    "id": "PublicGoodsGame-v0",
+    "name": "Public Goods Game",
+    "mode": "multiplayer",
+    "players": "3 (registered default; source does not enforce a range)",
+    "category": "Game theory & economics",
+    "oneLine": "Promise cooperation in public, then privately decide how much of your endowment to contribute.",
+    "objective": "Maximize total payoff across three rounds: keep part of each 20-token endowment while sharing an equal portion of the 1.5× multiplied public pot.",
+    "turnFlow": "Each round contains three simultaneous communication cycles whose messages reveal only after all submissions. Players then secretly choose a contribution from 0 to 20; contributions reveal together, payoffs are calculated, and cumulative scores update.",
+    "actions": [
+      "{Let me propose we all contribute 15 tokens}",
+      "[15]",
+      "[0]"
+    ],
+    "aiExperience": "Observes batch-revealed promises, previous contributions, payoffs, and scores → weighs free-riding against reciprocity and reputation → emits `{public message}` in communication and a hidden bracketed integer in the contribution phase.",
+    "skills": [
+      "Cooperation strategy",
+      "Reciprocity modeling",
+      "Payoff calculation",
+      "Credibility assessment"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "PublicGoodsGame-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/PublicGoodsGame/env.py"
+  },
+  {
+    "id": "SantoriniBaseFixed-v0",
+    "name": "Santorini — Fixed Worker Setup",
+    "mode": "multiplayer",
+    "players": "2 or 3",
+    "category": "Board & spatial",
+    "oneLine": "Move, climb, and build in one compact command on a fully visible 5×5 tower board.",
+    "objective": "Move one of your two workers onto level three, or leave the next player with no legal move.",
+    "turnFlow": "On each alternating turn, a player moves one adjacent worker no more than one level upward, then builds one level on an adjacent unoccupied square. The fixed setup removes placement decisions; towers cap with level-four domes.",
+    "actions": [
+      "[N1C2B1A1]"
+    ],
+    "aiExperience": "Receives the complete board, its color/worker IDs, and an enumerated valid-move list → searches move-build consequences and blocking tactics → emits one token encoding worker, source, destination, and build square.",
+    "skills": [
+      "Spatial planning",
+      "Lookahead",
+      "Mobility control",
+      "Threat detection"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "SantoriniBaseFixed-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Santorini/env.py"
+  },
+  {
+    "id": "ScorableGames-v0",
+    "name": "Scorable Games",
+    "mode": "multiplayer",
+    "players": "2, 4, 6, or 7 depending on variant",
+    "category": "Negotiation & social",
+    "oneLine": "Negotiate a complete multi-issue deal while every role values the options differently in private.",
+    "objective": "Reach an accepted deal that clears your private minimum score, while managing veto holders, the required vote threshold, and—in configured roles—a unanimity bonus.",
+    "turnFlow": "Players rotate through complete proposals and accept/reject votes. A new proposal replaces the current deal and clears votes; a deal passes only after enough acceptances and all configured veto roles approve, otherwise negotiation continues to the round limit.",
+    "actions": [
+      "[Propose] A1 B2 C2 D2 E3",
+      "[Accept]",
+      "[Reject]"
+    ],
+    "aiExperience": "Receives the public scenario, issues, current deal, votes, and negotiation history plus a private scoring table, threshold, and role instructions → reasons about trade-offs and other parties' latent utilities → emits rationale followed by a complete `[Propose] …`, `[Accept]`, or `[Reject]` action.",
+    "skills": [
+      "Multi-issue bargaining",
+      "Preference inference",
+      "Coalition building",
+      "Constraint satisfaction",
+      "Utility optimization"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "ScorableGames-v0",
+      "ScorableGames-v0-conservative",
+      "ScorableGames-v0-game1",
+      "ScorableGames-v0-game2",
+      "ScorableGames-v0-game3",
+      "ScorableGames-v0-7players",
+      "ScorableGames-v0-medicalethics",
+      "ScorableGames-v0-vendorretailer"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ScorableGames/env.py"
+  },
+  {
+    "id": "SecretMafia-v0",
+    "name": "Secret Mafia",
+    "mode": "multiplayer",
+    "players": "6–15",
+    "category": "Negotiation & social",
+    "oneLine": "Use language, deception, and hidden-role actions to decide who survives each day and night.",
+    "objective": "The Village wins by eliminating every Mafia member; the Mafia wins when its surviving members equal or outnumber the Village.",
+    "turnFlow": "Night proceeds through private Mafia targeting, Doctor protection, and Detective investigation when those roles remain alive. Day brings three rounds of public discussion followed by one vote from every survivor; eliminations repeat until a team wins.",
+    "actions": [
+      "Player 2's story changed; explain your vote.",
+      "[Player 3]",
+      "[3]"
+    ],
+    "aiExperience": "Receives a private role prompt—and Mafia teammate identities when applicable—plus the public transcript and phase-specific legal targets → updates suspicion and deception models → emits free-form day speech or one bracketed target for voting, killing, protection, or investigation.",
+    "skills": [
+      "Deception detection",
+      "Role inference",
+      "Persuasion",
+      "Team coordination",
+      "Long-horizon memory"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "SecretMafia-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SecretMafia/env.py"
+  },
+  {
+    "id": "SettlersOfCatan-v0",
+    "name": "Settlers of Catan",
+    "mode": "multiplayer",
+    "players": "4",
+    "category": "Board & spatial",
+    "oneLine": "Build from an indexed move menu, gather dice-driven resources, and negotiate bilateral trades.",
+    "objective": "Reach 11 implemented victory points by building settlements, upgrading cities, and expanding roads; the environment omits the robber, development cards, Largest Road, and Largest Army.",
+    "turnFlow": "Dice roll and resource distribution happen automatically at turn start. A player may take up to ten indexed build, negotiation, or no-op actions; negotiation temporarily alternates with one chosen partner until a trade resolves or either side ends it.",
+    "actions": [
+      "[3]",
+      "[Blue]",
+      "[Offer: 2 Wood, 1 Brick -> 1 Wheat]",
+      "[accept]",
+      "[deny]",
+      "[done]"
+    ],
+    "aiExperience": "Receives its color, the board, scores, resource information, remaining allowance, and a generated list of viable indexed moves → plans expansion and resource needs → emits `[index]`; if trading, it selects a partner and exchanges structured offers and responses in a sub-dialogue.",
+    "skills": [
+      "Resource planning",
+      "Spatial expansion",
+      "Trade negotiation",
+      "Action sequencing",
+      "Opponent modeling"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "SettlersOfCatan-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/SettlersOfCatan/env.py"
+  },
+  {
+    "id": "Snake-v0",
+    "name": "Multiplayer Snake",
+    "mode": "multiplayer",
+    "players": "2–15",
+    "category": "Board & spatial",
+    "oneLine": "Choose directions simultaneously, grow on apples, and avoid walls, bodies, and rival heads.",
+    "objective": "Survive longer than every rival; survival time ranks first, being alive breaks same-turn ties, and apple score provides the next tie-break.",
+    "turnFlow": "Every living snake submits a hidden direction, then all movement resolves together. Wall, head-on, swap, and body collisions kill; apples grow snakes and increase score, and play ends with one survivor or the turn limit.",
+    "actions": [
+      "[up]",
+      "[down]",
+      "[left]",
+      "[right]",
+      "[w]",
+      "[s]",
+      "[a]",
+      "[d]"
+    ],
+    "aiExperience": "Receives the shared grid with every snake and apple → projects all plausible simultaneous movements and collision zones → emits one bracketed direction; submitted moves remain pending until every living player has acted.",
+    "skills": [
+      "Spatial prediction",
+      "Collision avoidance",
+      "Adversarial pathfinding",
+      "Risk management"
+    ],
+    "information": "Open",
+    "interaction": "Simultaneous",
+    "variants": [
+      "Snake-v0",
+      "Snake-v0-standard",
+      "Snake-v0-large"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Snake/env.py"
+  },
+  {
+    "id": "Surround-v0",
+    "name": "Surround",
+    "mode": "multiplayer",
+    "players": "2–15",
+    "category": "Board & spatial",
+    "oneLine": "A simultaneous light-cycle duel where every safe move becomes a permanent deadly trail.",
+    "objective": "Outlive all other players by staying inside the grid and avoiding trails, occupied heads, and head-on collisions.",
+    "turnFlow": "Every survivor submits one direction and the environment resolves the batch simultaneously. Each successful move leaves a permanent trail; wall, trail, current-head, and shared-destination collisions eliminate players.",
+    "actions": [
+      "[up]",
+      "[down]",
+      "[left]",
+      "[right]",
+      "[w]",
+      "[s]",
+      "[a]",
+      "[d]"
+    ],
+    "aiExperience": "Receives the fully visible grid, heads, and trails → forecasts opponents' reachable cells and future enclosure → emits one bracketed direction; choices reveal only through simultaneous resolution.",
+    "skills": [
+      "Territory control",
+      "Simultaneous-move prediction",
+      "Path planning",
+      "Survival strategy"
+    ],
+    "information": "Open",
+    "interaction": "Simultaneous",
+    "variants": [
+      "Surround-v0",
+      "Surround-v0-standard",
+      "Surround-v0-large"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Surround/env.py"
+  },
+  {
+    "id": "Taboo-v0",
+    "name": "Taboo",
+    "mode": "multiplayer",
+    "players": "Any even count ≥4 (registry documents 4–6)",
+    "category": "Word & communication",
+    "oneLine": "Two teams race to decode secret words from clues that cannot use the obvious vocabulary.",
+    "objective": "Score more target words than the other team across the configured rounds without the Clue Giver saying the target or any listed taboo word.",
+    "turnFlow": "Each team has one Clue Giver and the remaining members are Guessers. Teams take separate rounds: the Clue Giver sees the private target and forbidden list, supplies free-form clues, and teammates rotate bracketed guesses before play switches teams.",
+    "actions": [
+      "This mammal has tusks and very large ears.",
+      "[elephant]"
+    ],
+    "aiExperience": "A Clue Giver receives the secret word and taboo list → searches for an indirect but discriminative description → emits unrestricted clue text; a Guesser receives teammate clues without the secret → infers the target and emits `[guess]`.",
+    "skills": [
+      "Constrained language",
+      "Semantic inference",
+      "Creative description",
+      "Team communication"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "Taboo-v0",
+      "Taboo-v0-animals",
+      "Taboo-v0-cars",
+      "Taboo-v0-city/country",
+      "Taboo-v0-food",
+      "Taboo-v0-literature",
+      "Taboo-v0-people",
+      "Taboo-v0-tv",
+      "Taboo-v0-long",
+      "Taboo-v0-full"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Taboo/env.py"
+  },
+  {
+    "id": "ThreePlayerGOPS-v0",
+    "name": "Three-Player GOPS",
+    "mode": "multiplayer",
+    "players": "3",
+    "category": "Cards & chance",
+    "oneLine": "Spend each card exactly once in simultaneous auctions for a shuffled stream of prize cards.",
+    "objective": "Accumulate the highest prize total after 13 auctions; tied winning bids carry the unresolved prize value into the next round.",
+    "turnFlow": "A public prize card is revealed and each player secretly commits one unused card from A through K. Bids reveal together; the unique high bidder takes the prize plus any carry pot, while a tie carries everything forward.",
+    "actions": [
+      "[Q]",
+      "[10]",
+      "[2]"
+    ],
+    "aiExperience": "Observes the current prize, carry pot, scores, and its remaining hand; because prior bids reveal, rivals' remaining cards are trackable → reasons about card conservation and likely simultaneous bids → emits one bracketed card.",
+    "skills": [
+      "Resource allocation",
+      "Opponent prediction",
+      "Simultaneous bidding",
+      "Long-horizon planning"
+    ],
+    "information": "Open",
+    "interaction": "Simultaneous",
+    "variants": [
+      "ThreePlayerGOPS-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ThreePlayerGOPS/env.py"
+  },
+  {
+    "id": "ThreePlayerIPD-v0",
+    "name": "Three-Player Iterated Prisoner's Dilemma",
+    "mode": "multiplayer",
+    "players": "3",
+    "category": "Game theory & economics",
+    "oneLine": "Talk as a group, then independently cooperate with or defect against each opponent.",
+    "objective": "Earn the highest cumulative score across five rounds of pairwise Prisoner's Dilemma payoffs.",
+    "turnFlow": "Each registered round begins with one full free-chat cycle. Every player then submits one cooperate/defect choice for each opponent; all decisions resolve into three pairwise payoff calculations before scores reveal and the next round starts.",
+    "actions": [
+      "I will cooperate with both of you if we keep the agreement.",
+      "[1 defect] [2 cooperate]"
+    ],
+    "aiExperience": "Observes the public conversation, prior decisions, and cumulative scores → models reciprocity separately for each opponent → emits free-form speech in conversation, then a single text action containing one hidden bracketed choice per opponent.",
+    "skills": [
+      "Reciprocity",
+      "Reputation tracking",
+      "Strategic communication",
+      "Opponent-specific planning"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "ThreePlayerIPD-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ThreePlayerIPD/env.py"
+  },
+  {
+    "id": "ThreePlayerTicTacToe-v0",
+    "name": "Three-Player Tic-Tac-Toe",
+    "mode": "multiplayer",
+    "players": "3",
+    "category": "Board & spatial",
+    "oneLine": "Three symbols compete to make four in a row on an open 5×5 board.",
+    "objective": "Be the first player to form a horizontal, vertical, or diagonal line of four of your symbol.",
+    "turnFlow": "Players A, B, and C alternate selecting one unoccupied numbered cell from 0 through 24. The board and available move list update after every placement; a full board without a four-line is a draw.",
+    "actions": [
+      "[4]"
+    ],
+    "aiExperience": "Receives the complete board, its symbol, and every currently legal bracketed cell → checks immediate wins, blocks two opponents' threats, and plans forks → emits one `[cell]` action.",
+    "skills": [
+      "Pattern recognition",
+      "Threat blocking",
+      "Spatial lookahead",
+      "Multi-opponent planning"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "ThreePlayerTicTacToe-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ThreePlayerTicTacToe/env.py"
+  },
+  {
+    "id": "WinAsMuchAsYouCan-v0",
+    "name": "Win as Much as You Can",
+    "mode": "multiplayer",
+    "players": "4",
+    "category": "Game theory & economics",
+    "oneLine": "Coordinate—or betray—across ten hidden X/Y choices whose late rounds carry enormous multipliers.",
+    "objective": "Finish with the highest individual score after ten rounds by balancing safe all-Y cooperation against profitable but collectively risky X choices.",
+    "turnFlow": "Rounds 1–4, 6–7, and 9 move directly to simultaneous choice. Rounds 5, 8, and 10 first allow public broadcasts, private whispers, and passing, then resolve hidden X/Y choices together with 3×, 5×, and 10× scoring respectively.",
+    "actions": [
+      "[Choose X]",
+      "[Choose Y]",
+      "[Broadcast] Let's all choose Y for mutual benefit!",
+      "[Whisper to 2] I'll choose Y if you do the same",
+      "[Pass]"
+    ],
+    "aiExperience": "Observes scores, revealed historical choices, and public talk plus any whispers addressed to it → evaluates trust, alliance signals, and the current multiplier → emits a communication command during talk or a hidden `[Choose X]`/`[Choose Y]` action for simultaneous resolution.",
+    "skills": [
+      "Cooperation and defection strategy",
+      "Trust modeling",
+      "Alliance formation",
+      "Multiplier-aware planning",
+      "Deception"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "WinAsMuchAsYouCan-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/WinAsMuchAsYouCan/env.py"
+  }
+]

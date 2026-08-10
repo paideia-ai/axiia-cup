@@ -1,5 +1,8 @@
 # Axiia Cup 技术架构（MVP）
 
+> ⚠️ **legacy 记录**：本文如实记录 legacy MVP 实现（含 submissions 表 prompt_a/prompt_b 等双侧数据模型）。agent 模型已被 v3.4 per-side（#55）取代——新实现以 v2 + axiia-cup-uiux/UI-Doc-v3.4.md 为准。
+
+
 ## 技术栈
 
 ```

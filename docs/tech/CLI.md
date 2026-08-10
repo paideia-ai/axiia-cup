@@ -1,5 +1,8 @@
 # Axiia Cup CLI Guide
 
+> ⚠️ **legacy 记录**：本文如实记录 legacy MVP 实现（含 submissions 表 prompt_a/prompt_b 等双侧数据模型）。agent 模型已被 v3.4 per-side（#55）取代——新实现以 v2 + axiia-cup-uiux/UI-Doc-v3.4.md 为准。
+
+
 `apps/cli` is the repository's admin and operations CLI. It can authenticate against the API, inspect tournaments, update scenarios, manage users, and operate playground runs.
 
 ## 1. Running the CLI

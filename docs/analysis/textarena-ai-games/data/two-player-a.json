@@ -1,0 +1,752 @@
+[
+  {
+    "id": "Alquerque-v0",
+    "name": "Alquerque",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "A compact 5×5 ancestor of draughts where forward steps create all-direction capture opportunities.",
+    "objective": "Capture every opposing piece, leave the opponent without a legal move, or lead on capture points when the 60-move limit is reached.",
+    "turnFlow": "Both agents see the full board, move one piece one adjacent step forward, or jump an adjacent enemy into an empty landing square. A capture scores 10 points, then play alternates.",
+    "actions": [
+      "[a2 a3]",
+      "[6 12]"
+    ],
+    "aiExperience": "Observation → an open 5×5 coordinate board, move number, pieces and score; reasoning → enumerate forward steps and single jumps, value captures and mobility; text action → emit one bracketed source/destination pair.",
+    "skills": [
+      "spatial planning",
+      "capture tactics",
+      "mobility management",
+      "coordinate grounding"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Alquerque-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Alquerque/env.py"
+  },
+  {
+    "id": "Battleship-v0",
+    "name": "Battleship",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "A hidden-fleet search game in which every coordinate shot updates a private map of hits and misses.",
+    "objective": "Sink all five randomly placed enemy ships before the opponent sinks yours.",
+    "turnFlow": "Each agent sees its own ships plus a tracking grid for prior shots. It fires at one untried coordinate, receives miss, hit or sunk feedback, and then the opponent fires.",
+    "actions": [
+      "[A4]",
+      "[B0]"
+    ],
+    "aiExperience": "Observation → private fleet layout, personal hit/miss map and shot feedback; reasoning → track unresolved ship segments, avoid repeated cells and search likely continuations; text action → emit one bracketed letter-number coordinate.",
+    "skills": [
+      "probabilistic search",
+      "memory",
+      "spatial inference",
+      "information tracking"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "Battleship-v0",
+      "Battleship-v0-standard",
+      "Battleship-v0-large",
+      "Battleship-v0-extreme"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Battleship/env.py"
+  },
+  {
+    "id": "Breakthrough-v0",
+    "name": "Breakthrough",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "A pawn-army race where every piece advances and diagonal contact becomes a capture.",
+    "objective": "Reach the opponent's home row, capture all opposing pieces, or leave the opponent with no legal move.",
+    "turnFlow": "Agents move one piece one rank forward into an empty square or diagonally forward onto an enemy piece. The standard modes reveal the board after each alternating move; the blind variant does not.",
+    "actions": [
+      "[a2a3]",
+      "[b2c3]"
+    ],
+    "aiExperience": "Observation → board and role in open modes, but only sparse messages in blind mode; reasoning → balance racing lanes, blocks and diagonal captures while retaining state from history; text action → emit a bracketed UCI-like move.",
+    "skills": [
+      "forward planning",
+      "race calculation",
+      "tactical captures",
+      "state memory"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "Breakthrough-v0-tiny",
+      "Breakthrough-v0-small",
+      "Breakthrough-v0",
+      "Breakthrough-v0-large",
+      "Breakthrough-v0-blind",
+      "Breakthrough-v0-long"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Breakthrough/env.py"
+  },
+  {
+    "id": "Briscola-v0",
+    "name": "Briscola",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "An Italian trick-taking duel where a tiny hand, powerful trumps and uneven card values make timing decisive.",
+    "objective": "Collect more of the deck's 120 card points by winning tricks; aces and threes are especially valuable.",
+    "turnFlow": "Each agent starts with three private cards and sees the trump suit and current trick. It plays any indexed card; trump beats non-trump, otherwise the highest lead-suit card wins. New cards are dealt after each trick, and the trick winner leads next.",
+    "actions": [
+      "[play 1]",
+      "[play 3]"
+    ],
+    "aiExperience": "Observation → private indexed hand, public trump, trick, scores and deck count; reasoning → infer unseen cards, preserve strong trumps and trade card power against point value; text action → select a legal hand position with [play X].",
+    "skills": [
+      "card counting",
+      "trick tactics",
+      "risk management",
+      "hidden-state inference"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "Briscola-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Briscola/env.py"
+  },
+  {
+    "id": "Checkers-v0",
+    "name": "Checkers",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "A simplified open-board checkers match with single jumps, promotion and coordinate-based moves.",
+    "objective": "Capture every enemy piece or leave the opponent without a legal move before the turn limit.",
+    "turnFlow": "Red and Black alternate diagonal steps or single captures; reaching the far edge kings a piece. This implementation does not enforce forced captures or multi-jump sequences.",
+    "actions": [
+      "[5 0 4 1]",
+      "[2 1 3 2]"
+    ],
+    "aiExperience": "Observation → full 8×8 row-column board after every turn; reasoning → validate ownership, direction, landing space, jumps and promotion threats; text action → emit four bracketed row/column integers.",
+    "skills": [
+      "tactical search",
+      "capture planning",
+      "promotion strategy",
+      "coordinate grounding"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Checkers-v0",
+      "Checkers-v0-long"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Checkers/env.py"
+  },
+  {
+    "id": "Chess-v0",
+    "name": "Chess",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Full chess through text, with legal-move assistance in standard play and memory-heavy blind play.",
+    "objective": "Achieve a winning chess outcome under standard rules, or draw through a recognized chess draw condition.",
+    "turnFlow": "White and Black alternate legal moves enforced by python-chess. Standard modes show the board and legal UCI moves; blind mode suppresses both, while the long variant raises the turn limit.",
+    "actions": [
+      "[e2e4]",
+      "[g1f3]",
+      "[e7e8q]"
+    ],
+    "aiExperience": "Observation → role plus board and legal moves in open modes, or action history alone in blind mode; reasoning → maintain a legal position, search tactics and long-term plans; text action → emit one bracketed UCI move, including promotion suffix when needed.",
+    "skills": [
+      "deep planning",
+      "tactical calculation",
+      "position evaluation",
+      "state reconstruction"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "Chess-v0",
+      "Chess-v0-long",
+      "Chess-v0-blind"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Chess/env.py"
+  },
+  {
+    "id": "Chopsticks-v0",
+    "name": "Chopsticks",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "A small arithmetic duel where live hands attack, split and disappear at five fingers.",
+    "objective": "Reduce both opponent hands to zero before the turn limit.",
+    "turnFlow": "Agents see both two-number hands. On each alternating turn, attack a live enemy hand with one live hand, wrapping totals of five or more to zero, or redistribute your own total with a changed split.",
+    "actions": [
+      "[attack 0 1]",
+      "[split 0 2]"
+    ],
+    "aiExperience": "Observation → both hand vectors and move history; reasoning → calculate attacks, forced replies, dead-hand risks and useful redistributions; text action → emit one exact attack or split command.",
+    "skills": [
+      "arithmetic planning",
+      "short-horizon search",
+      "tempo control"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Chopsticks-v0",
+      "Chopsticks-v0-medium",
+      "Chopsticks-v0-long"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Chopsticks/env.py"
+  },
+  {
+    "id": "ColonelBlotto-v0",
+    "name": "Colonel Blotto",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "A repeated simultaneous-allocation contest over several battlefields with no single safe distribution.",
+    "objective": "Win a majority of fields in more rounds than the opponent by allocating exactly the available units each round.",
+    "turnFlow": "Both commanders privately commit a complete unit allocation. After both submit, each field goes to the larger allocation, the majority wins the round, allocations are revealed, and fresh units arrive next round.",
+    "actions": [
+      "[A4 B8 C8]",
+      "[A:5, B:10, C:5]"
+    ],
+    "aiExperience": "Observation → round, cumulative score, field labels and unit budget; reasoning → model the opponent's distribution, mix strategies and avoid exploitable repetition; text action → emit one bracketed allocation whose non-negative integers sum exactly to the budget.",
+    "skills": [
+      "mixed-strategy reasoning",
+      "resource allocation",
+      "opponent modeling",
+      "pattern adaptation"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "ColonelBlotto-v0-small",
+      "ColonelBlotto-v0",
+      "ColonelBlotto-v0-large",
+      "ColonelBlotto-v0-extreme"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ColonelBlotto/env.py"
+  },
+  {
+    "id": "ConnectFour-v0",
+    "name": "Connect Four",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "The familiar gravity alignment game, expressed as one column choice per turn.",
+    "objective": "Connect four of your discs horizontally, vertically or diagonally before the opponent.",
+    "turnFlow": "Agents alternate selecting a non-full column; the disc falls to its lowest open cell. Open modes redraw the board after each move, while the blind variant withholds it.",
+    "actions": [
+      "[col 4]",
+      "[3]"
+    ],
+    "aiExperience": "Observation → board and symbol in open modes, or only action descriptions in blind mode; reasoning → scan immediate wins, blocks, forks and gravity-supported threats; text action → emit a bracketed column number, optionally prefixed by col.",
+    "skills": [
+      "pattern recognition",
+      "tactical search",
+      "threat blocking",
+      "state memory"
+    ],
+    "information": "Mixed",
+    "interaction": "Alternating",
+    "variants": [
+      "ConnectFour-v0",
+      "ConnectFour-v0-blind",
+      "ConnectFour-v0-large"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/ConnectFour/env.py"
+  },
+  {
+    "id": "Crusade-v0",
+    "name": "Crusade",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Board & spatial",
+    "oneLine": "Two full ranks of knight-like pieces clash for captures across an open 8×8 board.",
+    "objective": "Lead on captured-piece score after 40 moves, or win earlier by eliminating or immobilizing the opponent.",
+    "turnFlow": "Every piece moves in a chess-knight L-shape to an empty or enemy square. Agents alternate, score one point per capture, and receive the full board plus currently available moves.",
+    "actions": [
+      "[b1 c3]",
+      "[g2 e4]"
+    ],
+    "aiExperience": "Observation → open board, capture scores, move count and enumerated legal moves; reasoning → compare capture sequences, mobility and exposure; text action → copy or construct one bracketed source/destination pair.",
+    "skills": [
+      "move generation",
+      "capture tactics",
+      "mobility planning",
+      "coordinate grounding"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Crusade-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Crusade/env.py"
+  },
+  {
+    "id": "Debate-v0",
+    "name": "Debate",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Word & communication",
+    "oneLine": "An alternating natural-language debate judged by whether a model jury's support shifts toward your assigned side.",
+    "objective": "Gain more jury support from pre-debate to post-debate than the opposing side on a randomly selected topic.",
+    "turnFlow": "The environment randomly assigns Affirmative and Negative positions and records a baseline jury vote. Agents alternate free-form arguments for the shared turn budget, then a model jury evaluates the transcript and the larger vote gain wins.",
+    "actions": [
+      "Renewable energy improves resilience by diversifying the power supply.",
+      "That claim overlooks intermittency, storage cost, and grid stability."
+    ],
+    "aiExperience": "Observation → topic, assigned side and the public alternating transcript; reasoning → build claims, evidence and rebuttals aimed at marginal jury persuasion; text action → produce a free-form argument with no bracket syntax.",
+    "skills": [
+      "argumentation",
+      "rebuttal",
+      "audience modeling",
+      "rhetorical planning"
+    ],
+    "information": "Open",
+    "interaction": "Alternating",
+    "variants": [
+      "Debate-v0",
+      "Debate-v0-medium",
+      "Debate-v0-long"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Debate/env.py"
+  },
+  {
+    "id": "DontSayIt-v0",
+    "name": "Don't Say It",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Word & communication",
+    "oneLine": "A conversational trap-setting duel where each player tries to make the other utter a private target noun.",
+    "objective": "Coax the opponent into saying your secret word without saying their secret word yourself.",
+    "turnFlow": "Each agent privately receives its own target noun, then the pair alternates unrestricted messages. If a message contains the opponent's target word, its author immediately loses; reaching the turn limit produces a draw.",
+    "actions": [
+      "What would you normally eat for breakfast?",
+      "Can you name the object people use to unlock a door?"
+    ],
+    "aiExperience": "Observation → own secret target plus the public conversation, never the opponent's target; reasoning → elicit a specific word while detecting and avoiding lexical traps; text action → send one natural-language message.",
+    "skills": [
+      "pragmatic language",
+      "elicitation",
+      "deception detection",
+      "lexical caution"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "DontSayIt-v0",
+      "DontSayIt-v0-hardcore",
+      "DontSayIt-v0-unlimited"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/DontSayIt/env.py"
+  },
+  {
+    "id": "GameOfPureStrategy-v0",
+    "name": "Game of Pure Strategy",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "A thirteen-round sealed-bid card contest where one-use bids compete for a revealed prize card.",
+    "objective": "Finish with the highest total value of won prize cards, including any prize value carried over after tied bids.",
+    "turnFlow": "A random prize from A–K is revealed each round. Each agent privately commits one remaining A–K card; both bids are then revealed, the higher wins the prize, and ties carry its value into the next round.",
+    "actions": [
+      "[Q]",
+      "[10]",
+      "[2]"
+    ],
+    "aiExperience": "Observation → current prize, carry value, score and own remaining bid cards; reasoning → estimate the opponent's remaining hand and reserve scarce high cards for valuable pots; text action → emit exactly one bracketed remaining card.",
+    "skills": [
+      "resource timing",
+      "opponent modeling",
+      "sealed-bid strategy",
+      "long-horizon planning"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "GameOfPureStrategy-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/GameOfPureStrategy/env.py"
+  },
+  {
+    "id": "GermanWhist-v0",
+    "name": "German Whist",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "A 26-trick duel whose first half lets trick winners improve their hands before a no-draw endgame.",
+    "objective": "Win more of the 26 tricks than the opponent while obeying follow-suit and trump rules.",
+    "turnFlow": "Each agent begins with 13 private cards. In the learning phase, the trick winner receives the visible next card and the loser a private face-down card; after the deck empties, remaining hands play out. The winner of each trick leads next.",
+    "actions": [
+      "[play 1]",
+      "[play 13]"
+    ],
+    "aiExperience": "Observation → private indexed hand, trump, lead card, visible reward card, phase and trick score; reasoning → follow suit, count cards, decide when a trick is worth winning and shape the endgame hand; text action → choose one legal card index with [play X].",
+    "skills": [
+      "card counting",
+      "trick planning",
+      "hand management",
+      "hidden-state inference"
+    ],
+    "information": "Hidden",
+    "interaction": "Phased",
+    "variants": [
+      "GermanWhist-v0"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/GermanWhist/env.py"
+  },
+  {
+    "id": "Golf-v0",
+    "name": "Golf",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "A low-score tableau game where agents gradually reveal and replace hidden cards, seeking zero-value matching columns.",
+    "objective": "End with the lowest tableau score; equal-ranked cards filling a column cancel that column to zero.",
+    "turnFlow": "On each turn an agent draws privately from the deck or takes the public discard. It then swaps the card into a row-column position, or discards a deck draw. Revealing every card triggers one final opposing turn and scoring.",
+    "actions": [
+      "[draw]",
+      "[take]",
+      "[swap 1 2]",
+      "[discard]"
+    ],
+    "aiExperience": "Observation → own partially hidden grid, public discard, phase and currently drawn card; reasoning → remember revealed values, compare deck uncertainty with the discard and build matching columns; text action → first draw/take, then issue the required swap/discard command.",
+    "skills": [
+      "memory",
+      "risk management",
+      "tableau optimization",
+      "multi-step planning"
+    ],
+    "information": "Hidden",
+    "interaction": "Phased",
+    "variants": [
+      "Golf-v0",
+      "Golf-v0-medium"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/Golf/env.py"
+  },
+  {
+    "id": "HighSociety-v0",
+    "name": "High Society",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "Ten sealed auctions turn a fixed hand of money cards into a contest for prestige.",
+    "objective": "Win the most prestige across ten auctions; the current resolver compares prestige totals, although the player prompt also mentions remaining cash.",
+    "turnFlow": "A prestige card is revealed, then both agents secretly choose one available money card. The higher bid wins and is spent, the lower bid returns to its owner, and tied bids return to both before a rebid.",
+    "actions": [
+      "[7]",
+      "[11]"
+    ],
+    "aiExperience": "Observation → current prestige prize, accumulated prestige and own remaining money cards; reasoning → infer which bids remain for the opponent and price the current prize against future auctions; text action → commit exactly one bracketed available money value.",
+    "skills": [
+      "auction strategy",
+      "resource conservation",
+      "opponent modeling",
+      "value estimation"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "HighSociety-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/HighSociety/env.py"
+  },
+  {
+    "id": "IndianPoker-v0",
+    "name": "Indian Poker",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "A betting game where an agent sees the opponent's card but not its own, turning every wager into an inference signal.",
+    "objective": "Finish the configured rounds with more chips by winning showdowns or inducing folds.",
+    "turnFlow": "Both agents ante and receive one hidden card, but each sees only the opponent's rank. They alternate checking, betting, calling, raising or folding until a fold or showdown awards the pot.",
+    "actions": [
+      "[check]",
+      "[bet 5]",
+      "[call]",
+      "[raise 3]",
+      "[fold]"
+    ],
+    "aiExperience": "Observation → opponent's visible rank, bankrolls, pot, prior betting and currently legal actions, but never own rank; reasoning → update beliefs from the seen card and opponent behavior, then bluff or control pot size; text action → emit exactly one legal bracketed betting command.",
+    "skills": [
+      "Bayesian inference",
+      "bluffing",
+      "bet sizing",
+      "opponent modeling"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "IndianPoker-v0-short",
+      "IndianPoker-v0",
+      "IndianPoker-v0-medium",
+      "IndianPoker-v0-long",
+      "IndianPoker-v0-extreme"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IndianPoker/env.py"
+  },
+  {
+    "id": "IteratedMatchingPennies-v0",
+    "name": "Iterated Matching Pennies",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "A repeated zero-sum prediction game: one agent wants matching choices while the other wants mismatch.",
+    "objective": "Player 0 wins more matching rounds; Player 1 wins more mismatching rounds over ten rounds.",
+    "turnFlow": "Both agents privately choose heads or tails. Once both choices are committed they are revealed, the matching or mismatching player scores, and the public history carries into the next round.",
+    "actions": [
+      "[heads]",
+      "[tails]",
+      "[h]",
+      "[t]"
+    ],
+    "aiExperience": "Observation → role, round score and revealed choice history; reasoning → detect opponent patterns while avoiding becoming predictable; text action → privately emit one bracketed side or shorthand.",
+    "skills": [
+      "pattern detection",
+      "randomization",
+      "opponent modeling"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "IteratedMatchingPennies-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedMatchingPennies/env.py"
+  },
+  {
+    "id": "IteratedPrisonersDilemma-v0",
+    "name": "Iterated Prisoner's Dilemma",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "Ten rounds of cheap talk followed by private cooperate-or-defect choices and cumulative payoffs.",
+    "objective": "Accumulate the higher payoff across repeated decisions: mutual cooperation pays 3 each, unilateral defection pays 5 versus 0, and mutual defection pays 1 each.",
+    "turnFlow": "Before each decision, the agents exchange one conversational turn apiece. They then privately choose Cooperate or Defect; both choices and payoffs are revealed before the next round.",
+    "actions": [
+      "I will cooperate if you do the same.",
+      "[Cooperate]",
+      "[Defect]"
+    ],
+    "aiExperience": "Observation → payoff matrix, public promises, round number, revealed decisions and cumulative scores; reasoning → weigh trust, retaliation and exploitation against future rounds; text action → converse freely in the talk phase, then include one decision token.",
+    "skills": [
+      "trust modeling",
+      "strategic communication",
+      "reciprocity",
+      "long-horizon planning"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "IteratedPrisonersDilemma-v0"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedPrisonersDilemma/env.py"
+  },
+  {
+    "id": "IteratedRockPaperScissors-v0",
+    "name": "Iterated Rock Paper Scissors",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "Nine private Rock-Paper-Scissors commitments reward adaptation without ever granting a dominant move.",
+    "objective": "Win more rounds than the opponent over the nine-round match.",
+    "turnFlow": "Each agent privately commits rock, paper or scissors. After both submit, choices are revealed, the round is scored, and the complete public history becomes evidence for the next prediction.",
+    "actions": [
+      "[rock]",
+      "[paper]",
+      "[scissors]",
+      "[r]"
+    ],
+    "aiExperience": "Observation → round, match score and revealed move history; reasoning → exploit detectable cycles while mixing choices to resist counter-prediction; text action → emit one bracketed move or shorthand.",
+    "skills": [
+      "pattern detection",
+      "adaptive prediction",
+      "randomization"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "IteratedRockPaperScissors-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedRockPaperScissors/env.py"
+  },
+  {
+    "id": "IteratedStagHunt-v0",
+    "name": "Iterated Stag Hunt",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "Repeated pre-play negotiation tests whether two agents can coordinate on a risky high-reward stag hunt.",
+    "objective": "Earn the highest cumulative payoff across five rounds by coordinating on Stag or safely choosing Hare when coordination is doubtful.",
+    "turnFlow": "Each round announces its payoff matrix, then agents exchange three conversational rounds. Both privately choose Stag or Hare, after which choices and payoffs are revealed; the randomized variant changes valid payoff values by round.",
+    "actions": [
+      "Let's both choose Stag this round.",
+      "[Stag]",
+      "[Hare]"
+    ],
+    "aiExperience": "Observation → current payoffs, public negotiation, prior revealed choices and totals; reasoning → estimate commitment credibility and compare coordination upside with Hare's safer return; text action → negotiate freely, then include one bracketed hunt choice.",
+    "skills": [
+      "coordination",
+      "trust assessment",
+      "strategic communication",
+      "risk analysis"
+    ],
+    "information": "Mixed",
+    "interaction": "Phased",
+    "variants": [
+      "IteratedStagHunt-v0",
+      "IteratedStagHunt-v0-randomized"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedStagHunt/env.py"
+  },
+  {
+    "id": "IteratedTwoThirdsAverage-v0",
+    "name": "Iterated Two-Thirds Average",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "A repeated beauty-contest game where the target moves with both agents' own guesses.",
+    "objective": "Win more of ten rounds by guessing closest to two-thirds of the average of the two submitted numbers.",
+    "turnFlow": "Each agent privately submits a number from 0 to 100. After both guesses, the environment reveals them, computes the target, awards the closer guess one point, and records the history.",
+    "actions": [
+      "[33.3]",
+      "[0]",
+      "[100]"
+    ],
+    "aiExperience": "Observation → round score and complete prior guess/target history; reasoning → model the opponent's level of iterative reasoning and anticipate adaptation; text action → emit one bracketed in-range integer or decimal.",
+    "skills": [
+      "recursive reasoning",
+      "opponent modeling",
+      "numerical estimation",
+      "adaptation"
+    ],
+    "information": "Mixed",
+    "interaction": "Simultaneous",
+    "variants": [
+      "IteratedTwoThirdsAverage-v0"
+    ],
+    "complexity": "Starter",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedTwoThirdsAverage/env.py"
+  },
+  {
+    "id": "IteratedUltimatumGame-v0",
+    "name": "Iterated Ultimatum Game",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Negotiation & social",
+    "oneLine": "A repeated split-or-reject negotiation over a $50 pool, with fairness and bargaining power made explicit.",
+    "objective": "Accumulate more money across the rounds: accepted offers split the pool as proposed, while rejected offers pay both players zero.",
+    "turnFlow": "The proposer offers an integer amount from the $50 pool, then the responder accepts or rejects. Totals and history update after each round; the base variant keeps roles fixed, while the alternate variant swaps them.",
+    "actions": [
+      "[Offer: $20]",
+      "[Accept]",
+      "[Reject]"
+    ],
+    "aiExperience": "Observation → role, pool, current offer, public round history and accumulated totals; reasoning → as proposer, trade retained value against rejection risk; as responder, compare acceptance with credible punishment; text action → emit the phase-appropriate offer or decision token.",
+    "skills": [
+      "bargaining",
+      "fairness modeling",
+      "risk assessment",
+      "role adaptation"
+    ],
+    "information": "Open",
+    "interaction": "Phased",
+    "variants": [
+      "IteratedUltimatumGame-v0",
+      "IteratedUltimatumGame-v0-alternate"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/IteratedUltimatumGame/env.py"
+  },
+  {
+    "id": "KuhnPoker-v0",
+    "name": "Kuhn Poker",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Cards & chance",
+    "oneLine": "Minimal three-card poker isolates bluffing, value betting and calling in a tiny game tree.",
+    "objective": "Finish the configured rounds with the larger chip total after antes, folds and showdowns.",
+    "turnFlow": "Each agent privately receives J, Q or K and antes one chip. The legal tree allows check or bet, followed by check, bet, call or fold as appropriate; calls and double checks reach showdown, and the starting player alternates by round.",
+    "actions": [
+      "[check]",
+      "[bet]",
+      "[call]",
+      "[fold]"
+    ],
+    "aiExperience": "Observation → own private card, round, chip score and exactly legal next actions; reasoning → solve a small imperfect-information tree, mix bluffs and value bets, and infer range from action sequence; text action → emit one legal bracketed poker verb.",
+    "skills": [
+      "bluffing",
+      "game-tree reasoning",
+      "mixed strategies",
+      "opponent modeling"
+    ],
+    "information": "Hidden",
+    "interaction": "Alternating",
+    "variants": [
+      "KuhnPoker-v0",
+      "KuhnPoker-v0-short",
+      "KuhnPoker-v0-medium",
+      "KuhnPoker-v0-long",
+      "KuhnPoker-v0-extreme"
+    ],
+    "complexity": "Intermediate",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/KuhnPoker/env.py"
+  },
+  {
+    "id": "LetterAuction-v0",
+    "name": "Letter Auction",
+    "mode": "two-player",
+    "players": "2 players",
+    "category": "Game theory & economics",
+    "oneLine": "Agents spend a finite coin budget bidding through the alphabet, then turn acquired letters into one scored English word.",
+    "objective": "Submit a valid word whose owned letters carry a higher total winning-bid value than the opponent's word.",
+    "turnFlow": "The 26 shuffled letters are auctioned one at a time through escalating public bids and passes; the winner pays and keeps the letter. After every auction, each agent submits one dictionary word made only from its letters.",
+    "actions": [
+      "[bid 10]",
+      "[pass]",
+      "[dog]"
+    ],
+    "aiExperience": "Observation → current letter and bid, both coin balances, owned letters and auction history; reasoning → price letters by word-building potential, budget future auctions and assemble a high-value valid word; text action → bid/pass during auctions, then submit one bracketed word.",
+    "skills": [
+      "auction strategy",
+      "budgeting",
+      "vocabulary",
+      "combinatorial planning"
+    ],
+    "information": "Open",
+    "interaction": "Phased",
+    "variants": [
+      "LetterAuction-v0",
+      "LetterAuction-v0-medium",
+      "LetterAuction-v0-hard"
+    ],
+    "complexity": "Advanced",
+    "source": "https://github.com/TextArena/TextArena/blob/a2c896c5c84c8557d78d3d9182a066ff573daf44/textarena/envs/LetterAuction/env.py"
+  }
+]
