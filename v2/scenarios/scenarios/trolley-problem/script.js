@@ -259,6 +259,7 @@ async function main() {
   })
 
   const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
+  let osRound = 0
 
   // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
   // 不在此生成。
@@ -298,12 +299,15 @@ async function main() {
       const lineB = (await b.say({ channel: channel })).text
       a.hear(NAME_B, lineB)
       pending.push({ caseID: current.id, round: round, a: lineA, b: lineB })
+      // 全局轮计数：跨案连续（osRound == caseIndex*caseRounds+round，键值
+      // 不变），间隔大于单案轮数时节拍照样落点，不会整场无声。
+      osRound++
       const finalStretch = caseIndex === cases.length - 1 && round === caseRounds
-      if (round % osInterval === 0 && !finalStretch) {
+      if (osRound % osInterval === 0 && !finalStretch) {
         hearBatch()
         await judge.act(
           { fields: osFields },
-          { key: `os-${caseIndex * caseRounds + round}`, channel: 'judge-aside' },
+          { key: `os-${osRound}`, channel: 'judge-aside' },
         )
       }
     }

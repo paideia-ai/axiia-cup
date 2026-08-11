@@ -281,8 +281,10 @@ async function main() {
       const reply = (await diaochan.say({ channel: channel })).text
       player.hear('貂蝉', reply)
       lines.push(`貂蝉：${stripActions(reply)}`)
-      if (afterRound) await afterRound(round)
+      // 心声先于打断：独处提示要落在本轮话音刚歇、侍从催促之前，
+      // 否则「无人留意你」会撞上催促的灯火。
       await osBeat()
+      if (afterRound) await afterRound(round)
     }
     return lines.join('\n')
   }
