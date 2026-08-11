@@ -4,13 +4,16 @@ import { Link } from 'react-router-dom'
 import { catalog } from '../api/client'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
+import { gateMet, sideProgressText } from '../lib/gate'
 import { useAsync } from '../lib/use-async'
 import { scenarioModule } from '../scenarios'
 
 // D 卡（A4）：标题/学科/双方/轮数/门槛徽章来自服务端；难度·时长·适合新手
-// （#40）来自前端场景模块的编辑内容。统计（侧方胜率/对局数，#38/#39）尚无
-// 数据源，按 #54 只画引导式空态轮廓、绝不摆零或假数字；没有模块的场景整组
-// 隐藏（#18）。
+// （#40）来自前端场景模块的编辑内容。门槛徽章 P2 起按侧进度显示（#65，
+// mock V16 的紧凑形态「PVP 解锁 1/1·0/1」）；gateProgress 缺席（老服务器）
+// 时回落到 P1 的静态 PvE/PvP 徽章（#54）。统计（侧方胜率/对局数，#38/#39）
+// 尚无数据源，按 #54 只画引导式空态轮廓、绝不摆零或假数字；没有模块的场景
+// 整组隐藏（#18）。
 export function CatalogPage() {
   const { data, error, loading } = useAsync(() => catalog.scenarios(), [])
 
@@ -45,21 +48,38 @@ export function CatalogPage() {
                         <h2 className='text-lg font-semibold text-(--foreground)'>
                           {scenario.title}
                         </h2>
-                        <Badge
-                          tone={scenario.gateUnlocked ? 'success' : 'info'}
-                        >
-                          {scenario.gateUnlocked
+                        {scenario.gateProgress
+                          ? gateMet(scenario.gateProgress)
                             ? (
-                              <>
-                                <Unlock className='mr-1 h-3 w-3' /> PvP 已解锁
-                              </>
+                              <Badge tone='success'>
+                                <Unlock className='mr-1 h-3 w-3' /> PVP 已解锁
+                              </Badge>
                             )
                             : (
-                              <>
-                                <Lock className='mr-1 h-3 w-3' /> PvE
-                              </>
-                            )}
-                        </Badge>
+                              <Badge tone='info'>
+                                <Lock className='mr-1 h-3 w-3' /> PVP 解锁{' '}
+                                {sideProgressText(scenario.gateProgress.a)}·
+                                {sideProgressText(scenario.gateProgress.b)}
+                              </Badge>
+                            )
+                          : (
+                            <Badge
+                              tone={scenario.gateUnlocked ? 'success' : 'info'}
+                            >
+                              {scenario.gateUnlocked
+                                ? (
+                                  <>
+                                    <Unlock className='mr-1 h-3 w-3' />{' '}
+                                    PvP 已解锁
+                                  </>
+                                )
+                                : (
+                                  <>
+                                    <Lock className='mr-1 h-3 w-3' /> PvE
+                                  </>
+                                )}
+                            </Badge>
+                          )}
                       </div>
                       <p className='text-sm text-(--foreground-subtle)'>
                         {scenario.subject}

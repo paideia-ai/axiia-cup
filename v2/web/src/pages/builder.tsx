@@ -15,6 +15,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
+import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import {
   roleByKey,
@@ -194,7 +195,9 @@ export function BuilderPage() {
       // 版本列表在 EA：保存成功即回智能体主页。
       navigate(`/agents/${agentID}`)
     } catch (cause) {
-      setError(messageOf(cause, '保存失败'))
+      // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
+      // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
+      setError(rejectCopy(cause, null, '保存失败'))
       setSaving(false)
     }
   }
