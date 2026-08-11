@@ -321,6 +321,15 @@ const meta = {
     akechi_ashigaru: ROLES.akechi_ashigaru.name,
     judge: '明智光秀',
   },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）：a/b=玩家侧（内心
+  // 仅所有者可见），judge/npc=官方（内心公开）。
+  lanes: {
+    chosokabe: 'a',
+    yoshiaki: 'a',
+    hosokawa: 'b',
+    ashigaru: 'b',
+    judge: 'judge',
+  },
 }
 
 const SCORE_MAIN = 1

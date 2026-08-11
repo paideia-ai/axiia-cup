@@ -140,6 +140,8 @@ const meta = {
     },
   ],
   speakerLabels: { a: NAME_A, b: NAME_B, judge: '明理者' },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）。
+  lanes: { judge: 'judge' },
 }
 
 const caseBlock = (cases) =>

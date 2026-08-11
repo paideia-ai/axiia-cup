@@ -440,6 +440,8 @@ const meta = {
   ],
   presets: SHANGYANG_PRESETS,
   speakerLabels: { a: '商鞅', b: '甘龙', judge: '君上' },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）。
+  lanes: { judge: 'judge' },
 }
 
 const NAME_A = '商鞅'

@@ -80,6 +80,8 @@ const meta = {
     },
   ],
   speakerLabels: { a: '董卓', b: '吕布', diaochan: '貂蝉' },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）：npc=官方，内心公开。
+  lanes: { diaochan: 'npc' },
 }
 
 const NAMES = { a: '董卓', b: '吕布' }
