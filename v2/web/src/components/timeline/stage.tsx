@@ -8,11 +8,15 @@ export function TranscriptStage({
   index,
   total,
   labels,
+  showReasoning,
 }: {
   group: StageGroup
   index: number
   total: number
   labels: SpeakerLabels
+  // 调试模式 (#22): governs only the model reasoning traces inside the rows —
+  // dialogue and event rows render regardless.
+  showReasoning: boolean
 }) {
   return (
     <div className='space-y-3'>
@@ -52,6 +56,7 @@ export function TranscriptStage({
                   key={`live-${item.seq}-${item.bubble.speaker}`}
                   bubble={item.bubble}
                   labels={labels}
+                  showReasoning={showReasoning}
                 />
               )
               : item.turn.kind === 'event'
@@ -67,6 +72,7 @@ export function TranscriptStage({
                   key={item.seq}
                   turn={item.turn}
                   labels={labels}
+                  showReasoning={showReasoning}
                 />
               )
           )}
