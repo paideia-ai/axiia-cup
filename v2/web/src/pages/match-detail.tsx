@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { matches } from '../api/client'
 import { useMatchStream } from '../api/sse'
 import type { VerdictDTO } from '../api/types'
+import { JudgeTrendChart } from '../components/judge-trend'
+import { ReplayControls, useReplay } from '../components/replay-controls'
 import type { SpeakerLabels } from '../components/timeline/labels'
 import {
   sideName,
@@ -18,6 +20,7 @@ import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { VerdictBody, VerdictCard } from '../components/verdict-card'
 import { cn } from '../lib/cn'
+import { buildReplaySteps, replayBeats, replayReveal } from '../lib/replay'
 import {
   deriveScoreBreakdown,
   formatScoringReasoning,
@@ -25,6 +28,7 @@ import {
 import { usePinToBottom } from '../lib/scroll'
 import {
   groupTranscript,
+  isInquiryChannel,
   isInquiryGroup,
   placeVerdicts,
 } from '../lib/transcript'
@@ -70,13 +74,71 @@ export function MatchDetailPage() {
     if (landmark != null) reload()
   }, [landmark, reload])
 
+  // 完局战报 (#69): a finished, scored match reads 结果 → 对话全文 → 问询 →
+  // 计分推导. Anything short of that (queued, live, finished-but-unscored)
+  // keeps the live layout untouched.
+  const finished = data != null && data.summary.finished &&
+    data.summary.scored
+
+  // 回放（#24/A7）：纯前端重演。问询腿在回放里整段隐藏（终局剧透），所以
+  // 它的行不进入步骤序列——各场景的问询都在对话之后，前缀行数不受影响，
+  // 节拍的 afterSeq 锚点照常成立。
+  const inquiryChannels = useMemo(() => {
+    const set = new Set<string>()
+    if (data == null) return set
+    for (const stage of data.stages) {
+      for (const channel of stage.channels) {
+        if (stage.title.includes('问询') || isInquiryChannel(channel.id)) {
+          set.add(channel.id)
+        }
+      }
+    }
+    return set
+  }, [data])
+  const replaySteps = useMemo(() => {
+    if (data == null) return []
+    return buildReplaySteps(
+      data.turns.filter((turn) =>
+        !inquiryChannels.has(turn.channel) && !isInquiryChannel(turn.channel)
+      ),
+      data.verdicts,
+    )
+  }, [data, inquiryChannels])
+  const replay = useReplay(replaySteps)
+  const replaying = finished && replay.state.active
+  const reveal = replaying
+    ? replayReveal(replaySteps, replay.state.cursor)
+    : null
+
+  const shownTurns = data == null
+    ? []
+    : reveal == null
+    ? data.turns
+    : data.turns.filter((turn) => reveal.seqs.has(turn.seq))
   const stageGroups = data
-    ? groupTranscript(data.turns, data.stages, stream.bubbles)
+    ? groupTranscript(shownTurns, data.stages, stream.bubbles)
     : []
-  const interim = placeVerdicts(
-    stageGroups,
-    data?.verdicts.filter((verdict) => !isTerminalVerdict(verdict)) ?? [],
+  const interimSource =
+    data?.verdicts.filter((verdict) => !isTerminalVerdict(verdict)) ?? []
+  // 回放揭示切片：节拍按其步骤揭示，其余过程裁决按 afterSeq 跟上已揭示行数。
+  // 锚在问询行上的裁决（inquiry-a/b 的猜测 act）是终局剧透：问询腿整段不进
+  // 回放，它们也一并压下——afterSeq 数的是全部行、reveal.rows 数的是非问询
+  // 行，二者错位会让这些卡提前漏出（评审确认项）。
+  const inquiryAnchored = (verdict: VerdictDTO) => {
+    if (/^inquiry([-_.]|$)/i.test(verdict.key)) return true
+    const anchor = verdict.afterSeq > 0
+      ? data?.turns[verdict.afterSeq - 1]
+      : undefined
+    return anchor != null &&
+      (inquiryChannels.has(anchor.channel) || isInquiryChannel(anchor.channel))
+  }
+  const shownInterim = reveal == null ? interimSource : interimSource.filter(
+    (verdict) =>
+      isOsBeatVerdict(verdict)
+        ? reveal.beatKeys.has(verdict.key)
+        : verdict.afterSeq <= reveal.rows && !inquiryAnchored(verdict),
   )
+  const interim = placeVerdicts(stageGroups, shownInterim)
   const finalVerdict = data?.verdicts.find(isTerminalVerdict) ?? null
   // A private generation (an `act` with no channel, an affordance-only reply) has
   // no timeline row to grow into; it belongs to the status card, not the script.
@@ -86,7 +148,8 @@ export function MatchDetailPage() {
     (total, bubble) => total + bubble.text.length + bubble.reasoning.length,
     data?.turns.length ?? 0,
   )
-  usePinToBottom(live, grown)
+  // 回放推进时同样跟底——读者向上滚动即解除，与实况一致。
+  usePinToBottom(live || replaying, replaying ? replay.state.cursor : grown)
 
   if (loading && data == null) {
     return (
@@ -118,22 +181,29 @@ export function MatchDetailPage() {
     )
   }
 
-  // 完局战报 (#69): a finished, scored match reads 结果 → 对话全文 → 问询 →
-  // 计分推导. Anything short of that (queued, live, finished-but-unscored)
-  // keeps the live layout untouched.
-  const finished = data.summary.finished && data.summary.scored
-
-  const interimVerdict = (verdict: VerdictDTO) =>
-    isOsBeatVerdict(verdict)
-      ? <OsBeatCard key={verdict.key} verdict={verdict} labels={labels} />
-      : (
-        <VerdictCard
+  // 教学锚点（#24 U9）：回放停在倾向变化的节拍上，心声卡就地高亮并给「继续」。
+  const interimVerdict = (verdict: VerdictDTO) => {
+    if (isOsBeatVerdict(verdict)) {
+      const anchored = replaying && replay.state.anchorKey === verdict.key
+      return (
+        <OsBeatCard
           key={verdict.key}
           verdict={verdict}
           labels={labels}
-          interim
+          highlight={anchored}
+          onResume={anchored ? replay.togglePlay : undefined}
         />
       )
+    }
+    return (
+      <VerdictCard
+        key={verdict.key}
+        verdict={verdict}
+        labels={labels}
+        interim
+      />
+    )
+  }
 
   const groupRows = stageGroups.map((group, index) => ({
     group,
@@ -181,7 +251,8 @@ export function MatchDetailPage() {
           index={row.index}
           total={stageGroups.length}
           labels={labels}
-          showReasoning={debug}
+          // B1 · 08-10：回放是公开教学层，进行中强制隐藏 debug/trace 层。
+          showReasoning={debug && !replaying}
           verdictsBySeq={bySeq}
         />
         {atGroupEnd.map(interimVerdict)}
@@ -190,6 +261,8 @@ export function MatchDetailPage() {
   }
 
   const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
+  // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
+  const beats = replayBeats(replaySteps)
   const ledger = formatScoringReasoning(data.reasoning)
   const winner = data.summary.winner
   const winnerLine = winner === 'a'
@@ -218,35 +291,60 @@ export function MatchDetailPage() {
           <button
             type='button'
             role='switch'
-            aria-checked={debug}
-            onClick={() => setDebug((value) => !value)}
-            className='inline-flex cursor-pointer items-center gap-2 rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'
+            aria-checked={debug && !replaying}
+            // B1 · 08-10：回放中强制隐藏 debug 层——开关禁用（aria-disabled
+            // 而非 disabled，让 title 提示可悬停出现），退出回放后恢复原值。
+            aria-disabled={replaying}
+            title={replaying ? '回放中不可用' : undefined}
+            onClick={() => {
+              if (!replaying) setDebug((value) => !value)
+            }}
+            className={cn(
+              'inline-flex cursor-pointer items-center gap-2 rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)',
+              replaying && 'cursor-not-allowed opacity-45',
+            )}
           >
             调试模式
             <span
               className={cn(
                 'inline-flex h-4 w-7 items-center rounded-full transition-colors',
-                debug ? 'bg-(--accent)' : 'bg-white/10',
+                debug && !replaying ? 'bg-(--accent)' : 'bg-white/10',
               )}
             >
               <span
                 className={cn(
                   'inline-block h-3 w-3 translate-x-0.5 rounded-full bg-white transition-transform',
-                  debug && 'translate-x-3.5',
+                  debug && !replaying && 'translate-x-3.5',
                 )}
               />
             </span>
           </button>
+          {finished && !replaying && replaySteps.length > 0
+            ? (
+              <button
+                type='button'
+                onClick={replay.start}
+                className='inline-flex cursor-pointer items-center rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'
+              >
+                回放
+              </button>
+            )
+            : null}
           <Badge tone='info'>{data.summary.kind.toUpperCase()}</Badge>
           {data.summary.finished
             ? (
-              <Badge tone='success'>
-                {winner === 'a'
-                  ? `胜方 ${sideA}`
-                  : winner === 'b'
-                  ? `胜方 ${sideB}`
-                  : '已结束'}
-              </Badge>
+              // 回放中不剧透胜负——结果徽章换成中性的回放态。
+              replaying
+                ? <Badge tone='info'>回放中</Badge>
+                : (
+                  <Badge tone='success'>
+                    {winner === 'a'
+                      ? `胜方 ${sideA}`
+                      : winner === 'b'
+                      ? `胜方 ${sideB}`
+                      : '已结束'}
+                  </Badge>
+                )
             )
             : (
               <Badge tone='warning'>
@@ -259,56 +357,73 @@ export function MatchDetailPage() {
       {finished
         ? (
           <>
-            <Card>
-              <CardContent className='space-y-4 pt-5'>
-                <h2 className='text-sm font-semibold text-(--foreground)'>
-                  结果
-                </h2>
-                <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
-                  <span className='text-xl font-black text-(--foreground)'>
-                    {winnerLine}
-                  </span>
-                  <span className='text-sm text-(--foreground-subtle)'>
-                    比分 {sideA}{' '}
-                    <span className='text-lg font-black text-(--foreground)'>
-                      {data.scoreA ?? '—'} : {data.scoreB ?? '—'}
-                    </span>{' '}
-                    {sideB}
-                  </span>
-                </div>
-                {finalVerdict
-                  ? (
-                    <div className='space-y-3 border-t border-(--border-soft) pt-4'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-                          判词
-                        </p>
-                        <span className='text-xs text-(--foreground-muted)'>
-                          {finalVerdict.model}
-                        </span>
-                      </div>
-                      <VerdictBody verdict={finalVerdict} labels={labels} />
+            {
+              /* 回放中（#24/A7）：结果卡、判词、问询、计分推导都是终局剧透，
+              整段隐藏；控制条置顶，倾向轨迹小图随揭示逐点生长兼作进度感。 */
+            }
+            {replaying
+              ? (
+                <ReplayControls handle={replay} total={replaySteps.length}>
+                  <JudgeTrendChart
+                    beats={beats}
+                    labels={labels}
+                    speakers={speakers}
+                    revealedKeys={reveal?.beatKeys ?? null}
+                  />
+                </ReplayControls>
+              )
+              : (
+                <Card>
+                  <CardContent className='space-y-4 pt-5'>
+                    <h2 className='text-sm font-semibold text-(--foreground)'>
+                      结果
+                    </h2>
+                    <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
+                      <span className='text-xl font-black text-(--foreground)'>
+                        {winnerLine}
+                      </span>
+                      <span className='text-sm text-(--foreground-subtle)'>
+                        比分 {sideA}{' '}
+                        <span className='text-lg font-black text-(--foreground)'>
+                          {data.scoreA ?? '—'} : {data.scoreB ?? '—'}
+                        </span>{' '}
+                        {sideB}
+                      </span>
                     </div>
-                  )
-                  : null}
-              </CardContent>
-            </Card>
+                    {finalVerdict
+                      ? (
+                        <div className='space-y-3 border-t border-(--border-soft) pt-4'>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+                              判词
+                            </p>
+                            <span className='text-xs text-(--foreground-muted)'>
+                              {finalVerdict.model}
+                            </span>
+                          </div>
+                          <VerdictBody verdict={finalVerdict} labels={labels} />
+                        </div>
+                      )
+                      : null}
+                  </CardContent>
+                </Card>
+              )}
 
             <div className='space-y-5'>
               <h2 className='text-sm font-semibold text-(--foreground)'>
-                对话全文
+                {replaying ? '对话重演' : '对话全文'}
               </h2>
               {dialogueRows.length === 0
                 ? (
                   <p className='text-sm text-(--foreground-muted)'>
-                    暂无回合。
+                    {replaying ? '回放即将开始…' : '暂无回合。'}
                   </p>
                 )
                 : dialogueRows.map(renderGroupRow)}
               {interim.trailing.map(interimVerdict)}
             </div>
 
-            {inquiryRows.length > 0
+            {!replaying && inquiryRows.length > 0
               ? (
                 <div className='space-y-5'>
                   <h2 className='text-sm font-semibold text-(--foreground)'>
@@ -319,97 +434,112 @@ export function MatchDetailPage() {
               )
               : null}
 
-            <div className='space-y-3'>
-              <h2 className='text-sm font-semibold text-(--foreground)'>
-                计分推导
-              </h2>
-              {breakdown == null && !ledger
-                ? (
-                  <div className='rounded-xl border border-dashed border-(--border) px-4 py-5 text-center text-sm text-(--foreground-muted)'>
-                    此场景暂未提供计分明细
-                  </div>
-                )
-                : (
-                  <Card>
-                    <CardContent className='space-y-3 pt-5'>
-                      {breakdown?.trueRequests
-                        ? (
-                          <LedgerLine label='真目标'>
-                            <div className='flex flex-wrap gap-x-4 gap-y-1'>
-                              {Object.entries(breakdown.trueRequests).map(
-                                ([side, id]) => (
-                                  <span key={side}>
-                                    {speakerName(labels, side)}{' '}
-                                    <span className='font-mono'>{id}</span>
-                                  </span>
-                                ),
-                              )}
-                            </div>
-                          </LedgerLine>
-                        )
-                        : null}
-                      {breakdown?.guesses
-                        ? (
-                          <LedgerLine label='对方猜测'>
-                            <div className='flex flex-wrap gap-x-4 gap-y-1'>
-                              {Object.entries(breakdown.guesses).map(
-                                ([side, guess]) => (
-                                  <span key={side}>
-                                    {speakerName(labels, side)} 猜{' '}
-                                    <span className='font-mono'>{guess}</span>
-                                  </span>
-                                ),
-                              )}
-                            </div>
-                          </LedgerLine>
-                        )
-                        : null}
-                      {breakdown?.rulings
-                        ? (
-                          <LedgerLine label='准驳结果'>
-                            <div className='flex flex-wrap gap-1.5'>
-                              {Object.entries(breakdown.rulings).map(
-                                ([id, decision]) => (
-                                  <span
-                                    key={id}
-                                    className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
-                                      decision === '同意'
-                                        ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
-                                        : 'bg-white/4 text-(--foreground-muted)'
-                                    }`}
-                                  >
-                                    <span className='font-mono'>{id}</span>
-                                    {decision}
-                                  </span>
-                                ),
-                              )}
-                            </div>
-                          </LedgerLine>
-                        )
-                        : null}
-                      {ledger || breakdown?.scoreA != null ||
-                          breakdown?.scoreB != null
-                        ? (
-                          <LedgerLine label='得分账'>
-                            {ledger
-                              ? (
-                                <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
-                                  {ledger}
-                                </p>
-                              )
-                              : (
-                                <p className='text-sm text-(--foreground)'>
-                                  {sideA} {breakdown?.scoreA ?? '—'} :{' '}
-                                  {breakdown?.scoreB ?? '—'} {sideB}
-                                </p>
-                              )}
-                          </LedgerLine>
-                        )
-                        : null}
-                    </CardContent>
-                  </Card>
-                )}
-            </div>
+            {replaying ? null : (
+              <div className='space-y-3'>
+                <h2 className='text-sm font-semibold text-(--foreground)'>
+                  计分推导
+                </h2>
+                {beats.length > 0
+                  ? (
+                    <Card>
+                      <CardContent className='pt-5'>
+                        <JudgeTrendChart
+                          beats={beats}
+                          labels={labels}
+                          speakers={speakers}
+                        />
+                      </CardContent>
+                    </Card>
+                  )
+                  : null}
+                {breakdown == null && !ledger
+                  ? (
+                    <div className='rounded-xl border border-dashed border-(--border) px-4 py-5 text-center text-sm text-(--foreground-muted)'>
+                      此场景暂未提供计分明细
+                    </div>
+                  )
+                  : (
+                    <Card>
+                      <CardContent className='space-y-3 pt-5'>
+                        {breakdown?.trueRequests
+                          ? (
+                            <LedgerLine label='真目标'>
+                              <div className='flex flex-wrap gap-x-4 gap-y-1'>
+                                {Object.entries(breakdown.trueRequests).map(
+                                  ([side, id]) => (
+                                    <span key={side}>
+                                      {speakerName(labels, side)}{' '}
+                                      <span className='font-mono'>{id}</span>
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            </LedgerLine>
+                          )
+                          : null}
+                        {breakdown?.guesses
+                          ? (
+                            <LedgerLine label='对方猜测'>
+                              <div className='flex flex-wrap gap-x-4 gap-y-1'>
+                                {Object.entries(breakdown.guesses).map(
+                                  ([side, guess]) => (
+                                    <span key={side}>
+                                      {speakerName(labels, side)} 猜{' '}
+                                      <span className='font-mono'>{guess}</span>
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            </LedgerLine>
+                          )
+                          : null}
+                        {breakdown?.rulings
+                          ? (
+                            <LedgerLine label='准驳结果'>
+                              <div className='flex flex-wrap gap-1.5'>
+                                {Object.entries(breakdown.rulings).map(
+                                  ([id, decision]) => (
+                                    <span
+                                      key={id}
+                                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
+                                        decision === '同意'
+                                          ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
+                                          : 'bg-white/4 text-(--foreground-muted)'
+                                      }`}
+                                    >
+                                      <span className='font-mono'>{id}</span>
+                                      {decision}
+                                    </span>
+                                  ),
+                                )}
+                              </div>
+                            </LedgerLine>
+                          )
+                          : null}
+                        {ledger || breakdown?.scoreA != null ||
+                            breakdown?.scoreB != null
+                          ? (
+                            <LedgerLine label='得分账'>
+                              {ledger
+                                ? (
+                                  <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
+                                    {ledger}
+                                  </p>
+                                )
+                                : (
+                                  <p className='text-sm text-(--foreground)'>
+                                    {sideA} {breakdown?.scoreA ?? '—'} :{' '}
+                                    {breakdown?.scoreB ?? '—'} {sideB}
+                                  </p>
+                                )}
+                            </LedgerLine>
+                          )
+                          : null}
+                      </CardContent>
+                    </Card>
+                  )}
+              </div>
+            )}
           </>
         )
         : (

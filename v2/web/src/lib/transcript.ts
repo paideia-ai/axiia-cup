@@ -177,10 +177,14 @@ function endSeq(channels: ChannelGroup[]): number {
 // when the transcript actually distinguishes one — a stage naming itself 问询, or
 // one whose every channel is an inquiry channel. A scenario without such a stage
 // simply gets no section, never an empty header.
+export function isInquiryChannel(channelID: string): boolean {
+  return /^inquiry([-_.]|$)/i.test(channelID)
+}
+
 export function isInquiryGroup(group: StageGroup): boolean {
   if (group.title.includes('问询')) return true
   return group.channels.length > 0 &&
-    group.channels.every((channel) => /^inquiry([-_.]|$)/i.test(channel.id))
+    group.channels.every((channel) => isInquiryChannel(channel.id))
 }
 
 // A verdict settled on the first `afterSeq` rows, so it renders after the first
