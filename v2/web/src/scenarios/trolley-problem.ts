@@ -9,6 +9,12 @@ export const trolleyProblem: ScenarioModule = {
   laneLabels: {
     judge: '明理者',
   },
+  // 脚本的 favor 枚举是立场名而非任何 lane 的显示名（speakerLabels 里 a/b
+  // 是奕仁/武仁），倾向轨迹图靠这里映射到侧别。
+  favorSides: {
+    一人侧: 'a',
+    五人侧: 'b',
+  },
   education: {
     hook:
       '一辆刹不住的电车、三个变体案件：说服一位不站任何学派的普通明理者——三案两胜者赢。',

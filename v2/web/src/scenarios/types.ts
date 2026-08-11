@@ -38,6 +38,10 @@ export interface ScenarioModule {
   // 'b') stay out on purpose: a finished match carries its own labels for them,
   // and in a role-cast match they name a side rather than a speaker.
   laneLabels: Record<string, string>
+  // 裁判心声节拍 favor 词汇 → 侧别（#24 倾向轨迹图）：favor 通常就是某个
+  // lane/角色的显示名，可自动解析；词汇不经由任何 lane 的场景（如电车的
+  // 一人侧/五人侧）在此显式声明。
+  favorSides?: Record<string, Side>
   // DA 四层教育内容；缺席的场景走通用空态轮廓（#54）。
   education?: ScenarioEducation
   // 只读系统角色模板展示文案（#68）：按侧给出，占位符用〔…〕样式实填示意。
