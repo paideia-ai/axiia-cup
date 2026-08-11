@@ -32,7 +32,7 @@ const PROMPT_FIELD = 'prompt'
 export function BuilderPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
 
   // Query params are a first-paint hint only; the draft response is authoritative
@@ -67,8 +67,8 @@ export function BuilderPage() {
         setSide(draft.side)
         setVersions(list.versions)
         setEntryVersionID(list.entryVersionID ?? null)
-        // #70「编辑此版本」：?from=<versionID> 只做一次性预填（本效果每个
-        // agentID 只跑一次），之后的编辑一切照常。
+        // #70「编辑此版本」：?from=<versionID> 只做一次性预填。用完即从 URL
+        // 摘掉（replace，不留历史），刷新/重挂载不会再次套用旧版本内容。
         const fromID = Number(params.get('from') ?? '')
         const fromVersion = list.versions.find((v) => v.id === fromID)
         if (fromVersion) {
@@ -84,6 +84,14 @@ export function BuilderPage() {
           void builder
             .mutate(agentID, { field: PROMPT_FIELD, value: fromVersion.prompt })
             .catch(() => {})
+          setParams(
+            (prev) => {
+              const next = new URLSearchParams(prev)
+              next.delete('from')
+              return next
+            },
+            { replace: true },
+          )
         } else {
           setPrompt(draft.fields[PROMPT_FIELD] ?? '')
         }
@@ -167,6 +175,15 @@ export function BuilderPage() {
     if (modelID == null) return
     setSaving(true)
     setError(null)
+    // 保存后立刻离开本页：把还压在 debounce 里的最后一段输入先冲给服务器
+    // 草稿，避免卸载时被丢弃（版本本身用的是本地 prompt，不受影响）。
+    if (mutateTimer.current) {
+      clearTimeout(mutateTimer.current)
+      mutateTimer.current = null
+      void builder
+        .mutate(agentID, { field: PROMPT_FIELD, value: prompt })
+        .catch(() => {})
+    }
     try {
       await builder.save(agentID, {
         prompt,

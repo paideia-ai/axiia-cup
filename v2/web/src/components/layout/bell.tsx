@@ -18,11 +18,13 @@ export function BellIndicator() {
         )}
     >
       <Bell className='h-4 w-4' />
+      {/* #72 顶栏降噪（mock V30）：数字角标改小圆点，数量进 aria */}
       {unreadCount > 0
         ? (
-          <span className='absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-(--accent) px-1 text-[10px] font-bold text-white'>
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+          <span
+            aria-label={`${unreadCount} 条未读`}
+            className='absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-(--accent)'
+          />
         )
         : null}
     </NavLink>

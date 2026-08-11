@@ -110,10 +110,18 @@ export function AgentViewPage() {
                 </p>
               </div>
               <div className='flex items-center gap-2'>
-                {/* #75：页头编辑——载入最新状态进构建器，保存＝另存新版 */}
+                {
+                  /* #75：页头编辑＝载入最新版本进构建器（不是残留草稿），
+                    保存＝另存新版；还没有版本时进空构建器 */
+                }
                 <Button
                   variant='secondary'
-                  onClick={() => navigate(`/agents/${agentID}/build`)}
+                  onClick={() =>
+                    navigate(
+                      sorted[0]
+                        ? `/agents/${agentID}/build?from=${sorted[0].id}`
+                        : `/agents/${agentID}/build`,
+                    )}
                 >
                   编辑
                 </Button>
@@ -226,7 +234,22 @@ export function AgentViewPage() {
                 ))}
             </section>
 
-            {/* #20：diff 属所有者受限项——这里是自己的 agent，允许查看 */}
+            {
+              /* #20：diff 属所有者受限项——这里是自己的 agent，允许查看。
+                只有一个版本时给引导（#54），不留空白。 */
+            }
+            {sorted.length === 1
+              ? (
+                <section className='space-y-3'>
+                  <h2 className='text-sm font-semibold text-(--foreground)'>
+                    版本对比
+                  </h2>
+                  <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+                    再保存一个版本即可逐字对比两版策略的差异。
+                  </p>
+                </section>
+              )
+              : null}
             {sorted.length >= 2
               ? (
                 <section className='space-y-3'>

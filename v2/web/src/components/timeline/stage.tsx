@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import type { StageGroup } from '../../lib/transcript'
 import { DialogueRow, LiveDialogueRow } from './dialogue-row'
 import { EventRow } from './event-row'
@@ -9,6 +11,7 @@ export function TranscriptStage({
   total,
   labels,
   showReasoning,
+  verdictsBySeq,
 }: {
   group: StageGroup
   index: number
@@ -17,6 +20,9 @@ export function TranscriptStage({
   // 调试模式 (#22): governs only the model reasoning traces inside the rows —
   // dialogue and event rows render regardless.
   showReasoning: boolean
+  // 行级锚点的裁决卡（#22① 心声按 afterSeq 内插）：键＝所锚定行的 seq，
+  // 渲染在该行之后。
+  verdictsBySeq?: Record<number, ReactNode[]>
 }) {
   return (
     <div className='space-y-3'>
@@ -59,21 +65,24 @@ export function TranscriptStage({
                   showReasoning={showReasoning}
                 />
               )
-              : item.turn.kind === 'event'
-              ? (
-                <EventRow
-                  key={item.seq}
-                  turn={item.turn}
-                  labels={labels}
-                />
-              )
               : (
-                <DialogueRow
-                  key={item.seq}
-                  turn={item.turn}
-                  labels={labels}
-                  showReasoning={showReasoning}
-                />
+                <div key={item.seq} className='space-y-2'>
+                  {item.turn.kind === 'event'
+                    ? (
+                      <EventRow
+                        turn={item.turn}
+                        labels={labels}
+                      />
+                    )
+                    : (
+                      <DialogueRow
+                        turn={item.turn}
+                        labels={labels}
+                        showReasoning={showReasoning}
+                      />
+                    )}
+                  {verdictsBySeq?.[item.seq]}
+                </div>
               )
           )}
         </div>

@@ -149,18 +149,45 @@ export function MatchDetailPage() {
     ? groupRows.filter((row) => !isInquiryGroup(row.group))
     : groupRows
 
-  const renderGroupRow = (row: (typeof groupRows)[number]) => (
-    <div key={row.group.id} className='space-y-3'>
-      <TranscriptStage
-        group={row.group}
-        index={row.index}
-        total={stageGroups.length}
-        labels={labels}
-        showReasoning={debug}
-      />
-      {row.verdicts.map(interimVerdict)}
-    </div>
-  )
+  // afterSeq 是「已提交行数」：第 afterSeq 行（turns[afterSeq-1]）之后就是
+  // 这条裁决的时间线位置——按行内插，而不是压到整个阶段末尾（#22①）。
+  const anchorRowSeq = (verdict: VerdictDTO) => {
+    if (verdict.afterSeq <= 0) return null
+    const anchor = data.turns[verdict.afterSeq - 1]
+    return anchor ? anchor.seq : null
+  }
+
+  const renderGroupRow = (row: (typeof groupRows)[number]) => {
+    const bySeq: Record<number, ReactNode[]> = {}
+    const atGroupEnd: VerdictDTO[] = []
+    for (const verdict of row.verdicts) {
+      const anchor = anchorRowSeq(verdict)
+      const inGroup = anchor != null &&
+        row.group.channels.some((channel) =>
+          channel.items.some((item) =>
+            item.kind !== 'live' && item.seq === anchor
+          )
+        )
+      if (anchor != null && inGroup) {
+        ;(bySeq[anchor] ??= []).push(interimVerdict(verdict))
+      } else {
+        atGroupEnd.push(verdict)
+      }
+    }
+    return (
+      <div key={row.group.id} className='space-y-3'>
+        <TranscriptStage
+          group={row.group}
+          index={row.index}
+          total={stageGroups.length}
+          labels={labels}
+          showReasoning={debug}
+          verdictsBySeq={bySeq}
+        />
+        {atGroupEnd.map(interimVerdict)}
+      </div>
+    )
+  }
 
   const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   const ledger = formatScoringReasoning(data.reasoning)

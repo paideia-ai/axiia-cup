@@ -38,7 +38,8 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <div className='flex min-h-screen flex-col bg-(--background)'>
       <header className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'>
-        <div className='mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
+        {/* #72 顶栏降噪（mock V30）：h-16→h-12、激活态只变字色不加底 */}
+        <div className='mx-auto flex h-12 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
           <NavLink
             to='/scenarios'
             className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'
@@ -52,8 +53,8 @@ export function AppShell({ children }: PropsWithChildren) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/4 hover:text-(--foreground)',
-                    isActive && 'bg-white/6 text-(--foreground)',
+                    'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                    isActive && 'text-(--foreground)',
                   )}
               >
                 <item.icon className='h-4 w-4' />
@@ -67,8 +68,8 @@ export function AppShell({ children }: PropsWithChildren) {
               to='/settings'
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)',
-                  isActive && 'bg-white/8 text-(--foreground)',
+                  'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                  isActive && 'text-(--foreground)',
                 )}
             >
               <UserRound className='h-4 w-4' />

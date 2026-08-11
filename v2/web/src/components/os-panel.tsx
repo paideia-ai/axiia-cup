@@ -60,11 +60,11 @@ export function OsPanel({
     return role ? `${preset.label} · ${role.name}` : preset.label
   }
 
+  // 与原构建器一致：不预选，占位符「选择预设对手」引导玩家自己挑；
+  // 场景/侧变化时只清掉失效的选择。
   useEffect(() => {
     setPresetKey((current) =>
-      opponentPresets.some((preset) => preset.key === current)
-        ? current
-        : opponentPresets[0]?.key ?? null
+      opponentPresets.some((preset) => preset.key === current) ? current : null
     )
   }, [scenario, side])
 
@@ -209,6 +209,12 @@ export function OsPanel({
                       <Select
                         placeholder='选择预设对手'
                         value={presetKey ?? undefined}
+                        renderValue={(v) => {
+                          const preset = opponentPresets.find(
+                            (item) => item.key === v,
+                          )
+                          return preset ? presetLabel(preset) : v
+                        }}
                         onValueChange={(v) => setPresetKey(v ?? null)}
                       >
                         {opponentPresets.map((preset) => (
@@ -266,6 +272,14 @@ export function OsPanel({
                             value={opponentAgentID != null
                               ? String(opponentAgentID)
                               : undefined}
+                            renderValue={(v) => {
+                              const opponent = selfOpponents.find(
+                                (item) => String(item.agentID) === v,
+                              )
+                              return opponent
+                                ? `${opponent.displayName} · agent #${opponent.agentID}`
+                                : v
+                            }}
                             onValueChange={(v) =>
                               setOpponentAgentID(v ? Number(v) : null)}
                           >

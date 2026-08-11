@@ -18,7 +18,7 @@ export function CatalogPage() {
     <div className='space-y-6'>
       <div>
         <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-          场景工坊
+          场景
         </h1>
         <p className='mt-1 text-sm text-(--foreground-subtle)'>
           选择一个场景，为甲乙双方构建你的对话智能体。

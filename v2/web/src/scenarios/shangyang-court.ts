@@ -7,7 +7,7 @@ export const shangyangCourt: ScenarioModule = {
   slotID: 'shangyang-court',
   roles: [],
   laneLabels: {
-    judge: '秦孝公',
+    judge: '君上',
   },
   education: {
     hook:
