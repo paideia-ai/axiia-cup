@@ -1,6 +1,7 @@
 import type {
   AgentRefResponse,
   AgentVersionDTO,
+  ConfigResponse,
   CreateRegistrationCodeRequest,
   CreateScriptRequest,
   DispatchPVERequest,
@@ -16,6 +17,7 @@ import type {
   MatchListResponse,
   MeResponse,
   ModelListResponse,
+  MyAgentsResponse,
   NotificationsResponse,
   OKResponse,
   OpponentListResponse,
@@ -133,6 +135,19 @@ export const catalog = {
       'GET',
       `/scenarios/${encodeURIComponent(id)}/opponents?side=${side}`,
     ),
+}
+
+// ── Config & inventory (P2) ─────────────────────────────────────────────────
+
+export const config = {
+  // §C2 read-only projection: quotas, gate threshold, models, trials switch,
+  // plus the caller's usage. Callers must degrade gracefully on failure.
+  get: () => request<ConfigResponse>('GET', '/config'),
+}
+
+export const myAgents = {
+  // Cross-scenario inventory of the caller's agents (#64/#58).
+  list: () => request<MyAgentsResponse>('GET', '/my/agents'),
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────
