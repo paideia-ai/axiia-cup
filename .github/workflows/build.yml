@@ -244,6 +244,8 @@ jobs:
           file: v2/deploy/Dockerfile.web
           push: true
           tags: ${{ env.REGISTRY_URL }}/apps/axiia-web2:${{ github.sha }}
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
           provenance: false
 
   deploy_v2_web:
