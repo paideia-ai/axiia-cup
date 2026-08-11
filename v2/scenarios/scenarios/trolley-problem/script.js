@@ -43,6 +43,11 @@ const meta = {
       ],
     },
     {
+      id: 'aside',
+      title: '明理者心声',
+      channels: [{ id: 'judge-aside', label: '明理者心中' }],
+    },
+    {
       id: 'verdict',
       title: '明理者裁决',
       channels: [{ id: 'verdict', label: '逐案判词' }],
@@ -213,7 +218,10 @@ ${caseBlock(cases)}
 不得弃权，不得判平，不得说"视情况而定"。
 三个案件的裁决可以不同。
 
-以【系统】开头的消息是场景推进说明；其余消息均为你在辩论中听到的发言。`
+以【系统】开头的消息是场景推进说明；其余消息均为你在辩论中听到的发言。
+
+=== 你听辩的方式 ===
+你静坐听辩，不插话。书记者会把双方的辩词逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向哪一侧、此刻最放不下的一点。`
 
 const srVerdict = `【系统】三个案件的辩论已全部结束。现在你必须对 A、B、C 三个案件分别裁决。每个案件只能支持"一人侧"或"五人侧"。你的完整裁决词要用明理者的口吻说明每个案件为什么这样裁决，并说明哪一方以多数案件胜出。winner 由三案多数结果决定。`
 
@@ -250,6 +258,30 @@ async function main() {
     model: game.params.judgeModel ?? 'deepseek-v4-pro',
   })
 
+  const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
+
+  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
+  // 不在此生成。
+  const osFields = {
+    os: { hint: '你此刻心里对自己说的话——无人听见，不必公允，不必成篇，短即可', long: true },
+    attention: { hint: '此刻最让你放不下的一点，一句话' },
+    favor: { enum: [SIDE_A, SIDE_B], hint: '此刻你更倾向哪一侧' },
+    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份倾向此刻有多强' },
+  }
+
+  const pending = []
+  const hearBatch = () =>
+    judge.push(
+      `【系统】书记者录呈这几轮辩词：\n\n${
+        pending
+          .splice(0)
+          .map((entry) =>
+            `【案件${entry.caseID}·第${entry.round}轮】\n${NAME_A}：${entry.a}\n${NAME_B}：${entry.b}`
+          )
+          .join('\n\n')
+      }`,
+    )
+
   for (let caseIndex = 0; caseIndex < cases.length; caseIndex++) {
     const current = cases[caseIndex]
     const channel = `case-${caseIndex + 1}`
@@ -260,14 +292,24 @@ async function main() {
     judge.push(announcement)
     game.emit(channel, { type: 'scene', text: `案件 ${current.id}. ${current.title}：${current.text}` })
 
-    for (let round = 0; round < caseRounds; round++) {
+    for (let round = 1; round <= caseRounds; round++) {
       const lineA = (await a.say({ channel: channel })).text
       b.hear(NAME_A, lineA)
-      judge.hear(NAME_A, lineA)
       const lineB = (await b.say({ channel: channel })).text
       a.hear(NAME_B, lineB)
-      judge.hear(NAME_B, lineB)
+      pending.push({ caseID: current.id, round: round, a: lineA, b: lineB })
+      const finalStretch = caseIndex === cases.length - 1 && round === caseRounds
+      if (round % osInterval === 0 && !finalStretch) {
+        hearBatch()
+        await judge.act(
+          { fields: osFields },
+          { key: `os-${caseIndex * caseRounds + round}`, channel: 'judge-aside' },
+        )
+      }
     }
+    // Flush this case's remaining exchanges before the next announcement; the last
+    // case's final stretch reaches him unmarked, right before the verdict.
+    if (pending.length > 0) hearBatch()
   }
 
   game.phase('明理者裁决')
