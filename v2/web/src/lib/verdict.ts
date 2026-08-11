@@ -59,13 +59,18 @@ export function isOsBeatVerdict(verdict: VerdictDTO): boolean {
 
 export interface OsBeat {
   os: string | null
-  focus: string | null
-  tendency: string | null
+  // W7 对齐后的词汇（P4-S）：attention＝最挂心，favor＝当前倾向，strength＝
+  // 倾向强度（离散档位文本）。老对局钉死旧脚本 sha，仍会送来 focus/tendency，
+  // 解析时兜住。
+  attention: string | null
+  favor: string | null
+  strength: string | null
   fallbackText: string | null
 }
 
-// os/focus/tendency is the shangyang vocabulary; another scenario's beat payload
-// may carry none of it, in which case the raw output is still worth a card.
+// os/attention/favor/strength is the W7-aligned vocabulary (focus/tendency the
+// legacy one); another scenario's beat payload may carry none of it, in which
+// case the raw output is still worth a card.
 export function parseOsBeat(output: string): OsBeat {
   let payload: unknown = null
   try {
@@ -78,8 +83,9 @@ export function parseOsBeat(output: string): OsBeat {
   ) {
     return {
       os: null,
-      focus: null,
-      tendency: null,
+      attention: null,
+      favor: null,
+      strength: null,
       fallbackText: output.trim() || null,
     }
   }
@@ -89,13 +95,15 @@ export function parseOsBeat(output: string): OsBeat {
     return typeof value === 'string' && value.trim() ? value.trim() : null
   }
   const os = text('os')
-  const focus = text('focus')
-  const tendency = text('tendency')
+  const attention = text('attention') ?? text('focus')
+  const favor = text('favor') ?? text('tendency')
+  const strength = text('strength')
   return {
     os,
-    focus,
-    tendency,
-    fallbackText: os || focus || tendency ? null : output.trim() || null,
+    attention,
+    favor,
+    strength,
+    fallbackText: os || attention || favor ? null : output.trim() || null,
   }
 }
 

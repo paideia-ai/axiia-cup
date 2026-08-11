@@ -585,10 +585,13 @@ async function main() {
     model: game.params.judgeModel ?? 'deepseek-v4-pro',
   })
 
+  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
+  // 不在此生成。
   const osFields = {
     os: { hint: '你此刻的心声——在心里对自己说的话，无人听见，不必公允，短即可', long: true },
-    focus: { hint: '你此刻最挂心的一点，一句话' },
-    tendency: { enum: [NAME_A, NAME_B], hint: '此刻你更倾向何人' },
+    attention: { hint: '你此刻最挂心的一点，一句话' },
+    favor: { enum: [NAME_A, NAME_B], hint: '此刻你更倾向何人' },
+    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份倾向此刻有多强' },
   }
 
   const pending = []

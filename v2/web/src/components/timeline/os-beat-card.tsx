@@ -39,12 +39,17 @@ export function OsBeatCard({
           </p>
         )
         : null}
-      {beat.focus || beat.tendency
+      {beat.attention || beat.favor
         ? (
           <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-(--foreground-subtle)'>
-            {beat.focus ? <span>最挂心：{beat.focus}</span> : null}
-            {beat.tendency
-              ? <span>当前倾向：{speakerName(labels, beat.tendency)}</span>
+            {beat.attention ? <span>最挂心：{beat.attention}</span> : null}
+            {beat.favor
+              ? (
+                <span>
+                  当前倾向：{speakerName(labels, beat.favor)}
+                  {beat.strength ? `（${beat.strength}）` : ''}
+                </span>
+              )
               : null}
           </div>
         )
