@@ -273,6 +273,7 @@ export function BuilderPage() {
                     <Select
                       placeholder='选择角色'
                       value={roleKey ?? undefined}
+                      renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
                       onValueChange={(v) => v && setRoleKey(v)}
                     >
                       {roles.map((role) => (
@@ -295,6 +296,8 @@ export function BuilderPage() {
               <div className='w-56'>
                 <Select
                   value={modelID ?? undefined}
+                  renderValue={(v) =>
+                    models.find((model) => model.id === v)?.label ?? v}
                   onValueChange={(v) => v && setModelID(v)}
                 >
                   {models.map((model) => (
