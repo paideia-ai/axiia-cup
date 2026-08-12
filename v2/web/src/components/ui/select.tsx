@@ -49,8 +49,17 @@ export function Select({
         <ChevronDown className='h-4 w-4 shrink-0 text-(--foreground-muted)' />
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
-        <BaseSelect.Positioner side='bottom' sideOffset={6} align='start'>
-          <BaseSelect.Popup className='z-50 w-(--trigger-width) overflow-hidden rounded-lg border border-(--border) bg-(--surface-elevated) py-1 shadow-[0_20px_60px_rgba(0,0,0,0.5)]'>
+        {
+          /* z-[60]：弹层要压过 OS 面板等 z-50 的 modal 遮罩，否则下拉开在遮罩
+            背后不可见；宽度带回退——部分 base-ui 版本不注入 trigger-width 变量 */
+        }
+        <BaseSelect.Positioner
+          side='bottom'
+          sideOffset={6}
+          align='start'
+          className='z-[60]'
+        >
+          <BaseSelect.Popup className='w-[var(--anchor-width,var(--trigger-width,16rem))] overflow-hidden rounded-lg border border-(--border) bg-(--surface-elevated) py-1 shadow-[0_20px_60px_rgba(0,0,0,0.5)]'>
             <BaseSelect.List>{children}</BaseSelect.List>
           </BaseSelect.Popup>
         </BaseSelect.Positioner>
