@@ -195,6 +195,9 @@ export function AgentViewPage() {
                         <Button
                           size='sm'
                           variant='ghost'
+                          aria-label={expanded[version.id]
+                            ? `收起 v${version.snapshotSeq} 全文`
+                            : `展开 v${version.snapshotSeq} 全文`}
                           onClick={() =>
                             setExpanded((current) => ({
                               ...current,
@@ -208,6 +211,7 @@ export function AgentViewPage() {
                             <Button
                               size='sm'
                               variant='secondary'
+                              aria-label={`将 v${version.snapshotSeq} 设为参赛版本`}
                               onClick={() => void markEntry(version.id)}
                             >
                               设为参赛版本
@@ -218,6 +222,7 @@ export function AgentViewPage() {
                         <Button
                           size='sm'
                           variant='secondary'
+                          aria-label={`编辑 v${version.snapshotSeq}`}
                           onClick={() =>
                             navigate(
                               `/agents/${agentID}/build?from=${version.id}`,

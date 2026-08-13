@@ -260,6 +260,12 @@ export function MatchDetailPage() {
     )
   }
 
+  // 调试开关易被错过（评审反馈）：完局战报里若确有可揭示的思考轨迹而调试
+  // 未开，就在第一幕上方给一行安静的提示（不是横幅；实况布局不加）。
+  const hasHiddenReasoning = data.turns.some(
+    (turn) => (turn.reasoning ?? '').trim() !== '',
+  )
+
   const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
   const beats = replayBeats(replaySteps)
@@ -413,6 +419,14 @@ export function MatchDetailPage() {
               <h2 className='text-sm font-semibold text-(--foreground)'>
                 {replaying ? '对话重演' : '对话全文'}
               </h2>
+              {!replaying && !debug && hasHiddenReasoning &&
+                  dialogueRows.length > 0
+                ? (
+                  <p className='text-xs text-(--foreground-muted)'>
+                    内心与思考过程默认隐藏——页头「调试模式」可开启
+                  </p>
+                )
+                : null}
               {dialogueRows.length === 0
                 ? (
                   <p className='text-sm text-(--foreground-muted)'>
