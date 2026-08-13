@@ -14,8 +14,8 @@ Set `AXIIA_BIN` to reuse a built binary, `AXIIA_SERVER_REPO` if the backend is
 not the sibling `axiia-cup-v2` checkout, and `PLAYWRIGHT_CHROMIUM_PATH` to
 override the browser executable.
 
-Building the binary requires Swift 6.3, Clang, rsync, and `libsqlite3-dev`.
-The harness copies the backend into its disposable workspace before generating
+Building the binary requires Swift 6.3, Clang, rsync, and `libsqlite3-dev`. The
+harness copies the backend into its disposable workspace before generating
 manifests. In that copy only, it drops the retired `tca26` lockfile pin and
 normalizes public GitHub SSH URLs to HTTPS, so neither the backend checkout nor
 global Git configuration is changed.
