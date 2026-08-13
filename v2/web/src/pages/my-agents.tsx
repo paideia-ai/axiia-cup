@@ -1,4 +1,4 @@
-import { Hammer } from 'lucide-react'
+import { Hammer, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -9,6 +9,7 @@ import type {
   ScenarioSummary,
   Side,
 } from '../api/types'
+import { NewAgentDialog } from '../components/new-agent-dialog'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -18,7 +19,9 @@ import { messageOf, useAsync } from '../lib/use-async'
 // GET /v1/my/agents（版本数/★参赛版本/双侧完成度/参赛资格，#64/#58，样式对照
 // mock my-agents.tsx）；该接口失败时整页降级回 P1 的目录骨架（懒 ensure 进入，
 // 引导式空态占位），绝不白屏。目录侧名仍来自 /v1/scenarios（my/agents 只带
-// title，不带侧名）。
+// title，不带侧名）。P6 多智能体（#56/#63/#64）：每侧可有多个 agent，逐个成行
+// （展示名 #63：有自起名=「侧角色名「自起名」」，没有=「侧角色名 #id」）；
+// 每侧一枚「再建一个」开新建弹窗（受 #59/#79 引导门，弹窗内引导先建对侧）。
 export function MyAgentsPage() {
   const navigate = useNavigate()
   const { data, error, loading } = useAsync(async () => {
@@ -31,6 +34,10 @@ export function MyAgentsPage() {
   }, [])
   const [pending, setPending] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  // P6「再建一个」：弹窗新建（选侧 + 可选命名）；null = 关闭。
+  const [creating, setCreating] = useState<
+    { scenario: ScenarioSummary; side: Side } | null
+  >(null)
 
   // 懒创建（get-or-create，只在点击时调用）：仅当该侧还没有 agent 时走
   // ensure；已有 agentID 的入口直接导航，不再多打一次接口。
@@ -87,6 +94,7 @@ export function MyAgentsPage() {
                     inventory={inventory}
                     pending={pending}
                     onCreate={(side) => void enter(scenario.id, side, 'build')}
+                    onNewAgent={(side) => setCreating({ scenario, side })}
                   />
                 )
                 : (
@@ -104,23 +112,36 @@ export function MyAgentsPage() {
               : null}
           </div>
         )}
+
+      {creating
+        ? (
+          <NewAgentDialog
+            scenario={creating.scenario}
+            initialSide={creating.side}
+            onClose={() => setCreating(null)}
+          />
+        )
+        : null}
     </div>
   )
 }
 
-// 数据化分组卡（#64/#58）：双侧完成度徽章（有 agent 且已标★参赛版本才算
-// 完成）+ 参赛资格行（已就绪 / 差哪侧）+ 逐 agent 行（版本数 · ★参赛状态 ·
-// 直达入口）；缺侧给「去创建对侧（角色名）」CTA（mock V7 口径）。
+// 数据化分组卡（#64/#58）：双侧完成度徽章（该侧任一 agent 已标★参赛版本即
+// 完成，跨该侧全部 agent 聚合）+ 参赛资格行（entryReady 由服务端判定）+ 逐
+// agent 行卡（#56 每侧可多个；展示名 #63）；缺侧给「去创建对侧（角色名）」
+// CTA（mock V7 口径），已有侧给「再建一个」开新建弹窗（#59 引导门在弹窗内）。
 function ScenarioGroup({
   scenario,
   inventory,
   pending,
   onCreate,
+  onNewAgent,
 }: {
   scenario: ScenarioSummary
   inventory: MyAgentsScenarioDTO | null
   pending: string | null
   onCreate: (side: Side) => void
+  onNewAgent: (side: Side) => void
 }) {
   const navigate = useNavigate()
   const sides = [
@@ -183,55 +204,80 @@ function ScenarioGroup({
           const agents = agentsOf(side)
           const otherBuilt = agentsOf(side === 'a' ? 'b' : 'a').length > 0
           return agents.length > 0
-            ? agents.map((agent) => (
-              <div
-                key={`${side}:${agent.agentID}`}
-                className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
-              >
-                {
-                  /* min-w 兜底（390px 校验）：文字列低于下限时按钮整组换行，
-                  而不是把侧名/摘要挤成一字一行的竖排 */
-                }
-                <div className='min-w-40 flex-1'>
-                  <p className='text-sm font-semibold text-(--foreground)'>
-                    <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                      {side === 'a' ? '甲方' : '乙方'}
-                    </span>
-                    {name}
-                    <span className='ml-1.5 font-mono text-[11px] font-normal text-(--foreground-muted)'>
-                      #{agent.agentID}
-                    </span>
-                  </p>
-                  <p className='truncate text-xs text-(--foreground-muted)'>
-                    {agent.versionCount > 0
-                      ? `${agent.versionCount} 个版本`
-                      : '还没有版本'}
-                    {' · '}
-                    {agent.entryVersionID != null
-                      ? '已标 ★参赛版本'
-                      : '未标参赛版本'}
-                    {label ? ` · ${label}` : ''}
-                  </p>
-                </div>
-                <div className='flex items-center gap-1.5'>
+            ? (
+              <div key={side} className='space-y-3'>
+                {agents.map((agent) => (
+                  <div
+                    key={agent.agentID}
+                    className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
+                  >
+                    {
+                      /* min-w 兜底（390px 校验）：文字列低于下限时按钮整组换
+                      行，而不是把侧名/摘要挤成一字一行的竖排 */
+                    }
+                    <div className='min-w-40 flex-1'>
+                      <p className='text-sm font-semibold text-(--foreground)'>
+                        <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
+                          {side === 'a' ? '甲方' : '乙方'}
+                        </span>
+                        {
+                          /* #63 展示名：有自起名=侧角色名「自起名」，
+                          没有=侧角色名 #id */
+                        }
+                        {agent.name ? `${name}「${agent.name}」` : name}
+                        {agent.name == null || agent.name === ''
+                          ? (
+                            <span className='ml-1.5 font-mono text-[11px] font-normal text-(--foreground-muted)'>
+                              #{agent.agentID}
+                            </span>
+                          )
+                          : null}
+                      </p>
+                      <p className='truncate text-xs text-(--foreground-muted)'>
+                        {agent.versionCount > 0
+                          ? `${agent.versionCount} 个版本`
+                          : '还没有版本'}
+                        {' · '}
+                        {agent.entryVersionID != null
+                          ? '已标 ★参赛版本'
+                          : '未标参赛版本'}
+                        {label ? ` · ${label}` : ''}
+                      </p>
+                    </div>
+                    <div className='flex items-center gap-1.5'>
+                      <Button
+                        size='sm'
+                        variant='secondary'
+                        aria-label={`查看${scenario.title}·${name}侧智能体 #${agent.agentID}`}
+                        onClick={() => navigate(`/agents/${agent.agentID}`)}
+                      >
+                        查看智能体
+                      </Button>
+                      <Button
+                        size='sm'
+                        aria-label={`进入${scenario.title}·${name}侧构建 #${agent.agentID}`}
+                        onClick={() =>
+                          navigate(`/agents/${agent.agentID}/build`)}
+                      >
+                        进入构建
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {/* #56 每侧多 agent：入口在侧内；#59 引导门在弹窗里拦并引导 */}
+                <div>
                   <Button
                     size='sm'
-                    variant='secondary'
-                    aria-label={`查看${scenario.title}·${name}侧智能体`}
-                    onClick={() => navigate(`/agents/${agent.agentID}`)}
+                    variant='ghost'
+                    aria-label={`再建一个${scenario.title}·${name}侧智能体`}
+                    onClick={() => onNewAgent(side)}
                   >
-                    查看智能体
-                  </Button>
-                  <Button
-                    size='sm'
-                    aria-label={`进入${scenario.title}·${name}侧构建`}
-                    onClick={() => navigate(`/agents/${agent.agentID}/build`)}
-                  >
-                    进入构建
+                    <Plus className='mr-1.5 h-3.5 w-3.5' />
+                    再建一个{name}
                   </Button>
                 </div>
               </div>
-            ))
+            )
             : (
               <div
                 key={side}

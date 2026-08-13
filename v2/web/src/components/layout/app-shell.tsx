@@ -12,6 +12,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
 import { useScrollMemory } from '../../lib/scroll'
+import { BattleStrip } from '../battle-strip'
 import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
 import { IcpRecord } from './icp-record'
@@ -89,6 +90,8 @@ export function AppShell({ children }: PropsWithChildren) {
         </div>
       </header>
       <main className='mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8'>
+        {/* #72 对战条：只在派发处路由出现，空态自动隐藏（组件内自守）。 */}
+        <BattleStrip />
         {children}
       </main>
       <footer className='hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block'>

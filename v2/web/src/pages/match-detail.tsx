@@ -1,10 +1,11 @@
+import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { matches } from '../api/client'
 import { useMatchStream } from '../api/sse'
-import type { VerdictDTO } from '../api/types'
+import type { MatchParticipantDTO, VerdictDTO } from '../api/types'
 import { JudgeTrendChart } from '../components/judge-trend'
 import { ReplayControls, useReplay } from '../components/replay-controls'
 import type { SpeakerLabels } from '../components/timeline/labels'
@@ -60,6 +61,30 @@ export function MatchDetailPage() {
 
   const live = data != null && !data.summary.finished
   const stream = useMatchStream(matchID, live)
+
+  // 约战 ①/② 互链（#66，mock V21）：契约只带本场的 challengeID/leg，没有
+  // siblingMatchID——另一条腿从 matches.list() 里按同 challengeID 找（两条腿
+  // 我都是参战方，列表必含）。找不到/接口失败 → 只显徽章不给链接。
+  const challengeID = data?.summary.challengeID ?? null
+  const [siblingID, setSiblingID] = useState<number | null>(null)
+  useEffect(() => {
+    setSiblingID(null)
+    if (challengeID == null) return
+    let liveLookup = true
+    void matches
+      .list()
+      .then((response) => {
+        if (!liveLookup) return
+        const sibling = response.matches.find(
+          (match) => match.challengeID === challengeID && match.id !== matchID,
+        )
+        setSiblingID(sibling?.id ?? null)
+      })
+      .catch(() => {})
+    return () => {
+      liveLookup = false
+    }
+  }, [challengeID, matchID])
 
   useEffect(() => {
     if (stream.done) reload()
@@ -279,6 +304,17 @@ export function MatchDetailPage() {
     ? '平局'
     : '已结束'
 
+  // P3 头部元数据（#71/#25，mock V21）：epoch 秒 → 紧凑本地时间。
+  const compactTime = (epochSeconds: number) =>
+    new Date(epochSeconds * 1000).toLocaleString('zh-CN', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  const participants = data.summary.participants ?? null
+  const challengeLeg = data.summary.challengeLeg ?? null
+
   return (
     <div className='space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -292,6 +328,22 @@ export function MatchDetailPage() {
           <p className='mt-1 text-sm text-(--foreground-subtle)'>
             {data.summary.scenarioTitle} · {sideA} 对{sideB}
           </p>
+          {data.summary.createdAt != null || data.summary.finishedAt != null
+            ? (
+              <p className='mt-0.5 text-xs text-(--foreground-muted)'>
+                {data.summary.createdAt != null
+                  ? `发起 ${compactTime(data.summary.createdAt)}`
+                  : null}
+                {data.summary.createdAt != null &&
+                    data.summary.finishedAt != null
+                  ? ' · '
+                  : null}
+                {data.summary.finishedAt != null
+                  ? `完局 ${compactTime(data.summary.finishedAt)}`
+                  : null}
+              </p>
+            )
+            : null}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <button
@@ -336,6 +388,24 @@ export function MatchDetailPage() {
               </button>
             )
             : null}
+          {/* #66 成对约战：标出这是一对中的第几场，另一场给互链（mock V21）。 */}
+          {challengeLeg != null
+            ? (
+              <Badge tone='accent'>
+                约战{challengeLeg === 1 ? '①' : '②'}
+              </Badge>
+            )
+            : null}
+          {challengeLeg != null && siblingID != null
+            ? (
+              <Link
+                to={`/matches/${siblingID}`}
+                className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
+              >
+                查看另一场（{challengeLeg === 1 ? '②' : '①'}）→
+              </Link>
+            )
+            : null}
           <Badge tone='info'>{data.summary.kind.toUpperCase()}</Badge>
           {data.summary.finished
             ? (
@@ -359,6 +429,24 @@ export function MatchDetailPage() {
             )}
         </div>
       </div>
+
+      {/* 参战双方（P3 G20，#71/#25）：老服务器无 participants → 整块不渲染。 */}
+      {participants
+        ? (
+          <div className='grid gap-3 md:grid-cols-2'>
+            <ParticipantCard
+              which='a'
+              sideLabel={sideA}
+              participant={participants.a}
+            />
+            <ParticipantCard
+              which='b'
+              sideLabel={sideB}
+              participant={participants.b}
+            />
+          </div>
+        )
+        : null}
 
       {finished
         ? (
@@ -628,6 +716,107 @@ export function MatchDetailPage() {
           </p>
         )
         : null}
+    </div>
+  )
+}
+
+// 参战方卡（P3 G20）：展示名 + 模型（#21 永远公开）+ 版本 id 与复制按钮
+// （#25，按 id 约战的发现路径）。我方＝醒目「← 我的智能体」按钮（#71）；
+// 对手侧＝低调一行「对手：{名} · v#{id}」——公开 EA（G6）在 P6 后端才有，
+// 本阶段不给链接，id 可复制即可闭环。契约只有 ownerDisplayName，没有对手
+// 的 agent 名。
+function ParticipantCard({
+  which,
+  sideLabel,
+  participant,
+}: {
+  which: 'a' | 'b'
+  sideLabel: string
+  participant: MatchParticipantDTO
+}) {
+  const [copied, setCopied] = useState(false)
+  const copyID = () => {
+    const id = participant.versionID
+    if (id == null) return
+    // 非安全上下文没有 clipboard——静默不复制，id 仍然可见可手抄。
+    try {
+      void navigator.clipboard.writeText(String(id)).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      }).catch(() => {})
+    } catch {
+      // 忽略
+    }
+  }
+  const name = participant.ownerDisplayName ??
+    (participant.presetKey != null ? `预设 · ${participant.presetKey}` : '—')
+  return (
+    <div className='rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <Badge tone='info'>
+          执{which.toUpperCase()} · {sideLabel}
+        </Badge>
+        {participant.isMine
+          ? (
+            <span className='text-sm font-semibold text-(--foreground)'>
+              {name}
+            </span>
+          )
+          : (
+            <span className='text-sm text-(--foreground-subtle)'>
+              {participant.versionID != null
+                ? `对手：${name} · v#${participant.versionID}`
+                : name}
+            </span>
+          )}
+        {participant.isMine && participant.agentID != null
+          ? (
+            <Link
+              to={`/agents/${participant.agentID}`}
+              className='ml-auto inline-flex items-center rounded-md bg-(--accent) px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90'
+            >
+              ← 我的智能体
+            </Link>
+          )
+          : null}
+      </div>
+      <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
+        {participant.modelID
+          ? (
+            <span className='rounded-full border border-(--border-soft) px-2 py-0.5 font-mono'>
+              {participant.modelID}
+            </span>
+          )
+          : null}
+        {participant.versionID != null
+          ? (
+            <>
+              <code className='rounded-md border border-(--border-soft) bg-white/4 px-2 py-0.5 font-mono text-(--foreground)'>
+                v#{participant.versionID}
+              </code>
+              <button
+                type='button'
+                onClick={copyID}
+                className='inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
+              >
+                {copied
+                  ? <Check className='h-3 w-3 text-(--success)' />
+                  : <Copy className='h-3 w-3' />}
+                {copied ? '已复制' : '复制 id'}
+              </button>
+              <span className='text-(--foreground-muted)'>
+                可用于按 id 约战
+              </span>
+            </>
+          )
+          : participant.presetKey != null
+          ? (
+            <span className='text-(--foreground-muted)'>
+              PVE 预设 · {participant.presetKey}
+            </span>
+          )
+          : null}
+      </div>
     </div>
   )
 }
