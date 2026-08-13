@@ -196,6 +196,15 @@ export interface EnsureAgentRequest {
   side: string
 }
 
+// E4「复制为新智能体」（#84）的落点：POST /v1/agents 总是在同场景同侧新建
+// 一个 agent（从 v1 开始），受 #59/#79 引导门约束——与 ensure 的 get-or-create
+// 语义不同。`name` 随 P6 命名批次启用，当前可省略。
+export interface CreateAgentRequest {
+  scenarioID: string
+  side: string
+  name?: string | null
+}
+
 export interface AgentRefResponse {
   agentID: number
 }

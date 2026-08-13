@@ -2,6 +2,7 @@ import type {
   AgentRefResponse,
   AgentVersionDTO,
   ConfigResponse,
+  CreateAgentRequest,
   CreateRegistrationCodeRequest,
   CreateScriptRequest,
   DispatchPVERequest,
@@ -148,6 +149,16 @@ export const config = {
 export const myAgents = {
   // Cross-scenario inventory of the caller's agents (#64/#58).
   list: () => request<MyAgentsResponse>('GET', '/my/agents'),
+}
+
+// ── Agents（多槽位，#56/#84） ────────────────────────────────────────────────
+
+export const agents = {
+  // E4 复制为新智能体：在同场景同侧另建一个 agent（受 #59 引导门，错误码
+  // sibling_gate 走 lib/reject-copy）。后端批次未上线时答 404/405，调用方
+  // 就地降级文案、按钮保留。
+  create: (input: CreateAgentRequest) =>
+    request<AgentRefResponse>('POST', '/agents', input),
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────
