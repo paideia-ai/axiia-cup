@@ -41,11 +41,18 @@ export function AgentViewPage() {
   const [forkPending, setForkPending] = useState<number | null>(null)
   // E10（#84 提示句）：构建器保存成功后经导航 state 带来新版本 id；只消费
   // 一次——立即 replace 掉 history state，刷新/回退不复现，不落任何持久层。
+  // A3 降级路径同通道：express 首战派发失败时构建器落回这里并带错误文案
+  // （版本已保存，出战面板可手动发起）。
   const [savedVersionID, setSavedVersionID] = useState<number | null>(null)
+  const [expressError, setExpressError] = useState<string | null>(null)
   useEffect(() => {
-    const state = location.state as { savedVersionID?: number } | null
-    if (state?.savedVersionID != null) {
-      setSavedVersionID(state.savedVersionID)
+    const state = location.state as {
+      savedVersionID?: number
+      expressDispatchError?: string
+    } | null
+    if (state?.savedVersionID != null || state?.expressDispatchError != null) {
+      setSavedVersionID(state.savedVersionID ?? null)
+      setExpressError(state.expressDispatchError ?? null)
       navigate(location.pathname, { replace: true, state: null })
     }
   }, [])
@@ -182,6 +189,10 @@ export function AgentViewPage() {
 
             {actionError
               ? <p className='text-sm text-(--accent)'>{actionError}</p>
+              : null}
+
+            {expressError
+              ? <p className='text-sm text-(--accent)'>{expressError}</p>
               : null}
 
             {/* E10：保存不移动参赛标记（#33）——最常见遗忘点的一次性提示 */}

@@ -22,7 +22,9 @@ export async function signup(page: Page, label: string) {
   await page.getByLabel('邮箱').fill(email)
   await page.getByLabel('密码').fill('playwrightpw-123456')
   await page.getByRole('button', { name: '创建账户' }).click()
-  await expect(page).toHaveURL(/\/scenarios$/)
+  // A3：新账号注册后落首战快速通道 /express（未打过首战）；打过的账号
+  // （或极老前端）仍回 /scenarios。两者都算注册成功。
+  await expect(page).toHaveURL(/\/(express|scenarios)$/)
   return email
 }
 
