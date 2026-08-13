@@ -230,11 +230,15 @@ export function OsPanel({
                 : '先保存一个版本才能出战。'}
             </p>
           </div>
+          {
+            /* 触控目标 ≥44px（16px 图标 + 14px 内边距×2）；负外边距抵消
+            视觉占位，图标大小不变 */
+          }
           <button
             type='button'
             aria-label='关闭'
             onClick={onClose}
-            className='rounded-md p-1.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground)'
+            className='-m-2 rounded-md p-3.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground)'
           >
             <X className='h-4 w-4' />
           </button>

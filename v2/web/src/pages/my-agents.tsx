@@ -188,7 +188,11 @@ function ScenarioGroup({
                 key={`${side}:${agent.agentID}`}
                 className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
               >
-                <div className='min-w-0 flex-1'>
+                {
+                  /* min-w 兜底（390px 校验）：文字列低于下限时按钮整组换行，
+                  而不是把侧名/摘要挤成一字一行的竖排 */
+                }
+                <div className='min-w-40 flex-1'>
                   <p className='text-sm font-semibold text-(--foreground)'>
                     <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
                       {side === 'a' ? '甲方' : '乙方'}
@@ -213,12 +217,14 @@ function ScenarioGroup({
                   <Button
                     size='sm'
                     variant='secondary'
+                    aria-label={`查看${scenario.title}·${name}侧智能体`}
                     onClick={() => navigate(`/agents/${agent.agentID}`)}
                   >
                     查看智能体
                   </Button>
                   <Button
                     size='sm'
+                    aria-label={`进入${scenario.title}·${name}侧构建`}
                     onClick={() => navigate(`/agents/${agent.agentID}/build`)}
                   >
                     进入构建
@@ -231,7 +237,7 @@ function ScenarioGroup({
                 key={side}
                 className='flex flex-wrap items-center gap-3 rounded-md border border-dashed border-(--border-soft) px-3 py-2.5'
               >
-                <div className='min-w-0 flex-1'>
+                <div className='min-w-40 flex-1'>
                   <p className='text-sm text-(--foreground-subtle)'>
                     <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
                       {side === 'a' ? '甲方' : '乙方'}
@@ -250,6 +256,7 @@ function ScenarioGroup({
                   size='sm'
                   variant='secondary'
                   disabled={pending != null}
+                  aria-label={`创建${scenario.title}·${name}侧智能体`}
                   onClick={() => onCreate(side)}
                 >
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
@@ -301,7 +308,7 @@ function SkeletonGroup({
             key={side}
             className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
           >
-            <div className='min-w-0 flex-1'>
+            <div className='min-w-40 flex-1'>
               <p className='text-sm font-semibold text-(--foreground)'>
                 <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
                   {side === 'a' ? '甲方' : '乙方'}
@@ -321,6 +328,7 @@ function SkeletonGroup({
                 size='sm'
                 variant='secondary'
                 disabled={pending != null}
+                aria-label={`查看${scenario.title}·${name}侧智能体`}
                 onClick={() => onEnter(side, 'view')}
               >
                 {pending === `${scenario.id}:${side}:view`
@@ -330,6 +338,7 @@ function SkeletonGroup({
               <Button
                 size='sm'
                 disabled={pending != null}
+                aria-label={`进入${scenario.title}·${name}侧构建`}
                 onClick={() => onEnter(side, 'build')}
               >
                 {pending === `${scenario.id}:${side}:build`
