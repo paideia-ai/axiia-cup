@@ -6,6 +6,24 @@ const scenariosDir = join(root, 'scenarios')
 const ambient = join(root, 'types', 'axiia.d.ts')
 const contract = join(root, 'types', 'contract.ts')
 
+// Every live scenario must push judge OS beats and a structured score emit
+// (#22①/#23; dev-rollout RFC R3). Source-level presence checks — behavior is
+// still the scenario's own business.
+const required: [RegExp, string][] = [
+  [
+    /['"`]judge-aside['"`]/,
+    "judge OS beats — push aside beats on channel 'judge-aside' with keys `os-<n>`",
+  ],
+  [
+    /\bos-\$\{|key:\s*['"`]os-/,
+    'os-<n> beat keys — record each aside via act(..., { key: `os-<n>`, channel: \'judge-aside\' })',
+  ],
+  [
+    /type:\s*['"`]score['"`]/,
+    "a structured score emit — game.emit('…', { type: 'score', … }) with the final ledger",
+  ],
+]
+
 const confiscated: [RegExp, string][] = [
   [/\bMath\.random\b/, 'Math.random — use `await game.random()`'],
   [/\bnew\s+Date\b|\bDate\.(now|parse|UTC)\b/, 'Date — there is no clock'],
@@ -107,6 +125,15 @@ for (const id of scenarioIDs()) {
   for (const [pattern, message] of confiscated) {
     if (pattern.test(source)) {
       problems.push(`scenarios/${id}/script.js: uses ${message}`)
+    }
+  }
+
+  // 规格 #22①/#23（RFC R3 的机械保障）：每个场景必须推送裁判 OS beats
+  // （judge-aside 通道、os-N 键）并发结构化计分 emit（type: 'score'）——完局
+  // 战报的心声卡与计分推导都靠它们供数。
+  for (const [pattern, message] of required) {
+    if (!pattern.test(source)) {
+      problems.push(`scenarios/${id}/script.js: missing ${message}`)
     }
   }
 

@@ -321,6 +321,15 @@ const meta = {
     akechi_ashigaru: ROLES.akechi_ashigaru.name,
     judge: '明智光秀',
   },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）：a/b=玩家侧（内心
+  // 仅所有者可见），judge/npc=官方（内心公开）。
+  lanes: {
+    chosokabe: 'a',
+    yoshiaki: 'a',
+    hosokawa: 'b',
+    ashigaru: 'b',
+    judge: 'judge',
+  },
 }
 
 const SCORE_MAIN = 1
@@ -470,18 +479,15 @@ ${ROLES[roleB].requests.map((r, index) => `${index + 1}. ${r.content}`).join('\n
 以【系统】开头的消息是场景推进说明；其余消息均为军议中他人对你说的话。
 
 === 你在军议中的举止 ===
-你端坐帐中，不参与争论，一言不发。帐中的话不会自动传到你耳中：你要听新的进言时，只输出 <check_next/>，近侍便把你尚未听过的话如实录呈于你。看过之后，你再说一句你此刻的心声——那是你在心里对自己说的话，无人听见，不必公允，不必成篇，短即可。你也可以先不听，先想。`
+你端坐帐中，不参与争论，一言不发。近侍会把帐中的进言逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向何方之议、此刻最挂心的一件事。`
 
 const JUDGE_OPENING =
   '【系统】龟山城外，全军已发。你召两名说客入帐，军议即将开始。你此刻还没有听到任何进言。'
 
-const VERDICT_SUMMONS =
-  '【系统】帐中再无人进言。军议已毕，二人俯首待命。此刻你须作出决断。'
-
 const OPENING_LINE =
   '诸位，今夜军势已动，敌在何处，须在此刻决断。先陈杀信长之议。'
 
-const srVerdict = `【系统】你已听完军议。现在你要做出最终裁决。
+const srVerdict = `【系统】帐中再无人进言。军议已毕，二人俯首待命。现在你要做出最终裁决。
 
 一、大政方针
 你必须明确决断：袭击本能寺，还是西进毛利。身为明智光秀，你不可含糊其辞、模棱两可。
@@ -510,7 +516,7 @@ const srVerdict = `【系统】你已听完军议。现在你要做出最终裁�
 
 async function main() {
   const rounds = game.params.roundCount ?? 10
-  const pullInterval = game.params.judgePullInterval ?? 2
+  const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
   const selectedA = pickRole('a', DEFAULT_ROLE_A)
   const selectedB = pickRole('b', DEFAULT_ROLE_B)
   const roleAKey = selectedA.key
@@ -554,31 +560,25 @@ async function main() {
     model: game.params.judgeModel ?? 'deepseek-v4-pro',
   })
 
-  const committed = []
-  let cursor = 0
-  let councilOver = false
-  let summoned = false
-
-  const checkNext = {
-    prompt: '召近侍把你尚未听过的进言录呈于你。此次不要说话，只输出该标签。',
-    handler: () => {
-      if (cursor < committed.length) {
-        const batch = committed.slice(cursor)
-        cursor = committed.length
-        return batch
-          .map((entry) => `【第${entry.round}轮】\n${roleA.name}：${entry.a}\n${roleB.name}：${entry.b}`)
-          .join('\n\n')
-      }
-      if (councilOver) {
-        summoned = true
-        return VERDICT_SUMMONS
-      }
-      return '【系统】帐中此刻无人再言。'
-    },
+  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
+  // 不在此生成。
+  const osFields = {
+    os: { hint: '你此刻的心声——在心里对自己说的话，无人听见，不必公允，短即可', long: true },
+    attention: { hint: '你此刻最挂心的一件事，一句话' },
+    favor: { enum: [roleA.name, roleB.name], hint: '此刻你更倾向何方之议' },
+    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份倾向此刻有多强' },
   }
 
-  const judgeTurn = () =>
-    judge.turn({ channel: 'judge-aside', affordances: { check_next: checkNext } })
+  const pending = []
+  const hearBatch = () =>
+    judge.push(
+      `【系统】近侍录呈帐中进言：\n\n${
+        pending
+          .splice(0)
+          .map((entry) => `【第${entry.round}轮】\n${roleA.name}：${entry.a}\n${roleB.name}：${entry.b}`)
+          .join('\n\n')
+      }`,
+    )
 
   game.phase('第一阶段·深夜军议')
   judge.push(JUDGE_OPENING)
@@ -592,14 +592,14 @@ async function main() {
     b.hear(roleA.name, lineA)
     const lineB = (await b.say({ channel: 'council' })).text
     a.hear(roleB.name, lineB)
-    committed.push({ round: round, a: lineA, b: lineB })
-    if (round % pullInterval === 0 && round < rounds) await judgeTurn()
+    pending.push({ round: round, a: lineA, b: lineB })
+    if (round % osInterval === 0 && round < rounds) {
+      hearBatch()
+      await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
+    }
   }
-  councilOver = true
-
-  // The last rounds are deliberately never offered before the council ends, so
-  // they reach him unmarked; the pull after them is what summons the verdict.
-  for (let attempt = 0; attempt < 3 && !summoned; attempt++) await judgeTurn()
+  // The final rounds get no aside beat: they reach him unmarked, right before the verdict.
+  hearBatch()
 
   game.phase('第二阶段·屏退问询')
   const idsA = roleA.requests.map((r) => r.id)
