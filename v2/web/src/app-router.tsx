@@ -8,6 +8,7 @@ import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
+import { ExpressPage } from './pages/express'
 import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
@@ -37,6 +38,8 @@ function ProtectedShell() {
   return (
     <AppShell>
       <Routes>
+        {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
+        <Route path='/express' element={<ExpressPage />} />
         <Route path='/scenarios' element={<CatalogPage />} />
         <Route path='/scenarios/:scenarioId' element={<ScenarioDetailPage />} />
         <Route path='/my-agents' element={<MyAgentsPage />} />

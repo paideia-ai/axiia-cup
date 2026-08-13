@@ -22,14 +22,17 @@ export function RegisterPage() {
     setError(null)
     setIsSubmitting(true)
     try {
-      await signup({
+      const me = await signup({
         code,
         displayName,
         email: email || null,
         password,
         phone: null,
       })
-      navigate('/scenarios', { replace: true })
+      // A3：注册（自动登录）后未打过首战 → 直落快速通道；否则照旧进场景。
+      navigate(me.firstBattleDone === true ? '/scenarios' : '/express', {
+        replace: true,
+      })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '注册失败',
