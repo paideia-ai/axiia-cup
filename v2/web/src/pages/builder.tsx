@@ -1,19 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
-import { builder, catalog, sseUrl } from '../api/client'
+import {
+  builder,
+  catalog,
+  config as configApi,
+  matches,
+  sseUrl,
+} from '../api/client'
 import type {
   AgentVersionDTO,
   BuilderEventDTO,
+  ConfigResponse,
   ModelDTO,
   ScenarioDetail,
   Side,
 } from '../api/types'
+import { InitModes } from '../components/builder-init'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
+import { initModesAvailable } from '../lib/deck'
+import { metaPromptFor } from '../lib/meta-prompt'
 import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -24,6 +34,7 @@ import {
   rolesForSide,
   scenarioModule,
 } from '../scenarios'
+import { deckFor } from '../scenarios/decks'
 
 const PROMPT_FIELD = 'prompt'
 
@@ -43,6 +54,9 @@ export function BuilderPage() {
   const [side, setSide] = useState<Side>(
     (params.get('side') as Side | null) ?? 'a',
   )
+  // A3 首战快速通道（#9/#10/#17 例外）：?express=1 时保存＝自动派发首战并
+  // 直进实况；无侧别选择（#57——执方本就来自 agent，本页从无切侧控件）。
+  const express = params.get('express') === '1'
 
   const [prompt, setPrompt] = useState('')
   const [roleKey, setRoleKey] = useState<string | null>(null)
@@ -55,6 +69,11 @@ export function BuilderPage() {
   const [error, setError] = useState<string | null>(null)
   const [draftLoading, setDraftLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  // 清空工作区（E7 的唯一回头路）：两步就地确认，不弹窗。
+  const [clearArmed, setClearArmed] = useState(false)
+  // express 专用：config 供新手预设对手 key 与拒绝文案数字；失败按 null
+  // 降级（对手回落到第一个对侧预设）。
+  const [cfg, setCfg] = useState<ConfigResponse | null>(null)
   const mutateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -139,6 +158,17 @@ export function BuilderPage() {
   }, [])
 
   useEffect(() => {
+    if (!express) return
+    let live = true
+    void configApi.get().then((value) => {
+      if (live) setCfg(value)
+    }).catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [express])
+
+  useEffect(() => {
     if (!scenarioID) return
     void catalog
       .scenario(scenarioID, side)
@@ -179,6 +209,55 @@ export function BuilderPage() {
     }, 400)
   }
 
+  // 初始化方式的「填入工作区」/「清空工作区」：绕过 debounce 立即冲服务端
+  // 草稿——两个动作都翻转 E7 门（工作区空↔非空），所见即所存。
+  // #83 佐证：本次工作区内容的初始化方式；清空/直写回落 raw。
+  const initMethod = useRef<'mcq' | 'builder' | null>(null)
+
+  const fillWorkspace = (value: string, method?: 'mcq' | 'builder') => {
+    if (mutateTimer.current) {
+      clearTimeout(mutateTimer.current)
+      mutateTimer.current = null
+    }
+    initMethod.current = value.trim() ? method ?? null : null
+    setPrompt(value)
+    setClearArmed(false)
+    void builder
+      .mutate(agentID, { field: PROMPT_FIELD, value })
+      .catch(() => {})
+  }
+
+  // A3 ③：首战的保存自动派发（#17 的唯一例外）——对手＝新手预设指定的
+  // 对侧 NPC（#10，config 缺席回落第一个对侧预设），成功直进实况（#9），
+  // express 标记走一次性导航 state（旅程卡 #67 的诚实判据）。派发失败降级
+  // 为 EA 导航 + 错误文案（版本已保存，玩家可从出战面板手动发起）。
+  const expressDispatch = async (versionID: number) => {
+    const opponentPresets = (scenario?.presets ?? []).filter(
+      (preset) => preset.side !== side,
+    )
+    const configured = cfg?.expressPreset ?? null
+    const preset = opponentPresets.find(
+      (item) => item.key === configured?.presetKey,
+    ) ?? opponentPresets[0] ?? null
+    try {
+      if (preset == null) throw new Error('未找到首战对手预设')
+      const response = await matches.dispatchPVE({
+        versionID,
+        presetKey: preset.key,
+      })
+      navigate(`/matches/${response.matchID}`, { state: { express: true } })
+    } catch (cause) {
+      navigate(`/agents/${agentID}`, {
+        state: {
+          savedVersionID: versionID,
+          expressDispatchError: `${
+            rejectCopy(cause, cfg, '首战自动派发失败')
+          }——版本已保存，可从「出战」面板手动发起`,
+        },
+      })
+    }
+  }
+
   const save = async () => {
     if (modelID == null) return
     setSaving(true)
@@ -196,9 +275,14 @@ export function BuilderPage() {
       // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
       const saved = await builder.save(agentID, {
         prompt,
+        method: initMethod.current ?? 'raw',
         modelID,
         ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
       })
+      if (express) {
+        await expressDispatch(saved.id)
+        return
+      }
       // 版本列表在 EA：保存成功即回智能体主页。新版本 id 走一次性导航
       // state（不落 URL、不持久），供 EA 的 E10「参赛版本仍是 vK」提示。
       navigate(`/agents/${agentID}`, {
@@ -220,6 +304,18 @@ export function BuilderPage() {
   // #14：按汉字或英文词计（非 token），P1 仅提示、不阻断保存。
   const units = promptLength(prompt)
   const overLimit = units > PROMPT_UNIT_LIMIT
+
+  // 初始化方式三选一（E6/#83）：只在工作区为空且场景有 deck 时出现（E7 门
+  // 在 initModesAvailable）；deck 缺席的场景不摆假 tab，保持 Basic 直写。
+  // deck 按侧或入场角色解析（本能寺逐角色一套），换角色即换 deck、选择重置
+  // （key 重挂载）——选择本身不持久化。
+  const deck = deckFor(scenarioID, side, roleKey)
+  const showInit = !draftLoading && deck != null && initModesAvailable(prompt)
+  const sideDisplayName = scenario
+    ? (side === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName)
+    : side === 'a'
+    ? '甲方'
+    : '乙方'
   // #68 只读角色模板：内容由场景模块供稿（并行编写中），缺席走通用兜底。
   const roleTemplate = roleModule?.roleTemplates?.[side] ??
     '该场景的角色模板文案整理中——比赛时系统仍会自动为你合并官方角色模板，无需在提示词里重复编写。'
@@ -242,9 +338,27 @@ export function BuilderPage() {
         </p>
         {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
         <p className='mt-1 text-xs text-(--foreground-muted)'>
-          工作区 · 输入自动暂存；保存才会生成新版本
+          {express
+            ? '首战快速通道 · 保存即自动开战并直达实况'
+            : '工作区 · 输入自动暂存；保存才会生成新版本'}
         </p>
       </div>
+
+      {showInit && deck != null
+        ? (
+          <InitModes
+            key={`${scenarioID}:${side}:${roleKey ?? ''}`}
+            deck={deck}
+            metaPrompt={metaPromptFor(
+              roleModule,
+              scenario?.summary.title ?? scenarioID,
+              side,
+              sideDisplayName,
+            )}
+            onFill={fillWorkspace}
+          />
+        )
+        : null}
 
       {restoredSeq != null
         ? (
@@ -283,6 +397,45 @@ export function BuilderPage() {
               {units} / {PROMPT_UNIT_LIMIT}
             </span>
           </div>
+          {
+            /* E7（#83）：迭代只有文本工作台；清空工作区是重选初始化方式的
+            唯一回头路——两步就地确认，不弹窗。 */
+          }
+          {deck != null && !draftLoading && !initModesAvailable(prompt)
+            ? (
+              clearArmed
+                ? (
+                  <div className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'>
+                    <span className='text-xs text-(--foreground-subtle)'>
+                      清空后可重新选择初始化方式
+                    </span>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      onClick={() => fillWorkspace('')}
+                    >
+                      确认清空
+                    </Button>
+                    <button
+                      type='button'
+                      onClick={() => setClearArmed(false)}
+                      className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+                    >
+                      取消
+                    </button>
+                  </div>
+                )
+                : (
+                  <button
+                    type='button'
+                    onClick={() => setClearArmed(true)}
+                    className='cursor-pointer text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
+                  >
+                    清空工作区（重新选择初始化方式）
+                  </button>
+                )
+            )
+            : null}
           <div className='flex flex-wrap items-end gap-3'>
             {roles.length > 0
               ? (
@@ -337,7 +490,11 @@ export function BuilderPage() {
               onClick={() => void save()}
               disabled={saving || !prompt.trim() || modelID == null}
             >
-              {saving ? '保存中…' : '保存版本'}
+              {saving
+                ? express ? '开战中…' : '保存中…'
+                : express
+                ? '保存并开始首战'
+                : '保存版本'}
             </Button>
             {lastEvent
               ? (

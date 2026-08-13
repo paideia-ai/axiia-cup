@@ -1,11 +1,16 @@
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { matches } from '../api/client'
+import { builder, matches } from '../api/client'
 import { useMatchStream } from '../api/sse'
-import type { MatchParticipantDTO, VerdictDTO } from '../api/types'
+import type {
+  MatchParticipantDTO,
+  MatchParticipantsDTO,
+  Side,
+  VerdictDTO,
+} from '../api/types'
 import { JudgeTrendChart } from '../components/judge-trend'
 import { ReplayControls, useReplay } from '../components/replay-controls'
 import type { SpeakerLabels } from '../components/timeline/labels'
@@ -18,8 +23,10 @@ import { OsBeatCard } from '../components/timeline/os-beat-card'
 import { ReasoningFold } from '../components/timeline/reasoning-fold'
 import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { VerdictBody, VerdictCard } from '../components/verdict-card'
+import { useOptionalAuth } from '../context/auth'
 import { cn } from '../lib/cn'
 import { buildReplaySteps, replayBeats, replayReveal } from '../lib/replay'
 import {
@@ -33,12 +40,21 @@ import {
   isInquiryGroup,
   placeVerdicts,
 } from '../lib/transcript'
-import { useAsync } from '../lib/use-async'
+import { messageOf, useAsync } from '../lib/use-async'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 
 export function MatchDetailPage() {
   const { matchId = '' } = useParams()
   const matchID = Number(matchId)
+  const location = useLocation()
+  // auth 在这里只是增强（首战完局翻新 firstBattleDone）：Provider 之外
+  // （stories）拿到 null，静默跳过。
+  const optionalAuth = useOptionalAuth()
+  const refreshAuth = optionalAuth?.refresh ?? null
+  // 旅程卡（#67/V23）的诚实判据：express 流程把标记随导航 state 一路带到
+  // 实况页——只有确知是首战的对局才展示，不做「猜第一场」的启发式。
+  const expressArrival =
+    (location.state as { express?: boolean } | null)?.express === true
   const { data, error, loading, reload } = useAsync(
     () => matches.detail(matchID),
     [matchID],
@@ -104,6 +120,12 @@ export function MatchDetailPage() {
   // keeps the live layout untouched.
   const finished = data != null && data.summary.finished &&
     data.summary.scored
+
+  // 首战完局把 me.firstBattleDone 翻真（服务端推导）：就地刷新 auth 上下文，
+  // 让 /express 的让路逻辑立刻生效。失败无害——下次全量刷新自然对齐。
+  useEffect(() => {
+    if (expressArrival && finished) void refreshAuth?.().catch(() => {})
+  }, [expressArrival, finished, refreshAuth])
 
   // 回放（#24/A7）：纯前端重演。问询腿在回放里整段隐藏（终局剧透），所以
   // 它的行不进入步骤序列——各场景的问询都在对话之后，前缀行数不受影响，
@@ -404,6 +426,17 @@ export function MatchDetailPage() {
               >
                 查看另一场（{challengeLeg === 1 ? '②' : '①'}）→
               </Link>
+            )
+            : null}
+          {/* #67：顶部只有小锚点，旅程卡本体在页底。 */}
+          {expressArrival && finished && !replaying
+            ? (
+              <a
+                href='#first-battle-journey'
+                className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
+              >
+                首战旅程 ↓
+              </a>
             )
             : null}
           <Badge tone='info'>{data.summary.kind.toUpperCase()}</Badge>
@@ -716,7 +749,177 @@ export function MatchDetailPage() {
           </p>
         )
         : null}
+
+      {
+        /* 旅程卡（A3 ④/#67/V23）：首战完局置底——三格方向性 CTA + 三种构建
+        模式 tab 卡（#12）。回放中不渲染（回放隐藏一切终局层）。 */
+      }
+      {expressArrival && finished && !replaying
+        ? (
+          <FirstBattleJourney
+            scenarioID={data.summary.scenarioID}
+            participants={participants}
+          />
+        )
+        : null}
     </div>
+  )
+}
+
+// 首战旅程卡（#67，mock V23 初版）：三格用方向性关键词指路——下一轮 /
+// 对侧 / PVP；随后是三种构建模式 tab 卡（#12：首战后「解锁」三种初始化方式
+// ——新建流程可用，存量智能体的迭代仍是纯文本，E7）。participants 缺席
+// （老服务器）时按通用落点降级：智能体格去 /my-agents、对侧格去场景页。
+function FirstBattleJourney({
+  scenarioID,
+  participants,
+}: {
+  scenarioID: string
+  participants: MatchParticipantsDTO | null
+}) {
+  const navigate = useNavigate()
+  const [creating, setCreating] = useState(false)
+  const [journeyError, setJourneyError] = useState<string | null>(null)
+
+  const mine: { agentID: number | null; side: Side } | null =
+    participants?.a.isMine
+      ? { agentID: participants.a.agentID ?? null, side: 'a' }
+      : participants?.b.isMine
+      ? { agentID: participants.b.agentID ?? null, side: 'b' }
+      : null
+  const agentPath = mine?.agentID != null
+    ? `/agents/${mine.agentID}`
+    : '/my-agents'
+  const oppositeSide: Side | null = mine == null
+    ? null
+    : mine.side === 'a'
+    ? 'b'
+    : 'a'
+
+  // 「解锁对侧」＝#59/#64 的 ensure（get-or-create）+ 预选参数进构建器——
+  // 对侧是新建流程，三种初始化方式在那里全量可选。
+  const createOpposite = async () => {
+    if (oppositeSide == null) return
+    setCreating(true)
+    setJourneyError(null)
+    try {
+      const { agentID } = await builder.ensure({
+        scenarioID,
+        side: oppositeSide,
+      })
+      navigate(
+        `/agents/${agentID}/build?scenario=${scenarioID}&side=${oppositeSide}`,
+      )
+    } catch (cause) {
+      setJourneyError(messageOf(cause, '创建对侧智能体失败'))
+      setCreating(false)
+    }
+  }
+
+  const cellClass =
+    'flex flex-col gap-2 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'
+
+  return (
+    <section id='first-battle-journey' className='space-y-3 pt-2'>
+      <h2 className='text-sm font-semibold text-(--foreground)'>
+        首战打完，接下来
+      </h2>
+      {journeyError
+        ? <p className='text-sm text-(--accent)'>{journeyError}</p>
+        : null}
+      <div className='grid gap-3 sm:grid-cols-3'>
+        <div className={cellClass}>
+          <p className='text-base font-bold text-(--foreground)'>
+            通往下一轮 →
+          </p>
+          <p className='flex-1 text-xs text-(--foreground-muted)'>
+            回到智能体主页，改一版策略、从「出战」面板再打一场。
+          </p>
+          <Link to={agentPath}>
+            <Button size='sm' variant='secondary'>再战一场</Button>
+          </Link>
+        </div>
+        <div className={cellClass}>
+          <p className='text-base font-bold text-(--foreground)'>解锁对侧</p>
+          <p className='flex-1 text-xs text-(--foreground-muted)'>
+            换个立场再打——为另一方创建智能体，两侧都练过才解锁玩家约战。
+          </p>
+          {oppositeSide != null
+            ? (
+              <Button
+                size='sm'
+                variant='secondary'
+                disabled={creating}
+                onClick={() => void createOpposite()}
+              >
+                {creating ? '创建中…' : '去创建对侧'}
+              </Button>
+            )
+            : (
+              <Link to={`/scenarios/${scenarioID}`}>
+                <Button size='sm' variant='secondary'>去场景页选侧</Button>
+              </Link>
+            )}
+        </div>
+        <div className={cellClass}>
+          <p className='text-base font-bold text-(--foreground)'>
+            通往 PVP →
+          </p>
+          <p className='flex-1 text-xs text-(--foreground-muted)'>
+            每侧各赢下 NPC 练习即解锁玩家约战——进度在「出战」面板随时可看。
+          </p>
+          <Link to={agentPath}>
+            <Button size='sm' variant='secondary'>查看解锁进度</Button>
+          </Link>
+        </div>
+      </div>
+
+      {
+        /* #12：三种构建模式 tab 卡——新建流程（如「解锁对侧」）三选一；
+        已有智能体的迭代始终是文本工作台（E7），不提供选项回改。 */
+      }
+      <Card>
+        <CardContent className='space-y-3 pt-5'>
+          <p className='text-sm font-semibold text-(--foreground)'>
+            三种构建模式已解锁（新建智能体时三选一）
+          </p>
+          <div className='grid gap-2 sm:grid-cols-3'>
+            {([
+              ['MCQ 拼装', '默认——答几道选择题，拼出你的首稿'],
+              ['Basic 直写', '直接书写策略提示词'],
+              ['元提示词', '复制给你常用的 AI 生成，再粘贴回来'],
+            ] as const).map(([name, blurb]) => (
+              <div
+                key={name}
+                className='rounded-lg border border-(--border-soft) px-3 py-2.5'
+              >
+                <p className='text-sm font-semibold text-(--foreground)'>
+                  {name}
+                </p>
+                <p className='mt-0.5 text-xs text-(--foreground-muted)'>
+                  {blurb}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <p className='text-xs text-(--foreground-muted)'>
+              已保存过版本的智能体只有文本工作台——想再用选卡，走「复制为新智能体」或创建对侧。
+            </p>
+            {mine?.agentID != null
+              ? (
+                <Link
+                  to={`/agents/${mine.agentID}/build`}
+                  className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
+                >
+                  去构建器继续迭代 →
+                </Link>
+              )
+              : null}
+          </div>
+        </CardContent>
+      </Card>
+    </section>
   )
 }
 

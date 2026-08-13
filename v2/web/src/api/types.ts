@@ -260,6 +260,8 @@ export interface SaveVersionRequest {
   modelID: string
   parentVersionID?: number | null
   options?: string | null
+  // 初始化来源佐证（#83）：'raw' | 'mcq' | 'builder'（元提示词）。文本仍是唯一事实源。
+  method?: string | null
 }
 
 export interface AgentVersionDTO {

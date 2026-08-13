@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useRef } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { AppShell } from './components/layout/app-shell'
@@ -8,6 +9,7 @@ import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
+import { ExpressPage } from './pages/express'
 import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
@@ -37,6 +39,8 @@ function ProtectedShell() {
   return (
     <AppShell>
       <Routes>
+        {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
+        <Route path='/express' element={<ExpressPage />} />
         <Route path='/scenarios' element={<CatalogPage />} />
         <Route path='/scenarios/:scenarioId' element={<ScenarioDetailPage />} />
         <Route path='/my-agents' element={<MyAgentsPage />} />
@@ -69,8 +73,18 @@ function ProtectedShell() {
 
 function GuestOnly({ children }: { children: ReactNode }) {
   const { isLoading, account } = useAuth()
+  // 只挡「本来就已登录」的访客。表单提交成功后的落点由表单页自己决定
+  // （注册按 firstBattleDone 落 /express，A3/#9；登录落 /scenarios）——
+  // 提交成功会把 account 写进 auth 上下文，若这里继续无条件抢跳
+  // /scenarios，就会与表单页的 navigate 竞态，把新注册用户误送出快速通道。
+  const arrivedAuthenticated = useRef<boolean | null>(null)
+  if (!isLoading && arrivedAuthenticated.current === null) {
+    arrivedAuthenticated.current = account != null
+  }
   if (isLoading) return <Loading />
-  if (account) return <Navigate replace to='/scenarios' />
+  if (account && arrivedAuthenticated.current === true) {
+    return <Navigate replace to='/scenarios' />
+  }
   return <>{children}</>
 }
 
