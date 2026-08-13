@@ -16,7 +16,7 @@ const required: [RegExp, string][] = [
   ],
   [
     /\bos-\$\{|key:\s*['"`]os-/,
-    'os-<n> beat keys — record each aside via act(..., { key: `os-<n>`, channel: \'judge-aside\' })',
+    "os-<n> beat keys — record each aside via act(..., { key: `os-<n>`, channel: 'judge-aside' })",
   ],
   [
     /type:\s*['"`]score['"`]/,
