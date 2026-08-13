@@ -90,6 +90,18 @@ jobs:
       - name: Typecheck
         run: deno task typecheck
 
+      - name: Test typecheck
+        run: deno task typecheck:tests
+
+      - name: Unit contracts
+        run: deno task test:unit
+
+      - name: Install browser
+        run: deno run -A npm:playwright install --with-deps chromium
+
+      - name: Stateful UI contracts
+        run: deno task test:storybook
+
       - name: Build
         run: deno task build
 

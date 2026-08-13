@@ -47,8 +47,27 @@ Before pushing:
 deno task fmt        # --check; run `deno fmt .` to fix
 deno task lint
 deno task typecheck
+deno task typecheck:tests
+deno task test       # pure rules + Chromium Storybook/MSW/axe contracts
 deno task build
 ```
+
+The v3.4 acceptance stack has three layers:
+
+- `deno task test:unit` runs deterministic Vitest contracts for gates, prompt
+  counting, replay, transcript grouping, rejection copy, and score derivation.
+- `deno task test:storybook` runs stateful stories in real Chromium with MSW;
+  the accessibility addon makes axe violations fail the command.
+- `deno task test:e2e:real` builds and boots the sibling Swift server in an
+  isolated workspace, seeds it through public APIs, then runs Playwright UI
+  journeys with API read-back assertions. Set `AXIIA_BIN` to reuse a built
+  server or `AXIIA_SERVER_REPO` when its checkout is elsewhere. A Swift 6.3
+  toolchain, Clang, rsync, and the SQLite development headers are required only
+  when the command must build the server itself. The build uses an isolated
+  source copy and does not modify the sibling backend checkout.
+
+Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
+Playwright `fixme` contracts. They are not counted as passing functionality.
 
 ## Why the API is same-origin
 
@@ -61,17 +80,23 @@ to the same Swift server the beta uses; in development the vite proxy plays that
 role. Web code therefore builds no auth headers and no absolute API URLs — every
 request is a relative `/v1/...`.
 
-## v2/web is a mirror
+## Frontend source of truth
 
-`v2/web` is a byte-for-byte copy of `packages/axiia-web` in the private axiia
-monorepo, including files this repo does not use (`BUILD.bazel`, `e2e/`). Keeping
-it identical is what makes syncing safe in both directions via `git subtree`.
+`v2/web` is the current source of truth for the v3.4 frontend deployed at
+`axiia-cup-2-web.isofucius.cn`. The build and deployment workflow in this
+repository packages this directory directly.
 
-Do not restructure it, and put anything this repo needs — the Dockerfile, the
-nginx config — in `v2/deploy` instead.
+The private `axiia-cup-v2` repository still contains an older embedded copy at
+`packages/axiia-web`, used when building the SPA into the Swift server binary.
+The two directories are not currently byte-for-byte identical and there is no
+automatic synchronization between them. Do not assume that a change made in
+one tree exists in the other, and do not use the embedded copy as the acceptance
+target for current v3.4 frontend work.
 
-`vite.config.ts` currently carries one change made here first (the remote-target
-dev proxy above); it owes a copy back upstream.
+Until the duplicate is removed or a one-way synchronization process is
+established, make v3.4 frontend changes and run frontend acceptance tests here
+in `v2/web`. Keep repository-specific deployment files such as the Dockerfile
+and nginx configuration in `v2/deploy`.
 
 ## Deployment
 

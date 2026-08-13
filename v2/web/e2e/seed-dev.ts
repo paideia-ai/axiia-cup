@@ -187,6 +187,8 @@ console.log(
     playerPassword: PLAYER_PASSWORD,
     players: PLAYERS.map((player) => player.email),
     scenarios: catalog.scenarios.map((scenario) => scenario.id),
+    scenarioID: catalog.scenarios[0].id,
+    scenarioTitle: catalog.scenarios[0].title,
     model: seedModel,
     agents,
     versions,

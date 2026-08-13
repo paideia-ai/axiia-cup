@@ -52,11 +52,13 @@ export function BuilderPage() {
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [draftLoading, setDraftLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const mutateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     let live = true
+    setDraftLoading(true)
     void (async () => {
       try {
         const [draft, list] = await Promise.all([
@@ -98,6 +100,8 @@ export function BuilderPage() {
         }
       } catch (cause) {
         if (live) setError(messageOf(cause))
+      } finally {
+        if (live) setDraftLoading(false)
       }
     })()
     return () => {
@@ -241,6 +245,8 @@ export function BuilderPage() {
             <Textarea
               rows={10}
               value={prompt}
+              disabled={draftLoading}
+              aria-busy={draftLoading}
               onChange={(e) => onPromptChange(e.target.value)}
               placeholder={promptPlaceholder}
             />

@@ -1,14 +1,21 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": [
+  "include": [
     ".storybook",
-    "e2e",
     "src/**/*.stories.tsx",
     "src/**/*.test.ts",
-    "src/**/*.test.tsx",
+    "src/testing",
     "tests",
     "playwright.config.ts",
     "vitest.config.ts",
     "vitest.storybook.config.ts"
-  ]
+  ],
+  "compilerOptions": {
+    "types": [
+      "vite/client",
+      "node",
+      "vitest/globals",
+      "msw-storybook-addon/csf3"
+    ]
+  }
 }
