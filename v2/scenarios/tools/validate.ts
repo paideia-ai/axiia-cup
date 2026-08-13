@@ -6,10 +6,12 @@ const scenariosDir = join(root, 'scenarios')
 const ambient = join(root, 'types', 'axiia.d.ts')
 const contract = join(root, 'types', 'contract.ts')
 
-// Every live scenario must push judge OS beats and a structured score emit
-// (#22①/#23; dev-rollout RFC R3). Source-level presence checks — behavior is
-// still the scenario's own business.
-const required: [RegExp, string][] = [
+// The default single-judge mode must push judge OS beats (#22①). A scenario may
+// explicitly replace that judge with a mechanically tallied jury; it still has
+// to publish the same structured final score as every other scenario (#23).
+// These are source-level presence checks — behavior is still the scenario's own
+// business.
+const singleJudgeRequired: [RegExp, string][] = [
   [
     /['"`]judge-aside['"`]/,
     "judge OS beats — push aside beats on channel 'judge-aside' with keys `os-<n>`",
@@ -18,6 +20,9 @@ const required: [RegExp, string][] = [
     /\bos-\$\{|key:\s*['"`]os-/,
     "os-<n> beat keys — record each aside via act(..., { key: `os-<n>`, channel: 'judge-aside' })",
   ],
+]
+
+const universallyRequired: [RegExp, string][] = [
   [
     /type:\s*['"`]score['"`]/,
     "a structured score emit — game.emit('…', { type: 'score', … }) with the final ledger",
@@ -128,17 +133,9 @@ for (const id of scenarioIDs()) {
     }
   }
 
-  // 规格 #22①/#23（RFC R3 的机械保障）：每个场景必须推送裁判 OS beats
-  // （judge-aside 通道、os-N 键）并发结构化计分 emit（type: 'score'）——完局
-  // 战报的心声卡与计分推导都靠它们供数。
-  for (const [pattern, message] of required) {
-    if (!pattern.test(source)) {
-      problems.push(`scenarios/${id}/script.js: missing ${message}`)
-    }
-  }
-
+  let meta: Record<string, unknown> | null = null
   try {
-    const meta = readMeta(source, `scenarios/${id}/script.js`)
+    meta = readMeta(source, `scenarios/${id}/script.js`)
     if (meta.id !== id) {
       problems.push(
         `scenarios/${id}: meta.id is ${
@@ -148,6 +145,30 @@ for (const id of scenarioIDs()) {
     }
   } catch (error) {
     problems.push(error instanceof Error ? error.message : String(error))
+  }
+
+  const adjudicationMode = meta?.adjudicationMode
+  if (
+    adjudicationMode !== undefined && adjudicationMode !== 'single-judge' &&
+    adjudicationMode !== 'jury-vote'
+  ) {
+    problems.push(
+      `scenarios/${id}/script.js: meta.adjudicationMode must be ` +
+        "'single-judge' or 'jury-vote'",
+    )
+  }
+
+  for (const [pattern, message] of universallyRequired) {
+    if (!pattern.test(source)) {
+      problems.push(`scenarios/${id}/script.js: missing ${message}`)
+    }
+  }
+  if (adjudicationMode !== 'jury-vote') {
+    for (const [pattern, message] of singleJudgeRequired) {
+      if (!pattern.test(source)) {
+        problems.push(`scenarios/${id}/script.js: missing ${message}`)
+      }
+    }
   }
 
   const program = ts.createProgram([ambient, script, contract], options)

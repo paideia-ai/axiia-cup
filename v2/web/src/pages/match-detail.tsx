@@ -298,6 +298,7 @@ export function MatchDetailPage() {
           index={row.index}
           total={stageGroups.length}
           labels={labels}
+          scenarioID={data.summary.scenarioID}
           // B1 · 08-10：回放是公开教学层，进行中强制隐藏 debug/trace 层。
           showReasoning={debug && !replaying}
           verdictsBySeq={bySeq}

@@ -1,25 +1,25 @@
 # 《码头疑云：七号仓命案》V2 代码实现计划
 
-> 状态：已在 `/home/kesou/axiia-cup-v2` 的 `feature/legal-harbor-murder-jury` 分支实现，待评审、benchmark 与部署
+> 状态：已在 `paideia-ai/axiia-cup` 的 `legal-scenario` 分支实现并完成本地验证，待评审、正式 benchmark 与部署
 >
 > 产品规格：../../problems/legal-scenarios/02-harbor-murder-jury.md
 >
-> 实现基线：V2 `main` 提交 `e631fe9`
+> 实现基线：`origin/main` 提交 `51edc3b`
 >
-> 更新日期：2026-08-12
+> 更新日期：2026-08-14
 
 ## 1. 结论
 
-本场景只需要新增：
+本场景的运行规则集中在：
 
 ```text
-packages/axiia/Scenarios/legal-harbor-murder-jury/script.js
+v2/scenarios/scenarios/legal-harbor-murder-jury/script.js
 ```
 
-不需要修改后端、AxiiaScripting、AxiiaActors、数据库或前端。现有能力已经足够：
+不需要修改后端、AxiiaScripting、AxiiaActors 或数据库。现有脚本能力已经足够：
 
 - 无 `channel` 的 `agent.act` 做单值行动选择和私密生成。
-- `agent.say({ channel: 'public' })` 做独立公开发言。
+- 无 `channel` 的 `agent.act` 取得独立公开发言的 `speech` 字段，再由脚本清理结构标签和案件硬事实越界后发布 `jury_speech`；私聊交付正文与最终理由复用同一套案件边界清理，最终理由另限 120 个 Unicode 字符。
 - `push` / `hear` 决定每个场内 Agent 实际知道什么。
 - `game.emit` 写真人可见的持久化 timeline，但不会自动进入 Agent session。
 - `seq = -1` chunk 让真人网页实时看到无 channel 的幕后生成。
@@ -28,6 +28,8 @@ packages/axiia/Scenarios/legal-harbor-murder-jury/script.js
 脚本同时内置九个当前模型目录中的不同国产 NPC 模型。这样新 slot 使用默认空 params 也能直接运行；`jurorModels` 仍可在受控部署或 benchmark 中覆盖。
 
 `turn` affordance 不适合本场景：它的 handler 是同步函数，不能直接执行九人投票、六次私聊生成或十张程序票。行动窗口改用现有 `act(enum)`，同样只需脚本代码。
+
+前端需要两项配套改动：为本场景的自定义事件提供可读卡片；按全局 `seq` 交错显示 channel run，避免把 `observer`、`public`、`procedure` 等频道各自合并后改变真实顺序。多人票决以 `meta.adjudicationMode = 'jury-vote'` 显式声明，验证器只对这种模式免除单一 Judge 的 `judge-aside` 要求，但仍强制结构化 `score` 事件。
 
 ## 2. 信息边界
 
@@ -51,28 +53,31 @@ Agent 隔离完全由脚本对 session 的 `system`、`push` 和 `hear` 路由�
   玩家 2 以相同方式处理
   随机抽出本轮三名 NPC 及顺序
   第 1 名 NPC 发言（全轮第 3 名发言者）
-  中场窗口：苏单选「一个行动 / PASS」
-  中场窗口：林单选「一个行动 / PASS」
+  中场窗口：苏反复单选「一个行动 / PASS」，行动后继续询问，直到 PASS
+  中场窗口：林以相同方式处理
   若未提前终局，第 2、3 名 NPC 依次发言
 ```
 
 玩家公开顺序仍交替：第 1、3、5 轮林先，第 2、4 轮苏先。中场固定苏先、林后。
 
-发言前循环允许连续使用多个行动；每次选择后，行动结果会先进入有权 Agent 的上下文，再进行下一次选择。中场每人只选择一次，最多使用一个行动，而且不追加公开发言。
+发言前和中场循环都允许连续使用多个行动；每次选择后，行动结果会先进入有权 Agent 的上下文，再进行下一次选择。发言前以 `SPEAK` 退出并另行生成公开发言；中场以 `PASS` 退出，而且不追加公开发言。
 
 ## 4. 行动选择
 
-每次窗口调用一次没有 `channel` 和 `key` 的结构化 `act`：
+窗口中的每次选择调用一次没有 `channel` 和 `key` 的结构化 `act`。模型只选择动态菜单前的数字，脚本再映射为内部 action ID；这避免部分 provider 把长英文 ID 误识别为通用 tool call：
 
 ```js
 const choice = await player.agent.act({
   fields: {
-    actionId: {
-      enum: [...availableActionIds, exitId],
+    choice: {
+      enum: numberedOptions.map((option) => option.choice),
     },
   },
   prompt,
 })
+const actionId = numberedOptions.find((option) =>
+  option.choice === choice.fields.choice
+).actionId
 ```
 
 发言前的 `exitId` 是 `SPEAK`，中场是 `PASS`。`availableActionIds` 每次按轮次和整局剩余额度重新生成：
@@ -82,7 +87,7 @@ const choice = await player.agent.act({
 - 五个证据复核 ID：每方共享 2 次。
 - `EARLY_FINAL_MOTION`：每方 1 次，只从第 2 轮出现。
 
-V2 现有 enum 校验已经能拒绝非法 ID 并走结构化 repair；不需要数组字段、行动列表解析或后端校验扩展。
+V2 现有 enum 校验已经能拒绝非法数字并走结构化 repair；不需要数组字段、行动列表解析或后端校验扩展。
 
 每次选择后产生：
 
@@ -141,12 +146,13 @@ game.emit('observer', {
 
 ## 7. 真人观战与回放
 
-现有网页无需修改：
+网页采用真人全知视角并提供专属事件卡：
 
 - `seq = -1` 的无 channel 生成会在真人“幕后”区域实时显示。
-- `observer_action_decision`、`observer_secret_poll` 和 `observer_private_chat` 作为普通脚本事件进入持久化回放；即使没有场景专用组件，通用事件卡仍能展开完整 payload。
-- 公开 NPC 发言的 reasoning 由现有 dialogue row 展示。
+- `observer_action_decision`、`observer_secret_poll` 和 `observer_private_chat` 进入持久化回放，并由场景专属组件显示为行动、逐票和对话卡片。
+- 公开发言及其 reasoning 由专属 `jury_speech` 事件卡展示。
 - 原始随机值、作者真相和平台级私人策略 prompt 不进入这些 observer 事件。
+- 不同 channel 的行按全局 `seq` 交错呈现；channel 只保留语义标签，不改变时序。
 
 ## 8. 测试与成本
 
@@ -155,12 +161,12 @@ game.emit('observer', {
 1. 五轮全部 `SPEAK` / `PASS`：10 次发言前选择、10 次玩家公开发言、10 次中场选择、15 次 NPC 发言、9 次最终票，共 54 个模型生成。
 2. 工具路径：覆盖两次秘密票、一次私聊、两次复核、提前终局通过与失败，并确认结果能影响下一次选择和发言。
 
-若双方把所有行动都放在发言前，且两次提前终局都失败，名义成功生成单元上限为 134；provider retry 和结构化 repair 可能增加实际请求数。
+无论行动放在发言前还是中场，每次行动后都要再选择一次才能继续或退出。若双方使用全部额度且两次提前终局都失败，名义成功生成单元上限为 134；provider retry 和结构化 repair 可能增加实际请求数。
 
 另外验证：
 
 - 每轮三名 NPC 不重复，完整五轮覆盖九人。
-- 中场确实位于第三与第四名发言者之间，且顺序固定苏、林。
+- 中场确实位于第三与第四名发言者之间，顺序固定苏、林；两人都可连续行动直到 `PASS`。
 - 无权 Agent session 不含私聊、他人个人票或对方才应知道的匿名合计。
 - 真人 timeline 含全部 `observer_*` 记录。
 - 5/11 动议失败、6/11 通过；最终判决同样为 6/11。
@@ -169,7 +175,7 @@ game.emit('observer', {
 
 ## 9. 发布
 
-1. 只提交新增的 `script.js`。
+1. 提交场景脚本、多人票决契约、前端事件卡和时序回归测试。
 2. rebase 到最新 `origin/main` 后推送 feature branch 并创建 PR。
 3. 在非生产环境上传脚本；使用内置九模型默认值或显式设置 `jurorModels` params，然后创建 fresh match。
 4. 检查真人直播幕后区、持久化回放、Agent session 隔离和成本。
