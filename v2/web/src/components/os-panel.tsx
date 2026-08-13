@@ -211,6 +211,7 @@ export function OsPanel({
       className='fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm md:items-center md:p-6'
       role='dialog'
       aria-modal='true'
+      aria-labelledby='os-panel-title'
       onClick={onClose}
     >
       <div
@@ -219,7 +220,10 @@ export function OsPanel({
       >
         <div className='flex items-start justify-between gap-3 border-b border-(--border-soft) px-5 py-4'>
           <div className='min-w-0'>
-            <h2 className='text-base font-semibold text-(--foreground)'>
+            <h2
+              id='os-panel-title'
+              className='text-base font-semibold text-(--foreground)'
+            >
               出战 · {scenario.summary.title}
             </h2>
             <p className='mt-0.5 text-xs text-(--foreground-muted)'>

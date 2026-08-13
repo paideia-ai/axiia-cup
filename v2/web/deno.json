@@ -1,6 +1,13 @@
 {
   "owner": "axiia",
-  "exclude": ["build", "dist"],
+  "exclude": [
+    "build",
+    "dist",
+    "node_modules",
+    "playwright-report",
+    "storybook-static",
+    "test-results"
+  ],
   "fmt": { "semiColons": false, "singleQuote": true },
   "lint": {
     "rules": {
@@ -14,6 +21,14 @@
     "dev": "deno run -A npm:vite",
     "build": "deno run -A npm:vite build",
     "typecheck": "deno run -A npm:typescript/tsc -p tsconfig.check.json",
+    "typecheck:tests": "deno run -A npm:typescript/tsc -p tsconfig.tests.json",
+    "test": "deno task test:unit && deno task test:storybook",
+    "test:unit": "deno run -A npm:vitest run --config vitest.config.ts",
+    "test:storybook": "deno run -A npm:vitest run --config vitest.storybook.config.ts",
+    "storybook": "deno run -A npm:storybook dev -p 6006 --ci",
+    "storybook:build": "deno run -A npm:storybook build",
+    "test:e2e": "deno run -A npm:playwright test",
+    "test:e2e:real": "bash e2e/run-playwright.sh",
     "seed-dev": "deno run -A e2e/seed-dev.ts",
     "fmt": "deno fmt --check .",
     "lint": "deno lint src"

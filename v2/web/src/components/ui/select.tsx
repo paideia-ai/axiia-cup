@@ -30,6 +30,7 @@ export function Select({
       disabled={disabled}
     >
       <BaseSelect.Trigger
+        aria-label={placeholder}
         className={cn(
           'flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-(--border) bg-[rgba(255,255,255,0.02)] px-3 text-sm text-(--foreground) outline-none transition-colors focus:border-(--accent) focus:ring-2 focus:ring-[rgba(224,74,47,0.4)] disabled:cursor-not-allowed disabled:opacity-50',
           className,
