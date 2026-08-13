@@ -3,11 +3,12 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { builder, catalog } from '../api/client'
-import type { Side } from '../api/types'
+import type { ScenarioSummary, Side } from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
 import { roleOfOptions, rolesForSide, scenarioModule } from '../scenarios'
 
@@ -71,9 +72,7 @@ export function ScenarioDetailPage() {
                   {data.summary.turnCount} 轮
                 </p>
               </div>
-              <Badge tone={data.summary.gateUnlocked ? 'success' : 'info'}>
-                {data.summary.gateUnlocked ? 'PvP 已解锁' : 'PvE 阶段'}
-              </Badge>
+              <GateStatus summary={data.summary} />
             </div>
 
             {/* 第 1 层 GLANCE：钩子 + 元信息，统计槽位走引导式空态（#38/#54） */}
@@ -367,6 +366,39 @@ export function ScenarioDetailPage() {
           </>
         )
         : null}
+    </div>
+  )
+}
+
+// DA 门槛卡（#65，mock V16）：有按侧进度就点名到侧——商鞅 1/1 ✓ · 甘龙 0/1；
+// gateProgress 缺席（老服务器）时回落 P1 的静态徽章（#54 不摆假进度）。
+function GateStatus({ summary }: { summary: ScenarioSummary }) {
+  const progress = summary.gateProgress ?? null
+  if (!progress) {
+    return (
+      <Badge tone={summary.gateUnlocked ? 'success' : 'info'}>
+        {summary.gateUnlocked ? 'PvP 已解锁' : 'PvE 阶段'}
+      </Badge>
+    )
+  }
+  if (gateMet(progress)) {
+    return <Badge tone='success'>✓ PVP 已解锁</Badge>
+  }
+  return (
+    <div className='flex flex-wrap items-center gap-1.5'>
+      <span className='text-xs text-(--foreground-muted)'>
+        每侧各赢 ≥{progress.a.needed} 场 NPC 练习解锁 PVP
+      </span>
+      {(['a', 'b'] as const).map((which) => (
+        <Badge
+          key={which}
+          tone={sideMet(progress[which]) ? 'success' : 'info'}
+        >
+          {which === 'a' ? summary.sideAName : summary.sideBName}{' '}
+          {sideProgressText(progress[which])}
+          {sideMet(progress[which]) ? ' ✓' : ''}
+        </Badge>
+      ))}
     </div>
   )
 }

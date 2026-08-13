@@ -1,26 +1,32 @@
-import { Lock, X } from 'lucide-react'
+import { Lock, Unlock, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { catalog, matches } from '../api/client'
+import { builder, catalog, config as configApi, matches } from '../api/client'
 import type {
   AgentVersionDTO,
+  ConfigResponse,
   OpponentAgentDTO,
   PresetOpponentDTO,
   ScenarioDetail,
   Side,
 } from '../api/types'
+import { gateMet, sideMet, sideProgressText } from '../lib/gate'
+import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { roleOfOptions, scenarioModule } from '../scenarios'
+import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Select, SelectItem } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
-// OS 出战面板 v0（A5/G17）：桌面居中 Modal、移动端（<md）底部弹层。
+// OS 出战面板（A5/G17）：桌面居中 Modal、移动端（<md）底部弹层。
 // tabs：NPC 练习（PVE 预设）· 左右手互搏（#61——对手是你自己 isSelf 的对侧
-// agent 的 PVP）· 玩家约战（P1 仅锁定占位：A5「门槛是状态」，真实解锁判定
-// 在 P2；#18 不放假控件）。派发版本 = ★参赛版本，否则最新版——与服务器对
-// 对手侧的取法一致（对侧版本指定需后端支持，P1 不做假选择器）。
+// agent 的 PVP）· 玩家约战（P2：A5「门槛是状态」——按 gateProgress 呈现
+// 锁定/已解锁两态与按侧进度徽章 #65/mock V16；真实约战控件在 P3，#18 不放假
+// 控件）。派发版本 = ★参赛版本，否则最新版——与服务器对对手侧的取法一致
+// （对侧版本指定需后端支持，本阶段不做假选择器）。配额脚注与拒绝文案的数字
+// 来自 GET /v1/config，接口失败时静默降级（无脚注、无数字文案），不碍派发。
 
 interface OsPanelProps {
   open: boolean
@@ -48,7 +54,12 @@ export function OsPanel({
   const [opponents, setOpponents] = useState<OpponentAgentDTO[] | null>(null)
   const [opponentAgentID, setOpponentAgentID] = useState<number | null>(null)
   const [dispatching, setDispatching] = useState(false)
+  const [creatingOpposite, setCreatingOpposite] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 受控 tab：锁定态的「去练习该侧」要能把玩家切回 NPC 练习页签。
+  const [tab, setTab] = useState('pve')
+  // null 双关「未加载」与「加载失败」：两种情况都按无 config 降级渲染。
+  const [cfg, setCfg] = useState<ConfigResponse | null>(null)
 
   // 与原构建器派发区同一语义：对手侧的预设就是本侧的 PVE 对手。
   const opponentPresets: PresetOpponentDTO[] = scenario.presets.filter(
@@ -84,6 +95,24 @@ export function OsPanel({
       live = false
     }
   }, [open, scenarioID, side])
+
+  useEffect(() => {
+    if (!open) return
+    let live = true
+    // 配额脚注 + 拒绝文案数字 + 试炼开关；失败降级为 null（脚注隐藏、
+    // 文案无数字），派发本身不受影响。
+    void configApi
+      .get()
+      .then((value) => {
+        if (live) setCfg(value)
+      })
+      .catch(() => {
+        if (live) setCfg(null)
+      })
+    return () => {
+      live = false
+    }
+  }, [open])
 
   const selfOpponents = (opponents ?? []).filter(
     (opponent) => opponent.isSelf,
@@ -124,7 +153,8 @@ export function OsPanel({
       })
       navigate(`/matches/${response.matchID}`)
     } catch (cause) {
-      setError(messageOf(cause, '发起对战失败'))
+      // #52/#47：按钮保持可点，拒绝在点击后给产品文案（数字来自 config）。
+      setError(rejectCopy(cause, cfg, '发起对战失败'))
       setDispatching(false)
     }
   }
@@ -140,8 +170,37 @@ export function OsPanel({
       })
       navigate(`/matches/${response.matchID}`)
     } catch (cause) {
-      setError(messageOf(cause, '发起对战失败'))
+      setError(rejectCopy(cause, cfg, '发起对战失败'))
       setDispatching(false)
+    }
+  }
+
+  // ── 门槛态（A5/#65，mock V16/V7）────────────────────────────────────────
+  const oppositeSide: Side = side === 'a' ? 'b' : 'a'
+  const sideNameOf = (which: Side) =>
+    which === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName
+  const gateProgress = scenario.summary.gateProgress ?? null
+  // 有按侧进度就按它判定（A6 双侧过线）；老服务器没有 → 沿用 gateUnlocked。
+  const pvpUnlocked = gateProgress
+    ? gateMet(gateProgress)
+    : scenario.summary.gateUnlocked
+
+  // 「去创建对侧」（mock V7）：懒 ensure（get-or-create）后带预选参数进构建器。
+  const createOpposite = async () => {
+    setCreatingOpposite(true)
+    setError(null)
+    try {
+      const { agentID } = await builder.ensure({
+        scenarioID,
+        side: oppositeSide,
+      })
+      onClose()
+      navigate(
+        `/agents/${agentID}/build?scenario=${scenarioID}&side=${oppositeSide}`,
+      )
+    } catch (cause) {
+      setError(messageOf(cause, '创建对侧智能体失败'))
+      setCreatingOpposite(false)
     }
   }
 
@@ -182,16 +241,26 @@ export function OsPanel({
         </div>
 
         <div className='px-5 py-4'>
+          {/* #47 被阻挡态：提前告知；按钮仍可点，点了由 trials_blocked 拒绝 */}
+          {cfg?.trialsBlocked
+            ? (
+              <p className='mb-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2 text-sm text-(--warning)'>
+                赛事进行中，试炼暂时关闭——请稍后再来
+              </p>
+            )
+            : null}
           {error
             ? <p className='mb-3 text-sm text-(--accent)'>{error}</p>
             : null}
 
-          <Tabs defaultValue='pve' className='space-y-4'>
+          <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
             <TabsList>
               <TabsTrigger value='pve'>NPC 练习</TabsTrigger>
               <TabsTrigger value='hotseat'>左右手互搏</TabsTrigger>
               <TabsTrigger value='pvp'>
-                <Lock className='mr-1.5 h-3.5 w-3.5' />
+                {pvpUnlocked
+                  ? <Unlock className='mr-1.5 h-3.5 w-3.5' />
+                  : <Lock className='mr-1.5 h-3.5 w-3.5' />}
                 玩家约战
               </TabsTrigger>
             </TabsList>
@@ -319,19 +388,122 @@ export function OsPanel({
             </TabsContent>
 
             <TabsContent value='pvp'>
-              {/* A5 门槛是状态：P1 只呈现锁定占位，解锁判定在 P2 点亮（#18 零活动控件） */}
-              <div className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
-                <Lock className='h-5 w-5 text-(--foreground-muted)' />
-                <p className='text-sm font-medium text-(--foreground-subtle)'>
-                  双侧各自赢下 PVE 练习后解锁玩家约战
-                </p>
-                <p className='text-xs text-(--foreground-muted)'>
-                  解锁判定将在下一版本上线
-                </p>
-              </div>
+              {/* A5 门槛是状态：锁定/已解锁都如实呈现；真实约战控件在 P3（#18 不放假控件） */}
+              {pvpUnlocked
+                ? (
+                  <div className='flex flex-col items-center gap-2 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-8 text-center'>
+                    <Unlock className='h-5 w-5 text-(--success)' />
+                    <p className='text-sm font-medium text-(--foreground)'>
+                      已解锁（对手玩家约战将在下一版本上线）
+                    </p>
+                    {gateProgress
+                      ? (
+                        <div className='flex flex-wrap justify-center gap-2'>
+                          {(['a', 'b'] as const).map((which) => (
+                            <Badge key={which} tone='success'>
+                              {sideNameOf(which)}{' '}
+                              {sideProgressText(gateProgress[which])} ✓
+                            </Badge>
+                          ))}
+                        </div>
+                      )
+                      : null}
+                  </div>
+                )
+                : gateProgress
+                ? (
+                  <div className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+                    <Lock className='h-5 w-5 text-(--foreground-muted)' />
+                    <p className='text-sm font-medium text-(--foreground-subtle)'>
+                      每侧各赢 ≥{gateProgress.a.needed} 场 NPC 练习解锁玩家约战
+                    </p>
+                    {/* 按侧进度徽章（#65，mock V16）：如 商鞅 1/1 ✓ · 甘龙 0/1 */}
+                    <div className='flex flex-wrap justify-center gap-2'>
+                      {(['a', 'b'] as const).map((which) => (
+                        <Badge
+                          key={which}
+                          tone={sideMet(gateProgress[which])
+                            ? 'success'
+                            : 'info'}
+                        >
+                          {sideNameOf(which)}{' '}
+                          {sideProgressText(gateProgress[which])}
+                          {sideMet(gateProgress[which]) ? ' ✓' : ''}
+                        </Badge>
+                      ))}
+                    </div>
+                    {
+                      /* 差哪侧补哪侧（#62/#64，mock V7）：本侧未达标 → 切回
+                      NPC 练习页签；对侧未达标 → 有对侧 agent 去我的智能体换
+                      执侧，没有则懒创建进构建器 */
+                    }
+                    <div className='flex flex-wrap justify-center gap-2'>
+                      {!sideMet(gateProgress[side])
+                        ? (
+                          <Button
+                            size='sm'
+                            variant='secondary'
+                            onClick={() => setTab('pve')}
+                          >
+                            去练习该侧（{sideNameOf(side)}）
+                          </Button>
+                        )
+                        : null}
+                      {!sideMet(gateProgress[oppositeSide])
+                        ? selfOpponents.length > 0
+                          ? (
+                            <Button
+                              size='sm'
+                              variant='secondary'
+                              onClick={() => {
+                                onClose()
+                                navigate('/my-agents')
+                              }}
+                            >
+                              去练习对侧（{sideNameOf(oppositeSide)}）
+                            </Button>
+                          )
+                          : (
+                            <Button
+                              size='sm'
+                              variant='secondary'
+                              disabled={creatingOpposite}
+                              onClick={() => void createOpposite()}
+                            >
+                              {creatingOpposite
+                                ? '创建中…'
+                                : `去创建对侧（${sideNameOf(oppositeSide)}）`}
+                            </Button>
+                          )
+                        : null}
+                    </div>
+                  </div>
+                )
+                : (
+                  // 老服务器（无 gateProgress）：保留 P1 的锁定占位，不摆假进度
+                  <div className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+                    <Lock className='h-5 w-5 text-(--foreground-muted)' />
+                    <p className='text-sm font-medium text-(--foreground-subtle)'>
+                      双侧各自赢下 PVE 练习后解锁玩家约战
+                    </p>
+                    <p className='text-xs text-(--foreground-muted)'>
+                      解锁进度将在数据接入后点亮
+                    </p>
+                  </div>
+                )}
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* 面板脚注：三类配额中的两条日额（#52/#46），数字来自 /v1/config */}
+        {cfg
+          ? (
+            <div className='border-t border-(--border-soft) px-5 py-3 text-xs text-(--foreground-muted)'>
+              今日已用 {cfg.usage.battlesToday}/{cfg.dailyBattleLimit}（PVP{' '}
+              {cfg.usage.pvpBattlesToday}/{cfg.pvpDailyLimit}）
+            </div>
+          )
+          : null}
       </div>
     </div>
   )

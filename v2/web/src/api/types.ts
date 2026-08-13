@@ -51,7 +51,11 @@ export interface ScenarioSummary {
   sideALabel: string
   sideBLabel: string
   turnCount: number
+  // #65: true only when BOTH sides meet the per-side trial threshold.
   gateUnlocked: boolean
+  // Additive (G12): per-side progress toward that threshold; absent on a
+  // pre-P2 server.
+  gateProgress?: GateProgressDTO | null
 }
 
 export interface ChannelDTO {
@@ -106,6 +110,83 @@ export interface OpponentAgentDTO {
 
 export interface OpponentListResponse {
   opponents: OpponentAgentDTO[]
+}
+
+// ── ConfigDTOs ──────────────────────────────────────────────────────────────
+
+// The read-only client projection behind GET /v1/config (RFC §5 P2).
+export interface ConfigResponse {
+  dailyBattleLimit: number
+  pvpDailyLimit: number
+  concurrencyLimit: number
+  // Per-side threshold (#65): distinct presets to beat on EACH side for pvp.
+  pvpUnlockPerSideWins: number
+  statsDisplayThreshold: number
+  promptUnitLimit: number
+  expressPreset?: ExpressPresetDTO | null
+  // The same list GET /v1/models serves.
+  models: ModelDTO[]
+  visibility: VisibilityDTO
+  opponentDailyChallengeLimit: number
+  trialsBlocked: boolean
+  usage: UsageDTO
+}
+
+export interface ExpressPresetDTO {
+  scenarioID: string
+  side: string
+  presetKey: string
+}
+
+// Spec #20's three owner-only surfaces, named for clients so the restriction
+// list is data, not lore.
+export interface VisibilityDTO {
+  ownerOnly: string[]
+}
+
+// The calling user's consumption against the daily quotas (UTC+8 day, R16).
+export interface UsageDTO {
+  battlesToday: number
+  pvpBattlesToday: number
+}
+
+// Per-side trial progress (G12/#65): distinct presets beaten vs the threshold.
+export interface GateSideProgressDTO {
+  beaten: number
+  needed: number
+}
+
+export interface GateProgressDTO {
+  a: GateSideProgressDTO
+  b: GateSideProgressDTO
+}
+
+// One of the caller's agents in the GET /v1/my/agents inventory. Names arrive
+// in P6; until then an agent is identified by its scenario/side position.
+export interface MyAgentDTO {
+  agentID: number
+  versionCount: number
+  entryVersionID?: number | null
+  latestVersionID?: number | null
+}
+
+// A side with no agent yet is an empty array, never an absent key.
+export interface SideAgentsDTO {
+  a: MyAgentDTO[]
+  b: MyAgentDTO[]
+}
+
+export interface MyAgentsScenarioDTO {
+  scenarioID: string
+  title: string
+  sides: SideAgentsDTO
+  gateProgress: GateProgressDTO
+  // #58: both sides hold an entry-flagged version.
+  entryReady: boolean
+}
+
+export interface MyAgentsResponse {
+  scenarios: MyAgentsScenarioDTO[]
 }
 
 // ── SubmissionDTOs (builder) ────────────────────────────────────────────────
