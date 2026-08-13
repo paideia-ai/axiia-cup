@@ -15,7 +15,8 @@ import { roleOfOptions, rolesForSide, scenarioModule } from '../scenarios'
 // DA — 场景介绍（A4）：独立教育页，四层渐进（GLANCE → 双方 → 裁判与计分 →
 // 深读），页内没有任何编辑框（#42）。教育内容来自前端场景模块；缺席的场景
 // 每层都画引导式空态轮廓（#54），不留空白也不摆假数据。judgeOsPrompt 永不
-// 下发（#51）：这里只展示可公开的裁判摘要。
+// 下发（#51）：这里只展示可公开的裁判摘要。统计 P6 点亮（#38，与 D 卡同一
+// 展示）：stats 到手（服务端已把关门槛 #39）就替换 GLANCE 层的空态轮廓。
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
@@ -106,9 +107,21 @@ export function ScenarioDetailPage() {
                           ? <Badge tone='success'>适合新手</Badge>
                           : null}
                       </div>
-                      <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                        侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
-                      </p>
+                      {/* #38/#39/#54：stats 到手即点亮，缺席保持引导式空态 */}
+                      {statsLine(data.summary)
+                        ? (
+                          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+                            <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
+                              侧方胜率
+                            </span>
+                            {statsLine(data.summary)}
+                          </p>
+                        )
+                        : (
+                          <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+                            侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
+                          </p>
+                        )}
                     </>
                   )
                   : (
@@ -368,6 +381,18 @@ export function ScenarioDetailPage() {
         : null}
     </div>
   )
+}
+
+// #38/#39 统计一行（与 D 卡 catalog.tsx 的 statsLine 同一口径）：N 场 ·
+// 甲侧 x% / 乙侧 y%。胜率是 0..1 分数；平局等未分胜负的场次让两侧合计可
+// 小于 100%，因此各自独立取整，不做 100-x。
+function statsLine(summary: ScenarioSummary): string | null {
+  const stats = summary.stats
+  if (!stats) return null
+  const pct = (rate: number) => `${Math.round(rate * 100)}%`
+  return `${stats.battleCount} 场 · ${summary.sideAName} ${
+    pct(stats.sideWinRate.a)
+  } / ${summary.sideBName} ${pct(stats.sideWinRate.b)}`
 }
 
 // DA 门槛卡（#65，mock V16）：有按侧进度就点名到侧——商鞅 1/1 ✓ · 甘龙 0/1；

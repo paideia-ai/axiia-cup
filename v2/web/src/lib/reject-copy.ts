@@ -55,7 +55,60 @@ export function rejectCopy(
       const limit = config?.promptUnitLimit ?? PROMPT_UNIT_LIMIT
       return `提示词超出上限（按汉字或英文词计，上限 ${limit}）——对照输入框右下的计数器删减后再保存`
     }
+    // ── P3 约战错误码族（#66/#76，mock V20 口吻） ─────────────────────────
+    // #66 双侧成对：发起方缺侧。
+    case 'both_sides_required':
+      return 'PVP 约战需双方双侧齐备——你这边还缺一侧（有版本的智能体），先去创建对侧'
+    // #66：对方缺侧（单侧玩家不能被约战）。
+    case 'opponent_both_sides_required':
+      return 'PVP 约战需双方双侧齐备——对方还没有双侧齐备的智能体，换个对手'
+    // #76：同一玩家每日被约战限次，护对方配额不被刷。
+    case 'opponent_challenge_limit': {
+      const m = config?.opponentDailyChallengeLimit
+      return m != null
+        ? `对方今日收到的约战已达上限（${m} 次/日），明天再约`
+        : '对方今日收到的约战已达上限，明天再约'
+    }
+    // 版本与场景/执侧不匹配（按 id 约战或阵容选择传错侧）。
+    case 'wrong_side':
+      return '版本与本场景或所需执侧不符——请检查版本 id（需属于本场景、且执在对应一侧）'
+    // P6 命名：智能体名 ≤30 字符，超出由服务端拒绝。
+    case 'name_too_long':
+      return '名字太长——智能体名最多 30 个字符'
     default:
       return messageOf(error, fallback)
   }
+}
+
+// 约战上下文的配额文案（#52/Q7 成对语义）：一次约战计 2 场、要么整对要么
+// 不发——普通单场文案在这里会误导（「已用完」不准确，是「不足一整对」）。
+// 三个配额码换成对版本，其余仍走 rejectCopy。
+export function challengeRejectCopy(
+  error: unknown,
+  config?: ConfigResponse | null,
+  fallback = '发起约战失败',
+): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case 'daily_limit': {
+        const n = config?.dailyBattleLimit
+        return n != null
+          ? `今日配额不足一整对——一次约战计 2 场（上限 ${n}/日），明天再来`
+          : '今日配额不足一整对——一次约战计 2 场，明天再来'
+      }
+      case 'pvp_daily_limit': {
+        const m = config?.pvpDailyLimit
+        return m != null
+          ? `PVP 配额不足一整对——一次约战计 2 场（上限 ${m}/日），明天再来`
+          : 'PVP 配额不足一整对——一次约战计 2 场，明天再来'
+      }
+      case 'concurrency_limit': {
+        const c = config?.concurrencyLimit
+        return c != null
+          ? `并发名额不足 2 场（同时进行上限 ${c}），等一场结束再约`
+          : '并发名额不足 2 场，等一场结束再约'
+      }
+    }
+  }
+  return rejectCopy(error, config, fallback)
 }

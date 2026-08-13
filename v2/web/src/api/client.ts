@@ -1,8 +1,10 @@
 import type {
   AgentRefResponse,
   AgentVersionDTO,
+  ChallengeResponse,
   ConfigResponse,
   CreateAgentRequest,
+  CreateChallengeRequest,
   CreateRegistrationCodeRequest,
   CreateScriptRequest,
   DispatchPVERequest,
@@ -35,6 +37,7 @@ import type {
   UpdateSlotRequest,
   VersionDiffResponse,
   VersionListResponse,
+  VersionRefResponse,
 } from './types'
 
 // Same-origin by design (plan §6): the SPA is served from the Swift origin (dev:
@@ -194,12 +197,32 @@ export const matches = {
   detail: (id: number) => request<MatchDetail>('GET', `/matches/${id}`),
 }
 
+// ── Challenges（P3 #66） ────────────────────────────────────────────────────
+
+export const challenges = {
+  // 双侧成对约战：一次产生两场（正/反），配额对发起人计 2 场。后端批次未
+  // 上线时答 404/405，调用方降级为功能提示，不摆假控件。
+  create: (input: CreateChallengeRequest) =>
+    request<ChallengeResponse>('POST', '/challenges', input),
+}
+
+export const versions = {
+  // #25/#62 按 id 约战的解析读：版本 id → {玩家/场景/侧/模型}；不存在 → 404
+  // not_found；老服务器无此端点，同样按降级处理。
+  ref: (id: number) =>
+    request<VersionRefResponse>('GET', `/versions/${id}/ref`),
+}
+
 // ── Notifications ───────────────────────────────────────────────────────────
 
 export const notifications = {
   list: () => request<NotificationsResponse>('GET', '/notifications'),
   markRead: (id: number) =>
     request<OKResponse>('POST', `/notifications/${id}/read`),
+  // G25 批量动作：两个都按调用者本人圈定，无 id 可漏。老服务器 404 → 调用方
+  // 就地提示，不影响逐条已读。
+  readAll: () => request<OKResponse>('POST', '/notifications/read-all'),
+  clear: () => request<OKResponse>('DELETE', '/notifications'),
 }
 
 // ── Tournaments ─────────────────────────────────────────────────────────────

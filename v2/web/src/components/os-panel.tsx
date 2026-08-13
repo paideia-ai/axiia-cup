@@ -1,32 +1,49 @@
 import { Lock, Unlock, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { builder, catalog, config as configApi, matches } from '../api/client'
+import {
+  ApiError,
+  builder,
+  catalog,
+  challenges,
+  config as configApi,
+  matches,
+  myAgents,
+  versions as versionsApi,
+} from '../api/client'
 import type {
   AgentVersionDTO,
+  ChallengeOpponentRequest,
+  ChallengeResponse,
   ConfigResponse,
+  MyAgentDTO,
   OpponentAgentDTO,
   PresetOpponentDTO,
   ScenarioDetail,
   Side,
+  VersionRefResponse,
 } from '../api/types'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
-import { rejectCopy } from '../lib/reject-copy'
+import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { roleOfOptions, scenarioModule } from '../scenarios'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { Input } from './ui/input'
 import { Select, SelectItem } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 // OS 出战面板（A5/G17）：桌面居中 Modal、移动端（<md）底部弹层。
 // tabs：NPC 练习（PVE 预设）· 左右手互搏（#61——对手是你自己 isSelf 的对侧
-// agent 的 PVP）· 玩家约战（P2：A5「门槛是状态」——按 gateProgress 呈现
-// 锁定/已解锁两态与按侧进度徽章 #65/mock V16；真实约战控件在 P3，#18 不放假
-// 控件）。派发版本 = ★参赛版本，否则最新版——与服务器对对手侧的取法一致
-// （对侧版本指定需后端支持，本阶段不做假选择器）。配额脚注与拒绝文案的数字
-// 来自 GET /v1/config，接口失败时静默降级（无脚注、无数字文案），不碍派发。
+// agent 的 PVP）· 玩家约战（P3 #66，mock V20：解锁后两个子模式——① 对手
+// 玩家（按玩家去重的公开对手列表，按 accountID 约）· ② 按 id 约战（版本 id
+// → /versions/:id/ref 解析出玩家/场景/侧/模型再钉住约）；两者共用「我的双侧
+// 出战阵容」选择器（各侧一个版本，默认 ★参赛版否则最新版），一次约战＝成对
+// 两场。锁定态仍按 gateProgress 呈现按侧进度徽章（#65/mock V16）。PVE/自打
+// 的派发版本 = ★参赛版本，否则最新版——与服务器对对手侧的取法一致。配额
+// 脚注与拒绝文案的数字来自 GET /v1/config，接口失败时静默降级（无脚注、无
+// 数字文案），不碍派发。约战端点未上线（404/405）时降级为功能提示。
 
 interface OsPanelProps {
   open: boolean
@@ -35,6 +52,20 @@ interface OsPanelProps {
   side: Side
   versions: AgentVersionDTO[]
   entryVersionID: number | null
+}
+
+// 双侧阵容选择器的一个候选：我的某侧 agent 的一个版本。
+interface LineupOption {
+  versionID: number
+  agentID: number
+  isEntry: boolean
+  label: string
+}
+
+// 默认出战版本：★参赛版优先，否则最新版（列表旧→新，取末位）。
+function defaultLineupPick(options: LineupOption[]): number | null {
+  return (options.find((option) => option.isEntry) ??
+    options[options.length - 1])?.versionID ?? null
 }
 
 export function OsPanel({
@@ -60,6 +91,25 @@ export function OsPanel({
   const [tab, setTab] = useState('pve')
   // null 双关「未加载」与「加载失败」：两种情况都按无 config 降级渲染。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
+
+  // ── P3 约战态（#66，mock V20） ────────────────────────────────────────
+  // 我的双侧阵容候选：每侧一组 {版本, 所属 agent, ★}；null=未加载。
+  const [lineup, setLineup] = useState<
+    { a: LineupOption[]; b: LineupOption[] } | null
+  >(null)
+  const [lineupFailed, setLineupFailed] = useState(false)
+  const [pickA, setPickA] = useState<number | null>(null)
+  const [pickB, setPickB] = useState<number | null>(null)
+  const [pvpMode, setPvpMode] = useState<'players' | 'byid'>('players')
+  const [idInput, setIdInput] = useState('')
+  const [idRef, setIdRef] = useState<VersionRefResponse | null>(null)
+  const [idError, setIdError] = useState<string | null>(null)
+  const [idLooking, setIdLooking] = useState(false)
+  const [challengeDone, setChallengeDone] = useState<ChallengeResponse | null>(
+    null,
+  )
+  // POST /v1/challenges 在老服务器上 404/405：降级为功能提示，不摆假表单。
+  const [challengeUnavailable, setChallengeUnavailable] = useState(false)
 
   // 与原构建器派发区同一语义：对手侧的预设就是本侧的 PVE 对手。
   const opponentPresets: PresetOpponentDTO[] = scenario.presets.filter(
@@ -185,26 +235,177 @@ export function OsPanel({
     ? gateMet(gateProgress)
     : scenario.summary.gateUnlocked
 
-  // 「去创建对侧」（mock V7）：懒 ensure（get-or-create）后带预选参数进构建器。
-  const createOpposite = async () => {
+  // 「去创建对侧/去创建某侧」（mock V7/V20）：懒 ensure（get-or-create）后带
+  // 预选参数进构建器。
+  const createSide = async (which: Side) => {
     setCreatingOpposite(true)
     setError(null)
     try {
-      const { agentID } = await builder.ensure({
-        scenarioID,
-        side: oppositeSide,
-      })
+      const { agentID } = await builder.ensure({ scenarioID, side: which })
       onClose()
-      navigate(
-        `/agents/${agentID}/build?scenario=${scenarioID}&side=${oppositeSide}`,
-      )
+      navigate(`/agents/${agentID}/build?scenario=${scenarioID}&side=${which}`)
     } catch (cause) {
-      setError(messageOf(cause, '创建对侧智能体失败'))
+      setError(messageOf(cause, '创建智能体失败'))
       setCreatingOpposite(false)
+    }
+  }
+  const createOpposite = () => createSide(oppositeSide)
+
+  // ── P3 约战（#66，mock V20） ──────────────────────────────────────────
+
+  // 面板每次打开重置约战流的一次性状态。
+  useEffect(() => {
+    if (!open) return
+    setChallengeDone(null)
+    setChallengeUnavailable(false)
+    setPvpMode('players')
+    setIdInput('')
+    setIdRef(null)
+    setIdError(null)
+  }, [open])
+
+  // 解锁后加载我的双侧阵容：my/agents 圈出本场景两侧的 agent，再逐个拉版本
+  // 列表拼候选。任一接口失败 → lineupFailed，整块降级为提示（老服务器同）。
+  useEffect(() => {
+    if (!open || !pvpUnlocked) return
+    let live = true
+    const loadSide = async (agents: MyAgentDTO[]): Promise<LineupOption[]> => {
+      const fielded = agents.filter((agent) => agent.versionCount > 0)
+      const lists = await Promise.all(fielded.map(async (agent) => {
+        const list = await builder.versions(agent.agentID)
+        return list.versions.map((version) => ({
+          versionID: version.id,
+          agentID: agent.agentID,
+          isEntry: list.entryVersionID === version.id,
+          label:
+            `#${agent.agentID} · v${version.snapshotSeq} · ${version.modelID}${
+              list.entryVersionID === version.id ? ' ★' : ''
+            }`,
+        }))
+      }))
+      return lists.flat()
+    }
+    void (async () => {
+      try {
+        const inventory = await myAgents.list()
+        const entry = inventory.scenarios.find(
+          (item) => item.scenarioID === scenarioID,
+        )
+        const [a, b] = await Promise.all([
+          loadSide(entry?.sides.a ?? []),
+          loadSide(entry?.sides.b ?? []),
+        ])
+        if (!live) return
+        setLineup({ a, b })
+        setLineupFailed(false)
+        setPickA(defaultLineupPick(a))
+        setPickB(defaultLineupPick(b))
+      } catch {
+        if (!live) return
+        setLineup(null)
+        setLineupFailed(true)
+      }
+    })()
+    return () => {
+      live = false
+    }
+  }, [open, pvpUnlocked, scenarioID])
+
+  // 对手玩家（#66①）：对侧可对战 agent 中非 isSelf 的，按 ownerAccountID
+  // 去重成「玩家」行；老服务器条目无 ownerAccountID → 过滤掉（不给假按钮）。
+  const rivals = useMemo(() => {
+    const seen = new Set<string>()
+    const list: {
+      accountID: string
+      displayName: string
+      agentLabel: string
+    }[] = []
+    for (const opponent of opponents ?? []) {
+      if (opponent.isSelf) continue
+      const accountID = opponent.ownerAccountID
+      if (accountID == null || accountID === '' || seen.has(accountID)) {
+        continue
+      }
+      seen.add(accountID)
+      list.push({
+        accountID,
+        displayName: opponent.displayName,
+        agentLabel: opponent.name ?? `agent #${opponent.agentID}`,
+      })
+    }
+    return list
+  }, [opponents])
+  // 有对手却全都缺 ownerAccountID＝老服务器：提示改走按 id。
+  const rivalsUnattributed = rivals.length === 0 &&
+    (opponents ?? []).some((opponent) => !opponent.isSelf)
+
+  const submitChallenge = async (opponent: ChallengeOpponentRequest) => {
+    if (pickA == null || pickB == null || dispatching) return
+    setDispatching(true)
+    setError(null)
+    try {
+      const response = await challenges.create({
+        scenarioID,
+        mine: { a: { versionID: pickA }, b: { versionID: pickB } },
+        opponent,
+      })
+      setChallengeDone(response)
+    } catch (cause) {
+      if (
+        cause instanceof ApiError && cause.code === 'unknown' &&
+        (cause.status === 404 || cause.status === 405)
+      ) {
+        setChallengeUnavailable(true)
+      } else {
+        // #52/Q7 成对语义的配额文案 + P3 错误码族，都在 reject-copy。
+        setError(challengeRejectCopy(cause, cfg))
+      }
+    } finally {
+      setDispatching(false)
+    }
+  }
+
+  // 按 id 约战（#66②/#25）：版本 id → 公开身份卡；跨场景就地报错。
+  const lookupRef = async () => {
+    const id = Number(idInput.trim())
+    setIdRef(null)
+    if (!Number.isInteger(id) || id <= 0) {
+      setIdError('请输入数字版本 id（战报页可复制）')
+      return
+    }
+    setIdLooking(true)
+    setIdError(null)
+    try {
+      const ref = await versionsApi.ref(id)
+      if (ref.scenarioID !== scenarioID) {
+        setIdError(
+          `该版本属于其他场景（${ref.scenarioID}），不能用于本场景约战`,
+        )
+      } else {
+        setIdRef(ref)
+      }
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.code === 'not_found') {
+        setIdError('未找到该版本 id')
+      } else if (
+        cause instanceof ApiError && cause.code === 'unknown' &&
+        (cause.status === 404 || cause.status === 405)
+      ) {
+        setIdError('服务器版本暂不支持按 id 查询——该功能即将上线')
+      } else {
+        setIdError(messageOf(cause, '查询失败'))
+      }
+    } finally {
+      setIdLooking(false)
     }
   }
 
   if (!open) return null
+
+  // #66：发起方缺侧 → 表单换成「去创建对侧」引导（单侧玩家不能约战）。
+  const missingSides: Side[] = lineup == null
+    ? []
+    : (['a', 'b'] as const).filter((which) => lineup[which].length === 0)
 
   return (
     <div
@@ -395,28 +596,305 @@ export function OsPanel({
                 )}
             </TabsContent>
 
-            <TabsContent value='pvp'>
-              {/* A5 门槛是状态：锁定/已解锁都如实呈现；真实约战控件在 P3（#18 不放假控件） */}
+            <TabsContent value='pvp' className='space-y-3'>
+              {
+                /* A5 门槛是状态：锁定/已解锁都如实呈现；解锁态＝P3 真约战
+                （#66，mock V20），锁定态照旧按侧进度徽章。 */
+              }
               {pvpUnlocked
                 ? (
-                  <div className='flex flex-col items-center gap-2 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-8 text-center'>
-                    <Unlock className='h-5 w-5 text-(--success)' />
-                    <p className='text-sm font-medium text-(--foreground)'>
-                      已解锁（对手玩家约战将在下一版本上线）
-                    </p>
-                    {gateProgress
+                  <>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Unlock className='h-4 w-4 shrink-0 text-(--success)' />
+                      <p className='text-sm font-medium text-(--foreground)'>
+                        玩家约战已解锁
+                      </p>
+                      {gateProgress
+                        ? (['a', 'b'] as const).map((which) => (
+                          <Badge key={which} tone='success'>
+                            {sideNameOf(which)}{' '}
+                            {sideProgressText(gateProgress[which])} ✓
+                          </Badge>
+                        ))
+                        : null}
+                    </div>
+                    {challengeDone
                       ? (
-                        <div className='flex flex-wrap justify-center gap-2'>
-                          {(['a', 'b'] as const).map((which) => (
-                            <Badge key={which} tone='success'>
-                              {sideNameOf(which)}{' '}
-                              {sideProgressText(gateProgress[which])} ✓
-                            </Badge>
-                          ))}
+                        // 成功态（mock V21 的入口面）：两张对局卡 ①/②。
+                        <div className='space-y-3 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-4'>
+                          <p className='text-sm font-medium text-(--foreground)'>
+                            已发起双侧约战 · 两场对局已入队
+                          </p>
+                          <div className='flex flex-wrap gap-2'>
+                            {challengeDone.matchIDs.map((matchID, index) => (
+                              <Link
+                                key={matchID}
+                                to={`/matches/${matchID}`}
+                                onClick={onClose}
+                                className='inline-flex items-center gap-1.5 rounded-lg border border-(--border) px-3 py-2 text-sm font-medium text-(--foreground) transition hover:border-(--foreground-muted) hover:bg-white/3'
+                              >
+                                对局{index === 0 ? '①' : '②'} · #{matchID}
+                              </Link>
+                            ))}
+                          </div>
+                          <p className='text-xs text-(--foreground-muted)'>
+                            每次成对约战计 2
+                            场；对方会收到一条合并通知，无需同意、不能拒绝。
+                          </p>
                         </div>
                       )
-                      : null}
-                  </div>
+                      : challengeUnavailable
+                      ? (
+                        <p className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'>
+                          约战功能尚未在该服务器启用——敬请期待
+                        </p>
+                      )
+                      : lineupFailed
+                      ? (
+                        <p className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'>
+                          无法加载你的双侧阵容——稍后再试
+                        </p>
+                      )
+                      : lineup == null
+                      ? (
+                        <p className='text-sm text-(--foreground-subtle)'>
+                          加载双侧阵容…
+                        </p>
+                      )
+                      : missingSides.length > 0
+                      ? (
+                        // #66：单侧玩家不能约战——引导创建缺的那侧。
+                        <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'>
+                          <p className='text-sm font-medium text-(--foreground)'>
+                            PVP 约战需双方双侧齐备
+                          </p>
+                          <p className='mt-1 text-xs text-(--foreground-muted)'>
+                            一次约战＝两场（你的{sideNameOf('a')}打他的
+                            {sideNameOf('b')}，他的{sideNameOf('a')}打你的
+                            {sideNameOf('b')}）。你还缺
+                            {missingSides.map(sideNameOf).join('与')}
+                            （有版本的智能体）。
+                          </p>
+                          <div className='mt-4 flex flex-wrap justify-center gap-2'>
+                            {missingSides.map((which) => (
+                              <Button
+                                key={which}
+                                size='sm'
+                                variant='secondary'
+                                disabled={creatingOpposite}
+                                onClick={() => void createSide(which)}
+                              >
+                                {creatingOpposite
+                                  ? '创建中…'
+                                  : `去创建${sideNameOf(which)}`}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                      : (
+                        <>
+                          {/* 共用双侧阵容选择器（mock V20）：各侧一个版本。 */}
+                          <div className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'>
+                            <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+                              我的双侧出战阵容——① 我{sideNameOf('a')} vs 他
+                              {sideNameOf('b')} · ② 他{sideNameOf('a')} vs 我
+                              {sideNameOf('b')}
+                            </p>
+                            <div className='mt-2 grid gap-3 sm:grid-cols-2'>
+                              {(['a', 'b'] as const).map((which) => (
+                                <div key={which}>
+                                  <p className='mb-1 text-xs text-(--foreground-subtle)'>
+                                    执{which.toUpperCase()} ·{' '}
+                                    {sideNameOf(which)}
+                                  </p>
+                                  <Select
+                                    placeholder='选择出战版本'
+                                    value={(which === 'a' ? pickA : pickB) !=
+                                        null
+                                      ? String(which === 'a' ? pickA : pickB)
+                                      : undefined}
+                                    renderValue={(v) =>
+                                      lineup[which].find(
+                                        (option) =>
+                                          String(option.versionID) === v,
+                                      )?.label ?? v}
+                                    onValueChange={(v) =>
+                                      (which === 'a' ? setPickA : setPickB)(
+                                        v ? Number(v) : null,
+                                      )}
+                                  >
+                                    {lineup[which].map((option) => (
+                                      <SelectItem
+                                        key={option.versionID}
+                                        value={String(option.versionID)}
+                                      >
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </Select>
+                                </div>
+                              ))}
+                            </div>
+                            <p className='mt-2 text-[11px] text-(--foreground-muted)'>
+                              默认各侧 ★参赛版本（未标记则最新版）。
+                            </p>
+                          </div>
+
+                          {/* 子模式切换：① 对手玩家 · ② 按 id 约战。 */}
+                          <div className='flex gap-2'>
+                            {([
+                              ['players', '对手玩家'],
+                              ['byid', '按 id 约战'],
+                            ] as const).map(([mode, label]) => (
+                              <button
+                                key={mode}
+                                type='button'
+                                aria-pressed={pvpMode === mode}
+                                onClick={() => setPvpMode(mode)}
+                                className={pvpMode === mode
+                                  ? 'cursor-pointer rounded-full border border-(--accent) px-3 py-1.5 text-xs font-semibold text-(--accent)'
+                                  : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:text-(--foreground)'}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {pvpMode === 'players'
+                            ? (
+                              <div className='space-y-2'>
+                                {opponents === null
+                                  ? (
+                                    <p className='text-sm text-(--foreground-subtle)'>
+                                      加载中…
+                                    </p>
+                                  )
+                                  : rivals.length === 0
+                                  ? (
+                                    <p className='text-sm text-(--foreground-muted)'>
+                                      {rivalsUnattributed
+                                        ? '服务器版本暂不支持按玩家约战——试试按 id 约战'
+                                        : '暂无可约战的对手玩家——等其他玩家在本场景出战后再来'}
+                                    </p>
+                                  )
+                                  : rivals.map((rival) => (
+                                    <div
+                                      key={rival.accountID}
+                                      className='flex flex-wrap items-center gap-3 rounded-lg border border-(--border-soft) bg-white/2 px-4 py-2.5'
+                                    >
+                                      <div className='min-w-0 flex-1'>
+                                        <p className='text-sm font-semibold text-(--foreground)'>
+                                          {rival.displayName}
+                                        </p>
+                                        <p className='text-xs text-(--foreground-muted)'>
+                                          {rival.agentLabel}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        size='sm'
+                                        variant='secondary'
+                                        disabled={dispatching ||
+                                          pickA == null ||
+                                          pickB == null}
+                                        onClick={() =>
+                                          void submitChallenge({
+                                            accountID: rival.accountID,
+                                          })}
+                                      >
+                                        {dispatching
+                                          ? '约战中…'
+                                          : '发起双侧约战'}
+                                      </Button>
+                                    </div>
+                                  ))}
+                              </div>
+                            )
+                            : (
+                              <div className='space-y-2'>
+                                <div className='flex gap-2'>
+                                  <Input
+                                    value={idInput}
+                                    onChange={(event) => {
+                                      setIdInput(event.target.value)
+                                      setIdRef(null)
+                                      setIdError(null)
+                                    }}
+                                    placeholder='输入对方任一版本 id（战报页可复制）'
+                                  />
+                                  <Button
+                                    size='sm'
+                                    variant='secondary'
+                                    className='h-10 shrink-0'
+                                    disabled={idLooking ||
+                                      idInput.trim() === ''}
+                                    onClick={() => void lookupRef()}
+                                  >
+                                    {idLooking ? '查询中…' : '查询'}
+                                  </Button>
+                                </div>
+                                {idError
+                                  ? (
+                                    <p className='text-xs text-(--warning)'>
+                                      {idError}
+                                    </p>
+                                  )
+                                  : null}
+                                {idRef
+                                  ? (
+                                    // 解析卡：玩家/场景/侧/模型（#25）。
+                                    <div className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'>
+                                      <p className='text-sm font-semibold text-(--foreground)'>
+                                        {idRef.ownerDisplayName}
+                                      </p>
+                                      <p className='mt-1 text-xs text-(--foreground-muted)'>
+                                        {scenario.summary.title} · 执
+                                        {idRef.side === 'a'
+                                          ? `A（${sideNameOf('a')}）`
+                                          : `B（${sideNameOf('b')}）`} ·{' '}
+                                        {idRef.modelID} · v#{idRef.versionID}
+                                      </p>
+                                      <p className='mt-1 text-[11px] text-(--foreground-muted)'>
+                                        按 id 钉住其
+                                        {idRef.side === 'a'
+                                          ? sideNameOf('a')
+                                          : sideNameOf('b')}
+                                        侧版本；另一侧取对方★参赛版（否则最新版）。
+                                      </p>
+                                      <div className='mt-2'>
+                                        <Button
+                                          size='sm'
+                                          disabled={dispatching ||
+                                            pickA == null ||
+                                            pickB == null}
+                                          onClick={() =>
+                                            void submitChallenge({
+                                              pinnedVersionID: idRef.versionID,
+                                            })}
+                                        >
+                                          {dispatching
+                                            ? '约战中…'
+                                            : '发起双侧约战'}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )
+                                  : null}
+                              </div>
+                            )}
+
+                          <ul className='space-y-1 text-[11px] text-(--foreground-muted)'>
+                            <li>
+                              一次约战＝成对两场（①正/②反），每次成对约战计 2
+                              场配额。
+                            </li>
+                            <li>
+                              友谊赛不计分；对方会收到通知，无需同意、不能拒绝。
+                            </li>
+                          </ul>
+                        </>
+                      )}
+                  </>
                 )
                 : gateProgress
                 ? (
