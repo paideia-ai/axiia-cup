@@ -173,6 +173,16 @@ function endSeq(channels: ChannelGroup[]): number {
   )
 }
 
+// The finished report gives the judge-QA leg its own 问询 section (#69), but only
+// when the transcript actually distinguishes one — a stage naming itself 问询, or
+// one whose every channel is an inquiry channel. A scenario without such a stage
+// simply gets no section, never an empty header.
+export function isInquiryGroup(group: StageGroup): boolean {
+  if (group.title.includes('问询')) return true
+  return group.channels.length > 0 &&
+    group.channels.every((channel) => /^inquiry([-_.]|$)/i.test(channel.id))
+}
+
 // A verdict settled on the first `afterSeq` rows, so it renders after the first
 // stage that reaches that far; anything anchored past the whole transcript
 // trails it.

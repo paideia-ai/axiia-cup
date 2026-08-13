@@ -5,7 +5,8 @@
 # code (via faithful HTTP as a TOTP-elevated admin — scenarios and presets come
 # from the binary catalog), starts the vite dev server proxying /v1 to it
 # (same-origin so cookies + CSRF work), and drives a headless browser through:
-# signup → catalog → scenario → build agent → save version → logout. The match/LLM segment is env-gated on DEEPSEEK_API_KEY:
+# signup → catalog → scenario → build agent → save version (lands on the EA
+# agent home) → logout. The match/LLM segment is env-gated on DEEPSEEK_API_KEY:
 # present → dispatch a real PvE match and watch
 # the tier-1 live stream; absent → skip, exercising the match-list state instead.
 #
@@ -164,21 +165,20 @@ ab click '[data-testid=build-agent]' >/dev/null
 wait_text "智能体构建器" || fail "builder did not render"
 assert_contains "$(ab get url)" "/agents/"
 
-step "browser: write prompt + save version"
+step "browser: write prompt + save version (lands on EA agent home)"
 ab fill 'textarea' '你是甲方。坚定主张地契副本的效力，逐条反驳乙方。' >/dev/null; sleep 1
 ab click '[data-testid=save-version]' >/dev/null
-SAVED=""
-for _ in $(seq 1 30); do
-  SAVED="$(ab eval "Array.from(document.querySelectorAll('span,p')).map(e=>e.textContent).filter(t=>t&&(t.includes('已保存')||t.startsWith('v#'))).join(' | ')")"
-  case "$SAVED" in *"v#1"*) break;; esac
-  sleep 0.5
-done
-assert_contains "$SAVED" "v#1"
-ab screenshot "$SHOTS/05-builder-saved.png" >/dev/null
+# Saving navigates to the EA agent home (/agents/:id), which lists the version.
+wait_text "版本（1）" || fail "EA agent home did not render the saved version"
+case "$(ab get url)" in *"/build"*) fail "still on builder after save";; esac
+ab screenshot "$SHOTS/05-agent-home.png" >/dev/null
 
 # ── Env-gated LLM match segment ─────────────────────────────────────────────
 if [ -n "$LLM_KEY" ]; then
   step "browser: dispatch PvE match + watch tier-1 stream (LLM key present)"
+  # 出战 opens the OS dispatch panel (EA/E split moved dispatch off the builder).
+  ab click '[data-testid=open-os-panel]' >/dev/null
+  wait_text "选择预设对手" || fail "OS panel did not open"
   # Pick the opponent preset (base-ui Select): open the trigger, choose the option.
   ab eval "[...document.querySelectorAll('button')].find(b=>b.textContent.includes('选择预设对手'))?.click()" >/dev/null; sleep 1
   ab eval "document.querySelector('[role=option]')?.click()" >/dev/null; sleep 1
@@ -199,7 +199,7 @@ if [ -n "$LLM_KEY" ]; then
 else
   step "browser: match-list UI (no LLM key — skipping live dispatch)"
   ab open "$ORIGIN/matches" >/dev/null
-  wait_text "我的对战" || fail "match list did not render"
+  wait_text "历史" || fail "match list did not render"
   ab screenshot "$SHOTS/07-matches-empty.png" >/dev/null
   echo "match-list state exercised (LLM segment skipped)"
 fi

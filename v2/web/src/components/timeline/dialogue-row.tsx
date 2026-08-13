@@ -42,12 +42,16 @@ function Speaker({
   )
 }
 
+// `showReasoning` is the 调试模式 gate (#22): off, the model's 内心 trace does not
+// render at all — dialogue itself is never gated.
 export function DialogueRow({
   turn,
   labels,
+  showReasoning,
 }: {
   turn: TurnDTO
   labels: SpeakerLabels
+  showReasoning: boolean
 }) {
   return (
     <Card className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}>
@@ -61,7 +65,9 @@ export function DialogueRow({
         <p className='whitespace-pre-wrap text-sm text-(--foreground)'>
           {turn.finalText}
         </p>
-        {turn.reasoning ? <ReasoningFold text={turn.reasoning} /> : null}
+        {showReasoning && turn.reasoning
+          ? <ReasoningFold text={turn.reasoning} />
+          : null}
       </CardContent>
     </Card>
   )
@@ -73,9 +79,11 @@ export function DialogueRow({
 export function LiveDialogueRow({
   bubble,
   labels,
+  showReasoning,
 }: {
   bubble: LiveBubble
   labels: SpeakerLabels
+  showReasoning: boolean
 }) {
   return (
     <Card
@@ -102,7 +110,9 @@ export function LiveDialogueRow({
               {bubble.reasoning ? '正在斟酌措辞…' : '正在思考…'}
             </p>
           )}
-        <ReasoningFold text={bubble.reasoning} streaming />
+        {showReasoning
+          ? <ReasoningFold text={bubble.reasoning} streaming />
+          : null}
       </CardContent>
     </Card>
   )

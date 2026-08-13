@@ -47,6 +47,58 @@ export function isTerminalVerdict(verdict: VerdictDTO): boolean {
   return TERMINAL_KEYS.has(verdict.key)
 }
 
+// A judge-aside push beat (#22①): the scenario records the judge's private aside
+// as a verdict keyed `os-<round>`, its output the generated 心声 payload. It
+// renders as a 心声 card, always visible — this is the authored OS layer, not a
+// model trace, so 调试模式 never gates it.
+const OS_BEAT_KEY = /^os-\d+$/
+
+export function isOsBeatVerdict(verdict: VerdictDTO): boolean {
+  return OS_BEAT_KEY.test(verdict.key)
+}
+
+export interface OsBeat {
+  os: string | null
+  focus: string | null
+  tendency: string | null
+  fallbackText: string | null
+}
+
+// os/focus/tendency is the shangyang vocabulary; another scenario's beat payload
+// may carry none of it, in which case the raw output is still worth a card.
+export function parseOsBeat(output: string): OsBeat {
+  let payload: unknown = null
+  try {
+    payload = JSON.parse(output)
+  } catch {
+    payload = null
+  }
+  if (
+    payload == null || typeof payload !== 'object' || Array.isArray(payload)
+  ) {
+    return {
+      os: null,
+      focus: null,
+      tendency: null,
+      fallbackText: output.trim() || null,
+    }
+  }
+  const object = payload as Record<string, unknown>
+  const text = (key: string): string | null => {
+    const value = object[key]
+    return typeof value === 'string' && value.trim() ? value.trim() : null
+  }
+  const os = text('os')
+  const focus = text('focus')
+  const tendency = text('tendency')
+  return {
+    os,
+    focus,
+    tendency,
+    fallbackText: os || focus || tendency ? null : output.trim() || null,
+  }
+}
+
 export function verdictLabel(key: string): string {
   if (key === 'order') return '先后裁定'
   if (TERMINAL_KEYS.has(key)) return '终局裁决'

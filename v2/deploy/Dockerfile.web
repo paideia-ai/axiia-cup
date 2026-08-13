@@ -6,6 +6,9 @@ COPY v2/web/deno.json v2/web/deno.lock v2/web/package.json ./
 RUN deno install --frozen
 
 COPY v2/web ./
+# Footer build stamp (P1): CI passes the commit sha; vite inlines VITE_COMMIT_SHA.
+ARG COMMIT_SHA=dev
+ENV VITE_COMMIT_SHA=$COMMIT_SHA
 RUN deno task build
 
 FROM nginx:1.27-alpine

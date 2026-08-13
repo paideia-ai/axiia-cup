@@ -11,8 +11,11 @@ export function TournamentsPage() {
   return (
     <div className='space-y-6'>
       <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-        锦标赛
+        排名
       </h1>
+      <p className='-mt-4 text-sm text-(--foreground-subtle)'>
+        按锦标赛查看轮次与排位；玩家天梯待后续版本。
+      </p>
 
       {loading
         ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>

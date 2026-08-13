@@ -439,7 +439,7 @@ const meta = {
     },
   ],
   presets: SHANGYANG_PRESETS,
-  speakerLabels: { a: '商鞅', b: '甘龙', judge: '秦孝公' },
+  speakerLabels: { a: '商鞅', b: '甘龙', judge: '君上' },
 }
 
 const NAME_A = '商鞅'

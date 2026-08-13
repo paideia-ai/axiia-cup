@@ -6,7 +6,7 @@ const meta = {
   sideBName: '吕布',
   sideALabel: '相国之尊，朝廷、财货与甲兵尽在手中',
   sideBLabel: '温侯之勇，戟在手中，然身在人下',
-  turnCount: 10,
+  turnCount: 23,
   stages: [
     {
       id: 'stage-one',

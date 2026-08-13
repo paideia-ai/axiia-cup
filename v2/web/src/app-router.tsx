@@ -5,8 +5,10 @@ import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
+import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
+import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
 import { MatchDetailPage } from './pages/match-detail'
@@ -37,7 +39,10 @@ function ProtectedShell() {
       <Routes>
         <Route path='/scenarios' element={<CatalogPage />} />
         <Route path='/scenarios/:scenarioId' element={<ScenarioDetailPage />} />
-        <Route path='/agents/:agentId' element={<BuilderPage />} />
+        <Route path='/my-agents' element={<MyAgentsPage />} />
+        {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
+        <Route path='/agents/:agentId' element={<AgentViewPage />} />
+        <Route path='/agents/:agentId/build' element={<BuilderPage />} />
         <Route path='/matches' element={<MatchesPage />} />
         <Route path='/matches/:matchId' element={<MatchDetailPage />} />
         <Route path='/tournaments' element={<TournamentsPage />} />

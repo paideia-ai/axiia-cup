@@ -1,7 +1,8 @@
 import {
+  Bot,
+  History,
   LayoutDashboard,
   Shield,
-  Swords,
   Trophy,
   UserRound,
 } from 'lucide-react'
@@ -15,11 +16,16 @@ import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
 import { IcpRecord } from './icp-record'
 
+// 一级导航（#73/#74）：历史在最右；移动端底栏与桌面顶栏同一份清单。
 const navigation = [
-  { to: '/scenarios', label: '工坊', icon: LayoutDashboard },
-  { to: '/matches', label: '对战', icon: Swords },
-  { to: '/tournaments', label: '锦标赛', icon: Trophy },
+  { to: '/scenarios', label: '场景', icon: LayoutDashboard },
+  { to: '/my-agents', label: '我的智能体', icon: Bot },
+  { to: '/tournaments', label: '排名', icon: Trophy },
+  { to: '/matches', label: '历史', icon: History },
 ]
+
+const COMMIT_SHA = (import.meta.env.VITE_COMMIT_SHA as string | undefined) ??
+  'dev'
 
 export function AppShell({ children }: PropsWithChildren) {
   const { account, logout } = useAuth()
@@ -32,7 +38,8 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <div className='flex min-h-screen flex-col bg-(--background)'>
       <header className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'>
-        <div className='mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
+        {/* #72 顶栏降噪（mock V30）：h-16→h-12、激活态只变字色不加底 */}
+        <div className='mx-auto flex h-12 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
           <NavLink
             to='/scenarios'
             className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'
@@ -46,8 +53,8 @@ export function AppShell({ children }: PropsWithChildren) {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/4 hover:text-(--foreground)',
-                    isActive && 'bg-white/6 text-(--foreground)',
+                    'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                    isActive && 'text-(--foreground)',
                   )}
               >
                 <item.icon className='h-4 w-4' />
@@ -61,8 +68,8 @@ export function AppShell({ children }: PropsWithChildren) {
               to='/settings'
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)',
-                  isActive && 'bg-white/8 text-(--foreground)',
+                  'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                  isActive && 'text-(--foreground)',
                 )}
             >
               <UserRound className='h-4 w-4' />
@@ -85,7 +92,12 @@ export function AppShell({ children }: PropsWithChildren) {
         {children}
       </main>
       <footer className='hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block'>
-        <IcpRecord className='mx-auto w-full max-w-7xl' />
+        <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-3'>
+          <IcpRecord />
+          <code className='text-[10px] text-(--foreground-muted)'>
+            build {COMMIT_SHA}
+          </code>
+        </div>
       </footer>
       <nav className='fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-(--border-soft) bg-[rgba(12,12,12,0.92)] backdrop-blur-xl md:hidden'>
         {navigationItems.map((item) => (

@@ -51,7 +51,7 @@ export function LandingPage() {
               : account
               ? (
                 <Link to='/scenarios'>
-                  <Button size='sm'>进入工坊</Button>
+                  <Button size='sm'>进入场景</Button>
                 </Link>
               )
               : (
@@ -89,7 +89,7 @@ export function LandingPage() {
                 <div className='mt-10 flex justify-center'>
                   <Link to='/scenarios'>
                     <Button size='lg'>
-                      进入工坊
+                      进入场景
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
