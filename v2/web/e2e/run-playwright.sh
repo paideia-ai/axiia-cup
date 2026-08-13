@@ -88,6 +88,16 @@ export AXIIA_PVE_REQUIRED_WINS='1'
 export AXIIA_DAILY_BATTLE_LIMIT='20'
 export AXIIA_PVP_DAILY_LIMIT='10'
 export AXIIA_CONCURRENCY_LIMIT='10'
+# P6 #39: low display threshold so two deterministic fixture matches cross it
+# inside a single journey (production default is 20 — too many for a browser gate).
+export AXIIA_STATS_DISPLAY_THRESHOLD='2'
+# P3 #76: per-player daily received-challenge cap. Explicit and dev-realistic so
+# the paired-leg journey never trips it while /v1/config still projects a real value.
+export AXIIA_OPPONENT_DAILY_CHALLENGE_LIMIT='5'
+# P5 #10: the express-lane pointer names the OPPONENT preset (scenarioID:side:presetKey);
+# the express player fields the OPPOSITE side — here side a, 商鞅, whose MCQ deck
+# the P5 journey asserts.
+export AXIIA_EXPRESS_PRESET='shangyang-court:b:ganlong-conservative'
 
 "$AXIIA_BIN" serve >"$E2E_WORK/server.log" 2>&1 &
 API_PID=$!
@@ -142,7 +152,13 @@ done
 }
 
 printf 'Running Playwright against Swift %s and web %s\n' "$API_PORT" "$WEB_PORT"
+# The admin identity minted above is passed through: the P3/P6 journeys install a
+# deterministic fixture scenario (a model-free script) over the real admin API
+# (scripts + slots), which is how completed matches exist without model inference.
 AXIIA_BASE_URL="$ORIGIN" \
 AXIIA_REGISTRATION_CODE="$REGISTRATION_CODE" \
 AXIIA_SCENARIO_ID="$SCENARIO_ID" \
+AXIIA_ADMIN_EMAIL='admin@axiia.test' \
+AXIIA_ADMIN_PASSWORD='adminpw-123456' \
+AXIIA_ADMIN_TOTP_SECRET="$TOTP_SECRET" \
   deno task --config "$WEB_DIR/deno.json" test:e2e
