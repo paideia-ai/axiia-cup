@@ -46,6 +46,10 @@ export function rejectCopy(
     }
     case 'opponent_gate_locked':
       return '对方尚未解锁玩家约战——约战双方都需每侧过 NPC 练习门槛，换个对手或等对方练完'
+    // #59/#79 引导门：同侧第 2 个智能体之前必须先拥有对侧；E4「复制为新
+    // 智能体」同受此门。
+    case 'sibling_gate':
+      return '需先拥有对侧智能体才能在同侧再建（引导门 #59）'
     // #14：计数器只做提示，上限由服务端保存时强制；这句把玩家指回计数器。
     case 'prompt_too_long': {
       const limit = config?.promptUnitLimit ?? PROMPT_UNIT_LIMIT

@@ -27,9 +27,10 @@ import {
 
 const PROMPT_FIELD = 'prompt'
 
-// 纯构建器（EA/E 拆分后）：只管编辑与保存版本。版本列表与出战都归 EA
-// （/agents/:id），派发归 OS 面板——保存成功即回 EA。保存语义不变：保存
-// 总是创建一个新版本。
+// 工作区（E1/#81，β 模型）：构建器就是智能体唯一的工作区草稿——进入编辑＝
+// 进入工作区，输入高频自动暂存（草稿非版本，从不直接参战）；点保存＝产生
+// 一个新版本（E2/#82：严格线性，无父子）。版本列表与出战都归 EA
+// （/agents/:id），派发归 OS 面板——保存成功即回 EA。
 export function BuilderPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
@@ -48,7 +49,7 @@ export function BuilderPage() {
   const [models, setModels] = useState<ModelDTO[]>([])
   const [modelID, setModelID] = useState<string | null>(null)
   const [versions, setVersions] = useState<AgentVersionDTO[]>([])
-  const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
+  const [restoredSeq, setRestoredSeq] = useState<number | null>(null)
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -69,14 +70,15 @@ export function BuilderPage() {
         setScenarioID(draft.scenarioID)
         setSide(draft.side)
         setVersions(list.versions)
-        setEntryVersionID(list.entryVersionID ?? null)
-        // #70「编辑此版本」：?from=<versionID> 只做一次性预填。用完即从 URL
-        // 摘掉（replace，不留历史），刷新/重挂载不会再次套用旧版本内容。
+        // E3「恢复到工作区」（#82）：?from=<versionID> 把该历史版本回填到工作
+        // 区草稿——恢复本身不产生版本、不记录来源。一次性生效：用完即从 URL
+        // 摘掉（replace，不留历史），刷新/重挂载不会再次覆盖工作区。
         const fromID = Number(params.get('from') ?? '')
         const fromVersion = list.versions.find((v) => v.id === fromID)
         if (fromVersion) {
           setPrompt(fromVersion.prompt)
           setModelID(fromVersion.modelID)
+          setRestoredSeq(fromVersion.snapshotSeq)
           const role = roleOfOptions(
             scenarioModule(draft.scenarioID),
             fromVersion.options,
@@ -151,7 +153,8 @@ export function BuilderPage() {
     source.onmessage = (message) => {
       const event = JSON.parse(message.data) as BuilderEventDTO
       if ('fieldMutated' in event) {
-        setLastEvent(`字段已同步：${event.fieldMutated.field}`)
+        // E1：状态行按「自动暂存」口径措辞——草稿在服务端，刷新/离开不丢。
+        setLastEvent('已自动暂存')
       } else if ('versionCreated' in event) {
         setLastEvent(`版本已创建：#${event.versionCreated.versionID}`)
       }
@@ -190,14 +193,17 @@ export function BuilderPage() {
         .catch(() => {})
     }
     try {
-      await builder.save(agentID, {
+      // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
+      const saved = await builder.save(agentID, {
         prompt,
         modelID,
-        parentVersionID: entryVersionID,
         ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
       })
-      // 版本列表在 EA：保存成功即回智能体主页。
-      navigate(`/agents/${agentID}`)
+      // 版本列表在 EA：保存成功即回智能体主页。新版本 id 走一次性导航
+      // state（不落 URL、不持久），供 EA 的 E10「参赛版本仍是 vK」提示。
+      navigate(`/agents/${agentID}`, {
+        state: { savedVersionID: saved.id },
+      })
     } catch (cause) {
       // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
       // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
@@ -234,7 +240,19 @@ export function BuilderPage() {
           {scenario ? scenario.summary.title : scenarioID} · 为
           {side === 'a' ? '甲' : '乙'}方 · agent #{agentID}
         </p>
+        {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
+        <p className='mt-1 text-xs text-(--foreground-muted)'>
+          工作区 · 输入自动暂存；保存才会生成新版本
+        </p>
       </div>
+
+      {restoredSeq != null
+        ? (
+          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+            已恢复 v{restoredSeq} 到工作区
+          </p>
+        )
+        : null}
 
       {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
 

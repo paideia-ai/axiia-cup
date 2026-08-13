@@ -70,7 +70,12 @@ export const VersionCards: Story = {
       .toBeVisible()
     await expect(canvas.getByText('v2')).toBeVisible()
     await expect(canvas.getByText('★参赛版本')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: '编辑 v1' })).toBeVisible()
+    // E3/E4（#82/#84）：版本卡动作＝恢复到工作区 / 复制为新智能体 / 设为参赛
+    await expect(canvas.getByRole('button', { name: '恢复 v1 到工作区' }))
+      .toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: '以 v1 复制为新智能体' }),
+    ).toBeVisible()
     await expect(canvas.getByRole('button', { name: '将 v1 设为参赛版本' }))
       .toBeVisible()
   },
