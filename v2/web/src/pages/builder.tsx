@@ -27,6 +27,7 @@ import { metaPromptFor } from '../lib/meta-prompt'
 import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
+import { nextVersionCopy, versionTag } from '../lib/version-label'
 import {
   roleByKey,
   roleOfOptions,
@@ -63,7 +64,7 @@ export function BuilderPage() {
   const [models, setModels] = useState<ModelDTO[]>([])
   const [modelID, setModelID] = useState<string | null>(null)
   const [versions, setVersions] = useState<AgentVersionDTO[]>([])
-  const [restoredSeq, setRestoredSeq] = useState<number | null>(null)
+  const [restoredTag, setRestoredTag] = useState<string | null>(null)
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -97,7 +98,7 @@ export function BuilderPage() {
         if (fromVersion) {
           setPrompt(fromVersion.prompt)
           setModelID(fromVersion.modelID)
-          setRestoredSeq(fromVersion.snapshotSeq)
+          setRestoredTag(versionTag(fromVersion, list.versions))
           const role = roleOfOptions(
             scenarioModule(draft.scenarioID),
             fromVersion.options,
@@ -360,10 +361,10 @@ export function BuilderPage() {
         )
         : null}
 
-      {restoredSeq != null
+      {restoredTag != null
         ? (
           <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
-            已恢复 v{restoredSeq} 到工作区
+            已恢复 {restoredTag} 到工作区 · {nextVersionCopy(versions.length)}
           </p>
         )
         : null}

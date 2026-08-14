@@ -78,5 +78,7 @@ export const VersionCards: Story = {
     ).toBeVisible()
     await expect(canvas.getByRole('button', { name: '将 v1 设为参赛版本' }))
       .toBeVisible()
+    // E3/#82：N 已可知（两个版本），下一次保存就是 v3。
+    await expect(canvas.getAllByText('保存后将成为 v3')[0]).toBeVisible()
   },
 }

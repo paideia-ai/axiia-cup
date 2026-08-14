@@ -4,6 +4,7 @@ import type { VerdictDTO } from '../api/types'
 import { parseVerdict, verdictLabel } from '../lib/verdict'
 import type { SpeakerLabels } from './timeline/labels'
 import { speakerName } from './timeline/labels'
+import { ReasoningFold } from './timeline/reasoning-fold'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 
@@ -53,11 +54,17 @@ export function VerdictCard({
   labels,
   interim,
   children,
+  trace,
+  showTrace = false,
 }: {
   verdict: VerdictDTO
   labels: SpeakerLabels
   interim: boolean
   children?: ReactNode
+  // 这次裁决生成时模型的真实推演轨迹（#22②）：原本挂在被吸收的 act 行上，行
+  // 不再渲染后随卡走。调试模式之外不出现。
+  trace?: string | null
+  showTrace?: boolean
 }) {
   // An interim verdict is spectator-visible but is never injected into a player
   // agent's context; without the badge the transcript reads like they cheated.
@@ -77,6 +84,8 @@ export function VerdictCard({
         </div>
 
         <VerdictBody verdict={verdict} labels={labels} />
+
+        {showTrace && trace?.trim() ? <ReasoningFold text={trace} /> : null}
 
         {children}
       </CardContent>

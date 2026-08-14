@@ -3,6 +3,7 @@ import { cn } from '../../lib/cn'
 import { parseOsBeat } from '../../lib/verdict'
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
+import { ReasoningFold } from './reasoning-fold'
 
 // 裁判心声卡（#22①）：the judge's generated aside beat, always visible — never
 // behind 调试模式, which only governs model reasoning traces. Indented and dashed
@@ -15,12 +16,18 @@ export function OsBeatCard({
   labels,
   highlight = false,
   onResume,
+  trace,
+  showTrace = false,
 }: {
   verdict: VerdictDTO
   labels: SpeakerLabels
   highlight?: boolean
   // 锚点停留时卡内的「继续」；不在回放锚点上时不渲染。
   onResume?: () => void
+  // 裁判 OS ②（#22②）：这一拍生成时模型的真实推演轨迹——原本挂在被吸收的
+  // act 行上，行不再渲染后随卡走。调试模式之外不出现。
+  trace?: string | null
+  showTrace?: boolean
 }) {
   const beat = parseOsBeat(verdict.output)
   // The judge lane's scenario name when one resolves ('秦孝公' → 秦孝公心声);
@@ -92,6 +99,7 @@ export function OsBeatCard({
           </div>
         )
         : null}
+      {showTrace && trace?.trim() ? <ReasoningFold text={trace} /> : null}
       {highlight && onResume
         ? (
           <div className='mt-3'>

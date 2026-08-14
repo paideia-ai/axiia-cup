@@ -27,6 +27,7 @@ import type {
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
+import { versionTag } from '../lib/version-label'
 import { roleOfOptions, scenarioModule } from '../scenarios'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -277,10 +278,11 @@ export function OsPanel({
           versionID: version.id,
           agentID: agent.agentID,
           isEntry: list.entryVersionID === version.id,
-          label:
-            `#${agent.agentID} · v${version.snapshotSeq} · ${version.modelID}${
-              list.entryVersionID === version.id ? ' ★' : ''
-            }`,
+          label: `#${agent.agentID} · ${
+            versionTag(version, list.versions)
+          } · ${version.modelID}${
+            list.entryVersionID === version.id ? ' ★' : ''
+          }`,
         }))
       }))
       return lists.flat()
@@ -430,8 +432,10 @@ export function OsPanel({
             <p className='mt-0.5 text-xs text-(--foreground-muted)'>
               {fieldedVersion
                 ? entryVersionID != null
-                  ? `出战版本：★参赛版本 v${fieldedVersion.snapshotSeq}`
-                  : `出战版本：最新版 v${fieldedVersion.snapshotSeq}`
+                  ? `出战版本：★参赛版本 ${
+                    versionTag(fieldedVersion, versions)
+                  }`
+                  : `出战版本：最新版 ${versionTag(fieldedVersion, versions)}`
                 : '先保存一个版本才能出战。'}
             </p>
           </div>

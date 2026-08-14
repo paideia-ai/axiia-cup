@@ -35,6 +35,7 @@ import {
 } from '../lib/scoring-reasoning'
 import { usePinToBottom } from '../lib/scroll'
 import {
+  absorbedActSeqs,
   groupTranscript,
   isInquiryChannel,
   isInquiryGroup,
@@ -142,15 +143,23 @@ export function MatchDetailPage() {
     }
     return set
   }, [data])
+  // 整行都是结构化载荷的 act 行不渲染（内容在它自己的裁决卡里，#22）——回放
+  // 也不能为它花一拍。这些行的节拍 afterSeq 恰等于该行 seq，flushBeats 仍在它
+  // 原本的位置之前触发，节拍次序不变。
+  const absorbed = useMemo(
+    () => absorbedActSeqs(data?.turns ?? [], data?.verdicts ?? []),
+    [data],
+  )
   const replaySteps = useMemo(() => {
     if (data == null) return []
     return buildReplaySteps(
       data.turns.filter((turn) =>
-        !inquiryChannels.has(turn.channel) && !isInquiryChannel(turn.channel)
+        !inquiryChannels.has(turn.channel) && !isInquiryChannel(turn.channel) &&
+        !absorbed.has(turn.seq)
       ),
       data.verdicts,
     )
-  }, [data, inquiryChannels])
+  }, [data, inquiryChannels, absorbed])
   const replay = useReplay(replaySteps)
   const replaying = finished && replay.state.active
   const reveal = replaying
@@ -163,7 +172,7 @@ export function MatchDetailPage() {
     ? data.turns
     : data.turns.filter((turn) => reveal.seqs.has(turn.seq))
   const stageGroups = data
-    ? groupTranscript(shownTurns, data.stages, stream.bubbles)
+    ? groupTranscript(shownTurns, data.stages, stream.bubbles, data.verdicts)
     : []
   const interimSource =
     data?.verdicts.filter((verdict) => !isTerminalVerdict(verdict)) ?? []
@@ -228,6 +237,14 @@ export function MatchDetailPage() {
     )
   }
 
+  // 一次 act 生成的真实推演轨迹存在它那一行上（turn.reasoning）；行被吸收后
+  // 轨迹随卡走，这是 #22② 要暴露的东西——原始标签不是。
+  const traceOf = (verdict: VerdictDTO) =>
+    data.turns.find(
+      (turn) => turn.seq === verdict.afterSeq && turn.kind === 'dialogue',
+    )?.reasoning ?? null
+  const showTrace = debug && !replaying
+
   // 教学锚点（#24 U9）：回放停在倾向变化的节拍上，心声卡就地高亮并给「继续」。
   const interimVerdict = (verdict: VerdictDTO) => {
     if (isOsBeatVerdict(verdict)) {
@@ -239,6 +256,8 @@ export function MatchDetailPage() {
           labels={labels}
           highlight={anchored}
           onResume={anchored ? replay.togglePlay : undefined}
+          trace={traceOf(verdict)}
+          showTrace={showTrace}
         />
       )
     }
@@ -248,6 +267,8 @@ export function MatchDetailPage() {
         verdict={verdict}
         labels={labels}
         interim
+        trace={traceOf(verdict)}
+        showTrace={showTrace}
       />
     )
   }
@@ -530,6 +551,13 @@ export function MatchDetailPage() {
                             </span>
                           </div>
                           <VerdictBody verdict={finalVerdict} labels={labels} />
+                          {showTrace
+                            ? (
+                              <ReasoningFold
+                                text={traceOf(finalVerdict) ?? ''}
+                              />
+                            )
+                            : null}
                         </div>
                       )
                       : null}
@@ -722,6 +750,8 @@ export function MatchDetailPage() {
                   verdict={finalVerdict}
                   labels={labels}
                   interim={false}
+                  trace={traceOf(finalVerdict)}
+                  showTrace={showTrace}
                 >
                   {data.scoreA != null && data.scoreB != null
                     ? (

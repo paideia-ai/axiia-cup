@@ -75,6 +75,11 @@ export function rejectCopy(
     // P6 命名：智能体名 ≤30 字符，超出由服务端拒绝。
     case 'name_too_long':
       return '名字太长——智能体名最多 30 个字符'
+    // 服务端内部错误：这不是玩家能改的东西，只给通用文案。老服务端会把驱动
+    // 原文（SQL、表名、约束名）塞进 message，绝不透传给玩家——诊断在服务端
+    // 日志里。
+    case 'internal':
+      return '服务器开小差了，请稍后重试'
     default:
       return messageOf(error, fallback)
   }
