@@ -19,15 +19,23 @@ function dialogue(seq: number, channel: string): TurnDTO {
   }
 }
 
-function phase(seq: number, title: string): TurnDTO {
+function event(
+  seq: number,
+  channel: string,
+  value: Record<string, unknown>,
+): TurnDTO {
   return {
     seq,
-    channel: '*',
+    channel,
     kind: 'event',
     speaker: 'game',
     finalText: '',
-    event: { type: 'phase', title },
+    event: value as TurnDTO['event'],
   }
+}
+
+function phase(seq: number, title: string): TurnDTO {
+  return event(seq, '*', { type: 'phase', title })
 }
 
 const stages: StageDTO[] = [
@@ -43,6 +51,23 @@ const stages: StageDTO[] = [
     id: 'inquiry',
     title: '问询',
     channels: [{ id: 'inquiry-judge', label: '裁判问询' }],
+  },
+]
+
+const deliberationStages: StageDTO[] = [
+  {
+    id: 'deliberation',
+    title: '审议',
+    channels: [
+      { id: 'public', label: '公开发言' },
+      { id: 'procedure', label: '程序' },
+      { id: 'observer', label: '幕后' },
+    ],
+  },
+  {
+    id: 'verdict',
+    title: '判决',
+    channels: [{ id: 'verdict', label: '判决票' }],
   },
 ]
 
@@ -73,10 +98,58 @@ describe('v3.4 #20/#69/#80 transcript grouping', () => {
       'meeting@2',
       UNSTAGED_GROUP_ID,
     ])
-    expect(groups[1].phases).toEqual(['裁判问询'])
+    expect(groups[1].phases).toEqual([{ seq: 1, title: '裁判问询' }])
     expect(groups[2].channels[0].items.map(({ kind, seq }) => [kind, seq]))
       .toEqual([['turn', 4], ['live', 5]])
     expect(groups[3].channels[0].items[0].seq).toBe(6)
+  })
+
+  it('preserves adjacent channel runs within one stage', () => {
+    const groups = groupTranscript([
+      phase(0, '第一轮'),
+      event(1, 'observer', { type: 'observer_action_decision' }),
+      dialogue(2, 'public'),
+      event(3, 'procedure', { type: 'secret_poll_opened' }),
+      event(4, 'observer', { type: 'observer_secret_poll' }),
+      dialogue(5, 'public'),
+    ], deliberationStages)
+
+    expect(groups.map(({ id }) => id)).toEqual(['deliberation'])
+    expect(
+      groups[0].channels.map((channel) => ({
+        id: channel.id,
+        seqs: channel.items.map((item) => item.seq),
+      })),
+    ).toEqual([
+      { id: 'observer', seqs: [1] },
+      { id: 'public', seqs: [2] },
+      { id: 'procedure', seqs: [3] },
+      { id: 'observer', seqs: [4] },
+      { id: 'public', seqs: [5] },
+    ])
+    expect(groups[0].phases).toEqual([{ seq: 0, title: '第一轮' }])
+  })
+
+  it('keeps stage re-entry and unstaged rows in sequence', () => {
+    const groups = groupTranscript([
+      dialogue(0, 'public'),
+      event(1, 'verdict', { type: 'verdict' }),
+      dialogue(2, 'public'),
+      event(3, 'unknown', { type: 'scene' }),
+    ], deliberationStages)
+
+    expect(groups.map(({ id }) => id)).toEqual([
+      'deliberation',
+      'verdict',
+      'deliberation@2',
+      UNSTAGED_GROUP_ID,
+    ])
+    expect(groups.map((group) => group.channels[0].items[0].seq)).toEqual([
+      0,
+      1,
+      2,
+      3,
+    ])
   })
 
   it('suppresses a live bubble as soon as its committed row exists', () => {
@@ -92,6 +165,20 @@ describe('v3.4 #20/#69/#80 transcript grouping', () => {
     const [group] = groupTranscript([committed], stages, [bubble])
     expect(group.channels[0].items).toHaveLength(1)
     expect(group.channels[0].items[0].kind).toBe('turn')
+  })
+
+  it('attaches phase markers at their chronological positions', () => {
+    const groups = groupTranscript([
+      phase(0, '第一轮'),
+      dialogue(1, 'public'),
+      phase(2, '第二轮'),
+      event(3, 'observer', { type: 'observer_action_decision' }),
+    ], deliberationStages)
+
+    expect(groups[0].phases).toEqual([
+      { seq: 0, title: '第一轮' },
+      { seq: 2, title: '第二轮' },
+    ])
   })
 
   it('recognizes real inquiry sections and places verdicts by afterSeq', () => {

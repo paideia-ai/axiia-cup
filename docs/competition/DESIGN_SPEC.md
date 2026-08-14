@@ -129,6 +129,13 @@
 - 普通裁判 prompt 保持公开；OS prompt 仅由管理员维护，不在 Playground「场景资料」或玩家侧场景详情页公开。OS 仅用于展示，不进入最终裁决或计分输入。每场运行保存 OS prompt 快照及 hash、模型、thinking 模式、temperature、JSON mode、Context 版本和回合配置。
 - 详细产品语义、Context 备选方案和一致性实验计划见 [judge-os-feature-spec.md](judge-os-feature-spec.md)。其中未标为当前决定的方案仍属实验，不自动改变本规范以上规则。
 
+### 多 Agent 陪审团票决扩展（2026-08-13）
+
+- 场景可以显式声明 `meta.adjudicationMode = 'jury-vote'`，由多名场内 NPC 共同承担裁决角色，替代单一 Judge。未声明时仍采用既有的单一 Judge 模式。
+- 陪审团场景的胜负必须由脚本按照公开门槛机械统计成员票数，不再追加单一 Judge 的赛后问询，也不要求生成 `judge-aside` 内心 OS。
+- 每名陪审员仍须基于场景材料独立调用模型形成票和简短理由；脚本必须发布逐票揭晓及统一的结构化 `score` 事件，供回放、计分推导和审计使用。
+- 首个采用这一模式的场景是 `legal-harbor-murder-jury`：两名固定立场玩家与九名 NPC 组成十一人陪审团，六票形成裁决。
+
 ### 待探索：裁判系统扩展方向（非 MVP）
 
 以下为 3/31 会议讨论和后续设计思考中提出的方向，尚未纳入 MVP：

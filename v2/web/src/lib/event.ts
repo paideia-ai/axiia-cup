@@ -28,6 +28,28 @@ export function eventNumber(event: ScriptEvent, key: string): number | null {
   return typeof value === 'number' ? value : null
 }
 
+export function eventBoolean(event: ScriptEvent, key: string): boolean | null {
+  const value = event[key]
+  return typeof value === 'boolean' ? value : null
+}
+
+export function eventArray(
+  event: ScriptEvent,
+  key: string,
+): JSONValue[] | null {
+  const value = event[key]
+  return Array.isArray(value) ? value : null
+}
+
+export function eventStringArray(
+  event: ScriptEvent,
+  key: string,
+): string[] | null {
+  const value = eventArray(event, key)
+  if (!value || !value.every((item) => typeof item === 'string')) return null
+  return value as string[]
+}
+
 export function eventRecord(
   event: ScriptEvent,
   key: string,
