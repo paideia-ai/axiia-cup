@@ -73,7 +73,7 @@ const meta = {
 async function main() {
   const DEFAULT_JUROR_MODELS = [
     'deepseek-v3.2',
-    'kimi-k2.5',
+    'minimax-m2.5',
     'qwen3.5-397b-a17b',
     'deepseek-v4-pro',
     'deepseek-v4-flash',
