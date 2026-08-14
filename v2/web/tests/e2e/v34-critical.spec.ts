@@ -10,6 +10,8 @@ import {
 
 test.beforeEach(() => requireServerFixtures())
 
+const rawActMarkup = /<(os|attention|favor|strength|reason|guess)>/
+
 test('v3.4 #14/#17/#57 saves one side and never dispatches implicitly', async ({ page }) => {
   await signup(page, 'builder')
   const prompt = '先确认争点再举证'
@@ -104,6 +106,8 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByText('先立可验证的制度标准。')).toHaveCount(0)
   await expect(page.getByText('商鞅提出了可验证标准。', { exact: true }))
     .toBeVisible()
+  // #22：act 的原始标签一个都不许进战报——心声卡已渲染过同一份内容。
+  await expect(page.getByText(rawActMarkup)).toHaveCount(0)
 
   await page.getByRole('switch', { name: /调试模式/ }).click()
   await page.getByRole('button', { name: /内心/ }).first().click()
@@ -116,6 +120,8 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByRole('heading', { name: '计分推导' })).toHaveCount(0)
   await expect(page.getByRole('switch', { name: /调试模式/ }))
     .toHaveAttribute('aria-disabled', 'true')
+  // 回放是另一条渲染路径，同样不许漏。
+  await expect(page.getByText(rawActMarkup)).toHaveCount(0)
 })
 
 test('v3.4 #72/#74 keeps the mobile shell ordered, touchable, and overflow-free', async ({ page }) => {

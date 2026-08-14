@@ -182,11 +182,15 @@ verdict.fields.judgment // validated member of the enum
   fields (`speech`, `reason`) **before** decision tags — text-before-decision is
   the reasoning-preservation pattern this engine exists for.
 - Dynamic field sets are fine (shangyang builds one enum field per request id).
-- `key` records the parsed fields as a `verdicts` row; `channel` puts the raw
-  reply on the timeline. Omit `channel` for a private act (e.g. secret order
-  decisions still get a channel in shipped scripts because spectators see all —
-  _player-facing_ secrecy is achieved by never `push`ing it to player agents,
-  not by hiding the row).
+- `key` records the parsed fields as a `verdicts` row, and that row is what the
+  UI renders (a 心声/裁决 card). `channel` only gives the act a position on the
+  timeline: the tagged reply itself is never shown — the reader sees whatever
+  narration precedes the tags, and nothing at all when the reply is pure tags.
+  So do not hand-roll a stripper in the script, and do not treat the timeline
+  row as a second place to say something. Omit `channel` for a private act (e.g.
+  secret order decisions still get a channel in shipped scripts because
+  spectators see all — _player-facing_ secrecy is achieved by never `push`ing it
+  to player agents, not by hiding the row).
 
 ## `turn` and affordances
 

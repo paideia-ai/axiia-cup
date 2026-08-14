@@ -1,11 +1,14 @@
 import type { LiveBubble } from '../api/sse'
 import type { StageDTO, TurnDTO, VerdictDTO } from '../api/types'
+import { actTagNames, stripActTags } from './act-markup'
 import { scriptEvent } from './event'
 
 // Channels are labels over one global seq order. A stage may switch between
 // channels many times, so only adjacent rows from the same channel form a
 // display run. Turns whose channel belongs to no declared stage still render —
-// a transcript row is never silently dropped.
+// a transcript row is never silently dropped, except an act row whose entire
+// text is the structured payload its own verdict card already renders; that row
+// contributes only its trace, which moves onto the card.
 //
 // Two rows are not body rows. `game.phase` emits on the reserved channel `*`,
 // which belongs to no stage; it is a section marker and is hoisted onto the stage
@@ -41,18 +44,64 @@ export interface PhaseMarker {
 
 export const UNSTAGED_GROUP_ID = '__unstaged'
 
+// An `act` and its verdict are one generation in two shapes, and the engine
+// commits the row at exactly the seq the verdict counts up to (`park()` freezes
+// commitCount at timeline.count), so `turn.seq === verdict.afterSeq` pairs them
+// without any heuristic. The names to strip are that verdict's own JSON keys, so
+// a scenario inventing a new field is covered without a list here.
+function actTagsBySeq(
+  turns: TurnDTO[],
+  verdicts: VerdictDTO[],
+): Map<number, string[]> {
+  const dialogue = new Set(
+    turns.filter((turn) => turn.kind === 'dialogue').map((turn) => turn.seq),
+  )
+  const names = new Map<number, string[]>()
+  for (const verdict of verdicts) {
+    if (!dialogue.has(verdict.afterSeq)) continue
+    const declared = names.get(verdict.afterSeq) ?? []
+    declared.push(...actTagNames(verdict.output))
+    names.set(verdict.afterSeq, declared)
+  }
+  return names
+}
+
+// The act rows that render nothing once their markup is gone. Replay needs the
+// same set: a row that renders nothing must not cost a step.
+export function absorbedActSeqs(
+  turns: TurnDTO[],
+  verdicts: VerdictDTO[],
+): Set<number> {
+  const tags = actTagsBySeq(turns, verdicts)
+  const absorbed = new Set<number>()
+  for (const turn of turns) {
+    const names = tags.get(turn.seq)
+    if (names == null) continue
+    if (!stripActTags(turn.finalText, names)) absorbed.add(turn.seq)
+  }
+  return absorbed
+}
+
 export function groupTranscript(
   turns: TurnDTO[],
   stages: StageDTO[],
   bubbles: LiveBubble[] = [],
+  verdicts: VerdictDTO[] = [],
 ): StageGroup[] {
   const ordered = [...turns].sort((left, right) => left.seq - right.seq)
+  const actTags = actTagsBySeq(ordered, verdicts)
   const phases: TurnDTO[] = []
   const body: TurnDTO[] = []
   for (const turn of ordered) {
     const event = scriptEvent(turn)
     if (event?.type === 'phase') phases.push(turn)
-    else body.push(turn)
+    // 结构化载荷已由配对的裁决卡渲染：只余叙述的行留叙述，纯载荷的行整行不进
+    // 分组——放在分组之前，免得只有这一行的阶段留下一个空标题。
+    else if (!actTags.has(turn.seq)) body.push(turn)
+    else {
+      const prose = stripActTags(turn.finalText, actTags.get(turn.seq)!)
+      if (prose) body.push({ ...turn, finalText: prose })
+    }
   }
 
   const committedSeqs = new Set(ordered.map((turn) => turn.seq))

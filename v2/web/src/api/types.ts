@@ -271,6 +271,10 @@ export interface AgentVersionDTO {
   modelID: string
   parentVersionID?: number | null
   isEntry: boolean
+  // E2/#82：线性版本号（v1 → v2 → … → vN），服务端按 id 次序派生。要显示版本号
+  // 只能读这个；服务端还没带上时（部署错位）由 lib/version-label 按 id 次序补。
+  ordinal?: number
+  // 草稿自动暂存水位（服务端脏检测用），不是版本号——永远不要渲染它。
   snapshotSeq: number
   options?: string | null
 }
@@ -465,6 +469,9 @@ export type MatchEventDTO =
       // same in-flight turn.
       phase: string
       delta: string
+      // 'say' | 'act' | 'act_repair' — 外层生成型别。act 的 text 流里带结构化
+      // 标签（#22），渲染前要剥；老服务端不带这个字段。
+      call?: string
     }
   }
   | { verdictRecorded: { matchID: number; key: string } }

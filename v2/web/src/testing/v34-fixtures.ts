@@ -64,6 +64,8 @@ export const unlockedScenario: ScenarioDetail = {
   },
 }
 
+// snapshotSeq 故意非线性（0/4，复刻线上真实数据）：任何按 snapshotSeq 渲染版本
+// 号的回归都会让 Agent surfaces 的 play 测试变红。
 export const versions: AgentVersionDTO[] = [
   {
     id: 1001,
@@ -71,7 +73,8 @@ export const versions: AgentVersionDTO[] = [
     prompt: '先澄清争点，再用最短证据链回应。',
     modelID: 'fixture-model',
     isEntry: false,
-    snapshotSeq: 1,
+    ordinal: 1,
+    snapshotSeq: 0,
   },
   {
     id: 1002,
@@ -80,7 +83,8 @@ export const versions: AgentVersionDTO[] = [
     modelID: 'fixture-model',
     parentVersionID: 1001,
     isEntry: true,
-    snapshotSeq: 2,
+    ordinal: 2,
+    snapshotSeq: 4,
   },
 ]
 
@@ -158,7 +162,10 @@ export const finishedMatch: MatchDetail = {
     scored: true,
     winner: 'a',
   },
-  currentTurn: 4,
+  currentTurn: 6,
+  // seq 2 与 seq 4 是 act 行：同一次生成既写成 verdict（心声/问询卡），又把带
+  // 标签的原始回复写成时间线行（#22）。前者整行都是结构化载荷（行不该渲染，
+  // 真实推演轨迹随卡走），后者叙述在前、标签在后（只该剥标签）。
   turns: [
     {
       seq: 0,
@@ -178,13 +185,31 @@ export const finishedMatch: MatchDetail = {
     },
     {
       seq: 2,
+      channel: 'judge-aside',
+      kind: 'dialogue',
+      speaker: 'judge',
+      finalText:
+        '<os>甘龙补上了改革成本。</os>\n<attention>受损者是否有补偿</attention>\n<favor>b</favor>\n<strength>中</strength>',
+      reasoning: '真实推演：先比较两方对执行成本的处理。',
+    },
+    {
+      seq: 3,
       channel: 'inquiry-judge',
       kind: 'dialogue',
       speaker: 'judge',
       finalText: '双方如何处理改革初期的受损者？',
     },
     {
-      seq: 3,
+      seq: 4,
+      channel: 'inquiry-judge',
+      kind: 'dialogue',
+      speaker: 'a',
+      finalText:
+        '受损者按新法补偿，三年为限。\n<reason>先给可执行的补偿口径</reason>\n<guess>迁移补偿</guess>',
+      reasoning: '真实推演：把补偿口径说死，再猜对方真目标。',
+    },
+    {
+      seq: 5,
       channel: 'inquiry-judge',
       kind: 'event',
       speaker: 'game',
@@ -222,8 +247,17 @@ export const finishedMatch: MatchDetail = {
       model: 'fixture-judge',
     },
     {
-      key: 'judge',
+      key: 'inquiry-a',
       afterSeq: 4,
+      output: JSON.stringify({
+        reason: '先给可执行的补偿口径',
+        guess: '迁移补偿',
+      }),
+      model: 'fixture-judge',
+    },
+    {
+      key: 'judge',
+      afterSeq: 6,
       output: JSON.stringify({
         winner: 'a',
         judgment: '商鞅的制度方案更可检验，且回应了执行问题。',
@@ -234,7 +268,16 @@ export const finishedMatch: MatchDetail = {
   scoreA: 7,
   scoreB: 5,
   reasoning: '程序化计分明细：\n商鞅 +7\n甘龙 +5',
-  stages: scenario.stages,
+  // 心声阶段只有那一行纯载荷 act：它被吸收后这一幕整段不出现，连空标题都
+  // 不该留下。
+  stages: [
+    ...scenario.stages,
+    {
+      id: 'aside',
+      title: '旁白',
+      channels: [{ id: 'judge-aside', label: '裁判旁白' }],
+    },
+  ],
   speakerLabels: {
     a: '商鞅',
     b: '甘龙',

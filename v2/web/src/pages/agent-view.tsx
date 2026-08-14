@@ -10,6 +10,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf, useAsync } from '../lib/use-async'
+import { nextVersionCopy, versionLabel, versionTag } from '../lib/version-label'
 
 // EA 智能体主页（B3，#81–#84 已批）：版本卡（新在前）+ ★参赛版本切换 +
 // 「恢复到工作区」（E3/#82，原「编辑此版本」语义重释）+「复制为新智能体」
@@ -103,8 +104,11 @@ export function AgentViewPage() {
     }
   }
 
+  // 版本号按 id 次序派生（E2/#82），所以 id 降序＝版本号降序、最新在前。旧实现
+  // 按 snapshotSeq 排：那是草稿水位，两次保存之间没打字就并列，列表与 diff 的
+  // 默认基准/对比会静默反序。
   const sorted: AgentVersionDTO[] = data
-    ? [...data.versions].sort((a, b) => b.snapshotSeq - a.snapshotSeq)
+    ? [...data.versions].sort((a, b) => b.id - a.id)
     : []
 
   // E10：保存的新版本不是参赛版本时（参赛标记仍钉在别的版本上）才提示。
@@ -114,12 +118,10 @@ export function AgentViewPage() {
   const headID = headSel ?? (sorted[0] ? String(sorted[0].id) : undefined)
   const baseID = baseSel ?? (sorted[1] ? String(sorted[1].id) : undefined)
 
-  const versionLabel = (id: string | undefined) => {
+  // diff 下拉里的选项文案：这里只有 id，先解回 DTO 再交给共享的标签函数。
+  const optionLabel = (id: string | undefined) => {
     const version = sorted.find((v) => String(v.id) === id)
-    if (!version) return id ?? ''
-    return `v${version.snapshotSeq}${
-      version.isEntry ? ' ★' : ''
-    } · ${version.modelID}`
+    return version ? versionLabel(version, sorted) : id ?? ''
   }
 
   const runDiff = async () => {
@@ -200,7 +202,7 @@ export function AgentViewPage() {
                 entryVersion.id !== savedVersionID
               ? (
                 <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
-                  ★参赛版本仍是 v{entryVersion.snapshotSeq}
+                  ★参赛版本仍是 {versionTag(entryVersion, sorted)}
                   ——新版本不会自动参赛，可在下方版本卡改标
                 </p>
               )
@@ -238,7 +240,7 @@ export function AgentViewPage() {
                     <CardContent className='space-y-3 pt-5'>
                       <div className='flex flex-wrap items-center gap-2'>
                         <span className='text-base font-bold text-(--foreground)'>
-                          v{version.snapshotSeq}
+                          {versionTag(version, sorted)}
                         </span>
                         <span className='font-mono text-xs text-(--foreground-muted)'>
                           #{version.id}
@@ -260,8 +262,8 @@ export function AgentViewPage() {
                           size='sm'
                           variant='ghost'
                           aria-label={expanded[version.id]
-                            ? `收起 v${version.snapshotSeq} 全文`
-                            : `展开 v${version.snapshotSeq} 全文`}
+                            ? `收起 ${versionTag(version, sorted)} 全文`
+                            : `展开 ${versionTag(version, sorted)} 全文`}
                           onClick={() =>
                             setExpanded((current) => ({
                               ...current,
@@ -275,7 +277,9 @@ export function AgentViewPage() {
                             <Button
                               size='sm'
                               variant='secondary'
-                              aria-label={`将 v${version.snapshotSeq} 设为参赛版本`}
+                              aria-label={`将 ${
+                                versionTag(version, sorted)
+                              } 设为参赛版本`}
                               onClick={() => void markEntry(version.id)}
                             >
                               设为参赛版本
@@ -289,7 +293,9 @@ export function AgentViewPage() {
                         <Button
                           size='sm'
                           variant='secondary'
-                          aria-label={`恢复 v${version.snapshotSeq} 到工作区`}
+                          aria-label={`恢复 ${
+                            versionTag(version, sorted)
+                          } 到工作区`}
                           title='将此版本回填到工作区草稿；不产生新版本'
                           onClick={() =>
                             navigate(
@@ -302,7 +308,9 @@ export function AgentViewPage() {
                         <Button
                           size='sm'
                           variant='secondary'
-                          aria-label={`以 v${version.snapshotSeq} 复制为新智能体`}
+                          aria-label={`以 ${
+                            versionTag(version, sorted)
+                          } 复制为新智能体`}
                           title='以此版本为首稿，在同场景同侧新建智能体（从 v1 开始）'
                           disabled={forkPending != null}
                           onClick={() => void forkAsNew(version)}
@@ -312,7 +320,7 @@ export function AgentViewPage() {
                             : '复制为新智能体'}
                         </Button>
                         <span className='text-[11px] text-(--foreground-muted)'>
-                          恢复后保存将成为新版本
+                          {nextVersionCopy(sorted.length)}
                         </span>
                       </div>
                     </CardContent>
@@ -350,7 +358,7 @@ export function AgentViewPage() {
                           <div className='w-48'>
                             <Select
                               value={baseID}
-                              renderValue={(v) => versionLabel(v)}
+                              renderValue={(v) => optionLabel(v)}
                               onValueChange={(v) => v && setBaseSel(v)}
                             >
                               {sorted.map((version) => (
@@ -358,7 +366,7 @@ export function AgentViewPage() {
                                   key={version.id}
                                   value={String(version.id)}
                                 >
-                                  {versionLabel(String(version.id))}
+                                  {optionLabel(String(version.id))}
                                 </SelectItem>
                               ))}
                             </Select>
@@ -369,7 +377,7 @@ export function AgentViewPage() {
                           <div className='w-48'>
                             <Select
                               value={headID}
-                              renderValue={(v) => versionLabel(v)}
+                              renderValue={(v) => optionLabel(v)}
                               onValueChange={(v) => v && setHeadSel(v)}
                             >
                               {sorted.map((version) => (
@@ -377,7 +385,7 @@ export function AgentViewPage() {
                                   key={version.id}
                                   value={String(version.id)}
                                 >
-                                  {versionLabel(String(version.id))}
+                                  {optionLabel(String(version.id))}
                                 </SelectItem>
                               ))}
                             </Select>
@@ -406,7 +414,7 @@ export function AgentViewPage() {
                             ] as const).map(([label, version]) => (
                               <div key={label} className='min-w-0 space-y-1.5'>
                                 <p className='text-xs font-semibold text-(--foreground-subtle)'>
-                                  {label} v{version.snapshotSeq} ·{' '}
+                                  {label} {versionTag(version, sorted)} ·{' '}
                                   {version.modelID}
                                 </p>
                                 <pre className='max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-mono text-xs leading-relaxed text-(--foreground-subtle)'>

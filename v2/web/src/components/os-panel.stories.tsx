@@ -106,7 +106,9 @@ export const UnlockedDesktop: Story = {
                 prompt: '乙侧策略',
                 modelID: 'deepseek-v4-pro',
                 isEntry: true,
-                snapshotSeq: 1,
+                ordinal: 1,
+                // 同样的非线性诱饵：按 snapshotSeq 渲染会显示 v3。
+                snapshotSeq: 3,
               }],
               entryVersionID: 2001,
             }),
