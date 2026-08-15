@@ -26,6 +26,20 @@ export interface ElevateRequest {
   code: string
 }
 
+// PATCH /v1/account/profile：服务端 trim 后要求 1–50 字符，越界答
+// invalid_display_name；成功答完整 MeResponse（同 /v1/auth/me）。
+export interface UpdateProfileRequest {
+  displayName: string
+}
+
+// POST /v1/account/password：先节流（同登录护栏，key 为 pwchange:<uid>），
+// 再验当前密码（错 → invalid_credentials），新密码 <8 位 → weak_password。
+// 成功后服务端吊销本人其他会话，本会话保持有效；答 OKResponse。
+export interface ChangePasswordRequest {
+  current: string
+  new: string
+}
+
 export interface AccountDTO {
   id: string
   email?: string | null
