@@ -59,3 +59,14 @@ export function savedAtCopy(
   if (hours < 24) return `${hours} 小时前`
   return `${Math.floor(hours / 24)} 天前`
 }
+
+// P1a：策略行的「最近编辑」。与 savedAtCopy 同一把尺，但主语是策略不是版本。
+export function editedCopy(at?: number, now = Date.now()): string {
+  if (at == null || at <= 0) return ''
+  const minutes = Math.floor((now - at * 1000) / 60000)
+  if (minutes < 1) return '刚刚编辑'
+  if (minutes < 60) return `${minutes} 分钟前编辑`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} 小时前编辑`
+  return `${Math.floor(hours / 24)} 天前编辑`
+}

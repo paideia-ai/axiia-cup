@@ -207,6 +207,8 @@ export interface MyAgentDTO {
   latestVersionID?: number | null
   // #63 自起名（P6 起）；老服务器缺席。
   name?: string | null
+  // P1a：最近一次保存或草稿暂存的时间——多策略并存时用来认出「上次在改哪个」。
+  lastEditedAt?: number
 }
 
 // A side with no agent yet is an empty array, never an absent key.

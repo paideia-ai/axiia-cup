@@ -489,3 +489,56 @@ test('agent-edit：空策略可删、有版本的不可删、空壳不开引导�
     await expect(page).toHaveURL(/\/agents\/\d+\/build/)
   })
 })
+
+test('agent-edit：最近编辑时间与排序（P1a）', async ({ page }) => {
+  test.setTimeout(300_000)
+  await signup(page, 'edit-recency')
+
+  let agentA = 0
+  let agentB = 0
+  await test.step('假如 我在商鞅侧先后有两个策略 A、B（引导门已放行）', async () => {
+    const gan = await createViaScenarioPage(page, 'b')
+    await saveVersion(page, gan, '甘龙首稿：不轻掷民力。')
+    agentA = await createViaScenarioPage(page, 'a')
+    await saveVersion(page, agentA, 'A 的首稿。')
+    await page.goto('/my-agents')
+    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
+    await page.getByRole('dialog').getByRole('button', {
+      name: '创建并进入构建',
+    }).click()
+    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
+    agentB = Number(/\/agents\/(\d+)\/build/.exec(page.url())![1])
+    await saveVersion(page, agentB, 'B 的首稿。')
+  })
+
+  await test.step('并且 我最后编辑的是 A（在 A 的工作区打了字）', async () => {
+    await page.goto(`/agents/${agentA}/build`)
+    await expect(page.getByLabel('策略提示词')).toBeEnabled({ timeout: 30_000 })
+    await page.getByLabel('策略提示词').fill(
+      'A 又改了一句，于是 A 最近被编辑。',
+    )
+    await expect(page.getByText('已自动暂存')).toBeVisible()
+  })
+
+  await test.step('那么 商鞅侧第一行是 A，且每行都显示一句相对时间', async () => {
+    await page.goto('/my-agents')
+    const rows = page.getByTestId('agent-row')
+    await expect(rows.first()).toBeVisible()
+    // 商鞅侧两行；最近编辑的 A 必须排在 B 前面（旧实现是 id 升序＝A、B 恰好
+    // 同序，所以这里特意让 B 更晚创建、A 更晚编辑，两种排序结论相反）。
+    const first = await rows.first().getAttribute('data-agent-id')
+    expect(Number(first)).toBe(agentA)
+    await expect(page.getByTestId('agent-edited').first()).toBeVisible()
+    const inventory = await (await page.request.get('/v1/my/agents'))
+      .json() as {
+        scenarios: Array<
+          { sides: { a: Array<{ agentID: number; lastEditedAt?: number }> } }
+        >
+      }
+    const side = inventory.scenarios.flatMap((s) => s.sides.a)
+    const a = side.find((x) => x.agentID === agentA)
+    const b = side.find((x) => x.agentID === agentB)
+    expect(a?.lastEditedAt ?? 0).toBeGreaterThan(0)
+    expect(a!.lastEditedAt!).toBeGreaterThanOrEqual(b!.lastEditedAt!)
+  })
+})

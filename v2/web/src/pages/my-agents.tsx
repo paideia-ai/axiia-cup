@@ -18,6 +18,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { messageOf, useAsync } from '../lib/use-async'
+import { editedCopy } from '../lib/version-label'
 
 // 我的智能体（#73/#64）：按场景分组的一级入口页。P2 数据化——主数据源是
 // GET /v1/my/agents（版本数/★参赛版本/双侧完成度/参赛资格，#64/#58，样式对照
@@ -201,7 +202,11 @@ function ScenarioGroup({
     ['b', scenario.sideBName, scenario.sideBLabel],
   ] as const
 
-  const agentsOf = (side: Side): MyAgentDTO[] => inventory?.sides[side] ?? []
+  // P1a：按最近编辑倒序——回到这一页，最想先看到的是上次在改的那个。
+  const agentsOf = (side: Side): MyAgentDTO[] =>
+    [...(inventory?.sides[side] ?? [])].sort(
+      (a, b) => (b.lastEditedAt ?? 0) - (a.lastEditedAt ?? 0),
+    )
   const hasEntry = (side: Side) =>
     agentsOf(side).some((agent) => agent.entryVersionID != null)
 
@@ -261,6 +266,8 @@ function ScenarioGroup({
                 {agents.map((agent) => (
                   <div
                     key={agent.agentID}
+                    data-testid='agent-row'
+                    data-agent-id={agent.agentID}
                     className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
                   >
                     {
@@ -339,6 +346,16 @@ function ScenarioGroup({
                         {agent.entryVersionID != null
                           ? '已标 ★参赛版本'
                           : '未标参赛版本'}
+                        {editedCopy(agent.lastEditedAt)
+                          ? (
+                            <>
+                              {' · '}
+                              <span data-testid='agent-edited'>
+                                {editedCopy(agent.lastEditedAt)}
+                              </span>
+                            </>
+                          )
+                          : null}
                         {label ? ` · ${label}` : ''}
                       </p>
                     </div>
