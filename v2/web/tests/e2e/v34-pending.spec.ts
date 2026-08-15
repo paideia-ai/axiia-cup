@@ -333,7 +333,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       'sibling_gate',
     )
 
-    // 引导 CTA 切到对侧并创建成功——门只认「对侧存在」，不问版本。
+    // 引导 CTA 切到对侧并创建成功。
     await dialog.getByRole('button', { name: `先创建${sideBName}` }).click()
     await dialog.getByTestId('create-agent').click()
     await expect(page).toHaveURL(/\/agents\/\d+\/build/)
@@ -343,7 +343,21 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     expect(oppositeAgentID).toBeGreaterThan(0)
     expect(oppositeAgentID).not.toBe(firstAgentID)
 
-    // 对侧齐备后，同侧第 2 个放行。
+    // P8a：门认的是「对侧**有版本的**策略」，不是光有个号——空壳开门等于没门。
+    // 所以这里必须先给对侧存一版，否则下面的放行不该发生。
+    const stillBlocked = await page.request.post('/v1/agents', {
+      headers: sameOrigin,
+      data: { scenarioID, side: 'a' },
+    })
+    expect(stillBlocked.status()).toBe(409)
+
+    const oppositeInput = page.getByLabel('策略提示词')
+    await expect(oppositeInput).toBeEnabled()
+    await oppositeInput.fill('对侧首稿：先谈代价，再谈道理。')
+    await page.getByTestId('save-version').click()
+    await expect(page.getByTestId('version-card').first()).toBeVisible()
+
+    // 对侧齐备（且有版本）后，同侧第 2 个放行。
     await page.goto('/my-agents')
     await page
       .getByRole('button', { name: `再建一个${title}·${sideAName}侧智能体` })

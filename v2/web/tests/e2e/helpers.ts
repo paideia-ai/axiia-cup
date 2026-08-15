@@ -254,8 +254,10 @@ export async function buildVersion(
 ) {
   await page.goto(`/scenarios/${scenarioID}`)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  const buildButtons = page.getByRole('button', { name: '去构建' })
-  await buildButtons.nth(side === 'a' ? 0 : 1).click()
+  // P13：该侧已有策略时「去构建」会换成「再建一个」，按序号取按钮不再可靠
+  // ——用逐侧稳定 testid（本函数只走该侧尚无策略的首建路径）。
+  await page.getByTestId(side === 'a' ? 'build-agent' : 'build-agent-b')
+    .click()
   await expect(page).toHaveURL(/\/agents\/\d+\/build/)
   const agentID = Number(/\/agents\/(\d+)\/build/.exec(page.url())?.[1])
   expect(agentID).toBeGreaterThan(0)
@@ -267,7 +269,9 @@ export async function buildVersion(
   const save = page.getByTestId('save-version')
   await expect(save).toBeEnabled()
   await save.click()
-  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
+  // #88：保存不再跳转——留在 E 页，版本线就地长出这一版。
+  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build`))
+  await expect(page.getByTestId('version-card').first()).toBeVisible()
 
   const versionsResponse = await page.request.get(
     `/v1/agents/${agentID}/versions`,

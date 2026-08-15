@@ -2,7 +2,12 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
-import { nextVersionCopy, versionTag } from '../lib/version-label'
+import {
+  nextVersionCopy,
+  recordCopy,
+  savedAtCopy,
+  versionTag,
+} from '../lib/version-label'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -14,6 +19,8 @@ import { Card, CardContent } from './ui/card'
 
 interface VersionListProps {
   versions: AgentVersionDTO[]
+  // P4/#91：★ 是「这一侧的出战席位」，按钮要说清是哪一侧。
+  sideName?: string
   onSetEntry: (versionID: number) => void
   onIterate: (version: AgentVersionDTO) => void
   onField: (version: AgentVersionDTO) => void
@@ -24,6 +31,7 @@ interface VersionListProps {
 
 export function VersionList({
   versions,
+  sideName,
   onSetEntry,
   onIterate,
   onField,
@@ -81,6 +89,24 @@ export function VersionList({
                   ? <Badge tone='accent'>★参赛版本</Badge>
                   : null}
               </div>
+              {/* P15/P10：战绩、保存时间、备注——E5 与 B3 承诺过的版本身份 */}
+              <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--foreground-muted)'>
+                <span data-testid='version-record'>{recordCopy(version)}</span>
+                {savedAtCopy(version)
+                  ? (
+                    <span data-testid='version-time'>
+                      {savedAtCopy(version)}
+                    </span>
+                  )
+                  : null}
+                {version.note
+                  ? (
+                    <span className='text-(--foreground-subtle)'>
+                      备注：{version.note}
+                    </span>
+                  )
+                  : null}
+              </div>
               <p
                 className={`whitespace-pre-wrap text-sm text-(--foreground-subtle) ${
                   expanded[version.id] ? '' : 'line-clamp-3'
@@ -108,12 +134,15 @@ export function VersionList({
                     <Button
                       size='sm'
                       variant='secondary'
-                      aria-label={`将 ${
-                        versionTag(version, sorted)
-                      } 设为参赛版本`}
+                      aria-label={`将 ${versionTag(version, sorted)} 设为${
+                        sideName ?? ''
+                      }参赛版本`}
+                      title={sideName
+                        ? `把${sideName}这一侧的出战席位交给这一版；同侧其他智能体的 ★ 会被收走`
+                        : undefined}
                       onClick={() => onSetEntry(version.id)}
                     >
-                      设为参赛版本
+                      设为{sideName ?? ''}参赛版本
                     </Button>
                   )
                   : null}

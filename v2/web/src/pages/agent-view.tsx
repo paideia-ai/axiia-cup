@@ -226,6 +226,7 @@ export function AgentViewPage() {
             {/* 版本线与 E 页同构（#88）：同一件事在哪都长一样（E9） */}
             <VersionList
               versions={data.versions}
+              sideName={sideName}
               onSetEntry={(versionID) => void markEntry(versionID)}
               onIterate={(version) =>
                 navigate(`/agents/${agentID}/build?from=${version.id}`)}

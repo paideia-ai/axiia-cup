@@ -25,6 +25,7 @@ import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
+import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { initModesAvailable } from '../lib/deck'
 import { metaPromptFor } from '../lib/meta-prompt'
@@ -83,6 +84,8 @@ export function BuilderPage() {
   const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  // P10：保存时的可选备注，写一次不再改；保存成功即清空，下一版重新填。
+  const [note, setNote] = useState('')
   // P1：策略展示名（#63）。draft 接口不带 name，先从 /my/agents 取。
   const [agentName, setAgentName] = useState<string | null>(null)
   // P11（Yihan 修订）：只有草稿与最新版本不一致时才拦——一致说明没有未保存
@@ -354,6 +357,7 @@ export function BuilderPage() {
         prompt,
         method: initMethod.current ?? 'raw',
         modelID,
+        ...(note.trim() === '' ? {} : { note: note.trim() }),
         ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
       })
       if (express) {
@@ -367,6 +371,7 @@ export function BuilderPage() {
       setVersions(nextVersions)
       setEntryVersionID(list?.entryVersionID ?? entryVersionID)
       setRestoredTag(null)
+      setNote('')
       // E10（#84）：保存不移动参赛标记——新版本不是 ★ 时提醒一句。
       const entryID = list?.entryVersionID ?? entryVersionID
       const entry = nextVersions.find((v) => v.id === entryID)
@@ -386,13 +391,28 @@ export function BuilderPage() {
     }
   }
 
+  // P4/#91：改标＝把这一侧的出战席位交给这一版；服务端会收走同侧其他智能体的
+  // ★，所以提示要说清「从哪来」——玩家看不到别的策略时最容易以为没生效。
   const setEntry = async (versionID: number) => {
     setError(null)
+    const previous = versions.find((v) => v.id === entryVersionID) ?? null
     try {
       await builder.setEntry(agentID, versionID)
       const list = await builder.versions(agentID)
       setVersions(list.versions)
       setEntryVersionID(list.entryVersionID ?? null)
+      const next = list.versions.find((v) => v.id === versionID)
+      if (next != null) {
+        setSaveNotice(
+          previous != null && previous.id !== versionID
+            ? `★ 已从 ${versionTag(previous, list.versions)} 移到 ${
+              versionTag(next, list.versions)
+            }`
+            : `★ 已交给 ${
+              versionTag(next, list.versions)
+            }——${sideDisplayName}这一侧由它出战`,
+        )
+      }
     } catch (cause) {
       setError(messageOf(cause, '设置参赛版本失败'))
     }
@@ -621,6 +641,16 @@ export function BuilderPage() {
                 )
             )
             : null}
+          {/* P10：E5 说版本身份含备注——保存时可选填，卡上回看 */}
+          <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
+            <span>版本备注（可选）</span>
+            <Input
+              value={note}
+              maxLength={60}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder='这一版改了什么，比如「加了退让条款」'
+            />
+          </label>
           <div className='flex flex-wrap items-end gap-3'>
             {roles.length > 0
               ? (
@@ -737,6 +767,7 @@ export function BuilderPage() {
         ? (
           <VersionList
             versions={versions}
+            sideName={sideDisplayName}
             onSetEntry={(versionID) => void setEntry(versionID)}
             onIterate={requestIterate}
             onField={(version) => {
