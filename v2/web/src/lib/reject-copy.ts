@@ -85,6 +85,28 @@ export function rejectCopy(
   }
 }
 
+// 账户自助（settings 页：改昵称 / 改密码）的错误码族。invalid_credentials
+// 在这里专指「当前密码」验证失败——登录页不经过这个函数，两处文案互不串扰；
+// throttled 来自与登录共用的节流护栏（pwchange:<uid>），错误形状相同。
+export function accountRejectCopy(
+  error: unknown,
+  fallback = '请求失败',
+): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case 'invalid_credentials':
+        return '当前密码不正确'
+      case 'weak_password':
+        return '新密码至少 8 位'
+      case 'invalid_display_name':
+        return '昵称需为 1–50 个字符'
+      case 'throttled':
+        return '尝试太频繁，请稍后再试'
+    }
+  }
+  return rejectCopy(error, null, fallback)
+}
+
 // 约战上下文的配额文案（#52/Q7 成对语义）：一次约战计 2 场、要么整对要么
 // 不发——普通单场文案在这里会误导（「已用完」不准确，是「不足一整对」）。
 // 三个配额码换成对版本，其余仍走 rejectCopy。

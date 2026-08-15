@@ -14,6 +14,7 @@ import type {
   LoginRequest,
   MeResponse,
   SignupRequest,
+  UpdateProfileRequest,
 } from '../api/types'
 
 interface AuthContextValue {
@@ -28,6 +29,9 @@ interface AuthContextValue {
   signup: (input: SignupRequest) => Promise<MeResponse>
   logout: () => Promise<void>
   elevate: (code: string) => Promise<void>
+  // 账户自助：改昵称答完整 me，成功即覆盖本地账户态（同 elevate 的姿势）。
+  // 改密码不改账户态，settings 页直接调 api client，不经过这里。
+  updateProfile: (input: UpdateProfileRequest) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -90,6 +94,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       elevate: async (code) => {
         const me = await auth.elevate({ code })
+        setAccount(me.account)
+        setElevated(me.elevated)
+        setFirstBattleDone(me.firstBattleDone === true)
+      },
+      updateProfile: async (input) => {
+        const me = await auth.updateProfile(input)
         setAccount(me.account)
         setElevated(me.elevated)
         setFirstBattleDone(me.firstBattleDone === true)

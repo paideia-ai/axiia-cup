@@ -2,6 +2,7 @@ import type {
   AgentRefResponse,
   AgentVersionDTO,
   ChallengeResponse,
+  ChangePasswordRequest,
   ConfigResponse,
   CreateAgentRequest,
   CreateChallengeRequest,
@@ -34,6 +35,7 @@ import type {
   SlotListResponse,
   StandingsResponse,
   TournamentListResponse,
+  UpdateProfileRequest,
   UpdateSlotRequest,
   VersionDiffResponse,
   VersionListResponse,
@@ -122,6 +124,12 @@ export const auth = {
   me: () => request<MeResponse>('GET', '/auth/me'),
   elevate: (input: ElevateRequest) =>
     request<MeResponse>('POST', '/auth/elevate', input),
+  // 账户自助（settings 页）：改昵称答完整 me，SPA 直接 setAccount 而不再拉
+  // /auth/me；改密成功后本会话保持有效、其他会话被服务端吊销。
+  updateProfile: (input: UpdateProfileRequest) =>
+    request<MeResponse>('PATCH', '/account/profile', input),
+  changePassword: (input: ChangePasswordRequest) =>
+    request<OKResponse>('POST', '/account/password', input),
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────
