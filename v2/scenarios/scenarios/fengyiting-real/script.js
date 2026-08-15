@@ -37,6 +37,11 @@ const meta = {
       ],
     },
     {
+      id: 'aside',
+      title: '貂蝉心声',
+      channels: [{ id: 'judge-aside', label: '貂蝉心中' }],
+    },
+    {
       id: 'verdict',
       title: '终局·貂蝉裁决',
       channels: [{ id: 'verdict', label: '貂蝉独处' }],
@@ -143,6 +148,8 @@ const meta = {
     },
   ],
   speakerLabels: { a: '董卓', b: '吕布', diaochan: '貂蝉', spy: '细作', veteran: '董卓旧部' },
+  // 服务端可见的 lane 归属声明（#20/#80 观众过滤用）：npc=官方，内心公开。
+  lanes: { diaochan: 'npc', spy: 'npc', veteran: 'npc' },
 }
 
 const NAMES = { a: '董卓', b: '吕布' }
@@ -173,6 +180,8 @@ const diaochanSystem = `你正在扮演貂蝉，三国演义故事连环计中�
 你聪明、审慎、善于表演，也善于揪住言辞中的矛盾。倾听、坦白、承诺、财富、权势、武力与保护能力都可能真实地影响你——你在乎的不是这些条件是否高尚，而是它们让你的未来更安全还是更危险。允许对话真正改变你的信任与感情，不要为了显得中立而拒绝被打动。
 
 你与二人分别相见时，向谁说什么、瞒什么、如何转述你与另一人的往来，全凭你自己的处境与心计；系统不替你传话，也不替你保守或泄露任何秘密。
+
+这几日周旋之间，你不时得着片刻喘息——灯影一转、语声暂歇，无人留意你。那时你在心里对自己说一段话：那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻的心更向着谁、此刻最放心不下的一件事。
 
 对话规则：
 - 模仿罗贯中《三国演义》中貂蝉的真实口吻说话。
@@ -227,6 +236,7 @@ const srVerdict = `【系统】全部会面已经结束，现在你必须独自�
 async function main() {
   const stageOneRounds = game.params.stageOneRounds ?? 3
   const meetingRounds = game.params.meetingRounds ?? 5
+  const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
 
   const players = {
     a: game.agent('a', { system: playerSystem('董卓', '吕布', game.playerPrompt('a')), side: 'a' }),
@@ -237,6 +247,28 @@ async function main() {
     model: game.params.diaochanModel ?? 'deepseek-v4-pro',
   })
   const stripActions = (line) => line.replace(/（[^）]*）/g, '').trim()
+
+  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
+  // 不在此生成。
+  const osFields = {
+    os: { hint: '你此刻的心声——无人听见的自语，不必公允，不必成篇，短即可', long: true },
+    attention: { hint: '你此刻最放心不下的一件事，一句话' },
+    favor: { enum: [NAMES.a, NAMES.b], hint: '此刻你的心更向着谁' },
+    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份偏向此刻有多分明' },
+  }
+
+  // 貂蝉亲历亲闻她所知的每一句话——公开对峙她在场旁听，四场私会她亲自与谈，
+  // 故无批文可录呈；心声节拍只给她一个独处的间隙。细作、旧部与王允眼线的密报
+  // 只达董卓或吕布，貂蝉一概不知，绝不推给她。
+  const osTotalRounds = stageOneRounds + meetingRounds * 4
+  let osRound = 0
+  const osBeat = async () => {
+    osRound++
+    // 最后一程直抵终局：临裁决前的言语不设节拍，原样留在她心里。
+    if (osRound % osInterval !== 0 || osRound >= osTotalRounds) return
+    diaochan.push('【系统】灯影一转，语声暂歇，无人留意你。你在心里对自己说一段话——无人听见。')
+    await diaochan.act({ fields: osFields }, { key: `os-${osRound}`, channel: 'judge-aside' })
+  }
 
   const runMeeting = async (side, channel, playerIntro, diaochanIntro, sceneText, afterRound) => {
     const player = players[side]
@@ -251,6 +283,9 @@ async function main() {
       const reply = (await diaochan.say({ channel: channel })).text
       player.hear('貂蝉', reply)
       lines.push(`貂蝉：${stripActions(reply)}`)
+      // 心声先于打断：独处提示要落在本轮话音刚歇、侍从催促之前，
+      // 否则「无人留意你」会撞上催促的灯火。
+      await osBeat()
       if (afterRound) await afterRound(round)
     }
     return lines.join('\n')
@@ -275,6 +310,7 @@ async function main() {
     const lyuLine = (await players.b.say({ channel: 'public' })).text
     players.a.hear(NAMES.b, lyuLine)
     diaochan.hear(NAMES.b, lyuLine)
+    await osBeat()
   }
 
   game.phase('顺序裁决')
@@ -430,6 +466,8 @@ async function main() {
   )
 
   const chosen = verdict.fields.side === NAMES.a ? 'a' : 'b'
+  const scoreA = chosen === 'a' ? 1 : 0
+  const scoreB = chosen === 'b' ? 1 : 0
   game.emit('verdict', {
     type: 'verdict',
     actor: 'diaochan',
@@ -437,10 +475,19 @@ async function main() {
     winner: chosen,
   })
 
+  game.emit('verdict', {
+    type: 'score',
+    scheme: verdict.fields.scheme,
+    chosen: NAMES[chosen],
+    scoreA: scoreA,
+    scoreB: scoreB,
+    winner: chosen,
+  })
+
   return {
     winner: chosen,
-    scoreA: chosen === 'a' ? 1 : 0,
-    scoreB: chosen === 'b' ? 1 : 0,
+    scoreA: scoreA,
+    scoreB: scoreB,
     reasoning: `貂蝉${verdict.fields.scheme}，选择${NAMES[chosen]}。\n\n${verdict.fields.speech}`,
   }
 }

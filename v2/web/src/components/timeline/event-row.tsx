@@ -11,6 +11,7 @@ import {
   scriptEvent,
 } from '../../lib/event'
 import type { SpeakerLabels } from './labels'
+import { renderJuryEvent } from './jury-event-row'
 import { speakerName } from './labels'
 
 // One rendering per `game.emit` type. An unknown type is still a row: its own text
@@ -272,11 +273,19 @@ function GenericRow({
 export function EventRow({
   turn,
   labels,
+  scenarioID,
+  showReasoning,
 }: {
   turn: TurnDTO
   labels: SpeakerLabels
+  scenarioID: string
+  showReasoning: boolean
 }) {
   const event = scriptEvent(turn)
+  const juryRow = event && scenarioID === 'legal-harbor-murder-jury'
+    ? renderJuryEvent(event, labels, showReasoning)
+    : null
+  if (juryRow) return juryRow
   switch (event ? eventType(event) : null) {
     case 'scene':
       return <SceneRow event={event!} labels={labels} />

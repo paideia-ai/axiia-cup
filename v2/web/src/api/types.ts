@@ -26,6 +26,20 @@ export interface ElevateRequest {
   code: string
 }
 
+// PATCH /v1/account/profile：服务端 trim 后要求 1–50 字符，越界答
+// invalid_display_name；成功答完整 MeResponse（同 /v1/auth/me）。
+export interface UpdateProfileRequest {
+  displayName: string
+}
+
+// POST /v1/account/password：先节流（同登录护栏，key 为 pwchange:<uid>），
+// 再验当前密码（错 → invalid_credentials），新密码 <8 位 → weak_password。
+// 成功后服务端吊销本人其他会话，本会话保持有效；答 OKResponse。
+export interface ChangePasswordRequest {
+  current: string
+  new: string
+}
+
 export interface AccountDTO {
   id: string
   email?: string | null
@@ -38,6 +52,9 @@ export interface AccountDTO {
 export interface MeResponse {
   account: AccountDTO
   elevated: boolean
+  // A3/#12：是否完成过自己发起的对局（派生，服务端算）。P5 才消费；老服务
+  // 器缺席 → undefined，当 false 用。
+  firstBattleDone?: boolean
 }
 
 // ── CatalogDTOs ─────────────────────────────────────────────────────────────
@@ -51,7 +68,27 @@ export interface ScenarioSummary {
   sideALabel: string
   sideBLabel: string
   turnCount: number
+  // #65: true only when BOTH sides meet the per-side trial threshold.
   gateUnlocked: boolean
+  // Additive (G12): per-side progress toward that threshold; absent on a
+  // pre-P2 server.
+  gateProgress?: GateProgressDTO | null
+  // #38/#39：只在达到展示门槛时出现——低于门槛服务端整个省略 key，前端
+  // 不可能误显示小样本胜率；老服务器同样缺席。
+  stats?: ScenarioStatsDTO | null
+  // #54：场景槽位上线的 epoch 秒，「新上线」徽章的依据。
+  onlineAt?: number | null
+}
+
+export interface SideWinRateDTO {
+  a: number
+  b: number
+}
+
+// 计分口径（#38）：每场计 1、含 PVE，只数已计分对局。
+export interface ScenarioStatsDTO {
+  battleCount: number
+  sideWinRate: SideWinRateDTO
 }
 
 export interface ChannelDTO {
@@ -102,10 +139,93 @@ export interface OpponentAgentDTO {
   agentID: number
   displayName: string
   isSelf: boolean
+  // P6 多智能体：所有者给这个 agent 起的可选名字。
+  name?: string | null
+  // #66：所有者账号 id——按玩家约战的目标；老服务器缺席。
+  ownerAccountID?: string | null
 }
 
 export interface OpponentListResponse {
   opponents: OpponentAgentDTO[]
+}
+
+// ── ConfigDTOs ──────────────────────────────────────────────────────────────
+
+// The read-only client projection behind GET /v1/config (RFC §5 P2).
+export interface ConfigResponse {
+  dailyBattleLimit: number
+  pvpDailyLimit: number
+  concurrencyLimit: number
+  // Per-side threshold (#65): distinct presets to beat on EACH side for pvp.
+  pvpUnlockPerSideWins: number
+  statsDisplayThreshold: number
+  promptUnitLimit: number
+  expressPreset?: ExpressPresetDTO | null
+  // The same list GET /v1/models serves.
+  models: ModelDTO[]
+  visibility: VisibilityDTO
+  opponentDailyChallengeLimit: number
+  trialsBlocked: boolean
+  usage: UsageDTO
+}
+
+export interface ExpressPresetDTO {
+  scenarioID: string
+  side: string
+  presetKey: string
+}
+
+// Spec #20's three owner-only surfaces, named for clients so the restriction
+// list is data, not lore.
+export interface VisibilityDTO {
+  ownerOnly: string[]
+}
+
+// The calling user's consumption against the daily quotas (UTC+8 day, R16).
+export interface UsageDTO {
+  battlesToday: number
+  pvpBattlesToday: number
+}
+
+// Per-side trial progress (G12/#65): distinct presets beaten vs the threshold.
+export interface GateSideProgressDTO {
+  beaten: number
+  needed: number
+}
+
+export interface GateProgressDTO {
+  a: GateSideProgressDTO
+  b: GateSideProgressDTO
+}
+
+// One of the caller's agents in the GET /v1/my/agents inventory. Names arrive
+// in P6; until then an agent is identified by its scenario/side position.
+export interface MyAgentDTO {
+  agentID: number
+  versionCount: number
+  entryVersionID?: number | null
+  latestVersionID?: number | null
+  // #63 自起名（P6 起）；老服务器缺席。
+  name?: string | null
+}
+
+// A side with no agent yet is an empty array, never an absent key.
+export interface SideAgentsDTO {
+  a: MyAgentDTO[]
+  b: MyAgentDTO[]
+}
+
+export interface MyAgentsScenarioDTO {
+  scenarioID: string
+  title: string
+  sides: SideAgentsDTO
+  gateProgress: GateProgressDTO
+  // #58: both sides hold an entry-flagged version.
+  entryReady: boolean
+}
+
+export interface MyAgentsResponse {
+  scenarios: MyAgentsScenarioDTO[]
 }
 
 // ── SubmissionDTOs (builder) ────────────────────────────────────────────────
@@ -115,8 +235,29 @@ export interface EnsureAgentRequest {
   side: string
 }
 
+// E4「复制为新智能体」（#84）的落点：POST /v1/agents 总是在同场景同侧新建
+// 一个 agent（从 v1 开始），受 #59/#79 引导门约束——与 ensure 的 get-or-create
+// 语义不同。`name` 随 P6 命名批次启用，当前可省略。
+export interface CreateAgentRequest {
+  scenarioID: string
+  side: string
+  name?: string | null
+}
+
 export interface AgentRefResponse {
   agentID: number
+}
+
+// GET /v1/versions/:id/ref（P3 #25/#62）：任意可见版本 id 的公开身份——玩家/
+// 场景/侧/模型，够钉一次约战，永远不含提示词。
+export interface VersionRefResponse {
+  versionID: number
+  agentID: number
+  side: string
+  scenarioID: string
+  ownerAccountID: string
+  ownerDisplayName: string
+  modelID: string
 }
 
 export interface FieldMutationRequest {
@@ -133,6 +274,8 @@ export interface SaveVersionRequest {
   modelID: string
   parentVersionID?: number | null
   options?: string | null
+  // 初始化来源佐证（#83）：'raw' | 'mcq' | 'builder'（元提示词）。文本仍是唯一事实源。
+  method?: string | null
 }
 
 export interface AgentVersionDTO {
@@ -142,6 +285,10 @@ export interface AgentVersionDTO {
   modelID: string
   parentVersionID?: number | null
   isEntry: boolean
+  // E2/#82：线性版本号（v1 → v2 → … → vN），服务端按 id 次序派生。要显示版本号
+  // 只能读这个；服务端还没带上时（部署错位）由 lib/version-label 按 id 次序补。
+  ordinal?: number
+  // 草稿自动暂存水位（服务端脏检测用），不是版本号——永远不要渲染它。
   snapshotSeq: number
   options?: string | null
 }
@@ -190,6 +337,35 @@ export interface DispatchResponse {
   matchID: number
 }
 
+// POST /v1/challenges（P3 #66）：一次约战＝成对两场 PVP。`mine` 必须为我的
+// 每一侧各给一个版本（缺 key 是业务错误 both_sides_required，不是解码失败）；
+// `opponent` 二选一：按账号，或钉住一个版本（钉住的版本占它自己那一侧）。
+export interface ChallengeSideRef {
+  versionID: number
+}
+
+export interface ChallengeMineRequest {
+  a?: ChallengeSideRef | null
+  b?: ChallengeSideRef | null
+}
+
+export interface ChallengeOpponentRequest {
+  accountID?: string | null
+  pinnedVersionID?: number | null
+}
+
+export interface CreateChallengeRequest {
+  scenarioID: string
+  mine: ChallengeMineRequest
+  opponent: ChallengeOpponentRequest
+}
+
+// `matchIDs` 固定 [leg1, leg2]；`challengeID` 是这一对的共享 id。
+export interface ChallengeResponse {
+  challengeID: number
+  matchIDs: number[]
+}
+
 export type TurnKind = 'dialogue' | 'event'
 
 // Any JSON the script emitted; the emit vocabulary is per-scenario content.
@@ -219,6 +395,26 @@ export interface TurnDTO {
   finishReason?: string | null
 }
 
+// 一侧参战方（G20，viewer 过滤）：`isMine` 只对请求者本人计算，从不复述他人
+// 的所有权；提示词永不出现。预设侧带 presetKey（+模型）；版本侧带对手钉约战
+// （P3）所需的版本/agent/玩家名引用。
+export interface MatchParticipantDTO {
+  agentID?: number | null
+  versionID?: number | null
+  presetKey?: string | null
+  ownerDisplayName?: string | null
+  modelID?: string | null
+  isMine: boolean
+}
+
+export interface MatchParticipantsDTO {
+  a: MatchParticipantDTO
+  b: MatchParticipantDTO
+}
+
+// P3 新增字段全部 additive：老服务器缺席时按 P1/P2 行为渲染。
+// `createdAt`/`finishedAt` 是 epoch 秒；`challengeID`/`challengeLeg` 标记
+// 约战成对的两条腿；`initiatorIsMe` 按观众视角计算。
 export interface MatchSummary {
   id: number
   scenarioID: string
@@ -228,6 +424,12 @@ export interface MatchSummary {
   finished: boolean
   scored: boolean
   winner?: string | null
+  participants?: MatchParticipantsDTO | null
+  createdAt?: number | null
+  finishedAt?: number | null
+  challengeID?: number | null
+  challengeLeg?: number | null
+  initiatorIsMe?: boolean
 }
 
 // `output` is the program validator's normalized JSON, carried as a string.
@@ -281,6 +483,9 @@ export type MatchEventDTO =
       // same in-flight turn.
       phase: string
       delta: string
+      // 'say' | 'act' | 'act_repair' — 外层生成型别。act 的 text 流里带结构化
+      // 标签（#22），渲染前要剥；老服务端不带这个字段。
+      call?: string
     }
   }
   | { verdictRecorded: { matchID: number; key: string } }
@@ -315,12 +520,18 @@ export interface StandingsResponse {
   entries: StandingsEntryDTO[]
 }
 
+// `title`/`body` 是服务端渲染好的中文（G25）——客户端只展示、不再拼写；
+// 新契约必发，老服务器缺席 → 回落到本地 kind 文案。`link` 是 SPA 路径
+// （如 /matches/7），该 kind 无落点时缺席。
 export interface NotificationDTO {
   id: number
   kind: string
   matchID?: number | null
   tournamentID?: number | null
   read: boolean
+  title?: string
+  body?: string
+  link?: string | null
 }
 
 export interface NotificationsResponse {

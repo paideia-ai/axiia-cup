@@ -1,6 +1,11 @@
 import type {
   AgentRefResponse,
   AgentVersionDTO,
+  ChallengeResponse,
+  ChangePasswordRequest,
+  ConfigResponse,
+  CreateAgentRequest,
+  CreateChallengeRequest,
   CreateRegistrationCodeRequest,
   CreateScriptRequest,
   DispatchPVERequest,
@@ -16,6 +21,7 @@ import type {
   MatchListResponse,
   MeResponse,
   ModelListResponse,
+  MyAgentsResponse,
   NotificationsResponse,
   OKResponse,
   OpponentListResponse,
@@ -29,9 +35,11 @@ import type {
   SlotListResponse,
   StandingsResponse,
   TournamentListResponse,
+  UpdateProfileRequest,
   UpdateSlotRequest,
   VersionDiffResponse,
   VersionListResponse,
+  VersionRefResponse,
 } from './types'
 
 // Same-origin by design (plan §6): the SPA is served from the Swift origin (dev:
@@ -116,6 +124,12 @@ export const auth = {
   me: () => request<MeResponse>('GET', '/auth/me'),
   elevate: (input: ElevateRequest) =>
     request<MeResponse>('POST', '/auth/elevate', input),
+  // 账户自助（settings 页）：改昵称答完整 me，SPA 直接 setAccount 而不再拉
+  // /auth/me；改密成功后本会话保持有效、其他会话被服务端吊销。
+  updateProfile: (input: UpdateProfileRequest) =>
+    request<MeResponse>('PATCH', '/account/profile', input),
+  changePassword: (input: ChangePasswordRequest) =>
+    request<OKResponse>('POST', '/account/password', input),
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────
@@ -133,6 +147,29 @@ export const catalog = {
       'GET',
       `/scenarios/${encodeURIComponent(id)}/opponents?side=${side}`,
     ),
+}
+
+// ── Config & inventory (P2) ─────────────────────────────────────────────────
+
+export const config = {
+  // §C2 read-only projection: quotas, gate threshold, models, trials switch,
+  // plus the caller's usage. Callers must degrade gracefully on failure.
+  get: () => request<ConfigResponse>('GET', '/config'),
+}
+
+export const myAgents = {
+  // Cross-scenario inventory of the caller's agents (#64/#58).
+  list: () => request<MyAgentsResponse>('GET', '/my/agents'),
+}
+
+// ── Agents（多槽位，#56/#84） ────────────────────────────────────────────────
+
+export const agents = {
+  // E4 复制为新智能体：在同场景同侧另建一个 agent（受 #59 引导门，错误码
+  // sibling_gate 走 lib/reject-copy）。后端批次未上线时答 404/405，调用方
+  // 就地降级文案、按钮保留。
+  create: (input: CreateAgentRequest) =>
+    request<AgentRefResponse>('POST', '/agents', input),
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────
@@ -168,12 +205,32 @@ export const matches = {
   detail: (id: number) => request<MatchDetail>('GET', `/matches/${id}`),
 }
 
+// ── Challenges（P3 #66） ────────────────────────────────────────────────────
+
+export const challenges = {
+  // 双侧成对约战：一次产生两场（正/反），配额对发起人计 2 场。后端批次未
+  // 上线时答 404/405，调用方降级为功能提示，不摆假控件。
+  create: (input: CreateChallengeRequest) =>
+    request<ChallengeResponse>('POST', '/challenges', input),
+}
+
+export const versions = {
+  // #25/#62 按 id 约战的解析读：版本 id → {玩家/场景/侧/模型}；不存在 → 404
+  // not_found；老服务器无此端点，同样按降级处理。
+  ref: (id: number) =>
+    request<VersionRefResponse>('GET', `/versions/${id}/ref`),
+}
+
 // ── Notifications ───────────────────────────────────────────────────────────
 
 export const notifications = {
   list: () => request<NotificationsResponse>('GET', '/notifications'),
   markRead: (id: number) =>
     request<OKResponse>('POST', `/notifications/${id}/read`),
+  // G25 批量动作：两个都按调用者本人圈定，无 id 可漏。老服务器 404 → 调用方
+  // 就地提示，不影响逐条已读。
+  readAll: () => request<OKResponse>('POST', '/notifications/read-all'),
+  clear: () => request<OKResponse>('DELETE', '/notifications'),
 }
 
 // ── Tournaments ─────────────────────────────────────────────────────────────

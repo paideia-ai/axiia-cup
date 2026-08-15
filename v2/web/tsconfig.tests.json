@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    ".storybook",
+    "src/**/*.stories.tsx",
+    "src/**/*.test.ts",
+    "src/testing",
+    "tests",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "vitest.storybook.config.ts"
+  ],
+  "compilerOptions": {
+    "types": [
+      "vite/client",
+      "node",
+      "vitest/globals",
+      "msw-storybook-addon/csf3"
+    ]
+  }
+}

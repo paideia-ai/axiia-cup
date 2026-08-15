@@ -13,6 +13,11 @@ type SideValue = Side | (string & Record<never, never>)
 
 type WinnerValue = MatchWinner | (string & Record<never, never>)
 
+type AdjudicationModeValue =
+  | 'single-judge'
+  | 'jury-vote'
+  | (string & Record<never, never>)
+
 interface ScenarioChannel {
   id: string
   label: string
@@ -45,6 +50,10 @@ interface ScenarioMeta {
   stages?: ScenarioStage[]
   presets?: PresetOpponent[]
   speakerLabels?: Record<string, string>
+  lanes?: Record<string, SideValue | 'judge' | 'npc'>
+  // Omitted means the standard single in-world judge. A jury-vote scenario
+  // replaces that judge with a mechanically tallied multi-agent vote.
+  adjudicationMode?: AdjudicationModeValue
 }
 
 interface ScenarioResult {

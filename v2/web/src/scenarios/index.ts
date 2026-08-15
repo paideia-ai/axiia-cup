@@ -1,12 +1,22 @@
 import type { JSONValue, Side } from '../api/types'
+import { fengyitingReal } from './fengyiting-real'
 import { honnojiDecision } from './honnoji-decision'
+import { sanguoChain } from './sanguo-chain'
+import { shangyangCourt } from './shangyang-court'
+import { trolleyProblem } from './trolley-problem'
 import type { ScenarioModule, ScenarioRole } from './types'
 
 export type { ScenarioModule, ScenarioRole } from './types'
 
 // Every scenario the SPA knows something extra about. A scenario absent from here
 // is not broken: it renders through the generic, server-driven path.
-const MODULES: ScenarioModule[] = [honnojiDecision]
+const MODULES: ScenarioModule[] = [
+  shangyangCourt,
+  honnojiDecision,
+  fengyitingReal,
+  trolleyProblem,
+  sanguoChain,
+]
 
 export function scenarioModule(
   slotID: string | null | undefined,

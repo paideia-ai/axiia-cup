@@ -6,6 +6,29 @@ const scenariosDir = join(root, 'scenarios')
 const ambient = join(root, 'types', 'axiia.d.ts')
 const contract = join(root, 'types', 'contract.ts')
 
+// The default single-judge mode must push judge OS beats (#22①). A scenario may
+// explicitly replace that judge with a mechanically tallied jury; it still has
+// to publish the same structured final score as every other scenario (#23).
+// These are source-level presence checks — behavior is still the scenario's own
+// business.
+const singleJudgeRequired: [RegExp, string][] = [
+  [
+    /['"`]judge-aside['"`]/,
+    "judge OS beats — push aside beats on channel 'judge-aside' with keys `os-<n>`",
+  ],
+  [
+    /\bos-\$\{|key:\s*['"`]os-/,
+    "os-<n> beat keys — record each aside via act(..., { key: `os-<n>`, channel: 'judge-aside' })",
+  ],
+]
+
+const universallyRequired: [RegExp, string][] = [
+  [
+    /type:\s*['"`]score['"`]/,
+    "a structured score emit — game.emit('…', { type: 'score', … }) with the final ledger",
+  ],
+]
+
 const confiscated: [RegExp, string][] = [
   [/\bMath\.random\b/, 'Math.random — use `await game.random()`'],
   [/\bnew\s+Date\b|\bDate\.(now|parse|UTC)\b/, 'Date — there is no clock'],
@@ -110,8 +133,9 @@ for (const id of scenarioIDs()) {
     }
   }
 
+  let meta: Record<string, unknown> | null = null
   try {
-    const meta = readMeta(source, `scenarios/${id}/script.js`)
+    meta = readMeta(source, `scenarios/${id}/script.js`)
     if (meta.id !== id) {
       problems.push(
         `scenarios/${id}: meta.id is ${
@@ -121,6 +145,30 @@ for (const id of scenarioIDs()) {
     }
   } catch (error) {
     problems.push(error instanceof Error ? error.message : String(error))
+  }
+
+  const adjudicationMode = meta?.adjudicationMode
+  if (
+    adjudicationMode !== undefined && adjudicationMode !== 'single-judge' &&
+    adjudicationMode !== 'jury-vote'
+  ) {
+    problems.push(
+      `scenarios/${id}/script.js: meta.adjudicationMode must be ` +
+        "'single-judge' or 'jury-vote'",
+    )
+  }
+
+  for (const [pattern, message] of universallyRequired) {
+    if (!pattern.test(source)) {
+      problems.push(`scenarios/${id}/script.js: missing ${message}`)
+    }
+  }
+  if (adjudicationMode !== 'jury-vote') {
+    for (const [pattern, message] of singleJudgeRequired) {
+      if (!pattern.test(source)) {
+        problems.push(`scenarios/${id}/script.js: missing ${message}`)
+      }
+    }
   }
 
   const program = ts.createProgram([ambient, script, contract], options)

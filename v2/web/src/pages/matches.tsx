@@ -25,8 +25,11 @@ export function MatchesPage() {
   return (
     <div className='space-y-6'>
       <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-        {data?.open ? '全部对战' : '我的对战'}
+        历史
       </h1>
+      <p className='-mt-4 text-sm text-(--foreground-subtle)'>
+        {data?.open ? '全部对战记录。' : '你的全部对战记录。'}
+      </p>
 
       {loading
         ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
@@ -59,8 +62,8 @@ export function MatchesPage() {
         : (
           <p className='text-sm text-(--foreground-subtle)'>
             {data?.open
-              ? '还没有任何对战。到工坊构建智能体并发起 PvE 对战。'
-              : '还没有对战。到工坊构建智能体并发起 PvE 对战。'}
+              ? '还没有任何对战。到场景页构建智能体并发起对战。'
+              : '还没有对战。到场景页构建智能体并发起对战。'}
           </p>
         )}
     </div>

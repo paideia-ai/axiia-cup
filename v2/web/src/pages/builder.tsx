@@ -1,22 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
-import { builder, catalog, matches, sseUrl } from '../api/client'
+import {
+  builder,
+  catalog,
+  config as configApi,
+  matches,
+  sseUrl,
+} from '../api/client'
 import type {
   AgentVersionDTO,
   BuilderEventDTO,
+  ConfigResponse,
   ModelDTO,
-  OpponentAgentDTO,
-  PresetOpponentDTO,
   ScenarioDetail,
   Side,
 } from '../api/types'
-import { Badge } from '../components/ui/badge'
+import { InitModes } from '../components/builder-init'
+import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
+import { initModesAvailable } from '../lib/deck'
+import { metaPromptFor } from '../lib/meta-prompt'
+import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
+import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
+import { nextVersionCopy, versionTag } from '../lib/version-label'
 import {
   roleByKey,
   roleOfOptions,
@@ -24,23 +35,18 @@ import {
   rolesForSide,
   scenarioModule,
 } from '../scenarios'
+import { deckFor } from '../scenarios/decks'
 
 const PROMPT_FIELD = 'prompt'
 
-// Hotseat is not a third dispatch route: it is a PVP match whose opponent agent
-// happens to be your own, which the server already allows.
-type OpponentMode = 'pve' | 'pvp' | 'hotseat'
-
-const MODE_LABELS: Record<OpponentMode, string> = {
-  pve: '预设对手',
-  pvp: '其他玩家',
-  hotseat: '左右手互搏',
-}
-
+// 工作区（E1/#81，β 模型）：构建器就是智能体唯一的工作区草稿——进入编辑＝
+// 进入工作区，输入高频自动暂存（草稿非版本，从不直接参战）；点保存＝产生
+// 一个新版本（E2/#82：严格线性，无父子）。版本列表与出战都归 EA
+// （/agents/:id），派发归 OS 面板——保存成功即回 EA。
 export function BuilderPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
 
   // Query params are a first-paint hint only; the draft response is authoritative
@@ -49,32 +55,31 @@ export function BuilderPage() {
   const [side, setSide] = useState<Side>(
     (params.get('side') as Side | null) ?? 'a',
   )
+  // A3 首战快速通道（#9/#10/#17 例外）：?express=1 时保存＝自动派发首战并
+  // 直进实况；无侧别选择（#57——执方本就来自 agent，本页从无切侧控件）。
+  const express = params.get('express') === '1'
 
   const [prompt, setPrompt] = useState('')
   const [roleKey, setRoleKey] = useState<string | null>(null)
   const [models, setModels] = useState<ModelDTO[]>([])
   const [modelID, setModelID] = useState<string | null>(null)
   const [versions, setVersions] = useState<AgentVersionDTO[]>([])
-  const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
+  const [restoredTag, setRestoredTag] = useState<string | null>(null)
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null)
-  const [presetKey, setPresetKey] = useState<string | null>(null)
-  const [mode, setMode] = useState<OpponentMode>('pve')
-  const [opponents, setOpponents] = useState<OpponentAgentDTO[]>([])
-  const [opponentAgentID, setOpponentAgentID] = useState<number | null>(null)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
-  const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [draftLoading, setDraftLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  // 清空工作区（E7 的唯一回头路）：两步就地确认，不弹窗。
+  const [clearArmed, setClearArmed] = useState(false)
+  // express 专用：config 供新手预设对手 key 与拒绝文案数字；失败按 null
+  // 降级（对手回落到第一个对侧预设）。
+  const [cfg, setCfg] = useState<ConfigResponse | null>(null)
   const mutateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const refreshVersions = async () => {
-    const list = await builder.versions(agentID)
-    setVersions(list.versions)
-    setEntryVersionID(list.entryVersionID ?? null)
-  }
 
   useEffect(() => {
     let live = true
+    setDraftLoading(true)
     void (async () => {
       try {
         const [draft, list] = await Promise.all([
@@ -84,11 +89,41 @@ export function BuilderPage() {
         if (!live) return
         setScenarioID(draft.scenarioID)
         setSide(draft.side)
-        setPrompt(draft.fields[PROMPT_FIELD] ?? '')
         setVersions(list.versions)
-        setEntryVersionID(list.entryVersionID ?? null)
+        // E3「恢复到工作区」（#82）：?from=<versionID> 把该历史版本回填到工作
+        // 区草稿——恢复本身不产生版本、不记录来源。一次性生效：用完即从 URL
+        // 摘掉（replace，不留历史），刷新/重挂载不会再次覆盖工作区。
+        const fromID = Number(params.get('from') ?? '')
+        const fromVersion = list.versions.find((v) => v.id === fromID)
+        if (fromVersion) {
+          setPrompt(fromVersion.prompt)
+          setModelID(fromVersion.modelID)
+          setRestoredTag(versionTag(fromVersion, list.versions))
+          const role = roleOfOptions(
+            scenarioModule(draft.scenarioID),
+            fromVersion.options,
+          )
+          if (role && role.side === draft.side) setRoleKey(role.key)
+          // 草稿的 prompt 字段在服务端：预填走与打字相同的 mutate 通道，
+          // 让服务器草稿与所见一致。
+          void builder
+            .mutate(agentID, { field: PROMPT_FIELD, value: fromVersion.prompt })
+            .catch(() => {})
+          setParams(
+            (prev) => {
+              const next = new URLSearchParams(prev)
+              next.delete('from')
+              return next
+            },
+            { replace: true },
+          )
+        } else {
+          setPrompt(draft.fields[PROMPT_FIELD] ?? '')
+        }
       } catch (cause) {
         if (live) setError(messageOf(cause))
+      } finally {
+        if (live) setDraftLoading(false)
       }
     })()
     return () => {
@@ -124,31 +159,22 @@ export function BuilderPage() {
   }, [])
 
   useEffect(() => {
+    if (!express) return
+    let live = true
+    void configApi.get().then((value) => {
+      if (live) setCfg(value)
+    }).catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [express])
+
+  useEffect(() => {
     if (!scenarioID) return
-    // Presets on the opposite side are the PvE opponents for this agent.
     void catalog
       .scenario(scenarioID, side)
       .then(setScenario)
       .catch(() => setScenario(null))
-  }, [scenarioID, side])
-
-  useEffect(() => {
-    const opponents = scenario?.presets.filter((preset) =>
-      preset.side !== side
-    ) ?? []
-    setPresetKey((current) =>
-      opponents.some((preset) => preset.key === current)
-        ? current
-        : opponents[0]?.key ?? null
-    )
-  }, [scenario, side])
-
-  useEffect(() => {
-    if (!scenarioID) return
-    void catalog
-      .opponents(scenarioID, side === 'a' ? 'b' : 'a')
-      .then((list) => setOpponents(list.opponents))
-      .catch(() => setOpponents([]))
   }, [scenarioID, side])
 
   useEffect(() => {
@@ -158,7 +184,8 @@ export function BuilderPage() {
     source.onmessage = (message) => {
       const event = JSON.parse(message.data) as BuilderEventDTO
       if ('fieldMutated' in event) {
-        setLastEvent(`字段已同步：${event.fieldMutated.field}`)
+        // E1：状态行按「自动暂存」口径措辞——草稿在服务端，刷新/离开不丢。
+        setLastEvent('已自动暂存')
       } else if ('versionCreated' in event) {
         setLastEvent(`版本已创建：#${event.versionCreated.versionID}`)
       }
@@ -183,30 +210,91 @@ export function BuilderPage() {
     }, 400)
   }
 
+  // 初始化方式的「填入工作区」/「清空工作区」：绕过 debounce 立即冲服务端
+  // 草稿——两个动作都翻转 E7 门（工作区空↔非空），所见即所存。
+  // #83 佐证：本次工作区内容的初始化方式；清空/直写回落 raw。
+  const initMethod = useRef<'mcq' | 'builder' | null>(null)
+
+  const fillWorkspace = (value: string, method?: 'mcq' | 'builder') => {
+    if (mutateTimer.current) {
+      clearTimeout(mutateTimer.current)
+      mutateTimer.current = null
+    }
+    initMethod.current = value.trim() ? method ?? null : null
+    setPrompt(value)
+    setClearArmed(false)
+    void builder
+      .mutate(agentID, { field: PROMPT_FIELD, value })
+      .catch(() => {})
+  }
+
+  // A3 ③：首战的保存自动派发（#17 的唯一例外）——对手＝新手预设指定的
+  // 对侧 NPC（#10，config 缺席回落第一个对侧预设），成功直进实况（#9），
+  // express 标记走一次性导航 state（旅程卡 #67 的诚实判据）。派发失败降级
+  // 为 EA 导航 + 错误文案（版本已保存，玩家可从出战面板手动发起）。
+  const expressDispatch = async (versionID: number) => {
+    const opponentPresets = (scenario?.presets ?? []).filter(
+      (preset) => preset.side !== side,
+    )
+    const configured = cfg?.expressPreset ?? null
+    const preset = opponentPresets.find(
+      (item) => item.key === configured?.presetKey,
+    ) ?? opponentPresets[0] ?? null
+    try {
+      if (preset == null) throw new Error('未找到首战对手预设')
+      const response = await matches.dispatchPVE({
+        versionID,
+        presetKey: preset.key,
+      })
+      navigate(`/matches/${response.matchID}`, { state: { express: true } })
+    } catch (cause) {
+      navigate(`/agents/${agentID}`, {
+        state: {
+          savedVersionID: versionID,
+          expressDispatchError: `${
+            rejectCopy(cause, cfg, '首战自动派发失败')
+          }——版本已保存，可从「出战」面板手动发起`,
+        },
+      })
+    }
+  }
+
   const save = async () => {
     if (modelID == null) return
     setSaving(true)
     setError(null)
-    setStatus(null)
+    // 保存后立刻离开本页：把还压在 debounce 里的最后一段输入先冲给服务器
+    // 草稿，避免卸载时被丢弃（版本本身用的是本地 prompt，不受影响）。
+    if (mutateTimer.current) {
+      clearTimeout(mutateTimer.current)
+      mutateTimer.current = null
+      void builder
+        .mutate(agentID, { field: PROMPT_FIELD, value: prompt })
+        .catch(() => {})
+    }
     try {
-      const version = await builder.save(agentID, {
+      // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
+      const saved = await builder.save(agentID, {
         prompt,
+        method: initMethod.current ?? 'raw',
         modelID,
-        parentVersionID: entryVersionID,
         ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
       })
-      setStatus(`已保存版本 #${version.id}`)
-      await refreshVersions()
+      if (express) {
+        await expressDispatch(saved.id)
+        return
+      }
+      // 版本列表在 EA：保存成功即回智能体主页。新版本 id 走一次性导航
+      // state（不落 URL、不持久），供 EA 的 E10「参赛版本仍是 vK」提示。
+      navigate(`/agents/${agentID}`, {
+        state: { savedVersionID: saved.id },
+      })
     } catch (cause) {
-      setError(messageOf(cause, '保存失败'))
-    } finally {
+      // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
+      // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
+      setError(rejectCopy(cause, null, '保存失败'))
       setSaving(false)
     }
-  }
-
-  const setEntry = async (versionID: number) => {
-    await builder.setEntry(agentID, versionID).catch(() => {})
-    await refreshVersions()
   }
 
   const promptPlaceholder = side === 'a'
@@ -214,72 +302,141 @@ export function BuilderPage() {
     : '例如：先拆解对方方案的成本，再把你的真诉求藏在可执行的条件中…'
 
   const selectedRole = roleByKey(roleModule, roleKey)
-  const opponentPresets: PresetOpponentDTO[] =
-    scenario?.presets.filter((preset) => preset.side !== side) ?? []
-  // A preset cast for a role says so; one without options is just its own label.
-  const presetLabel = (preset: PresetOpponentDTO) => {
-    const role = roleOfOptions(roleModule, preset.options)
-    return role ? `${preset.label} · ${role.name}` : preset.label
-  }
-  const rivalAgents = opponents.filter((opponent) => !opponent.isSelf)
-  const ownOppositeAgents = opponents.filter((opponent) => opponent.isSelf)
-  const modeOpponents = mode === 'hotseat' ? ownOppositeAgents : rivalAgents
+  // #14：按汉字或英文词计（非 token），P1 仅提示、不阻断保存。
+  const units = promptLength(prompt)
+  const overLimit = units > PROMPT_UNIT_LIMIT
 
-  // The server fields an opponent's entry version else their latest; field ours
-  // the same way, so a freshly saved version is playable without marking it.
-  const fieldedVersionID = entryVersionID ??
-    versions[versions.length - 1]?.id ?? null
-
-  const canDispatch = fieldedVersionID != null &&
-    (mode === 'pve' ? presetKey != null : opponentAgentID != null)
-
-  const dispatch = async () => {
-    if (fieldedVersionID == null) return
-    setError(null)
-    try {
-      const response = mode === 'pve'
-        ? presetKey == null ? null : await matches.dispatchPVE({
-          versionID: fieldedVersionID,
-          presetKey,
-        })
-        : opponentAgentID == null
-        ? null
-        : await matches.dispatchPVP({
-          versionID: fieldedVersionID,
-          opponentAgentID,
-        })
-      if (response == null) return
-      navigate(`/matches/${response.matchID}`)
-    } catch (cause) {
-      setError(messageOf(cause, '发起对战失败'))
-    }
-  }
+  // 初始化方式三选一（E6/#83）：只在工作区为空且场景有 deck 时出现（E7 门
+  // 在 initModesAvailable）；deck 缺席的场景不摆假 tab，保持 Basic 直写。
+  // deck 按侧或入场角色解析（本能寺逐角色一套），换角色即换 deck、选择重置
+  // （key 重挂载）——选择本身不持久化。
+  const deck = deckFor(scenarioID, side, roleKey)
+  const showInit = !draftLoading && deck != null && initModesAvailable(prompt)
+  const sideDisplayName = scenario
+    ? (side === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName)
+    : side === 'a'
+    ? '甲方'
+    : '乙方'
+  // #68 只读角色模板：内容由场景模块供稿（并行编写中），缺席走通用兜底。
+  const roleTemplate = roleModule?.roleTemplates?.[side] ??
+    '该场景的角色模板文案整理中——比赛时系统仍会自动为你合并官方角色模板，无需在提示词里重复编写。'
 
   return (
     <div className='space-y-6'>
       <div>
-        <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+        <Link
+          to={`/agents/${agentID}`}
+          className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
+        >
+          ← 智能体主页
+        </Link>
+        <h1 className='mt-2 text-2xl font-black tracking-tight text-(--foreground)'>
           智能体构建器
         </h1>
         <p className='mt-1 text-sm text-(--foreground-subtle)'>
           {scenario ? scenario.summary.title : scenarioID} · 为
           {side === 'a' ? '甲' : '乙'}方 · agent #{agentID}
         </p>
+        {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
+        <p className='mt-1 text-xs text-(--foreground-muted)'>
+          {express
+            ? '首战快速通道 · 保存即自动开战并直达实况'
+            : '工作区 · 输入自动暂存；保存才会生成新版本'}
+        </p>
       </div>
+
+      {showInit && deck != null
+        ? (
+          <InitModes
+            key={`${scenarioID}:${side}:${roleKey ?? ''}`}
+            deck={deck}
+            metaPrompt={metaPromptFor(
+              roleModule,
+              scenario?.summary.title ?? scenarioID,
+              side,
+              sideDisplayName,
+            )}
+            onFill={fillWorkspace}
+          />
+        )
+        : null}
+
+      {restoredTag != null
+        ? (
+          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+            已恢复 {restoredTag} 到工作区 · {nextVersionCopy(versions.length)}
+          </p>
+        )
+        : null}
 
       {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
 
       <Card>
         <CardContent className='space-y-4 pt-5'>
           <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-            <span>系统提示词</span>
+            <span>策略提示词</span>
             <Textarea
               rows={10}
               value={prompt}
+              disabled={draftLoading}
+              aria-busy={draftLoading}
               onChange={(e) => onPromptChange(e.target.value)}
               placeholder={promptPlaceholder}
             />
           </label>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
+            {/* #68 三层说明的固定文案 */}
+            <p className='text-xs text-(--foreground-muted)'>
+              你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。
+            </p>
+            <span
+              className={`shrink-0 font-mono text-xs ${
+                overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
+              }`}
+              title='按汉字或英文词计数（非 token）；当前仅提示，不阻断保存'
+            >
+              {units} / {PROMPT_UNIT_LIMIT}
+            </span>
+          </div>
+          {
+            /* E7（#83）：迭代只有文本工作台；清空工作区是重选初始化方式的
+            唯一回头路——两步就地确认，不弹窗。 */
+          }
+          {deck != null && !draftLoading && !initModesAvailable(prompt)
+            ? (
+              clearArmed
+                ? (
+                  <div className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'>
+                    <span className='text-xs text-(--foreground-subtle)'>
+                      清空后可重新选择初始化方式
+                    </span>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      onClick={() => fillWorkspace('')}
+                    >
+                      确认清空
+                    </Button>
+                    <button
+                      type='button'
+                      onClick={() => setClearArmed(false)}
+                      className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+                    >
+                      取消
+                    </button>
+                  </div>
+                )
+                : (
+                  <button
+                    type='button'
+                    onClick={() => setClearArmed(true)}
+                    className='cursor-pointer text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
+                  >
+                    清空工作区（重新选择初始化方式）
+                  </button>
+                )
+            )
+            : null}
           <div className='flex flex-wrap items-end gap-3'>
             {roles.length > 0
               ? (
@@ -294,6 +451,7 @@ export function BuilderPage() {
                     <Select
                       placeholder='选择角色'
                       value={roleKey ?? undefined}
+                      renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
                       onValueChange={(v) => v && setRoleKey(v)}
                     >
                       {roles.map((role) => (
@@ -316,6 +474,8 @@ export function BuilderPage() {
               <div className='w-56'>
                 <Select
                   value={modelID ?? undefined}
+                  renderValue={(v) =>
+                    models.find((model) => model.id === v)?.label ?? v}
                   onValueChange={(v) => v && setModelID(v)}
                 >
                   {models.map((model) => (
@@ -331,11 +491,12 @@ export function BuilderPage() {
               onClick={() => void save()}
               disabled={saving || !prompt.trim() || modelID == null}
             >
-              {saving ? '保存中…' : '保存版本'}
+              {saving
+                ? express ? '开战中…' : '保存中…'
+                : express
+                ? '保存并开始首战'
+                : '保存版本'}
             </Button>
-            {status
-              ? <span className='text-sm text-(--success)'>{status}</span>
-              : null}
             {lastEvent
               ? (
                 <span className='text-xs text-(--foreground-muted)'>
@@ -351,156 +512,16 @@ export function BuilderPage() {
               </p>
             )
             : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className='space-y-3 pt-5'>
-          <h2 className='text-sm font-semibold text-(--foreground)'>
-            版本历史
-          </h2>
-          {versions.length === 0
-            ? (
-              <p className='text-sm text-(--foreground-muted)'>
-                还没有版本。写好提示词后点击“保存版本”。
-              </p>
-            )
-            : (
-              <ul className='space-y-2'>
-                {versions.map((version) => (
-                  <li
-                    key={version.id}
-                    className='flex items-center justify-between gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'
-                  >
-                    <div className='min-w-0'>
-                      <div className='flex items-center gap-2'>
-                        <span className='font-mono text-sm text-(--foreground)'>
-                          v#{version.id}
-                        </span>
-                        <span className='text-xs text-(--foreground-muted)'>
-                          {version.modelID}
-                        </span>
-                        {version.id === entryVersionID
-                          ? <Badge tone='success'>出战</Badge>
-                          : null}
-                      </div>
-                      <p className='truncate text-xs text-(--foreground-subtle)'>
-                        {version.prompt}
-                      </p>
-                    </div>
-                    {version.id !== entryVersionID
-                      ? (
-                        <Button
-                          size='sm'
-                          variant='secondary'
-                          onClick={() => void setEntry(version.id)}
-                        >
-                          设为出战
-                        </Button>
-                      )
-                      : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className='space-y-3 pt-5'>
-          <h2 className='text-sm font-semibold text-(--foreground)'>
-            发起对战
-          </h2>
-          <div className='flex flex-wrap items-center gap-2'>
-            {(['pve', 'pvp', 'hotseat'] as const).map((option) => (
-              <Button
-                key={option}
-                size='sm'
-                variant={mode === option ? 'primary' : 'secondary'}
-                onClick={() => {
-                  setMode(option)
-                  setOpponentAgentID(null)
-                }}
-              >
-                {MODE_LABELS[option]}
-              </Button>
-            ))}
-          </div>
-
-          {mode === 'pve'
-            ? opponentPresets.length === 0
-              ? (
-                <p className='text-sm text-(--foreground-muted)'>
-                  该场景暂无对手侧的预设对手。
-                </p>
-              )
-              : (
-                <div className='w-56'>
-                  <Select
-                    placeholder='选择预设对手'
-                    value={presetKey ?? undefined}
-                    onValueChange={(v) => setPresetKey(v ?? null)}
-                  >
-                    {opponentPresets.map((preset) => (
-                      <SelectItem key={preset.key} value={preset.key}>
-                        {presetLabel(preset)}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                </div>
-              )
-            : modeOpponents.length === 0
-            ? (
-              <p className='text-sm text-(--foreground-muted)'>
-                {mode === 'hotseat'
-                  ? '你还没有为对手方构建智能体。先去场景页为另一方建一个并保存版本。'
-                  : '还没有其他玩家在对手方保存过版本。'}
-              </p>
-            )
-            : (
-              <div className='w-56'>
-                <Select
-                  placeholder={mode === 'hotseat'
-                    ? '选择你的对手方'
-                    : '选择对手'}
-                  value={opponentAgentID != null
-                    ? String(opponentAgentID)
-                    : undefined}
-                  onValueChange={(v) =>
-                    setOpponentAgentID(v ? Number(v) : null)}
-                >
-                  {modeOpponents.map((opponent) => (
-                    <SelectItem
-                      key={opponent.agentID}
-                      value={String(opponent.agentID)}
-                    >
-                      {opponent.displayName} · agent #{opponent.agentID}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-            )}
-
-          <div className='flex flex-wrap items-center gap-3'>
-            <Button
-              data-testid='dispatch-match'
-              onClick={() => void dispatch()}
-              disabled={!canDispatch}
+          <Accordion className='border-t border-(--border-soft)'>
+            <AccordionItem
+              value='role-template'
+              title='查看场景角色模板（仅供查看，无需重复编写）'
             >
-              发起对战
-            </Button>
-            {fieldedVersionID == null
-              ? (
-                <span className='text-xs text-(--foreground-muted)'>
-                  先保存一个版本才能出战。
-                </span>
-              )
-              : (
-                <span className='text-xs text-(--foreground-muted)'>
-                  出战版本 v#{fieldedVersionID}
-                </span>
-              )}
-          </div>
+              <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
+                {roleTemplate}
+              </p>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
