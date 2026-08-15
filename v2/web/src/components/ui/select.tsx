@@ -37,15 +37,24 @@ export function Select({
         )}
       >
         <BaseSelect.Value>
-          {(v: string | null) => (
-            <span
-              className={v
-                ? 'text-(--foreground)'
-                : 'text-(--foreground-muted)'}
-            >
-              {v && renderValue ? renderValue(v) : (v ?? placeholder)}
-            </span>
-          )}
+          {(v: string | null) => {
+            // base-ui 只有在「值命中已注册的 Item」时才把值交给这个渲染函数；
+            // 受控的初始值在 Item 注册之前就落下来，于是触发器一直显示占位符
+            // ——模型选择器因此从来没显示过已选模型（保存用的值是对的）。
+            // 回落到受控 value 自己渲染，任何 Select 都不再假装「未选择」。
+            const shown = v ?? value ?? null
+            return (
+              <span
+                className={shown
+                  ? 'text-(--foreground)'
+                  : 'text-(--foreground-muted)'}
+              >
+                {shown && renderValue
+                  ? renderValue(shown)
+                  : (shown ?? placeholder)}
+              </span>
+            )
+          }}
         </BaseSelect.Value>
         <ChevronDown className='h-4 w-4 shrink-0 text-(--foreground-muted)' />
       </BaseSelect.Trigger>

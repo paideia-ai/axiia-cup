@@ -49,7 +49,9 @@ export function rejectCopy(
     // #59/#79 引导门：同侧第 2 个智能体之前必须先拥有对侧；E4「复制为新
     // 智能体」同受此门。
     case 'sibling_gate':
-      return '需先拥有对侧智能体才能在同侧再建（引导门 #59）'
+      // P6a：条文号不该出现在玩家眼前（E9 界面自解释）。侧名由调用方补全时
+      // 更好，但这里没有场景上下文——用不带编号的通用说法。
+      return '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事'
     // #14：计数器只做提示，上限由服务端保存时强制；这句把玩家指回计数器。
     case 'prompt_too_long': {
       const limit = config?.promptUnitLimit ?? PROMPT_UNIT_LIMIT

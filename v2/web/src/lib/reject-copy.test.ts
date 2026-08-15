@@ -34,7 +34,7 @@ describe('v3.4 rejection copy contracts', () => {
     ],
     [
       'sibling_gate',
-      '需先拥有对侧智能体才能在同侧再建（引导门 #59）',
+      '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
     ],
     [
       'prompt_too_long',

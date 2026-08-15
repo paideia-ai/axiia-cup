@@ -316,7 +316,9 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await expect(dialog).toBeVisible()
     await dialog.getByTestId('create-agent').click()
     await expect(
-      dialog.getByText('需先拥有对侧智能体才能在同侧再建（引导门 #59）'),
+      dialog.getByText(
+        '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
+      ),
     ).toBeVisible()
     await expect(dialog.getByText('两边都要会写才是真本事', { exact: false }))
       .toBeVisible()

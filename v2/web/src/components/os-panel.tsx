@@ -53,6 +53,8 @@ interface OsPanelProps {
   side: Side
   versions: AgentVersionDTO[]
   entryVersionID: number | null
+  // #88：从版本卡「出战」呼出时，钉住玩家点的那一版（否则回落 ★ / 最新版）。
+  preferVersionID?: number | null
 }
 
 // 双侧阵容选择器的一个候选：我的某侧 agent 的一个版本。
@@ -76,6 +78,7 @@ export function OsPanel({
   side,
   versions,
   entryVersionID,
+  preferVersionID = null,
 }: OsPanelProps) {
   const navigate = useNavigate()
   const scenarioID = scenario.summary.id
@@ -187,7 +190,9 @@ export function OsPanel({
   }, [open, onClose])
 
   // 出战版本 = ★参赛版本，否则最新版（与服务器选对手版本的规则一致）。
-  const fieldedVersionID = entryVersionID ??
+  // 派发取版：玩家点的那一版 > ★参赛版本 > 最新版（与服务器对对手侧的取法
+  // 一致）。preferVersionID 只在版本卡「出战」路径上有值（#88）。
+  const fieldedVersionID = preferVersionID ?? entryVersionID ??
     versions[versions.length - 1]?.id ?? null
   const fieldedVersion = versions.find(
     (version) => version.id === fieldedVersionID,
@@ -300,8 +305,16 @@ export function OsPanel({
         if (!live) return
         setLineup({ a, b })
         setLineupFailed(false)
-        setPickA(defaultLineupPick(a))
-        setPickB(defaultLineupPick(b))
+        const prefer = (
+          options: LineupOption[],
+          which: Side,
+        ): number | null =>
+          which === side && preferVersionID != null &&
+            options.some((o) => o.versionID === preferVersionID)
+            ? preferVersionID
+            : defaultLineupPick(options)
+        setPickA(prefer(a, 'a'))
+        setPickB(prefer(b, 'b'))
       } catch {
         if (!live) return
         setLineup(null)
@@ -311,7 +324,7 @@ export function OsPanel({
     return () => {
       live = false
     }
-  }, [open, pvpUnlocked, scenarioID])
+  }, [open, pvpUnlocked, scenarioID, preferVersionID])
 
   // 对手玩家（#66①）：对侧可对战 agent 中非 isSelf 的，按 ownerAccountID
   // 去重成「玩家」行；老服务器条目无 ownerAccountID → 过滤掉（不给假按钮）。

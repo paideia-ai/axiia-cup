@@ -1,6 +1,6 @@
 import { Hammer, Plus } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { builder, catalog, myAgents } from '../api/client'
 import type {
@@ -38,6 +38,24 @@ export function MyAgentsPage() {
   const [creating, setCreating] = useState<
     { scenario: ScenarioSummary; side: Side } | null
   >(null)
+  // P13：DA 侧卡「再建一个」把玩家送到这里并带 ?new=<side>&scenario=<id>，
+  // 落地即开新建弹窗；用完即从 URL 摘掉（replace，不留历史）。
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    const side = params.get('new') as Side | null
+    const scenarioID = params.get('scenario')
+    if (side == null || data == null) return
+    const scenario = data.scenarios.find((item) =>
+      scenarioID == null || item.id === scenarioID
+    )
+    if (scenario) setCreating({ scenario, side })
+    setParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('new')
+      next.delete('scenario')
+      return next
+    }, { replace: true })
+  }, [data])
 
   // 懒创建（get-or-create，只在点击时调用）：仅当该侧还没有 agent 时走
   // ensure；已有 agentID 的入口直接导航，不再多打一次接口。

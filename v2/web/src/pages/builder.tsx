@@ -1,3 +1,4 @@
+import { Check, Copy } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -6,6 +7,7 @@ import {
   catalog,
   config as configApi,
   matches,
+  myAgents,
   sseUrl,
 } from '../api/client'
 import type {
@@ -17,6 +19,8 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
+import { OsPanel } from '../components/os-panel'
+import { VersionList } from '../components/version-list'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -39,10 +43,11 @@ import { deckFor } from '../scenarios/decks'
 
 const PROMPT_FIELD = 'prompt'
 
-// 工作区（E1/#81，β 模型）：构建器就是智能体唯一的工作区草稿——进入编辑＝
-// 进入工作区，输入高频自动暂存（草稿非版本，从不直接参战）；点保存＝产生
-// 一个新版本（E2/#82：严格线性，无父子）。版本列表与出战都归 EA
-// （/agents/:id），派发归 OS 面板——保存成功即回 EA。
+// 工作区（E1/#81）＋ 内嵌版本线（E11/#88）：本页就是一个策略的**编辑现场**——
+// 上半是唯一的工作区草稿（高频自动暂存，草稿非版本、从不直接参战），下半是
+// 本策略的完整版本线。点保存＝产生一个新版本（E2/#82：严格线性、无父子）后
+// **留在本页**（#88：不再跳回 EA），就地把新版插进版本线顶端。版本卡动作按
+// #89/#90：基于该版本迭代 / 设为参赛版本 / 出战——「复制为新智能体」已废止。
 export function BuilderPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
@@ -72,6 +77,19 @@ export function BuilderPage() {
   const [saving, setSaving] = useState(false)
   // 清空工作区（E7 的唯一回头路）：两步就地确认，不弹窗。
   const [clearArmed, setClearArmed] = useState(false)
+  // #88：版本线与出战都搬进本页。
+  const [osOpen, setOsOpen] = useState(false)
+  const [preferVersionID, setPreferVersionID] = useState<number | null>(null)
+  const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
+  const [saveNotice, setSaveNotice] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  // P1：策略展示名（#63）。draft 接口不带 name，先从 /my/agents 取。
+  const [agentName, setAgentName] = useState<string | null>(null)
+  // P11（Yihan 修订）：只有草稿与最新版本不一致时才拦——一致说明没有未保存
+  // 的改动，直接载入不打扰。pendingIterate 是待确认的目标版本。
+  const [pendingIterate, setPendingIterate] = useState<AgentVersionDTO | null>(
+    null,
+  )
   // express 专用：config 供新手预设对手 key 与拒绝文案数字；失败按 null
   // 降级（对手回落到第一个对侧预设）。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
@@ -90,12 +108,20 @@ export function BuilderPage() {
         setScenarioID(draft.scenarioID)
         setSide(draft.side)
         setVersions(list.versions)
+        setEntryVersionID(list.entryVersionID ?? null)
+        // P5：模型属于版本、随版本快照（#13）——进入工作区默认沿用**最新
+        // 版本**的模型，而不是模型清单的第一项。草稿层还不持久化模型，所以
+        // 这里从版本线取；没有版本时才回落清单首项（见 models effect）。
+        const latest = [...list.versions].sort((a, b) => b.id - a.id)[0]
+        if (latest) setModelID(latest.modelID)
         // E3「恢复到工作区」（#82）：?from=<versionID> 把该历史版本回填到工作
         // 区草稿——恢复本身不产生版本、不记录来源。一次性生效：用完即从 URL
         // 摘掉（replace，不留历史），刷新/重挂载不会再次覆盖工作区。
         const fromID = Number(params.get('from') ?? '')
         const fromVersion = list.versions.find((v) => v.id === fromID)
         if (fromVersion) {
+          // 从 EA 过来的 ?from=：EA 侧已经确认过，这里直接载入（草稿的 prompt
+          // 字段在服务端，预填走与打字相同的 mutate 通道，让草稿与所见一致）。
           setPrompt(fromVersion.prompt)
           setModelID(fromVersion.modelID)
           setRestoredTag(versionTag(fromVersion, list.versions))
@@ -104,8 +130,6 @@ export function BuilderPage() {
             fromVersion.options,
           )
           if (role && role.side === draft.side) setRoleKey(role.key)
-          // 草稿的 prompt 字段在服务端：预填走与打字相同的 mutate 通道，
-          // 让服务器草稿与所见一致。
           void builder
             .mutate(agentID, { field: PROMPT_FIELD, value: fromVersion.prompt })
             .catch(() => {})
@@ -154,9 +178,27 @@ export function BuilderPage() {
   useEffect(() => {
     void catalog.models().then((list) => {
       setModels(list.models)
+      // 只有在没能从最新版本继承到模型时才回落清单首项（P5）。
       setModelID((current) => current ?? list.models[0]?.id ?? null)
     }).catch(() => {})
   }, [])
+
+  // P1：展示名来自 /my/agents（draft 不带 name）；失败静默——标题回落 id。
+  useEffect(() => {
+    let live = true
+    void myAgents.list().then((inventory) => {
+      if (!live) return
+      for (const scenario of inventory.scenarios) {
+        for (const which of ['a', 'b'] as const) {
+          const hit = scenario.sides[which].find((a) => a.agentID === agentID)
+          if (hit) setAgentName(hit.name ?? null)
+        }
+      }
+    }).catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [agentID])
 
   useEffect(() => {
     if (!express) return
@@ -199,6 +241,37 @@ export function BuilderPage() {
     },
     [],
   )
+
+  // E3/#89：把某个版本载入工作区草稿。本身不产生版本、不记录来源。
+  const applyIterate = (version: AgentVersionDTO, siblings = versions) => {
+    if (mutateTimer.current) {
+      clearTimeout(mutateTimer.current)
+      mutateTimer.current = null
+    }
+    setPrompt(version.prompt)
+    setModelID(version.modelID)
+    setRestoredTag(versionTag(version, siblings))
+    setSaveNotice(null)
+    const role = roleOfOptions(scenarioModule(scenarioID), version.options)
+    if (role && role.side === side) setRoleKey(role.key)
+    void builder
+      .mutate(agentID, { field: PROMPT_FIELD, value: version.prompt })
+      .catch(() => {})
+  }
+
+  // P11（Yihan 修订）：草稿与最新版本不一致＝有未保存的改动，覆盖前先确认；
+  // 一致就直接载入，不打扰。
+  const latestVersion = [...versions].sort((a, b) => b.id - a.id)[0] ?? null
+  const draftDiffersFromLatest = latestVersion != null &&
+    prompt.trim() !== latestVersion.prompt.trim()
+
+  const requestIterate = (version: AgentVersionDTO) => {
+    if (draftDiffersFromLatest) {
+      setPendingIterate(version)
+      return
+    }
+    applyIterate(version)
+  }
 
   const onPromptChange = (value: string) => {
     setPrompt(value)
@@ -265,13 +338,16 @@ export function BuilderPage() {
     setError(null)
     // 保存后立刻离开本页：把还压在 debounce 里的最后一段输入先冲给服务器
     // 草稿，避免卸载时被丢弃（版本本身用的是本地 prompt，不受影响）。
+    // 保存前把还压在 debounce 里的最后一段输入**同步等**落库：草稿必须与即将
+    // 产生的版本一致，否则重进工作区时服务端草稿仍停在上一版，P11 会误判
+    // 「有未保存的改动」（08-15 实测踩到）。
     if (mutateTimer.current) {
       clearTimeout(mutateTimer.current)
       mutateTimer.current = null
-      void builder
-        .mutate(agentID, { field: PROMPT_FIELD, value: prompt })
-        .catch(() => {})
     }
+    await builder
+      .mutate(agentID, { field: PROMPT_FIELD, value: prompt })
+      .catch(() => {})
     try {
       // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
       const saved = await builder.save(agentID, {
@@ -284,11 +360,24 @@ export function BuilderPage() {
         await expressDispatch(saved.id)
         return
       }
-      // 版本列表在 EA：保存成功即回智能体主页。新版本 id 走一次性导航
-      // state（不落 URL、不持久），供 EA 的 E10「参赛版本仍是 vK」提示。
-      navigate(`/agents/${agentID}`, {
-        state: { savedVersionID: saved.id },
-      })
+      // #88：保存后**留在本页**——把新版本插进页内版本线，给一句成功提示。
+      // 玩家「改一句→保存→再改一句」的连打循环不再被跳转打断。
+      const list = await builder.versions(agentID).catch(() => null)
+      const nextVersions = list?.versions ?? [...versions, saved]
+      setVersions(nextVersions)
+      setEntryVersionID(list?.entryVersionID ?? entryVersionID)
+      setRestoredTag(null)
+      // E10（#84）：保存不移动参赛标记——新版本不是 ★ 时提醒一句。
+      const entryID = list?.entryVersionID ?? entryVersionID
+      const entry = nextVersions.find((v) => v.id === entryID)
+      setSaveNotice(
+        entry != null && entry.id !== saved.id
+          ? `已保存 ${versionTag(saved, nextVersions)} · ★参赛版本仍是 ${
+            versionTag(entry, nextVersions)
+          }——新版本不会自动参赛`
+          : `已保存 ${versionTag(saved, nextVersions)}`,
+      )
+      setSaving(false)
     } catch (cause) {
       // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
       // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
@@ -296,6 +385,38 @@ export function BuilderPage() {
       setSaving(false)
     }
   }
+
+  const setEntry = async (versionID: number) => {
+    setError(null)
+    try {
+      await builder.setEntry(agentID, versionID)
+      const list = await builder.versions(agentID)
+      setVersions(list.versions)
+      setEntryVersionID(list.entryVersionID ?? null)
+    } catch (cause) {
+      setError(messageOf(cause, '设置参赛版本失败'))
+    }
+  }
+
+  // P14：E8 承诺过的「复制当前文本」——平台不做 AI 改写，就得给复制手段。
+  const copyPrompt = () => {
+    try {
+      void navigator.clipboard.writeText(prompt).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      }).catch(() => {})
+    } catch {
+      // 非安全上下文没有 clipboard——静默降级，文本仍可手动全选复制。
+    }
+  }
+
+  // P5 的显示侧：版本继承来的模型可能已不在当前可选清单里（模型下线/更名）。
+  // 那时 Select 找不到匹配项会退回「请选择…」，看上去像没选——把它作为一条
+  // 合成选项补进去，保证选择器显示的就是这一版真正会用的模型。
+  const modelOptions = modelID != null &&
+      !models.some((model) => model.id === modelID)
+    ? [...models, { id: modelID, label: modelID }]
+    : models
 
   const promptPlaceholder = side === 'a'
     ? '例如：先明确你的立场，再用裁判最难忽视的风险和利益组织论点…'
@@ -334,8 +455,10 @@ export function BuilderPage() {
           智能体构建器
         </h1>
         <p className='mt-1 text-sm text-(--foreground-subtle)'>
-          {scenario ? scenario.summary.title : scenarioID} · 为
-          {side === 'a' ? '甲' : '乙'}方 · agent #{agentID}
+          {scenario ? scenario.summary.title : scenarioID} ·{' '}
+          {agentName != null && agentName !== ''
+            ? `${sideDisplayName}「${agentName}」`
+            : `${sideDisplayName} #${agentID}`}
         </p>
         {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
         <p className='mt-1 text-xs text-(--foreground-muted)'>
@@ -361,10 +484,51 @@ export function BuilderPage() {
         )
         : null}
 
+      {/* P11：草稿与最新版本不一致时，覆盖前两步就地确认（不弹窗） */}
+      {pendingIterate != null
+        ? (
+          <div className='flex flex-wrap items-center gap-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'>
+            <span className='text-xs text-(--warning)'>
+              工作区里有未保存的改动，基于{' '}
+              {versionTag(pendingIterate, versions)} 迭代会覆盖它
+            </span>
+            <Button
+              size='sm'
+              variant='secondary'
+              onClick={() => {
+                applyIterate(pendingIterate)
+                setPendingIterate(null)
+              }}
+            >
+              仍要继续
+            </Button>
+            <button
+              type='button'
+              onClick={() =>
+                setPendingIterate(null)}
+              className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+            >
+              取消
+            </button>
+          </div>
+        )
+        : null}
+
       {restoredTag != null
         ? (
           <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
-            已恢复 {restoredTag} 到工作区 · {nextVersionCopy(versions.length)}
+            已载入 {restoredTag} · {nextVersionCopy(versions.length)}
+          </p>
+        )
+        : null}
+
+      {saveNotice != null
+        ? (
+          <p
+            data-testid='save-notice'
+            className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+          >
+            {saveNotice}
           </p>
         )
         : null}
@@ -373,9 +537,29 @@ export function BuilderPage() {
 
       <Card>
         <CardContent className='space-y-4 pt-5'>
-          <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-            <span>策略提示词</span>
+          <div className='flex items-center justify-between gap-2'>
+            <label
+              htmlFor='prompt-input'
+              className='text-sm text-(--foreground-subtle)'
+            >
+              策略提示词
+            </label>
+            {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
+            <Button
+              size='sm'
+              variant='ghost'
+              onClick={copyPrompt}
+              disabled={prompt.trim() === ''}
+            >
+              {copied
+                ? <Check className='mr-1.5 h-3.5 w-3.5 text-(--success)' />
+                : <Copy className='mr-1.5 h-3.5 w-3.5' />}
+              {copied ? '已复制' : '复制当前文本'}
+            </Button>
+          </div>
+          <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
             <Textarea
+              id='prompt-input'
               rows={10}
               value={prompt}
               disabled={draftLoading}
@@ -383,7 +567,7 @@ export function BuilderPage() {
               onChange={(e) => onPromptChange(e.target.value)}
               placeholder={promptPlaceholder}
             />
-          </label>
+          </div>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             {/* #68 三层说明的固定文案 */}
             <p className='text-xs text-(--foreground-muted)'>
@@ -475,10 +659,10 @@ export function BuilderPage() {
                 <Select
                   value={modelID ?? undefined}
                   renderValue={(v) =>
-                    models.find((model) => model.id === v)?.label ?? v}
+                    modelOptions.find((model) => model.id === v)?.label ?? v}
                   onValueChange={(v) => v && setModelID(v)}
                 >
-                  {models.map((model) => (
+                  {modelOptions.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       {model.label}
                     </SelectItem>
@@ -497,6 +681,14 @@ export function BuilderPage() {
                 ? '保存并开始首战'
                 : '保存版本'}
             </Button>
+            {/* P12：「保存＝产版」最该被看见的地方就是保存按钮旁 */}
+            {!express
+              ? (
+                <span className='text-xs font-medium text-(--accent)'>
+                  {nextVersionCopy(versions.length)}
+                </span>
+              )
+              : null}
             {lastEvent
               ? (
                 <span className='text-xs text-(--foreground-muted)'>
@@ -505,6 +697,18 @@ export function BuilderPage() {
               )
               : null}
           </div>
+          {/* P5：模型随版本快照（#13）——说清这一版会用哪个模型 */}
+          {latestVersion != null
+            ? (
+              <p className='text-xs text-(--foreground-muted)'>
+                {modelID === latestVersion.modelID
+                  ? `沿用 ${versionTag(latestVersion, versions)} 的模型`
+                  : `已改为新模型，保存后 v${versions.length + 1} 用新模型（${
+                    versionTag(latestVersion, versions)
+                  } 不受影响）`}
+              </p>
+            )
+            : null}
           {selectedRole
             ? (
               <p className='text-xs text-(--foreground-muted)'>
@@ -524,6 +728,53 @@ export function BuilderPage() {
           </Accordion>
         </CardContent>
       </Card>
+
+      {
+        /* E11/#88：版本线就在编辑现场——保存后不跳转，新版直接长在这里。
+        express 首战不摆版本线（那条路只保存一次就直奔实况）。 */
+      }
+      {!express
+        ? (
+          <VersionList
+            versions={versions}
+            onSetEntry={(versionID) => void setEntry(versionID)}
+            onIterate={requestIterate}
+            onField={(version) => {
+              setPreferVersionID(version.id)
+              setOsOpen(true)
+            }}
+            headingAside={
+              <span className='text-[11px] text-(--foreground-muted)'>
+                保存产生新版本；草稿不参战
+              </span>
+            }
+            emptyState={
+              <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'>
+                <p className='text-sm font-medium text-(--foreground)'>
+                  还没有保存过版本
+                </p>
+                <p className='mt-1 text-xs text-(--foreground-muted)'>
+                  写下策略并点「保存版本」，这里就会长出 v1。
+                </p>
+              </div>
+            }
+          />
+        )
+        : null}
+
+      {scenario != null && !express
+        ? (
+          <OsPanel
+            open={osOpen}
+            onClose={() => setOsOpen(false)}
+            scenario={scenario}
+            side={side}
+            versions={versions}
+            entryVersionID={entryVersionID}
+            preferVersionID={preferVersionID}
+          />
+        )
+        : null}
     </div>
   )
 }
