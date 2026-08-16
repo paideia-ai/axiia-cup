@@ -15,6 +15,9 @@ import { registrationCode } from '../helpers'
 
 const reusedEmail = process.env.AXIIA_U08_EMAIL ?? ''
 const reusedPassword = process.env.AXIIA_U08_PASSWORD ?? ''
+// 借用他人（协调者出借）账号跑只读检查时置 1：错误密码场景（C07）只允许
+// 打在自己的账号上，借用模式下强制 skip。
+const borrowedAccount = process.env.AXIIA_U08_BORROWED === '1'
 const PASSWORD = reusedPassword !== '' ? reusedPassword : 'playwrightpw-123456'
 // 截图与账号状态目录：对照审计跑时用 U08_SHOTS_DIR 指到证据仓库。
 const SHOTS = process.env.U08_SHOTS_DIR ?? 'test-results/u08-shots'
@@ -227,6 +230,7 @@ test('U08-C06 邮箱＋密码登录（B2）', async ({ page }) => {
 
 test('U08-C07 错误密码被拒绝（B2）', async ({ page }) => {
   skipIfBlocked()
+  test.skip(borrowedAccount, '借用账号只读模式：错误密码只打自己的账号')
   await test.step('假如 我在新的未登录会话打开 /login', async () => {
     await page.goto('/login')
   })
