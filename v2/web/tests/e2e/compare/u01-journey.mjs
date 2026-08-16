@@ -20,7 +20,7 @@ mkdirSync(SHOTS, { recursive: true })
 
 const creds = JSON.parse(
   readFileSync(
-    join(process.cwd(), 'test-results/shared-account/creds.json'),
+    join(process.cwd(), '.e2e-shared-account/creds.json'),
     'utf8',
   ),
 )
@@ -413,9 +413,16 @@ try {
     })
 
     await step('J16', 'P1 展示名（E/EA 页头）', async () => {
+      // E 页头的展示名与侧名都是异步渲染（/my/agents 与场景详情各一趟）——
+      // 必须显式等待，裸 count() 会在数据回来前取到 0（08-16 J16 实测踩坑）。
       await openBuild(B.agentID)
+      await page.getByText('商鞅「激进」').first().waitFor({ timeout: 20000 })
+        .catch(() => {})
       const bName = await page.getByText('商鞅「激进」').count()
       await openBuild(A.agentID)
+      await page.getByText(`商鞅 #${A.agentID}`).first().waitFor({
+        timeout: 20000,
+      }).catch(() => {})
       const aFallback = await page.getByText(`商鞅 #${A.agentID}`).count()
       await page.goto(`${BASE}/agents/${B.agentID}`)
       await page.getByRole('heading', { name: '商鞅「激进」' }).waitFor()

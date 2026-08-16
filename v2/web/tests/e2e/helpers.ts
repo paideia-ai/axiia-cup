@@ -39,7 +39,9 @@ export function requireServerFixtures() {
 // AXIIA_BASE_URL 复跑）都用凭据登录复用。storageState 逐 baseURL 存——cookie
 // 按域名隔离，换目标必须重新登录而不是复用别家域的 state。
 // 也可用 AXIIA_SHARED_EMAIL / AXIIA_SHARED_PASSWORD 指定既有账号，彻底不注册。
-const sharedDir = join(process.cwd(), 'test-results', 'shared-account')
+// ⚠ 位置绝不能放 test-results/——playwright 每次运行都会清空 outputDir，
+// 凭据被清掉就会静默注册第二个账号（08-16 实测踩坑，多烧一个注册名额）。
+const sharedDir = join(process.cwd(), '.e2e-shared-account')
 const credsPath = join(sharedDir, 'creds.json')
 
 function stateSlug(): string {
@@ -68,7 +70,12 @@ export async function ensureSharedAccount(
 
   if (creds != null) {
     if (!existsSync(sharedStatePath())) {
-      const context = await request.newContext({ baseURL })
+      // @playwright/test 会把 test.use 的 storageState（此刻还不存在的文件）
+      // 合并进 request.newContext——显式盖掉，登录后再写出该文件。
+      const context = await request.newContext({
+        baseURL,
+        storageState: undefined,
+      })
       const login = await context.post('/v1/auth/login', {
         headers: sameOrigin,
         data: { email: creds.email, password: creds.password },

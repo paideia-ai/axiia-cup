@@ -6,3 +6,5 @@
 /playwright-report/
 /storybook-static/
 /test-results/
+# e2e 共享账号凭据/故事线（不能放 test-results——playwright 每轮清空它）
+/.e2e-shared-account/

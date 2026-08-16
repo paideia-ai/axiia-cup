@@ -31,12 +31,12 @@ test.beforeAll(async ({ browser }) => {
 })
 
 // ── 故事线登记：跨测试记住 A/B/C/甘龙 的 agent id ─────────────────────────
-// 同一账号的多测试推进同一条故事线；id 落盘（test-results），worker 重启或
-// 复跑时仍能对上号。缺席时从 /v1/my/agents 兜底推断。
+// 同一账号的多测试推进同一条故事线；id 落盘（.e2e-shared-account，绝不能放
+// playwright 会清空的 test-results），worker 重启或复跑时仍能对上号。缺席时
+// 从 /v1/my/agents 兜底推断。
 const storyPath = join(
   process.cwd(),
-  'test-results',
-  'shared-account',
+  '.e2e-shared-account',
   'story.json',
 )
 
@@ -53,7 +53,7 @@ function story(): Story {
 }
 
 function remember(patch: Partial<Story>) {
-  mkdirSync(join(process.cwd(), 'test-results', 'shared-account'), {
+  mkdirSync(join(process.cwd(), '.e2e-shared-account'), {
     recursive: true,
   })
   writeFileSync(storyPath, JSON.stringify({ ...story(), ...patch }))
