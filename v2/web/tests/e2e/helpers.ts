@@ -1,9 +1,12 @@
 import {
   type APIRequestContext,
+  type Browser,
   expect,
   type Page,
   request,
 } from '@playwright/test'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 import { totp } from '../../e2e/http'
 
@@ -27,6 +30,71 @@ export function requireServerFixtures() {
   expect(scenarioID, 'AXIIA_SCENARIO_ID is set by run-playwright.sh').not.toBe(
     '',
   )
+}
+
+// ── 共享测试账号（agent-edit 系）───────────────────────────────────────────
+//
+// agent-edit.spec.ts 与 compare/u01-edit-versions.spec.ts 全部测试共用**一个**
+// 账号（注册码名额稀缺）：首次调用注册一次，之后（含 worker 重启、换
+// AXIIA_BASE_URL 复跑）都用凭据登录复用。storageState 逐 baseURL 存——cookie
+// 按域名隔离，换目标必须重新登录而不是复用别家域的 state。
+// 也可用 AXIIA_SHARED_EMAIL / AXIIA_SHARED_PASSWORD 指定既有账号，彻底不注册。
+const sharedDir = join(process.cwd(), 'test-results', 'shared-account')
+const credsPath = join(sharedDir, 'creds.json')
+
+function stateSlug(): string {
+  return (baseURL || 'default').replace(/[^a-zA-Z0-9.]+/g, '-')
+}
+
+export function sharedStatePath(): string {
+  return join(sharedDir, `state-${stateSlug()}.json`)
+}
+
+export async function ensureSharedAccount(
+  browser: Browser,
+): Promise<{ email: string; password: string }> {
+  mkdirSync(sharedDir, { recursive: true })
+  const envEmail = process.env.AXIIA_SHARED_EMAIL ?? ''
+  const password = process.env.AXIIA_SHARED_PASSWORD ?? 'playwrightpw-123456'
+  let creds: { email: string; password: string } | null = null
+  if (envEmail !== '') {
+    creds = { email: envEmail, password }
+  } else if (existsSync(credsPath)) {
+    creds = JSON.parse(readFileSync(credsPath, 'utf8')) as {
+      email: string
+      password: string
+    }
+  }
+
+  if (creds != null) {
+    if (!existsSync(sharedStatePath())) {
+      const context = await request.newContext({ baseURL })
+      const login = await context.post('/v1/auth/login', {
+        headers: sameOrigin,
+        data: { email: creds.email, password: creds.password },
+      })
+      expect(login.ok(), `shared account login ${creds.email}`).toBe(true)
+      await context.storageState({ path: sharedStatePath() })
+      await context.dispose()
+    }
+    return creds
+  }
+
+  // 唯一的一次注册：走真实注册页（顺带覆盖注册路径本身）。
+  expect(
+    registrationCode,
+    'AXIIA_REGISTRATION_CODE must be set to create the shared account',
+  ).not.toBe('')
+  // @playwright/test 会把 test.use 的 contextOptions（含还不存在的
+  // storageState 文件）合并进 browser.newContext——这里显式盖掉。
+  const context = await browser.newContext({ baseURL, storageState: undefined })
+  const page = await context.newPage()
+  const email = await signup(page, 'u01')
+  await context.storageState({ path: sharedStatePath() })
+  await context.close()
+  creds = { email, password: 'playwrightpw-123456' }
+  writeFileSync(credsPath, JSON.stringify(creds))
+  return creds
 }
 
 export async function signup(page: Page, label: string) {
