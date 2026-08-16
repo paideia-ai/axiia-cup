@@ -61,12 +61,19 @@ async function rowFolds(page: Page) {
   )
 }
 
+type Participant = {
+  versionID?: number
+  modelID?: string
+  presetKey?: string
+  isMine?: boolean
+}
+
 type MatchPayload = {
   summary: {
-    participants?: {
-      a: { versionID?: number; modelID?: string; presetKey?: string }
-      b: { versionID?: number; modelID?: string; presetKey?: string }
-    }
+    kind: string
+    finished: boolean
+    scored: boolean
+    participants?: { a: Participant; b: Participant }
   }
   turns: Array<{ speaker: string; kind: string; reasoning?: string | null }>
   verdicts: Array<{ key: string; model: string }>
@@ -79,6 +86,37 @@ async function matchPayload(
   const response: APIResponse = await page.request.get(`/v1/matches/${matchID}`)
   expect(response.ok(), `GET /v1/matches/${matchID}`).toBe(true)
   return await response.json() as MatchPayload
+}
+
+// 夹具预检：素材走样（对局被删/换、账号换人）要与「交付物红」区分开——
+// 预检失败＝夹具腐坏（fixture rot），不是规格差异。
+async function assertPveFixture(
+  page: Page,
+  { owned = true } = {},
+): Promise<MatchPayload> {
+  const payload = await matchPayload(page, MATCH)
+  const { summary } = payload
+  expect(summary.kind, 'AXIIA_MATCH_ID 应指向 PVE 对局').toBe('pve')
+  expect(summary.finished && summary.scored, '对局应已完局并计分').toBe(true)
+  expect(
+    summary.participants?.a.isMine,
+    owned ? '登录账号应是甲方（我方）智能体的所有者' : '旁观账号不应拥有甲方',
+  ).toBe(owned)
+  expect(
+    summary.participants?.b.presetKey,
+    '乙方应是官方 NPC 预设',
+  ).toBeTruthy()
+  return payload
+}
+
+async function assertPvpFixture(page: Page): Promise<MatchPayload> {
+  const payload = await matchPayload(page, PVP_MATCH)
+  const { summary } = payload
+  expect(summary.kind, 'AXIIA_PVP_MATCH_ID 应指向 PVP 对局').toBe('pvp')
+  expect(summary.finished && summary.scored, '对局应已完局并计分').toBe(true)
+  expect(summary.participants?.a.versionID, '甲方应为玩家版本').toBeTruthy()
+  expect(summary.participants?.b.versionID, '乙方应为玩家版本').toBeTruthy()
+  return payload
 }
 
 test.describe('U07 · 战报（§A7）', () => {
@@ -124,6 +162,7 @@ test.describe('U07 · 战报（§A7）', () => {
   test('隐藏目标的五步披露区块（#69，预期与 dev 有差异）', async ({ page }) => {
     await test.step('假如 我以对局所有者身份登录并打开完局战报', async () => {
       await login(page, OWNER_EMAIL)
+      await assertPveFixture(page)
       await openFinishedReport(page, MATCH)
     })
     await test.step(
@@ -162,7 +201,7 @@ test.describe('U07 · 战报（§A7）', () => {
       await login(page, OWNER_EMAIL)
       await openFinishedReport(page, MATCH)
     })
-    const { summary } = await matchPayload(page, MATCH)
+    const { summary } = await assertPveFixture(page)
     const mine = summary.participants!.a
     await test.step(
       '那么 我方参战卡显示版本 id 并可复制（可用于按 id 约战）',
@@ -196,7 +235,7 @@ test.describe('U07 · 战报（§A7）', () => {
       },
     )
     await test.step('那么 两张参战卡各自显示版本 id（#25 双方都显示）', async () => {
-      const { summary } = await matchPayload(page, PVP_MATCH)
+      const { summary } = await assertPvpFixture(page)
       // .first()：对手行文本与 id 徽章都含 v#——两处出现即「显示」成立。
       await expect(
         page.getByText(`v#${summary.participants!.a.versionID}`).first(),
@@ -225,6 +264,7 @@ test.describe('U07 · 战报（§A7）', () => {
       '假如 我以旁观者身份登录并打开一场完局 PVP 战报',
       async () => {
         await login(page, PROBE_EMAIL)
+        await assertPvpFixture(page)
         await openFinishedReport(page, PVP_MATCH)
       },
     )
@@ -326,8 +366,10 @@ test.describe('U07 · 战报（§A7）', () => {
       await test.step(
         '并且 裁判真实 trace 折叠对旁观者可见（#22② 公开）',
         async () => {
-          // 结果卡（判词处）的折叠＝裁判终局 trace；行内折叠只属对话行，
-          // 判词的折叠在 .border-l-2 之外。
+          // 裁判 trace 折叠数是**推断**出来的：total（全页「内心」按钮）−
+          // in-row（.border-l-2 对话行内的折叠，旁观者视角只剩 NPC 侧）＝
+          // 行外折叠，即心声卡/判词卡上的裁判 trace（旁观者拿不到 a 侧
+          // reasoning，行外折叠不可能来自他人己方 trace——上一步已证）。
           const total = await probePage.getByRole('button', { name: /内心/ })
             .count()
           const inRows = (await rowFolds(probePage))
@@ -422,7 +464,9 @@ test.describe('U07 · 战报（§A7）', () => {
       async () => {
         const body = await page.evaluate(() => document.body.innerText)
         expect(body).not.toContain('提示词')
-        expect(body).not.toContain('diff')
+        // 词边界匹配而非裸子串：页脚 build 哈希等场合可能偶含 'diff' 片段，
+        // 这里只拦作为独立词出现的 diff/版本 diff 标签。
+        expect(body).not.toMatch(/\bdiff\b/i)
         const payload = await matchPayload(page, MATCH)
         const keys = new Set<string>()
         const walk = (value: unknown) => {
