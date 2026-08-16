@@ -37,3 +37,36 @@ export function versionLabel(
 export function nextVersionCopy(versionCount: number): string {
   return `保存后将成为 v${versionCount + 1}`
 }
+
+// P15：逐版本战绩。没打过就直说「还没有出战过」——空白会被读成「0 胜」。
+export function recordCopy(version: AgentVersionDTO): string {
+  const played = version.matchCount ?? 0
+  if (played === 0) return '还没有出战过'
+  return `${played} 战 ${version.winCount ?? 0} 胜`
+}
+
+// P10：保存时间。只到「天/小时」粒度——版本卡要的是「哪一版更近」，不是秒。
+export function savedAtCopy(
+  version: AgentVersionDTO,
+  now = Date.now(),
+): string {
+  const at = version.createdAt
+  if (at == null || at <= 0) return ''
+  const minutes = Math.floor((now - at * 1000) / 60000)
+  if (minutes < 1) return '刚刚保存'
+  if (minutes < 60) return `${minutes} 分钟前`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} 小时前`
+  return `${Math.floor(hours / 24)} 天前`
+}
+
+// P1a：策略行的「最近编辑」。与 savedAtCopy 同一把尺，但主语是策略不是版本。
+export function editedCopy(at?: number, now = Date.now()): string {
+  if (at == null || at <= 0) return ''
+  const minutes = Math.floor((now - at * 1000) / 60000)
+  if (minutes < 1) return '刚刚编辑'
+  if (minutes < 60) return `${minutes} 分钟前编辑`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} 小时前编辑`
+  return `${Math.floor(hours / 24)} 天前编辑`
+}

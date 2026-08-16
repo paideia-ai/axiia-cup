@@ -1,19 +1,24 @@
 import { Hammer, Plus } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { builder, catalog, myAgents } from '../api/client'
+import { agents as agentsApi, builder, catalog, myAgents } from '../api/client'
 import type {
   MyAgentDTO,
   MyAgentsScenarioDTO,
   ScenarioSummary,
   Side,
 } from '../api/types'
-import { NewAgentDialog } from '../components/new-agent-dialog'
+import {
+  AGENT_NAME_LIMIT,
+  NewAgentDialog,
+} from '../components/new-agent-dialog'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import { Input } from '../components/ui/input'
 import { messageOf, useAsync } from '../lib/use-async'
+import { editedCopy } from '../lib/version-label'
 
 // 我的智能体（#73/#64）：按场景分组的一级入口页。P2 数据化——主数据源是
 // GET /v1/my/agents（版本数/★参赛版本/双侧完成度/参赛资格，#64/#58，样式对照
@@ -24,7 +29,7 @@ import { messageOf, useAsync } from '../lib/use-async'
 // 每侧一枚「再建一个」开新建弹窗（受 #59/#79 引导门，弹窗内引导先建对侧）。
 export function MyAgentsPage() {
   const navigate = useNavigate()
-  const { data, error, loading } = useAsync(async () => {
+  const { data, error, loading, reload } = useAsync(async () => {
     // 清单接口失败 → inventory 为 null → 降级骨架；目录失败才算页面错误。
     const [catalogRes, inventory] = await Promise.all([
       catalog.scenarios(),
@@ -38,6 +43,24 @@ export function MyAgentsPage() {
   const [creating, setCreating] = useState<
     { scenario: ScenarioSummary; side: Side } | null
   >(null)
+  // P13：DA 侧卡「再建一个」把玩家送到这里并带 ?new=<side>&scenario=<id>，
+  // 落地即开新建弹窗；用完即从 URL 摘掉（replace，不留历史）。
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    const side = params.get('new') as Side | null
+    const scenarioID = params.get('scenario')
+    if (side == null || data == null) return
+    const scenario = data.scenarios.find((item) =>
+      scenarioID == null || item.id === scenarioID
+    )
+    if (scenario) setCreating({ scenario, side })
+    setParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('new')
+      next.delete('scenario')
+      return next
+    }, { replace: true })
+  }, [data])
 
   // 懒创建（get-or-create，只在点击时调用）：仅当该侧还没有 agent 时走
   // ensure；已有 agentID 的入口直接导航，不再多打一次接口。
@@ -95,6 +118,7 @@ export function MyAgentsPage() {
                     pending={pending}
                     onCreate={(side) => void enter(scenario.id, side, 'build')}
                     onNewAgent={(side) => setCreating({ scenario, side })}
+                    onChanged={reload}
                   />
                 )
                 : (
@@ -136,20 +160,53 @@ function ScenarioGroup({
   pending,
   onCreate,
   onNewAgent,
+  onChanged,
 }: {
   scenario: ScenarioSummary
   inventory: MyAgentsScenarioDTO | null
   pending: string | null
   onCreate: (side: Side) => void
   onNewAgent: (side: Side) => void
+  onChanged: () => void
 }) {
   const navigate = useNavigate()
+  // P2 就地改名 / P8b 两步删除：都不弹窗（E9：界面自解释，不配说明书）。
+  const [renaming, setRenaming] = useState<number | null>(null)
+  const [draftName, setDraftName] = useState('')
+  const [deleteArmed, setDeleteArmed] = useState<number | null>(null)
+  const [rowError, setRowError] = useState<string | null>(null)
+
+  const commitRename = async (agentID: number) => {
+    setRowError(null)
+    try {
+      await agentsApi.rename(agentID, { name: draftName.trim() || null })
+      setRenaming(null)
+      onChanged()
+    } catch (cause) {
+      setRowError(messageOf(cause, '改名失败'))
+    }
+  }
+
+  const commitDelete = async (agentID: number) => {
+    setRowError(null)
+    try {
+      await agentsApi.remove(agentID)
+      setDeleteArmed(null)
+      onChanged()
+    } catch (cause) {
+      setRowError(messageOf(cause, '删除失败'))
+    }
+  }
   const sides = [
     ['a', scenario.sideAName, scenario.sideALabel],
     ['b', scenario.sideBName, scenario.sideBLabel],
   ] as const
 
-  const agentsOf = (side: Side): MyAgentDTO[] => inventory?.sides[side] ?? []
+  // P1a：按最近编辑倒序——回到这一页，最想先看到的是上次在改的那个。
+  const agentsOf = (side: Side): MyAgentDTO[] =>
+    [...(inventory?.sides[side] ?? [])].sort(
+      (a, b) => (b.lastEditedAt ?? 0) - (a.lastEditedAt ?? 0),
+    )
   const hasEntry = (side: Side) =>
     agentsOf(side).some((agent) => agent.entryVersionID != null)
 
@@ -209,6 +266,8 @@ function ScenarioGroup({
                 {agents.map((agent) => (
                   <div
                     key={agent.agentID}
+                    data-testid='agent-row'
+                    data-agent-id={agent.agentID}
                     className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
                   >
                     {
@@ -216,7 +275,53 @@ function ScenarioGroup({
                       行，而不是把侧名/摘要挤成一字一行的竖排 */
                     }
                     <div className='min-w-40 flex-1'>
-                      <p className='text-sm font-semibold text-(--foreground)'>
+                      {renaming === agent.agentID
+                        ? (
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <label
+                              className='sr-only'
+                              htmlFor={`rename-${agent.agentID}`}
+                            >
+                              智能体 #{agent.agentID} 的名字
+                            </label>
+                            <Input
+                              id={`rename-${agent.agentID}`}
+                              className='max-w-48'
+                              value={draftName}
+                              maxLength={AGENT_NAME_LIMIT}
+                              autoFocus
+                              onChange={(event) =>
+                                setDraftName(event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                  void commitRename(agent.agentID)
+                                }
+                                if (event.key === 'Escape') setRenaming(null)
+                              }}
+                              placeholder={`如「铁腕${name}」——留空则不起名`}
+                            />
+                            <Button
+                              size='sm'
+                              variant='secondary'
+                              onClick={() => void commitRename(agent.agentID)}
+                            >
+                              保存
+                            </Button>
+                            <button
+                              type='button'
+                              onClick={() => setRenaming(null)}
+                              className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+                            >
+                              取消
+                            </button>
+                          </div>
+                        )
+                        : null}
+                      <p
+                        className={`text-sm font-semibold text-(--foreground) ${
+                          renaming === agent.agentID ? 'hidden' : ''
+                        }`}
+                      >
                         <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
                           {side === 'a' ? '甲方' : '乙方'}
                         </span>
@@ -241,6 +346,16 @@ function ScenarioGroup({
                         {agent.entryVersionID != null
                           ? '已标 ★参赛版本'
                           : '未标参赛版本'}
+                        {editedCopy(agent.lastEditedAt)
+                          ? (
+                            <>
+                              {' · '}
+                              <span data-testid='agent-edited'>
+                                {editedCopy(agent.lastEditedAt)}
+                              </span>
+                            </>
+                          )
+                          : null}
                         {label ? ` · ${label}` : ''}
                       </p>
                     </div>
@@ -261,9 +376,51 @@ function ScenarioGroup({
                       >
                         进入构建
                       </Button>
+                      {/* P2：自起名是策略层唯一的身份标签，必须能改 */}
+                      <Button
+                        size='sm'
+                        variant='ghost'
+                        aria-label={`重命名智能体 #${agent.agentID}`}
+                        onClick={() => {
+                          setRenaming(agent.agentID)
+                          setDraftName(agent.name ?? '')
+                          setDeleteArmed(null)
+                        }}
+                      >
+                        重命名
+                      </Button>
+                      {/* P8b：只有一版都没存的空壳可删；有版本的永不可删 */}
+                      {agent.versionCount === 0
+                        ? (
+                          deleteArmed === agent.agentID
+                            ? (
+                              <Button
+                                size='sm'
+                                variant='secondary'
+                                aria-label={`确认删除智能体 #${agent.agentID}`}
+                                onClick={() => void commitDelete(agent.agentID)}
+                              >
+                                确认删除
+                              </Button>
+                            )
+                            : (
+                              <Button
+                                size='sm'
+                                variant='ghost'
+                                aria-label={`删除智能体 #${agent.agentID}`}
+                                onClick={() => setDeleteArmed(agent.agentID)}
+                              >
+                                删除
+                              </Button>
+                            )
+                        )
+                        : null}
                     </div>
                   </div>
                 ))}
+                {rowError
+                  ? <p className='text-xs text-(--accent)'>{rowError}</p>
+                  : null}
                 {/* #56 每侧多 agent：入口在侧内；#59 引导门在弹窗里拦并引导 */}
                 <div>
                   <Button

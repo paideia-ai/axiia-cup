@@ -207,6 +207,8 @@ export interface MyAgentDTO {
   latestVersionID?: number | null
   // #63 自起名（P6 起）；老服务器缺席。
   name?: string | null
+  // P1a：最近一次保存或草稿暂存的时间——多策略并存时用来认出「上次在改哪个」。
+  lastEditedAt?: number
 }
 
 // A side with no agent yet is an empty array, never an absent key.
@@ -269,6 +271,10 @@ export interface FieldMutationRequest {
 // script untouched; its vocabulary is the scenario's own (see src/scenarios).
 // Omitting it is always valid, and a scenario the SPA has no module for never
 // sends it.
+export interface RenameAgentRequest {
+  name?: string | null
+}
+
 export interface SaveVersionRequest {
   prompt: string
   modelID: string
@@ -276,6 +282,8 @@ export interface SaveVersionRequest {
   options?: string | null
   // 初始化来源佐证（#83）：'raw' | 'mcq' | 'builder'（元提示词）。文本仍是唯一事实源。
   method?: string | null
+  // P10：保存时可选填，写一次不再改。
+  note?: string | null
 }
 
 export interface AgentVersionDTO {
@@ -291,6 +299,12 @@ export interface AgentVersionDTO {
   // 草稿自动暂存水位（服务端脏检测用），不是版本号——永远不要渲染它。
   snapshotSeq: number
   options?: string | null
+  // P10（E5 承诺过）：备注与保存时间是版本身份的一部分。老服务器缺席。
+  note?: string | null
+  createdAt?: number
+  // P15（B3 承诺过）：该版本自己的战绩——玩家据此决定 ★ 给哪一版。
+  matchCount?: number
+  winCount?: number
 }
 
 export interface DraftResponse {

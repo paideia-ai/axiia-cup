@@ -2,7 +2,7 @@ import { Bot, Clock, Hammer } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { builder, catalog } from '../api/client'
+import { builder, catalog, myAgents } from '../api/client'
 import type { ScenarioSummary, Side } from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
@@ -30,6 +30,16 @@ export function ScenarioDetailPage() {
     () => catalog.scenario(scenarioId, 'a'),
     [scenarioId],
   )
+
+  // P13：该侧已有策略时，DA 不再猜「你要编辑哪个」——按钮组换成「再建一个 /
+  // 查看我的（N）」。清单失败按「没有」处理（回落今天的「去构建」）。
+  const { data: mine } = useAsync(
+    () => myAgents.list().catch(() => null),
+    [scenarioId],
+  )
+  const mineOf = (side: Side) =>
+    mine?.scenarios.find((item) => item.scenarioID === scenarioId)
+      ?.sides[side] ?? []
 
   // 懒创建（get-or-create，仅在点击时调用）：去构建进 /build，查看进主页。
   const enter = async (side: Side, target: 'build' | 'view') => {
@@ -202,29 +212,58 @@ export function ScenarioDetailPage() {
                           )
                           : null}
 
+                        {/* P13：先说清「我这一侧已经有什么」，再给动作 */}
+                        {mineOf(key).length > 0
+                          ? (
+                            <p className='text-xs text-(--foreground-muted)'>
+                              你已有 {mineOf(key).length} 个{name}：{' '}
+                              {mineOf(key)
+                                .map((agent) =>
+                                  agent.name ?? `#${agent.agentID}`
+                                )
+                                .join(' · ')}
+                            </p>
+                          )
+                          : null}
                         <div className='flex flex-wrap items-center gap-2 pt-1'>
-                          <Button
-                            size='sm'
-                            data-testid={key === 'a'
-                              ? 'build-agent'
-                              : undefined}
-                            disabled={pending != null}
-                            onClick={() => void enter(key, 'build')}
-                          >
-                            <Hammer className='mr-1.5 h-3.5 w-3.5' />
-                            {pending === `${key}:build` ? '创建中…' : '去构建'}
-                          </Button>
-                          <Button
-                            size='sm'
-                            variant='secondary'
-                            disabled={pending != null}
-                            onClick={() => void enter(key, 'view')}
-                          >
-                            <Bot className='mr-1.5 h-3.5 w-3.5' />
-                            {pending === `${key}:view`
-                              ? '打开中…'
-                              : '查看我的智能体'}
-                          </Button>
+                          {mineOf(key).length === 0
+                            ? (
+                              <Button
+                                size='sm'
+                                data-testid={key === 'a'
+                                  ? 'build-agent'
+                                  : `build-agent-${key}`}
+                                disabled={pending != null}
+                                onClick={() => void enter(key, 'build')}
+                              >
+                                <Hammer className='mr-1.5 h-3.5 w-3.5' />
+                                {pending === `${key}:build`
+                                  ? '创建中…'
+                                  : '去构建'}
+                              </Button>
+                            )
+                            : (
+                              <>
+                                <Button
+                                  size='sm'
+                                  onClick={() =>
+                                    navigate(
+                                      `/my-agents?new=${key}&scenario=${scenarioId}`,
+                                    )}
+                                >
+                                  <Hammer className='mr-1.5 h-3.5 w-3.5' />
+                                  再建一个{name}
+                                </Button>
+                                <Button
+                                  size='sm'
+                                  variant='secondary'
+                                  onClick={() => navigate('/my-agents')}
+                                >
+                                  <Bot className='mr-1.5 h-3.5 w-3.5' />
+                                  查看我的{name}（{mineOf(key).length}）
+                                </Button>
+                              </>
+                            )}
                         </div>
                       </CardContent>
                     </Card>

@@ -66,19 +66,22 @@ export const VersionCards: Story = {
   args: { page: 'agent' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByRole('heading', { name: /商鞅庭辩/ }))
+    // P1：页头是策略展示名（fixture 无自起名 → 「商鞅 #101」），场景名降为副题。
+    await expect(await canvas.findByRole('heading', { name: /商鞅 #101/ }))
       .toBeVisible()
     await expect(canvas.getByText('v2')).toBeVisible()
     await expect(canvas.getByText('★参赛版本')).toBeVisible()
-    // E3/E4（#82/#84）：版本卡动作＝恢复到工作区 / 复制为新智能体 / 设为参赛
-    await expect(canvas.getByRole('button', { name: '恢复 v1 到工作区' }))
+    // #89/#90：版本卡动作＝基于该版本迭代 / 设为参赛版本 / 出战——
+    // 「复制为新智能体」已废止，必须不存在。
+    await expect(canvas.getByRole('button', { name: '基于 v1 迭代' }))
       .toBeVisible()
-    await expect(
-      canvas.getByRole('button', { name: '以 v1 复制为新智能体' }),
-    ).toBeVisible()
-    await expect(canvas.getByRole('button', { name: '将 v1 设为参赛版本' }))
+    await expect(canvas.getByRole('button', { name: /将 v1 设为.*参赛版本/ }))
       .toBeVisible()
-    // E3/#82：N 已可知（两个版本），下一次保存就是 v3。
-    await expect(canvas.getAllByText('保存后将成为 v3')[0]).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '用 v1 出战' }))
+      .toBeVisible()
+    await expect(canvas.queryByRole('button', { name: /复制为新智能体/ }))
+      .toBeNull()
+    // P12：「保存后将成为 v3」提到段落级，全页一次。
+    await expect(canvas.getByText('保存后将成为 v3')).toBeVisible()
   },
 }
