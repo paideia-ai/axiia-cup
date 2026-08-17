@@ -93,10 +93,18 @@ export function BattleStrip() {
   // 老服务器守卫：createdAt/finishedAt 缺席时不渲染任何东西——没有时间
   // 字段就没有「刚完成」语义，进行中的陈年对局也不该复活成横条。
   const now = Date.now()
-  const inFlight = rows.filter((match) =>
+  // #72 的横条装的是**你已发起的**对局。dev 上 AXIIA_OPEN_BATTLES=1 让
+  // /v1/matches 成为全站可观战的列表（返回别人的对局，靠 initiatorIsMe 区分），
+  // 不过滤就会把陌生人的对局塞进你的横条——审计 U05-C09b 实证过：0 派发的
+  // 新账号照样看到别人进行中的卡。
+  // 这里对归属**失败关闭**：只有明确 initiatorIsMe === true 才进横条。老服务器
+  // 不返回该字段时整条退场，与上面「缺时间字段就不渲染」的降级取向一致——
+  // 宁可少显示，也不泄漏别人的对局。
+  const mine = rows.filter((match) => match.initiatorIsMe === true)
+  const inFlight = mine.filter((match) =>
     match.dispatched && !match.finished && match.createdAt != null
   )
-  const recentDone = rows
+  const recentDone = mine
     .filter((match) =>
       match.finished &&
       match.finishedAt != null &&

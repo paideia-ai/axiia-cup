@@ -1,10 +1,12 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { landing as landingApi } from '../api/client'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
+import { useAsync } from '../lib/use-async'
 
 const steps = [
   {
@@ -29,6 +31,11 @@ const steps = [
 
 export function LandingPage() {
   const { isLoading, account } = useAuth()
+  // 免鉴权取首页素材；失败就当没有（下面整段不渲染）。
+  const { data: landing } = useAsync(
+    () => landingApi.get().catch(() => null),
+    [],
+  )
 
   return (
     <div className='relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(224,74,47,0.18),transparent_28%),linear-gradient(180deg,#111_0%,#0c0c0c_38%,#090909_100%)]'>
@@ -130,6 +137,112 @@ export function LandingPage() {
             ))}
           </div>
         </section>
+
+        {
+          /* B1 规格四项：真实对局节选 / 白名单示范对局 / 顶尖玩家 / 总对战数。
+            公开页，数据来自免鉴权的 GET /v1/landing；取不到就整段不渲染，
+            首页不该因为一个接口挂掉而变成半张脸。 */
+        }
+        {landing
+          ? (
+            <section className='mx-auto w-full max-w-5xl space-y-10 pb-16'>
+              {landing.excerpt
+                ? (
+                  <div>
+                    <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
+                      真实对局节选
+                    </h2>
+                    <div className='mt-3 space-y-2 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-white/2 px-5 py-4'>
+                      {landing.excerpt.turns.map((turn, index) => (
+                        <p
+                          key={index}
+                          className='text-sm leading-7 text-(--foreground-subtle)'
+                        >
+                          <span className='mr-2 font-semibold text-white'>
+                            {turn.speaker}
+                          </span>
+                          {turn.text}
+                        </p>
+                      ))}
+                      <p className='pt-1 text-xs text-(--foreground-muted)'>
+                        节选自《{landing.excerpt.scenarioTitle}》· 对局
+                        #{landing
+                          .excerpt.matchID}
+                      </p>
+                    </div>
+                  </div>
+                )
+                : null}
+
+              <div className='grid gap-8 md:grid-cols-3'>
+                {landing.demoMatches.length > 0
+                  ? (
+                    <div>
+                      <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
+                        示范对局
+                      </h2>
+                      <ul className='mt-3 space-y-2'>
+                        {landing.demoMatches.map((demo) => (
+                          <li key={demo.matchID}>
+                            <Link
+                              to={`/matches/${demo.matchID}`}
+                              className='text-sm text-(--accent) hover:underline'
+                            >
+                              {demo.scenarioTitle} · 对局 #{demo.matchID}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                  : null}
+
+                {landing.topPlayers.length > 0
+                  ? (
+                    <div>
+                      <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
+                        顶尖玩家
+                      </h2>
+                      <ol className='mt-3 space-y-1.5'>
+                        {landing.topPlayers.map((player, index) => (
+                          <li
+                            key={player.displayName}
+                            className='flex items-center justify-between text-sm text-(--foreground-subtle)'
+                          >
+                            <span>
+                              <span className='mr-2 tabular-nums text-(--foreground-muted)'>
+                                {index + 1}
+                              </span>
+                              {player.displayName}
+                            </span>
+                            <span className='tabular-nums'>
+                              {player.wins} 胜
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )
+                  : null}
+
+                <div>
+                  <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
+                    总对战数
+                  </h2>
+                  <p
+                    data-testid='landing-total-battles'
+                    className='mt-3 text-[2.5rem] font-black leading-none tracking-[-0.04em] text-white tabular-nums'
+                  >
+                    {landing.totalBattles}
+                  </p>
+                  <p className='mt-2 text-xs text-(--foreground-muted)'>
+                    已完成并计分的对局
+                  </p>
+                </div>
+              </div>
+            </section>
+          )
+          : null}
 
         <footer className='py-4'>
           <IcpRecord />
