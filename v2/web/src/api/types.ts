@@ -508,20 +508,36 @@ export type MatchEventDTO =
 
 // ── EngagementDTOs ──────────────────────────────────────────────────────────
 
+export interface TournamentRoundDTO {
+  id: number
+  roundNumber: number
+  status: string
+  // 'qualifier' = 海选，'main' = 正赛。
+  phase: string
+}
+
 export interface TournamentSummary {
   id: number
   scenarioID: string
   status: string
   currentRound: number
   totalRounds: number
+  // 最新一轮所属阶段；还没开轮时缺席。老服务器同样缺席，UI 直接不显示徽章。
+  phase?: string | null
+  // B4「含选择器与按轮时间线」：轮次时间线随列表下发。
+  rounds?: TournamentRoundDTO[]
 }
 
 export interface TournamentListResponse {
   tournaments: TournamentSummary[]
 }
 
+// #64「排名一律按玩家（不按 agent、不按侧）」：一行＝一个人。玩家在一场赛事里
+// 通常两侧各投一个版本，`submissionIDs` 保留这些条目供下钻，但名次属于人。
 export interface StandingsEntryDTO {
-  submissionID: number
+  playerID: string
+  playerName: string
+  submissionIDs: number[]
   wins: number
   losses: number
   buchholz: number
@@ -620,4 +636,56 @@ export interface UpdateSlotRequest {
   title?: string | null
   params?: JSONValue | null
   status?: string | null
+}
+
+// #35 公开视图：别人看你的智能体时能看到的一切——身份 + 逐版本战绩。
+// 没有 prompt 字段，也没有 diff：契约层面就不给（#20）。
+export interface PublicAgentVersionDTO {
+  id: number
+  ordinal: number
+  isEntry: boolean
+  createdAt: number
+  matchCount: number
+  winCount: number
+}
+
+export interface PublicAgentResponse {
+  agentID: number
+  scenarioID: string
+  scenarioTitle: string
+  side: string
+  sideName: string
+  name?: string | null
+  ownerName: string
+  versions: PublicAgentVersionDTO[]
+}
+
+// ── Landing (B1) ────────────────────────────────────────────────────────────
+export interface LandingTurnDTO {
+  speaker: string
+  text: string
+}
+
+export interface LandingExcerptDTO {
+  matchID: number
+  scenarioID: string
+  scenarioTitle: string
+  turns: LandingTurnDTO[]
+}
+
+export interface LandingPlayerDTO {
+  displayName: string
+  wins: number
+}
+
+export interface LandingDemoDTO {
+  matchID: number
+  scenarioTitle: string
+}
+
+export interface LandingResponse {
+  totalBattles: number
+  topPlayers: LandingPlayerDTO[]
+  excerpt?: LandingExcerptDTO | null
+  demoMatches: LandingDemoDTO[]
 }

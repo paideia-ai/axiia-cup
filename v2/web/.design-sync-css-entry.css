@@ -1,0 +1,9 @@
+/* Tailwind entry for /design-sync's compiled stylesheet (cfg.cssEntry).
+   Automatic source detection is cwd-relative and only ever sees v2/web, so the
+   authored preview cards in .design-sync/previews/ contribute no classes — their
+   layout utilities would be missing from the shipped CSS and every card would
+   render unstyled scaffolding. The @source line adds them back.
+   Compiled to .design-sync-styles.css via cfg.buildCmd. */
+@import './src/styles.css';
+
+@source '../../.design-sync/previews/**/*.tsx';

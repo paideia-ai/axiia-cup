@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { builder, catalog, myAgents } from '../api/client'
+import { ApiError, builder, catalog, myAgents } from '../api/client'
 import type {
   AgentVersionDTO,
   MyAgentDTO,
@@ -25,6 +25,21 @@ export function AgentViewPage() {
   const agentID = Number(agentId)
   const navigate = useNavigate()
   const location = useLocation()
+
+  // #35 公开视图：别人的智能体也有主页。先按主人路径取（草稿/版本/diff 都要
+  // 所有权），403 就退到公开投影——身份 + 逐版本战绩，没有提示词也没有 diff。
+  const { data: publicView } = useAsync(async () => {
+    try {
+      await builder.draft(agentID)
+      return null // 是自己的，走下面的主人视图
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 403) {
+        // 老服务器没有 /public：再 404 就让它冒泡成原来的「不是你的智能体」。
+        return await builder.public(agentID)
+      }
+      return null
+    }
+  }, [agentID])
 
   const { data, error, reload } = useAsync(async () => {
     const draft = await builder.draft(agentID)
@@ -119,6 +134,75 @@ export function AgentViewPage() {
     } finally {
       setDiffBusy(false)
     }
+  }
+
+  // 公开视图：#35 明确「逐版本胜负有意公开」，而提示词与 diff 永不公开（#20）。
+  if (publicView) {
+    const displayName = publicView.name
+      ? `${publicView.sideName}「${publicView.name}」`
+      : `${publicView.sideName} #${publicView.agentID}`
+    return (
+      <div className='space-y-6'>
+        <div>
+          <Link
+            to='/scenarios'
+            className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
+          >
+            ← 场景
+          </Link>
+        </div>
+        <div>
+          <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+            {displayName}
+          </h1>
+          <p className='mt-1 text-sm text-(--foreground-subtle)'>
+            {publicView.ownerName} · {publicView.scenarioTitle}
+          </p>
+        </div>
+        <Card>
+          <CardContent className='space-y-3 pt-5'>
+            <h2 className='text-sm font-semibold text-(--foreground)'>
+              逐版本战绩
+            </h2>
+            {publicView.versions.length === 0
+              ? (
+                <p className='text-sm text-(--foreground-subtle)'>
+                  还没有保存过版本。
+                </p>
+              )
+              : (
+                <ul className='space-y-2'>
+                  {publicView.versions.map((version) => (
+                    <li
+                      key={version.id}
+                      className='flex items-center justify-between rounded-lg border border-(--border-soft) px-3 py-2 text-sm'
+                    >
+                      <span className='text-(--foreground)'>
+                        v{version.ordinal}
+                        {version.isEntry
+                          ? (
+                            <span className='ml-2 text-(--accent)'>
+                              ★ 参赛版本
+                            </span>
+                          )
+                          : null}
+                      </span>
+                      <span className='text-(--foreground-subtle)'>
+                        {version.matchCount === 0
+                          ? '还没有出战过'
+                          : `${version.matchCount} 战 ${version.winCount} 胜`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            <p className='text-xs text-(--foreground-muted)'>
+              提示词与版本对比只有主人可见。
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
