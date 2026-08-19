@@ -553,136 +553,6 @@ ${publicCasePacket}`
   const publicSpeechBoundary =
     '【本次案件发言的硬事实边界】E1 只是尚未发出的停约与内审建议草稿，不是已经执行的决定；只有顾衡在关键八分钟内通过唯一入口属于 E2，E2 门外镜头只记录进出，不能证明室内动作或离场时手持物；E3 载明原始交接册最终留在现场并散落，谁先取锤、座椅翻倒时点与方向、精确握持和锤头动作均不明；E4 只确认一次致命伤、近处血点和短暂抓握或碰撞，不能把击打说成“精准”或从痕迹确认手臂动作与意图；E5 载明顾衡第一次否认任何肢体接触，得知血点和擦伤后才第一次提出共同拉扯锤子的版本。顾衡在第二版陈述中自称抓住锤柄，但材料不能确认只有他接触过锤子，也没有说明他如何判断纪川仍在呼吸。交接册留在现场与现场散落属于 E3，不是 E1。若其他人的论点与这些边界冲突，应纠正或忽略，不得把错误继续当作事实。'
 
-  const stripQuoteArtifacts = (raw) => {
-    let text = String(raw ?? '')
-      .replace(/\r\n?/g, '\n')
-      .replace(/^[ \t]*[“”‘’「」『』"']+[ \t]*$/gm, '')
-      .trim()
-    for (const [opening, closing] of [
-      ['“', '”'],
-      ['‘', '’'],
-      ['「', '」'],
-      ['『', '』'],
-    ]) {
-      const openings = text.split(opening).length - 1
-      const closings = text.split(closing).length - 1
-      if (openings > closings) text = text.replace(opening, '')
-      if (closings > openings) text = text.replace(closing, '')
-    }
-    return text.trim()
-  }
-
-  const cleanPublicSpeech = (raw, maxSentences) => {
-    const withoutStructuredLeak = stripQuoteArtifacts(raw)
-      .replace(/<verdict\b[^>]*>[\s\S]*?<\/verdict>/gi, '')
-      .replace(/<reason\b[^>]*>[\s\S]*?<\/reason>/gi, '')
-      .replace(/<\/?[^>]+>/g, '')
-      .replace(
-        /E3(?=[^。！？!?\n]{0,32}(?:唯一.{0,12}(?:在场|进入|通过|进出)|只有.{0,12}(?:顾衡|两人)|没有其他人.{0,8}(?:进入|通过)))/g,
-        'E2',
-      )
-      .replace(
-        /E3\s*(?:已经|已)?排除(?:了)?(?=[^。！？!?\n]{0,28}(?:谁先|先拿|先取|握持|翻倒|锤头|角度|动作))/g,
-        'E3 未能确定',
-      )
-      .trim()
-    const sentences = withoutStructuredLeak.match(
-      /[^。！？!?\n]+(?:[。！？!?]+|(?=\n|$))/g,
-    )?.map((sentence) => sentence.trim()).filter(Boolean) ?? []
-
-    const isSupportedCaseSentence = (sentence) => {
-      const compact = sentence.replace(/\s+/g, '')
-      if (
-        /^(?:本次私下发言|本次公开发言|案件内说服正文|最多(?:三|四|3|4)句话的案件内公开发言正文)(?:[；;，,:：]?(?:可以|可)?写?多行)?[。！？!?]?$/.test(
-          compact,
-        )
-      ) return false
-      if (/(空手离开|空着手离开|两手空空.{0,6}离开)/.test(sentence)) {
-        return false
-      }
-      if (
-        /(?:镜头|监控|录像).{0,18}(?:拍到|拍下|记录|显示|证明).{0,20}(?:室内|屋内|办公室内|房间内|挥锤|击打|拉扯|拿锤|取锤|手里|手持|空手)/
-          .test(sentence)
-      ) return false
-      if (
-        /(?:从未否认|一直承认|始终承认|两次.{0,8}(?:都|均).{0,6}承认|第一次.{0,8}(?:就|已|也).{0,6}承认).{0,30}(?:接触|碰|拿|握|拉扯).{0,12}(?:锤|维修锤)/
-          .test(sentence) ||
-        /(?:接触|碰|拿|握|拉扯).{0,12}(?:锤|维修锤).{0,40}(?:从未否认|一直承认|始终承认|两次.{0,8}(?:都|均).{0,6}承认|唯一.{0,8}(?:没变|不变)|两次.{0,8}一致)/
-          .test(sentence)
-      ) return false
-      if (
-        /(?:第一次|第一版|起初|一开始).{0,24}(?:承认|没有否认|未否认).{0,18}(?:肢体接触|接触|碰|拿|握|拉扯).{0,12}(?:锤|维修锤)?/
-          .test(sentence)
-      ) return false
-      if (
-        /(?:精准|精确|准确).{0,8}(?:击打|一击|锤击|命中)|(?:击打|一击|锤击|命中).{0,8}(?:精准|精确|准确)/
-          .test(sentence)
-      ) return false
-      if (
-        /(?:停约|暂停.{0,8}合同|内审).{0,16}(?:已经|已然|正式).{0,8}(?:执行|生效|启动|决定)|(?:已经|已然|正式).{0,8}(?:执行|生效|启动|决定).{0,16}(?:停约|暂停.{0,8}合同|内审)/
-          .test(sentence)
-      ) return false
-      if (
-        /E1.{0,24}(?:交接册|册子).{0,16}(?:留在现场|散落|没有被带走|没被带走|未被带走|没有带走|没带走)|(?:交接册|册子).{0,24}(?:留在现场|散落|没有被带走|没被带走|未被带走|没有带走|没带走).{0,16}E1/
-          .test(sentence)
-      ) return false
-      if (
-        /(?:交接册|册子).{0,12}(?:连碰都没碰|没有碰|没碰)/.test(
-          sentence,
-        )
-      ) return false
-      if (
-        /(?:唯一|只有).{0,30}(?:碰|接触|拿|握|使用).{0,10}(?:锤|凶器)|(?:锤|凶器).{0,10}(?:唯一|只有).{0,30}(?:碰|接触|拿|握|使用)/
-          .test(sentence) ||
-        /(?:唯一|只有).{0,8}(?:顾衡|他).{0,30}(?:碰|接触|拿|握|使用).{0,10}(?:锤|凶器)/
-          .test(sentence)
-      ) return false
-      if (/(?:第一|第二|第三|第四|第[一二三四五六七八九十\d]+句)?(?:同上|如上|见上|沿用上文)[。！？!?]?$/.test(sentence)) {
-        return false
-      }
-
-      const notebookClauses = sentence.split(/[，,；;。！？!?\n—]+/).filter(
-        (clause) => /(?:交接册|册子)/.test(clause),
-      )
-      return notebookClauses.every((clause) => {
-        const removalIsNegated =
-          /(?:没有|并未|未曾|没|不曾).{0,10}(?:被.{0,6})?(?:带走|带离|拿走|取走|销毁|毁灭)/
-            .test(clause)
-        const claimsRemoval =
-          /(?:带走|带离|拿走|取走|销毁|毁灭)/.test(clause) ||
-          /(?:带着|携带|拿着).{0,24}(?:交接册|册子).{0,10}(?:离开|离场|离港|出门)/
-            .test(clause) ||
-          /(?:交接册|册子).{0,24}(?:离开|离场|离港|出门)/.test(clause)
-        const claimsMissingFromScene =
-          /(?:交接册|册子).{0,12}(?:没有|并未|未|没|不曾).{0,8}留在现场/
-            .test(clause) ||
-          /(?:交接册|册子).{0,12}不在现场/.test(clause)
-        return !claimsMissingFromScene && !(claimsRemoval && !removalIsNegated)
-      })
-    }
-
-    const supported = (sentences.length > 0 ? sentences : [withoutStructuredLeak])
-      .filter(isSupportedCaseSentence)
-    const bounded = supported.slice(0, maxSentences)
-    return (bounded.length > 0
-      ? bounded
-      : ['我暂时没有新的证据判断；请继续围绕 E1—E5 与证明标准审议。'])
-      .join('\n').trim()
-  }
-
-  const cleanCaseText = (raw) => cleanPublicSpeech(raw, Number.MAX_SAFE_INTEGER)
-  const truncateReason = (raw) => {
-    const chars = [...cleanCaseText(raw)]
-    if (chars.length <= 120) return chars.join('')
-    const head = chars.slice(0, 120)
-    for (let index = head.length - 1; index >= 48; index--) {
-      if (/[。！？!?；;]/.test(head[index])) {
-        return head.slice(0, index + 1).join('').trim()
-      }
-    }
-    return `${head.slice(0, 119).join('').trimEnd()}…`
-  }
-
   const evidenceCards = {
     REREAD_E1_RECORDS: {
       evidence: 'E1',
@@ -836,7 +706,7 @@ ${menu}
       prompt:
         `【公开发言】行动窗口已经结束。现在请另行生成第 ${round} 轮公开发言，最多四句话；只在 speech 字段中填写案件内说服正文，不要附加票型、理由字段、选项数字、行动菜单、程序选择过程或 XML 标签。${finalRound}\n\n${publicSpeechBoundary}`,
     })
-    const text = cleanPublicSpeech(speech.fields.speech, 4)
+    const text = speech.fields.speech
     game.emit('public', {
       type: 'jury_speech',
       actor: player.id,
@@ -950,7 +820,7 @@ ${menu}
           speech: { long: true, hint: '本次私下发言' },
         },
       })
-      const playerText = cleanCaseText(playerLine.fields.speech)
+      const playerText = playerLine.fields.speech
       messages.push({
         exchange,
         speaker: mover.id,
@@ -967,7 +837,7 @@ ${menu}
           speech: { long: true, hint: '本次私下发言' },
         },
       })
-      const jurorText = cleanCaseText(jurorLine.fields.speech)
+      const jurorText = jurorLine.fields.speech
       messages.push({
         exchange,
         speaker: target.id,
@@ -1176,7 +1046,7 @@ ${menu}
           index + 1
         }/3 个发言席位。请根据截至目前的全部公开讨论发言，最多三句话。回应一个具体论点、澄清一组证据或提出一个尚未解决的具体问题；不得拒绝发言，不得讨论抽签概率，也不要汇报个人票、全场合计或私聊。不要代表其他人宣布共识。只在 speech 字段中填写公开发言正文，不要附加票型、理由字段或 XML 标签。\n\n${publicSpeechBoundary}`,
       })
-      const text = cleanPublicSpeech(speech.fields.speech, 3)
+      const text = speech.fields.speech
       game.emit('public', {
         type: 'jury_speech',
         actor: juror.id,
@@ -1243,7 +1113,7 @@ NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡�
       keyEvidence: [vote.fields.keyEvidence1, second].filter((id) =>
         id !== 'NONE'
       ),
-      reason: truncateReason(vote.fields.reason),
+      reason: vote.fields.reason,
       reasoning: vote.reasoning,
     })
   }
