@@ -6,12 +6,9 @@ const scenariosDir = join(root, 'scenarios')
 const ambient = join(root, 'types', 'axiia.d.ts')
 const contract = join(root, 'types', 'contract.ts')
 
-// The default single-judge mode must push judge OS beats (#22①). A scenario may
-// explicitly replace that judge with a mechanically tallied jury; it still has
-// to publish the same structured final score as every other scenario (#23).
-// These are source-level presence checks — behavior is still the scenario's own
-// business.
-const singleJudgeRequired: [RegExp, string][] = [
+// Judge OS is optional scenario machinery. If a script opts in, require both
+// halves of its source-level contract; behavior remains the scenario's own.
+const judgeOSRequiredTogether: [RegExp, string][] = [
   [
     /['"`]judge-aside['"`]/,
     "judge OS beats — push aside beats on channel 'judge-aside' with keys `os-<n>`",
@@ -163,8 +160,8 @@ for (const id of scenarioIDs()) {
       problems.push(`scenarios/${id}/script.js: missing ${message}`)
     }
   }
-  if (adjudicationMode !== 'jury-vote') {
-    for (const [pattern, message] of singleJudgeRequired) {
+  if (judgeOSRequiredTogether.some(([pattern]) => pattern.test(source))) {
+    for (const [pattern, message] of judgeOSRequiredTogether) {
       if (!pattern.test(source)) {
         problems.push(`scenarios/${id}/script.js: missing ${message}`)
       }
