@@ -702,7 +702,7 @@ NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡�
 
 不要把 `Promise.all` 当成真实 provider 并发。V2 effect/replay 每次 nudge 只完成一个未命中的生成单元；首版按确定顺序循环，保证可重放和调试。
 
-脚本仍遵守 V2 文件形状，只声明 `meta` 与 `main` 两个全局。规范性 catalog face 为：
+脚本仍遵守 V2 文件形状，只声明 `meta` 与 `main` 两个全局。PvE preset 的完整策略正文与复制映射见 [Harbor Murder Jury PVE Preset Prompt Map](../../prompts/pve-prompts/harbor-manifest.md)；运行时 `meta.presets` 的正文必须与该目录中的六个文件一致。以下 catalog face 只展开 key、side、label 与 model，`prompt: '…'` 表示省略正文，不是运行时字面值：
 
 ```js
 const meta = {
@@ -734,18 +734,46 @@ const meta = {
   ],
   presets: [
     {
+      key: 'guilt-motive-concealment',
+      side: 'a',
+      label: '动机与掩饰',
+      modelID: 'deepseek-v4-flash',
+      prompt: '…',
+    },
+    {
       key: 'guilt-evidence-chain',
       side: 'a',
       label: '闭合证据链',
       modelID: 'deepseek-v4-flash',
-      prompt: '把现实利害、八分钟独处、现场、法医痕迹、改口和未求助连成故意杀人的间接证据链；承认证据边界，并正面解释争抢意外为什么仍不构成合理怀疑。',
+      prompt: '…',
+    },
+    {
+      key: 'guilt-deliberation-map',
+      side: 'a',
+      label: '争点推进',
+      modelID: 'deepseek-v4-flash',
+      prompt: '…',
+    },
+    {
+      key: 'doubt-unseen-moment',
+      side: 'b',
+      label: '室内未明',
+      modelID: 'deepseek-v4-flash',
+      prompt: '…',
     },
     {
       key: 'doubt-burden-of-proof',
       side: 'b',
       label: '紧守证明责任',
       modelID: 'deepseek-v4-flash',
-      prompt: '围绕真实肢体接触、翻倒座椅、单次击打、法医限制以及改口的多种动机建立具体怀疑；不必证明意外版本的每个动作，持续把问题拉回控方是否证明故意。',
+      prompt: '…',
+    },
+    {
+      key: 'doubt-supported-alternative',
+      side: 'b',
+      label: '最小替代叙事',
+      modelID: 'deepseek-v4-flash',
+      prompt: '…',
     },
   ],
   speakerLabels: {
@@ -762,7 +790,7 @@ const meta = {
 }
 ```
 
-上述 preset 的 `modelID` 对齐当前 V2 默认低成本模型；如果模型目录改变，发布同一版本前必须更新 preset 并重新 smoke test。NPC 的九模型配置不由参赛 preset 决定：脚本提供可直接运行的默认数组，受控的 scenario params 可以覆盖它。
+上述 preset 的 `modelID` 对齐当前 V2 默认低成本模型；key、side、label、model 和 prompt 正文均须与 manifest 及运行时一致。如果模型目录改变，发布同一版本前必须更新 preset 并重新 smoke test。NPC 的九模型配置不由参赛 preset 决定：脚本提供可直接运行的默认数组，受控的 scenario params 可以覆盖它。
 
 ### 13.2 为什么只用现有 `act(enum)`，不用 `turn` affordance
 
