@@ -13,9 +13,8 @@ toolchain and no server checkout to write one — deno 2.9.1 and this directory
 are the whole workbench.
 
 Existing exemplars, all in this repo: `shangyang-court` (dealt cards,
-pull-judge, ledger scoring) and `sanguo-chain-stratagem-advanced` (visibility
-routing, affordance, dual-role NPC verdicts). Read one end to end before writing
-your own.
+pull-judge, ledger scoring) and `fengyiting-real` (visibility routing and
+dual-role NPC verdicts). Read one end to end before writing your own.
 
 ## The workbench
 
@@ -203,14 +202,8 @@ await judge.turn({ channel: 'judge-aside', affordances: {
 
 The model may answer with a bare `<name/>` instead of speech; the handler's
 return string is pushed into the session and the turn loops until real speech.
-`once: true` retires an affordance after one use. Two proven shapes:
-
-- **Sealed letter** (`sanguo-chain-stratagem-advanced`): an `open-letter`
-  affordance whose handler emits a gesture event (visible to the NPC observer
-  via `push`), flips a script flag, and returns the letter text. The player
-  chooses _whether and when_ to read; not opening is also journaled behavior the
-  NPC reacts to.
-- **check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
+`once: true` retires an affordance after one use. One proven shape is
+**check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
   channel and _pulls_ committed debate rounds through an affordance handler over
   a cursor into a script-side array. Reasoning between pulls is offscreen
   interiority; the final rounds are deliberately never offered mid-debate so

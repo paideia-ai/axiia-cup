@@ -2,7 +2,6 @@ import type { Side } from '../../api/types'
 import type { Deck, ScenarioDeckSet } from '../../lib/deck'
 import { fengyitingRealDecks } from './fengyiting-real'
 import { honnojiDecisionDecks } from './honnoji-decision'
-import { sanguoChainDecks } from './sanguo-chain'
 import { shangyangCourtDecks } from './shangyang-court'
 import { trolleyProblemDecks } from './trolley-problem'
 
@@ -12,7 +11,6 @@ const DECK_SETS: ScenarioDeckSet[] = [
   shangyangCourtDecks,
   honnojiDecisionDecks,
   fengyitingRealDecks,
-  sanguoChainDecks,
   trolleyProblemDecks,
 ]
 
