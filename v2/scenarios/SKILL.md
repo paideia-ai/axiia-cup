@@ -204,11 +204,11 @@ The model may answer with a bare `<name/>` instead of speech; the handler's
 return string is pushed into the session and the turn loops until real speech.
 `once: true` retires an affordance after one use. One proven shape is
 **check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
-  channel and _pulls_ committed debate rounds through an affordance handler over
-  a cursor into a script-side array. Reasoning between pulls is offscreen
-  interiority; the final rounds are deliberately never offered mid-debate so
-  they arrive unmarked; the pull after the last round returns the verdict
-  summons instead. Pull cadence is a slot param (`judgePullInterval`).
+channel and _pulls_ committed debate rounds through an affordance handler over a
+cursor into a script-side array. Reasoning between pulls is offscreen
+interiority; the final rounds are deliberately never offered mid-debate so they
+arrive unmarked; the pull after the last round returns the verdict summons
+instead. Pull cadence is a slot param (`judgePullInterval`).
 
 Affordance handlers close over script state (cursor, flags). That state is
 replay-derived — see determinism rules.
