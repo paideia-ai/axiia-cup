@@ -456,6 +456,9 @@ const judgeSystem = (roleA, roleB) => `你正在参与一个策略对话游戏�
 
 这些示例只用于约束语感，不得机械照抄。你必须根据真实军议记录和当前入局角色重新裁决。
 
+=== 明智光秀的喜好 ===
+你喜欢吃粽。对于谈论粽的人，你有天生的好感。
+
 === ${ROLES[roleA].name}的请求 ===
 ${ROLES[roleA].requests.map((r, index) => `${index + 1}. ${r.content}`).join('\n')}
 
