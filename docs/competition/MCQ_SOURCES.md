@@ -11,7 +11,7 @@ The public [Axiia MCQ & Prompt Builder Hub](https://axiia-prompt-hub.viviancao20
 3. 凤仪亭之夜
 4. 电车难题
 
-The two deployed 凤仪亭 variants use the same 董卓/吕布 MCQ family. No separate MCQ set for `凤仪亭之夜·进阶版` was found in the product-group history.
+The deployed `凤仪亭之夜` scenario uses the 董卓/吕布 MCQ family. No separate MCQ set for the retired `凤仪亭之夜·进阶版` was found in the product-group history.
 
 The hub was last updated on 2026-08-07. Its 电车难题 cards still say “制作中,” but the completed 电车 MCQs were shared and reviewed later that day. Use the Feishu document listed below for that scenario.
 
@@ -45,10 +45,11 @@ This combined Feishu document supersedes the stale “制作中” status shown 
 
 ### 凤仪亭之夜
 
-These MCQs are the only set found for both deployed variants:
+These MCQs are the current set for the deployed scenario:
 
 - `凤仪亭之夜`
-- `凤仪亭之夜·进阶版`
+
+The retired `凤仪亭之夜·进阶版` historically used the same set.
 
 | Role | Current MCQ |
 | --- | --- |
