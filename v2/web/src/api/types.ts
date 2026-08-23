@@ -26,6 +26,20 @@ export interface ElevateRequest {
   code: string
 }
 
+// PATCH /v1/account/profile：服务端 trim 后要求 1–50 字符，越界答
+// invalid_display_name；成功答完整 MeResponse（同 /v1/auth/me）。
+export interface UpdateProfileRequest {
+  displayName: string
+}
+
+// POST /v1/account/password：先节流（同登录护栏，key 为 pwchange:<uid>），
+// 再验当前密码（错 → invalid_credentials），新密码 <8 位 → weak_password。
+// 成功后服务端吊销本人其他会话，本会话保持有效；答 OKResponse。
+export interface ChangePasswordRequest {
+  current: string
+  new: string
+}
+
 export interface AccountDTO {
   id: string
   email?: string | null
@@ -193,6 +207,8 @@ export interface MyAgentDTO {
   latestVersionID?: number | null
   // #63 自起名（P6 起）；老服务器缺席。
   name?: string | null
+  // P1a：最近一次保存或草稿暂存的时间——多策略并存时用来认出「上次在改哪个」。
+  lastEditedAt?: number
 }
 
 // A side with no agent yet is an empty array, never an absent key.
@@ -255,6 +271,10 @@ export interface FieldMutationRequest {
 // script untouched; its vocabulary is the scenario's own (see src/scenarios).
 // Omitting it is always valid, and a scenario the SPA has no module for never
 // sends it.
+export interface RenameAgentRequest {
+  name?: string | null
+}
+
 export interface SaveVersionRequest {
   prompt: string
   modelID: string
@@ -262,6 +282,8 @@ export interface SaveVersionRequest {
   options?: string | null
   // 初始化来源佐证（#83）：'raw' | 'mcq' | 'builder'（元提示词）。文本仍是唯一事实源。
   method?: string | null
+  // P10：保存时可选填，写一次不再改。
+  note?: string | null
 }
 
 export interface AgentVersionDTO {
@@ -271,8 +293,18 @@ export interface AgentVersionDTO {
   modelID: string
   parentVersionID?: number | null
   isEntry: boolean
+  // E2/#82：线性版本号（v1 → v2 → … → vN），服务端按 id 次序派生。要显示版本号
+  // 只能读这个；服务端还没带上时（部署错位）由 lib/version-label 按 id 次序补。
+  ordinal?: number
+  // 草稿自动暂存水位（服务端脏检测用），不是版本号——永远不要渲染它。
   snapshotSeq: number
   options?: string | null
+  // P10（E5 承诺过）：备注与保存时间是版本身份的一部分。老服务器缺席。
+  note?: string | null
+  createdAt?: number
+  // P15（B3 承诺过）：该版本自己的战绩——玩家据此决定 ★ 给哪一版。
+  matchCount?: number
+  winCount?: number
 }
 
 export interface DraftResponse {
@@ -465,6 +497,9 @@ export type MatchEventDTO =
       // same in-flight turn.
       phase: string
       delta: string
+      // 'say' | 'act' | 'act_repair' — 外层生成型别。act 的 text 流里带结构化
+      // 标签（#22），渲染前要剥；老服务端不带这个字段。
+      call?: string
     }
   }
   | { verdictRecorded: { matchID: number; key: string } }

@@ -49,7 +49,9 @@ export function rejectCopy(
     // #59/#79 引导门：同侧第 2 个智能体之前必须先拥有对侧；E4「复制为新
     // 智能体」同受此门。
     case 'sibling_gate':
-      return '需先拥有对侧智能体才能在同侧再建（引导门 #59）'
+      // P6a：条文号不该出现在玩家眼前（E9 界面自解释）。侧名由调用方补全时
+      // 更好，但这里没有场景上下文——用不带编号的通用说法。
+      return '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事'
     // #14：计数器只做提示，上限由服务端保存时强制；这句把玩家指回计数器。
     case 'prompt_too_long': {
       const limit = config?.promptUnitLimit ?? PROMPT_UNIT_LIMIT
@@ -75,9 +77,36 @@ export function rejectCopy(
     // P6 命名：智能体名 ≤30 字符，超出由服务端拒绝。
     case 'name_too_long':
       return '名字太长——智能体名最多 30 个字符'
+    // 服务端内部错误：这不是玩家能改的东西，只给通用文案。老服务端会把驱动
+    // 原文（SQL、表名、约束名）塞进 message，绝不透传给玩家——诊断在服务端
+    // 日志里。
+    case 'internal':
+      return '服务器开小差了，请稍后重试'
     default:
       return messageOf(error, fallback)
   }
+}
+
+// 账户自助（settings 页：改昵称 / 改密码）的错误码族。invalid_credentials
+// 在这里专指「当前密码」验证失败——登录页不经过这个函数，两处文案互不串扰；
+// throttled 来自与登录共用的节流护栏（pwchange:<uid>），错误形状相同。
+export function accountRejectCopy(
+  error: unknown,
+  fallback = '请求失败',
+): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case 'invalid_credentials':
+        return '当前密码不正确'
+      case 'weak_password':
+        return '新密码至少 8 位'
+      case 'invalid_display_name':
+        return '昵称需为 1–50 个字符'
+      case 'throttled':
+        return '尝试太频繁，请稍后再试'
+    }
+  }
+  return rejectCopy(error, null, fallback)
 }
 
 // 约战上下文的配额文案（#52/Q7 成对语义）：一次约战计 2 场、要么整对要么

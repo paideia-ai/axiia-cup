@@ -1,10 +1,20 @@
-# CLAUDE.md
+# Repository guidance
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Instructions for coding agents working with code in this repository.
 
-## Authoritative Design Document
+## Authoritative docs
 
-**`docs/competition/DESIGN_SPEC.md`** is the single source of truth for all Axiia Cup design decisions, rules, and specifications (Chinese). Historical docs (PRD_v1, SPEC_v2, etc.) are reference only.
+- Product/design decisions: `docs/competition/DESIGN_SPEC.md`
+- Current CI/CD and production operations: `docs/tech/CI_CD_OPERATIONS.md`
+- Server bootstrap and manual Docker Compose fallback: `docs/tech/DEPLOYMENT_SERVER.md`
+- LLM gateway topology and provider routing: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
+
+## Notes for agents
+
+- Treat `docs/tech/CI_CD_OPERATIONS.md` as the canonical reference for the **current** production deploy path.
+- Treat `docs/tech/DEPLOYMENT_SERVER.md` as bootstrap/manual-fallback guidance, not the standard release path.
+- Historical product/design docs (`PRD_v1`, `SPEC_v2`, etc.) are reference only.
+- Historical docs may describe older infrastructure choices; prefer the current ops doc when they conflict.
 
 ## Commands
 
@@ -67,6 +77,29 @@ Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
 - **DB as queue**: Matches processed by polling `status` column, no external queue. Worker uses lease tokens to prevent concurrent execution.
 - **JSON in SQLite**: Transcripts (dialogue, judge QA) stored as stringified JSON text columns.
 - **Match flow**: Each player pair plays 2 matches (swapped roles). Each match: N dialogue turns → judge asks questions to both agents → judge scores → winner determined.
+
+## Production host preflight
+
+Before using or proposing SSH access to `cup-worker`, read Minsheng's private
+orientation in full:
+
+- Private repo: `paideia-ai/axiia-cup-uiux`
+- File: `private-docs/cup-worker-orientation.md`
+- GitHub: <https://github.com/paideia-ai/axiia-cup-uiux/blob/main/private-docs/cup-worker-orientation.md>
+- Sibling checkout, when available: `../axiia-cup-uiux/private-docs/cup-worker-orientation.md`
+
+Reading it is mandatory before any task that would connect to the host or inspect,
+change, deploy, restart, back up, restore, or troubleshoot its production services,
+containers, nginx configuration, files under `/srv`, databases, on-host logs,
+secrets, or deploy webhook. It is also mandatory when a task depends on correctly
+distinguishing the current product services from the legacy stacks on that host.
+
+It is not required for local development, local tests, code-only changes, docs,
+PR review, or CI/log investigation that does not access `cup-worker`. Reading the
+orientation is a safety preflight, not authorization to operate production. Treat
+its operational state as time-sensitive, verify current state before acting, keep
+all host details private, and never copy host secrets into code, commits, logs,
+issues, PRs, or chat.
 
 ## Deployment
 

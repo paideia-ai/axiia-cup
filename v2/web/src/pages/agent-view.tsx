@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { agents, ApiError, builder, catalog } from '../api/client'
-import type { AgentVersionDTO, VersionDiffResponse } from '../api/types'
+import { builder, catalog, myAgents } from '../api/client'
+import type {
+  AgentVersionDTO,
+  MyAgentDTO,
+  VersionDiffResponse,
+} from '../api/types'
 import { OsPanel } from '../components/os-panel'
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
-import { rejectCopy } from '../lib/reject-copy'
+import { VersionList } from '../components/version-list'
 import { messageOf, useAsync } from '../lib/use-async'
+import { versionLabel, versionTag } from '../lib/version-label'
 
-// EA 智能体主页（B3，#81–#84 已批）：版本卡（新在前）+ ★参赛版本切换 +
-// 「恢复到工作区」（E3/#82，原「编辑此版本」语义重释）+「复制为新智能体」
-// （E4/#84）+ 页头「编辑」＝进入工作区（E1/#81）+「出战」呼出 OS 面板 +
-// diff（自己的 agent，#20 允许）+ 保存后的一次性参赛标记提示（E10）。
+// EA 智能体主页（B3）：策略门面与公开视图。页头＝策略展示名（P1/#63）+ 同侧
+// 兄弟策略胶囊（P9）；版本线与 E 页同构（VersionList，#88）；另有版本 diff
+// （自己的 agent，#20 允许）。
+// #90：「复制为新智能体」已废止——同侧再建只走「再建一个」（我的智能体页）。
+// #89：「恢复到工作区」改称「基于该版本迭代」（语义不变，见 VersionList）。
 export function AgentViewPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
@@ -23,22 +28,28 @@ export function AgentViewPage() {
 
   const { data, error, reload } = useAsync(async () => {
     const draft = await builder.draft(agentID)
-    const [scenario, list] = await Promise.all([
+    const [scenario, list, inventory] = await Promise.all([
       catalog.scenario(draft.scenarioID, draft.side),
       builder.versions(agentID),
+      // P1/P9：展示名与兄弟策略都来自这里（draft 不带 name）。失败不致命。
+      myAgents.list().catch(() => null),
     ])
+    const siblings: MyAgentDTO[] = inventory?.scenarios
+      .find((item) => item.scenarioID === draft.scenarioID)
+      ?.sides[draft.side] ?? []
     return {
       draft,
       scenario,
       versions: list.versions,
       entryVersionID: list.entryVersionID ?? null,
+      siblings,
+      self: siblings.find((a) => a.agentID === agentID) ?? null,
     }
   }, [agentID])
 
   const [osOpen, setOsOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({})
+  const [preferVersionID, setPreferVersionID] = useState<number | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
-  const [forkPending, setForkPending] = useState<number | null>(null)
   // E10（#84 提示句）：构建器保存成功后经导航 state 带来新版本 id；只消费
   // 一次——立即 replace 掉 history state，刷新/回退不复现，不落任何持久层。
   // A3 降级路径同通道：express 首战派发失败时构建器落回这里并带错误文案
@@ -72,54 +83,29 @@ export function AgentViewPage() {
     }
   }
 
-  // E4（#84）复制为新智能体：以该版本文本为首稿，在同场景同侧新建 agent
-  // （从 v1 开始），受 #59/#79 引导门。首稿经 mutate 通道写进新 agent 的
-  // 工作区草稿——推送失败不阻塞跳转（文本仍可从本 agent 恢复）。
-  const forkAsNew = async (version: AgentVersionDTO) => {
-    if (!data) return
-    setActionError(null)
-    setForkPending(version.id)
-    try {
-      const { agentID: newAgentID } = await agents.create({
-        scenarioID: data.draft.scenarioID,
-        side: data.draft.side,
-      })
-      await builder
-        .mutate(newAgentID, { field: 'prompt', value: version.prompt })
-        .catch(() => {})
-      navigate(`/agents/${newAgentID}/build`)
-    } catch (cause) {
-      // 后端多智能体批次未上线：POST /v1/agents 答 404/405——按钮保留，
-      // 文案说明功能随下一批后端到达。
-      if (
-        cause instanceof ApiError &&
-        (cause.status === 404 || cause.status === 405)
-      ) {
-        setActionError('多智能体功能随下一批后端上线')
-      } else {
-        setActionError(rejectCopy(cause, null, '复制为新智能体失败'))
-      }
-      setForkPending(null)
-    }
-  }
-
+  // 版本号按 id 次序派生（E2/#82），所以 id 降序＝版本号降序、最新在前。旧实现
+  // 按 snapshotSeq 排：那是草稿水位，两次保存之间没打字就并列，列表与 diff 的
+  // 默认基准/对比会静默反序。
   const sorted: AgentVersionDTO[] = data
-    ? [...data.versions].sort((a, b) => b.snapshotSeq - a.snapshotSeq)
+    ? [...data.versions].sort((a, b) => b.id - a.id)
     : []
 
   // E10：保存的新版本不是参赛版本时（参赛标记仍钉在别的版本上）才提示。
   const entryVersion = sorted.find((v) => v.isEntry) ?? null
+  const sideName = data == null
+    ? ''
+    : data.draft.side === 'a'
+    ? data.scenario.summary.sideAName
+    : data.scenario.summary.sideBName
 
   // diff 选择：默认 基准=次新版、对比=最新版；用户改过就用用户的。
   const headID = headSel ?? (sorted[0] ? String(sorted[0].id) : undefined)
   const baseID = baseSel ?? (sorted[1] ? String(sorted[1].id) : undefined)
 
-  const versionLabel = (id: string | undefined) => {
+  // diff 下拉里的选项文案：这里只有 id，先解回 DTO 再交给共享的标签函数。
+  const optionLabel = (id: string | undefined) => {
     const version = sorted.find((v) => String(v.id) === id)
-    if (!version) return id ?? ''
-    return `v${version.snapshotSeq}${
-      version.isEntry ? ' ★' : ''
-    } · ${version.modelID}`
+    return version ? versionLabel(version, sorted) : id ?? ''
   }
 
   const runDiff = async () => {
@@ -154,13 +140,19 @@ export function AgentViewPage() {
           <>
             <div className='flex flex-wrap items-start justify-between gap-4'>
               <div>
+                {/* P1：策略展示名当标题；内部 id 降为可复制小字（#25 仍要 id 可见） */}
                 <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-                  {data.scenario.summary.title} · {data.draft.side === 'a'
-                    ? data.scenario.summary.sideAName
-                    : data.scenario.summary.sideBName}
+                  {data.self?.name
+                    ? `${sideName}「${data.self.name}」`
+                    : `${sideName} #${agentID}`}
                 </h1>
                 <p className='mt-1 text-sm text-(--foreground-subtle)'>
-                  {data.draft.side === 'a' ? '甲方' : '乙方'} · agent #{agentID}
+                  {data.scenario.summary.title} ·{' '}
+                  {data.draft.side === 'a' ? '甲方' : '乙方'} ·{' '}
+                  {data.versions.length} 个版本 ·{' '}
+                  <span className='font-mono text-xs text-(--foreground-muted)'>
+                    #{agentID}
+                  </span>
                 </p>
               </div>
               <div className='flex items-center gap-2'>
@@ -200,125 +192,66 @@ export function AgentViewPage() {
                 entryVersion.id !== savedVersionID
               ? (
                 <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
-                  ★参赛版本仍是 v{entryVersion.snapshotSeq}
+                  ★参赛版本仍是 {versionTag(entryVersion, sorted)}
                   ——新版本不会自动参赛，可在下方版本卡改标
                 </p>
               )
               : null}
 
-            <section className='space-y-3'>
-              <h2 className='text-sm font-semibold text-(--foreground)'>
-                版本（{sorted.length}）
-              </h2>
-              {sorted.length === 0
-                ? (
-                  <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
-                    <p className='text-sm font-medium text-(--foreground)'>
-                      还没有保存过版本
-                    </p>
-                    <p className='mt-1 text-xs text-(--foreground-muted)'>
-                      去构建你的第一版策略。
-                    </p>
-                    <div className='mt-4 flex justify-center'>
-                      <Button
-                        onClick={() => navigate(`/agents/${agentID}/build`)}
-                      >
-                        进入构建器
-                      </Button>
-                    </div>
+            {/* 兄弟策略胶囊（P9）：同侧横向切换；只有一个策略时整排不出现 */}
+            {data.siblings.length > 1
+              ? (
+                <div className='flex flex-wrap items-center gap-2'>
+                  {data.siblings.map((sibling) => (
+                    <button
+                      key={sibling.agentID}
+                      type='button'
+                      aria-current={sibling.agentID === agentID
+                        ? 'page'
+                        : undefined}
+                      onClick={() => navigate(`/agents/${sibling.agentID}`)}
+                      className={sibling.agentID === agentID
+                        ? 'cursor-pointer rounded-full border border-(--accent) bg-[rgba(224,74,47,0.1)] px-3 py-1.5 text-xs font-semibold text-(--accent)'
+                        : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-xs font-medium text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'}
+                    >
+                      {sibling.name
+                        ? `${sideName}「${sibling.name}」`
+                        : `${sideName} #${sibling.agentID}`}
+                    </button>
+                  ))}
+                </div>
+              )
+              : null}
+
+            {/* 版本线与 E 页同构（#88）：同一件事在哪都长一样（E9） */}
+            <VersionList
+              versions={data.versions}
+              sideName={sideName}
+              onSetEntry={(versionID) => void markEntry(versionID)}
+              onIterate={(version) =>
+                navigate(`/agents/${agentID}/build?from=${version.id}`)}
+              onField={(version) => {
+                setPreferVersionID(version.id)
+                setOsOpen(true)
+              }}
+              emptyState={
+                <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+                  <p className='text-sm font-medium text-(--foreground)'>
+                    还没有保存过版本
+                  </p>
+                  <p className='mt-1 text-xs text-(--foreground-muted)'>
+                    去构建你的第一版策略。
+                  </p>
+                  <div className='mt-4 flex justify-center'>
+                    <Button
+                      onClick={() => navigate(`/agents/${agentID}/build`)}
+                    >
+                      进入构建器
+                    </Button>
                   </div>
-                )
-                : sorted.map((version) => (
-                  <Card
-                    key={version.id}
-                    className={version.isEntry
-                      ? 'border-[rgba(224,74,47,0.4)]'
-                      : undefined}
-                  >
-                    <CardContent className='space-y-3 pt-5'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <span className='text-base font-bold text-(--foreground)'>
-                          v{version.snapshotSeq}
-                        </span>
-                        <span className='font-mono text-xs text-(--foreground-muted)'>
-                          #{version.id}
-                        </span>
-                        <Badge tone='info'>{version.modelID}</Badge>
-                        {version.isEntry
-                          ? <Badge tone='accent'>★参赛版本</Badge>
-                          : null}
-                      </div>
-                      <p
-                        className={`whitespace-pre-wrap text-sm text-(--foreground-subtle) ${
-                          expanded[version.id] ? '' : 'line-clamp-3'
-                        }`}
-                      >
-                        {version.prompt}
-                      </p>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                          size='sm'
-                          variant='ghost'
-                          aria-label={expanded[version.id]
-                            ? `收起 v${version.snapshotSeq} 全文`
-                            : `展开 v${version.snapshotSeq} 全文`}
-                          onClick={() =>
-                            setExpanded((current) => ({
-                              ...current,
-                              [version.id]: !current[version.id],
-                            }))}
-                        >
-                          {expanded[version.id] ? '收起' : '展开全文'}
-                        </Button>
-                        {!version.isEntry
-                          ? (
-                            <Button
-                              size='sm'
-                              variant='secondary'
-                              aria-label={`将 v${version.snapshotSeq} 设为参赛版本`}
-                              onClick={() => void markEntry(version.id)}
-                            >
-                              设为参赛版本
-                            </Button>
-                          )
-                          : null}
-                        {
-                          /* E3（#82，#70 语义重释）：恢复＝把该版本文本回填
-                          工作区草稿，本身不产生版本；此后保存照常产生新版本 */
-                        }
-                        <Button
-                          size='sm'
-                          variant='secondary'
-                          aria-label={`恢复 v${version.snapshotSeq} 到工作区`}
-                          title='将此版本回填到工作区草稿；不产生新版本'
-                          onClick={() =>
-                            navigate(
-                              `/agents/${agentID}/build?from=${version.id}`,
-                            )}
-                        >
-                          恢复到工作区
-                        </Button>
-                        {/* E4（#84）：分叉的唯一出口——同侧另起炉灶，从 v1 开始 */}
-                        <Button
-                          size='sm'
-                          variant='secondary'
-                          aria-label={`以 v${version.snapshotSeq} 复制为新智能体`}
-                          title='以此版本为首稿，在同场景同侧新建智能体（从 v1 开始）'
-                          disabled={forkPending != null}
-                          onClick={() => void forkAsNew(version)}
-                        >
-                          {forkPending === version.id
-                            ? '复制中…'
-                            : '复制为新智能体'}
-                        </Button>
-                        <span className='text-[11px] text-(--foreground-muted)'>
-                          恢复后保存将成为新版本
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </section>
+                </div>
+              }
+            />
 
             {
               /* #20：diff 属所有者受限项——这里是自己的 agent，允许查看。
@@ -350,7 +283,7 @@ export function AgentViewPage() {
                           <div className='w-48'>
                             <Select
                               value={baseID}
-                              renderValue={(v) => versionLabel(v)}
+                              renderValue={(v) => optionLabel(v)}
                               onValueChange={(v) => v && setBaseSel(v)}
                             >
                               {sorted.map((version) => (
@@ -358,7 +291,7 @@ export function AgentViewPage() {
                                   key={version.id}
                                   value={String(version.id)}
                                 >
-                                  {versionLabel(String(version.id))}
+                                  {optionLabel(String(version.id))}
                                 </SelectItem>
                               ))}
                             </Select>
@@ -369,7 +302,7 @@ export function AgentViewPage() {
                           <div className='w-48'>
                             <Select
                               value={headID}
-                              renderValue={(v) => versionLabel(v)}
+                              renderValue={(v) => optionLabel(v)}
                               onValueChange={(v) => v && setHeadSel(v)}
                             >
                               {sorted.map((version) => (
@@ -377,7 +310,7 @@ export function AgentViewPage() {
                                   key={version.id}
                                   value={String(version.id)}
                                 >
-                                  {versionLabel(String(version.id))}
+                                  {optionLabel(String(version.id))}
                                 </SelectItem>
                               ))}
                             </Select>
@@ -406,7 +339,7 @@ export function AgentViewPage() {
                             ] as const).map(([label, version]) => (
                               <div key={label} className='min-w-0 space-y-1.5'>
                                 <p className='text-xs font-semibold text-(--foreground-subtle)'>
-                                  {label} v{version.snapshotSeq} ·{' '}
+                                  {label} {versionTag(version, sorted)} ·{' '}
                                   {version.modelID}
                                 </p>
                                 <pre className='max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-mono text-xs leading-relaxed text-(--foreground-subtle)'>
@@ -430,6 +363,7 @@ export function AgentViewPage() {
               side={data.draft.side}
               versions={data.versions}
               entryVersionID={data.entryVersionID}
+              preferVersionID={preferVersionID}
             />
           </>
         )}

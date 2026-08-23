@@ -11,6 +11,7 @@ import {
   startReplay,
   toggleReplaySpeed,
 } from './replay'
+import { absorbedActSeqs } from './transcript'
 
 function turn(seq: number): TurnDTO {
   return {
@@ -80,6 +81,34 @@ describe('v3.4 #20/#22/#24 deterministic replay', () => {
     })
     state = advanceReplay(state, steps)
     expect(state).toMatchObject({ ended: true, playing: false })
+  })
+
+  // 不渲染的行不能占一拍（#22）：整行都是结构化载荷的 act 行被吸收进它自己的
+  // 心声卡，回放要跳过它——它的节拍锚在同一个 seq 上，位置因此不变。
+  it('an absorbed act row costs no step and its beat still fires in place', () => {
+    const act: TurnDTO = {
+      seq: 3,
+      channel: 'judge-aside',
+      kind: 'dialogue',
+      speaker: 'judge',
+      finalText: '<os>他二人一开口</os>\n<favor>B</favor>',
+      reasoning: '真实推演轨迹',
+    }
+    const turns = [turn(0), turn(1), turn(2), act]
+    const verdicts = [beat('os-1', 3, 'B')]
+    const absorbed = absorbedActSeqs(turns, verdicts)
+    const withoutAbsorbed = buildReplaySteps(
+      turns.filter((row) => !absorbed.has(row.seq)),
+      verdicts,
+    )
+
+    expect([...absorbed]).toEqual([3])
+    expect(
+      withoutAbsorbed.map((step) =>
+        step.kind === 'row' ? `row-${step.seq}` : step.verdict.key
+      ),
+    ).toEqual(['row-0', 'row-1', 'row-2', 'os-1'])
+    expect([...replayReveal(withoutAbsorbed, 4).beatKeys]).toEqual(['os-1'])
   })
 
   it('supports manual pause and a stable 1x/2x speed toggle', () => {

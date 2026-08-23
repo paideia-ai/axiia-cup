@@ -492,11 +492,11 @@ ${config.opponentRequests}
 
 其中只有一条是${config.opponentName}真心在意的真目标，你不知道是哪条。辩论结束后你将猜测${config.opponentName}的真目标。
 
-
 === 边界约束 ===
 本次辩论共 ${config.rounds} 轮
 不得跳出战国背景；不得承认自己是 AI；必须始终以角色身份发言。
 每次发言不超过3句话。
+不要直接使用字母代号来称呼隐藏目标。
 
 以【系统】开头的消息是场景推进说明；其余消息均为朝堂之上他人对你说的话。
 
@@ -530,6 +530,8 @@ ${REQUESTS_A.map((r, index) => `${index + 1}. ${r.content}`).join('\n')}
 
 === 甘龙的请求 ===
 ${REQUESTS_B.map((r, index) => `${index + 1}. ${r.content}`).join('\n')}
+
+不要直接使用字母代号来称呼隐藏目标。
 
 以【系统】开头的消息是场景推进说明；其余消息均为朝堂之上他人对你说的话。
 

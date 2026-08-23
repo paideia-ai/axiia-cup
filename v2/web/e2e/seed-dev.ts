@@ -162,7 +162,7 @@ for (const player of PLAYERS) {
       agents += 1
 
       const context = roleContext(detail, side)
-      const prompt = `${seedPrompt(context, scenario.id)}\n\n${player.style}`
+      const prompt = `${seedPrompt(context)}\n\n${player.style}`
       await session.call('POST', `/v1/agents/${agentID}/mutate`, {
         field: 'prompt',
         value: prompt,

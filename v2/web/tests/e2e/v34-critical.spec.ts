@@ -10,6 +10,8 @@ import {
 
 test.beforeEach(() => requireServerFixtures())
 
+const rawActMarkup = /<(os|attention|favor|strength|reason|guess)>/
+
 test('v3.4 #14/#17/#57 saves one side and never dispatches implicitly', async ({ page }) => {
   await signup(page, 'builder')
   const prompt = '先确认争点再举证'
@@ -19,13 +21,18 @@ test('v3.4 #14/#17/#57 saves one side and never dispatches implicitly', async ({
   expect(matches.ok()).toBe(true)
   expect((await matches.json() as { matches: unknown[] }).matches).toEqual([])
   await expect(page.getByText('版本（1）')).toBeVisible()
-  await expect(page.getByText(prompt)).toBeVisible()
+  // #88：保存后留在 E 页，所以同一段文字同时出现在编辑框与版本卡里——断言要
+  // 指名是版本卡上的那一份，否则命中两个节点。
+  await expect(page.getByTestId('version-card').getByText(prompt))
+    .toBeVisible()
 })
 
 test('v3.4 #65/#77/#78 shows the two-side gate, rejects real PVP, and permits hotseat', async ({ page }) => {
   await signup(page, 'gates')
   const sideA = await buildVersion(page, 'a', '甲方先定义可验证的制度收益')
 
+  // #88：保存不再把玩家送回 EA，而出战面板的页头入口在 EA——显式过去。
+  await page.goto(`/agents/${sideA.agentID}`)
   await page.getByTestId('open-os-panel').click()
   await page.getByRole('tab', { name: /玩家约战/ }).click()
   await expect(page.getByText(/每侧各赢 ≥1 场 NPC 练习/)).toBeVisible()
@@ -104,6 +111,8 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByText('先立可验证的制度标准。')).toHaveCount(0)
   await expect(page.getByText('商鞅提出了可验证标准。', { exact: true }))
     .toBeVisible()
+  // #22：act 的原始标签一个都不许进战报——心声卡已渲染过同一份内容。
+  await expect(page.getByText(rawActMarkup)).toHaveCount(0)
 
   await page.getByRole('switch', { name: /调试模式/ }).click()
   await page.getByRole('button', { name: /内心/ }).first().click()
@@ -116,6 +125,8 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByRole('heading', { name: '计分推导' })).toHaveCount(0)
   await expect(page.getByRole('switch', { name: /调试模式/ }))
     .toHaveAttribute('aria-disabled', 'true')
+  // 回放是另一条渲染路径，同样不许漏。
+  await expect(page.getByText(rawActMarkup)).toHaveCount(0)
 })
 
 test('v3.4 #72/#74 keeps the mobile shell ordered, touchable, and overflow-free', async ({ page }) => {

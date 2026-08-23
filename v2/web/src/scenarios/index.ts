@@ -1,7 +1,6 @@
 import type { JSONValue, Side } from '../api/types'
 import { fengyitingReal } from './fengyiting-real'
 import { honnojiDecision } from './honnoji-decision'
-import { sanguoChain } from './sanguo-chain'
 import { shangyangCourt } from './shangyang-court'
 import { trolleyProblem } from './trolley-problem'
 import type { ScenarioModule, ScenarioRole } from './types'
@@ -15,7 +14,6 @@ const MODULES: ScenarioModule[] = [
   honnojiDecision,
   fengyitingReal,
   trolleyProblem,
-  sanguoChain,
 ]
 
 export function scenarioModule(

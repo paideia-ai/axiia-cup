@@ -2,6 +2,7 @@ import type {
   AgentRefResponse,
   AgentVersionDTO,
   ChallengeResponse,
+  ChangePasswordRequest,
   ConfigResponse,
   CreateAgentRequest,
   CreateChallengeRequest,
@@ -24,6 +25,7 @@ import type {
   NotificationsResponse,
   OKResponse,
   OpponentListResponse,
+  RenameAgentRequest,
   SaveVersionRequest,
   ScenarioDetail,
   ScenarioListResponse,
@@ -34,6 +36,7 @@ import type {
   SlotListResponse,
   StandingsResponse,
   TournamentListResponse,
+  UpdateProfileRequest,
   UpdateSlotRequest,
   VersionDiffResponse,
   VersionListResponse,
@@ -122,6 +125,12 @@ export const auth = {
   me: () => request<MeResponse>('GET', '/auth/me'),
   elevate: (input: ElevateRequest) =>
     request<MeResponse>('POST', '/auth/elevate', input),
+  // 账户自助（settings 页）：改昵称答完整 me，SPA 直接 setAccount 而不再拉
+  // /auth/me；改密成功后本会话保持有效、其他会话被服务端吊销。
+  updateProfile: (input: UpdateProfileRequest) =>
+    request<MeResponse>('PATCH', '/account/profile', input),
+  changePassword: (input: ChangePasswordRequest) =>
+    request<OKResponse>('POST', '/account/password', input),
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────
@@ -157,6 +166,12 @@ export const myAgents = {
 // ── Agents（多槽位，#56/#84） ────────────────────────────────────────────────
 
 export const agents = {
+  // P2 改名：空名＝清除，展示名回落「侧名 #id」。老服务器无此端点 → 404/405。
+  rename: (agentID: number, input: RenameAgentRequest) =>
+    request<OKResponse>('PATCH', `/agents/${agentID}`, input),
+  // P8b 删除：仅 0 版本策略；有版本的服务端答 agent_not_empty。
+  remove: (agentID: number) =>
+    request<OKResponse>('DELETE', `/agents/${agentID}`),
   // E4 复制为新智能体：在同场景同侧另建一个 agent（受 #59 引导门，错误码
   // sibling_gate 走 lib/reject-copy）。后端批次未上线时答 404/405，调用方
   // 就地降级文案、按钮保留。

@@ -13,9 +13,8 @@ toolchain and no server checkout to write one — deno 2.9.1 and this directory
 are the whole workbench.
 
 Existing exemplars, all in this repo: `shangyang-court` (dealt cards,
-pull-judge, ledger scoring) and `sanguo-chain-stratagem-advanced` (visibility
-routing, affordance, dual-role NPC verdicts). Read one end to end before writing
-your own.
+pull-judge, ledger scoring) and `fengyiting-real` (visibility routing and
+dual-role NPC verdicts). Read one end to end before writing your own.
 
 ## The workbench
 
@@ -189,11 +188,15 @@ verdict.fields.judgment // validated member of the enum
   fields (`speech`, `reason`) **before** decision tags — text-before-decision is
   the reasoning-preservation pattern this engine exists for.
 - Dynamic field sets are fine (shangyang builds one enum field per request id).
-- `key` records the parsed fields as a `verdicts` row; `channel` puts the raw
-  reply on the timeline. Omit `channel` for a private act (e.g. secret order
-  decisions still get a channel in shipped scripts because spectators see all —
-  _player-facing_ secrecy is achieved by never `push`ing it to player agents,
-  not by hiding the row).
+- `key` records the parsed fields as a `verdicts` row, and that row is what the
+  UI renders (a 心声/裁决 card). `channel` only gives the act a position on the
+  timeline: the tagged reply itself is never shown — the reader sees whatever
+  narration precedes the tags, and nothing at all when the reply is pure tags.
+  So do not hand-roll a stripper in the script, and do not treat the timeline
+  row as a second place to say something. Omit `channel` for a private act (e.g.
+  secret order decisions still get a channel in shipped scripts because
+  spectators see all — _player-facing_ secrecy is achieved by never `push`ing it
+  to player agents, not by hiding the row).
 
 ## `turn` and affordances
 
@@ -206,19 +209,13 @@ await judge.turn({ channel: 'judge-aside', affordances: {
 
 The model may answer with a bare `<name/>` instead of speech; the handler's
 return string is pushed into the session and the turn loops until real speech.
-`once: true` retires an affordance after one use. Two proven shapes:
-
-- **Sealed letter** (`sanguo-chain-stratagem-advanced`): an `open-letter`
-  affordance whose handler emits a gesture event (visible to the NPC observer
-  via `push`), flips a script flag, and returns the letter text. The player
-  chooses _whether and when_ to read; not opening is also journaled behavior the
-  NPC reacts to.
-- **check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
-  channel and _pulls_ committed debate rounds through an affordance handler over
-  a cursor into a script-side array. Reasoning between pulls is offscreen
-  interiority; the final rounds are deliberately never offered mid-debate so
-  they arrive unmarked; the pull after the last round returns the verdict
-  summons instead. Pull cadence is a slot param (`judgePullInterval`).
+`once: true` retires an affordance after one use. One proven shape is
+**check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
+channel and _pulls_ committed debate rounds through an affordance handler over a
+cursor into a script-side array. Reasoning between pulls is offscreen
+interiority; the final rounds are deliberately never offered mid-debate so they
+arrive unmarked; the pull after the last round returns the verdict summons
+instead. Pull cadence is a slot param (`judgePullInterval`).
 
 Affordance handlers close over script state (cursor, flags). That state is
 replay-derived — see determinism rules.

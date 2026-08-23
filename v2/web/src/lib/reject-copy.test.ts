@@ -34,7 +34,7 @@ describe('v3.4 rejection copy contracts', () => {
     ],
     [
       'sibling_gate',
-      '需先拥有对侧智能体才能在同侧再建（引导门 #59）',
+      '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
     ],
     [
       'prompt_too_long',
@@ -60,9 +60,25 @@ describe('v3.4 rejection copy contracts', () => {
       'name_too_long',
       '名字太长——智能体名最多 30 个字符',
     ],
+    // 500 的 message 可能是驱动原文（UNIQUE constraint failed: agents.…）。
+    [
+      'internal',
+      '服务器开小差了，请稍后重试',
+    ],
   ])('maps %s to stable product copy', (code, copy) => {
     expect(rejectCopy(new ApiError('raw server text', 409, code), config))
       .toBe(copy)
+  })
+
+  it('never shows a raw driver message to the player', () => {
+    const driver = new ApiError(
+      'SQLiteError(2067): UNIQUE constraint failed: agents.user_id, agents.scenario_id, agents.side',
+      500,
+      'internal',
+    )
+    expect(rejectCopy(driver, config, '创建智能体失败')).toBe(
+      '服务器开小差了，请稍后重试',
+    )
   })
 
   it('falls back to the server message for unknown errors', () => {
