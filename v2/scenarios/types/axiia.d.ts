@@ -121,6 +121,11 @@ interface ActOptions {
   channel?: string
 }
 
+interface ParallelActEntry {
+  agent: Agent
+  spec: Omit<ActSpec, 'key' | 'channel'>
+}
+
 interface AgentAffordance {
   prompt: string
   once?: boolean
@@ -156,6 +161,9 @@ interface Game {
   emit(channel: string, event?: unknown): void
   phase(title: string): void
   random(): Promise<number>
+  parallelAct(
+    entries: readonly ParallelActEntry[],
+  ): Promise<readonly ActReply[]>
 }
 
 declare const game: Game

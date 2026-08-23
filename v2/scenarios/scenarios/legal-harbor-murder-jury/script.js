@@ -774,16 +774,23 @@ ${menu}
         reasoning: '',
       },
     ]
-    for (const juror of npcJurors) {
+    const npcBallots = await game.parallelAct(npcJurors.map((juror) => {
       juror.agent.push(
         `【私密意向投票】第 ${round} 轮，${mover.name} 发起的不记名投票已经向全场公开，但个人票型不公开。这是一次不具约束力的当前判断快照；你在选择前不会看到他人的选择。请按此刻公开证据和讨论选择；九人全部选择后，你会看到十一票的不记名合计，但不会看到任何人的个人票。你之前可能作过的快照不约束现在，本次选择也不约束最终判决。不要为了猜多数而投票。`,
       )
-      const ballot = await juror.agent.act({
-        fields: {
-          verdict: { enum: ['GUILTY', 'NOT_GUILTY'] },
-          reason: { hint: '一句内部判断理由' },
+      return {
+        agent: juror.agent,
+        spec: {
+          fields: {
+            verdict: { enum: ['GUILTY', 'NOT_GUILTY'] },
+            reason: { hint: '一句内部判断理由' },
+          },
         },
-      })
+      }
+    }))
+    for (let index = 0; index < npcJurors.length; index++) {
+      const juror = npcJurors[index]
+      const ballot = npcBallots[index]
       ballots.push({
         juror: juror.id,
         verdict: ballot.fields.verdict,
