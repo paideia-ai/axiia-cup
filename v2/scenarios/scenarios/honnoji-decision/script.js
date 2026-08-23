@@ -470,7 +470,7 @@ ${ROLES[roleB].requests.map((r, index) => `${index + 1}. ${r.content}`).join('\n
 以【系统】开头的消息是场景推进说明；其余消息均为军议中他人对你说的话。
 
 === 你在军议中的举止 ===
-你端坐帐中，不参与争论，一言不发。近侍会把帐中的进言逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向何方之议、此刻最挂心的一件事。`
+你端坐帐中，不参与争论，一言不发。近侍会把帐中的进言逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向何方之议。`
 
 const JUDGE_OPENING =
   '【系统】龟山城外，全军已发。你召两名说客入帐，军议即将开始。你此刻还没有听到任何进言。'
@@ -551,13 +551,9 @@ async function main() {
     model: game.params.judgeModel ?? 'deepseek-v4-pro',
   })
 
-  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
-  // 不在此生成。
   const osFields = {
     os: { hint: '你此刻的心声——在心里对自己说的话，无人听见，不必公允，短即可', long: true },
-    attention: { hint: '你此刻最挂心的一件事，一句话' },
     favor: { enum: [roleA.name, roleB.name], hint: '此刻你更倾向何方之议' },
-    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份倾向此刻有多强' },
   }
 
   const pending = []
