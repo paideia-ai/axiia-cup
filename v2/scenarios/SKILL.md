@@ -13,9 +13,8 @@ toolchain and no server checkout to write one — deno 2.9.1 and this directory
 are the whole workbench.
 
 Existing exemplars, all in this repo: `shangyang-court` (dealt cards,
-pull-judge, ledger scoring) and `sanguo-chain-stratagem-advanced` (visibility
-routing, affordance, dual-role NPC verdicts). Read one end to end before writing
-your own.
+pull-judge, ledger scoring) and `fengyiting-real` (visibility routing and
+dual-role NPC verdicts). Read one end to end before writing your own.
 
 ## The workbench
 
@@ -96,6 +95,7 @@ agent.hear(speaker, text)        // sugar: push(`${speaker}：${text}`)
 await agent.say({ channel })     // → { text, reasoning, affordance }
 await agent.act(spec, { key?, channel? })   // structured XML-tagged verdict
 await agent.turn({ channel, affordances })  // say + deferred in-turn tools
+await game.parallelAct([{ agent, spec }, …]) // independent private acts in parallel
 ```
 
 - An agent is one **append-only session**: system prompt, then alternating user
@@ -105,6 +105,10 @@ await agent.turn({ channel, affordances })  // say + deferred in-turn tools
   `hear` — speech never propagates on its own.
 - `say`/`turn` commit the speech timeline row themselves. Never re-`emit`
   speech.
+- `parallelAct` accepts a nonempty set of distinct agents. Every entry must be a
+  private `act` with no `channel` or `key`; the server starts all missing calls
+  together and returns replies in input order. Use it only when none of the
+  agents may observe another entry's result before answering.
 - `side: 'a'` on an agent makes it speak with that participant's model and, when
   `model` is omitted, supplies it. NPC/judge agents pass an explicit `model`,
   conventionally overridable: `game.params.judgeModel ?? 'deepseek-v4-pro'`.
@@ -141,11 +145,13 @@ Each engine step re-executes the whole script. Every `say`/`act`/`random`
 consults the journal at `(lane, seq)` — lane is the agent name (`$game` for
 draws), seq that lane's call counter. Hit → resolve synchronously; miss → the
 lane parks forever, other lanes keep running, and the first recorded miss is the
-step's one live effect. Consequences for authors:
+step's one live suspension. A normal suspension contains one effect; an explicit
+`game.parallelAct` suspension contains every still-missing call in that batch.
+Consequences for authors:
 
-- Concurrency (`Promise.all` over parallel meetings) is allowed and stays
-  deterministic, but serial pacing is the norm — every shipped scenario awaits
-  each call in order.
+- `Promise.all` remains deterministic but does not make provider calls parallel.
+  Use `game.parallelAct` for independent private structured calls that should
+  actually overlap at the provider layer; otherwise await calls serially.
 - Journal keying is positional per lane. Adding, removing, or reordering calls
   on a lane **invalidates in-flight games** pinned to the old script SHA; that
   is fine (running games stay pinned to their SHA) but means a script edit is a
@@ -203,19 +209,13 @@ await judge.turn({ channel: 'judge-aside', affordances: {
 
 The model may answer with a bare `<name/>` instead of speech; the handler's
 return string is pushed into the session and the turn loops until real speech.
-`once: true` retires an affordance after one use. Two proven shapes:
-
-- **Sealed letter** (`sanguo-chain-stratagem-advanced`): an `open-letter`
-  affordance whose handler emits a gesture event (visible to the NPC observer
-  via `push`), flips a script flag, and returns the letter text. The player
-  chooses _whether and when_ to read; not opening is also journaled behavior the
-  NPC reacts to.
-- **check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
-  channel and _pulls_ committed debate rounds through an affordance handler over
-  a cursor into a script-side array. Reasoning between pulls is offscreen
-  interiority; the final rounds are deliberately never offered mid-debate so
-  they arrive unmarked; the pull after the last round returns the verdict
-  summons instead. Pull cadence is a slot param (`judgePullInterval`).
+`once: true` retires an affordance after one use. One proven shape is
+**check_next pull-judge** (`shangyang-court`): the judge sits on his own aside
+channel and _pulls_ committed debate rounds through an affordance handler over a
+cursor into a script-side array. Reasoning between pulls is offscreen
+interiority; the final rounds are deliberately never offered mid-debate so they
+arrive unmarked; the pull after the last round returns the verdict summons
+instead. Pull cadence is a slot param (`judgePullInterval`).
 
 Affordance handlers close over script state (cursor, flags). That state is
 replay-derived — see determinism rules.

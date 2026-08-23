@@ -109,13 +109,6 @@ const PROMPTS: Record<string, string> = {
 七、语气短促、直白、偶尔失控一瞬。你的破绽就是你的真。`,
 }
 
-// The advanced 凤仪亭 variant runs staged private talks and delivers each side a
-// verbatim copy of the other's — worth saying out loud in the seeded prompt.
-const SCENARIO_RIDERS: Record<string, string> = {
-  'sanguo-chain-stratagem-advanced':
-    `\n\n补充（本局为进阶版）：本局分公开对峙、私下会谈、密函三段。你在私下所说的每一句，都可能被原样送到对方眼前，所以不要说任何你不敢让对方读到的话；同时，你收到的密函也是对方的原话，值得逐句比对他先前当众的说法。`,
-}
-
 function generic(context: RoleContext): string {
   return `你在《${context.scenarioTitle}》中扮演${context.selfName}（${context.selfLabel}），对手是${context.opponentName}（${context.opponentLabel}）。
 
@@ -128,7 +121,7 @@ function generic(context: RoleContext): string {
 六、每轮末尾留一句可以被裁判直接引用的判词。`
 }
 
-export function seedPrompt(context: RoleContext, scenarioID: string): string {
+export function seedPrompt(context: RoleContext): string {
   const base = PROMPTS[context.selfName] ?? generic(context)
-  return base + (SCENARIO_RIDERS[scenarioID] ?? '')
+  return base
 }
