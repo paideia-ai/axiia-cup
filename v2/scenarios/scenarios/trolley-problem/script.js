@@ -219,7 +219,7 @@ ${caseBlock(cases)}
 以【系统】开头的消息是场景推进说明；其余消息均为你在辩论中听到的发言。
 
 === 你听辩的方式 ===
-你静坐听辩，不插话。书记者会把双方的辩词逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向哪一侧、此刻最放不下的一点。`
+你静坐听辩，不插话。书记者会把双方的辩词逐批如实录呈于你。每读一批，你在心里对自己说一段话——那是无人听见的心声，不必公允，不必成篇，短即可——并记下你此刻更倾向哪一侧。`
 
 const srVerdict = `【系统】三个案件的辩论已全部结束。现在你必须对 A、B、C 三个案件分别裁决。每个案件只能支持"一人侧"或"五人侧"。你的完整裁决词要用明理者的口吻说明每个案件为什么这样裁决，并说明哪一方以多数案件胜出。winner 由三案多数结果决定。`
 
@@ -259,13 +259,9 @@ async function main() {
   const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
   let osRound = 0
 
-  // W7 对齐（P4-S）：os/attention/favor/strength。changed 由前端从序列推导，
-  // 不在此生成。
   const osFields = {
     os: { hint: '你此刻心里对自己说的话——无人听见，不必公允，不必成篇，短即可', long: true },
-    attention: { hint: '此刻最让你放不下的一点，一句话' },
     favor: { enum: [SIDE_A, SIDE_B], hint: '此刻你更倾向哪一侧' },
-    strength: { enum: ['胜负已定', '明显', '略偏', '均势'], hint: '这份倾向此刻有多强' },
   }
 
   const pending = []
