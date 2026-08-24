@@ -1,0 +1,1241 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AXIIA CUP 场景介绍：商鞅变法、本能寺之变、电车难题、凤仪亭之夜与码头疑云"
+    />
+    <title>商鞅变法 · 朝堂辩法</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #090909;
+        --panel: #141414;
+        --line: #2b2b2b;
+        --text: #f5f3ef;
+        --muted: #aaa7a2;
+        --accent: #ff5a3d;
+        --accent-soft: #2e1713;
+        --gold: #e7b967;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 82% 4%, rgba(255, 90, 61, 0.08), transparent 26rem),
+          var(--bg);
+        color: var(--text);
+        font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        height: 72px;
+        padding: 0 5vw;
+        display: flex;
+        align-items: center;
+        gap: 48px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(9, 9, 9, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      .brand {
+        color: var(--accent);
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+      }
+
+      .topbar nav {
+        display: flex;
+        gap: 30px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .topbar nav a {
+        padding: 26px 0 22px;
+        border-bottom: 3px solid transparent;
+      }
+
+      .topbar nav a:hover,
+      .topbar nav a.active {
+        color: var(--text);
+        border-color: var(--accent);
+      }
+
+      .scenario-switcher {
+        position: sticky;
+        top: 72px;
+        z-index: 19;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        min-height: 58px;
+        padding: 9px 5vw;
+        border-bottom: 1px solid var(--line);
+        background: rgba(15, 15, 15, 0.96);
+        backdrop-filter: blur(16px);
+      }
+
+      .scenario-switcher > span {
+        flex: 0 0 auto;
+        color: #777;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .scenario-switcher > div {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+
+      .scenario-switcher > div::-webkit-scrollbar {
+        display: none;
+      }
+
+      .scenario-switcher a {
+        flex: 0 0 auto;
+        padding: 9px 13px;
+        border: 1px solid #303030;
+        border-radius: 999px;
+        color: #aaa6a1;
+        font-size: 13px;
+        transition:
+          color 0.2s,
+          border-color 0.2s,
+          background 0.2s;
+      }
+
+      .scenario-switcher a:hover {
+        color: var(--text);
+        border-color: #555;
+      }
+
+      .scenario-switcher a.active {
+        color: #fff;
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .copy-page {
+        min-height: 100vh;
+      }
+
+      .copy-shell {
+        width: min(1180px, calc(100% - 42px));
+        margin: 0 auto;
+        padding: 30px 0 80px;
+      }
+
+      .copy-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        padding: 48px 0 28px;
+      }
+
+      .copy-title-row h1 {
+        margin: 0;
+        font-size: 42px;
+        letter-spacing: -0.035em;
+      }
+
+      .copy-title-row p {
+        margin: 0 0 10px;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .copy-glance,
+      .copy-role-grid article {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+
+      .copy-glance {
+        padding: 34px;
+        border-color: #3b3028;
+        background: linear-gradient(135deg, #1c1714, #141414 58%);
+      }
+
+      .copy-glance > span {
+        color: var(--gold);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+      }
+
+      .copy-glance h2 {
+        margin: 22px 0 14px;
+        font-size: 30px;
+        letter-spacing: -0.02em;
+      }
+
+      .copy-glance > p {
+        max-width: 1050px;
+        margin: 0;
+        color: #cfcbc6;
+        font-size: 16px;
+        line-height: 1.9;
+      }
+
+      .copy-story-paragraph + .copy-story-paragraph {
+        margin-top: 12px;
+      }
+
+      .copy-section {
+        padding: 44px 0 18px;
+      }
+
+      .copy-section > h2 {
+        margin: 0;
+        font-size: 25px;
+      }
+
+      .copy-section-intro {
+        margin: 9px 0 24px;
+        color: #85817d;
+        line-height: 1.7;
+      }
+
+      .copy-ruler {
+        margin-bottom: 18px;
+        padding: 24px 28px;
+        border: 1px solid #4d4127;
+        border-radius: 14px;
+        background: linear-gradient(120deg, #211c13, #141414);
+      }
+
+      .copy-ruler h3 {
+        margin: 0;
+        font-size: 23px;
+      }
+
+      .copy-ruler small {
+        display: block;
+        margin-top: 3px;
+        color: #8e815f;
+      }
+
+      .copy-ruler p {
+        max-width: 920px;
+        margin: 18px 0 0;
+        color: #b5b0aa;
+        line-height: 1.75;
+      }
+
+      .copy-role-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+
+      .copy-role-grid article {
+        padding: 30px;
+      }
+
+      .copy-role-shangyang {
+        box-shadow: inset 0 3px 0 var(--accent);
+      }
+
+      .copy-role-ganlong {
+        box-shadow: inset 0 3px 0 var(--gold);
+      }
+
+      .copy-role-grid small,
+      .copy-role-grid strong {
+        color: #777;
+        font-size: 12px;
+      }
+
+      .copy-role-grid h3 {
+        margin: 15px 0 12px;
+        font-size: 29px;
+      }
+
+      .copy-role-grid em {
+        display: block;
+        margin-top: 6px;
+        color: #777;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 500;
+      }
+
+      .copy-role-grid p {
+        color: #b6b2ae;
+        line-height: 1.78;
+      }
+
+      .copy-role-grid button {
+        cursor: pointer;
+        margin-top: 12px;
+        padding: 13px 20px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 800;
+        transition:
+          transform 0.2s,
+          filter 0.2s;
+      }
+
+      .copy-role-grid button:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+      }
+
+      .side-goal-note {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 17px 20px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #101010;
+      }
+
+      .side-goal-note strong {
+        flex: 0 0 auto;
+        color: var(--gold);
+        font-size: 14px;
+      }
+
+      .side-goal-note span {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .copy-story-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .copy-story-grid article {
+        padding: 18px;
+        border: 1px solid #342f2a;
+        border-radius: 10px;
+        background: #121212;
+      }
+
+      .copy-story-grid h3 {
+        margin: 0 0 8px;
+        color: #ded9d3;
+        font-size: 15px;
+      }
+
+      .copy-story-grid p {
+        margin: 0;
+        color: #a9a39d;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .copy-story-grid-large article {
+        min-height: 210px;
+        padding: 28px;
+      }
+
+      .copy-story-grid-large h3 {
+        margin-bottom: 16px;
+        font-size: 21px;
+      }
+
+      .copy-story-grid-large p {
+        font-size: 15px;
+        line-height: 1.9;
+      }
+
+      .copy-timeline,
+      .copy-actions {
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid #342f2a;
+      }
+
+      .copy-timeline > h3,
+      .copy-actions > h3 {
+        margin: 0 0 16px;
+        color: #d9ae5d;
+        font-size: 18px;
+      }
+
+      .copy-timeline-track {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .copy-timeline-track article {
+        min-height: 138px;
+        padding: 18px;
+        border: 1px solid #342f2a;
+        border-radius: 10px;
+        background: #121212;
+      }
+
+      .copy-timeline-track small {
+        color: #d9ae5d;
+        font-weight: 700;
+      }
+
+      .copy-timeline-track h4,
+      .copy-actions-grid h4 {
+        margin: 10px 0 8px;
+        color: #e3ded8;
+        font-size: 16px;
+      }
+
+      .copy-timeline-track p,
+      .copy-actions-grid p {
+        margin: 0;
+        color: #aaa49e;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .copy-actions > p {
+        max-width: 980px;
+        margin: 0;
+        color: #c1bbb4;
+        font-size: 14px;
+        line-height: 1.8;
+      }
+
+      .copy-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .copy-actions-grid article {
+        padding: 18px;
+        border: 1px solid #342f2a;
+        border-radius: 10px;
+        background: #121212;
+      }
+
+      .copy-actions-grid h4 {
+        margin-top: 0;
+      }
+
+      .copy-supporting {
+        margin: 28px 0 24px;
+      }
+
+      .copy-supporting > h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .copy-supporting > p {
+        max-width: 960px;
+        margin: 0 0 18px;
+        color: #aaa49e;
+        line-height: 1.75;
+      }
+
+      .copy-supporting-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .copy-supporting-grid article {
+        padding: 20px;
+        border: 1px solid #342f2a;
+        border-radius: 10px;
+        background: #121212;
+      }
+
+      .copy-supporting-grid h4 {
+        margin: 0 0 5px;
+        color: #e3ded8;
+        font-size: 18px;
+      }
+
+      .copy-supporting-grid small {
+        display: block;
+        min-height: 36px;
+        color: #8e815f;
+        line-height: 1.5;
+      }
+
+      .copy-supporting-grid p {
+        margin: 12px 0 0;
+        color: #aaa49e;
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      .copy-character-choices {
+        display: grid;
+        gap: 10px;
+        margin: 18px 0 22px;
+      }
+
+      .copy-character-choices section {
+        padding: 15px 16px;
+        border: 1px solid #303030;
+        border-radius: 9px;
+        background: #111;
+      }
+
+      .copy-character-choices h4 {
+        margin: 0 0 6px;
+        color: #e2ddd8;
+        font-size: 15px;
+      }
+
+      .copy-character-choices p {
+        margin: 0;
+        color: #98938e;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 760px) {
+        .topbar {
+          height: 62px;
+          gap: 18px;
+          padding: 0 20px;
+        }
+
+        .topbar nav {
+          display: none;
+        }
+
+        .scenario-switcher {
+          top: 62px;
+          padding: 8px 20px;
+        }
+
+        .copy-title-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .copy-role-grid,
+        .copy-story-grid,
+        .copy-actions-grid,
+        .copy-supporting-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .copy-title-row h1 {
+          font-size: 29px;
+        }
+
+        .copy-glance {
+          padding: 24px;
+        }
+
+        .copy-glance h2 {
+          font-size: 25px;
+        }
+
+        .copy-story-grid-large article {
+          min-height: 0;
+        }
+
+        .side-goal-note {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#shangyang">AXIIA CUP</a>
+      <nav aria-label="页面导航">
+        <a class="active" data-section-link="story" href="#shangyang-story">场景</a>
+        <a data-section-link="characters" href="#shangyang-characters">人物</a>
+        <a data-section-link="special" href="#shangyang-special">隐藏目标</a>
+      </nav>
+    </header>
+
+    <nav class="scenario-switcher" aria-label="切换场景">
+      <span>切换场景</span>
+      <div>
+        <a class="active" data-scenario-link="shangyang" href="#shangyang" aria-current="page">商鞅变法</a>
+        <a data-scenario-link="honnoji" href="#honnoji">本能寺之变</a>
+        <a data-scenario-link="trolley" href="#trolley">电车难题</a>
+        <a data-scenario-link="fengyiting" href="#fengyiting">凤仪亭之夜</a>
+        <a data-scenario-link="harbor" href="#harbor">码头疑云</a>
+      </div>
+    </nav>
+
+    <main>
+      <section
+        class="copy-page scenario-panel"
+        id="shangyang"
+        data-scenario="shangyang"
+        data-title="商鞅变法 · 朝堂辩法"
+      >
+        <div class="copy-shell">
+          <div class="copy-title-row">
+            <div>
+              <p>历史策略辩论</p>
+              <h1>商鞅变法 · 朝堂辩法</h1>
+            </div>
+          </div>
+
+          <section class="copy-glance" id="shangyang-story">
+            <span>背景故事</span>
+            <h2>推行变法，还是维持现状？</h2>
+            <p>
+              公元前 359
+              年，秦国积弱已久，河西土地被魏国夺走，其他国家也不将秦国视为强国。即位不久的秦孝公决心扭转局面。他召来主张以新法重整秦国的入秦说客商鞅，也让反对仓促改革的秦国太师甘龙入朝。两人将在朝堂上公开辩论，由秦孝公决定是否变法。
+            </p>
+          </section>
+
+          <section class="copy-section" id="shangyang-characters">
+            <h2>朝堂上的三个人</h2>
+            <p class="copy-section-intro">先了解他们各自想改变什么、担心什么，再选择要构建的角色。</p>
+
+            <div class="copy-ruler">
+              <h3>秦孝公</h3>
+              <small>NPC 裁判</small>
+              <p>
+                秦国国君。他决心让秦国摆脱积弱，也必须判断：全面变法究竟能让国家强大，还是会先引发反抗与混乱。
+              </p>
+            </div>
+
+            <div class="copy-role-grid">
+              <article class="copy-role-shangyang">
+                <small>主张变法</small>
+                <h3>商鞅 <em>入秦说客</em></h3>
+                <p>
+                  他从魏国来到秦国，在秦国没有家族根基和本地势力。他认为旧制度使秦国长期积弱，只有推行条文明确、标准统一且能够真正落实的新法，秦国才可能变强。他愿意亲自承担改革的责任。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>说服秦孝公立即推行变法。</p>
+                <button type="button">去构建商鞅</button>
+              </article>
+
+              <article class="copy-role-ganlong">
+                <small>反对立即全面变法</small>
+                <h3>甘龙 <em>秦国太师</em></h3>
+                <p>
+                  他长期参与秦国朝政，熟悉宗室、旧制度和各方阻力。他也希望秦国变强，但认为商鞅的方案推进得太急，可能让秦国尚未变强便先陷入混乱。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>说服秦孝公暂不推行商鞅的新法。</p>
+                <button type="button">去构建甘龙</button>
+              </article>
+            </div>
+
+            <div class="side-goal-note" id="shangyang-special">
+              <strong>国策之外，还有隐藏目标</strong>
+              <span
+                >每方另有三个请求，一个是真目标，两个是假目标。你既要争取真正重视的请求，也要避免被对手轻易看穿。</span
+              >
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section
+        class="copy-page scenario-panel"
+        id="honnoji"
+        data-scenario="honnoji"
+        data-title="本能寺之变 · 敌在何处"
+        hidden
+      >
+        <div class="copy-shell">
+          <div class="copy-title-row">
+            <h1>本能寺之变 · 敌在何处</h1>
+          </div>
+
+          <section class="copy-glance" id="honnoji-story">
+            <span>背景故事</span>
+            <h2>西进四国，还是袭击本能寺？</h2>
+            <p class="copy-story-paragraph">
+              公元 1582
+              年，织田信长已经控制京都周边，明智光秀是他手下的重要将领。今夜，光秀率军从丹波龟山城出发，奉命西进。
+            </p>
+            <p class="copy-story-paragraph">
+              信长此时住在京都本能寺，身边护卫很少。光秀手中正有一支已经出发的军队。继续西进，他仍是奉命行军的家臣；中途改道，他就会突然袭击自己的主君。
+            </p>
+            <p class="copy-story-paragraph">
+              机会可能只在今夜，但起兵之后便没有回头路。光秀必须考虑军心、名分、盟友和明智家的退路，再决定军队究竟向西，还是转向京都。
+            </p>
+            <div class="copy-story-grid">
+              <article>
+                <h3>织田信长</h3>
+                <p>光秀的主君，也是当时最有势力的诸侯之一。今晚他住在本能寺，身边护卫很少。</p>
+              </article>
+              <article>
+                <h3>明智光秀</h3>
+                <p>
+                  织田家的重臣和将领。手中有兵，但一旦改道袭击主君，他便无法再回到原本奉命西征的立场。
+                </p>
+              </article>
+              <article>
+                <h3>今夜的选择</h3>
+                <p>袭击本能寺可能抓住唯一机会。继续西进可以避免立刻成为叛臣，却会把主动权重新交回信长。</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="copy-section" id="honnoji-characters">
+            <h2>军帐中的两方说客</h2>
+            <p class="copy-section-intro">先选择支持哪项决定，再从本方两名角色中选择一人入场。</p>
+
+            <div class="copy-ruler">
+              <h3>明智光秀</h3>
+              <small>NPC 裁判</small>
+              <p>
+                织田家重臣，也是今夜唯一能下令改道的人。他不知道本能寺之变后会发生什么，只能根据眼前的兵力、军心、名分、盟友、时间和退路作出决定。
+              </p>
+            </div>
+
+            <div class="copy-role-grid">
+              <article class="copy-role-shangyang">
+                <small>主张立即起兵</small>
+                <h3>袭击本能寺 <em>可选择一名说客</em></h3>
+                <div class="copy-character-choices">
+                  <section>
+                    <h4>长宗我部元亲阵营的密使</h4>
+                    <p>
+                      他代表土佐大名长宗我部元亲。光秀长期是织田家与长宗我部之间的联络人，但信长近来改变四国政策，要求元亲交还已经取得的领地，织田家的征讨也已迫近。今夜光秀如何选择，将直接改变长宗我部家的命运。
+                    </p>
+                  </section>
+                  <section>
+                    <h4>足利义昭的使者</h4>
+                    <p>
+                      足利义昭曾在信长支持下进入京都，后来却被织田信长逐出，如今流亡鞆浦。他仍保留第十五代将军和公方的名号，却没有可以立即调动的大军。使者代表这位被信长逐出的旧将军来到光秀军中。
+                    </p>
+                  </section>
+                </div>
+                <strong>最重要的目标</strong>
+                <p>说服光秀今夜转向京都，袭击本能寺。</p>
+                <button type="button">选择起兵方角色</button>
+              </article>
+
+              <article class="copy-role-ganlong">
+                <small>主张继续西进</small>
+                <h3>暂不袭击信长 <em>可选择一名说客</em></h3>
+                <div class="copy-character-choices">
+                  <section>
+                    <h4>细川藤孝</h4>
+                    <p>
+                      他曾侍奉足利将军家，后来归入织田政权，既是近畿名门和文化人，也是光秀的姻亲。他熟悉京都公家、寺社、旧幕府和近畿诸将。光秀一旦改道，两家的姻亲关系、细川家的去向，以及京都各方的选择都会立刻受到牵动。
+                    </p>
+                  </section>
+                  <section>
+                    <h4>明智军中的足轻</h4>
+                    <p>
+                      他是明智军中一名普通足轻，跟随全军从丹波龟山城连夜出发，接到的命令是西进支援秀吉。他没有资格参与高层密议，却要亲自执行新的军令，也要亲自承受突然改道后的混乱与冲杀，以及事后的清算。
+                    </p>
+                  </section>
+                </div>
+                <strong>最重要的目标</strong>
+                <p>说服光秀继续执行原命令，西进支援秀吉。</p>
+                <button type="button">选择西进方角色</button>
+              </article>
+            </div>
+
+            <div class="side-goal-note" id="honnoji-special">
+              <strong>国策之外，还有角色请求</strong>
+              <span
+                >每名入场角色另有三个请求，其中一个是真目标、两个是假目标。你要争取真正重视的请求，也要避免让对手轻易猜中。</span
+              >
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section
+        class="copy-page scenario-panel"
+        id="trolley"
+        data-scenario="trolley"
+        data-title="电车难题 · 一人与五人"
+        hidden
+      >
+        <div class="copy-shell">
+          <div class="copy-title-row">
+            <h1>电车难题 · 一人与五人</h1>
+          </div>
+
+          <section class="copy-glance" id="trolley-story">
+            <span>背景故事</span>
+            <h2>三个案件，明理者将分别裁决：救一人，还是救五人？</h2>
+            <p class="copy-story-paragraph">
+              事故已经无法完全避免，只能在两种都会造成伤害的结果之间选择。为了保护更多人，是否可以主动让另一个人承担伤害？
+            </p>
+            <div class="copy-story-grid copy-story-grid-large">
+              <article>
+                <h3>原始电车</h3>
+                <p>
+                  一辆失控电车正驶向主轨上的五个人。你是驾驶员，唯一能做的是把电车转向一条岔轨，岔轨上有一个人。不转向，五人会死。转向，一人会死。
+                </p>
+              </article>
+              <article>
+                <h3>自动驾驶车</h3>
+                <p>
+                  一辆自动驾驶车刹车失灵。它保持直行会撞死五名行人，转向会撞死车内的一名乘客。系统会按照预设规则作出选择。
+                </p>
+              </article>
+              <article>
+                <h3>缸中之脑</h3>
+                <p>
+                  一辆电车刹车失灵，你必须在两条路线中选择一条。路线 A 会撞死轨道上的一名维修工。路线 B
+                  会撞向缸中之脑的接口，让它体验五个人被电车撞死时的恐惧和疼痛，但不会造成真实的身体死亡。
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section class="copy-section" id="trolley-characters">
+            <h2>两种立场</h2>
+            <p class="copy-section-intro">奕仁代表一人侧，武仁代表五人侧。两人会依次讨论三个案件。</p>
+
+            <div class="copy-ruler">
+              <h3>明理者</h3>
+              <small>NPC 裁判</small>
+              <p>一位没有受过专业伦理学训练，但愿意认真听双方理由的普通人。他会分别判断三个案件。</p>
+            </div>
+
+            <div class="copy-role-grid">
+              <article class="copy-role-shangyang">
+                <small>保护一人</small>
+                <h3>奕仁 <em>一人侧</em></h3>
+                <p>他在三个案件中都主张保护一人，拒绝让一人承受题设中的伤害来保全五人。</p>
+                <strong>最重要的目标</strong>
+                <p>让明理者在至少两个案件中支持保护一人。</p>
+                <button type="button">去构建奕仁</button>
+              </article>
+
+              <article class="copy-role-ganlong">
+                <small>保护五人</small>
+                <h3>武仁 <em>五人侧</em></h3>
+                <p>他在三个案件中都主张保护五人，接受让一人承受题设中的伤害，以保护五人。</p>
+                <strong>最重要的目标</strong>
+                <p>让明理者在至少两个案件中支持保护五人。</p>
+                <button type="button">去构建武仁</button>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section
+        class="copy-page scenario-panel"
+        id="fengyiting"
+        data-scenario="fengyiting"
+        data-title="凤仪亭之夜 · 真实版"
+        hidden
+      >
+        <div class="copy-shell">
+          <div class="copy-title-row">
+            <h1>凤仪亭之夜 · 真实版</h1>
+          </div>
+
+          <section class="copy-glance" id="fengyiting-story">
+            <span>背景故事</span>
+            <h2>连环计该继续吗？貂蝉又会选谁？</h2>
+            <p class="copy-story-paragraph">
+              东汉初平三年，董卓挟持天子、专断朝政，长安上下惶惶。司徒王允苦无除董之策，便与养女貂蝉定下连环计：先让吕布相信貂蝉将嫁给他，再将貂蝉送入董卓府中，借两人的妒忌与嫌隙促使吕布诛杀董卓。
+            </p>
+            <p class="copy-story-paragraph">
+              凤仪亭中，吕布与貂蝉私下相见。董卓突然赶来，夺过画戟追赶吕布，又向他掷出画戟。吕布逃走，三人之间的冲突已经无法继续隐藏。
+            </p>
+            <div class="copy-story-grid">
+              <article>
+                <h3>董卓</h3>
+                <p>
+                  字仲颖，陇西临洮人。率西凉军进入洛阳后废少帝、立献帝，官至相国，把持朝廷与兵权。迁都长安后，司徒王允设下连环计，试图借吕布之手除掉他。
+                </p>
+              </article>
+              <article>
+                <h3>吕布</h3>
+                <p>
+                  字奉先，五原郡九原人，以骁勇善战闻名。原为丁原部将，后因赤兔马与金珠杀死丁原，投奔董卓并拜其为义父，任中郎将、封都亭侯。
+                </p>
+              </article>
+              <article>
+                <h3>貂蝉</h3>
+                <p>
+                  《三国演义》中的人物，司徒王允府中的歌女与义女。正史未记载其姓名，她的形象来自后世文学对董卓、吕布与王允关系的改写。
+                </p>
+              </article>
+            </div>
+
+            <section class="copy-timeline">
+              <h3>游戏流程</h3>
+              <div class="copy-timeline-track">
+                <article>
+                  <small>01</small>
+                  <h4>凤仪亭对峙</h4>
+                  <p>董卓先说，吕布回应，共三轮。貂蝉在场旁听。</p>
+                </article>
+                <article>
+                  <small>02</small>
+                  <h4>貂蝉决定顺序</h4>
+                  <p>貂蝉根据对峙表现，决定先与谁私谈。</p>
+                </article>
+                <article>
+                  <small>03</small>
+                  <h4>四场私谈</h4>
+                  <p>她与董卓、吕布各谈两次。部分私谈内容会依剧情传给另一方。</p>
+                </article>
+                <article>
+                  <small>04</small>
+                  <h4>貂蝉裁决</h4>
+                  <p>她先决定继续或放弃连环计，再选择董卓或吕布。</p>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <section class="copy-section" id="fengyiting-characters">
+            <h2>凤仪亭中的两名竞争者</h2>
+            <p class="copy-section-intro">董卓与吕布都想让貂蝉留下。两人的地位、力量和过往经历各不相同。</p>
+
+            <div class="copy-ruler">
+              <h3>貂蝉</h3>
+              <small>NPC 裁判 · 场内角色</small>
+              <p>
+                她会旁听对峙、决定私谈顺序，并在四场私谈中回应双方。她会留意二人的前后说法、承诺和实际安排，也会判断二人究竟如何看待自己。
+              </p>
+            </div>
+
+            <div class="copy-role-grid">
+              <article class="copy-role-shangyang">
+                <small>掌握权势</small>
+                <h3>董卓 <em>汉相国</em></h3>
+                <p>
+                  他是汉相国，控制朝廷、军队和财富，也能为貂蝉提供现实保护。但貂蝉也知道，他性情多疑，也习惯用权势处置背叛。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>无论是否继续连环计，都要让貂蝉最终选择董卓。</p>
+                <button type="button">去构建董卓</button>
+              </article>
+
+              <article class="copy-role-ganlong">
+                <small>承担行动</small>
+                <h3>吕布 <em>董卓义子</em></h3>
+                <p>
+                  他是董卓的义子和中郎将，以勇武闻名，也与貂蝉有情。他曾杀死旧主丁原后改投董卓，这段过去仍会影响貂蝉对他的信任。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>无论是否继续连环计，都要让貂蝉最终选择吕布。</p>
+                <button type="button">去构建吕布</button>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section
+        class="copy-page scenario-panel"
+        id="harbor"
+        data-scenario="harbor"
+        data-title="码头疑云 · 七号仓命案"
+        hidden
+      >
+        <div class="copy-shell">
+          <div class="copy-title-row">
+            <h1>码头疑云 · 七号仓命案</h1>
+          </div>
+
+          <section class="copy-glance" id="harbor-story">
+            <span>背景故事</span>
+            <h2>顾衡是故意击打纪川的吗？</h2>
+            <p class="copy-story-paragraph">
+              海岚市东港七号仓办公室内，现场负责人纪川被维修锤击中头部后死亡。办公室只有一扇门。门外摄像头记录到顾衡在
+              23:10 进入、23:18 独自离开，没有拍到室内发生的事。
+            </p>
+            <p class="copy-story-paragraph">
+              纪川当晚正准备暂停恒通货运的合同，并把顾衡签字经手的异常货箱记录交给内审。顾衡承认二人发生争执，也承认致命碰击发生时接触过锤子。他起初否认有肢体接触，得知血点与擦伤后，才改称二人在争抢锤子时失衡误伤。纪川倒地后，他没有求助便离开。
+            </p>
+            <div class="copy-story-grid">
+              <article>
+                <h3>E1 · 利害与邀约</h3>
+                <p>纪川准备暂停恒通货运的合同，并启动内部审查。准备提交内审的异常货箱记录由顾衡签字经手。</p>
+              </article>
+              <article>
+                <h3>E2 · 八分钟空白</h3>
+                <p>
+                  23:10 顾衡进入办公室，23:18 独自离开，23:27
+                  清洁人员发现纪川。镜头只拍门口，没有记录室内动作。
+                </p>
+              </article>
+              <article>
+                <h3>E3 · 现场与维修锤</h3>
+                <p>
+                  维修锤来自室内开放工具架，锤头造成了致命伤。现场座椅翻倒、交接册散落，锤上没有可靠指纹。
+                </p>
+              </article>
+              <article>
+                <h3>E4 · 一次击打与擦伤</h3>
+                <p>
+                  纪川头部受到一次击打，顾衡袖口留有四个小血点。顾衡和纪川身上都有新鲜的表浅擦伤。
+                </p>
+              </article>
+              <article>
+                <h3>E5 · 改口与未求助</h3>
+                <p>
+                  顾衡先称没有肢体接触，得知血点和擦伤后，才改称二人曾争抢锤子。纪川倒地后，他没有报警或呼叫急救便离开。
+                </p>
+              </article>
+            </div>
+
+            <section class="copy-timeline">
+              <h3>游戏流程</h3>
+              <div class="copy-timeline-track">
+                <article>
+                  <small>01</small>
+                  <h4>五轮审议</h4>
+                  <p>陪审团最多进行五轮公开审议。</p>
+                </article>
+                <article>
+                  <small>02</small>
+                  <h4>每轮五人发言</h4>
+                  <p>林和苏依次发言，随后随机抽取三名普通陪审员发言。林、苏每轮交替先说。</p>
+                </article>
+                <article>
+                  <small>03</small>
+                  <h4>十一人投票</h4>
+                  <p>审议结束后，十一名陪审员各自投票。至少六票有罪才会定罪。</p>
+                </article>
+              </div>
+            </section>
+
+            <section class="copy-actions">
+              <h3>行动简介</h3>
+              <p>
+                林和苏可在每次公开发言前采取行动。每轮中，林、苏和一名普通陪审员完成发言后，苏、林依次获得一次中场行动机会。行动可以连续选择，直到开始公开发言或主动结束中场行动。
+              </p>
+              <div class="copy-actions-grid">
+                <article>
+                  <h4>秘密意向投票 · 每人 2 次</h4>
+                  <p>
+                    第 1—4
+                    轮可以发起。十一名陪审员投出当前意向票。发起者和九名普通陪审员会看到有罪、无罪的总票数，个人投票在场内保持匿名。
+                  </p>
+                </article>
+                <article>
+                  <h4>一对一私聊 · 每人 1 次</h4>
+                  <p>从九名普通陪审员中选择一人。双方各发言三次，场内只有私聊双方知道对象和内容。</p>
+                </article>
+                <article>
+                  <h4>公开证据复核 · 每人 2 次</h4>
+                  <p>选择 E1—E5 中的一组证据。系统会向十一名陪审员重新展示这组证据的原始内容，不会加入新的事实或鉴定结果。</p>
+                </article>
+                <article>
+                  <h4>提前终局动议 · 每人 1 次</h4>
+                  <p>第 2 轮起可以提出。十一名陪审员记名表决是否结束审议。至少六票赞成时，审议立即结束并进入最终判决。</p>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <section class="copy-section" id="harbor-characters">
+            <h2>两名公开表明立场的陪审员</h2>
+            <p class="copy-section-intro">林和苏以陪审员身份参加审议。他们使用同一份案件材料，不能补充调查。</p>
+
+            <div class="copy-ruler">
+              <h3>十一人陪审团</h3>
+              <small>9 名 NPC 陪审员参与裁决</small>
+              <p>
+                林固定投有罪，苏固定投无罪。九名普通陪审员开局没有预设票。审议结束后，十一人各自投票。至少六张有罪票才会定罪。
+              </p>
+            </div>
+
+            <section class="copy-supporting">
+              <h3>九名普通陪审员</h3>
+              <p>九名陪审员经历各异，关注点也不同。职业背景会影响他们阅读材料的方式，但不会给案件增加新事实。</p>
+              <div class="copy-supporting-grid">
+                <article>
+                  <h4>陈岚</h4>
+                  <small>44 岁 · 社区调解中心项目主管</small>
+                </article>
+                <article>
+                  <h4>魏笙</h4>
+                  <small>36 岁 · 城市轨道交通调度员</small>
+                </article>
+                <article>
+                  <h4>韩朔</h4>
+                  <small>41 岁 · 写字楼安防与设施工程师</small>
+                </article>
+                <article>
+                  <h4>沈青</h4>
+                  <small>39 岁 · 医院检验科质量经理</small>
+                </article>
+                <article>
+                  <h4>杜临</h4>
+                  <small>50 岁 · 食品配送中心夜班主管</small>
+                </article>
+                <article>
+                  <h4>孟遥</h4>
+                  <small>33 岁 · 企业内审人员</small>
+                </article>
+                <article>
+                  <h4>方稚</h4>
+                  <small>46 岁 · 急诊护士</small>
+                </article>
+                <article>
+                  <h4>蒋诚</h4>
+                  <small>29 岁 · 小餐馆经营者</small>
+                </article>
+                <article>
+                  <h4>宁柏</h4>
+                  <small>55 岁 · 财产保险理赔调查员</small>
+                </article>
+              </div>
+            </section>
+
+            <div class="copy-role-grid">
+              <article class="copy-role-shangyang">
+                <small>证据足以定罪</small>
+                <h3>林 <em>第 10 席 · 固定投有罪</em></h3>
+                <p>
+                  第 10
+                  席陪审员。林公开主张控方已经排除合理怀疑，足以证明顾衡故意实施了致命击打。他的最终判决票固定为有罪。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>说服至少五名普通陪审员，使有罪票达到六票。</p>
+                <button type="button">去构建林</button>
+              </article>
+
+              <article class="copy-role-ganlong">
+                <small>仍有合理怀疑</small>
+                <h3>苏 <em>第 11 席 · 固定投无罪</em></h3>
+                <p>
+                  第 11
+                  席陪审员。苏公开主张现有证据仍留下合理怀疑，控方尚未将其排除，因此应判顾衡无罪。她的最终判决票固定为无罪。
+                </p>
+                <strong>最重要的目标</strong>
+                <p>让有罪票少于六票，使案件无法定罪。</p>
+                <button type="button">去构建苏</button>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const scenarioIds = ["shangyang", "honnoji", "trolley", "fengyiting", "harbor"];
+        const panels = [...document.querySelectorAll("[data-scenario]")];
+        const scenarioLinks = [...document.querySelectorAll("[data-scenario-link]")];
+        const sectionLinks = [...document.querySelectorAll("[data-section-link]")];
+        let activeScenario = "shangyang";
+
+        function scenarioFromHash() {
+          const hash = window.location.hash.slice(1);
+          return scenarioIds.find((id) => hash === id || hash.startsWith(id + "-")) || "shangyang";
+        }
+
+        function activateScenario(id) {
+          activeScenario = scenarioIds.includes(id) ? id : "shangyang";
+
+          panels.forEach((panel) => {
+            const active = panel.dataset.scenario === activeScenario;
+            panel.hidden = !active;
+          });
+
+          scenarioLinks.forEach((link) => {
+            const active = link.dataset.scenarioLink === activeScenario;
+            link.classList.toggle("active", active);
+            if (active) {
+              link.setAttribute("aria-current", "page");
+            } else {
+              link.removeAttribute("aria-current");
+            }
+          });
+
+          sectionLinks.forEach((link) => {
+            const section = link.dataset.sectionLink;
+            const target = document.getElementById(activeScenario + "-" + section);
+            link.hidden = !target;
+            link.href = target ? "#" + target.id : "#" + activeScenario;
+          });
+
+          const activePanel = panels.find((panel) => panel.dataset.scenario === activeScenario);
+          document.title = activePanel?.dataset.title || "AXIIA CUP 场景介绍";
+        }
+
+        function syncFromHash() {
+          activateScenario(scenarioFromHash());
+          const target = document.getElementById(window.location.hash.slice(1));
+          requestAnimationFrame(() => {
+            if (target && !target.hidden) {
+              target.scrollIntoView({ block: "start" });
+            } else {
+              window.scrollTo({ top: 0 });
+            }
+          });
+        }
+
+        scenarioLinks.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            const id = link.dataset.scenarioLink;
+            history.pushState(null, "", "#" + id);
+            activateScenario(id);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        });
+
+        sectionLinks.forEach((link) => {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            const target = document.getElementById(activeScenario + "-" + link.dataset.sectionLink);
+            if (!target) return;
+            history.pushState(null, "", "#" + target.id);
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        });
+
+        window.addEventListener("hashchange", syncFromHash);
+        window.addEventListener("popstate", syncFromHash);
+        syncFromHash();
+      })();
+    </script>
+  </body>
+</html>
