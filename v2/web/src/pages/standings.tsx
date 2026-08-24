@@ -34,7 +34,7 @@ export function StandingsPage() {
               <div className='space-y-2 md:hidden'>
                 {data.entries.map((entry) => (
                   <div
-                    key={entry.submissionID}
+                    key={entry.playerID}
                     className='rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'
                   >
                     <div className='flex items-center justify-between'>
@@ -42,8 +42,8 @@ export function StandingsPage() {
                         <span className='tabular-nums text-lg font-black text-(--foreground)'>
                           #{entry.rank}
                         </span>
-                        <span className='font-mono text-xs text-(--foreground-subtle)'>
-                          #{entry.submissionID}
+                        <span className='text-sm font-semibold text-(--foreground)'>
+                          {entry.playerName}
                         </span>
                       </div>
                       <span className='tabular-nums text-sm font-semibold text-(--success)'>
@@ -83,14 +83,22 @@ export function StandingsPage() {
                 <tbody className='text-(--foreground-subtle)'>
                   {data.entries.map((entry) => (
                     <tr
-                      key={entry.submissionID}
+                      key={entry.playerID}
                       className='border-t border-(--border-soft)'
                     >
                       <td className='py-2 font-semibold text-(--foreground)'>
                         {entry.rank}
                       </td>
-                      <td className='py-2 font-mono text-xs'>
-                        #{entry.submissionID}
+                      <td className='py-2'>
+                        <span className='text-(--foreground)'>
+                          {entry.playerName}
+                        </span>
+                        {/* #64：名次属于人；两侧投的版本降为小字下钻线索。 */}
+                        <span className='ml-2 font-mono text-[11px] text-(--foreground-muted)'>
+                          {entry.submissionIDs.map((id) => `#${id}`).join(
+                            ' · ',
+                          )}
+                        </span>
                       </td>
                       <td className='py-2 text-right'>{entry.wins}</td>
                       <td className='py-2 text-right'>{entry.losses}</td>

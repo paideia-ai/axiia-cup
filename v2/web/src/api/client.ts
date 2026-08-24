@@ -16,6 +16,7 @@ import type {
   EnsureAgentRequest,
   ErrorResponse,
   FieldMutationRequest,
+  LandingResponse,
   LoginRequest,
   MatchDetail,
   MatchListResponse,
@@ -25,6 +26,7 @@ import type {
   NotificationsResponse,
   OKResponse,
   OpponentListResponse,
+  PublicAgentResponse,
   RenameAgentRequest,
   SaveVersionRequest,
   ScenarioDetail,
@@ -152,6 +154,11 @@ export const catalog = {
 
 // ── Config & inventory (P2) ─────────────────────────────────────────────────
 
+// B1 公开落地页素材（免鉴权）：真实对局节选 / 示范对局 / 顶尖玩家 / 总对战数。
+export const landing = {
+  get: () => request<LandingResponse>('GET', '/landing'),
+}
+
 export const config = {
   // §C2 read-only projection: quotas, gate threshold, models, trials switch,
   // plus the caller's usage. Callers must degrade gracefully on failure.
@@ -190,6 +197,10 @@ export const builder = {
     request<AgentVersionDTO>('POST', `/agents/${agentID}/save`, input),
   draft: (agentID: number) =>
     request<DraftResponse>('GET', `/agents/${agentID}/draft`),
+  // #35 公开视图：任何登录玩家都能看别人的智能体身份与逐版本战绩（提示词永不
+  // 在内——响应类型里就没有这个字段）。老服务器无此端点 → 404/405，调用方降级。
+  public: (agentID: number) =>
+    request<PublicAgentResponse>('GET', `/agents/${agentID}/public`),
   versions: (agentID: number) =>
     request<VersionListResponse>('GET', `/agents/${agentID}/versions`),
   setEntry: (agentID: number, versionID: number) =>
