@@ -5,7 +5,7 @@ import type { MatchSummary } from '../api/types'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import type { RoleNames } from '../lib/outcome'
-import { outcomeCopy } from '../lib/outcome'
+import { outcomeCopy, scenarioRoles } from '../lib/outcome'
 import { useAsync } from '../lib/use-async'
 
 function statusTone(summary: MatchSummary) {
@@ -69,10 +69,10 @@ export function MatchesPage() {
     [],
   )
 
-  const roles: Record<string, RoleNames> = {}
-  for (const scenario of data?.scenarios?.scenarios ?? []) {
-    roles[scenario.id] = { a: scenario.sideAName, b: scenario.sideBName }
-  }
+  // 角色名映射走 lib/outcome 的共用构建（round4 评审 #10）。
+  const roles: Record<string, RoleNames> = scenarioRoles(
+    data?.scenarios?.scenarios ?? [],
+  )
   const rolesOf = (summary: MatchSummary) => roles[summary.scenarioID] ?? null
 
   const matchCard = (summary: MatchSummary) => (

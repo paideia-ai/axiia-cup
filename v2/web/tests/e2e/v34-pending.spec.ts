@@ -130,7 +130,9 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       new RegExp(`/matches/${challenge.matchIDs[0]}$`),
     )
     await expect(page.getByText('约战①', { exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: '查看另一场（②）→' }))
+    // F7：② 判完后互链会带上结果（查看另一场（②：对方（甘龙）胜）→），
+    // 前缀匹配两态皆中，不与判分赛跑。
+    await expect(page.getByRole('link', { name: /查看另一场（②/ }))
       .toHaveAttribute('href', `/matches/${challenge.matchIDs[1]}`)
 
     // API 复核 ①：两条腿成对——同 challengeID、leg 1/2、kind pvp、执侧成对

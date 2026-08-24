@@ -7,8 +7,7 @@ import {
   pauseReplay,
   REPLAY_IDLE,
   REPLAY_SPEEDS,
-  REPLAY_STEP_MS,
-  replayStepDelayMs,
+  replayDwellMs,
   resumeReplay,
   rewindReplay,
   setReplaySpeed,
@@ -64,11 +63,10 @@ export function useReplay(steps: ReplayStep[]): ReplayHandle {
 
   useEffect(() => {
     if (!state.active || !state.playing || state.ended) return
-    // 停留时长按「即将揭示的那一步」算（F5）：长台词多停、节拍恒定，再按
-    // 倍速缩放。
-    const step = steps[state.cursor]
-    const delay = (step ? replayStepDelayMs(step) : REPLAY_STEP_MS) /
-      state.speed
+    // 停留时长按「刚揭示的那一步」算（F5；round4 评审 #1 修正 off-by-one）：
+    // 长台词出现后多停在它自己身上、节拍恒定，再按倍速缩放；开场（尚未揭示）
+    // 用基础节拍。
+    const delay = replayDwellMs(steps, state.cursor) / state.speed
     const timer = setTimeout(
       () => setState((current) => advanceReplay(current, steps)),
       delay,

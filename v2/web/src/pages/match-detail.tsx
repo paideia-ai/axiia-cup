@@ -36,6 +36,7 @@ import {
   deriveScoreBreakdown,
   formatDelta,
   formatScoringReasoning,
+  ledgerFromScore,
   ledgerShortLabel,
   parseLedger,
 } from '../lib/scoring-reasoning'
@@ -348,13 +349,17 @@ export function MatchDetailPage() {
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
   const beats = replayBeats(replaySteps)
   const ledger = formatScoringReasoning(data.reasoning)
-  // F2（#69/#26）：把散文得分账解析成结构化条目——正负号、归侧、识破标记。
+  // F2（#69/#26）：把得分账解析成结构化条目——正负号、归侧、识破标记。
   // 解析不产出数字：合计与得分变化的兜底一律用服务端 scoreA/scoreB。
+  // round4 评审 #8：score 事件自带结构化 ledger 时直读事件（脚本 add() 的
+  // 原始元组），正则解析 reasoning 散文只作老对局的回退。
+  const ledgerContext = {
+    slotID: data.summary.scenarioID,
+    lanes: data.speakerLabels,
+  }
   const parsed = finished
-    ? parseLedger(data.reasoning, {
-      slotID: data.summary.scenarioID,
-      lanes: data.speakerLabels,
-    })
+    ? ledgerFromScore(data.turns, ledgerContext) ??
+      parseLedger(data.reasoning, ledgerContext)
     : null
   const ledgerFor = (side: Side) =>
     parsed?.items.filter((item) => item.side === side) ?? []

@@ -6,7 +6,7 @@ import { catalog, matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
 import { cn } from '../lib/cn'
 import type { RoleNames } from '../lib/outcome'
-import { outcomeCopy } from '../lib/outcome'
+import { outcomeCopy, scenarioRoles } from '../lib/outcome'
 
 // 对战条（#72，mock V29/V35）：只在派发处路由出现的横条，装着进行中与
 // 「刚完成」（15 分钟内完局）的对局小卡。空态自动隐藏；可折叠（chevron，
@@ -52,11 +52,7 @@ export function BattleStrip() {
       .scenarios()
       .then((response) => {
         if (!live) return
-        const map: Record<string, RoleNames> = {}
-        for (const scenario of response.scenarios) {
-          map[scenario.id] = { a: scenario.sideAName, b: scenario.sideBName }
-        }
-        setRoles(map)
+        setRoles(scenarioRoles(response.scenarios))
       })
       .catch(() => {})
     return () => {

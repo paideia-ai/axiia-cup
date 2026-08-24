@@ -198,7 +198,9 @@ export function VersionList({
 }
 
 // P11：卡内两步确认行（复用 E7「清空工作区」的就地确认模式，不弹窗）。
-// 挂载即武装：滚进视口并把焦点交给「仍要继续」，点击处一定看得见反馈。
+// 挂载即武装：滚进视口并把焦点交给确认行本体（round4 评审 #3：不聚焦
+// 「仍要继续」——按住 Enter 的连击会在警告被读到之前就触发覆盖），
+// 点击处一定看得见反馈。
 function IterateConfirmRow({
   message,
   onConfirm,
@@ -217,7 +219,7 @@ function IterateConfirmRow({
       if (typeof row.scrollIntoView === 'function') {
         row.scrollIntoView({ block: 'nearest' })
       }
-      row.querySelector('button')?.focus()
+      row.focus()
     })
     return () => cancelAnimationFrame(frame)
   }, [])
@@ -225,6 +227,7 @@ function IterateConfirmRow({
     <div
       ref={rowRef}
       role='alert'
+      tabIndex={-1}
       className='flex flex-wrap items-center gap-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'
     >
       <span className='text-xs text-(--warning)'>{message}</span>

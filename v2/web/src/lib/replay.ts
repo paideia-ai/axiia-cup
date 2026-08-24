@@ -157,6 +157,14 @@ export function replayStepDelayMs(step: ReplayStep): number {
   )
 }
 
+// 自动推进的停留时长（round4 评审 #1）：停留属于「刚揭示的那一步」——
+// steps[cursor - 1]，长台词出现后多停在它自己身上，而不是提前替下一步
+// 买单；尚未揭示任何内容（cursor === 0）时用基础节拍起步。
+export function replayDwellMs(steps: ReplayStep[], cursor: number): number {
+  const step = cursor > 0 ? steps[cursor - 1] : undefined
+  return step ? replayStepDelayMs(step) : REPLAY_STEP_MS
+}
+
 export function startReplay(): ReplayMachineState {
   return { ...REPLAY_IDLE, active: true, playing: true }
 }

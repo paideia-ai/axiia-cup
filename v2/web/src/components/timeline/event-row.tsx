@@ -10,6 +10,7 @@ import {
   eventType,
   scriptEvent,
 } from '../../lib/event'
+import { crossIdentified } from '../../lib/scoring-reasoning'
 import type { SpeakerLabels } from './labels'
 import { renderJuryEvent } from './jury-event-row'
 import { speakerName } from './labels'
@@ -174,6 +175,10 @@ function ScoreRow({
       ...Object.keys(guesses ?? {}),
     ]),
   ]
+  // F2（#69）：原本要两行对读才知道的「猜中/被识破」就地标注，与结果卡、
+  // 隐藏目标区块同一口径——派生统一收进 crossIdentified（round4 评审 #9），
+  // 只在恰好两侧对猜时有定义。
+  const cross = crossIdentified(trueRequests, guesses)
   return (
     <div className='rounded-xl border border-(--border) bg-white/2 px-4 py-4'>
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
@@ -198,17 +203,6 @@ function ScoreRow({
               const truth = trueRequests?.[side]
               const guess = guesses?.[side]
               if (!truth && !guess) return null
-              // F2（#69）：原本要两行对读才知道的「猜中/被识破」就地标注，
-              // 与结果卡、隐藏目标区块同一口径。只在恰好两侧对猜时有定义。
-              const other = sides.length === 2
-                ? sides.find((key) =>
-                  key !== side
-                )
-                : undefined
-              const otherTruth = other != null
-                ? trueRequests?.[other]
-                : undefined
-              const otherGuess = other != null ? guesses?.[other] : undefined
               return (
                 <p key={side}>
                   {speakerName(labels, side)}
@@ -219,7 +213,7 @@ function ScoreRow({
                         <span className='font-mono text-(--foreground)'>
                           {truth}
                         </span>
-                        {otherGuess != null && otherGuess === truth
+                        {cross.identified[side] === true
                           ? <span className='text-(--accent)'>（被识破）</span>
                           : null}
                       </>
@@ -232,7 +226,7 @@ function ScoreRow({
                         <span className='font-mono text-(--foreground)'>
                           {guess}
                         </span>
-                        {otherTruth != null && guess === otherTruth
+                        {cross.guessedRight[side] === true
                           ? <span className='text-(--success)'>（猜中）</span>
                           : null}
                       </>

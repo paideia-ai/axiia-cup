@@ -7,9 +7,12 @@ import {
   buildReplaySteps,
   pauseReplay,
   REPLAY_BEAT_MS,
+  REPLAY_CHAR_MS,
   REPLAY_IDLE,
+  REPLAY_MAX_STEP_MS,
   REPLAY_STEP_MS,
   replayBeats,
+  replayDwellMs,
   replayReveal,
   replayStepDelayMs,
   resumeReplay,
@@ -145,6 +148,25 @@ describe('v3.4 #20/#22/#24 deterministic replay', () => {
     const first = steps[0]
     expect(first.kind).toBe('row')
     expect(first.kind === 'row' ? first.chars : -1).toBe(6)
+  })
+
+  // round4 评审 #1：自动推进的停留属于「刚揭示的那一步」——长台词出现后
+  // 停在它自己身上，而不是提前替下一步买单；cursor 0（尚未揭示）用基础节拍。
+  it('dwells on the step just revealed, not the one about to appear', () => {
+    const dwellSteps = buildReplaySteps(
+      [{ ...turn(0), finalText: '长'.repeat(300) }, turn(1)],
+      [],
+    )
+
+    expect(replayDwellMs(dwellSteps, 0)).toBe(REPLAY_STEP_MS)
+    // 揭示 300 字长行后：停留按它自己的长度缩放（此处夹到上限），与下一行
+    // 的短台词无关。
+    expect(replayDwellMs(dwellSteps, 1)).toBe(replayStepDelayMs(dwellSteps[0]))
+    expect(replayDwellMs(dwellSteps, 1)).toBe(REPLAY_MAX_STEP_MS)
+    // 揭示短行（'turn-1'，6 字）后回到按它自己长度的小加时。
+    expect(replayDwellMs(dwellSteps, 2)).toBe(
+      REPLAY_STEP_MS + 6 * REPLAY_CHAR_MS,
+    )
   })
 
   // F5：上一步——回退一格并暂停、清锚点与说明；0 处与未激活时原样返回。

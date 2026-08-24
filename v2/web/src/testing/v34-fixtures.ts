@@ -234,6 +234,13 @@ export const finishedMatch: MatchDetail = {
         type: 'score',
         trueRequests: { a: 'SR2', b: 'GR2' },
         guesses: { a: 'GR1', b: 'SR2' },
+        // round4 评审 #8：脚本 add() 的结构化账目随事件下发，与下方
+        // reasoning 散文逐条对应——前端优先直读这里，散文只是回退。
+        ledger: [
+          { side: 'a', delta: 1, why: '秦孝公决意推行变法，大政方针达成' },
+          { side: 'a', delta: 0.5, why: '真请求 SR2 获准' },
+          { side: 'a', delta: -1, why: '真目标 SR2 被甘龙识破' },
+        ],
         scoreA: 0.5,
         scoreB: 0,
         winner: 'a',

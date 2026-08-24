@@ -632,11 +632,15 @@ async function main() {
   })
 
   const ledger = []
+  const ledgerEntries = []
   let scoreA = 0
   let scoreB = 0
   const add = (side, delta, why) => {
     if (side === 'a') scoreA += delta
     else scoreB += delta
+    // 飞书评审 round4 #8（与商鞅舌战同源）：结构化账目随 score 事件下发，
+    // reasoning 散文保持旧形态兼容老战报。
+    ledgerEntries.push({ side: side, delta: delta, why: why })
     ledger.push(`${side === 'a' ? roleA.name : roleB.name} ${delta > 0 ? '+' : ''}${delta}：${why}`)
   }
 
@@ -679,6 +683,7 @@ async function main() {
     type: 'score',
     trueRequests: { a: trueA, b: trueB },
     guesses: { a: inquiryA.fields.guess, b: inquiryB.fields.guess },
+    ledger: ledgerEntries,
     scoreA: scoreA,
     scoreB: scoreB,
     winner: winner,

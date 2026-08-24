@@ -1,5 +1,5 @@
 import { CheckCheck, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ApiError, notifications } from '../api/client'
@@ -52,6 +52,23 @@ function isMissingEndpoint(cause: unknown): boolean {
     cause.code === 'unknown'
 }
 
+// round4 评审 #5：本地不再镜像服务端列表——只记录三种乐观「变更」（逐条
+// 已读 / 全部已读 / 已清空），rows 与未读数从 data + 变更派生，没有双份
+// 状态可分叉，也没有同步 effect 造成的「暂无通知」闪帧。变更对新数据幂等
+// （重取后命中的行本就已读），失败路径在 reload() 前撤销对应变更即可与
+// 服务端对齐。
+interface NotificationMutations {
+  readIDs: ReadonlySet<number>
+  allRead: boolean
+  cleared: boolean
+}
+
+const NO_MUTATIONS: NotificationMutations = {
+  readIDs: new Set(),
+  allRead: false,
+  cleared: false,
+}
+
 export function NotificationsPage() {
   const { data, error, loading, reload } = useAsync(
     () => notifications.list(),
@@ -59,29 +76,39 @@ export function NotificationsPage() {
   )
   const [actionError, setActionError] = useState<string | null>(null)
   const [acting, setActing] = useState(false)
-  // F3：服务端数据镜像到本地 state，行内操作走乐观更新——成功路径不再
-  // 重取整页，列表不卸载，滚动位置即不丢（scroll.ts 的原则：refetch 不是
-  // 导航，不该移动页面）。铃铛角标仍由 SSE /notifications/bell 独立对齐。
-  const [rows, setRows] = useState<NotificationDTO[]>([])
-  const [unread, setUnread] = useState(0)
+  const [mutations, setMutations] = useState<NotificationMutations>(
+    NO_MUTATIONS,
+  )
 
-  useEffect(() => {
-    if (data == null) return
-    setRows(data.notifications)
-    setUnread(data.unreadCount)
-  }, [data])
+  // F3：行内操作走乐观更新——成功路径不再重取整页，列表不卸载，滚动位置
+  // 即不丢（scroll.ts 的原则：refetch 不是导航，不该移动页面）。铃铛角标
+  // 仍由 SSE /notifications/bell 独立对齐。
+  const rows = useMemo<NotificationDTO[]>(() => {
+    if (data == null || mutations.cleared) return []
+    return data.notifications.map((row) =>
+      !row.read && (mutations.allRead || mutations.readIDs.has(row.id))
+        ? { ...row, read: true }
+        : row
+    )
+  }, [data, mutations])
+  const unread = rows.filter((row) => !row.read).length
 
   const markRead = async (id: number) => {
     const target = rows.find((row) => row.id === id)
     if (target == null || target.read) return
-    // 乐观置已读：先改本地，失败才提示并 reload() 与服务端对齐。
-    setRows((current) =>
-      current.map((row) => (row.id === id ? { ...row, read: true } : row))
-    )
-    setUnread((count) => Math.max(0, count - 1))
+    // 乐观置已读：先记变更，失败撤销该条并提示、reload() 与服务端对齐。
+    setMutations((current) => ({
+      ...current,
+      readIDs: new Set(current.readIDs).add(id),
+    }))
     try {
       await notifications.markRead(id)
     } catch {
+      setMutations((current) => {
+        const readIDs = new Set(current.readIDs)
+        readIDs.delete(id)
+        return { ...current, readIDs }
+      })
       setActionError('标记失败，请重试')
       reload()
     }
@@ -97,12 +124,12 @@ export function NotificationsPage() {
   const readAll = async () => {
     setActing(true)
     setActionError(null)
-    // 乐观全读：先本地置读；失败保留端点缺席回退文案并 reload() 对齐。
-    setRows((current) => current.map((row) => ({ ...row, read: true })))
-    setUnread(0)
+    // 乐观全读：失败撤销变更、保留端点缺席回退文案并 reload() 对齐。
+    setMutations((current) => ({ ...current, allRead: true }))
     try {
       await notifications.readAll()
     } catch (cause) {
+      setMutations((current) => ({ ...current, allRead: false }))
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「全部已读」——可逐条标为已读'
@@ -119,12 +146,12 @@ export function NotificationsPage() {
     if (!globalThis.confirm('清空全部通知？此操作不可恢复。')) return
     setActing(true)
     setActionError(null)
-    // 乐观清空：失败 reload() 找回列表。
-    setRows([])
-    setUnread(0)
+    // 乐观清空：失败撤销变更并 reload() 找回列表。
+    setMutations((current) => ({ ...current, cleared: true }))
     try {
       await notifications.clear()
     } catch (cause) {
+      setMutations((current) => ({ ...current, cleared: false }))
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「清除」——稍后再试'

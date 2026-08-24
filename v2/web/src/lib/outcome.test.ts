@@ -64,6 +64,26 @@ describe('F7 带视角的结果文案（outcomeCopy）', () => {
     ).toBe('左右手互搏 · 商鞅胜')
   })
 
+  // round4 评审 #7：participants 存在但形态不全（{} / 缺一侧）——不抛错，
+  // 按旁观回退「胜方 角色」。
+  it('treats malformed participants as spectator view', () => {
+    expect(
+      outcomeCopy(
+        { winner: 'a', participants: {} as MatchParticipantsDTO },
+        roles,
+      ),
+    ).toBe('胜方 商鞅')
+    expect(
+      outcomeCopy(
+        {
+          winner: 'a',
+          participants: { b: { isMine: false } } as MatchParticipantsDTO,
+        },
+        roles,
+      ),
+    ).toBe('胜方 商鞅')
+  })
+
   it('reads 平局 regardless of perspective', () => {
     expect(
       outcomeCopy(

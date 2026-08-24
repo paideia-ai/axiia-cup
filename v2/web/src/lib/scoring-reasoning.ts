@@ -1,6 +1,13 @@
 import type { Side, TurnDTO } from '../api/types'
 import { scenarioModule } from '../scenarios'
-import { eventNumber, eventRecord, eventType, scriptEvent } from './event'
+import type { ScriptEvent } from './event'
+import {
+  eventArray,
+  eventNumber,
+  eventRecord,
+  eventType,
+  scriptEvent,
+} from './event'
 
 const PROGRAMMATIC_SCORING_DETAIL_PREFIX = '程序化计分明细：'
 
@@ -35,6 +42,40 @@ export interface ScoreBreakdown {
   identified: Record<string, boolean> | null
 }
 
+// round4 评审 #9：两侧对猜的「猜中/被识破」派生只此一处——本侧真目标对上
+// 另一侧的猜测，只在恰好两键对猜时有定义（商鞅/本能寺形态），其余形态两表
+// 皆空。identified[side]＝该侧真目标被对面猜中（被识破）；guessedRight[side]
+// ＝该侧的猜测命中对面真目标（猜中）。
+export interface CrossGuessOutcome {
+  identified: Record<string, boolean>
+  guessedRight: Record<string, boolean>
+}
+
+export function crossIdentified(
+  trueRequests: Record<string, string> | null,
+  guesses: Record<string, string> | null,
+): CrossGuessOutcome {
+  const identified: Record<string, boolean> = {}
+  const guessedRight: Record<string, boolean> = {}
+  const sides = [
+    ...new Set([
+      ...Object.keys(trueRequests ?? {}),
+      ...Object.keys(guesses ?? {}),
+    ]),
+  ]
+  if (trueRequests && guesses && sides.length === 2) {
+    for (const side of sides) {
+      const other = sides.find((key) => key !== side)!
+      const truth = trueRequests[side]
+      const guess = guesses[other]
+      if (truth == null || guess == null) continue
+      identified[side] = guess === truth
+      guessedRight[other] = guess === truth
+    }
+  }
+  return { identified, guessedRight }
+}
+
 export function deriveScoreBreakdown(turns: TurnDTO[]): ScoreBreakdown | null {
   let score: ReturnType<typeof scriptEvent> = null
   let rulings: Record<string, string> | null = null
@@ -62,24 +103,12 @@ export function deriveScoreBreakdown(turns: TurnDTO[]): ScoreBreakdown | null {
     }
   }
 
-  // 「被识破」只在恰好两侧对猜时有定义（商鞅/本能寺形态）：本侧真目标对上
-  // 另一侧的猜测。
-  let identified: Record<string, boolean> | null = null
-  const sides = [
-    ...new Set([
-      ...Object.keys(trueRequests ?? {}),
-      ...Object.keys(guesses ?? {}),
-    ]),
-  ]
-  if (trueRequests && guesses && sides.length === 2) {
-    for (const side of sides) {
-      const other = sides.find((key) => key !== side)!
-      const truth = trueRequests[side]
-      const guess = guesses[other]
-      if (truth == null || guess == null) continue
-      ;(identified ??= {})[side] = guess === truth
-    }
-  }
+  // 「被识破」口径统一走 crossIdentified（round4 评审 #9）——时间线
+  // ScoreRow 的就地标注与这里同一出处。
+  const cross = crossIdentified(trueRequests, guesses)
+  const identified = Object.keys(cross.identified).length > 0
+    ? cross.identified
+    : null
 
   return {
     trueRequests,
@@ -188,11 +217,68 @@ export function parseLedger(
   }
 
   let subtotals: Record<Side, number> | null = null
-  if (items.length > 0 && items.every((item) => item.side != null)) {
+  // 小计只在解析吃下整段计分散文时公布（round4 评审 #2）：任何 leftover 行
+  // 都可能藏着未入账的加减分（真目标/问询/scoreA 的丢弃行不算），残缺小计
+  // 会与服务端合计打架——宁缺，由调用方回落 scoreA/scoreB。
+  if (
+    items.length > 0 && leftover.length === 0 &&
+    items.every((item) => item.side != null)
+  ) {
     subtotals = { a: 0, b: 0 }
     for (const item of items) subtotals[item.side!] += item.delta
   }
   return { items, leftover, subtotals }
+}
+
+// round4 评审 #8：score 事件的结构化 ledger 通道——脚本 add() 的
+// (side, delta, why) 元组随事件原样下发（shangyang/honnoji 的 emit 已带），
+// 正则解析 reasoning 散文只作老对局的回退。任何一条不成形即整体放弃
+// （返回 null），由调用方回落 parseLedger，绝不发布半本账。
+export function ledgerFromScore(
+  turns: TurnDTO[],
+  context: LedgerContext,
+): ParsedLedger | null {
+  let score: ScriptEvent | null = null
+  for (const turn of turns) {
+    if (turn.kind !== 'event') continue
+    const event = scriptEvent(turn)
+    if (event != null && eventType(event) === 'score') score = event
+  }
+  const entries = score ? eventArray(score, 'ledger') : null
+  if (entries == null || entries.length === 0) return null
+
+  // 侧别→显示名：对局自带的 lanes 优先（与 labels.ts 的 sideName 次序
+  // 一致），其次 module 的 lane 标签，最后回落通用侧名。
+  const module = scenarioModule(context.slotID)
+  const nameOf = (side: Side): string =>
+    context.lanes?.[side] ?? module?.laneLabels[side] ??
+      (side === 'a' ? '甲方' : '乙方')
+
+  const items: LedgerItem[] = []
+  const subtotals: Record<Side, number> = { a: 0, b: 0 }
+  for (const entry of entries) {
+    if (entry == null || typeof entry !== 'object' || Array.isArray(entry)) {
+      return null
+    }
+    const { side, delta, why } = entry
+    if (
+      (side !== 'a' && side !== 'b') || typeof delta !== 'number' ||
+      typeof why !== 'string'
+    ) {
+      return null
+    }
+    items.push({
+      name: nameOf(side),
+      side,
+      delta,
+      why,
+      kind: classifyLedgerWhy(why),
+    })
+    subtotals[side] += delta
+  }
+  // 事件账目按构造完整（add() 是分数的唯一出口），小计恒可发布；散文里的
+  // 真目标/问询等重复行走结构化区块，这里没有 leftover。
+  return { items, leftover: [], subtotals }
 }
 
 // 带符号的分值文案：正数补「+」，负数自带「-」，零原样。
