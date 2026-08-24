@@ -7,6 +7,9 @@ export const fengyitingReal: ScenarioModule = {
   slotID: 'fengyiting-real',
   roles: [],
   laneLabels: {
+    // 貂蝉心声通道（judge-aside）：#132 暂移除了该节拍，但标题解析链保留此映射，
+    // 恢复心声时 OS 卡即显示「貂蝉心声」而非「裁判心声」（飞书审计 #10）。
+    'judge-aside': '貂蝉',
     diaochan: '貂蝉',
     spy: '细作',
     veteran: '董卓旧部',

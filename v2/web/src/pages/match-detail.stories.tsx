@@ -39,15 +39,25 @@ export const FinishedScored: Story = {
     const result = await canvas.findByRole('heading', { name: '结果' })
     const dialogue = canvas.getByRole('heading', { name: '对话全文' })
     const inquiry = canvas.getByRole('heading', { name: '问询' })
+    // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间。
+    const hiddenGoal = canvas.getByRole('heading', { name: '隐藏目标' })
     const scoring = canvas.getByRole('heading', { name: '计分推导' })
 
     await expect(result.compareDocumentPosition(dialogue) & 4).toBeTruthy()
     await expect(dialogue.compareDocumentPosition(inquiry) & 4).toBeTruthy()
-    await expect(inquiry.compareDocumentPosition(scoring) & 4).toBeTruthy()
+    await expect(inquiry.compareDocumentPosition(hiddenGoal) & 4).toBeTruthy()
+    await expect(hiddenGoal.compareDocumentPosition(scoring) & 4).toBeTruthy()
     await expect(canvas.queryByText('先立可验证的制度标准。')).toBeNull()
-    await expect(canvas.getAllByText('胜方 商鞅')).toHaveLength(2)
-    await expect(canvas.getByText(/商鞅 \+7/)).toBeVisible()
-    await expect(canvas.getByText(/甘龙 \+5/)).toBeVisible()
+    // F7：胜负行与徽记带「我方」视角（fixture 的 a 侧 isMine）。
+    await expect(canvas.getAllByText('我方（商鞅）胜')).toHaveLength(2)
+    // F2：得分账是逐项账目——「被识破」的扣分既是账目表明确的一行，也是
+    // 五步区块里的一步；结果卡的签名明细与合计都与 scoreA/scoreB 同源。
+    await expect(canvas.getByText('真目标 SR2 被甘龙识破')).toBeVisible()
+    await expect(canvas.getByText('被识破 -1')).toBeVisible()
+    await expect(
+      canvas.getByText('商鞅 +1 大政方针 · +0.5 真请求获准 · -1 被识破 = 0.5'),
+    ).toBeVisible()
+    await expect(canvas.getByText('合计 商鞅 0.5 : 0 甘龙')).toBeVisible()
 
     await expect(canvas.queryByText(RAW_ACT_MARKUP)).toBeNull()
     // 纯载荷的 act 行整行不渲染：心声只出现在它自己的卡里一次，那一幕也不留
@@ -82,6 +92,7 @@ export const ReplayHidesSpoilers: Story = {
     await userEvent.click(canvas.getByRole('button', { name: '回放' }))
     await expect(canvas.queryByRole('heading', { name: '结果' })).toBeNull()
     await expect(canvas.queryByRole('heading', { name: '问询' })).toBeNull()
+    await expect(canvas.queryByRole('heading', { name: '隐藏目标' })).toBeNull()
     await expect(canvas.queryByRole('heading', { name: '计分推导' })).toBeNull()
     await expect(canvas.getByRole('heading', { name: '对话重演' }))
       .toBeVisible()

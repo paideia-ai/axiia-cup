@@ -580,7 +580,10 @@ async function main() {
     const lineB = (await b.say({ channel: 'council' })).text
     a.hear(roleB.name, lineB)
     pending.push({ round: round, a: lineA, b: lineB })
-    if (round % osInterval === 0 && round < rounds) {
+    // 飞书审计 #12：首拍固定落在第 1 轮——首对 A/B 发言一出即录首段心声，
+    // 此后保持每 osInterval 轮一拍（默认 2 → 第 1、3、5…轮）。round < rounds
+    // 仍然兜底：末轮永不落拍，收官进言不加标记、直达裁决（见下方 hearBatch）。
+    if ((round - 1) % osInterval === 0 && round < rounds) {
       hearBatch()
       await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
     }
@@ -629,11 +632,15 @@ async function main() {
   })
 
   const ledger = []
+  const ledgerEntries = []
   let scoreA = 0
   let scoreB = 0
   const add = (side, delta, why) => {
     if (side === 'a') scoreA += delta
     else scoreB += delta
+    // 飞书评审 round4 #8（与商鞅舌战同源）：结构化账目随 score 事件下发，
+    // reasoning 散文保持旧形态兼容老战报。
+    ledgerEntries.push({ side: side, delta: delta, why: why })
     ledger.push(`${side === 'a' ? roleA.name : roleB.name} ${delta > 0 ? '+' : ''}${delta}：${why}`)
   }
 
@@ -664,10 +671,19 @@ async function main() {
       ? 'b'
       : decided.judgment === '袭击本能寺' ? 'a' : 'b'
 
+  // 飞书审计 #14 回归不变量（与商鞅舌战同源）：非平分时胜者必须是高分侧，
+  // 且 score 事件与 main 返回值复用同一组 scoreA/scoreB/winner。
+  if ((scoreA > scoreB && winner !== 'a') || (scoreB > scoreA && winner !== 'b')) {
+    throw new Error(
+      `score/winner inconsistent: scoreA=${scoreA} scoreB=${scoreB} winner=${winner}`,
+    )
+  }
+
   game.emit('verdict', {
     type: 'score',
     trueRequests: { a: trueA, b: trueB },
     guesses: { a: inquiryA.fields.guess, b: inquiryB.fields.guess },
+    ledger: ledgerEntries,
     scoreA: scoreA,
     scoreB: scoreB,
     winner: winner,

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
 import {
@@ -27,6 +27,11 @@ interface VersionListProps {
   // 段落标题右侧的补充内容（E 页放 P12 提示；EA 页留空）。
   headingAside?: ReactNode
   emptyState?: ReactNode
+  // P11（Yihan 修订）：覆盖保护的两步确认必须「就地」——画进被点击的那张
+  // 版本卡（不弹窗）。三个 props 都可选：EA 页不传即不渲染，共享形态不变。
+  pendingIterateID?: number | null
+  onConfirmIterate?: (version: AgentVersionDTO) => void
+  onCancelIterate?: () => void
 }
 
 export function VersionList({
@@ -37,6 +42,9 @@ export function VersionList({
   onField,
   headingAside,
   emptyState,
+  pendingIterateID,
+  onConfirmIterate,
+  onCancelIterate,
 }: VersionListProps) {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
 
@@ -165,9 +173,74 @@ export function VersionList({
                   出战
                 </Button>
               </div>
+              {
+                /* P11（Yihan 修订）：命中武装的那张卡就地渲染两步确认——
+              确认行与「基于该版本迭代」按钮同屏，取代原页面顶部横幅 */
+              }
+              {pendingIterateID === version.id &&
+                  onConfirmIterate != null &&
+                  onCancelIterate != null
+                ? (
+                  <IterateConfirmRow
+                    message={`工作区里有未保存的改动，基于 ${
+                      versionTag(version, sorted)
+                    } 迭代会覆盖它`}
+                    onConfirm={() => onConfirmIterate(version)}
+                    onCancel={onCancelIterate}
+                  />
+                )
+                : null}
             </CardContent>
           </Card>
         ))}
     </section>
+  )
+}
+
+// P11：卡内两步确认行（复用 E7「清空工作区」的就地确认模式，不弹窗）。
+// 挂载即武装：滚进视口并把焦点交给确认行本体（round4 评审 #3：不聚焦
+// 「仍要继续」——按住 Enter 的连击会在警告被读到之前就触发覆盖），
+// 点击处一定看得见反馈。
+function IterateConfirmRow({
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  message: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const rowRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const row = rowRef.current
+      if (!row) return
+      // jsdom 没有 scrollIntoView——守护后调用，真浏览器里滚到可视范围。
+      if (typeof row.scrollIntoView === 'function') {
+        row.scrollIntoView({ block: 'nearest' })
+      }
+      row.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [])
+  return (
+    <div
+      ref={rowRef}
+      role='alert'
+      tabIndex={-1}
+      className='flex flex-wrap items-center gap-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'
+    >
+      <span className='text-xs text-(--warning)'>{message}</span>
+      <Button size='sm' variant='secondary' onClick={onConfirm}>
+        仍要继续
+      </Button>
+      <button
+        type='button'
+        onClick={onCancel}
+        className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+      >
+        取消
+      </button>
+    </div>
   )
 }

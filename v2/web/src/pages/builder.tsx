@@ -263,7 +263,8 @@ export function BuilderPage() {
   }
 
   // P11（Yihan 修订）：草稿与最新版本不一致＝有未保存的改动，覆盖前先确认；
-  // 一致就直接载入，不打扰。
+  // 一致就直接载入，不打扰。确认行由 VersionList 就地画在被点击的那张版本
+  // 卡内——原先的页面顶部横幅与按钮不同屏，会被误当按钮失灵（J4.3 实测）。
   const latestVersion = [...versions].sort((a, b) => b.id - a.id)[0] ?? null
   const draftDiffersFromLatest = latestVersion != null &&
     prompt.trim() !== latestVersion.prompt.trim()
@@ -504,36 +505,6 @@ export function BuilderPage() {
         )
         : null}
 
-      {/* P11：草稿与最新版本不一致时，覆盖前两步就地确认（不弹窗） */}
-      {pendingIterate != null
-        ? (
-          <div className='flex flex-wrap items-center gap-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'>
-            <span className='text-xs text-(--warning)'>
-              工作区里有未保存的改动，基于{' '}
-              {versionTag(pendingIterate, versions)} 迭代会覆盖它
-            </span>
-            <Button
-              size='sm'
-              variant='secondary'
-              onClick={() => {
-                applyIterate(pendingIterate)
-                setPendingIterate(null)
-              }}
-            >
-              仍要继续
-            </Button>
-            <button
-              type='button'
-              onClick={() =>
-                setPendingIterate(null)}
-              className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
-            >
-              取消
-            </button>
-          </div>
-        )
-        : null}
-
       {restoredTag != null
         ? (
           <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
@@ -770,6 +741,12 @@ export function BuilderPage() {
             sideName={sideDisplayName}
             onSetEntry={(versionID) => void setEntry(versionID)}
             onIterate={requestIterate}
+            pendingIterateID={pendingIterate?.id ?? null}
+            onConfirmIterate={(version) => {
+              applyIterate(version)
+              setPendingIterate(null)
+            }}
+            onCancelIterate={() => setPendingIterate(null)}
             onField={(version) => {
               setPreferVersionID(version.id)
               setOsOpen(true)

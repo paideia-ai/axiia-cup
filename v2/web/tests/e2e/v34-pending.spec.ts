@@ -124,18 +124,16 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     }
     expect(challenge.matchIDs).toHaveLength(2)
 
-    // 成功态（mock V21）：两张对局卡 + 合并通知的口径。
-    await expect(page.getByText('已发起双侧约战 · 两场对局已入队'))
-      .toBeVisible()
-    await expect(page.getByText('对方会收到一条合并通知，无需同意、不能拒绝。'))
-      .toBeVisible()
-    for (const [index, matchID] of challenge.matchIDs.entries()) {
-      await expect(
-        page.getByRole('link', {
-          name: `对局${index === 0 ? '①' : '②'} · #${matchID}`,
-        }),
-      ).toHaveAttribute('href', `/matches/${matchID}`)
-    }
+    // F6 成功态：镜像 PVE——面板关闭并重定向到第 ① 场实况（站内路由）；
+    // 约战① 徽记 + 「查看另一场」互链保证两场都可达（mock V21 语义上移）。
+    await expect(page).toHaveURL(
+      new RegExp(`/matches/${challenge.matchIDs[0]}$`),
+    )
+    await expect(page.getByText('约战①', { exact: true })).toBeVisible()
+    // F7：② 判完后互链会带上结果（查看另一场（②：对方（甘龙）胜）→），
+    // 前缀匹配两态皆中，不与判分赛跑。
+    await expect(page.getByRole('link', { name: /查看另一场（②/ }))
+      .toHaveAttribute('href', `/matches/${challenge.matchIDs[1]}`)
 
     // API 复核 ①：两条腿成对——同 challengeID、leg 1/2、kind pvp、执侧成对
     // 交叉（我甲对他乙，他甲对我乙），且都在固定局上真实跑完。
