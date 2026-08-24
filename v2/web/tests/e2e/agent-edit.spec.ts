@@ -291,9 +291,14 @@ test('agent-edit：版本号恒 +1；基于该版本迭代不产版本；模型�
       '这是一段没保存的改动，不该被静默吞掉。',
     )
     await page.waitForTimeout(900)
-    await page.getByRole('button', { name: '基于 v1 迭代' }).click()
-    await expect(page.getByText(/工作区里有未保存的改动/)).toBeVisible()
-    await page.getByRole('button', { name: '取消' }).click()
+    // P11：确认行必须「就地」长在被点击的 v1 卡内（agent-edit.feature:102），
+    // 页面顶部横幅那种「可见但不同屏」的形态要被这里抓住。
+    const v1Card = page.getByTestId('version-card').filter({
+      has: page.getByRole('button', { name: '基于 v1 迭代' }),
+    })
+    await v1Card.getByRole('button', { name: '基于 v1 迭代' }).click()
+    await expect(v1Card.getByText(/工作区里有未保存的改动/)).toBeVisible()
+    await v1Card.getByRole('button', { name: '取消' }).click()
     await expect(page.getByLabel('策略提示词'))
       .toHaveValue('这是一段没保存的改动，不该被静默吞掉。')
   })

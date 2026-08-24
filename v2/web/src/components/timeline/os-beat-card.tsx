@@ -11,6 +11,11 @@ import { ReasoningFold } from './reasoning-fold'
 //
 // 回放的教学锚点态（#24 U9）：倾向变化的节拍让回放自动停在这里——accent 实线
 // 加环、最挂心一行放大，卡内给「继续」。
+
+// os 节拍固定走 'judge-aside' 通道（商鞅/凤仪亭等脚本同一约定）：心声标题先
+// 按通道 id、再按 judge lane 解析显示名（feishu 审计 #10）。
+const OS_VOICE_LANES = ['judge-aside', 'judge'] as const
+
 export function OsBeatCard({
   verdict,
   labels,
@@ -30,13 +35,20 @@ export function OsBeatCard({
   showTrace?: boolean
 }) {
   const beat = parseOsBeat(verdict.output)
-  // The judge lane's scenario name when one resolves ('秦孝公' → 秦孝公心声);
-  // the raw key falling through means no label exists, so the generic name.
-  const judge = speakerName(labels, 'judge')
-  const title = judge === 'judge' ? '裁判心声' : `${judge}心声`
+  // 心声的「说话人」未必是 judge lane（feishu 审计 #10）：凤仪亭的 os 节拍由
+  // 场上人物貂蝉在 'judge-aside' 通道亲声，judge lane 无标签，旧逻辑只会落到
+  // 通用「裁判心声」。按 OS_VOICE_LANES 依次解析显示名——module laneLabels
+  // 优先（作者随时可修），其次对局自带的 speakerLabels（'秦孝公' → 秦孝公
+  // 心声的旧路径原样保留在 'judge' 键上）；都解析不出才用通名。
+  const voice = OS_VOICE_LANES
+    .map((lane) => labels.module?.laneLabels[lane] ?? labels.lanes[lane])
+    .find((name) => name != null)
+  const title = voice ? `${voice}心声` : '裁判心声'
 
   return (
+    // F4：倾向轨迹图内联说明的「查看心声卡」按此 id scrollIntoView 直达。
     <div
+      id={`beat-${verdict.key}`}
       className={cn(
         'mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6',
         highlight &&

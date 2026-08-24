@@ -8,6 +8,7 @@ import { useMatchStream } from '../api/sse'
 import type {
   MatchParticipantDTO,
   MatchParticipantsDTO,
+  MatchSummary,
   Side,
   VerdictDTO,
 } from '../api/types'
@@ -28,10 +29,15 @@ import { Card, CardContent } from '../components/ui/card'
 import { VerdictBody, VerdictCard } from '../components/verdict-card'
 import { useOptionalAuth } from '../context/auth'
 import { cn } from '../lib/cn'
+import { outcomeCopy } from '../lib/outcome'
 import { buildReplaySteps, replayBeats, replayReveal } from '../lib/replay'
+import type { LedgerItem, ScoreBreakdown } from '../lib/scoring-reasoning'
 import {
   deriveScoreBreakdown,
+  formatDelta,
   formatScoringReasoning,
+  ledgerShortLabel,
+  parseLedger,
 } from '../lib/scoring-reasoning'
 import { usePinToBottom } from '../lib/scroll'
 import {
@@ -83,19 +89,22 @@ export function MatchDetailPage() {
   // siblingMatchID——另一条腿从 matches.list() 里按同 challengeID 找（两条腿
   // 我都是参战方，列表必含）。找不到/接口失败 → 只显徽章不给链接。
   const challengeID = data?.summary.challengeID ?? null
-  const [siblingID, setSiblingID] = useState<number | null>(null)
+  // F7：保存整个兄弟 MatchSummary 而不只是 id——互链旁直接标注另一场结果。
+  const [sibling, setSibling] = useState<MatchSummary | null>(null)
   useEffect(() => {
-    setSiblingID(null)
+    setSibling(null)
     if (challengeID == null) return
     let liveLookup = true
     void matches
       .list()
       .then((response) => {
         if (!liveLookup) return
-        const sibling = response.matches.find(
-          (match) => match.challengeID === challengeID && match.id !== matchID,
+        setSibling(
+          response.matches.find(
+            (match) =>
+              match.challengeID === challengeID && match.id !== matchID,
+          ) ?? null,
         )
-        setSiblingID(sibling?.id ?? null)
       })
       .catch(() => {})
     return () => {
@@ -339,14 +348,35 @@ export function MatchDetailPage() {
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
   const beats = replayBeats(replaySteps)
   const ledger = formatScoringReasoning(data.reasoning)
+  // F2（#69/#26）：把散文得分账解析成结构化条目——正负号、归侧、识破标记。
+  // 解析不产出数字：合计与得分变化的兜底一律用服务端 scoreA/scoreB。
+  const parsed = finished
+    ? parseLedger(data.reasoning, {
+      slotID: data.summary.scenarioID,
+      lanes: data.speakerLabels,
+    })
+    : null
+  const ledgerFor = (side: Side) =>
+    parsed?.items.filter((item) => item.side === side) ?? []
+  // 结果卡比分下的签名明细（F2）：如「甘龙 +1 大政方针 · -1 被识破 = 0」。
+  const sideSummaryLine = (side: Side): string => {
+    const name = side === 'a' ? sideA : sideB
+    const items = ledgerFor(side)
+    const total = parsed?.subtotals?.[side] ?? 0
+    if (items.length === 0) return `${name} 无增减 = ${total}`
+    const parts = items.map((item) =>
+      `${formatDelta(item.delta)} ${ledgerShortLabel(item)}`
+    )
+    return `${name} ${parts.join(' · ')} = ${total}`
+  }
   const winner = data.summary.winner
-  const winnerLine = winner === 'a'
-    ? `胜方 ${sideA}`
-    : winner === 'b'
-    ? `胜方 ${sideB}`
-    : winner === 'draw'
-    ? '平局'
-    : '已结束'
+  // F7（#69/#71）：胜负行带视角——我方（商鞅）胜 / 对方（甘龙）胜；旁观与
+  // open 历史回退「胜方 角色」；左右手互搏单独标注。
+  const outcome = outcomeCopy(
+    { winner, participants: data.summary.participants },
+    { a: sideA, b: sideB },
+  )
+  const winnerLine = outcome ?? '已结束'
 
   // P3 头部元数据（#71/#25，mock V21）：epoch 秒 → 紧凑本地时间。
   const compactTime = (epochSeconds: number) =>
@@ -358,6 +388,10 @@ export function MatchDetailPage() {
     })
   const participants = data.summary.participants ?? null
   const challengeLeg = data.summary.challengeLeg ?? null
+  // F7：兄弟场（约战另一条腿）已判定时，把它的结果写在互链旁。
+  const siblingOutcome = sibling != null && sibling.finished && sibling.scored
+    ? outcomeCopy(sibling, { a: sideA, b: sideB })
+    : null
 
   return (
     <div className='space-y-6'>
@@ -440,13 +474,15 @@ export function MatchDetailPage() {
               </Badge>
             )
             : null}
-          {challengeLeg != null && siblingID != null
+          {challengeLeg != null && sibling != null
             ? (
               <Link
-                to={`/matches/${siblingID}`}
+                to={`/matches/${sibling.id}`}
                 className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
               >
-                查看另一场（{challengeLeg === 1 ? '②' : '①'}）→
+                {/* F7：互链旁标注另一场的结果，两场胜负一屏看全。 */}
+                查看另一场（{challengeLeg === 1 ? '②' : '①'}
+                {siblingOutcome != null ? `：${siblingOutcome}` : ''}）→
               </Link>
             )
             : null}
@@ -465,17 +501,10 @@ export function MatchDetailPage() {
           {data.summary.finished
             ? (
               // 回放中不剧透胜负——结果徽章换成中性的回放态。
-              replaying
-                ? <Badge tone='info'>回放中</Badge>
-                : (
-                  <Badge tone='success'>
-                    {winner === 'a'
-                      ? `胜方 ${sideA}`
-                      : winner === 'b'
-                      ? `胜方 ${sideB}`
-                      : '已结束'}
-                  </Badge>
-                )
+              replaying ? <Badge tone='info'>回放中</Badge> : (
+                // F7：徽记与结果卡同一口径（outcomeCopy）。
+                <Badge tone='success'>{outcome ?? '已结束'}</Badge>
+              )
             )
             : (
               <Badge tone='warning'>
@@ -539,6 +568,20 @@ export function MatchDetailPage() {
                         {sideB}
                       </span>
                     </div>
+                    {
+                      /* F2（#69）：比分下的签名明细——「被识破 −1」这类增减
+                      在结果卡就说清，不必读到页底的得分账。 */
+                    }
+                    {parsed != null && parsed.items.length > 0 &&
+                        parsed.subtotals != null
+                      ? (
+                        <div className='space-y-0.5 text-xs text-(--foreground-subtle)'>
+                          {(['a', 'b'] as const).map((side) => (
+                            <p key={side}>{sideSummaryLine(side)}</p>
+                          ))}
+                        </div>
+                      )
+                      : null}
                     {finalVerdict
                       ? (
                         <div className='space-y-3 border-t border-(--border-soft) pt-4'>
@@ -594,6 +637,40 @@ export function MatchDetailPage() {
                     问询
                   </h2>
                   {inquiryRows.map(renderGroupRow)}
+                </div>
+              )
+              : null}
+
+            {
+              /* F2 · #69：独立的「隐藏目标」五步区块，排在问询与计分推导之
+              间——真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分
+              变化。散文里那条「被识破 −1」在这里成为明确的一步。 */
+            }
+            {!replaying && breakdown?.trueRequests != null &&
+                (breakdown.trueRequests.a != null ||
+                  breakdown.trueRequests.b != null)
+              ? (
+                <div className='space-y-3'>
+                  <h2 className='text-sm font-semibold text-(--foreground)'>
+                    隐藏目标
+                  </h2>
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    {(['a', 'b'] as const)
+                      .filter((side) => breakdown.trueRequests?.[side] != null)
+                      .map((side) => (
+                        <HiddenGoalCard
+                          key={side}
+                          side={side}
+                          name={side === 'a' ? sideA : sideB}
+                          otherName={side === 'a' ? sideB : sideA}
+                          breakdown={breakdown}
+                          items={ledgerFor(side)}
+                          total={parsed?.subtotals?.[side] ??
+                            (side === 'a' ? data.scoreA : data.scoreB) ??
+                            null}
+                        />
+                      ))}
+                  </div>
                 </div>
               )
               : null}
@@ -680,8 +757,76 @@ export function MatchDetailPage() {
                             </LedgerLine>
                           )
                           : null}
-                        {ledger || breakdown?.scoreA != null ||
-                            breakdown?.scoreB != null
+                        {
+                          /* F2（#69/#26）：得分账升格为逐项账目表——带符号
+                          分值、被识破标记、分侧小计与合计；解析不出条目
+                          （LLM 散文计分的场景）时整段散文原样回退。 */
+                        }
+                        {parsed != null && parsed.items.length > 0
+                          ? (
+                            <LedgerLine label='得分账'>
+                              <div className='space-y-1.5'>
+                                {parsed.items.map((item, index) => (
+                                  <div
+                                    key={index}
+                                    className='flex items-baseline justify-between gap-3'
+                                  >
+                                    <span className='min-w-0 text-sm text-(--foreground-subtle)'>
+                                      <span className='font-semibold text-(--foreground)'>
+                                        {item.name}
+                                      </span>
+                                      {' · '}
+                                      <span>{item.why}</span>
+                                      {item.kind === 'identified'
+                                        ? (
+                                          <span className='ml-1.5 inline-flex items-center rounded-md bg-[rgba(224,74,47,0.14)] px-1.5 py-0.5 text-[10px] font-semibold text-(--accent)'>
+                                            被识破扣分
+                                          </span>
+                                        )
+                                        : null}
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        'shrink-0 font-mono text-sm font-semibold',
+                                        item.delta > 0
+                                          ? 'text-(--success)'
+                                          : item.delta < 0
+                                          ? 'text-(--accent)'
+                                          : 'text-(--foreground-subtle)',
+                                      )}
+                                    >
+                                      {formatDelta(item.delta)}
+                                    </span>
+                                  </div>
+                                ))}
+                                {parsed.subtotals != null
+                                  ? (
+                                    <p className='border-t border-(--border-soft) pt-1.5 text-xs text-(--foreground-subtle)'>
+                                      {`小计 ${sideA} ${parsed.subtotals.a} · ${sideB} ${parsed.subtotals.b}`}
+                                    </p>
+                                  )
+                                  : null}
+                                {
+                                  /* 合计一律用服务端 scoreA/scoreB——与结果
+                                  卡同一数据源（#26）。 */
+                                }
+                                <p className='text-sm font-semibold text-(--foreground)'>
+                                  {`合计 ${sideA} ${data.scoreA ?? '—'} : ${
+                                    data.scoreB ?? '—'
+                                  } ${sideB}`}
+                                </p>
+                                {parsed.leftover.length > 0
+                                  ? (
+                                    <p className='whitespace-pre-wrap pt-1 text-xs leading-relaxed text-(--foreground-muted)'>
+                                      {parsed.leftover.join('\n')}
+                                    </p>
+                                  )
+                                  : null}
+                              </div>
+                            </LedgerLine>
+                          )
+                          : ledger || breakdown?.scoreA != null ||
+                              breakdown?.scoreB != null
                           ? (
                             <LedgerLine label='得分账'>
                               {ledger
@@ -935,7 +1080,7 @@ function FirstBattleJourney({
           </div>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <p className='text-xs text-(--foreground-muted)'>
-              已保存过版本的智能体只有文本工作台——想再用选卡，走「复制为新智能体」或创建对侧。
+              已保存过版本的智能体只有文本工作台——想再用选卡，走「清空工作区」重来或创建对侧。
             </p>
             {mine?.agentID != null
               ? (
@@ -1071,6 +1216,93 @@ function LedgerLine({
       <div className='min-w-0 flex-1 text-sm text-(--foreground)'>
         {children}
       </div>
+    </div>
+  )
+}
+
+// F2 · #69 隐藏目标五步卡：一侧的 真目标 → 是否达成 → 对手猜了什么 →
+// 是否被识破 → 得分变化。事件证据（achieved/identified）优先，缺席时由解析
+// 出的得分账条目回补；两者都没有的步骤以「—」示不知，不瞎猜。
+function HiddenGoalCard({
+  side,
+  name,
+  otherName,
+  breakdown,
+  items,
+  total,
+}: {
+  side: Side
+  name: string
+  otherName: string
+  breakdown: ScoreBreakdown
+  items: LedgerItem[]
+  total: number | null
+}) {
+  const other: Side = side === 'a' ? 'b' : 'a'
+  const trueApprovedItem = items.find((item) => item.kind === 'trueApproved') ??
+    null
+  const identifiedItem = items.find((item) => item.kind === 'identified') ??
+    null
+  const achieved = breakdown.achieved?.[side] ??
+    (trueApprovedItem != null ? true : null)
+  const identified = breakdown.identified?.[side] ??
+    (identifiedItem != null ? true : null)
+  const oppGuess = breakdown.guesses?.[other] ?? null
+  const unknown = <span className='text-(--foreground-muted)'>—</span>
+  return (
+    <div className='space-y-2.5 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'>
+      <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+        {name}
+      </p>
+      <LedgerLine label='真目标'>
+        <span className='font-mono'>
+          {breakdown.trueRequests?.[side] ?? '—'}
+        </span>
+      </LedgerLine>
+      <LedgerLine label='是否达成'>
+        {achieved === true
+          ? (
+            <span className='text-(--success)'>
+              {trueApprovedItem != null
+                ? `已达成（真请求获准 ${formatDelta(trueApprovedItem.delta)}）`
+                : '已达成'}
+            </span>
+          )
+          : achieved === false
+          ? <span className='text-(--foreground-subtle)'>未达成</span>
+          : unknown}
+      </LedgerLine>
+      <LedgerLine label='对手猜了什么'>
+        {oppGuess != null
+          ? (
+            <span>
+              {otherName} 猜 <span className='font-mono'>{oppGuess}</span>
+            </span>
+          )
+          : unknown}
+      </LedgerLine>
+      <LedgerLine label='是否被识破'>
+        {identified === true
+          ? (
+            <span className='font-semibold text-(--accent)'>
+              {identifiedItem != null
+                ? `被识破 ${formatDelta(identifiedItem.delta)}`
+                : '被识破'}
+            </span>
+          )
+          : identified === false
+          ? <span className='text-(--success)'>未被识破</span>
+          : unknown}
+      </LedgerLine>
+      <LedgerLine label='得分变化'>
+        {total != null
+          ? (
+            <span className='font-black text-(--foreground)'>
+              {formatDelta(total)}
+            </span>
+          )
+          : unknown}
+      </LedgerLine>
     </div>
   )
 }

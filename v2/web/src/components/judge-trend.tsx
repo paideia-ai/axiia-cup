@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import type { Side } from '../api/types'
 import type { ReplayBeatStep } from '../lib/replay'
 import type { SpeakerLabels } from './timeline/labels'
@@ -8,6 +10,11 @@ import { sideName, speakerSide } from './timeline/labels'
 // （上/下）承载，点色沿用全站的侧别色（A=accent、B=info）作冗余强化；changed
 // 节拍加同色空心外圈。零节拍不渲染（#18，不留空壳）；回放中传入 revealedKeys
 // 只画已揭示的节拍——x 轴范围按全部节拍固定，图随回放逐点长满，兼作进度感。
+//
+// 心声的图上承载（F4 / B8「移动端正常做」）：节拍点可点按、可聚焦，选中后在
+// 图下方内联显示完整心声——SVG <title> 只是桌面悬停加分（触屏不显示、键盘
+// 不可达、且 excerpt 截断 60 字）。内联而非浮层：窄屏无定位问题，也不会被
+// 外层 overflow-x-auto 裁掉。
 
 const STRENGTH_MAGNITUDE: Record<string, number> = {
   胜负已定: 1,
@@ -73,9 +80,8 @@ export function JudgeTrendChart({
   // 回放揭示切片：null＝完整战报（全画）。
   revealedKeys?: ReadonlySet<string> | null
 }) {
-  if (beats.length === 0) return null
-  const nameA = sideName(labels, 'a', speakers)
-  const nameB = sideName(labels, 'b', speakers)
+  // F4：选中节拍的 key。hooks 一律声明在零节拍提前 return 之前。
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   const points = beats
     .filter((step) =>
@@ -99,10 +105,31 @@ export function JudgeTrendChart({
       }
     })
 
+  // 回放收缩/退出会让节拍从图上消失（F4）：key 不在可见集合里就清掉选中，
+  // 不把上一次的说明残留到下一轮回放。
+  const revealedSignature = points
+    .map((point) => point.step.verdict.key)
+    .join('|')
+  useEffect(() => {
+    setSelectedKey((current) =>
+      current != null && !revealedSignature.split('|').includes(current)
+        ? null
+        : current
+    )
+  }, [revealedSignature])
+
+  if (beats.length === 0) return null
+  const nameA = sideName(labels, 'a', speakers)
+  const nameB = sideName(labels, 'b', speakers)
+
   const width = PAD_X * 2 + (beats.length - 1) * STEP_X
   const line = points
     .map((point, at) => `${at === 0 ? 'M' : 'L'}${point.x} ${point.y}`)
     .join(' ')
+  const selected =
+    points.find((point) => point.step.verdict.key === selectedKey) ?? null
+  const toggleSelect = (key: string) =>
+    setSelectedKey((current) => (current === key ? null : key))
 
   return (
     <div className='space-y-2'>
@@ -111,7 +138,7 @@ export function JudgeTrendChart({
           裁判倾向轨迹
         </p>
         <p className='text-[11px] text-(--foreground-muted)'>
-          空心圈＝倾向变化 · 悬停查看心声
+          空心圈＝倾向变化 · 点选节拍查看心声
         </p>
       </div>
       <div className='flex items-stretch gap-3'>
@@ -164,48 +191,139 @@ export function JudgeTrendChart({
                 />
               )
               : null}
-            {points.map((point) => (
-              <g key={point.step.verdict.key}>
-                <title>
-                  {[
-                    `${point.step.verdict.key} · 倾向：${
-                      point.step.beat.favor ?? '—'
-                    }${
-                      point.step.beat.strength
-                        ? `（${point.step.beat.strength}）`
-                        : ''
-                    }`,
-                    point.step.beat.attention
-                      ? `最挂心：${point.step.beat.attention}`
-                      : '',
-                    excerpt(point.step.beat.os ?? point.step.beat.fallbackText),
-                  ].filter(Boolean).join('\n')}
-                </title>
-                {point.step.changed
-                  ? (
-                    <circle
-                      cx={point.x}
-                      cy={point.y}
-                      r={8}
-                      fill='none'
-                      stroke={point.color}
-                      strokeWidth={1.5}
-                    />
-                  )
-                  : null}
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={4.5}
-                  fill={point.color}
-                  stroke='var(--background)'
-                  strokeWidth={2}
-                />
-              </g>
-            ))}
+            {points.map((point) => {
+              const key = point.step.verdict.key
+              const isSelected = selectedKey === key
+              return (
+                // F4：点按 / Enter / 空格选中节拍，图下方内联显示完整心声；
+                // <title> 保留作桌面悬停加分。
+                <g
+                  key={key}
+                  role='button'
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-label={`点选查看 ${key} 心声`}
+                  onClick={() => toggleSelect(key)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      toggleSelect(key)
+                    }
+                  }}
+                  style={{ cursor: 'pointer', touchAction: 'manipulation' }}
+                >
+                  <title>
+                    {[
+                      `${point.step.verdict.key} · 倾向：${
+                        point.step.beat.favor ?? '—'
+                      }${
+                        point.step.beat.strength
+                          ? `（${point.step.beat.strength}）`
+                          : ''
+                      }`,
+                      point.step.beat.attention
+                        ? `最挂心：${point.step.beat.attention}`
+                        : '',
+                      excerpt(
+                        point.step.beat.os ?? point.step.beat.fallbackText,
+                      ),
+                    ].filter(Boolean).join('\n')}
+                  </title>
+                  {/* F4：不可见命中圆——触控目标撑到 28px 见方。 */}
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={14}
+                    fill='transparent'
+                    stroke='none'
+                  />
+                  {point.step.changed
+                    ? (
+                      <circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={8}
+                        fill='none'
+                        stroke={point.color}
+                        strokeWidth={1.5}
+                      />
+                    )
+                    : null}
+                  {isSelected
+                    ? (
+                      <circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={10.5}
+                        fill='none'
+                        stroke={point.color}
+                        strokeWidth={2.5}
+                      />
+                    )
+                    : null}
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={4.5}
+                    fill={point.color}
+                    stroke='var(--background)'
+                    strokeWidth={2}
+                  />
+                </g>
+              )
+            })}
           </svg>
         </div>
       </div>
+      {selected
+        ? (
+          // F4：内联心声说明——完整 os / fallback（<title> 只截 60 字），
+          // 「查看心声卡」滚到对话全文里那张始终可见的卡。
+          <div className='rounded-xl border border-dashed border-(--border) px-3 py-2.5'>
+            <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-(--foreground-subtle)'>
+              <span className='font-semibold text-(--foreground)'>
+                {selected.step.verdict.key} · 倾向：
+                {selected.step.beat.favor ?? '—'}
+                {selected.step.beat.strength
+                  ? `（${selected.step.beat.strength}）`
+                  : ''}
+              </span>
+              {selected.step.beat.attention
+                ? <span>最挂心：{selected.step.beat.attention}</span>
+                : null}
+              <span className='ml-auto inline-flex items-center gap-3'>
+                <button
+                  type='button'
+                  onClick={() =>
+                    document
+                      .getElementById(`beat-${selected.step.verdict.key}`)
+                      ?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                      })}
+                  className='cursor-pointer font-semibold text-(--info) transition hover:opacity-80'
+                >
+                  查看心声卡
+                </button>
+                <button
+                  type='button'
+                  onClick={() => setSelectedKey(null)}
+                  className='cursor-pointer font-semibold transition hover:text-(--foreground)'
+                >
+                  关闭
+                </button>
+              </span>
+            </div>
+            {(selected.step.beat.os ?? selected.step.beat.fallbackText)
+              ? (
+                <p className='mt-1.5 whitespace-pre-wrap text-sm italic leading-relaxed text-(--foreground)'>
+                  {selected.step.beat.os ?? selected.step.beat.fallbackText}
+                </p>
+              )
+              : null}
+          </div>
+        )
+        : null}
     </div>
   )
 }

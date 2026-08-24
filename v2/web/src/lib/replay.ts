@@ -13,6 +13,8 @@ import { isOsBeatVerdict, parseOsBeat } from './verdict'
 export interface ReplayRowStep {
   kind: 'row'
   seq: number
+  // 该行台词的字数（finalText.length）——回放按台词长短缩放停留时长（F5）。
+  chars: number
 }
 
 export interface ReplayBeatStep {
@@ -66,7 +68,7 @@ export function buildReplaySteps(
 
   rows.forEach((row, revealed) => {
     flushBeats(revealed)
-    steps.push({ kind: 'row', seq: row.seq })
+    steps.push({ kind: 'row', seq: row.seq, chars: row.finalText.length })
   })
   flushBeats(Number.MAX_SAFE_INTEGER)
   return steps
@@ -103,7 +105,11 @@ export function replayReveal(
 
 // ── 状态机 ──────────────────────────────────────────────────────────────────
 
-export type ReplaySpeed = 1 | 2
+export type ReplaySpeed = 0.5 | 1 | 2
+
+// 倍速档（F5）：0.5× 给「再慢一些」的诉求，1×/2× 维持既有节奏；控制条的
+// 分段控件按此渲染。
+export const REPLAY_SPEEDS: readonly ReplaySpeed[] = [0.5, 1, 2]
 
 export interface ReplayMachineState {
   active: boolean
@@ -111,7 +117,8 @@ export interface ReplayMachineState {
   cursor: number
   playing: boolean
   speed: ReplaySpeed
-  // 已到终局：短暂展示「回放结束」后恢复完整战报。
+  // 已到终局：结束态常驻（F5）——由「重新播放 / 退出回放」收尾，不再定时
+  // 拉回完整战报。
   ended: boolean
   // 正停留的教学锚点（changed 节拍的 verdict key），高亮该心声卡。
   anchorKey: string | null
@@ -131,10 +138,24 @@ export const REPLAY_IDLE: ReplayMachineState = {
   noteSeen: false,
 }
 
-// 节奏：每步 1.2s（2x 减半）。行与节拍等权一步——对话行需要几秒读完，
-// 1.2s 是「持续推进但赶得上扫读」的折中；终局态停留 1.6s 再恢复完整战报。
-export const REPLAY_STEP_MS = 1200
-export const REPLAY_END_HOLD_MS = 1600
+// 节奏（F5；规格 A7 对每步毫秒未规定）：行步 = clamp(1600 + 字数×20ms,
+// 1600, 5000)——300 字的长台词不再和一句短语同价；节拍步恒 2200ms，够读完
+// 一段心声。REPLAY_STEP_MS 即 1× 的每步下限（1200 → 1600）；倍速在 useReplay
+// 里除到延时上。
+export const REPLAY_STEP_MS = 1600
+export const REPLAY_BEAT_MS = 2200
+export const REPLAY_MAX_STEP_MS = 5000
+export const REPLAY_CHAR_MS = 20
+
+// 单步停留时长（纯函数，计时器在 useReplay）：行按台词长度加时并夹取，
+// 节拍恒定。
+export function replayStepDelayMs(step: ReplayStep): number {
+  if (step.kind === 'beat') return REPLAY_BEAT_MS
+  return Math.min(
+    REPLAY_MAX_STEP_MS,
+    Math.max(REPLAY_STEP_MS, REPLAY_STEP_MS + step.chars * REPLAY_CHAR_MS),
+  )
+}
 
 export function startReplay(): ReplayMachineState {
   return { ...REPLAY_IDLE, active: true, playing: true }
@@ -183,4 +204,27 @@ export function toggleReplaySpeed(
   state: ReplayMachineState,
 ): ReplayMachineState {
   return { ...state, speed: state.speed === 1 ? 2 : 1 }
+}
+
+// 直接设档（F5）：0.5×/1×/2× 分段控件用。二元 toggleReplaySpeed 保留不动
+// ——1→2→1 的语义有既有单测钉着。
+export function setReplaySpeed(
+  state: ReplayMachineState,
+  speed: ReplaySpeed,
+): ReplayMachineState {
+  return { ...state, speed }
+}
+
+// 上一步（F5）：回退一格并暂停。reveal 是从 0 起的严格前缀，回退只会少看
+// 不会多看，不可能剧透；锚点与说明一并清掉，别把上次的停留态带回来。
+export function rewindReplay(state: ReplayMachineState): ReplayMachineState {
+  if (!state.active || state.cursor <= 0) return state
+  return {
+    ...state,
+    cursor: state.cursor - 1,
+    playing: false,
+    ended: false,
+    anchorKey: null,
+    showNote: false,
+  }
 }

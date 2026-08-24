@@ -58,6 +58,12 @@ export const NotificationsPopulated: Story = {
     await expect(await canvas.findByText('1 条未读')).toBeVisible()
     await expect(canvas.getAllByText('对战结束')).toHaveLength(2)
     await userEvent.click(canvas.getByRole('button', { name: '标为已读' }))
+    // F3：乐观已读——重取不再卸载列表：不闪「加载中…」，行原地留存，
+    // 未读徽章与该行按钮就地消失。
+    await expect(canvas.queryByText('加载中…')).toBeNull()
+    await expect(canvas.getAllByText('对战结束')).toHaveLength(2)
+    await expect(canvas.queryByText('1 条未读')).toBeNull()
+    await expect(canvas.queryByRole('button', { name: '标为已读' })).toBeNull()
   },
 }
 

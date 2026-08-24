@@ -364,7 +364,21 @@ export function OsPanel({
         mine: { a: { versionID: pickA }, b: { versionID: pickB } },
         opponent,
       })
-      setChallengeDone(response)
+      if (response.matchIDs.length > 0) {
+        // F6/#66：与 PVE/互搏路径一致——成功即关面板、站内跳到第 ① 场
+        // 实况（A7:429 不开新窗口）；siblingID 随导航 state 带给实况页，
+        // 第 ② 场靠「查看另一场」互链可达。
+        onClose()
+        navigate(`/matches/${response.matchIDs[0]}`, {
+          state: {
+            challengeID: response.challengeID,
+            siblingID: response.matchIDs[1] ?? null,
+          },
+        })
+      } else {
+        // 回退：服务器没回 matchIDs 时仍用面板内成功块（两张对局卡）。
+        setChallengeDone(response)
+      }
     } catch (cause) {
       if (
         cause instanceof ApiError && cause.code === 'unknown' &&

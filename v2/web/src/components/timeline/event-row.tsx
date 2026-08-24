@@ -198,6 +198,17 @@ function ScoreRow({
               const truth = trueRequests?.[side]
               const guess = guesses?.[side]
               if (!truth && !guess) return null
+              // F2（#69）：原本要两行对读才知道的「猜中/被识破」就地标注，
+              // 与结果卡、隐藏目标区块同一口径。只在恰好两侧对猜时有定义。
+              const other = sides.length === 2
+                ? sides.find((key) =>
+                  key !== side
+                )
+                : undefined
+              const otherTruth = other != null
+                ? trueRequests?.[other]
+                : undefined
+              const otherGuess = other != null ? guesses?.[other] : undefined
               return (
                 <p key={side}>
                   {speakerName(labels, side)}
@@ -208,6 +219,9 @@ function ScoreRow({
                         <span className='font-mono text-(--foreground)'>
                           {truth}
                         </span>
+                        {otherGuess != null && otherGuess === truth
+                          ? <span className='text-(--accent)'>（被识破）</span>
+                          : null}
                       </>
                     )
                     : null}
@@ -218,6 +232,9 @@ function ScoreRow({
                         <span className='font-mono text-(--foreground)'>
                           {guess}
                         </span>
+                        {otherTruth != null && guess === otherTruth
+                          ? <span className='text-(--success)'>（猜中）</span>
+                          : null}
                       </>
                     )
                     : null}

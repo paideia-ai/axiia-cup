@@ -64,9 +64,9 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
           <p className='text-sm font-semibold text-(--foreground)'>
             初始化方式 · 三选一生成首稿
           </p>
+          {/* #90：「复制为新智能体」已废止——想重新选卡只剩清空工作区一条路 */}
           <p className='mt-0.5 text-xs text-(--foreground-muted)'>
-            保存即成为
-            v1；此后的迭代只有文本编辑（想重新选卡：清空工作区，或从版本卡「复制为新智能体」）
+            保存即成为 v1；此后的迭代只有文本编辑（想重新选卡：清空工作区）
           </p>
         </div>
         <Tabs value={tab} onValueChange={setTab} className='space-y-4'>

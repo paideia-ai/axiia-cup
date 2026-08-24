@@ -161,6 +161,22 @@ export const finishedMatch: MatchDetail = {
     finished: true,
     scored: true,
     winner: 'a',
+    // F7：participants 让战报胜负行有「我方/对方」视角可用（G20：isMine
+    // 只对请求者本人计算）。
+    participants: {
+      a: {
+        agentID: 101,
+        versionID: 1002,
+        ownerDisplayName: '测试玩家',
+        modelID: 'fixture-model',
+        isMine: true,
+      },
+      b: {
+        presetKey: 'ganlong-steady',
+        modelID: 'fixture-model',
+        isMine: false,
+      },
+    },
   },
   currentTurn: 6,
   // seq 2 与 seq 4 是 act 行：同一次生成既写成 verdict（心声/问询卡），又把带
@@ -205,7 +221,7 @@ export const finishedMatch: MatchDetail = {
       kind: 'dialogue',
       speaker: 'a',
       finalText:
-        '受损者按新法补偿，三年为限。\n<reason>先给可执行的补偿口径</reason>\n<guess>迁移补偿</guess>',
+        '受损者按新法补偿，三年为限。\n<reason>先给可执行的补偿口径</reason>\n<guess>GR1</guess>',
       reasoning: '真实推演：把补偿口径说死，再猜对方真目标。',
     },
     {
@@ -216,10 +232,11 @@ export const finishedMatch: MatchDetail = {
       finalText: '',
       event: {
         type: 'score',
-        trueRequests: { a: '制度可信', b: '迁移补偿' },
-        guesses: { a: '迁移补偿', b: '制度可信' },
-        scoreA: 7,
-        scoreB: 5,
+        trueRequests: { a: 'SR2', b: 'GR2' },
+        guesses: { a: 'GR1', b: 'SR2' },
+        scoreA: 0.5,
+        scoreB: 0,
+        winner: 'a',
       },
     },
   ],
@@ -251,7 +268,7 @@ export const finishedMatch: MatchDetail = {
       afterSeq: 4,
       output: JSON.stringify({
         reason: '先给可执行的补偿口径',
-        guess: '迁移补偿',
+        guess: 'GR1',
       }),
       model: 'fixture-judge',
     },
@@ -265,9 +282,19 @@ export const finishedMatch: MatchDetail = {
       model: 'fixture-judge',
     },
   ],
-  scoreA: 7,
-  scoreB: 5,
-  reasoning: '程序化计分明细：\n商鞅 +7\n甘龙 +5',
+  scoreA: 0.5,
+  scoreB: 0,
+  // F2：reasoning 用商鞅脚本的真实形态（名字 ±delta：理由 + 重复的真目标/
+  // 问询前置行 + 开发者收尾行），让得分账解析与隐藏目标五步走真路径。
+  reasoning: [
+    '程序化计分明细：',
+    '真目标：商鞅 = SR2，甘龙 = GR2',
+    '问询：商鞅猜 GR1，甘龙猜 SR2',
+    '商鞅 +1：秦孝公决意推行变法，大政方针达成',
+    '商鞅 +0.5：真请求 SR2 获准',
+    '商鞅 -1：真目标 SR2 被甘龙识破',
+    'scoreA = 0.5, scoreB = 0',
+  ].join('\n'),
   // 心声阶段只有那一行纯载荷 act：它被吸收后这一幕整段不出现，连空标题都
   // 不该留下。
   stages: [

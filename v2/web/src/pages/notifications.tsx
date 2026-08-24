@@ -1,5 +1,5 @@
 import { CheckCheck, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ApiError, notifications } from '../api/client'
@@ -59,10 +59,32 @@ export function NotificationsPage() {
   )
   const [actionError, setActionError] = useState<string | null>(null)
   const [acting, setActing] = useState(false)
+  // F3：服务端数据镜像到本地 state，行内操作走乐观更新——成功路径不再
+  // 重取整页，列表不卸载，滚动位置即不丢（scroll.ts 的原则：refetch 不是
+  // 导航，不该移动页面）。铃铛角标仍由 SSE /notifications/bell 独立对齐。
+  const [rows, setRows] = useState<NotificationDTO[]>([])
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    if (data == null) return
+    setRows(data.notifications)
+    setUnread(data.unreadCount)
+  }, [data])
 
   const markRead = async (id: number) => {
-    await notifications.markRead(id).catch(() => {})
-    reload()
+    const target = rows.find((row) => row.id === id)
+    if (target == null || target.read) return
+    // 乐观置已读：先改本地，失败才提示并 reload() 与服务端对齐。
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, read: true } : row))
+    )
+    setUnread((count) => Math.max(0, count - 1))
+    try {
+      await notifications.markRead(id)
+    } catch {
+      setActionError('标记失败，请重试')
+      reload()
+    }
   }
 
   // 深链点击顺手标已读：即将导航离开，fire-and-forget 即可。
@@ -75,15 +97,18 @@ export function NotificationsPage() {
   const readAll = async () => {
     setActing(true)
     setActionError(null)
+    // 乐观全读：先本地置读；失败保留端点缺席回退文案并 reload() 对齐。
+    setRows((current) => current.map((row) => ({ ...row, read: true })))
+    setUnread(0)
     try {
       await notifications.readAll()
-      reload()
     } catch (cause) {
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「全部已读」——可逐条标为已读'
           : messageOf(cause, '全部已读失败'),
       )
+      reload()
     } finally {
       setActing(false)
     }
@@ -94,21 +119,23 @@ export function NotificationsPage() {
     if (!globalThis.confirm('清空全部通知？此操作不可恢复。')) return
     setActing(true)
     setActionError(null)
+    // 乐观清空：失败 reload() 找回列表。
+    setRows([])
+    setUnread(0)
     try {
       await notifications.clear()
-      reload()
     } catch (cause) {
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「清除」——稍后再试'
           : messageOf(cause, '清除失败'),
       )
+      reload()
     } finally {
       setActing(false)
     }
   }
 
-  const rows = data?.notifications ?? []
   const groups = [
     {
       title: 'PVP / 锦标赛',
@@ -122,14 +149,16 @@ export function NotificationsPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
+      {
+        /* F3：操作条 sticky（贴在 h-12 顶栏下沿），长列表滚到哪都看得见
+        「全部已读 / 清除」；铺页面底色避免下方行卡透出。 */
+      }
+      <div className='sticky top-12 z-10 flex flex-wrap items-center justify-between gap-3 bg-(--background) py-2'>
         <div className='flex items-center gap-3'>
           <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
             通知
           </h1>
-          {data && data.unreadCount > 0
-            ? <Badge tone='accent'>{data.unreadCount} 条未读</Badge>
-            : null}
+          {unread > 0 ? <Badge tone='accent'>{unread} 条未读</Badge> : null}
         </div>
         {rows.length > 0
           ? (
@@ -137,7 +166,7 @@ export function NotificationsPage() {
               <Button
                 size='sm'
                 variant='secondary'
-                disabled={acting || (data?.unreadCount ?? 0) === 0}
+                disabled={acting || unread === 0}
                 onClick={() => void readAll()}
               >
                 <CheckCheck className='mr-1.5 h-4 w-4' />
@@ -161,9 +190,13 @@ export function NotificationsPage() {
         ? <p className='text-sm text-(--accent)'>{actionError}</p>
         : null}
 
-      {loading
+      {
+        /* F3：仅首载显示加载/错误整页文案；一旦拿到过数据，重取期间列表
+        保持挂载——文档高度不塌，scrollY 不会被浏览器钳回顶部。 */
+      }
+      {loading && data == null
         ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
-        : error
+        : error && data == null
         ? <p className='text-sm text-(--accent)'>{error}</p>
         : groups.length > 0
         ? (

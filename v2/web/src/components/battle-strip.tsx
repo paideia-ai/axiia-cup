@@ -2,9 +2,11 @@ import { ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { matches } from '../api/client'
+import { catalog, matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
 import { cn } from '../lib/cn'
+import type { RoleNames } from '../lib/outcome'
+import { outcomeCopy } from '../lib/outcome'
 
 // 对战条（#72，mock V29/V35）：只在派发处路由出现的横条，装着进行中与
 // 「刚完成」（15 分钟内完局）的对局小卡。空态自动隐藏；可折叠（chevron，
@@ -40,6 +42,27 @@ export function BattleStrip() {
   // null = 未加载/加载失败：两种情况都整条不渲染（降级为不存在）。
   const [rows, setRows] = useState<MatchSummary[] | null>(null)
   const [collapsed, setCollapsed] = useState(loadCollapsed)
+  // F7（可选面）：完局卡带同口径的结果文案；角色名一次性取自 catalog，
+  // 失败只回退 甲方/乙方，不影响横条本体。
+  const [roles, setRoles] = useState<Record<string, RoleNames> | null>(null)
+  useEffect(() => {
+    if (!whitelisted || roles != null) return
+    let live = true
+    void catalog
+      .scenarios()
+      .then((response) => {
+        if (!live) return
+        const map: Record<string, RoleNames> = {}
+        for (const scenario of response.scenarios) {
+          map[scenario.id] = { a: scenario.sideAName, b: scenario.sideBName }
+        }
+        setRoles(map)
+      })
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [whitelisted, roles])
   // 轮询只更新数据；「刚完成」的过期靠每次轮询后的重渲染自然收敛（粒度
   // 30 秒，对 15 分钟窗口足够）。
   useEffect(() => {
@@ -117,31 +140,41 @@ export function BattleStrip() {
       </button>
       {collapsed ? null : (
         <div className='flex gap-2 overflow-x-auto pb-1'>
-          {cards.map((match) => (
-            <Link
-              key={match.id}
-              to={`/matches/${match.id}`}
-              className='inline-flex shrink-0 items-center gap-2 rounded-full border border-(--border-soft) bg-white/2 px-3 py-1.5 text-xs text-(--foreground-subtle) transition hover:border-(--border) hover:text-(--foreground)'
-            >
-              <span className='font-medium'>{match.scenarioTitle}</span>
-              {match.challengeLeg != null
-                ? (
-                  <span className='text-(--accent)'>
-                    约战{match.challengeLeg === 1 ? '①' : '②'}
-                  </span>
-                )
-                : null}
-              {match.finished
-                ? <span className='text-(--success)'>刚完成</span>
-                : (
-                  <span className='inline-flex items-center gap-1 text-(--info)'>
-                    <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-(--info)' />
-                    进行中
-                  </span>
-                )}
-              <span className='text-(--foreground-muted)'>#{match.id}</span>
-            </Link>
-          ))}
+          {cards.map((match) => {
+            // F7：完局卡在「刚完成」后追加带视角的结果（我方（商鞅）胜…）。
+            const outcome = match.finished && match.scored
+              ? outcomeCopy(match, roles?.[match.scenarioID] ?? null)
+              : null
+            return (
+              <Link
+                key={match.id}
+                to={`/matches/${match.id}`}
+                className='inline-flex shrink-0 items-center gap-2 rounded-full border border-(--border-soft) bg-white/2 px-3 py-1.5 text-xs text-(--foreground-subtle) transition hover:border-(--border) hover:text-(--foreground)'
+              >
+                <span className='font-medium'>{match.scenarioTitle}</span>
+                {match.challengeLeg != null
+                  ? (
+                    <span className='text-(--accent)'>
+                      约战{match.challengeLeg === 1 ? '①' : '②'}
+                    </span>
+                  )
+                  : null}
+                {match.finished
+                  ? (
+                    <span className='text-(--success)'>
+                      {outcome != null ? `刚完成 · ${outcome}` : '刚完成'}
+                    </span>
+                  )
+                  : (
+                    <span className='inline-flex items-center gap-1 text-(--info)'>
+                      <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-(--info)' />
+                      进行中
+                    </span>
+                  )}
+                <span className='text-(--foreground-muted)'>#{match.id}</span>
+              </Link>
+            )
+          })}
         </div>
       )}
     </section>

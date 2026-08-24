@@ -100,14 +100,26 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   const result = page.getByRole('heading', { name: '结果' })
   const dialogue = page.getByRole('heading', { name: '对话全文' })
   const inquiry = page.getByRole('heading', { name: '问询', exact: true })
+  const hiddenGoal = page.getByRole('heading', { name: '隐藏目标' })
   const scoring = page.getByRole('heading', { name: '计分推导' })
   await expect(result).toBeVisible()
   await expect(dialogue).toBeVisible()
   await expect(inquiry).toBeVisible()
+  await expect(hiddenGoal).toBeVisible()
   await expect(scoring).toBeVisible()
   expect((await result.boundingBox())!.y).toBeLessThan(
     (await dialogue.boundingBox())!.y,
   )
+  // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间；「被识破」
+  // 的扣分是得分账里明确的一行，不再只是页底散文。
+  expect((await inquiry.boundingBox())!.y).toBeLessThan(
+    (await hiddenGoal.boundingBox())!.y,
+  )
+  expect((await hiddenGoal.boundingBox())!.y).toBeLessThan(
+    (await scoring.boundingBox())!.y,
+  )
+  await expect(page.getByText('真目标 SR2 被甘龙识破')).toBeVisible()
+  await expect(page.getByText('被识破 -1')).toBeVisible()
   await expect(page.getByText('先立可验证的制度标准。')).toHaveCount(0)
   await expect(page.getByText('商鞅提出了可验证标准。', { exact: true }))
     .toBeVisible()
@@ -122,6 +134,7 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByRole('heading', { name: '结果' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '问询', exact: true }))
     .toHaveCount(0)
+  await expect(page.getByRole('heading', { name: '隐藏目标' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '计分推导' })).toHaveCount(0)
   await expect(page.getByRole('switch', { name: /调试模式/ }))
     .toHaveAttribute('aria-disabled', 'true')
