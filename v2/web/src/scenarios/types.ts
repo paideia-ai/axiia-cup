@@ -119,8 +119,21 @@ export interface ScenarioEducation {
   formatLabel: string
   // 第 2 层：双方是谁、各自的胜利条件。
   winConditions: { a: string; b: string }
+  // #51 W2 EXPAND-1「开场白」（u04-c13 裁定 · 2026-08-25）：对局开始、双方发言
+  // 之前，场景/裁判对双方同时说的统一首句。与运行时 OPENING_LINE 同源——值一律
+  // 取自 runtime-quotes.json（`deno task web-quotes` 从 script.js 提取生成、
+  // `deno task validate` 逐字核对）；没有统一开场首句的场景缺席，不许编造。
+  openingLine?: string
   // 第 3 层：裁判是谁、怎么判 + 计分规则。
   judgeSummary: string
+  // A4 基线「裁判 prompt + 摘要」（u04-c10 裁定）：对局中真实喂给裁判/NPC
+  // 裁决者的扮演 system prompt 原文，只读展示，同源机制同 openingLine。
+  // #51 只豁免 judgeOsPrompt——裁判内心独白的生成提示不在此列、维持不公开。
+  judgePrompt?: string
+  // 按局实填的场景（如本能寺按入场角色实填）用这行注解说明展示口径。
+  judgePromptNote?: string
+  // 裁判/裁决者模型默认值（#51 W2 DEEP「裁判/计分模型」），同源机制同上。
+  judgeModel?: string
   scoring: string
   // 第 4 层 DEEP：背景故事全文 + 隐藏目标机制怎么玩。
   background: string

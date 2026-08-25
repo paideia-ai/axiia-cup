@@ -139,12 +139,19 @@ describe('deckComplete', () => {
 
 describe('initModesAvailable — E7/#83 初始化-only 门', () => {
   it('offers the three init modes only while the workspace is empty', () => {
-    expect(initModesAvailable('')).toBe(true)
-    expect(initModesAvailable('  \n\t ')).toBe(true)
+    expect(initModesAvailable('', 0)).toBe(true)
+    expect(initModesAvailable('  \n\t ', 0)).toBe(true)
   })
 
   it('any text — assembled or typed — closes the chooser for good', () => {
-    expect(initModesAvailable('你是商鞅。')).toBe(false)
-    expect(initModesAvailable(' x ')).toBe(false)
+    expect(initModesAvailable('你是商鞅。', 0)).toBe(false)
+    expect(initModesAvailable(' x ', 0)).toBe(false)
+  })
+
+  it('a saved version shuts the gate for good — even on an empty workspace', () => {
+    // E7/#83（pr-fate u02-c19 拍板 A）：清空工作区不复活三选一；重选初始化
+    // 走「再建一个」新智能体（#90 的唯一出口）。
+    expect(initModesAvailable('', 1)).toBe(false)
+    expect(initModesAvailable('  \n ', 3)).toBe(false)
   })
 })

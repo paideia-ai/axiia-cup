@@ -155,6 +155,18 @@ export const ShangyangFourCards: Story = {
     await expect(canvas.getByRole('button', { name: '去构建商鞅' }))
       .toBeVisible()
     await expect(canvas.queryByText(/深读/)).toBeNull()
+    // u04-c13：开场白（EXPAND-1）与运行时 OPENING_LINE 同源，只读展示。
+    await expect(
+      canvas.getByText(/「卫鞅，寡人今日召你与甘龙太师当堂论辩/),
+    ).toBeVisible()
+    // u04-c10：裁判提示词原文默认收起；收起时原文不挂载。
+    const judgePromptToggle = canvas.getByRole('button', {
+      name: '裁判提示词原文',
+    })
+    await expect(judgePromptToggle).toHaveAttribute('aria-expanded', 'false')
+    await expect(
+      canvas.queryByText(/你正在参与一个策略对话游戏/),
+    ).toBeNull()
   },
 }
 
@@ -196,6 +208,11 @@ export const HonnojiFourCards: Story = {
       canvas.getByRole('heading', { name: '计分规则' }),
     ).toBeVisible()
     await expect(canvas.getByText('−0.75')).toBeVisible()
+    // u04-c13/c10：本能寺同样展示同源开场白与裁判提示词入口。
+    await expect(canvas.getByText(/「诸位，今夜军势已动/)).toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: '裁判提示词原文' }),
+    ).toBeVisible()
   },
 }
 
@@ -230,6 +247,11 @@ export const TrolleyFourCards: Story = {
     await expect(
       canvas.queryByRole('button', { name: '隐藏目标列表' }),
     ).toBeNull()
+    // u04-c13：三案无统一开场首句——不许编造开场白块。
+    await expect(canvas.queryByTestId('opening-line')).toBeNull()
+    await expect(
+      canvas.getByRole('button', { name: '裁判提示词原文' }),
+    ).toBeVisible()
   },
 }
 

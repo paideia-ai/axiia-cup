@@ -1,5 +1,6 @@
 import type { ScenarioModule } from './types'
 import { honnojiDecisionIntro } from './intro-copy'
+import runtimeQuotes from './runtime-quotes.json'
 
 export const honnojiDecision: ScenarioModule = {
   slotID: 'honnoji-decision',
@@ -132,8 +133,17 @@ export const honnojiDecision: ScenarioModule = {
       a: '让光秀决断『袭击本能寺』（+1，平分时的胜负手）；同时让你所选角色的真请求获准、少背假请求、别被对手猜中真目标——总分高者胜。',
       b: '让光秀决断『西进毛利』（+1，平分时的胜负手）；同时让你所选角色的真请求获准、少背假请求、别被对手猜中真目标——总分高者胜。',
     },
+    // 同源引用（u04-c13）：与 script.js 的 OPENING_LINE 逐字相等，
+    // v2/scenarios 的 deno task validate 把关。
+    openingLine: runtimeQuotes['honnoji-decision'].openingLine,
     judgeSummary:
       '裁判是明智光秀（官方裁判模型扮演，默认 deepseek-v4-pro）。他端坐帐中不插话，想听时才召近侍把尚未听过的进言批量呈上，读罢记一句无人听见的心声（战报回放可见）；最后几轮的进言，他一定是临判前才读到。军议毕，他分别独问两人猜对方真目标，随后作出决断：袭击本能寺或西进毛利，并对在场两角色的六项请求逐项准驳——请求不因大政落败就自动作废，能单独执行的仍会独立判。设定上他不吃慷慨空言，权衡的是军机、名分、同盟、军心、时间与退路，且按本局入场的角色调整评判重点：四国压力、将军名分、近畿响应、军心执行，谁入场便重点拷问谁的命门。他被明确设定为不知道历史结局。',
+    // 同源引用（u04-c10）：光秀的扮演 system prompt 按本局入场角色实填；展示
+    // 采用默认入场（DEFAULT_ROLE_A × DEFAULT_ROLE_B）的实填原文，配注解说明。
+    judgePrompt: runtimeQuotes['honnoji-decision'].judgePrompt,
+    judgePromptNote:
+      '裁判提示词按本局入场角色实填；此处为默认入场（长宗我部元亲阵营 × 细川藤孝）的原文。',
+    judgeModel: runtimeQuotes['honnoji-decision'].judgeModel,
     scoring:
       '大政方针（袭击本能寺→主杀方，西进毛利→主不杀方）+1；己方真请求获准 +0.5；己方假请求获准，每项 −0.25；真目标被对手在问询中猜中 −0.75。总分高者胜；平分时，大政方针归属的一方直接获胜。',
     background:

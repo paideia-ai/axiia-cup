@@ -1084,8 +1084,9 @@ function FirstBattleJourney({
             ))}
           </div>
           <div className='flex flex-wrap items-center justify-between gap-2'>
+            {/* E7/#83（2026-08-25 收紧）：重用选卡的唯一出口是再建一个/创建对侧。 */}
             <p className='text-xs text-(--foreground-muted)'>
-              已保存过版本的智能体只有文本工作台——想再用选卡，走「清空工作区」重来或创建对侧。
+              已保存过版本的智能体只有文本工作台——想再用选卡，再建一个智能体或创建对侧。
             </p>
             {mine?.agentID != null
               ? (

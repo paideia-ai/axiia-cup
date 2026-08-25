@@ -45,7 +45,6 @@ let p1Email = ''
 let admin: APIRequestContext
 let p1: APIRequestContext
 let p2: APIRequestContext
-let p2Name = ''
 let p1A = { agentID: 0, versionID: 0 }
 let p1B = { agentID: 0, versionID: 0 }
 let p3A = { agentID: 0, versionID: 0 }
@@ -94,7 +93,6 @@ test('U13-C02 管理员在固定局场景上建赛、报名四个版本并按 12
     p2 = s2.context
     p3 = s3.context
     p4 = s4.context
-    p2Name = s2.displayName
     p2AccountID = s2.accountID
     p4AccountID = s4.accountID
 
@@ -216,7 +214,7 @@ test('U13-C02 管理员在固定局场景上建赛、报名四个版本并按 12
     entrants = (await seeded.json() as { entrants: typeof entrants }).entrants
   })
 
-  await test.step('那么 P1、P3 直入正赛且标记跳过海选，P2、P4 落入海选', async () => {
+  await test.step('那么 P1、P3 直入正赛且标记跳过海选，P2、P4 落入海选', () => {
     const byVersion = new Map(
       entrants.map((entrant) => [entrant.versionID, entrant]),
     )

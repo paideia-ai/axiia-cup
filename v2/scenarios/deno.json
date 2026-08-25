@@ -15,7 +15,8 @@
     }
   },
   "tasks": {
-    "validate": "deno run --allow-read --allow-env tools/validate.ts",
+    "validate": "deno run --allow-read --allow-env tools/validate.ts && deno run --allow-read tools/web-quotes.ts",
+    "web-quotes": "deno run --allow-read --allow-write tools/web-quotes.ts --write",
     "fmt": "deno fmt --check .",
     "lint": "deno lint --rules-exclude=no-unused-vars scenarios && deno lint tools types",
     "push": "deno run --allow-read --allow-env --allow-net tools/push.ts"

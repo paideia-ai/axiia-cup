@@ -1,5 +1,6 @@
 import type { ScenarioModule } from './types'
 import { trolleyProblemIntro } from './intro-copy'
+import runtimeQuotes from './runtime-quotes.json'
 
 // 电车难题·一人与五人 — 机制最纯粹的场景：三案逐一辩论，明理者逐案裁决，
 // 多数案胜出。没有隐藏目标、没有问询。内容与 v2/scenarios/scenarios/
@@ -44,6 +45,10 @@ export const trolleyProblem: ScenarioModule = {
     },
     judgeSummary:
       '裁判是「明理者」（官方裁判模型扮演，默认 deepseek-v4-pro）——设定为未受专业伦理学训练、但有基本理解力的普通人，不预设功利主义或义务论立场，也不为制造平衡而随机。三案辩毕，他按每案各自的辩论记录逐案裁决：必须二选一、不得弃权，三案可以判给不同方。他公开的六条评判标准：原则清晰、案件敏感（是否处理了三案差异）、后果承担、责任结构、可公开性、反驳质量。',
+    // 同源引用（u04-c10）：明理者的扮演 system prompt＝judgeSystem(CASES) 的
+    // 运行时实填原文。三案没有对双方统一说出的开场首句——openingLine 缺席。
+    judgePrompt: runtimeQuotes['trolley-problem'].judgePrompt,
+    judgeModel: runtimeQuotes['trolley-problem'].judgeModel,
     scoring: '三个案件各裁给一方，每案 1 分，拿下多数案件的一方获胜。',
     background:
       '三个案件依次辩论，案情全文如下——\n\nA·原始电车：一辆失控电车正驶向主轨上的五个人。你是驾驶员，唯一能做的是把电车转向一条岔轨；岔轨上有一个人。若不转向，五人死；若转向，一人死。\n\nB·自动驾驶车：一辆自动驾驶车刹车失灵。它若保持直行，会撞死五名行人；若转向，会撞死车内的一名乘客。系统的选择是预先设置好的。\n\nC·缸中之脑：一辆电车刹车失灵，必须在两条路线中选择一条。路线一撞死轨道上的一名维修工；路线二撞向缸中之脑的接口，使缸中之脑体验到五个人被电车撞死时的恐惧和疼痛，但没有真实身体死亡。\n\n双方立场全程固定：奕仁代表一人侧，武仁代表五人侧。每案单独辩论五轮、每轮奕仁先发言，共十五轮；不得声称存在第三条路，不得否认或改写案件设定。',
