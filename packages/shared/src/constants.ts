@@ -6,7 +6,6 @@ export const submissionModelIds = [
   'kimi-k2.6',
   'qwen3.6-27b',
   'qwen3.8-27b',
-  'qwen3.8-max',
   'minimax-m2.5',
   'minimax-m3',
   'glm-5.1',
@@ -20,7 +19,6 @@ export const playerSelectableModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.8-27b',
-  'qwen3.8-max',
   'minimax-m3',
   'glm-5.3',
 ] as const
@@ -28,6 +26,7 @@ export const playerSelectableModelIds = [
 export const retiredModelIds = [] as const
 
 export const evaluationOnlyModelIds = [
+  'qwen3.8-max',
   'gpt-4.1',
   'gpt-5.4',
   'gpt-5.4-mini',
@@ -163,7 +162,7 @@ export const modelCatalog = [
     label: 'Qwen3.8 Max',
     apiModel: 'qwen3.8-max',
     provider: 'dashscope',
-    surfaces: ['submission', 'evaluation'],
+    surfaces: ['evaluation'],
   },
   {
     id: 'minimax-m3',

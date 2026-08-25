@@ -18,7 +18,6 @@ const chosenPlayerModelIds = [
   'deepseek-v4-flash',
   'kimi-k2.6',
   'qwen3.8-27b',
-  'qwen3.8-max',
   'minimax-m3',
   'glm-5.3',
 ] as const
@@ -44,6 +43,9 @@ describe('model catalog', () => {
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'glm-5.2',
     )
+    expect(playerModelOptions.map((option) => option.id)).not.toContain(
+      'qwen3.8-max',
+    )
   })
 
   it('makes the chosen current Chinese lab models available for judging and scoring', () => {
@@ -52,6 +54,7 @@ describe('model catalog', () => {
     for (const modelId of chosenPlayerModelIds) {
       expect(evaluationIds).toContain(modelId)
     }
+    expect(evaluationIds).toContain('qwen3.8-max')
 
     expect(
       updateScenarioSchema.safeParse({
@@ -92,7 +95,7 @@ describe('model catalog', () => {
     expect(submissionModelIdSchema.parse('glm-5.2')).toBe('glm-5.2')
   })
 
-  it('rejects legacy model ids for newly created player submissions', () => {
+  it('rejects models unavailable to newly created player submissions', () => {
     const validInput = {
       modelA: 'deepseek-v4-pro',
       modelB: 'glm-5.3',
@@ -124,6 +127,12 @@ describe('model catalog', () => {
       createSubmissionSchema.safeParse({
         ...validInput,
         modelA: 'glm-5.2',
+      }).success,
+    ).toBe(false)
+    expect(
+      createSubmissionSchema.safeParse({
+        ...validInput,
+        modelA: 'qwen3.8-max',
       }).success,
     ).toBe(false)
   })
@@ -159,6 +168,7 @@ describe('model catalog', () => {
     expect(getModelDefinition('qwen3.8-max')).toMatchObject({
       apiModel: 'qwen3.8-max',
       provider: 'dashscope',
+      surfaces: ['evaluation'],
     })
     expect(getModelDefinition('qwen3.8-max')).not.toHaveProperty('thinking')
     expect(getModelDefinition('glm-5.1')).toMatchObject({
