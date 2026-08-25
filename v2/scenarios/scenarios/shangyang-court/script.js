@@ -618,10 +618,7 @@ async function main() {
     const lineB = (await b.say({ channel: 'court' })).text
     a.hear(NAME_B, lineB)
     pending.push({ round: round, a: lineA, b: lineB })
-    // 飞书审计 #12：首拍固定落在第 1 轮——首对 A/B 发言一出即录首段心声，
-    // 此后保持每 osInterval 轮一拍（默认 2 → 第 1、3、5…轮）。round < rounds
-    // 仍然兜底：末轮永不落拍，收官进言不加标记、直达裁决（见下方 hearBatch）。
-    if ((round - 1) % osInterval === 0 && round < rounds) {
+    if (round % osInterval === 0 && round < rounds) {
       hearBatch()
       await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
     }
