@@ -1,120 +1,54 @@
-# Axiia Cup
+<h1 align="center">Axiia Cup</h1>
 
-Entrants write strategy prompts to build AI agents that compete in adversarial dialogue matches set in humanities-themed scenarios.
+<p align="center"><strong>用提示词打造最强对话智能体</strong></p>
 
-## Workspace
+<p align="center">
+  不写代码，只写策略。让 AI 在历史、法律、哲学与戏剧情境中替你博弈。
+</p>
 
-- `apps/web` — React Router v7 SPA + Vite + Tailwind v4 + shadcn/ui
-- `apps/api` — Hono + Bun + SQLite (Drizzle)
-- `apps/cli` — Commander.js admin CLI
-- `packages/shared` — Zod schemas and shared types
+<p align="center">
+  <a href="https://axiia-cup-2-web.isofucius.cn/"><strong>在线体验</strong></a>
+  · <a href="#怎么玩">怎么玩</a>
+  · <a href="#场景">场景</a>
+</p>
 
-## Quick Start
+<p align="center">
+  <a href="https://axiia-cup-2-web.isofucius.cn/">
+    <img src="docs/readme/axiia-cup-home.png" alt="Axiia Cup 在线体验站首页" width="100%" />
+  </a>
+</p>
 
-```bash
-cp .env.example .env
-# Fill in SILICONFLOW_API_KEY and JWT_SECRET in .env
-bun install
-bun run dev
+Axiia Cup 是一场面向人文学科的 AI 智能体策略赛。你为对立角色编写系统提示词、选择模型，然后把智能体交给平台自动对战。它们会阅读同一份场景材料，在角色约束与公开规则中博弈；有些场景还会加入隐藏目标和信息不对称。场内 NPC 或陪审团负责裁决，完整过程会留在战报中。
+
+这不是一场“谁更会聊天”的演示。你需要读懂规则、判断裁判、建模对手，并把整套策略压缩成模型真正能够执行的语言。
+
+## 怎么玩
+
+```text
+选择场景 → 构建甲乙双方 → PvE 试炼 → 解锁 PvP → 参加锦标赛 → 查看战报与排名
 ```
 
-For local development, use the repo root `.env` as the single source of truth and run commands from the repo root:
+1. **读懂场景**：了解冲突背景、双方角色、裁决者、胜负条件，以及可能存在的隐藏目标。
+2. **构建智能体**：分别为对立双方编写策略提示词，并选择驱动各自智能体的模型。每次保存都会形成可回看的版本。
+3. **先试再战**：先与官方预设策略进行 PvE 试炼，验证提示词在真实多轮对话中的表现；达成场景门槛后进入 PvP。
+4. **复盘迭代**：查看完整对话、场内事件、裁判判决、计分依据与排行榜，再据此修改下一版策略。
 
-```bash
-bun run dev
-bun run dev:api
-bun run db:migrate
-bun run db:seed:demo
-```
+## 场景
 
-Avoid maintaining a separate `apps/api/.env`, or the API and workspace commands can drift.
+| 场景 | 核心冲突 | 裁决者 |
+| --- | --- | --- |
+| 商鞅变法 · 朝堂辩法 | 立即推行变法，还是维持现状？ | 秦孝公 |
+| 本能寺之变 · 敌在何处 | 继续西进，还是突然转向京都？ | 明智光秀 |
+| 电车难题 · 一人与五人 | 是否可以主动牺牲一人以保护五人？ | 明理者 |
+| 凤仪亭之夜 | 连环计是否继续，貂蝉最终又会选择谁？ | 貂蝉 |
+| 码头疑云 · 七号仓命案 | 现有证据是否已经排除合理怀疑？ | 十一人陪审团 |
 
-## CLI
+场景会随赛季继续更新，具体开放状态与 PvP 解锁条件以线上页面为准。
 
-The admin CLI lives in `apps/cli`.
+## 参与方式
 
-```bash
-bun run ./apps/cli/src/index.ts --help
-```
+当前为邀请制。请从活动页面或群聊获取邀请码，然后前往 [Axiia Cup 体验站（临时地址）](https://axiia-cup-2-web.isofucius.cn/)。登录后选择一个场景，先为甲乙双方各构建一个智能体，再从 PvE 试炼开始。
 
-For CLI authentication, remote API usage, user and playground operations, and non-interactive scenario editing, see [CLI Guide](docs/tech/CLI.md).
-
-## Production Deployment
-
-The **current standard production release path** is GitHub Actions -> Aliyun ACR -> server-local deploy webhook. See [CI/CD and Production Operations](docs/tech/CI_CD_OPERATIONS.md).
-
-The shell scripts in `deploy/` remain important for first-time server bootstrap, manual fallback deploys, smoke checks, and DB backup.
-
-Production deployment assets live in `deploy/`.
-
-- `deploy/docker-compose.prod.yml` runs the `web` and `api` services
-- `deploy/Dockerfile.web` builds the Vite SPA and serves it with nginx
-- `deploy/Dockerfile.api` builds the Bun API and runs DB migrations on startup
-- `deploy/nginx.web.conf` provides SPA fallback and proxies `/api` and `/health`
-- `deploy/bootstrap-ubuntu-host.sh` prepares a fresh Ubuntu host with Docker, Compose, nginx, and the expected `/srv/axiia-cup` layout
-- `deploy/nginx.origin.axiia-cup.isofucius.cn.conf` is an example host-level nginx config for `axiia-cup.isofucius.cn` and `axiia-cup-2.isofucius.cn` when TLS terminates upstream at ESA/CDN
-- `deploy/angie.cup.axiia.ai.conf` is an example host-level reverse proxy for `cup.axiia.ai`
-- `deploy/deploy-master.sh` runs on your local machine and pushes a committed Git snapshot to a remote server over `ssh + rsync`
-- `deploy/dump-production-db.sh` runs on your local machine and pulls a consistent production SQLite backup over `ssh + rsync`
-- `deploy/bootstrap-server.sh` bootstraps a fresh server after prerequisites are in place; it supports `--mode prod|dev`
-- `deploy/deploy.sh` handles day-to-day redeploys; it supports `--mode prod|dev`
-- `deploy/smoke-check.sh` verifies health, SPA fallback, seeded data, and admin login; it supports `--mode prod|dev`
-- `deploy/development.env.example` is the dev-stack env template for split deployments
-- `deploy/sync-prod-db-to-dev.sh` refreshes the dev SQLite DB safely from a production snapshot and sanitizes active worker state
-- `docs/tech/server-local/` stores manual backup snapshots of server-local webhook/nginx files that are maintained by hand
-
-Typical single-server deployment flow:
-
-```bash
-cp deploy/production.env.example deploy/production.env
-# edit deploy/production.env
-
-docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml build
-docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml up -d
-docker compose --env-file deploy/production.env -f deploy/docker-compose.prod.yml exec api bun run ./apps/api/src/db/seed.ts
-```
-
-`seed.ts` also creates the initial admin account using the built-in default credentials.
-
-Scripted flow on a server:
-
-```bash
-./deploy/bootstrap-ubuntu-host.sh
-./deploy/bootstrap-server.sh /srv/axiia-cup/shared/config/production.env
-./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env
-BASE_URL=https://axiia-cup.isofucius.cn ./deploy/smoke-check.sh /srv/axiia-cup/shared/config/production.env
-```
-
-Scripted flow from your local machine:
-
-```bash
-./deploy/deploy-master.sh
-./deploy/deploy-master.sh --host ubuntu@cup-server --bootstrap --local-env ./deploy/production.env
-./deploy/deploy-master.sh --host ubuntu@cup-server --local-env ./deploy/production.env
-./deploy/deploy-master.sh --host ubuntu@cup-server --ref origin/main
-./deploy/deploy-master.sh --host ubuntu@cup-server --base-url https://axiia-cup.isofucius.cn
-./deploy/dump-production-db.sh
-```
-
-In this repository, `./deploy/deploy-master.sh` with no arguments deploys
-`origin/main` to the default production host and then runs the public smoke
-check. Use `--ref HEAD` if you intentionally want to deploy your current local
-commit instead.
-
-The web container listens on `127.0.0.1:${WEB_HOST_PORT}` and is intended to sit behind a host-level reverse proxy such as Angie or nginx.
-
-In the current `isofucius.cn` production setup, TLS terminates upstream at ESA,
-so the origin host only needs plain HTTP on port `80` and should proxy that to
-`127.0.0.1:${WEB_HOST_PORT}`.
-
-For production, point `AXIIA_DATA_DIR` at a persistent host path outside the
-repo checkout. Leave `LANGFUSE_*` blank unless you actually want telemetry.
-
-## Docs
-
-- [Design Spec](docs/competition/DESIGN_SPEC.md) — product rules and decisions
-- [Architecture](docs/tech/ARCHITECTURE.md) — technical stack, data model, and deployment notes
-- [CI/CD and Production Operations](docs/tech/CI_CD_OPERATIONS.md) — current release flow, production topology, rollback, and secret inventory
-- [CLI Guide](docs/tech/CLI.md) — CLI usage, remote API setup, and scenario editing workflow
-- [Server Deployment Checklist](docs/tech/DEPLOYMENT_SERVER.md) — server bootstrap and manual Docker Compose fallback
-- [Design System](docs/tech/DESIGN.md) — visual direction, typography, and color
+<p align="center">
+  Axiia Cup 由 <a href="https://github.com/paideia-ai">Paideia</a> 团队打造。
+</p>
