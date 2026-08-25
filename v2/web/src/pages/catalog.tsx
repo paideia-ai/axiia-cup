@@ -78,7 +78,8 @@ export function CatalogPage() {
         : (
           <div className='grid gap-4 md:grid-cols-2'>
             {ordered.map((scenario) => {
-              const education = scenarioModule(scenario.id)?.education ?? null
+              const module = scenarioModule(scenario.id)
+              const education = module?.education ?? null
               const stats = statsLine(scenario)
               return (
                 <Link
@@ -90,7 +91,7 @@ export function CatalogPage() {
                     <CardContent className='space-y-3 pt-5'>
                       <div className='flex items-start justify-between gap-3'>
                         <h2 className='text-lg font-semibold text-(--foreground)'>
-                          {scenario.title}
+                          {module?.intro?.source.title ?? scenario.title}
                         </h2>
                         <div className='flex flex-wrap items-center justify-end gap-1.5'>
                           {/* #54 新上线徽章：跟着 onlineAt 最新的那张卡 */}
@@ -177,7 +178,9 @@ export function CatalogPage() {
                             ? ` · ${scenario.sideBLabel}`
                             : ''}
                         </p>
-                        <p>{scenario.turnCount} 轮</p>
+                        <p>
+                          {education?.formatLabel ?? `${scenario.turnCount} 轮`}
+                        </p>
                       </div>
                       {/* #38/#39/#54：stats 到手即点亮；缺席时保持引导式空态 */}
                       {stats

@@ -10,29 +10,35 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
-import { roleOfOptions, rolesForSide, scenarioModule } from '../scenarios'
+import { scenarioModule } from '../scenarios'
+import type {
+  ScenarioEducation,
+  ScenarioHiddenGoalList,
+  ScenarioIntroCollection,
+  ScenarioIntroCopy,
+  ScenarioIntroFact,
+  ScenarioIntroImage,
+  ScenarioIntroSide,
+  ScenarioIntroTimeline,
+} from '../scenarios/types'
 
-// DA — 场景介绍（A4）：独立教育页，四层渐进（GLANCE → 双方 → 裁判与计分 →
-// 深读），页内没有任何编辑框（#42）。教育内容来自前端场景模块；缺席的场景
-// 每层都画引导式空态轮廓（#54），不留空白也不摆假数据。judgeOsPrompt 永不
-// 下发（#51）：这里只展示可公开的裁判摘要。统计 P6 点亮（#38，与 D 卡同一
-// 展示）：stats 到手（服务端已把关门槛 #39）就替换 GLANCE 层的空态轮廓。
+// 场景介绍的主体为四张顶层卡：背景故事、甲方、乙方、裁判与计分。
+// 个别场景可把游戏流程从背景故事中移到末尾，成为独立卡片。
+// `module.intro.source` 逐字来自 docs/competition/scenario-intro.html；这里可以
+// 重排，但不改写或省略。计分、难度、时长和状态属于额外的产品信息，单独渲染。
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
   const [pending, setPending] = useState<string | null>(null)
   const [buildError, setBuildError] = useState<string | null>(null)
   const module = scenarioModule(scenarioId)
+  const intro = module?.intro ?? null
   const education = module?.education ?? null
 
-  // 详情端点对 side 参数不敏感（presets 两侧都回），固定取一次即可。
   const { data, error, loading } = useAsync(
     () => catalog.scenario(scenarioId, 'a'),
     [scenarioId],
   )
-
-  // P13：该侧已有策略时，DA 不再猜「你要编辑哪个」——按钮组换成「再建一个 /
-  // 查看我的（N）」。清单失败按「没有」处理（回落今天的「去构建」）。
   const { data: mine } = useAsync(
     () => myAgents.list().catch(() => null),
     [scenarioId],
@@ -41,7 +47,6 @@ export function ScenarioDetailPage() {
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
       ?.sides[side] ?? []
 
-  // 懒创建（get-or-create，仅在点击时调用）：去构建进 /build，查看进主页。
   const enter = async (side: Side, target: 'build' | 'view') => {
     setPending(`${side}:${target}`)
     setBuildError(null)
@@ -62,7 +67,7 @@ export function ScenarioDetailPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className='mx-auto w-full max-w-6xl space-y-6'>
       {loading
         ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
         : error
@@ -70,350 +75,96 @@ export function ScenarioDetailPage() {
         : data
         ? (
           <>
-            <div className='flex flex-wrap items-start justify-between gap-4'>
+            <header className='flex flex-wrap items-start justify-between gap-4'>
               <div>
-                <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-                  {data.summary.title}
+                {intro?.source.category
+                  ? (
+                    <p className='mb-2 text-xs font-semibold tracking-[0.1em] text-(--accent)'>
+                      {intro.source.category}
+                    </p>
+                  )
+                  : null}
+                <h1 className='text-2xl font-black tracking-tight text-(--foreground) sm:text-3xl'>
+                  {intro?.source.title ?? data.summary.title}
                 </h1>
-                <p className='mt-1 max-w-2xl text-sm text-(--foreground-subtle)'>
+                <p className='mt-2 text-sm text-(--foreground-subtle)'>
                   {data.summary.subject}
                 </p>
                 <p className='mt-3 text-xs text-(--foreground-muted)'>
-                  {data.summary.sideAName} 对 {data.summary.sideBName} ·{' '}
-                  {data.summary.turnCount} 轮
+                  {intro?.source.participants.sides.a.name ??
+                    data.summary.sideAName} 对{' '}
+                  {intro?.source.participants.sides.b.name ??
+                    data.summary.sideBName} ·{' '}
+                  {education?.formatLabel ?? `${data.summary.turnCount} 轮`}
                 </p>
               </div>
               <GateStatus summary={data.summary} />
-            </div>
+            </header>
 
-            {/* 第 1 层 GLANCE：钩子 + 元信息，统计槽位走引导式空态（#38/#54） */}
-            <Card>
-              <CardContent className='space-y-3 pt-5'>
-                <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                  一眼看懂
-                </p>
-                {education
+            <OverviewCard
+              intro={intro}
+              education={education}
+              summary={data.summary}
+              factImages={module?.overviewFactImages ?? null}
+              timelineAtEnd={module?.timelineAtEnd ?? false}
+            />
+
+            <section className='space-y-3' aria-labelledby='participants-title'>
+              <div>
+                <h2
+                  id='participants-title'
+                  className='text-lg font-bold text-(--foreground)'
+                >
+                  {intro?.source.participants.title ?? '双方与胜利条件'}
+                </h2>
+                {intro
                   ? (
-                    <>
-                      <p className='text-base leading-relaxed text-(--foreground)'>
-                        {education.hook}
-                      </p>
-                      <div className='flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-(--foreground-subtle)'>
-                        <span title={`难度 ${education.difficulty} / 3`}>
-                          难度{' '}
-                          <span className='tracking-[0.12em] text-(--warning)'>
-                            {'★'.repeat(education.difficulty)}
-                            <span className='text-(--foreground-muted)'>
-                              {'☆'.repeat(3 - education.difficulty)}
-                            </span>
-                          </span>
-                        </span>
-                        <span className='inline-flex items-center gap-1'>
-                          <Clock className='h-3.5 w-3.5' />
-                          一场约 {education.minutes} 分钟
-                        </span>
-                        <span>{data.summary.turnCount} 轮对话</span>
-                        {education.noviceFriendly
-                          ? <Badge tone='success'>适合新手</Badge>
-                          : null}
-                      </div>
-                      {/* #38/#39/#54：stats 到手即点亮，缺席保持引导式空态 */}
-                      {statsLine(data.summary)
-                        ? (
-                          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
-                            <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
-                              侧方胜率
-                            </span>
-                            {statsLine(data.summary)}
-                          </p>
-                        )
-                        : (
-                          <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                            侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
-                          </p>
-                        )}
-                    </>
-                  )
-                  : (
-                    <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                      场景导读整理中——难度、预计时长与玩法概览将在这里出现
+                    <p className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'>
+                      {intro.source.participants.intro}
                     </p>
-                  )}
-              </CardContent>
-            </Card>
-
-            {/* 第 2 层 双方：各自是谁、胜利条件、入场角色 + 各侧构建入口 */}
-            <div className='space-y-2'>
-              <h2 className='text-sm font-semibold text-(--foreground)'>
-                双方与胜利条件
-              </h2>
-              <div className='grid gap-3 sm:grid-cols-2'>
-                {([
-                  ['a', data.summary.sideAName, data.summary.sideALabel],
-                  ['b', data.summary.sideBName, data.summary.sideBLabel],
-                ] as const).map(([key, name, label]) => {
-                  const roles = rolesForSide(module, key)
-                  return (
-                    <Card key={key}>
-                      <CardContent className='space-y-3 pt-5'>
-                        <div className='space-y-1'>
-                          <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                            {key === 'a' ? '甲方' : '乙方'}
-                          </p>
-                          <p className='text-base font-semibold text-(--foreground)'>
-                            {name}
-                          </p>
-                          {label
-                            ? (
-                              <p className='text-sm text-(--foreground-subtle)'>
-                                {label}
-                              </p>
-                            )
-                            : null}
-                        </div>
-
-                        {education
-                          ? (
-                            <div className='space-y-1'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                胜利条件
-                              </p>
-                              <p className='text-sm leading-relaxed text-(--foreground-subtle)'>
-                                {education.winConditions[key]}
-                              </p>
-                            </div>
-                          )
-                          : (
-                            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                              胜利条件文案整理中——先以双方立场为准
-                            </p>
-                          )}
-
-                        {roles.length > 0
-                          ? (
-                            <div className='space-y-1.5'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                可选入场角色（在构建器中选定）
-                              </p>
-                              {roles.map((role) => (
-                                <div
-                                  key={role.key}
-                                  className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'
-                                >
-                                  <p className='text-sm font-medium text-(--foreground)'>
-                                    {role.name}
-                                  </p>
-                                  <p className='mt-0.5 text-xs text-(--foreground-subtle)'>
-                                    {role.pitch}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                          : null}
-
-                        {/* P13：先说清「我这一侧已经有什么」，再给动作 */}
-                        {mineOf(key).length > 0
-                          ? (
-                            <p className='text-xs text-(--foreground-muted)'>
-                              你已有 {mineOf(key).length} 个{name}：{' '}
-                              {mineOf(key)
-                                .map((agent) =>
-                                  agent.name ?? `#${agent.agentID}`
-                                )
-                                .join(' · ')}
-                            </p>
-                          )
-                          : null}
-                        <div className='flex flex-wrap items-center gap-2 pt-1'>
-                          {mineOf(key).length === 0
-                            ? (
-                              <Button
-                                size='sm'
-                                data-testid={key === 'a'
-                                  ? 'build-agent'
-                                  : `build-agent-${key}`}
-                                disabled={pending != null}
-                                onClick={() => void enter(key, 'build')}
-                              >
-                                <Hammer className='mr-1.5 h-3.5 w-3.5' />
-                                {pending === `${key}:build`
-                                  ? '创建中…'
-                                  : '去构建'}
-                              </Button>
-                            )
-                            : (
-                              <>
-                                <Button
-                                  size='sm'
-                                  onClick={() =>
-                                    navigate(
-                                      `/my-agents?new=${key}&scenario=${scenarioId}`,
-                                    )}
-                                >
-                                  <Hammer className='mr-1.5 h-3.5 w-3.5' />
-                                  再建一个{name}
-                                </Button>
-                                <Button
-                                  size='sm'
-                                  variant='secondary'
-                                  onClick={() => navigate('/my-agents')}
-                                >
-                                  <Bot className='mr-1.5 h-3.5 w-3.5' />
-                                  查看我的{name}（{mineOf(key).length}）
-                                </Button>
-                              </>
-                            )}
-                        </div>
-                      </CardContent>
-                    </Card>
                   )
-                })}
+                  : null}
+              </div>
+
+              <div className='grid gap-4 md:grid-cols-2'>
+                {(['a', 'b'] as const).map((side) => (
+                  <SideCard
+                    key={side}
+                    side={side}
+                    copy={intro?.source.participants.sides[side] ?? null}
+                    fallbackName={side === 'a'
+                      ? data.summary.sideAName
+                      : data.summary.sideBName}
+                    fallbackLabel={side === 'a'
+                      ? data.summary.sideALabel
+                      : data.summary.sideBLabel}
+                    fallbackGoal={education?.winConditions[side] ?? null}
+                    hiddenGoals={module?.hiddenGoals?.[side] ?? null}
+                    agents={mineOf(side)}
+                    pending={pending}
+                    onEnter={enter}
+                    onViewAll={() => navigate('/my-agents')}
+                    onNew={() =>
+                      navigate(
+                        `/my-agents?new=${side}&scenario=${scenarioId}`,
+                      )}
+                  />
+                ))}
               </div>
               {buildError
                 ? <p className='text-sm text-(--accent)'>{buildError}</p>
                 : null}
-              {/* #42：DA 不设编辑框；构建智能体在构建器页进行。 */}
-              <p className='text-xs text-(--foreground-muted)'>
-                本页只讲规则，不设编辑框；点「去构建」为该方构建智能体。
-              </p>
-            </div>
+            </section>
 
-            {/* 第 3 层 裁判与计分（默认展开）+ 第 4 层 深读（默认收起） */}
-            <Card>
-              <CardContent className='pt-2 pb-2'>
-                <Accordion defaultValue={['judge-scoring']}>
-                  <AccordionItem
-                    value='judge-scoring'
-                    title='裁判与计分 · 谁来判、怎么算分'
-                  >
-                    <div className='space-y-4'>
-                      {education
-                        ? (
-                          <>
-                            <div className='space-y-1'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                裁判是谁 · 怎么判
-                              </p>
-                              <p className='whitespace-pre-line text-sm leading-relaxed text-(--foreground-subtle)'>
-                                {education.judgeSummary}
-                              </p>
-                            </div>
-                            <div className='space-y-1'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                计分规则
-                              </p>
-                              <p className='whitespace-pre-line text-sm leading-relaxed text-(--foreground-subtle)'>
-                                {education.scoring}
-                              </p>
-                            </div>
-                          </>
-                        )
-                        : (
-                          <>
-                            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                              裁判说明整理中——谁来判、按什么标准，将在这里出现
-                            </p>
-                            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                              计分规则整理中——胜负判定与加减分细则将在这里出现
-                            </p>
-                          </>
-                        )}
+            <JudgeScoringCard
+              intro={intro}
+              education={education}
+              scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
+                false}
+            />
 
-                      {data.stages.length > 0
-                        ? (
-                          <div className='space-y-1.5'>
-                            <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                              对局流程
-                            </p>
-                            <ol className='space-y-1.5'>
-                              {data.stages.map((stage, index) => (
-                                <li
-                                  key={stage.id}
-                                  className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-sm text-(--foreground-subtle)'
-                                >
-                                  <span className='mr-2 font-mono text-xs text-(--foreground-muted)'>
-                                    {index + 1}
-                                  </span>
-                                  {stage.title}
-                                  {stage.channels.length > 1
-                                    ? (
-                                      <span className='ml-2 text-xs text-(--foreground-muted)'>
-                                        {stage.channels.map((c) => c.label)
-                                          .join(' / ')}
-                                      </span>
-                                    )
-                                    : null}
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
-                        )
-                        : null}
-                    </div>
-                  </AccordionItem>
-
-                  <AccordionItem
-                    value='deep'
-                    title='深读 · 背景故事与隐藏目标玩法'
-                  >
-                    <div className='space-y-4'>
-                      {education
-                        ? (
-                          <>
-                            <div className='space-y-1'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                背景故事
-                              </p>
-                              <p className='whitespace-pre-line text-sm leading-relaxed text-(--foreground-subtle)'>
-                                {education.background}
-                              </p>
-                            </div>
-                            <div className='space-y-1'>
-                              <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-                                隐藏目标怎么玩
-                              </p>
-                              <p className='whitespace-pre-line text-sm leading-relaxed text-(--foreground-subtle)'>
-                                {education.hiddenGoalHowTo}
-                              </p>
-                            </div>
-                          </>
-                        )
-                        : (
-                          <>
-                            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                              背景故事整理中——完整叙事背景将在这里出现
-                            </p>
-                            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
-                              隐藏目标玩法说明整理中——若该场景没有隐藏目标机制，也会在这里如实说明
-                            </p>
-                          </>
-                        )}
-                    </div>
-                  </AccordionItem>
-                </Accordion>
-              </CardContent>
-            </Card>
-
-            {data.presets.length > 0
-              ? (
-                <div className='space-y-2'>
-                  <h2 className='text-sm font-semibold text-(--foreground)'>
-                    预设对手
-                  </h2>
-                  <div className='flex flex-wrap gap-2'>
-                    {data.presets.map((preset) => (
-                      <Badge key={preset.key} tone='info'>
-                        {preset.label} ·{' '}
-                        {roleOfOptions(module, preset.options)?.name ??
-                          (preset.side === 'a'
-                            ? data.summary.sideAName
-                            : data.summary.sideBName)} · {preset.modelID}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )
+            {module?.timelineAtEnd && intro?.source.overview.timeline
+              ? <TimelineCard timeline={intro.source.overview.timeline} />
               : null}
           </>
         )
@@ -422,9 +173,543 @@ export function ScenarioDetailPage() {
   )
 }
 
-// #38/#39 统计一行（与 D 卡 catalog.tsx 的 statsLine 同一口径）：N 场 ·
-// 甲侧 x% / 乙侧 y%。胜率是 0..1 分数；平局等未分胜负的场次让两侧合计可
-// 小于 100%，因此各自独立取整，不做 100-x。
+function OverviewCard({
+  intro,
+  education,
+  summary,
+  factImages,
+  timelineAtEnd,
+}: {
+  intro: ScenarioIntroCopy | null
+  education: ScenarioEducation | null
+  summary: ScenarioSummary
+  factImages: Record<string, ScenarioIntroImage> | null
+  timelineAtEnd: boolean
+}) {
+  const overview = intro?.source.overview ?? null
+  return (
+    <Card data-testid='scenario-intro-card'>
+      <CardContent className='space-y-5 pt-5'>
+        <div className='space-y-3'>
+          <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
+            01 · {overview?.label ?? '场景介绍'}
+          </p>
+          {overview
+            ? (
+              <>
+                <h2 className='text-xl font-bold leading-snug text-(--foreground) sm:text-2xl'>
+                  {overview.title}
+                </h2>
+                {overview.paragraphs.map((paragraph) => (
+                  <p
+                    key={paragraph}
+                    className='max-w-5xl text-sm leading-7 text-(--foreground-subtle)'
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </>
+            )
+            : (
+              <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+                场景导读整理中
+              </p>
+            )}
+        </div>
+
+        {overview?.facts && overview.facts.length > 0
+          ? (
+            <div className='grid gap-3 md:grid-cols-3'>
+              {overview.facts.map((fact) => (
+                <OverviewFactCard
+                  key={fact.title}
+                  fact={fact}
+                  image={factImages?.[fact.title] ?? null}
+                />
+              ))}
+            </div>
+          )
+          : null}
+
+        {overview?.timeline && !timelineAtEnd
+          ? (
+            <section className='space-y-3 border-t border-(--border-soft) pt-5'>
+              <h3 className='text-base font-semibold text-(--foreground)'>
+                {overview.timeline.title}
+              </h3>
+              <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+                {overview.timeline.items.map((item) => (
+                  <article
+                    key={`${item.step}:${item.title}`}
+                    className='rounded-lg border border-(--border-soft) bg-white/2 p-4'
+                  >
+                    <p className='font-mono text-xs text-(--warning)'>
+                      {item.step}
+                    </p>
+                    <h4 className='mt-2 text-sm font-semibold text-(--foreground)'>
+                      {item.title}
+                    </h4>
+                    <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
+                      {item.text}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )
+          : null}
+
+        {overview?.actions
+          ? <CollectionBlock collection={overview.actions} />
+          : null}
+
+        {intro?.source.participants.note
+          ? (
+            <div className='rounded-lg border border-(--warning)/35 bg-(--warning)/5 px-4 py-3 sm:flex sm:items-baseline sm:gap-3'>
+              <strong className='text-sm text-(--warning)'>
+                {intro.source.participants.note.title}
+              </strong>
+              <p className='mt-1 text-sm leading-6 text-(--foreground-subtle) sm:mt-0'>
+                {intro.source.participants.note.text}
+              </p>
+            </div>
+          )
+          : null}
+
+        {education
+          ? (
+            <div className='flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-soft) pt-4 text-xs text-(--foreground-subtle)'>
+              <span title={`难度 ${education.difficulty} / 3`}>
+                难度{' '}
+                <span className='tracking-[0.12em] text-(--warning)'>
+                  {'★'.repeat(education.difficulty)}
+                  <span className='text-(--foreground-muted)'>
+                    {'☆'.repeat(3 - education.difficulty)}
+                  </span>
+                </span>
+              </span>
+              <span className='inline-flex items-center gap-1'>
+                <Clock className='h-3.5 w-3.5' />
+                一场约 {education.minutes} 分钟
+              </span>
+              <span>{education.formatLabel}</span>
+              {education.noviceFriendly
+                ? <Badge tone='success'>适合新手</Badge>
+                : null}
+            </div>
+          )
+          : null}
+
+        {statsLine(summary)
+          ? (
+            <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+              <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
+                侧方胜率
+              </span>
+              {statsLine(summary)}
+            </p>
+          )
+          : education
+          ? (
+            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+              侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
+            </p>
+          )
+          : null}
+      </CardContent>
+    </Card>
+  )
+}
+
+function TimelineCard({ timeline }: { timeline: ScenarioIntroTimeline }) {
+  return (
+    <Card data-testid='scenario-intro-card'>
+      <CardContent className='space-y-4 pt-5'>
+        <h2 className='text-xl font-bold text-(--foreground)'>
+          {timeline.title}
+        </h2>
+        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+          {timeline.items.map((item) => (
+            <article
+              key={`${item.step}:${item.title}`}
+              className='rounded-lg border border-(--border-soft) bg-white/2 p-4'
+            >
+              <p className='font-mono text-xs text-(--warning)'>
+                {item.step}
+              </p>
+              <h3 className='mt-2 text-sm font-semibold text-(--foreground)'>
+                {item.title}
+              </h3>
+              <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
+                {item.text}
+              </p>
+            </article>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function OverviewFactCard({
+  fact,
+  image,
+}: {
+  fact: ScenarioIntroFact
+  image: ScenarioIntroImage | null
+}) {
+  return (
+    <article className='rounded-lg border border-(--border-soft) bg-white/2 p-4'>
+      {image
+        ? (
+          <img
+            alt={image.alt}
+            className='mb-4 aspect-[4/3] w-full rounded-md border border-(--border-soft) bg-white object-contain'
+            loading='lazy'
+            src={image.src}
+          />
+        )
+        : null}
+      <h3 className='text-sm font-semibold text-(--foreground)'>
+        {fact.title}
+      </h3>
+      <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
+        {fact.text}
+      </p>
+    </article>
+  )
+}
+
+function CollectionBlock(
+  { collection }: { collection: ScenarioIntroCollection },
+) {
+  return (
+    <section className='space-y-3 border-t border-(--border-soft) pt-5'>
+      <div>
+        <h3 className='text-base font-semibold text-(--foreground)'>
+          {collection.title}
+        </h3>
+        {collection.intro
+          ? (
+            <p className='mt-2 max-w-5xl text-sm leading-7 text-(--foreground-subtle)'>
+              {collection.intro}
+            </p>
+          )
+          : null}
+      </div>
+      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+        {collection.items.map((item) => (
+          <article
+            key={`${item.title}:${item.text}`}
+            className='rounded-lg border border-(--border-soft) bg-white/2 p-4'
+          >
+            <h4 className='text-sm font-semibold text-(--foreground)'>
+              {item.title}
+            </h4>
+            <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
+              {item.text}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SideCard({
+  side,
+  copy,
+  fallbackName,
+  fallbackLabel,
+  fallbackGoal,
+  hiddenGoals,
+  agents,
+  pending,
+  onEnter,
+  onViewAll,
+  onNew,
+}: {
+  side: Side
+  copy: ScenarioIntroSide | null
+  fallbackName: string
+  fallbackLabel: string | null | undefined
+  fallbackGoal: string | null
+  hiddenGoals: ScenarioHiddenGoalList | null
+  agents: Array<{ agentID: number; name?: string | null }>
+  pending: string | null
+  onEnter: (side: Side, target: 'build' | 'view') => Promise<void>
+  onViewAll: () => void
+  onNew: () => void
+}) {
+  const name = copy?.name ?? fallbackName
+  return (
+    <Card className='h-full' data-testid='scenario-intro-card'>
+      <CardContent className='flex h-full flex-col gap-4 pt-5'>
+        <div>
+          <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
+            {side === 'a' ? '02' : '03'} · {copy?.eyebrow ??
+              (side === 'a' ? '甲方' : '乙方')}
+          </p>
+          <h3 className='mt-2 text-xl font-bold text-(--foreground)'>
+            {name}
+          </h3>
+          {(copy ? copy.subtitle : fallbackLabel)
+            ? (
+              <p className='mt-1 text-xs text-(--foreground-muted)'>
+                {copy ? copy.subtitle : fallbackLabel}
+              </p>
+            )
+            : null}
+        </div>
+
+        {copy?.paragraphs.map((paragraph) => (
+          <p
+            key={paragraph}
+            className='text-sm leading-7 text-(--foreground-subtle)'
+          >
+            {paragraph}
+          </p>
+        ))}
+
+        <div className='rounded-lg border border-(--border-soft) bg-black/10 p-3'>
+          <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+            {copy?.goalLabel ?? '胜利条件'}
+          </p>
+          <p className='mt-1 text-sm leading-6 text-(--foreground-subtle)'>
+            {copy?.goal ?? fallbackGoal ?? '胜利条件文案整理中'}
+          </p>
+        </div>
+
+        {copy?.choices && copy.choices.length > 0
+          ? (
+            <div className='space-y-2'>
+              {copy.choices.map((choice) => {
+                const roleGoals = hiddenGoals?.groups.find((group) =>
+                  group.role === choice.name
+                )
+                return (
+                  <div key={choice.name} className='space-y-2'>
+                    <section className='rounded-lg border border-(--border-soft) bg-white/2 p-3'>
+                      <h4 className='text-sm font-semibold text-(--foreground)'>
+                        {choice.name}
+                      </h4>
+                      <p className='mt-1 text-xs leading-6 text-(--foreground-subtle)'>
+                        {choice.text}
+                      </p>
+                    </section>
+                    {roleGoals && hiddenGoals
+                      ? (
+                        <HiddenGoalList
+                          goals={{
+                            note: hiddenGoals.note,
+                            groups: [roleGoals],
+                          }}
+                          showRole={false}
+                        />
+                      )
+                      : null}
+                  </div>
+                )
+              })}
+            </div>
+          )
+          : null}
+
+        {hiddenGoals && hiddenGoals.groups.every((group) => !group.role)
+          ? <HiddenGoalList goals={hiddenGoals} />
+          : null}
+
+        {agents.length > 0
+          ? (
+            <p className='text-xs text-(--foreground-muted)'>
+              你已有 {agents.length} 个{name}：{' '}
+              {agents.map((agent) => agent.name ?? `#${agent.agentID}`).join(
+                ' · ',
+              )}
+            </p>
+          )
+          : null}
+
+        <div className='mt-auto flex flex-wrap items-center gap-2 pt-1'>
+          {agents.length === 0
+            ? (
+              <Button
+                size='sm'
+                data-testid={side === 'a' ? 'build-agent' : 'build-agent-b'}
+                disabled={pending != null}
+                onClick={() => void onEnter(side, 'build')}
+              >
+                <Hammer className='mr-1.5 h-3.5 w-3.5' />
+                {pending === `${side}:build`
+                  ? '创建中…'
+                  : copy?.actionLabel ?? `去构建${name}`}
+              </Button>
+            )
+            : (
+              <>
+                <Button size='sm' onClick={onNew}>
+                  <Hammer className='mr-1.5 h-3.5 w-3.5' />
+                  再建一个{name}
+                </Button>
+                <Button size='sm' variant='secondary' onClick={onViewAll}>
+                  <Bot className='mr-1.5 h-3.5 w-3.5' />
+                  查看我的{name}（{agents.length}）
+                </Button>
+              </>
+            )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function HiddenGoalList({
+  goals,
+  showRole = true,
+}: {
+  goals: ScenarioHiddenGoalList
+  showRole?: boolean
+}) {
+  return (
+    <section className='rounded-lg border border-(--warning)/30 bg-(--warning)/5 px-3'>
+      <Accordion className='divide-y-0'>
+        <AccordionItem
+          value='hidden-goals'
+          title='隐藏目标列表'
+          triggerClassName='text-xs font-medium tracking-[0.04em] text-(--foreground-muted)'
+        >
+          <div className='space-y-3'>
+            <p className='text-xs leading-5 text-(--foreground-subtle)'>
+              {goals.note}
+            </p>
+            {goals.groups.map((group, groupIndex) => (
+              <div
+                key={group.role ?? groupIndex}
+                className={groupIndex === 0
+                  ? 'space-y-2'
+                  : 'space-y-2 border-t border-(--warning)/20 pt-3'}
+              >
+                {showRole && group.role
+                  ? (
+                    <h5 className='text-xs font-semibold text-(--foreground)'>
+                      {group.role}
+                    </h5>
+                  )
+                  : null}
+                <ul className='space-y-2'>
+                  {group.options.map((option) => (
+                    <li
+                      key={option.id}
+                      className='grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 text-xs leading-5 text-(--foreground-subtle)'
+                    >
+                      <code className='font-mono font-semibold text-(--warning)'>
+                        {option.id}
+                      </code>
+                      <span>{option.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </AccordionItem>
+      </Accordion>
+    </section>
+  )
+}
+
+function JudgeScoringCard({
+  intro,
+  education,
+  scoringInitiallyCollapsed,
+}: {
+  intro: ScenarioIntroCopy | null
+  education: ScenarioEducation | null
+  scoringInitiallyCollapsed: boolean
+}) {
+  const participants = intro?.source.participants ?? null
+  return (
+    <Card data-testid='scenario-intro-card'>
+      <CardContent className='space-y-5 pt-5'>
+        <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
+          04 · 裁判与计分 · 谁来判、怎么算分
+        </p>
+        <div className='grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]'>
+          <div className='space-y-4'>
+            {participants
+              ? (
+                <>
+                  <div>
+                    <h2 className='text-xl font-bold text-(--foreground)'>
+                      {participants.judge.name}
+                    </h2>
+                    <p className='mt-1 text-xs text-(--foreground-muted)'>
+                      {participants.judge.label}
+                    </p>
+                    {participants.judge.paragraphs.map((paragraph) => (
+                      <p
+                        key={paragraph}
+                        className='mt-3 text-sm leading-7 text-(--foreground-subtle)'
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                  {participants.supporting
+                    ? <CollectionBlock collection={participants.supporting} />
+                    : null}
+                </>
+              )
+              : (
+                <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+                  裁判说明整理中
+                </p>
+              )}
+          </div>
+          <ScoringRules
+            initiallyCollapsed={scoringInitiallyCollapsed}
+            text={education?.scoring ?? '计分规则整理中'}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ScoringRules({
+  initiallyCollapsed,
+  text,
+}: {
+  initiallyCollapsed: boolean
+  text: string
+}) {
+  if (initiallyCollapsed) {
+    return (
+      <section className='rounded-lg border border-(--border-soft) bg-white/2 px-4'>
+        <Accordion className='divide-y-0'>
+          <AccordionItem
+            value='scoring-rules'
+            title='计分规则'
+            triggerClassName='font-semibold text-(--foreground)'
+          >
+            <p className='whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
+              {text}
+            </p>
+          </AccordionItem>
+        </Accordion>
+      </section>
+    )
+  }
+  return (
+    <section className='rounded-lg border border-(--border-soft) bg-white/2 p-4'>
+      <h3 className='text-sm font-semibold text-(--foreground)'>计分规则</h3>
+      <p className='mt-2 whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
+        {text}
+      </p>
+    </section>
+  )
+}
+
 function statsLine(summary: ScenarioSummary): string | null {
   const stats = summary.stats
   if (!stats) return null
@@ -434,8 +719,6 @@ function statsLine(summary: ScenarioSummary): string | null {
   } / ${summary.sideBName} ${pct(stats.sideWinRate.b)}`
 }
 
-// DA 门槛卡（#65，mock V16）：有按侧进度就点名到侧——商鞅 1/1 ✓ · 甘龙 0/1；
-// gateProgress 缺席（老服务器）时回落 P1 的静态徽章（#54 不摆假进度）。
 function GateStatus({ summary }: { summary: ScenarioSummary }) {
   const progress = summary.gateProgress ?? null
   if (!progress) {

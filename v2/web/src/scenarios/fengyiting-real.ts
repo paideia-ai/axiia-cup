@@ -1,4 +1,5 @@
 import type { ScenarioModule } from './types'
+import { fengyitingRealIntro } from './intro-copy'
 
 // 凤仪亭之夜·真实版 — 貂蝉（NPC）身兼场上人物与终局裁决者；没有真假请求
 // 机制，信息差长在泄密流程里。内容与 v2/scenarios/scenarios/fengyiting-real/
@@ -6,6 +7,8 @@ import type { ScenarioModule } from './types'
 export const fengyitingReal: ScenarioModule = {
   slotID: 'fengyiting-real',
   roles: [],
+  intro: fengyitingRealIntro,
+  timelineAtEnd: true,
   laneLabels: {
     // 貂蝉心声通道（judge-aside）：#132 暂移除了该节拍，但标题解析链保留此映射，
     // 恢复心声时 OS 卡即显示「貂蝉心声」而非「裁判心声」（飞书审计 #10）。
@@ -20,6 +23,7 @@ export const fengyitingReal: ScenarioModule = {
     difficulty: 3,
     minutes: 25,
     noviceFriendly: false,
+    formatLabel: '3 轮对峙 + 4 场私谈',
     winConditions: {
       a: '让貂蝉在终局选择董卓。她先决定继续或放弃连环计：继续，选的是战术上更值得示好的人；放弃，选的是真心愿意相随的人——无论哪种含义，被选中即胜（1:0）。',
       b: '让貂蝉在终局选择吕布。她先决定继续或放弃连环计：继续，选的是战术上更值得示好的人；放弃，选的是真心愿意相随的人——无论哪种含义，被选中即胜（1:0）。',

@@ -10,6 +10,98 @@ export interface ScenarioRole {
   pitch: string
 }
 
+export interface ScenarioIntroFact {
+  title: string
+  text: string
+}
+
+export interface ScenarioIntroStep {
+  step: string
+  title: string
+  text: string
+}
+
+export interface ScenarioIntroTimeline {
+  title: string
+  items: ScenarioIntroStep[]
+}
+
+export interface ScenarioIntroCollection {
+  title: string
+  intro?: string
+  items: ScenarioIntroFact[]
+}
+
+export interface ScenarioIntroChoice {
+  name: string
+  text: string
+}
+
+export interface ScenarioIntroImage {
+  src: string
+  alt: string
+}
+
+export interface ScenarioHiddenGoalOption {
+  id: string
+  text: string
+}
+
+export interface ScenarioHiddenGoalGroup {
+  role?: string
+  options: ScenarioHiddenGoalOption[]
+}
+
+export interface ScenarioHiddenGoalList {
+  note: string
+  groups: ScenarioHiddenGoalGroup[]
+}
+
+export interface ScenarioIntroSide {
+  eyebrow: string
+  name: string
+  subtitle?: string
+  paragraphs: string[]
+  choices?: ScenarioIntroChoice[]
+  goalLabel: string
+  goal: string
+  actionLabel: string
+}
+
+export interface ScenarioIntroJudge {
+  name: string
+  label: string
+  paragraphs: string[]
+}
+
+// `source` is a verbatim, structured transcription of the visible copy inside one
+// scenario panel in docs/competition/scenario-intro.html. The detail page may move
+// these fields between cards, but must not edit or omit them. Keep UI-only additions
+// such as scoring labels outside `source` so the parity test can detect copy drift.
+export interface ScenarioIntroCopy {
+  htmlID: string
+  source: {
+    category?: string
+    title: string
+    overview: {
+      label: string
+      title: string
+      paragraphs: string[]
+      facts?: ScenarioIntroFact[]
+      timeline?: ScenarioIntroTimeline
+      actions?: ScenarioIntroCollection
+    }
+    participants: {
+      title: string
+      intro: string
+      judge: ScenarioIntroJudge
+      supporting?: ScenarioIntroCollection
+      sides: { a: ScenarioIntroSide; b: ScenarioIntroSide }
+      note?: { title: string; text: string }
+    }
+  }
+}
+
 // DA 教育页四层内容（A4 基线 + #51：judgeOsPrompt 永不下发，这里只放可公开的
 // 裁判摘要）。全部为展示文案；服务器对场景语义保持无知，真源后续迁往 meta（R7b）。
 export interface ScenarioEducation {
@@ -18,6 +110,9 @@ export interface ScenarioEducation {
   difficulty: 1 | 2 | 3
   minutes: number
   noviceFriendly: boolean
+  // Human-readable structure. `turnCount` is an engine count and is not always a
+  // user-facing round count (for example, five jury rounds produce ten player turns).
+  formatLabel: string
   // 第 2 层：双方是谁、各自的胜利条件。
   winConditions: { a: string; b: string }
   // 第 3 层：裁判是谁、怎么判 + 计分规则。
@@ -34,6 +129,13 @@ export interface ScenarioEducation {
 export interface ScenarioModule {
   slotID: string
   roles: ScenarioRole[]
+  intro?: ScenarioIntroCopy
+  overviewFactImages?: Record<string, ScenarioIntroImage>
+  // Public candidate lists for scenarios that randomly mark one request as the
+  // player's true goal. The selected item stays private; these candidates do not.
+  hiddenGoals?: Partial<Record<Side, ScenarioHiddenGoalList>>
+  scoringInitiallyCollapsed?: boolean
+  timelineAtEnd?: boolean
   // Lane keys the script speaks under, mapped to display names. Side keys ('a',
   // 'b') stay out on purpose: a finished match carries its own labels for them,
   // and in a role-cast match they name a side rather than a speaker.

@@ -1,4 +1,5 @@
 import type { ScenarioModule } from './types'
+import { shangyangCourtIntro } from './intro-copy'
 
 // 商鞅变法·朝堂辩法 — 预定的首战场景：机制最短（5 轮辩论 + 问询 + 裁决），
 // 真假请求玩法在此第一次登场。文案与 v2/scenarios/scenarios/shangyang-court/
@@ -6,6 +7,40 @@ import type { ScenarioModule } from './types'
 export const shangyangCourt: ScenarioModule = {
   slotID: 'shangyang-court',
   roles: [],
+  intro: shangyangCourtIntro,
+  hiddenGoals: {
+    a: {
+      note: '每局随机一项为真目标，其余两项为假目标。',
+      groups: [
+        {
+          options: [
+            {
+              id: 'SR1',
+              text: '请授商鞅督察宗室之权，王公犯法皆得论处',
+            },
+            { id: 'SR2', text: '请擢景监为大夫，入朝参与国政' },
+            { id: 'SR3', text: '请赐商鞅举荐各县县令之权' },
+          ],
+        },
+      ],
+    },
+    b: {
+      note: '每局随机一项为真目标，其余两项为假目标。',
+      groups: [
+        {
+          options: [
+            { id: 'GR1', text: '请以世族子弟统领宫禁宿卫' },
+            {
+              id: 'GR2',
+              text: '请加太师府议政之权，凡国之大事须经太师府议定',
+            },
+            { id: 'GR3', text: '请保世族封地食邑世代相传，不受裁减' },
+          ],
+        },
+      ],
+    },
+  },
+  scoringInitiallyCollapsed: true,
   laneLabels: {
     judge: '君上',
   },
@@ -15,6 +50,7 @@ export const shangyangCourt: ScenarioModule = {
     difficulty: 1,
     minutes: 8,
     noviceFriendly: true,
+    formatLabel: '5 轮朝堂辩论',
     winConditions: {
       a: '让秦孝公裁决『推行变法』（+1，平分时的胜负手）；同时让你的真请求获准、少背假请求、别被甘龙猜中真目标——总分高者胜。',
       b: '让秦孝公裁决『维持现状』（+1，平分时的胜负手）；同时让你的真请求获准、少背假请求、别被商鞅猜中真目标——总分高者胜。',
