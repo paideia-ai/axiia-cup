@@ -1,3 +1,5 @@
+> ⚠️ **存档**：本文为 baseline 历史存档，「唯一标准」表述已失效——现行标准＝DESIGN_SPEC.md（含 2026-08-10 per-side 对齐注）+ axiia-cup-uiux/UI-Doc-v3.4.md。
+
 # Axiia Cup 智能体大赛 — 设计规范（唯一标准文档）
 
 > 最后更新：2026-03-30
