@@ -8,7 +8,7 @@
 // regression, it is an environment without a tournament.
 import { expect, test } from '@playwright/test'
 
-import { registrationCode, signup } from '../helpers'
+import { signup } from '../helpers'
 
 const sameOrigin = { 'Sec-Fetch-Site': 'same-origin' }
 
@@ -141,11 +141,10 @@ test('B1 公开落地页给出四项内容（U08-C01）', async ({ page }) => {
 
 test('#35 公开智能体视图（U10-C12）', async ({ page }) => {
   let agentID = 0
-  let owner = ''
 
   await test.step('假如 另一个玩家拥有一个已保存版本的智能体', async () => {
     // 用一个自己的账号造出「别人的」智能体，再换账号去看。
-    owner = await signup(page, 'pubowner')
+    await signup(page, 'pubowner')
     const ensure = await page.request.post('/v1/agents/ensure', {
       headers: sameOrigin,
       data: {
@@ -192,7 +191,7 @@ test('#35 公开智能体视图（U10-C12）', async ({ page }) => {
     await expect(page.getByText('逐版本战绩')).toBeVisible()
   })
 
-  await test.step('而且 响应里没有提示词字段', async () => {
+  await test.step('而且 响应里没有提示词字段', () => {
     expect(body).not.toContain('prompt')
     expect(body).not.toContain('不该被外人看到')
   })
@@ -254,7 +253,7 @@ test('#64 排名一律按玩家（U11-C04）', async ({ page }) => {
     ).toBeVisible()
   })
 
-  await test.step('并且 同一个玩家只占一行', async () => {
+  await test.step('并且 同一个玩家只占一行', () => {
     const ids = entries.map((entry) => entry.playerID)
     expect(new Set(ids).size, '玩家 id 不重复').toBe(ids.length)
   })

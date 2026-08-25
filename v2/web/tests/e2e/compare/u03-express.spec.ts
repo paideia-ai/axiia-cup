@@ -40,7 +40,9 @@ async function expectSimplifiedDA(page: Page) {
   await expect(page.getByText('首战快速通道').first()).toBeVisible()
   await expect(page.locator('h1')).toBeVisible()
   await expect(page.getByText('你的角色')).toBeVisible()
-  await expect(page.getByText(/轮对话后由裁判当场判定胜负/)).toBeVisible()
+  // 2026-08-25 集成注：#142 起「一句规则」渲染 education.formatLabel（商鞅＝
+  // 「5 轮朝堂辩论」），不再是移植时的静态「N 轮对话」——断言随产品文案对齐。
+  await expect(page.getByText(/轮朝堂辩论后由裁判当场判定胜负/)).toBeVisible()
   await expect(page.getByTestId('express-build')).toHaveText('去构建 →')
   await expect(page.getByText('先逛逛全部场景')).toBeVisible()
 }

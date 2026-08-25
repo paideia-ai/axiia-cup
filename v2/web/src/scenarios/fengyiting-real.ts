@@ -1,5 +1,6 @@
 import type { ScenarioModule } from './types'
 import { fengyitingRealIntro } from './intro-copy'
+import runtimeQuotes from './runtime-quotes.json'
 
 // 凤仪亭之夜 — 貂蝉（NPC）身兼场上人物与终局裁决者；没有真假请求
 // 机制，信息差长在泄密流程里。内容与 v2/scenarios/scenarios/fengyiting-real/
@@ -31,6 +32,12 @@ export const fengyitingReal: ScenarioModule = {
     },
     judgeSummary:
       '裁决者是貂蝉本人（官方 NPC 扮演，默认 deepseek-v4-pro），且她不只在终局出场：旁听完对峙后由她裁定私谈顺序，四场私谈她逐句参与、当面回应。终局她独自定夺两件事——继续或放弃连环计，再选一人。设定上她无从核实任何断言：兵力、时机、内应、王允的安排，都只是当面之言，无第三方可查证。她掂量的是二人如何回应她、前后说法是否一致、把她当作棋子还是当作人。',
+    // 同源引用（u04-c10）：貂蝉身兼场内角色与终局裁决者，她的扮演 system
+    // prompt 即本场景的「裁判 prompt」。对峙由【系统】舞台指令开场，无统一
+    // 开场首句——openingLine 缺席。
+    judgePrompt: runtimeQuotes['fengyiting-real'].judgePrompt,
+    judgePromptNote: '貂蝉身兼场内角色与终局裁决者，这是她的完整扮演提示词。',
+    judgeModel: runtimeQuotes['fengyiting-real'].judgeModel,
     scoring: '貂蝉终局选择的角色获胜',
     background:
       '东汉初平三年。王允的连环计行至最险一步：董卓闯入相府后园，在凤仪亭撞见吕布与貂蝉私会，当场对峙。与演义不同，本场景把底牌亮开——董卓、吕布、貂蝉三人都知道连环计的结构、目的与经典结局；揭穿计谋不令任何人惊讶，经典结局也只是一种可能的未来。\n\n流程五幕：凤仪亭当面交锋三轮（每轮董卓先发言，貂蝉旁听）；貂蝉裁决私谈顺序；随后四场私谈、每场五轮，两人各谈两场；其间暗流涌动——若先谈董卓，细作会把吕布的后园私谈逐句报给董卓，王允的眼线则把董卓的首谈递给吕布；若先谈吕布，吕布会潜回廊下亲耳偷听董卓首谈，而董卓的旧部会迟迟补报吕布的私谈全文、并遣人当场打断吕布与貂蝉的再谈。最后，貂蝉独处定夺。\n\n你的策略提示词只喂给你这一方（董卓或吕布）。貂蝉由系统扮演——说服不了系统，只能说服她。',

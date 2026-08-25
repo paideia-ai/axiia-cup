@@ -211,7 +211,8 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     // 简化版 DA（#11）：钩子 + 我方角色卡。AXIIA_EXPRESS_PRESET 指定对手为
     // 商鞅场景 b 侧预设 → 我执 a（商鞅）。
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      '商鞅变法·朝堂辩法',
+      // 2026-08-25 集成注：#142 起 express 页头用 intro 标题（「·」两侧带空格）。
+      '商鞅变法 · 朝堂辩法',
     )
     await expect(page.getByText('你的角色')).toBeVisible()
     await expect(page.getByText('自魏入秦的说客，无根无党，惟以变法自荐'))

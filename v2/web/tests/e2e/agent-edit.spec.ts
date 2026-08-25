@@ -303,6 +303,23 @@ test('agent-edit：版本号恒 +1；基于该版本迭代不产版本；模型�
       .toHaveValue('这是一段没保存的改动，不该被静默吞掉。')
   })
 
+  await test.step('当 我把工作区文本改成与 v1 一字不差再点「基于该版本迭代」；那么 不出现确认，直接载入 v1（jR1s4 零损失）', async () => {
+    // round-2 人工反馈（RUI LIN，jR1s4）：目标版本与草稿一字不差＝载入零
+    // 损失，P11 不再弹确认。草稿此时仍与最新版本 v4 不同——「与最新一致」
+    // 这条旧豁免帮不上忙，走的是新加的目标一致判据。
+    const { versions } = await versionsOf(page, agentA)
+    const v1 = versions.reduce((a, b) => (a.id < b.id ? a : b))
+    await page.getByLabel('策略提示词').fill(v1.prompt)
+    await page.waitForTimeout(900)
+    const v1Card = page.getByTestId('version-card').filter({
+      has: page.getByRole('button', { name: '基于 v1 迭代' }),
+    })
+    await v1Card.getByRole('button', { name: '基于 v1 迭代' }).click()
+    await expect(v1Card.getByText(/工作区里有未保存的改动/)).toHaveCount(0)
+    await expect(page.getByText(/已载入 v1/)).toBeVisible()
+    await expect(page.getByLabel('策略提示词')).toHaveValue(v1.prompt)
+  })
+
   await test.step('那么 模型选择器沿用最新版本的模型（P5），且「复制当前文本」可用（P14）', async () => {
     await page.goto(`/agents/${agentA}/build`)
     await expect(page.getByText(/沿用 v\d+ 的模型/)).toBeVisible()

@@ -14,9 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 import { Textarea } from './ui/textarea'
 
 // 新建流程的初始化方式三选一（E6/#83，mock S25 的三 tab 形态）：MCQ 拼装
-// （默认，#12）/ Basic 直写 / 元提示词。只在工作区为空时由构建器挂载
-// （E7 门在 lib/deck.ts initModesAvailable）；「填入工作区」把拼好的纯文本
-// 交回构建器后，工作区非空、本组件即被卸载——此后迭代只有文本工作台。
+// （默认，#12）/ Basic 直写 / 元提示词。只在版本数为 0 且工作区为空时由
+// 构建器挂载（E7 门在 lib/deck.ts initModesAvailable）；「填入工作区」把拼
+// 好的纯文本交回构建器后，工作区非空、本组件即被卸载——保存 v1 之后迭代
+// 只有文本工作台，清空工作区也不再回到这里（重选初始化＝「再建一个」，#90）。
 // MCQ 选择只活在组件内存里（不持久化；E5「选项随版本存档」等 P5 后端批次
 // 由保存接口承接）——调用方用 key 绑定 deck 身份，切侧/切角色即重置。
 
@@ -64,9 +65,12 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
           <p className='text-sm font-semibold text-(--foreground)'>
             初始化方式 · 三选一生成首稿
           </p>
-          {/* #90：「复制为新智能体」已废止——想重新选卡只剩清空工作区一条路 */}
+          {
+            /* #90：「复制为新智能体」已废止；保存 v1 后清空工作区也不复活
+            三选一（E7/#83）——想重新选卡＝「再建一个」智能体或创建对侧 */
+          }
           <p className='mt-0.5 text-xs text-(--foreground-muted)'>
-            保存即成为 v1；此后的迭代只有文本编辑（想重新选卡：清空工作区）
+            保存即成为 v1；此后的迭代只有文本编辑（想重新选卡：再建一个智能体）
           </p>
         </div>
         <Tabs value={tab} onValueChange={setTab} className='space-y-4'>

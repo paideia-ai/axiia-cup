@@ -137,9 +137,14 @@ export function assembleDeck(
   return sections.join(joiner)
 }
 
-// E7/#83 的入口门（唯一判据）：工作区没有任何文本才提供初始化方式三选一；
-// 出现任何文本（拼装填入或手打）即收起，迭代只剩文本工作台——文本→MCQ
-// 无路可回（纯 MCQ 首稿也不例外），想重选走清空工作区或 E4 复制为新智能体。
-export function initModesAvailable(workspaceText: string): boolean {
-  return workspaceText.trim() === ''
+// E7/#83 的入口门（唯一判据）：三选一只属于**从未保存过版本**的新建流程——
+// 版本数为 0 且工作区没有任何文本才提供；出现任何文本（拼装填入或手打）即
+// 收起，保存 v1 之后永远只剩文本工作台（纯 MCQ 首稿也不例外），清空工作区
+// 只删草稿、不再复活三选一。想重选初始化方式＝「再建一个」同侧新智能体或
+// 创建对侧（#90 废止 E4 后的唯一出口）。
+export function initModesAvailable(
+  workspaceText: string,
+  versionCount: number,
+): boolean {
+  return versionCount === 0 && workspaceText.trim() === ''
 }

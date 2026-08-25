@@ -133,6 +133,15 @@ export function ScenarioDetailPage() {
                   : null}
               </div>
 
+              {education?.openingLine
+                ? (
+                  <OpeningLine
+                    line={education.openingLine}
+                    speaker={intro?.source.participants.judge.name ?? null}
+                  />
+                )
+                : null}
+
               <div className='grid items-start gap-4 md:grid-cols-2'>
                 {(['a', 'b'] as const).map((side) => (
                   <SideCard
@@ -689,6 +698,15 @@ function JudgeScoringCard({
                   裁判说明整理中
                 </p>
               )}
+            {education?.judgePrompt
+              ? (
+                <JudgePromptDisclosure
+                  model={education.judgeModel ?? null}
+                  note={education.judgePromptNote ?? null}
+                  prompt={education.judgePrompt}
+                />
+              )
+              : null}
           </section>
           <ScoringRules
             initiallyCollapsed={scoringInitiallyCollapsed}
@@ -837,6 +855,84 @@ function ScoreRuleRow({
       >
         {rule.score}
       </span>
+    </div>
+  )
+}
+
+// #51 W2 EXPAND-1「开场白」（u04-c13 裁定）：对局开始、双方发言之前，场景/裁判
+// 对双方同时说的统一首句。文与运行时 OPENING_LINE 同源——值取自
+// runtime-quotes.json，v2/scenarios 的 deno task validate 逐字核对；这里只读
+// 展示，不另写会漂移的第二份。没有统一开场首句的场景不渲染本块。
+function OpeningLine({
+  line,
+  speaker,
+}: {
+  line: string
+  speaker: string | null
+}) {
+  return (
+    <figure
+      data-testid='opening-line'
+      className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
+    >
+      <figcaption className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+        开场白{speaker ? ` · 对局开始时${speaker}对双方说的第一句话` : ''}
+      </figcaption>
+      <blockquote className='mt-1 text-sm leading-7 text-(--foreground-subtle)'>
+        「{line}」
+      </blockquote>
+    </figure>
+  )
+}
+
+// A4 内容基线「裁判 prompt + 摘要」（u04-c10 裁定）：对局中真实喂给裁判/NPC
+// 裁决者的扮演 system prompt 原文，只读、默认收起。文与 script.js 同源
+// （runtime-quotes.json，deno task validate 逐字核对）。#51 只豁免
+// judgeOsPrompt——裁判内心独白的生成提示维持不公开，因此不在原文之内。
+function JudgePromptDisclosure({
+  model,
+  note,
+  prompt,
+}: {
+  model: string | null
+  note: string | null
+  prompt: string
+}) {
+  return (
+    <div
+      data-testid='judge-prompt'
+      className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'
+    >
+      <Accordion className='divide-y-0'>
+        <AccordionItem
+          value='judge-prompt'
+          title='裁判提示词原文'
+          triggerClassName='text-xs font-medium tracking-[0.04em] text-(--foreground-muted)'
+        >
+          <div className='space-y-3 border-t border-(--border-soft) pt-3'>
+            {model
+              ? (
+                <p className='text-[11px] leading-5 text-(--foreground-muted)'>
+                  裁判／计分模型：默认 {model}，可由对局参数覆盖。
+                </p>
+              )
+              : null}
+            {note
+              ? (
+                <p className='text-[11px] leading-5 text-(--foreground-muted)'>
+                  {note}
+                </p>
+              )
+              : null}
+            <p className='text-[11px] leading-5 text-(--foreground-muted)'>
+              依 #51，裁判内心独白（judge OS）的生成提示词不公开，不含在下文中。
+            </p>
+            <pre className='whitespace-pre-wrap border-l-2 border-(--border-soft) pl-3 font-sans text-xs leading-6 text-(--foreground-subtle)'>
+              {prompt}
+            </pre>
+          </div>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }

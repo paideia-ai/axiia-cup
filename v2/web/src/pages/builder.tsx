@@ -83,6 +83,10 @@ export function BuilderPage() {
   const [preferVersionID, setPreferVersionID] = useState<number | null>(null)
   const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
+  // E10/#84 后半句（pr-fate u02-c11b 拍板 A）：保存不移动 ★，但成功提示里给
+  // 「一键改标」——点一下把刚保存的 vN 设为参赛版本（复用 setEntry，提示按
+  // #91 口径更新）。只记 id，词面在渲染处按当前版本线现算。
+  const [restarTargetID, setRestarTargetID] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   // P10：保存时的可选备注，写一次不再改；保存成功即清空，下一版重新填。
   const [note, setNote] = useState('')
@@ -255,6 +259,7 @@ export function BuilderPage() {
     setModelID(version.modelID)
     setRestoredTag(versionTag(version, siblings))
     setSaveNotice(null)
+    setRestarTargetID(null)
     const role = roleOfOptions(scenarioModule(scenarioID), version.options)
     if (role && role.side === side) setRoleKey(role.key)
     void builder
@@ -268,9 +273,17 @@ export function BuilderPage() {
   const latestVersion = [...versions].sort((a, b) => b.id - a.id)[0] ?? null
   const draftDiffersFromLatest = latestVersion != null &&
     prompt.trim() !== latestVersion.prompt.trim()
+  // 一键改标的目标（E10）：id 换算回版本对象；版本线刷新后词面自动跟上。
+  const restarTarget = restarTargetID == null
+    ? null
+    : versions.find((v) => v.id === restarTargetID) ?? null
 
   const requestIterate = (version: AgentVersionDTO) => {
-    if (draftDiffersFromLatest) {
+    // round-2 人工反馈（RUI LIN，jR1s4）对 P11 的成文细化：被点击的目标版本
+    // 与当前草稿一字不差时，载入是零损失——即使草稿与最新版本不一致也直接
+    // 载入、不弹确认。P11 的确认只拦「会丢内容」的覆盖。
+    const zeroLoss = prompt.trim() === version.prompt.trim()
+    if (draftDiffersFromLatest && !zeroLoss) {
       setPendingIterate(version)
       return
     }
@@ -373,16 +386,19 @@ export function BuilderPage() {
       setEntryVersionID(list?.entryVersionID ?? entryVersionID)
       setRestoredTag(null)
       setNote('')
-      // E10（#84）：保存不移动参赛标记——新版本不是 ★ 时提醒一句。
+      // E10（#84）：保存不移动参赛标记——新版本不是 ★ 时提醒一句，并给
+      // 「一键改标」按钮（u02-c11b 拍板 A：E10 原文的后半句）。
       const entryID = list?.entryVersionID ?? entryVersionID
       const entry = nextVersions.find((v) => v.id === entryID)
+      const keepsOldEntry = entry != null && entry.id !== saved.id
       setSaveNotice(
-        entry != null && entry.id !== saved.id
+        keepsOldEntry
           ? `已保存 ${versionTag(saved, nextVersions)} · ★参赛版本仍是 ${
             versionTag(entry, nextVersions)
           }——新版本不会自动参赛`
           : `已保存 ${versionTag(saved, nextVersions)}`,
       )
+      setRestarTargetID(keepsOldEntry ? saved.id : null)
       setSaving(false)
     } catch (cause) {
       // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
@@ -396,6 +412,8 @@ export function BuilderPage() {
   // ★，所以提示要说清「从哪来」——玩家看不到别的策略时最容易以为没生效。
   const setEntry = async (versionID: number) => {
     setError(null)
+    // 改标动作（无论来自版本卡还是一键改标）都会让提示里的快捷按钮过时。
+    setRestarTargetID(null)
     const previous = versions.find((v) => v.id === entryVersionID) ?? null
     try {
       await builder.setEntry(agentID, versionID)
@@ -448,12 +466,15 @@ export function BuilderPage() {
   const units = promptLength(prompt)
   const overLimit = units > PROMPT_UNIT_LIMIT
 
-  // 初始化方式三选一（E6/#83）：只在工作区为空且场景有 deck 时出现（E7 门
-  // 在 initModesAvailable）；deck 缺席的场景不摆假 tab，保持 Basic 直写。
+  // 初始化方式三选一（E6/#83）：只属于从未保存过版本的新建流程——版本数为
+  // 0、工作区为空且场景有 deck 时出现（E7 门在 initModesAvailable；保存 v1
+  // 后清空工作区也不再复活三选一，重选初始化走「再建一个」，#90 的唯一出
+  // 口）；deck 缺席的场景不摆假 tab，保持 Basic 直写。
   // deck 按侧或入场角色解析（本能寺逐角色一套），换角色即换 deck、选择重置
   // （key 重挂载）——选择本身不持久化。
   const deck = deckFor(scenarioID, side, roleKey)
-  const showInit = !draftLoading && deck != null && initModesAvailable(prompt)
+  const showInit = !draftLoading && deck != null &&
+    initModesAvailable(prompt, versions.length)
   const sideDisplayName = scenario
     ? (side === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName)
     : side === 'a'
@@ -515,12 +536,24 @@ export function BuilderPage() {
 
       {saveNotice != null
         ? (
-          <p
+          <div
             data-testid='save-notice'
-            className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+            className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
           >
-            {saveNotice}
-          </p>
+            <span>{saveNotice}</span>
+            {/* E10 原文「参赛版本仍是 vK · 一键改标」的后半句（u02-c11b） */}
+            {restarTarget != null
+              ? (
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  onClick={() => void setEntry(restarTarget.id)}
+                >
+                  一键改标到 {versionTag(restarTarget, versions)}
+                </Button>
+              )
+              : null}
+          </div>
         )
         : null}
 
@@ -574,16 +607,20 @@ export function BuilderPage() {
             </span>
           </div>
           {
-            /* E7（#83）：迭代只有文本工作台；清空工作区是重选初始化方式的
-            唯一回头路——两步就地确认，不弹窗。 */
+            /* E7（#83，pr-fate u02-c19 拍板 A）：迭代只有文本工作台。清空
+            工作区只删草稿——版本数为 0 时它是重选初始化方式的回头路；已有
+            版本后三选一不再复活，重选初始化＝「再建一个」同侧新智能体或
+            创建对侧（#90 的唯一出口）。两步就地确认，不弹窗。 */
           }
-          {deck != null && !draftLoading && !initModesAvailable(prompt)
+          {deck != null && !draftLoading && prompt.trim() !== ''
             ? (
               clearArmed
                 ? (
                   <div className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'>
                     <span className='text-xs text-(--foreground-subtle)'>
-                      清空后可重新选择初始化方式
+                      {versions.length === 0
+                        ? '清空后可重新选择初始化方式'
+                        : '清空后不回到初始化三选一——想重选初始化方式：再建一个智能体或创建对侧'}
                     </span>
                     <Button
                       size='sm'
@@ -607,7 +644,9 @@ export function BuilderPage() {
                     onClick={() => setClearArmed(true)}
                     className='cursor-pointer text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
                   >
-                    清空工作区（重新选择初始化方式）
+                    {versions.length === 0
+                      ? '清空工作区（重新选择初始化方式）'
+                      : '清空工作区'}
                   </button>
                 )
             )
