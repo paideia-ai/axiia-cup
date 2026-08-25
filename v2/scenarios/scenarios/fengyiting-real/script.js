@@ -1,6 +1,6 @@
 const meta = {
   id: 'fengyiting-real',
-  title: '凤仪亭之夜·真实版',
+  title: '凤仪亭之夜',
   subject: '历史',
   sideAName: '董卓',
   sideBName: '吕布',
