@@ -575,15 +575,17 @@ async function main() {
   game.emit('council', { type: 'scene', actor: 'judge', text: OPENING_LINE })
 
   for (let round = 1; round <= rounds; round++) {
+    const roundPrompt = `【系统】当前是深夜军议第 ${round}/${rounds} 轮。${
+      round === rounds ? '这是本场军议的最后一轮。' : ''
+    }`
+    a.push(roundPrompt)
     const lineA = (await a.say({ channel: 'council' })).text
     b.hear(roleA.name, lineA)
+    b.push(roundPrompt)
     const lineB = (await b.say({ channel: 'council' })).text
     a.hear(roleB.name, lineB)
     pending.push({ round: round, a: lineA, b: lineB })
-    // 飞书审计 #12：首拍固定落在第 1 轮——首对 A/B 发言一出即录首段心声，
-    // 此后保持每 osInterval 轮一拍（默认 2 → 第 1、3、5…轮）。round < rounds
-    // 仍然兜底：末轮永不落拍，收官进言不加标记、直达裁决（见下方 hearBatch）。
-    if ((round - 1) % osInterval === 0 && round < rounds) {
+    if (round % osInterval === 0 && round < rounds) {
       hearBatch()
       await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
     }

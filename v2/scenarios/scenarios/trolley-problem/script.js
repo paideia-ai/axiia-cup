@@ -288,8 +288,13 @@ async function main() {
     game.emit(channel, { type: 'scene', text: `案件 ${current.id}. ${current.title}：${current.text}` })
 
     for (let round = 1; round <= caseRounds; round++) {
+      const roundPrompt = `【系统】当前是第 ${caseIndex + 1}/${cases.length} 个案件「${
+        current.title
+      }」的第 ${round}/${caseRounds} 轮。${round === caseRounds ? '这是本案的最后一轮。' : ''}`
+      a.push(roundPrompt)
       const lineA = (await a.say({ channel: channel })).text
       b.hear(NAME_A, lineA)
+      b.push(roundPrompt)
       const lineB = (await b.say({ channel: channel })).text
       a.hear(NAME_B, lineB)
       pending.push({ caseID: current.id, round: round, a: lineA, b: lineB })

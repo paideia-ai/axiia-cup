@@ -1,6 +1,6 @@
 const meta = {
   id: 'fengyiting-real',
-  title: '凤仪亭之夜·真实版',
+  title: '凤仪亭之夜',
   subject: '历史',
   sideAName: '董卓',
   sideBName: '吕布',
@@ -229,6 +229,7 @@ const srVerdict = `【系统】全部会面已经结束，现在你必须独自�
 async function main() {
   const stageOneRounds = game.params.stageOneRounds ?? 3
   const meetingRounds = game.params.meetingRounds ?? 5
+  const dialogueStageCount = 5
 
   const players = {
     a: game.agent('a', { system: playerSystem('董卓', '吕布', game.playerPrompt('a')), side: 'a' }),
@@ -239,17 +240,24 @@ async function main() {
     model: game.params.diaochanModel ?? 'deepseek-v4-pro',
   })
   const stripActions = (line) => line.replace(/（[^）]*）/g, '').trim()
+  const dialogueRoundPrompt = (stage, round, rounds) =>
+    `【系统】当前是第 ${stage.number}/${dialogueStageCount} 个对话阶段「${stage.title}」的第 ${round}/${rounds} 轮。${
+      round === rounds ? '这是本阶段的最后一轮。' : ''
+    }`
 
-  const runMeeting = async (side, channel, playerIntro, diaochanIntro, sceneText, afterRound) => {
+  const runMeeting = async (stage, side, channel, playerIntro, diaochanIntro, sceneText, afterRound) => {
     const player = players[side]
     player.push(playerIntro)
     diaochan.push(diaochanIntro)
     game.emit(channel, { type: 'scene', text: sceneText })
     const lines = []
     for (let round = 0; round < meetingRounds; round++) {
+      const roundPrompt = dialogueRoundPrompt(stage, round + 1, meetingRounds)
+      player.push(roundPrompt)
       const line = (await player.say({ channel: channel })).text
       diaochan.hear(NAMES[side], line)
       lines.push(`${NAMES[side]}：${stripActions(line)}`)
+      diaochan.push(roundPrompt)
       const reply = (await diaochan.say({ channel: channel })).text
       player.hear('貂蝉', reply)
       lines.push(`貂蝉：${stripActions(reply)}`)
@@ -270,10 +278,18 @@ async function main() {
   game.emit('public', { type: 'scene', text: srStageOnePlayer(stageOneRounds) })
 
   for (let round = 0; round < stageOneRounds; round++) {
+    const roundPrompt = dialogueRoundPrompt(
+      { number: 1, title: '凤仪亭公开交锋' },
+      round + 1,
+      stageOneRounds,
+    )
+    players.a.push(roundPrompt)
+    diaochan.push(roundPrompt)
     const dongLine = (await players.a.say({ channel: 'public' })).text
     players.b.hear(NAMES.a, dongLine)
     diaochan.hear(NAMES.a, dongLine)
 
+    players.b.push(roundPrompt)
     const lyuLine = (await players.b.say({ channel: 'public' })).text
     players.a.hear(NAMES.b, lyuLine)
     diaochan.hear(NAMES.b, lyuLine)
@@ -296,6 +312,7 @@ async function main() {
   if (first === 'a') {
     game.phase('第二场·貂蝉与董卓初谈')
     const firstDongTalk = await runMeeting(
+      { number: 2, title: '貂蝉与董卓初谈' },
       'a',
       'a-1',
       playerIntro('相府内室，灯烛未熄。貂蝉遣人请董卓入内室相见，室中只有你们二人。'),
@@ -305,6 +322,7 @@ async function main() {
 
     game.phase('第三场·貂蝉与吕布初谈')
     const lyuTalk = await runMeeting(
+      { number: 3, title: '貂蝉与吕布初谈' },
       'b',
       'b-1',
       playerIntro('次日董卓入朝，相府后园无人。貂蝉设法秘密送出口信，请你前来后园相见。'),
@@ -324,6 +342,7 @@ async function main() {
 
     game.phase('第四场·貂蝉与董卓再谈')
     await runMeeting(
+      { number: 4, title: '貂蝉与董卓再谈' },
       'a',
       'a-2',
       playerIntro('你自朝中归来，遣人再召貂蝉入内室相见。'),
@@ -342,6 +361,7 @@ async function main() {
 
     game.phase('第五场·貂蝉与吕布再谈')
     await runMeeting(
+      { number: 5, title: '貂蝉与吕布再谈' },
       'b',
       'b-2',
       playerIntro('你从王允席间立即离开，赶往相府接应貂蝉。她刚从董卓的内室出来，你在归途迎面遇见了她。'),
@@ -351,6 +371,7 @@ async function main() {
   } else {
     game.phase('第二场·貂蝉与吕布初谈')
     const lyuTalk = await runMeeting(
+      { number: 2, title: '貂蝉与吕布初谈' },
       'b',
       'b-1',
       playerIntro('次日董卓入朝，相府后园无人。貂蝉设法秘密送出口信，请你前来后园相见。'),
@@ -363,6 +384,7 @@ async function main() {
 
     game.phase('第三场·貂蝉与董卓初谈')
     const dongTalk = await runMeeting(
+      { number: 3, title: '貂蝉与董卓初谈' },
       'a',
       'a-1',
       playerIntro('你自朝中归来，貂蝉遣人请你入内室相见，室中只有你们二人。'),
@@ -379,6 +401,7 @@ async function main() {
     const reportAfterRound = Math.floor((meetingRounds - 1) / 2)
     const summons = '【系统】相府侍从的灯火自远处而来，传董卓口令：命貂蝉立刻回内室。来人不肯说明缘由，只在一旁催促等候；你们必须尽快收束此次谈话。'
     await runMeeting(
+      { number: 4, title: '吕布廊下相拦' },
       'b',
       'b-2',
       `【系统】貂蝉辞出内室，行至回廊转角，你突然现身拦住她。\n\n现在你与貂蝉就地交谈，共 ${meetingRounds} 个完整轮次，每轮你先发言、貂蝉回应。请开始。`,
@@ -407,6 +430,7 @@ async function main() {
 
     game.phase('第五场·貂蝉与董卓再谈')
     await runMeeting(
+      { number: 5, title: '貂蝉与董卓再谈' },
       'a',
       'a-2',
       playerIntro('内室灯下，你遣人将貂蝉召回，室中只有你们二人。'),

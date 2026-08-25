@@ -77,7 +77,8 @@ export function ExpressPage() {
   }
 
   const { scenario, mySide } = data
-  const education = scenarioModule(data.scenarioID)?.education ?? null
+  const module = scenarioModule(data.scenarioID)
+  const education = module?.education ?? null
   const mySideName = mySide === 'a'
     ? scenario.summary.sideAName
     : scenario.summary.sideBName
@@ -90,7 +91,7 @@ export function ExpressPage() {
       <div className='space-y-2'>
         <Badge tone='accent'>首战快速通道</Badge>
         <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
-          {scenario.summary.title}
+          {module?.intro?.source.title ?? scenario.summary.title}
         </h1>
         <p className='text-sm leading-relaxed text-(--foreground-subtle)'>
           {education?.hook ?? scenario.summary.subject}
@@ -119,8 +120,9 @@ export function ExpressPage() {
           {/* 一句规则：首战不展开四层教育，一行讲完怎么赢。 */}
           <p className='flex items-center gap-1.5 text-xs text-(--foreground-muted)'>
             <Clock className='h-3.5 w-3.5' />
-            {scenario.summary.turnCount}{' '}
-            轮对话后由裁判当场判定胜负——写好策略提示词，AI 替你上场。
+            {education?.formatLabel ??
+              `${scenario.summary.turnCount} 轮`}后由裁判当场判定胜负——写好策略提示词，AI
+            替你上场。
           </p>
         </CardContent>
       </Card>
