@@ -333,7 +333,7 @@ test('U13-C03 配对海选轮派发真对局，完局关轮，再配正赛轮', 
   })
 })
 
-test('U13-C04 玩家在「排名」页看到锦标赛卡片——现状与缺口', async ({ page }) => {
+test('U13-C04 玩家在「排名」页看到锦标赛卡片——时间线与阶段标签', async ({ page }) => {
   await test.step('假如 我以 P1 登录', async () => {
     await uiLogin(page, p1Email, PW)
   })
@@ -356,7 +356,7 @@ test('U13-C04 玩家在「排名」页看到锦标赛卡片——现状与缺口
     await shot(page, '02-tournaments-list-running')
   })
 
-  await test.step('并且 接口带 rounds 时间线与 phase，页面却没有渲染按轮时间线（缺口）', async () => {
+  await test.step('并且 接口带 rounds 时间线与 phase，页面渲染按轮时间线（B4——#138 已落地）', async () => {
     const response = await page.request.get('/v1/tournaments')
     expect(response.ok()).toBe(true)
     const summary = (await response.json() as {
@@ -364,22 +364,18 @@ test('U13-C04 玩家在「排名」页看到锦标赛卡片——现状与缺口
     }).tournaments.find((row) => row.id === tournamentID)!
     expect(summary.rounds?.length, '服务端已随列表带出按轮时间线').toBe(2)
     expect(summary.phase, '服务端已带当前 phase').toBe('main')
-    // 页面上没有任何「第 1 轮 / 第 2 轮」的时间线元素可断言——这正是缺口。
-    test.info().annotations.push({
-      type: 'product-gap',
-      description:
-        'B4 按轮时间线：/v1/tournaments 已带 rounds+phase，src/pages/tournaments.tsx 只渲染 currentRound/totalRounds 徽章（PR #128 的重设计未上 main）',
-    })
+    // 2026-08-25 集成注：#138（按玩家排名批次）已在 tournaments.tsx 落地
+    // B4 按轮时间线（每轮一格 li，title=阶段 · 状态）——由钉缺口转为验收。
+    await expect(card.getByText('第 1 轮')).toBeVisible()
+    await expect(card.getByText('第 2 轮')).toBeVisible()
+    await expect(card.locator('li[title="海选 · done"]')).toHaveCount(1)
+    await expect(card.locator('li[title="正赛 · running"]')).toHaveCount(1)
   })
 
-  await test.step('并且 页面上不出现「海选」「正赛」字样（#32 标签缺口）', async () => {
-    await expect(page.getByText('海选')).toHaveCount(0)
-    await expect(page.getByText('正赛')).toHaveCount(0)
-    test.info().annotations.push({
-      type: 'product-gap',
-      description:
-        '#32 阶段标签：TournamentPhase.displayName（海选/正赛）在服务端存在，玩家面 tournaments.tsx/standings.tsx 均未渲染',
-    })
+  await test.step('并且 页面渲染「海选」「正赛」阶段标签（#32——#138 已落地）', async () => {
+    // 时间线格子各带阶段名；当前 phase 另有徽章（「正赛」出现 ≥2 处）。
+    await expect(card.getByText('海选').first()).toBeVisible()
+    await expect(card.getByText('正赛').first()).toBeVisible()
   })
 
   await test.step('当 我点开该锦标赛卡片', async () => {
@@ -514,22 +510,19 @@ test('U13-C07 结赛推送最终排名通知，积分榜按玩家给出四行', 
     expect(new Set(entries.map((entry) => entry.playerID)).size).toBe(4)
   })
 
-  await test.step('并且 积分榜页面没有渲染玩家昵称（缺口：仍按版本形状取字段）', async () => {
+  await test.step('并且 积分榜页面按玩家渲染昵称（#64 前端——#138 已落地）', async () => {
     await page.goto(`/tournaments/${tournamentID}`)
     await expect(
       page.getByRole('heading', { name: `锦标赛 #${tournamentID} 积分榜` }),
     ).toBeVisible()
     await expect(page.locator('table tbody tr')).toHaveCount(4)
-    // 服务端已改成按玩家（playerName/submissionIDs），页面仍读老的
-    // submissionID 字段——昵称一处都不出现，选手列成了空「#」。
-    await expect(page.locator('table').getByText(entries[0].playerName))
-      .toHaveCount(0)
-    await shot(page, '09-standings-finished-by-player-gap')
-    test.info().annotations.push({
-      type: 'product-gap',
-      description:
-        '#64 前端：/v1/tournaments/:id/standings 已按玩家返回 playerName/playerID/submissionIDs，src/pages/standings.tsx 仍渲染 entry.submissionID（undefined）——选手列显示空「#」，昵称缺席（PR #128 未上 main）',
-    })
+    // 2026-08-25 集成注：standings.tsx 已按玩家渲染 playerName（#138 按玩家
+    // 排名批次）——由钉缺口转为验收：每行选手列都是玩家昵称。
+    for (const entry of entries) {
+      await expect(page.locator('table').getByText(entry.playerName).first())
+        .toBeVisible()
+    }
+    await shot(page, '09-standings-finished-by-player')
   })
 })
 
