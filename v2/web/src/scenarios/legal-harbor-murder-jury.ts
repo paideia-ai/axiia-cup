@@ -20,7 +20,7 @@ export const legalHarborMurderJury: ScenarioModule = {
       b: source.participants.sides.b.goal,
     },
     judgeSummary: source.participants.judge.paragraphs.join('\n\n'),
-    scoring: '11名陪审员各投一票，11票中超过6票方胜。',
+    scoring: '11名陪审员各投一票，有罪票达到6票即定罪。',
     background: source.overview.paragraphs.join('\n\n'),
     hiddenGoalHowTo: '本场景没有真假请求式的隐藏目标机制。',
   },

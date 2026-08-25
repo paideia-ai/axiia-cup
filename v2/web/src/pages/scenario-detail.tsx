@@ -654,45 +654,35 @@ function JudgeScoringCard({
     : scoringLabel === '投票规则'
     ? '裁判与投票规则'
     : '裁判与计分'
-  const scoringPrompt = scoringLabel === '胜负规则'
-    ? '如何获胜'
-    : scoringLabel === '投票规则'
-    ? '如何投票'
-    : '怎么算分'
   return (
     <Card data-testid='scenario-intro-card'>
-      <CardContent className='space-y-4 pt-5'>
+      <CardContent className='space-y-5 pt-5'>
         <h2 className='text-xl font-bold text-(--foreground)'>
           {scoringHeading}
         </h2>
-        <div className='grid items-start gap-4 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)]'>
-          <section className='space-y-4 rounded-lg border border-(--border-soft) bg-white/2 p-4'>
+        <div className='grid items-start gap-6 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)]'>
+          <section className='min-w-0 space-y-3 lg:pr-6'>
             {participants
               ? (
-                <>
-                  <div>
-                    <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
-                      谁来判
+                <div>
+                  <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
+                    裁判
+                  </p>
+                  <h3 className='mt-2 text-xl font-bold text-(--foreground)'>
+                    {participants.judge.name}
+                  </h3>
+                  <p className='mt-1 text-xs text-(--foreground-muted)'>
+                    {participants.judge.label}
+                  </p>
+                  {participants.judge.paragraphs.map((paragraph) => (
+                    <p
+                      key={paragraph}
+                      className='mt-3 text-sm leading-7 text-(--foreground-subtle)'
+                    >
+                      {paragraph}
                     </p>
-                    <h3 className='mt-1 text-xl font-bold text-(--foreground)'>
-                      {participants.judge.name}
-                    </h3>
-                    <p className='mt-1 text-xs text-(--foreground-muted)'>
-                      {participants.judge.label}
-                    </p>
-                    {participants.judge.paragraphs.map((paragraph) => (
-                      <p
-                        key={paragraph}
-                        className='mt-3 text-sm leading-7 text-(--foreground-subtle)'
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                  {participants.supporting
-                    ? <CollectionBlock collection={participants.supporting} />
-                    : null}
-                </>
+                  ))}
+                </div>
               )
               : (
                 <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
@@ -703,11 +693,13 @@ function JudgeScoringCard({
           <ScoringRules
             initiallyCollapsed={scoringInitiallyCollapsed}
             label={scoringLabel}
-            prompt={scoringPrompt}
             requestScoring={requestScoring}
             text={education?.scoring ?? '计分规则整理中'}
           />
         </div>
+        {participants?.supporting
+          ? <CollectionBlock collection={participants.supporting} />
+          : null}
       </CardContent>
     </Card>
   )
@@ -716,27 +708,22 @@ function JudgeScoringCard({
 function ScoringRules({
   initiallyCollapsed,
   label,
-  prompt,
   requestScoring,
   text,
 }: {
   initiallyCollapsed: boolean
   label: string
-  prompt: string
   requestScoring: ScenarioRequestScoring | null
   text: string
 }) {
   if (initiallyCollapsed) {
     return (
-      <section className='rounded-lg border border-(--border-soft) bg-white/2 px-4'>
-        <p className='pt-4 text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
-          {prompt}
-        </p>
+      <section className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'>
         <Accordion className='divide-y-0'>
           <AccordionItem
             value='scoring-rules'
             title={label}
-            triggerClassName='text-base font-semibold text-(--foreground)'
+            triggerClassName='text-lg font-semibold text-(--foreground)'
           >
             <div className='border-t border-(--border-soft) pt-3'>
               <ScoringContent requestScoring={requestScoring} text={text} />
@@ -747,14 +734,11 @@ function ScoringRules({
     )
   }
   return (
-    <section className='rounded-lg border border-(--border-soft) bg-white/2 p-4'>
-      <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
-        {prompt}
-      </p>
-      <h3 className='mt-1 text-base font-semibold text-(--foreground)'>
+    <section className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'>
+      <h3 className='text-lg font-semibold text-(--foreground)'>
         {label}
       </h3>
-      <div className='mt-3'>
+      <div className='mt-4'>
         <ScoringContent requestScoring={requestScoring} text={text} />
       </div>
     </section>
@@ -770,38 +754,34 @@ function ScoringContent({
 }) {
   if (!requestScoring) {
     return (
-      <p className='whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
+      <p className='whitespace-pre-line border-l-2 border-(--accent) pl-4 text-sm leading-7 text-(--foreground-subtle)'>
         {text}
       </p>
     )
   }
 
   const penalty = requestScoring.discoveryPenalty
-  const rules = [
-    {
-      title: '裁判支持你的立场',
-      detail: '大目标',
-      score: '+1',
-      scoreClassName:
-        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-    },
+  const mainRule = {
+    title: '裁判支持你的立场',
+    score: '+1',
+    scoreClassName:
+      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+  }
+  const requestRules = [
     {
       title: '你的真请求被裁判同意',
-      detail: '命中真目标',
       score: '+0.5',
       scoreClassName:
         'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
     },
     {
       title: '你的假请求被裁判同意',
-      detail: '每个假请求单独结算',
       score: '−0.25',
       scoreClassName:
         'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
     },
     {
       title: '你的真请求被对手猜中',
-      detail: '被识破真目标',
       score: `−${penalty}`,
       scoreClassName:
         'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
@@ -809,35 +789,54 @@ function ScoringContent({
   ]
 
   return (
-    <div className='space-y-3'>
+    <div className='space-y-5'>
       <p className='text-[11px] leading-5 text-(--foreground-muted)'>
         每局双方独立计分，总分高者胜。
       </p>
-      <div className='space-y-2'>
-        {rules.map((rule) => (
-          <div
-            key={rule.title}
-            className='flex items-center justify-between gap-3 rounded-lg border border-(--border-soft) bg-black/10 px-3 py-2.5'
-          >
-            <div className='min-w-0 space-y-0.5'>
-              <p className='text-xs font-medium text-(--foreground)'>
-                {rule.title}
-              </p>
-              <p className='text-[11px] text-(--foreground-muted)'>
-                {rule.detail}
-              </p>
-            </div>
-            <span
-              className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
-            >
-              {rule.score}
-            </span>
-          </div>
-        ))}
-      </div>
+      <section className='space-y-2'>
+        <h4 className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+          主要目标
+        </h4>
+        <ScoreRuleRow rule={mainRule} />
+      </section>
+      <section className='space-y-2'>
+        <h4 className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
+          隐藏请求
+        </h4>
+        <div className='divide-y divide-(--border-soft) border-y border-(--border-soft)'>
+          {requestRules.map((rule) => (
+            <ScoreRuleRow key={rule.title} rule={rule} />
+          ))}
+        </div>
+      </section>
       <p className='text-[11px] leading-5 text-(--foreground-muted)'>
         总分相同时，大政方针归属的一方获胜。
       </p>
+    </div>
+  )
+}
+
+function ScoreRuleRow({
+  rule,
+}: {
+  rule: {
+    title: string
+    score: string
+    scoreClassName: string
+  }
+}) {
+  return (
+    <div className='flex items-center justify-between gap-4 py-3'>
+      <div className='min-w-0 space-y-1'>
+        <p className='text-xs font-medium text-(--foreground)'>
+          {rule.title}
+        </p>
+      </div>
+      <span
+        className={`inline-flex min-w-16 shrink-0 items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+      >
+        {rule.score}
+      </span>
     </div>
   )
 }

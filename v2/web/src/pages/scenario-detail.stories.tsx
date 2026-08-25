@@ -145,6 +145,12 @@ export const ShangyangFourCards: Story = {
     await expect(
       canvas.getByRole('heading', { name: '计分规则' }),
     ).toBeVisible()
+    await expect(canvas.getByRole('heading', { name: '主要目标' }))
+      .toBeVisible()
+    await expect(canvas.getByRole('heading', { name: '隐藏请求' }))
+      .toBeVisible()
+    await expect(canvas.queryByText('谁来判')).toBeNull()
+    await expect(canvas.queryByText('怎么算分')).toBeNull()
     await expect(canvas.getByText('−1')).toBeVisible()
     await expect(canvas.getByRole('button', { name: '去构建商鞅' }))
       .toBeVisible()
@@ -159,7 +165,9 @@ export const HonnojiFourCards: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '本能寺之变 · 敌在何处' }),
     ).toBeVisible()
-    await expect(canvas.getByText('10 轮深夜军议')).toBeVisible()
+    const formatLabels = canvas.getAllByText('10 轮深夜军议')
+    await expect(formatLabels).toHaveLength(2)
+    for (const label of formatLabels) await expect(label).toBeVisible()
     await expect(
       canvas.queryByText(/袭击本能寺\s*对\s*暂不袭击信长/),
     ).toBeNull()
@@ -288,7 +296,7 @@ export const HarborFourCards: Story = {
       canvas.getByRole('heading', { name: '投票规则' }),
     ).toBeVisible()
     await expect(
-      canvas.getByText('11名陪审员各投一票，11票中超过6票方胜。'),
+      canvas.getByText('11名陪审员各投一票，有罪票达到6票即定罪。'),
     ).toBeVisible()
     await expect(
       canvas.queryByText(/林和苏以陪审员身份参加审议/),
