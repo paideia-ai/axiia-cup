@@ -117,7 +117,20 @@ describe('computeCallCostCny', () => {
     expect(above).toBeCloseTo((32_000 * 8) / 1_000_000, 6)
   })
 
-  it('every current player/evaluation model has a pricing entry', () => {
+  it('uses the current Beijing list prices for Qwen3.8', () => {
+    expect(getModelPricing('qwen3.8-27b')).toEqual({
+      cacheHitInputPer1M: 0.6,
+      inputPer1M: 3,
+      outputPer1M: 12,
+    })
+    expect(getModelPricing('qwen3.8-max')).toEqual({
+      cacheHitInputPer1M: 1.5,
+      inputPer1M: 12,
+      outputPer1M: 36,
+    })
+  })
+
+  it('has pricing for every current model with a published direct-API list price', () => {
     for (const modelId of [
       'deepseek-v4-pro',
       'deepseek-v4-flash',
@@ -125,6 +138,8 @@ describe('computeCallCostCny', () => {
       'kimi-k2.5',
       'kimi-k2.6',
       'qwen3.6-27b',
+      'qwen3.8-27b',
+      'qwen3.8-max',
       'minimax-m3',
       'minimax-m2.5',
       'glm-5.1',
@@ -132,5 +147,9 @@ describe('computeCallCostCny', () => {
     ] as const) {
       expect(getModelPricing(modelId)).not.toBeNull()
     }
+  })
+
+  it('does not guess a domestic direct-API price for GLM-5.3', () => {
+    expect(getModelPricing('glm-5.3')).toBeNull()
   })
 })

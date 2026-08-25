@@ -17,9 +17,10 @@ const chosenPlayerModelIds = [
   'deepseek-v4-pro',
   'deepseek-v4-flash',
   'kimi-k2.6',
-  'qwen3.6-27b',
+  'qwen3.8-27b',
+  'qwen3.8-max',
   'minimax-m3',
-  'glm-5.2',
+  'glm-5.3',
 ] as const
 
 describe('model catalog', () => {
@@ -36,6 +37,12 @@ describe('model catalog', () => {
     )
     expect(playerModelOptions.map((option) => option.id)).not.toContain(
       'glm-5.1',
+    )
+    expect(playerModelOptions.map((option) => option.id)).not.toContain(
+      'qwen3.6-27b',
+    )
+    expect(playerModelOptions.map((option) => option.id)).not.toContain(
+      'glm-5.2',
     )
   })
 
@@ -63,7 +70,7 @@ describe('model catalog', () => {
         roleBName: 'B',
         roleBOptions: [],
         roleBRequests: [],
-        scorerModel: 'glm-5.2',
+        scorerModel: 'glm-5.3',
         scorerPrompt: 'score',
         trueRequestCount: 0,
         turnCount: 10,
@@ -78,14 +85,17 @@ describe('model catalog', () => {
     expect(resolveModelLabel('kimi-k2.5')).toBe('Kimi K2.5')
     expect(resolveModelLabel('minimax-m3')).toBe('MiniMax M3')
     expect(resolveModelLabel('qwen3.5-397b-a17b')).toBe('Qwen3.5')
+    expect(resolveModelLabel('qwen3.6-27b')).toBe('Qwen3.6 27B')
     expect(resolveModelLabel('glm-5.1')).toBe('GLM-5.1')
     expect(submissionModelIdSchema.parse('glm-5.1')).toBe('glm-5.1')
+    expect(resolveModelLabel('glm-5.2')).toBe('GLM-5.2')
+    expect(submissionModelIdSchema.parse('glm-5.2')).toBe('glm-5.2')
   })
 
   it('rejects legacy model ids for newly created player submissions', () => {
     const validInput = {
       modelA: 'deepseek-v4-pro',
-      modelB: 'glm-5.2',
+      modelB: 'glm-5.3',
       promptA: '你是甲方',
       promptB: '你是乙方',
       scenarioId: 'shangyang-court',
@@ -102,6 +112,18 @@ describe('model catalog', () => {
       createSubmissionSchema.safeParse({
         ...validInput,
         modelA: 'glm-5.1',
+      }).success,
+    ).toBe(false)
+    expect(
+      createSubmissionSchema.safeParse({
+        ...validInput,
+        modelA: 'qwen3.6-27b',
+      }).success,
+    ).toBe(false)
+    expect(
+      createSubmissionSchema.safeParse({
+        ...validInput,
+        modelA: 'glm-5.2',
       }).success,
     ).toBe(false)
   })
@@ -129,12 +151,26 @@ describe('model catalog', () => {
       provider: 'dashscope',
       thinking: 'disabled',
     })
+    expect(getModelDefinition('qwen3.8-27b')).toMatchObject({
+      apiModel: 'qwen3.8-27b',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('qwen3.8-27b')).not.toHaveProperty('thinking')
+    expect(getModelDefinition('qwen3.8-max')).toMatchObject({
+      apiModel: 'qwen3.8-max',
+      provider: 'dashscope',
+    })
+    expect(getModelDefinition('qwen3.8-max')).not.toHaveProperty('thinking')
     expect(getModelDefinition('glm-5.1')).toMatchObject({
       apiModel: 'glm-5.1',
       provider: 'zhipu',
     })
     expect(getModelDefinition('glm-5.2')).toMatchObject({
       apiModel: 'glm-5.2',
+      provider: 'zhipu',
+    })
+    expect(getModelDefinition('glm-5.3')).toMatchObject({
+      apiModel: 'glm-5.3',
       provider: 'zhipu',
     })
     // MiniMax goes through their Anthropic-compatible endpoint.

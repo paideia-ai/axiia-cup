@@ -5,10 +5,13 @@ export const submissionModelIds = [
   'deepseek-v4-pro',
   'kimi-k2.6',
   'qwen3.6-27b',
+  'qwen3.8-27b',
+  'qwen3.8-max',
   'minimax-m2.5',
   'minimax-m3',
   'glm-5.1',
   'glm-5.2',
+  'glm-5.3',
   'deepseek-v4-flash',
 ] as const
 
@@ -16,9 +19,10 @@ export const playerSelectableModelIds = [
   'deepseek-v4-pro',
   'deepseek-v4-flash',
   'kimi-k2.6',
-  'qwen3.6-27b',
+  'qwen3.8-27b',
+  'qwen3.8-max',
   'minimax-m3',
-  'glm-5.2',
+  'glm-5.3',
 ] as const
 
 export const retiredModelIds = [] as const
@@ -148,6 +152,20 @@ export const modelCatalog = [
     thinking: 'disabled',
   },
   {
+    id: 'qwen3.8-27b',
+    label: 'Qwen3.8 27B',
+    apiModel: 'qwen3.8-27b',
+    provider: 'dashscope',
+    surfaces: ['submission', 'evaluation'],
+  },
+  {
+    id: 'qwen3.8-max',
+    label: 'Qwen3.8 Max',
+    apiModel: 'qwen3.8-max',
+    provider: 'dashscope',
+    surfaces: ['submission', 'evaluation'],
+  },
+  {
     id: 'minimax-m3',
     label: 'MiniMax M3',
     apiModel: 'MiniMax-M3',
@@ -172,6 +190,13 @@ export const modelCatalog = [
     id: 'glm-5.2',
     label: 'GLM-5.2',
     apiModel: 'glm-5.2',
+    provider: 'zhipu',
+    surfaces: ['submission', 'evaluation'],
+  },
+  {
+    id: 'glm-5.3',
+    label: 'GLM-5.3',
+    apiModel: 'glm-5.3',
     provider: 'zhipu',
     surfaces: ['submission', 'evaluation'],
   },

@@ -31,7 +31,7 @@ export type ModelPricing = ModelRates & {
 /** Fixed conversion for observability display only (Langfuse shows $). */
 export const CNY_PER_USD = 7.25
 
-// Official list prices, accessed 2026-07-17:
+// Official list prices, accessed 2026-08-25:
 // - DeepSeek: api-docs.deepseek.com/zh-cn/quick_start/pricing (flat; the
 //   reported V4 峰谷 windows are NOT in official docs yet — add offPeak once
 //   the 调价 email/console confirms exact windows).
@@ -40,7 +40,8 @@ export const CNY_PER_USD = 7.25
 // - Moonshot: platform.kimi.com/docs/pricing/chat-k26 and chat-k25.
 // - Zhipu: bigmodel.cn/pricing (domestic CNY, corroborated via third-party
 //   mirrors; glm-5.1 assumed identical to glm-5.2 — z.ai lists them the
-//   same — unconfirmed domestically).
+//   same — unconfirmed domestically). GLM-5.3 is intentionally absent until
+//   Zhipu publishes its domestic direct-API list price.
 // - DashScope: alibabacloud.com/help/zh/model-studio/model-pricing
 //   Beijing-region prices (USD display converted back to the clean CNY list
 //   prices; deepseek-v3.2 lands on exactly ¥2/¥3, validating the rate).
@@ -111,6 +112,16 @@ const PRICING_TABLE: Partial<Record<ModelId, ModelPricing>> = {
   'qwen3.6-27b': {
     inputPer1M: 3,
     outputPer1M: 18,
+  },
+  'qwen3.8-27b': {
+    cacheHitInputPer1M: 0.6,
+    inputPer1M: 3,
+    outputPer1M: 12,
+  },
+  'qwen3.8-max': {
+    cacheHitInputPer1M: 1.5,
+    inputPer1M: 12,
+    outputPer1M: 36,
   },
   // Pricing keys are catalog ModelIds but rates follow what the lab bills,
   // i.e. the apiModel: catalog 'qwen3.5-397b-a17b' calls qwen3.5-27b
