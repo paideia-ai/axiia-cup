@@ -7,7 +7,6 @@ import type { ScenarioIntroCopy } from './types'
 export const shangyangCourtIntro: ScenarioIntroCopy = {
   htmlID: 'shangyang',
   source: {
-    category: '历史策略辩论',
     title: '商鞅变法 · 朝堂辩法',
     overview: {
       label: '背景故事',
@@ -53,7 +52,7 @@ export const shangyangCourtIntro: ScenarioIntroCopy = {
       note: {
         title: '国策之外，还有隐藏目标',
         text:
-          '每方另有三个请求，一个是真目标，两个是假目标。你既要争取真正重视的请求，也要避免被对手轻易看穿。',
+          '每方另有三个请求，一个是真目标，两个是假目标。争取真目标被国君批准，同时避免被对手看穿。',
       },
     },
   },
@@ -141,7 +140,7 @@ export const honnojiDecisionIntro: ScenarioIntroCopy = {
       note: {
         title: '军策之外，还有角色请求',
         text:
-          '每名入场角色另有三个请求，其中一个是真目标、两个是假目标。你要争取真正重视的请求，也要避免让对手轻易猜中。',
+          '每名入场角色另有三个请求，其中一个是真目标、两个是假目标。争取真目标被光秀批准，同时避免被对手看穿。',
       },
     },
   },
@@ -214,7 +213,7 @@ export const trolleyProblemIntro: ScenarioIntroCopy = {
 export const fengyitingRealIntro: ScenarioIntroCopy = {
   htmlID: 'fengyiting',
   source: {
-    title: '凤仪亭之夜 · 真实版',
+    title: '凤仪亭之夜',
     overview: {
       label: '背景故事',
       title: '连环计该继续吗？貂蝉又会选谁？',
@@ -356,12 +355,12 @@ export const legalHarborMurderJuryIntro: ScenarioIntroCopy = {
               '第 1—4 轮可以发起。十一名陪审员投出当前意向票。发起者和九名普通陪审员会看到有罪、无罪的总票数，个人投票在场内保持匿名。',
           },
           {
-            title: '一对一私聊 · 每人 1 次',
+            title: '一对一私聊 · 1 次',
             text:
               '从九名普通陪审员中选择一人。双方各发言三次，场内只有私聊双方知道对象和内容。',
           },
           {
-            title: '公开证据复核 · 每人 2 次',
+            title: '公开证据复核 · 2 次',
             text:
               '选择 E1—E5 中的一组证据。系统会向十一名陪审员重新展示这组证据的原始内容，不会加入新的事实或鉴定结果。',
           },
@@ -375,19 +374,17 @@ export const legalHarborMurderJuryIntro: ScenarioIntroCopy = {
     },
     participants: {
       title: '两名公开表明立场的陪审员',
-      intro:
-        '林和苏以陪审员身份参加审议。他们使用同一份案件材料，不能补充调查。',
       judge: {
         name: '十一人陪审团',
         label: '9 名 NPC 陪审员参与裁决',
         paragraphs: [
-          '林固定投有罪，苏固定投无罪。九名普通陪审员开局没有预设票。审议结束后，十一人各自投票。至少六张有罪票才会定罪。',
+          '林固定投有罪，苏固定投无罪。九名普通陪审员开局没有预设票。审议结束后，十一人各自投票。',
         ],
       },
       supporting: {
         title: '九名普通陪审员',
         intro:
-          '九名陪审员经历各异，关注点也不同。职业背景会影响他们阅读材料的方式，但不会给案件增加新事实。',
+          '九名陪审员经历各异，关注点也不同。职业背景会影响他们阅读材料的方式。',
         items: [
           { title: '陈岚', text: '44 岁 · 社区调解中心项目主管' },
           { title: '魏笙', text: '36 岁 · 城市轨道交通调度员' },

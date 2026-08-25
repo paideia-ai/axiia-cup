@@ -57,6 +57,10 @@ export interface ScenarioHiddenGoalList {
   groups: ScenarioHiddenGoalGroup[]
 }
 
+export interface ScenarioRequestScoring {
+  discoveryPenalty: number
+}
+
 export interface ScenarioIntroSide {
   eyebrow: string
   name: string
@@ -93,7 +97,7 @@ export interface ScenarioIntroCopy {
     }
     participants: {
       title: string
-      intro: string
+      intro?: string
       judge: ScenarioIntroJudge
       supporting?: ScenarioIntroCollection
       sides: { a: ScenarioIntroSide; b: ScenarioIntroSide }
@@ -135,6 +139,9 @@ export interface ScenarioModule {
   // player's true goal. The selected item stays private; these candidates do not.
   hiddenGoals?: Partial<Record<Side, ScenarioHiddenGoalList>>
   scoringInitiallyCollapsed?: boolean
+  scoringLabel?: string
+  requestScoring?: ScenarioRequestScoring
+  hideHeaderMatchup?: boolean
   timelineAtEnd?: boolean
   // Lane keys the script speaks under, mapped to display names. Side keys ('a',
   // 'b') stay out on purpose: a finished match carries its own labels for them,

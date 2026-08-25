@@ -20,6 +20,7 @@ import type {
   ScenarioIntroImage,
   ScenarioIntroSide,
   ScenarioIntroTimeline,
+  ScenarioRequestScoring,
 } from '../scenarios/types'
 
 // 场景介绍的主体为四张顶层卡：背景故事、甲方、乙方、裁判与计分。
@@ -91,11 +92,17 @@ export function ScenarioDetailPage() {
                   {data.summary.subject}
                 </p>
                 <p className='mt-3 text-xs text-(--foreground-muted)'>
-                  {intro?.source.participants.sides.a.name ??
-                    data.summary.sideAName} 对{' '}
-                  {intro?.source.participants.sides.b.name ??
-                    data.summary.sideBName} ·{' '}
-                  {education?.formatLabel ?? `${data.summary.turnCount} 轮`}
+                  {module?.hideHeaderMatchup
+                    ? education?.formatLabel ?? `${data.summary.turnCount} 轮`
+                    : (
+                      <>
+                        {intro?.source.participants.sides.a.name ??
+                          data.summary.sideAName} 对{' '}
+                        {intro?.source.participants.sides.b.name ??
+                          data.summary.sideBName} · {education?.formatLabel ??
+                          `${data.summary.turnCount} 轮`}
+                      </>
+                    )}
                 </p>
               </div>
               <GateStatus summary={data.summary} />
@@ -117,7 +124,7 @@ export function ScenarioDetailPage() {
                 >
                   {intro?.source.participants.title ?? '双方与胜利条件'}
                 </h2>
-                {intro
+                {intro?.source.participants.intro
                   ? (
                     <p className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'>
                       {intro.source.participants.intro}
@@ -126,7 +133,7 @@ export function ScenarioDetailPage() {
                   : null}
               </div>
 
-              <div className='grid gap-4 md:grid-cols-2'>
+              <div className='grid items-start gap-4 md:grid-cols-2'>
                 {(['a', 'b'] as const).map((side) => (
                   <SideCard
                     key={side}
@@ -159,6 +166,8 @@ export function ScenarioDetailPage() {
             <JudgeScoringCard
               intro={intro}
               education={education}
+              requestScoring={module?.requestScoring ?? null}
+              scoringLabel={module?.scoringLabel ?? '计分规则'}
               scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
                 false}
             />
@@ -442,9 +451,11 @@ function SideCard({
   onNew: () => void
 }) {
   const name = copy?.name ?? fallbackName
+  const alignPrimaryGoal = hiddenGoals?.groups.every((group) => !group.role) ??
+    false
   return (
-    <Card className='h-full' data-testid='scenario-intro-card'>
-      <CardContent className='flex h-full flex-col gap-4 pt-5'>
+    <Card data-testid='scenario-intro-card'>
+      <CardContent className='flex flex-col gap-4 pt-5'>
         <div>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
             {side === 'a' ? '02' : '03'} · {copy?.eyebrow ??
@@ -462,14 +473,20 @@ function SideCard({
             : null}
         </div>
 
-        {copy?.paragraphs.map((paragraph) => (
-          <p
-            key={paragraph}
-            className='text-sm leading-7 text-(--foreground-subtle)'
-          >
-            {paragraph}
-          </p>
-        ))}
+        <div
+          className={alignPrimaryGoal && side === 'b'
+            ? 'space-y-4 md:pb-14 lg:pb-7'
+            : 'space-y-4'}
+        >
+          {copy?.paragraphs.map((paragraph) => (
+            <p
+              key={paragraph}
+              className='text-sm leading-7 text-(--foreground-subtle)'
+            >
+              {paragraph}
+            </p>
+          ))}
+        </div>
 
         <div className='rounded-lg border border-(--border-soft) bg-black/10 p-3'>
           <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
@@ -571,15 +588,15 @@ function HiddenGoalList({
   showRole?: boolean
 }) {
   return (
-    <section className='rounded-lg border border-(--warning)/30 bg-(--warning)/5 px-3'>
+    <section className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'>
       <Accordion className='divide-y-0'>
         <AccordionItem
           value='hidden-goals'
           title='隐藏目标列表'
           triggerClassName='text-xs font-medium tracking-[0.04em] text-(--foreground-muted)'
         >
-          <div className='space-y-3'>
-            <p className='text-xs leading-5 text-(--foreground-subtle)'>
+          <div className='space-y-3 border-t border-(--border-soft) pt-3'>
+            <p className='text-[11px] leading-5 text-(--foreground-muted)'>
               {goals.note}
             </p>
             {goals.groups.map((group, groupIndex) => (
@@ -587,22 +604,22 @@ function HiddenGoalList({
                 key={group.role ?? groupIndex}
                 className={groupIndex === 0
                   ? 'space-y-2'
-                  : 'space-y-2 border-t border-(--warning)/20 pt-3'}
+                  : 'space-y-2 border-t border-(--border-soft) pt-3'}
               >
                 {showRole && group.role
                   ? (
-                    <h5 className='text-xs font-semibold text-(--foreground)'>
+                    <h5 className='text-xs font-medium text-(--foreground-subtle)'>
                       {group.role}
                     </h5>
                   )
                   : null}
-                <ul className='space-y-2'>
+                <ul className='divide-y divide-(--border-soft)'>
                   {group.options.map((option) => (
                     <li
                       key={option.id}
-                      className='grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 text-xs leading-5 text-(--foreground-subtle)'
+                      className='grid grid-cols-[2.75rem_minmax(0,1fr)] items-start gap-2 py-2 text-xs leading-5 text-(--foreground-subtle) first:pt-0 last:pb-0'
                     >
-                      <code className='font-mono font-semibold text-(--warning)'>
+                      <code className='w-fit rounded border border-(--border-soft) bg-black/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-4 text-(--foreground-muted)'>
                         {option.id}
                       </code>
                       <span>{option.text}</span>
@@ -621,28 +638,45 @@ function HiddenGoalList({
 function JudgeScoringCard({
   intro,
   education,
+  requestScoring,
+  scoringLabel,
   scoringInitiallyCollapsed,
 }: {
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
+  requestScoring: ScenarioRequestScoring | null
+  scoringLabel: string
   scoringInitiallyCollapsed: boolean
 }) {
   const participants = intro?.source.participants ?? null
+  const scoringHeading = scoringLabel === '胜负规则'
+    ? '裁判与胜负规则'
+    : scoringLabel === '投票规则'
+    ? '裁判与投票规则'
+    : '裁判与计分'
+  const scoringPrompt = scoringLabel === '胜负规则'
+    ? '如何获胜'
+    : scoringLabel === '投票规则'
+    ? '如何投票'
+    : '怎么算分'
   return (
     <Card data-testid='scenario-intro-card'>
-      <CardContent className='space-y-5 pt-5'>
-        <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
-          04 · 裁判与计分 · 谁来判、怎么算分
-        </p>
-        <div className='grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,0.75fr)]'>
-          <div className='space-y-4'>
+      <CardContent className='space-y-4 pt-5'>
+        <h2 className='text-xl font-bold text-(--foreground)'>
+          {scoringHeading}
+        </h2>
+        <div className='grid items-start gap-4 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)]'>
+          <section className='space-y-4 rounded-lg border border-(--border-soft) bg-white/2 p-4'>
             {participants
               ? (
                 <>
                   <div>
-                    <h2 className='text-xl font-bold text-(--foreground)'>
+                    <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
+                      谁来判
+                    </p>
+                    <h3 className='mt-1 text-xl font-bold text-(--foreground)'>
                       {participants.judge.name}
-                    </h2>
+                    </h3>
                     <p className='mt-1 text-xs text-(--foreground-muted)'>
                       {participants.judge.label}
                     </p>
@@ -665,9 +699,12 @@ function JudgeScoringCard({
                   裁判说明整理中
                 </p>
               )}
-          </div>
+          </section>
           <ScoringRules
             initiallyCollapsed={scoringInitiallyCollapsed}
+            label={scoringLabel}
+            prompt={scoringPrompt}
+            requestScoring={requestScoring}
             text={education?.scoring ?? '计分规则整理中'}
           />
         </div>
@@ -678,23 +715,32 @@ function JudgeScoringCard({
 
 function ScoringRules({
   initiallyCollapsed,
+  label,
+  prompt,
+  requestScoring,
   text,
 }: {
   initiallyCollapsed: boolean
+  label: string
+  prompt: string
+  requestScoring: ScenarioRequestScoring | null
   text: string
 }) {
   if (initiallyCollapsed) {
     return (
       <section className='rounded-lg border border-(--border-soft) bg-white/2 px-4'>
+        <p className='pt-4 text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
+          {prompt}
+        </p>
         <Accordion className='divide-y-0'>
           <AccordionItem
             value='scoring-rules'
-            title='计分规则'
-            triggerClassName='font-semibold text-(--foreground)'
+            title={label}
+            triggerClassName='text-base font-semibold text-(--foreground)'
           >
-            <p className='whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
-              {text}
-            </p>
+            <div className='border-t border-(--border-soft) pt-3'>
+              <ScoringContent requestScoring={requestScoring} text={text} />
+            </div>
           </AccordionItem>
         </Accordion>
       </section>
@@ -702,11 +748,97 @@ function ScoringRules({
   }
   return (
     <section className='rounded-lg border border-(--border-soft) bg-white/2 p-4'>
-      <h3 className='text-sm font-semibold text-(--foreground)'>计分规则</h3>
-      <p className='mt-2 whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
+      <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
+        {prompt}
+      </p>
+      <h3 className='mt-1 text-base font-semibold text-(--foreground)'>
+        {label}
+      </h3>
+      <div className='mt-3'>
+        <ScoringContent requestScoring={requestScoring} text={text} />
+      </div>
+    </section>
+  )
+}
+
+function ScoringContent({
+  requestScoring,
+  text,
+}: {
+  requestScoring: ScenarioRequestScoring | null
+  text: string
+}) {
+  if (!requestScoring) {
+    return (
+      <p className='whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
         {text}
       </p>
-    </section>
+    )
+  }
+
+  const penalty = requestScoring.discoveryPenalty
+  const rules = [
+    {
+      title: '裁判支持你的立场',
+      detail: '大目标',
+      score: '+1',
+      scoreClassName:
+        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    },
+    {
+      title: '你的真请求被裁判同意',
+      detail: '命中真目标',
+      score: '+0.5',
+      scoreClassName:
+        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
+    },
+    {
+      title: '你的假请求被裁判同意',
+      detail: '每个假请求单独结算',
+      score: '−0.25',
+      scoreClassName:
+        'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
+    },
+    {
+      title: '你的真请求被对手猜中',
+      detail: '被识破真目标',
+      score: `−${penalty}`,
+      scoreClassName:
+        'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
+    },
+  ]
+
+  return (
+    <div className='space-y-3'>
+      <p className='text-[11px] leading-5 text-(--foreground-muted)'>
+        每局双方独立计分，总分高者胜。
+      </p>
+      <div className='space-y-2'>
+        {rules.map((rule) => (
+          <div
+            key={rule.title}
+            className='flex items-center justify-between gap-3 rounded-lg border border-(--border-soft) bg-black/10 px-3 py-2.5'
+          >
+            <div className='min-w-0 space-y-0.5'>
+              <p className='text-xs font-medium text-(--foreground)'>
+                {rule.title}
+              </p>
+              <p className='text-[11px] text-(--foreground-muted)'>
+                {rule.detail}
+              </p>
+            </div>
+            <span
+              className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+            >
+              {rule.score}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className='text-[11px] leading-5 text-(--foreground-muted)'>
+        总分相同时，大政方针归属的一方获胜。
+      </p>
+    </div>
   )
 }
 
@@ -734,7 +866,7 @@ function GateStatus({ summary }: { summary: ScenarioSummary }) {
   return (
     <div className='flex flex-wrap items-center gap-1.5'>
       <span className='text-xs text-(--foreground-muted)'>
-        每侧各赢 ≥{progress.a.needed} 场 NPC 练习解锁 PVP
+        每侧各赢 ≥{progress.a.needed} 场 PVE 练习解锁 PVP
       </span>
       {(['a', 'b'] as const).map((which) => (
         <Badge

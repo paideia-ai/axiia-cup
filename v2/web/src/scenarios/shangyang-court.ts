@@ -40,7 +40,7 @@ export const shangyangCourt: ScenarioModule = {
       ],
     },
   },
-  scoringInitiallyCollapsed: true,
+  requestScoring: { discoveryPenalty: 1 },
   laneLabels: {
     judge: '君上',
   },

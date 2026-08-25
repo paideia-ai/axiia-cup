@@ -63,7 +63,7 @@ const details: Record<string, ScenarioDetail> = {
   'fengyiting-real': {
     summary: {
       id: 'fengyiting-real',
-      title: '凤仪亭之夜·真实版',
+      title: '凤仪亭之夜',
       subject: '文学',
       sideAName: '董卓',
       sideBName: '吕布',
@@ -129,6 +129,9 @@ export const ShangyangFourCards: Story = {
       await canvas.findByRole('heading', { name: '商鞅变法 · 朝堂辩法' }),
     ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
+    await expect(
+      canvas.getByText('每侧各赢 ≥1 场 PVE 练习解锁 PVP'),
+    ).toBeVisible()
     await expect(canvas.getByText('国策之外，还有隐藏目标')).toBeVisible()
     const hiddenGoalButtons = canvas.getAllByRole('button', {
       name: '隐藏目标列表',
@@ -139,8 +142,10 @@ export const ShangyangFourCards: Story = {
     }
     await expect(canvas.queryByText('SR1')).toBeNull()
     await expect(canvas.queryByText('GR3')).toBeNull()
-    await expect(canvas.getByRole('button', { name: '计分规则' }))
-      .toHaveAttribute('aria-expanded', 'false')
+    await expect(
+      canvas.getByRole('heading', { name: '计分规则' }),
+    ).toBeVisible()
+    await expect(canvas.getByText('−1')).toBeVisible()
     await expect(canvas.getByRole('button', { name: '去构建商鞅' }))
       .toBeVisible()
     await expect(canvas.queryByText(/深读/)).toBeNull()
@@ -154,6 +159,10 @@ export const HonnojiFourCards: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '本能寺之变 · 敌在何处' }),
     ).toBeVisible()
+    await expect(canvas.getByText('10 轮深夜军议')).toBeVisible()
+    await expect(
+      canvas.queryByText(/袭击本能寺\s*对\s*暂不袭击信长/),
+    ).toBeNull()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(
       canvas.getByRole('heading', {
@@ -175,8 +184,10 @@ export const HonnojiFourCards: Story = {
     await expect(canvas.queryByText('YA3')).toBeNull()
     await expect(canvas.queryByText('HF1')).toBeNull()
     await expect(canvas.queryByText('AS3')).toBeNull()
-    await expect(canvas.getByRole('button', { name: '计分规则' }))
-      .toHaveAttribute('aria-expanded', 'false')
+    await expect(
+      canvas.getByRole('heading', { name: '计分规则' }),
+    ).toBeVisible()
+    await expect(canvas.getByText('−0.75')).toBeVisible()
   },
 }
 
@@ -219,7 +230,7 @@ export const FengyitingFourCards: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(
-      await canvas.findByRole('heading', { name: '凤仪亭之夜 · 真实版' }),
+      await canvas.findByRole('heading', { name: '凤仪亭之夜' }),
     ).toBeVisible()
     const cards = canvas.getAllByTestId('scenario-intro-card')
     await expect(cards).toHaveLength(5)
@@ -243,6 +254,13 @@ export const FengyitingFourCards: Story = {
     await expect(backgroundCard.queryByText(/字奉先/)).toBeNull()
     await expect(backgroundCard.queryByText(/三国演义/)).toBeNull()
     await expect(
+      canvas.getByRole('heading', { name: '裁判与胜负规则' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('heading', { name: '胜负规则' }),
+    ).toBeVisible()
+    await expect(canvas.getByText('貂蝉终局选择的角色获胜')).toBeVisible()
+    await expect(
       canvas.queryByText(/正史未记载其姓名/),
     ).toBeNull()
     await expect(
@@ -263,6 +281,21 @@ export const HarborFourCards: Story = {
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(canvas.getByText('E5 · 改口与未求助')).toBeVisible()
     await expect(canvas.getByText('九名普通陪审员')).toBeVisible()
+    await expect(
+      canvas.getByRole('heading', { name: '裁判与投票规则' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('heading', { name: '投票规则' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText('11名陪审员各投一票，11票中超过6票方胜。'),
+    ).toBeVisible()
+    await expect(
+      canvas.queryByText(/林和苏以陪审员身份参加审议/),
+    ).toBeNull()
+    await expect(
+      canvas.queryByText(/不会给案件增加新事实/),
+    ).toBeNull()
     await expect(
       canvas.queryByRole('button', { name: '隐藏目标列表' }),
     ).toBeNull()

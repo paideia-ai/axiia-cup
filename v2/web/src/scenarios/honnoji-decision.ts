@@ -4,6 +4,7 @@ import { honnojiDecisionIntro } from './intro-copy'
 export const honnojiDecision: ScenarioModule = {
   slotID: 'honnoji-decision',
   intro: honnojiDecisionIntro,
+  hideHeaderMatchup: true,
   roles: [
     {
       key: 'chosokabe',
@@ -110,7 +111,7 @@ export const honnojiDecision: ScenarioModule = {
       ],
     },
   },
-  scoringInitiallyCollapsed: true,
+  requestScoring: { discoveryPenalty: 0.75 },
   laneLabels: {
     chosokabe: '长宗我部元亲的密使',
     yoshiaki: '足利义昭的使者',

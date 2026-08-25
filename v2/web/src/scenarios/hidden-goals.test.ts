@@ -65,4 +65,9 @@ describe('public hidden-goal candidate lists', () => {
     expect(fengyitingReal.hiddenGoals).toBeUndefined()
     expect(legalHarborMurderJury.hiddenGoals).toBeUndefined()
   })
+
+  it('keeps the V1 request-discovery penalties for structured scoring', () => {
+    expect(shangyangCourt.requestScoring?.discoveryPenalty).toBe(1)
+    expect(honnojiDecision.requestScoring?.discoveryPenalty).toBe(0.75)
+  })
 })
