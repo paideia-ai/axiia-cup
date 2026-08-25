@@ -1,0 +1,108 @@
+name: Tournament Ops
+
+# Machine-operated tournaments: each dispatch drives one operator verb (or the
+# whole lifecycle with `auto`) against the axiia server. The OIDC assertion is
+# the credential — the server's federation policy pins this workflow file and
+# grants the `federated-tournament` client kind, which reaches the tournament
+# admin routes and nothing else. No long-lived token is stored here.
+#
+# Inert until the server deploys the tournament grant (axiia-cup-v2 branch
+# `tournament-machine-admin`) and the host federation policy names this
+# workflow. See v2/tournament-ops/README.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      op:
+        description: Operation
+        type: choice
+        required: true
+        default: status
+        options:
+          - create
+          - enroll
+          - seed
+          - pair
+          - advance
+          - promote
+          - finish
+          - status
+          - auto
+      tournamentID:
+        description: Existing tournament id (blank lets create/auto make one)
+        type: string
+        default: ""
+      scenarioID:
+        description: Scenario slot id (create/auto)
+        type: string
+        default: ""
+      totalRounds:
+        description: Swiss rounds (create/auto)
+        type: string
+        default: "3"
+      qualifierCutoff:
+        description: Rating at/above which 海选 is skipped (seed/auto; blank = everyone through 海选)
+        type: string
+        default: ""
+      phase:
+        description: Phase to pair (pair/auto)
+        type: choice
+        default: main
+        options:
+          - main
+          - qualifier
+      versionIDs:
+        description: CSV of agent version ids to enroll (enroll/auto)
+        type: string
+        default: ""
+      roundNumber:
+        description: Round number (pair/advance; blank = next/latest)
+        type: string
+        default: ""
+      slots:
+        description: 正赛 seats to promote into (promote)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+# One operator at a time: two concurrent runs pairing the same tournament would
+# double-dispatch a round.
+concurrency:
+  group: axiia-tournament-ops
+  cancel-in-progress: false
+
+jobs:
+  operate:
+    name: Operate tournament
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults:
+      run:
+        working-directory: v2/tournament-ops
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+
+      # No separate exchange step: the federated token lives ten minutes and a
+      # tournament round can run longer, so run.ts exchanges the assertion
+      # itself and re-exchanges when the token nears expiry.
+      - name: Run tournament op
+        env:
+          AXIIA_BASE_URL: ${{ vars.AXIIA_BASE_URL }}
+          OP: ${{ inputs.op }}
+          TOURNAMENT_ID: ${{ inputs.tournamentID }}
+          SCENARIO_ID: ${{ inputs.scenarioID }}
+          TOTAL_ROUNDS: ${{ inputs.totalRounds }}
+          QUALIFIER_CUTOFF: ${{ inputs.qualifierCutoff }}
+          PHASE: ${{ inputs.phase }}
+          VERSION_IDS: ${{ inputs.versionIDs }}
+          ROUND_NUMBER: ${{ inputs.roundNumber }}
+          SLOTS: ${{ inputs.slots }}
+        run: deno task run
