@@ -575,8 +575,13 @@ async function main() {
   game.emit('council', { type: 'scene', actor: 'judge', text: OPENING_LINE })
 
   for (let round = 1; round <= rounds; round++) {
+    const roundPrompt = `【系统】当前是深夜军议第 ${round}/${rounds} 轮。${
+      round === rounds ? '这是本场军议的最后一轮。' : ''
+    }`
+    a.push(roundPrompt)
     const lineA = (await a.say({ channel: 'council' })).text
     b.hear(roleA.name, lineA)
+    b.push(roundPrompt)
     const lineB = (await b.say({ channel: 'council' })).text
     a.hear(roleB.name, lineB)
     pending.push({ round: round, a: lineA, b: lineB })

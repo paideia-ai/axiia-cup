@@ -207,6 +207,7 @@ async function main() {
     evidenceReviewsPerSide: 2,
     earlyMotionsPerSide: 1,
   }
+  const roundLabel = (round) => `公开审议第 ${round}/${RULES.rounds} 轮`
 
   const params = game.params
   const jurorModels = params.jurorModels ?? DEFAULT_JUROR_MODELS
@@ -667,7 +668,7 @@ ${publicCasePacket}`
           hint: '只填写当前选项前的一个数字',
         },
       },
-      prompt: `现在是第 ${round} 轮。${timing}
+      prompt: `现在是${roundLabel(round)}。${timing}
 
 你的整局剩余额度为：秘密意向投票 ${available.pollsLeft} 次（仅第 1—4 轮可用）；私聊 ${available.privateLeft} 次；证据复核 ${available.reviewsLeft} 次；提前终局动议 ${available.motionLeft} 次（第 2 轮起可用）。
 
@@ -694,7 +695,7 @@ ${menu}
 
   const collectPlayerSpeech = async (player, round) => {
     const finalRound = round === RULES.rounds
-      ? '这是第五轮，请把本次发言作为最后陈词。'
+      ? '这是本局最后一轮，请把本次发言作为最后陈词。'
       : ''
     const speech = await player.agent.act({
       fields: {
@@ -704,7 +705,7 @@ ${menu}
         },
       },
       prompt:
-        `【公开发言】行动窗口已经结束。现在请另行生成第 ${round} 轮公开发言，最多四句话；只在 speech 字段中填写案件内说服正文，不要附加票型、理由字段、选项数字、行动菜单、程序选择过程或 XML 标签。${finalRound}\n\n${publicSpeechBoundary}`,
+        `【公开发言】行动窗口已经结束。当前是${roundLabel(round)}。现在请另行生成本轮公开发言，最多四句话；只在 speech 字段中填写案件内说服正文，不要附加票型、理由字段、选项数字、行动菜单、程序选择过程或 XML 标签。${finalRound}\n\n${publicSpeechBoundary}`,
     })
     const text = speech.fields.speech
     game.emit('public', {
@@ -755,7 +756,7 @@ ${menu}
       mover: mover.id,
     })
     pushAll(
-      `【公开程序】第 ${round} 轮，${mover.name} 发起一次不记名意向投票。投票发生和发起者对全体 Agent 公开；个人票型不向其他 Agent 公开，十一票合计稍后只发送给发起者和九名普通陪审员。`,
+      `【公开程序】${roundLabel(round)}，${mover.name} 发起一次不记名意向投票。投票发生和发起者对全体 Agent 公开；个人票型不向其他 Agent 公开，十一票合计稍后只发送给发起者和九名普通陪审员。`,
     )
 
     let guilty = 1
@@ -776,7 +777,7 @@ ${menu}
     ]
     const npcBallots = await game.parallelAct(npcJurors.map((juror) => {
       juror.agent.push(
-        `【私密意向投票】第 ${round} 轮，${mover.name} 发起的不记名投票已经向全场公开，但个人票型不公开。这是一次不具约束力的当前判断快照；你在选择前不会看到他人的选择。请按此刻公开证据和讨论选择；九人全部选择后，你会看到十一票的不记名合计，但不会看到任何人的个人票。你之前可能作过的快照不约束现在，本次选择也不约束最终判决。不要为了猜多数而投票。`,
+        `【私密意向投票】${roundLabel(round)}，${mover.name} 发起的不记名投票已经向全场公开，但个人票型不公开。这是一次不具约束力的当前判断快照；你在选择前不会看到他人的选择。请按此刻公开证据和讨论选择；九人全部选择后，你会看到十一票的不记名合计，但不会看到任何人的个人票。你之前可能作过的快照不约束现在，本次选择也不约束最终判决。不要为了猜多数而投票。`,
       )
       return {
         agent: juror.agent,
@@ -811,7 +812,7 @@ ${menu}
     })
 
     const aggregate =
-      `【私密投票结果】第 ${round} 轮当前不记名快照：有罪 ${guilty} 票，无罪 ${notGuilty} 票。合计包含林与苏的固定票，不附带任何个人身份；本次快照不约束最终判决。`
+      `【私密投票结果】${roundLabel(round)}的不记名快照：有罪 ${guilty} 票，无罪 ${notGuilty} 票。合计包含林与苏的固定票，不附带任何个人身份；本次快照不约束最终判决。`
     mover.agent.push(aggregate)
     for (const juror of npcJurors) juror.agent.push(aggregate)
   }
@@ -820,7 +821,7 @@ ${menu}
     const messages = []
     for (let exchange = 1; exchange <= RULES.privateChatExchanges; exchange++) {
       mover.agent.push(
-        `【私密交谈】你正与 ${target.name} 在审议室外进行不公开的一对一交谈，这是第 ${exchange}/3 个往返的你的发言。说服对方重新检查一个具体证据组合，也可以追问其真实疑虑。不得许诺利益、威胁、编造证据或要求对方保证投票。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。\n\n${publicSpeechBoundary}`,
+        `【私密交谈】你正与 ${target.name} 在审议室外进行不公开的一对一交谈，这是${roundLabel(round)}中的第 ${exchange}/${RULES.privateChatExchanges} 个往返的你的发言。说服对方重新检查一个具体证据组合，也可以追问其真实疑虑。不得许诺利益、威胁、编造证据或要求对方保证投票。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。\n\n${publicSpeechBoundary}`,
       )
       const playerLine = await mover.agent.act({
         fields: {
@@ -837,7 +838,7 @@ ${menu}
       target.agent.hear(mover.name, playerText)
 
       target.agent.push(
-        `【私密交谈】你正与 ${mover.name} 进行不公开的一对一交谈，这是第 ${exchange}/3 个往返。诚实回应其论点：可以提出疑问、指出未被解决的顾虑或承认某点推动了你。不要为取悦对方承诺最终票，也不要添加公开材料之外的事实。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。\n\n${publicSpeechBoundary}`,
+        `【私密交谈】你正与 ${mover.name} 进行不公开的一对一交谈，这是${roundLabel(round)}中的第 ${exchange}/${RULES.privateChatExchanges} 个往返。诚实回应其论点：可以提出疑问、指出未被解决的顾虑或承认某点推动了你。不要为取悦对方承诺最终票，也不要添加公开材料之外的事实。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。\n\n${publicSpeechBoundary}`,
       )
       const jurorLine = await target.agent.act({
         fields: {
@@ -879,7 +880,7 @@ ${menu}
 
   const procedureVote = async (juror, mover, round) => {
     juror.agent.push(
-      `【提前终局程序票】第 ${round} 轮，${mover.name} 公开动议立即结束审议并进入最终判决。请只回答是否认为讨论已经充分到可以现在投最终判决票。END_NOW 不等于有罪，CONTINUE 不等于无罪。考虑是否仍有具体、可通过剩余轮次澄清的争点。你的程序票和理由收齐后将记名公开。`,
+      `【提前终局程序票】${roundLabel(round)}，${mover.name} 公开动议立即结束审议并进入最终判决。请只回答是否认为讨论已经充分到可以现在投最终判决票。END_NOW 不等于有罪，CONTINUE 不等于无罪。考虑是否仍有具体、可通过剩余轮次澄清的争点。你的程序票和理由收齐后将记名公开。`,
     )
     const ballot = await juror.agent.act({
       fields: {
@@ -903,7 +904,7 @@ ${menu}
       threshold: RULES.earlyFinalThreshold,
     })
     pushAll(
-      `【公开程序】第 ${round} 轮，${mover.name} 动议立即结束审议并进入最终判决。十一人将记名表决；至少 ${RULES.earlyFinalThreshold} 票 END_NOW 方可通过。`,
+      `【公开程序】${roundLabel(round)}，${mover.name} 动议立即结束审议并进入最终判决。十一人将记名表决；至少 ${RULES.earlyFinalThreshold} 票 END_NOW 方可通过。`,
     )
 
     const ballots = [{
@@ -1035,7 +1036,7 @@ ${menu}
       speakers: speakerIDs,
     })
     pushAll(
-      `【公开抽签】第 ${round} 轮普通陪审员发言顺序：${
+      `【公开抽签】${roundLabel(round)}的普通陪审员发言顺序：${
         selected.map((juror) => juror.name).join('、')
       }。`,
     )
@@ -1049,7 +1050,7 @@ ${menu}
             hint: '最多三句话的案件内公开发言正文',
           },
         },
-        prompt: `【公开发言】你在第 ${round} 轮随机抽签中获得第 ${
+        prompt: `【公开发言】你在${roundLabel(round)}的随机抽签中获得第 ${
           index + 1
         }/3 个发言席位。请根据截至目前的全部公开讨论发言，最多三句话。回应一个具体论点、澄清一组证据或提出一个尚未解决的具体问题；不得拒绝发言，不得讨论抽签概率，也不要汇报个人票、全场合计或私聊。不要代表其他人宣布共识。只在 speech 字段中填写公开发言正文，不要附加票型、理由字段或 XML 标签。\n\n${publicSpeechBoundary}`,
       })

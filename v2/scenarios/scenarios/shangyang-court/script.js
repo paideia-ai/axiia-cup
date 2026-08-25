@@ -613,8 +613,13 @@ async function main() {
   game.emit('court', { type: 'scene', actor: 'judge', text: OPENING_LINE })
 
   for (let round = 1; round <= rounds; round++) {
+    const roundPrompt = `【系统】当前是朝堂辩论第 ${round}/${rounds} 轮。${
+      round === rounds ? '这是本场辩论的最后一轮。' : ''
+    }`
+    a.push(roundPrompt)
     const lineA = (await a.say({ channel: 'court' })).text
     b.hear(NAME_A, lineA)
+    b.push(roundPrompt)
     const lineB = (await b.say({ channel: 'court' })).text
     a.hear(NAME_B, lineB)
     pending.push({ round: round, a: lineA, b: lineB })
