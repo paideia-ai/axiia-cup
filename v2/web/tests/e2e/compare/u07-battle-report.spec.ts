@@ -155,18 +155,28 @@ test.describe('U07 · 战报（§A7）', () => {
       await expect(page.getByText('甘龙 无增减 = 0', { exact: true }))
         .toBeVisible()
     })
-    await test.step('并且 判词散文（含裁判模型标注）随结果区块分列', async () => {
-      await expect(page.getByText('判词')).toBeVisible()
+    await test.step('并且 完整终局裁决（含裁判模型标注）在问询之后按原事件顺序出现', async () => {
+      await expect(
+        page.getByRole('heading', { name: '终局裁决', exact: true }),
+      )
+        .toBeVisible()
       const final = richMatch('owner').verdicts
         .find((verdict) => verdict.key === 'final' || verdict.key === 'judge')
       expect(final).toBeTruthy()
       await expect(page.getByText(final!.model).first()).toBeVisible()
     })
     await test.step(
-      '并且 区块自上而下依次为 结果、对话全文、问询、隐藏目标、计分推导',
+      '并且 区块自上而下依次为 结果、对话全文、问询、终局裁决、隐藏目标、计分推导',
       async () => {
         const titles = await sectionTitles(page)
-        const order = ['结果', '对话全文', '问询', '隐藏目标', '计分推导']
+        const order = [
+          '结果',
+          '对话全文',
+          '问询',
+          '终局裁决',
+          '隐藏目标',
+          '计分推导',
+        ]
           .map((title) => titles.findIndex((t) => t === title))
         expect(order.every((index) => index >= 0), `h2＝${titles}`).toBe(true)
         expect([...order].sort((a, b) => a - b)).toEqual(order)
@@ -199,12 +209,14 @@ test.describe('U07 · 战报（§A7）', () => {
       await openFinishedReport(page, RICH_MATCH_ID)
     })
     await test.step(
-      '那么 问询之后、计分推导之前存在独立的「隐藏目标」区块',
+      '那么 终局裁决之后、计分推导之前存在独立的「隐藏目标」区块',
       async () => {
         const titles = await sectionTitles(page)
         const hidden = titles.findIndex((t) => t.includes('隐藏目标'))
         expect(hidden, `h2＝${titles}——无「隐藏目标」区块`).toBeGreaterThan(-1)
-        expect(hidden).toBeGreaterThan(titles.findIndex((t) => t === '问询'))
+        expect(hidden).toBeGreaterThan(
+          titles.findIndex((t) => t === '终局裁决'),
+        )
         expect(hidden).toBeLessThan(titles.findIndex((t) => t === '计分推导'))
       },
     )

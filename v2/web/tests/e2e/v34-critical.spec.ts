@@ -100,11 +100,16 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   const result = page.getByRole('heading', { name: '结果' })
   const dialogue = page.getByRole('heading', { name: '对话全文' })
   const inquiry = page.getByRole('heading', { name: '问询', exact: true })
+  const verdict = page.getByRole('heading', {
+    name: '终局裁决',
+    exact: true,
+  })
   const hiddenGoal = page.getByRole('heading', { name: '隐藏目标' })
   const scoring = page.getByRole('heading', { name: '计分推导' })
   await expect(result).toBeVisible()
   await expect(dialogue).toBeVisible()
   await expect(inquiry).toBeVisible()
+  await expect(verdict).toBeVisible()
   await expect(hiddenGoal).toBeVisible()
   await expect(scoring).toBeVisible()
   expect((await result.boundingBox())!.y).toBeLessThan(
@@ -113,6 +118,9 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间；「被识破」
   // 的扣分是得分账里明确的一行，不再只是页底散文。
   expect((await inquiry.boundingBox())!.y).toBeLessThan(
+    (await verdict.boundingBox())!.y,
+  )
+  expect((await verdict.boundingBox())!.y).toBeLessThan(
     (await hiddenGoal.boundingBox())!.y,
   )
   expect((await hiddenGoal.boundingBox())!.y).toBeLessThan(

@@ -4,6 +4,7 @@ import type { LiveBubble } from '../api/sse'
 import type { StageDTO, TurnDTO, VerdictDTO } from '../api/types'
 import {
   absorbedActSeqs,
+  buildFinishedReportSections,
   groupTranscript,
   isInquiryGroup,
   placeVerdicts,
@@ -212,6 +213,46 @@ describe('v3.4 #20/#69/#80 transcript grouping', () => {
     expect(isInquiryGroup(groups[1])).toBe(true)
     expect(placed.perGroup[0].map(({ key }) => key)).toEqual(['order'])
     expect(placed.trailing.map(({ key }) => key)).toEqual(['judge'])
+  })
+
+  it('keeps dialogue, inquiry, and the later resolution leg in script order', () => {
+    const reportStages: StageDTO[] = [
+      ...stages,
+      {
+        id: 'verdict',
+        title: '终局裁决',
+        channels: [{ id: 'verdict', label: '判词' }],
+      },
+    ]
+    const groups = groupTranscript([
+      dialogue(0, 'room-a'),
+      dialogue(1, 'inquiry-judge'),
+      event(2, 'verdict', { type: 'verdict' }),
+    ], reportStages)
+
+    const sections = buildFinishedReportSections(groups)
+    expect(sections.map(({ kind }) => kind)).toEqual([
+      'dialogue',
+      'inquiry',
+      'resolution',
+    ])
+    expect(
+      sections.map(({ groupIndexes }) =>
+        groupIndexes.map((index) => groups[index].id)
+      ),
+    ).toEqual([['meeting'], ['inquiry'], ['verdict']])
+  })
+
+  it('does not invent an inquiry or resolution section when none exists', () => {
+    const groups = groupTranscript([
+      dialogue(0, 'public'),
+      event(1, 'verdict', { type: 'verdict' }),
+    ], deliberationStages)
+
+    expect(buildFinishedReportSections(groups)).toEqual([{
+      kind: 'dialogue',
+      groupIndexes: [0, 1],
+    }])
   })
 })
 

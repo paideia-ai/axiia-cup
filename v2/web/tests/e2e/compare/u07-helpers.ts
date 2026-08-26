@@ -7,6 +7,7 @@
 import { type APIRequestContext, expect, type Page } from '@playwright/test'
 
 import type { MatchDetail } from '../../../src/api/types'
+import { scriptEvent } from '../../../src/lib/event'
 import { finishedMatch } from '../../../src/testing/v34-fixtures'
 import {
   apiSignup,
@@ -34,17 +35,16 @@ function clone<T>(value: T): T {
 // 见 spec 的 @fixme（本地零推理栈无带 reasoning 的真对局可证）。
 export function richMatch(viewer: 'owner' | 'probe'): MatchDetail {
   const match = clone(finishedMatch)
-  match.turns.push({
-    seq: 6,
-    channel: 'inquiry-judge',
-    kind: 'event',
-    speaker: 'game',
-    finalText: '',
-    event: {
-      type: 'verdict',
+  const ruling = match.turns.find((turn) =>
+    scriptEvent(turn)?.type === 'verdict'
+  )
+  const rulingEvent = ruling == null ? null : scriptEvent(ruling)
+  if (ruling != null && rulingEvent != null) {
+    ruling.event = {
+      ...rulingEvent,
       requests: { SR2: '同意', GR2: '驳回' },
-    },
-  })
+    }
+  }
   if (viewer === 'probe') {
     for (const turn of match.turns) {
       if (turn.speaker === 'a') turn.reasoning = null
