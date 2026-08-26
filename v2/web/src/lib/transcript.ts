@@ -216,6 +216,45 @@ export function isInquiryGroup(group: StageGroup): boolean {
     group.channels.every((channel) => isInquiryChannel(channel.id))
 }
 
+export type FinishedReportSectionKind =
+  | 'dialogue'
+  | 'inquiry'
+  | 'resolution'
+
+export interface FinishedReportSection {
+  kind: FinishedReportSectionKind
+  groupIndexes: number[]
+}
+
+// A finished report may give inquiry its own visual section, but that must not
+// reorder the transcript. Everything before the first inquiry remains dialogue;
+// inquiry groups stay where they occurred; later non-inquiry groups are the
+// resolution leg. Adjacent runs are kept separate so a future scenario that
+// revisits inquiry still follows the script's global order.
+export function buildFinishedReportSections(
+  groups: StageGroup[],
+): FinishedReportSection[] {
+  if (groups.length === 0) {
+    return [{ kind: 'dialogue', groupIndexes: [] }]
+  }
+
+  const sections: FinishedReportSection[] = []
+  let inquirySeen = false
+  groups.forEach((group, index) => {
+    const inquiry = isInquiryGroup(group)
+    if (inquiry) inquirySeen = true
+    const kind: FinishedReportSectionKind = inquiry
+      ? 'inquiry'
+      : inquirySeen
+      ? 'resolution'
+      : 'dialogue'
+    const previous = sections.at(-1)
+    if (previous?.kind === kind) previous.groupIndexes.push(index)
+    else sections.push({ kind, groupIndexes: [index] })
+  })
+  return sections
+}
+
 // A verdict settled on the first `afterSeq` rows, so it renders after the first
 // stage that reaches that far; anything anchored past the whole transcript
 // trails it.

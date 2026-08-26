@@ -178,10 +178,11 @@ export const finishedMatch: MatchDetail = {
       },
     },
   },
-  currentTurn: 6,
-  // seq 2 与 seq 4 是 act 行：同一次生成既写成 verdict（心声/问询卡），又把带
-  // 标签的原始回复写成时间线行（#22）。前者整行都是结构化载荷（行不该渲染，
-  // 真实推演轨迹随卡走），后者叙述在前、标签在后（只该剥标签）。
+  currentTurn: 9,
+  // seq 2/5/6 是纯载荷 act 行：同一次生成既写成 verdict（心声/问询/终局
+  // 裁决卡），又把带标签的原始回复写成时间线行（#22），整行不该渲染；
+  // seq 4 的问询 act 有叙述，只剥标签。seq 7/8 则复刻真实场景在 final act
+  // 之后发出的裁决与计分事件，确保测试能抓到「裁决阶段被搬到问询前」的回归。
   turns: [
     {
       seq: 0,
@@ -227,6 +228,37 @@ export const finishedMatch: MatchDetail = {
     {
       seq: 5,
       channel: 'inquiry-judge',
+      kind: 'dialogue',
+      speaker: 'b',
+      finalText:
+        '<reason>商鞅始终在保护新法执行权</reason>\n<guess>SR2</guess>',
+      reasoning: '真实推演：从整场权力安排反推商鞅的真目标。',
+    },
+    {
+      seq: 6,
+      channel: 'verdict',
+      kind: 'dialogue',
+      speaker: 'judge',
+      finalText:
+        '<winner>a</winner>\n<judgment>商鞅的制度方案更可检验，且回应了执行问题。</judgment>',
+      reasoning: '最终推演：先核对问询猜测，再作终局裁决。',
+    },
+    {
+      seq: 7,
+      channel: 'verdict',
+      kind: 'event',
+      speaker: 'game',
+      finalText: '',
+      event: {
+        type: 'verdict',
+        actor: 'judge',
+        judgment: '推行变法',
+        winner: 'a',
+      },
+    },
+    {
+      seq: 8,
+      channel: 'verdict',
       kind: 'event',
       speaker: 'game',
       finalText: '',
@@ -280,6 +312,15 @@ export const finishedMatch: MatchDetail = {
       model: 'fixture-judge',
     },
     {
+      key: 'inquiry-b',
+      afterSeq: 5,
+      output: JSON.stringify({
+        reason: '商鞅始终在保护新法执行权',
+        guess: 'SR2',
+      }),
+      model: 'fixture-judge',
+    },
+    {
       key: 'judge',
       afterSeq: 6,
       output: JSON.stringify({
@@ -311,6 +352,11 @@ export const finishedMatch: MatchDetail = {
       title: '旁白',
       channels: [{ id: 'judge-aside', label: '裁判旁白' }],
     },
+    {
+      id: 'verdict',
+      title: '终局裁决',
+      channels: [{ id: 'verdict', label: '朝堂判词' }],
+    },
   ],
   speakerLabels: {
     a: '商鞅',
@@ -318,4 +364,79 @@ export const finishedMatch: MatchDetail = {
     judge: '裁判',
     game: '系统',
   },
+}
+
+// A finished scenario with no judge-QA leg. This guards the other common flow:
+// ordinary dialogue goes straight into a terminal act and emitted verdict/score
+// events. The report must not invent an inquiry section or hoist the final card.
+export const finishedNoInquiryMatch: MatchDetail = {
+  ...finishedMatch,
+  summary: {
+    ...finishedMatch.summary,
+    id: 9002,
+    scenarioID: 'no-inquiry-fixture',
+    scenarioTitle: '无问询裁决',
+  },
+  currentTurn: 5,
+  turns: [
+    {
+      seq: 0,
+      channel: 'court',
+      kind: 'dialogue',
+      speaker: 'a',
+      finalText: '先核对事实，再给出可执行的选择。',
+    },
+    {
+      seq: 1,
+      channel: 'court',
+      kind: 'dialogue',
+      speaker: 'b',
+      finalText: '我们同意直接进入最终表决。',
+    },
+    {
+      seq: 2,
+      channel: 'verdict',
+      kind: 'dialogue',
+      speaker: 'judge',
+      finalText: '<winner>a</winner>\n<judgment>甲方方案更可执行。</judgment>',
+      reasoning: '终局推演：比较两方方案的可执行性。',
+    },
+    {
+      seq: 3,
+      channel: 'verdict',
+      kind: 'event',
+      speaker: 'game',
+      finalText: '',
+      event: { type: 'verdict', winner: 'a', judgment: '甲方胜' },
+    },
+    {
+      seq: 4,
+      channel: 'verdict',
+      kind: 'event',
+      speaker: 'game',
+      finalText: '',
+      event: { type: 'score', scoreA: 1, scoreB: 0, winner: 'a' },
+    },
+  ],
+  verdicts: [{
+    key: 'judge',
+    afterSeq: 2,
+    output: JSON.stringify({ winner: 'a', judgment: '甲方方案更可执行。' }),
+    model: 'fixture-judge',
+  }],
+  scoreA: 1,
+  scoreB: 0,
+  reasoning: '',
+  stages: [
+    {
+      id: 'debate',
+      title: '公开辩论',
+      channels: [{ id: 'court', label: '讨论' }],
+    },
+    {
+      id: 'verdict',
+      title: '终局裁决',
+      channels: [{ id: 'verdict', label: '判词' }],
+    },
+  ],
 }

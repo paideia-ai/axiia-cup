@@ -26,7 +26,7 @@ import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
-import { VerdictBody, VerdictCard } from '../components/verdict-card'
+import { VerdictCard } from '../components/verdict-card'
 import { useOptionalAuth } from '../context/auth'
 import { cn } from '../lib/cn'
 import { outcomeCopy } from '../lib/outcome'
@@ -43,9 +43,9 @@ import {
 import { usePinToBottom } from '../lib/scroll'
 import {
   absorbedActSeqs,
+  buildFinishedReportSections,
   groupTranscript,
   isInquiryChannel,
-  isInquiryGroup,
   placeVerdicts,
 } from '../lib/transcript'
 import { messageOf, useAsync } from '../lib/use-async'
@@ -126,8 +126,9 @@ export function MatchDetailPage() {
     if (landmark != null) reload()
   }, [landmark, reload])
 
-  // 完局战报 (#69): a finished, scored match reads 结果 → 对话全文 → 问询 →
-  // 计分推导. Anything short of that (queued, live, finished-but-unscored)
+  // 完局战报 (#69): a finished, scored match starts with a spoiler summary,
+  // then keeps every transcript stage and verdict in script order. Anything short
+  // of that (queued, live, finished-but-unscored)
   // keeps the live layout untouched.
   const finished = data != null && data.summary.finished &&
     data.summary.scored
@@ -204,8 +205,15 @@ export function MatchDetailPage() {
         ? reveal.beatKeys.has(verdict.key)
         : verdict.afterSeq <= reveal.rows && !inquiryAnchored(verdict),
   )
-  const interim = placeVerdicts(stageGroups, shownInterim)
   const finalVerdict = data?.verdicts.find(isTerminalVerdict) ?? null
+  // The result card above the report is summary-only. In a finished report the
+  // full terminal verdict joins the same chronological placement path as every
+  // process verdict, so inquiry can never be pushed below it. Replay still hides
+  // the terminal verdict as a spoiler; live/unscored keeps its existing layout.
+  const shownVerdicts = finished && !replaying && finalVerdict != null
+    ? [...shownInterim, finalVerdict]
+    : shownInterim
+  const placed = placeVerdicts(stageGroups, shownVerdicts)
   // A private generation (an `act` with no channel, an affordance-only reply) has
   // no timeline row to grow into; it belongs to the status card, not the script.
   const offstage = stream.bubbles.filter((bubble) => bubble.seq < 0)
@@ -256,7 +264,19 @@ export function MatchDetailPage() {
   const showTrace = debug && !replaying
 
   // 教学锚点（#24 U9）：回放停在倾向变化的节拍上，心声卡就地高亮并给「继续」。
-  const interimVerdict = (verdict: VerdictDTO) => {
+  const renderVerdict = (verdict: VerdictDTO) => {
+    if (isTerminalVerdict(verdict)) {
+      return (
+        <VerdictCard
+          key={verdict.key}
+          verdict={verdict}
+          labels={labels}
+          interim={false}
+          trace={traceOf(verdict)}
+          showTrace={showTrace}
+        />
+      )
+    }
     if (isOsBeatVerdict(verdict)) {
       const anchored = replaying && replay.state.anchorKey === verdict.key
       return (
@@ -286,16 +306,15 @@ export function MatchDetailPage() {
   const groupRows = stageGroups.map((group, index) => ({
     group,
     index,
-    verdicts: interim.perGroup[index],
+    verdicts: placed.perGroup[index],
   }))
-  // The 问询 leg moves under its own section in the finished layout — with its
-  // original stage numbering, since it is extracted, not renumbered.
-  const inquiryRows = finished
-    ? groupRows.filter((row) => isInquiryGroup(row.group))
+  // Sections are presentation labels over the ordered groups, not filters. The
+  // latter used to hoist every non-inquiry group ahead of inquiry, which made the
+  // UI contradict the actual match sequence.
+  const reportSections = finished
+    ? buildFinishedReportSections(stageGroups)
     : []
-  const dialogueRows = finished
-    ? groupRows.filter((row) => !isInquiryGroup(row.group))
-    : groupRows
+  const dialogueRows = groupRows
 
   // afterSeq 是「已提交行数」：第 afterSeq 行（turns[afterSeq-1]）之后就是
   // 这条裁决的时间线位置——按行内插，而不是压到整个阶段末尾（#22①）。
@@ -307,7 +326,15 @@ export function MatchDetailPage() {
 
   const renderGroupRow = (row: (typeof groupRows)[number]) => {
     const bySeq: Record<number, ReactNode[]> = {}
+    const atGroupStart: VerdictDTO[] = []
     const atGroupEnd: VerdictDTO[] = []
+    const firstCommittedSeq = Math.min(
+      ...row.group.channels.flatMap((channel) =>
+        channel.items
+          .filter((item) => item.kind === 'turn')
+          .map((item) => item.seq)
+      ),
+    )
     for (const verdict of row.verdicts) {
       const anchor = anchorRowSeq(verdict)
       const inGroup = anchor != null &&
@@ -317,13 +344,19 @@ export function MatchDetailPage() {
           )
         )
       if (anchor != null && inGroup) {
-        ;(bySeq[anchor] ??= []).push(interimVerdict(verdict))
+        ;(bySeq[anchor] ??= []).push(renderVerdict(verdict))
+      } else if (anchor != null && anchor < firstCommittedSeq) {
+        // The anchor can be a pure act row that groupTranscript absorbed. When
+        // the next visible stage begins later, keep its card in that exact gap
+        // rather than moving it behind the stage's emitted events.
+        atGroupStart.push(verdict)
       } else {
         atGroupEnd.push(verdict)
       }
     }
     return (
       <div key={row.group.id} className='space-y-3'>
+        {atGroupStart.map(renderVerdict)}
         <TranscriptStage
           group={row.group}
           index={row.index}
@@ -334,7 +367,7 @@ export function MatchDetailPage() {
           showReasoning={debug && !replaying}
           verdictsBySeq={bySeq}
         />
-        {atGroupEnd.map(interimVerdict)}
+        {atGroupEnd.map(renderVerdict)}
       </div>
     )
   }
@@ -587,61 +620,51 @@ export function MatchDetailPage() {
                         </div>
                       )
                       : null}
-                    {finalVerdict
-                      ? (
-                        <div className='space-y-3 border-t border-(--border-soft) pt-4'>
-                          <div className='flex flex-wrap items-center gap-2'>
-                            <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-                              判词
-                            </p>
-                            <span className='text-xs text-(--foreground-muted)'>
-                              {finalVerdict.model}
-                            </span>
-                          </div>
-                          <VerdictBody verdict={finalVerdict} labels={labels} />
-                          {showTrace
-                            ? (
-                              <ReasoningFold
-                                text={traceOf(finalVerdict) ?? ''}
-                              />
-                            )
-                            : null}
-                        </div>
-                      )
-                      : null}
                   </CardContent>
                 </Card>
               )}
 
-            <div className='space-y-5'>
-              <h2 className='text-sm font-semibold text-(--foreground)'>
-                {replaying ? '对话重演' : '对话全文'}
-              </h2>
-              {!replaying && !debug && hasHiddenReasoning &&
-                  dialogueRows.length > 0
-                ? (
-                  <p className='text-xs text-(--foreground-muted)'>
-                    内心与思考过程默认隐藏——页头「调试模式」可开启
-                  </p>
-                )
-                : null}
-              {dialogueRows.length === 0
-                ? (
-                  <p className='text-sm text-(--foreground-muted)'>
-                    {replaying ? '回放即将开始…' : '暂无回合。'}
-                  </p>
-                )
-                : dialogueRows.map(renderGroupRow)}
-              {interim.trailing.map(interimVerdict)}
-            </div>
-
-            {!replaying && inquiryRows.length > 0
+            {reportSections.map((section, sectionIndex) => (
+              <div
+                key={`${section.kind}-${sectionIndex}`}
+                className='space-y-5'
+              >
+                {section.kind === 'dialogue'
+                  ? (
+                    <h2 className='text-sm font-semibold text-(--foreground)'>
+                      {replaying ? '对话重演' : '对话全文'}
+                    </h2>
+                  )
+                  : section.kind === 'inquiry'
+                  ? (
+                    <h2 className='text-sm font-semibold text-(--foreground)'>
+                      问询
+                    </h2>
+                  )
+                  : null}
+                {section.kind === 'dialogue' && !replaying && !debug &&
+                    hasHiddenReasoning && section.groupIndexes.length > 0
+                  ? (
+                    <p className='text-xs text-(--foreground-muted)'>
+                      内心与思考过程默认隐藏——页头「调试模式」可开启
+                    </p>
+                  )
+                  : null}
+                {section.groupIndexes.length === 0
+                  ? (
+                    <p className='text-sm text-(--foreground-muted)'>
+                      {replaying ? '回放即将开始…' : '暂无回合。'}
+                    </p>
+                  )
+                  : section.groupIndexes.map((index) =>
+                    renderGroupRow(groupRows[index])
+                  )}
+              </div>
+            ))}
+            {placed.trailing.length > 0
               ? (
-                <div className='space-y-5'>
-                  <h2 className='text-sm font-semibold text-(--foreground)'>
-                    问询
-                  </h2>
-                  {inquiryRows.map(renderGroupRow)}
+                <div className='space-y-3'>
+                  {placed.trailing.map(renderVerdict)}
                 </div>
               )
               : null}
@@ -891,7 +914,7 @@ export function MatchDetailPage() {
                   </p>
                 )
                 : dialogueRows.map(renderGroupRow)}
-              {interim.trailing.map(interimVerdict)}
+              {placed.trailing.map(renderVerdict)}
             </div>
 
             {finalVerdict

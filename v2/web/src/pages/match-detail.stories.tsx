@@ -3,7 +3,7 @@ import { expect, userEvent, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import { finishedMatch } from '../testing/v34-fixtures'
+import { finishedMatch, finishedNoInquiryMatch } from '../testing/v34-fixtures'
 import { MatchDetailPage } from './match-detail'
 
 function MatchReport() {
@@ -39,13 +39,18 @@ export const FinishedScored: Story = {
     const result = await canvas.findByRole('heading', { name: '结果' })
     const dialogue = canvas.getByRole('heading', { name: '对话全文' })
     const inquiry = canvas.getByRole('heading', { name: '问询' })
+    const verdict = canvas.getByRole('heading', {
+      name: '终局裁决',
+      level: 2,
+    })
     // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间。
     const hiddenGoal = canvas.getByRole('heading', { name: '隐藏目标' })
     const scoring = canvas.getByRole('heading', { name: '计分推导' })
 
     await expect(result.compareDocumentPosition(dialogue) & 4).toBeTruthy()
     await expect(dialogue.compareDocumentPosition(inquiry) & 4).toBeTruthy()
-    await expect(inquiry.compareDocumentPosition(hiddenGoal) & 4).toBeTruthy()
+    await expect(inquiry.compareDocumentPosition(verdict) & 4).toBeTruthy()
+    await expect(verdict.compareDocumentPosition(hiddenGoal) & 4).toBeTruthy()
     await expect(hiddenGoal.compareDocumentPosition(scoring) & 4).toBeTruthy()
     await expect(canvas.queryByText('先立可验证的制度标准。')).toBeNull()
     // F7：胜负行与徽记带「我方」视角（fixture 的 a 侧 isMine）。
@@ -85,6 +90,33 @@ export const DebugReasoning: Story = {
   },
 }
 
+export const NoInquiryKeepsChronology: Story = {
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/matches/9001',
+        () => HttpResponse.json(finishedNoInquiryMatch),
+      ),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const result = await canvas.findByRole('heading', { name: '结果' })
+    const dialogue = canvas.getByRole('heading', { name: '对话全文' })
+    const verdict = canvas.getByRole('heading', {
+      name: '终局裁决',
+      level: 2,
+    })
+    const scoring = canvas.getByRole('heading', { name: '计分推导' })
+
+    await expect(canvas.queryByRole('heading', { name: '问询' })).toBeNull()
+    await expect(result.compareDocumentPosition(dialogue) & 4).toBeTruthy()
+    await expect(dialogue.compareDocumentPosition(verdict) & 4).toBeTruthy()
+    await expect(verdict.compareDocumentPosition(scoring) & 4).toBeTruthy()
+    await expect(canvas.getByText('我们同意直接进入最终表决。')).toBeVisible()
+  },
+}
+
 export const ReplayHidesSpoilers: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -96,8 +128,9 @@ export const ReplayHidesSpoilers: Story = {
     await expect(canvas.queryByRole('heading', { name: '计分推导' })).toBeNull()
     await expect(canvas.getByRole('heading', { name: '对话重演' }))
       .toBeVisible()
-    // 不渲染的行不占步数：两行对话 + 两拍心声＝4 步，被吸收的 act 行不在其中。
-    await expect(canvas.getByText(/^\d+\/4$/)).toBeVisible()
+    // 不渲染的行不占步数：两行对话 + 两拍心声 + 两条终局
+    // 事件＝6 步，被吸收的 act 行不在其中。
+    await expect(canvas.getByText(/^\d+\/6$/)).toBeVisible()
     // 回放是另一条渲染路径，同样一个标签都不许漏。
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
