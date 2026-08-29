@@ -9,6 +9,13 @@ export const shangyangCourt: ScenarioModule = {
   slotID: 'shangyang-court',
   roles: [],
   intro: shangyangCourtIntro,
+  overviewImages: [
+    {
+      src: '/scenario-assets/shangyang-court/court-debate.jpeg',
+      alt: '商鞅与甘龙在秦孝公面前辩法',
+      caption: '朝堂辩法',
+    },
+  ],
   hiddenGoals: {
     a: {
       note: '每局随机一项为真目标，其余两项为假目标。',

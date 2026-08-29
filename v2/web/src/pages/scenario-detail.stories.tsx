@@ -128,6 +128,9 @@ export const ShangyangFourCards: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '商鞅变法 · 朝堂辩法' }),
     ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', { name: '商鞅与甘龙在秦孝公面前辩法' }),
+    ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(
       canvas.getByText('每侧各赢 ≥1 场 PVE 练习解锁 PVP'),
@@ -176,6 +179,9 @@ export const HonnojiFourCards: Story = {
     const canvas = within(canvasElement)
     await expect(
       await canvas.findByRole('heading', { name: '本能寺之变 · 敌在何处' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', { name: '织田信长在席间命令明智光秀' }),
     ).toBeVisible()
     const formatLabels = canvas.getAllByText('10 轮深夜军议')
     await expect(formatLabels).toHaveLength(2)
@@ -262,6 +268,9 @@ export const FengyitingFourCards: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '凤仪亭之夜' }),
     ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', { name: '董卓、貂蝉与吕布在凤仪亭对峙' }),
+    ).toBeVisible()
     const cards = canvas.getAllByTestId('scenario-intro-card')
     await expect(cards).toHaveLength(5)
     const lastCard = within(cards.at(-1)!)
@@ -307,6 +316,12 @@ export const HarborFourCards: Story = {
     const canvas = within(canvasElement)
     await expect(
       await canvas.findByRole('heading', { name: '码头疑云 · 七号仓命案' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', { name: '港口谋杀案办公室案发现场' }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', { name: '陪审团围桌审议港口谋杀案' }),
     ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(canvas.getByText('E5 · 改口与未求助')).toBeVisible()

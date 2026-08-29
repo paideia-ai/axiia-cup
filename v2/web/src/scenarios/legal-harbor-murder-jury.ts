@@ -7,6 +7,18 @@ export const legalHarborMurderJury: ScenarioModule = {
   slotID: 'legal-harbor-murder-jury',
   roles: [],
   intro: legalHarborMurderJuryIntro,
+  overviewImages: [
+    {
+      src: '/scenario-assets/legal-harbor-murder-jury/office-crime-scene.png',
+      alt: '港口谋杀案办公室案发现场',
+      caption: '办公室案发现场',
+    },
+    {
+      src: '/scenario-assets/legal-harbor-murder-jury/jury-deliberation.jpeg',
+      alt: '陪审团围桌审议港口谋杀案',
+      caption: '陪审团审议',
+    },
+  ],
   scoringLabel: '投票规则',
   laneLabels: {},
   education: {

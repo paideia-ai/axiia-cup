@@ -40,6 +40,7 @@ export interface ScenarioIntroChoice {
 export interface ScenarioIntroImage {
   src: string
   alt: string
+  caption?: string
 }
 
 export interface ScenarioHiddenGoalOption {
@@ -147,6 +148,7 @@ export interface ScenarioModule {
   slotID: string
   roles: ScenarioRole[]
   intro?: ScenarioIntroCopy
+  overviewImages?: ScenarioIntroImage[]
   overviewFactImages?: Record<string, ScenarioIntroImage>
   // Public candidate lists for scenarios that randomly mark one request as the
   // player's true goal. The selected item stays private; these candidates do not.
