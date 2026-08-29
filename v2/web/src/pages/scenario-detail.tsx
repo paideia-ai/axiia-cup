@@ -112,6 +112,7 @@ export function ScenarioDetailPage() {
               intro={intro}
               education={education}
               summary={data.summary}
+              images={module?.overviewImages ?? null}
               factImages={module?.overviewFactImages ?? null}
               timelineAtEnd={module?.timelineAtEnd ?? false}
             />
@@ -195,12 +196,14 @@ function OverviewCard({
   intro,
   education,
   summary,
+  images,
   factImages,
   timelineAtEnd,
 }: {
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
   summary: ScenarioSummary
+  images: ScenarioIntroImage[] | null
   factImages: Record<string, ScenarioIntroImage> | null
   timelineAtEnd: boolean
 }) {
@@ -234,6 +237,10 @@ function OverviewCard({
               </p>
             )}
         </div>
+
+        {images && images.length > 0
+          ? <ScenarioOverviewImages images={images} />
+          : null}
 
         {overview?.facts && overview.facts.length > 0
           ? (
@@ -336,6 +343,36 @@ function OverviewCard({
           : null}
       </CardContent>
     </Card>
+  )
+}
+
+function ScenarioOverviewImages({ images }: { images: ScenarioIntroImage[] }) {
+  return (
+    <div
+      className={`grid gap-3 ${images.length > 1 ? 'sm:grid-cols-2' : ''}`}
+      data-testid='scenario-overview-images'
+    >
+      {images.map((image) => (
+        <figure
+          key={image.src}
+          className='overflow-hidden rounded-lg border border-(--border-soft) bg-white'
+        >
+          <img
+            alt={image.alt}
+            className='aspect-[4/3] w-full object-contain'
+            loading='eager'
+            src={image.src}
+          />
+          {image.caption
+            ? (
+              <figcaption className='border-t border-(--border-soft) bg-(--background) px-3 py-2 text-xs text-(--foreground-subtle)'>
+                {image.caption}
+              </figcaption>
+            )
+            : null}
+        </figure>
+      ))}
+    </div>
   )
 }
 

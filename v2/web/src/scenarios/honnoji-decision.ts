@@ -6,6 +6,13 @@ export const honnojiDecision: ScenarioModule = {
   slotID: 'honnoji-decision',
   intro: honnojiDecisionIntro,
   hideHeaderMatchup: true,
+  overviewImages: [
+    {
+      src: '/scenario-assets/honnoji-decision/dismissal-hypothesis.png',
+      alt: '织田信长在席间命令明智光秀',
+      caption: '信长解除光秀职务的假说场景',
+    },
+  ],
   roles: [
     {
       key: 'chosokabe',
