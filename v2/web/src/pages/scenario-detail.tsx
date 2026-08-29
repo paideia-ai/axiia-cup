@@ -349,7 +349,9 @@ function OverviewCard({
 function ScenarioOverviewImages({ images }: { images: ScenarioIntroImage[] }) {
   return (
     <div
-      className={`grid gap-3 ${images.length > 1 ? 'sm:grid-cols-2' : ''}`}
+      className={`grid gap-3 ${
+        images.length > 1 ? 'sm:grid-cols-2' : 'mx-auto w-full max-w-xl'
+      }`}
       data-testid='scenario-overview-images'
     >
       {images.map((image) => (
