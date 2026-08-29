@@ -8,9 +8,14 @@ export const honnojiDecision: ScenarioModule = {
   hideHeaderMatchup: true,
   overviewImages: [
     {
-      src: '/scenario-assets/honnoji-decision/dismissal-hypothesis.png',
-      alt: '织田信长在席间命令明智光秀',
-      caption: '信长解除光秀职务的假说场景',
+      src: '/scenario-assets/honnoji-decision/banquet-duty-removal.png',
+      alt: '织田信长撤下明智光秀负责的宴席筹备差事',
+      caption: '信长撤下光秀的宴席筹备差事',
+    },
+    {
+      src: '/scenario-assets/honnoji-decision/iron-fan-punishment.jpg',
+      alt: '《新编绘本太阁记》中信长命人用铁扇责打光秀的插图',
+      caption: '信长命人用铁扇责打光秀',
     },
   ],
   roles: [

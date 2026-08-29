@@ -181,7 +181,14 @@ export const HonnojiFourCards: Story = {
       await canvas.findByRole('heading', { name: '本能寺之变 · 敌在何处' }),
     ).toBeVisible()
     await expect(
-      canvas.getByRole('img', { name: '织田信长在席间命令明智光秀' }),
+      canvas.getByRole('img', {
+        name: '织田信长撤下明智光秀负责的宴席筹备差事',
+      }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('img', {
+        name: '《新编绘本太阁记》中信长命人用铁扇责打光秀的插图',
+      }),
     ).toBeVisible()
     const formatLabels = canvas.getAllByText('10 轮深夜军议')
     await expect(formatLabels).toHaveLength(2)
