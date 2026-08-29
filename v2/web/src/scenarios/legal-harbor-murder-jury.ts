@@ -15,8 +15,8 @@ export const legalHarborMurderJury: ScenarioModule = {
     },
     {
       src: '/scenario-assets/legal-harbor-murder-jury/jury-deliberation.jpeg',
-      alt: '十一名陪审员围桌审议港口谋杀案',
-      caption: '十一名陪审员审议',
+      alt: '陪审团围桌审议港口谋杀案',
+      caption: '陪审团审议',
     },
   ],
   scoringLabel: '投票规则',

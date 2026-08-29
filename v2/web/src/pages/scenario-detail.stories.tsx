@@ -321,7 +321,7 @@ export const HarborFourCards: Story = {
       canvas.getByRole('img', { name: '港口谋杀案办公室案发现场' }),
     ).toBeVisible()
     await expect(
-      canvas.getByRole('img', { name: '十一名陪审员围桌审议港口谋杀案' }),
+      canvas.getByRole('img', { name: '陪审团围桌审议港口谋杀案' }),
     ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(canvas.getByText('E5 · 改口与未求助')).toBeVisible()
