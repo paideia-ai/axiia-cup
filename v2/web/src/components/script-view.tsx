@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 
 import type { TokenKind } from '../lib/highlight'
 import { tokenizeLines } from '../lib/highlight'
+import { tm } from '../testmode/mark'
 
 const tokenClass: Record<TokenKind, string> = {
   plain: 'text-(--foreground-subtle)',
@@ -16,7 +17,10 @@ export function ScriptView({ source }: { source: string }) {
   const lines = useMemo(() => tokenizeLines(source), [source])
 
   return (
-    <div className='overflow-x-auto rounded-lg border border-(--border-soft) bg-black/30'>
+    <div
+      {...tm('ADM.slot-script-view')}
+      className='overflow-x-auto rounded-lg border border-(--border-soft) bg-black/30'
+    >
       <pre className='min-w-max py-3 font-mono text-[12px] leading-[1.6]'>
         {lines.map((tokens, number) => (
           <div key={number} className='flex'>

@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/card'
 import type { RoleNames } from '../lib/outcome'
 import { outcomeCopy, scenarioRoles } from '../lib/outcome'
 import { useAsync } from '../lib/use-async'
+import { tm } from '../testmode/mark'
 
 function statusTone(summary: MatchSummary) {
   if (!summary.dispatched) return 'info' as const
@@ -76,26 +77,39 @@ export function MatchesPage() {
   const rolesOf = (summary: MatchSummary) => roles[summary.scenarioID] ?? null
 
   const matchCard = (summary: MatchSummary) => (
-    <Link key={summary.id} to={`/matches/${summary.id}`}>
+    <Link
+      key={summary.id}
+      to={`/matches/${summary.id}`}
+      {...tm('L.match-card')}
+    >
       <Card className='transition hover:border-(--foreground-muted)'>
         <CardContent className='flex items-center justify-between gap-3 py-4'>
           <div>
-            <span className='font-mono text-sm text-(--foreground)'>
+            <span
+              className='font-mono text-sm text-(--foreground)'
+              {...tm('L.match-id')}
+            >
               对战 #{summary.id}
             </span>
-            <span className='ml-3 text-xs text-(--foreground-muted)'>
+            <span
+              className='ml-3 text-xs text-(--foreground-muted)'
+              {...tm('L.match-meta')}
+            >
               {summary.scenarioTitle} · {summary.kind.toUpperCase()}
             </span>
             {/* F7 · #66：约战腿标出这是一对中的第几场。 */}
             {summary.challengeLeg != null
               ? (
-                <span className='ml-2 text-xs font-semibold text-(--accent)'>
+                <span
+                  className='ml-2 text-xs font-semibold text-(--accent)'
+                  {...tm('L.challenge-leg')}
+                >
                   约战{summary.challengeLeg === 1 ? '①' : '②'}
                 </span>
               )
               : null}
           </div>
-          <Badge tone={statusTone(summary)}>
+          <Badge tone={statusTone(summary)} {...tm('L.status-badge')}>
             {statusLabel(summary, rolesOf(summary))}
           </Badge>
         </CardContent>
@@ -115,20 +129,33 @@ export function MatchesPage() {
 
   return (
     <div className='space-y-6'>
-      <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+      <h1
+        className='text-2xl font-black tracking-tight text-(--foreground)'
+        {...tm('L.page-title')}
+      >
         历史
       </h1>
-      <p className='-mt-4 text-sm text-(--foreground-subtle)'>
+      <p
+        className='-mt-4 text-sm text-(--foreground-subtle)'
+        {...tm('L.page-intro')}
+      >
         {data?.list.open ? '全部对战记录。' : '你的全部对战记录。'}
       </p>
 
       {loading
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            className='text-sm text-(--foreground-subtle)'
+            {...tm('L.loading')}
+          >
+            加载中…
+          </p>
+        )
         : error
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? <p className='text-sm text-(--accent)' {...tm('L.error')}>{error}</p>
         : data && data.list.matches.length > 0
         ? (
-          <div className='space-y-2'>
+          <div className='space-y-2' {...tm('L.match-list')}>
             {groupHistory(data.list.matches).map((row) => {
               if (row.kind === 'single') return matchCard(row.match)
               const legs = [...row.legs].sort(
@@ -138,8 +165,12 @@ export function MatchesPage() {
                 <div
                   key={`challenge-${row.challengeID}`}
                   className='space-y-2 rounded-xl border border-(--border-soft) bg-white/2 p-2'
+                  {...tm('L.pair-group')}
                 >
-                  <p className='px-2 pt-1 text-xs font-semibold text-(--foreground-subtle)'>
+                  <p
+                    className='px-2 pt-1 text-xs font-semibold text-(--foreground-subtle)'
+                    {...tm('L.pair-header')}
+                  >
                     {pairHeader(row.challengeID, legs)}
                   </p>
                   {legs.map(matchCard)}
@@ -149,7 +180,7 @@ export function MatchesPage() {
           </div>
         )
         : (
-          <p className='text-sm text-(--foreground-subtle)'>
+          <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
             {data?.list.open
               ? '还没有任何对战。到场景页构建智能体并发起对战。'
               : '还没有对战。到场景页构建智能体并发起对战。'}

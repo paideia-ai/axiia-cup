@@ -1,0 +1,2512 @@
+{
+  "generatedFrom": "axiia-cup-uiux/spec-v4/sources/step-clause-map.json + human.json",
+  "note": "route / marker 两个字段由测试模式的映射工作补齐（step 发生在哪个路由、聚光哪个 data-tm）；clauseIds = precise 优先否则 broad",
+  "journeys": [
+    {
+      "id": "r1:1",
+      "round": "r1",
+      "n": "1",
+      "title": "从陌生人到打完第一场",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j1s1",
+          "round": "r1",
+          "journey": "1",
+          "index": 1,
+          "action": "用无痕窗口打开首页（不要登录）。",
+          "expected": "应该看到：这个产品是干什么的一目了然。规格要求首页有四样东西：真实对局的一段节选、一两场示范对局、顶尖玩家、总对战数。",
+          "specLine": "规格 B1 首页",
+          "anchors": [
+            "spec-b1"
+          ],
+          "clauseIds": [
+            "U07-C09",
+            "U08-C01",
+            "U08-C02"
+          ],
+          "primary": [
+            "U07-C09"
+          ],
+          "known": "已知问题（不用报）：现在首页只有宣传语和三张玩法卡，那四样内容都还没有。修复已经写好但还没上线。（修复在 PR #128，仍未合并）",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j1s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j1s2",
+          "round": "r1",
+          "journey": "1",
+          "index": 2,
+          "action": "点「立即注册」，填注册码、昵称、邮箱、密码，创建账户。",
+          "expected": "应该看到：注册完自动就登录了，不用再登一次；并且直接进入「首战快速通道」。",
+          "specLine": "规格 B2 登录 · 注册",
+          "anchors": [
+            "spec-b2"
+          ],
+          "clauseIds": [
+            "U08-C03",
+            "U08-C04",
+            "U08-C05",
+            "U08-C06",
+            "U08-C07"
+          ],
+          "primary": [
+            "U08-C03"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j1s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j1s3",
+          "round": "r1",
+          "journey": "1",
+          "index": 3,
+          "action": "在首战快速通道页读一遍。",
+          "expected": "应该看到：只给你一方的角色（比如「商鞅」），一句话说清楚你要达成什么，一个「去构建 →」按钮。这里是刻意简化的——不该出现一堆你还看不懂的东西。",
+          "specLine": "规格 A3 首战快速通道 #11",
+          "anchors": [
+            "spec-a3",
+            "spec-change-11"
+          ],
+          "clauseIds": [
+            "U03-C02"
+          ],
+          "primary": [
+            "U03-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j1s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j1s4",
+          "round": "r1",
+          "journey": "1",
+          "index": 4,
+          "action": "点「去构建」，按提示写一段策略（写什么都行，用大白话写你想让这个角色怎么说话、坚持什么），然后保存。",
+          "expected": "应该看到：保存之后自动就开打了，不需要你再去找「开始对战」按钮。",
+          "specLine": "规格 #9 保存即派遣",
+          "anchors": [
+            "spec-change-9"
+          ],
+          "clauseIds": [
+            "U03-C05",
+            "U03-C07"
+          ],
+          "primary": [
+            "U03-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j1s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j1s5",
+          "round": "r1",
+          "journey": "1",
+          "index": 5,
+          "action": "看着它打完。",
+          "expected": "应该看到：能看到对局正在进行（直播感），打完之后能看到完整战报。",
+          "specLine": "规格 #10 A7 战报",
+          "anchors": [
+            "spec-change-10",
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U03-C06",
+            "U03-C12"
+          ],
+          "primary": [
+            "U03-C06"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：从点下保存到「看到有反应」，等了多久？这段等待里你心里慌不慌——会不会怀疑自己是不是点错了、页面是不是卡住了？机器只会记录「几秒完成」，只有你能说出「这几秒里我很想刷新页面」。",
+          "manualUrl": "/player-journeys#j1s5",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j1s6",
+          "round": "r1",
+          "journey": "1",
+          "index": 6,
+          "action": "战报看完，往下拉到底。",
+          "expected": "应该看到：一张卡片告诉你「接下来可以做什么」，并且从这里之后，你能看到三种玩法的入口。",
+          "specLine": "规格 #67 #12",
+          "anchors": [
+            "spec-change-67",
+            "spec-change-12"
+          ],
+          "clauseIds": [
+            "U03-C08",
+            "U02-C02",
+            "U03-C04",
+            "U03-C09",
+            "U03-C13",
+            "U08-C04"
+          ],
+          "primary": [
+            "U03-C08"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j1s6",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:2",
+      "round": "r1",
+      "n": "2",
+      "title": "逛场景、看懂一个场景",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j2s1",
+          "round": "r1",
+          "journey": "2",
+          "index": 1,
+          "action": "点顶部「场景」。",
+          "expected": "应该看到：每张卡片都有：难度、大约要多久、两边分别是谁、以及这个场景已经打了多少场/两边胜率。刚上线的新场景会排在第二个位置并带「新上线」标记。",
+          "specLine": "规格 A4 场景选择 #40 #54",
+          "anchors": [
+            "spec-a4",
+            "spec-change-40",
+            "spec-change-54"
+          ],
+          "clauseIds": [
+            "U04-C02",
+            "U04-C03",
+            "U04-C04"
+          ],
+          "primary": [
+            "U04-C02"
+          ],
+          "known": "已知问题（不用报）：「码头疑云：七号仓命案」这张卡缺难度、时长和统计。别的卡有。",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j2s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j2s2",
+          "round": "r1",
+          "journey": "2",
+          "index": 2,
+          "action": "点进一个场景（推荐「商鞅变法·朝堂辩法」，最短最好懂）。",
+          "expected": "应该看到：从「一眼看懂」的一句话开始，越往下越详细——你可以在任何一层停下来就去玩，不必读完。",
+          "specLine": "规格 A4 场景介绍 #51",
+          "anchors": [
+            "spec-a4",
+            "spec-change-51"
+          ],
+          "clauseIds": [
+            "U04-C13",
+            "U04-C14",
+            "U04-C15"
+          ],
+          "primary": [
+            "U04-C13"
+          ],
+          "known": "已知问题（不用报）：缺「开场白」这一项；也没有「看原始规则原文」的切换。",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j2s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j2s3",
+          "round": "r1",
+          "journey": "2",
+          "index": 3,
+          "action": "找一下：这场怎么算赢？裁判会怎么判？",
+          "expected": "应该看到：赢的条件写得清楚，而且明确告诉你有「暗线」——有些目标是藏着的，不会一开始就摊开。",
+          "specLine": "规格 #42",
+          "anchors": [
+            "spec-change-42"
+          ],
+          "clauseIds": [
+            "U04-C07",
+            "U04-C11"
+          ],
+          "primary": [
+            "U04-C07"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：这一页读下来，你敢开始玩了吗？还是觉得「我还不知道该写什么」？如果是后者，是缺哪句话让你不敢动手。",
+          "manualUrl": "/player-journeys#j2s3",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:3",
+      "round": "r1",
+      "n": "3",
+      "title": "构建器：三种起手方式",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j3s1",
+          "round": "r1",
+          "journey": "3",
+          "index": 1,
+          "action": "在场景页点「去构建」/「创建智能体」。",
+          "expected": "应该看到：三种开始方式——自己直接写、做选择题让系统帮你生成、或者把你在别的 AI 那儿写好的粘进来。",
+          "specLine": "规格 A2 构建器 #83",
+          "anchors": [
+            "spec-a2",
+            "spec-change-83"
+          ],
+          "clauseIds": [
+            "U01-C09",
+            "U01-C10",
+            "U01-C34",
+            "U02-C01",
+            "U02-C02",
+            "U02-C04",
+            "U02-C05",
+            "U02-C19",
+            "U03-C04"
+          ],
+          "primary": [
+            "U01-C09"
+          ],
+          "known": "已知问题（不用报）：①「码头疑云」那个场景没有选择题模式，只能直接写。②构建器顶部那句说明里写着「或从版本卡『复制为新智能体』」——这个功能已经取消了，是句没删干净的旧文案。（修复在新 PR 中）",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j3s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j3s2",
+          "round": "r1",
+          "journey": "3",
+          "index": 2,
+          "action": "试「做选择题」这条路：一路点下去。",
+          "expected": "应该看到：选完之后，工作区里出现一段给你打好的草稿，你可以继续改。",
+          "specLine": "",
+          "anchors": [],
+          "clauseIds": [],
+          "primary": [],
+          "known": null,
+          "humanOnly": "只有你能发现：生成出来的这段话，像不像人话？读起来是不是一段合理的角色设定，还是一堆拼起来的模板句？这是机器完全测不了的。",
+          "manualUrl": "/player-journeys#j3s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j3s3",
+          "round": "r1",
+          "journey": "3",
+          "index": 3,
+          "action": "随便写点东西，注意右下角/附近的字数。",
+          "expected": "应该看到：有字数上限（1000 字），快到的时候有提示，超了不让保存。",
+          "specLine": "规格 #14",
+          "anchors": [
+            "spec-change-14"
+          ],
+          "clauseIds": [
+            "U02-C08"
+          ],
+          "primary": [
+            "U02-C08"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j3s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j3s4",
+          "round": "r1",
+          "journey": "3",
+          "index": 4,
+          "action": "看看能不能选模型。",
+          "expected": "应该看到：有模型选择器，而且模型是跟着版本走的——这版用什么模型，存下来就固定了。",
+          "specLine": "规格 #13",
+          "anchors": [
+            "spec-change-13"
+          ],
+          "clauseIds": [
+            "U02-C06",
+            "U02-C07",
+            "U02-C17"
+          ],
+          "primary": [
+            "U02-C06"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j3s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j3s5",
+          "round": "r1",
+          "journey": "3",
+          "index": 5,
+          "action": "点保存。",
+          "expected": "应该看到：保存后你还停在这一页（不会被踢走），并且提示你「这是第几版」。",
+          "specLine": "规格 #88 P12",
+          "anchors": [
+            "spec-change-88",
+            "spec-p12"
+          ],
+          "clauseIds": [
+            "U01-C12",
+            "U01-C13",
+            "U01-C14",
+            "U01-C34",
+            "U02-C10",
+            "U10-C09",
+            "U01-C30",
+            "U02-C12"
+          ],
+          "primary": [
+            "U01-C12"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j3s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:4",
+      "round": "r1",
+      "n": "4",
+      "title": "版本线：改、比、标记参赛",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j4s1",
+          "round": "r1",
+          "journey": "4",
+          "index": 1,
+          "action": "在同一个智能体里改一句话，再保存一次。",
+          "expected": "应该看到：版本号严格 +1（v1、v2、v3…），不会跳号；每个版本都能看到什么时候存的，还能给它写个备注。",
+          "specLine": "规格 E2 P10",
+          "anchors": [
+            "spec-e2",
+            "spec-p10"
+          ],
+          "clauseIds": [
+            "U01-C02",
+            "U01-C29"
+          ],
+          "primary": [
+            "U01-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j4s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j4s2",
+          "round": "r1",
+          "journey": "4",
+          "index": 2,
+          "action": "找一个旧版本，点「基于该版本迭代」。",
+          "expected": "应该看到：那一版的内容被放回工作区让你继续改；旧版本本身不会被删掉或改掉。",
+          "specLine": "规格 E3 #89",
+          "anchors": [
+            "spec-e3",
+            "spec-change-89"
+          ],
+          "clauseIds": [
+            "U01-C03",
+            "U01-C04",
+            "U01-C34",
+            "U10-C08"
+          ],
+          "primary": [
+            "U01-C03"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j4s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j4s3",
+          "round": "r1",
+          "journey": "4",
+          "index": 3,
+          "action": "先在工作区打几个字不保存，然后马上去点另一个版本的「基于该版本迭代」。",
+          "expected": "应该看到：先问你一句「工作区里有没保存的改动，确定要覆盖吗」，而不是默默把你写的东西冲掉。",
+          "specLine": "规格 P11 覆盖保护",
+          "anchors": [
+            "spec-p11"
+          ],
+          "clauseIds": [
+            "U01-C04"
+          ],
+          "primary": [
+            "U01-C04"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：这个确认该弹的时候弹了吗？不该弹的时候是不是老弹？如果你什么都没改它也弹，那很烦人——这种「烦人程度」只有人能判断。",
+          "manualUrl": "/player-journeys#j4s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j4s4",
+          "round": "r1",
+          "journey": "4",
+          "index": 4,
+          "action": "给某个版本点上「★ 参赛版本」。",
+          "expected": "应该看到：每一侧只能有一个★。给新的标上，旧的自动取消，并且告诉你「★ 从 v2 挪到了 v5」。",
+          "specLine": "规格 #91",
+          "anchors": [
+            "spec-change-91"
+          ],
+          "clauseIds": [
+            "U01-C33",
+            "U01-C34",
+            "U05-C02b",
+            "U06-C10",
+            "U06-C11",
+            "U06-C12",
+            "U10-C06"
+          ],
+          "primary": [
+            "U01-C33"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j4s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j4s5",
+          "round": "r1",
+          "journey": "4",
+          "index": 5,
+          "action": "去「我的智能体」页，给这个智能体改个名字（用中文输入法打）。",
+          "expected": "应该看到：改完之后，所有地方显示的都是新名字。",
+          "specLine": "规格 P2 #63",
+          "anchors": [
+            "spec-p2",
+            "spec-change-63"
+          ],
+          "clauseIds": [
+            "U01-C22",
+            "U01-C22b",
+            "U10-C01"
+          ],
+          "primary": [
+            "U01-C22"
+          ],
+          "known": "已知问题（不用报）：智能体主页上没有改名入口，只能在「我的智能体」页改。",
+          "humanOnly": "只有你能发现（重点）：用拼音输入法打名字，在还没选完字的时候按回车。它是把你选的词存下来，还是把半截拼音存进去了？我们怀疑这里有 bug，但脚本测不出来——请你一定试。",
+          "manualUrl": "/player-journeys#j4s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:5",
+      "round": "r1",
+      "n": "5",
+      "title": "打 NPC、解锁跟真人对战",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j5s1",
+          "round": "r1",
+          "journey": "5",
+          "index": 1,
+          "action": "在智能体页点「出战」，打开选择对手的面板。",
+          "expected": "应该看到：几个页签。「NPC 练习」可以点；「跟玩家约战」是锁着的，并且告诉你怎么才能解锁。",
+          "specLine": "规格 A5 选择对手 A6 门槛",
+          "anchors": [
+            "spec-a5",
+            "spec-a6"
+          ],
+          "clauseIds": [
+            "U05-C01",
+            "U05-C02",
+            "U05-C02b",
+            "U05-C03",
+            "U05-C03b",
+            "U05-C04",
+            "U05-C05",
+            "U05-C06",
+            "U05-C07",
+            "U05-C09",
+            "U05-C09b",
+            "U05-C10",
+            "U05-C11",
+            "U05-C12",
+            "U05-C14",
+            "U06-C01",
+            "U06-C03",
+            "U06-C05",
+            "U05-C08",
+            "U06-C02",
+            "U06-C04",
+            "U06-C06",
+            "U06-C16",
+            "U11-C05",
+            "U11-C07"
+          ],
+          "primary": [
+            "U05-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j5s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j5s2",
+          "round": "r1",
+          "journey": "5",
+          "index": 2,
+          "action": "选一个 NPC 打一场，赢下来。",
+          "expected": "应该看到：赢了之后，这一侧的进度往前走一格（比如「商鞅 1/1」）。",
+          "specLine": "规格 #65",
+          "anchors": [
+            "spec-change-65"
+          ],
+          "clauseIds": [
+            "U06-C01",
+            "U06-C02",
+            "U06-C03"
+          ],
+          "primary": [
+            "U06-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j5s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j5s3",
+          "round": "r1",
+          "journey": "5",
+          "index": 3,
+          "action": "换另一侧（另一个角色）也建一个智能体，也赢一场。",
+          "expected": "应该看到：两边都赢过之后，跟玩家约战才解锁。只赢一边不够。",
+          "specLine": "规格 #77",
+          "anchors": [
+            "spec-change-77"
+          ],
+          "clauseIds": [
+            "U06-C04"
+          ],
+          "primary": [
+            "U06-C04"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：这个「必须两边都会写」的设计，你觉得合理还是折磨？作为新玩家，走到这一步你是有成就感，还是已经想放弃了？",
+          "manualUrl": "/player-journeys#j5s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j5s4",
+          "round": "r1",
+          "journey": "5",
+          "index": 4,
+          "action": "留意页面上的每日次数提示。",
+          "expected": "应该看到：出战面板底部有一行「今日已用 0/10（PVP 0/5）」。打满了会拒绝你，并且说人话解释为什么。",
+          "specLine": "规格 #52",
+          "anchors": [
+            "spec-change-52"
+          ],
+          "clauseIds": [
+            "U03-C11",
+            "U06-C15"
+          ],
+          "primary": [
+            "U03-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j5s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:6",
+      "round": "r1",
+      "n": "6",
+      "title": "约战、左右手互搏、被别人挑战",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j6s1",
+          "round": "r1",
+          "journey": "6",
+          "index": 1,
+          "action": "先试「左右手互搏」：让自己的甲方打自己的乙方。",
+          "expected": "应该看到：这个不需要解锁就能玩，是给你自己测试策略用的。",
+          "specLine": "规格 #61 #78",
+          "anchors": [
+            "spec-change-61",
+            "spec-change-78"
+          ],
+          "clauseIds": [
+            "U05-C07",
+            "U06-C05",
+            "U05-C08"
+          ],
+          "primary": [
+            "U05-C07"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j6s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j6s2",
+          "round": "r1",
+          "journey": "6",
+          "index": 2,
+          "action": "两个账号都解锁之后，A 账号向 B 账号发起约战。",
+          "expected": "应该看到：一次约战会打两场（你执甲我执乙，然后换过来），这样才公平。",
+          "specLine": "规格 #66",
+          "anchors": [
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j6s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j6s3",
+          "round": "r1",
+          "journey": "6",
+          "index": 3,
+          "action": "切到 B 账号看通知。",
+          "expected": "应该看到：B 收到「有人向你发起约战」的提醒。注意——是通知你，不是征求你同意，对局已经开打了。",
+          "specLine": "规格 #29 B5 通知",
+          "anchors": [
+            "spec-change-29",
+            "spec-b5"
+          ],
+          "clauseIds": [
+            "U05-C13",
+            "U06-C04",
+            "U09-C08"
+          ],
+          "primary": [
+            "U05-C13"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j6s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j6s4",
+          "round": "r1",
+          "journey": "6",
+          "index": 4,
+          "action": "在战报里找到对手的版本号（形如 v#283），复制它，用「按 id 约战」直接挑这个版本。",
+          "expected": "应该看到：能精确挑到那一版。这是给高手复仇用的。",
+          "specLine": "规格 #25",
+          "anchors": [
+            "spec-change-25"
+          ],
+          "clauseIds": [
+            "U05-C12",
+            "U07-C03",
+            "U10-C01",
+            "U10-C07"
+          ],
+          "primary": [
+            "U05-C12"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j6s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j6s5",
+          "round": "r1",
+          "journey": "6",
+          "index": 5,
+          "action": "对同一个人反复约战（同一天内多次）。",
+          "expected": "应该看到：约到第 4 次会被拦住，告诉你今天不能再约这个人了——防止骚扰。",
+          "specLine": "规格 #76",
+          "anchors": [
+            "spec-change-76"
+          ],
+          "clauseIds": [
+            "U06-C06"
+          ],
+          "primary": [
+            "U06-C06"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j6s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:7",
+      "round": "r1",
+      "n": "7",
+      "title": "战报：产品的脸面",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j7s1",
+          "round": "r1",
+          "journey": "7",
+          "index": 1,
+          "action": "打开任意一场已经打完的对局。",
+          "expected": "应该看到顺序是：先结果（谁赢了、比分），再是完整对话，再是裁判追问，再揭示藏着的目标，最后才是分数怎么算出来的。",
+          "specLine": "规格 A7 战报 #69",
+          "anchors": [
+            "spec-a7",
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j7s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j7s2",
+          "round": "r1",
+          "journey": "7",
+          "index": 2,
+          "action": "读裁判的判词。",
+          "expected": "应该看到：裁判怎么想的是公开的——它问了什么、怎么判的，都能看到。",
+          "specLine": "规格 #22 #24",
+          "anchors": [
+            "spec-change-22",
+            "spec-change-24"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现（最重要的一条）：裁判判得服不服？它给的理由站得住脚吗，还是自相矛盾、或者明显没看懂对话？机器只能验「判词这个框存在」，永远无法验「判得对不对」。你觉得冤枉的每一场，都请截图告诉我们。",
+          "manualUrl": "/player-journeys#j7s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j7s3",
+          "round": "r1",
+          "journey": "7",
+          "index": 3,
+          "action": "看藏着的目标揭晓那一段。",
+          "expected": "应该看到：你的真目标、对方猜的、有没有达成、有没有被识破、各自加减了多少分。",
+          "specLine": "规格 #69",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": "已知问题（不用报）：这五步现在没有分成清楚的五块，是混在计分说明里的。",
+          "humanOnly": "只有你能发现：揭晓的那一刻，有没有「原来如此」的感觉？还是看完仍然一头雾水？这个「恍然大悟」是这个产品的核心体验，做没做出来只有人能判断。",
+          "manualUrl": "/player-journeys#j7s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j7s4",
+          "round": "r1",
+          "journey": "7",
+          "index": 4,
+          "action": "点「回放」。",
+          "expected": "应该看到：对话一句一句重放；回放的时候不能提前看到后面的结论，不然就剧透了。",
+          "specLine": "规格 A7 回放",
+          "anchors": [
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U07-C01",
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04",
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09",
+            "U07-C10",
+            "U07-C11",
+            "U07-C12",
+            "U07-C13"
+          ],
+          "primary": [
+            "U07-C01"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：回放的快慢合适吗？太慢会不耐烦，太快看不清。这个节奏感只能人来定。",
+          "manualUrl": "/player-journeys#j7s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j7s5",
+          "round": "r1",
+          "journey": "7",
+          "index": 5,
+          "action": "点「调试模式」。",
+          "expected": "应该看到：能看到自己智能体的「内心戏」（思考过程）。但看别人的对局时，别人的内心戏不能给你看。",
+          "specLine": "规格 #20",
+          "anchors": [
+            "spec-change-20"
+          ],
+          "clauseIds": [
+            "U07-C07",
+            "U07-C10",
+            "U10-C04",
+            "U10-C13"
+          ],
+          "primary": [
+            "U07-C07"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：找一场不是你打的对局，仔细翻一遍——有没有哪个角落漏出了别人的提示词或思考过程？这种泄漏是最严重的问题，而且往往藏在不起眼的地方（悬停提示、折叠面板、页面源码里）。",
+          "manualUrl": "/player-journeys#j7s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:8",
+      "round": "r1",
+      "n": "8",
+      "title": "别人的智能体主页",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j8s1",
+          "round": "r1",
+          "journey": "8",
+          "index": 1,
+          "action": "从战报里点对手的名字，或直接打开别人智能体的页面。",
+          "expected": "应该看到：这个智能体叫什么、属于谁、在哪个场景执哪一方、每个版本各打了多少胜负——战绩是故意公开的，方便你摸底。",
+          "specLine": "规格 B3 智能体视图 #35",
+          "anchors": [
+            "spec-b3",
+            "spec-change-35"
+          ],
+          "clauseIds": [
+            "U10-C05",
+            "U10-C12"
+          ],
+          "primary": [
+            "U10-C05"
+          ],
+          "known": "已知问题（不用报）：现在打开别人的智能体只会显示「不是你的智能体」，什么都看不到。修复已写好未上线。（修复在 PR #128，仍未合并）",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j8s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j8s2",
+          "round": "r1",
+          "journey": "8",
+          "index": 2,
+          "action": "确认看不到的东西：别人的提示词原文、别人的版本对比。",
+          "expected": "应该看到：这两样永远不公开。",
+          "specLine": "规格 #20",
+          "anchors": [
+            "spec-change-20"
+          ],
+          "clauseIds": [
+            "U07-C07",
+            "U07-C10",
+            "U10-C04",
+            "U10-C13"
+          ],
+          "primary": [
+            "U07-C07"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j8s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j8s3",
+          "round": "r1",
+          "journey": "8",
+          "index": 3,
+          "action": "回到自己的智能体主页。",
+          "expected": "应该看到：自己的能看全——版本线、对比、编辑入口，还有同一侧其他策略的快捷切换。",
+          "specLine": "规格 P9 #75",
+          "anchors": [
+            "spec-p9",
+            "spec-change-75"
+          ],
+          "clauseIds": [
+            "U01-C28",
+            "U10-C10",
+            "U10-C03"
+          ],
+          "primary": [
+            "U01-C28"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j8s3",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:9",
+      "round": "r1",
+      "n": "9",
+      "title": "锦标赛：海选与正赛",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j9s1",
+          "round": "r1",
+          "journey": "9",
+          "index": 1,
+          "action": "点顶部「排名」。",
+          "expected": "应该看到：可以选择看哪一场锦标赛，并且能看到一轮一轮的时间线（第几轮、打完没有、属于海选还是正赛）。",
+          "specLine": "规格 B4 锦标赛 / 排名",
+          "anchors": [
+            "spec-b4"
+          ],
+          "clauseIds": [
+            "U11-C01",
+            "U11-C02",
+            "U11-C03",
+            "U11-C04",
+            "U11-C05",
+            "U13-C02",
+            "U13-C03",
+            "U13-C04"
+          ],
+          "primary": [
+            "U11-C01"
+          ],
+          "known": "第一轮时的情况（已解决，不用报）：当时线上一场锦标赛都没有，这页是空的，整段只能跳过；按玩家排名的修复当时也未上线（后已随 PR #138 于 08-24 合并）。现在都已就绪——见下方标注。",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j9s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j9s2",
+          "round": "r1",
+          "journey": "9",
+          "index": 2,
+          "action": "（有比赛时）看积分榜。",
+          "expected": "应该看到：榜上一行是一个人（昵称），不是一个版本号；同一个人不会占两行。",
+          "specLine": "规格 #64",
+          "anchors": [
+            "spec-change-64"
+          ],
+          "clauseIds": [
+            "U05-C04",
+            "U06-C14",
+            "U10-C02",
+            "U11-C04",
+            "U13-C07"
+          ],
+          "primary": [
+            "U05-C04"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j9s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j9s3",
+          "round": "r1",
+          "journey": "9",
+          "index": 3,
+          "action": "（有比赛时）留意「海选 / 正赛」。",
+          "expected": "应该看到：新人从海选打起；战绩足够好的老玩家可以直接进正赛，不用再走海选。",
+          "specLine": "规格 #32",
+          "anchors": [
+            "spec-change-32"
+          ],
+          "clauseIds": [
+            "U09-C11",
+            "U11-C07",
+            "U13-C02",
+            "U13-C04"
+          ],
+          "primary": [
+            "U09-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j9s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j9s4",
+          "round": "r1",
+          "journey": "9",
+          "index": 4,
+          "action": "（有比赛时）比赛进行期间去打练习。",
+          "expected": "应该看到：可能会告诉你「赛事进行中，试炼暂时关闭」。这是规格允许的，不是 bug。",
+          "specLine": "规格 #47",
+          "anchors": [
+            "spec-change-47"
+          ],
+          "clauseIds": [
+            "U11-C06",
+            "U13-C05"
+          ],
+          "primary": [
+            "U11-C06"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j9s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:10",
+      "round": "r1",
+      "n": "10",
+      "title": "通知、历史、设置",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j10s1",
+          "round": "r1",
+          "journey": "10",
+          "index": 1,
+          "action": "派发一场对局，然后马上关掉页面去干别的，过十几分钟再回来。",
+          "expected": "应该看到：铃铛上有未读提醒，点开能看到「你的对局打完了」，点一下直接跳到那场战报。",
+          "specLine": "规格 B5 通知 #43",
+          "anchors": [
+            "spec-b5",
+            "spec-change-43"
+          ],
+          "clauseIds": [
+            "U08-C10",
+            "U09-C01",
+            "U09-C02",
+            "U09-C03"
+          ],
+          "primary": [
+            "U08-C10"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：这条通知真的等到你回来了吗？自动化测试都是几秒内跑完的，「关掉浏览器、过二十分钟、换台设备再回来」这种真实使用节奏，只有你能验。",
+          "manualUrl": "/player-journeys#j10s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j10s2",
+          "round": "r1",
+          "journey": "10",
+          "index": 2,
+          "action": "点「历史」。",
+          "expected": "应该看到：你打过的每一场都在列表里，点一行就进战报。",
+          "specLine": "规格 B7 对战历史",
+          "anchors": [
+            "spec-b7"
+          ],
+          "clauseIds": [
+            "U12-C09",
+            "U12-C10"
+          ],
+          "primary": [
+            "U12-C09"
+          ],
+          "known": "已知问题（不用报）：这页现在显示的是全站所有人的对局（写着「全部对战记录」），不只是你自己的。这是测试期开的开关。",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j10s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j10s3",
+          "round": "r1",
+          "journey": "10",
+          "index": 3,
+          "action": "点「设置」，改一下昵称。",
+          "expected": "应该看到：改完之后，页面各处显示的昵称都跟着变。",
+          "specLine": "规格 B6 设置 #85",
+          "anchors": [
+            "spec-b6",
+            "spec-change-85"
+          ],
+          "clauseIds": [
+            "U01-C34",
+            "U12-C01",
+            "U12-C02",
+            "U12-C03",
+            "U12-C04",
+            "U12-C05"
+          ],
+          "primary": [
+            "U01-C34"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j10s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j10s4",
+          "round": "r1",
+          "journey": "10",
+          "index": 4,
+          "action": "改密码：先故意把「当前密码」填错，再填对。",
+          "expected": "应该看到：填错要拒绝；改成功之后，你在别的设备/别的浏览器上的登录会被踢下线，但当前这个窗口还能继续用。",
+          "specLine": "规格 #86",
+          "anchors": [
+            "spec-change-86"
+          ],
+          "clauseIds": [
+            "U01-C34",
+            "U12-C13",
+            "U12-C14",
+            "U12-C15"
+          ],
+          "primary": [
+            "U01-C34"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：这条要两个窗口配合——先在两个浏览器都登录，在一个里改密码，然后回另一个刷新看是不是被踢了。多设备场景是自动化的老大难。",
+          "manualUrl": "/player-journeys#j10s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:11",
+      "round": "r1",
+      "n": "11",
+      "title": "导航与全局",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j11s1",
+          "round": "r1",
+          "journey": "11",
+          "index": 1,
+          "action": "看顶部导航。",
+          "expected": "应该看到：场景、我的智能体、排名、历史、通知、设置——就这几项，「历史」在最右边。",
+          "specLine": "规格 B8 全局与横切 #73",
+          "anchors": [
+            "spec-b8",
+            "spec-change-73"
+          ],
+          "clauseIds": [
+            "U08-C08"
+          ],
+          "primary": [
+            "U08-C08"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j11s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j11s2",
+          "round": "r1",
+          "journey": "11",
+          "index": 2,
+          "action": "用手机打开（真机，不是把电脑窗口拉窄）。",
+          "expected": "应该看到：手机上能到达的地方和电脑上一样，不该有「手机上就没这个功能」。",
+          "specLine": "规格 #74",
+          "anchors": [
+            "spec-change-74"
+          ],
+          "clauseIds": [
+            "U08-C08",
+            "U08-C09"
+          ],
+          "primary": [
+            "U08-C08"
+          ],
+          "known": null,
+          "humanOnly": "只有你能发现：真机上手指点得准吗？按钮会不会太小、太挤？滚动顺不顺？长文本会不会被切掉？这些在电脑上缩小窗口是看不出来的。",
+          "manualUrl": "/player-journeys#j11s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j11s3",
+          "round": "r1",
+          "journey": "11",
+          "index": 3,
+          "action": "派发一场对局后，留意页面上的「进行中的对战」横条。",
+          "expected": "应该看到：横条里装的是你自己发起的对局。没有正在进行的就整条不出现。",
+          "specLine": "规格 #72",
+          "anchors": [
+            "spec-change-72"
+          ],
+          "clauseIds": [
+            "U05-C09",
+            "U05-C09b",
+            "U08-C11"
+          ],
+          "primary": [
+            "U05-C09"
+          ],
+          "known": "已知问题（不用报）：现在这条横条会显示别人的对局。修复已写好未上线。（修复在 PR #128，仍未合并）",
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j11s3",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r1:12",
+      "round": "r1",
+      "n": "12",
+      "title": "边界检查",
+      "manual": "/player-journeys",
+      "steps": [
+        {
+          "id": "j12s1",
+          "round": "r1",
+          "journey": "12",
+          "index": 1,
+          "action": "全站找一遍：有没有「卡牌」「精选推荐」「专注模式」这类功能？",
+          "expected": "应该看到：没有。这些是明确推迟到以后的。",
+          "specLine": "规格 C3 推迟的功能",
+          "anchors": [
+            "spec-c3"
+          ],
+          "clauseIds": [
+            "U02-C16",
+            "U11-C03",
+            "U12-C12"
+          ],
+          "primary": [
+            "U02-C16"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j12s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j12s2",
+          "round": "r1",
+          "journey": "12",
+          "index": 2,
+          "action": "有没有哪个页面让你配置系统参数（比如改每日上限）？",
+          "expected": "应该看到：没有。这些参数只能由工程同学改配置文件，不该有后台界面。",
+          "specLine": "规格 C2 配置",
+          "anchors": [
+            "spec-c2"
+          ],
+          "clauseIds": [
+            "U03-C12",
+            "U06-C06",
+            "U12-C11"
+          ],
+          "primary": [
+            "U03-C12"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j12s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "j12s3",
+          "round": "r1",
+          "journey": "12",
+          "index": 3,
+          "action": "有没有「使用说明书」「帮助文档」这种入口？",
+          "expected": "应该看到：没有。产品的设计目标是「不用看说明书就会用」。如果你走到某一步非常需要一份说明书，那本身就是一个要报的问题——说明那一步做得不够自解释。",
+          "specLine": "规格 E9 无说明书原则",
+          "anchors": [
+            "spec-e9"
+          ],
+          "clauseIds": [
+            "U01-C11",
+            "U07-C13",
+            "U08-C12"
+          ],
+          "primary": [
+            "U01-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys#j12s3",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R1",
+      "round": "r2",
+      "n": "R1",
+      "title": "「基于该版本迭代」的确认，出现在你点的那张卡里",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR1s1",
+          "round": "r2",
+          "journey": "R1",
+          "index": 1,
+          "action": "打开一个已有 ≥2 个版本的智能体编辑页（我的智能体 → 任一智能体 → 继续构建）。在工作区打几个字，不保存，然后滚到下面的版本列表，点某个旧版本的「基于该版本迭代」。",
+          "expected": "应该看到：琥珀色确认行「工作区里有未保存的改动，基于 vN 迭代会覆盖它 · 仍要继续 / 取消」出现在那张版本卡内、按钮正下方——点击处一眼可见，不再是页面顶部一条你看不见的横幅。",
+          "specLine": "规格 P11 覆盖保护 #89",
+          "anchors": [
+            "spec-p11",
+            "spec-change-89"
+          ],
+          "clauseIds": [
+            "U01-C04",
+            "U01-C03",
+            "U01-C34",
+            "U10-C08"
+          ],
+          "primary": [
+            "U01-C04"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR1s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR1s2",
+          "round": "r2",
+          "journey": "R1",
+          "index": 2,
+          "action": "留意刚点完那一瞬间的页面动作。",
+          "expected": "应该看到：确认行自动滚进视口、键盘焦点落在「仍要继续」上；文案和按钮字样与之前完全一致（只是位置搬了家）。",
+          "specLine": "规格 P11 E7 就地确认",
+          "anchors": [
+            "spec-p11",
+            "spec-e7"
+          ],
+          "clauseIds": [
+            "U01-C04",
+            "U01-C09",
+            "U02-C19"
+          ],
+          "primary": [
+            "U01-C04"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR1s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR1s3",
+          "round": "r2",
+          "journey": "R1",
+          "index": 3,
+          "action": "「取消」和「仍要继续」各试一次。",
+          "expected": "应该看到：取消 → 确认行消失，工作区里你打的字原样还在；仍要继续 → 那一版内容载入工作区，旧版本本身不被改动。",
+          "specLine": "规格 E3 #89",
+          "anchors": [
+            "spec-e3",
+            "spec-change-89"
+          ],
+          "clauseIds": [
+            "U01-C03",
+            "U01-C04",
+            "U01-C34",
+            "U10-C08"
+          ],
+          "primary": [
+            "U01-C03"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR1s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR1s4",
+          "round": "r2",
+          "journey": "R1",
+          "index": 4,
+          "action": "回归检查：把工作区恢复到与最新版本一致（或刷新页面后什么都不改），再点「基于该版本迭代」。",
+          "expected": "应该看到：不该弹的时候不弹——直接载入，不出确认；并且无论怎么操作，页面顶部都不再出现那条旧横幅。",
+          "specLine": "规格 P11（一致时直接载入，不打扰）",
+          "anchors": [
+            "spec-p11"
+          ],
+          "clauseIds": [
+            "U01-C04"
+          ],
+          "primary": [
+            "U01-C04"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR1s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R2",
+      "round": "r2",
+      "n": "R2",
+      "title": "「甘龙的 1 分」现在应该一眼就能看到去哪了",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR2s1",
+          "round": "r2",
+          "journey": "R2",
+          "index": 1,
+          "action": "打开任意一场商鞅场景的完局战报，先只看顶部结果卡。",
+          "expected": "应该看到：比分下面多了一行签名明细，把每一侧的增减直接写出来，比如「甘龙 +1 大政方针 · −1 被识破 = 0」——不用翻到页面底部就知道分是怎么来的。",
+          "specLine": "规格 #69 结果置顶·一眼知胜负",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR2s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR2s2",
+          "round": "r2",
+          "journey": "R2",
+          "index": 2,
+          "action": "往下滚，越过完整对话和赛后问询。",
+          "expected": "应该看到：一个独立的「隐藏目标」区块，位置在问询之后、计分推导之前；每侧五步齐全：真目标 → 是否达成 → 对手猜了什么 → 是否被识破（命中时明确写「被识破 −1」）→ 得分变化。不再混在计分说明里。",
+          "specLine": "规格 #69 隐藏目标五步",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR2s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR2s3",
+          "round": "r2",
+          "journey": "R2",
+          "index": 3,
+          "action": "再看计分推导里的「得分账」。",
+          "expected": "应该看到：不再是一段小灰字散文，而是账目表：一条一行，右侧带正负号的分值（加分绿、扣分红），「被识破扣分」有明确标签，下面有分侧小计，最后一行「合计 商鞅 X : Y 甘龙」——数字与顶部结果卡完全一致。结尾也不再有 scoreA = … 这种给程序员看的行。",
+          "specLine": "规格 #26 结构化计分 #69",
+          "anchors": [
+            "spec-change-26",
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U04-C11",
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U04-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR2s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR2s4",
+          "round": "r2",
+          "journey": "R2",
+          "index": 4,
+          "action": "回到对话末尾「朝堂判词」阶段的计分行。",
+          "expected": "应该看到：每侧的真目标 / 对方猜测旁边有就地标注——猜对了标（猜中）、被对面猜中标（被识破），不用你自己两行对读去推。",
+          "specLine": "规格 #69",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR2s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR2s5",
+          "round": "r2",
+          "journey": "R2",
+          "index": 5,
+          "action": "回归检查：换一场别的场景的完局战报（比如码头疑云这类由裁判散文给分的）。",
+          "expected": "应该看到：解析不出账目条目的场景，计分推导仍完整显示原文说明，没有丢内容、没有报错、没有空白区块。",
+          "specLine": "规格 #26（形态随场景计分选择而定）",
+          "anchors": [
+            "spec-change-26"
+          ],
+          "clauseIds": [
+            "U04-C11"
+          ],
+          "primary": [
+            "U04-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR2s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R3",
+      "round": "r2",
+      "n": "R3",
+      "title": "标已读不跳顶，「全部已读」随手可见",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR3s1",
+          "round": "r2",
+          "journey": "R3",
+          "index": 1,
+          "action": "先攒一批通知（打几场对局就有了），打开通知页往下滚。",
+          "expected": "应该看到：页面往下滚时，「全部已读 / 清除」所在的操作条贴在顶栏下沿跟着你走（sticky）——列表再长，这两个按钮都不会滚出视野。",
+          "specLine": "规格 B5 通知",
+          "anchors": [
+            "spec-b5"
+          ],
+          "clauseIds": [
+            "U08-C10",
+            "U09-C01",
+            "U09-C02",
+            "U09-C03",
+            "U09-C04",
+            "U09-C05",
+            "U09-C06",
+            "U09-C16",
+            "U11-C07"
+          ],
+          "primary": [
+            "U08-C10"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR3s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR3s2",
+          "round": "r2",
+          "journey": "R3",
+          "index": 2,
+          "action": "滚到列表中下部，点某一条的「标为已读」。",
+          "expected": "应该看到：那一条立即变成已读样式（乐观更新），页面停在原地——不跳回顶部，也不整页闪一下「加载中…」。你刚才看到哪，现在还在哪。",
+          "specLine": "规格 B5 #43",
+          "anchors": [
+            "spec-b5",
+            "spec-change-43"
+          ],
+          "clauseIds": [
+            "U08-C10",
+            "U09-C01",
+            "U09-C02",
+            "U09-C03"
+          ],
+          "primary": [
+            "U08-C10"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR3s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR3s3",
+          "round": "r2",
+          "journey": "R3",
+          "index": 3,
+          "action": "点「全部已读」。",
+          "expected": "应该看到：所有未读标记即时熄灭，铃铛角标归零，页面位置同样不动。",
+          "specLine": "规格 #43",
+          "anchors": [
+            "spec-change-43"
+          ],
+          "clauseIds": [
+            "U08-C10",
+            "U09-C01",
+            "U09-C02",
+            "U09-C03"
+          ],
+          "primary": [
+            "U08-C10"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR3s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR3s4",
+          "round": "r2",
+          "journey": "R3",
+          "index": 4,
+          "action": "回归检查：连着快点几条「标为已读」，中途再点一次「全部已读」。",
+          "expected": "应该看到：怎么点都不会被甩回顶部、列表不会整个消失重来；如果某次网络失败，会有明确提示并自动与服务端对齐，而不是悄悄丢状态。",
+          "specLine": "规格 B5",
+          "anchors": [
+            "spec-b5"
+          ],
+          "clauseIds": [
+            "U08-C10",
+            "U09-C01",
+            "U09-C02",
+            "U09-C03",
+            "U09-C04",
+            "U09-C05",
+            "U09-C06",
+            "U09-C16",
+            "U11-C07"
+          ],
+          "primary": [
+            "U08-C10"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR3s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R4",
+      "round": "r2",
+      "n": "R4",
+      "title": "倾向轨迹图：点选节拍就能看心声",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR4s1",
+          "round": "r2",
+          "journey": "R4",
+          "index": 1,
+          "action": "用手机打开一场有裁判心声的完局战报，滚到计分推导的裁判倾向轨迹图，读图下的提示文字。",
+          "expected": "应该看到：提示写的是「空心圈＝倾向变化 · 点选节拍查看心声」——不再写「悬停」。",
+          "specLine": "规格 B8 移动端正常做",
+          "anchors": [
+            "spec-b8"
+          ],
+          "clauseIds": [
+            "U08-C08",
+            "U08-C09",
+            "U09-C16",
+            "U11-C01",
+            "U11-C08"
+          ],
+          "primary": [
+            "U08-C08"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR4s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR4s2",
+          "round": "r2",
+          "journey": "R4",
+          "index": 2,
+          "action": "用手指点图上任意一个节拍点。",
+          "expected": "应该看到：手指点得中（命中范围放大过，不用戳得特别准）；图下方内联展开该节拍的完整心声——倾向、强度、最挂心什么、心声全文——并可关闭。不是浮在手指底下看不见的小提示。",
+          "specLine": "规格 #22 裁判 OS 公开 #24 结构化锚点",
+          "anchors": [
+            "spec-change-22",
+            "spec-change-24"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR4s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR4s3",
+          "round": "r2",
+          "journey": "R4",
+          "index": 3,
+          "action": "点内联说明里的「查看心声卡」。",
+          "expected": "应该看到：页面滚到对话全文里对应的那张心声卡（它本来就始终可见）——图上看节奏、跳下去读全文，两条路都通。",
+          "specLine": "规格 #22",
+          "anchors": [
+            "spec-change-22"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C06",
+            "U07-C07"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR4s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR4s4",
+          "round": "r2",
+          "journey": "R4",
+          "index": 4,
+          "action": "回归检查（电脑上）：键盘 Tab 能走到节拍点、按回车展开；鼠标点选同样可用。",
+          "expected": "应该看到：桌面上的体验没有因为改成点选而变差——点选、键盘、悬停提示都工作。",
+          "specLine": "规格 B8",
+          "anchors": [
+            "spec-b8"
+          ],
+          "clauseIds": [
+            "U08-C08",
+            "U08-C09",
+            "U09-C16",
+            "U11-C01",
+            "U11-C08"
+          ],
+          "primary": [
+            "U08-C08"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR4s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R5",
+      "round": "r2",
+      "n": "R5",
+      "title": "更慢的默认、可调的速度、可回退、播完不赶人",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR5s1",
+          "round": "r2",
+          "journey": "R5",
+          "index": 1,
+          "action": "打开一场完局战报，点「回放」，先什么都不动，看它自己播。",
+          "expected": "应该看到：控制条上有 0.5× / 1× / 2× 三档分段按钮（不再是从前那枚小小的 1x/2x 文字药丸），旁边多了「上一步」。默认 1× 也比第一轮明显更从容：短句停留至少一秒半，台词越长停得越久，长篇发言不会一闪而过。",
+          "specLine": "规格 A7 回放 #24",
+          "anchors": [
+            "spec-a7",
+            "spec-change-24"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C09"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR5s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR5s2",
+          "round": "r2",
+          "journey": "R5",
+          "index": 2,
+          "action": "切到 0.5×，再切回 2×，感受节奏。",
+          "expected": "应该看到：0.5× 真的更慢（给「想慢慢读」的人）；切档即时生效；播放/暂停、步进照旧可用，倾向变化节拍仍会自动停下来。",
+          "specLine": "规格 A7",
+          "anchors": [
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U07-C01",
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04",
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09",
+            "U07-C10",
+            "U07-C11",
+            "U07-C12",
+            "U07-C13"
+          ],
+          "primary": [
+            "U07-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR5s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR5s3",
+          "round": "r2",
+          "journey": "R5",
+          "index": 3,
+          "action": "点「上一步」。",
+          "expected": "应该看到：回退一格并暂停，方便你重看刚才那句；回退不会让你提前看到后面还没播到的内容。",
+          "specLine": "规格 A7",
+          "anchors": [
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U07-C01",
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04",
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09",
+            "U07-C10",
+            "U07-C11",
+            "U07-C12",
+            "U07-C13"
+          ],
+          "primary": [
+            "U07-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR5s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR5s4",
+          "round": "r2",
+          "journey": "R5",
+          "index": 4,
+          "action": "让它一直播到最后。",
+          "expected": "应该看到：播完停在结尾，给你「重新播放 / 退出回放」两个按钮——不再是一秒多之后被硬拉回战报。",
+          "specLine": "规格 A7",
+          "anchors": [
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U07-C01",
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04",
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09",
+            "U07-C10",
+            "U07-C11",
+            "U07-C12",
+            "U07-C13"
+          ],
+          "primary": [
+            "U07-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR5s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR5s5",
+          "round": "r2",
+          "journey": "R5",
+          "index": 5,
+          "action": "回归检查：退出回放，换一场再点「回放」；同时留意回放全程的页面。",
+          "expected": "应该看到：① 新开的回放记住了你上次选的倍速；② 回放进行中仍然不剧透——结果、问询、隐藏目标、计分推导统统隐藏，只有播过的内容可见。",
+          "specLine": "规格 A7 回放不剧透",
+          "anchors": [
+            "spec-a7"
+          ],
+          "clauseIds": [
+            "U07-C01",
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04",
+            "U07-C05",
+            "U07-C06",
+            "U07-C07",
+            "U07-C09",
+            "U07-C10",
+            "U07-C11",
+            "U07-C12",
+            "U07-C13"
+          ],
+          "primary": [
+            "U07-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR5s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R6",
+      "round": "r2",
+      "n": "R6",
+      "title": "发起约战，像出战一样直接看直播",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR6s1",
+          "round": "r2",
+          "journey": "R6",
+          "index": 1,
+          "action": "用 A 账号向 B 账号发起约战（「跟玩家约战」或「按 id 约战」都行），点下发起按钮。",
+          "expected": "应该看到：成功后直接进入第 ① 场的实况页——和 NPC 出战、左右手互搏一个待遇。不再停在面板里对着绿色成功块自己找链接。",
+          "specLine": "规格 A5 选择对手 #66 成对约战",
+          "anchors": [
+            "spec-a5",
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR6s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR6s2",
+          "round": "r2",
+          "journey": "R6",
+          "index": 2,
+          "action": "看实况页顶部。",
+          "expected": "应该看到：「约战①」徽记，以及「查看另一场（②）→」链接——你知道自己在看一对里的哪一场。",
+          "specLine": "规格 #66",
+          "anchors": [
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR6s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR6s3",
+          "round": "r2",
+          "journey": "R6",
+          "index": 3,
+          "action": "点「查看另一场（②）」。",
+          "expected": "应该看到：切到第 ② 场（双方角色对调）的实况/战报，那边同样有「约战②」徽记和跳回 ① 的链接。",
+          "specLine": "规格 #66",
+          "anchors": [
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR6s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR6s4",
+          "round": "r2",
+          "journey": "R6",
+          "index": 4,
+          "action": "回归检查：再各发一场 NPC 练习和左右手互搏。",
+          "expected": "应该看到：这两条路径照旧直接进实况——三种派发方式行为一致，没有哪条被改坏。",
+          "specLine": "规格 A5",
+          "anchors": [
+            "spec-a5"
+          ],
+          "clauseIds": [
+            "U05-C01",
+            "U05-C02",
+            "U05-C02b",
+            "U05-C03",
+            "U05-C03b",
+            "U05-C04",
+            "U05-C05",
+            "U05-C06",
+            "U05-C07",
+            "U05-C09",
+            "U05-C09b",
+            "U05-C10",
+            "U05-C11",
+            "U05-C12",
+            "U05-C14",
+            "U06-C01",
+            "U06-C03",
+            "U06-C05"
+          ],
+          "primary": [
+            "U05-C01"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR6s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R7",
+      "round": "r2",
+      "n": "R7",
+      "title": "「我方（商鞅）胜」——一眼看懂谁赢了",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR7s1",
+          "round": "r2",
+          "journey": "R7",
+          "index": 1,
+          "action": "打开一场你自己参与的完局战报，看结果行。",
+          "expected": "应该看到：结果写成「我方（商鞅）胜」或「对方（甘龙）胜」——带视角、带角色名；比分行照旧。不再是让你自己换算的「胜方 A」。",
+          "specLine": "规格 #69 一眼知胜负 #71 我方/对手区分",
+          "anchors": [
+            "spec-change-69",
+            "spec-change-71"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b",
+            "U07-C04"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR7s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR7s2",
+          "round": "r2",
+          "journey": "R7",
+          "index": 2,
+          "action": "找一场约战的战报，看「查看另一场」链接。",
+          "expected": "应该看到：另一场打完时，链接直接带上它的结果，如「查看另一场（②：对方（甘龙）胜）→」——两场各谁赢，一处看全，不用开两份战报。",
+          "specLine": "规格 #66",
+          "anchors": [
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR7s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR7s3",
+          "round": "r2",
+          "journey": "R7",
+          "index": 3,
+          "action": "打开「历史」页。",
+          "expected": "应该看到：同一次约战的两场并排分在同一组（成对表头），每行带「约战①/②」小标，结果同样用我方/对方 + 角色名书写——不再是散落两处的裸 A/B 行。",
+          "specLine": "规格 B7 对战历史 #66",
+          "anchors": [
+            "spec-b7",
+            "spec-change-66"
+          ],
+          "clauseIds": [
+            "U05-C11",
+            "U05-C12"
+          ],
+          "primary": [
+            "U05-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR7s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR7s4",
+          "round": "r2",
+          "journey": "R7",
+          "index": 4,
+          "action": "打完一场后马上看页面上的「进行中的对战」横条。",
+          "expected": "应该看到：「刚完成」的小卡片也带胜负（如「我方（商鞅）胜」），不再只有「刚完成 · #id」。",
+          "specLine": "规格 #72 对战条",
+          "anchors": [
+            "spec-change-72"
+          ],
+          "clauseIds": [
+            "U05-C09",
+            "U05-C09b",
+            "U08-C11"
+          ],
+          "primary": [
+            "U05-C09"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR7s4",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR7s5",
+          "round": "r2",
+          "journey": "R7",
+          "index": 5,
+          "action": "回归检查：打开一场别人打的对局（历史页里双方都不是你的那种）。",
+          "expected": "应该看到：措辞回退为「胜方 商鞅」这类旁观视角——不会把别人的对局错标成「我方」。左右手互搏（两边都是你）也另有明确写法，不会自称「对方」。",
+          "specLine": "规格 #69",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR7s5",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R8",
+      "round": "r2",
+      "n": "R8",
+      "title": "商鞅 / 本能寺：第一轮就该有裁判心声",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR8s1",
+          "round": "r2",
+          "journey": "R8",
+          "index": 1,
+          "action": "用商鞅场景发起一场新对局（NPC 练习即可），盯着实况看开局。",
+          "expected": "应该看到：第 1 轮双方各发言一次后，马上出现第一拍裁判内心 OS（心声卡）——不再等到第三轮才有反应。",
+          "specLine": "规格 #22 裁判 OS 默认显示 #23 内心 OS 必须存在",
+          "anchors": [
+            "spec-change-22",
+            "spec-change-23"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C06",
+            "U07-C07"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR8s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR8s2",
+          "round": "r2",
+          "journey": "R8",
+          "index": 2,
+          "action": "继续看完整场。",
+          "expected": "应该看到：之后心声隔轮一拍（第 1、3、5…轮）；最后一轮不落拍——收官发言不带心声，直接进入裁决。",
+          "specLine": "规格 #24 结构化倾向节拍",
+          "anchors": [
+            "spec-change-24"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C09"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR8s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR8s3",
+          "round": "r2",
+          "journey": "R8",
+          "index": 3,
+          "action": "用本能寺场景重复第 1 步。",
+          "expected": "应该看到：同样首轮即出第一拍，之后隔轮。",
+          "specLine": "规格 #23",
+          "anchors": [
+            "spec-change-23"
+          ],
+          "clauseIds": [],
+          "primary": [],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR8s3",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR8s4",
+          "round": "r2",
+          "journey": "R8",
+          "index": 4,
+          "action": "回归检查：打完后打开这场战报，看计分推导的倾向轨迹图。",
+          "expected": "应该看到：轨迹图的第一个节拍点落在对局开头（第 1 轮附近），整条轨迹从头讲到尾——回放时首拍也作为锚点正常停顿。",
+          "specLine": "规格 #24",
+          "anchors": [
+            "spec-change-24"
+          ],
+          "clauseIds": [
+            "U07-C05",
+            "U07-C09"
+          ],
+          "primary": [
+            "U07-C05"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR8s4",
+          "route": null,
+          "marker": null
+        }
+      ]
+    },
+    {
+      "id": "r2:R9",
+      "round": "r2",
+      "n": "R9",
+      "title": "非平分时，胜方必须是高分那一侧",
+      "manual": "/player-journeys-round2",
+      "steps": [
+        {
+          "id": "jR9s1",
+          "round": "r2",
+          "journey": "R9",
+          "index": 1,
+          "action": "翻开最近的几场完局战报（商鞅、本能寺各找一两场），逐场对照结果与比分。",
+          "expected": "应该看到：凡比分不相等的场次，胜方一定是分高的一侧；结果卡、签名明细、账目表合计三处数字互相一致。",
+          "specLine": "规格 #69 结果与分数 #26",
+          "anchors": [
+            "spec-change-69",
+            "spec-change-26"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b",
+            "U04-C11"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR9s1",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR9s2",
+          "round": "r2",
+          "journey": "R9",
+          "index": 2,
+          "action": "如果碰到平分的场次，多看一眼。",
+          "expected": "应该看到：平分时按场景规则裁定（商鞅场景由「大政方针」定胜负），战报的签名明细能把「同分为何有胜方」解释圆——这不算矛盾。",
+          "specLine": "规格 #26",
+          "anchors": [
+            "spec-change-26"
+          ],
+          "clauseIds": [
+            "U04-C11"
+          ],
+          "primary": [
+            "U04-C11"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR9s2",
+          "route": null,
+          "marker": null
+        },
+        {
+          "id": "jR9s3",
+          "round": "r2",
+          "journey": "R9",
+          "index": 3,
+          "action": "回归检查：整个复核期间，凡打开的任何战报都顺手瞄一眼胜负与比分。",
+          "expected": "应该看到：不再出现「高分侧判负」的战报。另外：如果哪场对局直接失败、没有产出战报，那可能正是不变量当场拦下的矛盾局——这属于修复的预期行为（宁可作废不写矛盾），但请照样截图报给我们，我们要知道它拦了什么。",
+          "specLine": "规格 #69",
+          "anchors": [
+            "spec-change-69"
+          ],
+          "clauseIds": [
+            "U07-C02",
+            "U07-C02b"
+          ],
+          "primary": [
+            "U07-C02"
+          ],
+          "known": null,
+          "humanOnly": null,
+          "manualUrl": "/player-journeys-round2#jR9s3",
+          "route": null,
+          "marker": null
+        }
+      ]
+    }
+  ]
+}

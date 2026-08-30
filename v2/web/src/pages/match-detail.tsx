@@ -50,6 +50,7 @@ import {
 } from '../lib/transcript'
 import { messageOf, useAsync } from '../lib/use-async'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
+import { tm } from '../testmode/mark'
 
 export function MatchDetailPage() {
   const { matchId = '' } = useParams()
@@ -228,14 +229,19 @@ export function MatchDetailPage() {
   if (loading && data == null) {
     return (
       <div className='space-y-6'>
-        <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        <p {...tm('FA.loading')} className='text-sm text-(--foreground-subtle)'>
+          加载中…
+        </p>
       </div>
     )
   }
   if (!data) {
     return (
       <div className='space-y-6'>
-        <div className='rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm'>
+        <div
+          {...tm('FA.not-found')}
+          className='rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm'
+        >
           <p className='font-semibold text-(--foreground)'>
             {error ?? '对局不存在'}
           </p>
@@ -244,6 +250,7 @@ export function MatchDetailPage() {
           </p>
           <div className='mt-5 flex justify-center'>
             <Link
+              {...tm('FA.not-found-back-link')}
               to='/matches'
               className='inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90'
             >
@@ -435,18 +442,31 @@ export function MatchDetailPage() {
     <div className='space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <Link to='/my-agents' className='text-sm text-(--accent)'>
+          <Link
+            {...tm('FA.back-link')}
+            to='/my-agents'
+            className='text-sm text-(--accent)'
+          >
             ← 我的智能体
           </Link>
-          <h1 className='mt-1 text-2xl font-black tracking-tight text-(--foreground)'>
+          <h1
+            {...tm('FA.page-title')}
+            className='mt-1 text-2xl font-black tracking-tight text-(--foreground)'
+          >
             对战 #{data.summary.id}
           </h1>
-          <p className='mt-1 text-sm text-(--foreground-subtle)'>
+          <p
+            {...tm('FA.match-subtitle')}
+            className='mt-1 text-sm text-(--foreground-subtle)'
+          >
             {data.summary.scenarioTitle} · {sideA} 对{sideB}
           </p>
           {data.summary.createdAt != null || data.summary.finishedAt != null
             ? (
-              <p className='mt-0.5 text-xs text-(--foreground-muted)'>
+              <p
+                {...tm('FA.time-meta')}
+                className='mt-0.5 text-xs text-(--foreground-muted)'
+              >
                 {data.summary.createdAt != null
                   ? `发起 ${compactTime(data.summary.createdAt)}`
                   : null}
@@ -463,6 +483,7 @@ export function MatchDetailPage() {
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <button
+            {...tm('FA.debug-toggle')}
             type='button'
             role='switch'
             aria-checked={debug && !replaying}
@@ -496,6 +517,7 @@ export function MatchDetailPage() {
           {finished && !replaying && replaySteps.length > 0
             ? (
               <button
+                {...tm('FA.replay-button')}
                 type='button'
                 onClick={replay.start}
                 className='inline-flex cursor-pointer items-center rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'
@@ -507,7 +529,7 @@ export function MatchDetailPage() {
           {/* #66 成对约战：标出这是一对中的第几场，另一场给互链（mock V21）。 */}
           {challengeLeg != null
             ? (
-              <Badge tone='accent'>
+              <Badge {...tm('FA.challenge-leg-badge')} tone='accent'>
                 约战{challengeLeg === 1 ? '①' : '②'}
               </Badge>
             )
@@ -515,6 +537,7 @@ export function MatchDetailPage() {
           {challengeLeg != null && sibling != null
             ? (
               <Link
+                {...tm('FA.sibling-link')}
                 to={`/matches/${sibling.id}`}
                 className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
               >
@@ -528,6 +551,7 @@ export function MatchDetailPage() {
           {expressArrival && finished && !replaying
             ? (
               <a
+                {...tm('FA.journey-anchor')}
                 href='#first-battle-journey'
                 className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
               >
@@ -535,17 +559,23 @@ export function MatchDetailPage() {
               </a>
             )
             : null}
-          <Badge tone='info'>{data.summary.kind.toUpperCase()}</Badge>
+          <Badge {...tm('FA.kind-badge')} tone='info'>
+            {data.summary.kind.toUpperCase()}
+          </Badge>
           {data.summary.finished
             ? (
               // 回放中不剧透胜负——结果徽章换成中性的回放态。
-              replaying ? <Badge tone='info'>回放中</Badge> : (
-                // F7：徽记与结果卡同一口径（outcomeCopy）。
-                <Badge tone='success'>{outcome ?? '已结束'}</Badge>
-              )
+              replaying
+                ? <Badge {...tm('FA.status-badge')} tone='info'>回放中</Badge>
+                : (
+                  // F7：徽记与结果卡同一口径（outcomeCopy）。
+                  <Badge {...tm('FA.status-badge')} tone='success'>
+                    {outcome ?? '已结束'}
+                  </Badge>
+                )
             )
             : (
-              <Badge tone='warning'>
+              <Badge {...tm('FA.status-badge')} tone='warning'>
                 {stream.connected ? '直播中' : '进行中'}
               </Badge>
             )}
@@ -555,7 +585,7 @@ export function MatchDetailPage() {
       {/* 参战双方（P3 G20，#71/#25）：老服务器无 participants → 整块不渲染。 */}
       {participants
         ? (
-          <div className='grid gap-3 md:grid-cols-2'>
+          <div {...tm('FA.participants')} className='grid gap-3 md:grid-cols-2'>
             <ParticipantCard
               which='a'
               sideLabel={sideA}
@@ -589,16 +619,22 @@ export function MatchDetailPage() {
                 </ReplayControls>
               )
               : (
-                <Card>
+                <Card {...tm('FA.result-card')}>
                   <CardContent className='space-y-4 pt-5'>
                     <h2 className='text-sm font-semibold text-(--foreground)'>
                       结果
                     </h2>
                     <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
-                      <span className='text-xl font-black text-(--foreground)'>
+                      <span
+                        {...tm('FA.result-winner')}
+                        className='text-xl font-black text-(--foreground)'
+                      >
                         {winnerLine}
                       </span>
-                      <span className='text-sm text-(--foreground-subtle)'>
+                      <span
+                        {...tm('FA.result-score')}
+                        className='text-sm text-(--foreground-subtle)'
+                      >
                         比分 {sideA}{' '}
                         <span className='text-lg font-black text-(--foreground)'>
                           {data.scoreA ?? '—'} : {data.scoreB ?? '—'}
@@ -613,9 +649,14 @@ export function MatchDetailPage() {
                     {parsed != null && parsed.items.length > 0 &&
                         parsed.subtotals != null
                       ? (
-                        <div className='space-y-0.5 text-xs text-(--foreground-subtle)'>
+                        <div
+                          {...tm('FA.result-summary')}
+                          className='space-y-0.5 text-xs text-(--foreground-subtle)'
+                        >
                           {(['a', 'b'] as const).map((side) => (
-                            <p key={side}>{sideSummaryLine(side)}</p>
+                            <p {...tm('FA.result-summary-line')} key={side}>
+                              {sideSummaryLine(side)}
+                            </p>
                           ))}
                         </div>
                       )
@@ -626,12 +667,16 @@ export function MatchDetailPage() {
 
             {reportSections.map((section, sectionIndex) => (
               <div
+                {...tm('FA.report-section')}
                 key={`${section.kind}-${sectionIndex}`}
                 className='space-y-5'
               >
                 {section.kind === 'dialogue'
                   ? (
-                    <h2 className='text-sm font-semibold text-(--foreground)'>
+                    <h2
+                      {...tm('FA.dialogue-heading')}
+                      className='text-sm font-semibold text-(--foreground)'
+                    >
                       {replaying ? '对话重演' : '对话全文'}
                     </h2>
                   )
@@ -645,14 +690,20 @@ export function MatchDetailPage() {
                 {section.kind === 'dialogue' && !replaying && !debug &&
                     hasHiddenReasoning && section.groupIndexes.length > 0
                   ? (
-                    <p className='text-xs text-(--foreground-muted)'>
+                    <p
+                      {...tm('FA.debug-hint')}
+                      className='text-xs text-(--foreground-muted)'
+                    >
                       内心与思考过程默认隐藏——页头「调试模式」可开启
                     </p>
                   )
                   : null}
                 {section.groupIndexes.length === 0
                   ? (
-                    <p className='text-sm text-(--foreground-muted)'>
+                    <p
+                      {...tm('FA.section-empty')}
+                      className='text-sm text-(--foreground-muted)'
+                    >
                       {replaying ? '回放即将开始…' : '暂无回合。'}
                     </p>
                   )
@@ -663,7 +714,7 @@ export function MatchDetailPage() {
             ))}
             {placed.trailing.length > 0
               ? (
-                <div className='space-y-3'>
+                <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
                   {placed.trailing.map(renderVerdict)}
                 </div>
               )
@@ -678,7 +729,7 @@ export function MatchDetailPage() {
                 (breakdown.trueRequests.a != null ||
                   breakdown.trueRequests.b != null)
               ? (
-                <div className='space-y-3'>
+                <div {...tm('FA.hidden-goal-section')} className='space-y-3'>
                   <h2 className='text-sm font-semibold text-(--foreground)'>
                     隐藏目标
                   </h2>
@@ -703,187 +754,227 @@ export function MatchDetailPage() {
               )
               : null}
 
-            {replaying ? null : (
-              <div className='space-y-3'>
-                <h2 className='text-sm font-semibold text-(--foreground)'>
-                  计分推导
-                </h2>
-                {beats.length > 0
-                  ? (
-                    <Card>
-                      <CardContent className='pt-5'>
-                        <JudgeTrendChart
-                          beats={beats}
-                          labels={labels}
-                          speakers={speakers}
-                        />
-                      </CardContent>
-                    </Card>
-                  )
-                  : null}
-                {breakdown == null && !ledger
-                  ? (
-                    <div className='rounded-xl border border-dashed border-(--border) px-4 py-5 text-center text-sm text-(--foreground-muted)'>
-                      此场景暂未提供计分明细
-                    </div>
-                  )
-                  : (
-                    <Card>
-                      <CardContent className='space-y-3 pt-5'>
-                        {breakdown?.trueRequests
-                          ? (
-                            <LedgerLine label='真目标'>
-                              <div className='flex flex-wrap gap-x-4 gap-y-1'>
-                                {Object.entries(breakdown.trueRequests).map(
-                                  ([side, id]) => (
-                                    <span key={side}>
-                                      {speakerName(labels, side)}{' '}
-                                      <span className='font-mono'>{id}</span>
-                                    </span>
-                                  ),
-                                )}
-                              </div>
-                            </LedgerLine>
-                          )
-                          : null}
-                        {breakdown?.guesses
-                          ? (
-                            <LedgerLine label='对方猜测'>
-                              <div className='flex flex-wrap gap-x-4 gap-y-1'>
-                                {Object.entries(breakdown.guesses).map(
-                                  ([side, guess]) => (
-                                    <span key={side}>
-                                      {speakerName(labels, side)} 猜{' '}
-                                      <span className='font-mono'>{guess}</span>
-                                    </span>
-                                  ),
-                                )}
-                              </div>
-                            </LedgerLine>
-                          )
-                          : null}
-                        {breakdown?.rulings
-                          ? (
-                            <LedgerLine label='准驳结果'>
-                              <div className='flex flex-wrap gap-1.5'>
-                                {Object.entries(breakdown.rulings).map(
-                                  ([id, decision]) => (
-                                    <span
-                                      key={id}
-                                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
-                                        decision === '同意'
-                                          ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
-                                          : 'bg-white/4 text-(--foreground-muted)'
-                                      }`}
-                                    >
-                                      <span className='font-mono'>{id}</span>
-                                      {decision}
-                                    </span>
-                                  ),
-                                )}
-                              </div>
-                            </LedgerLine>
-                          )
-                          : null}
-                        {
-                          /* F2（#69/#26）：得分账升格为逐项账目表——带符号
+            {replaying
+              ? null
+              : (
+                <div {...tm('FA.scoring-section')} className='space-y-3'>
+                  <h2 className='text-sm font-semibold text-(--foreground)'>
+                    计分推导
+                  </h2>
+                  {beats.length > 0
+                    ? (
+                      <Card {...tm('FA.trend-card')}>
+                        <CardContent className='pt-5'>
+                          <JudgeTrendChart
+                            beats={beats}
+                            labels={labels}
+                            speakers={speakers}
+                          />
+                        </CardContent>
+                      </Card>
+                    )
+                    : null}
+                  {breakdown == null && !ledger
+                    ? (
+                      <div
+                        {...tm('FA.scoring-empty')}
+                        className='rounded-xl border border-dashed border-(--border) px-4 py-5 text-center text-sm text-(--foreground-muted)'
+                      >
+                        此场景暂未提供计分明细
+                      </div>
+                    )
+                    : (
+                      <Card {...tm('FA.scoring-card')}>
+                        <CardContent className='space-y-3 pt-5'>
+                          {breakdown?.trueRequests
+                            ? (
+                              <LedgerLine label='真目标'>
+                                <div
+                                  {...tm('FA.ledger-true-request')}
+                                  className='flex flex-wrap gap-x-4 gap-y-1'
+                                >
+                                  {Object.entries(breakdown.trueRequests).map(
+                                    ([side, id]) => (
+                                      <span key={side}>
+                                        {speakerName(labels, side)}{' '}
+                                        <span className='font-mono'>{id}</span>
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              </LedgerLine>
+                            )
+                            : null}
+                          {breakdown?.guesses
+                            ? (
+                              <LedgerLine label='对方猜测'>
+                                <div
+                                  {...tm('FA.ledger-guesses')}
+                                  className='flex flex-wrap gap-x-4 gap-y-1'
+                                >
+                                  {Object.entries(breakdown.guesses).map(
+                                    ([side, guess]) => (
+                                      <span key={side}>
+                                        {speakerName(labels, side)} 猜{' '}
+                                        <span className='font-mono'>
+                                          {guess}
+                                        </span>
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              </LedgerLine>
+                            )
+                            : null}
+                          {breakdown?.rulings
+                            ? (
+                              <LedgerLine label='准驳结果'>
+                                <div
+                                  {...tm('FA.ledger-rulings')}
+                                  className='flex flex-wrap gap-1.5'
+                                >
+                                  {Object.entries(breakdown.rulings).map(
+                                    ([id, decision]) => (
+                                      <span
+                                        key={id}
+                                        className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${
+                                          decision === '同意'
+                                            ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
+                                            : 'bg-white/4 text-(--foreground-muted)'
+                                        }`}
+                                      >
+                                        <span className='font-mono'>{id}</span>
+                                        {decision}
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              </LedgerLine>
+                            )
+                            : null}
+                          {
+                            /* F2（#69/#26）：得分账升格为逐项账目表——带符号
                           分值、被识破标记、分侧小计与合计；解析不出条目
                           （LLM 散文计分的场景）时整段散文原样回退。 */
-                        }
-                        {parsed != null && parsed.items.length > 0
-                          ? (
-                            <LedgerLine label='得分账'>
-                              <div className='space-y-1.5'>
-                                {parsed.items.map((item, index) => (
-                                  <div
-                                    key={index}
-                                    className='flex items-baseline justify-between gap-3'
-                                  >
-                                    <span className='min-w-0 text-sm text-(--foreground-subtle)'>
-                                      <span className='font-semibold text-(--foreground)'>
-                                        {item.name}
-                                      </span>
-                                      {' · '}
-                                      <span>{item.why}</span>
-                                      {item.kind === 'identified'
-                                        ? (
-                                          <span className='ml-1.5 inline-flex items-center rounded-md bg-[rgba(224,74,47,0.14)] px-1.5 py-0.5 text-[10px] font-semibold text-(--accent)'>
-                                            被识破扣分
-                                          </span>
-                                        )
-                                        : null}
-                                    </span>
-                                    <span
-                                      className={cn(
-                                        'shrink-0 font-mono text-sm font-semibold',
-                                        item.delta > 0
-                                          ? 'text-(--success)'
-                                          : item.delta < 0
-                                          ? 'text-(--accent)'
-                                          : 'text-(--foreground-subtle)',
-                                      )}
+                          }
+                          {parsed != null && parsed.items.length > 0
+                            ? (
+                              <LedgerLine label='得分账'>
+                                <div
+                                  {...tm('FA.ledger-table')}
+                                  className='space-y-1.5'
+                                >
+                                  {parsed.items.map((item, index) => (
+                                    <div
+                                      {...tm('FA.ledger-item')}
+                                      key={index}
+                                      className='flex items-baseline justify-between gap-3'
                                     >
-                                      {formatDelta(item.delta)}
-                                    </span>
-                                  </div>
-                                ))}
-                                {parsed.subtotals != null
-                                  ? (
-                                    <p className='border-t border-(--border-soft) pt-1.5 text-xs text-(--foreground-subtle)'>
-                                      {`小计 ${sideA} ${parsed.subtotals.a} · ${sideB} ${parsed.subtotals.b}`}
-                                    </p>
-                                  )
-                                  : null}
-                                {
-                                  /* 合计一律用服务端 scoreA/scoreB——与结果
+                                      <span className='min-w-0 text-sm text-(--foreground-subtle)'>
+                                        <span className='font-semibold text-(--foreground)'>
+                                          {item.name}
+                                        </span>
+                                        {' · '}
+                                        <span>{item.why}</span>
+                                        {item.kind === 'identified'
+                                          ? (
+                                            <span
+                                              {...tm(
+                                                'FA.ledger-identified-badge',
+                                              )}
+                                              className='ml-1.5 inline-flex items-center rounded-md bg-[rgba(224,74,47,0.14)] px-1.5 py-0.5 text-[10px] font-semibold text-(--accent)'
+                                            >
+                                              被识破扣分
+                                            </span>
+                                          )
+                                          : null}
+                                      </span>
+                                      <span
+                                        className={cn(
+                                          'shrink-0 font-mono text-sm font-semibold',
+                                          item.delta > 0
+                                            ? 'text-(--success)'
+                                            : item.delta < 0
+                                            ? 'text-(--accent)'
+                                            : 'text-(--foreground-subtle)',
+                                        )}
+                                      >
+                                        {formatDelta(item.delta)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  {parsed.subtotals != null
+                                    ? (
+                                      <p
+                                        {...tm('FA.ledger-subtotal')}
+                                        className='border-t border-(--border-soft) pt-1.5 text-xs text-(--foreground-subtle)'
+                                      >
+                                        {`小计 ${sideA} ${parsed.subtotals.a} · ${sideB} ${parsed.subtotals.b}`}
+                                      </p>
+                                    )
+                                    : null}
+                                  {
+                                    /* 合计一律用服务端 scoreA/scoreB——与结果
                                   卡同一数据源（#26）。 */
-                                }
-                                <p className='text-sm font-semibold text-(--foreground)'>
-                                  {`合计 ${sideA} ${data.scoreA ?? '—'} : ${
-                                    data.scoreB ?? '—'
-                                  } ${sideB}`}
-                                </p>
-                                {parsed.leftover.length > 0
+                                  }
+                                  <p
+                                    {...tm('FA.ledger-total')}
+                                    className='text-sm font-semibold text-(--foreground)'
+                                  >
+                                    {`合计 ${sideA} ${data.scoreA ?? '—'} : ${
+                                      data.scoreB ?? '—'
+                                    } ${sideB}`}
+                                  </p>
+                                  {parsed.leftover.length > 0
+                                    ? (
+                                      <p
+                                        {...tm('FA.ledger-prose')}
+                                        className='whitespace-pre-wrap pt-1 text-xs leading-relaxed text-(--foreground-muted)'
+                                      >
+                                        {parsed.leftover.join('\n')}
+                                      </p>
+                                    )
+                                    : null}
+                                </div>
+                              </LedgerLine>
+                            )
+                            : ledger || breakdown?.scoreA != null ||
+                                breakdown?.scoreB != null
+                            ? (
+                              <LedgerLine label='得分账'>
+                                {ledger
                                   ? (
-                                    <p className='whitespace-pre-wrap pt-1 text-xs leading-relaxed text-(--foreground-muted)'>
-                                      {parsed.leftover.join('\n')}
+                                    <p
+                                      {...tm('FA.ledger-prose')}
+                                      className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'
+                                    >
+                                      {ledger}
                                     </p>
                                   )
-                                  : null}
-                              </div>
-                            </LedgerLine>
-                          )
-                          : ledger || breakdown?.scoreA != null ||
-                              breakdown?.scoreB != null
-                          ? (
-                            <LedgerLine label='得分账'>
-                              {ledger
-                                ? (
-                                  <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
-                                    {ledger}
-                                  </p>
-                                )
-                                : (
-                                  <p className='text-sm text-(--foreground)'>
-                                    {sideA} {breakdown?.scoreA ?? '—'} :{' '}
-                                    {breakdown?.scoreB ?? '—'} {sideB}
-                                  </p>
-                                )}
-                            </LedgerLine>
-                          )
-                          : null}
-                      </CardContent>
-                    </Card>
-                  )}
-              </div>
-            )}
+                                  : (
+                                    <p
+                                      {...tm('FA.ledger-total')}
+                                      className='text-sm text-(--foreground)'
+                                    >
+                                      {sideA} {breakdown?.scoreA ?? '—'} :{' '}
+                                      {breakdown?.scoreB ?? '—'} {sideB}
+                                    </p>
+                                  )}
+                              </LedgerLine>
+                            )
+                            : null}
+                        </CardContent>
+                      </Card>
+                    )}
+                </div>
+              )}
           </>
         )
         : (
           <>
             {live && offstage.length > 0
               ? (
-                <Card>
+                <Card {...tm('FA.offstage-card')}>
                   <CardContent className='space-y-2 pt-5'>
                     <h2 className='text-sm font-semibold text-(--foreground)'>
                       幕后
@@ -903,13 +994,19 @@ export function MatchDetailPage() {
               )
               : null}
 
-            <div className='space-y-5'>
-              <h2 className='text-sm font-semibold text-(--foreground)'>
+            <div className='space-y-5' {...tm('FA.live-dialogue')}>
+              <h2
+                {...tm('FA.live-dialogue-heading')}
+                className='text-sm font-semibold text-(--foreground)'
+              >
                 对话
               </h2>
               {dialogueRows.length === 0
                 ? (
-                  <p className='text-sm text-(--foreground-muted)'>
+                  <p
+                    {...tm('FA.live-empty')}
+                    className='text-sm text-(--foreground-muted)'
+                  >
                     {live ? '对局即将开始…' : '暂无回合。'}
                   </p>
                 )
@@ -928,14 +1025,20 @@ export function MatchDetailPage() {
                 >
                   {data.scoreA != null && data.scoreB != null
                     ? (
-                      <p className='text-sm text-(--foreground-subtle)'>
+                      <p
+                        {...tm('FA.live-score-line')}
+                        className='text-sm text-(--foreground-subtle)'
+                      >
                         比分 {sideA} {data.scoreA} : {data.scoreB} {sideB}
                       </p>
                     )
                     : null}
                   {ledger
                     ? (
-                      <p className='whitespace-pre-wrap text-xs text-(--foreground-muted)'>
+                      <p
+                        {...tm('FA.live-ledger')}
+                        className='whitespace-pre-wrap text-xs text-(--foreground-muted)'
+                      >
                         {ledger}
                       </p>
                     )
@@ -948,7 +1051,7 @@ export function MatchDetailPage() {
 
       {data.error
         ? (
-          <p className='text-sm text-(--accent)'>
+          <p {...tm('FA.match-error')} className='text-sm text-(--accent)'>
             对战错误：{data.error}
           </p>
         )
@@ -1024,15 +1127,23 @@ function FirstBattleJourney({
     'flex flex-col gap-2 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'
 
   return (
-    <section id='first-battle-journey' className='space-y-3 pt-2'>
+    <section
+      {...tm('FA.journey-card')}
+      id='first-battle-journey'
+      className='space-y-3 pt-2'
+    >
       <h2 className='text-sm font-semibold text-(--foreground)'>
         首战打完，接下来
       </h2>
       {journeyError
-        ? <p className='text-sm text-(--accent)'>{journeyError}</p>
+        ? (
+          <p {...tm('FA.journey-error')} className='text-sm text-(--accent)'>
+            {journeyError}
+          </p>
+        )
         : null}
       <div className='grid gap-3 sm:grid-cols-3'>
-        <div className={cellClass}>
+        <div {...tm('FA.journey-next-round')} className={cellClass}>
           <p className='text-base font-bold text-(--foreground)'>
             通往下一轮 →
           </p>
@@ -1040,10 +1151,16 @@ function FirstBattleJourney({
             回到智能体主页，改一版策略、从「出战」面板再打一场。
           </p>
           <Link to={agentPath}>
-            <Button size='sm' variant='secondary'>再战一场</Button>
+            <Button
+              {...tm('FA.journey-rematch-button')}
+              size='sm'
+              variant='secondary'
+            >
+              再战一场
+            </Button>
           </Link>
         </div>
-        <div className={cellClass}>
+        <div {...tm('FA.journey-opposite')} className={cellClass}>
           <p className='text-base font-bold text-(--foreground)'>解锁对侧</p>
           <p className='flex-1 text-xs text-(--foreground-muted)'>
             换个立场再打——为另一方创建智能体，两侧都练过才解锁玩家约战。
@@ -1051,6 +1168,7 @@ function FirstBattleJourney({
           {oppositeSide != null
             ? (
               <Button
+                {...tm('FA.journey-opposite-button')}
                 size='sm'
                 variant='secondary'
                 disabled={creating}
@@ -1061,11 +1179,17 @@ function FirstBattleJourney({
             )
             : (
               <Link to={`/scenarios/${scenarioID}`}>
-                <Button size='sm' variant='secondary'>去场景页选侧</Button>
+                <Button
+                  {...tm('FA.journey-opposite-button')}
+                  size='sm'
+                  variant='secondary'
+                >
+                  去场景页选侧
+                </Button>
               </Link>
             )}
         </div>
-        <div className={cellClass}>
+        <div {...tm('FA.journey-pvp')} className={cellClass}>
           <p className='text-base font-bold text-(--foreground)'>
             通往 PVP →
           </p>
@@ -1073,7 +1197,13 @@ function FirstBattleJourney({
             每侧各赢下 NPC 练习即解锁玩家约战——进度在「出战」面板随时可看。
           </p>
           <Link to={agentPath}>
-            <Button size='sm' variant='secondary'>查看解锁进度</Button>
+            <Button
+              {...tm('FA.journey-progress-button')}
+              size='sm'
+              variant='secondary'
+            >
+              查看解锁进度
+            </Button>
           </Link>
         </div>
       </div>
@@ -1082,7 +1212,7 @@ function FirstBattleJourney({
         /* #12：三种构建模式 tab 卡——新建流程（如「解锁对侧」）三选一；
         已有智能体的迭代始终是文本工作台（E7），不提供选项回改。 */
       }
-      <Card>
+      <Card {...tm('FA.journey-modes-card')}>
         <CardContent className='space-y-3 pt-5'>
           <p className='text-sm font-semibold text-(--foreground)'>
             三种构建模式已解锁（新建智能体时三选一）
@@ -1094,6 +1224,7 @@ function FirstBattleJourney({
               ['元提示词', '复制给你常用的 AI 生成，再粘贴回来'],
             ] as const).map(([name, blurb]) => (
               <div
+                {...tm('FA.journey-mode-item')}
                 key={name}
                 className='rounded-lg border border-(--border-soft) px-3 py-2.5'
               >
@@ -1108,12 +1239,16 @@ function FirstBattleJourney({
           </div>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             {/* E7/#83（2026-08-25 收紧）：重用选卡的唯一出口是再建一个/创建对侧。 */}
-            <p className='text-xs text-(--foreground-muted)'>
+            <p
+              {...tm('FA.journey-modes-hint')}
+              className='text-xs text-(--foreground-muted)'
+            >
               已保存过版本的智能体只有文本工作台——想再用选卡，再建一个智能体或创建对侧。
             </p>
             {mine?.agentID != null
               ? (
                 <Link
+                  {...tm('FA.journey-build-link')}
                   to={`/agents/${mine.agentID}/build`}
                   className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
                 >
@@ -1159,19 +1294,28 @@ function ParticipantCard({
   const name = participant.ownerDisplayName ??
     (participant.presetKey != null ? `预设 · ${participant.presetKey}` : '—')
   return (
-    <div className='rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.participant-card')}
+      className='rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'
+    >
       <div className='flex flex-wrap items-center gap-2'>
-        <Badge tone='info'>
+        <Badge {...tm('FA.participant-side-badge')} tone='info'>
           执{which.toUpperCase()} · {sideLabel}
         </Badge>
         {participant.isMine
           ? (
-            <span className='text-sm font-semibold text-(--foreground)'>
+            <span
+              {...tm('FA.participant-name')}
+              className='text-sm font-semibold text-(--foreground)'
+            >
               {name}
             </span>
           )
           : (
-            <span className='text-sm text-(--foreground-subtle)'>
+            <span
+              {...tm('FA.opponent-line')}
+              className='text-sm text-(--foreground-subtle)'
+            >
               {participant.versionID != null
                 ? `对手：${name} · v#${participant.versionID}`
                 : name}
@@ -1180,6 +1324,7 @@ function ParticipantCard({
         {participant.isMine && participant.agentID != null
           ? (
             <Link
+              {...tm('FA.my-agent-button')}
               to={`/agents/${participant.agentID}`}
               className='ml-auto inline-flex items-center rounded-md bg-(--accent) px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90'
             >
@@ -1191,7 +1336,10 @@ function ParticipantCard({
       <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {participant.modelID
           ? (
-            <span className='rounded-full border border-(--border-soft) px-2 py-0.5 font-mono'>
+            <span
+              {...tm('FA.model-chip')}
+              className='rounded-full border border-(--border-soft) px-2 py-0.5 font-mono'
+            >
               {participant.modelID}
             </span>
           )
@@ -1199,10 +1347,14 @@ function ParticipantCard({
         {participant.versionID != null
           ? (
             <>
-              <code className='rounded-md border border-(--border-soft) bg-white/4 px-2 py-0.5 font-mono text-(--foreground)'>
+              <code
+                {...tm('FA.version-id')}
+                className='rounded-md border border-(--border-soft) bg-white/4 px-2 py-0.5 font-mono text-(--foreground)'
+              >
                 v#{participant.versionID}
               </code>
               <button
+                {...tm('FA.copy-id-button')}
                 type='button'
                 onClick={copyID}
                 className='inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
@@ -1212,14 +1364,20 @@ function ParticipantCard({
                   : <Copy className='h-3 w-3' />}
                 {copied ? '已复制' : '复制 id'}
               </button>
-              <span className='text-(--foreground-muted)'>
+              <span
+                {...tm('FA.version-id-hint')}
+                className='text-(--foreground-muted)'
+              >
                 可用于按 id 约战
               </span>
             </>
           )
           : participant.presetKey != null
           ? (
-            <span className='text-(--foreground-muted)'>
+            <span
+              {...tm('FA.preset-label')}
+              className='text-(--foreground-muted)'
+            >
               PVE 预设 · {participant.presetKey}
             </span>
           )
@@ -1279,7 +1437,10 @@ function HiddenGoalCard({
   const oppGuess = breakdown.guesses?.[other] ?? null
   const unknown = <span className='text-(--foreground-muted)'>—</span>
   return (
-    <div className='space-y-2.5 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'>
+    <div
+      {...tm('FA.hidden-goal-card')}
+      className='space-y-2.5 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'
+    >
       <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
         {name}
       </p>

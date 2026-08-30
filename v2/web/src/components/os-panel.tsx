@@ -29,6 +29,7 @@ import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
 import { roleOfOptions, scenarioModule } from '../scenarios'
+import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -447,16 +448,21 @@ export function OsPanel({
       <div
         className='max-h-[85vh] w-full overflow-y-auto rounded-t-2xl border border-(--border-soft) bg-(--surface) shadow-[0_20px_60px_rgba(0,0,0,0.5)] md:max-w-xl md:rounded-xl'
         onClick={(event) => event.stopPropagation()}
+        {...tm('OS.panel')}
       >
         <div className='flex items-start justify-between gap-3 border-b border-(--border-soft) px-5 py-4'>
           <div className='min-w-0'>
             <h2
               id='os-panel-title'
               className='text-base font-semibold text-(--foreground)'
+              {...tm('OS.panel-title')}
             >
               出战 · {scenario.summary.title}
             </h2>
-            <p className='mt-0.5 text-xs text-(--foreground-muted)'>
+            <p
+              className='mt-0.5 text-xs text-(--foreground-muted)'
+              {...tm('OS.fielded-version')}
+            >
               {fieldedVersion
                 ? entryVersionID != null
                   ? `出战版本：★参赛版本 ${
@@ -475,6 +481,7 @@ export function OsPanel({
             aria-label='关闭'
             onClick={onClose}
             className='-m-2 rounded-md p-3.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground)'
+            {...tm('OS.close-button')}
           >
             <X className='h-4 w-4' />
           </button>
@@ -484,20 +491,34 @@ export function OsPanel({
           {/* #47 被阻挡态：提前告知；按钮仍可点，点了由 trials_blocked 拒绝 */}
           {cfg?.trialsBlocked
             ? (
-              <p className='mb-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2 text-sm text-(--warning)'>
+              <p
+                className='mb-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2 text-sm text-(--warning)'
+                {...tm('OS.trials-blocked-notice')}
+              >
                 赛事进行中，试炼暂时关闭——请稍后再来
               </p>
             )
             : null}
           {error
-            ? <p className='mb-3 text-sm text-(--accent)'>{error}</p>
+            ? (
+              <p
+                className='mb-3 text-sm text-(--accent)'
+                {...tm('OS.error-notice')}
+              >
+                {error}
+              </p>
+            )
             : null}
 
           <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
-            <TabsList>
-              <TabsTrigger value='pve'>NPC 练习</TabsTrigger>
-              <TabsTrigger value='hotseat'>左右手互搏</TabsTrigger>
-              <TabsTrigger value='pvp'>
+            <TabsList {...tm('OS.tabs')}>
+              <TabsTrigger value='pve' {...tm('OS.tab-pve')}>
+                NPC 练习
+              </TabsTrigger>
+              <TabsTrigger value='hotseat' {...tm('OS.tab-hotseat')}>
+                左右手互搏
+              </TabsTrigger>
+              <TabsTrigger value='pvp' {...tm('OS.tab-pvp')}>
                 {pvpUnlocked
                   ? <Unlock className='mr-1.5 h-3.5 w-3.5' />
                   : <Lock className='mr-1.5 h-3.5 w-3.5' />}
@@ -508,13 +529,19 @@ export function OsPanel({
             <TabsContent value='pve' className='space-y-3'>
               {opponentPresets.length === 0
                 ? (
-                  <p className='text-sm text-(--foreground-muted)'>
+                  <p
+                    className='text-sm text-(--foreground-muted)'
+                    {...tm('OS.pve-empty')}
+                  >
                     该场景暂无对手侧的预设对手。
                   </p>
                 )
                 : (
                   <>
-                    <div className='w-full max-w-xs'>
+                    <div
+                      className='w-full max-w-xs'
+                      {...tm('OS.preset-select')}
+                    >
                       <Select
                         placeholder='选择预设对手'
                         value={presetKey ?? undefined}
@@ -536,6 +563,7 @@ export function OsPanel({
                     <Button
                       data-testid='dispatch-match'
                       onClick={() => void dispatchPVE()}
+                      {...tm('OS.pve-dispatch-button')}
                       disabled={dispatching ||
                         presetKey == null ||
                         fieldedVersionID == null}
@@ -549,13 +577,19 @@ export function OsPanel({
             <TabsContent value='hotseat' className='space-y-3'>
               {opponents === null
                 ? (
-                  <p className='text-sm text-(--foreground-subtle)'>
+                  <p
+                    className='text-sm text-(--foreground-subtle)'
+                    {...tm('OS.hotseat-loading')}
+                  >
                     加载中…
                   </p>
                 )
                 : selfOpponents.length === 0
                 ? (
-                  <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'>
+                  <div
+                    className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
+                    {...tm('OS.hotseat-empty')}
+                  >
                     <p className='text-sm font-medium text-(--foreground)'>
                       你还没有对侧智能体
                     </p>
@@ -564,7 +598,11 @@ export function OsPanel({
                     </p>
                     <div className='mt-4 flex justify-center'>
                       <Link to='/my-agents' onClick={onClose}>
-                        <Button size='sm' variant='secondary'>
+                        <Button
+                          size='sm'
+                          variant='secondary'
+                          {...tm('OS.hotseat-go-my-agents')}
+                        >
                           去我的智能体
                         </Button>
                       </Link>
@@ -575,7 +613,10 @@ export function OsPanel({
                   <>
                     {selfOpponents.length > 1
                       ? (
-                        <div className='w-full max-w-xs'>
+                        <div
+                          className='w-full max-w-xs'
+                          {...tm('OS.hotseat-opponent-select')}
+                        >
                           <Select
                             placeholder='选择你的对侧智能体'
                             value={opponentAgentID != null
@@ -605,18 +646,25 @@ export function OsPanel({
                         </div>
                       )
                       : (
-                        <p className='text-sm text-(--foreground)'>
+                        <p
+                          className='text-sm text-(--foreground)'
+                          {...tm('OS.hotseat-opponent-label')}
+                        >
                           对侧：{selfOpponents[0].displayName} · agent #
                           {selfOpponents[0].agentID}
                         </p>
                       )}
                     {/* #18：对侧版本选择需后端支持（后续阶段），不放假选择器 */}
-                    <p className='text-xs text-(--foreground-muted)'>
+                    <p
+                      className='text-xs text-(--foreground-muted)'
+                      {...tm('OS.hotseat-version-note')}
+                    >
                       对侧将以其★参赛版本（否则最新版）出战 ·
                       指定具体版本将在后续版本开放。
                     </p>
                     <Button
                       onClick={() => void dispatchHotseat()}
+                      {...tm('OS.hotseat-dispatch-button')}
                       disabled={dispatching ||
                         opponentAgentID == null ||
                         fieldedVersionID == null}
@@ -635,7 +683,10 @@ export function OsPanel({
               {pvpUnlocked
                 ? (
                   <>
-                    <div className='flex flex-wrap items-center gap-2'>
+                    <div
+                      className='flex flex-wrap items-center gap-2'
+                      {...tm('OS.pvp-unlocked-header')}
+                    >
                       <Unlock className='h-4 w-4 shrink-0 text-(--success)' />
                       <p className='text-sm font-medium text-(--foreground)'>
                         玩家约战已解锁
@@ -652,7 +703,10 @@ export function OsPanel({
                     {challengeDone
                       ? (
                         // 成功态（mock V21 的入口面）：两张对局卡 ①/②。
-                        <div className='space-y-3 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-4'>
+                        <div
+                          className='space-y-3 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-4'
+                          {...tm('OS.challenge-success')}
+                        >
                           <p className='text-sm font-medium text-(--foreground)'>
                             已发起双侧约战 · 两场对局已入队
                           </p>
@@ -676,26 +730,38 @@ export function OsPanel({
                       )
                       : challengeUnavailable
                       ? (
-                        <p className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'>
+                        <p
+                          className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'
+                          {...tm('OS.challenge-unavailable')}
+                        >
                           约战功能尚未在该服务器启用——敬请期待
                         </p>
                       )
                       : lineupFailed
                       ? (
-                        <p className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'>
+                        <p
+                          className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'
+                          {...tm('OS.lineup-failed')}
+                        >
                           无法加载你的双侧阵容——稍后再试
                         </p>
                       )
                       : lineup == null
                       ? (
-                        <p className='text-sm text-(--foreground-subtle)'>
+                        <p
+                          className='text-sm text-(--foreground-subtle)'
+                          {...tm('OS.lineup-loading')}
+                        >
                           加载双侧阵容…
                         </p>
                       )
                       : missingSides.length > 0
                       ? (
                         // #66：单侧玩家不能约战——引导创建缺的那侧。
-                        <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'>
+                        <div
+                          className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
+                          {...tm('OS.missing-side-guide')}
+                        >
                           <p className='text-sm font-medium text-(--foreground)'>
                             PVP 约战需双方双侧齐备
                           </p>
@@ -714,6 +780,7 @@ export function OsPanel({
                                 variant='secondary'
                                 disabled={creatingOpposite}
                                 onClick={() => void createSide(which)}
+                                {...tm('OS.create-side-button')}
                               >
                                 {creatingOpposite
                                   ? '创建中…'
@@ -726,7 +793,10 @@ export function OsPanel({
                       : (
                         <>
                           {/* 共用双侧阵容选择器（mock V20）：各侧一个版本。 */}
-                          <div className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'>
+                          <div
+                            className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
+                            {...tm('OS.lineup')}
+                          >
                             <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
                               我的双侧出战阵容——① 我{sideNameOf('a')} vs 他
                               {sideNameOf('b')} · ② 他{sideNameOf('a')} vs 我
@@ -734,7 +804,7 @@ export function OsPanel({
                             </p>
                             <div className='mt-2 grid gap-3 sm:grid-cols-2'>
                               {(['a', 'b'] as const).map((which) => (
-                                <div key={which}>
+                                <div key={which} {...tm('OS.lineup-select')}>
                                   <p className='mb-1 text-xs text-(--foreground-subtle)'>
                                     执{which.toUpperCase()} ·{' '}
                                     {sideNameOf(which)}
@@ -767,13 +837,19 @@ export function OsPanel({
                                 </div>
                               ))}
                             </div>
-                            <p className='mt-2 text-[11px] text-(--foreground-muted)'>
+                            <p
+                              className='mt-2 text-[11px] text-(--foreground-muted)'
+                              {...tm('OS.lineup-default-note')}
+                            >
                               默认各侧 ★参赛版本（未标记则最新版）。
                             </p>
                           </div>
 
                           {/* 子模式切换：① 对手玩家 · ② 按 id 约战。 */}
-                          <div className='flex gap-2'>
+                          <div
+                            className='flex gap-2'
+                            {...tm('OS.pvp-mode-switch')}
+                          >
                             {([
                               ['players', '对手玩家'],
                               ['byid', '按 id 约战'],
@@ -783,6 +859,7 @@ export function OsPanel({
                                 type='button'
                                 aria-pressed={pvpMode === mode}
                                 onClick={() => setPvpMode(mode)}
+                                {...tm('OS.pvp-mode-button')}
                                 className={pvpMode === mode
                                   ? 'cursor-pointer rounded-full border border-(--accent) px-3 py-1.5 text-xs font-semibold text-(--accent)'
                                   : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:text-(--foreground)'}
@@ -797,13 +874,19 @@ export function OsPanel({
                               <div className='space-y-2'>
                                 {opponents === null
                                   ? (
-                                    <p className='text-sm text-(--foreground-subtle)'>
+                                    <p
+                                      className='text-sm text-(--foreground-subtle)'
+                                      {...tm('OS.rivals-loading')}
+                                    >
                                       加载中…
                                     </p>
                                   )
                                   : rivals.length === 0
                                   ? (
-                                    <p className='text-sm text-(--foreground-muted)'>
+                                    <p
+                                      className='text-sm text-(--foreground-muted)'
+                                      {...tm('OS.rivals-empty')}
+                                    >
                                       {rivalsUnattributed
                                         ? '服务器版本暂不支持按玩家约战——试试按 id 约战'
                                         : '暂无可约战的对手玩家——等其他玩家在本场景出战后再来'}
@@ -813,6 +896,7 @@ export function OsPanel({
                                     <div
                                       key={rival.accountID}
                                       className='flex flex-wrap items-center gap-3 rounded-lg border border-(--border-soft) bg-white/2 px-4 py-2.5'
+                                      {...tm('OS.rival-row')}
                                     >
                                       <div className='min-w-0 flex-1'>
                                         <p className='text-sm font-semibold text-(--foreground)'>
@@ -832,6 +916,7 @@ export function OsPanel({
                                           void submitChallenge({
                                             accountID: rival.accountID,
                                           })}
+                                        {...tm('OS.challenge-button')}
                                       >
                                         {dispatching
                                           ? '约战中…'
@@ -852,6 +937,7 @@ export function OsPanel({
                                       setIdError(null)
                                     }}
                                     placeholder='输入对方任一版本 id（战报页可复制）'
+                                    {...tm('OS.byid-input')}
                                   />
                                   <Button
                                     size='sm'
@@ -860,13 +946,17 @@ export function OsPanel({
                                     disabled={idLooking ||
                                       idInput.trim() === ''}
                                     onClick={() => void lookupRef()}
+                                    {...tm('OS.byid-lookup-button')}
                                   >
                                     {idLooking ? '查询中…' : '查询'}
                                   </Button>
                                 </div>
                                 {idError
                                   ? (
-                                    <p className='text-xs text-(--warning)'>
+                                    <p
+                                      className='text-xs text-(--warning)'
+                                      {...tm('OS.byid-error')}
+                                    >
                                       {idError}
                                     </p>
                                   )
@@ -874,7 +964,10 @@ export function OsPanel({
                                 {idRef
                                   ? (
                                     // 解析卡：玩家/场景/侧/模型（#25）。
-                                    <div className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'>
+                                    <div
+                                      className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
+                                      {...tm('OS.byid-ref-card')}
+                                    >
                                       <p className='text-sm font-semibold text-(--foreground)'>
                                         {idRef.ownerDisplayName}
                                       </p>
@@ -902,6 +995,7 @@ export function OsPanel({
                                             void submitChallenge({
                                               pinnedVersionID: idRef.versionID,
                                             })}
+                                          {...tm('OS.challenge-button')}
                                         >
                                           {dispatching
                                             ? '约战中…'
@@ -914,7 +1008,10 @@ export function OsPanel({
                               </div>
                             )}
 
-                          <ul className='space-y-1 text-[11px] text-(--foreground-muted)'>
+                          <ul
+                            className='space-y-1 text-[11px] text-(--foreground-muted)'
+                            {...tm('OS.pvp-footnotes')}
+                          >
                             <li>
                               一次约战＝成对两场（①正/②反），每次成对约战计 2
                               场配额。
@@ -929,9 +1026,15 @@ export function OsPanel({
                 )
                 : gateProgress
                 ? (
-                  <div className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+                  <div
+                    className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'
+                    {...tm('OS.gate-locked')}
+                  >
                     <Lock className='h-5 w-5 text-(--foreground-muted)' />
-                    <p className='text-sm font-medium text-(--foreground-subtle)'>
+                    <p
+                      className='text-sm font-medium text-(--foreground-subtle)'
+                      {...tm('OS.gate-rule-text')}
+                    >
                       每侧各赢 ≥{gateProgress.a.needed} 场 NPC 练习解锁玩家约战
                     </p>
                     {/* 按侧进度徽章（#65，mock V16）：如 商鞅 1/1 ✓ · 甘龙 0/1 */}
@@ -942,6 +1045,7 @@ export function OsPanel({
                           tone={sideMet(gateProgress[which])
                             ? 'success'
                             : 'info'}
+                          {...tm('OS.gate-side-badge')}
                         >
                           {sideNameOf(which)}{' '}
                           {sideProgressText(gateProgress[which])}
@@ -961,6 +1065,7 @@ export function OsPanel({
                             size='sm'
                             variant='secondary'
                             onClick={() => setTab('pve')}
+                            {...tm('OS.gate-practice-this-side')}
                           >
                             去练习该侧（{sideNameOf(side)}）
                           </Button>
@@ -976,6 +1081,7 @@ export function OsPanel({
                                 onClose()
                                 navigate('/my-agents')
                               }}
+                              {...tm('OS.gate-practice-opposite')}
                             >
                               去练习对侧（{sideNameOf(oppositeSide)}）
                             </Button>
@@ -986,6 +1092,7 @@ export function OsPanel({
                               variant='secondary'
                               disabled={creatingOpposite}
                               onClick={() => void createOpposite()}
+                              {...tm('OS.gate-create-opposite')}
                             >
                               {creatingOpposite
                                 ? '创建中…'
@@ -998,7 +1105,10 @@ export function OsPanel({
                 )
                 : (
                   // 老服务器（无 gateProgress）：保留 P1 的锁定占位，不摆假进度
-                  <div className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+                  <div
+                    className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'
+                    {...tm('OS.gate-locked-legacy')}
+                  >
                     <Lock className='h-5 w-5 text-(--foreground-muted)' />
                     <p className='text-sm font-medium text-(--foreground-subtle)'>
                       双侧各自赢下 PVE 练习后解锁玩家约战
@@ -1015,7 +1125,10 @@ export function OsPanel({
         {/* 面板脚注：三类配额中的两条日额（#52/#46），数字来自 /v1/config */}
         {cfg
           ? (
-            <div className='border-t border-(--border-soft) px-5 py-3 text-xs text-(--foreground-muted)'>
+            <div
+              className='border-t border-(--border-soft) px-5 py-3 text-xs text-(--foreground-muted)'
+              {...tm('OS.quota-footer')}
+            >
               今日已用 {cfg.usage.battlesToday}/{cfg.dailyBattleLimit}（PVP{' '}
               {cfg.usage.pvpBattlesToday}/{cfg.pvpDailyLimit}）
             </div>

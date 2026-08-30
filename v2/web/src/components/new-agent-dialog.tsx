@@ -6,6 +6,7 @@ import { agents, ApiError } from '../api/client'
 import type { ScenarioSummary, Side } from '../api/types'
 import { cn } from '../lib/cn'
 import { rejectCopy } from '../lib/reject-copy'
+import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 
@@ -119,6 +120,7 @@ export function NewAgentDialog({
       <div
         className='max-h-[85vh] w-full overflow-y-auto rounded-t-2xl border border-(--border-soft) bg-(--surface) shadow-[0_20px_60px_rgba(0,0,0,0.5)] md:max-w-md md:rounded-xl'
         onClick={(event) => event.stopPropagation()}
+        {...tm('E.new-agent-dialog')}
       >
         <div className='flex items-start justify-between gap-3 border-b border-(--border-soft) px-5 py-4'>
           <div className='min-w-0'>
@@ -141,6 +143,7 @@ export function NewAgentDialog({
             aria-label='关闭'
             onClick={onClose}
             className='-m-2 rounded-md p-3.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground)'
+            {...tm('E.new-agent-close')}
           >
             <X className='h-4 w-4' />
           </button>
@@ -151,13 +154,17 @@ export function NewAgentDialog({
             <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
               选择执方
             </p>
-            <div className='inline-flex items-center gap-1 rounded-full border border-(--border-soft) bg-white/2 p-1'>
+            <div
+              className='inline-flex items-center gap-1 rounded-full border border-(--border-soft) bg-white/2 p-1'
+              {...tm('E.new-agent-side-toggle')}
+            >
               {(['a', 'b'] as const).map((which) => (
                 <button
                   key={which}
                   type='button'
                   aria-pressed={side === which}
                   onClick={() => pickSide(which)}
+                  {...tm('E.new-agent-side-option')}
                   className={cn(
                     'rounded-full px-3 py-1.5 text-xs font-semibold transition',
                     side === which
@@ -186,9 +193,13 @@ export function NewAgentDialog({
                 setNameError(null)
               }}
               placeholder={`如「铁腕${sideName(side)}」`}
+              {...tm('E.new-agent-name-input')}
             />
             <div className='flex items-center justify-between gap-2 text-[11px]'>
-              <span className='text-(--accent)'>
+              <span
+                className='text-(--accent)'
+                {...tm('E.new-agent-name-error')}
+              >
                 {nameError ??
                   (tooLong ? `名字最多 ${AGENT_NAME_LIMIT} 字` : '')}
               </span>
@@ -196,6 +207,7 @@ export function NewAgentDialog({
                 className={tooLong
                   ? 'font-semibold text-(--accent)'
                   : 'text-(--foreground-muted)'}
+                {...tm('E.new-agent-name-counter')}
               >
                 {nameLength}/{AGENT_NAME_LIMIT}
               </span>
@@ -205,7 +217,10 @@ export function NewAgentDialog({
           {/* #59/#79 引导门：文案来自 reject-copy，引导按 mock V2 口径切侧 */}
           {gateError
             ? (
-              <div className='space-y-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'>
+              <div
+                className='space-y-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'
+                {...tm('E.new-agent-gate')}
+              >
                 <p className='text-sm text-(--warning)'>{gateError}</p>
                 <p className='text-xs text-(--foreground-muted)'>
                   想再建一个{sideName(side)}？先创建一个{sideName(opposite)}
@@ -215,6 +230,7 @@ export function NewAgentDialog({
                   size='sm'
                   variant='secondary'
                   onClick={() => pickSide(opposite)}
+                  {...tm('E.new-agent-gate-switch')}
                 >
                   先创建{sideName(opposite)}
                 </Button>
@@ -222,16 +238,30 @@ export function NewAgentDialog({
             )
             : null}
 
-          {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
+          {error
+            ? (
+              <p
+                className='text-sm text-(--accent)'
+                {...tm('E.new-agent-error')}
+              >
+                {error}
+              </p>
+            )
+            : null}
 
           <div className='flex items-center justify-end gap-2 pt-1'>
-            <Button variant='secondary' onClick={onClose}>
+            <Button
+              variant='secondary'
+              onClick={onClose}
+              {...tm('E.new-agent-cancel')}
+            >
               取消
             </Button>
             <Button
               data-testid='create-agent'
               disabled={busy || tooLong}
               onClick={() => void submit()}
+              {...tm('E.new-agent-submit')}
             >
               {busy ? '创建中…' : '创建并进入构建'}
             </Button>

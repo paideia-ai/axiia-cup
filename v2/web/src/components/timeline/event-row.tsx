@@ -14,6 +14,7 @@ import { crossIdentified } from '../../lib/scoring-reasoning'
 import type { SpeakerLabels } from './labels'
 import { renderJuryEvent } from './jury-event-row'
 import { speakerName } from './labels'
+import { tm } from '../../testmode/mark'
 
 // One rendering per `game.emit` type. An unknown type is still a row: its own text
 // if it carries one, its type name otherwise, with the payload behind a fold. The
@@ -45,7 +46,10 @@ function SceneRow({
           </p>
         )
         : null}
-      <p className='mt-1 whitespace-pre-wrap text-sm text-(--foreground-subtle)'>
+      <p
+        {...tm('FA.event-scene')}
+        className='mt-1 whitespace-pre-wrap text-sm text-(--foreground-subtle)'
+      >
         {text}
       </p>
     </Narration>
@@ -63,7 +67,10 @@ function OrderRow({
   const first = eventString(event, 'first')
   const second = eventString(event, 'second')
   return (
-    <div className='rounded-lg border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-3'>
+    <div
+      {...tm('FA.event-order')}
+      className='rounded-lg border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--info)'>
         次序已定{actor ? ` · ${speakerName(labels, actor)}` : ''}
       </p>
@@ -92,6 +99,7 @@ function GestureRow({
   const who = actor ? speakerName(labels, actor) : '他'
   return (
     <p
+      {...tm('FA.event-gesture')}
       className={`px-4 py-1.5 text-center text-sm italic ${
         opened ? 'text-(--warning)' : 'text-(--foreground-muted)'
       }`}
@@ -114,7 +122,10 @@ function VerdictEventRow({
   const winner = eventString(event, 'winner')
   const requests = eventRecord(event, 'requests')
   return (
-    <div className='rounded-xl border border-(--border) bg-[rgba(224,74,47,0.06)] px-4 py-4'>
+    <div
+      {...tm('FA.event-verdict')}
+      className='rounded-xl border border-(--border) bg-[rgba(224,74,47,0.06)] px-4 py-4'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--accent)'>
         裁决{actor ? ` · ${speakerName(labels, actor)}` : ''}
       </p>
@@ -134,7 +145,10 @@ function VerdictEventRow({
         : null}
       {requests
         ? (
-          <div className='mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3'>
+          <div
+            {...tm('FA.event-verdict-requests')}
+            className='mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3'
+          >
             {Object.entries(requests).map(([id, decision]) => (
               <div
                 key={id}
@@ -180,7 +194,10 @@ function ScoreRow({
   // 只在恰好两侧对猜时有定义。
   const cross = crossIdentified(trueRequests, guesses)
   return (
-    <div className='rounded-xl border border-(--border) bg-white/2 px-4 py-4'>
+    <div
+      {...tm('FA.event-score')}
+      className='rounded-xl border border-(--border) bg-white/2 px-4 py-4'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         计分
       </p>
@@ -204,7 +221,7 @@ function ScoreRow({
               const guess = guesses?.[side]
               if (!truth && !guess) return null
               return (
-                <p key={side}>
+                <p {...tm('FA.event-score-side')} key={side}>
                   {speakerName(labels, side)}
                   {truth
                     ? (
@@ -214,7 +231,11 @@ function ScoreRow({
                           {truth}
                         </span>
                         {cross.identified[side] === true
-                          ? <span className='text-(--accent)'>（被识破）</span>
+                          ? (
+                            <span className='text-(--accent)'>
+                              （被识破）
+                            </span>
+                          )
                           : null}
                       </>
                     )
@@ -227,7 +248,11 @@ function ScoreRow({
                           {guess}
                         </span>
                         {cross.guessedRight[side] === true
-                          ? <span className='text-(--success)'>（猜中）</span>
+                          ? (
+                            <span className='text-(--success)'>
+                              （猜中）
+                            </span>
+                          )
                           : null}
                       </>
                     )
@@ -256,7 +281,10 @@ function GenericRow({
   const line = summary ?? turn.finalText
   return (
     <Narration>
-      <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
+      <p
+        {...tm('FA.event-generic')}
+        className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'
+      >
         {speakerName(labels, turn.speaker)}
         {type ? ` · ${type}` : ''}
       </p>
@@ -265,7 +293,7 @@ function GenericRow({
       </p>
       {event
         ? (
-          <details className='mt-2 text-left'>
+          <details {...tm('FA.event-raw-data')} className='mt-2 text-left'>
             <summary className='cursor-pointer text-[11px] text-(--foreground-muted)'>
               原始数据
             </summary>

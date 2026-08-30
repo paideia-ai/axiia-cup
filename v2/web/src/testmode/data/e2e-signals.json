@@ -1,0 +1,880 @@
+{
+  "note": "只作映射线索：e2e 标题里的条款号与该测试用到的选择器共现；不进 bundle",
+  "clauses": {
+    "U05-C09b": {
+      "tests": [
+        "compare/fixes-round3.spec.ts :: #72 对战条只装自己发起的对局（U05-C09b）",
+        "compare/u05-opponent-select.spec.ts :: U05-C09b：条上只装「你已发起」的对局（#72/A5——#138 已修）"
+      ],
+      "selectors": [
+        "role:heading:我的智能体",
+        "role:region:进行中的对战"
+      ]
+    },
+    "U08-C01": {
+      "tests": [
+        "compare/fixes-round3.spec.ts :: B1 公开落地页给出四项内容（U08-C01）",
+        "compare/u08-entry-nav.spec.ts :: U08-C01 落地页展示真实对局内容与统计（B1，#138 已实现）"
+      ],
+      "selectors": [
+        "testid:landing-total-battles",
+        "text:总对战数",
+        "text:顶尖玩家",
+        "role:heading:总对战数",
+        "role:heading:顶尖玩家",
+        "role:heading:示范对局",
+        "role:heading:真实对局节选",
+        "text:AXIIA CUP"
+      ]
+    },
+    "U10-C12": {
+      "tests": [
+        "compare/fixes-round3.spec.ts :: #35 公开智能体视图（U10-C12）",
+        "compare/u10-agent-view.spec.ts :: U10-C12：公开视图——逐版本胜负有意公开（#35，#138 已实现）"
+      ],
+      "selectors": [
+        "text:逐版本战绩",
+        "testid:open-os-panel",
+        "role:heading:逐版本战绩",
+        "role:button:编辑",
+        "text:不是你的智能体",
+        "text:★ 参赛版本",
+        "text:提示词与版本对比只有主人可见。"
+      ]
+    },
+    "U11-C04": {
+      "tests": [
+        "compare/fixes-round3.spec.ts :: #64 排名一律按玩家（U11-C04）"
+      ],
+      "selectors": []
+    },
+    "U09-C10": {
+      "tests": [
+        "compare/fixes-round3.spec.ts :: #53④ 锦标赛通知（U09-C10）"
+      ],
+      "selectors": [
+        "role:heading:通知"
+      ]
+    },
+    "U02-C01": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 空工作区出现三选一初始化卡，MCQ 默认（U02-C01/C02）"
+      ],
+      "selectors": [
+        "role:tab:MCQ 拼装",
+        "text:初始化方式 · 三选一生成首稿"
+      ]
+    },
+    "U02-C18": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 初始化卡副标题不引用已废止的「复制为新智能体」（U02-C18，#90）"
+      ],
+      "selectors": [
+        "text:保存即成为"
+      ]
+    },
+    "U02-C04": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 元提示词初始化＝复制出去、粘贴回来，产品内不提供聊天（U02-C04）"
+      ],
+      "selectors": [
+        "role:tab:元提示词",
+        "role:button:复制元提示词",
+        "role:button:填入工作区"
+      ]
+    },
+    "U02-C02": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: MCQ 拼装生成首稿并填入工作区（U02-C02）"
+      ],
+      "selectors": [
+        "role:tab:MCQ 拼装",
+        "role:button:填入工作区",
+        "label:策略提示词",
+        "text:初始化方式 · 三选一生成首稿"
+      ]
+    },
+    "U02-C06": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 模型选择器清单来自可配置的 /v1/models（U02-C06，#13）"
+      ],
+      "selectors": [
+        "text:模型"
+      ]
+    },
+    "U02-C10": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存后留在 E 页（U02-C10，#88 保存按钮侧）"
+      ],
+      "selectors": [
+        "testid:save-version"
+      ]
+    },
+    "U02-C05": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存的版本记录初始化方式与所选模型（U02-C05/C07，#83/#13）"
+      ],
+      "selectors": []
+    },
+    "U02-C09": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存＝存版本，从不派发对局（U02-C09，#17）"
+      ],
+      "selectors": []
+    },
+    "U02-C07": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 版本的模型信息公开可见（U02-C07-ui，#21）"
+      ],
+      "selectors": []
+    },
+    "U02-C12": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存按钮旁常驻「保存后将成为 v(N+1)」（U02-C12，P12）"
+      ],
+      "selectors": [
+        "text:保存后将成为 v${count + 1}"
+      ]
+    },
+    "U02-C11": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存成功提示带「参赛版本仍是 vK」（U02-C11，E10）"
+      ],
+      "selectors": [
+        "testid:save-version",
+        "label:策略提示词",
+        "text:参赛版本仍是 ${entryTag}"
+      ]
+    },
+    "U02-C11b": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存成功提示带「一键改标」，点击后 ★ 真正移动（U02-C11b，E10——pr-fate 拍板 A）"
+      ],
+      "selectors": [
+        "testid:save-notice",
+        "role:button:一键改标到 ${savedTag}"
+      ]
+    },
+    "U02-C08": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 超限有计数反馈且保存被拒绝（U02-C08，#14）"
+      ],
+      "selectors": [
+        "testid:save-version",
+        "label:策略提示词",
+        "text:1001 / 1000"
+      ]
+    },
+    "U02-C17": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 重进构建器继承最新版本的模型（U02-C17，P5）"
+      ],
+      "selectors": [
+        "label:策略提示词"
+      ]
+    },
+    "U02-C13": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 三层 prompt 说明与只读角色模板（U02-C13，#68）"
+      ],
+      "selectors": [
+        "text:查看场景角色模板（仅供查看，无需重复编写）"
+      ]
+    },
+    "U02-C14": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 无构建内预览，无 C3 future 控件，无未完成占位（U02-C14/C15/C16）"
+      ],
+      "selectors": []
+    },
+    "U02-C19": {
+      "tests": [
+        "compare/u02-builder-core.spec.ts :: 保存 v1 之后不再有初始化模式概念（U02-C19，#83 正文/E7——pr-fate 拍板 A）"
+      ],
+      "selectors": [
+        "role:button:确认清空",
+        "label:策略提示词",
+        "text:清空工作区",
+        "text:清空工作区（重新选择初始化方式）",
+        "text:初始化方式 · 三选一生成首稿"
+      ]
+    },
+    "U04-C01": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C01/C02/C04：D 页每张产品卡一句话介绍 + 统计槽位（点亮或空态），难度/时长/适合新手"
+      ],
+      "selectors": []
+    },
+    "U04-C03": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C03：最近上线的场景固定第 2 位 + 「新上线」徽章"
+      ],
+      "selectors": [
+        "text:新上线"
+      ]
+    },
+    "U04-C05": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C05：「最热门」为 Future，D 页必须缺席"
+      ],
+      "selectors": [
+        "text:最热门"
+      ]
+    },
+    "U04-C06": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C06：点卡片进 DA，「去构建」只在 DA"
+      ],
+      "selectors": [
+        "testid:scenario-${SHANGYANG}"
+      ]
+    },
+    "U04-C07": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C07：DA 页内没有编辑框（#42 与 E 分开）"
+      ],
+      "selectors": []
+    },
+    "U04-C08": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C08：四张顶层卡依序呈现，隐藏目标渐进披露（#142 结构）"
+      ],
+      "selectors": [
+        "role:button:隐藏目标列表",
+        "text:SR1"
+      ]
+    },
+    "U04-C09": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C09：侧方胜率出现在背景故事卡（#38 GLANCE）"
+      ],
+      "selectors": [
+        "text:侧方胜率"
+      ]
+    },
+    "U04-C10": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C10：内容基线八项齐备，裁判 prompt 原文可查（同源）"
+      ],
+      "selectors": [
+        "role:button:隐藏目标列表",
+        "text:GR1"
+      ]
+    },
+    "U04-C11": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C11：计分来自场景数据、精确权重公开（#42/#26）"
+      ],
+      "selectors": [
+        "role:heading:计分规则"
+      ]
+    },
+    "U04-C12": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C12：隐藏目标机制对人公开"
+      ],
+      "selectors": [
+        "role:button:隐藏目标列表",
+        "text:SR1",
+        "text:每局随机一项为真目标，其余两项为假目标。",
+        "text:GR1"
+      ]
+    },
+    "U04-C13": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C13：EXPAND-1 请求项 + 同源开场白（#51）"
+      ],
+      "selectors": [
+        "testid:opening-line",
+        "role:button:隐藏目标列表",
+        "text:SR1",
+        "text:GR1"
+      ]
+    },
+    "U04-C14": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C14：EXPAND-2 真假概况与轮数；阶段结构（如有）在流程卡（#51）"
+      ],
+      "selectors": [
+        "role:heading:游戏流程",
+        "text:一个是真目标，两个是假目标",
+        "text:四场私谈"
+      ]
+    },
+    "U04-C14b": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C14b：EXPAND-2 交代赛后问询方式（#51——缺口未修）"
+      ],
+      "selectors": []
+    },
+    "U04-C15": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C15：裁判/计分模型公开；judgeOsPrompt 不公开（#51）"
+      ],
+      "selectors": []
+    },
+    "U04-C16": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C16：叙事 ↔ 原始规则切换保留"
+      ],
+      "selectors": []
+    },
+    "U04-C17": {
+      "tests": [
+        "compare/u04-discovery.spec.ts :: U04-C17：P13 侧卡按钮组随「该侧已有策略」切换"
+      ],
+      "selectors": [
+        "testid:build-agent",
+        "testid:build-agent-b",
+        "role:button:再建一个商鞅",
+        "role:button:查看我的商鞅（${countA}）",
+        "role:button:再建一个甘龙",
+        "text:你已有 ${countA} 个商鞅"
+      ]
+    },
+    "U05-C01": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C01：从版本卡与 EA 页头呼出面板，桌面居中呈现"
+      ],
+      "selectors": [
+        "role:button:用 v2 出战",
+        "text:出战 · ${SCENARIO_TITLE}"
+      ]
+    },
+    "U05-C02": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C02：面板内提供己方版本下拉（A5——缺口未修，#88 钉版是现行替代）"
+      ],
+      "selectors": []
+    },
+    "U05-C02b": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C02b：钉住非 ★ 版本时副标题不得谎称 ★参赛版本（#91——缺口未修）"
+      ],
+      "selectors": [
+        "role:button:用 v2 出战"
+      ]
+    },
+    "U05-C03": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C03：执方由所选 agent 隐含，PVE 只列对手侧 NPC"
+      ],
+      "selectors": [
+        "text:选择预设对手"
+      ]
+    },
+    "U05-C03b": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C03b：PVE 的 NPC 列表含两侧胜率（A5/#34——缺口未修）"
+      ],
+      "selectors": []
+    },
+    "U05-C05": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C05：tabs 含「顶尖玩家」与「自动匹配」（A5——缺口未修，W11 未评审）"
+      ],
+      "selectors": [
+        "role:tab:NPC 练习"
+      ]
+    },
+    "U05-C06": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C06：PVP tab 锁定可见 + 按侧进度徽章"
+      ],
+      "selectors": []
+    },
+    "U05-C04": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C04：面板提供「切侧」（A5——缺口未修，现行替代是锁定态引导与我的智能体）"
+      ],
+      "selectors": [
+        "text:切侧"
+      ]
+    },
+    "U05-C07": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C07：hotseat 对侧多 agent 时需选择打哪个"
+      ],
+      "selectors": [
+        "role:tab:左右手互搏",
+        "role:combobox:选择你的对侧智能体"
+      ]
+    },
+    "U05-C08": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C08：未过 PVP 门槛也能自打（#78；消耗 1 场战斗预算）"
+      ],
+      "selectors": [
+        "role:tab:左右手互搏",
+        "role:button:自打一场"
+      ]
+    },
+    "U05-C09": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C09：对战条当且仅当我发起的对局有进行中/刚完成时出现，且仅在派发处；可折叠"
+      ],
+      "selectors": []
+    },
+    "U05-C10": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C10：条上对局经侧抽屉观战（A5——缺口未修，现行整页跳转战报）"
+      ],
+      "selectors": []
+    },
+    "U05-C11": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C11：【桩】解锁态呈现双侧成对约战表单（#66；不派发）"
+      ],
+      "selectors": [
+        "role:button:对手玩家",
+        "role:button:按 id 约战",
+        "role:button:发起双侧约战",
+        "text:玩家约战已解锁",
+        "text:默认各侧 ★参赛版本（未标记则最新版）。"
+      ]
+    },
+    "U05-C11c": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C11c：【桩】阵容下拉以策略展示名标示、id 降为小字（P1——缺口未修）"
+      ],
+      "selectors": [
+        "text:玩家约战已解锁"
+      ]
+    },
+    "U05-C11b": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C11b：【桩】发起方缺一侧时表单换成补侧引导（#66 双侧齐备）"
+      ],
+      "selectors": [
+        "text:PVP 约战需双方双侧齐备"
+      ]
+    },
+    "U05-C12": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C12：【桩】按 id 约战：校验、解析卡与钉版语义（真实查询；绝不点「发起双侧约战」）"
+      ],
+      "selectors": [
+        "role:button:按 id 约战",
+        "role:button:发起双侧约战",
+        "text:未找到该版本 id"
+      ]
+    },
+    "U05-C15": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C15：【桩】发起双侧约战成功后直达第 ① 场实况（F6；桩拦截派发）"
+      ],
+      "selectors": [
+        "role:button:按 id 约战",
+        "role:button:发起双侧约战",
+        "text:默认各侧 ★参赛版本（未标记则最新版）。"
+      ]
+    },
+    "U05-C14": {
+      "tests": [
+        "compare/u05-opponent-select.spec.ts :: U05-C14：移动视口下面板为底部弹层"
+      ],
+      "selectors": []
+    },
+    "U08-C02": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C02 落地页主行动是注册/登录入口（B1）"
+      ],
+      "selectors": [
+        "role:link:立即注册",
+        "role:link:登录"
+      ]
+    },
+    "U08-C03": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C03 注册字段集＝邮箱＋注册码＋昵称＋密码（B2）"
+      ],
+      "selectors": [
+        "label:昵称",
+        "label:邮箱",
+        "label:密码"
+      ]
+    },
+    "U08-C04": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C04 注册后自动登录并落进快速通道（B2/A3）"
+      ],
+      "selectors": []
+    },
+    "U08-C05": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C05 无效注册码被拒绝（B2）"
+      ],
+      "selectors": [
+        "role:button:创建账户",
+        "label:昵称",
+        "label:邮箱",
+        "label:密码"
+      ]
+    },
+    "U08-C06": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C06 邮箱＋密码登录（B2）"
+      ],
+      "selectors": []
+    },
+    "U08-C07": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C07 错误密码被拒绝（B2）"
+      ],
+      "selectors": []
+    },
+    "U08-C08": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C08 桌面顶栏恰为六项，历史居最右（B8 #73/#74）"
+      ],
+      "selectors": [
+        "role:link:通知"
+      ]
+    },
+    "U08-C09": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C09 移动底栏与桌面顶栏一致（B8 #74）"
+      ],
+      "selectors": [
+        "role:link:通知"
+      ]
+    },
+    "U08-C10": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C10 通知铃处处可见（#43）"
+      ],
+      "selectors": [
+        "role:link:通知"
+      ]
+    },
+    "U08-C11": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C11 顶栏视觉降噪（#72 视觉面）"
+      ],
+      "selectors": []
+    },
+    "U08-C12": {
+      "tests": [
+        "compare/u08-entry-nav.spec.ts :: U08-C12 导航无「说明书」类条目（E9 交叉检查）"
+      ],
+      "selectors": []
+    },
+    "U09-C07": {
+      "tests": [
+        "compare/u09-notifications.spec.ts :: ① 对局完成通知带战报深链（U09-C07 · U09-C04）"
+      ],
+      "selectors": []
+    },
+    "U09-C04": {
+      "tests": [
+        "compare/u09-notifications.spec.ts :: ① 对局完成通知带战报深链（U09-C07 · U09-C04）",
+        "compare/u09-notifications.spec.ts :: ② 被约战通知合并成一条，深链落在约战第 ① 场（U09-C08 · U09-C04）"
+      ],
+      "selectors": [
+        "text:被约战",
+        "text:约战①"
+      ]
+    },
+    "U09-C12": {
+      "tests": [
+        "compare/u09-notifications.spec.ts :: ⑥ 门槛达成通知在列（U09-C12）"
+      ],
+      "selectors": [
+        "text:门槛达成"
+      ]
+    },
+    "U09-C08": {
+      "tests": [
+        "compare/u09-notifications.spec.ts :: ② 被约战通知合并成一条，深链落在约战第 ① 场（U09-C08 · U09-C04）"
+      ],
+      "selectors": [
+        "text:被约战",
+        "text:约战①"
+      ]
+    },
+    "U10-C01": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C01/C07：EA 页头展示名与双编号；无名策略回落「侧名 #id」"
+      ],
+      "selectors": [
+        "testid:version-card"
+      ]
+    },
+    "U10-C02": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C02：双侧完成度徽章在 EA 页（#64——缺口未修）",
+        "compare/u10-agent-view.spec.ts :: U10-C02：双侧完成度徽章在「我的智能体」页"
+      ],
+      "selectors": [
+        "testid:agent-row"
+      ]
+    },
+    "U10-C03": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C03：页头「编辑」在「出战」旁，点击进入工作区"
+      ],
+      "selectors": [
+        "testid:open-os-panel",
+        "role:button:编辑",
+        "label:策略提示词"
+      ]
+    },
+    "U10-C04": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C04：版本 diff 所有者可见且可用（#20）"
+      ],
+      "selectors": [
+        "role:heading:版本对比",
+        "role:button:对比",
+        "text:基准 v1",
+        "text:对比 v2"
+      ]
+    },
+    "U10-C05": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C05/C06：逐版本胜负槽与 ★参赛版本"
+      ],
+      "selectors": [
+        "testid:version-record",
+        "text:★参赛版本"
+      ]
+    },
+    "U10-C08": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C08：版本卡动作集合按 #89/#90 定稿"
+      ],
+      "selectors": [
+        "testid:version-card",
+        "text:★参赛版本",
+        "text:复制为新智能体",
+        "text:恢复到工作区"
+      ]
+    },
+    "U10-C09": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C09：EA 与 E 页版本卡动作集合逐字一致（#88）"
+      ],
+      "selectors": [
+        "testid:version-card",
+        "role:button:设为商鞅参赛版本",
+        "label:策略提示词"
+      ]
+    },
+    "U10-C10": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C10：兄弟策略胶囊（P9）"
+      ],
+      "selectors": [
+        "role:button:商鞅「激进」",
+        "role:button:甘龙 #${agentG}"
+      ]
+    },
+    "U10-C11": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C11：EA 入口——DA「查看我的」/「我的智能体」行 / OS 阵容"
+      ],
+      "selectors": [
+        "testid:agent-row",
+        "testid:version-card",
+        "testid:open-os-panel",
+        "text:贪婪"
+      ]
+    },
+    "U10-C13": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C13：提示词与 diff 对非所有者永不可见（#20）"
+      ],
+      "selectors": []
+    },
+    "U10-C14": {
+      "tests": [
+        "compare/u10-agent-view.spec.ts :: U10-C14：PVE-NPC 视图＝聚合数据（#34——后半缺口未修）"
+      ],
+      "selectors": [
+        "role:heading:预设对手",
+        "text:侧方胜率"
+      ]
+    },
+    "U12-C01": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C01/C04/C05/C06：设置页个人资料区的结构"
+      ],
+      "selectors": [
+        "role:heading:账户",
+        "role:heading:个人资料",
+        "role:button:编辑",
+        "text:昵称",
+        "text:测试玩家 u12",
+        "text:邮箱",
+        "text:角色",
+        "text:选手",
+        "text:管理员提权"
+      ]
+    },
+    "U12-C02": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C02：昵称长度边界为 1 到 50 字"
+      ],
+      "selectors": [
+        "role:button:编辑",
+        "role:button:保存",
+        "role:button:取消",
+        "label:昵称"
+      ]
+    },
+    "U12-C03": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C03：改昵称后全站展示即时同步"
+      ],
+      "selectors": [
+        "role:button:编辑",
+        "role:button:保存",
+        "label:昵称",
+        "text:测试玩家 u12"
+      ]
+    },
+    "U12-C08": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C08：设置页有通知偏好区块（待产品定义，暂行站内默认通知所有）"
+      ],
+      "selectors": [
+        "role:heading:账户"
+      ]
+    },
+    "U12-C09": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C09/C10：历史页的行结构与「行点开→战报」"
+      ],
+      "selectors": [
+        "role:heading:历史"
+      ]
+    },
+    "U12-C11": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C11：C2 配置旋钮无任何玩家侧 UI"
+      ],
+      "selectors": []
+    },
+    "U12-C12": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C12：C3 future 功能缺席"
+      ],
+      "selectors": [
+        "role:heading:账户",
+        "text:最热门"
+      ]
+    },
+    "U12-C13": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C13：改密表单——客户端先挡必错提交"
+      ],
+      "selectors": [
+        "role:heading:修改密码",
+        "role:button:修改密码",
+        "label:当前密码",
+        "label:确认新密码",
+        "text:新密码至少 8 位",
+        "text:两次输入的新密码不一致"
+      ]
+    },
+    "U12-C14": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C14：当前密码错误被服务端拒绝"
+      ],
+      "selectors": [
+        "role:button:修改密码",
+        "label:当前密码",
+        "label:确认新密码",
+        "text:密码已修改，其他设备已退出登录"
+      ]
+    },
+    "U12-C15": {
+      "tests": [
+        "compare/u12-settings-history.spec.ts :: U12-C15：改密成功后其他会话失效、当前会话保留（最后跑）"
+      ],
+      "selectors": [
+        "role:heading:账户",
+        "role:button:修改密码",
+        "role:heading:历史",
+        "label:当前密码",
+        "label:确认新密码",
+        "text:密码已修改，其他设备已退出登录"
+      ]
+    },
+    "U13-C01": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C01 用注册码在真注册页开出一个新账号"
+      ],
+      "selectors": []
+    },
+    "U13-C02": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C02 管理员在固定局场景上建赛、报名四个版本并按 1240 播种"
+      ],
+      "selectors": []
+    },
+    "U13-C03": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C03 配对海选轮派发真对局，完局关轮，再配正赛轮"
+      ],
+      "selectors": []
+    },
+    "U13-C04": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C04 玩家在「排名」页看到锦标赛卡片——时间线与阶段标签"
+      ],
+      "selectors": [
+        "role:link:排名",
+        "role:heading:排名",
+        "role:heading:锦标赛 #${tournamentID} 积分榜",
+        "role:heading:历史",
+        "text:锦标赛 #${tournamentID}",
+        "text:第 2/3 轮",
+        "text:running",
+        "text:第 1 轮",
+        "text:第 2 轮",
+        "text:海选",
+        "text:正赛",
+        "text:对战 #${mainMatchID}"
+      ]
+    },
+    "U13-C05": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C05 赛事 running 时试炼未被阻挡——机制是启动期环境变量"
+      ],
+      "selectors": [
+        "testid:open-os-panel",
+        "role:tab:NPC 练习",
+        "text:赛事进行中，试炼暂时关闭"
+      ]
+    },
+    "U13-C06": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C06 直邀者的铃铛与通知页"
+      ],
+      "selectors": [
+        "role:heading:通知",
+        "text:锦标赛资格",
+        "text:锦标赛邀请",
+        "text:锦标赛新一轮开始"
+      ]
+    },
+    "U13-C07": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C07 结赛推送最终排名通知，积分榜按玩家给出四行"
+      ],
+      "selectors": [
+        "role:heading:锦标赛 #${tournamentID} 积分榜",
+        "text:锦标赛已结束",
+        "text:最终排名已产生",
+        "text:finished"
+      ]
+    },
+    "U13-C08": {
+      "tests": [
+        "compare/u13-tournaments-live.spec.ts :: U13-C08 单侧版本也能被报名进锦标赛"
+      ],
+      "selectors": []
+    }
+  }
+}

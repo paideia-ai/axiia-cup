@@ -4,6 +4,7 @@ import type { Side } from '../api/types'
 import type { ReplayBeatStep } from '../lib/replay'
 import type { SpeakerLabels } from './timeline/labels'
 import { sideName, speakerSide } from './timeline/labels'
+import { tm } from '../testmode/mark'
 
 // 裁判倾向轨迹小图（#24，P4 前端）：x＝节拍序（os-N），y＝带号强度——倾向
 // A 侧向上、B 侧向下，幅度按强度档位离散取值。单序列折线：极性主要由位置
@@ -132,17 +133,21 @@ export function JudgeTrendChart({
     setSelectedKey((current) => (current === key ? null : key))
 
   return (
-    <div className='space-y-2'>
+    <div {...tm('FA.trend-chart')} className='space-y-2'>
       <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
         <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
           裁判倾向轨迹
         </p>
-        <p className='text-[11px] text-(--foreground-muted)'>
+        <p
+          {...tm('FA.trend-hint')}
+          className='text-[11px] text-(--foreground-muted)'
+        >
           空心圈＝倾向变化 · 点选节拍查看心声
         </p>
       </div>
       <div className='flex items-stretch gap-3'>
         <div
+          {...tm('FA.trend-legend')}
           className='flex shrink-0 flex-col justify-between text-[11px] text-(--foreground-subtle)'
           style={{ height: HEIGHT }}
         >
@@ -165,6 +170,7 @@ export function JudgeTrendChart({
         </div>
         <div className='min-w-0 flex-1 overflow-x-auto'>
           <svg
+            {...tm('FA.trend-plot')}
             width={width}
             height={HEIGHT}
             role='img'
@@ -198,6 +204,7 @@ export function JudgeTrendChart({
                 // F4：点按 / Enter / 空格选中节拍，图下方内联显示完整心声；
                 // <title> 保留作桌面悬停加分。
                 <g
+                  {...tm('FA.trend-beat')}
                   key={key}
                   role='button'
                   tabIndex={0}
@@ -279,7 +286,10 @@ export function JudgeTrendChart({
         ? (
           // F4：内联心声说明——完整 os / fallback（<title> 只截 60 字），
           // 「查看心声卡」滚到对话全文里那张始终可见的卡。
-          <div className='rounded-xl border border-dashed border-(--border) px-3 py-2.5'>
+          <div
+            {...tm('FA.trend-beat-detail')}
+            className='rounded-xl border border-dashed border-(--border) px-3 py-2.5'
+          >
             <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-(--foreground-subtle)'>
               <span className='font-semibold text-(--foreground)'>
                 {selected.step.verdict.key} · 倾向：
@@ -293,6 +303,7 @@ export function JudgeTrendChart({
                 : null}
               <span className='ml-auto inline-flex items-center gap-3'>
                 <button
+                  {...tm('FA.trend-view-card-button')}
                   type='button'
                   onClick={() =>
                     document
@@ -306,6 +317,7 @@ export function JudgeTrendChart({
                   查看心声卡
                 </button>
                 <button
+                  {...tm('FA.trend-close-button')}
                   type='button'
                   onClick={() => setSelectedKey(null)}
                   className='cursor-pointer font-semibold transition hover:text-(--foreground)'

@@ -16,6 +16,7 @@ import { BattleStrip } from '../battle-strip'
 import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
 import { IcpRecord } from './icp-record'
+import { tm } from '../../testmode/mark'
 
 // 一级导航（#73/#74）：历史在最右；移动端底栏与桌面顶栏同一份清单。
 const navigation = [
@@ -38,19 +39,27 @@ export function AppShell({ children }: PropsWithChildren) {
 
   return (
     <div className='flex min-h-screen flex-col bg-(--background)'>
-      <header className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'>
+      <header
+        {...tm('NAV.header')}
+        className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'
+      >
         {/* #72 顶栏降噪（mock V30）：h-16→h-12、激活态只变字色不加底 */}
         <div className='mx-auto flex h-12 w-full max-w-7xl items-center gap-3 px-4 sm:px-6'>
           <NavLink
+            {...tm('NAV.logo')}
             to='/scenarios'
             className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'
           >
             AXIIA CUP
           </NavLink>
-          <nav className='hidden items-center gap-1 md:flex'>
+          <nav
+            {...tm('NAV.desktop-nav')}
+            className='hidden items-center gap-1 md:flex'
+          >
             {navigationItems.map((item) => (
               <NavLink
                 key={item.to}
+                {...tm('NAV.nav-link')}
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
@@ -66,6 +75,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <div className='ml-auto flex items-center gap-2'>
             <BellIndicator />
             <NavLink
+              {...tm('NAV.settings-link')}
               to='/settings'
               className={({ isActive }) =>
                 cn(
@@ -77,6 +87,7 @@ export function AppShell({ children }: PropsWithChildren) {
               <span>{account?.displayName ?? '选手'}</span>
             </NavLink>
             <Button
+              {...tm('NAV.logout-button')}
               data-testid='logout'
               size='sm'
               variant='secondary'
@@ -94,18 +105,28 @@ export function AppShell({ children }: PropsWithChildren) {
         <BattleStrip />
         {children}
       </main>
-      <footer className='hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block'>
+      <footer
+        {...tm('NAV.footer')}
+        className='hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block'
+      >
         <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-3'>
           <IcpRecord />
-          <code className='text-[10px] text-(--foreground-muted)'>
+          <code
+            {...tm('NAV.build-sha')}
+            className='text-[10px] text-(--foreground-muted)'
+          >
             build {COMMIT_SHA}
           </code>
         </div>
       </footer>
-      <nav className='fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-(--border-soft) bg-[rgba(12,12,12,0.92)] backdrop-blur-xl md:hidden'>
+      <nav
+        {...tm('NAV.mobile-nav')}
+        className='fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-(--border-soft) bg-[rgba(12,12,12,0.92)] backdrop-blur-xl md:hidden'
+      >
         {navigationItems.map((item) => (
           <NavLink
             key={item.to}
+            {...tm('NAV.mobile-nav-link')}
             to={item.to}
             className={({ isActive }) =>
               cn(

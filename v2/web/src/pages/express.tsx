@@ -10,6 +10,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { messageOf, useAsync } from '../lib/use-async'
 import { scenarioModule } from '../scenarios'
+import { tm } from '../testmode/mark'
 
 // A3 首战快速通道落点（#8–#12，mock S4 的简化版 DA）：注册成功直接落进
 // 这里——比正常 DA 更省略（#11）：只有我方角色卡 + 钩子 + 一句规则 +
@@ -56,11 +57,18 @@ export function ExpressPage() {
   }
 
   if (loading) {
-    return <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+    return (
+      <p className='text-sm text-(--foreground-subtle)' {...tm('X.loading')}>
+        加载中…
+      </p>
+    )
   }
   if (error || !data) {
     return (
-      <div className='rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm'>
+      <div
+        className='rounded-xl border border-(--border-soft) bg-white/2 px-6 py-8 text-center text-sm'
+        {...tm('X.error-card')}
+      >
         <p className='font-semibold text-(--foreground)'>
           {error ?? '首战场景暂不可用'}
         </p>
@@ -69,7 +77,9 @@ export function ExpressPage() {
         </p>
         <div className='mt-5 flex justify-center'>
           <Link to='/scenarios'>
-            <Button variant='secondary'>浏览全部场景</Button>
+            <Button variant='secondary' {...tm('X.error-browse-button')}>
+              浏览全部场景
+            </Button>
           </Link>
         </div>
       </div>
@@ -87,24 +97,33 @@ export function ExpressPage() {
     : scenario.summary.sideBLabel
 
   return (
-    <div className='mx-auto max-w-2xl space-y-6'>
-      <div className='space-y-2'>
-        <Badge tone='accent'>首战快速通道</Badge>
-        <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+    <div className='mx-auto max-w-2xl space-y-6' {...tm('X.page')}>
+      <div className='space-y-2' {...tm('X.page-header')}>
+        <Badge tone='accent' {...tm('X.badge')}>首战快速通道</Badge>
+        <h1
+          className='text-2xl font-black tracking-tight text-(--foreground)'
+          {...tm('X.page-title')}
+        >
           {module?.intro?.source.title ?? scenario.summary.title}
         </h1>
-        <p className='text-sm leading-relaxed text-(--foreground-subtle)'>
+        <p
+          className='text-sm leading-relaxed text-(--foreground-subtle)'
+          {...tm('X.hook')}
+        >
           {education?.hook ?? scenario.summary.subject}
         </p>
       </div>
 
       {/* 我方角色卡（S4：简化版只保留己方这一张） */}
-      <Card>
+      <Card {...tm('X.role-card')}>
         <CardContent className='space-y-2 pt-5'>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
             你的角色
           </p>
-          <p className='text-lg font-bold text-(--foreground)'>
+          <p
+            className='text-lg font-bold text-(--foreground)'
+            {...tm('X.role-name')}
+          >
             {mySideName}
             <span className='ml-2 text-sm font-medium text-(--foreground-subtle)'>
               {mySideLabel}
@@ -112,13 +131,19 @@ export function ExpressPage() {
           </p>
           {education
             ? (
-              <p className='text-sm leading-relaxed text-(--foreground-subtle)'>
+              <p
+                className='text-sm leading-relaxed text-(--foreground-subtle)'
+                {...tm('X.win-condition')}
+              >
                 {education.winConditions[mySide]}
               </p>
             )
             : null}
           {/* 一句规则：首战不展开四层教育，一行讲完怎么赢。 */}
-          <p className='flex items-center gap-1.5 text-xs text-(--foreground-muted)'>
+          <p
+            className='flex items-center gap-1.5 text-xs text-(--foreground-muted)'
+            {...tm('X.rule-line')}
+          >
             <Clock className='h-3.5 w-3.5' />
             {education?.formatLabel ??
               `${scenario.summary.turnCount} 轮`}后由裁判当场判定胜负——写好策略提示词，AI
@@ -128,20 +153,26 @@ export function ExpressPage() {
       </Card>
 
       {enterError
-        ? <p className='text-sm text-(--accent)'>{enterError}</p>
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('X.enter-error')}>
+            {enterError}
+          </p>
+        )
         : null}
 
-      <div className='flex flex-wrap items-center gap-4'>
+      <div className='flex flex-wrap items-center gap-4' {...tm('X.actions')}>
         <Button
           data-testid='express-build'
           onClick={() => void goBuild()}
           disabled={entering}
+          {...tm('X.build-button')}
         >
           {entering ? '进入中…' : '去构建 →'}
         </Button>
         <Link
           to='/scenarios'
           className='text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+          {...tm('X.escape-link')}
         >
           先逛逛全部场景
         </Link>

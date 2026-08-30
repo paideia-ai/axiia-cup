@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
+import { tm } from '../testmode/mark'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -35,15 +36,23 @@ export function LoginPage() {
     <div className='flex min-h-screen flex-col px-4 py-12'>
       <div className='flex flex-1 items-center justify-center'>
         <div className='w-full max-w-sm space-y-5'>
-          <h1 className='flex justify-center text-3xl font-black tracking-tight text-(--foreground)'>
+          <h1
+            {...tm('B.page-title')}
+            className='flex justify-center text-3xl font-black tracking-tight text-(--foreground)'
+          >
             登录
           </h1>
           <Card>
             <CardContent className='pt-5'>
-              <form className='space-y-4' onSubmit={handleSubmit}>
+              <form
+                {...tm('B.form')}
+                className='space-y-4'
+                onSubmit={handleSubmit}
+              >
                 <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
                   <span>邮箱</span>
                   <Input
+                    {...tm('B.email-input')}
                     autoComplete='email'
                     name='email'
                     onChange={(e) => setEmail(e.target.value)}
@@ -55,6 +64,7 @@ export function LoginPage() {
                 <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
                   <span>密码</span>
                   <Input
+                    {...tm('B.password-input')}
                     autoComplete='current-password'
                     name='password'
                     onChange={(e) => setPassword(e.target.value)}
@@ -64,9 +74,14 @@ export function LoginPage() {
                   />
                 </label>
                 {error
-                  ? <p className='text-sm text-(--accent)'>{error}</p>
+                  ? (
+                    <p {...tm('B.error')} className='text-sm text-(--accent)'>
+                      {error}
+                    </p>
+                  )
                   : null}
                 <Button
+                  {...tm('B.submit-button')}
                   className='w-full'
                   disabled={isSubmitting}
                   type='submit'
@@ -78,7 +93,11 @@ export function LoginPage() {
           </Card>
           <p className='text-center text-sm text-(--foreground-muted)'>
             还没有账户？{' '}
-            <Link to='/register' className='text-(--accent)'>
+            <Link
+              {...tm('B.register-link')}
+              to='/register'
+              className='text-(--accent)'
+            >
               去注册
             </Link>
           </p>

@@ -8,6 +8,7 @@ import {
   type DeckSelections,
 } from '../lib/deck'
 import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
+import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
@@ -59,7 +60,7 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
   }
 
   return (
-    <Card>
+    <Card {...tm('E.init-card')}>
       <CardContent className='space-y-4 pt-5'>
         <div>
           <p className='text-sm font-semibold text-(--foreground)'>
@@ -69,27 +70,43 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
             /* #90：「复制为新智能体」已废止；保存 v1 后清空工作区也不复活
             三选一（E7/#83）——想重新选卡＝「再建一个」智能体或创建对侧 */
           }
-          <p className='mt-0.5 text-xs text-(--foreground-muted)'>
+          <p
+            className='mt-0.5 text-xs text-(--foreground-muted)'
+            {...tm('E.init-subtitle')}
+          >
             保存即成为 v1；此后的迭代只有文本编辑（想重新选卡：再建一个智能体）
           </p>
         </div>
         <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
-          <TabsList>
-            <TabsTrigger value='mcq'>MCQ 拼装</TabsTrigger>
-            <TabsTrigger value='basic'>Basic 直写</TabsTrigger>
-            <TabsTrigger value='meta'>元提示词</TabsTrigger>
+          <TabsList {...tm('E.init-tabs')}>
+            <TabsTrigger value='mcq' {...tm('E.init-tab-mcq')}>
+              MCQ 拼装
+            </TabsTrigger>
+            <TabsTrigger value='basic' {...tm('E.init-tab-basic')}>
+              Basic 直写
+            </TabsTrigger>
+            <TabsTrigger value='meta' {...tm('E.init-tab-meta')}>
+              元提示词
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value='mcq' className='space-y-4'>
             {deck.intro
               ? (
-                <p className='text-sm text-(--foreground-subtle)'>
+                <p
+                  className='text-sm text-(--foreground-subtle)'
+                  {...tm('E.mcq-intro')}
+                >
                   {deck.intro}
                 </p>
               )
               : null}
             {deck.questions.map((question, index) => (
-              <div key={question.id} className='space-y-2'>
+              <div
+                key={question.id}
+                className='space-y-2'
+                {...tm('E.mcq-question')}
+              >
                 <p className='text-sm text-(--foreground)'>
                   <span className='mr-1.5 font-mono text-xs text-(--foreground-muted)'>
                     {index + 1}/{deck.questions.length}
@@ -104,6 +121,7 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                         key={option.id}
                         type='button'
                         aria-pressed={active}
+                        {...tm('E.mcq-option')}
                         onClick={() =>
                           setSelections((current) => ({
                             ...current,
@@ -120,7 +138,10 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                 </div>
               </div>
             ))}
-            <div className='space-y-2 border-t border-(--border-soft) pt-3'>
+            <div
+              className='space-y-2 border-t border-(--border-soft) pt-3'
+              {...tm('E.mcq-preview')}
+            >
               <div className='flex flex-wrap items-center justify-between gap-2'>
                 <p className='text-xs font-semibold tracking-[0.06em] text-(--foreground-muted)'>
                   拼装预览
@@ -130,6 +151,7 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                     overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
                   }`}
                   title='按汉字或英文词计数（非 token）'
+                  {...tm('E.mcq-counter')}
                 >
                   {units} / {PROMPT_UNIT_LIMIT}
                 </span>
@@ -152,12 +174,16 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                   size='sm'
                   disabled={!complete || assembled === '' || overLimit}
                   onClick={() => onFill(assembled, 'mcq')}
+                  {...tm('E.mcq-fill-button')}
                 >
                   填入工作区
                 </Button>
                 {!complete
                   ? (
-                    <span className='text-xs text-(--foreground-muted)'>
+                    <span
+                      className='text-xs text-(--foreground-muted)'
+                      {...tm('E.mcq-remaining')}
+                    >
                       还差 {unanswered} 题
                     </span>
                   )
@@ -167,7 +193,10 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
           </TabsContent>
 
           <TabsContent value='basic'>
-            <p className='text-sm text-(--foreground-subtle)'>
+            <p
+              className='text-sm text-(--foreground-subtle)'
+              {...tm('E.basic-hint')}
+            >
               直接在下方编辑框书写策略提示词——写下任何文字后，这里会自动收起。
             </p>
           </TabsContent>
@@ -179,10 +208,18 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                   <p className='text-sm text-(--foreground-subtle)'>
                     复制这段元提示词发给你常用的 AI，再把生成结果粘贴回来。
                   </p>
-                  <pre className='max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 font-sans text-xs leading-relaxed text-(--foreground-subtle)'>
+                  <pre
+                    className='max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 font-sans text-xs leading-relaxed text-(--foreground-subtle)'
+                    {...tm('E.meta-prompt-text')}
+                  >
                     {metaPrompt}
                   </pre>
-                  <Button size='sm' variant='secondary' onClick={copyMeta}>
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    onClick={copyMeta}
+                    {...tm('E.meta-copy-button')}
+                  >
                     {copied
                       ? (
                         <Check className='mr-1.5 h-3.5 w-3.5 text-(--success)' />
@@ -195,11 +232,13 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                     value={pasted}
                     onChange={(event) => setPasted(event.target.value)}
                     placeholder='把 AI 生成的策略提示词粘贴到这里…'
+                    {...tm('E.meta-paste-input')}
                   />
                   <Button
                     size='sm'
                     disabled={pasted.trim() === ''}
                     onClick={() => onFill(pasted, 'builder')}
+                    {...tm('E.meta-fill-button')}
                   >
                     填入工作区
                   </Button>

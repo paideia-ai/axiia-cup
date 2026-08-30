@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { messageOf, useAsync } from '../lib/use-async'
+import { tm } from '../testmode/mark'
 
 // 通知页（B5/G25，mock 通知页样式）：按 kind 分组（PVP/锦标赛 优先于
 // PVE/系统）、渲染服务端 title/body（缺席回落本地 kind 文案）、link 深链、
@@ -180,21 +181,34 @@ export function NotificationsPage() {
         /* F3：操作条 sticky（贴在 h-12 顶栏下沿），长列表滚到哪都看得见
         「全部已读 / 清除」；铺页面底色避免下方行卡透出。 */
       }
-      <div className='sticky top-12 z-10 flex flex-wrap items-center justify-between gap-3 bg-(--background) py-2'>
+      <div
+        className='sticky top-12 z-10 flex flex-wrap items-center justify-between gap-3 bg-(--background) py-2'
+        {...tm('I.action-bar')}
+      >
         <div className='flex items-center gap-3'>
-          <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+          <h1
+            className='text-2xl font-black tracking-tight text-(--foreground)'
+            {...tm('I.page-title')}
+          >
             通知
           </h1>
-          {unread > 0 ? <Badge tone='accent'>{unread} 条未读</Badge> : null}
+          {unread > 0
+            ? (
+              <Badge tone='accent' {...tm('I.unread-badge')}>
+                {unread} 条未读
+              </Badge>
+            )
+            : null}
         </div>
         {rows.length > 0
           ? (
-            <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-2' {...tm('I.actions')}>
               <Button
                 size='sm'
                 variant='secondary'
                 disabled={acting || unread === 0}
                 onClick={() => void readAll()}
+                {...tm('I.read-all-button')}
               >
                 <CheckCheck className='mr-1.5 h-4 w-4' />
                 全部已读
@@ -204,6 +218,7 @@ export function NotificationsPage() {
                 variant='secondary'
                 disabled={acting}
                 onClick={() => void clearAll()}
+                {...tm('I.clear-button')}
               >
                 <Trash2 className='mr-1.5 h-4 w-4' />
                 清除
@@ -214,7 +229,11 @@ export function NotificationsPage() {
       </div>
 
       {actionError
-        ? <p className='text-sm text-(--accent)'>{actionError}</p>
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('I.action-error')}>
+            {actionError}
+          </p>
+        )
         : null}
 
       {
@@ -222,15 +241,25 @@ export function NotificationsPage() {
         保持挂载——文档高度不塌，scrollY 不会被浏览器钳回顶部。 */
       }
       {loading && data == null
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            className='text-sm text-(--foreground-subtle)'
+            {...tm('I.loading')}
+          >
+            加载中…
+          </p>
+        )
         : error && data == null
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? <p className='text-sm text-(--accent)' {...tm('I.error')}>{error}</p>
         : groups.length > 0
         ? (
-          <div className='space-y-4'>
+          <div className='space-y-4' {...tm('I.group-list')}>
             {groups.map((group) => (
-              <div key={group.title} className='space-y-2'>
-                <p className='text-[11px] font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
+              <div key={group.title} className='space-y-2' {...tm('I.group')}>
+                <p
+                  className='text-[11px] font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'
+                  {...tm('I.group-title')}
+                >
                   {group.title}
                 </p>
                 {group.items.map((notification) => (
@@ -238,14 +267,19 @@ export function NotificationsPage() {
                     key={notification.id}
                     notification={notification}
                     onFollow={() => follow(notification)}
-                    onMarkRead={() => void markRead(notification.id)}
+                    onMarkRead={() =>
+                      void markRead(notification.id)}
                   />
                 ))}
               </div>
             ))}
           </div>
         )
-        : <p className='text-sm text-(--foreground-subtle)'>暂无通知。</p>}
+        : (
+          <p className='text-sm text-(--foreground-subtle)' {...tm('I.empty')}>
+            暂无通知。
+          </p>
+        )}
     </div>
   )
 }
@@ -261,18 +295,20 @@ function NotificationRow({
 }) {
   const link = linkOf(notification)
   return (
-    <Card>
+    <Card {...tm('I.notification-row')}>
       <CardContent className='flex items-start justify-between gap-3 py-4'>
         <div className='flex min-w-0 flex-1 items-start gap-3'>
           <span
             className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
               notification.read ? 'bg-(--border)' : 'bg-(--accent)'
             }`}
+            {...tm('I.unread-dot')}
           />
           <div className='min-w-0'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge
                 tone={PVP_KINDS.has(notification.kind) ? 'accent' : 'info'}
+                {...tm('I.kind-badge')}
               >
                 {kindLabel(notification.kind)}
               </Badge>
@@ -282,7 +318,10 @@ function NotificationRow({
               }
               {notification.title
                 ? (
-                  <span className='text-sm font-medium text-(--foreground)'>
+                  <span
+                    className='text-sm font-medium text-(--foreground)'
+                    {...tm('I.notification-title')}
+                  >
                     {notification.title}
                   </span>
                 )
@@ -290,7 +329,10 @@ function NotificationRow({
             </div>
             {notification.body
               ? (
-                <p className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'>
+                <p
+                  className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'
+                  {...tm('I.notification-body')}
+                >
                   {notification.body}
                 </p>
               )
@@ -301,6 +343,7 @@ function NotificationRow({
                   to={link}
                   onClick={onFollow}
                   className='mt-1 inline-block text-xs text-(--accent)'
+                  {...tm('I.detail-link')}
                 >
                   {notification.link
                     ? '查看详情 →'
@@ -312,7 +355,12 @@ function NotificationRow({
         </div>
         {!notification.read
           ? (
-            <Button size='sm' variant='secondary' onClick={onMarkRead}>
+            <Button
+              size='sm'
+              variant='secondary'
+              onClick={onMarkRead}
+              {...tm('I.mark-read-button')}
+            >
               标为已读
             </Button>
           )

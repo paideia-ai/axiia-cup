@@ -3,12 +3,14 @@ import { NavLink } from 'react-router-dom'
 
 import { useBell } from '../../api/sse'
 import { cn } from '../../lib/cn'
+import { tm } from '../../testmode/mark'
 
 export function BellIndicator() {
   const unreadCount = useBell(true)
 
   return (
     <NavLink
+      {...tm('NAV.bell')}
       to='/notifications'
       aria-label='通知'
       className={({ isActive }) =>
@@ -22,6 +24,7 @@ export function BellIndicator() {
       {unreadCount > 0
         ? (
           <span
+            {...tm('NAV.bell-unread-dot')}
             aria-label={`${unreadCount} 条未读`}
             className='absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-(--accent)'
           />
