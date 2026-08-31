@@ -9,6 +9,13 @@ export const fengyitingReal: ScenarioModule = {
   slotID: 'fengyiting-real',
   roles: [],
   intro: fengyitingRealIntro,
+  overviewImages: [
+    {
+      src: '/scenario-assets/fengyiting-real/fengyi-pavilion.jpeg',
+      alt: '董卓、貂蝉与吕布在凤仪亭对峙',
+      caption: '凤仪亭对峙',
+    },
+  ],
   scoringLabel: '胜负规则',
   timelineAtEnd: true,
   laneLabels: {

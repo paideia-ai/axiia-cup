@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { BindPhoneCard } from '../components/auth/bind-phone-card'
 import { useAuth } from '../context/auth'
 import { accountRejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -206,6 +207,10 @@ export function SettingsPage() {
             <span className='text-(--foreground-muted)'>邮箱</span>
             <span className='text-(--foreground)'>{account.email ?? '—'}</span>
           </div>
+          <div className='flex justify-between' {...tm('K.phone-row')}>
+            <span className='text-(--foreground-muted)'>手机号</span>
+            <span className='text-(--foreground)'>{account.phone ?? '—'}</span>
+          </div>
           <div className='flex justify-between' {...tm('K.role-row')}>
             <span className='text-(--foreground-muted)'>角色</span>
             <span>
@@ -216,6 +221,8 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <BindPhoneCard />
 
       <Card {...tm('K.password-card')}>
         <CardContent className='space-y-3 pt-5'>

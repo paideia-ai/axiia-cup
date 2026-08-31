@@ -29,14 +29,22 @@ export function requireServerFixtures() {
   )
 }
 
+// 注册/登录页是「手机号 / 邮箱」两栏（默认邮箱），两栏都带「注册码」与
+// 「创建账户」。定位一律锚在当前可见的面板上：隐藏面板不进无障碍树，
+// getByRole('tabpanel') 只会解析出这一个。
+export function activePanel(page: Page) {
+  return page.getByRole('tabpanel')
+}
+
 export async function signup(page: Page, label: string) {
   const email = `playwright-${label}-${Date.now()}@axiia.test`
   await page.goto('/register')
-  await page.getByLabel('注册码').fill(registrationCode)
-  await page.getByLabel('昵称').fill(`测试玩家 ${label}`)
-  await page.getByLabel('邮箱').fill(email)
-  await page.getByLabel('密码').fill('playwrightpw-123456')
-  await page.getByRole('button', { name: '创建账户' }).click()
+  const panel = activePanel(page)
+  await panel.getByLabel('注册码').fill(registrationCode)
+  await panel.getByLabel('昵称').fill(`测试玩家 ${label}`)
+  await panel.getByLabel('邮箱').fill(email)
+  await panel.getByLabel('密码').fill('playwrightpw-123456')
+  await panel.getByRole('button', { name: '创建账户' }).click()
   // A3：新账号注册后落首战快速通道 /express（未打过首战）；打过的账号
   // （或极老前端）仍回 /scenarios。两者都算注册成功。
   await expect(page).toHaveURL(/\/(express|scenarios)$/)

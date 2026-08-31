@@ -138,6 +138,52 @@ export const TM_ENTRY: TmRegistry = {
   },
 
   // ======================= B 登录 =======================
+  'B.auth-card': {
+    label: '登录卡',
+    clauses: ['U08-C06', 'LACK-07'],
+    note:
+      '手机号 / 邮箱两个 tab（#153 新增手机号验证码登录，规格未写——LACK-07）',
+  },
+  'B.phone-form': {
+    label: '手机验证码表单',
+    clauses: ['LACK-07'],
+    note:
+      '登录 / 注册两页共用（B 代号；注册页 withInvite 多出注册码与昵称）。#153 上线，规格没有任何条文',
+  },
+  'B.phone-input': {
+    label: '手机号输入框',
+    clauses: ['LACK-07'],
+  },
+  'B.send-code-button': {
+    label: '发验证码按钮',
+    clauses: ['LACK-07'],
+    note: '60s 冷却；服务端 Retry-After 也会触发冷却',
+  },
+  'B.sms-code-input': {
+    label: '短信码输入框',
+    clauses: ['LACK-07'],
+    when: '点「发送验证码」之后出现',
+  },
+  'B.phone-invite-input': {
+    label: '手机注册码框',
+    clauses: ['U08-C05', 'U11-C10', 'LACK-07'],
+    when: '仅注册页（withInvite）',
+  },
+  'B.phone-name-input': {
+    label: '手机昵称输入框',
+    clauses: ['U08-C03', 'LACK-07'],
+    when: '发送验证码后、号码未注册过时出现',
+  },
+  'B.phone-error': {
+    label: '手机流程错误',
+    clauses: ['LACK-07', 'LACK-10'],
+    when: '发送 / 验证失败后出现',
+  },
+  'B.phone-submit-button': {
+    label: '验证码提交按钮',
+    clauses: ['LACK-07'],
+    note: '未注册号显示「创建账户」、已注册显示「登录」；落点判据同注册（A3）',
+  },
   'B.page-title': {
     label: '登录页标题',
     note: '规格无条文',
@@ -145,12 +191,13 @@ export const TM_ENTRY: TmRegistry = {
   'B.form': {
     label: '登录表单',
     clauses: ['U08-C06', 'U08-C07', 'LACK-07'],
-    note: '邮箱 + 密码；登录节流 / cookie 期限 / 手机号登录（LACK-07）规格未写',
+    note:
+      '邮箱 + 密码（「邮箱」tab）；登录节流 / cookie 期限规格未写（LACK-07）',
   },
   'B.email-input': {
     label: '邮箱输入框',
     clauses: ['U08-C06', 'U08-C03', 'LACK-07'],
-    note: 'B2「邮箱登录（手机号近上线再加）」',
+    note: 'B2「邮箱登录」；手机号 tab 08-31 已上线（#153），规格未更新',
   },
   'B.password-input': {
     label: '密码输入框',
@@ -173,6 +220,11 @@ export const TM_ENTRY: TmRegistry = {
   },
 
   // ======================= C 注册 =======================
+  'C.auth-card': {
+    label: '注册卡',
+    clauses: ['U08-C03', 'LACK-07'],
+    note: '手机号 / 邮箱两个 tab（#153）；手机号路径见 B.phone-form',
+  },
   'C.page-title': {
     label: '注册页标题',
     note: '规格无条文',
@@ -199,7 +251,7 @@ export const TM_ENTRY: TmRegistry = {
   'C.email-input': {
     label: '邮箱输入框',
     clauses: ['U08-C03', 'LACK-07'],
-    note: '邮箱即登录名；手机号字段规格说「近上线再加」',
+    note: '邮箱即登录名（#153 起 email 可为 null，规格未写）',
   },
   'C.password-input': {
     label: '密码输入框',

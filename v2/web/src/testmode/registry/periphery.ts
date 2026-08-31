@@ -365,6 +365,39 @@ export const TM_PERIPHERY: TmRegistry = {
     note: '服务端拒绝（长度/节流等）的账户类文案',
     when: '保存失败时出现',
   },
+  'K.phone-row': {
+    label: '手机号行',
+    clauses: ['LACK-07'],
+    note: '只读；#153 起账号可绑手机号，规格未写',
+  },
+  'K.bind-phone-card': {
+    label: '绑定手机号卡',
+    clauses: ['LACK-07'],
+    note: '#153 新增：给老账号补绑手机号；规格没有任何条文',
+  },
+  'K.bind-phone-input': {
+    label: '绑定手机号框',
+    clauses: ['LACK-07'],
+  },
+  'K.bind-send-code-button': {
+    label: '绑定发码按钮',
+    clauses: ['LACK-07'],
+    note: '60s 冷却',
+  },
+  'K.bind-code-input': {
+    label: '绑定验证码框',
+    clauses: ['LACK-07'],
+    when: '点「发送验证码」之后出现',
+  },
+  'K.bind-error': {
+    label: '绑定错误提示',
+    clauses: ['LACK-07', 'LACK-10'],
+    when: '发送 / 绑定失败后出现',
+  },
+  'K.bind-submit-button': {
+    label: '绑定提交按钮',
+    clauses: ['LACK-07'],
+  },
   'K.email-row': {
     label: '邮箱行',
     clauses: ['U12-C04'],
