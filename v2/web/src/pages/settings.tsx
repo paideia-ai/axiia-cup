@@ -6,6 +6,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { BindPhoneCard } from '../components/auth/bind-phone-card'
 import { useAuth } from '../context/auth'
 import { accountRejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -178,6 +179,10 @@ export function SettingsPage() {
             <span className='text-(--foreground)'>{account.email ?? '—'}</span>
           </div>
           <div className='flex justify-between'>
+            <span className='text-(--foreground-muted)'>手机号</span>
+            <span className='text-(--foreground)'>{account.phone ?? '—'}</span>
+          </div>
+          <div className='flex justify-between'>
             <span className='text-(--foreground-muted)'>角色</span>
             <span>
               {account.isAdmin
@@ -187,6 +192,8 @@ export function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <BindPhoneCard />
 
       <Card>
         <CardContent className='space-y-3 pt-5'>

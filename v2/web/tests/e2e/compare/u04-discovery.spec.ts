@@ -16,7 +16,7 @@
 // 一次性智能体（P13 判定）；不派发任何对局；不触碰管理端点。
 import { type BrowserContext, expect, type Page, test } from '@playwright/test'
 
-import { registrationCode, sameOrigin } from '../helpers'
+import { activePanel, registrationCode, sameOrigin } from '../helpers'
 
 const SHANGYANG = 'shangyang-court'
 // #142 起 DA 页头用 intro 标题（「·」两侧带空格）。
@@ -58,11 +58,12 @@ async function ensureSession(target: Page) {
   }
   expect(registrationCode, 'AXIIA_REGISTRATION_CODE must be set').not.toBe('')
   await target.goto('/register')
-  await target.getByLabel('注册码').fill(registrationCode)
-  await target.getByLabel('昵称').fill('测试玩家 u04')
-  await target.getByLabel('邮箱').fill(UNIT_EMAIL)
-  await target.getByLabel('密码').fill(UNIT_PASSWORD)
-  await target.getByRole('button', { name: '创建账户' }).click()
+  const panel = activePanel(target)
+  await panel.getByLabel('注册码').fill(registrationCode)
+  await panel.getByLabel('昵称').fill('测试玩家 u04')
+  await panel.getByLabel('邮箱').fill(UNIT_EMAIL)
+  await panel.getByLabel('密码').fill(UNIT_PASSWORD)
+  await panel.getByRole('button', { name: '创建账户' }).click()
   await expect(
     target,
     'signup lands on /express or /scenarios (403 here = registration code exhausted, an environment blocker)',

@@ -22,6 +22,31 @@ export interface LoginRequest {
   password: string
 }
 
+// 短信验证码族（POST /v1/auth/sms/code · /v1/auth/sms/verify ·
+// /v1/auth/phone/code · /v1/auth/phone/bind）。注册码只在「该号未注册」时
+// 需要，服务端先验后扣：发码时校验、verify 时才真正消耗。
+export interface SendPhoneCodeRequest {
+  phone: string
+  inviteCode?: string | null
+}
+
+// registered 决定下一屏是否要昵称——服务端已经用「登录发码不要注册码、注册
+// 发码没有注册码就拒」把这个事实泄露出去了，响应里明说更省一次试探。
+export interface PhoneCodeSentResponse {
+  registered: boolean
+}
+
+export interface PhoneVerifyRequest {
+  phone: string
+  code: string
+  displayName?: string | null
+}
+
+export interface BindPhoneRequest {
+  phone: string
+  code: string
+}
+
 export interface ElevateRequest {
   code: string
 }

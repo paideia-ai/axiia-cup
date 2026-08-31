@@ -1,6 +1,7 @@
 import type {
   AgentRefResponse,
   AgentVersionDTO,
+  BindPhoneRequest,
   ChallengeResponse,
   ChangePasswordRequest,
   ConfigResponse,
@@ -26,6 +27,8 @@ import type {
   NotificationsResponse,
   OKResponse,
   OpponentListResponse,
+  PhoneCodeSentResponse,
+  PhoneVerifyRequest,
   PublicAgentResponse,
   RenameAgentRequest,
   SaveVersionRequest,
@@ -33,6 +36,7 @@ import type {
   ScenarioListResponse,
   ScriptRefResponse,
   ScriptResponse,
+  SendPhoneCodeRequest,
   Side,
   SignupRequest,
   SlotListResponse,
@@ -56,17 +60,33 @@ const API_ROOT =
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  readonly retryAfter: number | null
 
-  constructor(message: string, status: number, code: string) {
+  constructor(
+    message: string,
+    status: number,
+    code: string,
+    retryAfter: number | null = null,
+  ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.retryAfter = retryAfter
   }
 
   get isUnauthorized() {
     return this.status === 401
   }
+}
+
+// 短信发码节流答 429 + Retry-After（秒）。这是服务端为该号码算出的预算，
+// 倒计时照它走才不会怂恿一次注定被拒的重发。
+function retryAfterSeconds(response: Response): number | null {
+  const header = response.headers.get('Retry-After')
+  if (!header) return null
+  const seconds = Number.parseInt(header, 10)
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null
 }
 
 function isErrorResponse(value: unknown): value is ErrorResponse {
@@ -108,9 +128,19 @@ async function request<T>(
 
   if (!response.ok) {
     if (isErrorResponse(payload)) {
-      throw new ApiError(payload.message, response.status, payload.error)
+      throw new ApiError(
+        payload.message,
+        response.status,
+        payload.error,
+        retryAfterSeconds(response),
+      )
     }
-    throw new ApiError(text || '请求失败', response.status, 'unknown')
+    throw new ApiError(
+      text || '请求失败',
+      response.status,
+      'unknown',
+      retryAfterSeconds(response),
+    )
   }
 
   return (payload ?? {}) as T
@@ -127,6 +157,18 @@ export const auth = {
   me: () => request<MeResponse>('GET', '/auth/me'),
   elevate: (input: ElevateRequest) =>
     request<MeResponse>('POST', '/auth/elevate', input),
+  // 手机号验证码登录/注册：一条路两用——号码已注册就是登录，没注册就带注册码
+  // 当场开号（verify 时才要昵称）。verify 答完整 me 并下发会话 cookie，与
+  // /auth/login 同形，所以两条路都经 AuthProvider 落账号态。
+  sendPhoneCode: (input: SendPhoneCodeRequest) =>
+    request<PhoneCodeSentResponse>('POST', '/auth/sms/code', input),
+  verifyPhone: (input: PhoneVerifyRequest) =>
+    request<MeResponse>('POST', '/auth/sms/verify', input),
+  // 绑定（settings 页）：两个端点都要已登录会话，答完整 me。
+  sendBindCode: (input: SendPhoneCodeRequest) =>
+    request<PhoneCodeSentResponse>('POST', '/auth/phone/code', input),
+  bindPhone: (input: BindPhoneRequest) =>
+    request<MeResponse>('POST', '/auth/phone/bind', input),
   // 账户自助（settings 页）：改昵称答完整 me，SPA 直接 setAccount 而不再拉
   // /auth/me；改密成功后本会话保持有效、其他会话被服务端吊销。
   updateProfile: (input: UpdateProfileRequest) =>

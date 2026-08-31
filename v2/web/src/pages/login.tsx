@@ -4,7 +4,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { IcpRecord } from '../components/layout/icp-record'
+import { PhoneAuthForm } from '../components/auth/phone-form'
 import { useAuth } from '../context/auth'
 
 export function LoginPage() {
@@ -40,40 +42,54 @@ export function LoginPage() {
           </h1>
           <Card>
             <CardContent className='pt-5'>
-              <form className='space-y-4' onSubmit={handleSubmit}>
-                <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-                  <span>邮箱</span>
-                  <Input
-                    autoComplete='email'
-                    name='email'
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder='you@example.com'
-                    type='email'
-                    value={email}
+              <Tabs defaultValue='email'>
+                <TabsList className='mb-4'>
+                  <TabsTrigger value='phone'>手机号</TabsTrigger>
+                  <TabsTrigger value='email'>邮箱</TabsTrigger>
+                </TabsList>
+                <TabsContent value='phone'>
+                  <PhoneAuthForm
+                    onDone={() => navigate('/scenarios', { replace: true })}
+                    withInvite={false}
                   />
-                </label>
-                <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-                  <span>密码</span>
-                  <Input
-                    autoComplete='current-password'
-                    name='password'
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder='••••••••'
-                    type='password'
-                    value={password}
-                  />
-                </label>
-                {error
-                  ? <p className='text-sm text-(--accent)'>{error}</p>
-                  : null}
-                <Button
-                  className='w-full'
-                  disabled={isSubmitting}
-                  type='submit'
-                >
-                  {isSubmitting ? '登录中…' : '登录'}
-                </Button>
-              </form>
+                </TabsContent>
+                <TabsContent value='email'>
+                  <form className='space-y-4' onSubmit={handleSubmit}>
+                    <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
+                      <span>邮箱</span>
+                      <Input
+                        autoComplete='email'
+                        name='email'
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder='you@example.com'
+                        type='email'
+                        value={email}
+                      />
+                    </label>
+                    <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
+                      <span>密码</span>
+                      <Input
+                        autoComplete='current-password'
+                        name='password'
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder='••••••••'
+                        type='password'
+                        value={password}
+                      />
+                    </label>
+                    {error
+                      ? <p className='text-sm text-(--accent)'>{error}</p>
+                      : null}
+                    <Button
+                      className='w-full'
+                      disabled={isSubmitting}
+                      type='submit'
+                    >
+                      {isSubmitting ? '登录中…' : '登录'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
           <p className='text-center text-sm text-(--foreground-muted)'>

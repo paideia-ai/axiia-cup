@@ -94,11 +94,14 @@ async function saveVersion(agentID, prompt) {
 try {
   await step('SETUP-1', '注册主账号（浏览器 UI）', async () => {
     await page.goto('/register')
-    await page.getByLabel('注册码').fill(CODE)
-    await page.getByLabel('昵称').fill('测试玩家 u05')
-    await page.getByLabel('邮箱').fill(mainEmail)
-    await page.getByLabel('密码').fill('playwrightpw-123456')
-    await page.getByRole('button', { name: '创建账户' }).click()
+    // 注册页是「手机号 / 邮箱」两栏（默认邮箱），两栏都带注册码——锚在
+    // 可见面板上（隐藏面板不进无障碍树）。
+    const panel = page.getByRole('tabpanel')
+    await panel.getByLabel('注册码').fill(CODE)
+    await panel.getByLabel('昵称').fill('测试玩家 u05')
+    await panel.getByLabel('邮箱').fill(mainEmail)
+    await panel.getByLabel('密码').fill('playwrightpw-123456')
+    await panel.getByRole('button', { name: '创建账户' }).click()
     await page.waitForURL(/\/(express|scenarios)$/, { timeout: 60_000 })
     note(`注册落点 ${page.url()}`)
   })

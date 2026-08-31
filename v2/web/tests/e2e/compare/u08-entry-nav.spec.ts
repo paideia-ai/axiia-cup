@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 import { type Browser, expect, type Page, test } from '@playwright/test'
 
-import { registrationCode } from '../helpers'
+import { activePanel, registrationCode } from '../helpers'
 
 const reusedEmail = process.env.AXIIA_U08_EMAIL ?? ''
 const reusedPassword = process.env.AXIIA_U08_PASSWORD ?? ''
@@ -86,16 +86,17 @@ test.beforeAll(async ({ browser }) => {
     expect(registrationCode, 'AXIIA_REGISTRATION_CODE must be set').not.toBe('')
     u08Email = `playwright-u08-${Date.now()}@axiia.test`
     await page.goto('/register')
-    await page.getByLabel(/注册码/).fill(registrationCode)
-    await page.getByLabel('昵称').fill('测试玩家 u08')
-    await page.getByLabel('邮箱').fill(u08Email)
-    await page.getByLabel('密码').fill(PASSWORD)
-    await page.getByRole('button', { name: '创建账户' }).click()
+    const panel = activePanel(page)
+    await panel.getByLabel(/注册码/).fill(registrationCode)
+    await panel.getByLabel('昵称').fill('测试玩家 u08')
+    await panel.getByLabel('邮箱').fill(u08Email)
+    await panel.getByLabel('密码').fill(PASSWORD)
+    await panel.getByRole('button', { name: '创建账户' }).click()
     await Promise.race([
       page.waitForURL((url) => !/\/register$/.test(url.pathname), {
         timeout: 45_000,
       }),
-      page.locator('form p').waitFor({ timeout: 45_000 }),
+      activePanel(page).locator('form p').waitFor({ timeout: 45_000 }),
     ])
     if (/\/register$/.test(new URL(page.url()).pathname)) {
       // 注册码 uses 耗尽（2026-08-16 实测 axiia-0815-270671054 已 403
@@ -218,20 +219,31 @@ test('U08-C02 落地页主行动是注册/登录入口（B1）', async ({ page }
   })
 })
 
-test('U08-C03 注册字段集＝邮箱＋注册码＋昵称＋密码（B2）', async ({ page }) => {
+test('U08-C03 注册分「手机号 / 邮箱」两栏，默认邮箱栏＝注册码＋昵称＋邮箱＋密码（B2）', async ({ page }) => {
   await test.step('假如 我未登录并打开 /register', async () => {
     await page.goto('/register')
   })
-  await test.step('那么 表单恰含 注册码、昵称、邮箱、密码 四个输入框', async () => {
-    await expect(page.getByLabel(/注册码/)).toBeVisible()
-    await expect(page.getByLabel('昵称')).toBeVisible()
-    await expect(page.getByLabel('邮箱')).toBeVisible()
-    await expect(page.getByLabel('密码')).toBeVisible()
-    await expect(page.locator('form input')).toHaveCount(4)
+  await test.step('那么 页面有「手机号」「邮箱」两个页签，默认停在邮箱栏', async () => {
+    await expect(page.getByRole('tab', { name: '手机号' })).toBeVisible()
+    const emailTab = page.getByRole('tab', { name: '邮箱' })
+    await expect(emailTab).toBeVisible()
+    await expect(emailTab).toHaveAttribute('data-state', 'active')
   })
-  await test.step('并且 没有手机号字段（手机号近上线再加）', async () => {
-    await expect(page.locator('input[type="tel"], input[name="phone"]'))
-      .toHaveCount(0)
+  await test.step('并且 邮箱栏恰含 注册码、昵称、邮箱、密码 四个输入框', async () => {
+    const panel = activePanel(page)
+    await expect(panel.getByLabel(/注册码/)).toBeVisible()
+    await expect(panel.getByLabel('昵称')).toBeVisible()
+    await expect(panel.getByLabel('邮箱')).toBeVisible()
+    await expect(panel.getByLabel('密码')).toBeVisible()
+    await expect(panel.locator('form input')).toHaveCount(4)
+  })
+  await test.step('并且 切到手机号栏后是 注册码＋手机号（验证码与昵称在发码后才出现）', async () => {
+    await page.getByRole('tab', { name: '手机号' }).click()
+    const panel = activePanel(page)
+    await expect(panel.getByLabel(/注册码/)).toBeVisible()
+    await expect(panel.getByLabel('手机号')).toBeVisible()
+    await expect(panel.locator('form input')).toHaveCount(2)
+    await expect(panel.getByLabel('验证码')).toHaveCount(0)
   })
 })
 
@@ -254,15 +266,16 @@ test('U08-C05 无效注册码被拒绝（B2）', async ({ page }) => {
     await page.goto('/register')
   })
   await test.step('当 我用明显无效的注册码提交注册', async () => {
-    await page.getByLabel(/注册码/).fill('definitely-invalid-code-u08')
-    await page.getByLabel('昵称').fill('测试玩家 u08-invalid')
-    await page.getByLabel('邮箱').fill(`u08-invalid-${Date.now()}@axiia.test`)
-    await page.getByLabel('密码').fill('throwaway-pw-123456')
-    await page.getByRole('button', { name: '创建账户' }).click()
+    const panel = activePanel(page)
+    await panel.getByLabel(/注册码/).fill('definitely-invalid-code-u08')
+    await panel.getByLabel('昵称').fill('测试玩家 u08-invalid')
+    await panel.getByLabel('邮箱').fill(`u08-invalid-${Date.now()}@axiia.test`)
+    await panel.getByLabel('密码').fill('throwaway-pw-123456')
+    await panel.getByRole('button', { name: '创建账户' }).click()
   })
   await test.step('那么 注册被拒绝并显示错误提示，仍停留在 /register', async () => {
     // 错误提示渲染为表单内的 <p>（与登录页同构）；文案本身不在规格内。
-    await expect(page.locator('form p')).toBeVisible()
+    await expect(activePanel(page).locator('form p')).toBeVisible()
     await expect(page).toHaveURL(/\/register$/)
   })
 })
@@ -291,7 +304,7 @@ test('U08-C07 错误密码被拒绝（B2）', async ({ page }) => {
   })
   await test.step('那么 显示错误提示且仍停留在 /login（不进入登录态）', async () => {
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.locator('form p')).toBeVisible()
+    await expect(activePanel(page).locator('form p')).toBeVisible()
   })
 })
 
