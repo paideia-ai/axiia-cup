@@ -66,11 +66,14 @@ try {
   } else {
     email = `playwright-u10-${Date.now()}@axiia.test`
     await page.goto(`${BASE}/register`)
-    await page.getByLabel('注册码').fill(REG_CODE)
-    await page.getByLabel('昵称').fill('测试玩家 u10')
-    await page.getByLabel('邮箱').fill(email)
-    await page.getByLabel('密码').fill(PASSWORD)
-    await page.getByRole('button', { name: '创建账户' }).click()
+    // 注册页是「手机号 / 邮箱」两栏（默认邮箱），两栏都带注册码——锚在
+    // 可见面板上（隐藏面板不进无障碍树）。
+    const panel = page.getByRole('tabpanel')
+    await panel.getByLabel('注册码').fill(REG_CODE)
+    await panel.getByLabel('昵称').fill('测试玩家 u10')
+    await panel.getByLabel('邮箱').fill(email)
+    await panel.getByLabel('密码').fill(PASSWORD)
+    await panel.getByRole('button', { name: '创建账户' }).click()
     await page.waitForURL(/\/(express|scenarios)$/, { timeout: 20000 })
   }
   log.ownerEmail = email
