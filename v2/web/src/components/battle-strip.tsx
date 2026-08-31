@@ -7,6 +7,7 @@ import type { MatchSummary } from '../api/types'
 import { cn } from '../lib/cn'
 import type { RoleNames } from '../lib/outcome'
 import { outcomeCopy, scenarioRoles } from '../lib/outcome'
+import { tm } from '../testmode/mark'
 
 // 对战条（#72，mock V29/V35）：只在派发处路由出现的横条，装着进行中与
 // 「刚完成」（15 分钟内完局）的对局小卡。空态自动隐藏；可折叠（chevron，
@@ -128,10 +129,15 @@ export function BattleStrip() {
   }
 
   return (
-    <section aria-label='进行中的对战' className='space-y-2'>
+    <section
+      aria-label='进行中的对战'
+      className='space-y-2'
+      {...tm('OS.battle-strip')}
+    >
       <button
         type='button'
         onClick={toggle}
+        {...tm('OS.battle-strip-toggle')}
         className='inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase transition hover:text-(--foreground)'
       >
         <ChevronDown
@@ -143,7 +149,10 @@ export function BattleStrip() {
         进行中的对战（{inFlight.length} 进行 · {recentDone.length} 刚完成）
       </button>
       {collapsed ? null : (
-        <div className='flex gap-2 overflow-x-auto pb-1'>
+        <div
+          className='flex gap-2 overflow-x-auto pb-1'
+          {...tm('OS.battle-strip-cards')}
+        >
           {cards.map((match) => {
             // F7：完局卡在「刚完成」后追加带视角的结果（我方（商鞅）胜…）。
             const outcome = match.finished && match.scored
@@ -154,11 +163,15 @@ export function BattleStrip() {
                 key={match.id}
                 to={`/matches/${match.id}`}
                 className='inline-flex shrink-0 items-center gap-2 rounded-full border border-(--border-soft) bg-white/2 px-3 py-1.5 text-xs text-(--foreground-subtle) transition hover:border-(--border) hover:text-(--foreground)'
+                {...tm('OS.battle-card')}
               >
                 <span className='font-medium'>{match.scenarioTitle}</span>
                 {match.challengeLeg != null
                   ? (
-                    <span className='text-(--accent)'>
+                    <span
+                      className='text-(--accent)'
+                      {...tm('OS.battle-card-leg')}
+                    >
                       约战{match.challengeLeg === 1 ? '①' : '②'}
                     </span>
                   )

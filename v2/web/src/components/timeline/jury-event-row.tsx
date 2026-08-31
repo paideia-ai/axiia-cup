@@ -11,6 +11,7 @@ import {
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { tm } from '../../testmode/mark'
 
 const ACTION_LABELS: Record<string, string> = {
   SECRET_POLL: '发起秘密意向投票',
@@ -37,7 +38,10 @@ function JurySpeech({
   const speech = eventString(event, 'text') ?? ''
   const reasoning = eventString(event, 'reasoning') ?? ''
   return (
-    <div className='rounded-xl border border-(--border) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.jury-speech')}
+      className='rounded-xl border border-(--border) bg-white/2 px-4 py-3'
+    >
       <p className='text-xs font-semibold text-(--foreground-subtle)'>
         {speakerName(labels, actor)}
       </p>
@@ -138,7 +142,10 @@ function ActionDecision({
     ? '轮次中场'
     : '行动窗口'
   return (
-    <div className='rounded-lg border border-dashed border-(--border) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.jury-action-decision')}
+      className='rounded-lg border border-dashed border-(--border) bg-white/2 px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         真人幕后 · 行动选择
       </p>
@@ -164,7 +171,10 @@ function SpeakerDraw({
   const round = eventNumber(event, 'round')
   const speakers = eventStringArray(event, 'speakers') ?? []
   return (
-    <div className='rounded-lg border border-dashed border-(--border) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.jury-speaker-draw')}
+      className='rounded-lg border border-dashed border-(--border) bg-white/2 px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         {round == null ? '陪审员发言抽签' : `第 ${round} 轮陪审员发言抽签`}
       </p>
@@ -202,7 +212,10 @@ function SecretPollOpened({
   const mover = eventString(event, 'mover') ?? ''
   const round = eventNumber(event, 'round')
   return (
-    <div className='rounded-lg border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-3'>
+    <div
+      {...tm('FA.jury-secret-poll-opened')}
+      className='rounded-lg border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--info)'>
         秘密意向投票
       </p>
@@ -231,7 +244,10 @@ function SecretPollResult({
   const notGuilty = eventNumber(event, 'notGuiltyVotes')
   const round = eventNumber(event, 'round')
   return (
-    <div className='rounded-xl border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-4'>
+    <div
+      {...tm('FA.jury-secret-poll-result')}
+      className='rounded-xl border border-(--border) bg-[rgba(96,165,250,0.06)] px-4 py-4'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--info)'>
         真人幕后 · 秘密意向投票结果
       </p>
@@ -267,7 +283,10 @@ function PrivateChat({
   const round = eventNumber(event, 'round')
   const messages = messagesOf(event)
   return (
-    <div className='rounded-xl border border-[rgba(168,85,247,0.32)] bg-[rgba(168,85,247,0.05)] px-4 py-4'>
+    <div
+      {...tm('FA.jury-private-chat')}
+      className='rounded-xl border border-[rgba(168,85,247,0.32)] bg-[rgba(168,85,247,0.05)] px-4 py-4'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--info)'>
         真人幕后 · 一对一私聊
       </p>
@@ -292,7 +311,10 @@ function PrivateChat({
                     fromMover ? 'justify-start' : 'justify-end'
                   }`}
                 >
-                  <div className='max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'>
+                  <div
+                    {...tm('FA.jury-private-message')}
+                    className='max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'
+                  >
                     <p className='text-[11px] font-semibold text-(--foreground-subtle)'>
                       {speakerName(labels, message.speaker)}
                       {message.exchange == null
@@ -333,7 +355,10 @@ function EvidenceReview({
   const text = eventString(event, 'text') ?? ''
   const round = eventNumber(event, 'round')
   return (
-    <div className='rounded-lg border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.05)] px-4 py-3'>
+    <div
+      {...tm('FA.jury-evidence-review')}
+      className='rounded-lg border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.05)] px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--warning)'>
         公开证据复核 · {evidence}
       </p>
@@ -370,7 +395,10 @@ function MotionOpened({
   const threshold = eventNumber(event, 'threshold')
   const round = eventNumber(event, 'round')
   return (
-    <div className='rounded-lg border border-(--border) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.jury-motion-opened')}
+      className='rounded-lg border border-(--border) bg-white/2 px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         提前终局动议
       </p>
@@ -395,7 +423,10 @@ function MotionVotes({
   showReasoning: boolean
 }) {
   return (
-    <div className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'>
+    <div
+      {...tm('FA.jury-motion-votes')}
+      className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         提前终局 · 十一人记名程序票
       </p>
@@ -415,6 +446,7 @@ function MotionResult({ event }: { event: ScriptEvent }) {
   const threshold = eventNumber(event, 'threshold')
   return (
     <div
+      {...tm('FA.jury-motion-result')}
       className={`rounded-lg border px-4 py-3 ${
         passed
           ? 'border-[rgba(52,211,153,0.4)] bg-[rgba(52,211,153,0.08)]'
@@ -464,7 +496,11 @@ function BallotGrid({
           ? '继续审议'
           : '票型未知'
         return (
-          <div key={ballot.juror} className='rounded-md bg-black/10 px-3 py-2'>
+          <div
+            {...tm('FA.jury-ballot')}
+            key={ballot.juror}
+            className='rounded-md bg-black/10 px-3 py-2'
+          >
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <p className='text-xs font-semibold text-(--foreground)'>
                 {speakerName(labels, ballot.juror)}
@@ -520,7 +556,10 @@ function FinalVoteReveal({
     ? '五轮审议结束'
     : '审议结束'
   return (
-    <div className='rounded-xl border border-(--border) bg-[rgba(224,74,47,0.05)] px-4 py-4'>
+    <div
+      {...tm('FA.jury-final-vote-reveal')}
+      className='rounded-xl border border-(--border) bg-[rgba(224,74,47,0.05)] px-4 py-4'
+    >
       <div className='flex flex-wrap items-end justify-between gap-2'>
         <div>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--accent)'>
@@ -555,7 +594,10 @@ function MatchResult({
   const guilty = eventNumber(event, 'guiltyVotes')
   const notGuilty = eventNumber(event, 'notGuiltyVotes')
   return (
-    <div className='rounded-xl border border-(--border) bg-white/2 px-4 py-4 text-center'>
+    <div
+      {...tm('FA.jury-match-result')}
+      className='rounded-xl border border-(--border) bg-white/2 px-4 py-4 text-center'
+    >
       <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
         对局结果
       </p>

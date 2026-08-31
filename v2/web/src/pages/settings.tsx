@@ -10,6 +10,7 @@ import { BindPhoneCard } from '../components/auth/bind-phone-card'
 import { useAuth } from '../context/auth'
 import { accountRejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
+import { tm } from '../testmode/mark'
 
 export function SettingsPage() {
   const { account, elevated, elevate, updateProfile } = useAuth()
@@ -109,22 +110,29 @@ export function SettingsPage() {
 
   return (
     <div className='max-w-xl space-y-6'>
-      <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+      <h1
+        className='text-2xl font-black tracking-tight text-(--foreground)'
+        {...tm('K.page-title')}
+      >
         账户
       </h1>
 
-      <Card>
+      <Card {...tm('K.profile-card')}>
         <CardContent className='space-y-3 pt-5 text-sm'>
           <h2 className='text-sm font-semibold text-(--foreground)'>
             个人资料
           </h2>
-          <div className='flex items-center justify-between gap-3'>
+          <div
+            className='flex items-center justify-between gap-3'
+            {...tm('K.nickname-row')}
+          >
             <span className='shrink-0 text-(--foreground-muted)'>昵称</span>
             {editingName
               ? (
                 <form
                   className='flex flex-1 items-center justify-end gap-2'
                   onSubmit={submitName}
+                  {...tm('K.nickname-form')}
                 >
                   <Input
                     aria-label='昵称'
@@ -132,6 +140,7 @@ export function SettingsPage() {
                     maxLength={50}
                     onChange={(e) => setNameDraft(e.target.value)}
                     value={nameDraft}
+                    {...tm('K.nickname-input')}
                   />
                   <Button
                     disabled={nameBusy ||
@@ -139,6 +148,7 @@ export function SettingsPage() {
                       trimmedDraft === account.displayName}
                     size='sm'
                     type='submit'
+                    {...tm('K.nickname-save-button')}
                   >
                     {nameBusy ? '保存中…' : '保存'}
                   </Button>
@@ -147,6 +157,7 @@ export function SettingsPage() {
                     size='sm'
                     type='button'
                     variant='ghost'
+                    {...tm('K.nickname-cancel-button')}
                   >
                     取消
                   </Button>
@@ -154,17 +165,28 @@ export function SettingsPage() {
               )
               : (
                 <span className='flex items-center gap-2'>
-                  <span className='text-(--foreground)'>
+                  <span
+                    className='text-(--foreground)'
+                    {...tm('K.nickname-value')}
+                  >
                     {account.displayName}
                   </span>
                   {nameSaved
-                    ? <span className='text-xs text-(--success)'>已保存</span>
+                    ? (
+                      <span
+                        className='text-xs text-(--success)'
+                        {...tm('K.nickname-saved-notice')}
+                      >
+                        已保存
+                      </span>
+                    )
                     : null}
                   <Button
                     onClick={startEditName}
                     size='sm'
                     type='button'
                     variant='ghost'
+                    {...tm('K.nickname-edit-button')}
                   >
                     编辑
                   </Button>
@@ -172,22 +194,29 @@ export function SettingsPage() {
               )}
           </div>
           {nameError
-            ? <p className='text-right text-sm text-(--accent)'>{nameError}</p>
+            ? (
+              <p
+                className='text-right text-sm text-(--accent)'
+                {...tm('K.nickname-error')}
+              >
+                {nameError}
+              </p>
+            )
             : null}
-          <div className='flex justify-between'>
+          <div className='flex justify-between' {...tm('K.email-row')}>
             <span className='text-(--foreground-muted)'>邮箱</span>
             <span className='text-(--foreground)'>{account.email ?? '—'}</span>
           </div>
-          <div className='flex justify-between'>
+          <div className='flex justify-between' {...tm('K.phone-row')}>
             <span className='text-(--foreground-muted)'>手机号</span>
             <span className='text-(--foreground)'>{account.phone ?? '—'}</span>
           </div>
-          <div className='flex justify-between'>
+          <div className='flex justify-between' {...tm('K.role-row')}>
             <span className='text-(--foreground-muted)'>角色</span>
             <span>
               {account.isAdmin
-                ? <Badge tone='warning'>管理员</Badge>
-                : <Badge tone='info'>选手</Badge>}
+                ? <Badge tone='warning' {...tm('K.role-badge')}>管理员</Badge>
+                : <Badge tone='info' {...tm('K.role-badge')}>选手</Badge>}
             </span>
           </div>
         </CardContent>
@@ -195,12 +224,16 @@ export function SettingsPage() {
 
       <BindPhoneCard />
 
-      <Card>
+      <Card {...tm('K.password-card')}>
         <CardContent className='space-y-3 pt-5'>
           <h2 className='text-sm font-semibold text-(--foreground)'>
             修改密码
           </h2>
-          <form className='space-y-4' onSubmit={submitPassword}>
+          <form
+            className='space-y-4'
+            onSubmit={submitPassword}
+            {...tm('K.password-form')}
+          >
             <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
               <span>当前密码</span>
               <Input
@@ -209,6 +242,7 @@ export function SettingsPage() {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 type='password'
                 value={currentPassword}
+                {...tm('K.current-password-input')}
               />
             </label>
             <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
@@ -219,6 +253,7 @@ export function SettingsPage() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 type='password'
                 value={newPassword}
+                {...tm('K.new-password-input')}
               />
             </label>
             <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
@@ -229,14 +264,25 @@ export function SettingsPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 type='password'
                 value={confirmPassword}
+                {...tm('K.confirm-password-input')}
               />
             </label>
             {passwordError
-              ? <p className='text-sm text-(--accent)'>{passwordError}</p>
+              ? (
+                <p
+                  className='text-sm text-(--accent)'
+                  {...tm('K.password-error')}
+                >
+                  {passwordError}
+                </p>
+              )
               : null}
             {passwordDone
               ? (
-                <p className='text-sm text-(--success)'>
+                <p
+                  className='text-sm text-(--success)'
+                  {...tm('K.password-done-notice')}
+                >
                   密码已修改，其他设备已退出登录
                 </p>
               )
@@ -247,6 +293,7 @@ export function SettingsPage() {
                 !newPassword ||
                 !confirmPassword}
               type='submit'
+              {...tm('K.password-submit-button')}
             >
               {passwordBusy ? '提交中…' : '修改密码'}
             </Button>
@@ -256,15 +303,23 @@ export function SettingsPage() {
 
       {account.isAdmin
         ? (
-          <Card>
+          <Card {...tm('K.elevate-card')}>
             <CardContent className='space-y-3 pt-5'>
               <div className='flex items-center justify-between'>
                 <h2 className='text-sm font-semibold text-(--foreground)'>
                   管理员提权
                 </h2>
                 {elevated
-                  ? <Badge tone='success'>已提权</Badge>
-                  : <Badge tone='accent'>未提权</Badge>}
+                  ? (
+                    <Badge tone='success' {...tm('K.elevate-status-badge')}>
+                      已提权
+                    </Badge>
+                  )
+                  : (
+                    <Badge tone='accent' {...tm('K.elevate-status-badge')}>
+                      未提权
+                    </Badge>
+                  )}
               </div>
               {elevated
                 ? (
@@ -272,6 +327,7 @@ export function SettingsPage() {
                     当前会话已提权。<Link
                       to='/admin'
                       className='text-(--accent)'
+                      {...tm('K.admin-link')}
                     >
                       进入管理面板
                     </Link>
@@ -281,6 +337,7 @@ export function SettingsPage() {
                   <form
                     className='flex items-end gap-3'
                     onSubmit={submitElevate}
+                    {...tm('K.elevate-form')}
                   >
                     <label className='flex-1 space-y-1.5 text-sm text-(--foreground-subtle)'>
                       <span>TOTP 验证码 / 恢复码</span>
@@ -289,18 +346,27 @@ export function SettingsPage() {
                         onChange={(e) => setCode(e.target.value)}
                         placeholder='123456'
                         inputMode='numeric'
+                        {...tm('K.totp-input')}
                       />
                     </label>
                     <Button
                       type='submit'
                       disabled={elevateBusy || !code.trim()}
+                      {...tm('K.elevate-button')}
                     >
                       {elevateBusy ? '验证中…' : '提权'}
                     </Button>
                   </form>
                 )}
               {elevateError
-                ? <p className='text-sm text-(--accent)'>{elevateError}</p>
+                ? (
+                  <p
+                    className='text-sm text-(--accent)'
+                    {...tm('K.elevate-error')}
+                  >
+                    {elevateError}
+                  </p>
+                )
                 : null}
             </CardContent>
           </Card>

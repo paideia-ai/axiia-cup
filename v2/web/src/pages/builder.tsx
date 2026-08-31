@@ -41,6 +41,7 @@ import {
   scenarioModule,
 } from '../scenarios'
 import { deckFor } from '../scenarios/decks'
+import { tm } from '../testmode/mark'
 
 const PROMPT_FIELD = 'prompt'
 
@@ -490,20 +491,30 @@ export function BuilderPage() {
         <Link
           to={`/agents/${agentID}`}
           className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
+          {...tm('E.back-link')}
         >
           ← 智能体主页
         </Link>
-        <h1 className='mt-2 text-2xl font-black tracking-tight text-(--foreground)'>
+        <h1
+          className='mt-2 text-2xl font-black tracking-tight text-(--foreground)'
+          {...tm('E.page-title')}
+        >
           智能体构建器
         </h1>
-        <p className='mt-1 text-sm text-(--foreground-subtle)'>
+        <p
+          className='mt-1 text-sm text-(--foreground-subtle)'
+          {...tm('E.agent-name')}
+        >
           {scenario ? scenario.summary.title : scenarioID} ·{' '}
           {agentName != null && agentName !== ''
             ? `${sideDisplayName}「${agentName}」`
             : `${sideDisplayName} #${agentID}`}
         </p>
         {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
-        <p className='mt-1 text-xs text-(--foreground-muted)'>
+        <p
+          className='mt-1 text-xs text-(--foreground-muted)'
+          {...tm('E.workspace-hint')}
+        >
           {express
             ? '首战快速通道 · 保存即自动开战并直达实况'
             : '工作区 · 输入自动暂存；保存才会生成新版本'}
@@ -528,7 +539,10 @@ export function BuilderPage() {
 
       {restoredTag != null
         ? (
-          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+          <p
+            className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+            {...tm('E.restored-notice')}
+          >
             已载入 {restoredTag} · {nextVersionCopy(versions.length)}
           </p>
         )
@@ -539,6 +553,7 @@ export function BuilderPage() {
           <div
             data-testid='save-notice'
             className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+            {...tm('E.save-notice')}
           >
             <span>{saveNotice}</span>
             {/* E10 原文「参赛版本仍是 vK · 一键改标」的后半句（u02-c11b） */}
@@ -548,6 +563,7 @@ export function BuilderPage() {
                   size='sm'
                   variant='secondary'
                   onClick={() => void setEntry(restarTarget.id)}
+                  {...tm('E.move-entry-button')}
                 >
                   一键改标到 {versionTag(restarTarget, versions)}
                 </Button>
@@ -557,9 +573,15 @@ export function BuilderPage() {
         )
         : null}
 
-      {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
+      {error
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('E.error')}>
+            {error}
+          </p>
+        )
+        : null}
 
-      <Card>
+      <Card {...tm('E.workspace-card')}>
         <CardContent className='space-y-4 pt-5'>
           <div className='flex items-center justify-between gap-2'>
             <label
@@ -574,6 +596,7 @@ export function BuilderPage() {
               variant='ghost'
               onClick={copyPrompt}
               disabled={prompt.trim() === ''}
+              {...tm('E.copy-prompt-button')}
             >
               {copied
                 ? <Check className='mr-1.5 h-3.5 w-3.5 text-(--success)' />
@@ -590,11 +613,15 @@ export function BuilderPage() {
               aria-busy={draftLoading}
               onChange={(e) => onPromptChange(e.target.value)}
               placeholder={promptPlaceholder}
+              {...tm('E.prompt-input')}
             />
           </div>
           <div className='flex flex-wrap items-start justify-between gap-3'>
             {/* #68 三层说明的固定文案 */}
-            <p className='text-xs text-(--foreground-muted)'>
+            <p
+              className='text-xs text-(--foreground-muted)'
+              {...tm('E.merge-hint')}
+            >
               你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。
             </p>
             <span
@@ -602,6 +629,7 @@ export function BuilderPage() {
                 overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
               }`}
               title='按汉字或英文词计数（非 token）；当前仅提示，不阻断保存'
+              {...tm('E.length-counter')}
             >
               {units} / {PROMPT_UNIT_LIMIT}
             </span>
@@ -616,7 +644,10 @@ export function BuilderPage() {
             ? (
               clearArmed
                 ? (
-                  <div className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'>
+                  <div
+                    className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'
+                    {...tm('E.clear-confirm')}
+                  >
                     <span className='text-xs text-(--foreground-subtle)'>
                       {versions.length === 0
                         ? '清空后可重新选择初始化方式'
@@ -626,6 +657,7 @@ export function BuilderPage() {
                       size='sm'
                       variant='secondary'
                       onClick={() => fillWorkspace('')}
+                      {...tm('E.clear-confirm-button')}
                     >
                       确认清空
                     </Button>
@@ -643,6 +675,7 @@ export function BuilderPage() {
                     type='button'
                     onClick={() => setClearArmed(true)}
                     className='cursor-pointer text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
+                    {...tm('E.clear-button')}
                   >
                     {versions.length === 0
                       ? '清空工作区（重新选择初始化方式）'
@@ -659,6 +692,7 @@ export function BuilderPage() {
               maxLength={60}
               onChange={(event) => setNote(event.target.value)}
               placeholder='这一版改了什么，比如「加了退让条款」'
+              {...tm('E.note-input')}
             />
           </label>
           <div className='flex flex-wrap items-end gap-3'>
@@ -671,7 +705,7 @@ export function BuilderPage() {
                   >
                     出场角色
                   </span>
-                  <div className='w-56'>
+                  <div className='w-56' {...tm('E.role-select')}>
                     <Select
                       placeholder='选择角色'
                       value={roleKey ?? undefined}
@@ -695,7 +729,7 @@ export function BuilderPage() {
               >
                 模型
               </span>
-              <div className='w-56'>
+              <div className='w-56' {...tm('E.model-select')}>
                 <Select
                   value={modelID ?? undefined}
                   renderValue={(v) =>
@@ -714,6 +748,7 @@ export function BuilderPage() {
               data-testid='save-version'
               onClick={() => void save()}
               disabled={saving || !prompt.trim() || modelID == null}
+              {...tm('E.save-button')}
             >
               {saving
                 ? express ? '开战中…' : '保存中…'
@@ -724,14 +759,20 @@ export function BuilderPage() {
             {/* P12：「保存＝产版」最该被看见的地方就是保存按钮旁 */}
             {!express
               ? (
-                <span className='text-xs font-medium text-(--accent)'>
+                <span
+                  className='text-xs font-medium text-(--accent)'
+                  {...tm('E.next-version-hint')}
+                >
                   {nextVersionCopy(versions.length)}
                 </span>
               )
               : null}
             {lastEvent
               ? (
-                <span className='text-xs text-(--foreground-muted)'>
+                <span
+                  className='text-xs text-(--foreground-muted)'
+                  {...tm('E.autosave-status')}
+                >
                   {lastEvent}
                 </span>
               )
@@ -740,7 +781,10 @@ export function BuilderPage() {
           {/* P5：模型随版本快照（#13）——说清这一版会用哪个模型 */}
           {latestVersion != null
             ? (
-              <p className='text-xs text-(--foreground-muted)'>
+              <p
+                className='text-xs text-(--foreground-muted)'
+                {...tm('E.model-inherit-hint')}
+              >
                 {modelID === latestVersion.modelID
                   ? `沿用 ${versionTag(latestVersion, versions)} 的模型`
                   : `已改为新模型，保存后 v${versions.length + 1} 用新模型（${
@@ -751,7 +795,10 @@ export function BuilderPage() {
             : null}
           {selectedRole
             ? (
-              <p className='text-xs text-(--foreground-muted)'>
+              <p
+                className='text-xs text-(--foreground-muted)'
+                {...tm('E.role-pitch')}
+              >
                 {selectedRole.pitch}
               </p>
             )
@@ -759,9 +806,16 @@ export function BuilderPage() {
           <Accordion className='border-t border-(--border-soft)'>
             <AccordionItem
               value='role-template'
-              title='查看场景角色模板（仅供查看，无需重复编写）'
+              title={
+                <span {...tm('E.role-template-toggle')}>
+                  查看场景角色模板（仅供查看，无需重复编写）
+                </span>
+              }
             >
-              <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
+              <p
+                className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'
+                {...tm('E.role-template-text')}
+              >
                 {roleTemplate}
               </p>
             </AccordionItem>
@@ -791,12 +845,18 @@ export function BuilderPage() {
               setOsOpen(true)
             }}
             headingAside={
-              <span className='text-[11px] text-(--foreground-muted)'>
+              <span
+                className='text-[11px] text-(--foreground-muted)'
+                {...tm('E.version-list-aside')}
+              >
                 保存产生新版本；草稿不参战
               </span>
             }
             emptyState={
-              <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'>
+              <div
+                className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
+                {...tm('E.version-empty')}
+              >
                 <p className='text-sm font-medium text-(--foreground)'>
                   还没有保存过版本
                 </p>

@@ -4,6 +4,7 @@ import { parseOsBeat } from '../../lib/verdict'
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { tm } from '../../testmode/mark'
 
 // 裁判心声卡（#22①）：the judge's generated aside beat, always visible — never
 // behind 调试模式, which only governs model reasoning traces. Indented and dashed
@@ -48,6 +49,7 @@ export function OsBeatCard({
   return (
     // F4：倾向轨迹图内联说明的「查看心声卡」按此 id scrollIntoView 直达。
     <div
+      {...tm('FA.aside-card')}
       id={`beat-${verdict.key}`}
       className={cn(
         'mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6',
@@ -56,11 +58,21 @@ export function OsBeatCard({
       )}
     >
       <div className='flex flex-wrap items-center gap-2 text-xs'>
-        <span className='font-semibold text-(--warning)'>{title}</span>
-        <span className='text-(--foreground-muted)'>{verdict.model}</span>
+        <span
+          {...tm('FA.aside-title')}
+          className='font-semibold text-(--warning)'
+        >
+          {title}
+        </span>
+        <span {...tm('FA.aside-model')} className='text-(--foreground-muted)'>
+          {verdict.model}
+        </span>
         {highlight
           ? (
-            <span className='rounded-full bg-[rgba(224,74,47,0.14)] px-2 py-0.5 text-[11px] font-semibold text-(--accent)'>
+            <span
+              {...tm('FA.aside-anchor-badge')}
+              className='rounded-full bg-[rgba(224,74,47,0.14)] px-2 py-0.5 text-[11px] font-semibold text-(--accent)'
+            >
               倾向变化
             </span>
           )
@@ -68,14 +80,20 @@ export function OsBeatCard({
       </div>
       {beat.os
         ? (
-          <p className='mt-2 whitespace-pre-wrap text-sm italic leading-relaxed text-(--foreground)'>
+          <p
+            {...tm('FA.aside-text')}
+            className='mt-2 whitespace-pre-wrap text-sm italic leading-relaxed text-(--foreground)'
+          >
             {beat.os}
           </p>
         )
         : null}
       {beat.fallbackText
         ? (
-          <p className='mt-2 whitespace-pre-wrap text-sm italic leading-relaxed text-(--foreground)'>
+          <p
+            {...tm('FA.aside-text')}
+            className='mt-2 whitespace-pre-wrap text-sm italic leading-relaxed text-(--foreground)'
+          >
             {beat.fallbackText}
           </p>
         )
@@ -83,6 +101,7 @@ export function OsBeatCard({
       {beat.attention || beat.favor
         ? (
           <div
+            {...tm('FA.aside-tendency')}
             className={cn(
               'mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-(--foreground-subtle)',
               highlight && 'items-baseline',
@@ -116,6 +135,7 @@ export function OsBeatCard({
         ? (
           <div className='mt-3'>
             <button
+              {...tm('FA.aside-resume-button')}
               type='button'
               onClick={onResume}
               className='inline-flex cursor-pointer items-center rounded-full bg-(--accent) px-3.5 py-1.5 text-xs font-semibold text-white transition hover:opacity-90'

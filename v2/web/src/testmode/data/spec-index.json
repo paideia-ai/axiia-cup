@@ -1,0 +1,2953 @@
+{
+  "generatedAt": "2026-08-30T06:03:45.990Z",
+  "specSha": "fda7778",
+  "clauses": {
+    "U01-C01": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "每个智能体有唯一的工作区（草稿）…高频自动暂存…草稿不是版本",
+      "s": "工作区草稿语义全部到位：进入编辑=进工作区、打字自动暂存（SSE「已自动暂存」）、离开再回不丢、版本数不因打字增加",
+      "anchors": [
+        "spec-a2e",
+        "spec-e1",
+        "spec-change-81"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C02": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "版本历史严格线性…点保存＝产生一个新版本（append-only）…不记录父子",
+      "s": "A/B/C 分别迭代到 3/4/5 版、保存间穿插暂存噪声，ordinal 恰为 [1..N]、相邻差恒 1——08-14「暂存水位当版本号」回归未复发",
+      "anchors": [
+        "spec-a2e",
+        "spec-e2",
+        "spec-change-82"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C03": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "「基于该版本迭代」：把该历史版本的文本读入工作区。本身不产生版本、不记录来源…提示「已载入 v1 · 保存后将成为 v(N+1)」",
+      "s": "按钮文案已按 #89；点后载入 v1 全文、版本数不变、提示句正确；此后保存产生 v(N+1) 不开分支",
+      "anchors": [
+        "spec-a2e",
+        "spec-e3",
+        "spec-change-82",
+        "spec-change-89"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C04": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "仅当工作区草稿与最新版本不一致时，先就地两步确认…一致时直接载入，不打扰",
+      "s": "触发条件按 Yihan 修订实现：不一致时两步确认（仍要继续/取消，取消保草稿）；一致时直载无确认条",
+      "anchors": [
+        "spec-a2e",
+        "spec-e3",
+        "spec-p11"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C05": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "版本卡不再提供「复制为新智能体」，前端删除该按钮",
+      "s": "按钮负检通过：E 页与 EA 页版本卡均无该动作按钮",
+      "anchors": [
+        "spec-change-90",
+        "spec-e4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C06": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "前端删除该按钮与其全部降级分支",
+      "s": "残留文案实测确认：InitModes 说明句「…（想重新选卡：清空工作区，或从版本卡『复制为新智能体』）」仍在（远端+5173）；match-detail 另 1 处由部署 bundle 佐证——引导玩家找一个已不存在的动作，且与 E7 的",
+      "anchors": [
+        "spec-change-90",
+        "spec-e4"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C07": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "版本的身份＝保存那一刻的文本快照（+ 模型 #13 + 备注 + 时间）…不回溯改写",
+      "s": "文本+模型+备注+时间四要素齐备（DTO 与卡面均有）；append-only 未见回写",
+      "anchors": [
+        "spec-a2e",
+        "spec-e5",
+        "spec-change-82"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C08": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "MCQ 的选项随版本一并存储（供回看与统计），但不构成版本身份",
+      "s": "运行时确认缺失：在 C 上走 MCQ 选卡→填入工作区→保存，新版本 options=null——选卡记录不随版本存储（前端从不上送；builder-init 注释自认「MCQ 选择只活在组件内存里」）",
+      "anchors": [
+        "spec-a2e",
+        "spec-e5"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C09": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "保存 v1 之后，编辑器只有文本工作台…想用选卡重来 → 「再建一个」…禁止入口处给一句引导文案",
+      "s": "合规半实测绿：迭代期无选卡入口、无「重新生成」、就地引导不弹窗。两处偏差实测红：① 引导文案是「清空工作区（重新选择初始化方式）」而非指向「再建一个」；② 清空工作区后初始化三选一在同一策略复活（MCQ 页签重新出现）——绕开「统一初始化-",
+      "anchors": [
+        "spec-a2e",
+        "spec-e7",
+        "spec-change-83"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C10": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "编辑器提供「复制当前文本」按钮做便利…平台不提供自动喂给 AI 改写",
+      "s": "P14 按钮实测可用（点击变「已复制」）；无任何产品内 AI 改写入口",
+      "anchors": [
+        "spec-a2e",
+        "spec-e8",
+        "spec-change-83",
+        "spec-p14"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C11": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "不配说明书…界面自解释；UI 一律仍说「智能体」与「版本」",
+      "s": "巡检通过：无说明书页面、就地一句话提示齐备；「版本线」不上界面；「策略」仅以「策略提示词」等写作义出现（非槽位义，记观察不判违例）",
+      "anchors": [
+        "spec-a2e",
+        "spec-e9",
+        "spec-change-84",
+        "spec-change-87"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C12": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "保存成功提示中带一句「参赛版本仍是 vK · 一键改标」",
+      "s": "机制实测绿：保存不动 ★，E 页就地提示「已保存 v6 · ★参赛版本仍是 v1——新版本不会自动参赛」。文案实测红：「一键改标」入口/字样缺席（改标靠下方版本卡按钮）",
+      "anchors": [
+        "spec-a2",
+        "spec-e10",
+        "spec-change-84",
+        "spec-change-88"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C13": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "E 工作区下方常驻本策略的完整版本线（vN…v1，新在前）…保存不跳转",
+      "s": "实测绿：保存后留在 /build、版本线就地 +1、新在前；v1→v2 全程不离开 E 页",
+      "anchors": [
+        "spec-a2e",
+        "spec-e11",
+        "spec-change-88"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C14": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "EA 与 E 的版本卡同构：同一套动作集合在两页长一样；EA 另有版本 diff 与公开视图",
+      "s": "实测绿：EA 版本卡四动作与 E 页一致、无废止按钮；EA 独有「版本对比」段；页头「编辑」进入 /build（E1 入口）。公开视图分层归 U10",
+      "anchors": [
+        "spec-a2e",
+        "spec-e11",
+        "spec-change-88"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C15": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "保存 → 产生 v1、仍停留在 E 页…vN 与 #id 两套编号…★ 从 v1 移到 v2；「保存后将成为 v3」",
+      "s": "验收剧本第一组实测绿：v1 自动 ★、双编号并排、四动作、改标后 ★ 移动、保存钮旁「保存后将成为 v3」",
+      "anchors": [
+        "spec-a2e"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C16": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "工作区打字只进草稿（自动暂存，离开再回不丢）；版本数不变；草稿永不参战",
+      "s": "实测绿（同 C01）",
+      "anchors": [
+        "spec-a2e"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C17": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "「版本卡上不存在『复制为新智能体』」，且同侧再建只走「再建一个」（受 #59/#79 引导门）",
+      "s": "实测绿：按钮不存在；同侧再建仅「再建一个」一条路——无对侧时引导门挡下（文案无条文号 + 切侧 CTA），有版本对侧后放行、B 从 v1 独立计数",
+      "anchors": [
+        "spec-a2e",
+        "spec-e4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C18": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "A/B/C 分别迭代到 v3/v4/v5…ordinal 序列恰为 [1..N]，任意相邻差恒为 1——版本号只随保存次数走",
+      "s": "实测绿（同 C02，含暂存噪声）",
+      "anchors": [
+        "spec-a2e"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C19": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "点「基于该版本迭代」→ 载入 v1 全文并提示「已载入 v1 · 保存后将成为 v(N+1)」…（P11）先两步确认再覆盖",
+      "s": "实测绿（同 C03/C04）",
+      "anchors": [
+        "spec-a2e"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C20": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "EA/E 页头…一律用策略展示名，内部 id 降为可复制小字",
+      "s": "实测绿：E 页头 B=「商鞅「激进」」、A 回落「商鞅 #116」；EA 页头同 + #id mono 小字",
+      "anchors": [
+        "spec-p1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C20b": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "EA/E 页头与 OS 阵容下拉一律用策略展示名",
+      "s": "OS 双侧阵容选择器候选 label＝`#${agentID} · vN · modelID`——用裸 #id 而非策略展示名（数据源 /my/agents 本就带 name）。收口记录称 P1 已上线，但只覆盖页头半",
+      "anchors": [
+        "spec-p1"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U01-C21": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "策略行显示最近编辑时间，并按其倒序（lastEditedAt＝保存与草稿暂存取较晚者）",
+      "s": "实测绿：在 A 打字（仅暂存）后，「我的智能体」商鞅侧行序 [116,120,121]（A 第一，非 id/创建序）；每行相对时间在；lastEditedAt 单调可查",
+      "anchors": [
+        "spec-p1a"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C22": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "策略可改名（1–30 字，可清空回落 商鞅 #id）",
+      "s": "实测绿：就地重命名「贪婪」→ 刷新仍在（落库）→ 清空回落「商鞅 #id」",
+      "anchors": [
+        "spec-p2"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C22b": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "P2 页面落点：我的智能体·EA；P3 首个策略（ensure 建的）事后补名（EA）",
+      "s": "实测红：EA 页无任何改名控件——P2 的 EA 半缺席，P3 的「EA 补名」无处发生（补名只能绕道我的智能体页）",
+      "anchors": [
+        "spec-p2",
+        "spec-p3"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C23": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "首个策略（ensure 建的）事后补名，不给首战路径加弹窗",
+      "s": "首建/首战路径实测无命名弹窗（懒 ensure 直进构建器）；事后补名在「我的智能体」页可用（C22）；EA 半缺失已记 C22b",
+      "anchors": [
+        "spec-p3"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C24": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "工作区继承最新版本的模型与角色",
+      "s": "实测绿：API 存非默认模型后重进工作区，「沿用 vN 的模型」提示在、UI 保存不换模型（新版本 modelID 与上一版一致）",
+      "anchors": [
+        "spec-p5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C24b": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "草稿层持久化模型（后端列：草稿持久化需后端）",
+      "s": "运行时确认缺失：draft 响应仅 {fields:{prompt},scenarioID,side}——无任何模型槽位；改模型不保存即丢（回落版本线的模型）。P 批收口的后端补齐清单（P2/P4/P8/P10/P15）不含 P5，源码注释",
+      "anchors": [
+        "spec-p5"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C25": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "引导门文案去掉条文号：「需先有一个甘龙，才能再建第二个商鞅——两边都会写才是真本事」",
+      "s": "半符合（实测）：条文号确已去除✓、弹窗有角色名切侧 CTA「先创建甘龙」✓；但主句是通称版「需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事」，非 P6a 引号原句（角色名只在第二句「想再建一个商鞅？先创建一个甘龙——两边",
+      "anchors": [
+        "spec-p6a"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U01-C26": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "空策略不开引导门：#79 判定改为「现存 ≥1 个对侧策略且版本数 ≥1」",
+      "s": "实测绿：只建甘龙空壳（0 版本）时「再建一个商鞅」仍被挡；给甘龙存 1 版后放行",
+      "anchors": [
+        "spec-p8a"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C27": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "仅 0 版本策略可删；有版本的策略永不可删",
+      "s": "实测绿：有版本行无「删除」；空壳行两步删除成功、行消失（BDD 于 gate 流程验证 + 旅程在甘龙侧空壳 #127 复演）",
+      "anchors": [
+        "spec-p8b"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C28": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "EA 页头兄弟策略切换胶囊（同侧仅 1 个时不出现）",
+      "s": "实测绿：A 的 EA 胶囊 3 枚、当前高亮（aria-current）；甘龙 EA（同侧仅 1）整排不出现",
+      "anchors": [
+        "spec-p9"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C29": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "版本补备注 + 时间（E5 已承诺却缺失的两个字段）",
+      "s": "实测绿：保存可选备注、卡面「备注：加了退让条款」+ 相对保存时间；不填备注仍有时间",
+      "anchors": [
+        "spec-p10"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C30": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "「保存后将成为 v(N+1)」常驻保存按钮旁 + 版本段落级一次（不再每卡重复）",
+      "s": "实测绿：E 页该句恰 1 处（保存钮旁）、不逐卡重复；EA 版本段落级恰 1 处。观察：E 页版本段标题右侧放的是「保存产生新版本；草稿不参战」（另一句），v(N+1) 句的段落级落点在 EA——语义达成、措辞落点微差（不判违例）",
+      "anchors": [
+        "spec-p12"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C31": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "DA 侧卡：该侧已有策略时按钮组换成「再建一个商鞅 / 查看我的商鞅（N）」，并显示「你已有 2 个商鞅：…」",
+      "s": "实测绿：商鞅侧「你已有 3 个商鞅：…」+「再建一个商鞅 / 查看我的商鞅（3）」；甘龙侧同构（1）",
+      "anchors": [
+        "spec-p13"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C32": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U01",
+      "q": "补上 B3 早已承诺却不存在的「逐版本胜负」（matchCount/winCount，按已计分对局统计）",
+      "s": "空态实测绿：0 战版本卡显示「还没有出战过」（非空白）、DTO matchCount/winCount=0。有战形态「N 战 M 胜」在 0 战斗预算下未验（recordCopy 源码存在该分支）",
+      "anchors": [
+        "spec-p15",
+        "spec-b3"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C33": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "参赛＝「参赛策略 + 参赛版本」…★ 每侧唯一（markEntryVersion 侧内清星 + 自动参赛收窄）",
+      "s": "实测绿：在 B 的 v1 改标 → B v1 成 ★、A 的 entryVersionID 清空（全部 isEntry=false）、提示「★ 已交给 v1——商鞅这一侧由它出战」、我的智能体徽章「商鞅 ✓」。派发默认用参赛版本归 U06",
+      "anchors": [
+        "spec-change-91",
+        "spec-p4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U01-C34": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U01",
+      "q": "（changelog 行 #81-#84 → E 条文；#87 词汇分层；#88-#91 → E11/#89/#90/#91；#92 → P1-P15；#85/#86 → 设置页）",
+      "s": "#81/#82/#83/#84(余 E9/E10)/#87/#88/#89/#90/#91/#92 全部映射到上列条款行并已实测；#85（个人资料）/#86（修改密码）落在设置页 K——页面归 U12，本单元只登记不重验",
+      "anchors": [
+        "spec-change-81",
+        "spec-change-82",
+        "spec-change-83",
+        "spec-change-84",
+        "spec-change-85",
+        "spec-change-86",
+        "spec-change-87",
+        "spec-change-88",
+        "spec-change-89",
+        "spec-change-90",
+        "spec-change-91",
+        "spec-change-92"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C01": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "新建流程：三种初始化方式——MCQ / 元提示词 / 直写是新建智能体时的三种初始化方式：三选一生成首稿文本",
+      "s": "新建（去构建/再建一个→构建器）后，空工作区出现「初始化方式 · 三选一生成首稿」卡",
+      "anchors": [
+        "spec-a2",
+        "spec-change-83",
+        "spec-e6"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C02": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "1. MCQ（默认；全场景可用）… 2. Basic——直接写提示词 3. Prompt-builder prompt",
+      "s": "三 tab 依次为 MCQ 拼装 / Basic 直写 / 元提示词，MCQ 默认选中；逐题选择→拼装预览→「填入工作区」生成首稿（673 字纯文本），初始化卡收起",
+      "anchors": [
+        "spec-a2",
+        "spec-change-83",
+        "spec-change-12"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C03": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "MCQ 模式全场景上线（不是单场景试点）",
+      "s": "目录 6 个场景中 5 个有 MCQ deck；「码头疑云：七号仓命案（legal-harbor-murder-jury）」无 deck——构建器完全不出现三选一初始化（无 tab、仅直写），远端与 5173 一致",
+      "anchors": [
+        "spec-change-15"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U02-C04": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "Prompt-builder prompt——给玩家一段元提示词，拿去自己的 AI 用；产品内不提供聊天",
+      "s": "元提示词 tab：元提示词正文 + 「复制元提示词」按钮 + 粘贴框 + 「填入工作区」（粘贴前禁用）；页面无任何聊天/发送控件",
+      "anchors": [
+        "spec-a2",
+        "spec-change-83",
+        "spec-e8"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C05": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "智能体记录自己的「初始化方式」标签",
+      "s": "保存请求携带 method（mcq/builder/raw），服务端校验枚举（未知值 400「unknown prompt method」）并落库（method TEXT NOT NULL DEFAULT 'raw'）；但版本 DTO/UI",
+      "anchors": [
+        "spec-a2",
+        "spec-change-83"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C06": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "模型选择器：明确的 UI 控件；清单可配置",
+      "s": "构建页有「模型」标签 + combobox；下拉 6 项与 /v1/models（DeepSeek V4 Pro/Flash、Kimi K2.6、Qwen3.6 27B、MiniMax M3、GLM-5.2）一一对应",
+      "anchors": [
+        "spec-change-13"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C07": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "模型属于版本、随版本快照；模型信息永远公开",
+      "s": "保存时所选模型（清单第二项 DeepSeek V4 Flash）随版本快照（API versions.modelID 一致）；版本卡/智能体主页公开展示 modelID",
+      "anchors": [
+        "spec-change-13",
+        "spec-change-21"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C08": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "字数上限：逐方 1000，按汉字或英文词计（非 token）",
+      "s": "计数器「x / 1000」实时更新（title 注明按汉字/英文词计）；填 1001 汉字→计数器警示色；保存被服务端拒绝（prompt_too_long → 中文文案指回右下计数器），版本数不变",
+      "anchors": [
+        "spec-change-14"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C09": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "保存＝存一个版本，不派发。唯一例外：快速通道首战的保存自动派发",
+      "s": "多次保存（v1/v2/…）后 /v1/matches 中 isMine 参与者数恒 0——保存从不派发（express 例外未测：预算 0，不进首战）",
+      "anchors": [
+        "spec-change-17"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C10": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "（#88）保存后不跳转：保存留在 E 页，就地把新版本插入页内版本线顶端并给出成功提示",
+      "s": "点「保存版本」后 URL 仍为 /agents/:id/build，版本线就地长出新版 + 成功提示",
+      "anchors": [
+        "spec-change-17",
+        "spec-change-88"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C11": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "保存成功提示中带一句「参赛版本仍是 vK · 一键改标」（纯前端提示，无数据变化）",
+      "s": "保存非参赛新版后提示「已保存 v2 · ★参赛版本仍是 v1——新版本不会自动参赛」——vK 信息在，且保存确不移动 ★",
+      "anchors": [
+        "spec-change-17",
+        "spec-e10",
+        "spec-change-84"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C11b": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "「参赛版本仍是 vK · 一键改标」",
+      "s": "保存成功提示（及全前端）没有「一键改标」入口——要改标必须去版本卡点「设为参赛版本」；E10 规定的提示内一键动作缺失",
+      "anchors": [
+        "spec-change-17",
+        "spec-e10",
+        "spec-change-84"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U02-C12": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "（P12）「保存后将成为 v(N+1)」常驻保存按钮旁",
+      "s": "提示常驻保存按钮旁且随保存自增：0 版时 v1、2 版时 v3（复核截图）",
+      "anchors": [
+        "spec-change-17",
+        "spec-p12"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C13": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "编辑框旁固定说明「你只需编写策略；比赛时系统自动与角色模板合并」；提供可展开的只读系统角色模板预览（标「仅供查看，无需重复」）",
+      "s": "固定说明「你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。」在编辑框下；手风琴「查看场景角色模板（仅供查看，无需重复编写）」可展开出 369 字只读模板",
+      "anchors": [
+        "spec-change-68"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C14": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "无构建内预览/快测——测试靠 PVE",
+      "s": "构建页无预览/快测/试运行控件（MCQ 卡内的「拼装预览」是选项拼文预览，非对局预览，不属本条禁区）",
+      "anchors": [
+        "spec-a2"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C15": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "未完成的控件在落地前完全隐藏",
+      "s": "构建页无「敬请期待/即将上线」类占位或明显半成品控件（观察项，穷举有限）",
+      "anchors": [
+        "spec-change-18"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C16": {
+      "page": "",
+      "chapter": "C3",
+      "unit": "U02",
+      "q": "卡牌（可视化 deck）构建模式（L8）…Focus mode（X10）——明确推迟",
+      "s": "构建 UI 无卡牌可视化构建、无 Focus mode/专注模式入口——future features 正确缺席",
+      "anchors": [
+        "spec-c3"
+      ],
+      "impl": "match",
+      "owner": "Yihan"
+    },
+    "U02-C17": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "工作区继承最新版本的模型与角色；草稿层持久化模型",
+      "s": "重进构建页，模型选择器默认显示最新版本的模型（DeepSeek V4 Flash，非清单首项 V4 Pro），并注明「沿用 v2 的模型」",
+      "anchors": [
+        "spec-change-13",
+        "spec-p5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U02-C18": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "版本卡不再提供该动作，前端删除该按钮与其全部降级分支；同侧新增策略只走「再建一个」",
+      "s": "初始化卡副标题仍写「…想重新选卡：清空工作区，或从版本卡『复制为新智能体』」——引用已废止且已不存在的动作，误导玩家",
+      "anchors": [
+        "spec-change-90",
+        "spec-e4"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U02-C19": {
+      "page": "E",
+      "chapter": "A2",
+      "unit": "U02",
+      "q": "此后的版本不再有模式概念（全部是文本迭代的产物）……想用选卡重来 → 「再建一个」",
+      "s": "保存 v1 之后，「清空工作区（重新选择初始化方式）」把三选一（含 MCQ 选卡）在同一策略内重新放出来——与「初始化-only」相悖；规格定的重选出口是另建策略（再建一个）",
+      "anchors": [
+        "spec-a2",
+        "spec-change-83",
+        "spec-e7"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U03-C01": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "新注册自动登录后进入；只针对第一场",
+      "s": "注册成功自动登录并落地 /express",
+      "anchors": [
+        "spec-a3"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C02": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "新手 express 轨道看简化版 DA（与正常用户不同）",
+      "s": "简化版 DA：徽章＋标题＋钩子＋只有我方角色卡＋一句规则＋「去构建 →」＋逃生链接",
+      "anchors": [
+        "spec-a3",
+        "spec-change-11"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C03": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "「去构建」直接进 E……首战＝创建一个单侧 agent（#57；执哪方可配置）",
+      "s": "去构建＝懒 ensure 单侧 agent，直进 /agents/:id/build?express=1；页头写明「保存即自动开战并直达实况」；无切侧控件、不摆版本线",
+      "anchors": [
+        "spec-a3",
+        "spec-change-57"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C04": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "express 默认进 MCQ……express 内可切换到正常模式（#83 后＝解锁全部三种初始化方式）",
+      "s": "初始化卡三 tab（MCQ 拼装/Basic 直写/元提示词），默认选中 MCQ；三 tab 均可切换且内容正常；MCQ 逐题选择后拼装预览逐节拼出（模板预填的落地形态），填入工作区即收起",
+      "anchors": [
+        "spec-change-12",
+        "spec-change-83"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C05": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "保存＝自动派发……直接进入实况观看（#9，非异步）",
+      "s": "express 保存按钮文案「保存并开始首战」；点击后不经过 OS/异步队列，直接跳到 /matches/5 实况页",
+      "anchors": [
+        "spec-a3",
+        "spec-change-9",
+        "spec-change-17"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C06": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "对手为最容易的 PVE-NPC（#10，可配置）",
+      "s": "首战对手＝对侧 NPC presetKey v1-1「糊涂翁甘龙」（deepseek-v4-flash，人设刻意最弱），由前端回落逻辑自动选定，无需玩家选对手",
+      "anchors": [
+        "spec-a3",
+        "spec-change-10"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C07": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "直接进入实况观看（#9，非异步）",
+      "s": "实况页「直播中」徽章、对话经 SSE 逐步长出；完局（148 秒）后就地翻成完局战报，全程无需刷新",
+      "anchors": [
+        "spec-a3",
+        "spec-change-9"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C08": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "首战引导卡置于战报底部，用方向性关键词（「通往下一轮 →」，#67……顶部留小锚点）",
+      "s": "完局后页顶小锚点「首战旅程 ↓」，页底「首战打完，接下来」旅程卡三格：通往下一轮 → / 解锁对侧 / 通往 PVP →；旅程 section 是页面最后一个元素",
+      "anchors": [
+        "spec-a3",
+        "spec-change-67"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C09": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "首战结束后展示三个模式 tab（#12）",
+      "s": "旅程卡下方「三种构建模式已解锁（新建智能体时三选一）」卡：MCQ 拼装 / Basic 直写 / 元提示词 三格齐全",
+      "anchors": [
+        "spec-a3",
+        "spec-change-12"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C10": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "只针对第一场",
+      "s": "打过首战后再访 /express 被重定向到 /scenarios（firstBattleDone 让路）",
+      "anchors": [
+        "spec-a3"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C11": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "提示「今日次数已用完（N/N），明天再来」→ 拒绝入队",
+      "s": "触顶文案已随前端发布：部署 bundle 含「今日次数已用完（」「明天再来」（含 N/N 插值的 #52 定稿话术）；config 提供 dailyBattleLimit=10 供插值。按任务边界只验文案存在，绝不触顶实测",
+      "anchors": [
+        "spec-change-45",
+        "spec-change-52"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C12": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "新手预设三元组（场景 / 执方 / 对手 NPC）→ §C2",
+      "s": "GET /v1/config 的 expressPreset 在 dev 上为 null——前端按文档化回落（商鞅场景/我执 a/第一个 b 侧预设）完成派发。配置数值与投放属 §C2『文件 + CLI』管理，非本单元可测",
+      "anchors": [
+        "spec-change-10",
+        "spec-a3",
+        "spec-c2"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U03-C13": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U03",
+      "q": "废止 E4「复制为新智能体」：版本卡不再提供该动作，前端删除该按钮与其全部降级分支",
+      "s": "按钮本体确已删除（U02 域），但 express 漏斗两处提示句仍引用已废止动作：① express E 初始化卡副标题「……或从版本卡『复制为新智能体』」（builder-init.tsx）；② 战报底部三模式卡脚注「想再用选卡，走『复",
+      "anchors": [
+        "spec-change-90",
+        "spec-change-12"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C01": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "每场景一卡：一句话介绍 + 统计。统计展示门槛只按对局数（按 agent 计），阈值可配置",
+      "s": "D 卡统计钩子：5/6 卡有空态轮廓，「码头疑云：七号仓命案」整个统计槽位缺席",
+      "anchors": [
+        "spec-a4",
+        "spec-change-38",
+        "spec-change-39"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C02": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "卡片传达：难度（简单/中等/困难）、适合新手独立标注（#40）、预计一场时长、侧方胜率",
+      "s": "5/6 卡有难度与时长，「码头疑云」两者皆缺；「适合新手」独立徽章正常（2 卡）",
+      "anchors": [
+        "spec-a4",
+        "spec-change-40"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C03": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "最近上线的场景固定插在列表第 2 位 + 「新上线」徽章",
+      "s": "onlineAt 最新的 legal-harbor-murder-jury 固定第 2 位 + 唯一「新上线」徽章",
+      "anchors": [
+        "spec-a4",
+        "spec-change-54"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C04": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "未过统计门槛时统计区显示引导式空态轮廓（不显示空数字）",
+      "s": "空态轮廓覆盖 5/6 卡且无零数字；码头疑云卡违约（无轮廓）——与 C01 同根因",
+      "anchors": [
+        "spec-a4",
+        "spec-change-54"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C05": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "「最热门」动态精选 → [Future]（#37）",
+      "s": "「最热门」缺席（Future 未实现）",
+      "anchors": [
+        "spec-a4",
+        "spec-change-37"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C06": {
+      "page": "D",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "点卡片 → DA；「去构建」在 DA",
+      "s": "D 卡无构建入口，点卡进 DA",
+      "anchors": [
+        "spec-a4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C07": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "独立教育页，与 E 分开（#42）",
+      "s": "DA 无编辑框 + 免责声明「本页只讲规则，不设编辑框」",
+      "anchors": [
+        "spec-a4",
+        "spec-change-42"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C08": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "四层渐进展示骨架保留（GLANCE → EXPAND-1 → EXPAND-2 → DEEP）",
+      "s": "四层齐全：一眼看懂 → 双方与胜利条件 → 裁判与计分（默认开）→ 深读（默认收）",
+      "anchors": [
+        "spec-a4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C09": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "侧方胜率上移到 GLANCE（#38）",
+      "s": "「侧方胜率」在 GLANCE 卡内（当前为空态轮廓形态）",
+      "anchors": [
+        "spec-a4",
+        "spec-change-38"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C10": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "背景故事 · 双方胜利条件 · 双方是谁 · 裁判 prompt + 摘要 · 评判什么 · 隐藏目标（how-to）· 计分规则（how-to）· 预计时长",
+      "s": "八项中七项齐备；「裁判 prompt」原文缺席（只有摘要，前端 API 类型亦无该字段）",
+      "anchors": [
+        "spec-a4"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C11": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "计分规则从场景数据读取，不硬编码（#42）；精确权重全公开（#26）",
+      "s": "计分文本逐场景（商鞅 +1/+0.5/−0.25/−1 vs 电车六条标准），权重数值公开",
+      "anchors": [
+        "spec-a4",
+        "spec-change-42",
+        "spec-change-26"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C12": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "隐藏目标在 DA 有意公开（对人公开、对对手 agent 隐藏）",
+      "s": "DEEP 层「隐藏目标怎么玩」整节公开机制（真目标随机指定、规则对所有玩家公开）",
+      "anchors": [
+        "spec-a4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U04-C13": {
+      "page": "D+DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "EXPAND-1 ＋双方可选立场/请求项、开场白",
+      "s": "「开场白」完全缺席；立场/请求项无专字段（角色卡仅部分场景有，请求项散落计分与 DEEP 散文）",
+      "anchors": [
+        "spec-change-51"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C14": {
+      "page": "D+DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "EXPAND-2 ＋隐藏信息真假配置概况、赛后问询方式、对话轮数、阶段结构（如有）",
+      "s": "轮数/阶段结构/问询方式已达意；「真假配置概况」无专字段、概况主体落在 DEEP 散文（层位错）",
+      "anchors": [
+        "spec-change-51"
+      ],
+      "impl": "gap_known",
+      "owner": "ks"
+    },
+    "U04-C15": {
+      "page": "D+DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "DEEP ＋裁判/计分模型。judgeOsPrompt 维持不公开",
+      "s": "裁判模型经摘要散文交代（EXPAND-2 而非 DEEP 字段）；judgeOsPrompt 确不在 payload",
+      "anchors": [
+        "spec-change-51"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U04-C16": {
+      "page": "DA",
+      "chapter": "A4",
+      "unit": "U04",
+      "q": "叙事↔原始规则切换保留",
+      "s": "叙事 ↔ 原始规则切换完全缺席",
+      "anchors": [
+        "spec-a4"
+      ],
+      "impl": "gap_known",
+      "owner": "ks"
+    },
+    "U04-C17": {
+      "page": "E",
+      "chapter": "A2.E",
+      "unit": "U04",
+      "q": "DA 侧卡：该侧已有策略时按钮组换成「再建一个商鞅 / 查看我的商鞅（N）」，并显示「你已有 2 个商鞅：…」",
+      "s": "全链路已验：0 策略双侧「去构建」→ 点甲方去构建创建 #117 → 回 DA 甲方换组「再建一个商鞅 / 查看我的商鞅（1）」+「你已有 1 个商鞅：#117」，乙方仍「去构建」",
+      "anchors": [
+        "spec-a2e",
+        "spec-p13"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C01": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "从 agent 呼出的紧凑面板（决定 (e) 不变）：agent 预选",
+      "s": "面板从 E 页版本卡「出战」与 EA 页头「出战」呼出；桌面居中 Modal；agent/场景/执侧随呼出处预选",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C02": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "agent 预选 + 版本下拉",
+      "s": "面板内没有己方版本下拉：出战版本是固定文案（钉住版＞★参赛版＞最新版）；换版本要回版本卡用「出战」（#88 E11 路径）",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C02b": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "参赛版本＝每侧各显式标记一个（#33/#58）",
+      "s": "从非 ★ 版本卡「出战」呼出时，副标题把钉住的版本谎标成「★参赛版本」：判据是 entryVersionID!=null 而非 fielded==entry",
+      "anchors": [
+        "spec-a5",
+        "spec-change-91",
+        "spec-p4"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C03": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "OS：执方由所选 agent 隐含；（tab0）测另一侧＝换用对侧 agent",
+      "s": "面板无执方控件；PVE 预设下拉只列对手侧 NPC（商鞅面板→甘龙侧 6 项；甘龙面板→商鞅侧），换侧＝换 agent 呼出",
+      "anchors": [
+        "spec-change-62",
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C03b": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "0 PVE（NPC 列表，含两侧胜率，#34）",
+      "s": "PVE tab 是纯预设下拉（label·角色名），NPC 不展示任何战绩/两侧胜率",
+      "anchors": [
+        "spec-a5",
+        "spec-change-34"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C04": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "「切侧」＝切换到你另一侧的 agent（没有则引导创建，#64）",
+      "s": "面板内无字面「切侧」控件；替代路径散在锁定态（去练习该侧/去练习对侧/去创建对侧）与 hotseat 空态（去我的智能体）",
+      "anchors": [
+        "spec-a5",
+        "spec-change-62",
+        "spec-change-64"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C05": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "tabs：0 PVE · 1 PVP 按 id（#25）· 2 PVP 顶尖玩家（→W11）· 3 自动匹配（计分，设计待评审 W11）。另：hotseat（自打）保留（#61）",
+      "s": "实际 3 tab：NPC 练习 / 左右手互搏(hotseat 升为 tab) / 玩家约战（内含「对手玩家/按 id 约战」子模式）；「顶尖玩家」「自动匹配」整体缺席",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C06": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "PVP tab 锁定可见 + 进度条徽章；解锁门槛可配置",
+      "s": "「玩家约战」tab 恒可见带锁形图标；内容区锁形 + 口径文案「每侧各赢 ≥1 场 NPC 练习解锁玩家约战」+ 按侧徽章 商鞅 0/1 · 甘龙 0/1 + 差侧引导按钮",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C07": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "hotseat 保留（自打/自测）：需选择打对侧的哪个 agent（对侧多 agent 时）",
+      "s": "「左右手互搏」tab：对侧唯一时直陈身份；对侧两个（B1/B2）时给「选择你的对侧智能体」下拉，候选恰为两者",
+      "anchors": [
+        "spec-change-61",
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C08": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U05",
+      "q": "hotseat 自打不受 PVP 门槛限制：两侧 agent 在手即可；不占 PVP 配额、占每日总配额",
+      "s": "门槛未解锁（0 PVE 胜）时「自打一场」派发成功并进 /matches/:id；config 用量 battlesToday+1、pvpBattlesToday 保持 0",
+      "anchors": [
+        "spec-change-78",
+        "spec-a6"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C09": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "「进行中的对战」条收敛：仅派发处出现、空态自动隐藏、可折叠",
+      "s": "空态三派发处均不渲染；派发后 E 页/my-agents/DA 出现横条（条头计数 + 对局小卡），chevron 可折叠展开；/scenarios 目录与 /matches 历史页恒不出现；移动端卡容器横向滚动",
+      "anchors": [
+        "spec-change-72",
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C09b": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "装着你已发起的对局卡的横条（#72）……「对战」＝入队进「进行中的对战」条",
+      "s": "跨账号泄漏证实：0 派发的副账号 B 在 /my-agents 看到他人（主账号）进行中的对局卡 #11；GET /v1/matches 返回全站 11 行且带 initiatorIsMe=false 可辨归属，但 battle-strip",
+      "anchors": [
+        "spec-change-72",
+        "spec-a5"
+      ],
+      "impl": "fixed_unverified",
+      "owner": "ks"
+    },
+    "U05-C10": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "侧抽屉可观战；战报可分享",
+      "s": "点条上对局卡＝整页跳转 /matches/:id（战报本身可分享、含版本 id）；不存在侧抽屉观战形态",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C11": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "双侧成对约战：一次约战产生两场（我 A vs 你 B ＋ 我 B vs 你 A），双方都须双侧齐备；默认打对方各侧最新版；（#91）双侧默认各取该侧参赛版本",
+      "s": "解锁态（route-mock gate 达标）表单齐备：头部「玩家约战已解锁」+双侧 ✓ 徽章；「我的双侧出战阵容——① 我商鞅 vs 他甘龙 · ② 他商鞅 vs 我甘龙」双下拉默认 ★（文案「默认各侧 ★参赛版本（未标记则最新版）」）；",
+      "anchors": [
+        "spec-change-66",
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C11p1": {
+      "page": "OS",
+      "chapter": "A2.E",
+      "unit": "U05",
+      "q": "EA/E 页头与 OS 阵容下拉一律用策略展示名，内部 id 降为可复制小字（#25 仍要 id 可见）",
+      "s": "OS 阵容下拉（含 hotseat 对侧选择器）以「#agentID · vN · 模型」为主标签，无策略展示名（商鞅/甘龙「自起名」），id 也非「可复制小字」形态",
+      "anchors": [
+        "spec-p1",
+        "spec-a2e"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U05-C12": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "1 PVP 按 id（FA/EA 可见 id，#25；约战＝选对手对侧的 agent-version）；默认打对方各侧最新版，按 id 可指定版本",
+      "s": "「按 id 约战」子模式完整：占位「输入对方任一版本 id（战报页可复制）」；非数字/不存在/跨场景三类就地报错；真实 id 解析出身份卡（昵称·场景·执方·模型·v#id）+「按 id 钉住其商鞅侧版本；另一侧取对方★参赛版（否则最新版）",
+      "anchors": [
+        "spec-change-25",
+        "spec-a5",
+        "spec-change-66"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C13": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "PVP 友谊赛：对方被通知、无需同意、不能拒绝",
+      "s": "解锁态脚注「友谊赛不计分；对方会收到通知，无需同意、不能拒绝。」；成功态另有「对方会收到一条合并通知，无需同意、不能拒绝」（存在于 bundle，未触发）",
+      "anchors": [
+        "spec-change-29"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U05-C14": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "移动端：底部弹层；条横向滚动",
+      "s": "390×844 下面板为贴底弹层（盒底=844，顶部圆角）；对战条卡容器 overflow-x-auto 横向滚动",
+      "anchors": [
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C01": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "双侧要求（#65，取代 #60）：每一侧都至少赢 ≥1 场 PVE（每侧阈值可配置，默认 1）",
+      "s": "新账号基线：全部场景 PVP 锁定，按侧进度 0/1，阈值来自配置",
+      "anchors": [
+        "spec-a6",
+        "spec-change-65",
+        "spec-a5",
+        "spec-change-46"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C02": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "每一侧都至少赢 ≥1 场 PVE 才解锁——取代 #60「任一侧都算」",
+      "s": "单侧胜仍锁定：a=1/1 后 gateUnlocked 仍 false（#60 语义被真实排除）",
+      "anchors": [
+        "spec-a6",
+        "spec-change-65",
+        "spec-change-60"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C03": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "PVE（两侧各建 agent 练两侧）→ 每侧各赢 ≥1 场 PVE（#65）→ 解锁 PVP",
+      "s": "双侧各胜 1 场后解锁：gateUnlocked=true，OS 面板解锁态齐备",
+      "anchors": [
+        "spec-a6",
+        "spec-change-65",
+        "spec-a5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C04": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "约战双方都须已解锁 PVP（#77）——被约方同样要过 #65 门槛",
+      "s": "服务端在 /v1/challenges 上双向强制门槛：发起方 gate_locked、被约方 opponent_gate_locked",
+      "anchors": [
+        "spec-a6",
+        "spec-change-77",
+        "spec-change-29"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C05": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "hotseat 自打不受 PVP 门槛限制（#78）：两侧 agent 在手即可，练习性质；不占 PVP 配额、占每日总配额",
+      "s": "锁定态下 hotseat 派发被受理（match 9）；配额只走每日总量；不计 PVE 门槛",
+      "anchors": [
+        "spec-a6",
+        "spec-change-78",
+        "spec-a5",
+        "spec-change-61"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C06": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "重复约战限次（#76）：同一对手玩家每日 M 次约战（M 进 §C2，参考 3）；每次约战占发起人 2 场配额（Q7）",
+      "s": "限次旋钮与文案在位（M=3）；强制行为不可测（需刷满 3 次成功约战=6 场真实对局+第二只解锁账号）",
+      "anchors": [
+        "spec-a6",
+        "spec-change-76",
+        "spec-c2"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C07": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "已有 1 个商鞅、想建第 2 个商鞅 → 必须先建过 ≥1 个甘龙；两侧都有后不再限制",
+      "s": "无对侧时同侧再建被挡：UI 弹窗引导文案 + API 409 sibling_gate",
+      "anchors": [
+        "spec-change-59",
+        "spec-change-79",
+        "spec-p6a"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C08": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "空策略不开引导门：#79 判定改为「现存 ≥1 个对侧策略**且版本数 ≥1**」",
+      "s": "0 版本对侧不放行；对侧存下 v1 后门即开",
+      "anchors": [
+        "spec-p8a",
+        "spec-change-79"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C09": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "按（玩家, 场景）隔离——本场景的门只看本场景内的对侧",
+      "s": "别场景的对侧不越场景放行（商鞅场景有甘龙，不解电车难题的门）",
+      "anchors": [
+        "spec-change-79"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C10": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "一侧同时只能有一个 ★；在任一策略的任一版本上点「设为参赛版本」＝把这一侧的出战席位交给它，自动清除同侧其他策略的 ★",
+      "s": "跨策略改标即侧内清星：状态层每侧恒 ≤1 个 ★（就地提示文案归 U01）",
+      "anchors": [
+        "spec-change-91",
+        "spec-p4"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C11": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "自动参赛只在本侧尚无 ★ 时发生……该侧还没有任何 ★ 时，首存的版本才自动接管；否则……交接席位必须是一次显式的「设为…参赛版本」",
+      "s": "侧无 ★ 时首存自动接管（a:#258、b:#259 实证）；侧有 ★ 时新策略首存与同策略新版都不夺席位",
+      "anchors": [
+        "spec-change-91"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C12": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "约战/成对对战（#66）双侧默认各取该侧参赛版本（未标记才回落最新版）",
+      "s": "解锁面板双侧阵容默认预选 ★（非最新版！a 侧 ★=v1 而最新=v2，预选取 v1 实证「参赛优先于最新」）",
+      "anchors": [
+        "spec-change-91"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C13": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "参赛版本显式标记，处处可见（#33）",
+      "s": "★ 在我的智能体行、E 页版本线、OS 面板版本下拉/阵容一致指向同一版本（UI 细节归 U01/U05，此处验一致性）",
+      "anchors": [
+        "spec-change-33"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C14": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "参赛必须双方：每侧各标一个参赛版本，只写一侧不能参赛",
+      "s": "entryReady 语义正确（单侧 ★ =false，双侧 ★ =true）；锦标赛报名校验本体无 UI 载体可测",
+      "anchors": [
+        "spec-change-58",
+        "spec-change-64"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U06-C15": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "触顶行为已定（#52）：按钮可点 → 提示「今日次数已用完（N/N），明天再来」→ 拒绝入队",
+      "s": "触顶文案（copy only）与配额口径在位；未打满配额（审计纪律）",
+      "anchors": [
+        "spec-change-52",
+        "spec-change-45",
+        "spec-change-46"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U06-C16": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U06",
+      "q": "分数初始 0/空，不由 PVE 播种；按玩家 × 场景计；基于真实 PVP/锦标赛结果",
+      "s": "天梯（GP/W11）未建——排名页明示「玩家天梯待后续版本」；两场 PVE 胜 + 一场 hotseat 后全站无任何分数面被播种",
+      "anchors": [
+        "spec-a6"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C01": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "三态（排队/进行中·实况/完成）；赛事、PVP、PVE 全部用这同一个视图",
+      "s": "PVE/PVP 均走 /matches/:id 同一视图；进行中（match 9 直播中）与完局（5/6）两态实证。排队态无素材（无 dispatched=false 对局且战斗预算 0）无法实证——源码里未完成态共用实况布局。",
+      "anchors": [
+        "spec-a7",
+        "spec-change-27"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C02": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "结果（胜者+分数）置顶（一眼知胜负；裁判理由散文随结果分列）→ 完整对话（静态为主）→ 赛后问询 → … → 计分推导（#26）",
+      "s": "完局区块次序＝结果(胜者+比分+判词散文+裁判模型) → 对话全文 → 问询 → 计分推导（倾向轨迹图 + 真目标/对方猜测/准驳结果/得分账账目），与主干一致。",
+      "anchors": [
+        "spec-a7",
+        "spec-change-69"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C02b": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "→ 隐藏目标（五步结构：真目标 → 辩论中是否达成 → 对手猜了什么 → 是否被识破 → 得分变化）→ 计分推导",
+      "s": "无独立「隐藏目标」区块。五步中仅「真目标」「对方猜测」是显式账目行（并入计分推导账目），「是否达成」「是否被识破」「得分变化」只散落在得分账散文里（如「甘龙 -1：真目标 GR2 被商鞅识破」），不成五步结构。",
+      "anchors": [
+        "spec-a7",
+        "spec-change-69"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U07-C03": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "另含 双方版本 id（#25）／FA 显示双方版本 id…id 可分享——按 id 约战的发现路径",
+      "s": "PVP 完局双方参战卡各显 v#252/v#254 + 复制按钮 +「可用于按 id 约战」；PVE 我方 v#244 同样呈现, NPC 侧标「PVE 预设 · v1-1」（官方侧本无版本 id, 合理）。",
+      "anchors": [
+        "spec-change-25"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C04": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "我方侧＝显眼的「← 我的智能体」按钮（高频）；对手侧＝低调「查看对手智能体」（公开视图，低频）",
+      "s": "我方半条满足：参战卡上醒目 accent 按钮「← 我的智能体」直达 /agents/:id（页头另有全局返回链）。对手半条缺失：对手侧只有纯文本「对手：{名} · v#{id}」, 无任何指向对手智能体公开视图的入口；源码注释自认「公开 ",
+      "anchors": [
+        "spec-a7",
+        "spec-change-71"
+      ],
+      "impl": "gap_known",
+      "owner": "ks"
+    },
+    "U07-C05": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "裁判 OS ①（生成层）：默认显示；独立 prompt 生成（保留裁判人设与模型）；生成时输出结构化倾向数据（schema → W7）；对所有观众公开",
+      "s": "「君上心声」卡（场景化裁判人设名）默认对旁观者可见, 卡标裁判模型 id, 卡内结构化倾向行「最挂心 / 当前倾向(favor+strength)」；同一结构化数据驱动计分推导的倾向轨迹图与回放锚点。API verdicts=os-N, o",
+      "anchors": [
+        "spec-a7",
+        "spec-change-22",
+        "spec-change-24"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U07-C06": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "裁判 OS ②（trace 层）：裁判真实 thinking trace，debug mode 查看，公开（不在受限三项内）…debug mode 本身任何观众可开",
+      "s": "旁观者可开调试模式；开后裁判真实 trace 以「内心」折叠出现在心声卡与判词处；API 对非所有者返回 judge 行 reasoning 非空（seq 11/18）。",
+      "anchors": [
+        "spec-a7",
+        "spec-change-22"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U07-C07": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "己方 OS：模型真实 thinking trace；默认隐藏，debug mode 查看；仅所有者（#20 已确认）…非所有者看不到别人的己方 trace",
+      "s": "默认无任何「内心」折叠；owner 开调试后己方（商鞅）行出现折叠；旁观者开调试后他人侧 0 折叠。关键：服务端契约层就把非所有者 payload 的 a 侧 reasoning 剥空（owner 5 处 vs probe 0 处）——是真",
+      "anchors": [
+        "spec-a7",
+        "spec-change-20",
+        "spec-change-22"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C08": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "PVE-NPC 侧＝官方运行（#80）：其 trace 按裁判 trace ② 处理，debug 下公开（不是「无 trace」，也不适用 #20 所有者限制）",
+      "s": "旁观者开调试后 NPC（甘龙）侧 5 处「内心」折叠可见；API 对非所有者返回 b 侧 reasoning 非空（seq 5/8/10/13/16）——官方侧按裁判②公开, 正确。",
+      "anchors": [
+        "spec-change-80"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C09": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "点击回放，全部内容从 0 到终局动态重演（无新 LLM 调用）；以裁判倾向变化的结构化锚点组织教学节奏（#24）…回放进行中隐藏 debug/trace 层（B1）",
+      "s": "「回放」按钮→控制条（播放/暂停/步进/倍速/退出）+ 倾向轨迹小图逐点生长；结果徽章换「回放中」；结果/问询/计分推导整段隐藏；调试开关 aria-disabled、全部「内心」折叠隐藏；倾向变化节拍处停留高亮心声卡并给「继续」；纯前端重",
+      "anchors": [
+        "spec-a7",
+        "spec-change-24",
+        "spec-b1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C10": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "受限项共三样——提示词、diff、己方 OS trace 仅所有者；其余（对话、结果、分数、裁判 OS、模型、id）对所有人可见…模型永远公开（#21）",
+      "s": "旁观者可见: 对话全文、结果、比分、裁判心声、双方模型 chip、版本 id。payload 键集无 prompt/playerPrompt/diff；页面无提示词/diff 字样。己方 trace 见 C07。旁观者能打开任意对局属 op",
+      "anchors": [
+        "spec-a7",
+        "spec-change-20",
+        "spec-change-21"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C11": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "分享：战报可链接分享；无需隐藏信息打码",
+      "s": "与对局无关的账号直接打开 /matches/5 URL 得到完整战报, 无打码。备注: 未登录访问 API 返回 401（前端落登录页）——链接接收者需有账号并登录, 规格未言明匿名可看, 记备注不判违规。",
+      "anchors": [
+        "spec-a7"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U07-C12": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "对战发起不强制新窗口/自动滚动（首战实况例外）",
+      "s": "全 src 仅 ICP 备案外链一处 target=_blank；对战/战报所有导航皆 React Router Link/navigate（同标签页）；旅程中从列表/入口打开战报均同标签。真派发验证受战斗预算 0 限制, 以源码 + 入口",
+      "anchors": [
+        "spec-a7"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U07-C13": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "内部词汇……只进规格，不进 UI／E9 无说明书原则",
+      "s": "完局问询区块里两张问询裁决卡以裁决内部 key 原文「inquiry-a」「inquiry-b」作为卡标题（h2）, 内部标识裸露上界面；应显示为问询对象的角色名（商鞅/甘龙）或中文标题。5173 同现。",
+      "anchors": [
+        "spec-a7",
+        "spec-section-0",
+        "spec-e9"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U08-C01": {
+      "page": "A",
+      "chapter": "B1",
+      "unit": "U08",
+      "q": "公开落地页：真实对局节选开场、1–2 场白名单示范对局（裁判 OS 公开可见）、顶尖玩家、总对战数。",
+      "s": "落地页只有营销 hero（用提示词打造最强对话智能体）+ 01/02/03 三张玩法说明卡 + 立即注册/登录。四项规格内容（真实对局节选、示范对局、顶尖玩家、总对战数）全部缺失。",
+      "anchors": [
+        "spec-b1"
+      ],
+      "impl": "fixed_unverified",
+      "owner": "ks"
+    },
+    "U08-C02": {
+      "page": "A",
+      "chapter": "B1",
+      "unit": "U08",
+      "q": "公开落地页（主行动＝进入注册/登录）",
+      "s": "主行动「立即注册」为主色按钮，旁有「已有账户，登录」；右上角另有 登录/注册。符合。",
+      "anchors": [
+        "spec-b1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U08-C03": {
+      "page": "B+C",
+      "chapter": "B2",
+      "unit": "U08",
+      "q": "邮箱登录（手机号近上线再加）；注册邀请码",
+      "s": "注册表单恰为 注册码(code)+昵称(displayName)+邮箱(email)+密码(password) 四个输入框，无手机号字段。符合。",
+      "anchors": [
+        "spec-b2"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U08-C04": {
+      "page": "B+C",
+      "chapter": "B2",
+      "unit": "U08",
+      "q": "注册邀请码 + 自动登录 → 落进 D/快速通道",
+      "s": "注册提交后自动登录，新账号（未打首战）落 /express 首战快速通道（页面带「首战快速通道」徽章与首战卡；express 页内容归 U03）。符合。",
+      "anchors": [
+        "spec-b2",
+        "spec-a3",
+        "spec-change-12"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U08-C05": {
+      "page": "B+C",
+      "chapter": "B2",
+      "unit": "U08",
+      "q": "注册邀请码（无效码应被拒绝）",
+      "s": "明显无效码提交 → 403，表单内红字「registration code unavailable」，停留 /register，不创建账号。行为符合；错误文案为英文原文（观察项，规格未约束文案语言）。",
+      "anchors": [
+        "spec-b2"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U08-C06": {
+      "page": "B+C",
+      "chapter": "B2",
+      "unit": "U08",
+      "q": "邮箱登录",
+      "s": "邮箱+密码登录成功进入登录态，落 /scenarios。用借用账号（只读）实测，符合。",
+      "anchors": [
+        "spec-b2"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U08-C07": {
+      "page": "B+C",
+      "chapter": "B2",
+      "unit": "U08",
+      "q": "邮箱登录（错误密码应报错）",
+      "s": "用自建账号邮箱+错误密码登录：表单内红字「email or password is incorrect」，停留 /login，不进入登录态。符合；错误文案为英文原文（观察项）。",
+      "anchors": [
+        "spec-b2"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U08-C08": {
+      "page": "",
+      "chapter": "B8",
+      "unit": "U08",
+      "q": "全局头部＝场景 D · 我的智能体 · 排名 G · 历史 B7 · 通知 I（铃铛 #43）· 设置 K；历史居最右",
+      "s": "桌面顶栏实测：AXIIA CUP logo + 文字导航恰为 场景/我的智能体/排名/历史（顺序如此，历史居最右）+ 铃铛(→/notifications) + 设置入口(→/settings) + 退出。恰六项，无第七项。符合。观察：设置",
+      "anchors": [
+        "spec-b8",
+        "spec-change-73",
+        "spec-change-74"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U08-C09": {
+      "page": "",
+      "chapter": "B8",
+      "unit": "U08",
+      "q": "桌面顶栏与移动底栏一致，历史居最右",
+      "s": "390×844 移动视口实测：底栏固定导航 场景/我的智能体/排名/历史（与桌面同一份清单，历史居最右）；顶栏保留铃铛+用户+退出。符合。",
+      "anchors": [
+        "spec-b8",
+        "spec-change-74"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U08-C10": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U08",
+      "q": "通知铃处处可见（含未读数）",
+      "s": "铃铛在 /scenarios /my-agents /tournaments /matches /settings 五处均可见（移动端亦可见）。未读数实现为小圆点+aria-label「N 条未读」（#72 顶栏降噪：数字角标改小圆点，数量",
+      "anchors": [
+        "spec-change-43",
+        "spec-b5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U08-C11": {
+      "page": "A",
+      "chapter": "B1",
+      "unit": "U08",
+      "q": "顶栏视觉降噪（「进行中的对战」条仅派发处出现）",
+      "s": "顶栏（header）内无对战条（aria-label=进行中的对战 计 0）、无多余组件；顶栏内容收敛为 logo+四 tab+铃铛+设置+退出，高度 h-12。视觉面符合。（对战条出现/折叠行为归 U05。）",
+      "anchors": [
+        "spec-change-72"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U08-C12": {
+      "page": "A",
+      "chapter": "B1",
+      "unit": "U08",
+      "q": "智能体/版本体系不配说明书——界面自解释",
+      "s": "登录态 header/footer/nav 与未登录三页均无「说明书/帮助/文档/指南/docs/help」类条目。导航层符合 E9。",
+      "anchors": [
+        "spec-e9",
+        "spec-change-84"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C01": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "alpha 只做站内（#43）",
+      "s": "通知渠道只有站内：全站无邮件/推送开关或提示；邮箱仅作登录名（设置页账户信息只读区）；通知只落 /notifications 与铃铛",
+      "anchors": [
+        "spec-b5",
+        "spec-change-43"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C02": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "玩家离线时通知持久保存",
+      "s": "通知与读态服务端持久：U06 上一会话（数小时前）产生的 5 条通知在全新登录后原样在列；标已读后登出→登入读态不回退",
+      "anchors": [
+        "spec-b5",
+        "spec-change-43"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C03": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "通知铃**处处可见**（含未读数）",
+      "s": "未读数行为正确：未读>0 时铃铛现未读点、aria-label「N 条未读」且 N===unreadCount；标已读逐条递减；全部已读后归零、未读点消失；新通知到达（match 12 完局）后未读点复亮",
+      "anchors": [
+        "spec-b5",
+        "spec-change-43"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C04": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "深链到战报/G",
+      "s": "kind① 深链落战报：通知行「查看详情 →」（服务端 link=/matches/N）点击落 /matches/N 战报页；深链点击顺手标已读",
+      "anchors": [
+        "spec-b5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C05": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "派发时给 **ETA +「完成后通知你」**",
+      "s": "派发时刻无 ETA、无「完成后通知你」：实测 hotseat 派发（match 12）点击后直接跳转 /matches/:id 实况页；PVE/约战派发同样直跳或只说「两场对局已入队」。全站唯一「完成后通知你」在落地页营销卡",
+      "anchors": [
+        "spec-b5"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U09-C06": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "通知页支持**已读 / 清除 / 分组**",
+      "s": "三能力在位：逐条「标为已读」+「全部已读」（未读数联动）；「清除」带不可恢复确认守卫（confirm）；按「PVP / 锦标赛」「PVE / 系统」分组渲染（空组隐藏）",
+      "anchors": [
+        "spec-b5"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C07": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "① 对局完成（你发起的 PVE/PVP 出结果 → 深链战报）",
+      "s": "kind① 全链路实证：存量 4 条（PVE match 7/8/10 + hotseat-PVP match 9）+ 新鲜 1 条（match 12 完局即达，含 SSE 铃铛联动）；服务端渲染「对局已结束/你的对局已出结果，点击查看战报",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C08": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "② 被挑战（友谊赛来袭；仅告知，不可拒绝 #29）",
+      "s": "不可测：产生 kind② 需一次**成功**约战落到被约方，而 #77 要求约战双方都已解锁 PVP。现场唯一解锁账号是 U06 自己（自约被服务端 400 bad_request 拒，U06-C04 实测）；给第二只账号解锁需 ≥2 场 ",
+      "anchors": [
+        "spec-change-53",
+        "spec-change-29"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C09": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "③ 自动匹配结果（计分 PVP、天梯变动）",
+      "s": "不可测：自动匹配/天梯（W11）未落地——排名页明示「玩家天梯待后续版本」（U06-C16），无任何计分 PVP 通路可产生本 kind",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "untestable",
+      "owner": "ks"
+    },
+    "U09-C10": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "④ 锦标赛·新一轮 / 你的对局完成 / 最终排名",
+      "s": "不可测：线上无任何锦标赛（GET /v1/tournaments = []）；开赛/推轮属 admin CLI 面（axiia start/next-round），审计纪律禁用 admin 端点",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "fixed_unverified",
+      "owner": "ks"
+    },
+    "U09-C11": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "⑤ 锦标赛资格（直邀/跳过海选 #32）",
+      "s": "不可测：直邀由主办方（admin）发起，且现场无锦标赛；纪律禁用 admin",
+      "anchors": [
+        "spec-change-53",
+        "spec-change-32"
+      ],
+      "impl": "untestable",
+      "owner": "ks"
+    },
+    "U09-C12": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "⑥ PVE 门槛达成（PVP 解锁）",
+      "s": "kind⑥ 实证：U06 双侧过线（match 10）产生 gate_unlocked 通知——「🎉 双侧试炼完成，约战已解锁」+「该场景两侧的试炼都已达标，现在可以向其他玩家发起约战了。」+ link=/scenarios/shangy",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C13": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "⑦ 参赛版本提醒（锁定前确认）",
+      "s": "不可测：触发点是锦标赛报名/锁定窗口——线上无锦标赛即无锁定前时刻",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U09-C14": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "⑧ 系统公告",
+      "s": "不可测：公告由 admin 发布，审计纪律禁用 admin 端点",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "untestable",
+      "owner": "ks"
+    },
+    "U09-C15": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "优先级：PVP/锦标赛 > PVE",
+      "s": "分组序在位：通知页恒以「PVP / 锦标赛」组在前、「PVE / 系统」组在后渲染（空组隐藏）；kind 归组＝challenged/automatch_result/tournament_round/tournament_invite →",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U09-C16": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "（B5 诸能力在零通知账号上的空态基线）",
+      "s": "空态正确：新号 /notifications「暂无通知。」、无「全部已读/清除」按钮（空态不给动作）、铃铛无未读点；GET /v1/notifications = {notifications:[],unreadCount:0}",
+      "anchors": [
+        "spec-b5",
+        "spec-b8"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C01": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "展示名＝侧角色名 + 场景（「侧角色名「自起名」· 场景」）…（P1/P9）页头显示策略展示名（商鞅「贪婪」，无名回落 商鞅 #id）…「策略」「版本线」这类词不出现在 UI。",
+      "s": "EA 页头 h1=「商鞅「贪婪」」，副行「商鞅变法·朝堂辩法 · 甲方 · 2 个版本 · #123」；无名的甘龙回落「甘龙 #124」；正文无「策略/版本线」内部词。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-63",
+        "spec-change-87",
+        "spec-p1",
+        "spec-change-25"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C02": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "双侧完成度徽章（#64）：EA 与「我的智能体」处显示 商鞅 ✓ / 甘龙 ✗，缺侧时给「去创建对侧」引导。",
+      "s": "「我的智能体」页有完整双侧徽章（商鞅 ✓/未标参赛/未建 三态）与「参赛资格已就绪/未就绪」行——该半句达标。但 EA 页（agent-view）没有任何双侧完成度徽章，也没有缺侧引导；#64 点名的两处只落了一处。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-64"
+      ],
+      "impl": "gap_known",
+      "owner": "ks"
+    },
+    "U10-C03": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "页头「编辑」按钮（出战旁，＝进入工作区、默认载入最新版本文本，#75/#81）。",
+      "s": "EA 页头「编辑」与「出战」并排；点击落 /agents/123/build 工作区（内容语义归 U01）。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-75",
+        "spec-change-81"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C04": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "所有者视图：提示词、版本 diff、…（#20：提示词与 diff 仅所有者）。",
+      "s": "EA「版本对比」区：基准/对比双下拉（vN ★·模型 口径）+「对比」→ 双栏全文对照，owner 可见提示词全文。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-20"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C05": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "逐版本胜负（天然按侧，#35/#63）…P15 补上 B3 早已承诺却不存在的「逐版本胜负」（matchCount/winCount，按已计分对局统计）。",
+      "s": "每张版本卡有 data-testid=version-record 战绩槽：0 战显示「还没有出战过」，有局显示「N 战 M 胜」。对战预算 0，仅验结构与文案（本账号版本均 0 战）；按侧天然成立（agent 即侧）。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-35",
+        "spec-p15"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C06": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "参赛版本标记…★ 每侧唯一（P4/#91）。",
+      "s": "恰一张版本卡带「★参赛版本」徽章（v1 首存自动 ★）；非 ★ 卡给「设为商鞅参赛版本」。改标机制归 U01，此处只验标记存在与唯一。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-33",
+        "spec-change-91"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C07": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "自己的版本 id（#25）…P1：内部 id 降为可复制小字（#25 仍要 id 可见）。",
+      "s": "页头副行含 agent id 小字 #123；每张版本卡并排 vN 与 #全局id 双编号。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-25",
+        "spec-p1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C08": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "版本卡动作（按 #89/#90 更新）＝「展开全文」/「设为参赛版本」（#33）/「基于该版本迭代」/「出战」——「复制为新智能体」已删除（#90）。",
+      "s": "动作集合逐字为 展开全文/设为商鞅参赛版本（★卡不显）/基于该版本迭代/出战；页面无「复制为新智能体」「恢复到工作区」（存在/缺席验证；点击机制归 U01）。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-89",
+        "spec-change-90"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C09": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "（#88）EA 与 E 的版本卡同构：同一套动作集合在两页长一样；EA 另有版本 diff 与公开视图，E 另有编辑区。",
+      "s": "EA 与 E 页版本卡动作集合逐字一致（同一 VersionList）；EA 独有 diff 区，E 独有工作区。附注：E 页在场景数据未回时按钮短暂显示「设为甲方参赛版本」占位（builder 的 side 回落文案）——加载瞬态，不计差",
+      "anchors": [
+        "spec-b3",
+        "spec-change-88"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C10": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "下方一排兄弟策略胶囊用于同侧横向切换（同侧仅 1 个策略时整排不出现）。",
+      "s": "商鞅侧两策略：A 页头下出现「商鞅「激进」」胶囊（当前项高亮 aria-current），点击切到 /agents/125；甘龙（同侧唯一）页整排不出现。",
+      "anchors": [
+        "spec-b3",
+        "spec-p9",
+        "spec-p1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C11": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "入口（沿 v3.2 EA-4）：排行榜 · E 保存后 · D/DA「我的智能体」· G 里玩家的对局列表 · 战报「查看该智能体」。",
+      "s": "可达入口三处全通：DA 侧卡「查看我的商鞅（1）」→ EA；「我的智能体」行「查看智能体」→ EA；EA「出战」开 OS 面板，阵容用策略展示名口径（含「贪婪」，P1）。E→EA 互通由「← 智能体主页」与页头「编辑」双向成立（C03）。",
+      "anchors": [
+        "spec-b3",
+        "spec-p1"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C11b": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "入口…排行榜 · G 里玩家的对局列表 · 战报「查看该智能体」。",
+      "s": "对战预算 0：无战报可开、无排名数据。静态证据：战报参战方卡对**我方**给「← 我的智能体」→ /agents/:id（match-detail.tsx G20 卡）；对**对手侧**故意不给链接（源码注释自认「公开 EA（G6）在 P6",
+      "anchors": [
+        "spec-b3"
+      ],
+      "impl": "gap_open",
+      "owner": "ks"
+    },
+    "U10-C12": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "公开视图：逐版本胜负有意公开（#35，按侧显示）。",
+      "s": "公开 EA 不存在：探针账号打开 /agents/123 只得到错误文案「not your agent」（导航壳之外无任何内容——无展示名、无逐版本胜负）；draft/versions 对非所有者一律 403，前端无公开渲染分支。match",
+      "anchors": [
+        "spec-b3",
+        "spec-change-35"
+      ],
+      "impl": "fixed_unverified",
+      "owner": "ks"
+    },
+    "U10-C13": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "提示词与 diff 永不公开（#20）。",
+      "s": "探针视角页面正文不含任何提示词暗记；以探针 cookie 请求 draft/versions/diff 全部 403，响应体不含提示词。受限项保护达标（且正因拒绝一切数据，C12 的公开面也一并没了——两条同因异果）。",
+      "anchors": [
+        "spec-b3",
+        "spec-change-20"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U10-C14": {
+      "page": "EA",
+      "chapter": "B3",
+      "unit": "U10",
+      "q": "PVE-NPC 的视图：聚合数据（含两侧胜率语义 #34）。（#34：显示的是该场景两侧 agent 的胜率，不是玩家胜率。）",
+      "s": "聚合数据的语义面达标：DA/D 有「侧方胜率」条（N 场 · 商鞅 x% / 甘龙 y%，两侧 agent 胜率口径；无数据时空态「数据积累中」）。但「PVE-NPC 的视图」本体缺席：NPC 预设在 DA 只是「预设对手」一节的静态徽章（",
+      "anchors": [
+        "spec-b3",
+        "spec-change-34"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U11-C01": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "GT（锦标赛，含选择器与按轮时间线）…（决策记录：「排名中心在哪」已解决＝G 的双 tab；无独立 J 页）；B8 全局头部含「排名 G」",
+      "s": "「排名」为一级导航入口，/tournaments 即 G 排名中心；0 锦标赛时 GT 列表显示空态「暂无锦标赛。」，无独立 J 页",
+      "anchors": [
+        "spec-b4",
+        "spec-b8"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U11-C02": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "GT（锦标赛，含选择器与按轮时间线）",
+      "s": "锦标赛选择器的非空形态与「按轮时间线」——需要至少一个真实锦标赛才可观测",
+      "anchors": [
+        "spec-b4"
+      ],
+      "impl": "gap_open",
+      "owner": "Minsheng"
+    },
+    "U11-C03": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "GP（天梯，待 W11 落地后开）…MMR 天梯的完整设计属 W11（方向已进规格 A6，设计待评审）",
+      "s": "GP 天梯在 W11 落地前缺席：页面无「天梯」tab，仅说明「玩家天梯待后续版本」",
+      "anchors": [
+        "spec-b4",
+        "spec-c3"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U11-C04": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "排名/天梯一律按玩家（不按 agent、不按侧，#64）",
+      "s": "排名行主体应是玩家（昵称），不是 agent/侧/提交条目",
+      "anchors": [
+        "spec-b4",
+        "spec-change-64"
+      ],
+      "impl": "fixed_unverified",
+      "owner": "Minsheng"
+    },
+    "U11-C05": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "锦标赛报名校验双侧参赛版本（#58）…参赛必须双方：每侧各标一个参赛版本，只写一侧不能参赛",
+      "s": "报名时校验双侧各有 ★参赛版本，单侧拒绝",
+      "anchors": [
+        "spec-b4",
+        "spec-change-58",
+        "spec-a6"
+      ],
+      "impl": "pending_ruling",
+      "owner": "Minsheng"
+    },
+    "U11-C06": {
+      "page": "",
+      "chapter": "A3",
+      "unit": "U11",
+      "q": "赛事运行期间，系统可以阻挡全部试炼（#47——规格行为，非 bug）",
+      "s": "赛事运行时阻挡全部试炼；未运行时不阻挡（本次只可测后半）",
+      "anchors": [
+        "spec-a3",
+        "spec-change-47"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U11-C07": {
+      "page": "",
+      "chapter": "A6",
+      "unit": "U11",
+      "q": "天梯高分 → 后续锦标赛直邀 / 跳过海选（任意高分 agent 即获资格，#32）；通知⑤ 锦标赛资格（直邀/跳过海选 #32）",
+      "s": "天梯高分玩家获后续锦标赛直邀/跳过海选资格，经通知⑤送达",
+      "anchors": [
+        "spec-a6",
+        "spec-change-32",
+        "spec-b5"
+      ],
+      "impl": "untestable",
+      "owner": "ks"
+    },
+    "U11-C08": {
+      "page": "",
+      "chapter": "B8",
+      "unit": "U11",
+      "q": "B8 导航＝场景 · 我的智能体 · 排名 · 历史 · 通知 · 设置（无管理入口）；/admin 为管理员专属",
+      "s": "非管理员访问 /admin 必须被拒（拒绝本身是可测条文）；单次导航即全部测试",
+      "anchors": [
+        "spec-b8"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U11-C09": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U11",
+      "q": "/admin/slots/:id 为管理员专属",
+      "s": "非管理员访问 /admin/slots/:id 必须被拒；单次导航即全部测试",
+      "anchors": [],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U11-C10": {
+      "page": "",
+      "chapter": "C4",
+      "unit": "U11",
+      "q": "公开上线（离开邀请码 alpha）前需 ICP 备案 + ToS/隐私页",
+      "s": "当前仍处邀请码 alpha：注册页必填「注册码」，axiia_cup 可通过",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U11-C11": {
+      "page": "",
+      "chapter": "C4",
+      "unit": "U11",
+      "q": "公开上线（离开邀请码 alpha）前需 ICP 备案 + ToS/隐私页",
+      "s": "ICP 备案已在位（页脚「备案号：浙ICP备2025153799号-1」处处可见）；ToS/隐私页尚无——公开上线前置未到期，缺席不构成 diff",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U11-C12": {
+      "page": "",
+      "chapter": "C4",
+      "unit": "U11",
+      "q": "每个动 schema 的改动附一行「上线时对现有玩家发生什么」；旧 model 列 NOT NULL——所有新写入路径必须继续填它；赛事运行期间不部署 submissions 表迁",
+      "s": "纯运维/迁移就绪项——玩家可见 UI 无任何观测物",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "untestable",
+      "owner": "Minsheng"
+    },
+    "U12-C01": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "个人资料（昵称可编辑 #85）",
+      "s": "设置页个人资料区存在，昵称行显示当前昵称并带「编辑」入口",
+      "anchors": [
+        "spec-b6",
+        "spec-change-85"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C02": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "昵称可编辑（1–50 字…）",
+      "s": "昵称长度边界：空昵称保存钮禁用（下限 1）；输入 60 字被 maxLength 截断为 50（上限 50）",
+      "anchors": [
+        "spec-b6",
+        "spec-change-85"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C03": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "改后全站展示即时同步",
+      "s": "改昵称保存后，设置页与顶栏导航立即显示新昵称；另开「我的智能体」页顶栏仍为新昵称；已改回原昵称",
+      "anchors": [
+        "spec-b6",
+        "spec-change-85"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C04": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "邮箱/角色只读",
+      "s": "邮箱行以纯文本显示注册邮箱，页面无邮箱输入框",
+      "anchors": [
+        "spec-b6",
+        "spec-change-85"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C05": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "邮箱/角色只读",
+      "s": "角色行显示「选手」徽章，只读无输入框",
+      "anchors": [
+        "spec-b6",
+        "spec-change-85"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C06": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "管理员提权（TOTP）",
+      "s": "TOTP 提权入口：玩家账号下「管理员提权」卡不出现（符合 admin-gated 设计）；管理员侧的提权表单无法用本单元的玩家账号验证（禁用 admin 端点），但前端源码（v2/web/src/pages/settings.tsx）在 ",
+      "anchors": [
+        "spec-b6"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C07": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "邀请码状态",
+      "s": "设置页没有任何「邀请码」状态区块——B6 列明应有。远端与 5173（分支前端）都缺，且分支源码 settings.tsx 无此区块",
+      "anchors": [
+        "spec-b6"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U12-C08": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "通知偏好",
+      "s": "设置页没有「通知偏好」区块——B6 列明应有。远端与 5173 都缺，分支源码亦无。缓解因素：alpha 通知站内 only（B5/#43），暂无渠道可偏好，故定级 minor 而非 major",
+      "anchors": [
+        "spec-b6"
+      ],
+      "impl": "pending_ruling",
+      "owner": "ks"
+    },
+    "U12-C09": {
+      "page": "L",
+      "chapter": "B7",
+      "unit": "U12",
+      "q": "完整历史页",
+      "s": "历史页 /matches 存在，标题「历史」，行结构完整（对战 #id · 场景标题 · 类型 PVE/PVP · 状态徽章）。初版 BDD 假设新账号历史必为空而红——实际 dev 后端历史为公开模式（open=true，文案「全部对战记",
+      "anchors": [
+        "spec-b7"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C10": {
+      "page": "L",
+      "chapter": "B7",
+      "unit": "U12",
+      "q": "行点开 → 战报",
+      "s": "点击历史第一行落到 /matches/4 战报页（战报内容归 U07，本单元只验行→报链接）。原计划记 blocked（预算 0 无自有对局），因历史公开模式意外可验，未消耗任何对战",
+      "anchors": [
+        "spec-b7"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C11": {
+      "page": "",
+      "chapter": "C2",
+      "unit": "U12",
+      "q": "全部走文件 + CLI，无后台 UI",
+      "s": "C2 旋钮负检：/settings、/scenarios、/notifications 均无「每日对战次数/统计展示门槛/解锁门槛/并发上限/可见性矩阵/新手预设」等配置控件或字样（拒绝文案里出现的数值提示不属配置 UI，未见触发）",
+      "anchors": [
+        "spec-c2",
+        "spec-change-44"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U12-C12": {
+      "page": "",
+      "chapter": "C3",
+      "unit": "U12",
+      "q": "Future features（明确推迟）",
+      "s": "C3 负检：无卡牌（deck）构建模式、无「最热门」动态精选、无 Focus mode 控件、无站外通知渠道（email/飞书）设置、无（B6 后续）姓名隐私开关。MMR 天梯完整设计（W11）属设计文档域，UI 无 MMR 配置面——记 ",
+      "anchors": [
+        "spec-c3"
+      ],
+      "impl": "match",
+      "owner": "Yihan"
+    },
+    "U12-C13": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "新密码 ≥8 位",
+      "s": "修改密码表单三输入（当前/新/确认新）齐全；7 位新密码被挡「新密码至少 8 位」；两次新密码不一致被挡「两次输入的新密码不一致」",
+      "anchors": [
+        "spec-b6",
+        "spec-change-86"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C14": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "需验当前密码",
+      "s": "错误的当前密码 + 合法新密码 → 服务端拒绝，文案「当前密码不正确」，无成功文案，密码未变（旧密码随后仍登录成功）",
+      "anchors": [
+        "spec-b6",
+        "spec-change-86"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U12-C15": {
+      "page": "K",
+      "chapter": "B6",
+      "unit": "U12",
+      "q": "成功后除当前会话外全部会话失效",
+      "s": "改密前登录的第二浏览器上下文在改密后刷新即失效（被打回 /login）；当前上下文会话保留（仍可开 /settings、/matches）；成功文案「密码已修改，其他设备已退出登录」。两种方法各改密一轮，均已把密码改回 playwright",
+      "anchors": [
+        "spec-b6",
+        "spec-change-86"
+      ],
+      "impl": "match",
+      "owner": "ks"
+    },
+    "U13-C01": {
+      "page": "C",
+      "chapter": "C4",
+      "unit": "U13",
+      "q": "    场景: 用注册码在真注册页开出一个新账号（U13-C01）\n      当 我打开 /register 用注册码填全四项并点「创建账户」\n      那么 我落进 /exp",
+      "s": "邀请码注册 → 注册即登录（浏览器人程腿）",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C02": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 管理员在固定局场景上建赛、报名四个版本并按 1240 播种（U13-C02）\n      假如 管理员装好无模型固定局场景（scripts+slots）\n     ",
+      "s": "admin 建赛/报名/播种，1240 门槛把 MMR 场切成 海选/正赛",
+      "anchors": [
+        "spec-b4",
+        "spec-change-32",
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C03": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 配对海选轮派发真对局，完局关轮，再配正赛轮（U13-C03）\n      当 管理员对海选池配对第 1 轮\n      那么 响应给出 1 场已派发对局且无轮空\n ",
+      "s": "配对开轮即派发真对局，固定局零推理完局，按轮推进到正赛",
+      "anchors": [
+        "spec-b4",
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C04": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 玩家在「排名」页看到锦标赛卡片——时间线与阶段标签（U13-C04）\n      假如 我以 P1 登录\n      那么 顶部导航存在「排名」入口\n      当",
+      "s": "玩家「排名」页锦标赛卡片（时间线与 海选/正赛 标签——\n08-25 集成核实 #138 已落地，连同 #64 按玩家积分榜由钉缺口转为验收）",
+      "anchors": [
+        "spec-b4",
+        "spec-change-32"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C05": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 赛事 running 时试炼未被阻挡——机制是启动期环境变量（U13-C05）\n      假如 我以 P1 登录且锦标赛正在 running\n      那么 /",
+      "s": "试炼阻挡的真实机制是启动期 AXIIA_TRIALS_BLOCKED，无运行时开关",
+      "anchors": [
+        "spec-change-47"
+      ],
+      "impl": "pending_ruling",
+      "owner": "Minsheng"
+    },
+    "U13-C06": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 直邀者的铃铛与通知页（U13-C06）\n      假如 我以 P1（跳过海选的直邀者）登录\n      那么 顶栏铃铛带未读小圆点\n      当 我进入 /no",
+      "s": "参赛者铃铛/通知页——直邀「锦标赛资格」与「新一轮」",
+      "anchors": [
+        "spec-change-53"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C07": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 结赛推送最终排名通知，积分榜按玩家给出四行（U13-C07）\n      当 管理员把锦标赛置为 finished\n      那么 P1 的通知里出现「锦标赛已结",
+      "s": "结赛 → 最终排名通知；积分榜后端按玩家、前端未跟上",
+      "anchors": [
+        "spec-change-53",
+        "spec-change-64"
+      ],
+      "impl": "match",
+      "owner": "Minsheng"
+    },
+    "U13-C08": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "    场景: 单侧版本也能被报名进锦标赛（U13-C08）\n      假如 一名只在甲侧保存过版本的新玩家\n      当 管理员在另一场锦标赛里报名他的单侧版本\n      ",
+      "s": "报名不校验双侧参赛版本（缺口钉住）",
+      "anchors": [
+        "spec-change-58"
+      ],
+      "impl": "pending_ruling",
+      "owner": "Minsheng"
+    },
+    "LACK-01": {
+      "page": "场景内容",
+      "chapter": "D",
+      "unit": "U15",
+      "q": "场景内容：裁判 OS 节拍与名字、脚本内计分与 winner 一致性、隐藏目标/隐藏信息、jury-vote 事件、角色选择、多阶段结构",
+      "s": "§C1 整体划出。唯一系统层条文 #23「OS 必须存在」被 main PR#132 直接违反；OS 节拍三方不一致（DESIGN_SPEC 偶数轮 / R8 08-25 复核通过时 1,3,5 / 同日 PR#139 改回 2,4,6）",
+      "anchors": [
+        "spec-c1",
+        "spec-change-23",
+        "spec-change-22",
+        "spec-change-24"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-02": {
+      "page": "G",
+      "chapter": "B4",
+      "unit": "U13",
+      "q": "锦标赛赛制细则：瑞士轮配对、Buchholz、轮空计胜、海选/正赛播种、临时 MMR 1200±40、qualifierCutoff、晋级名额、失败局不计分不收轮",
+      "s": "v3.4 只有 A6 一句、B4 一行；#58「校验双侧参赛版本」被 U13-C08 测试反向断言「单侧也能报名」，无裁决记录",
+      "anchors": [
+        "spec-b4",
+        "spec-a6",
+        "spec-change-32",
+        "spec-change-58"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    },
+    "LACK-03": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "战报可见性与分享权限模型（未登录？登录非 owner？凭 token？）",
+      "s": "A7 写「对所有人可见」「可链接分享」但谁能看未定义；飞书 09「需产品决策先行」",
+      "anchors": [
+        "spec-a7",
+        "spec-change-20"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-04": {
+      "page": "运营",
+      "chapter": "C2",
+      "unit": "U14",
+      "q": "运营/管理面：/admin 与 /admin/slots UI、admin 端点（tournaments/seed/pair/promote/participants/slots/",
+      "s": "规格只有 #44「一切走文件+CLI，无后台 UI」——与现实相反；谁能做/失败怎么办/幂等/通知副作用零条文，无 e2e",
+      "anchors": [
+        "spec-change-44",
+        "spec-c2"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    },
+    "LACK-05": {
+      "page": "I",
+      "chapter": "B5",
+      "unit": "U09",
+      "q": "通知：种类清单、发射时机、ETA 承诺、通知偏好形态",
+      "s": "#53 八类 vs 九 kind（多 security_alert / tournament_finished，缺 ⑦ 参赛版本提醒；③ ⑧ 无发射器）；B5 派发 ETA 未实现（U09-C05 fixme）；B6 通知偏好 08-25 ",
+      "anchors": [
+        "spec-b5",
+        "spec-b6",
+        "spec-change-53"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-06": {
+      "page": "OS",
+      "chapter": "A5",
+      "unit": "U05",
+      "q": "选择对手面板 A5 的 7 条「产品裁定」缺口（版本下拉、切侧、顶尖玩家/自动匹配 tab、NPC 两侧胜率、侧抽屉观战、阵容展示名、#91 钉版副标题）",
+      "s": "不是无 spec，是「spec 待裁决」：A5 文字存在但是否仍是 desired 无人拍板（#88 钉版被注释称「现行替代」）",
+      "anchors": [
+        "spec-a5",
+        "spec-change-88",
+        "spec-change-91",
+        "spec-change-34"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-07": {
+      "page": "B/C",
+      "chapter": "B2",
+      "unit": "U16",
+      "q": "认证与会话安全：登录节流、cookie 90 天、CSRF (Sec-Fetch-Site)、refresh 重放→session_killed、密码强度、手机号登录/绑定",
+      "s": "B2 只写「邮箱登录（手机号近上线再加）」；注册接受 5 字符密码而 #86「≥8」只在改密生效；规格未随手机号登录更新",
+      "anchors": [
+        "spec-b2",
+        "spec-change-86"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    },
+    "LACK-08": {
+      "page": "配置",
+      "chapter": "C2",
+      "unit": "U12",
+      "q": "配置注册表 §C2 与实际旋钮的对应；「可配置」项的真源",
+      "s": "§C2「PVE-NPC 默认 2」vs 商鞅十余 preset（RFC R15 未关）；#47「赛事运行期间可阻挡」实现为启动期 env 与赛事状态无关（U13-C05 明确断言）；A4「难度/时长可配置」实为前端 education 字段",
+      "anchors": [
+        "spec-c2",
+        "spec-change-47",
+        "spec-a4"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    },
+    "LACK-09": {
+      "page": "FA",
+      "chapter": "A7",
+      "unit": "U07",
+      "q": "SSE 实况 / 铃铛连接语义：断线重连游标、thinking 帧逐观众过滤、bell 无重连、对战条 30s 轮询与标签页隐藏暂停",
+      "s": "A7 只定义三态；断线后会不会丢帧、是否提示——用户应期待什么无条文",
+      "anchors": [
+        "spec-a7",
+        "spec-b5"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-10": {
+      "page": "全局",
+      "chapter": "B8",
+      "unit": "U17",
+      "q": "错误态 / 空态 / 失败态：无 404 页、无 ErrorBoundary、对局失败态、老服务器 404/405 降级文案、配额触顶文案",
+      "s": "B8 只有「引导式空状态」一句；「失败局不计分」只在赛制说明 §7；#45 行仍写「触顶行为未定」",
+      "anchors": [
+        "spec-b8",
+        "spec-change-45"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-11": {
+      "page": "运营",
+      "chapter": "C4",
+      "unit": "U14",
+      "q": "场景生命周期与内容真源：slot live/draft/retired、脚本 SHA 内容寻址、push 自动 retire、上线/下线/回滚",
+      "s": "哪个场景在线、哪个脚本版本生效，仓库里读不到；两仓对脚本 canonical 声明相反；姊妹仓副本停在 08-06",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    },
+    "LACK-12": {
+      "page": "全局",
+      "chapter": "B8",
+      "unit": "U08",
+      "q": "移动端与无障碍",
+      "s": "规格只有「移动端正常做」一句，无 a11y 条文；Playwright 无 mobile project（仅 v34-critical 1 条）",
+      "anchors": [
+        "spec-b8",
+        "spec-a5"
+      ],
+      "impl": "lack",
+      "owner": "ks"
+    },
+    "LACK-13": {
+      "page": "规格",
+      "chapter": "§−2",
+      "unit": "U00",
+      "q": "规格自身的变更记录规则（行为改动必须有 §−2 行 + history；实现状态不混进规格）",
+      "s": "三次裁决只改正文（3e01c2b / c3c6feb / f3deed3）；A2.E.页面表后端列写「✅ 已实现」；「spec 最后什么时候改的」没有可靠来源",
+      "anchors": [
+        "spec-change-1"
+      ],
+      "impl": "lack",
+      "owner": "Yihan"
+    },
+    "LACK-14": {
+      "page": "规格",
+      "chapter": "C3",
+      "unit": "U00",
+      "q": "开放工作项与 RFC 遗留：W4 express UI、W6 真人对战完整设计、W7 OS schema、W10、W11 天梯、W15 F 中文名、W16 可见性矩阵、W21 计分",
+      "s": "以「已定方向、细节未定」占位；没有统一 lack-of-spec 清单，无人收口",
+      "anchors": [
+        "spec-c3"
+      ],
+      "impl": "lack",
+      "owner": "Yihan"
+    },
+    "LACK-15": {
+      "page": "全局",
+      "chapter": "C4",
+      "unit": "U08",
+      "q": "上线前合规面：ToS / 隐私页、ICP、页脚 build SHA",
+      "s": "C4 一句；ToS / 隐私页无实现；页脚 build SHA 是目前唯一「被测版本」线索但规格未要求",
+      "anchors": [
+        "spec-c4"
+      ],
+      "impl": "lack",
+      "owner": "Minsheng"
+    }
+  }
+}

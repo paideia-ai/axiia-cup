@@ -15,6 +15,7 @@ import {
   toggleReplaySpeed,
 } from '../lib/replay'
 import { cn } from '../lib/cn'
+import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 
@@ -121,20 +122,27 @@ export function ReplayControls({
   const { state } = handle
   const playLabel = state.playing ? '暂停' : state.anchorKey ? '继续' : '播放'
   return (
-    <Card>
+    <Card {...tm('FA.replay-controls')}>
       <CardContent className='space-y-3 pt-5'>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge tone='info'>回放</Badge>
-          <span className='text-xs tabular-nums text-(--foreground-subtle)'>
+          <span
+            {...tm('FA.replay-progress')}
+            className='text-xs tabular-nums text-(--foreground-subtle)'
+          >
             {state.cursor}/{total}
           </span>
           {state.ended
             ? (
               <>
-                <span className='text-sm font-semibold text-(--foreground)'>
+                <span
+                  {...tm('FA.replay-ended')}
+                  className='text-sm font-semibold text-(--foreground)'
+                >
                   回放结束
                 </span>
                 <button
+                  {...tm('FA.replay-restart-button')}
                   type='button'
                   onClick={handle.restart}
                   className={PILL}
@@ -146,6 +154,7 @@ export function ReplayControls({
             : (
               <>
                 <button
+                  {...tm('FA.replay-play-button')}
                   type='button'
                   onClick={handle.togglePlay}
                   className={cn(
@@ -157,6 +166,7 @@ export function ReplayControls({
                   {playLabel}
                 </button>
                 <button
+                  {...tm('FA.replay-back-button')}
                   type='button'
                   onClick={handle.stepBack}
                   disabled={state.cursor <= 0}
@@ -165,6 +175,7 @@ export function ReplayControls({
                   上一步
                 </button>
                 <button
+                  {...tm('FA.replay-step-button')}
                   type='button'
                   onClick={handle.stepOnce}
                   className={PILL}
@@ -172,12 +183,14 @@ export function ReplayControls({
                   步进
                 </button>
                 <div
+                  {...tm('FA.replay-speed-group')}
                   role='group'
                   aria-label='倍速'
                   className='flex items-center gap-1'
                 >
                   {REPLAY_SPEEDS.map((speed) => (
                     <button
+                      {...tm('FA.replay-speed-button')}
                       key={speed}
                       type='button'
                       aria-pressed={state.speed === speed}
@@ -195,6 +208,7 @@ export function ReplayControls({
               </>
             )}
           <button
+            {...tm('FA.replay-exit-button')}
             type='button'
             onClick={handle.exit}
             className={cn(PILL, 'ml-auto')}
@@ -204,7 +218,10 @@ export function ReplayControls({
         </div>
         {state.showNote
           ? (
-            <p className='text-xs text-(--warning)'>
+            <p
+              {...tm('FA.replay-anchor-note')}
+              className='text-xs text-(--warning)'
+            >
               倾向发生变化，值得停留——看看此刻裁判最挂心什么，按「继续」接着重演。
             </p>
           )

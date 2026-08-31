@@ -21,6 +21,7 @@ import { ScenarioDetailPage } from './pages/scenario-detail'
 import { SettingsPage } from './pages/settings'
 import { StandingsPage } from './pages/standings'
 import { TournamentsPage } from './pages/tournaments'
+import { TestModeRoot } from './testmode/index'
 
 function Loading() {
   return (
@@ -111,6 +112,8 @@ export function AppRouter() {
         />
         <Route path='/*' element={<ProtectedShell />} />
       </Routes>
+      {/* 测试模式（?tm=1）：挂在 Routes 旁边，所有路由都能用；关着时零成本。 */}
+      <TestModeRoot />
     </BrowserRouter>
   )
 }

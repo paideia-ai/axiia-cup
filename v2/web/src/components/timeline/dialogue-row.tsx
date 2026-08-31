@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/card'
 import type { SpeakerLabels } from './labels'
 import { speakerAccent, speakerName, speakerSide } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { tm } from '../../testmode/mark'
 
 function Speaker({
   speaker,
@@ -19,21 +20,28 @@ function Speaker({
 }) {
   const isSide = speakerSide(labels, speaker) != null
   return (
-    <div className='flex items-center gap-2 text-xs text-(--foreground-muted)'>
+    <div
+      {...tm('FA.speaker-line')}
+      className='flex items-center gap-2 text-xs text-(--foreground-muted)'
+    >
       <span className='font-semibold text-(--foreground-subtle)'>
         {speakerName(labels, speaker)}
       </span>
-      {isSide
-        ? null
-        : (
-          <span className='rounded-full bg-[rgba(251,191,36,0.14)] px-2 py-0.5 text-[10px] font-semibold text-(--warning)'>
-            旁白角色
-          </span>
-        )}
+      {isSide ? null : (
+        <span
+          {...tm('FA.narrator-badge')}
+          className='rounded-full bg-[rgba(251,191,36,0.14)] px-2 py-0.5 text-[10px] font-semibold text-(--warning)'
+        >
+          旁白角色
+        </span>
+      )}
       <span>#{seq + 1}</span>
       {live
         ? (
-          <span className='inline-flex items-center gap-1 text-(--accent)'>
+          <span
+            {...tm('FA.live-indicator')}
+            className='inline-flex items-center gap-1 text-(--accent)'
+          >
             <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-(--accent)' />
             正在发言
           </span>
@@ -55,7 +63,10 @@ export function DialogueRow({
   showReasoning: boolean
 }) {
   return (
-    <Card className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}>
+    <Card
+      {...tm('FA.dialogue-row')}
+      className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}
+    >
       <CardContent className='space-y-1 py-4'>
         <Speaker
           speaker={turn.speaker}
@@ -63,7 +74,10 @@ export function DialogueRow({
           seq={turn.seq}
           live={false}
         />
-        <p className='whitespace-pre-wrap text-sm text-(--foreground)'>
+        <p
+          {...tm('FA.dialogue-text')}
+          className='whitespace-pre-wrap text-sm text-(--foreground)'
+        >
           {turn.finalText}
         </p>
         {showReasoning && turn.reasoning
@@ -95,6 +109,7 @@ export function LiveDialogueRow({
     : stripStreamingActTags(bubble.text)
   return (
     <Card
+      {...tm('FA.live-dialogue-row')}
       className={`border-l-2 ${
         speakerAccent(labels, bubble.speaker)
       } border-dashed bg-white/1`}
@@ -114,7 +129,10 @@ export function LiveDialogueRow({
             </p>
           )
           : (
-            <p className='text-sm text-(--foreground-muted)'>
+            <p
+              {...tm('FA.live-placeholder')}
+              className='text-sm text-(--foreground-muted)'
+            >
               {bubble.reasoning ? '正在斟酌措辞…' : '正在思考…'}
             </p>
           )}

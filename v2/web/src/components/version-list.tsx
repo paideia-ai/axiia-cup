@@ -8,6 +8,7 @@ import {
   savedAtCopy,
   versionTag,
 } from '../lib/version-label'
+import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -52,13 +53,16 @@ export function VersionList({
   const sorted = [...versions].sort((a, b) => b.id - a.id)
 
   return (
-    <section className='space-y-3'>
+    <section className='space-y-3' {...tm('E.version-list')}>
       <div className='flex flex-wrap items-baseline justify-between gap-2'>
         <h2 className='text-sm font-semibold text-(--foreground)'>
           版本（{sorted.length}）
         </h2>
         {headingAside ?? (
-          <span className='text-[11px] text-(--foreground-muted)'>
+          <span
+            className='text-[11px] text-(--foreground-muted)'
+            {...tm('E.version-list-aside')}
+          >
             {nextVersionCopy(sorted.length)}
           </span>
         )}
@@ -66,7 +70,10 @@ export function VersionList({
 
       {sorted.length === 0
         ? emptyState ?? (
-          <div className='rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'>
+          <div
+            className='rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'
+            {...tm('E.version-empty')}
+          >
             <p className='text-sm font-medium text-(--foreground)'>
               还没有保存过版本
             </p>
@@ -82,34 +89,52 @@ export function VersionList({
             className={version.isEntry
               ? 'border-[rgba(224,74,47,0.4)]'
               : undefined}
+            {...tm('E.version-card')}
           >
             <CardContent className='space-y-3 pt-5'>
               <div className='flex flex-wrap items-center gap-2'>
                 {/* #25 双编号：vN（本策略序号）与 #id（全局引用号）并排 */}
-                <span className='text-base font-bold text-(--foreground)'>
+                <span
+                  className='text-base font-bold text-(--foreground)'
+                  {...tm('E.version-tag')}
+                >
                   {versionTag(version, sorted)}
                 </span>
-                <span className='font-mono text-xs text-(--foreground-muted)'>
+                <span
+                  className='font-mono text-xs text-(--foreground-muted)'
+                  {...tm('E.version-id')}
+                >
                   #{version.id}
                 </span>
-                <Badge tone='info'>{version.modelID}</Badge>
+                <Badge tone='info' {...tm('E.version-model-badge')}>
+                  {version.modelID}
+                </Badge>
                 {version.isEntry
-                  ? <Badge tone='accent'>★参赛版本</Badge>
+                  ? (
+                    <Badge tone='accent' {...tm('E.entry-badge')}>
+                      ★参赛版本
+                    </Badge>
+                  )
                   : null}
               </div>
               {/* P15/P10：战绩、保存时间、备注——E5 与 B3 承诺过的版本身份 */}
               <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--foreground-muted)'>
-                <span data-testid='version-record'>{recordCopy(version)}</span>
+                <span data-testid='version-record' {...tm('E.version-record')}>
+                  {recordCopy(version)}
+                </span>
                 {savedAtCopy(version)
                   ? (
-                    <span data-testid='version-time'>
+                    <span data-testid='version-time' {...tm('E.version-time')}>
                       {savedAtCopy(version)}
                     </span>
                   )
                   : null}
                 {version.note
                   ? (
-                    <span className='text-(--foreground-subtle)'>
+                    <span
+                      className='text-(--foreground-subtle)'
+                      {...tm('E.version-note')}
+                    >
                       备注：{version.note}
                     </span>
                   )
@@ -119,6 +144,7 @@ export function VersionList({
                 className={`whitespace-pre-wrap text-sm text-(--foreground-subtle) ${
                   expanded[version.id] ? '' : 'line-clamp-3'
                 }`}
+                {...tm('E.version-prompt')}
               >
                 {version.prompt}
               </p>
@@ -134,6 +160,7 @@ export function VersionList({
                       ...current,
                       [version.id]: !current[version.id],
                     }))}
+                  {...tm('E.expand-button')}
                 >
                   {expanded[version.id] ? '收起' : '展开全文'}
                 </Button>
@@ -149,6 +176,7 @@ export function VersionList({
                         ? `把${sideName}这一侧的出战席位交给这一版；同侧其他智能体的 ★ 会被收走`
                         : undefined}
                       onClick={() => onSetEntry(version.id)}
+                      {...tm('E.set-entry-button')}
                     >
                       设为{sideName ?? ''}参赛版本
                     </Button>
@@ -161,6 +189,7 @@ export function VersionList({
                   aria-label={`基于 ${versionTag(version, sorted)} 迭代`}
                   title='把这一版载入工作区继续改；本身不产生新版本'
                   onClick={() => onIterate(version)}
+                  {...tm('E.iterate-button')}
                 >
                   基于该版本迭代
                 </Button>
@@ -169,6 +198,7 @@ export function VersionList({
                   variant='secondary'
                   aria-label={`用 ${versionTag(version, sorted)} 出战`}
                   onClick={() => onField(version)}
+                  {...tm('E.field-button')}
                 >
                   出战
                 </Button>
@@ -229,15 +259,22 @@ function IterateConfirmRow({
       role='alert'
       tabIndex={-1}
       className='flex flex-wrap items-center gap-2 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5'
+      {...tm('E.iterate-confirm')}
     >
       <span className='text-xs text-(--warning)'>{message}</span>
-      <Button size='sm' variant='secondary' onClick={onConfirm}>
+      <Button
+        size='sm'
+        variant='secondary'
+        onClick={onConfirm}
+        {...tm('E.iterate-confirm-continue')}
+      >
         仍要继续
       </Button>
       <button
         type='button'
         onClick={onCancel}
         className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+        {...tm('E.iterate-confirm-cancel')}
       >
         取消
       </button>

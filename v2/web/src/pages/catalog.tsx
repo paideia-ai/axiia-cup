@@ -8,6 +8,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideProgressText } from '../lib/gate'
 import { useAsync } from '../lib/use-async'
 import { scenarioModule } from '../scenarios'
+import { tm } from '../testmode/mark'
 
 // D 卡（A4）：标题/学科/双方/轮数/门槛徽章来自服务端；难度·时长·适合新手
 // （#40）来自前端场景模块的编辑内容。门槛徽章 P2 起按侧进度显示（#65，
@@ -62,7 +63,7 @@ export function CatalogPage() {
 
   return (
     <div className='space-y-6'>
-      <div>
+      <div {...tm('D.page-header')}>
         <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
           场景
         </h1>
@@ -72,11 +73,25 @@ export function CatalogPage() {
       </div>
 
       {loading
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            className='text-sm text-(--foreground-subtle)'
+            {...tm('D.loading')}
+          >
+            加载中…
+          </p>
+        )
         : error
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('D.error')}>
+            {error}
+          </p>
+        )
         : (
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div
+            className='grid gap-4 md:grid-cols-2'
+            {...tm('D.scenario-list')}
+          >
             {ordered.map((scenario) => {
               const module = scenarioModule(scenario.id)
               const education = module?.education ?? null
@@ -86,18 +101,25 @@ export function CatalogPage() {
                   key={scenario.id}
                   to={`/scenarios/${scenario.id}`}
                   data-testid={`scenario-${scenario.id}`}
+                  {...tm('D.scenario-card')}
                 >
                   <Card className='h-full transition hover:border-(--foreground-muted)'>
                     <CardContent className='space-y-3 pt-5'>
                       <div className='flex items-start justify-between gap-3'>
-                        <h2 className='text-lg font-semibold text-(--foreground)'>
+                        <h2
+                          className='text-lg font-semibold text-(--foreground)'
+                          {...tm('D.card-title')}
+                        >
                           {module?.intro?.source.title ?? scenario.title}
                         </h2>
-                        <div className='flex flex-wrap items-center justify-end gap-1.5'>
+                        <div
+                          className='flex flex-wrap items-center justify-end gap-1.5'
+                          {...tm('D.card-badges')}
+                        >
                           {/* #54 新上线徽章：跟着 onlineAt 最新的那张卡 */}
                           {fresh?.id === scenario.id
                             ? (
-                              <Badge tone='accent'>
+                              <Badge tone='accent' {...tm('D.new-badge')}>
                                 <Sparkles className='mr-1 h-3 w-3' /> 新上线
                               </Badge>
                             )
@@ -105,12 +127,12 @@ export function CatalogPage() {
                           {scenario.gateProgress
                             ? gateMet(scenario.gateProgress)
                               ? (
-                                <Badge tone='success'>
+                                <Badge tone='success' {...tm('D.gate-badge')}>
                                   <Unlock className='mr-1 h-3 w-3' /> PVP 已解锁
                                 </Badge>
                               )
                               : (
-                                <Badge tone='info'>
+                                <Badge tone='info' {...tm('D.gate-badge')}>
                                   <Lock className='mr-1 h-3 w-3' /> PVP 解锁
                                   {' '}
                                   {sideProgressText(scenario.gateProgress.a)}·
@@ -122,6 +144,7 @@ export function CatalogPage() {
                                 tone={scenario.gateUnlocked
                                   ? 'success'
                                   : 'info'}
+                                {...tm('D.gate-badge')}
                               >
                                 {scenario.gateUnlocked
                                   ? (
@@ -139,12 +162,18 @@ export function CatalogPage() {
                             )}
                         </div>
                       </div>
-                      <p className='text-sm text-(--foreground-subtle)'>
+                      <p
+                        className='text-sm text-(--foreground-subtle)'
+                        {...tm('D.card-subject')}
+                      >
                         {scenario.subject}
                       </p>
                       {education
                         ? (
-                          <div className='flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--foreground-subtle)'>
+                          <div
+                            className='flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--foreground-subtle)'
+                            {...tm('D.card-education')}
+                          >
                             <span title={`难度 ${education.difficulty} / 3`}>
                               难度{' '}
                               <span className='tracking-[0.12em] text-(--warning)'>
@@ -156,12 +185,19 @@ export function CatalogPage() {
                             </span>
                             <span>约 {education.minutes} 分钟</span>
                             {education.noviceFriendly
-                              ? <Badge tone='success'>适合新手</Badge>
+                              ? (
+                                <Badge tone='success' {...tm('D.novice-badge')}>
+                                  适合新手
+                                </Badge>
+                              )
                               : null}
                           </div>
                         )
                         : null}
-                      <div className='space-y-1 text-xs text-(--foreground-muted)'>
+                      <div
+                        className='space-y-1 text-xs text-(--foreground-muted)'
+                        {...tm('D.card-sides')}
+                      >
                         <p>
                           <span className='text-(--foreground-subtle)'>
                             {scenario.sideAName}
@@ -185,7 +221,10 @@ export function CatalogPage() {
                       {/* #38/#39/#54：stats 到手即点亮；缺席时保持引导式空态 */}
                       {stats
                         ? (
-                          <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+                          <p
+                            className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+                            {...tm('D.card-stats')}
+                          >
                             <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
                               侧方胜率
                             </span>
@@ -194,7 +233,10 @@ export function CatalogPage() {
                         )
                         : education
                         ? (
-                          <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+                          <p
+                            className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
+                            {...tm('D.card-stats-empty')}
+                          >
                             侧方胜率 · 对局数 — 数据积累中
                           </p>
                         )
@@ -205,7 +247,14 @@ export function CatalogPage() {
               )
             })}
             {data && data.scenarios.length === 0
-              ? <p className='text-sm text-(--foreground-subtle)'>暂无场景。</p>
+              ? (
+                <p
+                  className='text-sm text-(--foreground-subtle)'
+                  {...tm('D.empty')}
+                >
+                  暂无场景。
+                </p>
+              )
               : null}
           </div>
         )}

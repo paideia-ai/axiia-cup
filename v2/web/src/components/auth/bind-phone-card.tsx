@@ -6,6 +6,7 @@ import { Card, CardContent } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAuth } from '../../context/auth'
 import { messageOf } from '../../lib/use-async'
+import { tm } from '../../testmode/mark'
 
 const COOLDOWN_SECONDS = 60
 
@@ -60,7 +61,7 @@ export function BindPhoneCard() {
   }
 
   return (
-    <Card>
+    <Card {...tm('K.bind-phone-card')}>
       <CardContent className='space-y-3 pt-5'>
         <h2 className='text-sm font-semibold text-(--foreground)'>
           {account.phone ? '更换手机号' : '绑定手机号'}
@@ -75,6 +76,7 @@ export function BindPhoneCard() {
               autoComplete='tel'
               inputMode='numeric'
               name='phone'
+              {...tm('K.bind-phone-input')}
               onChange={(e) => setPhone(e.target.value)}
               placeholder='中国大陆手机号'
               value={phone}
@@ -82,6 +84,7 @@ export function BindPhoneCard() {
             <Button
               className='shrink-0'
               disabled={busy || remaining > 0 || phone.length < 11}
+              {...tm('K.bind-send-code-button')}
               onClick={send}
               type='button'
               variant='secondary'
@@ -97,14 +100,25 @@ export function BindPhoneCard() {
                 inputMode='numeric'
                 maxLength={6}
                 name='code'
+                {...tm('K.bind-code-input')}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder='6 位验证码'
                 value={code}
               />
             )
             : null}
-          {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
-          <Button disabled={busy || !sent || code.length < 6} type='submit'>
+          {error
+            ? (
+              <p className='text-sm text-(--accent)' {...tm('K.bind-error')}>
+                {error}
+              </p>
+            )
+            : null}
+          <Button
+            disabled={busy || !sent || code.length < 6}
+            type='submit'
+            {...tm('K.bind-submit-button')}
+          >
             {busy ? '处理中…' : '确认绑定'}
           </Button>
         </form>

@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button'
 import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
 import { useAsync } from '../lib/use-async'
+import { tm } from '../testmode/mark'
 
 const steps = [
   {
@@ -41,8 +42,12 @@ export function LandingPage() {
     <div className='relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(224,74,47,0.18),transparent_28%),linear-gradient(180deg,#111_0%,#0c0c0c_38%,#090909_100%)]'>
       <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(224,74,47,0.08),transparent_24%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.04),transparent_18%)]' />
       <div className='mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 sm:px-6'>
-        <header className='flex items-center justify-between py-4'>
+        <header
+          {...tm('A.header')}
+          className='flex items-center justify-between py-4'
+        >
           <Link
+            {...tm('A.logo')}
             to='/'
             className='text-sm font-black tracking-[0.24em] text-(--accent)'
           >
@@ -51,42 +56,59 @@ export function LandingPage() {
           <div className='flex items-center gap-3'>
             {isLoading
               ? (
-                <div className='text-sm text-(--foreground-subtle)'>
+                <div
+                  {...tm('A.session-restoring')}
+                  className='text-sm text-(--foreground-subtle)'
+                >
                   正在恢复会话...
                 </div>
               )
               : account
               ? (
                 <Link to='/scenarios'>
-                  <Button size='sm'>进入场景</Button>
+                  <Button size='sm' {...tm('A.header-enter-button')}>
+                    进入场景
+                  </Button>
                 </Link>
               )
               : (
                 <>
                   <Link
+                    {...tm('A.header-login-link')}
                     to='/login'
                     className='text-sm text-(--foreground-subtle) hover:text-(--foreground)'
                   >
                     登录
                   </Link>
                   <Link to='/register'>
-                    <Button size='sm'>注册</Button>
+                    <Button size='sm' {...tm('A.header-register-button')}>
+                      注册
+                    </Button>
                   </Link>
                 </>
               )}
           </div>
         </header>
 
-        <section className='relative flex flex-1 flex-col items-center justify-center py-16 text-center'>
+        <section
+          {...tm('A.pitch')}
+          className='relative flex flex-1 flex-col items-center justify-center py-16 text-center'
+        >
           <div className='max-w-4xl'>
-            <Badge tone='success' className='mb-8'>
+            <Badge tone='success' className='mb-8' {...tm('A.season-badge')}>
               第一赛季报名中
             </Badge>
-            <h1 className='text-5xl font-black leading-20 tracking-[-0.06em] text-white md:text-7xl'>
+            <h1
+              {...tm('A.tagline')}
+              className='text-5xl font-black leading-20 tracking-[-0.06em] text-white md:text-7xl'
+            >
               用提示词打造
               <span className='block text-(--accent)'>最强对话智能体</span>
             </h1>
-            <p className='mx-auto mt-6 max-w-2xl text-base leading-8 text-(--foreground-subtle) md:text-lg'>
+            <p
+              {...tm('A.pitch-intro')}
+              className='mx-auto mt-6 max-w-2xl text-base leading-8 text-(--foreground-subtle) md:text-lg'
+            >
               Axiia Cup 是一个面向人文学科的 AI
               智能体对抗赛。编写你的系统提示词，让两个 AI
               在历史、法律、戏剧场景中展开博弈。
@@ -95,7 +117,7 @@ export function LandingPage() {
               ? (
                 <div className='mt-10 flex justify-center'>
                   <Link to='/scenarios'>
-                    <Button size='lg'>
+                    <Button size='lg' {...tm('A.cta-enter')}>
                       进入场景
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
@@ -106,13 +128,17 @@ export function LandingPage() {
               ? (
                 <div className='mt-10 flex justify-center gap-4'>
                   <Link to='/register'>
-                    <Button size='lg'>
+                    <Button size='lg' {...tm('A.cta-register')}>
                       立即注册
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
                   <Link to='/login'>
-                    <Button size='lg' variant='secondary'>
+                    <Button
+                      size='lg'
+                      variant='secondary'
+                      {...tm('A.cta-login')}
+                    >
                       已有账户，登录
                     </Button>
                   </Link>
@@ -121,9 +147,16 @@ export function LandingPage() {
               : null}
           </div>
 
-          <div className='mt-16 grid w-full max-w-5xl divide-y divide-[rgba(255,255,255,0.07)] text-left lg:grid-cols-3 lg:divide-x lg:divide-y-0'>
+          <div
+            {...tm('A.how-it-works')}
+            className='mt-16 grid w-full max-w-5xl divide-y divide-[rgba(255,255,255,0.07)] text-left lg:grid-cols-3 lg:divide-x lg:divide-y-0'
+          >
             {steps.map((step) => (
-              <div key={step.n} className='px-8 py-6 first:pl-0 last:pr-0'>
+              <div
+                key={step.n}
+                {...tm('A.how-it-works-card')}
+                className='px-8 py-6 first:pl-0 last:pr-0'
+              >
                 <p className='text-[2.5rem] font-black leading-none tracking-[-0.05em] text-[rgba(224,74,47,0.22)]'>
                   {step.n}
                 </p>
@@ -145,10 +178,13 @@ export function LandingPage() {
         }
         {landing
           ? (
-            <section className='mx-auto w-full max-w-5xl space-y-10 pb-16'>
+            <section
+              {...tm('A.landing-data')}
+              className='mx-auto w-full max-w-5xl space-y-10 pb-16'
+            >
               {landing.excerpt
                 ? (
-                  <div>
+                  <div {...tm('A.excerpt')}>
                     <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                       真实对局节选
                     </h2>
@@ -177,7 +213,7 @@ export function LandingPage() {
               <div className='grid gap-8 md:grid-cols-3'>
                 {landing.demoMatches.length > 0
                   ? (
-                    <div>
+                    <div {...tm('A.demo-matches')}>
                       <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                         示范对局
                       </h2>
@@ -185,6 +221,7 @@ export function LandingPage() {
                         {landing.demoMatches.map((demo) => (
                           <li key={demo.matchID}>
                             <Link
+                              {...tm('A.demo-match-link')}
                               to={`/matches/${demo.matchID}`}
                               className='text-sm text-(--accent) hover:underline'
                             >
@@ -199,7 +236,7 @@ export function LandingPage() {
 
                 {landing.topPlayers.length > 0
                   ? (
-                    <div>
+                    <div {...tm('A.top-players')}>
                       <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                         顶尖玩家
                       </h2>
@@ -207,6 +244,7 @@ export function LandingPage() {
                         {landing.topPlayers.map((player, index) => (
                           <li
                             key={player.displayName}
+                            {...tm('A.top-player-row')}
                             className='flex items-center justify-between text-sm text-(--foreground-subtle)'
                           >
                             <span>
@@ -225,17 +263,21 @@ export function LandingPage() {
                   )
                   : null}
 
-                <div>
+                <div {...tm('A.total-battles')}>
                   <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                     总对战数
                   </h2>
                   <p
+                    {...tm('A.total-battles-count')}
                     data-testid='landing-total-battles'
                     className='mt-3 text-[2.5rem] font-black leading-none tracking-[-0.04em] text-white tabular-nums'
                   >
                     {landing.totalBattles}
                   </p>
-                  <p className='mt-2 text-xs text-(--foreground-muted)'>
+                  <p
+                    {...tm('A.total-battles-caption')}
+                    className='mt-2 text-xs text-(--foreground-muted)'
+                  >
                     已完成并计分的对局
                   </p>
                 </div>
@@ -244,7 +286,7 @@ export function LandingPage() {
           )
           : null}
 
-        <footer className='py-4'>
+        <footer {...tm('A.footer')} className='py-4'>
           <IcpRecord />
         </footer>
       </div>

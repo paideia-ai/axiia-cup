@@ -12,7 +12,8 @@ const localChromium = process.env.PLAYWRIGHT_CHROMIUM_PATH ??
 
 export default defineConfig({
   optimizeDeps: {
-    include: ['msw-storybook-addon/csf3'],
+    // react-dom：测试模式用 createPortal；不预打包的话第一次跑到它会触发重新优化、React 双份。
+    include: ['msw-storybook-addon/csf3', 'react-dom'],
   },
   test: {
     projects: [

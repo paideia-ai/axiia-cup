@@ -2,6 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
 import { cn } from '../../lib/cn'
+import { tm } from '../../testmode/mark'
 
 // Interiority is spoiler-shaped: collapsed by default, and expandable while the
 // trace is still streaming — the open state lives here so a delta never closes it.
@@ -16,8 +17,9 @@ export function ReasoningFold({
   if (!text.trim()) return null
 
   return (
-    <div className='mt-2'>
+    <div {...tm('FA.reasoning-fold')} className='mt-2'>
       <button
+        {...tm('FA.reasoning-toggle')}
         type='button'
         onClick={() => setOpen((value) => !value)}
         className='inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-semibold tracking-[0.06em] text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground-subtle)'
@@ -32,7 +34,10 @@ export function ReasoningFold({
       </button>
       {open
         ? (
-          <p className='mt-1 whitespace-pre-wrap border-l border-dashed border-(--border) py-1 pl-3 text-xs leading-relaxed text-(--foreground-muted)'>
+          <p
+            {...tm('FA.reasoning-text')}
+            className='mt-1 whitespace-pre-wrap border-l border-dashed border-(--border) py-1 pl-3 text-xs leading-relaxed text-(--foreground-muted)'
+          >
             {text}
           </p>
         )

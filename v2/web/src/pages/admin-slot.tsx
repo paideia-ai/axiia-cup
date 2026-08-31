@@ -11,6 +11,7 @@ import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { useAuth } from '../context/auth'
 import { messageOf, useAsync } from '../lib/use-async'
+import { tm } from '../testmode/mark'
 
 const STATUSES = ['live', 'draft', 'retired']
 
@@ -44,16 +45,32 @@ function ScriptCard({
   }
 
   return (
-    <Card>
+    <Card {...tm('ADM.script-card')}>
       <CardContent className='space-y-3 pt-5'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <h2 className='text-sm font-semibold text-(--foreground)'>脚本</h2>
-          <code className='text-xs text-(--foreground-muted)'>{sha}</code>
+          <code
+            {...tm('ADM.script-sha')}
+            className='text-xs text-(--foreground-muted)'
+          >
+            {sha}
+          </code>
         </div>
         {loading && !data
-          ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+          ? (
+            <p
+              {...tm('ADM.script-loading')}
+              className='text-sm text-(--foreground-subtle)'
+            >
+              加载中…
+            </p>
+          )
           : error
-          ? <p className='text-sm text-(--accent)'>{error}</p>
+          ? (
+            <p {...tm('ADM.script-error')} className='text-sm text-(--accent)'>
+              {error}
+            </p>
+          )
           : data
           ? <ScriptView source={data.source} />
           : null}
@@ -61,6 +78,7 @@ function ScriptCard({
         {draft == null
           ? (
             <Button
+              {...tm('ADM.script-edit-button')}
               variant='secondary'
               size='sm'
               onClick={() => setDraft(data?.source ?? '')}
@@ -72,6 +90,7 @@ function ScriptCard({
           : (
             <div className='space-y-2'>
               <Textarea
+                {...tm('ADM.script-draft-input')}
                 className='h-96 font-mono text-xs'
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -79,6 +98,7 @@ function ScriptCard({
               />
               <div className='flex gap-2'>
                 <Button
+                  {...tm('ADM.script-upload-button')}
                   size='sm'
                   disabled={uploading || !draft.trim()}
                   onClick={() => void upload(draft)}
@@ -86,6 +106,7 @@ function ScriptCard({
                   {uploading ? '上传中…' : '上传并指向本槽位'}
                 </Button>
                 <Button
+                  {...tm('ADM.script-cancel-button')}
                   size='sm'
                   variant='secondary'
                   onClick={() => setDraft(null)}
@@ -95,8 +116,26 @@ function ScriptCard({
               </div>
             </div>
           )}
-        {notice ? <p className='text-sm text-(--success)'>{notice}</p> : null}
-        {failure ? <p className='text-sm text-(--accent)'>{failure}</p> : null}
+        {notice
+          ? (
+            <p
+              {...tm('ADM.script-notice')}
+              className='text-sm text-(--success)'
+            >
+              {notice}
+            </p>
+          )
+          : null}
+        {failure
+          ? (
+            <p
+              {...tm('ADM.script-error-notice')}
+              className='text-sm text-(--accent)'
+            >
+              {failure}
+            </p>
+          )
+          : null}
       </CardContent>
     </Card>
   )
@@ -153,18 +192,22 @@ function SlotEditor({ slot, onSaved }: { slot: SlotDTO; onSaved: () => void }) {
   }
 
   return (
-    <Card>
+    <Card {...tm('ADM.slot-editor')}>
       <CardContent className='space-y-4 pt-5'>
         <h2 className='text-sm font-semibold text-(--foreground)'>槽位设置</h2>
         <div className='grid gap-3 sm:grid-cols-2'>
           <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
             <span className='block'>标题</span>
             <Input
+              {...tm('ADM.slot-title-input')}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
             />
           </label>
-          <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
+          <label
+            {...tm('ADM.slot-status-select')}
+            className='space-y-1.5 text-sm text-(--foreground-subtle)'
+          >
             <span className='block'>状态</span>
             <Select
               value={status}
@@ -179,6 +222,7 @@ function SlotEditor({ slot, onSaved }: { slot: SlotDTO; onSaved: () => void }) {
         <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
           <span className='block'>脚本 SHA</span>
           <Input
+            {...tm('ADM.slot-script-sha-input')}
             className='font-mono text-xs'
             value={scriptSHA}
             onChange={(event) => setScriptSHA(event.target.value)}
@@ -189,6 +233,7 @@ function SlotEditor({ slot, onSaved }: { slot: SlotDTO; onSaved: () => void }) {
             params（JSON；<code>presets</code> 覆盖脚本自带的对手名单）
           </span>
           <Textarea
+            {...tm('ADM.slot-params-input')}
             className='h-56 font-mono text-xs'
             value={params}
             onChange={(event) => setParams(event.target.value)}
@@ -196,20 +241,42 @@ function SlotEditor({ slot, onSaved }: { slot: SlotDTO; onSaved: () => void }) {
           />
         </label>
         {paramsError
-          ? <p className='text-sm text-(--accent)'>params：{paramsError}</p>
+          ? (
+            <p
+              {...tm('ADM.slot-params-error')}
+              className='text-sm text-(--accent)'
+            >
+              params：{paramsError}
+            </p>
+          )
           : null}
         <div className='flex items-center gap-3'>
           <Button
+            {...tm('ADM.slot-save-button')}
             onClick={() => void save()}
             disabled={saving || paramsError != null}
           >
             {saving ? '保存中…' : '保存'}
           </Button>
           {notice
-            ? <span className='text-sm text-(--success)'>{notice}</span>
+            ? (
+              <span
+                {...tm('ADM.slot-save-notice')}
+                className='text-sm text-(--success)'
+              >
+                {notice}
+              </span>
+            )
             : null}
           {failure
-            ? <span className='text-sm text-(--accent)'>{failure}</span>
+            ? (
+              <span
+                {...tm('ADM.slot-save-error')}
+                className='text-sm text-(--accent)'
+              >
+                {failure}
+              </span>
+            )
             : null}
         </div>
       </CardContent>
@@ -234,29 +301,61 @@ export function AdminSlotPage() {
   return (
     <div className='space-y-6'>
       <div className='flex flex-wrap items-center gap-3'>
-        <Link to='/admin' className='text-sm text-(--accent)'>← 管理面板</Link>
-        <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+        <Link
+          {...tm('ADM.slot-back-link')}
+          to='/admin'
+          className='text-sm text-(--accent)'
+        >
+          ← 管理面板
+        </Link>
+        <h1
+          {...tm('ADM.slot-page-title')}
+          className='text-2xl font-black tracking-tight text-(--foreground)'
+        >
           {slot?.title ?? slotId}
         </h1>
       </div>
 
       {!elevated
         ? (
-          <Card>
+          <Card {...tm('ADM.elevation-notice')}>
             <CardContent className='pt-5 text-sm text-(--foreground-subtle)'>
               管理操作需要先提权。前往{' '}
-              <Link to='/settings' className='text-(--accent)'>账户设置</Link>
-              {' '}
+              <Link
+                {...tm('ADM.elevation-settings-link')}
+                to='/settings'
+                className='text-(--accent)'
+              >
+                账户设置
+              </Link>{' '}
               输入 TOTP 验证码。
             </CardContent>
           </Card>
         )
         : loading && !data
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            {...tm('ADM.slot-loading')}
+            className='text-sm text-(--foreground-subtle)'
+          >
+            加载中…
+          </p>
+        )
         : error
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? (
+          <p {...tm('ADM.slot-error')} className='text-sm text-(--accent)'>
+            {error}
+          </p>
+        )
         : !slot
-        ? <p className='text-sm text-(--foreground-subtle)'>槽位不存在。</p>
+        ? (
+          <p
+            {...tm('ADM.slot-missing')}
+            className='text-sm text-(--foreground-subtle)'
+          >
+            槽位不存在。
+          </p>
+        )
         : (
           <>
             <SlotEditor slot={slot} onSaved={reload} />

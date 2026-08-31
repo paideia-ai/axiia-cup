@@ -6,6 +6,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { useAuth } from '../../context/auth'
 import { messageOf } from '../../lib/use-async'
+import { tm } from '../../testmode/mark'
 
 const COOLDOWN_SECONDS = 60
 
@@ -80,13 +81,14 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
   }
 
   return (
-    <form className='space-y-4' onSubmit={submit}>
+    <form className='space-y-4' onSubmit={submit} {...tm('B.phone-form')}>
       {withInvite
         ? (
           <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
             <span>注册码</span>
             <Input
               name='inviteCode'
+              {...tm('B.phone-invite-input')}
               onChange={(e) => setInviteCode(e.target.value)}
               placeholder='邀请注册码'
               value={inviteCode}
@@ -104,6 +106,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
             autoComplete='tel'
             inputMode='numeric'
             name='phone'
+            {...tm('B.phone-input')}
             onChange={(e) => setPhone(e.target.value)}
             placeholder='中国大陆手机号'
             value={phone}
@@ -114,6 +117,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
             onClick={send}
             type='button'
             variant='secondary'
+            {...tm('B.send-code-button')}
           >
             {cooldown.remaining > 0 ? `${cooldown.remaining}s` : '发送验证码'}
           </Button>
@@ -129,6 +133,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
                 inputMode='numeric'
                 maxLength={6}
                 name='code'
+                {...tm('B.sms-code-input')}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder='6 位数字'
                 value={code}
@@ -140,6 +145,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
                   <span>昵称</span>
                   <Input
                     name='displayName'
+                    {...tm('B.phone-name-input')}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder='你的名字'
                     value={displayName}
@@ -150,11 +156,18 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
           </>
         )
         : null}
-      {error ? <p className='text-sm text-(--accent)'>{error}</p> : null}
+      {error
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('B.phone-error')}>
+            {error}
+          </p>
+        )
+        : null}
       <Button
         className='w-full'
         disabled={isBusy || !sent || code.length < 6}
         type='submit'
+        {...tm('B.phone-submit-button')}
       >
         {isBusy ? '处理中…' : needsName ? '创建账户' : '登录'}
       </Button>

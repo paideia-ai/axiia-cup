@@ -9,6 +9,7 @@ import { IcpRecord } from '../components/layout/icp-record'
 import { PhoneAuthForm } from '../components/auth/phone-form'
 import type { MeResponse } from '../api/types'
 import { useAuth } from '../context/auth'
+import { tm } from '../testmode/mark'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -55,10 +56,13 @@ export function RegisterPage() {
     <div className='flex min-h-screen flex-col px-4 py-12'>
       <div className='flex flex-1 items-center justify-center'>
         <div className='w-full max-w-sm space-y-5'>
-          <h1 className='flex justify-center text-3xl font-black tracking-tight text-(--foreground)'>
+          <h1
+            className='flex justify-center text-3xl font-black tracking-tight text-(--foreground)'
+            {...tm('C.page-title')}
+          >
             注册
           </h1>
-          <Card>
+          <Card {...tm('C.auth-card')}>
             <CardContent className='pt-5'>
               <Tabs defaultValue='email'>
                 <TabsList className='mb-4'>
@@ -69,16 +73,24 @@ export function RegisterPage() {
                   <PhoneAuthForm onDone={land} withInvite />
                 </TabsContent>
                 <TabsContent value='email'>
-                  <form className='space-y-4' onSubmit={handleSubmit}>
+                  <form
+                    className='space-y-4'
+                    onSubmit={handleSubmit}
+                    {...tm('C.form')}
+                  >
                     <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
                       <span>注册码</span>
                       <Input
                         name='code'
+                        {...tm('C.code-input')}
                         onChange={(e) => setCode(e.target.value)}
                         placeholder='邀请注册码'
                         value={code}
                       />
-                      <span className='text-xs text-(--foreground-muted)'>
+                      <span
+                        className='text-xs text-(--foreground-muted)'
+                        {...tm('C.code-hint')}
+                      >
                         从群聊或活动页面获取
                       </span>
                     </label>
@@ -86,6 +98,7 @@ export function RegisterPage() {
                       <span>昵称</span>
                       <Input
                         name='displayName'
+                        {...tm('C.display-name-input')}
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder='你的名字'
                         value={displayName}
@@ -96,6 +109,7 @@ export function RegisterPage() {
                       <Input
                         autoComplete='email'
                         name='email'
+                        {...tm('C.email-input')}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder='you@example.com'
                         type='email'
@@ -107,6 +121,7 @@ export function RegisterPage() {
                       <Input
                         autoComplete='new-password'
                         name='password'
+                        {...tm('C.password-input')}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder='至少 8 位'
                         type='password'
@@ -114,12 +129,20 @@ export function RegisterPage() {
                       />
                     </label>
                     {error
-                      ? <p className='text-sm text-(--accent)'>{error}</p>
+                      ? (
+                        <p
+                          className='text-sm text-(--accent)'
+                          {...tm('C.error')}
+                        >
+                          {error}
+                        </p>
+                      )
                       : null}
                     <Button
                       className='w-full'
                       disabled={isSubmitting}
                       type='submit'
+                      {...tm('C.submit-button')}
                     >
                       {isSubmitting ? '注册中…' : '创建账户'}
                     </Button>
@@ -130,7 +153,11 @@ export function RegisterPage() {
           </Card>
           <p className='text-center text-sm text-(--foreground-muted)'>
             已有账户？{' '}
-            <Link to='/login' className='text-(--accent)'>
+            <Link
+              to='/login'
+              className='text-(--accent)'
+              {...tm('C.login-link')}
+            >
               去登录
             </Link>
           </p>

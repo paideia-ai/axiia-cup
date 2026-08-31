@@ -19,6 +19,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { messageOf, useAsync } from '../lib/use-async'
 import { editedCopy } from '../lib/version-label'
+import { tm } from '../testmode/mark'
 
 // 我的智能体（#73/#64）：按场景分组的一级入口页。P2 数据化——主数据源是
 // GET /v1/my/agents（版本数/★参赛版本/双侧完成度/参赛资格，#64/#58，样式对照
@@ -88,25 +89,42 @@ export function MyAgentsPage() {
 
   return (
     <div className='space-y-6'>
-      <div>
-        <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
+      <div {...tm('MA.page-header')}>
+        <h1
+          className='text-2xl font-black tracking-tight text-(--foreground)'
+          {...tm('MA.page-title')}
+        >
           我的智能体
         </h1>
-        <p className='mt-1 text-sm text-(--foreground-subtle)'>
+        <p
+          className='mt-1 text-sm text-(--foreground-subtle)'
+          {...tm('MA.page-intro')}
+        >
           按场景分组；每个智能体执一侧，参赛需两侧各标一个参赛版本。
         </p>
       </div>
 
       {actionError
-        ? <p className='text-sm text-(--accent)'>{actionError}</p>
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('MA.action-error')}>
+            {actionError}
+          </p>
+        )
         : null}
 
       {loading
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            className='text-sm text-(--foreground-subtle)'
+            {...tm('MA.loading')}
+          >
+            加载中…
+          </p>
+        )
         : error
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? <p className='text-sm text-(--accent)' {...tm('MA.error')}>{error}</p>
         : (
-          <div className='space-y-4'>
+          <div className='space-y-4' {...tm('MA.scenario-list')}>
             {data?.scenarios.map((scenario) => {
               const inventory = data.inventory ? inventoryOf(scenario.id) : null
               return data.inventory
@@ -132,7 +150,14 @@ export function MyAgentsPage() {
                 )
             })}
             {data && data.scenarios.length === 0
-              ? <p className='text-sm text-(--foreground-subtle)'>暂无场景。</p>
+              ? (
+                <p
+                  className='text-sm text-(--foreground-subtle)'
+                  {...tm('MA.no-scenarios')}
+                >
+                  暂无场景。
+                </p>
+              )
               : null}
           </div>
         )}
@@ -221,16 +246,23 @@ function ScenarioGroup({
     )
 
   return (
-    <Card>
+    <Card {...tm('MA.scenario-group')}>
       <CardContent className='space-y-3 pt-5'>
-        <div className='flex flex-wrap items-center gap-2'>
+        <div
+          className='flex flex-wrap items-center gap-2'
+          {...tm('MA.group-header')}
+        >
           <Link
             to={`/scenarios/${scenario.id}`}
             className='text-base font-semibold text-(--foreground) hover:underline'
+            {...tm('MA.scenario-link')}
           >
             {scenario.title}
           </Link>
-          <span className='text-xs text-(--foreground-muted)'>
+          <span
+            className='text-xs text-(--foreground-muted)'
+            {...tm('MA.scenario-subject')}
+          >
             {scenario.subject}
           </span>
           {/* 双侧完成度徽章（#64）：有 agent + 已标参赛版本 = ✓ */}
@@ -241,6 +273,7 @@ function ScenarioGroup({
               <Badge
                 key={side}
                 tone={done ? 'success' : built ? 'warning' : 'info'}
+                {...tm('MA.side-badge')}
               >
                 {name} {done ? '✓' : built ? '未标参赛' : '未建'}
               </Badge>
@@ -250,6 +283,7 @@ function ScenarioGroup({
             className={`ml-auto text-xs ${
               entryReady ? 'text-(--success)' : 'text-(--foreground-muted)'
             }`}
+            {...tm('MA.entry-ready')}
           >
             {entryReady
               ? '✓ 参赛资格已就绪'
@@ -262,12 +296,13 @@ function ScenarioGroup({
           const otherBuilt = agentsOf(side === 'a' ? 'b' : 'a').length > 0
           return agents.length > 0
             ? (
-              <div key={side} className='space-y-3'>
+              <div key={side} className='space-y-3' {...tm('MA.side-section')}>
                 {agents.map((agent) => (
                   <div
                     key={agent.agentID}
                     data-testid='agent-row'
                     data-agent-id={agent.agentID}
+                    {...tm('MA.agent-row')}
                     className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
                   >
                     {
@@ -277,7 +312,10 @@ function ScenarioGroup({
                     <div className='min-w-40 flex-1'>
                       {renaming === agent.agentID
                         ? (
-                          <div className='flex flex-wrap items-center gap-2'>
+                          <div
+                            className='flex flex-wrap items-center gap-2'
+                            {...tm('MA.rename-form')}
+                          >
                             <label
                               className='sr-only'
                               htmlFor={`rename-${agent.agentID}`}
@@ -299,11 +337,13 @@ function ScenarioGroup({
                                 if (event.key === 'Escape') setRenaming(null)
                               }}
                               placeholder={`如「铁腕${name}」——留空则不起名`}
+                              {...tm('MA.rename-input')}
                             />
                             <Button
                               size='sm'
                               variant='secondary'
                               onClick={() => void commitRename(agent.agentID)}
+                              {...tm('MA.rename-save-button')}
                             >
                               保存
                             </Button>
@@ -311,6 +351,7 @@ function ScenarioGroup({
                               type='button'
                               onClick={() => setRenaming(null)}
                               className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
+                              {...tm('MA.rename-cancel-button')}
                             >
                               取消
                             </button>
@@ -321,6 +362,7 @@ function ScenarioGroup({
                         className={`text-sm font-semibold text-(--foreground) ${
                           renaming === agent.agentID ? 'hidden' : ''
                         }`}
+                        {...tm('MA.agent-name')}
                       >
                         <span className='mr-1.5 text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
                           {side === 'a' ? '甲方' : '乙方'}
@@ -332,13 +374,19 @@ function ScenarioGroup({
                         {agent.name ? `${name}「${agent.name}」` : name}
                         {agent.name == null || agent.name === ''
                           ? (
-                            <span className='ml-1.5 font-mono text-[11px] font-normal text-(--foreground-muted)'>
+                            <span
+                              className='ml-1.5 font-mono text-[11px] font-normal text-(--foreground-muted)'
+                              {...tm('MA.agent-id')}
+                            >
                               #{agent.agentID}
                             </span>
                           )
                           : null}
                       </p>
-                      <p className='truncate text-xs text-(--foreground-muted)'>
+                      <p
+                        className='truncate text-xs text-(--foreground-muted)'
+                        {...tm('MA.agent-meta')}
+                      >
                         {agent.versionCount > 0
                           ? `${agent.versionCount} 个版本`
                           : '还没有版本'}
@@ -350,7 +398,10 @@ function ScenarioGroup({
                           ? (
                             <>
                               {' · '}
-                              <span data-testid='agent-edited'>
+                              <span
+                                data-testid='agent-edited'
+                                {...tm('MA.agent-edited')}
+                              >
                                 {editedCopy(agent.lastEditedAt)}
                               </span>
                             </>
@@ -359,12 +410,16 @@ function ScenarioGroup({
                         {label ? ` · ${label}` : ''}
                       </p>
                     </div>
-                    <div className='flex items-center gap-1.5'>
+                    <div
+                      className='flex items-center gap-1.5'
+                      {...tm('MA.agent-actions')}
+                    >
                       <Button
                         size='sm'
                         variant='secondary'
                         aria-label={`查看${scenario.title}·${name}侧智能体 #${agent.agentID}`}
                         onClick={() => navigate(`/agents/${agent.agentID}`)}
+                        {...tm('MA.view-button')}
                       >
                         查看智能体
                       </Button>
@@ -373,6 +428,7 @@ function ScenarioGroup({
                         aria-label={`进入${scenario.title}·${name}侧构建 #${agent.agentID}`}
                         onClick={() =>
                           navigate(`/agents/${agent.agentID}/build`)}
+                        {...tm('MA.build-button')}
                       >
                         进入构建
                       </Button>
@@ -381,6 +437,7 @@ function ScenarioGroup({
                         size='sm'
                         variant='ghost'
                         aria-label={`重命名智能体 #${agent.agentID}`}
+                        {...tm('MA.rename-button')}
                         onClick={() => {
                           setRenaming(agent.agentID)
                           setDraftName(agent.name ?? '')
@@ -399,6 +456,7 @@ function ScenarioGroup({
                                 variant='secondary'
                                 aria-label={`确认删除智能体 #${agent.agentID}`}
                                 onClick={() => void commitDelete(agent.agentID)}
+                                {...tm('MA.delete-confirm-button')}
                               >
                                 确认删除
                               </Button>
@@ -409,6 +467,7 @@ function ScenarioGroup({
                                 variant='ghost'
                                 aria-label={`删除智能体 #${agent.agentID}`}
                                 onClick={() => setDeleteArmed(agent.agentID)}
+                                {...tm('MA.delete-button')}
                               >
                                 删除
                               </Button>
@@ -419,7 +478,14 @@ function ScenarioGroup({
                   </div>
                 ))}
                 {rowError
-                  ? <p className='text-xs text-(--accent)'>{rowError}</p>
+                  ? (
+                    <p
+                      className='text-xs text-(--accent)'
+                      {...tm('MA.row-error')}
+                    >
+                      {rowError}
+                    </p>
+                  )
                   : null}
                 {/* #56 每侧多 agent：入口在侧内；#59 引导门在弹窗里拦并引导 */}
                 <div>
@@ -428,6 +494,7 @@ function ScenarioGroup({
                     variant='ghost'
                     aria-label={`再建一个${scenario.title}·${name}侧智能体`}
                     onClick={() => onNewAgent(side)}
+                    {...tm('MA.new-agent-button')}
                   >
                     <Plus className='mr-1.5 h-3.5 w-3.5' />
                     再建一个{name}
@@ -439,6 +506,7 @@ function ScenarioGroup({
               <div
                 key={side}
                 className='flex flex-wrap items-center gap-3 rounded-md border border-dashed border-(--border-soft) px-3 py-2.5'
+                {...tm('MA.empty-side')}
               >
                 <div className='min-w-40 flex-1'>
                   <p className='text-sm text-(--foreground-subtle)'>
@@ -461,6 +529,7 @@ function ScenarioGroup({
                   disabled={pending != null}
                   aria-label={`创建${scenario.title}·${name}侧智能体`}
                   onClick={() => onCreate(side)}
+                  {...tm('MA.create-side-button')}
                 >
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   {pending === `${scenario.id}:${side}:build`
@@ -489,7 +558,7 @@ function SkeletonGroup({
   onEnter: (side: Side, target: 'view' | 'build') => void
 }) {
   return (
-    <Card>
+    <Card {...tm('MA.fallback-group')}>
       <CardContent className='space-y-3 pt-5'>
         <div className='flex flex-wrap items-baseline gap-2'>
           <Link
@@ -510,6 +579,7 @@ function SkeletonGroup({
           <div
             key={side}
             className='flex flex-wrap items-center gap-3 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2.5'
+            {...tm('MA.fallback-row')}
           >
             <div className='min-w-40 flex-1'>
               <p className='text-sm font-semibold text-(--foreground)'>
@@ -533,6 +603,7 @@ function SkeletonGroup({
                 disabled={pending != null}
                 aria-label={`查看${scenario.title}·${name}侧智能体`}
                 onClick={() => onEnter(side, 'view')}
+                {...tm('MA.fallback-view-button')}
               >
                 {pending === `${scenario.id}:${side}:view`
                   ? '打开中…'
@@ -543,6 +614,7 @@ function SkeletonGroup({
                 disabled={pending != null}
                 aria-label={`进入${scenario.title}·${name}侧构建`}
                 onClick={() => onEnter(side, 'build')}
+                {...tm('MA.fallback-build-button')}
               >
                 {pending === `${scenario.id}:${side}:build`
                   ? '打开中…'
@@ -553,7 +625,10 @@ function SkeletonGroup({
         ))}
 
         {/* #54 引导式空态：数据化槽位不摆假数字，只给轮廓提示 */}
-        <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+        <p
+          className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
+          {...tm('MA.fallback-hint')}
+        >
           完成度与参赛资格徽章将在数据接入后点亮
         </p>
       </CardContent>

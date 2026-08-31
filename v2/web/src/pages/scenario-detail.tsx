@@ -11,6 +11,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
 import { scenarioModule } from '../scenarios'
+import { tm } from '../testmode/mark'
 import type {
   ScenarioEducation,
   ScenarioHiddenGoalList,
@@ -68,15 +69,29 @@ export function ScenarioDetailPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6'>
+    <div className='mx-auto w-full max-w-6xl space-y-6' {...tm('DA.page')}>
       {loading
-        ? <p className='text-sm text-(--foreground-subtle)'>加载中…</p>
+        ? (
+          <p
+            className='text-sm text-(--foreground-subtle)'
+            {...tm('DA.loading')}
+          >
+            加载中…
+          </p>
+        )
         : error
-        ? <p className='text-sm text-(--accent)'>{error}</p>
+        ? (
+          <p className='text-sm text-(--accent)' {...tm('DA.error')}>
+            {error}
+          </p>
+        )
         : data
         ? (
           <>
-            <header className='flex flex-wrap items-start justify-between gap-4'>
+            <header
+              className='flex flex-wrap items-start justify-between gap-4'
+              {...tm('DA.page-header')}
+            >
               <div>
                 {intro?.source.category
                   ? (
@@ -91,7 +106,10 @@ export function ScenarioDetailPage() {
                 <p className='mt-2 text-sm text-(--foreground-subtle)'>
                   {data.summary.subject}
                 </p>
-                <p className='mt-3 text-xs text-(--foreground-muted)'>
+                <p
+                  className='mt-3 text-xs text-(--foreground-muted)'
+                  {...tm('DA.header-matchup')}
+                >
                   {module?.hideHeaderMatchup
                     ? education?.formatLabel ?? `${data.summary.turnCount} 轮`
                     : (
@@ -117,7 +135,11 @@ export function ScenarioDetailPage() {
               timelineAtEnd={module?.timelineAtEnd ?? false}
             />
 
-            <section className='space-y-3' aria-labelledby='participants-title'>
+            <section
+              className='space-y-3'
+              aria-labelledby='participants-title'
+              {...tm('DA.participants-section')}
+            >
               <div>
                 <h2
                   id='participants-title'
@@ -169,7 +191,14 @@ export function ScenarioDetailPage() {
                 ))}
               </div>
               {buildError
-                ? <p className='text-sm text-(--accent)'>{buildError}</p>
+                ? (
+                  <p
+                    className='text-sm text-(--accent)'
+                    {...tm('DA.build-error')}
+                  >
+                    {buildError}
+                  </p>
+                )
                 : null}
             </section>
 
@@ -209,9 +238,9 @@ function OverviewCard({
 }) {
   const overview = intro?.source.overview ?? null
   return (
-    <Card data-testid='scenario-intro-card'>
+    <Card data-testid='scenario-intro-card' {...tm('DA.overview-card')}>
       <CardContent className='space-y-5 pt-5'>
-        <div className='space-y-3'>
+        <div className='space-y-3' {...tm('DA.overview-story')}>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
             01 · {overview?.label ?? '场景介绍'}
           </p>
@@ -232,7 +261,10 @@ function OverviewCard({
               </>
             )
             : (
-              <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+              <p
+                className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
+                {...tm('DA.overview-empty')}
+              >
                 场景导读整理中
               </p>
             )}
@@ -244,7 +276,10 @@ function OverviewCard({
 
         {overview?.facts && overview.facts.length > 0
           ? (
-            <div className='grid gap-3 md:grid-cols-3'>
+            <div
+              className='grid gap-3 md:grid-cols-3'
+              {...tm('DA.overview-facts')}
+            >
               {overview.facts.map((fact) => (
                 <OverviewFactCard
                   key={fact.title}
@@ -258,7 +293,10 @@ function OverviewCard({
 
         {overview?.timeline && !timelineAtEnd
           ? (
-            <section className='space-y-3 border-t border-(--border-soft) pt-5'>
+            <section
+              className='space-y-3 border-t border-(--border-soft) pt-5'
+              {...tm('DA.timeline')}
+            >
               <h3 className='text-base font-semibold text-(--foreground)'>
                 {overview.timeline.title}
               </h3>
@@ -285,12 +323,20 @@ function OverviewCard({
           : null}
 
         {overview?.actions
-          ? <CollectionBlock collection={overview.actions} />
+          ? (
+            <CollectionBlock
+              collection={overview.actions}
+              mark={tm('DA.actions-list')}
+            />
+          )
           : null}
 
         {intro?.source.participants.note
           ? (
-            <div className='rounded-lg border border-(--warning)/35 bg-(--warning)/5 px-4 py-3 sm:flex sm:items-baseline sm:gap-3'>
+            <div
+              className='rounded-lg border border-(--warning)/35 bg-(--warning)/5 px-4 py-3 sm:flex sm:items-baseline sm:gap-3'
+              {...tm('DA.participants-note')}
+            >
               <strong className='text-sm text-(--warning)'>
                 {intro.source.participants.note.title}
               </strong>
@@ -303,7 +349,10 @@ function OverviewCard({
 
         {education
           ? (
-            <div className='flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-soft) pt-4 text-xs text-(--foreground-subtle)'>
+            <div
+              className='flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-soft) pt-4 text-xs text-(--foreground-subtle)'
+              {...tm('DA.education-row')}
+            >
               <span title={`难度 ${education.difficulty} / 3`}>
                 难度{' '}
                 <span className='tracking-[0.12em] text-(--warning)'>
@@ -327,7 +376,10 @@ function OverviewCard({
 
         {statsLine(summary)
           ? (
-            <p className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'>
+            <p
+              className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
+              {...tm('DA.stats-line')}
+            >
               <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
                 侧方胜率
               </span>
@@ -336,7 +388,10 @@ function OverviewCard({
           )
           : education
           ? (
-            <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'>
+            <p
+              className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
+              {...tm('DA.stats-empty')}
+            >
               侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
             </p>
           )
@@ -380,7 +435,7 @@ function ScenarioOverviewImages({ images }: { images: ScenarioIntroImage[] }) {
 
 function TimelineCard({ timeline }: { timeline: ScenarioIntroTimeline }) {
   return (
-    <Card data-testid='scenario-intro-card'>
+    <Card data-testid='scenario-intro-card' {...tm('DA.timeline')}>
       <CardContent className='space-y-4 pt-5'>
         <h2 className='text-xl font-bold text-(--foreground)'>
           {timeline.title}
@@ -438,10 +493,17 @@ function OverviewFactCard({
 }
 
 function CollectionBlock(
-  { collection }: { collection: ScenarioIntroCollection },
+  { collection, mark }: {
+    collection: ScenarioIntroCollection
+    /** 测试模式标记：两处调用各自一个 id（见 testmode/registry/discovery.ts） */
+    mark: ReturnType<typeof tm>
+  },
 ) {
   return (
-    <section className='space-y-3 border-t border-(--border-soft) pt-5'>
+    <section
+      className='space-y-3 border-t border-(--border-soft) pt-5'
+      {...mark}
+    >
       <div>
         <h3 className='text-base font-semibold text-(--foreground)'>
           {collection.title}
@@ -502,7 +564,7 @@ function SideCard({
   const alignPrimaryGoal = hiddenGoals?.groups.every((group) => !group.role) ??
     false
   return (
-    <Card data-testid='scenario-intro-card'>
+    <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>
         <div>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
@@ -536,7 +598,10 @@ function SideCard({
           ))}
         </div>
 
-        <div className='rounded-lg border border-(--border-soft) bg-black/10 p-3'>
+        <div
+          className='rounded-lg border border-(--border-soft) bg-black/10 p-3'
+          {...tm('DA.side-goal')}
+        >
           <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
             {copy?.goalLabel ?? '胜利条件'}
           </p>
@@ -547,7 +612,7 @@ function SideCard({
 
         {copy?.choices && copy.choices.length > 0
           ? (
-            <div className='space-y-2'>
+            <div className='space-y-2' {...tm('DA.side-choices')}>
               {copy.choices.map((choice) => {
                 const roleGoals = hiddenGoals?.groups.find((group) =>
                   group.role === choice.name
@@ -586,7 +651,10 @@ function SideCard({
 
         {agents.length > 0
           ? (
-            <p className='text-xs text-(--foreground-muted)'>
+            <p
+              className='text-xs text-(--foreground-muted)'
+              {...tm('DA.side-owned-note')}
+            >
               你已有 {agents.length} 个{name}：{' '}
               {agents.map((agent) => agent.name ?? `#${agent.agentID}`).join(
                 ' · ',
@@ -595,7 +663,10 @@ function SideCard({
           )
           : null}
 
-        <div className='mt-auto flex flex-wrap items-center gap-2 pt-1'>
+        <div
+          className='mt-auto flex flex-wrap items-center gap-2 pt-1'
+          {...tm('DA.side-actions')}
+        >
           {agents.length === 0
             ? (
               <Button
@@ -603,6 +674,7 @@ function SideCard({
                 data-testid={side === 'a' ? 'build-agent' : 'build-agent-b'}
                 disabled={pending != null}
                 onClick={() => void onEnter(side, 'build')}
+                {...tm('DA.build-button')}
               >
                 <Hammer className='mr-1.5 h-3.5 w-3.5' />
                 {pending === `${side}:build`
@@ -612,11 +684,20 @@ function SideCard({
             )
             : (
               <>
-                <Button size='sm' onClick={onNew}>
+                <Button
+                  size='sm'
+                  onClick={onNew}
+                  {...tm('DA.build-more-button')}
+                >
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   再建一个{name}
                 </Button>
-                <Button size='sm' variant='secondary' onClick={onViewAll}>
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  onClick={onViewAll}
+                  {...tm('DA.view-mine-button')}
+                >
                   <Bot className='mr-1.5 h-3.5 w-3.5' />
                   查看我的{name}（{agents.length}）
                 </Button>
@@ -636,7 +717,10 @@ function HiddenGoalList({
   showRole?: boolean
 }) {
   return (
-    <section className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'>
+    <section
+      className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'
+      {...tm('DA.hidden-goals')}
+    >
       <Accordion className='divide-y-0'>
         <AccordionItem
           value='hidden-goals'
@@ -703,13 +787,16 @@ function JudgeScoringCard({
     ? '裁判与投票规则'
     : '裁判与计分'
   return (
-    <Card data-testid='scenario-intro-card'>
+    <Card data-testid='scenario-intro-card' {...tm('DA.judge-card')}>
       <CardContent className='space-y-5 pt-5'>
         <h2 className='text-xl font-bold text-(--foreground)'>
           {scoringHeading}
         </h2>
         <div className='grid items-start gap-6 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)]'>
-          <section className='min-w-0 space-y-3 lg:pr-6'>
+          <section
+            className='min-w-0 space-y-3 lg:pr-6'
+            {...tm('DA.judge-intro')}
+          >
             {participants
               ? (
                 <div>
@@ -755,7 +842,12 @@ function JudgeScoringCard({
           />
         </div>
         {participants?.supporting
-          ? <CollectionBlock collection={participants.supporting} />
+          ? (
+            <CollectionBlock
+              collection={participants.supporting}
+              mark={tm('DA.supporting-list')}
+            />
+          )
           : null}
       </CardContent>
     </Card>
@@ -775,7 +867,10 @@ function ScoringRules({
 }) {
   if (initiallyCollapsed) {
     return (
-      <section className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'>
+      <section
+        className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'
+        {...tm('DA.scoring-rules')}
+      >
         <Accordion className='divide-y-0'>
           <AccordionItem
             value='scoring-rules'
@@ -791,7 +886,10 @@ function ScoringRules({
     )
   }
   return (
-    <section className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'>
+    <section
+      className='min-w-0 lg:border-l lg:border-(--border-soft) lg:pl-6'
+      {...tm('DA.scoring-rules')}
+    >
       <h3 className='text-lg font-semibold text-(--foreground)'>
         {label}
       </h3>
@@ -883,7 +981,10 @@ function ScoreRuleRow({
   }
 }) {
   return (
-    <div className='flex items-center justify-between gap-4 py-3'>
+    <div
+      className='flex items-center justify-between gap-4 py-3'
+      {...tm('DA.score-rule-row')}
+    >
       <div className='min-w-0 space-y-1'>
         <p className='text-xs font-medium text-(--foreground)'>
           {rule.title}
@@ -913,6 +1014,7 @@ function OpeningLine({
     <figure
       data-testid='opening-line'
       className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
+      {...tm('DA.opening-line')}
     >
       <figcaption className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
         开场白{speaker ? ` · 对局开始时${speaker}对双方说的第一句话` : ''}
@@ -941,6 +1043,7 @@ function JudgePromptDisclosure({
     <div
       data-testid='judge-prompt'
       className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'
+      {...tm('DA.judge-prompt')}
     >
       <Accordion className='divide-y-0'>
         <AccordionItem
@@ -989,16 +1092,26 @@ function GateStatus({ summary }: { summary: ScenarioSummary }) {
   const progress = summary.gateProgress ?? null
   if (!progress) {
     return (
-      <Badge tone={summary.gateUnlocked ? 'success' : 'info'}>
+      <Badge
+        tone={summary.gateUnlocked ? 'success' : 'info'}
+        {...tm('DA.gate-status')}
+      >
         {summary.gateUnlocked ? 'PvP 已解锁' : 'PvE 阶段'}
       </Badge>
     )
   }
   if (gateMet(progress)) {
-    return <Badge tone='success'>✓ PVP 已解锁</Badge>
+    return (
+      <Badge tone='success' {...tm('DA.gate-status')}>
+        ✓ PVP 已解锁
+      </Badge>
+    )
   }
   return (
-    <div className='flex flex-wrap items-center gap-1.5'>
+    <div
+      className='flex flex-wrap items-center gap-1.5'
+      {...tm('DA.gate-status')}
+    >
       <span className='text-xs text-(--foreground-muted)'>
         每侧各赢 ≥{progress.a.needed} 场 PVE 练习解锁 PVP
       </span>
@@ -1006,6 +1119,7 @@ function GateStatus({ summary }: { summary: ScenarioSummary }) {
         <Badge
           key={which}
           tone={sideMet(progress[which]) ? 'success' : 'info'}
+          {...tm('DA.gate-side-badge')}
         >
           {which === 'a' ? summary.sideAName : summary.sideBName}{' '}
           {sideProgressText(progress[which])}
