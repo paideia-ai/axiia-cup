@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Axiia Cup 历史规格与 Supabase 评论中的可配置系统变量清单"
+    />
+    <title>Axiia Cup · 可配置系统变量</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #171717;
+        --muted: #686868;
+        --paper: #f7f5ef;
+        --card: #fffdf8;
+        --line: #ded9cd;
+        --accent: #155e75;
+        --accent-soft: #dff3f5;
+        --warning: #8a4b08;
+        --warning-soft: #fff0d5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 64px 0 88px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 32px;
+        align-items: end;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 820px;
+        margin-bottom: 14px;
+        font-size: clamp(2.25rem, 6vw, 5.6rem);
+        line-height: 0.96;
+        letter-spacing: -0.055em;
+      }
+
+      h2 {
+        margin: 64px 0 18px;
+        font-size: clamp(1.5rem, 3vw, 2.2rem);
+        letter-spacing: -0.025em;
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 1.03rem;
+      }
+
+      .eyebrow,
+      .meta,
+      .label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .lead {
+        max-width: 760px;
+        margin-bottom: 0;
+        color: #414141;
+        font-size: 1.08rem;
+      }
+
+      .stamp {
+        min-width: 178px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--card);
+      }
+
+      .stamp p {
+        margin-bottom: 2px;
+      }
+
+      .notice {
+        margin-top: 28px;
+        padding: 18px 20px;
+        border-left: 4px solid var(--accent);
+        border-radius: 0 12px 12px 0;
+        background: var(--accent-soft);
+      }
+
+      .notice p {
+        margin: 0;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+      }
+
+      table {
+        width: 100%;
+        min-width: 900px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      code {
+        padding: 0.16rem 0.38rem;
+        border-radius: 6px;
+        background: #ece8df;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 0.86em;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+      }
+
+      .card p,
+      .card ul {
+        margin-bottom: 0;
+      }
+
+      .card ul {
+        padding-left: 20px;
+      }
+
+      .conflict {
+        border-color: #e8c690;
+        background: var(--warning-soft);
+      }
+
+      .conflict .label {
+        color: var(--warning);
+      }
+
+      a {
+        color: var(--accent);
+        text-underline-offset: 3px;
+      }
+
+      footer {
+        margin-top: 64px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      @media (max-width: 720px) {
+        main {
+          width: min(100% - 24px, 1120px);
+          padding-top: 36px;
+        }
+
+        header,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: clamp(2.5rem, 15vw, 4.5rem);
+        }
+
+        .stamp {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">Axiia Cup · Product Spec Audit</p>
+          <h1>可配置系统变量</h1>
+          <p class="lead">
+            合并 Supabase 评论、UI Spec v1–v4、DESIGN_SPEC Git 历史与当前场景
+            schema 后得到的产品配置清单。
+          </p>
+        </div>
+        <div class="stamp" aria-label="报告元数据">
+          <p class="meta">整理日期</p>
+          <p>2026-09-02</p>
+          <p class="meta" style="margin-top: 12px">管理方式</p>
+          <p>文件 + CLI</p>
+        </div>
+      </header>
+
+      <div class="notice">
+        <p>
+          <strong>结论：</strong>当前 v3.4 C2 注册表覆盖了主要运营旋钮，但历史规格还包含
+          场景执行配置，并留下“重复约战限次”“turn_count 默认值”“judge_rounds”
+          三项必须先裁决的冲突。
+        </p>
+      </div>
+
+      <section aria-labelledby="knobs">
+        <h2 id="knobs">确认需要可配置的旋钮</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>变量</th>
+                <th>作用域</th>
+                <th>规格口径</th>
+                <th>默认 / 状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>stats.min_battles_per_agent</code></td>
+                <td>全局</td>
+                <td>按 agent 的对局数决定是否展示场景统计；不按胜率</td>
+                <td>数值未定；前端不得写死</td>
+              </tr>
+              <tr>
+                <td><code>limits.daily_battles_per_player</code></td>
+                <td>每玩家</td>
+                <td>每日总对战次数；只扣发起人；触顶拒绝入队</td>
+                <td>数值未定</td>
+              </tr>
+              <tr>
+                <td><code>limits.concurrent_battles_per_player</code></td>
+                <td>每玩家</td>
+                <td>同时排队或运行的对局上限</td>
+                <td>数值未定</td>
+              </tr>
+              <tr>
+                <td><code>limits.pvp_daily_battles_per_player</code></td>
+                <td>每玩家</td>
+                <td>PVP 每日次数，独立于每日总量</td>
+                <td>数值未定</td>
+              </tr>
+              <tr>
+                <td><code>gates.pvp_distinct_wins_per_side</code></td>
+                <td>玩家 × 场景 × 侧</td>
+                <td>每一侧分别击败 N 个不同 PVE-NPC；约战双方均须达标</td>
+                <td>N=1；N ≤ NPC 数</td>
+              </tr>
+              <tr>
+                <td><code>pve.default_npc_count</code></td>
+                <td>全局默认</td>
+                <td>每场景的默认 PVE-NPC 数量</td>
+                <td>2</td>
+              </tr>
+              <tr>
+                <td><code>onboarding.scenario_id</code></td>
+                <td>全局</td>
+                <td>新人首战默认场景</td>
+                <td>曾建议商鞅；待确认</td>
+              </tr>
+              <tr>
+                <td><code>onboarding.side</code></td>
+                <td>全局</td>
+                <td>新人首战默认执方</td>
+                <td>待定</td>
+              </tr>
+              <tr>
+                <td><code>onboarding.opponent_npc_id</code></td>
+                <td>全局</td>
+                <td>新人首战自动派发的“最容易”NPC</td>
+                <td>待定</td>
+              </tr>
+              <tr>
+                <td><code>models.allowed_player_models</code></td>
+                <td>全局</td>
+                <td>由配置文件/只读接口下发；选择结果随版本快照</td>
+                <td>清单可变</td>
+              </tr>
+              <tr>
+                <td><code>visibility.matrix</code></td>
+                <td>全局</td>
+                <td>按资源 × 观众身份决定可见性</td>
+                <td>提示词、diff、玩家 trace 仅所有者</td>
+              </tr>
+              <tr>
+                <td><code>scenario.difficulty</code></td>
+                <td>每场景</td>
+                <td>场景难度</td>
+                <td>简单 / 中等 / 困难</td>
+              </tr>
+              <tr>
+                <td><code>scenario.beginner_friendly</code></td>
+                <td>每场景</td>
+                <td>独立新手标记，不由 difficulty 推导</td>
+                <td>Boolean</td>
+              </tr>
+              <tr>
+                <td><code>notifications.preferences</code></td>
+                <td>每玩家</td>
+                <td>总开关、逐类偏好、强制通知、默认值与持久化</td>
+                <td>Future；当前全部默认开启</td>
+              </tr>
+              <tr>
+                <td><code>ops.block_trials_during_tournament</code></td>
+                <td>运营</td>
+                <td>赛事运行期间是否阻挡全部试炼</td>
+                <td>规格已确认</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="scenario-config">
+        <h2 id="scenario-config">场景配置必须支持</h2>
+        <div class="grid">
+          <article class="card">
+            <p class="label">Flow</p>
+            <h3>对局流程</h3>
+            <p>
+              <code>turn_count</code>、<code>stage_structure</code>、
+              <code>examination_mode</code>、<code>examination_questions</code>、
+              历史字段 <code>judge_rounds</code>。
+            </p>
+          </article>
+          <article class="card">
+            <p class="label">Randomization</p>
+            <h3>隐藏信息</h3>
+            <p>
+              两侧隐藏信息池、<code>false_info_count</code>、
+              <code>true_request_count</code> 及每局抽取分配规则。
+            </p>
+          </article>
+          <article class="card">
+            <p class="label">Evaluation</p>
+            <h3>裁判与计分</h3>
+            <p>
+              Judge/scorer 模型与 prompts、计分模式、维度、权重、惩罚、场景专属
+              scoring script/schema。
+            </p>
+          </article>
+          <article class="card">
+            <p class="label">Content</p>
+            <h3>角色与构建</h3>
+            <p>
+              两侧角色卡、目标、边界、立场/请求项、开场白、系统角色模板、MCQ decks。
+            </p>
+          </article>
+          <article class="card">
+            <p class="label">Opponents</p>
+            <h3>PVE-NPC</h3>
+            <p>
+              NPC 列表、所属侧、名称、提示词、模型、难度、排序，以及“最容易”对手定义。
+            </p>
+          </article>
+          <article class="card">
+            <p class="label">Metadata</p>
+            <h3>场景基础信息</h3>
+            <p>
+              名称、学科、摘要、背景、难度、新手标记、预计时长、上线时间。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="conflicts">
+        <h2 id="conflicts">先裁决，再实现</h2>
+        <div class="grid">
+          <article class="card conflict">
+            <p class="label">Conflict 01</p>
+            <h3>重复约战限次</h3>
+            <p>
+              历史规格分别出现“不额外限制”“同一对手每日 M 次”“完全相同四版本阵容每日
+              X 次”。最终只能保留一种口径。
+            </p>
+          </article>
+          <article class="card conflict">
+            <p class="label">Conflict 02</p>
+            <h3><code>turn_count</code> 默认值</h3>
+            <p>产品规格默认 20；当前数据库 schema 默认 10。</p>
+          </article>
+          <article class="card conflict">
+            <p class="label">Conflict 03</p>
+            <h3><code>judge_rounds</code></h3>
+            <p>
+              历史规格默认 3；当前 schema 没有独立字段，需决定恢复或由新问询 schema
+              正式取代。
+            </p>
+          </article>
+          <article class="card conflict">
+            <p class="label">Open Value</p>
+            <h3>统计展示门槛</h3>
+            <p>计算口径已定，具体对局数仍未确认；可以不展示给玩家，但不能缺少配置值。</p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="sources">
+        <h2 id="sources">主要来源</h2>
+        <ul>
+          <li>
+            <a
+              href="https://github.com/paideia-ai/axiia-cup-uiux/blob/main/v3-confusions-answers-yihan.md"
+              >Yihan 对 59 项规格困惑的回应</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/paideia-ai/axiia-cup-uiux/blob/main/UI-Doc-v3.4.md"
+              >UI-Doc-v3.4</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/paideia-ai/axiia-cup-uiux/blob/main/spec-v4/README.md"
+              >spec v4 README</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/paideia-ai/axiia-cup/blob/d2cf1076/docs/competition/DESIGN_SPEC.md#L430-L445"
+              >历史 DESIGN_SPEC 配置注册表</a
+            >
+          </li>
+          <li>Supabase <code>axiia-decisions.public.comments</code>，只读查询</li>
+        </ul>
+      </section>
+
+      <footer>
+        完整字段说明、历史冲突和非配置项边界请以同目录 Markdown 报告为准。
+      </footer>
+    </main>
+  </body>
+</html>
