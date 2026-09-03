@@ -115,6 +115,34 @@ describe('buildOpenAICompatibleRequest', () => {
 
     expect(request.temperature).toBe(0.7)
   })
+
+  it('routes the new Qwen models to their exact DashScope model ids with thinking available', () => {
+    for (const model of ['qwen3.8-27b', 'qwen3.8-max'] as const) {
+      const request = buildOpenAICompatibleRequest({
+        ...baseParams,
+        jsonMode: true,
+        model,
+      })
+
+      expect(request.model).toBe(model)
+      expect(request.response_format).toEqual({ type: 'json_object' })
+      expect(request.temperature).toBe(0)
+      expect('enable_thinking' in request).toBe(false)
+    }
+  })
+
+  it('routes GLM-5.3 to the Zhipu model id without trying to disable required thinking', () => {
+    const request = buildOpenAICompatibleRequest({
+      ...baseParams,
+      jsonMode: true,
+      model: 'glm-5.3',
+    })
+
+    expect(request.model).toBe('glm-5.3')
+    expect(request.response_format).toEqual({ type: 'json_object' })
+    expect(request.temperature).toBe(0)
+    expect('enable_thinking' in request).toBe(false)
+  })
 })
 
 describe('extractTokenUsage', () => {
