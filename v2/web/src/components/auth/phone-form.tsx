@@ -40,6 +40,10 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
 
+  // 登录页不带注册码，服务端对未注册号码的 403 invalid_code 只可能是「没有账户」。
+  const unregistered = (cause: unknown) =>
+    !withInvite && cause instanceof ApiError && cause.code === 'invalid_code'
+
   const send = async () => {
     setError(null)
     setIsBusy(true)
@@ -55,7 +59,11 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
       // Retry-After 是服务端为这个号算出的预算；照它起倒计时，才不会怂恿一次
       // 注定被拒的重发。
       if (cause instanceof ApiError && cause.retryAfter) cooldown.start()
-      setError(messageOf(cause, '验证码发送失败'))
+      setError(
+        unregistered(cause)
+          ? '该手机号尚未注册，请先去注册'
+          : messageOf(cause, '验证码发送失败'),
+      )
     } finally {
       setIsBusy(false)
     }
