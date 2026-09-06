@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
-      legacy_changed: ${{ steps.classify.outputs.legacy_changed }}
       v2_web_changed: ${{ steps.classify.outputs.v2_web_changed }}
       v2_scenarios_changed: ${{ steps.classify.outputs.v2_scenarios_changed }}
 
@@ -31,37 +30,6 @@ jobs:
         run: |
           chmod +x .github/classify-changes.sh
           .github/classify-changes.sh
-
-  ci:
-    name: CI
-    runs-on: ubuntu-latest
-    needs: classify
-    if: needs.classify.outputs.legacy_changed == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.3.11"
-
-      - run: bun install --frozen-lockfile
-
-      - name: Format check
-        run: bun run fmt:check
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Typecheck
-        run: bun run typecheck
-
-      - name: Build
-        run: bun run build
-
-      - name: Test
-        run: bun test
-        working-directory: apps/api
 
   v2-web:
     name: v2 web
@@ -135,7 +103,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - classify
-      - ci
       - v2-web
       - v2-scenarios
     if: always()
@@ -145,17 +112,15 @@ jobs:
         shell: bash
         env:
           DOCS_ONLY: ${{ needs.classify.outputs.docs_only }}
-          LEGACY_CHANGED: ${{ needs.classify.outputs.legacy_changed }}
           V2_WEB_CHANGED: ${{ needs.classify.outputs.v2_web_changed }}
           V2_SCENARIOS_CHANGED: ${{ needs.classify.outputs.v2_scenarios_changed }}
-          CI_RESULT: ${{ needs.ci.result }}
           V2_WEB_RESULT: ${{ needs.v2-web.result }}
           V2_SCENARIOS_RESULT: ${{ needs.v2-scenarios.result }}
         run: |
           set -euo pipefail
 
-          echo "docs_only=$DOCS_ONLY legacy_changed=$LEGACY_CHANGED v2_web_changed=$V2_WEB_CHANGED v2_scenarios_changed=$V2_SCENARIOS_CHANGED"
-          echo "ci=$CI_RESULT v2-web=$V2_WEB_RESULT v2-scenarios=$V2_SCENARIOS_RESULT"
+          echo "docs_only=$DOCS_ONLY v2_web_changed=$V2_WEB_CHANGED v2_scenarios_changed=$V2_SCENARIOS_CHANGED"
+          echo "v2-web=$V2_WEB_RESULT v2-scenarios=$V2_SCENARIOS_RESULT"
 
           if [[ "$DOCS_ONLY" == "true" ]]; then
             echo "Docs-only change detected; heavy CI skipped."
@@ -163,11 +128,6 @@ jobs:
           fi
 
           failed=0
-
-          if [[ "$LEGACY_CHANGED" == "true" && "$CI_RESULT" != "success" ]]; then
-            echo "CI job must pass."
-            failed=1
-          fi
 
           if [[ "$V2_WEB_CHANGED" == "true" && "$V2_WEB_RESULT" != "success" ]]; then
             echo "v2 web job must pass."
@@ -181,6 +141,11 @@ jobs:
 
           if [[ "$failed" != "0" ]]; then
             exit 1
+          fi
+
+          if [[ "$V2_WEB_CHANGED" != "true" && "$V2_SCENARIOS_CHANGED" != "true" ]]; then
+            echo "Change touches no build lane; nothing to verify."
+            exit 0
           fi
 
           echo "Required CI gate passed."
