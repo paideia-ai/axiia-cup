@@ -5,7 +5,9 @@ _Last verified: 2026-09-06 against the workflow files in this repository._
 This document describes the **current** CI and deploy path for what this
 repository ships. Everything here is derived from `.github/`; host-side state
 (nginx, containers, the webhook service) is authoritative on `cup-worker`, not
-here — verify it live before acting on it.
+here — verify it live before acting on it. The host layout the deploy lands on
+is documented in the sibling `axiia-cup-2` repository at `docs/deployment.md`;
+this repository keeps no snapshot of it.
 
 Production cut over to the Swift `axiia` server on 2026-09-02, and the legacy v1
 bun stack was deleted from this repository on 2026-09-06; the final v1 database
@@ -148,7 +150,9 @@ and an `ssh -L` tunnel from `cup-worker`. `deploy/openai-proxy/`,
 `deploy/start-us-gateway-tunnel.sh`, and
 `deploy/axiia-us-gateway-tunnel.service.example` are the references for it; the
 live production tunnel is a long-running `ssh` under `anna`, not the systemd
-unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md`.
+unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md` — its topology
+still holds, but its source links and `deploy-api-1` container names are
+v1-era.
 
 ## 9. Troubleshooting
 

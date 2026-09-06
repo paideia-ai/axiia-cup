@@ -1,10 +1,9 @@
 # v2 — the frontend and scenarios for the Swift axiia server
 
-`v2/web` is the SPA that talks to the new Swift server behind
-`axiia-cup-2.isofucius.cn`. It is independent of the bun API and web app in
-`apps/`: different toolchain (deno + vite), different CI job, different image,
-different host. A commit that touches only `v2/` never builds or deploys the
-legacy stack, and vice versa.
+`v2/web` is the SPA that talks to the Swift server behind
+`axiia-cup-2.isofucius.cn`. It is the only frontend this repository ships: the
+legacy v1 bun API and web app were deleted on 2026-09-06, after production cut
+over to the Swift server on 2026-09-02.
 
 `v2/scenarios` is where prompt engineers author the game scripts the server
 runs. It is its own stack again: `v2_scenarios_changed` and `v2_web_changed` are
@@ -19,8 +18,9 @@ deno task fmt
 deno task lint
 ```
 
-Scenarios have no deploy job yet: a script reaches the server through the admin
-API, and automated delivery from this repo is still being wired.
+`deploy_v2_scenarios` in `.github/workflows/build.yml` ships them on push to
+`main`: it exchanges a GitHub OIDC assertion for a short-lived token at
+`/v1/auth/federated` and runs `deno task push`. No token is stored here.
 
 ## Working on it
 
