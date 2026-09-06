@@ -2,81 +2,81 @@
 
 Instructions for coding agents working with code in this repository.
 
-## Authoritative docs
+## What is here
 
-- Product/design decisions: `docs/competition/DESIGN_SPEC.md`
-- Current CI/CD and production operations: `docs/tech/CI_CD_OPERATIONS.md`
-- Server bootstrap and manual Docker Compose fallback: `docs/tech/DEPLOYMENT_SERVER.md`
-- LLM gateway topology and provider routing: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
+This repository holds the **v2** lanes of Axiia Cup — the frontend and the
+scenario scripts for the Swift `axiia` server. The server itself lives in the
+private `axiia-cup-v2` repository; nothing in this tree builds or runs it.
 
-## Notes for agents
+The legacy v1 bun/turbo stack (`apps/api`, `apps/web`, `apps/cli`,
+`packages/shared`) was removed on 2026-09-06. Production cut over to the Swift
+server on 2026-09-02; the v1 database is backed up on the host at
+`/srv/axiia-cup/backups/axiia-v1-prod-20260902.db.gz`. Docs under `docs/` that
+describe the bun API, its CLI, or its deploy path are historical.
 
-- Treat `docs/tech/CI_CD_OPERATIONS.md` as the canonical reference for the **current** production deploy path.
-- Treat `docs/tech/DEPLOYMENT_SERVER.md` as bootstrap/manual-fallback guidance, not the standard release path.
-- Historical product/design docs (`PRD_v1`, `SPEC_v2`, etc.) are reference only.
-- Historical docs may describe older infrastructure choices; prefer the current ops doc when they conflict.
+| Lane | Path | Toolchain | Ships as |
+| --- | --- | --- | --- |
+| Frontend | `v2/web` | deno 2.9.1 + vite | ACR image `apps/axiia-web2:<sha>` → `axiia-cup-2-web.isofucius.cn` |
+| Scenarios | `v2/scenarios` | deno 2.9.1 | admin API upload |
+| Tournament ops | `v2/tournament-ops` | deno 2.9.1 | `.github/workflows/tournament-ops.yml` |
+| Host ops | `deploy/` | shell / docker | US LLM gateway + tunnel, Ubuntu host bootstrap |
+
+Start with [`v2/README.md`](v2/README.md). It is the authoritative guide for
+both v2 lanes.
 
 ## Commands
 
+You need deno 2.9.1 and nothing else. There is no root package manager, no
+workspace, and no build at the repository root.
+
 ```bash
-# Development
-bun install                    # install dependencies
-bun run dev                    # start web + api in parallel
-bun run dev:api                # API only (localhost:3001)
-bun run dev:web                # Web only (localhost:5173)
-bun run dev:cli                # CLI watch mode
+# Frontend
+cd v2/web
+deno install --frozen
+AXIIA_PROXY_TARGET=https://axiia-cup-2.isofucius.cn deno task dev
 
-# Database
-bun run --filter @axiia/api db:migrate    # run Drizzle migrations
-bun run --filter @axiia/api db:seed:demo  # seed demo data
+deno task fmt              # --check; `deno fmt .` fixes
+deno task lint
+deno task typecheck
+deno task typecheck:tests
+deno task test:unit        # deterministic Vitest contracts
+deno task test:storybook   # stateful stories in Chromium, axe-gated
+deno task build
 
-# Quality
-bun run fmt:check              # oxfmt format check (apps + packages only)
-bun run fmt                    # oxfmt auto-fix
-bun run lint                   # oxlint via turbo
-bun run typecheck              # tsc --noEmit via turbo
-bun run build                  # build all packages
-
-# Tests (Bun native test runner, only apps/api has tests)
-cd apps/api && bun test                    # all tests
-cd apps/api && bun test src/engine/swiss.test.ts   # single file
+# Scenarios
+cd v2/scenarios
+deno task validate         # typecheck + meta extraction over every scenario
+deno task fmt
+deno task lint
 ```
 
-## Architecture
+`deno task test:e2e:real` builds and boots the sibling Swift server; it needs a
+Swift 6.3 toolchain and is not part of CI.
 
-Monorepo (Turborepo + Bun workspaces) with four packages:
+## CI
 
-- **apps/api** — Hono + Bun backend. SQLite via Drizzle ORM. DB-backed async worker for match execution.
-- **apps/web** — React Router v7 SPA + Vite + Tailwind v4 + shadcn/ui.
-- **apps/cli** — Commander.js admin CLI for tournament operations (`axiia start`, `axiia next-round`, `axiia leaderboard`, etc.).
-- **packages/shared** — Zod schemas + constants shared across all packages. Import as `@axiia/shared`.
+`.github/classify-changes.sh` decides which lane a commit touches and emits
+`docs_only`, `v2_web_changed`, `v2_scenarios_changed`. Jobs in `ci.yml` and
+`build.yml` gate on those flags rather than on `paths-ignore`, because the
+branch ruleset requires the `Check` context and a path-skipped workflow never
+reports it. A non-docs change outside `v2/` sets no lane flag and `Check`
+passes on it.
 
-### API structure
+See [`docs/tech/CI_CD_OPERATIONS.md`](docs/tech/CI_CD_OPERATIONS.md) for the
+full pipeline.
 
-Routes are mounted in `apps/api/src/index.ts` via `app.route()`:
-- `src/routes/` — auth, scenarios, submissions, playground, tournaments, stats, admin-settings, admin-users
-- `src/middleware/` — `requireAuth` (checks JWT + disabled status) and `requireAdmin` Hono middleware
-- `src/engine/core.ts` — Match execution: dialogue phase → judge QA rounds → scoring
-- `src/engine/swiss.ts` — Swiss pairing algorithm (sort by wins, avoid repeat pairings)
-- `src/engine/llm.ts` — SiliconFlow API (OpenAI-compatible) for Chinese LLM models
-- `src/engine/worker.ts` — Polling worker (5s interval, configurable concurrency, lease tokens)
-- `src/lib/settings.ts` — App settings helpers (registration code stored in DB, falls back to env var)
-- `src/db/schema.ts` — Drizzle schema (users, scenarios, submissions, tournaments, rounds, matches, playgroundRuns, appSettings)
-- `src/db/migrations/` — SQL migrations run by Drizzle migrator
+## Authoritative docs
 
-### Web structure
+- Current CI/CD and deploy path: `docs/tech/CI_CD_OPERATIONS.md`
+- v2 lanes, dev loop, deployment: `v2/README.md`
+- Scenario authoring: `v2/scenarios/SKILL.md`
+- LLM gateway topology and provider routing: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
+- Product/design decisions: `docs/competition/DESIGN_SPEC.md`
 
-- `src/app-router.tsx` — All route definitions (public: `/login`, `/register`; protected: `/dashboard`, `/scenarios/:id`, `/playground/:submissionId`, `/leaderboard`, `/matches/:id`, `/settings`, `/admin`)
-- `src/context/auth.tsx` — Auth context (JWT token, user state)
-- `src/pages/` — Page components
-- `src/components/layout/app-shell.tsx` — Authenticated layout shell
-
-### Key patterns
-
-- **Shared types first**: API contracts defined as Zod schemas in `packages/shared`, used for both validation and TypeScript inference.
-- **DB as queue**: Matches processed by polling `status` column, no external queue. Worker uses lease tokens to prevent concurrent execution.
-- **JSON in SQLite**: Transcripts (dialogue, judge QA) stored as stringified JSON text columns.
-- **Match flow**: Each player pair plays 2 matches (swapped roles). Each match: N dialogue turns → judge asks questions to both agents → judge scores → winner determined.
+Everything else under `docs/` — `ARCHITECTURE.md`, `CLI.md`,
+`DEPLOYMENT_SERVER.md`, `SPEC_v2.md`, the `PRD_v1`/`SPEC_v2` lineage — is
+reference only and describes the retired v1 stack. Prefer the current ops doc
+when they conflict.
 
 ## Production host preflight
 
@@ -100,22 +100,3 @@ orientation is a safety preflight, not authorization to operate production. Trea
 its operational state as time-sensitive, verify current state before acting, keep
 all host details private, and never copy host secrets into code, commits, logs,
 issues, PRs, or chat.
-
-## Deployment
-
-- **Current production release path**: GitHub Actions -> Aliyun ACR -> server-local deploy webhook (`release/*` tags trigger production deploys)
-- **Manual fallback**: `./deploy/deploy.sh /srv/axiia-cup/shared/config/production.env` on the production host
-- **Canonical ops doc**: `docs/tech/CI_CD_OPERATIONS.md`
-- Database file at `$AXIIA_DB_PATH` or default `apps/api/axiia.db`
-
-## Environment Variables
-
-- `AXIIA_DB_PATH` — SQLite database path (API)
-- `SILICONFLOW_API_KEY` — LLM API key (API)
-- `DEEPSEEK_API_KEY` — DeepSeek official API key, used for `deepseek` provider models via the Anthropic-compatible endpoint (API)
-- `MOONSHOT_API_KEY` / `ZHIPU_API_KEY` / `MINIMAX_API_KEY` / `DASHSCOPE_API_KEY` — lab-direct OpenAI-compatible provider keys (Kimi / GLM / MiniMax / Qwen); each has an optional `*_BASE_URL` override (API)
-- `JWT_SECRET` — JWT signing secret (API)
-- `REGISTRATION_CODE` — Fallback registration code if not set in DB (default `axiia_cup`; DB value takes priority)
-- `AXIIA_API_URL` — API base URL for CLI (default `http://localhost:3001`)
-- `AXIIA_ADMIN_TOKEN` — Admin bearer token for CLI
-- `WORKER_CONCURRENCY` — Worker max concurrent jobs (API, default 8)

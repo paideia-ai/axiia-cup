@@ -1,398 +1,182 @@
-# Axiia Cup CI/CD and Production Operations
+# Axiia Cup CI/CD Operations
 
-_Last verified: 2026-04-14._
+_Last verified: 2026-09-06 against the workflow files in this repository._
 
-This document describes the **current** production deployment path for Axiia Cup.
-It is the canonical reference for:
+This document describes the **current** CI and deploy path for what this
+repository ships. Everything here is derived from `.github/`; host-side state
+(nginx, containers, the webhook service) is authoritative on `cup-worker`, not
+here — verify it live before acting on it.
 
-- GitHub Actions CI
-- image build and push to Aliyun ACR
-- tag-triggered production deploys
-- rollback procedure
-- production host topology
-- secret/config storage locations
+Production cut over to the Swift `axiia` server on 2026-09-02, and the legacy v1
+bun stack was deleted from this repository on 2026-09-06; the final v1 database
+is backed up on the host at
+`/srv/axiia-cup/backups/axiia-v1-prod-20260902.db.gz`.
 
-For first-time server bootstrap and manual Docker Compose operations, also see
-[DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md).
+## 1. What this repository ships
 
-## Verification sources
+| Lane | Source | Built by | Delivered by |
+| --- | --- | --- | --- |
+| v2 web | `v2/web`, `v2/deploy` | `build_v2_web` | `deploy_v2_web` → webhook `target: web2` |
+| v2 scenarios | `v2/scenarios` | — | `deploy_v2_scenarios` → admin API push |
+| tournament ops | `v2/tournament-ops` | — | `workflow_dispatch` only |
 
-This document was checked against:
+The Swift server binary is **not** built here. It lives in the private
+`axiia-cup-v2` repository and is deployed separately.
 
-- `.github/workflows/ci.yml`
-- `.github/workflows/build.yml`
-- `.github/workflows/deploy.yml`
-- live GitHub branch protection for `main`
-- live production server files:
-  - `/srv/axiia-cup/deploy-webhook/server.py`
-  - `axiia-deploy-webhook.service`
-- live production process state for the LLM gateway tunnel
+## 2. Change classification
 
-## 1. Current production topology
+`.github/classify-changes.sh` runs first in both `ci.yml` and `build.yml` and
+emits three GitHub Actions outputs:
 
-### 1.1 App host
+- `docs_only` — every changed file is under `docs/` or is a root-level Markdown
+  file (`README.md`, `AGENTS.md`, `CLAUDE.md`)
+- `v2_scenarios_changed` — something under `v2/scenarios/`
+- `v2_web_changed` — something else under `v2/`
 
-Primary production host:
+A non-docs change outside `v2/` — `deploy/` host-ops, `scripts/`, the workflows
+themselves — sets **no** lane flag. There is nothing left in this repository to
+build from such a change, so `Check` passes on it explicitly.
 
-- `cup-worker.isofucius.cn`
-- public IP: `116.62.32.22`
-- SSH: `root` or `anna`
+If the classifier sees no changed files at all it sets `v2_web_changed=true` to
+stay safe.
 
-Public domains:
+Jobs gate on these flags rather than on workflow-level `paths-ignore`: the
+branch ruleset requires the `Check` context, and a workflow skipped by a path
+filter never reports that context, which would block the PR forever.
 
-- `axiia-cup.isofucius.cn` — primary production domain
-- `axiia-cup-2.isofucius.cn` — production preview/canary alias to the same prod stack
-- `cup-dev-114514.isofucius.cn` — dev stack on the same server
+## 3. CI — `.github/workflows/ci.yml`
 
-Historical note:
+Triggers: push to `main`, pull request targeting `main`.
 
-- `120.55.38.143` is **not** the current cup worker.
-- It is the bastion / root-domain host and should not be treated as the Axiia Cup production app host.
+Jobs:
 
-### 1.2 Reverse proxy and containers
+- `classify`
+- `v2 web` — runs when `v2_web_changed`; `deno install --frozen`, then
+  `deno task fmt` / `lint` / `typecheck` / `typecheck:tests` / `test:unit`,
+  then Chromium install and `test:storybook`, then `build`
+- `v2 scenarios` — runs when `v2_scenarios_changed`; `deno task validate`,
+  `fmt`, `lint`
+- `Check` — `if: always()`, the single required status context
 
-Current app shape on `cup-worker`:
+`Check` fails if a lane flag is set and that lane's job did not succeed. It
+passes on a docs-only change, and on a change that touches no lane.
 
-- nginx listens on port `80`
-- nginx proxies production traffic to `127.0.0.1:8200`
-- nginx proxies dev traffic to `127.0.0.1:8201`
-- Docker Compose runs two independent stacks on the same host:
-  - production stack: default compose project (`deploy-*` containers)
-  - dev stack: `COMPOSE_PROJECT_NAME=axiia-dev` (`axiia-dev-*` containers)
+Toolchain: deno 2.9.1 everywhere. No bun, no node, no root install step.
 
-Persistent data and config paths:
+## 4. Build and deploy — `.github/workflows/build.yml`
 
-- repo checkout: `/srv/axiia-cup/current`
-- prod env: `/srv/axiia-cup/shared/config/production.env`
-- dev env: `/srv/axiia-cup/shared/config/development.env`
-- prod SQLite data root: `/srv/axiia-cup/shared/data`
-- prod SQLite DB: `/srv/axiia-cup/shared/data/api/axiia.db`
-- dev SQLite data root: `/srv/axiia-cup/shared/data/dev`
-- dev SQLite DB: `/srv/axiia-cup/shared/data/dev/api/axiia.db`
+Triggers: push to `main`, manual `workflow_dispatch` (which forces both v2 lanes
+on).
 
-### 1.3 Deploy webhook
+### 4.1 `build_v2_web`
 
-Standard deploys are handled by a server-local webhook service:
+Runs when `v2_web_changed`. Authenticates to Aliyun via OIDC (RAM role
+`githubactions-axiiacup`, provider `acs:ram::1805039414054707:oidc-provider/GitHub`),
+logs into ACR, and builds `v2/deploy/Dockerfile.web` with repository root as the
+build context:
 
-- script: `/srv/axiia-cup/deploy-webhook/server.py`
-- systemd unit: `axiia-deploy-webhook.service`
-- bind address: `127.0.0.1:9900`
-- public route: `https://axiia-cup.isofucius.cn/_deploy`
-- status route: `https://axiia-cup.isofucius.cn/_deploy/status?id=<deployment-id>`
-- nginx also exposes the same routes on `https://cup-dev-114514.isofucius.cn`
-- nginx proxies `/_deploy` and `/_deploy/status` to the webhook service
+- registry: `second-acr-registry.cn-hangzhou.cr.aliyuncs.com`
+- instance: `cri-qvdxmkdj3dh8s2oe`
+- image: `apps/axiia-web2:<commit-sha>`
+- build arg `COMMIT_SHA` is inlined by vite as `VITE_COMMIT_SHA` for the footer
+  build stamp
 
-The webhook now accepts deploy requests asynchronously:
+The Dockerfile is two-stage: deno builds the SPA, nginx 1.27-alpine serves
+`/app/build/client` with `v2/deploy/nginx.conf`.
 
-- `POST /_deploy` validates the JWT, starts the deploy in background, and returns `202 Accepted`
-- the response includes a random in-memory `deploymentId`
-- callers poll `GET /_deploy/status?id=<deployment-id>` until status becomes `success` or `failed`
-- deployment state is stored in memory on the webhook process and is lost if the service restarts
+Images are tagged by commit sha only. There is no release tag flow any more.
 
-- `docs/tech/server-local/deploy-webhook.server.py`
-- `docs/tech/server-local/nginx.origin.split-stack.conf`
+### 4.2 `deploy_v2_web`
 
-## 2. Branch protection
+Runs on push to `main` when `build_v2_web` succeeded. Signs a short-lived HS256
+JWT with `DEPLOY_WEBHOOK_SECRET` carrying `{tag: <sha>, target: "web2", repo}`,
+`POST`s it to `https://axiia-cup.isofucius.cn/_deploy`, expects `202` with a
+`deploymentId`, then polls `GET /_deploy/status?id=<id>` every 5s for up to 120
+attempts until `success` or `failed`.
 
-Current `main` protection was verified live from GitHub.
+The webhook pulls `apps/axiia-web2:<sha>` and restarts the web2 container.
+Concurrency group `axiia-web2-deploy`, cancel-in-progress.
+
+### 4.3 `deploy_v2_scenarios`
+
+Runs on push to `main` when `v2_scenarios_changed`. No stored token: it requests
+a GitHub OIDC assertion for audience `AXIIA_BASE_URL`, exchanges it at
+`POST $AXIIA_BASE_URL/v1/auth/federated` for a short-lived access token, and
+runs `deno task push` from `v2/scenarios`. The server's federation policy trusts
+the exact workflow subject, so only `main` can publish scenarios.
+
+Concurrency group `axiia-scenarios-deploy`, **not** cancel-in-progress.
+
+## 5. Tournament ops — `.github/workflows/tournament-ops.yml`
+
+`workflow_dispatch` only. One operator verb per dispatch (or `auto` for the
+whole lifecycle) against the axiia server, again authenticated by OIDC
+assertion — `v2/tournament-ops/run.ts` exchanges and re-exchanges the token
+itself because a round can outlive the ten-minute token. Concurrency group
+`axiia-tournament-ops`, never cancelled. See `v2/tournament-ops/README.md`.
+
+## 6. Branch protection
 
 - required status check: `Check`
 - strict status checks: enabled
 - required linear history: enabled
-- force pushes: disabled
-- deletions: disabled
+- force pushes and deletions: disabled
 - `enforce_admins`: `false`
 
-Operationally, this means normal changes should land via PR and squash/linear history, but admins are not forced through the same protection gate.
+Land changes via PR with squash merge.
 
-## 3. Standard release and deploy flow
+## 7. Secret and config inventory
 
-### 3.1 CI on `main` and PRs
-
-Workflow: `.github/workflows/ci.yml`
-
-Triggers:
-
-- push to `main`
-- pull request targeting `main`
-
-Docs-only skip rule:
-
-- heavy CI is skipped only when **every changed file** is either:
-  - under `docs/`
-  - or a root-level Markdown file such as `README.md`, `AGENTS.md`, or `CLAUDE.md`
-- otherwise the full CI suite runs
-
-Checks run when not skipped:
-
-- `bun install --frozen-lockfile`
-- `bun run fmt:check`
-- `bun run lint`
-- `bun run typecheck`
-- `bun run build`
-- `cd apps/api && bun test`
-
-### 3.2 Image build and dev auto-deploy
-
-Workflow: `.github/workflows/build.yml`
-
-Triggers:
-
-- push to `main`
-- manual `workflow_dispatch`
-
-Docs-only skip rule:
-
-- the build workflow still runs a light classify step on push to `main`
-- heavy image build/push is skipped only when the same docs-only rule from CI matches
-- `workflow_dispatch` always forces a real build
-
-What it does when not skipped:
-
-- authenticates GitHub Actions to Aliyun via OIDC
-- logs into Aliyun ACR
-- builds and pushes two images tagged by commit SHA
-- on push to `main`, starts an async deploy for that same SHA to the **dev** stack
-- the workflow polls the webhook status endpoint using the returned `deploymentId` until the deploy reaches `success` or `failed`
-
-Registry details:
-
-- registry: `second-acr-registry.cn-hangzhou.cr.aliyuncs.com`
-- instance ID: `cri-qvdxmkdj3dh8s2oe`
-- namespace: `apps`
-- repos:
-  - `axiia-cup-api`
-  - `axiia-cup-web`
-
-Image tags:
-
-- `second-acr-registry.cn-hangzhou.cr.aliyuncs.com/apps/axiia-cup-api:<commit-sha>`
-- `second-acr-registry.cn-hangzhou.cr.aliyuncs.com/apps/axiia-cup-web:<commit-sha>`
-
-### 3.3 Production deploy
-
-Workflow: `.github/workflows/deploy.yml`
-
-Trigger:
-
-- push of a tag matching `release/*`
-
-Canonical release procedure:
-
-```bash
-git tag release/2026-04-14.1
-git push origin release/2026-04-14.1
-```
-
-Deploy sequence:
-
-1. `main` already contains the commit.
-2. Build workflow has pushed images for that commit SHA to ACR.
-3. Deploy workflow resolves the commit SHA for the pushed release tag.
-4. Deploy workflow signs a short-lived JWT using `DEPLOY_WEBHOOK_SECRET`.
-5. Deploy workflow `POST`s to `https://axiia-cup.isofucius.cn/_deploy` with `target=prod`.
-6. The webhook validates the JWT, starts the production deploy in background, and returns `202 Accepted` with a random `deploymentId`.
-7. Deploy workflow polls `GET /_deploy/status?id=<deployment-id>` until the status becomes `success` or `failed`.
-8. The webhook worker:
-   - logs into ACR with the local Aliyun CLI
-   - pulls the `api` and `web` images for that SHA
-   - updates only the **prod** stack
-
-### 3.4 What the webhook actually runs
-
-The live webhook server currently supports two targets:
-
-- `prod`
-  - reads app env from `/srv/axiia-cup/shared/config/production.env`
-  - updates the default compose project (current container names start with `deploy-`)
-- `dev`
-  - reads app env from `/srv/axiia-cup/shared/config/development.env`
-  - updates compose project `axiia-dev`
-  - before starting the dev stack, it runs `deploy/sync-prod-db-to-dev.sh`
-  - that script creates a consistent SQLite backup from prod, copies it into the dev DB, and sanitizes active worker state (`writeLock`, queued/running jobs, running tournaments)
-
-For both targets the webhook sets:
-
-- `API_IMAGE=<acr-api-image>:<sha>`
-- `WEB_IMAGE=<acr-web-image>:<sha>`
-
-Prod compose run shape:
-
-```bash
-docker compose -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
-  --env-file /srv/axiia-cup/shared/config/production.env \
-  up -d --remove-orphans
-```
-
-Dev compose run shape:
-
-```bash
-docker compose -p axiia-dev \
-  -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
-  --env-file /srv/axiia-cup/shared/config/development.env \
-  up -d --remove-orphans
-```
-
-## 4. Manual fallback deploy path
-
-The shell scripts in `deploy/` still matter, but they are now **manual fallback / bootstrap paths**, not the normal production release mechanism.
-
-Useful manual commands on the production host:
-
-Prod fallback deploy:
-
-```bash
-cd /srv/axiia-cup/current
-./deploy/deploy.sh --mode prod /srv/axiia-cup/shared/config/production.env
-```
-
-Dev fallback deploy:
-
-```bash
-cd /srv/axiia-cup/current
-./deploy/deploy.sh --mode dev /srv/axiia-cup/shared/config/development.env
-```
-
-Fast prod restart after env-only changes:
-
-```bash
-cd /srv/axiia-cup/current
-./deploy/deploy.sh --mode prod --skip-build /srv/axiia-cup/shared/config/production.env
-```
-
-First-time bootstrap on a fresh host:
-
-```bash
-cd /srv/axiia-cup/current
-./deploy/bootstrap-server.sh /srv/axiia-cup/shared/config/production.env
-```
-
-Important distinction:
-
-- `deploy/docker-compose.prod.yml` uses local builds
-- `deploy/docker-compose.acr.yml` uses prebuilt ACR images
-- the webhook deploy path uses `docker-compose.acr.yml`
-
-## 5. Rollback
-
-Rollback is done by deploying an older commit SHA via a new release tag.
-
-Option A: tag an older commit directly
-
-```bash
-git tag release/2026-04-14.2 <older-commit-sha>
-git push origin release/2026-04-14.2
-```
-
-Option B: re-tag a known-good prior release
-
-```bash
-git tag release/2026-04-14.2 release/2026-04-13.1^{}
-git push origin release/2026-04-14.2
-```
-
-Constraint:
-
-- the target commit's images must already exist in ACR
-- in practice this means the commit must previously have been built from `main`
-
-## 6. Secret and config inventory
-
-This section records **where** secrets live, not their values.
+Where secrets live, not their values.
 
 | Item | Location | Notes |
 | --- | --- | --- |
-| `JWT_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | app auth signing/verification |
-| `DEPLOY_WEBHOOK_SECRET` | GitHub Actions secret | used by deploy and auto-dev-deploy workflows to sign JWTs |
-| `WEBHOOK_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/deploy-webhook.env` | must match GitHub `DEPLOY_WEBHOOK_SECRET` |
-| `SILICONFLOW_API_KEY` | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | player/submission LLM traffic |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` on China worker | `cup-worker:/srv/axiia-cup/shared/config/production.env` and `cup-worker:/srv/axiia-cup/shared/config/development.env` | gateway tokens, not real provider keys |
-| dev DB refresh helper | `cup-worker:/srv/axiia-cup/current/deploy/sync-prod-db-to-dev.sh` | used by the webhook before each dev deploy |
-| real OpenAI / Anthropic keys | US host `104.238.220.76`, in the llm-gateway deployment env | never store on the China worker |
-| `GATEWAY_SHARED_TOKEN` | US host gateway deployment env (see `docs/tech/LLM_GATEWAY_OPERATIONS.md`) | value reused as China worker `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` |
-| Aliyun OIDC trust | Aliyun RAM role `githubactions-axiiacup` trusting `acs:ram::1805039414054707:oidc-provider/GitHub` | keyless GitHub Actions auth to ACR |
-| Aliyun CLI auth on server | `cup-worker:~/.aliyun/config.json` | lets webhook fetch temporary ACR auth |
+| `DEPLOY_WEBHOOK_SECRET` | GitHub Actions secret | signs the `target: web2` deploy JWT |
+| `WEBHOOK_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/deploy-webhook.env` | must match the GitHub secret |
+| `AXIIA_BASE_URL` | GitHub Actions repository variable | audience and target for both OIDC exchanges |
+| Aliyun OIDC trust | RAM role `githubactions-axiiacup` | keyless Actions auth to ACR |
+| Aliyun CLI auth on server | `cup-worker:~/.aliyun/config.json` | lets the webhook fetch temporary ACR auth |
+| `GATEWAY_SHARED_TOKEN`, real OpenAI/Anthropic keys | US gateway host env | see `LLM_GATEWAY_OPERATIONS.md`; never on the China worker |
 
-## 7. LLM gateway tunnel: current live state
+Nothing in `v2/web` holds a secret: the SPA is static and every credential lives
+server-side.
 
-Current live production uses a long-running `ssh -L` process under `anna`, not a systemd-managed tunnel service.
+## 8. LLM gateway tunnel
 
-Verified live command shape:
+Evaluation-model traffic still reaches OpenAI/Anthropic through the US gateway
+and an `ssh -L` tunnel from `cup-worker`. `deploy/openai-proxy/`,
+`deploy/start-us-gateway-tunnel.sh`, and
+`deploy/axiia-us-gateway-tunnel.service.example` are the references for it; the
+live production tunnel is a long-running `ssh` under `anna`, not the systemd
+unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md`.
 
-```bash
-/usr/bin/ssh -NT -g \
-  -i /home/anna/.ssh/axiia_us_gateway \
-  -L 0.0.0.0:33100:127.0.0.1:3100 \
-  anna@104.238.220.76
-```
+## 9. Troubleshooting
 
-Operational consequences:
-
-- if this process dies, evaluation-model traffic fails
-- `33100` is currently bound on `0.0.0.0`, not only on the Docker bridge IP
-- `deploy/start-us-gateway-tunnel.sh` and `deploy/axiia-us-gateway-tunnel.service.example` are useful references, but they do **not** describe the current live production mechanism exactly
-
-Quick checks:
-
-```bash
-ps -ef | grep '33100:127.0.0.1:3100' | grep -v grep
-ss -ltnp | grep 33100
-curl http://127.0.0.1:33100/health
-```
-
-Current manual restart pattern:
-
-```bash
-ssh -NT -g -L 0.0.0.0:33100:127.0.0.1:3100 anna@104.238.220.76
-```
-
-## 8. Troubleshooting
-
-### 8.1 Deploy webhook failed
-
-Check webhook logs:
+Deploy webhook:
 
 ```bash
 journalctl -u axiia-deploy-webhook -n 50 --no-pager
-```
-
-Check service state:
-
-```bash
 systemctl status axiia-deploy-webhook.service --no-pager
 ```
 
-### 8.2 ACR auth failed on server
+ACR auth on the server:
 
 ```bash
 aliyun cr GetAuthorizationToken --InstanceId cri-qvdxmkdj3dh8s2oe
 ```
 
-### 8.3 Webhook secret mismatch
+Webhook secret mismatch — compare the GitHub secret `DEPLOY_WEBHOOK_SECRET`
+against `cup-worker:/srv/axiia-cup/shared/config/deploy-webhook.env`.
 
-Compare the configured value source locations:
+Scenario push refused — the federated exchange returns no `accessToken` when the
+server's federation policy does not name this workflow subject. Check the policy
+on the server, not the workflow.
 
-- GitHub repo secret: `DEPLOY_WEBHOOK_SECRET`
-- server file: `/srv/axiia-cup/shared/config/deploy-webhook.env`
+## 10. Related docs
 
-### 8.4 Compose state on the app host
-
-```bash
-docker compose \
-  --env-file /srv/axiia-cup/shared/config/production.env \
-  -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
-  ps
-```
-
-```bash
-docker compose \
-  --env-file /srv/axiia-cup/shared/config/production.env \
-  -f /srv/axiia-cup/current/deploy/docker-compose.acr.yml \
-  logs --tail=100 api web
-```
-
-## 9. Related docs
-
-- [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md) — server bootstrap and manual Docker Compose fallback
-- [LLM_GATEWAY_OPERATIONS.md](LLM_GATEWAY_OPERATIONS.md) — gateway topology and provider-routing notes
-- [CLI.md](CLI.md) — admin CLI usage
+- [`../../v2/README.md`](../../v2/README.md) — the v2 lanes, dev loop, and what
+  deploys where
+- [LLM_GATEWAY_OPERATIONS.md](LLM_GATEWAY_OPERATIONS.md) — gateway topology and
+  provider routing
+- [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md) and [CLI.md](CLI.md) —
+  **historical**; they describe the retired v1 bun stack
