@@ -33,7 +33,7 @@ export const CatalogGateAndHonestStats: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(await canvas.findByText('PVP 解锁 1/1·0/1')).toBeVisible()
-    await expect(canvas.getByText('侧方胜率 · 对局数 — 数据积累中'))
+    await expect(canvas.getByText('侧方胜率 · 对局数不足，暂无统计'))
       .toBeVisible()
     await expect(canvas.queryByText(/0%/)).toBeNull()
   },

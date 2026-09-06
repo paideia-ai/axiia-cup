@@ -29,6 +29,13 @@
 3. `deno task tm:check`：标记 ↔ 登记一一对应、条款 / 步骤 id 存在。CI 的
    `test:unit` 也跑它。
 
+## 看板凭据
+
+写看板的端点与匿名 key 是构建期环境变量，不进仓库：`VITE_TM_BOARD_URL` 与
+`VITE_TM_BOARD_ANON_KEY`（本地写进 `v2/web/.env`，镜像由 CI 用同名 secret 经
+`TM_BOARD_URL` / `TM_BOARD_ANON_KEY` build-arg 传入）。两个缺一，导测就是只读：
+点确认只报「看板未配置」，其余功能照常。
+
 ## 数据
 
 `data/spec-index.json`（条款索引）、`data/journeys.json`（两轮手册的 88 步）由

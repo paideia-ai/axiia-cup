@@ -513,7 +513,7 @@ test.fixme('U10-C14：PVE-NPC 视图＝聚合数据（#34——后半缺口未�
     await page.goto(`${baseURL}/scenarios/${SHANGYANG}`)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
-  await test.step('那么 有「侧方胜率」聚合条（含空态「数据积累中」，语义＝两侧 agent 胜率）', async () => {
+  await test.step('那么 有「侧方胜率」聚合条（含空态「对局数不足」，语义＝两侧 agent 胜率）', async () => {
     await expect(page.getByText('侧方胜率').first()).toBeVisible()
   })
   await test.step('并且 NPC 预设提供可点开的智能体视图入口', async () => {

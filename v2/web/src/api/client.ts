@@ -48,6 +48,7 @@ import type {
   VersionListResponse,
   VersionRefResponse,
 } from './types'
+import { retryAfterSeconds } from '../lib/cooldown'
 
 // Same-origin by design (plan §6): the SPA is served from the Swift origin (dev:
 // via the vite `/v1` proxy) so the HttpOnly cookie and CSRF Sec-Fetch-Site gate
@@ -78,15 +79,6 @@ export class ApiError extends Error {
   get isUnauthorized() {
     return this.status === 401
   }
-}
-
-// 短信发码节流答 429 + Retry-After（秒）。这是服务端为该号码算出的预算，
-// 倒计时照它走才不会怂恿一次注定被拒的重发。
-function retryAfterSeconds(response: Response): number | null {
-  const header = response.headers.get('Retry-After')
-  if (!header) return null
-  const seconds = Number.parseInt(header, 10)
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : null
 }
 
 function isErrorResponse(value: unknown): value is ErrorResponse {
@@ -132,14 +124,14 @@ async function request<T>(
         payload.message,
         response.status,
         payload.error,
-        retryAfterSeconds(response),
+        retryAfterSeconds(response.headers),
       )
     }
     throw new ApiError(
       text || '请求失败',
       response.status,
       'unknown',
-      retryAfterSeconds(response),
+      retryAfterSeconds(response.headers),
     )
   }
 

@@ -392,7 +392,7 @@ function OverviewCard({
               className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
               {...tm('DA.stats-empty')}
             >
-              侧方胜率 · 对局数 — 数据积累中，早期对局正在进行
+              侧方胜率 · 对局数不足，暂无统计——早期对局正在进行
             </p>
           )
           : null}

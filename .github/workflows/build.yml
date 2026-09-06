@@ -88,6 +88,8 @@ jobs:
           tags: ${{ env.REGISTRY_URL }}/apps/axiia-web2:${{ github.sha }}
           build-args: |
             COMMIT_SHA=${{ github.sha }}
+            TM_BOARD_URL=${{ secrets.TM_BOARD_URL }}
+            TM_BOARD_ANON_KEY=${{ secrets.TM_BOARD_ANON_KEY }}
           provenance: false
 
   deploy_v2_web:

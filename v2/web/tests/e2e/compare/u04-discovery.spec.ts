@@ -151,10 +151,10 @@ test('U04-C01/C02/C04：D 页每张产品卡一句话介绍 + 统计槽位（点
       expect(text.trim().split('\n').length).toBeGreaterThanOrEqual(2)
     }
   })
-  await test.step('并且 每张产品场景卡的统计槽位：有数据则显示「侧方胜率 · N 场 · 两侧胜率」，未过门槛则显示引导式空态「数据积累中」', () => {
+  await test.step('并且 每张产品场景卡的统计槽位：有数据则显示「侧方胜率 · N 场 · 两侧胜率」，未过门槛则显示引导式空态「对局数不足」', () => {
     for (const text of texts) {
       const lit = /侧方胜率/.test(text) && /\d+ 场 ·/.test(text)
-      const outline = /侧方胜率/.test(text) && /数据积累中/.test(text)
+      const outline = /侧方胜率/.test(text) && /对局数不足/.test(text)
       expect(
         lit || outline,
         `每张产品卡都要有统计槽位（点亮或空态轮廓），这张两者皆无：${

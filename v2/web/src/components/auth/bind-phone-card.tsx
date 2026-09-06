@@ -1,29 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ApiError, auth } from '../../api/client'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import { Input } from '../ui/input'
 import { useAuth } from '../../context/auth'
+import { useCooldown } from '../../lib/cooldown'
 import { messageOf } from '../../lib/use-async'
 import { tm } from '../../testmode/mark'
 
-const COOLDOWN_SECONDS = 60
-
 export function BindPhoneCard() {
   const { account, bindPhone } = useAuth()
+  const cooldown = useCooldown()
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [sent, setSent] = useState(false)
-  const [remaining, setRemaining] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-
-  useEffect(() => {
-    if (remaining <= 0) return
-    const timer = setTimeout(() => setRemaining(remaining - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [remaining])
 
   if (!account) return null
 
@@ -33,10 +26,12 @@ export function BindPhoneCard() {
     try {
       await auth.sendBindCode({ phone })
       setSent(true)
-      setRemaining(COOLDOWN_SECONDS)
+      cooldown.start()
     } catch (cause) {
+      // Retry-After 是服务端为这个号算出的预算，照它走才不会怂恿一次注定
+      // 被拒的重发。
       if (cause instanceof ApiError && cause.retryAfter) {
-        setRemaining(COOLDOWN_SECONDS)
+        cooldown.start(cause.retryAfter)
       }
       setError(messageOf(cause, '验证码发送失败'))
     } finally {
@@ -83,13 +78,13 @@ export function BindPhoneCard() {
             />
             <Button
               className='shrink-0'
-              disabled={busy || remaining > 0 || phone.length < 11}
+              disabled={busy || cooldown.remaining > 0 || phone.length < 11}
               {...tm('K.bind-send-code-button')}
               onClick={send}
               type='button'
               variant='secondary'
             >
-              {remaining > 0 ? `${remaining}s` : '发送验证码'}
+              {cooldown.remaining > 0 ? `${cooldown.remaining}s` : '发送验证码'}
             </Button>
           </div>
           {sent

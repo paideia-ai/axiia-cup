@@ -183,12 +183,10 @@ export interface ConfigResponse {
   concurrencyLimit: number
   // Per-side threshold (#65): distinct presets to beat on EACH side for pvp.
   pvpUnlockPerSideWins: number
-  statsDisplayThreshold: number
   promptUnitLimit: number
   expressPreset?: ExpressPresetDTO | null
   // The same list GET /v1/models serves.
   models: ModelDTO[]
-  visibility: VisibilityDTO
   opponentDailyChallengeLimit: number
   trialsBlocked: boolean
   usage: UsageDTO
@@ -198,12 +196,6 @@ export interface ExpressPresetDTO {
   scenarioID: string
   side: string
   presetKey: string
-}
-
-// Spec #20's three owner-only surfaces, named for clients so the restriction
-// list is data, not lore.
-export interface VisibilityDTO {
-  ownerOnly: string[]
 }
 
 // The calling user's consumption against the daily quotas (UTC+8 day, R16).

@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { AgentVersionDTO } from '../api/types'
 import { BuilderPage } from './builder'
-import { scenario } from '../testing/v34-fixtures'
+import { config, scenario } from '../testing/v34-fixtures'
 
 // 构建器工作区（E 页）的行为钉子——本文件只钉 pr-fate 本轮拍板的三件事：
 // ① E10/#84「一键改标」（u02-c11b 拍板 A）：保存不移动 ★，但成功提示里给
@@ -51,6 +51,7 @@ function handlers(
   versionHandler: Parameters<typeof http.get>[1],
 ) {
   return [
+    http.get('/v1/config', () => HttpResponse.json(config)),
     http.get('/v1/models', () =>
       HttpResponse.json({
         models: [{ id: 'fixture-model', label: 'Fixture Model' }],
@@ -112,6 +113,8 @@ export const InitGateShutForVersionedAgent: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(await canvas.findByText('版本（2）')).toBeVisible()
+    // #14：计数器的上限来自 GET /v1/config（fixture 1000），不是前端常量。
+    await expect(await canvas.findByText('9 / 1000')).toBeVisible()
     // 三选一不挂载；清空入口只叫「清空工作区」，不再承诺重新选择初始化方式。
     await expect(canvas.queryByText('初始化方式 · 三选一生成首稿')).toBeNull()
     await expect(canvas.queryByText('清空工作区（重新选择初始化方式）'))
