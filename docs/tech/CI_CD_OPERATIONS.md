@@ -35,8 +35,8 @@ emits three GitHub Actions outputs:
 - `v2_scenarios_changed` — something under `v2/scenarios/`
 - `v2_web_changed` — something else under `v2/`
 
-A non-docs change outside `v2/` — `deploy/` host-ops, `scripts/`, the workflows
-themselves — sets **no** lane flag. There is nothing left in this repository to
+A non-docs change outside `v2/` — `scripts/`, the workflows themselves — sets
+**no** lane flag. There is nothing left in this repository to
 build from such a change, so `Check` passes on it explicitly.
 
 If the classifier sees no changed files at all it sets `v2_web_changed=true` to
@@ -138,21 +138,17 @@ Where secrets live, not their values.
 | `AXIIA_BASE_URL` | GitHub Actions repository variable | audience and target for both OIDC exchanges |
 | Aliyun OIDC trust | RAM role `githubactions-axiiacup` | keyless Actions auth to ACR |
 | Aliyun CLI auth on server | `cup-worker:~/.aliyun/config.json` | lets the webhook fetch temporary ACR auth |
-| `GATEWAY_SHARED_TOKEN`, real OpenAI/Anthropic keys | US gateway host env | see `LLM_GATEWAY_OPERATIONS.md`; never on the China worker |
 
 Nothing in `v2/web` holds a secret: the SPA is static and every credential lives
 server-side.
 
-## 8. LLM gateway tunnel
+## 8. Retired: the US LLM gateway
 
-Evaluation-model traffic still reaches OpenAI/Anthropic through the US gateway
-and an `ssh -L` tunnel from `cup-worker`. `deploy/openai-proxy/`,
-`deploy/start-us-gateway-tunnel.sh`, and
-`deploy/axiia-us-gateway-tunnel.service.example` are the references for it; the
-live production tunnel is a long-running `ssh` under `anna`, not the systemd
-unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md`, which also
-records that the current Swift server has no base-URL override and therefore
-does not route through this gateway.
+The US LLM gateway proxy and its SSH tunnel (host port `33100`) were removed
+from this repository on 2026-09-06, together with the v1 stack that was their
+only client. The tunnel may still be running on `cup-worker` and needs manual
+retirement; nothing in the Swift server can reach it, since the server resolves
+models from provider keys alone and exposes no base-URL override.
 
 ## 9. Troubleshooting
 
@@ -180,7 +176,5 @@ on the server, not the workflow.
 
 - [`../../v2/README.md`](../../v2/README.md) — the v2 lanes, dev loop, and what
   deploys where
-- [LLM_GATEWAY_OPERATIONS.md](LLM_GATEWAY_OPERATIONS.md) — gateway topology and
-  provider routing
 - [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md) and [CLI.md](CLI.md) —
   **historical**; they describe the retired v1 bun stack

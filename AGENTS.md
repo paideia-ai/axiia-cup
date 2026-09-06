@@ -19,7 +19,6 @@ describe the bun API, its CLI, or its deploy path are historical.
 | Frontend | `v2/web` | deno 2.9.1 + vite | ACR image `apps/axiia-web2:<sha>` → `axiia-cup-2-web.isofucius.cn` |
 | Scenarios | `v2/scenarios` | deno 2.9.1 | admin API upload |
 | Tournament ops | `v2/tournament-ops` | deno 2.9.1 | `.github/workflows/tournament-ops.yml` |
-| Host ops | `deploy/` | shell / docker | US LLM gateway + tunnel, Ubuntu host bootstrap |
 
 Start with [`v2/README.md`](v2/README.md). It is the authoritative guide for
 both v2 lanes.
@@ -70,7 +69,6 @@ full pipeline.
 - Current CI/CD and deploy path: `docs/tech/CI_CD_OPERATIONS.md`
 - v2 lanes, dev loop, deployment: `v2/README.md`
 - Scenario authoring: `v2/scenarios/SKILL.md`
-- US LLM gateway and tunnel: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
 - Host routing and the deployed server: `docs/deployment.md` in the sibling
   `axiia-cup-2` repository — canonical, not mirrored here
 - Product/design decisions: `docs/competition/DESIGN_SPEC.md`
