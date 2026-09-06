@@ -70,8 +70,7 @@ full pipeline.
 - Current CI/CD and deploy path: `docs/tech/CI_CD_OPERATIONS.md`
 - v2 lanes, dev loop, deployment: `v2/README.md`
 - Scenario authoring: `v2/scenarios/SKILL.md`
-- LLM gateway topology and provider routing: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
-  (the topology is current; its source links and `deploy-api-1` container names are v1-era)
+- US LLM gateway and tunnel: `docs/tech/LLM_GATEWAY_OPERATIONS.md`
 - Host routing and the deployed server: `docs/deployment.md` in the sibling
   `axiia-cup-2` repository — canonical, not mirrored here
 - Product/design decisions: `docs/competition/DESIGN_SPEC.md`

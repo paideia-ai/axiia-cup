@@ -150,9 +150,9 @@ and an `ssh -L` tunnel from `cup-worker`. `deploy/openai-proxy/`,
 `deploy/start-us-gateway-tunnel.sh`, and
 `deploy/axiia-us-gateway-tunnel.service.example` are the references for it; the
 live production tunnel is a long-running `ssh` under `anna`, not the systemd
-unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md` — its topology
-still holds, but its source links and `deploy-api-1` container names are
-v1-era.
+unit. Details and quick checks are in `LLM_GATEWAY_OPERATIONS.md`, which also
+records that the current Swift server has no base-URL override and therefore
+does not route through this gateway.
 
 ## 9. Troubleshooting
 
