@@ -29,7 +29,7 @@ import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
 import { initModesAvailable } from '../lib/deck'
 import { metaPromptFor } from '../lib/meta-prompt'
-import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
+import { promptLength } from '../lib/prompt-length'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { nextVersionCopy, versionTag } from '../lib/version-label'
@@ -98,8 +98,8 @@ export function BuilderPage() {
   const [pendingIterate, setPendingIterate] = useState<AgentVersionDTO | null>(
     null,
   )
-  // express 专用：config 供新手预设对手 key 与拒绝文案数字；失败按 null
-  // 降级（对手回落到第一个对侧预设）。
+  // config 供字数上限、拒绝文案数字与 express 的新手预设对手 key；失败按
+  // null 降级（不显示上限、对手回落到第一个对侧预设）。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
   const mutateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -209,7 +209,6 @@ export function BuilderPage() {
   }, [agentID])
 
   useEffect(() => {
-    if (!express) return
     let live = true
     void configApi.get().then((value) => {
       if (live) setCfg(value)
@@ -217,7 +216,7 @@ export function BuilderPage() {
     return () => {
       live = false
     }
-  }, [express])
+  }, [])
 
   useEffect(() => {
     if (!scenarioID) return
@@ -463,9 +462,11 @@ export function BuilderPage() {
     : '例如：先拆解对方方案的成本，再把你的真诉求藏在可执行的条件中…'
 
   const selectedRole = roleByKey(roleModule, roleKey)
-  // #14：按汉字或英文词计（非 token），P1 仅提示、不阻断保存。
+  // #14：按汉字或英文词计（非 token），P1 仅提示、不阻断保存。上限来自
+  // GET /v1/config；config 未到手前只报已用字数，不摆一个可能过时的数。
   const units = promptLength(prompt)
-  const overLimit = units > PROMPT_UNIT_LIMIT
+  const promptUnitLimit = cfg?.promptUnitLimit ?? null
+  const overLimit = promptUnitLimit != null && units > promptUnitLimit
 
   // 初始化方式三选一（E6/#83）：只属于从未保存过版本的新建流程——版本数为
   // 0、工作区为空且场景有 deck 时出现（E7 门在 initModesAvailable；保存 v1
@@ -533,6 +534,7 @@ export function BuilderPage() {
               sideDisplayName,
             )}
             onFill={fillWorkspace}
+            promptUnitLimit={promptUnitLimit}
           />
         )
         : null}
@@ -631,7 +633,7 @@ export function BuilderPage() {
               title='按汉字或英文词计数（非 token）；当前仅提示，不阻断保存'
               {...tm('E.length-counter')}
             >
-              {units} / {PROMPT_UNIT_LIMIT}
+              {units} / {promptUnitLimit ?? '—'}
             </span>
           </div>
           {

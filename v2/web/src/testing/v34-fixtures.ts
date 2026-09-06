@@ -93,12 +93,8 @@ export const config: ConfigResponse = {
   pvpDailyLimit: 4,
   concurrencyLimit: 2,
   pvpUnlockPerSideWins: 1,
-  statsDisplayThreshold: 20,
   promptUnitLimit: 1000,
   models: [{ id: 'fixture-model', label: 'Fixture Model' }],
-  visibility: {
-    ownerOnly: ['prompt', 'reasoning', 'version_diff'],
-  },
   opponentDailyChallengeLimit: 2,
   trialsBlocked: false,
   usage: { battlesToday: 3, pvpBattlesToday: 1 },

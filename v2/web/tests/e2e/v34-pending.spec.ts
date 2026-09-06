@@ -405,14 +405,14 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     expect('stats' in freshEntry!).toBe(false)
     expect(freshEntry!.onlineAt).toBeGreaterThan(0)
 
-    // 浏览器复核：固定局卡无统计行；有教育内容的真场景卡画「数据积累中」
+    // 浏览器复核：固定局卡无统计行；有教育内容的真场景卡画「对局数不足」
     // 引导式空态（电车场景全程无人完局，永远低于门槛）。
     await page.goto('/scenarios')
     const fixtureCard = page.getByTestId(`scenario-${fixtureID}`)
     await expect(fixtureCard).toBeVisible()
     await expect(fixtureCard.getByText('侧方胜率')).toHaveCount(0)
     await expect(
-      page.getByTestId('scenario-trolley-problem').getByText(/数据积累中/),
+      page.getByTestId('scenario-trolley-problem').getByText(/对局数不足/),
     ).toBeVisible()
 
     // 两场固定局完局跨过门槛（a 侧带暗记连胜两场 → 100% / 0%）。

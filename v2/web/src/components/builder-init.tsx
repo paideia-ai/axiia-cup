@@ -7,7 +7,7 @@ import {
   deckComplete,
   type DeckSelections,
 } from '../lib/deck'
-import { PROMPT_UNIT_LIMIT, promptLength } from '../lib/prompt-length'
+import { promptLength } from '../lib/prompt-length'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -26,9 +26,13 @@ interface InitModesProps {
   deck: Deck
   metaPrompt: string
   onFill: (text: string, method: 'mcq' | 'builder') => void
+  // GET /v1/config 的 promptUnitLimit；未到手前为 null，计数器只报已用数。
+  promptUnitLimit: number | null
 }
 
-export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
+export function InitModes(
+  { deck, metaPrompt, onFill, promptUnitLimit }: InitModesProps,
+) {
   // 受控 tab：元提示词面板的粘贴框只在其 tab 激活时挂载——页面上「策略
   // 提示词」工作区始终是唯一常驻的 textarea（选择器与工具脚本据此定位）。
   const [tab, setTab] = useState('mcq')
@@ -39,7 +43,7 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
   const assembled = assembleDeck(deck, selections)
   const complete = deckComplete(deck, selections)
   const units = promptLength(assembled)
-  const overLimit = units > PROMPT_UNIT_LIMIT
+  const overLimit = promptUnitLimit != null && units > promptUnitLimit
   const unanswered = deck.questions.filter(
     (question) =>
       !question.options.some((option) => option.id === selections[question.id]),
@@ -153,7 +157,7 @@ export function InitModes({ deck, metaPrompt, onFill }: InitModesProps) {
                   title='按汉字或英文词计数（非 token）'
                   {...tm('E.mcq-counter')}
                 >
-                  {units} / {PROMPT_UNIT_LIMIT}
+                  {units} / {promptUnitLimit ?? '—'}
                 </span>
               </div>
               {assembled
