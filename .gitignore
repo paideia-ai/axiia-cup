@@ -5,7 +5,6 @@
 __pycache__/
 .python-version
 node_modules/
-.turbo/
 dist/
 build/
 .DS_Store
@@ -13,9 +12,6 @@ build/
 coverage/
 .env*
 !.env.example
-!apps/api/.env.example
-deploy/production.env
-deploy/data/
 .gstack/
 # Local operator files: never commit anything under .local/ (a tracked
 # .local script leaked an admin JWT once already).
