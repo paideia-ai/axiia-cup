@@ -1,26 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ApiError, auth } from '../../api/client'
 import type { MeResponse } from '../../api/types'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { useAuth } from '../../context/auth'
+import { useCooldown } from '../../lib/cooldown'
 import { messageOf } from '../../lib/use-async'
 import { tm } from '../../testmode/mark'
-
-const COOLDOWN_SECONDS = 60
-
-function useCooldown() {
-  const [remaining, setRemaining] = useState(0)
-
-  useEffect(() => {
-    if (remaining <= 0) return
-    const timer = setTimeout(() => setRemaining(remaining - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [remaining])
-
-  return { remaining, start: () => setRemaining(COOLDOWN_SECONDS) }
-}
 
 type Props = {
   onDone: (me: MeResponse) => void
@@ -58,7 +45,9 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
     } catch (cause) {
       // Retry-After 是服务端为这个号算出的预算；照它起倒计时，才不会怂恿一次
       // 注定被拒的重发。
-      if (cause instanceof ApiError && cause.retryAfter) cooldown.start()
+      if (cause instanceof ApiError && cause.retryAfter) {
+        cooldown.start(cause.retryAfter)
+      }
       setError(
         unregistered(cause)
           ? '该手机号尚未注册，请先去注册'
