@@ -5,10 +5,9 @@ usage() {
   cat <<'EOF'
 Usage: .github/classify-changes.sh
 
-Classifies the current GitHub Actions event by which stack it touches.
+Classifies the current GitHub Actions event by which lane it touches.
 Outputs the following GitHub Actions outputs when GITHUB_OUTPUT is set:
   - docs_only=true|false
-  - legacy_changed=true|false
   - v2_web_changed=true|false
   - v2_scenarios_changed=true|false
 
@@ -16,12 +15,14 @@ Docs-only means every changed file is either:
   - under docs/
   - or a root-level Markdown file such as README.md / AGENTS.md / CLAUDE.md
 
-The stacks are independent. v2_scenarios_changed covers v2/scenarios (the scenario
+The lanes are independent. v2_scenarios_changed covers v2/scenarios (the scenario
 scripts prompt engineers author, checked with deno and shipped through the admin
 API). v2_web_changed covers the rest of v2/ (the Swift-server frontend, built with
 deno and deployed to axiia-cup-2-web, plus its deploy assets and README).
-legacy_changed covers every other non-docs file (the bun API and web). A commit
-can set any combination.
+
+A non-docs change outside v2/ — deploy host-ops, scripts, workflows — belongs to
+no build lane and sets neither flag. The Check job passes on that, since there is
+nothing left in this repository to build from it.
 
 Jobs gate on these flags rather than the workflow using paths-ignore: the branch
 ruleset requires the `Check` context, and a workflow skipped by a path filter
@@ -110,13 +111,11 @@ is_v2_path() {
 
 if [[ ${#files[@]} -eq 0 ]]; then
   docs_only=false
-  legacy_changed=true
-  v2_web_changed=false
+  v2_web_changed=true
   v2_scenarios_changed=false
-  echo "No changed files detected; building the legacy stack to stay safe." >&2
+  echo "No changed files detected; building v2 web to stay safe." >&2
 else
   docs_only=true
-  legacy_changed=false
   v2_web_changed=false
   v2_scenarios_changed=false
   echo "Changed files:" >&2
@@ -130,8 +129,6 @@ else
       v2_scenarios_changed=true
     elif is_v2_path "$file"; then
       v2_web_changed=true
-    else
-      legacy_changed=true
     fi
   done
 fi
@@ -144,6 +141,5 @@ emit() {
 }
 
 emit docs_only "$docs_only"
-emit legacy_changed "$legacy_changed"
 emit v2_web_changed "$v2_web_changed"
 emit v2_scenarios_changed "$v2_scenarios_changed"
