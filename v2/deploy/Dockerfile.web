@@ -9,6 +9,12 @@ COPY v2/web ./
 # Footer build stamp (P1): CI passes the commit sha; vite inlines VITE_COMMIT_SHA.
 ARG COMMIT_SHA=dev
 ENV VITE_COMMIT_SHA=$COMMIT_SHA
+# 测试模式看板的写入端点与匿名 key。不进仓库（这个 key 能写看板），由 CI 从
+# secrets 传入；缺席时导测只读，其余功能不受影响。
+ARG TM_BOARD_URL=
+ARG TM_BOARD_ANON_KEY=
+ENV VITE_TM_BOARD_URL=$TM_BOARD_URL
+ENV VITE_TM_BOARD_ANON_KEY=$TM_BOARD_ANON_KEY
 RUN deno task build
 
 FROM nginx:1.27-alpine

@@ -5,10 +5,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { AgentVersionDTO } from '../api/types'
 import { BuilderPage } from '../pages/builder'
-import { scenario } from '../testing/v34-fixtures'
+import { config, scenario } from '../testing/v34-fixtures'
 import { STEPS } from './data'
 import { TestModeRoot } from './index'
 import { STEP_HINTS } from './registry/index'
+import { BOARD_URL } from './supabase'
 
 // 测试模式压在真实的构建器（E 页）上：徽标 → 弹层 → 清单 → 导测（j3s5 聚光）→ 确认写看板。
 // 断言只依赖「页面上有标记」，不钉具体 id，登记表增删不必改这里。
@@ -40,9 +41,8 @@ interface RpcCall {
 }
 const calls: RpcCall[] = []
 
-const SB = 'https://xxfaohdyljlwhdbwjqmr.supabase.co'
-
 const handlers = [
+  http.get('/v1/config', () => HttpResponse.json(config)),
   http.get('/v1/models', () =>
     HttpResponse.json({
       models: [{ id: 'fixture-model', label: 'Fixture Model' }],
@@ -67,7 +67,7 @@ const handlers = [
     '/v1/agents/101/versions',
     () => HttpResponse.json({ versions: [v1], entryVersionID: v1.id }),
   ),
-  http.post(`${SB}/rest/v1/rpc/:fn`, async ({ params, request }) => {
+  http.post(`${BOARD_URL}/rest/v1/rpc/:fn`, async ({ params, request }) => {
     const body = (await request.json()) as Record<string, unknown>
     calls.push({ fn: String(params.fn), body })
     return HttpResponse.json(null)

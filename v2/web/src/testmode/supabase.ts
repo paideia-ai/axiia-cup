@@ -1,9 +1,13 @@
 /* 看板（Supabase）写入 + 身份存储。身份的 localStorage 键与 spec 看板相同，登录一次处处可用。
    只有导测里的明确点击才会调用 recordStep；这里不做任何自动写入。 */
 
-const SB_URL = 'https://xxfaohdyljlwhdbwjqmr.supabase.co'
-const SB_ANON =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4ZmFvaGR5bGpsd2hkYndqcW1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5NjkxMDgsImV4cCI6MjA5ODU0NTEwOH0.I2ps861GN43rXe2E4mjAG5_Lz6-7hxoYLitKvwG9G0w'
+// 看板端点与匿名 key 走构建期环境变量（VITE_TM_BOARD_*），不进仓库：这个
+// key 能写看板，仓库里放一份就等于永久公开一把写权限。两个都缺席时导测退回
+// 只读——recordStep 直接报「未配置」，不发一次注定失败的请求。
+export const BOARD_URL =
+  (import.meta.env.VITE_TM_BOARD_URL as string | undefined) ?? ''
+const BOARD_ANON =
+  (import.meta.env.VITE_TM_BOARD_ANON_KEY as string | undefined) ?? ''
 
 export const NAME_KEY = 'axiia-decisions:me'
 export const PW_KEY = 'axiia-decisions:pw'
@@ -74,13 +78,16 @@ export async function rpc(
   fn: 'set_pick' | 'post_comment',
   body: Record<string, unknown>,
 ): Promise<unknown> {
+  if (!BOARD_URL || !BOARD_ANON) {
+    throw new TmError('server', '看板未配置（VITE_TM_BOARD_URL/ANON_KEY）')
+  }
   let res: Response
   try {
-    res = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+    res = await fetch(`${BOARD_URL}/rest/v1/rpc/${fn}`, {
       method: 'POST',
       headers: {
-        apikey: SB_ANON,
-        Authorization: `Bearer ${SB_ANON}`,
+        apikey: BOARD_ANON,
+        Authorization: `Bearer ${BOARD_ANON}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
