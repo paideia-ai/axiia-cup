@@ -476,7 +476,7 @@ E1—E5 在脚本的 `evidenceById` 中各定义一次，内容采用第 3 节�
 ### 10.2 收集协议
 
 1. 席位 10 自动记录 `GUILTY`，席位 11 自动记录 `NOT_GUILTY`。
-2. 九名 NPC 在互相看不到结果的情况下依次作结构化最终投票。
+2. 九名 NPC 通过 `game.parallelAct` 并行作结构化最终投票，互相看不到结果；返回结果按输入席位顺序对应各 NPC。
 3. 每名 NPC 提交：
 
 ```text
@@ -718,11 +718,11 @@ NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡�
 - `game.agent(name, { system, model?, effort?, side? })` 建立十一条独立 session。
 - `agent.push` 写入该 Agent 的私有上下文；`agent.hear` 显式传递公开发言。
 - `agent.act(spec, { key?, channel? })` 取得单值行动选择、各类票或公开发言 `speech` 字段；没有 `channel` 时不自动形成公开 dialogue row。
-- `game.parallelAct([{ agent, spec }, ...])` 并行取得九名 NPC 的私密意向票；各自完成前不向其他 NPC 交付结果。
+- `game.parallelAct([{ agent, spec }, ...])` 并行取得九名 NPC 的私密意向票或最终判决票；全部收齐前不交付结果。
 - `await game.random()` 取得 journal 化的 `[0, 1)` 随机值，用于 NPC 无放回抽签和当轮顺序洗牌。
 - `game.phase` 与 `game.emit` 发布阶段、公开行动、`jury_speech`、观察层记录、程序票和最终结果事件。
 
-不要把 `Promise.all` 当成真实 provider 并发。秘密意向票使用 `game.parallelAct`，以输入顺序返回各 NPC 的结果，全部收齐后再发布合计；公开发言、私聊和最终判决仍按脚本顺序执行。
+不要把 `Promise.all` 当成真实 provider 并发。秘密意向票和最终判决票使用 `game.parallelAct`，以输入顺序返回各 NPC 的结果；秘密意向票全部收齐后再发布合计，最终判决票全部收齐后再一次性公开十一人判决票与理由。公开发言、私聊和提前终局程序票仍按脚本顺序执行。
 
 脚本仍遵守 V2 文件形状，只声明 `meta` 与 `main` 两个全局。PvE preset 的完整策略正文与复制映射见 [Harbor Murder Jury PVE Preset Prompt Map](../../prompts/pve-prompts/harbor-manifest.md)；运行时 `meta.presets` 的正文必须与该目录中的六个文件一致。以下 catalog face 只展开 key、side、label 与 model，`prompt: '…'` 表示省略正文，不是运行时字面值：
 
