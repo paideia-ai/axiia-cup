@@ -878,11 +878,11 @@
       "owner": "ks"
     },
     "U03-C11": {
-      "page": "",
-      "chapter": "A3",
+      "page": "OS",
+      "chapter": "A5",
       "unit": "U03",
-      "q": "提示「今日次数已用完（N/N），明天再来」→ 拒绝入队",
-      "s": "触顶文案已随前端发布：部署 bundle 含「今日次数已用完（」「明天再来」（含 N/N 插值的 #52 定稿话术）；config 提供 dailyBattleLimit=10 供插值。按任务边界只验文案存在，绝不触顶实测",
+      "q": "在玩家准备发起 PVP 对战的情况下，当玩家当日可用次数已经耗尽时，Axiia 系统必须显示「今日次数已用完（N/N），明天再来」并拒绝入队。",
+      "s": "触顶时显示完整 N/N 文案并拒绝入队；操作前后不得新增、排队或派发任何对局",
       "anchors": [
         "spec-change-45",
         "spec-change-52"
@@ -1148,26 +1148,26 @@
       "page": "OS",
       "chapter": "A5",
       "unit": "U05",
-      "q": "agent 预选 + 版本下拉",
+      "q": "在玩家准备确认出战的情况下，当选择对手面板展示己方智能体时，Axiia 系统必须列出该智能体的全部可用版本，清晰标识当前参赛版本，并允许玩家在面板内选择本次出战版本。",
       "s": "面板内没有己方版本下拉：出战版本是固定文案（钉住版＞★参赛版＞最新版）；换版本要回版本卡用「出战」（#88 E11 路径）",
       "anchors": [
         "spec-a5"
       ],
-      "impl": "pending_ruling",
+      "impl": "gap_known",
       "owner": "ks"
     },
     "U05-C02b": {
       "page": "OS",
       "chapter": "A5",
       "unit": "U05",
-      "q": "参赛版本＝每侧各显式标记一个（#33/#58）",
+      "q": "在玩家准备发起一场对战的情况下，当玩家打开选择对手面板或确认出战时，Axiia 系统必须让每个阵营各自拥有一个显式参赛版本，并且只把真正已标记的版本显示为参赛版本。",
       "s": "从非 ★ 版本卡「出战」呼出时，副标题把钉住的版本谎标成「★参赛版本」：判据是 entryVersionID!=null 而非 fielded==entry",
       "anchors": [
         "spec-a5",
         "spec-change-91",
         "spec-p4"
       ],
-      "impl": "pending_ruling",
+      "impl": "gap_known",
       "owner": "ks"
     },
     "U05-C03": {
@@ -1200,14 +1200,14 @@
       "page": "OS",
       "chapter": "A5",
       "unit": "U05",
-      "q": "「切侧」＝切换到你另一侧的 agent（没有则引导创建，#64）",
+      "q": "在玩家准备发起一场对战的情况下，当玩家打开选择对手面板或确认出战时，Axiia 系统必须提供切换到玩家另一阵营智能体的明确操作；若该阵营不存在智能体，则引导创建。",
       "s": "面板内无字面「切侧」控件；替代路径散在锁定态（去练习该侧/去练习对侧/去创建对侧）与 hotseat 空态（去我的智能体）",
       "anchors": [
         "spec-a5",
         "spec-change-62",
         "spec-change-64"
       ],
-      "impl": "pending_ruling",
+      "impl": "gap_known",
       "owner": "ks"
     },
     "U05-C05": {
@@ -1248,11 +1248,11 @@
       "owner": "ks"
     },
     "U05-C08": {
-      "page": "",
-      "chapter": "A6",
+      "page": "OS",
+      "chapter": "A5",
       "unit": "U05",
-      "q": "hotseat 自打不受 PVP 门槛限制：两侧 agent 在手即可；不占 PVP 配额、占每日总配额",
-      "s": "门槛未解锁（0 PVE 胜）时「自打一场」派发成功并进 /matches/:id；config 用量 battlesToday+1、pvpBattlesToday 保持 0",
+      "q": "在玩家发起左右手互搏的情况下，当系统检查资格与配额时，Axiia 系统必须不应用 PVP 解锁门槛或 PVP 配额，但必须计入每日总对战配额。",
+      "s": "即使 PVP 门槛未解锁或 PVP 配额不可用也能派发；pvpBattlesToday 不增加，battlesToday 恰增加 1",
       "anchors": [
         "spec-change-78",
         "spec-a6"
@@ -1290,12 +1290,12 @@
       "page": "OS",
       "chapter": "A5",
       "unit": "U05",
-      "q": "侧抽屉可观战；战报可分享",
-      "s": "点条上对局卡＝整页跳转 /matches/:id（战报本身可分享、含版本 id）；不存在侧抽屉观战形态",
+      "q": "在玩家查看进行中的对战列表的情况下，当玩家选择一场对局时，Axiia 系统必须打开可观看的对局视图。",
+      "s": "点进行中对战条上的对局卡会打开 /matches/:id，可直接观看该场对局",
       "anchors": [
         "spec-a5"
       ],
-      "impl": "pending_ruling",
+      "impl": "match",
       "owner": "ks"
     },
     "U05-C11": {
@@ -2301,13 +2301,13 @@
       "page": "EA",
       "chapter": "B3",
       "unit": "U10",
-      "q": "PVE-NPC 的视图：聚合数据（含两侧胜率语义 #34）。（#34：显示的是该场景两侧 agent 的胜率，不是玩家胜率。）",
+      "q": "在玩家正在查看一个智能体的情况下，当页面展示智能体身份、版本、模型或战绩时，Axiia 系统必须为每个 PVE NPC 提供可查看的聚合视图，并按场景两个阵营分别展示 NPC 胜率。",
       "s": "聚合数据的语义面达标：DA/D 有「侧方胜率」条（N 场 · 商鞅 x% / 甘龙 y%，两侧 agent 胜率口径；无数据时空态「数据积累中」）。但「PVE-NPC 的视图」本体缺席：NPC 预设在 DA 只是「预设对手」一节的静态徽章（",
       "anchors": [
         "spec-b3",
         "spec-change-34"
       ],
-      "impl": "pending_ruling",
+      "impl": "gap_known",
       "owner": "ks"
     },
     "U11-C01": {

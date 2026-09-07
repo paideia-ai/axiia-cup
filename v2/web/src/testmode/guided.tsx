@@ -1,4 +1,4 @@
-/* 导测：按两轮旅程手册一步步走。每一步说做什么、该看到什么、对哪几条规格；有落点就带路、有标记就聚光；
+/* 导测：按历史两轮手册或 B3/A5 固定版本交接旅程一步步走。每一步说网址、做什么、该看到什么、截图与规格；有落点就带路、有标记就聚光；
    确认（看到了 / 不是这样 / 跳过）才写看板——一条条款一条 set_pick，备注落在主条款的评论里，另记一条步骤级进度。 */
 import {
   type ReactNode,
@@ -13,8 +13,10 @@ import {
 import { useNavigate } from 'react-router-dom'
 
 import {
+  B3_A5_MANUAL_URL,
   DASHBOARD,
   type Journey,
+  type JourneyRound,
   JOURNEYS,
   journeyUrl,
   manualUrl,
@@ -31,6 +33,16 @@ import {
   useNarrow,
   useReducedMotion,
 } from './dom'
+import {
+  fillFixtureText,
+  fixtureLabel,
+  type FixtureValues,
+  fixtureVariables,
+  matchIdFromUrl,
+  readFixtureValues,
+  resolveFixtureUrl,
+  writeFixtureValues,
+} from './fixtures'
 import { TM } from './registry/index'
 import {
   type Choice,
@@ -58,6 +70,12 @@ const CHOICE_LABEL: Record<Choice, string> = {
   fail: '不是这样',
   skip: '跳过',
 }
+
+const PROFILE_READINESS = {
+  ready: 'ID 已预填',
+  'refresh-required': '开测前刷新状态',
+  'known-gap': '已知实现缺口',
+} as const
 
 function tally(j: Journey, p: JourneyProgress) {
   let pass = 0, fail = 0, skip = 0
@@ -98,6 +116,248 @@ function Fold(
       </summary>
       {children}
     </details>
+  )
+}
+
+function FixtureUrlBlock(
+  {
+    journey,
+    step,
+    pathname,
+    values,
+    onChange,
+  }: {
+    journey: Journey
+    step: Step
+    pathname: string
+    values: FixtureValues
+    onChange: (name: string, value: string) => void
+  },
+) {
+  if (!step.testUrl && !step.links?.length && !step.captures?.length) {
+    return null
+  }
+  const links = [
+    ...(step.testUrl
+      ? [{ label: '本步起始页', url: step.testUrl, primary: true }]
+      : []),
+    ...(step.links ?? []).map((link) => ({ ...link, primary: false })),
+  ]
+  const variables = fixtureVariables(
+    ...links.map((link) => link.url),
+    step.action,
+    step.expected,
+  ).filter((name) => name !== 'appBaseUrl')
+  const captureNames = new Set(
+    (step.captures ?? []).map((capture) => capture.variable),
+  )
+  const usedNames = new Set([
+    ...variables,
+    ...(step.captures ?? []).map((capture) => capture.variable),
+  ])
+  const profiles = (step.fixtureRefs ?? []).map((id) =>
+    journey.fixtureProfiles?.find((profile) => profile.id === id)
+  ).filter((profile) => profile !== undefined)
+  const fields = (journey.fixtureProfiles ?? []).flatMap((profile) =>
+    profile.fields
+  )
+  const labelOf = (name: string) =>
+    fields.find((field) => field.name === name)?.label ?? fixtureLabel(name)
+  const currentMatchId = matchIdFromUrl(pathname)
+
+  return (
+    <div className='tm-block tm-fixture-card'>
+      <div className='tm-block-t'>本步登录角色与网址</div>
+      {profiles.length > 0
+        ? (
+          <div className='tm-fixture-profiles'>
+            {profiles.map((profile) => {
+              const fields = profile.fields.filter((field) =>
+                usedNames.has(field.name) && !captureNames.has(field.name)
+              )
+              return (
+                <section key={profile.id} className='tm-fixture-profile'>
+                  <div className='tm-fixture-profile-title'>
+                    <span>{profile.label}</span>
+                    <span className='tm-profile-badges'>
+                      {profile.readiness
+                        ? (
+                          <span
+                            className={`tm-profile-state tm-profile-state--${profile.readiness}`}
+                          >
+                            {PROFILE_READINESS[profile.readiness]}
+                          </span>
+                        )
+                        : null}
+                      <span
+                        className='tm-profile-id tm-mono'
+                        title={`fixture profile: ${profile.id}`}
+                      >
+                        {profile.accountAlias ?? profile.id}
+                      </span>
+                    </span>
+                  </div>
+                  <p>{profile.description}</p>
+                  {fields.length > 0
+                    ? (
+                      <div className='tm-fixture-fields'>
+                        {fields.map((field) => {
+                          const inputId =
+                            `tm-fixture-${step.id}-${profile.id}-${field.name}`
+                          return (
+                            <label
+                              key={field.name}
+                              className='tm-fixture-field'
+                              htmlFor={inputId}
+                            >
+                              <span>
+                                {field.label}
+                                {field.kind === 'runtime'
+                                  ? (
+                                    <span className='tm-runtime-badge'>
+                                      本轮产生
+                                    </span>
+                                  )
+                                  : null}
+                                <span className='tm-mono'>{field.name}</span>
+                              </span>
+                              <input
+                                id={inputId}
+                                className='tm-input tm-mono'
+                                value={values[field.name] ?? ''}
+                                placeholder={`粘贴${field.label}`}
+                                autoComplete='off'
+                                spellCheck={false}
+                                onChange={(event) => {
+                                  const entered = event.target.value
+                                  onChange(
+                                    field.name,
+                                    field.extract === 'matchId'
+                                      ? matchIdFromUrl(entered) ?? entered
+                                      : entered,
+                                  )
+                                }}
+                              />
+                              <small>{field.help}</small>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )
+                    : null}
+                </section>
+              )
+            })}
+          </div>
+        )
+        : null}
+      {links.length > 0
+        ? (
+          <div className='tm-fixture-links'>
+            {links.map((link) => {
+              const resolution = resolveFixtureUrl(link.url, values)
+              const missing = resolution.missing.map(labelOf).join('、')
+              return (
+                <div
+                  key={`${link.label}:${link.url}`}
+                  className='tm-fixture-link'
+                >
+                  <div>
+                    <strong>{link.label}</strong>
+                    <div className='tm-fixture-url tm-mono'>
+                      {resolution.preview}
+                    </div>
+                  </div>
+                  {resolution.href
+                    ? (
+                      <a
+                        className={`tm-btn tm-ext${
+                          link.primary ? ' tm-btn--primary' : ''
+                        }`}
+                        href={resolution.href}
+                        target='_blank'
+                        rel='noreferrer'
+                        aria-label={`打开网页：${link.label}`}
+                      >
+                        打开网页
+                      </a>
+                    )
+                    : (
+                      <button
+                        type='button'
+                        className={`tm-btn${
+                          link.primary ? ' tm-btn--primary' : ''
+                        }`}
+                        disabled
+                        title={`请先填写${missing}`}
+                      >
+                        先填写：{missing}
+                      </button>
+                    )}
+                </div>
+              )
+            })}
+          </div>
+        )
+        : null}
+      {step.captures?.map((capture) => {
+        const inputId = `tm-capture-${step.id}-${capture.variable}`
+        return (
+          <section key={capture.variable} className='tm-runtime-capture'>
+            <div className='tm-fixture-profile-title'>
+              <span>{capture.label}</span>
+              <span className='tm-runtime-badge'>运行时产生</span>
+            </div>
+            <div className='tm-capture-row'>
+              <input
+                id={inputId}
+                className='tm-input tm-mono'
+                value={values[capture.variable] ?? ''}
+                placeholder={capture.placeholder}
+                aria-label={capture.label}
+                autoComplete='off'
+                spellCheck={false}
+                onChange={(event) => {
+                  const entered = event.target.value
+                  onChange(
+                    capture.variable,
+                    matchIdFromUrl(entered) ?? entered,
+                  )
+                }}
+              />
+              <button
+                type='button'
+                className='tm-btn'
+                disabled={!currentMatchId}
+                title={currentMatchId
+                  ? `捕获 ${currentMatchId}`
+                  : '请先打开本轮 /matches/:id 对局页'}
+                onClick={() => {
+                  if (currentMatchId) onChange(capture.variable, currentMatchId)
+                }}
+              >
+                从当前对局网址捕获
+              </button>
+            </div>
+            <small>{capture.hint}</small>
+          </section>
+        )
+      })}
+      <div className='tm-actions'>
+        <a
+          className='tm-btn tm-ext'
+          href={manualUrl(step)}
+          target='_blank'
+          rel='noreferrer'
+        >
+          详细手册与 fixture 说明
+        </a>
+      </div>
+      <div className='tm-fixture-help'>
+        站点根地址自动使用当前环境；各旅程的值互相隔离。这里只填项目同学给的公开
+        ID，账号密码不要填入 Test Mode。
+      </div>
+    </div>
   )
 }
 
@@ -150,6 +410,20 @@ export function Guided(
   const [spotOff, setSpotOff] = useState(false)
   const [altMarker, setAltMarker] = useState<string | null>(null)
   const [dockRight, setDockRight] = useState(false)
+  const [fixtureValuesByJourney, setFixtureValuesByJourney] = useState<
+    Record<string, FixtureValues>
+  >(() => {
+    const initialId = target?.journeyId
+    const initialJourney = JOURNEYS.find((item) => item.id === initialId)
+    return initialId
+      ? {
+        [initialId]: readFixtureValues(
+          initialId,
+          initialJourney?.fixtureDefaults,
+        ),
+      }
+      : {}
+  })
   // 部件被卡片挡住又推不上去时（页面已到底），把正文收起只留头尾（确认按钮挪到页脚）；也可手动收起
   const [collapsed, setCollapsed] = useState(false)
   const noteRef = useRef<HTMLTextAreaElement>(null)
@@ -160,6 +434,14 @@ export function Guided(
   const journey = useMemo(
     () => JOURNEYS.find((j) => j.id === journeyId) ?? null,
     [journeyId],
+  )
+  const fixtureValues = useMemo(
+    () =>
+      journeyId
+        ? fixtureValuesByJourney[journeyId] ??
+          readFixtureValues(journeyId, journey?.fixtureDefaults)
+        : readFixtureValues(null),
+    [fixtureValuesByJourney, journey, journeyId],
   )
   const step: Step | null = journey?.steps[stepIdx] ?? null
   const finished = journey !== null && stepIdx >= journey.steps.length
@@ -179,6 +461,25 @@ export function Guided(
   useEffect(() => {
     if (journeyId) setProgress(readProgress(journeyId))
   }, [journeyId])
+
+  useEffect(() => {
+    if (!journeyId || fixtureValuesByJourney[journeyId] !== fixtureValues) {
+      return
+    }
+    writeFixtureValues(journeyId, fixtureValues)
+  }, [fixtureValues, fixtureValuesByJourney, journeyId])
+
+  const setFixtureValue = useCallback((name: string, value: string) => {
+    if (!journeyId) return
+    setFixtureValuesByJourney((current) => ({
+      ...current,
+      [journeyId]: {
+        ...(current[journeyId] ??
+          readFixtureValues(journeyId, journey?.fixtureDefaults)),
+        [name]: value,
+      },
+    }))
+  }, [journey, journeyId])
 
   // 换步：清备注 / 错误 / 聚光的关闭状态 / 待补的确认
   useEffect(() => {
@@ -314,6 +615,7 @@ export function Guided(
         stepId: step.id,
         clauseIds: step.clauseIds,
         primary: step.primary,
+        versionPins: step.versionPins,
         choice,
         note,
         identity: id,
@@ -391,10 +693,11 @@ export function Guided(
 
   /* ── 旅程列表 ── */
   if (!journey) {
-    const groups: ['r1' | 'r2', Journey[]][] = [
+    const groups: [JourneyRound, Journey[]][] = [
+      ['handoff', JOURNEYS.filter((j) => j.round === 'handoff')],
       ['r1', JOURNEYS.filter((j) => j.round === 'r1')],
       ['r2', JOURNEYS.filter((j) => j.round === 'r2')],
-    ]
+    ].filter(([, list]) => list.length > 0) as [JourneyRound, Journey[]][]
     return (
       <section
         ref={dockRef}
@@ -406,7 +709,7 @@ export function Guided(
           <div className='tm-h-title'>
             <div>导测 · 选一条旅程</div>
             <div className='tm-eyebrow'>
-              {JOURNEYS.length} 条旅程 · 两轮人工测试手册
+              {JOURNEYS.length} 条旅程 · 当前 B3/A5 可交接 + 历史两轮
             </div>
           </div>
           <button
@@ -424,6 +727,18 @@ export function Guided(
               <div className='tm-sec'>
                 <span className='tm-eyebrow'>{ROUND_LABEL[round]}</span>
                 <span className='tm-sec-n'>{list.length}</span>
+                {round === 'handoff'
+                  ? (
+                    <a
+                      className='tm-ext'
+                      href={B3_A5_MANUAL_URL}
+                      target='_blank'
+                      rel='noreferrer'
+                    >
+                      详细手册 · 截图提交
+                    </a>
+                  )
+                  : null}
               </div>
               <div className='tm-jlist'>
                 {list.map((j) => {
@@ -525,10 +840,55 @@ export function Guided(
               </div>
             )
             : null}
+          {journey.completion || journey.evidenceRequirements?.length
+            ? (
+              <section className='tm-delivery' aria-label='交接完成标准'>
+                <div className='tm-delivery-title'>交接完成标准</div>
+                {journey.completion
+                  ? (
+                    <p className='tm-delivery-completion'>
+                      {journey.completion}
+                    </p>
+                  )
+                  : null}
+                {journey.evidenceRequirements?.length
+                  ? (
+                    <details className='tm-details tm-delivery-evidence' open>
+                      <summary>
+                        <span>必须提交的证据</span>
+                        <span className='tm-sec-n'>
+                          {journey.evidenceRequirements.length} 项
+                        </span>
+                      </summary>
+                      <ul>
+                        {journey.evidenceRequirements.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )
+                  : null}
+              </section>
+            )
+            : null}
           <div className='tm-actions'>
+            {journey.round === 'handoff'
+              ? (
+                <a
+                  className='tm-btn tm-btn--primary tm-ext'
+                  href={journeyUrl(journey)}
+                  target='_blank'
+                  rel='noreferrer'
+                >
+                  详细手册 · 提交证据
+                </a>
+              )
+              : null}
             <a
-              className='tm-btn tm-btn--primary tm-ext'
-              href={`${DASHBOARD}/spec-v4`}
+              className={`tm-btn tm-ext${
+                journey.round === 'handoff' ? '' : ' tm-btn--primary'
+              }`}
+              href={`${DASHBOARD}/spec-v4#verification`}
               target='_blank'
               rel='noreferrer'
             >
@@ -708,18 +1068,86 @@ export function Guided(
             {compact ? <div className='tm-steps-nav'>{navButtons}</div> : null}
           </div>
 
+          {stepIdx === 0 && journey.prerequisites?.length
+            ? (
+              <details className='tm-details'>
+                <summary>
+                  <span className='tm-eyebrow'>开测前准备</span>
+                  <span className='tm-sec-n'>
+                    {journey.prerequisites.length}
+                  </span>
+                </summary>
+                <ul style={{ margin: '8px 0 2px', paddingLeft: 20 }}>
+                  {journey.prerequisites.map((item) => (
+                    <li key={item} style={{ marginBottom: 6 }}>{item}</li>
+                  ))}
+                </ul>
+              </details>
+            )
+            : null}
+
+          <FixtureUrlBlock
+            journey={journey}
+            step={s}
+            pathname={pathname}
+            values={fixtureValues}
+            onChange={setFixtureValue}
+          />
+          {s.knownGap
+            ? (
+              <section className='tm-known-gap' role='status'>
+                <div className='tm-known-gap-title'>{s.knownGap.title}</div>
+                <p>{s.knownGap.detail}</p>
+                <strong>{s.knownGap.instruction}</strong>
+              </section>
+            )
+            : null}
           <div className='tm-block tm-block--action'>
             <div className='tm-block-t'>做什么</div>
-            <div className='tm-block-b'>{s.action}</div>
+            <div className='tm-block-b'>
+              {fillFixtureText(s.action, fixtureValues).value}
+            </div>
           </div>
           <div className='tm-block'>
             <div className='tm-block-t'>应该看到</div>
             <div className='tm-block-b'>
-              {s.expected.replace(/^应该看到：/, '')}
+              {fillFixtureText(s.expected, fixtureValues).value.replace(
+                /^应该看到：/,
+                '',
+              )}
             </div>
           </div>
 
-          {route && !onRoute
+          {s.screenshotEvidence?.length
+            ? (
+              <div className='tm-block tm-block--aside tm-block--human'>
+                <div className='tm-block-t'>必须截图 / 提交</div>
+                <div className='tm-block-b'>
+                  <div className='tm-evidence-instruction'>
+                    以下就是必须使用的准确文件名（包含 .png，请勿改名）：
+                  </div>
+                  <ul className='tm-file-list'>
+                    {s.screenshotEvidence.map((name) => (
+                      <li key={name} className='tm-file-name tm-mono'>
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    className='tm-btn tm-btn--sm tm-ext'
+                    style={{ marginTop: 8 }}
+                    href={manualUrl(s)}
+                    target='_blank'
+                    rel='noreferrer'
+                  >
+                    在详细手册提交这些文件
+                  </a>
+                </div>
+              </div>
+            )
+            : null}
+
+          {route && !onRoute && !s.testUrl
             ? (
               <div className='tm-hint'>
                 {routeHasParams(route)
@@ -809,6 +1237,17 @@ export function Guided(
               {s.clauseIds.length
                 ? <ClauseChips ids={s.clauseIds} />
                 : <span className='tm-dimt'>这一步没有归到具体条款</span>}
+              {s.versionPins
+                ? (
+                  <div className='tm-chips' style={{ marginTop: 6 }}>
+                    {Object.entries(s.versionPins).map(([id, version]) => (
+                      <span key={id} className='tm-chip tm-mono'>
+                        {id} · {version}
+                      </span>
+                    ))}
+                  </div>
+                )
+                : null}
             </div>
             {related.length
               ? (
