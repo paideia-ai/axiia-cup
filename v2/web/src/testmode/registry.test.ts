@@ -5,16 +5,15 @@ import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-import journeys from './data/journeys.json'
 import spec from './data/spec-index.json'
-import { clausesForPages, pagesOfPath } from './data'
+import { clausesForPages, JOURNEYS, pagesOfPath } from './data'
 import { STEP_HINTS, TM } from './registry/index'
 import { ROUTE_PAGES } from './types'
 
 const ID_RE = /^(A|B|C|D|DA|E|EA|OS|FA|G|I|K|L|X|MA|ADM|NAV)\.[a-z0-9-]+$/
 const CLAUSE_IDS = new Set(Object.keys(spec.clauses))
 const STEP_IDS = new Set(
-  journeys.journeys.flatMap((j) => j.steps.map((s) => s.id)),
+  JOURNEYS.flatMap((j) => j.steps.map((s) => s.id)),
 )
 const TM_IDS = Object.keys(TM)
 
@@ -79,7 +78,7 @@ describe('测试模式登记表', () => {
     expect(bad, `不存在的条款：${bad.join(', ')}`).toEqual([])
   })
 
-  it('journeys 里的步骤 id 都在 journeys.json 里', () => {
+  it('journeys 里的步骤 id 都在完整旅程数据里', () => {
     const bad: string[] = []
     for (const id of TM_IDS) {
       for (const s of TM[id].journeys ?? []) {

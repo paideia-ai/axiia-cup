@@ -110,6 +110,8 @@ export interface StepRecordInput {
   stepId: string
   clauseIds: string[]
   primary: string[]
+  /** 固定版本交接旅程必须把真人结果钉在执行时确认的条款版本上。 */
+  versionPins?: Record<string, string>
   choice: Choice
   note: string
   identity: Identity
@@ -124,25 +126,34 @@ export async function recordStep(
   input: StepRecordInput,
 ): Promise<StepRecordResult> {
   const { identity, stepId, choice } = input
-  const note = JSON.stringify({
-    build: { web: BUILD_SHA },
-    role: identity.role,
-    via: `guided:${stepId}`,
-    step: stepId,
-    at: new Date().toISOString(),
-  })
-  const pick = (card: string) =>
+  const at = new Date().toISOString()
+  const note = (clauseVersion?: string) =>
+    JSON.stringify({
+      build: { web: BUILD_SHA },
+      role: identity.role,
+      via: `guided:${stepId}`,
+      step: stepId,
+      at,
+      ...(clauseVersion ? { clauseVersion } : {}),
+    })
+  const pick = (card: string, clauseVersion?: string) =>
     rpc('set_pick', {
       p_card: card,
       p_author: identity.name,
       p_choice: choice,
-      p_note: note,
+      p_note: note(clauseVersion),
       p_pwd: identity.pwd,
     })
-  const clauseCards = input.clauseIds.map((c) => `ss:${c}`)
+  const clauses = input.clauseIds.map((id) => ({
+    id,
+    card: `ss:${id}`,
+    version: input.versionPins?.[id],
+  }))
   // 先写第一条：口令错就在这里停下，不会留下一半。
-  if (clauseCards.length > 0) await pick(clauseCards[0])
-  await Promise.all(clauseCards.slice(1).map(pick))
+  if (clauses.length > 0) await pick(clauses[0].card, clauses[0].version)
+  await Promise.all(
+    clauses.slice(1).map((c) => pick(c.card, c.version)),
+  )
   await pick(`pjg:${stepId}`)
 
   const primary = input.primary[0] ?? input.clauseIds[0] ?? null

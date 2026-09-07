@@ -6,7 +6,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { AgentVersionDTO } from '../api/types'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
-import { STEPS } from './data'
+import { B3_A5_MANUAL_URL, STEPS } from './data'
+import { FIXTURE_SESSION_STORAGE_KEY, FIXTURE_STORAGE_KEY } from './fixtures'
 import { TestModeRoot } from './index'
 import { STEP_HINTS } from './registry/index'
 import { BOARD_URL } from './supabase'
@@ -86,6 +87,19 @@ const meta = {
       localStorage.removeItem('axiia-decisions:me')
       localStorage.removeItem('axiia-decisions:pw')
       localStorage.removeItem('axiia:tm:guided:r1:3')
+      localStorage.removeItem(FIXTURE_STORAGE_KEY)
+      sessionStorage.removeItem(FIXTURE_SESSION_STORAGE_KEY)
+      for (
+        const journey of [
+          'HV-B3-OWNER-EA',
+          'HV-B3-PUBLIC-NPC',
+          'HV-A5-OS-CORE',
+          'HV-A5-HOTSEAT-LIFECYCLE',
+          'HV-A5-PVP-BOUNDARIES',
+        ]
+      ) {
+        localStorage.removeItem(`axiia:tm:guided:${journey}`)
+      }
       return {}
     },
   ],
@@ -229,5 +243,84 @@ export const BuilderUnderTestMode: Story = {
     // 走到下一步（旅程 3 只有 5 步：落到小结卡）
     await expect(await body.findByText(/第 6 步|走完了|已确认 \d+ \/ \d+/))
       .toBeVisible()
+  },
+}
+
+export const ConfirmedB3A5Handoff: Story = {
+  play: async () => {
+    const body = within(document.body)
+    const pill = await body.findByRole('navigation', { name: '测试模式' })
+    await userEvent.click(within(pill).getByRole('button', { name: '导测' }))
+    const runner = await body.findByRole('dialog', { name: '导测' })
+
+    await expect(within(runner).getByText('B3 / A5 · 固定版本可交接'))
+      .toBeVisible()
+    const handoffManual = within(runner).getByRole('link', {
+      name: '详细手册 · 截图提交',
+    }) as HTMLAnchorElement
+    expect(handoffManual.href).toBe(B3_A5_MANUAL_URL)
+
+    await userEvent.click(
+      within(runner).getByRole('button', { name: /^旅程 B3\.1：/ }),
+    )
+    await expect(await body.findByText('HV-B3-OWNER-EA-S01')).toBeVisible()
+    await expect(body.getByText('账号 A · 完整所有者')).toBeVisible()
+    await expect(body.getByText('B3 人测·完整所有者')).toBeVisible()
+    const tournamentInput = body.getByLabelText(/锦标赛 ID/)
+    await userEvent.clear(tournamentInput)
+    await expect(
+      body.getByText(
+        `${globalThis.location.origin}/tournaments/{{b3OwnerTournamentId}}`,
+      ),
+    ).toBeVisible()
+    await expect(
+      body.getByRole('button', { name: '先填写：含主智能体的锦标赛 ID' }),
+    ).toBeDisabled()
+    await userEvent.type(
+      tournamentInput,
+      'tm-tournament',
+    )
+    const testPage = body.getByRole('link', {
+      name: '打开网页：本步起始页',
+    }) as HTMLAnchorElement
+    expect(testPage.href).toBe(
+      `${globalThis.location.origin}/tournaments/tm-tournament`,
+    )
+    expect(testPage.target).toBe('_blank')
+    expect(
+      body.getByRole('link', { name: '打开网页：玩家对局列表' }),
+    ).toHaveAttribute('href', `${globalThis.location.origin}/matches`)
+    await expect(
+      body.getByText(/以下就是必须使用的准确文件名/),
+    ).toBeVisible()
+    await expect(
+      body.getByText('HV-B3-OWNER-EA-S01-leaderboard.png'),
+    ).toBeVisible()
+    const b3Upload = body.getByRole('link', {
+      name: '在详细手册提交这些文件',
+    }) as HTMLAnchorElement
+    expect(b3Upload.href).toBe(
+      `${B3_A5_MANUAL_URL}#HV-B3-OWNER-EA-S01`,
+    )
+
+    await userEvent.click(body.getByRole('button', { name: /^第 9 步/ }))
+    await userEvent.click(body.getByRole('button', { name: '看小结 →' }))
+    const delivery = body.getByRole('region', { name: '交接完成标准' })
+    await expect(delivery).toBeVisible()
+    await expect(within(delivery).getByText('必须提交的证据')).toBeVisible()
+
+    await userEvent.click(body.getByRole('button', { name: '换一条旅程' }))
+    const refreshedRunner = await body.findByRole('dialog', { name: '导测' })
+    await userEvent.click(
+      within(refreshedRunner).getByRole('button', { name: /^旅程 A5\.1：/ }),
+    )
+    await userEvent.click(
+      body.getByRole('button', { name: /^第 5 步/ }),
+    )
+    await expect(await body.findByText('HV-A5-OS-CORE-S05')).toBeVisible()
+    await expect(
+      body.getByText('HV-A5-OS-CORE-S05-mobile-sheet.png'),
+    ).toBeVisible()
+    expect(body.queryByText('HV-A5-OS-CORE-S06')).toBeNull()
   },
 }

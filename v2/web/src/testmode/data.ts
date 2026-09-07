@@ -1,5 +1,6 @@
-/* 测试模式的数据面：spec v4 条款索引 + 两轮旅程手册，加几个查询小工具。
+/* 测试模式的数据面：spec v4 条款索引 + 历史两轮旅程 + B3/A5 固定版本交接旅程，加几个查询小工具。
    只在 overlay 分块里被引用（index.tsx 不 import 这里），关掉测试模式时零成本。 */
+import { B3_A5_JOURNEYS, B3_A5_MANUAL_PATH } from './data/b3-a5-journeys'
 import journeysJson from './data/journeys.json'
 import specJson from './data/spec-index.json'
 import { TM } from './registry/index'
@@ -26,9 +27,50 @@ export interface Clause {
   owner: string
 }
 
+export type JourneyRound = 'r1' | 'r2' | 'handoff'
+
+/** 一套 fixture 里的非敏感引用。账号密码由项目同学私下交付，不进入 Test Mode。 */
+export interface FixtureField {
+  name: string
+  label: string
+  help: string
+  kind?: 'runtime'
+  extract?: 'matchId'
+}
+
+/** 同一旅程可能需要多种互斥账号状态；每个 profile 对应一个登录角色。 */
+export interface FixtureProfile {
+  id: string
+  label: string
+  /** 可公开的角色别名；不是邮箱或登录凭据。 */
+  accountAlias?: string
+  kind?: 'known-gap'
+  readiness?: 'ready' | 'refresh-required' | 'known-gap'
+  description: string
+  fields: FixtureField[]
+}
+
+export interface StepTestLink {
+  label: string
+  url: string
+}
+
+export interface StepCapture {
+  variable: string
+  label: string
+  placeholder: string
+  hint: string
+}
+
+export interface KnownGap {
+  title: string
+  detail: string
+  instruction: string
+}
+
 export interface Step {
   id: string
-  round: 'r1' | 'r2'
+  round: JourneyRound
   journey: string
   index: number
   action: string
@@ -42,18 +84,42 @@ export interface Step {
   manualUrl: string
   route: string | null
   marker: string | null
+  /** 可交接旅程固定的现行条款版本；历史两轮步骤没有这个字段。 */
+  versionPins?: Record<string, string>
+  /** 手册里的完整起始 URL 模板，保留 fixture 占位符。 */
+  testUrl?: string
+  /** 操作文字提到的其他页面也必须能直接打开，不能只留下不可点的路径。 */
+  links?: StepTestLink[]
+  /** 本步骤执行后才会产生的变量；Test Mode 可从当前 /matches/:id 捕获。 */
+  captures?: StepCapture[]
+  /** 本步骤实际使用的登录角色 / 数据状态；引用 Journey.fixtureProfiles.id。 */
+  fixtureRefs?: string[]
+  /** 当前产品没有可执行路径时明确呈现，不要求测试者猜 ID 或伪造 URL。 */
+  knownGap?: KnownGap
+  /** 本步骤在详细手册里要求提交的截图文件名。 */
+  screenshotEvidence?: string[]
 }
 
 export interface Journey {
   id: string
-  round: 'r1' | 'r2'
+  round: JourneyRound
   n: string
   title: string
   manual: string
   steps: Step[]
+  chapter?: 'B3' | 'A5'
+  manualAnchor?: string
+  prerequisites?: string[]
+  evidenceRequirements?: string[]
+  completion?: string
+  fixtureProfiles?: FixtureProfile[]
+  /** 可公开的稳定 ID 默认值；密码、cookie、token 永远不能放这里。 */
+  fixtureDefaults?: Record<string, string>
 }
 
 export const DASHBOARD = 'https://deploy-v2-ebon-beta.vercel.app'
+export { B3_A5_MANUAL_PATH }
+export const B3_A5_MANUAL_URL = `${DASHBOARD}${B3_A5_MANUAL_PATH}`
 
 const rawClauses = (specJson as { clauses: Record<string, Omit<Clause, 'id'>> })
   .clauses
@@ -62,7 +128,8 @@ export const CLAUSES: Record<string, Clause> = Object.fromEntries(
 )
 export const CLAUSE_IDS = Object.keys(CLAUSES)
 
-export const JOURNEYS = (journeysJson as { journeys: Journey[] }).journeys
+const LEGACY_JOURNEYS = (journeysJson as { journeys: Journey[] }).journeys
+export const JOURNEYS: Journey[] = [...LEGACY_JOURNEYS, ...B3_A5_JOURNEYS]
 export const STEPS: Record<string, Step> = Object.fromEntries(
   JOURNEYS.flatMap((j) => j.steps.map((s) => [s.id, s])),
 )
@@ -81,7 +148,11 @@ export const IMPL_LABEL: Record<Impl, string> = {
   untestable: '不可测',
 }
 
-export const ROUND_LABEL = { r1: '第一轮', r2: '第二轮' } as const
+export const ROUND_LABEL: Record<JourneyRound, string> = {
+  r1: '第一轮',
+  r2: '第二轮',
+  handoff: 'B3 / A5 · 固定版本可交接',
+}
 
 /** 条款 page 字段为空或不是页面代号时，按章节把它归到最可能出现的页面（清单里才列得出来） */
 const CHAPTER_PAGES: Record<string, PageCode[]> = {
@@ -151,7 +222,7 @@ export function manualUrl(step: Step): string {
   return `${DASHBOARD}${step.manualUrl}`
 }
 export function journeyUrl(j: Journey): string {
-  return `${DASHBOARD}${j.manual}#${j.steps[0]?.id ?? ''}`
+  return `${DASHBOARD}${j.manual}#${j.manualAnchor ?? j.steps[0]?.id ?? ''}`
 }
 
 /** 条款 → 挂了它的标记（全站） */

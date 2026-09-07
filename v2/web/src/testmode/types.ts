@@ -1,4 +1,4 @@
-/* 测试模式（test mode）——给产品里每个 UI/UX 部件一个稳定的标记（data-tm），并把它和 spec v4 的条款 / 两轮旅程手册的步骤连起来。
+/* 测试模式（test mode）——给产品里每个 UI/UX 部件一个稳定的标记（data-tm），并把它和 spec v4 的条款 / 历史两轮及当前固定版本旅程步骤连起来。
    约定：
    - 标记 id = `<页面代号>.<部件 slug>`，页面代号用 v3.4 的：A 首页 · B 登录 · C 注册 · D 场景选择 · DA 场景介绍 · E 构建器 · EA 智能体视图 · OS 选择对手 · FA 战报 · G 锦标赛 · I 通知 · K 设置 · L 对战历史；
      不在 v3.4 页面表里的：X 首战快速通道（A3 /express）· MA 我的智能体（/my-agents）· ADM 管理面 · NAV 顶栏/底栏/铃铛/进行中的对战条（全局）。
@@ -72,7 +72,7 @@ export interface TmEntry {
   clauses?: string[]
   /** 规格锚（spec-change-N / spec-e10 / spec-p11 / spec-a5…），只在没有条款能对上、或条款之外还有直接锚时填 */
   anchors?: string[]
-  /** 旅程步骤 id（j3s5 = 第一轮旅程 3 第 5 步；jR2s1 = 第二轮 R2 第 1 步） */
+  /** 旅程步骤 id（j3s5 = 第一轮旅程 3 第 5 步；jR2s1 = 第二轮 R2 第 1 步；HV-* = 当前固定版本交接） */
   journeys?: string[]
   /** 一句说明：这个部件为什么对应这些条款 / 有什么已知差异（可空） */
   note?: string
