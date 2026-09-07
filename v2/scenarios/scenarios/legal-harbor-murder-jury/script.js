@@ -1085,22 +1085,29 @@ ${menu}
       reasoning: '',
     },
   ]
-  for (const juror of npcJurors) {
+  const npcFinalVotes = await game.parallelAct(npcJurors.map((juror) => {
     juror.agent.push(
       `【最终判决】公开审议已经结束。请独立作出最终判决，不猜多数，也不要试图继续讨论。
 
 GUILTY：你认为公开证据整体已经排除由证据支持的合理怀疑。
 NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡清白，也不要求证明其意外版本的每个动作必然发生。`,
     )
-    const vote = await juror.agent.act({
-      fields: {
-        reason: {
-          hint: '说明你的判决理由',
-          long: true,
+    return {
+      agent: juror.agent,
+      spec: {
+        fields: {
+          reason: {
+            hint: '说明你的判决理由',
+            long: true,
+          },
+          verdict: { enum: ['GUILTY', 'NOT_GUILTY'] },
         },
-        verdict: { enum: ['GUILTY', 'NOT_GUILTY'] },
       },
-    })
+    }
+  }))
+  for (let index = 0; index < npcJurors.length; index++) {
+    const juror = npcJurors[index]
+    const vote = npcFinalVotes[index]
     finalVotes.push({
       juror: juror.id,
       verdict: vote.fields.verdict,
