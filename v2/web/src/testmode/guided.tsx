@@ -43,6 +43,7 @@ import {
   resolveFixtureUrl,
   writeFixtureValues,
 } from './fixtures'
+import { fixtureNicknameState, sameOriginAppPath } from './entry'
 import { TM } from './registry/index'
 import {
   type Choice,
@@ -125,15 +126,20 @@ function FixtureUrlBlock(
     step,
     pathname,
     values,
+    accountDisplayName,
+    accountEmail,
     onChange,
   }: {
     journey: Journey
     step: Step
     pathname: string
     values: FixtureValues
+    accountDisplayName: string | null
+    accountEmail: string | null
     onChange: (name: string, value: string) => void
   },
 ) {
+  const navigate = useNavigate()
   if (!step.testUrl && !step.links?.length && !step.captures?.length) {
     return null
   }
@@ -158,6 +164,17 @@ function FixtureUrlBlock(
   const profiles = (step.fixtureRefs ?? []).map((id) =>
     journey.fixtureProfiles?.find((profile) => profile.id === id)
   ).filter((profile) => profile !== undefined)
+  const requiredAliases = [
+    ...new Set(
+      profiles.flatMap((profile) =>
+        profile.accountAlias ? [profile.accountAlias] : []
+      ),
+    ),
+  ]
+  const nicknameState = fixtureNicknameState(
+    accountDisplayName,
+    requiredAliases,
+  )
   const fields = (journey.fixtureProfiles ?? []).flatMap((profile) =>
     profile.fields
   )
@@ -168,6 +185,50 @@ function FixtureUrlBlock(
   return (
     <div className='tm-block tm-fixture-card'>
       <div className='tm-block-t'>本步登录角色与网址</div>
+      {profiles.length > 0
+        ? (
+          <div
+            className={`tm-account-check tm-account-check--${nicknameState}`}
+            role={nicknameState === 'mismatch' ? 'alert' : 'status'}
+            data-testid='tm-fixture-account-status'
+            data-nickname-state={nicknameState}
+          >
+            <strong>
+              当前产品账号：
+              <span data-testid='tm-current-account'>
+                {accountDisplayName ?? '未读取到昵称'}
+              </span>
+              {' · '}
+              <span data-testid='tm-current-account-email'>
+                {accountEmail ?? '未读取到邮箱'}
+              </span>
+            </strong>
+            {nicknameState === 'match'
+              ? (
+                <span>
+                  {requiredAliases.length > 1
+                    ? '昵称与本步其中一个角色别名相同，但这只是一条提示，不是账号验证。请按 axiia-cup-product 群账号包核对当前登录邮箱，并按步骤在指定时点切换其他角色账号。'
+                    : '昵称与本步角色别名相同，但这只是一条提示，不是账号验证。请按 axiia-cup-product 群账号包核对当前登录邮箱后再继续。'}
+                </span>
+              )
+              : nicknameState === 'mismatch'
+              ? (
+                <span>
+                  昵称与本步角色别名不同。这只是一条切换提示；请按
+                  axiia-cup-product 群账号包核对当前登录邮箱，并切换到：
+                  {requiredAliases.join(' / ')}。
+                </span>
+              )
+              : (
+                <span>
+                  未读取到产品昵称，无法提供昵称提示。请按 axiia-cup-product
+                  群账号包核对当前登录邮箱，并选择本步账号：
+                  {requiredAliases.join(' / ')}。
+                </span>
+              )}
+          </div>
+        )
+        : null}
       {profiles.length > 0
         ? (
           <div className='tm-fixture-profiles'>
@@ -195,6 +256,16 @@ function FixtureUrlBlock(
                       >
                         {profile.accountAlias ?? profile.id}
                       </span>
+                      {profile.accountAlias === accountDisplayName
+                        ? (
+                          <span
+                            className='tm-profile-current'
+                            data-testid={`tm-current-profile-${profile.id}`}
+                          >
+                            昵称相同
+                          </span>
+                        )
+                        : null}
                     </span>
                   </div>
                   <p>{profile.description}</p>
@@ -257,6 +328,13 @@ function FixtureUrlBlock(
             {links.map((link) => {
               const resolution = resolveFixtureUrl(link.url, values)
               const missing = resolution.missing.map(labelOf).join('、')
+              const appPath = resolution.href &&
+                  typeof globalThis.location !== 'undefined'
+                ? sameOriginAppPath(
+                  resolution.href,
+                  globalThis.location.origin,
+                )
+                : null
               return (
                 <div
                   key={`${link.label}:${link.url}`}
@@ -275,9 +353,25 @@ function FixtureUrlBlock(
                           link.primary ? ' tm-btn--primary' : ''
                         }`}
                         href={resolution.href}
-                        target='_blank'
-                        rel='noreferrer'
+                        target={appPath ? undefined : '_blank'}
+                        rel={appPath ? undefined : 'noreferrer'}
                         aria-label={`打开网页：${link.label}`}
+                        onClick={appPath
+                          ? (event) => {
+                            if (
+                              event.defaultPrevented ||
+                              event.button !== 0 ||
+                              event.metaKey ||
+                              event.ctrlKey ||
+                              event.shiftKey ||
+                              event.altKey
+                            ) {
+                              return
+                            }
+                            event.preventDefault()
+                            navigate(appPath)
+                          }
+                          : undefined}
                       >
                         打开网页
                       </a>
@@ -367,6 +461,8 @@ export function Guided(
     pathname,
     rects,
     target,
+    accountDisplayName,
+    accountEmail,
     hints,
     identity,
     identityOpen,
@@ -380,6 +476,8 @@ export function Guided(
     pathname: string
     rects: MarkerRect[]
     target: GuidedTarget | null
+    accountDisplayName: string | null
+    accountEmail: string | null
     hints: StepHints
     identity: Identity | null
     /** 身份对话框是否开着：关掉而没填身份 = 取消，那一下确认作废 */
@@ -399,7 +497,14 @@ export function Guided(
   const [journeyId, setJourneyId] = useState<string | null>(
     target?.journeyId ?? null,
   )
-  const [stepIdx, setStepIdx] = useState(0)
+  const [stepIdx, setStepIdx] = useState(() => {
+    if (!target?.stepId) return 0
+    const initialJourney = JOURNEYS.find((item) => item.id === target.journeyId)
+    const initialIndex = initialJourney?.steps.findIndex((item) =>
+      item.id === target.stepId
+    ) ?? -1
+    return initialIndex >= 0 ? initialIndex : 0
+  })
   const [progress, setProgress] = useState<JourneyProgress>({})
   const [note, setNote] = useState('')
   const [err, setErr] = useState<string | null>(null)
@@ -1091,6 +1196,8 @@ export function Guided(
             step={s}
             pathname={pathname}
             values={fixtureValues}
+            accountDisplayName={accountDisplayName}
+            accountEmail={accountEmail}
             onChange={setFixtureValue}
           />
           {s.knownGap
@@ -1321,7 +1428,7 @@ export function Guided(
           <p className='tm-dimt' style={{ margin: '8px 0 0', fontSize: 11.5 }}>
             点确认才写看板：{s.clauseIds.length} 条条款各记一笔{identity
               ? `，署名 ${identity.name}`
-              : '；第一次会先问你名字和口令'}。
+              : '；第一次会先请你手填真实飞书名和看板口令（不是产品账号密码）'}。
           </p>
         </div>
         <div className='tm-foot'>

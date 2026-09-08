@@ -135,7 +135,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·完整所有者',
         readiness: 'ready',
         description:
-          '双侧齐全；主智能体 224 的 v1=版本 359（已计分 1 场、0 胜），v2=版本 360（参赛版、0 场）；同侧兄弟=226，对侧唯一智能体=225。登录信息已通过私聊账号包交付。',
+          '双侧齐全；主智能体 224 的 v1=版本 359（已计分 1 场、0 胜），v2=版本 360（参赛版、0 场）；同侧兄弟=226，对侧唯一智能体=225。登录信息已通过 axiia-cup-product 群账号包交付。',
         fields: [
           preparedId(
             'b3OwnerAgentId',
@@ -170,7 +170,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·访客缺侧',
         readiness: 'ready',
         description:
-          '专门核对「去创建对侧」；与旅程 2 的只读访客复用同一私聊账号。',
+          '专门核对「去创建对侧」；与旅程 2 的只读访客复用 axiia-cup-product 群账号包中的同一账号。',
         fields: [
           preparedId(
             'b3MissingSideAgentId',
@@ -400,7 +400,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·访客缺侧',
         readiness: 'ready',
         description:
-          '与目标智能体无所有权关系；与旅程 1 的缺侧账号复用同一私聊账号。',
+          '与目标智能体无所有权关系；与旅程 1 的缺侧账号复用 axiia-cup-product 群账号包中的同一账号。',
         fields: [
           preparedId(
             'b3PublicTargetAgentId',
@@ -521,7 +521,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'A5 人测·锁定热座',
         readiness: 'ready',
         description:
-          '新账号保持 PVP 未解锁，用于锁图标、配置门槛和双侧实时进度；与 Hotseat 旅程复用同一私聊账号。',
+          '新账号保持 PVP 未解锁，用于锁图标、配置门槛和双侧实时进度；与 Hotseat 旅程复用 axiia-cup-product 群账号包中的同一账号。',
         fields: [
           preparedId(
             'a5CoreLockedAgentId',
@@ -536,7 +536,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'A5 人测·锁定热座',
         readiness: 'refresh-required',
         description:
-          '与 Hotseat 旅程复用同一私聊账号；多张进行中卡片会自然结束，测试当天按步骤派发后再核对移动端横向对战条。',
+          '与 Hotseat 旅程复用 axiia-cup-product 群账号包中的同一账号；多张进行中卡片会自然结束，测试当天按步骤派发后再核对移动端横向对战条。',
         fields: [
           preparedId(
             'a5CoreMobileAgentId',
@@ -829,7 +829,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'A5 人测·配额被约方',
         readiness: 'ready',
         description:
-          '在另一个浏览器会话登录；与触顶负例复用同一私聊账号，无需填写公开业务 ID，直接打开通知页。',
+          '在另一个浏览器会话登录；与触顶负例复用 axiia-cup-product 群账号包中的同一账号，无需填写公开业务 ID，直接打开通知页。',
         fields: [],
       },
     ],

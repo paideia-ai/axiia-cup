@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { useLocation } from 'react-router-dom'
 
+import { useOptionalAuth } from '../context/auth'
 import { DASHBOARD, journeyOf, ROUND_LABEL, STEPS } from './data'
 import {
   scrollToMarker,
@@ -342,8 +343,17 @@ function Popover(
 
 /* ── 总装 ──────────────────────────────────────────────────────────── */
 
-export default function Surface({ ui, setUi }: { ui: TmUi; setUi: SetUi }) {
+export default function Surface(
+  { ui, setUi, target }: {
+    ui: TmUi
+    setUi: SetUi
+    target: GuidedTarget | null
+  },
+) {
   const { pathname } = useLocation()
+  const auth = useOptionalAuth()
+  const accountDisplayName = auth?.account?.displayName ?? null
+  const accountEmail = auth?.account?.email ?? null
   const narrow = useNarrow()
   const reduced = useReducedMotion()
   const rects = useMarkerRects(ui.badges !== 'off' || ui.panel || ui.guided)
@@ -352,12 +362,26 @@ export default function Surface({ ui, setUi }: { ui: TmUi; setUi: SetUi }) {
   >(null)
   const [hover, setHover] = useState<string | null>(null)
   const [flash, setFlash] = useState<{ box: Box; n: number } | null>(null)
-  const [guidedTarget, setGuidedTarget] = useState<GuidedTarget | null>(null)
+  const [guidedTarget, setGuidedTarget] = useState<GuidedTarget | null>(
+    () => target,
+  )
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [identity, setIdentityState] = useState<Identity | null>(getIdentity)
   const [pendingLabel, setPendingLabel] = useState<string | null>(null)
   const [spotKey, setSpotKey] = useState<string | null>(null)
   const guidedRef = useRef<GuidedHandle>(null)
+  const targetJourneyId = target?.journeyId ?? null
+  const targetStepId = target?.stepId
+
+  useEffect(() => {
+    if (!targetJourneyId) return
+    setGuidedTarget((current) =>
+      current?.journeyId === targetJourneyId &&
+        current.stepId === targetStepId
+        ? current
+        : { journeyId: targetJourneyId, stepId: targetStepId }
+    )
+  }, [targetJourneyId, targetStepId])
 
   const specs = useMemo(
     () =>
@@ -521,6 +545,8 @@ export default function Surface({ ui, setUi }: { ui: TmUi; setUi: SetUi }) {
             pathname={pathname}
             rects={rects}
             target={guidedTarget}
+            accountDisplayName={accountDisplayName}
+            accountEmail={accountEmail}
             hints={STEP_HINTS}
             identity={identity}
             identityOpen={ui.identity}

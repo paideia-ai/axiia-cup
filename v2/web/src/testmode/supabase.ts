@@ -64,7 +64,7 @@ export class TmError extends Error {
 export function describeError(e: unknown): string {
   if (e instanceof TmError) {
     if (e.kind === 'pwd') {
-      return '口令不对，没写进看板。向 Yihan 或 Minsheng 要口令，在「身份」里重填后再点一次。'
+      return '看板口令不对，没写进看板。向 Yihan 或 Minsheng 要看板口令（不是产品账号密码），在「身份」里重填后再点一次。'
     }
     if (e.kind === 'network') {
       return '网络不通，没写进看板。检查网络后再点一次。'

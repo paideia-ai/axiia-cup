@@ -190,7 +190,7 @@ export function IdentityDialog(
         onSubmit={(e) => {
           e.preventDefault()
           if (!name.trim()) return setErr('名字不能为空')
-          if (!pwd) return setErr('口令不能为空')
+          if (!pwd) return setErr('看板口令不能为空')
           onSave({ name: name.trim(), pwd, role })
         }}
       >
@@ -216,8 +216,9 @@ export function IdentityDialog(
             {pending
               ? `要把「${pending}」记到看板，需要署名。`
               : '写看板的记录会署这个名。'}
-            名字填飞书显示名；口令向 Yihan 或 Minsheng 要——和 spec
-            看板同一份，填一次处处可用。
+            名字请填实际执行人的飞书显示名，不要填写 fixture
+            账号昵称。看板口令向 Yihan 或 Minsheng 要，和 spec
+            看板同一份；它不是产品账号密码。
           </p>
           <label className='tm-label' htmlFor='tm-id-name'>名字</label>
           <input
@@ -228,13 +229,15 @@ export function IdentityDialog(
             autoComplete='nickname'
             onChange={(e) => setName(e.target.value)}
           />
-          <label className='tm-label' htmlFor='tm-id-pwd'>口令</label>
+          <label className='tm-label' htmlFor='tm-id-pwd'>
+            看板口令（不是产品账号密码）
+          </label>
           <input
             id='tm-id-pwd'
             className='tm-input'
             type='password'
             value={pwd}
-            autoComplete='current-password'
+            autoComplete='off'
             onChange={(e) => setPwd(e.target.value)}
           />
           <span className='tm-label' id='tm-id-role'>我是</span>

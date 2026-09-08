@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
-import type { AgentVersionDTO } from '../api/types'
+import type { AgentVersionDTO, MeResponse } from '../api/types'
+import { AuthProvider } from '../context/auth'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
 import { B3_A5_MANUAL_URL, STEPS } from './data'
@@ -75,6 +76,43 @@ const handlers = [
   }),
 ]
 
+const HANDOFF_ENTRY =
+  '/agents/224?tm=1&tmJourney=HV-B3-OWNER-EA&tmStep=HV-B3-OWNER-EA-S03'
+const B3_OWNER_NAME = 'B3 人测·完整所有者'
+
+function RouteProbe() {
+  const location = useLocation()
+  return <output aria-label='当前产品网址'>{location.pathname}</output>
+}
+
+function AccountAwareSurface() {
+  return (
+    <MemoryRouter initialEntries={[HANDOFF_ENTRY]}>
+      <AuthProvider>
+        <Routes>
+          <Route path='*' element={<RouteProbe />} />
+        </Routes>
+        <TestModeRoot />
+      </AuthProvider>
+    </MemoryRouter>
+  )
+}
+
+function accountHandler(displayName: string) {
+  const me: MeResponse = {
+    account: {
+      id: 'account-test-mode',
+      email: 'tester@example.test',
+      displayName,
+      isAdmin: false,
+      hasTOTP: false,
+    },
+    elevated: false,
+    firstBattleDone: false,
+  }
+  return http.get('/v1/auth/me', () => HttpResponse.json(me))
+}
+
 const meta = {
   title: 'v3.4/Test mode',
   component: Surface,
@@ -109,6 +147,78 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 const badgeSel = '[data-tm-root] .tm-badge'
+
+export const AccountAwareHandoffEntry: Story = {
+  render: AccountAwareSurface,
+  parameters: { msw: [accountHandler(B3_OWNER_NAME)] },
+  play: async () => {
+    const body = within(document.body)
+    const guide = await body.findByRole('dialog', { name: '导测' })
+    await expect(within(guide).getByText('HV-B3-OWNER-EA-S03')).toBeVisible()
+
+    const account = await body.findByTestId('tm-fixture-account-status')
+    await waitFor(() =>
+      expect(account).toHaveAttribute('data-nickname-state', 'match')
+    )
+    await expect(within(account).getByText(B3_OWNER_NAME)).toBeVisible()
+    await expect(
+      within(account).getByText('tester@example.test'),
+    ).toBeVisible()
+    await expect(
+      body.getByTestId('tm-current-profile-b3-owner-rich'),
+    ).toHaveTextContent('昵称相同')
+
+    const start = within(guide).getByRole('link', {
+      name: '打开网页：本步起始页',
+    })
+    await expect(start).not.toHaveAttribute('target')
+    await userEvent.click(start)
+    await expect(body.getByLabelText('当前产品网址')).toHaveTextContent(
+      '/agents/224',
+    )
+    await expect(body.getByRole('dialog', { name: '导测' })).toBeVisible()
+
+    const pill = body.getByRole('navigation', { name: '测试模式' })
+    await userEvent.click(
+      within(pill).getByRole('button', { name: '设置身份' }),
+    )
+    const identity = await body.findByRole('dialog', { name: '身份' })
+    await expect(within(identity).getByLabelText('名字')).toHaveValue('')
+    const boardPasscode = within(identity).getByLabelText(
+      '看板口令（不是产品账号密码）',
+    )
+    await expect(boardPasscode).toHaveValue('')
+    await expect(boardPasscode).toHaveAttribute('autocomplete', 'off')
+    await userEvent.click(
+      within(identity).getByRole('button', { name: '取消' }),
+    )
+  },
+}
+
+export const WrongProductAccountWarning: Story = {
+  render: AccountAwareSurface,
+  parameters: { msw: [accountHandler('普通玩家')] },
+  play: async () => {
+    const body = within(document.body)
+    const guide = await body.findByRole(
+      'dialog',
+      { name: '导测' },
+      { timeout: 8000 },
+    )
+    const account = await within(guide).findByTestId(
+      'tm-fixture-account-status',
+      {},
+      { timeout: 8000 },
+    )
+    await waitFor(() =>
+      expect(account).toHaveAttribute('data-nickname-state', 'mismatch')
+    )
+    await expect(account).toHaveAttribute('role', 'alert')
+    await expect(within(account).getByText('普通玩家')).toBeVisible()
+    await expect(account).toHaveTextContent('并切换到')
+    await expect(account).toHaveTextContent(B3_OWNER_NAME)
+  },
+}
 
 export const BuilderUnderTestMode: Story = {
   play: async () => {
@@ -200,7 +310,10 @@ export const BuilderUnderTestMode: Story = {
     )
     const who0 = await body.findByRole('dialog', { name: '身份' })
     await userEvent.type(within(who0).getByLabelText('名字'), 'story-tester')
-    await userEvent.type(within(who0).getByLabelText('口令'), 'story-pwd')
+    await userEvent.type(
+      within(who0).getByLabelText('看板口令（不是产品账号密码）'),
+      'story-pwd',
+    )
     await userEvent.click(
       within(who0).getByRole('button', { name: '保存身份' }),
     )
@@ -286,7 +399,7 @@ export const ConfirmedB3A5Handoff: Story = {
     expect(testPage.href).toBe(
       `${globalThis.location.origin}/tournaments/tm-tournament`,
     )
-    expect(testPage.target).toBe('_blank')
+    await expect(testPage).not.toHaveAttribute('target')
     expect(
       body.getByRole('link', { name: '打开网页：玩家对局列表' }),
     ).toHaveAttribute('href', `${globalThis.location.origin}/matches`)

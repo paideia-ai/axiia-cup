@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -8,15 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { IcpRecord } from '../components/layout/icp-record'
 import { PhoneAuthForm } from '../components/auth/phone-form'
 import { useAuth } from '../context/auth'
+import { loginReturnPath } from '../lib/login-return'
 import { tm } from '../testmode/mark'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const returnPath = loginReturnPath(location.search)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -24,7 +27,7 @@ export function LoginPage() {
     setIsSubmitting(true)
     try {
       await login({ email, password })
-      navigate('/scenarios', { replace: true })
+      navigate(returnPath, { replace: true })
     } catch (submissionError) {
       setError(
         submissionError instanceof Error ? submissionError.message : '登录失败',
@@ -53,7 +56,7 @@ export function LoginPage() {
                 </TabsList>
                 <TabsContent value='phone'>
                   <PhoneAuthForm
-                    onDone={() => navigate('/scenarios', { replace: true })}
+                    onDone={() => navigate(returnPath, { replace: true })}
                     withInvite={false}
                   />
                 </TabsContent>
