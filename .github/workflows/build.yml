@@ -162,7 +162,7 @@ jobs:
           status_url="${{ env.DEPLOY_WEBHOOK_URL }}/status?id=${deployment_id}"
 
           for attempt in $(seq 1 120); do
-            response=$(curl -s -w "\n%{http_code}" --max-time 30 "$status_url" \
+            response=$(curl -s -w "\n%{http_code}" --max-time 30 --retry 5 --retry-delay 3 --retry-connrefused "$status_url" \
               -H "Authorization: Bearer ${{ steps.token.outputs.jwt }}")
 
             body=$(echo "$response" | head -n -1)
@@ -229,11 +229,11 @@ jobs:
           AXIIA_BASE_URL: ${{ vars.AXIIA_BASE_URL }}
         run: |
           set -euo pipefail
-          assertion="$(curl -sS --max-time 30 \
+          assertion="$(curl -sS --max-time 30 --retry 5 --retry-delay 3 --retry-all-errors \
             -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$AXIIA_BASE_URL" | jq -r '.value')"
           [ -n "$assertion" ] && [ "$assertion" != "null" ] || { echo "no OIDC assertion"; exit 1; }
-          token="$(curl -sS --max-time 30 -X POST "$AXIIA_BASE_URL/v1/auth/federated" \
+          token="$(curl -sS --max-time 30 --retry 5 --retry-delay 3 --retry-all-errors -X POST "$AXIIA_BASE_URL/v1/auth/federated" \
             -H 'content-type: application/json' \
             --data "$(jq -nc --arg a "$assertion" '{assertion: $a}')" | jq -r '.accessToken // empty')"
           [ -n "$token" ] || { echo "federated exchange refused"; exit 1; }

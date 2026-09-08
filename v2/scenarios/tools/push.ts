@@ -20,20 +20,50 @@ async function api<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const response = await fetch(`${baseURL}${path}`, {
-    method,
-    headers: {
-      authorization: `Bearer ${token}`,
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  const request = () =>
+    fetch(`${baseURL}${path}`, {
+      method,
+      headers: {
+        authorization: `Bearer ${token}`,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(30_000),
+    })
+  const response = await retrying(request, `${method} ${path}`)
   if (!response.ok) {
     throw new Error(
       `${method} ${path} -> ${response.status} ${await response.text()}`,
     )
   }
   return await response.json() as T
+}
+
+// Every call here is idempotent (see the header), so a retry can never
+// double-apply. Only transport failures and 5xx/429 retry; a 4xx is a real
+// answer.
+async function retrying(
+  request: () => Promise<Response>,
+  label: string,
+  attempts = 5,
+): Promise<Response> {
+  for (let attempt = 1;; attempt++) {
+    const outcome = await request().then(
+      (response) => ({ response }),
+      (error: unknown) => ({ error }),
+    )
+    const transient = 'error' in outcome ||
+      outcome.response.status === 429 || outcome.response.status >= 500
+    if (!transient || attempt === attempts) {
+      if ('error' in outcome) throw outcome.error
+      return outcome.response
+    }
+    const reason = 'error' in outcome
+      ? String(outcome.error)
+      : `HTTP ${outcome.response.status}`
+    console.error(`${label}: ${reason}; retry ${attempt}/${attempts - 1}`)
+    await new Promise((resolve) => setTimeout(resolve, 3_000 * attempt))
+  }
 }
 
 const local = new Map<string, string>()
