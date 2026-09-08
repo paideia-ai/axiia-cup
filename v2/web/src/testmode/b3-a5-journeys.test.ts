@@ -150,6 +150,16 @@ describe('B3 / A5 固定版本人测交接', () => {
       'a5-pvp-challenger',
       'a5-pvp-exhausted',
     ])
+    const mobileRole = profiles.find((profile) =>
+      profile.id === 'a5-core-mobile-overflow'
+    )
+    expect(mobileRole).toMatchObject({
+      label: '测试角色 G · A5 移动端多卡横向滚动',
+      accountAlias: 'A5 人测·配额被约方',
+    })
+    expect(B3_A5_FIXTURE_DEFAULTS.a5CoreMobileAgentId).toBe(
+      B3_A5_FIXTURE_DEFAULTS.a5PvpExhaustedAgentId,
+    )
 
     for (const journey of B3_A5_JOURNEYS) {
       const profileById = new Map(
