@@ -22,7 +22,7 @@ export const B3_A5_FIXTURE_DEFAULTS: Record<string, string> = {
   a5CoreAgentId: '228',
   a5CoreMissingSideAgentId: '230',
   a5CoreLockedAgentId: '231',
-  a5CoreMobileAgentId: '231',
+  a5CoreMobileAgentId: '233',
   a5HotseatAgentId: '231',
   a5PvpExhaustedAgentId: '233',
   a5PvpExhaustedOpponentVersionId: '367',
@@ -115,9 +115,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'B3',
     title: '所有者 EA：入口、身份、版本与动作',
     prerequisites: [
-      '先按 fixture 卡切换到账号 A（B3 人测·完整所有者）；主智能体有 v1、v2 两个版本，最新版文本已知，v2 已标为本阵营唯一参赛版本。',
+      '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体有 v1、v2 两个版本，最新版文本已知，v2 已标为本阵营唯一参赛版本。',
       '种子数据口径固定：版本 359 有 1 场已计分、0 胜；参赛版本 360 为 0 场。执行中新增版本或对局后，先记录变化再按当时实际统计判定。',
-      '同一阵营另有 b3OwnerSiblingAgentId，另一阵营有且仅有 b3OwnerSoloSideAgentId；缺侧检查必须切换到账号 B（B3 人测·访客缺侧）。',
+      '同一阵营另有 b3OwnerSiblingAgentId，另一阵营有且仅有 b3OwnerSoloSideAgentId；缺侧检查必须切换到「B3 人测·访客缺侧」。',
       '准备 b3OwnerTournamentId 对应积分榜条目、D/DA「我的智能体」入口、玩家对局列表、b3OwnerCompletedMatchId 战报和一次 E 保存结果，全部指向 b3OwnerAgentId。',
       '记录环境 URL、build SHA、所有相关 agent/version/match ID 和预期统计。',
     ],
@@ -131,7 +131,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     fixtureProfiles: [
       {
         id: 'b3-owner-rich',
-        label: '账号 A · 完整所有者',
+        label: '测试角色 A · B3 完整所有者',
         accountAlias: 'B3 人测·完整所有者',
         readiness: 'ready',
         description:
@@ -166,7 +166,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'b3-owner-missing-side',
-        label: '账号 B · 缺少对侧',
+        label: '测试角色 B · B3 缺少对侧',
         accountAlias: 'B3 人测·访客缺侧',
         readiness: 'ready',
         description:
@@ -200,7 +200,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/tournaments/:id',
         marker: null,
         action:
-          '以账号 A 依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本后点保存结果中的智能体入口。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
+          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本后点保存结果中的智能体入口。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
         expected:
           '每个入口都打开 /agents/{{b3OwnerAgentId}}，没有落到别的智能体或只停在中间列表页。',
         clauseIds: ['U10-C11', 'U10-C11b'],
@@ -229,7 +229,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'EA.page-header',
         action:
-          '先以账号 A 查看 EA 页头的展示名、场景名和双侧完成度；再切换账号 B，打开上方「缺侧账号的 EA」与「缺侧账号的我的智能体」，点击或定位「去创建对侧」。',
+          '先以「B3 人测·完整所有者」查看 EA 页头的展示名、场景名和双侧完成度；再切换「B3 人测·访客缺侧」，打开上方「缺侧账号的 EA」与「缺侧账号的我的智能体」，点击或定位「去创建对侧」。',
         expected:
           '展示名使用「侧角色名「自起名」· 场景」口径，无自起名时回落「侧角色名 #id」，界面不出现「策略」「版本线」内部词；双侧状态分别显示 ✓/✗，缺侧时出现明确「去创建对侧」入口。',
         clauseIds: ['U10-C01', 'U10-C02'],
@@ -382,7 +382,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'B3',
     title: '非所有者公开 EA 与 PVE NPC 聚合视图',
     prerequisites: [
-      '按 fixture 卡登录账号 C（B3_PUBLIC_VIEWER）；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
+      '按 fixture 卡登录「B3 人测·访客缺侧」；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
       'NPC 步骤直接从场景页开始。当前产品没有 NPC agent 实体或可填写的 NPC ID；不得拼造 npcAgentId。若入口缺失，按已知实现缺口提交失败证据。',
       '记录环境 URL、build SHA、账号角色和所有预期值。',
     ],
@@ -396,7 +396,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     fixtureProfiles: [
       {
         id: 'b3-public-viewer',
-        label: '账号 C · 非所有者只读视角',
+        label: '测试角色 C · B3 非所有者只读视角',
         accountAlias: 'B3 人测·访客缺侧',
         readiness: 'ready',
         description:
@@ -427,7 +427,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'EA.public-version-list',
         action:
-          '以账号 C 打开 b3PublicTargetAgentId，逐张检查公开版本战绩；全文搜索已知提示词片段，并检查版本差异、工作区草稿或相关入口是否出现。',
+          '以「B3 人测·访客缺侧」打开 b3PublicTargetAgentId，逐张检查公开版本战绩；全文搜索已知提示词片段，并检查版本差异、工作区草稿或相关入口是否出现。',
         expected:
           '公开视图展示每个版本的对局数和胜场数；页面不显示提示词、工作区草稿或版本差异，也不能通过可见入口取得这些内容。',
         clauseIds: ['U10-C12', 'U10-C13'],
@@ -473,9 +473,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'A5',
     title: '选择对手面板：预选、版本、换侧、锁定与移动端',
     prerequisites: [
-      '账号 D（A5 人测·完整发起方）在同一场景两个阵营各有智能体，a5CoreAgentId 有三个版本且有显式参赛版本；创建引导必须另切账号 E（A5 人测·缺侧玩家）。',
-      '锁定态必须切账号 F（A5 人测·锁定热座），并记录当前可配置解锁门槛及两侧实时进度。',
-      '移动端复用账号 F（A5 人测·锁定热座）；浏览器切到 390×844，并在测试当天完成前序派发，让进行中对战条出现足够卡片后再执行本步。',
+      '「A5 人测·完整发起方」在同一场景两个阵营各有智能体，a5CoreAgentId 有三个版本且有显式参赛版本；创建引导必须另切「A5 人测·缺侧玩家」。',
+      '锁定态必须切换到「A5 人测·锁定热座」，并记录当前可配置解锁门槛及两侧实时进度。',
+      '移动端使用测试角色 G，登录「A5 人测·配额被约方」（与 PVP 边界的 I / K 共用登录）；浏览器切到 390×844，并在测试当天完成前序派发，让进行中对战条出现足够卡片后再执行本步。',
       '本旅程不点击最终派发按钮；记录环境 URL、build SHA 与 fixture 标识。',
     ],
     evidenceRequirements: [
@@ -488,7 +488,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     fixtureProfiles: [
       {
         id: 'a5-core-rich-owner',
-        label: '账号 D · 双侧多版本',
+        label: '测试角色 D · A5 双侧多版本',
         accountAlias: 'A5 人测·完整发起方',
         readiness: 'ready',
         description:
@@ -503,7 +503,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'a5-core-missing-side',
-        label: '账号 E · 缺少对侧',
+        label: '测试角色 E · A5 缺少对侧',
         accountAlias: 'A5 人测·缺侧玩家',
         readiness: 'ready',
         description: '只用于创建对侧引导。',
@@ -517,7 +517,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'a5-core-pvp-locked',
-        label: '账号 F · PVP 未解锁',
+        label: '测试角色 F · A5 PVP 未解锁',
         accountAlias: 'A5 人测·锁定热座',
         readiness: 'ready',
         description:
@@ -532,11 +532,11 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'a5-core-mobile-overflow',
-        label: '账号 G · 多张进行中卡片',
-        accountAlias: 'A5 人测·锁定热座',
+        label: '测试角色 G · A5 移动端多卡横向滚动',
+        accountAlias: 'A5 人测·配额被约方',
         readiness: 'refresh-required',
         description:
-          '与 Hotseat 旅程复用 axiia-cup-product 群账号包中的同一账号；多张进行中卡片会自然结束，测试当天按步骤派发后再核对移动端横向对战条。',
+          '与 PVP 边界的测试角色 I / K 复用 axiia-cup-product 群账号包中的同一账号；多张进行中卡片会自然结束，测试当天按步骤派发后再核对移动端横向对战条。',
         fields: [
           preparedId(
             'a5CoreMobileAgentId',
@@ -594,7 +594,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.tab-hotseat',
         action:
-          '先以账号 D 查看面板当前阵营，点击「测试另一侧」或等义换侧操作并核对所选智能体；随后切换账号 E，打开上方「缺侧账号的 EA」重开面板并点击同一换侧操作。',
+          '先以「A5 人测·完整发起方」查看面板当前阵营，点击「测试另一侧」或等义换侧操作并核对所选智能体；随后切换「A5 人测·缺侧玩家」，打开上方「缺侧账号的 EA」重开面板并点击同一换侧操作。',
         expected:
           '当前阵营清楚可见；测试另一侧后改为选择对侧智能体；缺少该侧智能体时出现并可点击明确的创建引导。',
         clauseIds: ['U05-C03', 'U05-C04'],
@@ -614,7 +614,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.gate-locked',
         action:
-          '切换账号 F，打开「出战」并点击可见的 PVP/玩家约战 tab；核对锁图标、进度徽章和两侧数值。',
+          '切换到「A5 人测·锁定热座」，打开「出战」并点击可见的 PVP/玩家约战 tab；核对锁图标、进度徽章和两侧数值。',
         expected:
           'PVP tab 在锁定时仍可见，内容明确显示锁定和两侧进度；门槛/进度数值来自当前配置，不是固定旧值。',
         clauseIds: ['U05-C06'],
@@ -628,7 +628,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.panel',
         action:
-          '切换账号 G，把 viewport 设为 390×844，点击「出战」；关闭面板后定位进行中对战条，用触摸或 Shift+滚轮横向滚到最后一张卡。',
+          '切换到「A5 人测·配额被约方」，把 viewport 设为 390×844，点击「出战」；关闭面板后定位进行中对战条，用触摸或 Shift+滚轮横向滚到最后一张卡。',
         expected:
           '选择对手面板呈现为贴底弹层；对战条可横向滚动到全部卡片，页面本身不产生横向溢出。',
         clauseIds: ['U05-C14'],
@@ -647,7 +647,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'A5',
     title: '左右手互搏与进行中对战条',
     prerequisites: [
-      '按 fixture 卡登录账号 H（A5 人测·锁定热座）：PVP 未解锁，但每日总对战仍有至少 1 场余量；同一场景两侧智能体齐全。',
+      '按 fixture 卡登录「A5 人测·锁定热座」：PVP 未解锁，但每日总对战仍有至少 1 场余量；同一场景两侧智能体齐全。',
       '操作前记录 battlesToday、pvpBattlesToday、总配额和 PVP 配额；确保没有其他进行中对局。',
       '打开网络记录和屏幕录制。a5HotseatActiveMatchId 不能预填：S01 派发成功后，把落地 /matches/:id 网址粘贴到本步的运行时记录框。',
     ],
@@ -661,7 +661,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     fixtureProfiles: [
       {
         id: 'a5-hotseat',
-        label: '账号 H · Hotseat 生命周期',
+        label: '测试角色 H · A5 Hotseat 生命周期',
         accountAlias: 'A5 人测·锁定热座',
         readiness: 'ready',
         description:
@@ -771,9 +771,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'A5',
     title: 'PVP 配额触顶、成对约战与被约方通知',
     prerequisites: [
-      '账号 I（A5 人测·配额被约方）：稳定 ID 已预置；测试当天先将 PVP 解锁并刷新到当日可用次数 N/N，再以 {{a5PvpExhaustedOpponentVersionId}} 这个有效对手执行负例；操作前记录队列和对局基线。',
-      '账号 J（A5 人测·完整发起方）与账号 K（A5 人测·配额被约方）在同一场景两侧智能体齐全；测试当天先完成双方 PVP 解锁，每侧显式标记一个参赛版本，成功约战时显式选择 {{a5PvpOpponentVersionId}}。',
-      '账号 K 保持另一个浏览器会话并打开通知页；两边都打开网络记录，记录环境 URL 与 build SHA。',
+      '「A5 人测·配额被约方」：稳定 ID 已预置；测试当天先将 PVP 解锁并刷新到当日可用次数 N/N，再以 {{a5PvpExhaustedOpponentVersionId}} 这个有效对手执行负例；操作前记录队列和对局基线。',
+      '「A5 人测·完整发起方」与「A5 人测·配额被约方」在同一场景两侧智能体齐全；测试当天先完成双方 PVP 解锁，每侧显式标记一个参赛版本，成功约战时显式选择 {{a5PvpOpponentVersionId}}。',
+      '「A5 人测·配额被约方」保持另一个浏览器会话并打开通知页；两边都打开网络记录，记录环境 URL 与 build SHA。',
     ],
     evidenceRequirements: [
       '提交指定截图，以及两次操作前后的对局/队列数量和去敏网络响应。',
@@ -785,7 +785,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     fixtureProfiles: [
       {
         id: 'a5-pvp-exhausted',
-        label: '账号 I · PVP 已触顶',
+        label: '测试角色 I · A5 PVP 已触顶',
         accountAlias: 'A5 人测·配额被约方',
         readiness: 'refresh-required',
         description:
@@ -805,7 +805,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'a5-pvp-challenger',
-        label: '账号 J · 成功约战发起方',
+        label: '测试角色 J · A5 成功约战发起方',
         accountAlias: 'A5 人测·完整发起方',
         readiness: 'refresh-required',
         description:
@@ -825,7 +825,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       },
       {
         id: 'a5-pvp-invitee',
-        label: '账号 K · 被约方通知会话',
+        label: '测试角色 K · A5 被约方通知会话',
         accountAlias: 'A5 人测·配额被约方',
         readiness: 'ready',
         description:
@@ -844,7 +844,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.challenge-button',
         action:
-          '以账号 I 点击「出战」→「玩家约战」，显式选择有效对手版本 {{a5PvpExhaustedOpponentVersionId}} 并点击确认发起；随后检查页面文案、网络响应、队列和上方对局列表。',
+          '以「A5 人测·配额被约方」点击「出战」→「玩家约战」，显式选择有效对手版本 {{a5PvpExhaustedOpponentVersionId}} 并点击确认发起；随后检查页面文案、网络响应、队列和上方对局列表。',
         expected:
           '系统显示完整文案「今日次数已用完（N/N），明天再来」并拒绝入队；操作前后不得新增、排队或派发任何对局。',
         clauseIds: ['U03-C11'],
@@ -860,13 +860,13 @@ export const B3_A5_JOURNEYS: Journey[] = [
         id: 'HV-A5-PVP-BOUNDARIES-S02',
         testUrl: '{{appBaseUrl}}/agents/{{a5PvpChallengerAgentId}}',
         links: [
-          { label: '账号 K 的通知页', url: '{{appBaseUrl}}/notifications' },
+          { label: '被约方通知页', url: '{{appBaseUrl}}/notifications' },
         ],
         fixtureRefs: ['a5-pvp-challenger', 'a5-pvp-invitee'],
         route: '/agents/:id',
         marker: 'OS.challenge-button',
         action:
-          '切换账号 J，在「玩家约战」显式选择双方版本（被约方选择 {{a5PvpOpponentVersionId}}）后发起友谊约战；不要评价默认版本选择。账号 K 的独立会话不做同意操作，直接打开上方通知页并检查是否有拒绝/取消入口。',
+          '切换到「A5 人测·完整发起方」，在「玩家约战」显式选择双方版本（被约方选择 {{a5PvpOpponentVersionId}}）后发起友谊约战；不要评价默认版本选择。「A5 人测·配额被约方」的独立会话不做同意操作，直接打开上方通知页并检查是否有拒绝/取消入口。',
         expected:
           '约战无需被约方同意即可派发，被约方收到约战通知，且没有可拒绝已派发约战的入口；本步不判断创建几场或默认采用哪个版本。',
         clauseIds: ['U05-C13'],

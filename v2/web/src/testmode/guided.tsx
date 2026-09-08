@@ -1420,7 +1420,7 @@ export function Guided(
             ? (
               <div className='tm-ok'>
                 这一步已记过：{CHOICE_LABEL[done.choice]} · {localTime(done.at)}
-                。再点会覆盖看板上的记录。
+                。如需更正，改选并再次提交；同一执行人的当前选择会被覆盖，旧备注仍作为审计历史保留。
               </div>
             )
             : null}
