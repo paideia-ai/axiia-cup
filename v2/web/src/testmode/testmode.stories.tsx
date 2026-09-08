@@ -377,7 +377,7 @@ export const ConfirmedB3A5Handoff: Story = {
       within(runner).getByRole('button', { name: /^旅程 B3\.1：/ }),
     )
     await expect(await body.findByText('HV-B3-OWNER-EA-S01')).toBeVisible()
-    await expect(body.getByText('账号 A · 完整所有者')).toBeVisible()
+    await expect(body.getByText('测试角色 A · B3 完整所有者')).toBeVisible()
     await expect(body.getByText('B3 人测·完整所有者')).toBeVisible()
     const tournamentInput = body.getByLabelText(/锦标赛 ID/)
     await userEvent.clear(tournamentInput)
