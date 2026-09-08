@@ -189,9 +189,15 @@ export const TM_CSS = `
 [data-tm-root] .tm-block--human{border-left-color:#c084fc}
 [data-tm-root] .tm-hint{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding:7px 9px;border:1px dashed var(--tm-line);border-radius:7px;font-size:12px;color:var(--tm-mute)}
 [data-tm-root] .tm-fixture-card{padding:9px;border:1px solid var(--tm-line);border-radius:8px;background:rgba(34,211,238,.06)}
+[data-tm-root] .tm-account-check{display:grid;gap:3px;margin-top:7px;padding:8px;border:1px solid var(--tm-line);border-radius:7px;background:rgba(0,0,0,.13);font-size:11.5px;line-height:1.45}
+[data-tm-root] .tm-account-check strong{color:var(--tm-text)}
+[data-tm-root] .tm-account-check--match{border-color:rgba(74,222,128,.48);background:rgba(74,222,128,.08);color:#bbf7d0}
+[data-tm-root] .tm-account-check--mismatch{border-color:rgba(251,191,36,.6);background:rgba(245,158,11,.11);color:#fef3c7}
+[data-tm-root] .tm-account-check--unknown{border-color:rgba(148,163,184,.4);color:var(--tm-mute)}
 [data-tm-root] .tm-fixture-profiles{display:grid;gap:7px;margin-top:7px}
 [data-tm-root] .tm-fixture-profile{padding:8px;border:1px solid rgba(34,211,238,.24);border-radius:7px;background:rgba(0,0,0,.13)}
 [data-tm-root] .tm-fixture-profile-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;color:var(--tm-text)}
+[data-tm-root] .tm-profile-current{padding:1px 5px;border-radius:999px;background:rgba(74,222,128,.16);color:#bbf7d0;font-size:9.5px;font-weight:750;white-space:nowrap}
 [data-tm-root] .tm-fixture-profile>p{margin:4px 0 0;color:var(--tm-mute);font-size:11.5px;line-height:1.45}
 [data-tm-root] .tm-profile-badges{display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap}
 [data-tm-root] .tm-profile-state{padding:1px 5px;border-radius:999px;font-size:9.5px;font-weight:600;white-space:nowrap}

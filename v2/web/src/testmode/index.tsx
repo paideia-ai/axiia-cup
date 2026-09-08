@@ -5,6 +5,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { testModeEntryTarget } from './entry'
 import { BASE_CSS } from './styles'
 import { getIdentity, IDENTITY_EVENT } from './supabase'
 
@@ -56,6 +57,9 @@ function readBadges(): BadgeMode {
 export function TestModeRoot() {
   const location = useLocation()
   const navigate = useNavigate()
+  const [entryTarget, setEntryTarget] = useState(() =>
+    testModeEntryTarget(location.search)
+  )
   // 初始值就看一眼 ?tm=：带 tm=0 打开时不能先按「开」渲染一帧（那会把 overlay 分块拉下来）
   const [on, setOn] = useState(() => {
     const v = new URLSearchParams(location.search).get('tm')
@@ -66,7 +70,7 @@ export function TestModeRoot() {
   const [ui, setUiState] = useState<TmUi>(() => ({
     badges: readBadges(),
     panel: false,
-    guided: false,
+    guided: entryTarget !== null,
     identity: false,
   }))
   const [who, setWho] = useState(() => getIdentity()?.name ?? null)
@@ -100,6 +104,22 @@ export function TestModeRoot() {
       { replace: true },
     )
   }, [location.search, location.pathname, location.hash, navigate])
+
+  // 手册入口可钉住一条旅程/一步。目标留在组件态里，因此未登录跳转到
+  // /login?next=… 时不会丢；登录回到原路由后仍会直接展开同一步。
+  useEffect(() => {
+    const target = testModeEntryTarget(location.search)
+    if (!target) return
+    setEntryTarget((current) =>
+      current?.journeyId === target.journeyId &&
+        current.stepId === target.stepId
+        ? current
+        : target
+    )
+    setUiState((current) =>
+      current.guided ? current : { ...current, guided: true }
+    )
+  }, [location.search])
 
   useEffect(() => {
     if (!on || !host) return
@@ -208,7 +228,7 @@ export function TestModeRoot() {
           className='tm-pill-btn tm-pill-btn--who'
           title={who
             ? `当前身份：${who}（点击修改）`
-            : '设置身份：名字 + 口令，写看板时用'}
+            : '设置看板身份：名字 + 看板口令（不是产品账号密码）'}
           aria-label={who ? `身份：${who}，点击修改` : '设置身份'}
           onClick={() => setUi({ identity: true })}
         >
@@ -232,7 +252,7 @@ export function TestModeRoot() {
         </button>
       </nav>
       <Suspense fallback={null}>
-        <Surface ui={ui} setUi={setUi} />
+        <Surface ui={ui} setUi={setUi} target={entryTarget} />
       </Suspense>
     </>,
     host,

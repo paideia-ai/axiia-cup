@@ -1,9 +1,16 @@
 import type { ReactNode } from 'react'
 import { useRef } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom'
 
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
+import { protectedLoginUrl } from './lib/login-return'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
@@ -33,9 +40,10 @@ function Loading() {
 
 function ProtectedShell() {
   const { isLoading, account } = useAuth()
+  const location = useLocation()
 
   if (isLoading) return <Loading />
-  if (!account) return <Navigate replace to='/login' />
+  if (!account) return <Navigate replace to={protectedLoginUrl(location)} />
 
   return (
     <AppShell>
@@ -75,7 +83,7 @@ function ProtectedShell() {
 function GuestOnly({ children }: { children: ReactNode }) {
   const { isLoading, account } = useAuth()
   // 只挡「本来就已登录」的访客。表单提交成功后的落点由表单页自己决定
-  // （注册按 firstBattleDone 落 /express，A3/#9；登录落 /scenarios）——
+  // （注册按 firstBattleDone 落 /express，A3/#9；登录优先回到受保护的原网址）——
   // 提交成功会把 account 写进 auth 上下文，若这里继续无条件抢跳
   // /scenarios，就会与表单页的 navigate 竞态，把新注册用户误送出快速通道。
   const arrivedAuthenticated = useRef<boolean | null>(null)
