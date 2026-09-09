@@ -37,7 +37,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigationItems = account?.isAdmin
     ? [...navigation, { to: '/admin', label: '管理面板', icon: Shield }]
     : navigation
-  const contentWidth = 'max-w-7xl'
+  const contentWidth = 'max-w-[1040px]'
   const navigationActive = (to: string) =>
     to === '/my-agents'
       ? pathname === '/my-agents' || pathname.startsWith('/agents/')
