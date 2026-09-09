@@ -5,17 +5,15 @@ import type {
   ScenarioDetail,
   Side,
 } from '../api/types'
-import { config, scenario as courtScenario } from '../testing/v34-fixtures'
 import {
   catalogFixtures,
   matchFixtures,
+  snapshot,
   standingsFixture,
   tournamentFixtures,
 } from './browse-fixtures'
-import { fillExampleStrategies, seedAgents } from './model'
 
-// Only fixture data is carried over from the old demo. Every page, control,
-// routing transition and prompt helper is rendered by latest-main components.
+// Real snapshot data is anonymized before import; all mutations stay in this browser.
 interface DemoAgent {
   id: number
   name: string | null
@@ -24,35 +22,15 @@ interface DemoAgent {
   fields: Record<string, string>
   versions: AgentVersionDTO[]
 }
-const key = 'axiia-main-style-demo-28cf870-v1'
-const models = [
-  { id: 'glm-5.3-flash', label: 'GLM-5.3 Flash' },
-  { id: 'kimi-k2.6', label: 'Kimi K2.6' },
-  { id: 'deepseek-v3.2', label: 'DeepSeek V3.2' },
-]
+const key = 'axiia-public-snapshot-20260909-v1'
+const models = snapshot.config.models
 function initial(): DemoAgent[] {
-  let versionID = 1000
-  return fillExampleStrategies(seedAgents()).map((a, index) => {
-    const id = a.id > 0 ? a.id : 300 + index
-    const versions = a.versions.map((v, i) => ({
-      ...v,
-      id: ++versionID,
-      agentID: id,
-      modelID: models[0].id,
-      ordinal: i + 1,
-      isEntry: a.entrySelectionUnknown
-        ? i === a.versions.length - 1
-        : v.isEntry,
-    }))
-    return {
-      id,
-      name: a.name || null,
-      scenario: a.scenario,
-      side: a.side === 0 ? 'a' : 'b',
-      fields: { prompt: a.draft || versions.at(-1)?.prompt || '' },
-      versions,
-    }
-  })
+  return structuredClone(snapshot.agents as DemoAgent[]).map((a) => ({
+    ...a,
+    versions: a.versions.sort((x, y) =>
+      (x.ordinal ?? x.id) - (y.ordinal ?? y.id)
+    ),
+  }))
 }
 function load(): DemoAgent[] {
   try {
@@ -98,20 +76,8 @@ function inventory(): MyAgentsResponse {
   }
 }
 function detail(id: string): ScenarioDetail | null {
-  const summary = catalogFixtures.find((s) => s.id === id)
-  if (!summary) return null
-  return {
-    summary,
-    stages: courtScenario.stages,
-    presets: (['a', 'b'] as const).map((side) => ({
-      side,
-      key: `demo-${side}`,
-      label: `示例预设（${
-        side === 'a' ? summary.sideAName : summary.sideBName
-      }）`,
-      modelID: models[0].id,
-    })),
-  }
+  return (snapshot.scenarioDetails as Record<string, ScenarioDetail>)[id] ??
+    null
 }
 // The product's SSE consumers run unchanged; demo streams emit local draft
 // confirmations only. No socket or remote stream is opened.
@@ -172,8 +138,8 @@ export function installDemoAPI() {
     }
     const me = {
       account: {
-        id: 'demo-kesou',
-        displayName: 'kesou',
+        id: 'demo-account',
+        displayName: '演示选手',
         isAdmin: false,
         hasTOTP: false,
         email: 'demo@example.com',
@@ -186,7 +152,7 @@ export function installDemoAPI() {
     if (path === '/notifications') {
       return Response.json({ unreadCount: 0, notifications: [] })
     }
-    if (path === '/config') return Response.json({ ...config, models })
+    if (path === '/config') return Response.json({ ...snapshot.config, models })
     if (path === '/models') return Response.json({ models })
     const mode = new URLSearchParams(location.search).get('fixture')
     if (mode === 'loading') return new Promise<Response>(() => {})
@@ -221,10 +187,10 @@ export function installDemoAPI() {
           a.side !== url.searchParams.get('side') && a.versions.length
         ).map((a) => ({
           agentID: a.id,
-          displayName: 'kesou',
+          displayName: '演示选手',
           name: a.name || null,
           isSelf: true,
-          ownerAccountID: 'demo-kesou',
+          ownerAccountID: 'demo-account',
         })),
       })
     }

@@ -12,9 +12,9 @@ const results = []
 const surfaces = [
   ['/scenarios', 'D.scenario-card', 'catalog'],
   ['/tournaments', 'G.tournament-list', 'rankings'],
-  ['/tournaments/41', 'G.standings-table', 'standings'],
+  ['/tournaments/1', 'G.standings-table', 'standings'],
   ['/matches', 'L.match-list', 'history'],
-  ['/matches/9001', 'FA.result-card', 'report'],
+  ['/matches/145', 'FA.result-card', 'report'],
   ['/my-agents', 'MA.scenario-list', 'agents'],
   ['/agents/163', 'EA.page-title', 'agent-home'],
   ['/agents/163/build', 'E.prompt-input', 'builder'],
@@ -150,7 +150,7 @@ try {
     await expect(page.locator('[data-tm="EA.page-title"]')).toContainText(
       '克制示例',
     )
-    await visit('/matches/9001', 'FA.result-card')
+    await visit('/matches/145', 'FA.result-card')
     await page.getByRole('button', { name: '回放', exact: true }).click()
     await expect(page.getByRole('heading', { name: '对话重演', exact: true }))
       .toBeVisible()

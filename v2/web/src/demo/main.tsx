@@ -73,7 +73,8 @@ function Demo() {
         </Routes>
       </AppShell>
       <p className='demo-provenance'>
-        前端演示 · main 28cf870 + PR #170 · 合成示例数据，不连接真实服务
+        真实数据快照 · 2026-09-09 17:51 UTC · 账户已匿名化，私人策略为示例文本 ·
+        历史展示已收录的 29 场对局 · 操作仅保存在本机
       </p>
     </>
   )
