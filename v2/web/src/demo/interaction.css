@@ -1,0 +1,87 @@
+/* Document scope includes menus and popovers rendered outside the React root.
+   Only the demo entry opts in; shared production components keep their styles. */
+body[data-agent-demo] .demo-overlay-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  color: var(--foreground);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32);
+}
+
+body[data-agent-demo] .demo-overlay-close {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--foreground-subtle);
+  transition: background-color 150ms, color 150ms;
+}
+
+body[data-agent-demo] .demo-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+}
+
+body[data-agent-demo] .demo-overlay-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body[data-agent-demo] :is(button, a[href], summary, select, [role='button'], [role='combobox'], [role='option'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='tab'], [role='checkbox'], [role='radio'], [role='switch'], input[type='checkbox'], input[type='radio'], input[type='button'], input[type='submit'], input[type='reset']):not(:disabled):not([aria-disabled='true']):not([data-disabled]) {
+  cursor: pointer;
+}
+
+body[data-agent-demo] label:has(input:is([type='checkbox'], [type='radio']):enabled) {
+  cursor: pointer;
+}
+
+body[data-agent-demo] :is(:disabled, [aria-disabled='true'], [data-disabled]) {
+  cursor: not-allowed;
+}
+
+/* Native disabled buttons still reject clicks, but receive hover for their
+   disabled cursor and explanatory title instead of exposing the element below. */
+body[data-agent-demo] button:disabled {
+  pointer-events: auto;
+}
+
+/* Enlarge touch targets without enlarging their icons. Portaled close buttons
+   follow the same rule; desktop controls keep the compact presentation. */
+@media (max-width: 767px) {
+  body[data-agent-demo] button[aria-label] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  body[data-agent-demo] nav[aria-label='同角色智能体'] a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+}
+
+/* The same creation form becomes a compact bottom sheet on mobile.
+   VisualViewport variables keep it above the on-screen keyboard. */
+@media (max-width: 767px) {
+  body[data-agent-demo] .demo-create-positioner {
+    position: fixed !important;
+    top: auto !important;
+    bottom: var(--create-bottom-inset, 0px) !important;
+    left: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  body[data-agent-demo] .demo-create-panel {
+    width: 100%;
+    max-width: none;
+    max-height: var(--create-available-height, 85dvh);
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 20px max(20px, env(safe-area-inset-bottom));
+  }
+}

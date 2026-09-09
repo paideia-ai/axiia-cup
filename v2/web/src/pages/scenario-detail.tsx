@@ -33,9 +33,6 @@ export function ScenarioDetailPage() {
   const navigate = useNavigate()
   const [pending, setPending] = useState<string | null>(null)
   const [buildError, setBuildError] = useState<string | null>(null)
-  const module = scenarioModule(scenarioId)
-  const intro = module?.intro ?? null
-  const education = module?.education ?? null
 
   const { data, error, loading } = useAsync(
     () => catalog.scenario(scenarioId, 'a'),
@@ -87,137 +84,173 @@ export function ScenarioDetailPage() {
         )
         : data
         ? (
-          <>
-            <header
-              className='flex flex-wrap items-start justify-between gap-4'
-              {...tm('DA.page-header')}
-            >
-              <div>
-                {intro?.source.category
-                  ? (
-                    <p className='mb-2 text-xs font-semibold tracking-[0.1em] text-(--accent)'>
-                      {intro.source.category}
-                    </p>
-                  )
-                  : null}
-                <h1 className='text-2xl font-black tracking-tight text-(--foreground) sm:text-3xl'>
-                  {intro?.source.title ?? data.summary.title}
-                </h1>
-                <p className='mt-2 text-sm text-(--foreground-subtle)'>
-                  {data.summary.subject}
-                </p>
-                <p
-                  className='mt-3 text-xs text-(--foreground-muted)'
-                  {...tm('DA.header-matchup')}
-                >
-                  {module?.hideHeaderMatchup
-                    ? education?.formatLabel ?? `${data.summary.turnCount} 轮`
-                    : (
-                      <>
-                        {intro?.source.participants.sides.a.name ??
-                          data.summary.sideAName} 对{' '}
-                        {intro?.source.participants.sides.b.name ??
-                          data.summary.sideBName} · {education?.formatLabel ??
-                          `${data.summary.turnCount} 轮`}
-                      </>
-                    )}
-                </p>
-              </div>
-              <GateStatus summary={data.summary} />
-            </header>
-
-            <OverviewCard
-              intro={intro}
-              education={education}
-              summary={data.summary}
-              images={module?.overviewImages ?? null}
-              factImages={module?.overviewFactImages ?? null}
-              timelineAtEnd={module?.timelineAtEnd ?? false}
-            />
-
-            <section
-              className='space-y-3'
-              aria-labelledby='participants-title'
-              {...tm('DA.participants-section')}
-            >
-              <div>
-                <h2
-                  id='participants-title'
-                  className='text-lg font-bold text-(--foreground)'
-                >
-                  {intro?.source.participants.title ?? '双方与胜利条件'}
-                </h2>
-                {intro?.source.participants.intro
-                  ? (
-                    <p className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'>
-                      {intro.source.participants.intro}
-                    </p>
-                  )
-                  : null}
-              </div>
-
-              {education?.openingLine
-                ? (
-                  <OpeningLine
-                    line={education.openingLine}
-                    speaker={intro?.source.participants.judge.name ?? null}
-                  />
-                )
-                : null}
-
-              <div className='grid items-start gap-4 md:grid-cols-2'>
-                {(['a', 'b'] as const).map((side) => (
-                  <SideCard
-                    key={side}
-                    side={side}
-                    copy={intro?.source.participants.sides[side] ?? null}
-                    fallbackName={side === 'a'
-                      ? data.summary.sideAName
-                      : data.summary.sideBName}
-                    fallbackLabel={side === 'a'
-                      ? data.summary.sideALabel
-                      : data.summary.sideBLabel}
-                    fallbackGoal={education?.winConditions[side] ?? null}
-                    hiddenGoals={module?.hiddenGoals?.[side] ?? null}
-                    agents={mineOf(side)}
-                    pending={pending}
-                    onEnter={enter}
-                    onViewAll={() => navigate('/my-agents')}
-                    onNew={() =>
-                      navigate(
-                        `/my-agents?new=${side}&scenario=${scenarioId}`,
-                      )}
-                  />
-                ))}
-              </div>
-              {buildError
-                ? (
-                  <p
-                    className='text-sm text-(--accent)'
-                    {...tm('DA.build-error')}
-                  >
-                    {buildError}
-                  </p>
-                )
-                : null}
-            </section>
-
-            <JudgeScoringCard
-              intro={intro}
-              education={education}
-              requestScoring={module?.requestScoring ?? null}
-              scoringLabel={module?.scoringLabel ?? '计分规则'}
-              scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
-                false}
-            />
-
-            {module?.timelineAtEnd && intro?.source.overview.timeline
-              ? <TimelineCard timeline={intro.source.overview.timeline} />
-              : null}
-          </>
+          <ScenarioDetailContent
+            summary={data.summary}
+            mineOf={mineOf}
+            pending={pending}
+            buildError={buildError}
+            onEnter={enter}
+            onViewAll={() => navigate('/my-agents')}
+            onNew={(side) =>
+              navigate(`/my-agents?new=${side}&scenario=${scenarioId}`)}
+          />
         )
         : null}
     </div>
+  )
+}
+
+// Shared presentation: production supplies API data; the demo supplies its local
+// inventory and callbacks. Scenario copy and visuals stay in one implementation.
+export function ScenarioDetailContent({
+  summary,
+  mineOf,
+  onEnter,
+  onViewAll,
+  onNew,
+  pending = null,
+  buildError = null,
+  showLiveProgress = true,
+}: {
+  summary: ScenarioSummary
+  mineOf: (side: Side) => Array<{ agentID: number; name?: string | null }>
+  onEnter: (side: Side, target: 'build' | 'view') => Promise<void>
+  onViewAll: () => void
+  onNew: (side: Side) => void
+  pending?: string | null
+  buildError?: string | null
+  showLiveProgress?: boolean
+}) {
+  const module = scenarioModule(summary.id)
+  const intro = module?.intro ?? null
+  const education = module?.education ?? null
+  return (
+    <>
+      <header
+        className='flex flex-wrap items-start justify-between gap-4'
+        {...tm('DA.page-header')}
+      >
+        <div>
+          {intro?.source.category
+            ? (
+              <p className='mb-2 text-xs font-semibold tracking-[0.1em] text-(--accent)'>
+                {intro.source.category}
+              </p>
+            )
+            : null}
+          <h1 className='text-2xl font-black tracking-tight text-(--foreground) sm:text-3xl'>
+            {intro?.source.title ?? summary.title}
+          </h1>
+          <p className='mt-2 text-sm text-(--foreground-subtle)'>
+            {summary.subject}
+          </p>
+          <p
+            className='mt-3 text-xs text-(--foreground-muted)'
+            {...tm('DA.header-matchup')}
+          >
+            {module?.hideHeaderMatchup
+              ? education?.formatLabel ?? `${summary.turnCount} 轮`
+              : (
+                <>
+                  {intro?.source.participants.sides.a.name ??
+                    summary.sideAName} 对{' '}
+                  {intro?.source.participants.sides.b.name ??
+                    summary.sideBName} · {education?.formatLabel ??
+                    `${summary.turnCount} 轮`}
+                </>
+              )}
+          </p>
+        </div>
+        {showLiveProgress && <GateStatus summary={summary} />}
+      </header>
+
+      <OverviewCard
+        intro={intro}
+        education={education}
+        summary={summary}
+        showStats={showLiveProgress}
+        images={module?.overviewImages ?? null}
+        factImages={module?.overviewFactImages ?? null}
+        timelineAtEnd={module?.timelineAtEnd ?? false}
+      />
+
+      <section
+        className='space-y-3'
+        aria-labelledby='participants-title'
+        {...tm('DA.participants-section')}
+      >
+        <div>
+          <h2
+            id='participants-title'
+            className='text-lg font-bold text-(--foreground)'
+          >
+            {intro?.source.participants.title ?? '双方与胜利条件'}
+          </h2>
+          {intro?.source.participants.intro
+            ? (
+              <p className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'>
+                {intro.source.participants.intro}
+              </p>
+            )
+            : null}
+        </div>
+
+        {education?.openingLine
+          ? (
+            <OpeningLine
+              line={education.openingLine}
+              speaker={intro?.source.participants.judge.name ?? null}
+            />
+          )
+          : null}
+
+        <div className='grid items-start gap-4 md:grid-cols-2'>
+          {(['a', 'b'] as const).map((side) => (
+            <SideCard
+              key={side}
+              side={side}
+              copy={intro?.source.participants.sides[side] ?? null}
+              fallbackName={side === 'a'
+                ? summary.sideAName
+                : summary.sideBName}
+              fallbackLabel={side === 'a'
+                ? summary.sideALabel
+                : summary.sideBLabel}
+              fallbackGoal={education?.winConditions[side] ?? null}
+              hiddenGoals={module?.hiddenGoals?.[side] ?? null}
+              agents={mineOf(side)}
+              pending={pending}
+              onEnter={onEnter}
+              onViewAll={onViewAll}
+              onNew={() => onNew(side)}
+            />
+          ))}
+        </div>
+        {buildError
+          ? (
+            <p
+              className='text-sm text-(--accent)'
+              {...tm('DA.build-error')}
+            >
+              {buildError}
+            </p>
+          )
+          : null}
+      </section>
+
+      <JudgeScoringCard
+        intro={intro}
+        education={education}
+        requestScoring={module?.requestScoring ?? null}
+        scoringLabel={module?.scoringLabel ?? '计分规则'}
+        scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
+          false}
+      />
+
+      {module?.timelineAtEnd && intro?.source.overview.timeline
+        ? <TimelineCard timeline={intro.source.overview.timeline} />
+        : null}
+    </>
   )
 }
 
@@ -228,6 +261,7 @@ function OverviewCard({
   images,
   factImages,
   timelineAtEnd,
+  showStats = true,
 }: {
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
@@ -235,6 +269,7 @@ function OverviewCard({
   images: ScenarioIntroImage[] | null
   factImages: Record<string, ScenarioIntroImage> | null
   timelineAtEnd: boolean
+  showStats?: boolean
 }) {
   const overview = intro?.source.overview ?? null
   return (
@@ -374,7 +409,7 @@ function OverviewCard({
           )
           : null}
 
-        {statsLine(summary)
+        {showStats && (statsLine(summary)
           ? (
             <p
               className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
@@ -395,7 +430,7 @@ function OverviewCard({
               侧方胜率 · 对局数不足，暂无统计——早期对局正在进行
             </p>
           )
-          : null}
+          : null)}
       </CardContent>
     </Card>
   )

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Check, ChevronDown, ChevronUp, Copy, Sword } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
@@ -22,11 +23,14 @@ interface VersionListProps {
   versions: AgentVersionDTO[]
   // P4/#91：★ 是「这一侧的出战席位」，按钮要说清是哪一侧。
   sideName?: string
+  compactActions?: boolean
+  detailsMissing?: (versionID: number) => boolean
   onSetEntry: (versionID: number) => void
-  onIterate: (version: AgentVersionDTO) => void
+  onIterate?: (version: AgentVersionDTO) => void
   onField: (version: AgentVersionDTO) => void
   // 段落标题右侧的补充内容（E 页放 P12 提示；EA 页留空）。
   headingAside?: ReactNode
+  headingAction?: ReactNode
   emptyState?: ReactNode
   // P11（Yihan 修订）：覆盖保护的两步确认必须「就地」——画进被点击的那张
   // 版本卡（不弹窗）。三个 props 都可选：EA 页不传即不渲染，共享形态不变。
@@ -38,16 +42,101 @@ interface VersionListProps {
 export function VersionList({
   versions,
   sideName,
+  compactActions = false,
+  detailsMissing,
   onSetEntry,
   onIterate,
   onField,
   headingAside,
+  headingAction,
   emptyState,
   pendingIterateID,
   onConfirmIterate,
   onCancelIterate,
 }: VersionListProps) {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({})
+  const [overflows, setOverflows] = useState<Record<number, boolean>>({})
+  const promptNodes = useRef(new Map<number, HTMLParagraphElement>())
+  const [copied, setCopied] = useState<number | null>(null)
+  const [copyError, setCopyError] = useState<number | null>(null)
+  useEffect(() => {
+    if (!compactActions) return
+    let active = true
+    const measure = () => {
+      if (!active) return
+      const next: Record<number, boolean> = {}
+      for (const [id, node] of promptNodes.current) {
+        // Compare to the three-line preview even while expanded, so resizing
+        // can hide an unnecessary collapse control without changing the text.
+        const lineHeight = Number.parseFloat(getComputedStyle(node).lineHeight)
+        next[id] = node.scrollHeight > lineHeight * 3 + 1
+      }
+      setOverflows((current) =>
+        Object.keys(current).length === Object.keys(next).length &&
+          Object.entries(next).every(([id, value]) =>
+            current[Number(id)] === value
+          )
+          ? current
+          : next
+      )
+    }
+    const observer = new ResizeObserver(measure)
+    for (const node of promptNodes.current.values()) observer.observe(node)
+    measure()
+    void document.fonts.ready.then(measure)
+    document.fonts.addEventListener('loadingdone', measure)
+    return () => {
+      active = false
+      observer.disconnect()
+      document.fonts.removeEventListener('loadingdone', measure)
+    }
+  }, [compactActions, versions])
+  useEffect(() => {
+    if (copied == null) return
+    const timer = setTimeout(() => setCopied(null), 1800)
+    return () => clearTimeout(timer)
+  }, [copied])
+  const copyPrompt = async (version: AgentVersionDTO) => {
+    setCopyError(null)
+    setCopied(null)
+    try {
+      await navigator.clipboard.writeText(version.prompt)
+      setCopied(version.id)
+    } catch {
+      setCopyError(version.id)
+    }
+  }
+
+  function expandButton(version: AgentVersionDTO) {
+    if (compactActions && !overflows[version.id]) return null
+    return (
+      <Button
+        size='sm'
+        variant='ghost'
+        disabled={detailsMissing?.(version.id) && !version.prompt}
+        className={compactActions ? 'ml-auto h-9 w-9 p-0' : undefined}
+        aria-expanded={!!expanded[version.id]}
+        title={expanded[version.id] ? '收起全文' : '展开全文'}
+        aria-label={expanded[version.id]
+          ? `收起 ${versionTag(version, sorted)} 全文`
+          : `展开 ${versionTag(version, sorted)} 全文`}
+        onClick={() =>
+          setExpanded((current) => ({
+            ...current,
+            [version.id]: !current[version.id],
+          }))}
+        {...tm('E.expand-button')}
+      >
+        {compactActions
+          ? expanded[version.id]
+            ? <ChevronUp aria-hidden='true' className='h-4 w-4' />
+            : <ChevronDown aria-hidden='true' className='h-4 w-4' />
+          : expanded[version.id]
+          ? '收起'
+          : '展开全文'}
+      </Button>
+    )
+  }
 
   // 版本号按 id 次序派生（E2/#82），所以 id 降序＝版本号降序、最新在前。
   const sorted = [...versions].sort((a, b) => b.id - a.id)
@@ -55,9 +144,12 @@ export function VersionList({
   return (
     <section className='space-y-3' {...tm('E.version-list')}>
       <div className='flex flex-wrap items-baseline justify-between gap-2'>
-        <h2 className='text-sm font-semibold text-(--foreground)'>
-          版本（{sorted.length}）
-        </h2>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-sm font-semibold text-(--foreground)'>
+            版本（{sorted.length}）
+          </h2>
+          {headingAction}
+        </div>
         {headingAside ?? (
           <span
             className='text-[11px] text-(--foreground-muted)'
@@ -77,9 +169,11 @@ export function VersionList({
             <p className='text-sm font-medium text-(--foreground)'>
               还没有保存过版本
             </p>
-            <p className='mt-1 text-xs text-(--foreground-muted)'>
-              写下策略并保存，这里就会长出 v1。
-            </p>
+            {!compactActions && (
+              <p className='mt-1 text-xs text-(--foreground-muted)'>
+                写下策略并保存，这里就会长出 v1。
+              </p>
+            )}
           </div>
         )
         : sorted.map((version) => (
@@ -100,71 +194,99 @@ export function VersionList({
                 >
                   {versionTag(version, sorted)}
                 </span>
-                <span
-                  className='font-mono text-xs text-(--foreground-muted)'
-                  {...tm('E.version-id')}
-                >
-                  #{version.id}
-                </span>
-                <Badge tone='info' {...tm('E.version-model-badge')}>
-                  {version.modelID}
-                </Badge>
-                {version.isEntry
+                {!detailsMissing?.(version.id) && (
+                  <span
+                    className='font-mono text-xs text-(--foreground-muted)'
+                    {...tm('E.version-id')}
+                  >
+                    #{version.id}
+                  </span>
+                )}
+                {!detailsMissing?.(version.id) && (
+                  <Badge tone='info' {...tm('E.version-model-badge')}>
+                    {version.modelID}
+                  </Badge>
+                )}
+                {version.isEntry && !compactActions
                   ? (
                     <Badge tone='accent' {...tm('E.entry-badge')}>
                       ★参赛版本
                     </Badge>
                   )
                   : null}
+                {compactActions && (
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='ghost'
+                    className={`ml-auto h-9 w-9 shrink-0 rounded-full border p-0 ${
+                      version.isEntry
+                        ? 'border-(--accent) bg-(--accent) text-white hover:bg-(--accent-hover)'
+                        : 'border-(--border) text-(--foreground-subtle) hover:border-(--foreground-muted)'
+                    }`}
+                    aria-label={`将 ${versionTag(version, sorted)} 设为${
+                      sideName ?? ''
+                    }参赛版本`}
+                    aria-pressed={version.isEntry}
+                    title={version.isEntry ? '已用此版本参赛' : '用此版本参赛'}
+                    onClick={() => {
+                      if (!version.isEntry) onSetEntry(version.id)
+                    }}
+                    {...tm('E.set-entry-button')}
+                  >
+                    <Check aria-hidden='true' className='h-4 w-4' />
+                  </Button>
+                )}
               </div>
               {/* P15/P10：战绩、保存时间、备注——E5 与 B3 承诺过的版本身份 */}
-              <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--foreground-muted)'>
-                <span data-testid='version-record' {...tm('E.version-record')}>
-                  {recordCopy(version)}
-                </span>
-                {savedAtCopy(version)
-                  ? (
-                    <span data-testid='version-time' {...tm('E.version-time')}>
-                      {savedAtCopy(version)}
-                    </span>
-                  )
-                  : null}
-                {version.note
-                  ? (
-                    <span
-                      className='text-(--foreground-subtle)'
-                      {...tm('E.version-note')}
-                    >
-                      备注：{version.note}
-                    </span>
-                  )
-                  : null}
-              </div>
+              {!detailsMissing?.(version.id) && (
+                <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--foreground-muted)'>
+                  <span
+                    data-testid='version-record'
+                    {...tm('E.version-record')}
+                  >
+                    {recordCopy(version)}
+                  </span>
+                  {savedAtCopy(version)
+                    ? (
+                      <span
+                        data-testid='version-time'
+                        {...tm('E.version-time')}
+                      >
+                        {savedAtCopy(version)}
+                      </span>
+                    )
+                    : null}
+                  {version.note
+                    ? (
+                      <span
+                        className='text-(--foreground-subtle)'
+                        {...tm('E.version-note')}
+                      >
+                        备注：{version.note}
+                      </span>
+                    )
+                    : null}
+                </div>
+              )}
               <p
+                data-version-prompt
+                ref={(node) => {
+                  if (node) promptNodes.current.set(version.id, node)
+                  else promptNodes.current.delete(version.id)
+                }}
                 className={`whitespace-pre-wrap text-sm text-(--foreground-subtle) ${
                   expanded[version.id] ? '' : 'line-clamp-3'
                 }`}
                 {...tm('E.version-prompt')}
               >
-                {version.prompt}
+                {detailsMissing?.(version.id) && !version.prompt
+                  ? '列表未提供此版本正文。'
+                  : version.prompt}
               </p>
               <div className='flex flex-wrap items-center gap-2'>
-                <Button
-                  size='sm'
-                  variant='ghost'
-                  aria-label={expanded[version.id]
-                    ? `收起 ${versionTag(version, sorted)} 全文`
-                    : `展开 ${versionTag(version, sorted)} 全文`}
-                  onClick={() =>
-                    setExpanded((current) => ({
-                      ...current,
-                      [version.id]: !current[version.id],
-                    }))}
-                  {...tm('E.expand-button')}
-                >
-                  {expanded[version.id] ? '收起' : '展开全文'}
-                </Button>
-                {!version.isEntry
+                {!compactActions && expandButton(version)}
+                {!version.isEntry && !compactActions
                   ? (
                     <Button
                       size='sm'
@@ -182,27 +304,63 @@ export function VersionList({
                     </Button>
                   )
                   : null}
-                {/* E3（#82，文案按 #89）：回填工作区草稿，本身不产生版本 */}
-                <Button
-                  size='sm'
-                  variant='secondary'
-                  aria-label={`基于 ${versionTag(version, sorted)} 迭代`}
-                  title='把这一版载入工作区继续改；本身不产生新版本'
-                  onClick={() => onIterate(version)}
-                  {...tm('E.iterate-button')}
-                >
-                  基于该版本迭代
-                </Button>
+                {compactActions
+                  ? (
+                    <Button
+                      type='button'
+                      size='sm'
+                      variant='ghost'
+                      className='h-9 w-9 p-0'
+                      aria-label={`复制 ${versionTag(version, sorted)} 提示词`}
+                      title={copied === version.id ? '已复制' : '复制提示词'}
+                      disabled={detailsMissing?.(version.id) && !version.prompt}
+                      onClick={() => void copyPrompt(version)}
+                    >
+                      {copied === version.id
+                        ? (
+                          <Check
+                            aria-hidden='true'
+                            className='h-4 w-4 text-(--success)'
+                          />
+                        )
+                        : <Copy aria-hidden='true' className='h-4 w-4' />}
+                    </Button>
+                  )
+                  : onIterate
+                  ? (
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      aria-label={`基于 ${versionTag(version, sorted)} 迭代`}
+                      title='把这一版载入工作区继续改；本身不产生新版本'
+                      onClick={() => onIterate(version)}
+                      {...tm('E.iterate-button')}
+                    >
+                      基于该版本迭代
+                    </Button>
+                  )
+                  : null}
                 <Button
                   size='sm'
                   variant='secondary'
                   aria-label={`用 ${versionTag(version, sorted)} 出战`}
+                  disabled={detailsMissing?.(version.id) && !version.prompt}
+                  className={compactActions ? 'gap-1.5' : undefined}
                   onClick={() => onField(version)}
                   {...tm('E.field-button')}
                 >
+                  {compactActions && (
+                    <Sword aria-hidden='true' className='h-4 w-4' />
+                  )}
                   出战
                 </Button>
+                {compactActions && expandButton(version)}
               </div>
+              {copyError === version.id && (
+                <p role='alert' className='text-xs text-(--warning)'>
+                  复制失败，请展开全文后手动复制。
+                </p>
+              )}
               {
                 /* P11（Yihan 修订）：命中武装的那张卡就地渲染两步确认——
               确认行与「基于该版本迭代」按钮同屏，取代原页面顶部横幅 */

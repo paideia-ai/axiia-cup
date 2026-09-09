@@ -1,0 +1,122 @@
+/* This stylesheet is imported by the isolated demo entry only. */
+@media (min-width: 768px) {
+  html:has(body[data-agent-demo]) {
+    scrollbar-gutter: stable;
+  }
+}
+
+body[data-agent-demo] {
+  --foreground-subtle: #a0a0a0;
+  --foreground-muted: #858585;
+}
+
+body[data-agent-demo] .demo-scenario-card,
+body[data-agent-demo] [data-testid='version-card'] {
+  box-shadow: none;
+}
+
+.demo-scenario-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.demo-role-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-role-status {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground-subtle);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.demo-entry-status {
+  margin-left: auto;
+  line-height: 20px;
+}
+
+.demo-role-group {
+  margin-top: 20px;
+}
+
+.demo-role-group + .demo-role-group {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.demo-role-heading {
+  margin-bottom: 8px;
+}
+
+.demo-agent-row {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.demo-agent-row + .demo-agent-row {
+  margin-top: 4px;
+}
+
+.demo-agent-row:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.demo-agent-row[data-entry='true'] {
+  border-color: rgba(224, 74, 47, 0.5);
+  background: rgba(224, 74, 47, 0.035);
+}
+
+.demo-agent-row[data-entry='true']:hover {
+  border-color: var(--accent);
+  background: rgba(224, 74, 47, 0.07);
+}
+
+body[data-agent-demo] [data-version-prompt] {
+  color: #dedede;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.demo-builder .demo-editor {
+  margin-top: 16px;
+}
+
+@media (max-width: 767px) {
+  .demo-scenario-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 8px;
+    padding-bottom: 16px;
+  }
+
+  .demo-role-statuses {
+    grid-column: 1;
+  }
+
+  .demo-entry-status {
+    grid-column: 2;
+    max-width: 128px;
+    margin-left: 0;
+    text-align: right;
+  }
+
+  .demo-role-group {
+    margin-top: 12px;
+  }
+
+  .demo-role-group + .demo-role-group {
+    margin-top: 16px;
+    padding-top: 8px;
+  }
+}
