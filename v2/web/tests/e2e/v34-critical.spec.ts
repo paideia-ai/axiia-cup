@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import { finishedMatch } from '../../src/testing/v34-fixtures'
 import {
   buildVersion,
+  openBattlePanel,
   requireServerFixtures,
   scenarioID,
   signup,
@@ -20,9 +21,9 @@ test('v3.4 #14/#17/#57 saves one side and never dispatches implicitly', async ({
   const matches = await page.request.get('/v1/matches')
   expect(matches.ok()).toBe(true)
   expect((await matches.json() as { matches: unknown[] }).matches).toEqual([])
-  await expect(page.getByText('版本（1）')).toBeVisible()
-  // #88：保存后留在 E 页，所以同一段文字同时出现在编辑框与版本卡里——断言要
-  // 指名是版本卡上的那一份，否则命中两个节点。
+  // 2026-09-09 三页修订：保存回到 EA，版本卡在高信息主页可见。
+  await expect(page).toHaveURL(/\/agents\/\d+$/)
+  await expect(page.getByTestId('version-card')).toHaveCount(1)
   await expect(page.getByTestId('version-card').getByText(prompt))
     .toBeVisible()
 })
@@ -31,9 +32,7 @@ test('v3.4 #65/#77/#78 shows the two-side gate, rejects real PVP, and permits ho
   await signup(page, 'gates')
   const sideA = await buildVersion(page, 'a', '甲方先定义可验证的制度收益')
 
-  // #88：保存不再把玩家送回 EA，而出战面板的页头入口在 EA——显式过去。
-  await page.goto(`/agents/${sideA.agentID}`)
-  await page.getByTestId('open-os-panel').click()
+  await openBattlePanel(page, sideA.agentID)
   await page.getByRole('tab', { name: /玩家约战/ }).click()
   await expect(page.getByText(/每侧各赢 ≥1 场 NPC 练习/)).toBeVisible()
   await expect(page.getByText(/^[^/]+ 0\/1$/)).toHaveCount(2)
@@ -58,11 +57,12 @@ test('v3.4 #65/#77/#78 shows the two-side gate, rejects real PVP, and permits ho
     },
   })
   expect(rejected.status()).toBe(403)
-  expect((await rejected.json() as { error: string }).error).toBe('gate_locked')
+  expect((await rejected.json() as { error: string }).error).toBe(
+    'gate_locked',
+  )
 
   await buildVersion(page, 'b', '乙方逐项质疑改革的执行与迁移成本')
-  await page.goto(`/agents/${sideA.agentID}`)
-  await page.getByTestId('open-os-panel').click()
+  await openBattlePanel(page, sideA.agentID)
   await page.getByRole('tab', { name: '左右手互搏' }).click()
   const dispatched = page.waitForResponse((response) =>
     response.url().endsWith('/v1/matches/pvp') &&

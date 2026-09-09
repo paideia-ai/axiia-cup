@@ -11,7 +11,7 @@ interface SelectProps {
   onValueChange?: (value: string | null) => void
   placeholder?: string
   renderValue?: (value: string) => ReactNode
-  value?: string
+  value?: string | null
 }
 
 export function Select({

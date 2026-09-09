@@ -1,7 +1,7 @@
-/* EA 智能体视图（/agents/:id，B3）+ MA 我的智能体（/my-agents，#73/#64）+ X 首战快速通道（/express，A3）。
-   EA 的版本卡是 E 页同一套 VersionList（E.version-card…，#88），出战面板是 OS.*，
-   「再建一个」弹窗是 E.new-agent-*——这里只登记三页自己的部件。
-   条款以 spec-index 里 page=EA 的 16 行 + unit=U03 的 13 行 + U01 里落在我的智能体页的 P 系列为准。 */
+/* EA 智能体主页（/agents/:id，B3）+ MA 我的智能体（/my-agents，#73/#64）+ X 首战快速通道（/express，A3）。
+   2026-09-09 咳嗽方案把三页重排为「清单低复杂度 → 主页高复杂度 → 构建器低复杂度」：
+   MA 只负责选择/新建，改名、删除、版本、参赛和出战集中在 EA。EA 的版本卡继续复用
+   VersionList 的 E.version-card… 标记，出战面板是 OS.*，「新建智能体」浮层是 E.new-agent-*。 */
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_AGENTS: TmRegistry = {
@@ -88,7 +88,7 @@ export const TM_AGENTS: TmRegistry = {
   'EA.back-link': {
     label: '返回我的智能体',
     clauses: ['U10-C11'],
-    note: 'EA ⇄ 我的智能体行「查看智能体」互通',
+    note: 'EA ⇄ 我的智能体整行入口互通',
   },
   'EA.error': {
     label: '页面错误',
@@ -107,7 +107,7 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U10-C01', 'U10-C03'],
     anchors: ['spec-b3'],
     journeys: ['j8s3'],
-    note: '标题 + 副行在左，「编辑」「出战」并排在右',
+    note: '标题、副行与身份操作菜单；版本/出战动作在下方版本区',
   },
   'EA.page-title': {
     label: '策略展示名标题',
@@ -115,7 +115,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-p1', 'spec-change-63'],
     journeys: ['j8s3'],
     note:
-      '「商鞅「贪婪」」，无名回落「商鞅 #id」；改名后这里要跟着变（改名入口只在我的智能体页，U01-C22b）',
+      '「商鞅「贪婪」」，无名回落「商鞅 #id」；主页身份菜单可就地改名，保存后全局同步',
   },
   'EA.subtitle': {
     label: '页头副行',
@@ -131,19 +131,40 @@ export const TM_AGENTS: TmRegistry = {
     note: 'P1：id 降为 mono 小字，#25 仍要 id 可见',
   },
   'EA.edit-button': {
-    label: '编辑按钮',
+    label: '新建版本',
     clauses: ['U10-C03', 'U01-C14'],
     anchors: ['spec-change-75', 'spec-change-81'],
     journeys: ['j8s3'],
     note:
-      '在「出战」旁；点击进入 /agents/:id/build 工作区，内容以服务端常驻草稿为准',
+      '版本标题旁的铅笔加号；进入 /agents/:id/build，内容以服务端常驻草稿为准',
   },
   'EA.field-button': {
     label: '出战按钮',
     clauses: ['U05-C01', 'U10-C03'],
     journeys: ['j5s1'],
+    note: '每张版本卡内呼出选择对手面板（OS.*），并预选该 agent/场景/执侧/版本',
+  },
+  'EA.identity-menu': {
+    label: '身份操作菜单',
+    clauses: ['U01-C22', 'U01-C22b', 'U01-C27'],
+    anchors: ['spec-p2', 'spec-p8b'],
+    journeys: ['j4s5'],
+    note: '标题旁唯一的省略号菜单；收纳重命名与删除，避免挤占主页主动作',
+  },
+  'EA.rename-form': {
+    label: '主页改名表单',
+    clauses: ['U01-C22', 'U01-C22b', 'U01-C23'],
+    anchors: ['spec-p2', 'spec-p3'],
     note:
-      '呼出选择对手面板（OS.*），agent/场景/执侧随呼出处预选；0 版本时禁用并提示「先保存一个版本才能出战」',
+      '从身份菜单展开；1–30 字、空值回落侧角色名 + #id，支持 Enter 保存、Esc 取消及中文输入法组字保护',
+    when: '身份操作菜单点「重命名」后',
+  },
+  'EA.delete-dialog': {
+    label: '删除确认弹窗',
+    clauses: ['U01-C27'],
+    anchors: ['spec-p8b'],
+    note: '只有 0 版本空壳可以确认删除；已有版本时菜单项禁用并解释原因',
+    when: '0 版本智能体的身份操作菜单点「删除智能体」后',
   },
   'EA.action-error': {
     label: '改标失败提示',
@@ -167,24 +188,28 @@ export const TM_AGENTS: TmRegistry = {
     when: '从构建器保存回来，且新版本不是参赛版本时',
   },
   'EA.sibling-pills': {
-    label: '同侧策略胶囊排',
+    label: '同侧智能体栏',
     clauses: ['U10-C10', 'U01-C28'],
     anchors: ['spec-p9'],
     journeys: ['j8s3'],
-    note: '同侧横向切换；同侧只有 1 个策略时整排不出现',
-    when: '同一场景同一侧有 ≥2 个智能体',
+    note: '同侧横向切换轨道；即使只有当前一个智能体也保留，末尾提供新建入口',
   },
   'EA.sibling-pill': {
-    label: '同侧策略胶囊',
+    label: '同侧智能体项',
     clauses: ['U10-C10', 'U01-C28', 'U10-C01'],
     anchors: ['spec-p9', 'spec-p1'],
     journeys: ['j8s3'],
     note:
       '当前项高亮（aria-current=page）；文案用策略展示名；点击切到 /agents/:id',
-    when: '同侧有 ≥2 个智能体',
+  },
+  'EA.sibling-create-button': {
+    label: '同侧新建按钮',
+    clauses: ['U01-C17', 'U01-C26', 'U06-C08'],
+    anchors: ['spec-change-59', 'spec-change-79', 'spec-p8a'],
+    note: '同侧切换轨道末尾的机器人加号；打开锚定的新建浮层',
   },
   'EA.version-empty': {
-    label: '版本线空态',
+    label: '版本列表空态',
     clauses: ['U01-C13', 'U01-C15', 'LACK-10'],
     note:
       'EA 自己的空态文案「还没有保存过版本 / 去构建你的第一版策略」（VersionList 的默认空态归 E.version-empty）',
@@ -270,7 +295,7 @@ export const TM_AGENTS: TmRegistry = {
     label: '页面一句话说明',
     clauses: ['U06-C14', 'U11-C05'],
     anchors: ['spec-change-58'],
-    note: '「按场景分组；每个智能体执一侧，参赛需两侧各标一个参赛版本」',
+    note: '只说明「选择一个智能体，继续你的策略」；资格细节留在分组状态里',
   },
   'MA.action-error': {
     label: '进入失败提示',
@@ -300,7 +325,8 @@ export const TM_AGENTS: TmRegistry = {
     label: '场景分组卡',
     clauses: ['U10-C02', 'U06-C13'],
     anchors: ['spec-change-73', 'spec-change-64'],
-    note: '数据化分组（/v1/my/agents）：双侧徽章 + 参赛资格行 + 逐侧智能体行',
+    note:
+      '数据化分组（/v1/my/agents）：简短场景信息、双侧状态与可整行点入的智能体清单',
     when: '/v1/my/agents 可用时（否则降级为骨架卡）',
   },
   'MA.group-header': {
@@ -333,14 +359,15 @@ export const TM_AGENTS: TmRegistry = {
     label: '一侧的智能体段',
     clauses: ['U01-C21'],
     anchors: ['spec-p1a'],
-    note: '该侧全部智能体按最近编辑倒序，下接「再建一个」',
-    when: '该侧已有 ≥1 个智能体',
+    note:
+      '段头只出现一次角色名与简述并保留一个机器人加号；该侧全部智能体沿用服务端顺序',
   },
   'MA.agent-row': {
     label: '智能体行',
     clauses: ['U10-C11', 'U01-C21', 'U10-C02'],
     anchors: ['spec-change-63'],
-    note: '#56 每侧可多个，逐个成行（data-testid=agent-row）',
+    note:
+      '#56 每侧可多个；整行是 → /agents/:id 的唯一主操作（data-testid=agent-row）',
   },
   'MA.agent-name': {
     label: '智能体展示名',
@@ -348,118 +375,20 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-change-63', 'spec-p1'],
     journeys: ['j4s5'],
     note:
-      '#63：有自起名=「侧角色名「自起名」」，没有=「侧角色名 #id」；改名后即时变',
-  },
-  'MA.agent-id': {
-    label: '内部 id 小字',
-    clauses: ['U01-C20'],
-    anchors: ['spec-change-25', 'spec-p1'],
-    when: '没起名时（有名则不显示 id）',
-  },
-  'MA.agent-meta': {
-    label: '版本参赛摘要',
-    clauses: ['U06-C13', 'U01-C21', 'U01-C33'],
-    anchors: ['spec-change-33', 'spec-p1a'],
-    note: '「N 个版本 · 已标 ★参赛版本/未标参赛版本 · 最近编辑 · 侧标签」',
-  },
-  'MA.agent-edited': {
-    label: '最近编辑时间',
-    clauses: ['U01-C21'],
-    anchors: ['spec-p1a'],
-    note: 'lastEditedAt＝保存与草稿暂存取较晚者；行序按它倒序',
-    when: '有过保存或暂存时',
-  },
-  'MA.agent-actions': {
-    label: '行动作组',
-    note: '查看智能体 / 进入构建 / 重命名 / 删除（仅空壳）',
-  },
-  'MA.view-button': {
-    label: '查看智能体',
-    clauses: ['U10-C11'],
-    note: '→ /agents/:id（EA）',
-  },
-  'MA.build-button': {
-    label: '进入构建',
-    clauses: ['U01-C01', 'U01-C16'],
-    journeys: ['jR1s1'],
-    note: '→ /agents/:id/build 工作区；已有 agentID 直接导航，不再 ensure',
-  },
-  'MA.rename-button': {
-    label: '重命名按钮',
-    clauses: ['U01-C22', 'U01-C22b', 'U01-C23'],
-    anchors: ['spec-p2', 'spec-p3'],
-    journeys: ['j4s5'],
-    note:
-      'P2 就地改名不弹窗；P3 首个（ensure 建的）策略事后补名只能在这里（EA 无改名入口，C22b 缺口）',
-  },
-  'MA.rename-form': {
-    label: '改名表单',
-    clauses: ['U01-C22'],
-    anchors: ['spec-p2'],
-    journeys: ['j4s5'],
-    when: '点「重命名」后就地出现',
-  },
-  'MA.rename-input': {
-    label: '改名输入框',
-    clauses: ['U01-C22'],
-    anchors: ['spec-p2'],
-    journeys: ['j4s5'],
-    note:
-      '1–30 字，留空则不起名（回落「商鞅 #id」）；Enter 保存 / Esc 取消——中文输入法组字中按回车是重点观察项',
-    when: '点「重命名」后',
-  },
-  'MA.rename-save-button': {
-    label: '改名保存',
-    clauses: ['U01-C22'],
-    anchors: ['spec-p2'],
-    journeys: ['j4s5'],
-    when: '点「重命名」后',
-  },
-  'MA.rename-cancel-button': {
-    label: '改名取消',
-    clauses: ['U01-C22'],
-    when: '点「重命名」后',
-  },
-  'MA.delete-button': {
-    label: '删除按钮',
-    clauses: ['U01-C27'],
-    anchors: ['spec-p8b'],
-    note: 'P8b：只有 0 版本的空壳才有「删除」；有版本的永不可删',
-    when: '该智能体一版都没存时',
-  },
-  'MA.delete-confirm-button': {
-    label: '确认删除',
-    clauses: ['U01-C27'],
-    anchors: ['spec-p8b'],
-    note: '两步删除不弹窗（E9 界面自解释）',
-    when: '点过「删除」后',
-  },
-  'MA.row-error': {
-    label: '改名删除失败',
-    clauses: ['LACK-10'],
-    when: '改名或删除请求失败时',
+      '#63：角色名已由段头说明；行内有自起名则只显示自起名，没有则回落 #id；改名后即时变',
   },
   'MA.new-agent-button': {
-    label: '再建一个',
+    label: '新建智能体',
     clauses: ['U01-C17', 'U01-C26', 'U06-C08', 'U02-C19', 'U01-C09'],
     anchors: ['spec-change-59', 'spec-change-79', 'spec-p8a', 'spec-p6a'],
     note:
-      '同侧再建唯一入口（#90 废止「复制为新智能体」后）；开 E.new-agent-dialog，#59/#79 引导门在弹窗里拦：需先有 ≥1 个对侧策略且版本数 ≥1',
-    when: '该侧已有 ≥1 个智能体',
+      '每侧段头唯一的机器人加号；桌面锚定浮层、移动端底部面板。创建成功先进入智能体主页；#59/#79 引导门仍由浮层处理',
   },
   'MA.empty-side': {
     label: '缺侧空态行',
     clauses: ['U10-C02'],
     anchors: ['spec-change-64'],
-    note: '「还没有商鞅智能体」+ 创建 CTA',
-    when: '该侧还没有智能体',
-  },
-  'MA.create-side-button': {
-    label: '创建该侧智能体',
-    clauses: ['U10-C02', 'U01-C23', 'U05-C04', 'U02-C01'],
-    anchors: ['spec-change-64', 'spec-p3'],
-    note:
-      '文案：对侧已建时「去创建对侧（甘龙）」，否则「创建甘龙智能体」；懒 ensure 直进构建器，不弹命名弹窗',
+    note: '只显示「还没有商鞅智能体」；创建入口固定在该侧段头',
     when: '该侧还没有智能体',
   },
   'MA.fallback-group': {
@@ -470,17 +399,7 @@ export const TM_AGENTS: TmRegistry = {
   },
   'MA.fallback-row': {
     label: '降级侧行',
-    when: '降级骨架时',
-  },
-  'MA.fallback-view-button': {
-    label: '降级·查看',
-    clauses: ['U10-C11'],
-    note: '懒 ensure 后 → /agents/:id',
-    when: '降级骨架时',
-  },
-  'MA.fallback-build-button': {
-    label: '降级·进入构建',
-    note: '懒 ensure 后 → /agents/:id/build',
+    note: '段头机器人加号懒 ensure，并安全打开既有/新建智能体主页',
     when: '降级骨架时',
   },
   'MA.fallback-hint': {
@@ -593,9 +512,9 @@ export const TM_AGENTS: TmRegistry = {
 export const STEPS_AGENTS: StepHints = {
   // 第一轮旅程 1（第 4 步保存在 E，第 5–6 步在 FA，归各自组）
   j1s3: { route: '/express', marker: 'X.role-card' },
-  // 第一轮旅程 4 第 5 步：改名只能在我的智能体页
-  j4s5: { route: '/my-agents', marker: 'MA.rename-button' },
-  // 第一轮旅程 5 第 1 步：从 EA 页头「出战」呼出面板（面板本体归 OS）
+  // 咳嗽方案把改名收进智能体主页的身份菜单。
+  j4s5: { route: '/agents/:id', marker: 'EA.identity-menu' },
+  // 第一轮旅程 5 第 1 步：从 EA 版本卡「出战」呼出面板（面板本体归 OS）
   j5s1: { route: '/agents/:id', marker: 'EA.field-button' },
   // 第一轮旅程 8 别人的智能体主页
   j8s1: { route: '/agents/:id', marker: 'EA.public-record-card' },

@@ -8,6 +8,7 @@ import {
   FIXTURE_SIDE_B_NAME,
   FIXTURE_WIN_TOKEN,
   installFixtureScenario,
+  openBattlePanel,
   requireServerFixtures,
   sameOrigin,
   saveEntryVersion,
@@ -50,6 +51,14 @@ interface ScenarioSummaryJSON {
   id: string
   onlineAt?: number | null
   stats?: { battleCount: number; sideWinRate: { a: number; b: number } }
+}
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>((done) => {
+    resolve = done
+  })
+  return { promise, resolve }
 }
 
 test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
@@ -103,8 +112,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
 
     // UI 旅程（mock V20）：出战面板 → 玩家约战（已解锁）→ 对手玩家 → 发起
     // 双侧约战。
-    await page.goto(`/agents/${mineA.agentID}`)
-    await page.getByTestId('open-os-panel').click()
+    await openBattlePanel(page, mineA.agentID)
     await page.getByRole('tab', { name: /玩家约战/ }).click()
     await expect(page.getByText('玩家约战已解锁')).toBeVisible()
     await expect(page.getByText('我的双侧出战阵容', { exact: false }))
@@ -202,7 +210,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await target.context.dispose()
   })
 
-  test('P5 #9–#12 Express lands after signup, defaults to MCQ, saves, and enters live first battle', async ({ page }) => {
+  test('P5 #9–#12 Express lands after signup, opens a preset on demand, saves, and enters live first battle', async ({ page }) => {
     test.setTimeout(120_000)
     // A3：新账号注册直落 /express（严格断言，不接受 /scenarios 回落）。
     await signup(page, `express-${Date.now()}`)
@@ -218,52 +226,121 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await expect(page.getByText('自魏入秦的说客，无根无党，惟以变法自荐'))
       .toBeVisible()
 
+    const releaseConfig = deferred()
+    const seenConfig = deferred()
+    const deliveredConfig = deferred()
+    const releaseScenario = deferred()
+    const seenScenario = deferred()
+    const deliveredScenario = deferred()
+    await page.route(/\/v1\/config$/, async (route) => {
+      const response = await route.fetch()
+      seenConfig.resolve()
+      await releaseConfig.promise
+      await route.fulfill({ response })
+      deliveredConfig.resolve()
+    })
+    await page.route(
+      /\/v1\/scenarios\/shangyang-court\?side=a$/,
+      async (route) => {
+        const response = await route.fetch()
+        seenScenario.resolve()
+        await releaseScenario.promise
+        await route.fulfill({ response })
+        deliveredScenario.resolve()
+      },
+    )
+
     await page.getByTestId('express-build').click()
     await expect(page).toHaveURL(/\/agents\/\d+\/build\?.*express=1/)
     await expect(page.getByText('首战快速通道 · 保存即自动开战并直达实况'))
       .toBeVisible()
 
-    // #12：初始化三选一默认停在 MCQ 拼装，商鞅 a 侧题库可见。
-    const mcqTab = page.getByRole('tab', { name: 'MCQ 拼装' })
-    await expect(mcqTab).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByRole('tab', { name: 'Basic 直写' })).toBeVisible()
-    await expect(page.getByRole('tab', { name: '元提示词' })).toBeVisible()
+    // 2026-09-09：辅助入口常驻但默认收起；express 仍保留保存自动开战。
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('tab')).toHaveCount(0)
+    await page.getByRole('button', { name: '选择预设策略' }).click()
+    const presetDialog = page.getByRole('dialog', { name: '选择预设策略' })
     const deck = deckFor('shangyang-court', 'a', null)
     expect(deck, 'the shangyang side-a MCQ deck ships with the SPA').not
       .toBeNull()
-    await expect(page.getByText(deck!.questions[0].prompt)).toBeVisible()
+    await expect(presetDialog.getByText(deck!.questions[0].prompt))
+      .toBeVisible()
 
     // 快速答题：每题点第一个选项；答完前「填入工作区」保持不可点。
-    const fill = page.getByRole('button', { name: '填入工作区' })
+    const fill = presetDialog.getByRole('button', { name: '填入工作区' })
     await expect(fill).toBeDisabled()
     const selections: Record<string, string> = {}
     for (const question of deck!.questions) {
       selections[question.id] = question.options[0].id
-      await page
+      await presetDialog
         .getByRole('button', { name: question.options[0].label, exact: true })
         .click()
     }
     await fill.click()
 
-    // 拼装文本进入工作区（所见即所存），三选一卡随之收起。
+    // 拼装文本进入工作区（所见即所存），辅助入口仍然常驻。
     const assembled = assembleDeck(deck!, selections)
     await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
-    await expect(page.getByText('初始化方式 · 三选一生成首稿')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+
+    await test.step('当 首战构建器的配置与场景详情响应都被延迟', async () => {
+      await Promise.all([seenConfig.promise, seenScenario.promise])
+    })
+
+    await test.step('那么 即使工作区已有策略，「加载首战配置…」按钮仍不可用', async () => {
+      const save = page.getByTestId('save-version')
+      await expect(save).toHaveText('加载首战配置…')
+      await expect(save).toBeDisabled()
+    })
+
+    await test.step('当 配置先返回但场景详情仍被延迟', async () => {
+      releaseConfig.resolve()
+      await deliveredConfig.promise
+    })
+
+    await test.step('那么 保存仍不可用', async () => {
+      await expect(page.getByTestId('save-version')).toHaveText(
+        '加载首战配置…',
+      )
+      await expect(page.getByTestId('save-version')).toBeDisabled()
+    })
+
+    await test.step('当 场景详情也返回', async () => {
+      releaseScenario.resolve()
+      await deliveredScenario.promise
+    })
+
+    await test.step('那么 保存恢复为「保存并开始首战」', async () => {
+      await expect(page.getByTestId('save-version')).toHaveText(
+        '保存并开始首战',
+      )
+      await expect(page.getByTestId('save-version')).toBeEnabled()
+    })
 
     // #9/#17 例外：express 下保存即自动派发首战并直达实况。
-    const save = page.getByTestId('save-version')
-    await expect(save).toHaveText('保存并开始首战')
-    const dispatched = page.waitForResponse((response) =>
-      response.url().endsWith('/v1/matches/pve') &&
-      response.request().method() === 'POST'
-    )
-    await save.click()
-    const dispatchHttp = await dispatched
-    expect(dispatchHttp.status()).toBe(200)
-    const { matchID } = await dispatchHttp.json() as { matchID: number }
-    await expect(page).toHaveURL(new RegExp(`/matches/${matchID}$`))
-    await expect(page.getByRole('heading', { name: `对战 #${matchID}` }))
-      .toBeVisible()
+    let matchID = 0
+    let dispatchStatus = 0
+    await test.step('当 我点击保存', async () => {
+      const dispatched = page.waitForResponse((response) =>
+        response.url().endsWith('/v1/matches/pve') &&
+        response.request().method() === 'POST'
+      )
+      await page.getByTestId('save-version').click()
+      const dispatchHttp = await dispatched
+      dispatchStatus = dispatchHttp.status()
+      matchID = (await dispatchHttp.json() as { matchID: number }).matchID
+    })
+
+    await test.step('那么 使用真实配置的预设派发并直达首战实况', async () => {
+      expect(dispatchStatus).toBe(200)
+      await expect(page).toHaveURL(new RegExp(`/matches/${matchID}$`))
+      await expect(page.getByRole('heading', { name: `对战 #${matchID}` }))
+        .toBeVisible()
+    })
 
     // API 复核：恰好这一场 PVE 首战存在于我的对局列表。
     const matches = await (await page.request.get('/v1/matches'))
@@ -295,23 +372,33 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     )).json() as {
       summary: { title: string; sideAName: string; sideBName: string }
     }
-    const { title, sideAName, sideBName } = detail.summary
+    const { sideAName, sideBName } = detail.summary
+    const scenarioGroup = () =>
+      page.getByRole('heading', {
+        level: 2,
+        name: detail.summary.title,
+        exact: true,
+      }).locator('..').locator('..')
 
     // 第一个 a 侧智能体：我的智能体页的空侧 CTA（懒 ensure，不受引导门）。
     await page.goto('/my-agents')
-    await page
-      .getByRole('button', { name: `创建${title}·${sideAName}侧智能体` })
+    await scenarioGroup()
+      .getByRole('button', { name: `新建${sideAName}智能体` })
       .click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-    const firstAgentID = Number(/\/agents\/(\d+)\/build/.exec(page.url())?.[1])
+    await page.getByRole('dialog', { name: `新建${sideAName}智能体` })
+      .getByRole('button', { name: '创建智能体' }).click()
+    await expect(page).toHaveURL(/\/agents\/\d+$/)
+    const firstAgentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
     expect(firstAgentID).toBeGreaterThan(0)
 
     // 同侧第 2 个：新建弹窗被 #59 引导门拦下，给出切侧引导。
     await page.goto('/my-agents')
-    await page
-      .getByRole('button', { name: `再建一个${title}·${sideAName}侧智能体` })
+    await scenarioGroup()
+      .getByRole('button', { name: `新建${sideAName}智能体` })
       .click()
-    const dialog = page.getByRole('dialog', { name: /新建智能体/ })
+    const dialog = page.getByRole('dialog', {
+      name: `新建${sideAName}智能体`,
+    })
     await expect(dialog).toBeVisible()
     await dialog.getByTestId('create-agent').click()
     await expect(
@@ -319,9 +406,6 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
         '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
       ),
     ).toBeVisible()
-    await expect(dialog.getByText('两边都要会写才是真本事', { exact: false }))
-      .toBeVisible()
-
     // API 复核：POST /v1/agents 以 409 + sibling_gate 拒绝。
     const rejected = await page.request.post('/v1/agents', {
       headers: sameOrigin,
@@ -333,11 +417,13 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     )
 
     // 引导 CTA 切到对侧并创建成功。
-    await dialog.getByRole('button', { name: `先创建${sideBName}` }).click()
-    await dialog.getByTestId('create-agent').click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
+    await dialog.getByRole('button', { name: `去创建${sideBName}智能体` })
+      .click()
+    await page.getByRole('dialog', { name: `新建${sideBName}智能体` })
+      .getByTestId('create-agent').click()
+    await expect(page).toHaveURL(/\/agents\/\d+$/)
     const oppositeAgentID = Number(
-      /\/agents\/(\d+)\/build/.exec(page.url())?.[1],
+      /\/agents\/(\d+)$/.exec(page.url())?.[1],
     )
     expect(oppositeAgentID).toBeGreaterThan(0)
     expect(oppositeAgentID).not.toBe(firstAgentID)
@@ -350,6 +436,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     })
     expect(stillBlocked.status()).toBe(409)
 
+    await page.getByRole('button', { name: '新建版本' }).click()
     const oppositeInput = page.getByLabel('策略提示词')
     await expect(oppositeInput).toBeEnabled()
     await oppositeInput.fill('对侧首稿：先谈代价，再谈道理。')
@@ -358,15 +445,15 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
 
     // 对侧齐备（且有版本）后，同侧第 2 个放行。
     await page.goto('/my-agents')
-    await page
-      .getByRole('button', { name: `再建一个${title}·${sideAName}侧智能体` })
+    await scenarioGroup()
+      .getByRole('button', { name: `新建${sideAName}智能体` })
       .click()
     await page
-      .getByRole('dialog', { name: /新建智能体/ })
+      .getByRole('dialog', { name: `新建${sideAName}智能体` })
       .getByTestId('create-agent')
       .click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-    const secondAgentID = Number(/\/agents\/(\d+)\/build/.exec(page.url())?.[1])
+    await expect(page).toHaveURL(/\/agents\/\d+$/)
+    const secondAgentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
     expect(secondAgentID).toBeGreaterThan(0)
     expect([firstAgentID, oppositeAgentID]).not.toContain(secondAgentID)
 

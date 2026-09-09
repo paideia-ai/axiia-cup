@@ -63,9 +63,19 @@ if [ -z "$AXIIA_BIN" ]; then
   else
     BAZEL=(deno run -A --no-config npm:@bazel/bazelisk@1.28.1)
   fi
+  # Swiftly exposes `clang` through a multicall shim. Bazel later invokes the
+  # selected compiler in a stripped environment, where that shim can infer its
+  # resource root from the shim path and miss swiftrt.o. Ask Clang for the real
+  # compiler path up front; system Clang installations simply return `clang`.
+  CLANG_BIN="$(clang -print-prog-name=clang)"
+  [ -x "$CLANG_BIN" ] || command -v "$CLANG_BIN" >/dev/null 2>&1 ||
+    fail "Clang compiler is not executable: $CLANG_BIN"
+  SWIFT_TOOLCHAIN_BIN="$(dirname "$CLANG_BIN")"
+  SWIFT_TOOLCHAIN_PATH="$SWIFT_TOOLCHAIN_BIN:$PATH"
   printf 'Building the real Swift server...\n'
-  (cd "$SERVER_BUILD_REPO" && CC=clang USE_BAZEL_VERSION=9.1.0 \
-    "${BAZEL[@]}" build "--action_env=PATH=$PATH" //packages/axiia:axiia) \
+  (cd "$SERVER_BUILD_REPO" && PATH="$SWIFT_TOOLCHAIN_PATH" CC="$CLANG_BIN" \
+    USE_BAZEL_VERSION=9.1.0 "${BAZEL[@]}" build \
+    "--action_env=PATH=$SWIFT_TOOLCHAIN_PATH" //packages/axiia:axiia) \
     >"$E2E_WORK/bazel.log" 2>&1 || {
       tail -200 "$E2E_WORK/bazel.log"
       fail 'Swift server build failed'
@@ -113,10 +123,24 @@ done
   fail 'Swift server did not become ready'
 }
 
-MINT="$($AXIIA_BIN admin mint \
-  --email admin@axiia.test \
-  --name Admin \
-  --password 'adminpw-123456')"
+MINT=''
+for _ in $(seq 1 6); do
+  if MINT="$($AXIIA_BIN admin mint \
+    --email admin@axiia.test \
+    --name Admin \
+    --password 'adminpw-123456' 2>"$E2E_WORK/mint.err")"; then
+    break
+  fi
+  kill -0 "$API_PID" 2>/dev/null || {
+    cat "$E2E_WORK/server.log"
+    fail 'Swift server exited before the control plane became ready'
+  }
+  sleep 2
+done
+[ -n "$MINT" ] || {
+  cat "$E2E_WORK/mint.err"
+  fail 'admin control plane did not become ready'
+}
 TOTP_SECRET="$(printf '%s\n' "$MINT" | sed -n 's/^TOTP secret: //p')"
 [ -n "$TOTP_SECRET" ] || fail 'admin mint did not return a TOTP secret'
 
@@ -161,4 +185,4 @@ AXIIA_SCENARIO_ID="$SCENARIO_ID" \
 AXIIA_ADMIN_EMAIL='admin@axiia.test' \
 AXIIA_ADMIN_PASSWORD='adminpw-123456' \
 AXIIA_ADMIN_TOTP_SECRET="$TOTP_SECRET" \
-  deno task --config "$WEB_DIR/deno.json" test:e2e
+  deno task --config "$WEB_DIR/deno.json" test:e2e "$@"

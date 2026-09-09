@@ -1,6 +1,7 @@
 import { type BrowserContext, expect, type Page, test } from '@playwright/test'
 
 import { B3_A5_FIXTURE_DEFAULTS } from '../../src/testmode/data/b3-a5-journeys'
+import { openBattlePanel } from './helpers'
 
 // These tests use real handoff accounts. A failure must never persist a trace,
 // video, screenshot, or automatic page snapshot that could contain the login
@@ -103,7 +104,8 @@ async function loginAfterProtectedEntry(page: Page, persona: Persona) {
   await expect(page).toHaveURL((url) =>
     url.pathname === '/login' && url.searchParams.has('next')
   )
-  await expect(page.getByRole('navigation', { name: '测试模式' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '测试模式' }))
+    .toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem('axiia:tm'))).toBe('1')
 
   const loginURL = new URL(page.url())
@@ -124,7 +126,8 @@ async function loginAfterProtectedEntry(page: Page, persona: Persona) {
     url.searchParams.get('tmJourney') === persona.journeyID &&
     url.searchParams.get('tmStep') === persona.stepID
   )
-  await expect(page.getByRole('navigation', { name: '测试模式' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: '测试模式' }))
+    .toBeVisible()
   expect(await page.evaluate(() => localStorage.getItem('axiia:tm'))).toBe('1')
 
   const meResponse = await page.request.get('/v1/auth/me')
@@ -263,11 +266,13 @@ test.describe('B3/A5 Test Mode with real handoff accounts', () => {
       'guided product links navigate in the tester current tab',
     ).toBe(pagesBefore)
     await expect(guide).toBeVisible()
-    await expect(guide.getByText(b3Owner.stepID, { exact: true })).toBeVisible()
+    await expect(guide.getByText(b3Owner.stepID, { exact: true }))
+      .toBeVisible()
 
     await page.goto(`/agents/${b3Owner.agentID}`)
-    await expect(page.getByTestId('open-os-panel')).toBeVisible()
-    await expect(page.getByRole('button', { name: '编辑', exact: true }))
+    await expect(page.getByRole('button', { name: /用 v\d+ 出战/ }).first())
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '新建版本' }))
       .toBeVisible()
     await expect(page.getByText('版本对比', { exact: true })).toBeVisible()
     await expect(page.getByText('提示词与版本对比只有主人可见。'))
@@ -304,9 +309,7 @@ test.describe('B3/A5 Test Mode with real handoff accounts', () => {
     await assertOwnsAgent(page, a5Owner.agentID)
     await assertBoardIdentityBoundary(page, guide)
 
-    const battleButton = page.getByTestId('open-os-panel')
-    await expect(battleButton).toBeEnabled()
-    await battleButton.click()
+    await openBattlePanel(page, Number(a5Owner.agentID))
     const opponentPanel = page.getByRole('dialog').filter({
       has: page.getByRole('heading', { name: /^出战 ·/ }),
     })

@@ -277,8 +277,8 @@ export async function buildVersion(
   const save = page.getByTestId('save-version')
   await expect(save).toBeEnabled()
   await save.click()
-  // #88：保存不再跳转——留在 E 页，版本线就地长出这一版。
-  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build`))
+  // Keso 2026-09-09：低信息构建器保存后回到高信息主页，版本卡在主页长出。
+  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
   await expect(page.getByTestId('version-card').first()).toBeVisible()
 
   const versionsResponse = await page.request.get(
@@ -293,4 +293,45 @@ export async function buildVersion(
   expect(version?.prompt).toBe(prompt)
   expect(payload.entryVersionID).toBe(version?.id)
   return { agentID, versionID: version!.id }
+}
+
+/**
+ * Opens the real opponent-selection panel from the accepted 2026-09-09 home
+ * surface. With no ordinal it mirrors the old page-header shortcut: prefer the
+ * side's selected entry version, otherwise use the latest saved version.
+ */
+export async function openBattlePanel(
+  page: Page,
+  agentID: number,
+  ordinal?: number,
+) {
+  await page.goto(`/agents/${agentID}`)
+  await expect(page.getByRole('heading', { level: 1 }))
+    .toBeVisible({ timeout: 30_000 })
+  const response = await page.request.get(`/v1/agents/${agentID}/versions`)
+  expect(response.ok(), `versions for agent ${agentID}`).toBe(true)
+  const payload = await response.json() as {
+    versions: Array<{
+      id: number
+      ordinal?: number
+      isEntry?: boolean
+    }>
+    entryVersionID?: number | null
+  }
+  const ascending = [...payload.versions].sort((a, b) => a.id - b.id)
+  const tagged = ascending.map((version, index) => ({
+    ...version,
+    ordinal: version.ordinal ?? index + 1,
+  }))
+  const target = ordinal == null
+    ? tagged.find((version) =>
+      version.id === payload.entryVersionID || version.isEntry
+    ) ?? tagged.at(-1)
+    : tagged.find((version) => version.ordinal === ordinal)
+  expect(target, `agent ${agentID} has requested battle version`).toBeDefined()
+  await page.getByRole('button', { name: `用 v${target!.ordinal} 出战` })
+    .click()
+  const panel = page.getByRole('dialog', { name: /^出战 ·/ })
+  await expect(panel).toBeVisible()
+  return { panel, ordinal: target!.ordinal, versionID: target!.id }
 }

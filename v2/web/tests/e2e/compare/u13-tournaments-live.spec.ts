@@ -16,6 +16,7 @@ import {
   adminContext,
   apiSignup,
   installFixtureScenario,
+  openBattlePanel,
   requireServerFixtures,
   sameOrigin,
   saveEntryVersion,
@@ -145,7 +146,12 @@ test('U13-C02 管理员在固定局场景上建赛、报名四个版本并按 12
       '实战版·不带暗记，正面立论。',
     )
     await saveEntryVersion(p2, FIXTURE_ID, 'b', '实战版·不带暗记，稳守反击。')
-    await saveEntryVersion(p4, FIXTURE_ID, 'a', '实战版·不带暗记，以证据说话。')
+    await saveEntryVersion(
+      p4,
+      FIXTURE_ID,
+      'a',
+      '实战版·不带暗记，以证据说话。',
+    )
     p4B = await saveEntryVersion(
       p4,
       FIXTURE_ID,
@@ -338,7 +344,8 @@ test('U13-C04 玩家在「排名」页看到锦标赛卡片——时间线与阶
 
   await test.step('那么 顶部导航存在「排名」入口', async () => {
     await page.goto('/scenarios')
-    await expect(page.getByRole('link', { name: '排名' }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: '排名' }).first())
+      .toBeVisible()
   })
 
   await test.step('当 我进入 /tournaments', async () => {
@@ -414,8 +421,7 @@ test('U13-C05 赛事 running 时试炼未被阻挡——机制是启动期环境
   })
 
   await test.step('当 我从智能体页呼出出战面板', async () => {
-    await page.goto(`/agents/${p1A.agentID}`)
-    await page.getByTestId('open-os-panel').click()
+    await openBattlePanel(page, p1A.agentID)
     await expect(page.getByRole('tab', { name: 'NPC 练习' })).toBeVisible()
   })
 

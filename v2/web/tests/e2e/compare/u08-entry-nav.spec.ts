@@ -46,7 +46,7 @@ async function loginAs(
   password: string,
 ): Promise<void> {
   await page.goto('/login')
-  await page.getByLabel('邮箱').fill(email)
+  await page.getByRole('textbox', { name: '邮箱', exact: true }).fill(email)
   await page.getByLabel('密码').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
 }
@@ -243,7 +243,7 @@ test('U08-C03 注册分「手机号 / 邮箱」两栏，默认邮箱栏＝注册
     await expect(panel.getByLabel(/注册码/)).toBeVisible()
     await expect(panel.getByLabel('手机号')).toBeVisible()
     await expect(panel.locator('form input')).toHaveCount(2)
-    await expect(panel.getByLabel('验证码')).toHaveCount(0)
+    await expect(panel.getByLabel('验证码', { exact: true })).toHaveCount(0)
   })
 })
 

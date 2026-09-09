@@ -223,7 +223,11 @@ export const WrongProductAccountWarning: Story = {
 export const BuilderUnderTestMode: Story = {
   play: async () => {
     const body = within(document.body)
-    await expect(await body.findByText('版本（1）')).toBeVisible()
+    // Keso 2026-09-09: the Builder no longer renders its version line. Wait for
+    // the real draft workspace instead before exercising the Test Mode overlay.
+    const prompt = await body.findByLabelText('策略提示词')
+    await waitFor(() => expect(prompt).toBeEnabled())
+    await expect(body.queryByText('版本（1）')).toBeNull()
     const pill = await body.findByRole('navigation', { name: '测试模式' })
 
     // ① 徽标层：页面上每个 [data-tm] 一个徽标

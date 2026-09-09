@@ -26,7 +26,7 @@ function Surface({ page }: { page: 'inventory' | 'agent' }) {
 }
 
 const meta = {
-  title: 'v3.4/Agent surfaces',
+  title: 'Agents/Keso low-high-low surfaces',
   component: Surface,
   parameters: {
     msw: [
@@ -50,68 +50,71 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const DualSideReadiness: Story = {
+export const MinimalInventoryWithReadiness: Story = {
   args: { page: 'inventory' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(await canvas.findByText('商鞅庭辩')).toBeVisible()
-    await expect(canvas.getByText('商鞅 ✓')).toBeVisible()
-    await expect(canvas.getByText('甘龙 未标参赛')).toBeVisible()
+    const readiness = canvas.getByLabelText('两侧参赛状态')
+    await expect(within(readiness).getByText(/商鞅/)).toHaveTextContent(
+      '商鞅 ✓',
+    )
+    await expect(within(readiness).getByText(/甘龙/)).toHaveTextContent(
+      '甘龙 未标参赛',
+    )
     await expect(
       canvas.getByText('参赛资格未就绪：还差 甘龙（未标参赛版本）'),
     ).toBeVisible()
+    await expect(canvas.getAllByTestId('agent-row')).toHaveLength(2)
+    await expect(canvas.queryByRole('button', { name: /重命名|删除/ }))
+      .toBeNull()
   },
 }
 
-export const VersionCards: Story = {
+export const HighFunctionAgentHome: Story = {
   args: { page: 'agent' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // P1：页头是策略展示名（fixture 无自起名 → 「商鞅 #101」），场景名降为副题。
     await expect(await canvas.findByRole('heading', { name: /商鞅 #101/ }))
       .toBeVisible()
-    await expect(canvas.getByText('v2')).toBeVisible()
-    await expect(canvas.getByText('★参赛版本')).toBeVisible()
-    // #89/#90：版本卡动作＝基于该版本迭代 / 设为参赛版本 / 出战——
-    // 「复制为新智能体」已废止，必须不存在。
-    await expect(canvas.getByRole('button', { name: '基于 v1 迭代' }))
+    await expect(canvas.getByRole('button', { name: '智能体更多操作' }))
       .toBeVisible()
-    await expect(canvas.getByRole('button', { name: /将 v1 设为.*参赛版本/ }))
+    await expect(canvas.getByRole('button', { name: '新建版本' })).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '新建商鞅智能体' }))
       .toBeVisible()
+    await expect(canvas.getByRole('button', { name: '复制 v1 提示词' }))
+      .toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: /将 v1 设为商鞅参赛版本/ }),
+    ).toBeVisible()
     await expect(canvas.getByRole('button', { name: '用 v1 出战' }))
       .toBeVisible()
-    await expect(canvas.queryByRole('button', { name: /复制为新智能体/ }))
+    await expect(canvas.getByRole('button', { name: '版本对比' }))
+      .toBeVisible()
+    await expect(canvas.queryByRole('button', { name: /基于 v1 迭代/ }))
       .toBeNull()
-    // P12：「保存后将成为 v3」提到段落级，全页一次。
-    await expect(canvas.getByText('保存后将成为 v3')).toBeVisible()
   },
 }
 
-// P11（Yihan 修订）：覆盖确认的武装态——确认行（role=alert）就地长在被点击
-// 的 v1 卡内，不再是页面顶部横幅（J4.3：不同屏会被误当按钮失灵）。
-export const IterateOverwriteConfirmArmed: Story = {
+export const CompactVersionControls: Story = {
   args: { page: 'agent' },
   render: () => (
     <VersionList
       versions={versions}
+      sideName='商鞅'
       onSetEntry={() => {}}
-      onIterate={() => {}}
       onField={() => {}}
-      pendingIterateID={1001}
-      onConfirmIterate={() => {}}
-      onCancelIterate={() => {}}
     />
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const cards = canvas.getAllByTestId('version-card')
-    // 最新在前：v1 是最后一张卡；确认行必须在它里面，别的卡没有。
-    const v1Card = within(cards[cards.length - 1])
-    await expect(v1Card.getByRole('alert')).toHaveTextContent(
-      '工作区里有未保存的改动，基于 v1 迭代会覆盖它',
-    )
-    await expect(v1Card.getByRole('button', { name: '仍要继续' }))
+    await expect(canvas.getByText('版本（2）')).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '复制 v2 提示词' }))
       .toBeVisible()
-    await expect(within(cards[0]).queryByRole('alert')).toBeNull()
+    await expect(canvas.getByRole('button', { name: '用 v2 出战' }))
+      .toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: '将 v2 设为商鞅参赛版本' }),
+    ).toHaveAttribute('aria-pressed', 'true')
   },
 }

@@ -1,566 +1,882 @@
-// 智能体编辑与版本 — agent-edit.feature 的可执行对应（BDD：每个 test.step
-// 的文案与 feature 的 Given/When/Then 一一对应；行为叙述以 feature 为准）。
-//
-// 锚定 v3.4：#81/E1 草稿 · #82/E2/E3 线性版本与迭代 · #88/E11 E 页内嵌版本线
-// 与「保存不跳转」· #89「基于该版本迭代」文案 · #90 废止「复制为新智能体」·
-// #25 双编号 · #33 设为参赛版本 · #56 同侧多槽 · #59/#79 引导门 ·
-// P5 模型继承 · P11 覆盖确认 · P12 提示常驻 · P14 复制当前文本。
-// 固定用内置场景「商鞅变法·朝堂辩法」（甲＝商鞅，乙＝甘龙），不依赖
-// AXIIA_SCENARIO_ID 的夹具场景。
+// agent-edit.feature 的可执行镜像。2026-09-09 起以咳嗦三页层级为准。
 import { expect, type Page, test } from '@playwright/test'
 
-import { registrationCode, signup } from './helpers'
+import { registrationCode, sameOrigin, signup } from './helpers'
 
-const SHANGYANG = 'shangyang-court'
-const SCENARIO_TITLE = '商鞅变法·朝堂辩法'
+const SIDE_A = '商鞅'
+const SIDE_B = '甘龙'
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>((done) => {
+    resolve = done
+  })
+  return { promise, resolve }
+}
+
+interface LocalDraftJournal {
+  schema: 2
+  identity: string
+  agentID: number
+  writerID: string
+  revision: number
+  token: string
+  basePrompt: string
+  prompt: string
+  promptPersisted: boolean
+  roleKey: string | null
+  modelID: string | null
+  note: string
+  method: 'mcq' | 'builder' | null
+  updatedAt: number
+}
+
+async function localDraftJournals(page: Page, agentID: number) {
+  return await page.evaluate((id) => {
+    const found: LocalDraftJournal[] = []
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index)
+      if (key == null || !key.startsWith('axiia:builder-draft:v2:')) continue
+      const raw = localStorage.getItem(key)
+      if (raw == null) continue
+      try {
+        const value = JSON.parse(raw) as LocalDraftJournal
+        if (value.schema === 2 && value.agentID === id) found.push(value)
+      } catch {
+        // Ignore unrelated malformed local data in the browser profile.
+      }
+    }
+    return found.sort((left, right) => right.revision - left.revision)
+  }, agentID)
+}
+
+async function putLocalDraftJournal(page: Page, journal: LocalDraftJournal) {
+  await page.evaluate((value) => {
+    const prefix = `axiia:builder-draft:v2:${
+      encodeURIComponent(value.identity)
+    }:`
+    localStorage.setItem(`${prefix}${value.token}`, JSON.stringify(value))
+  }, journal)
+}
+
+async function journalIdentity(page: Page, agentID: number) {
+  const response = await page.request.get('/v1/auth/me')
+  expect(response.ok()).toBe(true)
+  const me = await response.json() as { account: { id: string } }
+  return `${me.account.id}:${agentID}`
+}
 
 test.beforeEach(() => {
   expect(registrationCode, 'AXIIA_REGISTRATION_CODE must be set').not.toBe('')
 })
 
-// 场景页「去构建」＝懒创建（get-or-create，#54）：nth(0)＝甲方商鞅，
-// nth(1)＝乙方甘龙。返回新（或既有）agent id。
-async function createViaScenarioPage(
+async function createFromInventory(
   page: Page,
-  side: 'a' | 'b',
+  role: string,
+  name?: string,
 ): Promise<number> {
-  await page.goto(`/scenarios/${SHANGYANG}`)
-  // 远程 dev 后端的场景详情偶尔要十几秒才回——默认 5s 会在「加载中…」上超时。
-  await expect(page.getByRole('heading', { level: 1 }))
+  await page.goto('/my-agents')
+  await expect(page.getByRole('heading', { name: '我的智能体' }))
     .toBeVisible({ timeout: 30_000 })
-  // P13：该侧已有策略时「去构建」会换成「再建一个」，按序号取按钮不再可靠——
-  // 用逐侧稳定 testid 定位（本函数只用于该侧还没有策略的首建路径）。
-  await page.getByTestId(side === 'a' ? 'build-agent' : 'build-agent-b')
-    .click()
-  await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-  return Number(/\/agents\/(\d+)\/build/.exec(page.url())![1])
+  await page.getByRole('button', { name: `新建${role}智能体` }).click()
+  const dialog = page.getByRole('dialog', { name: `新建${role}智能体` })
+  if (name) await dialog.getByLabel('名称（可选）').fill(name)
+  await dialog.getByRole('button', { name: '创建智能体' }).click()
+  await expect(page).toHaveURL(/\/agents\/\d+$/)
+  const agentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
+  expect(agentID).toBeGreaterThan(0)
+  return agentID
 }
 
-// 工作区里保存一个版本。noise 是保存前的额外草稿暂存轮数（每轮改一次文本并
-// 等 debounce 落库）——「恒 +1」规则用它证明版本号与暂存次数无关。
-// #88：保存后**不再跳转**——断言留在 /build，并等版本线里出现新卡。
-async function saveVersion(
-  page: Page,
-  agentID: number,
-  prompt: string,
-  noise = 0,
-) {
+async function versionState(page: Page, agentID: number) {
+  const response = await page.request.get(`/v1/agents/${agentID}/versions`)
+  expect(response.ok()).toBe(true)
+  return await response.json() as {
+    versions: Array<{
+      id: number
+      ordinal?: number
+      prompt: string
+      isEntry?: boolean
+    }>
+    entryVersionID?: number | null
+  }
+}
+
+async function saveFromBuilder(page: Page, agentID: number, prompt: string) {
   if (!new RegExp(`/agents/${agentID}/build`).test(page.url())) {
     await page.goto(`/agents/${agentID}/build`)
   }
   const input = page.getByLabel('策略提示词')
-  // 草稿未回来之前编辑框是 disabled（aria-busy）——远程 dev 下 5s 不够。
   await expect(input).toBeEnabled({ timeout: 30_000 })
-  for (let round = 0; round < noise; round++) {
-    await input.fill(`${prompt} ——草稿噪声第 ${round + 1} 轮，不该影响版本号`)
-    await page.waitForTimeout(900)
-  }
   await input.fill(prompt)
-  const before = await page.getByTestId('version-card').count()
-  const save = page.getByTestId('save-version')
-  await expect(save).toBeEnabled()
-  await save.click()
-  // #88：留在 E 页，版本线就地长出一张新卡。
-  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build`))
-  await expect(page.getByTestId('version-card')).toHaveCount(before + 1)
+  await page.getByTestId('save-version').click()
+  await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
 }
 
-async function versionsOf(page: Page, agentID: number) {
-  const response = await page.request.get(`/v1/agents/${agentID}/versions`)
-  expect(response.ok()).toBe(true)
-  return await response.json() as {
-    versions: Array<
-      {
-        id: number
-        ordinal?: number
-        prompt: string
-        isEntry?: boolean
-        note?: string | null
-        createdAt?: number
-        matchCount?: number
-        winCount?: number
-      }
-    >
-    entryVersionID: number
-  }
-}
-
-test('agent-edit：E 页内嵌版本线——保存不跳转，v1→v2，改标参赛版本', async ({ page }) => {
+test('草稿自动暂存，保存回主页，版本严格线性', async ({ page }) => {
   test.setTimeout(240_000)
-  await signup(page, 'edit-iterate')
+  await signup(page, `edit-linear-${Date.now()}`)
+  let agentID = 0
+  const draft = '尚未保存：先以徙木证明法令可执行。'
 
-  let agentA = 0
-  await test.step('假如 我在场景页点甲方「去构建」——首个商鞅智能体 A 即建即进工作区', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
+  await test.step('假如 我从「我的智能体」创建商鞅 A，并先进入 A 的主页', async () => {
+    agentID = await createFromInventory(page, SIDE_A, 'A')
+    await expect(page.getByRole('heading', { name: `${SIDE_A}「A」` }))
+      .toBeVisible()
   })
 
-  const v1Prompt = '徙木立信：先立可验证的小承诺，再谈变法大义。'
-  await test.step('当 我输入首稿并点「保存版本」；那么 产生 v1、仍停留在 E 页、版本线出现 v1、v1 自动为 ★参赛版本', async () => {
-    await saveVersion(page, agentA, v1Prompt)
-    await expect(page).toHaveURL(new RegExp(`/agents/${agentA}/build`))
-    await expect(page.getByText('版本（1）')).toBeVisible()
-    await expect(page.getByText('★参赛版本')).toBeVisible()
-    const { versions, entryVersionID } = await versionsOf(page, agentA)
-    expect(versions).toHaveLength(1)
-    expect(entryVersionID).toBe(versions[0].id)
+  await test.step('当 我在低信息构建器写入独特草稿并立刻点击「← 智能体主页」（不等待 debounce）', async () => {
+    await page.getByRole('button', { name: '新建版本' }).click()
+    const input = page.getByLabel('策略提示词')
+    await expect(input).toBeEnabled()
+    await input.fill(draft)
+    await page.getByRole('link', { name: '← 智能体主页' }).click()
   })
 
-  const v2Prompt = '第二版：把甘龙的每条祖制引用都逼回「可否验于当下」。'
-  await test.step('当 我在同一页改写文本并再次保存；那么 版本线为 v2、v1（最新在前），双编号与四个动作齐全，且没有「复制为新智能体」', async () => {
-    await saveVersion(page, agentA, v2Prompt)
-    await expect(page).toHaveURL(new RegExp(`/agents/${agentA}/build`))
-    await expect(page.getByText('版本（2）')).toBeVisible()
-    const { versions } = await versionsOf(page, agentA)
-    expect(versions).toHaveLength(2)
-    const cardLabels = await page.getByText(/^v\d+$/).allTextContents()
-    expect(cardLabels).toEqual(['v2', 'v1'])
-    for (const version of versions) {
-      await expect(page.getByText(`#${version.id}`, { exact: true }))
-        .toBeVisible()
-    }
-    await expect(page.getByRole('button', { name: /展开 v\d+ 全文/ }).first())
-      .toBeVisible()
-    await expect(page.getByRole('button', { name: /设为.*参赛版本/ }))
-      .toBeVisible()
-    await expect(page.getByRole('button', { name: /基于 v\d+ 迭代/ }).first())
-      .toBeVisible()
-    await expect(page.getByRole('button', { name: /用 v\d+ 出战/ }).first())
-      .toBeVisible()
-    // #90：这个动作已废止，页面上不该再有它。
-    await expect(page.getByRole('button', { name: /复制为新智能体/ }))
-      .toHaveCount(0)
+  await test.step('并且 我立刻重新打开构建器', async () => {
+    await page.getByRole('button', { name: '新建版本' }).click()
   })
 
-  await test.step('当 我在 v2 卡点「设为参赛版本」；那么 ★ 从 v1 移到 v2，保存按钮旁常驻「保存后将成为 v3」', async () => {
-    await page.getByRole('button', { name: /设为.*参赛版本/ }).click()
-    const { versions } = await versionsOf(page, agentA)
-    const v2 = versions.reduce((a, b) => (a.id > b.id ? a : b))
-    // 远程 dev 后端：改标往返偶尔超过默认 5s，给足预算再判定。
-    await expect.poll(
-      async () => (await versionsOf(page, agentA)).entryVersionID,
-      { timeout: 20_000 },
-    ).toBe(v2.id)
-    await expect(page.getByText('保存后将成为 v3').first()).toBeVisible()
-  })
-
-  await test.step('当 我在工作区打字但不保存、离开再回来；那么 草稿仍在而版本数仍是 2', async () => {
-    const draft = '这段只是草稿：三年不改一字者，非慎也，怠也。'
-    await page.getByLabel('策略提示词').fill(draft)
-    // 等服务端把这次暂存确认回来（SSE → 状态字），再离开。固定 sleep 会在
-    // 远程 dev 上把还在飞的 mutate 请求随导航一起掐掉，草稿就丢了。
-    await expect(page.getByText('已自动暂存')).toBeVisible()
-    await page.goto('/my-agents')
-    await page.goto(`/agents/${agentA}/build`)
+  await test.step('那么 服务端草稿与输入框都恢复完全相同的文本，且还没有产生版本', async () => {
     await expect(page.getByLabel('策略提示词')).toHaveValue(draft)
-    expect((await versionsOf(page, agentA)).versions).toHaveLength(2)
-  })
-})
-
-test('agent-edit：同侧再建只走「再建一个」——引导门先挡后放，B 从 v1 重新计数', async ({ page }) => {
-  test.setTimeout(240_000)
-  await signup(page, 'edit-sibling')
-
-  let agentA = 0
-  await test.step('假如 我只有商鞅侧智能体 A，且已迭代到 v2', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, 'A 的 v1：先徙木，后论法。')
-    await saveVersion(page, agentA, 'A 的 v2：以「验于当下」为唯一裁准。')
-    await expect(page.getByText('版本（2）')).toBeVisible()
-  })
-
-  await test.step('那么 版本卡上没有「复制为新智能体」（#90 已废止）', async () => {
-    await expect(page.getByRole('button', { name: /复制为新智能体/ }))
-      .toHaveCount(0)
-    await page.goto(`/agents/${agentA}`)
-    await expect(page.getByRole('button', { name: /复制为新智能体/ }))
-      .toHaveCount(0)
-  })
-
-  await test.step('当 我在「我的智能体」点「再建一个商鞅」并提交；那么 引导门挡下且文案不含条文号', async () => {
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    const dialog = page.getByRole('dialog')
-    await dialog.getByRole('button', { name: '创建并进入构建' }).click()
-    await expect(
-      dialog.getByText(
-        '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
-      ),
-    ).toBeVisible()
-    await expect(dialog.getByText('#59')).toHaveCount(0)
-  })
-
-  await test.step('假如 我创建了甘龙侧智能体并保存一版（引导门放行，P8a 要求对侧有版本）', async () => {
-    const gan = await createViaScenarioPage(page, 'b')
-    await saveVersion(page, gan, '甘龙首稿：不轻掷民力。')
-  })
-
-  let agentB = 0
-  await test.step('当 我「再建一个商鞅」并起名「激进」；那么 新建策略 B、工作区为空（可重走 MCQ）', async () => {
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    const dialog = page.getByRole('dialog')
-    await dialog.getByLabel(/自起名/).fill('激进')
-    await dialog.getByRole('button', { name: '创建并进入构建' }).click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-    agentB = Number(/\/agents\/(\d+)\/build/.exec(page.url())![1])
-    expect(agentB).not.toBe(agentA)
-    await expect(page.getByLabel('策略提示词')).toHaveValue('')
-    expect((await versionsOf(page, agentB)).versions).toHaveLength(0)
-  })
-
-  await test.step('当 我保存 B 的首稿；那么 B 是「版本（1）」，商鞅侧并列 A、B（#56）', async () => {
-    await saveVersion(page, agentB, 'B 的 v1：另起一路，先破「利不百不变法」。')
-    await expect(page.getByText('版本（1）')).toBeVisible()
-    const { versions } = await versionsOf(page, agentB)
-    expect(versions).toHaveLength(1)
-    expect(versions[0].ordinal ?? 1).toBe(1)
-    await page.goto('/my-agents')
-    await expect(page.getByText('商鞅「激进」')).toBeVisible()
-  })
-})
-
-test('agent-edit：版本号恒 +1；基于该版本迭代不产版本；模型继承；复制当前文本', async ({ page }) => {
-  test.setTimeout(600_000)
-  await signup(page, 'edit-linear')
-
-  await test.step('假如 引导门已放行（对侧甘龙已存在且有版本，P8a）', async () => {
-    const gan = await createViaScenarioPage(page, 'b')
-    await saveVersion(page, gan, '甘龙首稿：不轻掷民力。')
-  })
-
-  let agentA = 0
-  const siblings: number[] = []
-  await test.step('并且 我拥有同侧策略 A、B、C（后两个经「再建一个」创建）', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, 'A v1：定基调。')
-    for (let i = 0; i < 2; i++) {
-      await page.goto('/my-agents')
-      await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-      await page.getByRole('dialog').getByRole('button', {
-        name: '创建并进入构建',
-      }).click()
-      await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-      siblings.push(Number(/\/agents\/(\d+)\/build/.exec(page.url())![1]))
-    }
-  })
-
-  const plans: Array<{ label: string; agentID: number; target: number }> = [
-    { label: 'A', agentID: agentA, target: 3 },
-    { label: 'B', agentID: siblings[0], target: 4 },
-    { label: 'C', agentID: siblings[1], target: 5 },
-  ]
-
-  for (const plan of plans) {
-    await test.step(`当 我把 ${plan.label} 迭代到 ${plan.target} 个版本（保存间随意暂存）；那么 序号恰为 v1..v${plan.target}，相邻差恒为 1`, async () => {
-      const existing = (await versionsOf(page, plan.agentID)).versions.length
-      for (let n = existing + 1; n <= plan.target; n++) {
-        await saveVersion(
-          page,
-          plan.agentID,
-          `${plan.label} 的第 ${n} 版正文。`,
-          (n % 2) + 1,
-        )
-      }
-      await expect(page.getByText(`版本（${plan.target}）`)).toBeVisible()
-      const { versions } = await versionsOf(page, plan.agentID)
-      const ordinals = versions.map((v) => v.ordinal ?? 0)
-      expect(ordinals).toEqual(
-        Array.from({ length: plan.target }, (_, i) => i + 1),
-      )
-      for (let i = 1; i < ordinals.length; i++) {
-        expect(ordinals[i] - ordinals[i - 1]).toBe(1)
-      }
-    })
-  }
-
-  await test.step('当 我在 A 的 v1 卡点「基于该版本迭代」；那么 载入 v1 全文、提示「已载入 v1」、版本数不变；再保存产生 v4', async () => {
-    await page.goto(`/agents/${agentA}/build`)
-    const { versions } = await versionsOf(page, agentA)
-    const v1 = versions.reduce((a, b) => (a.id < b.id ? a : b))
-    await page.getByRole('button', { name: '基于 v1 迭代' }).click()
-    await expect(page.getByText(/已载入 v1/)).toBeVisible()
-    await expect(page.getByLabel('策略提示词')).toHaveValue(v1.prompt)
-    expect((await versionsOf(page, agentA)).versions).toHaveLength(3)
-    await saveVersion(page, agentA, 'A 的第 4 版：从 v1 出发另走一条线。')
-    const after = await versionsOf(page, agentA)
-    expect(after.versions.map((v) => v.ordinal ?? 0)).toEqual([1, 2, 3, 4])
-  })
-
-  await test.step('当 草稿与最新版本不一致时点「基于该版本迭代」；那么 先确认再覆盖（P11）', async () => {
-    await page.getByLabel('策略提示词').fill(
-      '这是一段没保存的改动，不该被静默吞掉。',
+    const response = await page.request.get(`/v1/agents/${agentID}/draft`)
+    expect(response.ok()).toBe(true)
+    expect(
+      (await response.json() as { fields: Record<string, string> }).fields
+        .prompt,
     )
-    await page.waitForTimeout(900)
-    // P11：确认行必须「就地」长在被点击的 v1 卡内（agent-edit.feature:102），
-    // 页面顶部横幅那种「可见但不同屏」的形态要被这里抓住。
-    const v1Card = page.getByTestId('version-card').filter({
-      has: page.getByRole('button', { name: '基于 v1 迭代' }),
-    })
-    await v1Card.getByRole('button', { name: '基于 v1 迭代' }).click()
-    await expect(v1Card.getByText(/工作区里有未保存的改动/)).toBeVisible()
-    await v1Card.getByRole('button', { name: '取消' }).click()
-    await expect(page.getByLabel('策略提示词'))
-      .toHaveValue('这是一段没保存的改动，不该被静默吞掉。')
+      .toBe(draft)
+    expect((await versionState(page, agentID)).versions).toHaveLength(0)
   })
 
-  await test.step('当 我把工作区文本改成与 v1 一字不差再点「基于该版本迭代」；那么 不出现确认，直接载入 v1（jR1s4 零损失）', async () => {
-    // round-2 人工反馈（RUI LIN，jR1s4）：目标版本与草稿一字不差＝载入零
-    // 损失，P11 不再弹确认。草稿此时仍与最新版本 v4 不同——「与最新一致」
-    // 这条旧豁免帮不上忙，走的是新加的目标一致判据。
-    const { versions } = await versionsOf(page, agentA)
-    const v1 = versions.reduce((a, b) => (a.id < b.id ? a : b))
-    await page.getByLabel('策略提示词').fill(v1.prompt)
-    await page.waitForTimeout(900)
-    const v1Card = page.getByTestId('version-card').filter({
-      has: page.getByRole('button', { name: '基于 v1 迭代' }),
-    })
-    await v1Card.getByRole('button', { name: '基于 v1 迭代' }).click()
-    await expect(v1Card.getByText(/工作区里有未保存的改动/)).toHaveCount(0)
-    await expect(page.getByText(/已载入 v1/)).toBeVisible()
-    await expect(page.getByLabel('策略提示词')).toHaveValue(v1.prompt)
-  })
-
-  await test.step('那么 模型选择器沿用最新版本的模型（P5），且「复制当前文本」可用（P14）', async () => {
-    await page.goto(`/agents/${agentA}/build`)
-    await expect(page.getByText(/沿用 v\d+ 的模型/)).toBeVisible()
-    await page.getByRole('button', { name: /复制当前文本/ }).click()
-    await expect(page.getByRole('button', { name: /已复制/ })).toBeVisible()
-  })
-})
-
-// ── P4/#91 · P15 · P10 · P2 · P8 ──────────────────────────────────────────
-// 这五项都要后端配合（清同侧星 / 战绩字段 / 备注与时间 / 改名 / 删空策略与门
-// 的判定口径）。它们与上面三条同属 agent-edit.feature 的叙述。
-
-test('agent-edit：★ 每侧唯一——在另一个策略上改标会收走同侧原有的 ★（P4/#91）', async ({ page }) => {
-  test.setTimeout(300_000)
-  await signup(page, 'edit-entry-side')
-
-  await test.step('假如 引导门已放行（对侧甘龙已存在且有版本）', async () => {
-    const gan = await createViaScenarioPage(page, 'b')
-    await saveVersion(page, gan, '甘龙：祖制非为守旧，是为不轻掷民力。')
-  })
-
-  let agentA = 0
-  let agentB = 0
-  await test.step('并且 我在商鞅侧有两个策略 A（2 个版本）与 B（1 个版本），A 的 v2 是当前 ★', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, 'A v1：先徙木，后论法。')
-    await saveVersion(page, agentA, 'A v2：以「验于当下」为唯一裁准。')
-    await page.getByRole('button', { name: /设为.*参赛版本/ }).click()
-    await expect.poll(async () => {
-      const { versions, entryVersionID } = await versionsOf(page, agentA)
-      const newest = versions.reduce((a, b) => (a.id > b.id ? a : b))
-      return entryVersionID === newest.id
-    }, { timeout: 30_000 }).toBe(true)
-
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    await page.getByRole('dialog').getByRole('button', {
-      name: '创建并进入构建',
-    }).click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-    agentB = Number(/\/agents\/(\d+)\/build/.exec(page.url())![1])
-    await saveVersion(page, agentB, 'B v1：另起一路。')
-  })
-
-  await test.step('当 我在 B 的 v1 卡点「设为商鞅侧参赛版本」；那么 B v1 成为 ★，且 A 上不再有任何 ★', async () => {
-    // B 的 v1 是 B 内部的首版，保存时会自动成为本策略的 ★——所以这里先确认
-    // 按钮存在与否取决于它当前是不是本侧唯一的 ★。统一从 A 侧验证结果。
-    const bEntry = (await versionsOf(page, agentB)).entryVersionID
-    if (bEntry == null) {
-      await page.getByRole('button', { name: /设为.*参赛版本/ }).first().click()
-    }
-    await expect.poll(
-      async () => (await versionsOf(page, agentB)).entryVersionID != null,
-      { timeout: 30_000 },
-    ).toBe(true)
-    // 核心断言：同侧另一个策略的 ★ 必须被收走。契约用 optionals-absent 编码，
-    // 没有参赛版本时这个键是缺席的（undefined），不是 null。
-    await expect.poll(
-      async () => (await versionsOf(page, agentA)).entryVersionID ?? null,
-      { timeout: 30_000 },
-    ).toBeNull()
-    const { versions } = await versionsOf(page, agentA)
-    expect(versions.every((v) => !v.isEntry)).toBe(true)
-  })
-
-  await test.step('并且 「我的智能体」页商鞅侧完成度徽章为 ✓（恰有一个 ★）', async () => {
-    await page.goto('/my-agents')
-    await expect(page.getByText('商鞅 ✓')).toBeVisible()
-  })
-})
-
-test('agent-edit：逐版本胜负 + 版本备注与时间（P15/P10）', async ({ page }) => {
-  test.setTimeout(300_000)
-  await signup(page, 'edit-record-note')
-
-  let agentA = 0
-  await test.step('假如 我保存了一版并填了备注「加了退让条款」', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    const input = page.getByLabel('策略提示词')
-    await expect(input).toBeEnabled({ timeout: 30_000 })
-    await input.fill('先立可验证的小承诺，再谈变法大义。')
-    await page.getByLabel('版本备注（可选）').fill('加了退让条款')
+  await test.step('当 我保存首稿', async () => {
     await page.getByTestId('save-version').click()
-    await expect(page.getByTestId('version-card')).toHaveCount(1)
   })
 
-  await test.step('那么 版本卡显示备注、保存时间，以及「还没有出战过」', async () => {
-    await expect(page.getByText('加了退让条款')).toBeVisible()
-    await expect(page.getByTestId('version-time').first()).toBeVisible()
-    await expect(page.getByText('还没有出战过').first()).toBeVisible()
-    const { versions } = await versionsOf(page, agentA)
-    expect(versions[0].note).toBe('加了退让条款')
-    expect(versions[0].createdAt).toBeGreaterThan(0)
-    expect(versions[0].matchCount).toBe(0)
-    expect(versions[0].winCount).toBe(0)
+  let v1 = 0
+  await test.step('那么 我回到 A 的主页，v1 自动成为该侧参赛版本', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
+    const state = await versionState(page, agentID)
+    expect(state.versions).toHaveLength(1)
+    v1 = state.versions[0].id
+    expect(state.entryVersionID).toBe(v1)
+    await expect(page.getByRole('button', {
+      name: `将 v1 设为${SIDE_A}参赛版本`,
+    })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  await test.step('当 我不填备注再保存一版；那么 那一版没有备注但仍显示时间', async () => {
-    const input = page.getByLabel('策略提示词')
-    await input.fill('第二版：把祖制引用逼回「可否验于当下」。')
-    await expect(page.getByLabel('版本备注（可选）')).toHaveValue('')
-    await page.getByTestId('save-version').click()
+  await test.step('当 我再次进入构建器保存第二稿', async () => {
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await saveFromBuilder(
+      page,
+      agentID,
+      '第二稿：把每条祖制引用转化为可验证的现实成本。',
+    )
+  })
+
+  let v2 = 0
+  await test.step('那么 我再次回到主页，版本依次为 v2、v1', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
     await expect(page.getByTestId('version-card')).toHaveCount(2)
-    const { versions } = await versionsOf(page, agentA)
-    const newest = versions.reduce((a, b) => (a.id > b.id ? a : b))
-    expect(newest.note ?? '').toBe('')
-    expect(newest.createdAt).toBeGreaterThan(0)
-    await expect(page.getByTestId('version-time')).toHaveCount(2)
-  })
-})
-
-test('agent-edit：策略改名（P2）', async ({ page }) => {
-  test.setTimeout(300_000)
-  await signup(page, 'edit-rename')
-
-  let agentA = 0
-  await test.step('假如 我有一个未起名的商鞅策略，展示为「商鞅 #id」', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, '未起名策略的首稿。')
-    await page.goto('/my-agents')
-    await expect(page.getByText(`#${agentA}`, { exact: true })).toBeVisible()
+    await expect(
+      page.getByTestId('version-card').locator('[data-tm="E.version-tag"]'),
+    )
+      .toHaveText(['v2', 'v1'])
+    const state = await versionState(page, agentID)
+    v2 = Math.max(...state.versions.map((version) => version.id))
   })
 
-  await test.step('当 我点「重命名」并输入「贪婪」；那么 展示名变为「商鞅「贪婪」」且刷新后仍在', async () => {
-    await page.getByRole('button', { name: `重命名智能体 #${agentA}` }).click()
-    const field = page.getByLabel(`智能体 #${agentA} 的名字`)
-    await field.fill('贪婪')
-    await field.press('Enter')
-    await expect(page.getByText('商鞅「贪婪」')).toBeVisible()
-    await page.reload()
-    await expect(page.getByText('商鞅「贪婪」')).toBeVisible()
+  await test.step('并且 ★ 仍在 v1，保存没有偷偷改参赛版本', async () => {
+    expect((await versionState(page, agentID)).entryVersionID).toBe(v1)
   })
 
-  await test.step('当 我把名字清空并保存；那么 展示名回落为「商鞅 #id」', async () => {
-    await page.getByRole('button', { name: `重命名智能体 #${agentA}` }).click()
-    const field = page.getByLabel(`智能体 #${agentA} 的名字`)
-    await field.fill('')
-    await field.press('Enter')
-    await expect(page.getByText(`#${agentA}`, { exact: true })).toBeVisible()
-  })
-})
-
-test('agent-edit：空策略可删、有版本的不可删、空壳不开引导门（P8a/P8b）', async ({ page }) => {
-  test.setTimeout(300_000)
-  await signup(page, 'edit-empty-strategy')
-
-  let agentA = 0
-  await test.step('假如 我有一个有版本的商鞅策略，并建了一个一版没存的甘龙空壳', async () => {
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, '商鞅首稿：徙木立信。')
-    await createViaScenarioPage(page, 'b') // 只建号，不保存版本
-  })
-
-  await test.step('当 我尝试「再建一个商鞅」；那么 引导门仍然挡下（空壳对侧不算数，P8a）', async () => {
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    const dialog = page.getByRole('dialog')
-    await dialog.getByRole('button', { name: '创建并进入构建' }).click()
-    await expect(dialog.getByText(/需先有一个对侧智能体/)).toBeVisible()
-    await dialog.getByRole('button', { name: '取消' }).click()
-  })
-
-  await test.step('那么 有版本的策略那一行没有「删除」，空壳那一行有（P8b）', async () => {
-    await expect(page.getByRole('button', { name: `删除智能体 #${agentA}` }))
-      .toHaveCount(0)
-    await expect(page.getByRole('button', { name: /删除智能体 #\d+/ }))
-      .toHaveCount(1)
-  })
-
-  await test.step('当 我删除那个空壳；那么 该行消失', async () => {
-    const del = page.getByRole('button', { name: /删除智能体 #\d+/ })
-    const label = await del.getAttribute('aria-label')
-    const emptyID = Number(/#(\d+)/.exec(label!)![1])
-    await del.click()
-    await page.getByRole('button', { name: `确认删除智能体 #${emptyID}` })
-      .click()
-    await expect(page.getByRole('button', { name: /删除智能体 #\d+/ }))
-      .toHaveCount(0)
-  })
-
-  await test.step('当 我给甘龙保存一个版本后再试；那么 引导门放行', async () => {
-    const gan = await createViaScenarioPage(page, 'b')
-    await saveVersion(page, gan, '甘龙首稿：不轻掷民力。')
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    await page.getByRole('dialog').getByRole('button', {
-      name: '创建并进入构建',
+  await test.step('当 我在主页把 v2 设为参赛版本', async () => {
+    await page.getByRole('button', {
+      name: `将 v2 设为${SIDE_A}参赛版本`,
     }).click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
+  })
+
+  await test.step('那么 服务端参赛位移动到 v2', async () => {
+    await expect.poll(
+      async () => (await versionState(page, agentID)).entryVersionID ?? null,
+      { timeout: 20_000 },
+    ).toBe(v2)
+  })
+
+  await test.step('假如 A 已经有版本', async () => {
+    expect((await versionState(page, agentID)).versions.length)
+      .toBeGreaterThan(0)
+  })
+
+  await test.step('当 我再次打开 A 的构建器', async () => {
+    await page.getByRole('button', { name: '新建版本' }).click()
+  })
+
+  await test.step('那么 预设策略与外部 AI 辅助仍然可见', async () => {
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+      .toBeVisible()
+  })
+
+  await test.step('并且 当前草稿复制可用', async () => {
+    await expect(page.getByRole('button', { name: '复制当前草稿' }))
+      .toBeEnabled()
+  })
+
+  await test.step('并且 页面没有版本卡、版本对比、参赛或出战控件', async () => {
+    await expect(page.getByTestId('version-card')).toHaveCount(0)
+    await expect(page.getByText(/^版本（\d+）$/)).toHaveCount(0)
+    await expect(
+      page.getByRole('button', { name: /设为.*参赛版本|用 v\d+ 出战/ }),
+    )
+      .toHaveCount(0)
   })
 })
 
-test('agent-edit：最近编辑时间与排序（P1a）', async ({ page }) => {
-  test.setTimeout(300_000)
-  await signup(page, 'edit-recency')
-
+test('同一路由切换智能体时，迟到草稿不能串写或误存', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-route-race-${Date.now()}`)
+  const promptA = 'A-PRIVATE：迟到的商鞅草稿绝不能进入甘龙。'
+  const promptB = 'B-ONLY：甘龙自己的草稿必须原样保存。'
   let agentA = 0
   let agentB = 0
-  await test.step('假如 我在商鞅侧先后有两个策略 A、B（引导门已放行）', async () => {
-    const gan = await createViaScenarioPage(page, 'b')
-    await saveVersion(page, gan, '甘龙首稿：不轻掷民力。')
-    agentA = await createViaScenarioPage(page, 'a')
-    await saveVersion(page, agentA, 'A 的首稿。')
-    await page.goto('/my-agents')
-    await page.getByLabel(`再建一个${SCENARIO_TITLE}·商鞅侧智能体`).click()
-    await page.getByRole('dialog').getByRole('button', {
-      name: '创建并进入构建',
-    }).click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build/)
-    agentB = Number(/\/agents\/(\d+)\/build/.exec(page.url())![1])
-    await saveVersion(page, agentB, 'B 的首稿。')
+
+  await test.step('假如 A 与 B 各有一份可区分的服务端草稿，且都还没有版本', async () => {
+    const ensure = async (side: 'a' | 'b') => {
+      const response = await page.request.post('/v1/agents/ensure', {
+        headers: sameOrigin,
+        data: { scenarioID: 'shangyang-court', side },
+      })
+      expect(response.ok()).toBe(true)
+      return (await response.json() as { agentID: number }).agentID
+    }
+    agentA = await ensure('a')
+    agentB = await ensure('b')
+    for (
+      const [agentID, value] of [
+        [agentA, promptA],
+        [agentB, promptB],
+      ] as const
+    ) {
+      const response = await page.request.post(`/v1/agents/${agentID}/mutate`, {
+        headers: sameOrigin,
+        data: { field: 'prompt', value },
+      })
+      expect(response.ok()).toBe(true)
+      expect((await versionState(page, agentID)).versions).toHaveLength(0)
+    }
   })
 
-  await test.step('并且 我最后编辑的是 A（在 A 的工作区打了字）', async () => {
+  const releaseA = deferred()
+  const seenA = deferred()
+  const deliveredA = deferred()
+  const releaseB = deferred()
+  const seenB = deferred()
+  const deliveredB = deferred()
+  await page.route(`**/v1/agents/${agentA}/draft`, async (route) => {
+    const response = await route.fetch()
+    seenA.resolve()
+    await releaseA.promise
+    await route.fulfill({ response })
+    deliveredA.resolve()
+  })
+  await page.route(`**/v1/agents/${agentB}/draft`, async (route) => {
+    const response = await route.fetch()
+    seenB.resolve()
+    await releaseB.promise
+    await route.fulfill({ response })
+    deliveredB.resolve()
+  })
+
+  await test.step('当 A 的草稿响应被延迟，而我在同一个构建器路由切换到 B', async () => {
     await page.goto(`/agents/${agentA}/build`)
-    await expect(page.getByLabel('策略提示词')).toBeEnabled({ timeout: 30_000 })
-    await page.getByLabel('策略提示词').fill(
-      'A 又改了一句，于是 A 最近被编辑。',
-    )
-    await expect(page.getByText('已自动暂存')).toBeVisible()
+    await seenA.promise
+    await page.evaluate((path) => {
+      globalThis.history.pushState(globalThis.history.state, '', path)
+      globalThis.dispatchEvent(
+        new PopStateEvent('popstate', { state: globalThis.history.state }),
+      )
+    }, `/agents/${agentB}/build`)
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentB}/build$`))
+    await seenB.promise
   })
 
-  await test.step('那么 商鞅侧第一行是 A，且每行都显示一句相对时间', async () => {
-    await page.goto('/my-agents')
-    const rows = page.getByTestId('agent-row')
-    await expect(rows.first()).toBeVisible()
-    // 商鞅侧两行；最近编辑的 A 必须排在 B 前面（旧实现是 id 升序＝A、B 恰好
-    // 同序，所以这里特意让 B 更晚创建、A 更晚编辑，两种排序结论相反）。
-    const first = await rows.first().getAttribute('data-agent-id')
-    expect(Number(first)).toBe(agentA)
-    await expect(page.getByTestId('agent-edited').first()).toBeVisible()
-    const inventory = await (await page.request.get('/v1/my/agents'))
-      .json() as {
-        scenarios: Array<
-          { sides: { a: Array<{ agentID: number; lastEditedAt?: number }> } }
-        >
-      }
-    const side = inventory.scenarios.flatMap((s) => s.sides.a)
-    const a = side.find((x) => x.agentID === agentA)
-    const b = side.find((x) => x.agentID === agentB)
-    expect(a?.lastEditedAt ?? 0).toBeGreaterThan(0)
-    expect(a!.lastEditedAt!).toBeGreaterThanOrEqual(b!.lastEditedAt!)
+  await test.step('那么 B 的权威草稿返回前保存保持禁用', async () => {
+    await expect(page.getByLabel('策略提示词')).toBeDisabled()
+    await expect(page.getByTestId('save-version')).toBeDisabled()
+  })
+
+  await test.step('当 A 的迟到响应先返回', async () => {
+    releaseA.resolve()
+    await deliveredA.promise
+  })
+
+  await test.step('那么 A 的文本不会出现在 B，B 仍不能保存', async () => {
+    await expect(page.getByLabel('策略提示词')).not.toHaveValue(promptA)
+    await expect(page.getByTestId('save-version')).toBeDisabled()
+  })
+
+  await test.step('当 B 的权威草稿返回并保存', async () => {
+    releaseB.resolve()
+    await deliveredB.promise
+    await expect(page.getByLabel('策略提示词')).toHaveValue(promptB)
+    await expect(page.getByTestId('save-version')).toBeEnabled()
+    await page.getByTestId('save-version').click()
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentB}$`))
+  })
+
+  await test.step('那么 只有 B 产生内容完全正确的 v1，A 的草稿与版本都未被改动', async () => {
+    const aState = await versionState(page, agentA)
+    const bState = await versionState(page, agentB)
+    expect(aState.versions).toHaveLength(0)
+    expect(bState.versions).toHaveLength(1)
+    expect(bState.versions[0].prompt).toBe(promptB)
+    const aDraft = await page.request.get(`/v1/agents/${agentA}/draft`)
+    const bDraft = await page.request.get(`/v1/agents/${agentB}/draft`)
+    expect(
+      (await aDraft.json() as { fields: Record<string, string> }).fields.prompt,
+    )
+      .toBe(promptA)
+    expect(
+      (await bDraft.json() as { fields: Record<string, string> }).fields.prompt,
+    )
+      .toBe(promptB)
+  })
+})
+
+test('同一智能体卸载重挂后仍共用自动暂存队列', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-remount-queue-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '重挂队列')
+  await page.getByRole('button', { name: '新建版本' }).click()
+  await expect(page.getByLabel('策略提示词')).toBeEnabled()
+
+  const oldPrompt = '旧组件发出的延迟草稿。'
+  const newPrompt = '重挂后最终保存的新草稿。'
+  const oldMutationSeen = deferred()
+  const releaseOldMutation = deferred()
+  let saveRequests = 0
+  await page.route(`**/v1/agents/${agentID}/mutate`, async (route) => {
+    const input = route.request().postDataJSON() as { value?: string }
+    if (input.value === oldPrompt) {
+      oldMutationSeen.resolve()
+      await releaseOldMutation.promise
+    }
+    await route.continue()
+  })
+  await page.route(`**/v1/agents/${agentID}/save`, async (route) => {
+    saveRequests += 1
+    await route.continue()
+  })
+
+  await test.step('假如 旧构建器的自动暂存请求仍被延迟', async () => {
+    await page.getByLabel('策略提示词').fill(oldPrompt)
+    await oldMutationSeen.promise
+  })
+
+  await test.step('当 我经 SPA 返回主页并重新挂载同一智能体构建器', async () => {
+    await page.getByRole('link', { name: '← 智能体主页' }).click()
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await expect(page.getByLabel('策略提示词')).toHaveValue(oldPrompt)
+  })
+
+  await test.step('并且 我写入新稿并立即保存', async () => {
+    await page.getByLabel('策略提示词').fill(newPrompt)
+    await page.getByTestId('save-version').click()
+  })
+
+  await test.step('那么 新保存会在旧暂存之后排队，旧请求未完成前不会创建版本', async () => {
+    await expect(page.getByTestId('save-version')).toHaveText('保存中…')
+    await page.waitForTimeout(300)
+    expect(saveRequests).toBe(0)
+  })
+
+  await test.step('当 旧暂存请求完成', () => {
+    releaseOldMutation.resolve()
+  })
+
+  await test.step('那么 服务端草稿和唯一版本都只保留重挂后的新稿', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
+    const response = await page.request.get(`/v1/agents/${agentID}/draft`)
+    expect(response.ok()).toBe(true)
+    expect(
+      (await response.json() as { fields: Record<string, string> }).fields
+        .prompt,
+    ).toBe(newPrompt)
+    const state = await versionState(page, agentID)
+    expect(state.versions).toHaveLength(1)
+    expect(state.versions[0].prompt).toBe(newPrompt)
+  })
+})
+
+test('保存等待最终暂存时锁定快照；暂存失败不创建版本', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-save-barrier-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '保存屏障')
+  await page.getByRole('button', { name: '新建版本' }).click()
+  await expect(page.getByLabel('策略提示词')).toBeEnabled()
+
+  await page.getByRole('button', { name: '版本备注' }).click()
+  await page.getByLabel('版本备注（可选）').fill('点击时备注')
+  await page.getByRole('button', { name: '关闭备注' }).click()
+
+  const mutationSeen = deferred()
+  const releaseMutation = deferred()
+  let saveRequests = 0
+  const mutatePattern = `**/v1/agents/${agentID}/mutate`
+  await page.route(mutatePattern, async (route) => {
+    mutationSeen.resolve()
+    await releaseMutation.promise
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'draft_unavailable',
+        message: 'draft unavailable',
+      }),
+    })
+  })
+  await page.route(`**/v1/agents/${agentID}/save`, async (route) => {
+    saveRequests += 1
+    await route.abort()
+  })
+
+  await test.step('当 我输入最后一段文字并保存，而最终暂存仍在等待', async () => {
+    await page.getByLabel('策略提示词').fill('点击快照：这段文字必须先暂存。')
+    await page.getByTestId('save-version').click()
+    await mutationSeen.promise
+  })
+
+  await test.step('那么 所有会改变版本快照的入口都被冻结', async () => {
+    await expect(page.getByLabel('策略提示词')).toBeDisabled()
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeDisabled()
+    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+      .toBeDisabled()
+    await expect(page.getByRole('button', { name: '复制当前草稿' }))
+      .toBeDisabled()
+    await expect(page.getByRole('button', { name: '版本备注' }))
+      .toBeDisabled()
+    const roleSelect = page.locator('[data-tm="E.role-select"]').getByRole(
+      'button',
+    )
+    if (await roleSelect.count() > 0) await expect(roleSelect).toBeDisabled()
+    await expect(
+      page.locator('[data-tm="E.model-select"]').getByRole('combobox'),
+    ).toBeDisabled()
+    await expect(page.getByTestId('save-version')).toBeDisabled()
+    await expect(page.getByTestId('save-version')).toHaveText('保存中…')
+  })
+
+  await test.step('当 最终暂存失败', () => {
+    releaseMutation.resolve()
+  })
+
+  await test.step('那么 保存停止并显示中文错误，且没有请求创建版本', async () => {
+    await expect(
+      page.getByText('草稿暂存失败，请检查网络后重试；尚未创建新版本。'),
+    )
+      .toBeVisible()
+    await expect(page.getByLabel('策略提示词')).toBeEnabled()
+    await expect(page.getByTestId('save-version')).toBeEnabled()
+    expect(saveRequests).toBe(0)
+    expect((await versionState(page, agentID)).versions).toHaveLength(0)
+  })
+})
+
+test('硬刷新恢复本机最后编辑，成功保存后清理恢复日志', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-reload-journal-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '刷新保护')
+  await page.getByRole('button', { name: '新建版本' }).click()
+  await expect(page.getByLabel('策略提示词')).toBeEnabled()
+
+  const mutatePattern = `**/v1/agents/${agentID}/mutate`
+  await page.route(mutatePattern, async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: 'draft_unavailable',
+        message: 'draft unavailable',
+      }),
+    })
+  })
+  const prompt = '硬刷新前最后一笔：不能因为 debounce 尚未完成而丢失。'
+
+  await test.step('假如 服务端暂存不可用，我编辑提示词与版本备注', async () => {
+    await page.getByRole('button', { name: '版本备注' }).click()
+    await page.getByLabel('版本备注（可选）').fill('刷新保护')
+    await page.getByRole('button', { name: '关闭备注' }).click()
+    await page.getByLabel('策略提示词').fill(prompt)
+    const journals = await localDraftJournals(page, agentID)
+    expect(journals).toHaveLength(1)
+    expect(journals[0]).toMatchObject({ schema: 2, agentID })
+    expect(journals[0].revision).toBeGreaterThan(0)
+    expect(journals[0].identity).toContain(`:${agentID}`)
+    expect(journals[0].token).not.toBe('')
+    expect(journals[0].prompt).toBe(prompt)
+    expect(journals[0].basePrompt).toBe('')
+  })
+
+  await test.step('并且 复制权限被拒时只显示失败指引，绝不谎报已复制', async () => {
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: () => Promise.reject(new Error('clipboard denied')),
+        },
+      })
+    })
+    await page.getByRole('button', { name: '复制当前草稿' }).click()
+    await expect(page.getByText('复制失败，请手动选择策略提示词并复制。'))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '复制当前草稿' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '已复制当前草稿' }))
+      .toHaveCount(0)
+  })
+
+  await test.step('当 我立即硬刷新', async () => {
+    await page.reload()
+  })
+
+  await test.step('那么 本机日志恢复最后文本与备注，并明确提示正在同步', async () => {
+    await expect(page.getByLabel('策略提示词')).toHaveValue(prompt)
+    await expect(page.getByText('已恢复本机未暂存的草稿，正在同步'))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '版本备注' }))
+      .toHaveAttribute('title', '版本备注：刷新保护')
+    const response = await page.request.get(`/v1/agents/${agentID}/draft`)
+    expect(response.ok()).toBe(true)
+    expect(
+      (await response.json() as { fields: Record<string, string> }).fields
+        .prompt ?? '',
+    ).toBe('')
+  })
+
+  await test.step('当 服务端恢复后我重试保存', async () => {
+    await page.unroute(mutatePattern)
+    await page.getByTestId('save-version').click()
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
+  })
+
+  await test.step('那么 新版本使用恢复文本，且本机恢复日志已清理', async () => {
+    const state = await versionState(page, agentID)
+    expect(state.versions).toHaveLength(1)
+    expect(state.versions[0].prompt).toBe(prompt)
+    expect(await localDraftJournals(page, agentID)).toHaveLength(0)
+  })
+})
+
+test('旧标签页保存只清理点击时 token，不删除另一标签页的新日志', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-journal-cas-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '并发日志')
+  await page.getByRole('button', { name: '新建版本' }).click()
+  const prompt = '旧标签页准备保存的稳定草稿。'
+  await page.getByLabel('策略提示词').fill(prompt)
+  await expect.poll(async () => {
+    const response = await page.request.get(`/v1/agents/${agentID}/draft`)
+    return (await response.json() as { fields: Record<string, string> }).fields
+      .prompt
+  }).toBe(prompt)
+  const [saveJournal] = await localDraftJournals(page, agentID)
+  expect(saveJournal).toBeDefined()
+
+  const saveSeen = deferred()
+  const releaseSave = deferred()
+  await page.route(`**/v1/agents/${agentID}/save`, async (route) => {
+    const response = await route.fetch()
+    saveSeen.resolve()
+    await releaseSave.promise
+    await route.fulfill({ response })
+  }, { times: 1 })
+
+  await test.step('当 旧标签页开始保存并停在服务器响应前', async () => {
+    await page.getByTestId('save-version').click()
+    await saveSeen.promise
+  })
+
+  const newerJournal: LocalDraftJournal = {
+    ...saveJournal,
+    writerID: 'deterministic-second-tab',
+    revision: saveJournal.revision + 1,
+    token: `second-tab-${Date.now()}`,
+    basePrompt: prompt,
+    prompt: '另一标签页稍后写下、尚未保存的新草稿。',
+    promptPersisted: false,
+    updatedAt: Date.now(),
+  }
+  await test.step('并且 另一标签页写入更高 revision 和新 token', async () => {
+    await putLocalDraftJournal(page, newerJournal)
+  })
+
+  await test.step('当 旧标签页的保存响应返回', () => {
+    releaseSave.resolve()
+  })
+
+  await test.step('那么 只删除旧 token，另一标签页的新日志仍完整保留', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentID}$`))
+    const journals = await localDraftJournals(page, agentID)
+    expect(journals.some((journal) => journal.token === saveJournal.token))
+      .toBe(false)
+    expect(journals).toContainEqual(newerJournal)
+  })
+})
+
+test('服务器偏离 base 时保留冲突副本，只有明确选择才恢复', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-journal-conflict-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '冲突恢复')
+  const serverPrompt = '服务器上的独立新稿。'
+  const localPrompt = '本机从旧底稿继续写出的未暂存副本。'
+  const seed = await page.request.post(`/v1/agents/${agentID}/mutate`, {
+    headers: sameOrigin,
+    data: { field: 'prompt', value: serverPrompt },
+  })
+  expect(seed.ok()).toBe(true)
+  await putLocalDraftJournal(page, {
+    schema: 2,
+    identity: await journalIdentity(page, agentID),
+    agentID,
+    writerID: 'stale-tab',
+    revision: 1,
+    token: `conflict-${Date.now()}`,
+    basePrompt: '双方曾经看到的旧底稿。',
+    prompt: localPrompt,
+    promptPersisted: false,
+    roleKey: null,
+    modelID: null,
+    note: '冲突副本',
+    method: null,
+    updatedAt: Date.now(),
+  })
+
+  let mutationRequests = 0
+  await page.route(`**/v1/agents/${agentID}/mutate`, async (route) => {
+    mutationRequests += 1
+    await route.continue()
+  })
+
+  await test.step('假如 本机未暂存副本的 base 已落后于服务器', async () => {
+    await page.goto(`/agents/${agentID}/build`)
+  })
+
+  await test.step('那么 构建器保留服务器文本且不会静默回写旧副本', async () => {
+    await expect(page.getByLabel('策略提示词')).toHaveValue(serverPrompt)
+    const recovery = page.getByRole('region', { name: '本机草稿恢复' })
+    await expect(recovery).toContainText(
+      '服务器草稿已更新，本机副本未自动恢复。',
+    )
+    await expect(recovery).toContainText(localPrompt)
+    await page.waitForTimeout(650)
+    expect(mutationRequests).toBe(0)
+    await expect(page.getByTestId('save-version')).toBeDisabled()
+  })
+
+  await test.step('当 我明确选择恢复本机副本', async () => {
+    await page.getByRole('button', { name: '恢复本机副本' }).click()
+  })
+
+  await test.step('那么 才将本机文本同步到服务器并继续编辑', async () => {
+    await expect(page.getByLabel('策略提示词')).toHaveValue(localPrompt)
+    await expect(page.getByTestId('draft-recovery')).toHaveCount(0)
+    await expect.poll(async () => {
+      const response = await page.request.get(`/v1/agents/${agentID}/draft`)
+      return (await response.json() as { fields: Record<string, string> })
+        .fields
+        .prompt
+    }).toBe(localPrompt)
+    expect(mutationRequests).toBe(1)
+  })
+})
+
+test('超过十四天的日志不自动覆盖，并可明确保留服务器稿', async ({ page }) => {
+  test.setTimeout(180_000)
+  await signup(page, `edit-journal-expired-${Date.now()}`)
+  const agentID = await createFromInventory(page, SIDE_A, '过期恢复')
+  const expiredPrompt = '十五天前留在本机的旧稿。'
+  await putLocalDraftJournal(page, {
+    schema: 2,
+    identity: await journalIdentity(page, agentID),
+    agentID,
+    writerID: 'expired-tab',
+    revision: 1,
+    token: `expired-${Date.now()}`,
+    basePrompt: '',
+    prompt: expiredPrompt,
+    promptPersisted: false,
+    roleKey: null,
+    modelID: null,
+    note: '',
+    method: null,
+    updatedAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
+  })
+  let mutationRequests = 0
+  await page.route(`**/v1/agents/${agentID}/mutate`, async (route) => {
+    mutationRequests += 1
+    await route.continue()
+  })
+
+  await test.step('假如 本机日志已超过十四天，即使服务器仍等于其 base', async () => {
+    await page.goto(`/agents/${agentID}/build`)
+  })
+
+  await test.step('那么 旧稿不会自动恢复或发往服务器', async () => {
+    await expect(page.getByLabel('策略提示词')).toHaveValue('')
+    const recovery = page.getByRole('region', { name: '本机草稿恢复' })
+    await expect(recovery).toContainText(
+      '本机留有一份超过 14 天的草稿，未自动恢复。',
+    )
+    await expect(recovery).toContainText(expiredPrompt)
+    await page.waitForTimeout(650)
+    expect(mutationRequests).toBe(0)
+  })
+
+  await test.step('当 我明确使用服务器草稿', async () => {
+    await page.getByRole('button', { name: '使用服务器草稿' }).click()
+  })
+
+  await test.step('那么 过期日志被精确清理，服务器空稿保持可编辑', async () => {
+    await expect(page.getByTestId('draft-recovery')).toHaveCount(0)
+    await expect(page.getByLabel('策略提示词')).toBeEnabled()
+    expect(await localDraftJournals(page, agentID)).toHaveLength(0)
+    expect(mutationRequests).toBe(0)
+  })
+})
+
+test('同侧新增门槛；空智能体在主页重命名与删除', async ({ page }) => {
+  test.setTimeout(300_000)
+  await signup(page, `edit-sibling-${Date.now()}`)
+  let agentA = 0
+  let agentB = 0
+  const deletedPrompt = '删除后不得残留在本机的敏感草稿。'
+
+  await test.step('假如 我只有一个已有版本的商鞅 A', async () => {
+    agentA = await createFromInventory(page, SIDE_A, 'A')
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await saveFromBuilder(page, agentA, 'A v1：先立可信的小承诺。')
+  })
+
+  await test.step('当 我从 A 主页尝试新建另一个商鞅', async () => {
+    const rail = page.getByRole('navigation', { name: '同角色智能体' })
+    await rail.getByRole('button', { name: `新建${SIDE_A}智能体` }).click()
+    await page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
+      .getByRole('button', { name: '创建智能体' }).click()
+  })
+
+  await test.step('那么 服务端拒绝并引导我去创建甘龙智能体', async () => {
+    const dialog = page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
+    await expect(dialog.getByRole('alert')).toBeVisible()
+    await expect(dialog.getByRole('button', {
+      name: `去创建${SIDE_B}智能体`,
+    })).toBeVisible()
+  })
+
+  await test.step('当 我创建甘龙、保存一版，再新建商鞅 B', async () => {
+    const blocked = page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
+    await blocked.getByRole('button', { name: `去创建${SIDE_B}智能体` })
+      .click()
+    const opposite = page.getByRole('dialog', { name: `新建${SIDE_B}智能体` })
+    await opposite.getByRole('button', { name: '创建智能体' }).click()
+    await expect(page).toHaveURL(/\/agents\/\d+$/)
+    const sideBID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await saveFromBuilder(page, sideBID, '甘龙 v1：先问变法失败由谁承担。')
+    agentB = await createFromInventory(page, SIDE_A, 'B')
+  })
+
+  await test.step('那么 B 先进入空的智能体主页，而不是构建器', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${agentB}$`))
+    await expect(page.getByText('还没有保存过版本')).toBeVisible()
+    expect((await versionState(page, agentB)).versions).toHaveLength(0)
+  })
+
+  await test.step('并且 B 的版本从 v1 独立计数', async () => {
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await saveFromBuilder(page, agentB, 'B v1：另起一路。')
+    await expect(
+      page.getByTestId('version-card').getByText('v1', {
+        exact: true,
+      }),
+    ).toBeVisible()
+  })
+
+  await test.step('假如 我有一个没有版本、但本机留有多份草稿日志的智能体', async () => {
+    agentB = await createFromInventory(page, SIDE_B, '待命')
+    expect((await versionState(page, agentB)).versions).toHaveLength(0)
+    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByLabel('策略提示词').fill(deletedPrompt)
+    await expect.poll(async () => {
+      const response = await page.request.get(`/v1/agents/${agentB}/draft`)
+      return (await response.json() as { fields: Record<string, string> })
+        .fields
+        .prompt
+    }).toBe(deletedPrompt)
+    const [current] = await localDraftJournals(page, agentB)
+    expect(current).toBeDefined()
+    await putLocalDraftJournal(page, {
+      ...current,
+      identity: `another-account:${agentB}`,
+      writerID: 'another-account-tab',
+      revision: current.revision + 1,
+      token: `delete-purge-${Date.now()}`,
+      prompt: `${deletedPrompt}（另一 scoped token）`,
+      promptPersisted: false,
+      updatedAt: Date.now(),
+    })
+    await page.evaluate((id) => {
+      localStorage.setItem(
+        `axiia:builder-draft:v1:${id}`,
+        'legacy prompt copy',
+      )
+    }, agentB)
+    expect(await localDraftJournals(page, agentB)).toHaveLength(2)
+    await page.getByRole('link', { name: '← 智能体主页' }).click()
+  })
+
+  await test.step('当 我从主页更多菜单重命名', async () => {
+    await page.getByRole('button', { name: '智能体更多操作' }).click()
+    await page.getByRole('menuitem', { name: '重命名' }).click()
+    await page.locator('#inline-agent-name').fill('新名字')
+    await page.getByRole('button', { name: '保存名称' }).click()
+  })
+
+  await test.step('那么 标题与服务端清单同步新名称', async () => {
+    await expect(page.getByRole('heading', { name: `${SIDE_B}「新名字」` }))
+      .toBeVisible()
+    const response = await page.request.get('/v1/my/agents')
+    expect(response.ok()).toBe(true)
+    expect(JSON.stringify(await response.json())).toContain('新名字')
+  })
+
+  await test.step('当 我从主页更多菜单删除并确认', async () => {
+    await page.getByRole('button', { name: '智能体更多操作' }).click()
+    await page.getByRole('menuitem', { name: '删除智能体' }).click()
+    const dialog = page.getByRole('dialog', { name: '删除智能体' })
+    await dialog.getByRole('button', { name: /确认删除|删除智能体/ }).click()
+  })
+
+  await test.step('那么 空智能体被删除，所有 scoped 本机草稿日志也被清理', async () => {
+    await expect(page).not.toHaveURL(new RegExp(`/agents/${agentB}$`))
+    const response = await page.request.get(`/v1/agents/${agentB}/versions`)
+    expect(response.status()).toBe(404)
+    expect(await localDraftJournals(page, agentB)).toHaveLength(0)
+    expect(
+      await page.evaluate(
+        (id) => localStorage.getItem(`axiia:builder-draft:v1:${id}`),
+        agentB,
+      ),
+    ).toBeNull()
+  })
+
+  await test.step('但是 已有版本的智能体在主页显示“已有版本，无法删除”', async () => {
+    await page.goto(`/agents/${agentA}`)
+    await page.getByRole('button', { name: '智能体更多操作' }).click()
+    await expect(page.getByText('已有版本，无法删除')).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: '删除智能体' }))
+      .toBeDisabled()
   })
 })

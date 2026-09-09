@@ -1,11 +1,12 @@
 // U05 · OS 选择对手（A5）— u05-opponent-select.feature 的可执行对应。
-// test.step 文案与 feature 的 Given/When/Then 一一对应；feature 是叙述源。
+// test.step 覆盖 feature 的同名场景；连续动作与断言可合并在一个步骤中，
+// feature 仍是行为叙述源。
 //
 // 移植（2026-08-25，#137/#138 合并后）：
 //   · #138 修 #72——对战条按 initiatorIsMe === true 过滤：C09 口径同步、C09b
 //     由预期红转绿；F6 修约战成功流——新增 C15 以桩拦截 POST /v1/challenges
 //     断言「成功即关面板、直达第 ① 场实况」（真服全链路断言归 v34-pending）。
-//   · 仍未修的审计缺口（版本下拉、#91 副标题、#34 NPC 胜率、切侧、顶尖玩家/
+//   · 仍未修的审计缺口（版本下拉、#34 NPC 胜率、切侧、顶尖玩家/
 //     自动匹配 tabs、侧抽屉观战、P1 阵容展示名）标 test.fixme 保留断言体，
 //     台账见 fixme-u05.json——不为凑绿改断言。
 //
@@ -22,7 +23,13 @@ import {
   test,
 } from '@playwright/test'
 
-import { baseURL, registrationCode, sameOrigin, signup } from '../helpers'
+import {
+  baseURL,
+  openBattlePanel,
+  registrationCode,
+  sameOrigin,
+  signup,
+} from '../helpers'
 
 const SHANGYANG = 'shangyang-court'
 const SCENARIO_TITLE = '商鞅变法·朝堂辩法'
@@ -39,7 +46,11 @@ let entryVersionID = 0
 let rivalVersionID = 0
 let rivalName = ''
 
-const dialog = () => page.locator('[role="dialog"][aria-modal="true"]')
+const dialog = () =>
+  page.getByRole('dialog', {
+    name: `出战 · ${SCENARIO_TITLE}`,
+    exact: true,
+  })
 
 async function api<T>(
   method: 'GET' | 'POST',
@@ -103,6 +114,13 @@ async function ensureStoryline() {
   versionV1 = versions.versions[0].id
   versionV2 = versions.versions[versions.versions.length - 1].id
   entryVersionID = versions.entryVersionID
+  // The narrative fixes ★ on v1. Reused audit accounts may have moved it in a
+  // previous exploratory run, so converge the fixture before asserting that a
+  // v2 card is the explicitly requested (non-entry) version.
+  if (entryVersionID !== versionV1) {
+    await api('POST', `/v1/agents/${agentA}/entry/${versionV1}`)
+    entryVersionID = versionV1
+  }
 
   const ensuredB = await api<{ agentID: number }>('POST', '/v1/agents/ensure', {
     scenarioID: SHANGYANG,
@@ -230,9 +248,12 @@ test.afterAll(async () => {
   await ctx?.close()
 })
 
+// Kept as a local alias to avoid obscuring the OS-focused scenarios below.
+// Since the 2026-09-09 three-page amendment, the default panel opens from the
+// selected entry version's card on Agent Home; the removed page-header button
+// is never queried.
 async function openFromHeader(agentID: number = agentA) {
-  await page.goto(`/agents/${agentID}`)
-  await page.getByTestId('open-os-panel').click()
+  await openBattlePanel(page, agentID)
   await expect(dialog().getByText(`出战 · ${SCENARIO_TITLE}`)).toBeVisible()
 }
 
@@ -259,15 +280,17 @@ async function unmockAll() {
   await page.unroute(/\/v1\/challenges$/).catch(() => {})
 }
 
-test('U05-C01：从版本卡与 EA 页头呼出面板，桌面居中呈现', async () => {
+test('U05-C01：从主页版本卡呼出面板，桌面居中呈现', async () => {
   test.setTimeout(180_000)
-  await test.step('当 我在商鞅 A 的 E 页版本卡点「出战」', async () => {
-    await page.goto(`/agents/${agentA}/build`)
-    await page.getByRole('button', { name: '用 v2 出战' }).click()
+  const v2Field = page.getByRole('button', { name: '用 v2 出战' })
+  await test.step('当 我在商鞅 A 的主页 v2 版本卡点「出战」', async () => {
+    await page.goto(`/agents/${agentA}`)
+    await expect(v2Field).toBeVisible({ timeout: 30_000 })
+    await v2Field.click()
   })
   await test.step('那么 弹出紧凑面板「出战 · 商鞅变法·朝堂辩法」（role=dialog，桌面居中）', async () => {
     await expect(dialog().getByText(`出战 · ${SCENARIO_TITLE}`)).toBeVisible()
-    const box = await dialog().locator('> div').boundingBox()
+    const box = await dialog().boundingBox()
     const viewport = page.viewportSize()!
     expect(Math.abs(box!.x + box!.width / 2 - viewport.width / 2))
       .toBeLessThan(80)
@@ -275,45 +298,76 @@ test('U05-C01：从版本卡与 EA 页头呼出面板，桌面居中呈现', asy
   await test.step('并且 副标题标明出战版本（钉住点击的那一版，#88）', async () => {
     await expect(dialog().getByText(/出战版本：.*v2/)).toBeVisible()
   })
-  await test.step('当 我改从 EA 页头点「出战」；那么 同一面板弹出，出战版本回落 ★参赛版本（否则最新版）', async () => {
+  await test.step('并且 左右方向键、Home 与 End 可在三个页签间移动并激活', async () => {
+    const pve = dialog().getByRole('tab', { name: 'NPC 练习' })
+    const hotseat = dialog().getByRole('tab', { name: '左右手互搏' })
+    const pvp = dialog().getByRole('tab', { name: /玩家约战/ })
+    await pve.focus()
+    await page.keyboard.press('ArrowRight')
+    await expect(hotseat).toBeFocused()
+    await expect(hotseat).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('ArrowLeft')
+    await expect(pve).toBeFocused()
+    await expect(pve).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('End')
+    await expect(pvp).toBeFocused()
+    await expect(pvp).toHaveAttribute('aria-selected', 'true')
+    await page.keyboard.press('Home')
+    await expect(pve).toBeFocused()
+    await expect(pve).toHaveAttribute('aria-selected', 'true')
+  })
+  await test.step('并且 焦点进入并困在面板内，Escape 关闭后回到 v2 出战按钮', async () => {
+    const panel = dialog()
+    await expect.poll(async () =>
+      await panel.evaluate((node) => node.contains(document.activeElement))
+    ).toBe(true)
+    const focusable = panel.locator(
+      ':is(button, a[href], input, select, textarea, [tabindex]):not(:disabled):not([tabindex="-1"]):not([aria-hidden="true"]):visible',
+    )
+    expect(await focusable.count()).toBeGreaterThan(1)
+    await focusable.first().focus()
+    await page.keyboard.press('Shift+Tab')
+    await expect(focusable.last()).toBeFocused()
+    await focusable.last().focus()
+    await page.keyboard.press('Tab')
+    await expect(focusable.first()).toBeFocused()
     await page.keyboard.press('Escape')
+    await expect(panel).toHaveCount(0)
+    await expect(v2Field).toBeFocused()
+  })
+  await test.step('当 我改从主页的 ★参赛版本卡点「出战」；那么 同一面板弹出并钉住该版', async () => {
     await openFromHeader()
     await expect(dialog().getByText(/出战版本：★参赛版本 v1/)).toBeVisible()
   })
 })
 
-// fixme(A5 版本下拉缺席): 按规格 U05-C02 / A5「agent 预选 + 版本下拉」应 面板
-// 内有己方版本下拉可切换出战版本；待 产品裁定 A5 版本下拉 vs #88 钉版替代
-// （W 级决议）并在面板落版本选择器 修复后摘除。
-test.fixme('U05-C02：面板内提供己方版本下拉（A5——缺口未修，#88 钉版是现行替代）', async () => {
+test('U05-C02：主页版本卡选择出战版本，面板不重复放己方版本下拉', async () => {
   test.setTimeout(180_000)
-  await test.step('当 面板从 EA 页头呼出', async () => {
-    await openFromHeader()
+  await test.step('当 我从主页 v2 版本卡呼出面板', async () => {
+    await openBattlePanel(page, agentA, 2)
   })
-  await test.step('那么 面板内存在己方版本下拉可切换出战版本', async () => {
-    // A5「agent 预选 + 版本下拉」：面板里应有能显示 vN 候选的版本选择器。
+  await test.step('那么 副标题钉住 v2，面板不重复提供“选择出战版本”控件', async () => {
+    await expect(dialog().getByText(/出战版本：.*v2/)).toBeVisible()
     await expect(
-      dialog().locator('[role="combobox"], select').filter({
-        hasText: /v\d+/,
+      dialog().getByRole('combobox', {
+        name: /选择出战版本|己方版本/,
       }),
-    ).not.toHaveCount(0)
+    ).toHaveCount(0)
   })
 })
 
-// fixme(#91 钉版副标题谎标): 按规格 #91 应 钉住 v2（★ 在 v1）时副标题不把 v2
-// 标成「★参赛版本」；待 os-panel 副标题按 fieldedVersionID === entryVersionID
-// 区分「★参赛版本/指定版本/最新版」 修复后摘除。
-test.fixme('U05-C02b：钉住非 ★ 版本时副标题不得谎称 ★参赛版本（#91——缺口未修）', async () => {
+test('U05-C02b：钉住非 ★ 版本时副标题明确标为指定版本', async () => {
   test.setTimeout(180_000)
   await test.step('假如 A 的 ★ 在 v1', () => {
     expect(entryVersionID).toBe(versionV1)
     expect(versionV2).not.toBe(versionV1)
   })
-  await test.step('当 我从 v2 卡「出战」呼出面板；那么 副标题不把 v2 标成「★参赛版本」', async () => {
-    await page.goto(`/agents/${agentA}/build`)
-    await page.getByRole('button', { name: '用 v2 出战' }).click()
-    await expect(dialog().getByText(/出战版本：/)).toBeVisible()
-    await expect(dialog().getByText(/★参赛版本 v2/)).toHaveCount(0)
+  await test.step('当 我从 v2 卡「出战」呼出面板', async () => {
+    await openBattlePanel(page, agentA, 2)
+  })
+  await test.step('那么 副标题明确写「出战版本：指定版本 v2」', async () => {
+    await expect(dialog().getByText('出战版本：指定版本 v2', { exact: true }))
+      .toBeVisible()
   })
 })
 
@@ -730,6 +784,79 @@ test('U05-C12：【桩】按 id 约战：校验、解析卡与钉版语义（真
   })
 })
 
+test('U05-C12b：【桩】按 id 查询结果只属于当前输入，旧响应不能替换付费对手', async () => {
+  test.setTimeout(180_000)
+  const input = () => dialog().getByPlaceholder(/输入对方任一版本 id/)
+  let releaseOld!: () => void
+  const oldGate = new Promise<void>((resolve) => {
+    releaseOld = resolve
+  })
+  let sawOld!: () => void
+  const oldSeen = new Promise<void>((resolve) => {
+    sawOld = resolve
+  })
+  let finishOld!: () => void
+  const oldFinished = new Promise<void>((resolve) => {
+    finishOld = resolve
+  })
+  await test.step('假如 对方真实版本 id 的查询响应被延迟', async () => {
+    await mockGateMet()
+    await page.route(
+      new RegExp(`/v1/versions/${rivalVersionID}/ref$`),
+      async (route) => {
+        sawOld()
+        await oldGate
+        const response = await route.fetch()
+        await route.fulfill({ response })
+        finishOld()
+      },
+    )
+    await openFromHeader()
+    await dialog().getByRole('tab', { name: /玩家约战/ }).click()
+    await dialog().getByRole('button', { name: '按 id 约战' }).click()
+    await input().fill(String(rivalVersionID))
+    await dialog().getByRole('button', { name: /^查询/ }).click()
+    await oldSeen
+  })
+
+  await test.step('当 我在旧响应返回前改填不存在的 id 并查询', async () => {
+    await input().fill('99999999')
+    await dialog().getByRole('button', { name: /^查询/ }).click()
+  })
+
+  await test.step('那么 当前输入得到“未找到”，且没有旧版本解析卡', async () => {
+    await expect(dialog().getByText('未找到该版本 id')).toBeVisible()
+    await expect(dialog().getByText(rivalName)).toHaveCount(0)
+  })
+
+  await test.step('当 旧查询最终返回', async () => {
+    const oldResponse = page.waitForResponse(
+      new RegExp(`/v1/versions/${rivalVersionID}/ref$`),
+    )
+    releaseOld()
+    const [response] = await Promise.all([oldResponse, oldFinished])
+    await response.finished()
+    // Let the response promise and any resulting React render fully settle before
+    // asserting that the stale payload was ignored.
+    await page.evaluate(() =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+    )
+  })
+
+  await test.step('那么 旧玩家卡仍不出现，也不能向旧 id 发起约战', async () => {
+    await expect(dialog().getByText('未找到该版本 id')).toBeVisible()
+    await expect(dialog().getByText(rivalName)).toHaveCount(0)
+    await expect(dialog().getByRole('button', { name: '发起双侧约战' }))
+      .toHaveCount(0)
+    await page.unroute(
+      new RegExp(`/v1/versions/${rivalVersionID}/ref$`),
+    )
+    await unmockAll()
+  })
+})
+
 // F6（#137）：约战成功流与 PVE/互搏一致——成功即关面板、站内直达第 ① 场
 // 实况；面板内成功块只作服务器缺 matchIDs 的回退。真派发消耗 2 场配额且需
 // 真解锁，这里以桩拦截 POST /v1/challenges 只断言前端成功流（真服全链路
@@ -776,7 +903,7 @@ test('U05-C14：移动视口下面板为底部弹层', async () => {
   await test.step('当 视口为 390×844 且面板呼出；那么 面板贴屏幕底部（底部弹层），而非居中', async () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await openFromHeader()
-    const box = await dialog().locator('> div').boundingBox()
+    const box = await dialog().boundingBox()
     expect(Math.abs(box!.y + box!.height - 844)).toBeLessThan(4)
     await page.setViewportSize({ width: 1280, height: 800 })
   })

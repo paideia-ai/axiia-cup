@@ -1,5 +1,5 @@
 import { Clock } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 
 import { builder, catalog, config as configApi } from '../api/client'
@@ -23,6 +23,18 @@ export function ExpressPage() {
   const { firstBattleDone } = useAuth()
   const [entering, setEntering] = useState(false)
   const [enterError, setEnterError] = useState<string | null>(null)
+  const liveRef = useRef(true)
+  const enterRequestRef = useRef(0)
+  const firstBattleDoneRef = useRef(firstBattleDone)
+  firstBattleDoneRef.current = firstBattleDone
+
+  useEffect(() => {
+    liveRef.current = true
+    return () => {
+      liveRef.current = false
+      enterRequestRef.current += 1
+    }
+  }, [])
 
   const { data, error, loading } = useAsync(async () => {
     // config 失败不挡首战：按默认三元组渲染（对手预设由构建器兜底）。
@@ -39,18 +51,25 @@ export function ExpressPage() {
 
   const goBuild = async () => {
     if (!data) return
+    const requestID = ++enterRequestRef.current
+    const { scenarioID, mySide } = data
+    const isCurrent = () =>
+      liveRef.current && enterRequestRef.current === requestID &&
+      !firstBattleDoneRef.current
     setEntering(true)
     setEnterError(null)
     try {
       // 首战＝创建一个单侧 agent（#57）：懒 ensure 后带 express 标记进构建器。
       const { agentID } = await builder.ensure({
-        scenarioID: data.scenarioID,
-        side: data.mySide,
+        scenarioID,
+        side: mySide,
       })
+      if (!isCurrent()) return
       navigate(
-        `/agents/${agentID}/build?scenario=${data.scenarioID}&side=${data.mySide}&express=1`,
+        `/agents/${agentID}/build?scenario=${scenarioID}&side=${mySide}&express=1`,
       )
     } catch (cause) {
+      if (!isCurrent()) return
       setEnterError(messageOf(cause, '创建智能体失败'))
       setEntering(false)
     }

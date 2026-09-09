@@ -1,5 +1,5 @@
 import { Check, Copy } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import {
@@ -19,20 +19,22 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
-import { OsPanel } from '../components/os-panel'
-import { VersionList } from '../components/version-list'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
-import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
-import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
-import { initModesAvailable } from '../lib/deck'
+import { VersionNote } from '../components/version-note'
+import { useOptionalAuth } from '../context/auth'
+import {
+  builderDraftJournalIdentity,
+  builderDraftJournalStoragePrefix,
+  enqueueBuilderDraftMutation,
+} from '../lib/builder-draft-storage'
 import { metaPromptFor } from '../lib/meta-prompt'
 import { promptLength } from '../lib/prompt-length'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
-import { nextVersionCopy, versionTag } from '../lib/version-label'
+import { versionTag } from '../lib/version-label'
 import {
   roleByKey,
   roleOfOptions,
@@ -45,16 +47,242 @@ import { tm } from '../testmode/mark'
 
 const PROMPT_FIELD = 'prompt'
 
-// 工作区（E1/#81）＋ 内嵌版本线（E11/#88）：本页就是一个策略的**编辑现场**——
-// 上半是唯一的工作区草稿（高频自动暂存，草稿非版本、从不直接参战），下半是
-// 本策略的完整版本线。点保存＝产生一个新版本（E2/#82：严格线性、无父子）后
-// **留在本页**（#88：不再跳回 EA），就地把新版插进版本线顶端。版本卡动作按
-// #89/#90：基于该版本迭代 / 设为参赛版本 / 出战——「复制为新智能体」已废止。
+interface DraftSyncState {
+  value: string
+  revision: number
+  persistedRevision: number
+  queue: Promise<void>
+}
+
+interface DraftJournal {
+  schema: 2
+  identity: string
+  agentID: number
+  writerID: string
+  revision: number
+  token: string
+  basePrompt: string
+  prompt: string
+  promptPersisted: boolean
+  roleKey: string | null
+  modelID: string | null
+  note: string
+  method: 'mcq' | 'builder' | null
+  updatedAt: number
+}
+
+interface DraftJournalScope {
+  identity: string
+  agentID: number
+}
+
+interface DraftRecovery {
+  journal: DraftJournal
+  reason: 'conflict' | 'expired'
+}
+
+const DRAFT_JOURNAL_AUTO_RESTORE_MS = 14 * 24 * 60 * 60 * 1000
+
+function draftJournalPrefix(scope: DraftJournalScope) {
+  return builderDraftJournalStoragePrefix(scope.identity)
+}
+
+function draftJournalKey(scope: DraftJournalScope, token: string) {
+  return `${draftJournalPrefix(scope)}${token}`
+}
+
+function parseDraftJournal(
+  scope: DraftJournalScope,
+  raw: string,
+): DraftJournal | null {
+  try {
+    const value = JSON.parse(raw) as Partial<DraftJournal>
+    if (
+      value.schema !== 2 ||
+      value.identity !== scope.identity ||
+      value.agentID !== scope.agentID ||
+      typeof value.writerID !== 'string' || value.writerID === '' ||
+      typeof value.revision !== 'number' ||
+      !Number.isSafeInteger(value.revision) || value.revision < 1 ||
+      typeof value.token !== 'string' || value.token === '' ||
+      typeof value.basePrompt !== 'string' ||
+      typeof value.prompt !== 'string' ||
+      typeof value.promptPersisted !== 'boolean' ||
+      !(value.roleKey == null || typeof value.roleKey === 'string') ||
+      !(value.modelID == null || typeof value.modelID === 'string') ||
+      typeof value.note !== 'string' ||
+      typeof value.updatedAt !== 'number' ||
+      !Number.isFinite(value.updatedAt) ||
+      !(
+        value.method == null || value.method === 'mcq' ||
+        value.method === 'builder'
+      )
+    ) return null
+    return {
+      schema: 2,
+      identity: value.identity,
+      agentID: value.agentID,
+      writerID: value.writerID,
+      revision: value.revision,
+      token: value.token,
+      basePrompt: value.basePrompt,
+      prompt: value.prompt,
+      promptPersisted: value.promptPersisted,
+      roleKey: value.roleKey ?? null,
+      modelID: value.modelID ?? null,
+      note: value.note,
+      method: value.method ?? null,
+      updatedAt: value.updatedAt,
+    }
+  } catch {
+    return null
+  }
+}
+
+function allDraftJournals(scope: DraftJournalScope): DraftJournal[] {
+  const journals: DraftJournal[] = []
+  try {
+    const prefix = draftJournalPrefix(scope)
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index)
+      if (key == null || !key.startsWith(prefix)) continue
+      const raw = localStorage.getItem(key)
+      if (raw == null) continue
+      const journal = parseDraftJournal(scope, raw)
+      if (journal != null && key === draftJournalKey(scope, journal.token)) {
+        journals.push(journal)
+      }
+    }
+  } catch {
+    return []
+  }
+  return journals
+}
+
+function latestDraftJournal(scope: DraftJournalScope): DraftJournal | null {
+  return allDraftJournals(scope).sort((left, right) =>
+    right.revision - left.revision || right.updatedAt - left.updatedAt ||
+    right.token.localeCompare(left.token)
+  )[0] ?? null
+}
+
+function draftJournalByToken(
+  scope: DraftJournalScope,
+  token: string | null,
+): DraftJournal | null {
+  if (token == null) return null
+  try {
+    const raw = localStorage.getItem(draftJournalKey(scope, token))
+    return raw == null ? null : parseDraftJournal(scope, raw)
+  } catch {
+    return null
+  }
+}
+
+function newDraftJournalToken() {
+  try {
+    return crypto.randomUUID()
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  }
+}
+
+function writeNextDraftJournal(
+  scope: DraftJournalScope,
+  writerID: string,
+  value: Omit<
+    DraftJournal,
+    'schema' | 'identity' | 'agentID' | 'writerID' | 'revision' | 'token'
+  >,
+  supersededToken: string | null,
+): DraftJournal | null {
+  const revision = allDraftJournals(scope).reduce(
+    (highest, journal) => Math.max(highest, journal.revision),
+    0,
+  ) + 1
+  const token = newDraftJournalToken()
+  const journal: DraftJournal = {
+    schema: 2,
+    identity: scope.identity,
+    agentID: scope.agentID,
+    writerID,
+    revision,
+    token,
+    ...value,
+  }
+  try {
+    // A token owns its own key. Writing the successor before removing the exact
+    // predecessor means an older tab can never delete a newer tab's record.
+    localStorage.setItem(draftJournalKey(scope, token), JSON.stringify(journal))
+  } catch {
+    return null
+  }
+  try {
+    if (supersededToken != null && supersededToken !== token) {
+      localStorage.removeItem(draftJournalKey(scope, supersededToken))
+    }
+  } catch {
+    // The successor is already durable. A leftover predecessor is harmless:
+    // revision ordering selects the successor and a later pass can retire it.
+  }
+  return journal
+}
+
+function acknowledgeDraftJournal(
+  scope: DraftJournalScope,
+  token: string | null,
+  writerID: string,
+  confirmedPrompt: string,
+) {
+  const current = draftJournalByToken(scope, token)
+  if (current == null || current.writerID !== writerID) return
+  try {
+    localStorage.setItem(
+      draftJournalKey(scope, current.token),
+      JSON.stringify(
+        {
+          ...current,
+          basePrompt: confirmedPrompt,
+          promptPersisted: current.prompt === confirmedPrompt,
+        } satisfies DraftJournal,
+      ),
+    )
+  } catch {
+    // A durable server ACK is still authoritative if storage is unavailable.
+  }
+}
+
+function compareAndDeleteDraftJournal(
+  scope: DraftJournalScope,
+  snapshot: Pick<DraftJournal, 'token' | 'revision'>,
+) {
+  const current = draftJournalByToken(scope, snapshot.token)
+  if (current == null || current.revision !== snapshot.revision) return false
+  try {
+    // Compare revision inside the token-owned key, then remove only that key.
+    // A newer tab has a different token/key and remains untouchable.
+    localStorage.removeItem(draftJournalKey(scope, snapshot.token))
+    return true
+  } catch {
+    // Storage failure must never block a real version save.
+    return false
+  }
+}
+
+// Keso 2026-09-09「低—高—低」方案：构建器只保留写作所需的低复杂度工作区。
+// 版本浏览、参赛选择、对比与出战集中在智能体主页；保存普通版本后返回主页。
+// 草稿仍由服务端自动暂存，保存仍生成不可变的线性版本，express 首战保持例外。
 export function BuilderPage() {
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
+  const auth = useOptionalAuth()
+  const journalScope = useMemo<DraftJournalScope>(() => ({
+    identity: builderDraftJournalIdentity(auth?.account?.id, agentID),
+    agentID,
+  }), [agentID, auth?.account?.id])
+  const writerID = useMemo(newDraftJournalToken, [])
 
   // Query params are a first-paint hint only; the draft response is authoritative
   // and overwrites them, so entering the builder without a query string works.
@@ -75,36 +303,113 @@ export function BuilderPage() {
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null)
   const [lastEvent, setLastEvent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [recovery, setRecovery] = useState<DraftRecovery | null>(null)
   const [draftLoading, setDraftLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  // 清空工作区（E7 的唯一回头路）：两步就地确认，不弹窗。
-  const [clearArmed, setClearArmed] = useState(false)
-  // #88：版本线与出战都搬进本页。
-  const [osOpen, setOsOpen] = useState(false)
-  const [preferVersionID, setPreferVersionID] = useState<number | null>(null)
-  const [entryVersionID, setEntryVersionID] = useState<number | null>(null)
-  const [saveNotice, setSaveNotice] = useState<string | null>(null)
-  // E10/#84 后半句（pr-fate u02-c11b 拍板 A）：保存不移动 ★，但成功提示里给
-  // 「一键改标」——点一下把刚保存的 vN 设为参赛版本（复用 setEntry，提示按
-  // #91 口径更新）。只记 id，词面在渲染处按当前版本线现算。
-  const [restarTargetID, setRestarTargetID] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   // P10：保存时的可选备注，写一次不再改；保存成功即清空，下一版重新填。
   const [note, setNote] = useState('')
   // P1：策略展示名（#63）。draft 接口不带 name，先从 /my/agents 取。
   const [agentName, setAgentName] = useState<string | null>(null)
-  // P11（Yihan 修订）：只有草稿与最新版本不一致时才拦——一致说明没有未保存
-  // 的改动，直接载入不打扰。pendingIterate 是待确认的目标版本。
-  const [pendingIterate, setPendingIterate] = useState<AgentVersionDTO | null>(
-    null,
-  )
   // config 供字数上限、拒绝文案数字与 express 的新手预设对手 key；失败按
   // null 降级（不显示上限、对手回落到第一个对侧预设）。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
+  const [configSettled, setConfigSettled] = useState(false)
+  const [loadedAgentID, setLoadedAgentID] = useState<number | null>(null)
   const mutateTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const initMethod = useRef<'mcq' | 'builder' | null>(null)
+  const promptPersistedRef = useRef(true)
+  const basePromptRef = useRef('')
+  const journalTokenRef = useRef<string | null>(null)
+  const liveRef = useRef(true)
+  const saveRequestRef = useRef(0)
+  // A route change may reuse BuilderPage. Giving every agent its own sync
+  // ledger keeps an old request completion from marking the new agent's draft
+  // as persisted.
+  const draftSync = useMemo<DraftSyncState>(() => ({
+    value: '',
+    revision: 0,
+    persistedRevision: 0,
+    queue: Promise.resolve(),
+  }), [agentID])
+
+  // Saving may outlive this keyed route when a player uses the navbar or
+  // browser history during a slow request. Late completions must never take
+  // over the newer route or write state into an unmounted builder.
+  useEffect(() => {
+    liveRef.current = true
+    return () => {
+      liveRef.current = false
+      saveRequestRef.current += 1
+    }
+  }, [])
+
+  // Serialize field mutations so a slow older request can never overwrite a
+  // newer draft. The keepalive form is used while leaving the route, when the
+  // component can no longer wait for the response it promised as “自动暂存”.
+  const enqueueDraftMutation = useCallback((keepalive = false) => {
+    const revision = draftSync.revision
+    const value = draftSync.value
+    if (revision <= draftSync.persistedRevision) {
+      return draftSync.queue
+    }
+
+    const queued = enqueueBuilderDraftMutation(
+      journalScope.identity,
+      async () => {
+        if (revision <= draftSync.persistedRevision) return
+        await builder.mutate(
+          agentID,
+          { field: PROMPT_FIELD, value },
+          { keepalive },
+        )
+        draftSync.persistedRevision = Math.max(
+          draftSync.persistedRevision,
+          revision,
+        )
+        // The coordinated backend treats 200 as a durable commit ACK. Advance
+        // this tab's confirmed base even when a newer local revision is queued;
+        // that newer revision is now safely based on this confirmed prompt.
+        basePromptRef.current = value
+        acknowledgeDraftJournal(
+          journalScope,
+          journalTokenRef.current,
+          writerID,
+          value,
+        )
+        if (
+          revision === draftSync.revision && value === draftSync.value
+        ) {
+          promptPersistedRef.current = true
+        }
+      },
+    )
+    draftSync.queue = queued
+    return queued
+  }, [agentID, draftSync, journalScope, writerID])
 
   useEffect(() => {
     let live = true
+    setScenarioID(params.get('scenario') ?? '')
+    setSide((params.get('side') as Side | null) ?? 'a')
+    setPrompt('')
+    setRoleKey(null)
+    setModelID(null)
+    setVersions([])
+    setRestoredTag(null)
+    setScenario(null)
+    setLastEvent(null)
+    setError(null)
+    setRecovery(null)
+    setSaving(false)
+    setCopied(false)
+    setNote('')
+    setAgentName(null)
+    setLoadedAgentID(null)
+    initMethod.current = null
+    promptPersistedRef.current = true
+    basePromptRef.current = ''
+    journalTokenRef.current = null
     setDraftLoading(true)
     void (async () => {
       try {
@@ -116,12 +421,13 @@ export function BuilderPage() {
         setScenarioID(draft.scenarioID)
         setSide(draft.side)
         setVersions(list.versions)
-        setEntryVersionID(list.entryVersionID ?? null)
         // P5：模型属于版本、随版本快照（#13）——进入工作区默认沿用**最新
         // 版本**的模型，而不是模型清单的第一项。草稿层还不持久化模型，所以
         // 这里从版本线取；没有版本时才回落清单首项（见 models effect）。
         const latest = [...list.versions].sort((a, b) => b.id - a.id)[0]
         if (latest) setModelID(latest.modelID)
+        const loadedPrompt = draft.fields[PROMPT_FIELD] ?? ''
+        basePromptRef.current = loadedPrompt
         // E3「恢复到工作区」（#82）：?from=<versionID> 把该历史版本回填到工作
         // 区草稿——恢复本身不产生版本、不记录来源。一次性生效：用完即从 URL
         // 摘掉（replace，不留历史），刷新/重挂载不会再次覆盖工作区。
@@ -130,6 +436,9 @@ export function BuilderPage() {
         if (fromVersion) {
           // 从 EA 过来的 ?from=：EA 侧已经确认过，这里直接载入（草稿的 prompt
           // 字段在服务端，预填走与打字相同的 mutate 通道，让草稿与所见一致）。
+          draftSync.value = fromVersion.prompt
+          draftSync.revision += 1
+          promptPersistedRef.current = false
           setPrompt(fromVersion.prompt)
           setModelID(fromVersion.modelID)
           setRestoredTag(versionTag(fromVersion, list.versions))
@@ -138,9 +447,19 @@ export function BuilderPage() {
             fromVersion.options,
           )
           if (role && role.side === draft.side) setRoleKey(role.key)
-          void builder
-            .mutate(agentID, { field: PROMPT_FIELD, value: fromVersion.prompt })
-            .catch(() => {})
+          initMethod.current = null
+          const journal = writeNextDraftJournal(journalScope, writerID, {
+            basePrompt: loadedPrompt,
+            prompt: fromVersion.prompt,
+            promptPersisted: false,
+            roleKey: role?.side === draft.side ? role.key : null,
+            modelID: fromVersion.modelID,
+            note: '',
+            method: null,
+            updatedAt: Date.now(),
+          }, null)
+          journalTokenRef.current = journal?.token ?? null
+          void enqueueDraftMutation().catch(() => {})
           setParams(
             (prev) => {
               const next = new URLSearchParams(prev)
@@ -150,8 +469,69 @@ export function BuilderPage() {
             { replace: true },
           )
         } else {
-          setPrompt(draft.fields[PROMPT_FIELD] ?? '')
+          const journal = latestDraftJournal(journalScope)
+          const expired = journal != null &&
+            Date.now() - journal.updatedAt > DRAFT_JOURNAL_AUTO_RESTORE_MS
+          // Auto-recovery is deliberately three-way, not “local always wins”:
+          // 1. server already equals local (the ACK was lost); or
+          // 2. local is unacknowledged and server still equals its recorded base.
+          // Any independent server change or a >14-day record stays preserved
+          // behind an explicit recovery choice and is never POSTed on mount.
+          const serverAlreadyHasLocal = !expired && journal != null &&
+            journal.prompt === loadedPrompt
+          const serverStillAtBase = !expired && journal != null &&
+            !journal.promptPersisted && journal.basePrompt === loadedPrompt
+          const autoRestore = serverAlreadyHasLocal || serverStillAtBase
+          const restoredPrompt = autoRestore && journal != null
+            ? journal.prompt
+            : loadedPrompt
+          draftSync.value = restoredPrompt
+          setPrompt(restoredPrompt)
+          promptPersistedRef.current = restoredPrompt === loadedPrompt
+          if (journal != null && autoRestore) {
+            if (journal.modelID != null) setModelID(journal.modelID)
+            setNote(journal.note)
+            initMethod.current = journal.method
+            const journalRole = roleByKey(
+              scenarioModule(draft.scenarioID),
+              journal.roleKey,
+            )
+            if (journalRole?.side === draft.side) setRoleKey(journalRole.key)
+            const claimed = writeNextDraftJournal(
+              journalScope,
+              writerID,
+              {
+                basePrompt: loadedPrompt,
+                prompt: restoredPrompt,
+                promptPersisted: restoredPrompt === loadedPrompt,
+                roleKey: journal.roleKey,
+                modelID: journal.modelID,
+                note: journal.note,
+                method: journal.method,
+                updatedAt: Date.now(),
+              },
+              journal.token,
+            )
+            journalTokenRef.current = claimed?.token ?? journal.token
+          } else if (journal != null) {
+            setRecovery({ journal, reason: expired ? 'expired' : 'conflict' })
+          }
+          if (autoRestore && restoredPrompt !== loadedPrompt) {
+            draftSync.revision += 1
+            setLastEvent('已恢复本机未暂存的草稿，正在同步')
+            void enqueueDraftMutation().catch(() => {})
+          } else if (serverAlreadyHasLocal && journal != null) {
+            // A hard close can lose only the response while the durable write
+            // succeeds. Mark the claimed record confirmed without another POST.
+            acknowledgeDraftJournal(
+              journalScope,
+              journalTokenRef.current,
+              writerID,
+              loadedPrompt,
+            )
+          }
         }
+        setLoadedAgentID(agentID)
       } catch (cause) {
         if (live) setError(messageOf(cause))
       } finally {
@@ -161,7 +541,7 @@ export function BuilderPage() {
     return () => {
       live = false
     }
-  }, [agentID])
+  }, [agentID, draftSync, enqueueDraftMutation, journalScope, writerID])
 
   // A scenario the SPA carries a module for lets the player cast his own side; the
   // choice rides along the saved version as the options blob the script parses.
@@ -186,10 +566,16 @@ export function BuilderPage() {
   useEffect(() => {
     void catalog.models().then((list) => {
       setModels(list.models)
-      // 只有在没能从最新版本继承到模型时才回落清单首项（P5）。
-      setModelID((current) => current ?? list.models[0]?.id ?? null)
     }).catch(() => {})
   }, [])
+
+  // Same-route agent navigation resets modelID. Once that agent's authoritative
+  // draft/version list has loaded, a versionless agent falls back to the first
+  // live catalog model; versioned agents were already set to their latest model.
+  useEffect(() => {
+    if (draftLoading || loadedAgentID !== agentID || versions.length > 0) return
+    setModelID((current) => current ?? models[0]?.id ?? null)
+  }, [agentID, draftLoading, loadedAgentID, models, versions.length])
 
   // P1：展示名来自 /my/agents（draft 不带 name）；失败静默——标题回落 id。
   useEffect(() => {
@@ -210,9 +596,14 @@ export function BuilderPage() {
 
   useEffect(() => {
     let live = true
+    setConfigSettled(false)
     void configApi.get().then((value) => {
       if (live) setCfg(value)
-    }).catch(() => {})
+    }).catch(() => {
+      if (live) setCfg(null)
+    }).finally(() => {
+      if (live) setConfigSettled(true)
+    })
     return () => {
       live = false
     }
@@ -220,11 +611,22 @@ export function BuilderPage() {
 
   useEffect(() => {
     if (!scenarioID) return
+    let live = true
+    setScenario(null)
     void catalog
       .scenario(scenarioID, side)
-      .then(setScenario)
-      .catch(() => setScenario(null))
-  }, [scenarioID, side])
+      .then((value) => {
+        if (live) setScenario(value)
+      })
+      .catch(() => {
+        if (!live) return
+        setScenario(null)
+        if (express) setError('首战配置加载失败，请刷新后重试')
+      })
+    return () => {
+      live = false
+    }
+  }, [express, scenarioID, side])
 
   useEffect(() => {
     const source = new EventSource(sseUrl(`/agents/${agentID}/stream`), {
@@ -233,7 +635,7 @@ export function BuilderPage() {
     source.onmessage = (message) => {
       const event = JSON.parse(message.data) as BuilderEventDTO
       if ('fieldMutated' in event) {
-        // E1：状态行按「自动暂存」口径措辞——草稿在服务端，刷新/离开不丢。
+        // E1：状态行按「自动暂存」口径措辞——确认本次草稿已经写入服务端。
         setLastEvent('已自动暂存')
       } else if ('versionCreated' in event) {
         setLastEvent(`版本已创建：#${event.versionCreated.versionID}`)
@@ -242,87 +644,146 @@ export function BuilderPage() {
     return () => source.close()
   }, [agentID])
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const clearPendingTimer = () => {
       if (mutateTimer.current) clearTimeout(mutateTimer.current)
-    },
-    [],
-  )
-
-  // E3/#89：把某个版本载入工作区草稿。本身不产生版本、不记录来源。
-  const applyIterate = (version: AgentVersionDTO, siblings = versions) => {
-    if (mutateTimer.current) {
-      clearTimeout(mutateTimer.current)
       mutateTimer.current = null
     }
-    setPrompt(version.prompt)
-    setModelID(version.modelID)
-    setRestoredTag(versionTag(version, siblings))
-    setSaveNotice(null)
-    setRestarTargetID(null)
-    const role = roleOfOptions(scenarioModule(scenarioID), version.options)
-    if (role && role.side === side) setRoleKey(role.key)
-    void builder
-      .mutate(agentID, { field: PROMPT_FIELD, value: version.prompt })
-      .catch(() => {})
-  }
-
-  // P11（Yihan 修订）：草稿与最新版本不一致＝有未保存的改动，覆盖前先确认；
-  // 一致就直接载入，不打扰。确认行由 VersionList 就地画在被点击的那张版本
-  // 卡内——原先的页面顶部横幅与按钮不同屏，会被误当按钮失灵（J4.3 实测）。
-  const latestVersion = [...versions].sort((a, b) => b.id - a.id)[0] ?? null
-  const draftDiffersFromLatest = latestVersion != null &&
-    prompt.trim() !== latestVersion.prompt.trim()
-  // 一键改标的目标（E10）：id 换算回版本对象；版本线刷新后词面自动跟上。
-  const restarTarget = restarTargetID == null
-    ? null
-    : versions.find((v) => v.id === restarTargetID) ?? null
-
-  const requestIterate = (version: AgentVersionDTO) => {
-    // round-2 人工反馈（RUI LIN，jR1s4）对 P11 的成文细化：被点击的目标版本
-    // 与当前草稿一字不差时，载入是零损失——即使草稿与最新版本不一致也直接
-    // 载入、不弹确认。P11 的确认只拦「会丢内容」的覆盖。
-    const zeroLoss = prompt.trim() === version.prompt.trim()
-    if (draftDiffersFromLatest && !zeroLoss) {
-      setPendingIterate(version)
-      return
+    // SPA route exits keep this JavaScript context alive, so the serialized
+    // queue can safely flush the latest value after any older request. Do not
+    // start a second request on pagehide: without server-side client revisions,
+    // its arrival could be overwritten by the older in-flight mutation.
+    return () => {
+      clearPendingTimer()
+      void enqueueDraftMutation(true).catch(() => {})
     }
-    applyIterate(version)
+  }, [agentID, draftSync, enqueueDraftMutation])
+
+  const latestVersion = [...versions].sort((a, b) => b.id - a.id)[0] ?? null
+
+  const journalWorkspace = (
+    overrides: Partial<Omit<DraftJournal, 'updatedAt'>> = {},
+  ) => {
+    // Merge from the synchronous journal first. This also protects two input
+    // events delivered in one React batch: one handler cannot overwrite the
+    // other field with a stale render closure.
+    const existing = draftJournalByToken(
+      journalScope,
+      journalTokenRef.current,
+    )
+    const next = writeNextDraftJournal(journalScope, writerID, {
+      basePrompt: basePromptRef.current,
+      prompt: existing?.prompt ?? prompt,
+      promptPersisted: promptPersistedRef.current,
+      roleKey: existing ? existing.roleKey : roleKey,
+      modelID: existing ? existing.modelID : modelID,
+      note: existing?.note ?? note,
+      method: existing ? existing.method : initMethod.current,
+      ...overrides,
+      updatedAt: Date.now(),
+    }, existing?.token ?? null)
+    if (next != null) journalTokenRef.current = next.token
   }
 
   const onPromptChange = (value: string) => {
+    draftSync.value = value
+    draftSync.revision += 1
+    promptPersistedRef.current = false
     setPrompt(value)
+    journalWorkspace({ prompt: value, promptPersisted: false })
     if (mutateTimer.current) clearTimeout(mutateTimer.current)
     mutateTimer.current = setTimeout(() => {
-      void builder
-        .mutate(agentID, { field: PROMPT_FIELD, value })
-        .catch(() => {})
+      mutateTimer.current = null
+      void enqueueDraftMutation().catch(() => {})
     }, 400)
   }
 
-  // 初始化方式的「填入工作区」/「清空工作区」：绕过 debounce 立即冲服务端
-  // 草稿——两个动作都翻转 E7 门（工作区空↔非空），所见即所存。
-  // #83 佐证：本次工作区内容的初始化方式；清空/直写回落 raw。
-  const initMethod = useRef<'mcq' | 'builder' | null>(null)
-
+  // Preset fills use the same authoritative server-draft channel as typing.
   const fillWorkspace = (value: string, method?: 'mcq' | 'builder') => {
     if (mutateTimer.current) {
       clearTimeout(mutateTimer.current)
       mutateTimer.current = null
     }
-    initMethod.current = value.trim() ? method ?? null : null
+    const nextMethod = value.trim() ? method ?? null : null
+    initMethod.current = nextMethod
+    draftSync.value = value
+    draftSync.revision += 1
+    promptPersistedRef.current = false
     setPrompt(value)
-    setClearArmed(false)
-    void builder
-      .mutate(agentID, { field: PROMPT_FIELD, value })
-      .catch(() => {})
+    journalWorkspace({
+      prompt: value,
+      promptPersisted: false,
+      method: nextMethod,
+    })
+    void enqueueDraftMutation().catch(() => {})
+  }
+
+  const recoverLocalDraft = () => {
+    if (recovery == null) return
+    const latest = latestDraftJournal(journalScope)
+    if (latest?.token !== recovery.journal.token) {
+      setError('本机草稿已在另一标签页更新，请刷新后再选择。')
+      return
+    }
+    const local = recovery.journal
+    setRecovery(null)
+    setError(null)
+    setPrompt(local.prompt)
+    if (local.modelID != null) setModelID(local.modelID)
+    setNote(local.note)
+    initMethod.current = local.method
+    const localRole = roleByKey(roleModule, local.roleKey)
+    if (localRole?.side === side) setRoleKey(localRole.key)
+    draftSync.value = local.prompt
+    draftSync.revision += 1
+    promptPersistedRef.current = false
+    const claimed = writeNextDraftJournal(
+      journalScope,
+      writerID,
+      {
+        basePrompt: basePromptRef.current,
+        prompt: local.prompt,
+        promptPersisted: false,
+        roleKey: local.roleKey,
+        modelID: local.modelID,
+        note: local.note,
+        method: local.method,
+        updatedAt: Date.now(),
+      },
+      local.token,
+    )
+    journalTokenRef.current = claimed?.token ?? local.token
+    setLastEvent('已选择恢复本机草稿，正在同步')
+    void enqueueDraftMutation().catch(() => {})
+  }
+
+  const keepServerDraft = () => {
+    if (recovery == null) return
+    const latest = latestDraftJournal(journalScope)
+    if (latest?.token !== recovery.journal.token) {
+      setError('本机草稿已在另一标签页更新，请刷新后再选择。')
+      return
+    }
+    if (!compareAndDeleteDraftJournal(journalScope, recovery.journal)) {
+      setError('无法清理本机草稿，请刷新后重试。')
+      return
+    }
+    setRecovery(null)
+    setError(null)
+    setLastEvent('已保留服务器草稿')
   }
 
   // A3 ③：首战的保存自动派发（#17 的唯一例外）——对手＝新手预设指定的
   // 对侧 NPC（#10，config 缺席回落第一个对侧预设），成功直进实况（#9），
   // express 标记走一次性导航 state（旅程卡 #67 的诚实判据）。派发失败降级
   // 为 EA 导航 + 错误文案（版本已保存，玩家可从出战面板手动发起）。
-  const expressDispatch = async (versionID: number) => {
+  const expressDependenciesReady = !express ||
+    (scenario != null && configSettled)
+
+  const expressDispatch = async (
+    versionID: number,
+    requestIsCurrent: () => boolean,
+  ) => {
     const opponentPresets = (scenario?.presets ?? []).filter(
       (preset) => preset.side !== side,
     )
@@ -336,8 +797,10 @@ export function BuilderPage() {
         versionID,
         presetKey: preset.key,
       })
+      if (!requestIsCurrent()) return
       navigate(`/matches/${response.matchID}`, { state: { express: true } })
     } catch (cause) {
+      if (!requestIsCurrent()) return
       navigate(`/agents/${agentID}`, {
         state: {
           savedVersionID: versionID,
@@ -350,7 +813,32 @@ export function BuilderPage() {
   }
 
   const save = async () => {
-    if (modelID == null) return
+    if (
+      saving || modelID == null || draftLoading || loadedAgentID !== agentID ||
+      !expressDependenciesReady || !prompt.trim() || recovery != null
+    ) return
+    // Everything below uses this immutable click-time snapshot. The controls
+    // are disabled on the same render as `saving`, so a slow final draft flush
+    // cannot silently mix a newer prompt/note/model/role into this version.
+    const snapshot = {
+      prompt,
+      method: initMethod.current ?? 'raw',
+      modelID,
+      note: note.trim(),
+      options: roleKey == null ? null : roleOptions(roleKey),
+      journal: (() => {
+        const journal = draftJournalByToken(
+          journalScope,
+          journalTokenRef.current,
+        )
+        return journal == null
+          ? null
+          : { token: journal.token, revision: journal.revision }
+      })(),
+    }
+    const requestID = ++saveRequestRef.current
+    const requestIsCurrent = () =>
+      liveRef.current && saveRequestRef.current === requestID
     setSaving(true)
     setError(null)
     // 保存后立刻离开本页：把还压在 debounce 里的最后一段输入先冲给服务器
@@ -362,45 +850,41 @@ export function BuilderPage() {
       clearTimeout(mutateTimer.current)
       mutateTimer.current = null
     }
-    await builder
-      .mutate(agentID, { field: PROMPT_FIELD, value: prompt })
-      .catch(() => {})
+    try {
+      await enqueueDraftMutation()
+    } catch {
+      if (!requestIsCurrent()) return
+      setError('草稿暂存失败，请检查网络后重试；尚未创建新版本。')
+      setSaving(false)
+      return
+    }
+    if (!requestIsCurrent()) return
     try {
       // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
       const saved = await builder.save(agentID, {
-        prompt,
-        method: initMethod.current ?? 'raw',
-        modelID,
-        ...(note.trim() === '' ? {} : { note: note.trim() }),
-        ...(roleKey == null ? {} : { options: roleOptions(roleKey) }),
+        prompt: snapshot.prompt,
+        method: snapshot.method,
+        modelID: snapshot.modelID,
+        ...(snapshot.note === '' ? {} : { note: snapshot.note }),
+        ...(snapshot.options == null ? {} : { options: snapshot.options }),
       })
+      if (!requestIsCurrent()) return
+      if (snapshot.journal != null) {
+        compareAndDeleteDraftJournal(journalScope, snapshot.journal)
+      }
       if (express) {
-        await expressDispatch(saved.id)
+        await expressDispatch(saved.id, requestIsCurrent)
         return
       }
-      // #88：保存后**留在本页**——把新版本插进页内版本线，给一句成功提示。
-      // 玩家「改一句→保存→再改一句」的连打循环不再被跳转打断。
-      const list = await builder.versions(agentID).catch(() => null)
-      const nextVersions = list?.versions ?? [...versions, saved]
-      setVersions(nextVersions)
-      setEntryVersionID(list?.entryVersionID ?? entryVersionID)
-      setRestoredTag(null)
-      setNote('')
-      // E10（#84）：保存不移动参赛标记——新版本不是 ★ 时提醒一句，并给
-      // 「一键改标」按钮（u02-c11b 拍板 A：E10 原文的后半句）。
-      const entryID = list?.entryVersionID ?? entryVersionID
-      const entry = nextVersions.find((v) => v.id === entryID)
-      const keepsOldEntry = entry != null && entry.id !== saved.id
-      setSaveNotice(
-        keepsOldEntry
-          ? `已保存 ${versionTag(saved, nextVersions)} · ★参赛版本仍是 ${
-            versionTag(entry, nextVersions)
-          }——新版本不会自动参赛`
-          : `已保存 ${versionTag(saved, nextVersions)}`,
-      )
-      setRestarTargetID(keepsOldEntry ? saved.id : null)
-      setSaving(false)
+      // Keso's low-complexity builder returns to the high-information home,
+      // where the new immutable version, entry selection, comparison and
+      // battle actions live. The backend remains authoritative about whether
+      // this first version automatically receives the side's entry slot.
+      navigate(`/agents/${agentID}`, {
+        state: { savedVersionID: saved.id },
+      })
     } catch (cause) {
+      if (!requestIsCurrent()) return
       // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
       // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
       setError(rejectCopy(cause, null, '保存失败'))
@@ -408,44 +892,21 @@ export function BuilderPage() {
     }
   }
 
-  // P4/#91：改标＝把这一侧的出战席位交给这一版；服务端会收走同侧其他智能体的
-  // ★，所以提示要说清「从哪来」——玩家看不到别的策略时最容易以为没生效。
-  const setEntry = async (versionID: number) => {
-    setError(null)
-    // 改标动作（无论来自版本卡还是一键改标）都会让提示里的快捷按钮过时。
-    setRestarTargetID(null)
-    const previous = versions.find((v) => v.id === entryVersionID) ?? null
-    try {
-      await builder.setEntry(agentID, versionID)
-      const list = await builder.versions(agentID)
-      setVersions(list.versions)
-      setEntryVersionID(list.entryVersionID ?? null)
-      const next = list.versions.find((v) => v.id === versionID)
-      if (next != null) {
-        setSaveNotice(
-          previous != null && previous.id !== versionID
-            ? `★ 已从 ${versionTag(previous, list.versions)} 移到 ${
-              versionTag(next, list.versions)
-            }`
-            : `★ 已交给 ${
-              versionTag(next, list.versions)
-            }——${sideDisplayName}这一侧由它出战`,
-        )
-      }
-    } catch (cause) {
-      setError(messageOf(cause, '设置参赛版本失败'))
-    }
-  }
-
   // P14：E8 承诺过的「复制当前文本」——平台不做 AI 改写，就得给复制手段。
-  const copyPrompt = () => {
+  const copyPrompt = async () => {
+    const value = prompt
     try {
-      void navigator.clipboard.writeText(prompt).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      }).catch(() => {})
+      if (navigator.clipboard?.writeText == null) throw new Error('clipboard')
+      await navigator.clipboard.writeText(value)
+      if (!liveRef.current) return
+      setCopied(true)
+      setTimeout(() => {
+        if (liveRef.current) setCopied(false)
+      }, 1500)
     } catch {
-      // 非安全上下文没有 clipboard——静默降级，文本仍可手动全选复制。
+      if (!liveRef.current) return
+      setCopied(false)
+      setError('复制失败，请手动选择策略提示词并复制。')
     }
   }
 
@@ -457,9 +918,7 @@ export function BuilderPage() {
     ? [...models, { id: modelID, label: modelID }]
     : models
 
-  const promptPlaceholder = side === 'a'
-    ? '例如：先明确你的立场，再用裁判最难忽视的风险和利益组织论点…'
-    : '例如：先拆解对方方案的成本，再把你的真诉求藏在可执行的条件中…'
+  const promptPlaceholder = '你希望智能体如何思考、回应和行动？'
 
   const selectedRole = roleByKey(roleModule, roleKey)
   // #14：按汉字或英文词计（非 token），P1 仅提示、不阻断保存。上限来自
@@ -467,16 +926,11 @@ export function BuilderPage() {
   const units = promptLength(prompt)
   const promptUnitLimit = cfg?.promptUnitLimit ?? null
   const overLimit = promptUnitLimit != null && units > promptUnitLimit
+  const workspaceReady = !draftLoading && loadedAgentID === agentID
 
-  // 初始化方式三选一（E6/#83）：只属于从未保存过版本的新建流程——版本数为
-  // 0、工作区为空且场景有 deck 时出现（E7 门在 initModesAvailable；保存 v1
-  // 后清空工作区也不再复活三选一，重选初始化走「再建一个」，#90 的唯一出
-  // 口）；deck 缺席的场景不摆假 tab，保持 Basic 直写。
-  // deck 按侧或入场角色解析（本能寺逐角色一套），换角色即换 deck、选择重置
-  // （key 重挂载）——选择本身不持久化。
+  // Helpers remain available for every draft/version. Persona-specific decks
+  // still key off the selected role, so changing role resets only the helper.
   const deck = deckFor(scenarioID, side, roleKey)
-  const showInit = !draftLoading && deck != null &&
-    initModesAvailable(prompt, versions.length)
   const sideDisplayName = scenario
     ? (side === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName)
     : side === 'a'
@@ -522,20 +976,28 @@ export function BuilderPage() {
         </p>
       </div>
 
-      {showInit && deck != null
+      {workspaceReady
         ? (
-          <InitModes
-            key={`${scenarioID}:${side}:${roleKey ?? ''}`}
-            deck={deck}
-            metaPrompt={metaPromptFor(
-              roleModule,
-              scenario?.summary.title ?? scenarioID,
-              side,
-              sideDisplayName,
-            )}
-            onFill={fillWorkspace}
-            promptUnitLimit={promptUnitLimit}
-          />
+          <fieldset
+            disabled={saving || recovery != null}
+            className='min-w-0 border-0 p-0'
+            aria-busy={saving}
+          >
+            <legend className='sr-only'>策略辅助</legend>
+            <InitModes
+              key={`${scenarioID}:${side}:${roleKey ?? ''}:${saving}`}
+              deck={deck}
+              metaPrompt={metaPromptFor(
+                roleModule,
+                scenario?.summary.title ?? scenarioID,
+                side,
+                sideDisplayName,
+              )}
+              currentPrompt={prompt}
+              onFill={fillWorkspace}
+              promptUnitLimit={promptUnitLimit}
+            />
+          </fieldset>
         )
         : null}
 
@@ -545,33 +1007,46 @@ export function BuilderPage() {
             className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
             {...tm('E.restored-notice')}
           >
-            已载入 {restoredTag} · {nextVersionCopy(versions.length)}
+            已载入 {restoredTag}，修改后保存会生成新版本。
           </p>
         )
         : null}
 
-      {saveNotice != null
+      {recovery != null
         ? (
-          <div
-            data-testid='save-notice'
-            className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
-            {...tm('E.save-notice')}
+          <section
+            aria-label='本机草稿恢复'
+            className='space-y-3 rounded-lg border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-3'
+            data-testid='draft-recovery'
           >
-            <span>{saveNotice}</span>
-            {/* E10 原文「参赛版本仍是 vK · 一键改标」的后半句（u02-c11b） */}
-            {restarTarget != null
-              ? (
-                <Button
-                  size='sm'
-                  variant='secondary'
-                  onClick={() => void setEntry(restarTarget.id)}
-                  {...tm('E.move-entry-button')}
-                >
-                  一键改标到 {versionTag(restarTarget, versions)}
-                </Button>
-              )
-              : null}
-          </div>
+            <div className='space-y-1'>
+              <p className='text-sm text-(--warning)'>
+                {recovery.reason === 'expired'
+                  ? '本机留有一份超过 14 天的草稿，未自动恢复。'
+                  : '服务器草稿已更新，本机副本未自动恢复。'}
+              </p>
+              <p className='line-clamp-2 text-xs text-(--foreground-subtle)'>
+                本机副本：{recovery.journal.prompt || '（空白）'}
+              </p>
+            </div>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                type='button'
+                size='sm'
+                onClick={recoverLocalDraft}
+              >
+                恢复本机副本
+              </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='secondary'
+                onClick={keepServerDraft}
+              >
+                使用服务器草稿
+              </Button>
+            </div>
+          </section>
         )
         : null}
 
@@ -583,307 +1058,229 @@ export function BuilderPage() {
         )
         : null}
 
-      <Card {...tm('E.workspace-card')}>
-        <CardContent className='space-y-4 pt-5'>
-          <div className='flex items-center justify-between gap-2'>
-            <label
-              htmlFor='prompt-input'
-              className='text-sm text-(--foreground-subtle)'
+      <fieldset
+        disabled={saving || !workspaceReady || recovery != null}
+        aria-busy={saving}
+        className='space-y-4 rounded-xl border border-(--border-soft) bg-white/2 p-4 sm:p-5'
+        {...tm('E.workspace-card')}
+      >
+        <legend className='sr-only'>版本内容</legend>
+        <div className='flex items-center justify-between gap-2'>
+          <label
+            htmlFor='prompt-input'
+            className='text-sm text-(--foreground-subtle)'
+          >
+            策略提示词
+          </label>
+          {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
+          <Button
+            type='button'
+            variant='ghost'
+            className='h-11 w-11 px-0 md:h-10 md:w-10'
+            onClick={() => void copyPrompt()}
+            disabled={saving || prompt.trim() === ''}
+            aria-label={copied ? '已复制当前草稿' : '复制当前草稿'}
+            title={copied ? '已复制' : '复制当前草稿'}
+            {...tm('E.copy-prompt-button')}
+          >
+            {copied
+              ? (
+                <Check
+                  aria-hidden='true'
+                  className='h-4 w-4 text-(--success)'
+                />
+              )
+              : <Copy aria-hidden='true' className='h-4 w-4' />}
+          </Button>
+        </div>
+        <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
+          <Textarea
+            id='prompt-input'
+            rows={18}
+            value={prompt}
+            disabled={!workspaceReady || saving}
+            aria-busy={draftLoading || saving}
+            onChange={(e) => onPromptChange(e.target.value)}
+            placeholder={promptPlaceholder}
+            className='min-h-[46dvh] resize-y bg-(--background) text-base leading-7'
+            {...tm('E.prompt-input')}
+          />
+        </div>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          {/* #68 三层说明的固定文案 */}
+          <p
+            className='text-xs text-(--foreground-muted)'
+            {...tm('E.merge-hint')}
+          >
+            你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。
+          </p>
+          <span
+            className={`shrink-0 font-mono text-xs ${
+              overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
+            }`}
+            title='按汉字或英文词计数（非 token）'
+            {...tm('E.length-counter')}
+          >
+            {units} / {promptUnitLimit ?? '—'}
+          </span>
+        </div>
+        {overLimit
+          ? (
+            <p role='alert' className='text-xs text-(--accent)'>
+              当前策略超过字数上限，请精简后再保存。
+            </p>
+          )
+          : null}
+        <div className='flex flex-wrap items-end gap-2 border-t border-(--border-soft) pt-4'>
+          {roles.length > 0
+            ? (
+              <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
+                <span
+                  className='block'
+                  title='角色决定你在这一局里的身份与筹码'
+                >
+                  出场角色
+                </span>
+                <div
+                  className='w-[min(14rem,calc(100vw-3rem))]'
+                  {...tm('E.role-select')}
+                >
+                  <Select
+                    key={`role:${saving}`}
+                    placeholder='选择角色'
+                    value={roleKey}
+                    className='h-11 md:h-10'
+                    disabled={!workspaceReady || saving}
+                    renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
+                    onValueChange={(v) => {
+                      if (!v) return
+                      setRoleKey(v)
+                      journalWorkspace({ roleKey: v })
+                    }}
+                  >
+                    {roles.map((role) => (
+                      <SelectItem key={role.key} value={role.key}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              </label>
+            )
+            : null}
+          <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
+            <span
+              className='block'
+              title='模型影响 AI 的表达风格和推理能力'
             >
-              策略提示词
-            </label>
-            {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={copyPrompt}
-              disabled={prompt.trim() === ''}
-              {...tm('E.copy-prompt-button')}
+              模型
+            </span>
+            <div
+              className='w-[min(14rem,calc(100vw-3rem))]'
+              {...tm('E.model-select')}
             >
-              {copied
-                ? <Check className='mr-1.5 h-3.5 w-3.5 text-(--success)' />
-                : <Copy className='mr-1.5 h-3.5 w-3.5' />}
-              {copied ? '已复制' : '复制当前文本'}
-            </Button>
-          </div>
-          <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-            <Textarea
-              id='prompt-input'
-              rows={10}
-              value={prompt}
-              disabled={draftLoading}
-              aria-busy={draftLoading}
-              onChange={(e) => onPromptChange(e.target.value)}
-              placeholder={promptPlaceholder}
-              {...tm('E.prompt-input')}
-            />
-          </div>
-          <div className='flex flex-wrap items-start justify-between gap-3'>
-            {/* #68 三层说明的固定文案 */}
+              <Select
+                key={`model:${saving}`}
+                value={modelID}
+                className='h-11 md:h-10'
+                disabled={!workspaceReady || saving}
+                renderValue={(v) =>
+                  modelOptions.find((model) => model.id === v)?.label ?? v}
+                onValueChange={(v) => {
+                  if (!v) return
+                  setModelID(v)
+                  journalWorkspace({ modelID: v })
+                }}
+              >
+                {modelOptions.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.label}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
+          </label>
+          <VersionNote
+            key={`note:${saving}`}
+            value={note}
+            onChange={(value) => {
+              setNote(value)
+              journalWorkspace({ note: value })
+            }}
+          />
+          <Button
+            data-testid='save-version'
+            className='h-11 sm:ml-auto md:h-10'
+            onClick={() => void save()}
+            disabled={saving || draftLoading || loadedAgentID !== agentID ||
+              !prompt.trim() || modelID == null || overLimit ||
+              !expressDependenciesReady || recovery != null}
+            {...tm('E.save-button')}
+          >
+            {saving
+              ? express ? '开战中…' : '保存中…'
+              : express
+              ? expressDependenciesReady ? '保存并开始首战' : '加载首战配置…'
+              : '保存并返回主页'}
+          </Button>
+          {lastEvent
+            ? (
+              <span
+                className='text-xs text-(--foreground-muted)'
+                {...tm('E.autosave-status')}
+              >
+                {lastEvent}
+              </span>
+            )
+            : null}
+        </div>
+        {/* P5：模型随版本快照（#13）——说清这一版会用哪个模型 */}
+        {latestVersion != null
+          ? (
             <p
               className='text-xs text-(--foreground-muted)'
-              {...tm('E.merge-hint')}
+              {...tm('E.model-inherit-hint')}
             >
-              你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。
+              {modelID === latestVersion.modelID
+                ? `沿用 ${versionTag(latestVersion, versions)} 的模型`
+                : `已改为新模型，保存后 v${versions.length + 1} 用新模型（${
+                  versionTag(latestVersion, versions)
+                } 不受影响）`}
             </p>
-            <span
-              className={`shrink-0 font-mono text-xs ${
-                overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
-              }`}
-              title='按汉字或英文词计数（非 token）；当前仅提示，不阻断保存'
-              {...tm('E.length-counter')}
+          )
+          : null}
+        {selectedRole
+          ? (
+            <p
+              className='text-xs text-(--foreground-muted)'
+              {...tm('E.role-pitch')}
             >
-              {units} / {promptUnitLimit ?? '—'}
+              {selectedRole.pitch}
+            </p>
+          )
+          : null}
+      </fieldset>
+
+      <Accordion className='rounded-xl border border-(--border-soft) px-4'>
+        <AccordionItem
+          value='role-template'
+          title={
+            <span {...tm('E.role-template-toggle')}>
+              角色系统提示词
             </span>
-          </div>
-          {
-            /* E7（#83，pr-fate u02-c19 拍板 A）：迭代只有文本工作台。清空
-            工作区只删草稿——版本数为 0 时它是重选初始化方式的回头路；已有
-            版本后三选一不再复活，重选初始化＝「再建一个」同侧新智能体或
-            创建对侧（#90 的唯一出口）。两步就地确认，不弹窗。 */
           }
-          {deck != null && !draftLoading && prompt.trim() !== ''
-            ? (
-              clearArmed
-                ? (
-                  <div
-                    className='flex flex-wrap items-center gap-2 rounded-md border border-(--border-soft) bg-white/2 px-3 py-2'
-                    {...tm('E.clear-confirm')}
-                  >
-                    <span className='text-xs text-(--foreground-subtle)'>
-                      {versions.length === 0
-                        ? '清空后可重新选择初始化方式'
-                        : '清空后不回到初始化三选一——想重选初始化方式：再建一个智能体或创建对侧'}
-                    </span>
-                    <Button
-                      size='sm'
-                      variant='secondary'
-                      onClick={() => fillWorkspace('')}
-                      {...tm('E.clear-confirm-button')}
-                    >
-                      确认清空
-                    </Button>
-                    <button
-                      type='button'
-                      onClick={() => setClearArmed(false)}
-                      className='cursor-pointer text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
-                    >
-                      取消
-                    </button>
-                  </div>
-                )
-                : (
-                  <button
-                    type='button'
-                    onClick={() => setClearArmed(true)}
-                    className='cursor-pointer text-xs text-(--foreground-muted) underline-offset-2 transition hover:text-(--foreground) hover:underline'
-                    {...tm('E.clear-button')}
-                  >
-                    {versions.length === 0
-                      ? '清空工作区（重新选择初始化方式）'
-                      : '清空工作区'}
-                  </button>
-                )
-            )
-            : null}
-          {/* P10：E5 说版本身份含备注——保存时可选填，卡上回看 */}
-          <label className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
-            <span>版本备注（可选）</span>
-            <Input
-              value={note}
-              maxLength={60}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder='这一版改了什么，比如「加了退让条款」'
-              {...tm('E.note-input')}
-            />
-          </label>
-          <div className='flex flex-wrap items-end gap-3'>
-            {roles.length > 0
-              ? (
-                <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
-                  <span
-                    className='block'
-                    title='角色决定你在这一局里的身份与筹码'
-                  >
-                    出场角色
-                  </span>
-                  <div className='w-56' {...tm('E.role-select')}>
-                    <Select
-                      placeholder='选择角色'
-                      value={roleKey ?? undefined}
-                      renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
-                      onValueChange={(v) => v && setRoleKey(v)}
-                    >
-                      {roles.map((role) => (
-                        <SelectItem key={role.key} value={role.key}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </Select>
-                  </div>
-                </label>
-              )
-              : null}
-            <label className='space-y-1.5 text-sm text-(--foreground-subtle)'>
-              <span
-                className='block'
-                title='模型影响 AI 的表达风格和推理能力'
-              >
-                模型
-              </span>
-              <div className='w-56' {...tm('E.model-select')}>
-                <Select
-                  value={modelID ?? undefined}
-                  renderValue={(v) =>
-                    modelOptions.find((model) => model.id === v)?.label ?? v}
-                  onValueChange={(v) => v && setModelID(v)}
-                >
-                  {modelOptions.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.label}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </div>
-            </label>
-            <Button
-              data-testid='save-version'
-              onClick={() => void save()}
-              disabled={saving || !prompt.trim() || modelID == null}
-              {...tm('E.save-button')}
-            >
-              {saving
-                ? express ? '开战中…' : '保存中…'
-                : express
-                ? '保存并开始首战'
-                : '保存版本'}
-            </Button>
-            {/* P12：「保存＝产版」最该被看见的地方就是保存按钮旁 */}
-            {!express
-              ? (
-                <span
-                  className='text-xs font-medium text-(--accent)'
-                  {...tm('E.next-version-hint')}
-                >
-                  {nextVersionCopy(versions.length)}
-                </span>
-              )
-              : null}
-            {lastEvent
-              ? (
-                <span
-                  className='text-xs text-(--foreground-muted)'
-                  {...tm('E.autosave-status')}
-                >
-                  {lastEvent}
-                </span>
-              )
-              : null}
-          </div>
-          {/* P5：模型随版本快照（#13）——说清这一版会用哪个模型 */}
-          {latestVersion != null
-            ? (
-              <p
-                className='text-xs text-(--foreground-muted)'
-                {...tm('E.model-inherit-hint')}
-              >
-                {modelID === latestVersion.modelID
-                  ? `沿用 ${versionTag(latestVersion, versions)} 的模型`
-                  : `已改为新模型，保存后 v${versions.length + 1} 用新模型（${
-                    versionTag(latestVersion, versions)
-                  } 不受影响）`}
-              </p>
-            )
-            : null}
-          {selectedRole
-            ? (
-              <p
-                className='text-xs text-(--foreground-muted)'
-                {...tm('E.role-pitch')}
-              >
-                {selectedRole.pitch}
-              </p>
-            )
-            : null}
-          <Accordion className='border-t border-(--border-soft)'>
-            <AccordionItem
-              value='role-template'
-              title={
-                <span {...tm('E.role-template-toggle')}>
-                  查看场景角色模板（仅供查看，无需重复编写）
-                </span>
-              }
-            >
-              <p
-                className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'
-                {...tm('E.role-template-text')}
-              >
-                {roleTemplate}
-              </p>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
-      </Card>
-
-      {
-        /* E11/#88：版本线就在编辑现场——保存后不跳转，新版直接长在这里。
-        express 首战不摆版本线（那条路只保存一次就直奔实况）。 */
-      }
-      {!express
-        ? (
-          <VersionList
-            versions={versions}
-            sideName={sideDisplayName}
-            onSetEntry={(versionID) => void setEntry(versionID)}
-            onIterate={requestIterate}
-            pendingIterateID={pendingIterate?.id ?? null}
-            onConfirmIterate={(version) => {
-              applyIterate(version)
-              setPendingIterate(null)
-            }}
-            onCancelIterate={() => setPendingIterate(null)}
-            onField={(version) => {
-              setPreferVersionID(version.id)
-              setOsOpen(true)
-            }}
-            headingAside={
-              <span
-                className='text-[11px] text-(--foreground-muted)'
-                {...tm('E.version-list-aside')}
-              >
-                保存产生新版本；草稿不参战
-              </span>
-            }
-            emptyState={
-              <div
-                className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
-                {...tm('E.version-empty')}
-              >
-                <p className='text-sm font-medium text-(--foreground)'>
-                  还没有保存过版本
-                </p>
-                <p className='mt-1 text-xs text-(--foreground-muted)'>
-                  写下策略并点「保存版本」，这里就会长出 v1。
-                </p>
-              </div>
-            }
-          />
-        )
-        : null}
-
-      {scenario != null && !express
-        ? (
-          <OsPanel
-            open={osOpen}
-            onClose={() => setOsOpen(false)}
-            scenario={scenario}
-            side={side}
-            versions={versions}
-            entryVersionID={entryVersionID}
-            preferVersionID={preferVersionID}
-          />
-        )
-        : null}
+        >
+          <p className='mb-3 text-xs text-(--foreground-muted)'>
+            比赛时系统会自动合并这份角色模板，无需复制到策略提示词。
+          </p>
+          <p
+            className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'
+            {...tm('E.role-template-text')}
+          >
+            {roleTemplate}
+          </p>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }
