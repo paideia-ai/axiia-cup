@@ -484,7 +484,7 @@ function BallotDetails({ children, secret = false }: {
       </summary>
       {secret && (
         <p className='mt-2 text-xs text-(--foreground-subtle)'>
-          个人票型对其他场内 Agent 保密；箭头表示相较上一次秘密意向投票的变化。
+          个人票型对其他场内 Agent 保密；改票时会注明上一次秘密意向投票的选择。
         </p>
       )}
       {children}
@@ -542,17 +542,33 @@ function BallotGrid({
               <p className='text-xs font-semibold text-(--foreground)'>
                 {speakerName(labels, ballot.juror)}
               </p>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                  guilty || endNow
-                    ? 'bg-[rgba(224,74,47,0.14)] text-(--accent)'
-                    : 'bg-[rgba(96,165,250,0.14)] text-(--info)'
-                }`}
-              >
-                {changed
-                  ? `${previous === 'GUILTY' ? '有罪' : '无罪'} → ${voteLabel}`
-                  : voteLabel}
-              </span>
+              <div className='flex items-center gap-2'>
+                {changed && (
+                  <span
+                    className={`text-[10px] font-normal ${
+                      previous === 'GUILTY'
+                        ? 'text-(--accent)'
+                        : 'text-(--info)'
+                    }`}
+                  >
+                    原投{previous === 'GUILTY' ? '有罪' : '无罪'}
+                  </span>
+                )}
+                <span
+                  aria-label={kind === 'verdict'
+                    ? `当前票型：${voteLabel}`
+                    : undefined}
+                  className={`rounded-full px-2 py-0.5 font-semibold ${
+                    kind === 'verdict' ? 'text-[11px]' : 'text-[10px]'
+                  } ${
+                    guilty || endNow
+                      ? 'bg-[rgba(224,74,47,0.14)] text-(--accent)'
+                      : 'bg-[rgba(96,165,250,0.14)] text-(--info)'
+                  }`}
+                >
+                  {voteLabel}
+                </span>
+              </div>
             </div>
             {ballot.keyEvidence.length > 0
               ? (

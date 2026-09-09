@@ -158,19 +158,38 @@ export const HarborBallots: Story = {
     const folds = [...polls, final].map((el) => el.querySelector('details')!)
     for (const fold of folds) await expect(fold).not.toHaveAttribute('open')
     await expect(within(polls[1]).getByText('有罪 6 · 无罪 5')).toBeVisible()
-    await expect(within(polls[1]).getByText('有罪 → 无罪')).not.toBeVisible()
+    await expect(within(polls[1]).getByText('原投有罪')).not.toBeVisible()
     await userEvent.click(folds[0].querySelector('summary')!)
-    await expect(within(polls[0]).queryByText(/→/)).toBeNull()
+    await expect(within(polls[0]).queryByText(/^原投/)).toBeNull()
     await userEvent.click(folds[1].querySelector('summary')!)
-    await expect(within(polls[1]).getByText('有罪 → 无罪')).toBeVisible()
-    await expect(within(polls[1]).getByText('无罪 → 有罪')).toBeVisible()
-    await expect(within(polls[1]).getAllByText('有罪')).toHaveLength(5)
-    await expect(within(polls[1]).getAllByText('无罪')).toHaveLength(4)
+    await expect(within(polls[1]).getByText('原投有罪')).toBeVisible()
+    await expect(within(polls[1]).getByText('原投无罪')).toBeVisible()
+    const previousGuilty = within(polls[1]).getByText('原投有罪')
+    const previousNotGuilty = within(polls[1]).getByText('原投无罪')
+    const currentNotGuilty = within(previousGuilty.parentElement!)
+      .getByLabelText('当前票型：无罪')
+    const currentGuilty = within(previousNotGuilty.parentElement!)
+      .getByLabelText('当前票型：有罪')
+    await expect(getComputedStyle(previousGuilty).color).toBe(
+      getComputedStyle(currentGuilty).color,
+    )
+    await expect(getComputedStyle(previousNotGuilty).color).toBe(
+      getComputedStyle(currentNotGuilty).color,
+    )
+    await expect(getComputedStyle(currentGuilty).color).not.toBe(
+      getComputedStyle(currentNotGuilty).color,
+    )
+    await expect(parseFloat(getComputedStyle(currentGuilty).fontSize))
+      .toBeGreaterThan(parseFloat(getComputedStyle(previousGuilty).fontSize))
+    await expect(parseInt(getComputedStyle(currentGuilty).fontWeight))
+      .toBeGreaterThan(parseInt(getComputedStyle(previousGuilty).fontWeight))
+    await expect(within(polls[1]).getAllByText('有罪')).toHaveLength(6)
+    await expect(within(polls[1]).getAllByText('无罪')).toHaveLength(5)
     await userEvent.click(folds[1].querySelector('summary')!)
-    await expect(within(polls[1]).getByText('有罪 → 无罪')).not.toBeVisible()
+    await expect(within(polls[1]).getByText('原投有罪')).not.toBeVisible()
     await userEvent.click(folds[2].querySelector('summary')!)
     await expect(within(final).getByText('陪审员 1')).toBeVisible()
-    await expect(within(final).queryByText(/→/)).toBeNull()
+    await expect(within(final).queryByText(/^原投/)).toBeNull()
   },
 }
 
@@ -180,7 +199,7 @@ export const HarborReplay: Story = {
     const canvas = within(canvasElement)
     await canvas.findByRole('heading', { name: '结果' })
     await userEvent.click(canvas.getByRole('button', { name: '回放' }))
-    await expect(canvas.queryByText('有罪 → 无罪')).toBeNull()
+    await expect(canvas.queryByText('原投有罪')).toBeNull()
     await expect(canvas.queryByText('十一人最终判决')).toBeNull()
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
@@ -189,7 +208,7 @@ export const HarborReplay: Story = {
     await expect(polls).toHaveLength(2)
     const second = polls[1].parentElement!
     await userEvent.click(second.querySelector('summary')!)
-    await expect(within(second).getByText('有罪 → 无罪')).toBeVisible()
+    await expect(within(second).getByText('原投有罪')).toBeVisible()
     await expect(canvas.queryByText('十一人最终判决')).toBeNull()
   },
 }
@@ -232,7 +251,7 @@ export const HarborMissingHistory: Story = {
     const poll = canvas.getAllByText('真人幕后 · 秘密意向投票结果')[1]
       .parentElement!
     await userEvent.click(poll.querySelector('summary')!)
-    await expect(within(poll).queryByText(/→/)).toBeNull()
+    await expect(within(poll).queryByText(/^原投/)).toBeNull()
     await expect(within(poll).getAllByText('有罪')).toHaveLength(6)
     await expect(within(poll).getAllByText('无罪')).toHaveLength(5)
   },
