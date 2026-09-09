@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { JSONValue } from '../../api/types'
 import type { ScriptEvent } from '../../lib/event'
@@ -12,6 +13,7 @@ import {
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { Badge } from '../ui/badge'
 import { tm } from '../../testmode/mark'
 
 const ACTION_LABELS: Record<string, string> = {
@@ -543,43 +545,37 @@ function BallotGrid({
               <p className='text-xs font-semibold text-(--foreground)'>
                 {speakerName(labels, ballot.juror)}
               </p>
-              <div className='flex items-center gap-2'>
+              <div className='flex shrink-0 items-center gap-1.5'>
                 {changed && (
                   <>
-                    <span
+                    <Badge
                       aria-label={`上次票型：${
                         previous === 'GUILTY' ? '有罪' : '无罪'
                       }`}
-                      className={`text-[10px] font-normal ${
-                        previous === 'GUILTY'
-                          ? 'text-(--accent)'
-                          : 'text-(--info)'
-                      }`}
+                      tone={previous === 'GUILTY' ? 'accent' : 'info'}
+                      className='bg-transparent px-2 py-0.5 font-normal ring-1 ring-inset ring-(--border)'
                     >
                       {previous === 'GUILTY' ? '有罪' : '无罪'}
-                    </span>
-                    <span
+                    </Badge>
+                    <ArrowRight
                       aria-hidden='true'
-                      className='text-xs text-(--foreground-subtle)'
-                    >
-                      →
-                    </span>
+                      size={12}
+                      strokeWidth={1.5}
+                      className='text-(--foreground-subtle)'
+                    />
                   </>
                 )}
-                <span
+                <Badge
                   aria-label={kind === 'verdict'
                     ? `当前票型：${voteLabel}`
                     : undefined}
-                  className={`rounded-full px-2 py-0.5 font-semibold ${
-                    kind === 'verdict' ? 'text-[11px]' : 'text-[10px]'
-                  } ${
-                    guilty || endNow
-                      ? 'bg-[rgba(224,74,47,0.14)] text-(--accent)'
-                      : 'bg-[rgba(96,165,250,0.14)] text-(--info)'
+                  tone={guilty || endNow ? 'accent' : 'info'}
+                  className={`px-2 py-0.5 ${
+                    kind === 'procedure' ? 'text-[10px]' : ''
                   }`}
                 >
                   {voteLabel}
-                </span>
+                </Badge>
               </div>
             </div>
             {ballot.keyEvidence.length > 0

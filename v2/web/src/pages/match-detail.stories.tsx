@@ -167,7 +167,6 @@ export const HarborBallots: Story = {
       .toBeVisible()
     await expect(within(polls[1]).getByLabelText('上次票型：无罪'))
       .toBeVisible()
-    await expect(within(polls[1]).getAllByText('→')).toHaveLength(2)
     const previousGuilty = within(polls[1]).getByLabelText('上次票型：有罪')
     const previousNotGuilty = within(polls[1]).getByLabelText('上次票型：无罪')
     const currentNotGuilty = within(previousGuilty.parentElement!)
@@ -184,7 +183,17 @@ export const HarborBallots: Story = {
       getComputedStyle(currentNotGuilty).color,
     )
     await expect(parseFloat(getComputedStyle(currentGuilty).fontSize))
-      .toBeGreaterThan(parseFloat(getComputedStyle(previousGuilty).fontSize))
+      .toBe(parseFloat(getComputedStyle(previousGuilty).fontSize))
+    await expect(getComputedStyle(previousGuilty).backgroundColor).toBe(
+      'rgba(0, 0, 0, 0)',
+    )
+    await expect(getComputedStyle(currentGuilty).backgroundColor).not.toBe(
+      'rgba(0, 0, 0, 0)',
+    )
+    await expect(previousGuilty.parentElement!.querySelector('svg'))
+      .toBeVisible()
+    await expect(previousNotGuilty.parentElement!.querySelector('svg'))
+      .toBeVisible()
     await expect(parseInt(getComputedStyle(currentGuilty).fontWeight))
       .toBeGreaterThan(parseInt(getComputedStyle(previousGuilty).fontWeight))
     await expect(within(polls[1]).getAllByLabelText('当前票型：有罪'))
