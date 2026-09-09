@@ -1,0 +1,215 @@
+/* Restrained presentation over main 28cf870 with PR #170's shared 1040px width. */
+.demo-provenance {
+  margin: 0;
+  padding: 12px 20px 90px;
+  text-align: center;
+  color: #999;
+  background: #0c0c0c;
+  font-size: 11px;
+}
+@media (min-width: 768px) {
+  .demo-provenance {
+    padding-bottom: 16px;
+  }
+}
+body[data-frontend-style='polished'] {
+  --foreground-subtle: #aaa;
+  --foreground-muted: #929292;
+  --border-soft: #303030;
+  --surface: #161616;
+
+  /* Neutral surfaces: no decorative orange edges or brown panel fills. */
+  [data-tm='NAV.nav-link'][aria-current='page'] {
+    background: #ffffff06;
+  }
+  main h1 {
+    font-size: 26px;
+    font-weight: 650;
+    line-height: 1.4;
+    letter-spacing: -.035em;
+  }
+  main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #c7c7c7;
+    outline-offset: 3px;
+  }
+  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) {
+    display: block;
+    border-radius: 10px;
+  }
+  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+    background: #161616;
+    border: 1px solid #303030;
+    border-radius: 10px;
+    box-shadow: none;
+    transition: border-color 150ms, background-color 150ms;
+  }
+  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']):hover > div {
+    background: #1a1a1a;
+    border-color: #505050;
+  }
+  [data-tm='D.scenario-list'] {
+    gap: 18px;
+  }
+  [data-tm='D.scenario-card'] > div > div {
+    padding: 24px;
+  }
+  [data-tm='D.card-title'] {
+    font-size: 20px;
+    line-height: 1.45;
+    font-weight: 600;
+    letter-spacing: -.025em;
+  }
+  [data-tm='D.card-education'] {
+    padding-block: 3px;
+  }
+  [data-tm='D.card-sides'] {
+    line-height: 1.85;
+  }
+  [data-tm='D.card-sides'] > p + p {
+    margin-top: 5px;
+  }
+  :is([data-tm='D.card-stats'], [data-tm='D.card-stats-empty']) {
+    border-radius: 6px;
+    background: #ffffff02;
+    line-height: 1.8;
+  }
+  :is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+    padding: 20px 24px;
+  }
+  :is([data-tm='G.tournament-name'], [data-tm='L.match-id']) {
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  :is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+    line-height: 1.8;
+  }
+  [data-tm='G.round-timeline'] {
+    margin-top: 12px;
+  }
+  [data-tm='G.round-chip'] {
+    padding: 4px 8px;
+  }
+  [data-tm='G.round-chip'] > span {
+    opacity: 1;
+  }
+  [data-tm='G.standings-table'] {
+    box-shadow: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  [data-tm='G.standings-table'] > div {
+    padding: 8px 24px;
+  }
+  [data-tm='G.standings-table'] :is(th, td) {
+    padding-block: 17px;
+    font-variant-numeric: tabular-nums;
+  }
+  [data-tm='G.standings-table'] th {
+    font-weight: 500;
+    color: var(--foreground-subtle);
+  }
+  [data-tm='G.standings-row']:hover {
+    background: #ffffff03;
+  }
+  [data-tm='G.standings-row'] td:first-child {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  [data-tm='G.standings-buchholz'] > span {
+    color: var(--foreground-muted);
+  }
+  [data-tm='L.pair-group'] {
+    padding: 10px;
+    background: #ffffff02;
+    border-radius: 10px;
+  }
+  [data-tm='L.pair-header'] {
+    padding: 5px 12px 4px;
+    line-height: 1.8;
+  }
+  [data-testid='scenario-intro-card'] {
+    box-shadow: none;
+    border-radius: 10px;
+  }
+  [data-tm='DA.overview-story'] {
+    line-height: 1.85;
+  }
+  [data-tm='FA.result-card'] {
+    background: #1b1b1b;
+    border: 1px solid #383838;
+    box-shadow: none;
+  }
+  [data-tm='FA.result-winner'] {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -.025em;
+  }
+  [data-tm='FA.result-summary'] {
+    line-height: 1.8;
+  }
+  :is([data-tm='FA.report-section'], [data-tm='FA.hidden-goal-section'], [data-tm='FA.scoring-section']) > h2 {
+    font-size: 17px;
+    font-weight: 600;
+  }
+  [data-tm='FA.dialogue-row'] {
+    box-shadow: none;
+  }
+  [data-tm='FA.dialogue-text'] {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+  [data-tm='FA.aside-card'] {
+    background: #ffffff02;
+  }
+  [data-tm='FA.aside-text'] {
+    line-height: 1.85;
+    font-style: normal;
+  }
+  [data-tm='FA.verdict-card'] {
+    box-shadow: none;
+  }
+  [data-tm='FA.verdict-field'] p {
+    line-height: 1.85;
+  }
+  /* Readable red labels retain their status meaning; primary buttons stay red. */
+  main .text-\(--accent\) {
+    color: #f17a61;
+  }
+  [data-tm='DA.side-actions'] button.bg-\(--accent\) {
+    background: #b93925;
+  }
+
+  @media (max-width: 767px) {
+    main h1 {
+      font-size: 24px;
+    }
+    [data-tm='D.scenario-card'] > div > div {
+      padding: 20px;
+    }
+    [data-tm='D.card-title'] {
+      font-size: 19px;
+    }
+    :is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+      padding: 18px 16px;
+      flex-wrap: wrap;
+    }
+    :is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+      display: inline-block;
+      width: 100%;
+      margin: 4px 0 0;
+      overflow-wrap: anywhere;
+    }
+    [data-tm='G.standings-table'] > div {
+      padding: 12px;
+    }
+    [data-tm='FA.result-winner'] {
+      font-size: 24px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+      transition: none;
+    }
+  }
+}
