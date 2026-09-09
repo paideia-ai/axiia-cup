@@ -78,6 +78,15 @@ Everything else under `docs/` — `ARCHITECTURE.md`, `CLI.md`,
 reference only and describes the retired v1 stack. Prefer the current ops doc
 when they conflict.
 
+## Axiia product-group updates
+
+After implementing anything new in this repository, post an implementation
+update to the `axiia-cup-product` group through `lark-cli --as bot`. Include
+what changed, the current verification status, the deployment status, and
+links to any relevant PR or design thread. If the change has not been deployed,
+say so explicitly. Do not treat the implementation as complete until this
+update has been sent.
+
 ## Production host preflight
 
 Before using or proposing SSH access to `cup-worker`, read Minsheng's private
