@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { JSONValue } from '../../api/types'
 import type { ScriptEvent } from '../../lib/event'
 import {
@@ -234,7 +235,9 @@ function SecretPollResult({
   event,
   labels,
   showReasoning,
+  previousSecretPoll,
 }: {
+  previousSecretPoll?: ScriptEvent
   event: ScriptEvent
   labels: SpeakerLabels
   showReasoning: boolean
@@ -259,12 +262,17 @@ function SecretPollResult({
           {round == null ? '' : `第 ${round} 轮 · `}不约束最终判决
         </p>
       </div>
-      <BallotGrid
-        ballots={ballots}
-        labels={labels}
-        kind='verdict'
-        showReasoning={showReasoning}
-      />
+      <BallotDetails secret>
+        <BallotGrid
+          ballots={ballots}
+          previousBallots={previousSecretPoll
+            ? ballotsOf(previousSecretPoll, 'ballots')
+            : []}
+          labels={labels}
+          kind='verdict'
+          showReasoning={showReasoning}
+        />
+      </BallotDetails>
     </div>
   )
 }
@@ -463,12 +471,35 @@ function MotionResult({ event }: { event: ScriptEvent }) {
   )
 }
 
+function BallotDetails({ children, secret = false }: {
+  children: ReactNode
+  secret?: boolean
+}) {
+  return (
+    <details className='group mt-3 border-t border-(--border-soft) pt-3'>
+      <summary className='cursor-pointer rounded-sm text-xs font-semibold text-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--info)'>
+        <span className='group-open:hidden'>展开详细票型</span>
+        <span className='hidden group-open:inline'>收起详细票型</span>
+        {secret ? ' · 仅观众可见' : ''}
+      </summary>
+      {secret && (
+        <p className='mt-2 text-xs text-(--foreground-subtle)'>
+          个人票型对其他场内 Agent 保密；箭头表示相较上一次秘密意向投票的变化。
+        </p>
+      )}
+      {children}
+    </details>
+  )
+}
+
 function BallotGrid({
   ballots,
+  previousBallots = [],
   labels,
   kind,
   showReasoning,
 }: {
+  previousBallots?: Ballot[]
   ballots: Ballot[]
   labels: SpeakerLabels
   kind: 'procedure' | 'verdict'
@@ -482,6 +513,12 @@ function BallotGrid({
   return (
     <div className='mt-3 grid gap-2 sm:grid-cols-2'>
       {ballots.map((ballot) => {
+        const previous = previousBallots.find((item) =>
+          item.juror === ballot.juror
+        )?.vote
+        const changed = kind === 'verdict' && previous !== ballot.vote &&
+          (previous === 'GUILTY' || previous === 'NOT_GUILTY') &&
+          (ballot.vote === 'GUILTY' || ballot.vote === 'NOT_GUILTY')
         const guilty = ballot.vote === 'GUILTY'
         const endNow = ballot.vote === 'END_NOW'
         const voteLabel = kind === 'verdict'
@@ -512,7 +549,9 @@ function BallotGrid({
                     : 'bg-[rgba(96,165,250,0.14)] text-(--info)'
                 }`}
               >
-                {voteLabel}
+                {changed
+                  ? `${previous === 'GUILTY' ? '有罪' : '无罪'} → ${voteLabel}`
+                  : voteLabel}
               </span>
             </div>
             {ballot.keyEvidence.length > 0
@@ -573,12 +612,14 @@ function FinalVoteReveal({
           {threshold ?? 6} 票形成裁决 · {endLabel}
         </p>
       </div>
-      <BallotGrid
-        ballots={ballotsOf(event, 'votes')}
-        labels={labels}
-        kind='verdict'
-        showReasoning={showReasoning}
-      />
+      <BallotDetails>
+        <BallotGrid
+          ballots={ballotsOf(event, 'votes')}
+          labels={labels}
+          kind='verdict'
+          showReasoning={showReasoning}
+        />
+      </BallotDetails>
     </div>
   )
 }
@@ -615,6 +656,7 @@ export function renderJuryEvent(
   event: ScriptEvent,
   labels: SpeakerLabels,
   showReasoning: boolean,
+  previousSecretPoll?: ScriptEvent,
 ) {
   switch (eventType(event)) {
     case 'jury_speech':
@@ -640,6 +682,7 @@ export function renderJuryEvent(
     case 'observer_secret_poll':
       return (
         <SecretPollResult
+          previousSecretPoll={previousSecretPoll}
           event={event}
           labels={labels}
           showReasoning={showReasoning}
