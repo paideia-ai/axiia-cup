@@ -184,7 +184,7 @@ const meta = {
 
 async function main() {
   const DEFAULT_JUROR_MODELS = [
-    'deepseek-v3.2',
+    'glm-5.3-flash',
     'minimax-m2.5',
     'qwen3.8-flash',
     'deepseek-v4-pro',
