@@ -374,12 +374,13 @@ export const TM_FA: TmRegistry = {
     when: 'data.error 非空',
   },
 
-  // ---------- 首战旅程卡（A3 ④ / #67 / #12） ----------
+  // ---------- 首战旅程卡（A3 ④ / #67 / Keso 2026-09-09） ----------
   'FA.journey-card': {
     label: '首战旅程卡',
     clauses: ['U03-C08', 'U03-C09'],
     journeys: ['j1s6'],
-    note: '首战完局置底：三格方向性 CTA + 三种构建模式 tab 卡；回放中不渲染',
+    note:
+      '首战完局置底：三格方向性 CTA + 单一工作区/常驻辅助说明；回放中不渲染',
     when: '从 express 首战导航过来且完局、非回放',
   },
   'FA.journey-error': {
@@ -406,7 +407,7 @@ export const TM_FA: TmRegistry = {
     label: '去创建对侧按钮',
     clauses: ['U03-C08'],
     note:
-      '#59/#64 ensure（get-or-create）后带 scenario/side 进构建器，三种初始化方式全量可选；participants 缺席时降级为「去场景页选侧」',
+      '#59/#64 ensure（get-or-create）后先进入智能体主页；participants 缺席时降级为「去场景页选侧」',
   },
   'FA.journey-pvp': {
     label: '通往 PVP 格',
@@ -418,23 +419,23 @@ export const TM_FA: TmRegistry = {
     note: '去智能体主页的「出战」面板看进度',
   },
   'FA.journey-modes-card': {
-    label: '三种构建模式卡',
+    label: '构建器辅助说明卡',
     clauses: ['U03-C09', 'U02-C02', 'U02-C01'],
-    note: '#12：首战后「解锁」三种初始化方式（仅新建流程）',
+    note: 'Keso 2026-09-09：单一策略工作区，两个辅助入口在首版与后续版本都可用',
   },
   'FA.journey-mode-item': {
-    label: '构建模式一格',
+    label: '工作辅助格',
     clauses: ['U02-C02'],
-    note: 'MCQ 拼装（默认）/ Basic 直写 / 元提示词',
+    note: '策略工作区 / 选择预设策略 / 让你的 AI 帮你想策略',
   },
   'FA.journey-modes-hint': {
     label: '文本工作台提示',
     clauses: ['U01-C09', 'U02-C19', 'U03-C13'],
     note:
-      'E7/#83：已保存过版本的智能体只有文本工作台，想再用选卡→再建一个或创建对侧',
+      '两个辅助入口常驻；版本管理、版本对比、参赛选择和出战集中在智能体主页',
   },
   'FA.journey-build-link': {
-    label: '去构建器继续迭代',
+    label: '继续写策略',
     clauses: ['U01-C09'],
     when: '我方 agentID 已知',
   },

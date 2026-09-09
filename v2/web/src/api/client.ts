@@ -96,9 +96,15 @@ async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
+  options?: Pick<RequestInit, 'keepalive'>,
 ): Promise<T> {
   const headers = new Headers()
-  const init: RequestInit = { method, credentials: 'include', headers }
+  const init: RequestInit = {
+    method,
+    credentials: 'include',
+    headers,
+    keepalive: options?.keepalive,
+  }
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json')
     init.body = JSON.stringify(body)
@@ -225,8 +231,11 @@ export const agents = {
 export const builder = {
   ensure: (input: EnsureAgentRequest) =>
     request<AgentRefResponse>('POST', '/agents/ensure', input),
-  mutate: (agentID: number, input: FieldMutationRequest) =>
-    request<OKResponse>('POST', `/agents/${agentID}/mutate`, input),
+  mutate: (
+    agentID: number,
+    input: FieldMutationRequest,
+    options?: Pick<RequestInit, 'keepalive'>,
+  ) => request<OKResponse>('POST', `/agents/${agentID}/mutate`, input, options),
   save: (agentID: number, input: SaveVersionRequest) =>
     request<AgentVersionDTO>('POST', `/agents/${agentID}/save`, input),
   draft: (agentID: number) =>

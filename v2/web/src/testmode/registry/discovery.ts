@@ -1,5 +1,5 @@
-/* D 场景选择（/scenarios）· DA 场景介绍（/scenarios/:id）· OS 出战面板（从 EA 页头 /
-   E 版本卡「出战」呼出；A5）与「进行中的对战」条（battle-strip，#72，在 DA / EA / E /
+/* D 场景选择（/scenarios）· DA 场景介绍（/scenarios/:id）· OS 出战面板（从 EA
+   版本卡「出战」呼出；A5）与「进行中的对战」条（battle-strip，#72，在 DA / EA / E /
    我的智能体页出现）。条款以 spec-index 里 page ∈ {D, DA, D+DA, OS} 的 34 行为准，
    另把 U06 门槛章（page 空）里在这些部件上直接体现的条款也挂上。 */
 import type { StepHints, TmRegistry } from '../types'
@@ -326,8 +326,8 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-a5'],
     journeys: ['j5s1', 'jR6s4'],
     note:
-      '桌面居中 Modal、移动端底部弹层；Esc/点遮罩关闭；agent/场景/执侧随呼出处预选；A5 的 7 条「待裁决」缺口汇总在 LACK-06',
-    when: '在 EA 页头或 E 版本卡点「出战」',
+      '桌面居中 Modal、移动端底部弹层；Esc/点遮罩关闭；agent/场景/执侧/版本随 EA 版本卡呼出处预选；A5 的 7 条「待裁决」缺口汇总在 LACK-06',
+    when: '在 EA 版本卡点「出战」',
   },
   'OS.panel-title': {
     label: '面板标题',
@@ -339,7 +339,7 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U05-C02', 'U05-C02b', 'U06-C13'],
     anchors: ['spec-change-88', 'spec-change-91'],
     note:
-      '钉住版 > ★参赛版 > 最新版；面板内无版本下拉（待裁决）；从非 ★ 版本卡呼出时会谎标「★参赛版本」（C02b 已知）',
+      '钉住版 > ★参赛版 > 最新版；面板内无版本下拉；非 ★ 卡显示「指定版本」，只有真正参赛卡显示「★参赛版本」',
   },
   'OS.close-button': {
     label: '关闭按钮',
@@ -680,7 +680,7 @@ export const STEPS_DISCOVERY: StepHints = {
   j2s1: { route: '/scenarios', marker: 'D.scenario-card' },
   j2s2: { route: '/scenarios/:id', marker: 'DA.overview-card' },
   j2s3: { route: '/scenarios/:id', marker: 'DA.judge-card' },
-  // 第一轮旅程 3 第 1 步：起点是场景页的「去构建」（构建器里的三选一见 E.init-card）
+  // 第一轮旅程 3 第 1 步：起点是场景页的「去构建」（构建器辅助入口见 E.init-card）
   j3s1: { route: '/scenarios/:id', marker: 'DA.build-button' },
   // 第一轮旅程 5 打 NPC、解锁（面板从智能体页呼出）
   j5s1: { route: '/agents/:id', marker: 'OS.tabs' },

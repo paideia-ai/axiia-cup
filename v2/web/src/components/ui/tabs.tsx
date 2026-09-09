@@ -93,6 +93,7 @@ type TabsTriggerProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function TabsTrigger({
   className,
   onClick,
+  onKeyDown,
   value,
   ...props
 }: TabsTriggerProps) {
@@ -118,6 +119,37 @@ export function TabsTrigger({
         if (!event.defaultPrevented) {
           context.setValue(value)
         }
+      }}
+      onKeyDown={(event) => {
+        onKeyDown?.(event)
+        if (event.defaultPrevented) return
+
+        const list = event.currentTarget.closest<HTMLElement>(
+          '[role="tablist"]',
+        )
+        const tabs = Array.from(
+          list?.querySelectorAll<HTMLButtonElement>(
+            '[role="tab"]:not(:disabled)',
+          ) ?? [],
+        )
+        const current = tabs.indexOf(event.currentTarget)
+        if (current < 0 || tabs.length === 0) return
+
+        const rtl = list != null && getComputedStyle(list).direction === 'rtl'
+        let next = -1
+        if (event.key === 'Home') next = 0
+        if (event.key === 'End') next = tabs.length - 1
+        if (event.key === 'ArrowRight') {
+          next = (current + (rtl ? -1 : 1) + tabs.length) % tabs.length
+        }
+        if (event.key === 'ArrowLeft') {
+          next = (current + (rtl ? 1 : -1) + tabs.length) % tabs.length
+        }
+        if (next < 0) return
+
+        event.preventDefault()
+        tabs[next]?.focus()
+        tabs[next]?.click()
       }}
       role='tab'
       tabIndex={isActive ? 0 : -1}

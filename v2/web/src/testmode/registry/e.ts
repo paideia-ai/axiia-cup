@@ -1,6 +1,6 @@
-/* E 构建器（/agents/:id/build）——工作区 + 初始化三选一 + 内嵌版本线；
-   另含版本卡（EA 页复用同一套，U01-C14）与「再建一个」新建弹窗（从我的智能体页打开，
-   走 #59/#79 引导门后进构建器）。条款以 spec-index 里 page=E 的 56 行为准。 */
+/* E 构建器（/agents/:id/build）——大输入框为主，辅助工具与版本备注为次；保存后返回 EA。
+   2026-09-09 咳嗽方案移除了构建器内嵌版本线。VersionList 的 E.version-* 标记仍放在这里，
+   但它现在只渲染于 EA 智能体主页。「新建智能体」浮层可从 MA 或 EA 打开，创建后也先到 EA。 */
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_E: TmRegistry = {
@@ -8,15 +8,15 @@ export const TM_E: TmRegistry = {
   'E.back-link': {
     label: '返回智能体主页',
     clauses: ['U01-C14'],
-    note: '回 EA（/agents/:id）；EA 页头「编辑」是反向入口',
+    note: '回 EA（/agents/:id）；EA 版本标题旁的铅笔加号是反向入口',
   },
   'E.page-title': {
     label: '页面标题',
     clauses: ['U01-C11'],
-    note: '界面一律说「智能体」与「版本」，不出现「版本线」「策略」槽位义',
+    note: '标题只说明当前是智能体构建器；版本管理留在主页',
   },
   'E.agent-name': {
-    label: '场景与策略名',
+    label: '场景与智能体',
     clauses: ['U01-C20', 'U01-C23', 'U01-C20b'],
     note: 'P1：有自起名显示「商鞅「激进」」，无名回落「商鞅 #id」',
   },
@@ -24,145 +24,91 @@ export const TM_E: TmRegistry = {
     label: '工作区一句话说明',
     clauses: ['U01-C01', 'U01-C16', 'U01-C11', 'U02-C09'],
     note:
-      '「输入自动暂存；保存才会生成新版本」；express 首战时改为「保存即自动开战」（#17 唯一例外）',
+      '「输入自动暂存；保存才会生成新版本」；普通保存返回主页，express 首战改为「保存即自动开战」（#17 唯一例外）',
   },
 
-  // ---------- 初始化三选一（InitModes，只在 0 版本且工作区为空时出现） ----------
+  // ---------- 次要辅助工具（InitModes；任何草稿/版本状态都可发现） ----------
   'E.init-card': {
-    label: '初始化方式卡',
+    label: '策略辅助行',
     clauses: ['U02-C01', 'U02-C03', 'U01-C09', 'U02-C19'],
     journeys: ['j3s1'],
-    when:
-      '新建后（0 版本、工作区为空）出现；场景无 deck 时不出现（U02-C03 缺口）；保存 v1 后不再复活',
-  },
-  'E.init-subtitle': {
-    label: '初始化卡副标题',
-    clauses: ['U02-C18', 'U01-C06', 'U01-C09', 'U03-C13'],
     note:
-      '「想重新选卡：再建一个智能体」——不得再引用已废止的「复制为新智能体」',
-    when: '同初始化方式卡',
-  },
-  'E.init-tabs': {
-    label: '三种起手方式页签',
-    clauses: ['U02-C02', 'U03-C04'],
-    journeys: ['j3s1'],
-    when: '同初始化方式卡',
+      '始终显示一句引导 + 两个轻量按钮；详细 MCQ/元提示词流程在弹窗中，不与主输入框争抢层级',
   },
   'E.init-tab-mcq': {
-    label: 'MCQ 拼装页签',
+    label: '预设策略入口',
     clauses: ['U02-C02', 'U03-C04'],
-    note: '默认选中（#12）；U03-C04：express 也默认 MCQ、三种可切',
-    when: '同初始化方式卡',
-  },
-  'E.init-tab-basic': {
-    label: '直写页签',
-    clauses: ['U02-C02'],
-    when: '同初始化方式卡',
+    note: '打开「选择预设策略」弹窗；无 deck 时在弹窗内解释并引向 AI 辅助',
   },
   'E.init-tab-meta': {
-    label: '元提示词页签',
+    label: 'AI辅助入口',
     clauses: ['U02-C02', 'U02-C04'],
-    when: '同初始化方式卡',
-  },
-  'E.mcq-intro': {
-    label: 'MCQ 开场说明',
-    clauses: ['U02-C02'],
-    when: 'MCQ 页签且 deck 有 intro',
+    note: '打开「让你的 AI 帮你想策略」弹窗',
   },
   'E.mcq-question': {
     label: 'MCQ 题目',
     clauses: ['U02-C02'],
     journeys: ['j3s2'],
-    when: 'MCQ 页签',
+    when: '打开预设策略弹窗且场景有 deck',
   },
   'E.mcq-option': {
     label: 'MCQ 选项',
     clauses: ['U02-C02', 'U01-C08'],
     journeys: ['j3s2'],
     note: '选择只活在内存里，不随版本存储（U01-C08 缺口）',
-    when: 'MCQ 页签',
+    when: '打开预设策略弹窗且场景有 deck',
   },
   'E.mcq-preview': {
     label: '拼装预览',
     clauses: ['U02-C02', 'U02-C14'],
     journeys: ['j3s2'],
     note: '是选项拼文预览，不是对局预览（不属 U02-C14 禁区）',
-    when: 'MCQ 页签',
+    when: '打开预设策略弹窗且场景有 deck',
   },
   'E.mcq-counter': {
     label: '拼装字数计数',
     clauses: ['U02-C08'],
-    when: 'MCQ 页签',
+    when: '打开预设策略弹窗且场景有 deck',
   },
   'E.mcq-fill-button': {
     label: '选题填入按钮',
     clauses: ['U02-C02', 'U02-C05', 'U01-C08'],
     journeys: ['j3s2'],
-    note: '填入后初始化卡收起；本次保存 method=mcq',
-    when: 'MCQ 页签，选完全部题目后可点',
+    note:
+      '填入主输入框并关闭弹窗；已有不同草稿时先确认替换；本次保存 method=mcq',
+    when: '预设策略弹窗内选完全部题目后可点',
   },
   'E.mcq-remaining': {
     label: '还差 n 题',
     clauses: ['U02-C02'],
-    when: 'MCQ 页签，未选完时',
-  },
-  'E.basic-hint': {
-    label: '直写说明',
-    clauses: ['U02-C02'],
-    when: 'Basic 直写页签',
+    when: '预设策略弹窗内还有题目未选时',
   },
   'E.meta-prompt-text': {
     label: '元提示词正文',
     clauses: ['U02-C04'],
-    when: '元提示词页签',
+    note: '产品不内嵌聊天；复制到外部 AI，结果直接粘贴回主输入框',
+    when: '打开 AI 辅助弹窗',
   },
   'E.meta-copy-button': {
     label: '复制元提示词',
     clauses: ['U02-C04'],
-    when: '元提示词页签',
-  },
-  'E.meta-paste-input': {
-    label: '粘贴框',
-    clauses: ['U02-C04'],
-    note: '产品内不提供聊天——只有复制出去、粘贴回来',
-    when: '元提示词页签',
-  },
-  'E.meta-fill-button': {
-    label: '元提示词填入',
-    clauses: ['U02-C04', 'U02-C05'],
-    note: '粘贴前禁用；本次保存 method=builder',
-    when: '元提示词页签',
+    when: '打开 AI 辅助弹窗',
   },
 
   // ---------- 提示条 ----------
   'E.restored-notice': {
     label: '已载入提示',
     clauses: ['U01-C03', 'U01-C19'],
-    journeys: ['j4s2', 'jR1s3'],
-    note: '「已载入 vN · 保存后将成为 v(N+1)」；载入本身不产生版本',
-    when: '点某版本「基于该版本迭代」之后（或带 ?from= 进入）',
-  },
-  'E.save-notice': {
-    label: '保存成功提示',
-    clauses: ['U02-C10', 'U02-C11', 'U01-C12', 'U01-C33'],
-    journeys: ['j3s5', 'j4s4'],
-    note:
-      '「已保存 vN · ★参赛版本仍是 vK——新版本不会自动参赛」；改标后同一条显示「★ 已从 vK 移到 vN」',
-    when: '保存或改标之后',
-  },
-  'E.move-entry-button': {
-    label: '一键改标',
-    clauses: ['U02-C11b', 'U01-C12'],
-    journeys: ['j3s5'],
-    note: 'E10 后半句：点一下把刚保存的 vN 设为参赛版本（pr-fate 拍板 A）',
-    when: '保存了一个不是 ★ 的新版本之后',
+    note: '兼容带 ?from= 的旧深链；载入本身不产生版本，保存后返回主页',
+    when: '用带 ?from= 的旧深链进入构建器',
   },
   'E.error': {
     label: '错误提示',
     clauses: ['U02-C08', 'LACK-10'],
     journeys: ['j3s3'],
-    note: 'prompt_too_long 的中文文案把玩家指回计数器；改标失败也落这里',
-    when: '保存/改标失败',
+    note:
+      'prompt_too_long 的中文文案把玩家指回计数器；也承接加载、暂存与保存错误',
+    when: '加载、暂存或保存失败',
   },
 
   // ---------- 工作区 ----------
@@ -170,7 +116,8 @@ export const TM_E: TmRegistry = {
     label: '工作区',
     journeys: ['j12s1'],
     clauses: ['U01-C01', 'U01-C16', 'U02-C14', 'U02-C15', 'U02-C16', 'U12-C12'],
-    note: '负检：无预览/快测、无「敬请期待」占位、无卡牌可视化与 Focus mode',
+    note:
+      '主输入框占约 46dvh；模型、角色、备注与保存为次级动作。负检：无版本线、预览/快测、卡牌可视化与 Focus mode',
   },
   'E.copy-prompt-button': {
     label: '复制当前文本',
@@ -180,7 +127,7 @@ export const TM_E: TmRegistry = {
   'E.prompt-input': {
     label: '策略提示词编辑框',
     clauses: ['U01-C01', 'U01-C16', 'U02-C02'],
-    journeys: ['j3s3', 'j4s1', 'j4s3', 'jR1s1'],
+    journeys: ['j3s3'],
     note: '打字 400ms 后自动暂存到服务端草稿；版本数不变；草稿永不参战',
   },
   'E.merge-hint': {
@@ -192,32 +139,7 @@ export const TM_E: TmRegistry = {
     clauses: ['U02-C08'],
     journeys: ['j3s3'],
     note:
-      '按汉字/英文词计（非 token），超 1000 变警示色；仅提示，保存由服务端拒绝',
-  },
-  'E.clear-button': {
-    label: '清空工作区',
-    clauses: ['U01-C09', 'U02-C19'],
-    note:
-      '0 版本时文案「清空工作区（重新选择初始化方式）」；已有版本后只写「清空工作区」',
-    when: '场景有 deck 且工作区非空',
-  },
-  'E.clear-confirm': {
-    label: '清空确认行',
-    clauses: ['U01-C09', 'U02-C19'],
-    note:
-      '两步就地确认不弹窗；已有版本时提示「不回到初始化三选一——想重选：再建一个或创建对侧」',
-    when: '点「清空工作区」之后',
-  },
-  'E.clear-confirm-button': {
-    label: '确认清空',
-    clauses: ['U02-C19'],
-    when: '点「清空工作区」之后',
-  },
-  'E.note-input': {
-    label: '版本备注输入',
-    clauses: ['U01-C29', 'U01-C07'],
-    journeys: ['j4s1'],
-    note: 'P10：≤60 字，保存成功后清空',
+      '按汉字/英文词计（非 token），超 1000 变警示色并禁用保存；服务端仍做最终校验',
   },
   'E.role-select': {
     label: '出场角色选择',
@@ -243,15 +165,9 @@ export const TM_E: TmRegistry = {
       'U03-C05',
       'U03-C06',
     ],
-    journeys: ['j3s5', 'j4s1', 'j1s4'],
+    journeys: ['j3s5', 'j1s4'],
     note:
-      '保存＝存一个版本、不派发、留在本页；express 首战例外：「保存并开始首战」自动派发直进实况；express 分支：自动选最弱 NPC（U03-C06）；U02-C05 的 method 标签在请求体里，按钮上看不见',
-  },
-  'E.next-version-hint': {
-    label: '下个版本号提示',
-    clauses: ['U02-C12', 'U01-C30', 'U01-C15'],
-    journeys: ['j3s5'],
-    note: 'P12：常驻保存按钮旁，E 页恰一处',
+      '普通保存＝存一个版本、不派发、返回 EA 主页；express 首战例外：「保存并开始首战」自动派发直进实况；method 标签只在请求体里',
   },
   'E.autosave-status': {
     label: '暂存状态',
@@ -282,30 +198,29 @@ export const TM_E: TmRegistry = {
     when: '展开角色模板后',
   },
 
-  // ---------- 版本线（VersionList；EA 页复用） ----------
+  // ---------- 版本列表（VersionList；只在 EA 智能体主页渲染） ----------
   'E.version-list': {
-    label: '版本线',
+    label: '版本列表',
     clauses: ['U01-C13', 'U01-C14', 'U01-C02', 'U10-C09'],
     journeys: ['j3s5', 'j4s1'],
-    note: '新在前；express 首战不摆版本线；EA 页同一套',
+    note: '只在 EA 主页出现、最新在前；构建器不再重复版本列表',
   },
   'E.version-list-aside': {
     label: '版本段副句',
     clauses: ['U01-C30', 'U01-C16'],
-    note:
-      'E 页放「保存产生新版本；草稿不参战」；EA 页放「保存后将成为 v(N+1)」（P12 段落级）',
+    note: 'VersionList 的可选段落说明；当前 EA 主页用精简标题，不显示副句',
   },
   'E.version-empty': {
-    label: '版本线空态',
+    label: '版本列表空态',
     clauses: ['U01-C13', 'U01-C15', 'LACK-10'],
     when: '还没保存过版本时',
   },
   'E.version-card': {
     label: '版本卡',
     clauses: ['U01-C14', 'U01-C07', 'U01-C05', 'U01-C17', 'U10-C08', 'U10-C09'],
-    journeys: ['j4s1', 'j4s2', 'j4s4', 'jR1s1'],
+    journeys: ['j4s1', 'j4s4'],
     note:
-      '四动作：展开全文 / 设为参赛版本 / 基于该版本迭代 / 出战；负检：无「复制为新智能体」',
+      '主页版本卡：复制提示词 / 设为参赛版本 / 出战 / 按需展开全文；不内嵌「基于该版本迭代」',
     when: '至少一个版本',
   },
   'E.version-tag': {
@@ -333,7 +248,7 @@ export const TM_E: TmRegistry = {
   'E.version-record': {
     label: '版本战绩',
     clauses: ['U01-C32'],
-    note: 'B3 逐版本胜负（条款归 EA 页，卡面两页同显）',
+    note: 'B3 主人视图的逐版本胜负；公开投影使用 EA.public-record',
   },
   'E.version-time': {
     label: '保存时间',
@@ -351,6 +266,11 @@ export const TM_E: TmRegistry = {
     clauses: ['U01-C07'],
     note: '保存那一刻的文本快照，不回溯改写',
   },
+  'E.copy-button': {
+    label: '复制版本提示词',
+    clauses: ['U01-C10', 'U01-C14', 'U10-C08'],
+    note: '主页版本卡的图标按钮；复制不可变的版本提示词，成功状态对读屏器可见',
+  },
   'E.expand-button': {
     label: '展开全文',
     clauses: ['U01-C14', 'U10-C08'],
@@ -363,58 +283,21 @@ export const TM_E: TmRegistry = {
       'P4/#91：★ 每侧唯一，同侧其他智能体的 ★ 会被收走；U06-C10：按钮 title 逐字就是「同侧其他智能体的 ★ 会被收走」',
     when: '非 ★ 的版本卡上',
   },
-  'E.iterate-button': {
-    label: '基于该版本迭代',
-    clauses: ['U01-C03', 'U01-C19', 'U01-C04', 'U10-C08'],
-    journeys: ['j4s2', 'j4s3', 'jR1s1', 'jR1s4'],
-    note: '回填工作区，不产生版本；草稿与最新版本不一致且会丢内容时先就地确认',
-  },
   'E.field-button': {
     label: '出战',
     clauses: ['U01-C14', 'U10-C08'],
-    note: '打开选择对手面板（OS）',
-  },
-  'E.iterate-confirm': {
-    label: '覆盖确认行',
-    clauses: ['U01-C04', 'U01-C19'],
-    journeys: ['j4s3', 'jR1s1', 'jR1s2', 'jR1s3'],
-    note:
-      'P11：画在被点的那张版本卡内，自动滚进视口并聚焦本体（不聚焦「仍要继续」）',
-    when: '工作区有未保存改动时点「基于该版本迭代」',
-  },
-  'E.iterate-confirm-continue': {
-    label: '仍要继续',
-    clauses: ['U01-C04'],
-    journeys: ['jR1s2', 'jR1s3'],
-    when: '覆盖确认行出现时',
-  },
-  'E.iterate-confirm-cancel': {
-    label: '取消覆盖',
-    clauses: ['U01-C04'],
-    journeys: ['jR1s3'],
-    note: '取消后工作区里的字原样还在',
-    when: '覆盖确认行出现时',
+    note: 'EA 主页版本卡内打开选择对手面板（OS），并预选这一个版本',
   },
 
-  // ---------- 新建智能体弹窗（从我的智能体页「再建一个」打开） ----------
+  // ---------- 新建智能体浮层（从 MA 或 EA 的机器人加号打开） ----------
   'E.new-agent-dialog': {
-    label: '新建智能体弹窗',
+    label: '新建智能体浮层',
     clauses: ['U01-C17', 'U01-C26', 'U01-C23'],
-    note: '同侧再建只走这里；首战路径不弹（懒 ensure 直进构建器）',
-    when: '我的智能体页点「再建一个」',
+    note: '桌面锚定触发按钮、移动端贴底；创建成功先进入 EA 主页',
+    when: 'MA 或 EA 点某一侧的机器人加号',
   },
   'E.new-agent-close': {
     label: '关闭弹窗',
-    when: '新建智能体弹窗内',
-  },
-  'E.new-agent-side-toggle': {
-    label: '执方二选一',
-    clauses: ['U01-C17', 'U01-C25'],
-    when: '新建智能体弹窗内',
-  },
-  'E.new-agent-side-option': {
-    label: '执方选项',
-    clauses: ['U01-C17'],
     when: '新建智能体弹窗内',
   },
   'E.new-agent-name-input': {
@@ -452,14 +335,10 @@ export const TM_E: TmRegistry = {
     note: '通用失败 / 旧服务器无端点降级 / 网络',
     when: '创建失败',
   },
-  'E.new-agent-cancel': {
-    label: '取消新建',
-    when: '新建智能体弹窗内',
-  },
   'E.new-agent-submit': {
-    label: '创建并进入构建',
+    label: '创建智能体',
     clauses: ['U01-C17', 'U01-C26', 'U02-C01'],
-    note: '成功后直进该智能体的构建器（空工作区出现三选一）',
+    note: '成功后进入新智能体主页；用主页版本标题旁的铅笔加号再进入构建器',
     when: '新建智能体弹窗内',
   },
 }
@@ -472,14 +351,7 @@ export const STEPS_E: StepHints = {
   j3s3: { route: '/agents/:id/build', marker: 'E.length-counter' },
   j3s4: { route: '/agents/:id/build', marker: 'E.model-select' },
   j3s5: { route: '/agents/:id/build', marker: 'E.save-button' },
-  // 第一轮旅程 4 版本线（j4s5 改名发生在我的智能体页，归 MA）
-  j4s1: { route: '/agents/:id/build', marker: 'E.version-card' },
-  j4s2: { route: '/agents/:id/build', marker: 'E.iterate-button' },
-  j4s3: { route: '/agents/:id/build', marker: 'E.iterate-confirm' },
-  j4s4: { route: '/agents/:id/build', marker: 'E.set-entry-button' },
-  // 第二轮 R1 就地覆盖确认
-  jR1s1: { route: '/agents/:id/build', marker: 'E.iterate-button' },
-  jR1s2: { route: '/agents/:id/build', marker: 'E.iterate-confirm' },
-  jR1s3: { route: '/agents/:id/build', marker: 'E.iterate-confirm' },
-  jR1s4: { route: '/agents/:id/build', marker: 'E.iterate-button' },
+  // 咳嗽方案把版本列表与参赛操作集中到 EA；历史「卡内迭代确认」步骤已无现行标记。
+  j4s1: { route: '/agents/:id', marker: 'E.version-card' },
+  j4s4: { route: '/agents/:id', marker: 'E.set-entry-button' },
 }

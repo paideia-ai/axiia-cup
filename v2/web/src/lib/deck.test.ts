@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  assembleDeck,
-  type Deck,
-  deckComboKey,
-  deckComplete,
-  initModesAvailable,
-} from './deck'
+import { assembleDeck, type Deck, deckComboKey, deckComplete } from './deck'
 
 const fragmentDeck: Deck = {
   title: '片段牌',
@@ -134,24 +128,5 @@ describe('deckComplete', () => {
     expect(deckComplete(fragmentDeck, { q1: 'A' })).toBe(false)
     expect(deckComplete(fragmentDeck, { q1: 'A', q2: 'Z' })).toBe(false)
     expect(deckComplete(fragmentDeck, { q1: 'A', q2: 'B' })).toBe(true)
-  })
-})
-
-describe('initModesAvailable — E7/#83 初始化-only 门', () => {
-  it('offers the three init modes only while the workspace is empty', () => {
-    expect(initModesAvailable('', 0)).toBe(true)
-    expect(initModesAvailable('  \n\t ', 0)).toBe(true)
-  })
-
-  it('any text — assembled or typed — closes the chooser for good', () => {
-    expect(initModesAvailable('你是商鞅。', 0)).toBe(false)
-    expect(initModesAvailable(' x ', 0)).toBe(false)
-  })
-
-  it('a saved version shuts the gate for good — even on an empty workspace', () => {
-    // E7/#83（pr-fate u02-c19 拍板 A）：清空工作区不复活三选一；重选初始化
-    // 走「再建一个」新智能体（#90 的唯一出口）。
-    expect(initModesAvailable('', 1)).toBe(false)
-    expect(initModesAvailable('  \n ', 3)).toBe(false)
   })
 })

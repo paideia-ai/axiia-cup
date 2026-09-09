@@ -1,6 +1,11 @@
 // U05 方法一旅程：OS 选择对手面板（§A5 + #25/#29/#61/#62/#66/#72/#78）。
 // 对照文档：compare-v34/journeys/u05-opponent-select.md（步骤与 clause 对应）。
-// 运行：node tests/e2e/compare/u05-journey.mjs
+//
+// 历史证据（冻结于 v3.4）：本文件不在 Playwright/Deno 测试发现范围内，保留
+// 当时的 CDP 截图复现步骤，里面的页头 OS 与构建器版本线定位器故意不迁移。
+// 2026-09-09 咳嗦方案的现行可执行验收见 u05-opponent-select.spec.ts 与
+// keso-agent-flow.spec.ts；请勿把本文件当作当前 UI 的冒烟命令。
+// 仅对历史 v3.4 构建复现：node tests/e2e/compare/u05-journey.mjs
 //   env AXIIA_BASE_URL（默认部署 dev）· AXIIA_REGISTRATION_CODE（必填）
 // 共享 CDP 浏览器（18800）：只关自己的 context，绝不 browser.close()。
 // 战斗预算：本脚本恰好派发 1 场 hotseat（C08）。约战一律不点「发起双侧约战」。
@@ -165,7 +170,8 @@ try {
       await openPanelFromHeader(agentA)
       const subtitle = await dialog().getByText(/出战版本：/).textContent()
       note(`页头呼出副标题：「${subtitle.trim()}」`)
-      const combos = await dialog().locator('select, [role="combobox"]').count()
+      const combos = await dialog().locator('select, [role="combobox"]')
+        .count()
       note(
         `面板内下拉控件数（PVE 预设下拉除外前总数）=${combos}——无己方版本下拉`,
       )

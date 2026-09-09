@@ -1,6 +1,6 @@
 // U03 · 首战快速通道（express）— u03-express.feature 的可执行对应。
-// BDD：每个 test.step 的文案与 feature 的 Given/When/Then 一一对应；
-// 行为叙述以 feature 为准。
+// BDD：test.step 覆盖 feature 的同名场景；连续动作与断言可组合，行为叙述
+// 以 feature 为准。
 //
 // 锚定 v3.4：A3 全节 · #8–#12 · #45/#52（只验文案）· #67 · #90（废止文案检查）。
 //
@@ -72,28 +72,29 @@ test('U03：新号一路走到「保存并开始首战」按钮前（不消耗�
     await expect(page.getByTestId('version-card')).toHaveCount(0)
   })
 
-  await test.step('那么 出现「初始化方式 · 三选一生成首稿」卡，三个 tab，默认选中「MCQ 拼装」（U03-C04，#12）', async () => {
-    await expect(page.getByText('初始化方式 · 三选一生成首稿')).toBeVisible()
-    await expect(page.getByRole('tab')).toHaveText([
-      'MCQ 拼装',
-      'Basic 直写',
-      '元提示词',
-    ])
+  await test.step('那么 「选择预设策略」与「让你的AI帮你想策略」都立即可见，页面没有初始化 tab 或默认展开的 MCQ 大卡（U03-C04，2026-09-09 修订）', async () => {
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('tab')).toHaveCount(0)
+    await expect(page.getByText('初始化方式 · 三选一生成首稿')).toHaveCount(0)
+  })
+
+  await test.step('当 我依次打开外部 AI 与预设策略对话框；那么 两个辅助流程都能正常展示，主输入框保持独立', async () => {
+    await page.getByRole('button', { name: '让你的AI帮你想策略' }).click()
+    const meta = page.getByRole('dialog', { name: '让你的AI帮你想策略' })
+    await expect(meta.getByRole('button', { name: '复制元提示词' }))
+      .toBeVisible()
+    await meta.getByRole('button', { name: '关闭弹窗' }).click()
+    await page.getByRole('button', { name: '选择预设策略' }).click()
     await expect(
-      page.locator('[role="tab"][aria-selected="true"]'),
-    ).toHaveText('MCQ 拼装')
+      page.getByRole('dialog', { name: '选择预设策略' })
+        .getByRole('button', { name: '填入工作区' }),
+    ).toBeVisible()
   })
 
-  await test.step('当 我切到「元提示词」再切回「MCQ 拼装」；那么 两个 tab 都能正常展示各自内容（U03-C04，#12/#83 可切正常模式）', async () => {
-    await page.getByRole('tab', { name: '元提示词' }).click()
-    await expect(page.getByText('复制这段元提示词发给你常用的 AI'))
-      .toBeVisible()
-    await page.getByRole('tab', { name: 'MCQ 拼装' }).click()
-    await expect(page.getByRole('button', { name: '填入工作区' }).first())
-      .toBeVisible()
-  })
-
-  await test.step('那么 初始化卡提示句不出现已废止的「复制为新智能体」（#90，#137 已清除残留）', async () => {
+  await test.step('那么 辅助区不出现已废止的「复制为新智能体」（#90，#137 已清除残留）', async () => {
     // #90（08-15）废止该动作；#137（08-24）清除了提示句残留——现行文案是
     // 「想重新选卡：清空工作区」。文案要么在要么不在，短超时即可。
     await expect(page.getByText('复制为新智能体')).toHaveCount(0, {
@@ -102,7 +103,8 @@ test('U03：新号一路走到「保存并开始首战」按钮前（不消耗�
   })
 
   await test.step('当 我把 MCQ 每题都选一个选项；那么 「拼装预览」逐节拼出提示词文本', async () => {
-    const groups = page.locator(
+    const dialog = page.getByRole('dialog', { name: '选择预设策略' })
+    const groups = dialog.locator(
       'div.flex.flex-wrap.gap-2:has(button[aria-pressed])',
     )
     const count = await groups.count()
@@ -110,17 +112,95 @@ test('U03：新号一路走到「保存并开始首战」按钮前（不消耗�
     for (let i = 0; i < count; i++) {
       await groups.nth(i).locator('button[aria-pressed]').first().click()
     }
-    await expect(page.locator('pre').first()).toBeVisible()
-    expect((await page.locator('pre').first().textContent())!.length)
+    await expect(dialog.locator('pre').first()).toBeVisible()
+    expect((await dialog.locator('pre').first().textContent())!.length)
       .toBeGreaterThan(20)
   })
 
-  await test.step('当 我点「填入工作区」；那么 工作区载入拼装文本、初始化卡收起，保存按钮文案是「保存并开始首战」（U03-C05 按钮承诺，#9/#17 例外）', async () => {
-    await page.getByRole('button', { name: '填入工作区' }).first().click()
+  await test.step('当 我点「填入工作区」；那么 工作区载入拼装文本、两个辅助入口仍可见，保存按钮文案是「保存并开始首战」（U03-C05 按钮承诺，#9/#17 例外）', async () => {
+    await page.getByRole('dialog', { name: '选择预设策略' })
+      .getByRole('button', { name: '填入工作区' }).click()
     await expect(page.getByLabel('策略提示词')).not.toHaveValue('')
-    await expect(page.getByText('初始化方式 · 三选一生成首稿')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+      .toBeVisible()
     await expect(page.getByTestId('save-version')).toHaveText('保存并开始首战')
     // 到此为止不点保存——真实派发由人工旅程消耗（预算 1 场）。
+  })
+})
+
+test('U03：离开入口后，迟到的创建响应不能劫持当前路由', async ({ page }) => {
+  test.setTimeout(120_000)
+  await signup(page, 'u03-late-ensure')
+  await expect(page).toHaveURL(/\/express$/)
+
+  const delayEnsureAndLeave = async (
+    trigger: () => Promise<void>,
+    leave: () => Promise<void>,
+  ) => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let sawRequest!: () => void
+    const requestSeen = new Promise<void>((resolve) => {
+      sawRequest = resolve
+    })
+    let finishRequest!: () => void
+    const requestFinished = new Promise<void>((resolve) => {
+      finishRequest = resolve
+    })
+    const pattern = /\/v1\/agents\/ensure$/
+    await page.route(pattern, async (route) => {
+      sawRequest()
+      await gate
+      const response = await route.fetch()
+      await route.fulfill({ response })
+      finishRequest()
+    })
+
+    await trigger()
+    await requestSeen
+    await leave()
+    await expect(page).toHaveURL(/\/scenarios$/)
+
+    const responsePromise = page.waitForResponse(pattern)
+    release()
+    const [response] = await Promise.all([responsePromise, requestFinished])
+    await response.finished()
+    await page.evaluate(() =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+    )
+    await expect(page).toHaveURL(/\/scenarios$/)
+    await page.unroute(pattern)
+  }
+
+  await test.step('假如 /express 的创建响应被延迟，我先去场景列表', async () => {
+    await delayEnsureAndLeave(
+      () => page.getByTestId('express-build').click(),
+      () => page.getByRole('link', { name: '先逛逛全部场景' }).click(),
+    )
+  })
+
+  await test.step('当 延迟响应完成；那么 我仍停在场景列表，没有被拉回构建器', async () => {
+    await expect(page).toHaveURL(/\/scenarios$/)
+  })
+
+  await test.step('当 DA 的创建响应也被延迟，我再次回到场景列表', async () => {
+    await page.goto('/scenarios/shangyang-court')
+    const build = page.getByTestId(/build-agent/)
+    await expect(build).toHaveCount(1)
+    await delayEnsureAndLeave(
+      () => build.click(),
+      () => page.getByRole('link', { name: '场景', exact: true }).click(),
+    )
+  })
+
+  await test.step('当 延迟响应完成；那么 我仍停在场景列表，没有被拉回构建器', async () => {
+    await expect(page).toHaveURL(/\/scenarios$/)
   })
 })
 

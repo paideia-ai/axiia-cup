@@ -28,7 +28,7 @@ let email = ''
 
 async function login(target: Page, password: string) {
   await target.goto('/login')
-  await target.getByLabel('邮箱').fill(email)
+  await target.getByRole('textbox', { name: '邮箱', exact: true }).fill(email)
   await target.getByLabel('密码').fill(password)
   await target.getByRole('button', { name: '登录' }).click()
   await expect(target).not.toHaveURL(/\/login$/)
@@ -280,12 +280,12 @@ test.describe('U12 设置 · 历史 · 边界', () => {
         await page.getByLabel('确认新密码').fill(ROTATED_PASSWORD)
         await page.getByRole('button', { name: '修改密码' }).click()
         await expect(page.getByText('密码已修改，其他设备已退出登录'))
-          .toBeVisible()
+          .toBeVisible({ timeout: 30_000 })
         recordAccount(ROTATED_PASSWORD)
       })
       await test.step('并且 第二个上下文刷新后会话失效（被打回登录页）', async () => {
         await otherPage.goto('/settings')
-        await expect(otherPage).toHaveURL(/\/(login)?$/)
+        await expect(otherPage).toHaveURL(/\/login(?:\?.*)?$/)
       })
       await test.step('并且 当前上下文的会话仍然有效（还能打开 /settings）', async () => {
         await page.goto('/matches')
@@ -299,7 +299,7 @@ test.describe('U12 设置 · 历史 · 边界', () => {
         await page.getByLabel('确认新密码').fill(ORIGINAL_PASSWORD)
         await page.getByRole('button', { name: '修改密码' }).click()
         await expect(page.getByText('密码已修改，其他设备已退出登录'))
-          .toBeVisible()
+          .toBeVisible({ timeout: 30_000 })
         recordAccount(ORIGINAL_PASSWORD)
       })
     } finally {

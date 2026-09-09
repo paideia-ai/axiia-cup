@@ -1,5 +1,5 @@
-import { Bot, Clock, Hammer } from 'lucide-react'
-import { useState } from 'react'
+import { Clock, Hammer } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { builder, catalog, myAgents } from '../api/client'
@@ -33,6 +33,10 @@ export function ScenarioDetailPage() {
   const navigate = useNavigate()
   const [pending, setPending] = useState<string | null>(null)
   const [buildError, setBuildError] = useState<string | null>(null)
+  const liveRef = useRef(true)
+  const enterRequestRef = useRef(0)
+  const scenarioIDRef = useRef(scenarioId)
+  scenarioIDRef.current = scenarioId
   const module = scenarioModule(scenarioId)
   const intro = module?.intro ?? null
   const education = module?.education ?? null
@@ -41,30 +45,68 @@ export function ScenarioDetailPage() {
     () => catalog.scenario(scenarioId, 'a'),
     [scenarioId],
   )
-  const { data: mine } = useAsync(
-    () => myAgents.list().catch(() => null),
+  const {
+    data: mine,
+    error: mineError,
+    loading: mineLoading,
+    reload: reloadMine,
+  } = useAsync(
+    () => myAgents.list(),
     [scenarioId],
   )
   const mineOf = (side: Side) =>
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
       ?.sides[side] ?? []
 
+  useEffect(() => {
+    liveRef.current = true
+    return () => {
+      liveRef.current = false
+      enterRequestRef.current += 1
+    }
+  }, [])
+
+  useEffect(() => {
+    enterRequestRef.current += 1
+    setPending(null)
+    setBuildError(null)
+  }, [scenarioId])
+
   const enter = async (side: Side, target: 'build' | 'view') => {
+    const requestID = ++enterRequestRef.current
+    const requestScenarioID = scenarioId
+    const isCurrent = () =>
+      liveRef.current && enterRequestRef.current === requestID &&
+      scenarioIDRef.current === requestScenarioID
     setPending(`${side}:${target}`)
     setBuildError(null)
     try {
       const { agentID } = await builder.ensure({
-        scenarioID: scenarioId,
+        scenarioID: requestScenarioID,
         side,
       })
+      if (!isCurrent()) return
       navigate(
         target === 'build'
-          ? `/agents/${agentID}/build?scenario=${scenarioId}&side=${side}`
+          ? `/agents/${agentID}/build?scenario=${requestScenarioID}&side=${side}`
           : `/agents/${agentID}`,
       )
     } catch (cause) {
+      if (!isCurrent()) return
       setBuildError(messageOf(cause, '创建智能体失败'))
       setPending(null)
+    }
+  }
+
+  const viewMine = (side: Side) => {
+    const agents = mineOf(side)
+    if (agents.length === 1) {
+      navigate(`/agents/${agents[0].agentID}`)
+      return
+    }
+    if (agents.length > 1) {
+      const focus = new URLSearchParams({ scenario: scenarioId, side })
+      navigate(`/my-agents?${focus.toString()}`)
     }
   }
 
@@ -179,10 +221,13 @@ export function ScenarioDetailPage() {
                       : data.summary.sideBLabel}
                     fallbackGoal={education?.winConditions[side] ?? null}
                     hiddenGoals={module?.hiddenGoals?.[side] ?? null}
-                    agents={mineOf(side)}
+                    agents={mine == null ? null : mineOf(side)}
+                    inventoryError={mineError}
+                    inventoryLoading={mineLoading}
                     pending={pending}
                     onEnter={enter}
-                    onViewAll={() => navigate('/my-agents')}
+                    onViewAll={() => viewMine(side)}
+                    onRetryInventory={reloadMine}
                     onNew={() =>
                       navigate(
                         `/my-agents?new=${side}&scenario=${scenarioId}`,
@@ -543,9 +588,12 @@ function SideCard({
   fallbackGoal,
   hiddenGoals,
   agents,
+  inventoryError,
+  inventoryLoading,
   pending,
   onEnter,
   onViewAll,
+  onRetryInventory,
   onNew,
 }: {
   side: Side
@@ -554,10 +602,13 @@ function SideCard({
   fallbackLabel: string | null | undefined
   fallbackGoal: string | null
   hiddenGoals: ScenarioHiddenGoalList | null
-  agents: Array<{ agentID: number; name?: string | null }>
+  agents: Array<{ agentID: number; name?: string | null }> | null
+  inventoryError: string | null
+  inventoryLoading: boolean
   pending: string | null
   onEnter: (side: Side, target: 'build' | 'view') => Promise<void>
   onViewAll: () => void
+  onRetryInventory: () => void
   onNew: () => void
 }) {
   const name = copy?.name ?? fallbackName
@@ -649,7 +700,7 @@ function SideCard({
           ? <HiddenGoalList goals={hiddenGoals} />
           : null}
 
-        {agents.length > 0
+        {agents != null && agents.length > 0
           ? (
             <p
               className='text-xs text-(--foreground-muted)'
@@ -667,7 +718,31 @@ function SideCard({
           className='mt-auto flex flex-wrap items-center gap-2 pt-1'
           {...tm('DA.side-actions')}
         >
-          {agents.length === 0
+          {agents == null
+            ? inventoryError != null
+              ? (
+                <div
+                  className='flex flex-wrap items-center gap-2 text-xs text-(--foreground-muted)'
+                  role='alert'
+                >
+                  <span>我的{name}清单加载失败：{inventoryError}</span>
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    onClick={onRetryInventory}
+                  >
+                    重试清单
+                  </Button>
+                </div>
+              )
+              : (
+                <Button size='sm' variant='secondary' disabled>
+                  {inventoryLoading
+                    ? `正在确认我的${name}…`
+                    : `暂时无法确认我的${name}`}
+                </Button>
+              )
+            : agents.length === 0
             ? (
               <Button
                 size='sm'
@@ -692,15 +767,14 @@ function SideCard({
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   再建一个{name}
                 </Button>
-                <Button
-                  size='sm'
-                  variant='secondary'
+                <button
+                  type='button'
                   onClick={onViewAll}
+                  className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
                   {...tm('DA.view-mine-button')}
                 >
-                  <Bot className='mr-1.5 h-3.5 w-3.5' />
                   查看我的{name}（{agents.length}）
-                </Button>
+                </button>
               </>
             )}
         </div>

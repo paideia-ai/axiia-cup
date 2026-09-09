@@ -6,6 +6,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useParams,
 } from 'react-router-dom'
 
 import { AppShell } from './components/layout/app-shell'
@@ -38,6 +39,14 @@ function Loading() {
   )
 }
 
+// React Router reuses a route element when only :agentId changes. The Builder
+// owns debounced draft state, so key it by agent to guarantee that no visible
+// or in-flight editing state can bleed into a sibling agent.
+function BuilderRoute() {
+  const { agentId = '' } = useParams()
+  return <BuilderPage key={agentId} />
+}
+
 function ProtectedShell() {
   const { isLoading, account } = useAuth()
   const location = useLocation()
@@ -55,7 +64,7 @@ function ProtectedShell() {
         <Route path='/my-agents' element={<MyAgentsPage />} />
         {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
         <Route path='/agents/:agentId' element={<AgentViewPage />} />
-        <Route path='/agents/:agentId/build' element={<BuilderPage />} />
+        <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
         <Route path='/matches' element={<MatchesPage />} />
         <Route path='/matches/:matchId' element={<MatchDetailPage />} />
         <Route path='/tournaments' element={<TournamentsPage />} />

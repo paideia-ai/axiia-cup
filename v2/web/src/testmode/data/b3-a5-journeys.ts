@@ -118,7 +118,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体有 v1、v2 两个版本，最新版文本已知，v2 已标为本阵营唯一参赛版本。',
       '种子数据口径固定：版本 359 有 1 场已计分、0 胜；参赛版本 360 为 0 场。执行中新增版本或对局后，先记录变化再按当时实际统计判定。',
       '同一阵营另有 b3OwnerSiblingAgentId，另一阵营有且仅有 b3OwnerSoloSideAgentId；缺侧检查必须切换到「B3 人测·访客缺侧」。',
-      '准备 b3OwnerTournamentId 对应积分榜条目、D/DA「我的智能体」入口、玩家对局列表、b3OwnerCompletedMatchId 战报和一次 E 保存结果，全部指向 b3OwnerAgentId。',
+      '准备 b3OwnerTournamentId 对应积分榜条目、D/DA「我的智能体」入口、玩家对局列表、b3OwnerCompletedMatchId 战报和一次 E 保存后返回主页的结果，全部指向 b3OwnerAgentId。',
       '记录环境 URL、build SHA、所有相关 agent/version/match ID 和预期统计。',
     ],
     evidenceRequirements: [
@@ -150,7 +150,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
           preparedId(
             'b3OwnerSoloSideAgentId',
             '另一阵营单智能体 ID',
-            '该阵营同侧只有一个智能体，用于核对胶囊整排不出现。',
+            '该阵营同侧只有一个智能体，用于核对胶囊整排仍保留当前项与新建入口。',
           ),
           preparedId(
             'b3OwnerTournamentId',
@@ -170,7 +170,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·访客缺侧',
         readiness: 'ready',
         description:
-          '专门核对「去创建对侧」；与旅程 2 的只读访客复用 axiia-cup-product 群账号包中的同一账号。',
+          '专门核对缺侧时的信息分层；与旅程 2 的只读访客复用 axiia-cup-product 群账号包中的同一账号。',
         fields: [
           preparedId(
             'b3MissingSideAgentId',
@@ -200,7 +200,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/tournaments/:id',
         marker: null,
         action:
-          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本后点保存结果中的智能体入口。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
+          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本并观察自动返回。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
         expected:
           '每个入口都打开 /agents/{{b3OwnerAgentId}}，没有落到别的智能体或只停在中间列表页。',
         clauseIds: ['U10-C11', 'U10-C11b'],
@@ -229,9 +229,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'EA.page-header',
         action:
-          '先以「B3 人测·完整所有者」查看 EA 页头的展示名、场景名和双侧完成度；再切换「B3 人测·访客缺侧」，打开上方「缺侧账号的 EA」与「缺侧账号的我的智能体」，点击或定位「去创建对侧」。',
+          '先以「B3 人测·完整所有者」查看 EA 页头的展示名、场景名与身份菜单；再切换「B3 人测·访客缺侧」，分别打开上方「缺侧账号的 EA」与「缺侧账号的我的智能体」，核对两层各自承担的信息。',
         expected:
-          '展示名使用「侧角色名「自起名」· 场景」口径，无自起名时回落「侧角色名 #id」，界面不出现「策略」「版本线」内部词；双侧状态分别显示 ✓/✗，缺侧时出现明确「去创建对侧」入口。',
+          '展示名使用「侧角色名「自起名」· 场景」口径，无自起名时回落「侧角色名 #id」，界面不出现「策略」「版本线」内部词；EA 不重复双侧完成度或补侧提醒，我的智能体页以克制的状态摘要呈现两侧准备度并各保留一个新建入口。',
         clauseIds: ['U10-C01', 'U10-C02'],
         versionPins: {
           'U10-C01': 'baseline:U10-C01',
@@ -248,9 +248,10 @@ export const B3_A5_JOURNEYS: Journey[] = [
         fixtureRefs: ['b3-owner-rich'],
         route: '/agents/:id',
         marker: 'EA.edit-button',
-        action: '在页头点击「编辑」，等待工作区加载完成；不要修改或保存文本。',
+        action:
+          '点击版本标题旁的「新建版本」铅笔加号，等待工作区加载完成；不要修改或保存文本。',
         expected:
-          '浏览器进入 /agents/{{b3OwnerAgentId}}/build，编辑区载入该智能体最新版本的完整文本。',
+          '浏览器进入 /agents/{{b3OwnerAgentId}}/build，编辑区载入该智能体唯一的服务端草稿；已保存版本保持不可变且不在构建器重复展示。',
         clauseIds: ['U10-C03'],
         versionPins: { 'U10-C03': 'comment-v2:U10-C03' },
         screenshotEvidence: ['HV-B3-OWNER-EA-S03-edit-latest.png'],
@@ -262,7 +263,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'EA.diff-section',
         action:
-          '展开「版本对比」，分别选择 v1 为基准版本、v2 为对比版本，点击页面提供的对比操作并展开两侧全文。',
+          '展开「版本对比」，分别选择 v1 为基准版本、v2 为对比版本，等待差异自动刷新并展开两侧全文。',
         expected:
           '所有者能看到完整提示词和版本差异；基准、对比选择器都可用，结果对应所选两个版本。',
         clauseIds: ['U10-C04'],
@@ -296,7 +297,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'E.entry-badge',
         action:
-          '检查 v1、v2 的参赛徽章；点击非参赛版本的「设为参赛版本」，确认后再次检查两张卡。',
+          '检查 v1、v2 的参赛徽章；点击非参赛版本的勾选图标并等待请求完成，再次检查两张卡。',
         expected:
           '操作前后本阵营始终恰好一个版本带参赛标记；改标后旧标记消失，新标记只出现在所选版本。',
         clauseIds: ['U10-C06'],
@@ -313,9 +314,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'E.version-card',
         action:
-          '在一张参赛版本卡和一张非参赛版本卡上逐项检查并点击安全的展开动作；只打开「出战」面板后立即关闭，不确认派发。全文搜索「复制为新智能体」。',
+          '在一张参赛版本卡和一张非参赛版本卡上逐项检查紧凑图标，并点击复制提示词与安全的展开动作；只打开「出战」面板后立即关闭，不确认派发。全文搜索「复制为新智能体」。',
         expected:
-          '版本卡提供「展开全文」「设为参赛版本」（仅适用卡）、「基于该版本迭代」「出战」；不存在「复制为新智能体」或其降级入口。',
+          '版本卡提供复制提示词、勾选参赛版本、出战，以及正文超过三行时的展开/收起；不再内嵌「基于该版本迭代」，也不存在「复制为新智能体」或其降级入口。',
         clauseIds: ['U10-C08'],
         versionPins: { 'U10-C08': 'baseline:U10-C08' },
         screenshotEvidence: [
@@ -334,11 +335,11 @@ export const B3_A5_JOURNEYS: Journey[] = [
         ],
         fixtureRefs: ['b3-owner-rich'],
         route: '/agents/:id/build',
-        marker: 'E.version-card',
+        marker: 'E.workspace-card',
         action:
-          '截取 E 页下方版本卡，再打开上方「同一智能体 EA」截取同一版本卡；逐项比较动作、版本号、战绩和时间结构。',
+          '截取 E 的单一策略工作区与两个辅助入口，再打开上方「同一智能体 EA」截取版本列表；逐项核对两层分工。',
         expected:
-          'E 与 EA 使用同一套版本卡动作和信息结构；EA 额外提供版本 diff/公开视图语境，E 额外提供编辑区。',
+          'E 只保留主文本区、模型/备注/persona 和始终可用的两个辅助弹窗，不展示版本卡；EA 集中承载版本号、战绩、复制、参赛、出战与 diff。',
         clauseIds: ['U10-C09'],
         versionPins: { 'U10-C09': 'baseline:U10-C09' },
         screenshotEvidence: [
@@ -365,7 +366,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         action:
           '在主智能体页点击 b3OwnerSiblingAgentId 的同侧兄弟胶囊并确认 URL；然后打开上方「另一阵营单智能体 EA」。',
         expected:
-          '有多个同侧智能体时显示横向胶囊、当前项高亮且点击切换到 b3OwnerSiblingAgentId；同侧只有一个智能体时整排胶囊不出现。',
+          '同角色胶囊整排始终显示；有多个时当前项高亮且点击切换到 b3OwnerSiblingAgentId，只有一个时仍显示当前项与唯一的新建图标。',
         clauseIds: ['U10-C10'],
         versionPins: { 'U10-C10': 'baseline:U10-C10' },
         screenshotEvidence: [
@@ -554,9 +555,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'EA.field-button',
         action:
-          '点击页头「出战」，关闭面板；再在指定版本卡点击「出战」并保持面板打开。',
+          '在指定版本卡点击「出战」并保持面板打开；关闭后再从另一张版本卡打开一次。',
         expected:
-          '两次都打开紧凑的选择对手面板；面板预选 a5CoreAgentId，第二次还保持从指定版本发起的上下文。',
+          '每次都打开紧凑的选择对手面板并预选 a5CoreAgentId；面板始终钉住所点击版本，不存在脱离版本语境的页头出战入口。',
         clauseIds: ['U05-C01'],
         versionPins: { 'U05-C01': 'comment-v2:U05-C01' },
         screenshotEvidence: ['HV-A5-OS-CORE-S01-preselected.png'],
@@ -568,9 +569,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.fielded-version',
         action:
-          '在选择对手面板展开己方版本选择器，逐项核对所有可用版本；选择非默认版本，再切换回明确标记的参赛版本。',
+          '先从非参赛版本卡打开面板并核对副标题，关闭后再从参赛版本卡打开并核对副标题；两次都不要确认派发。',
         expected:
-          '面板内列出全部可用版本，清楚标识当前参赛版本并允许选择本次出战版本；每个阵营只把真正已标记的一个版本显示为参赛版本。',
+          '面板没有己方版本选择器：非参赛卡显示「出战版本：指定版本 vN」，参赛卡才显示「出战版本：★参赛版本 vN」；真正派发的版本始终等于呼出面板的版本。',
         clauseIds: ['U05-C02', 'U05-C02b'],
         versionPins: {
           'U05-C02': 'comment-v2:U05-C02',

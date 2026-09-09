@@ -1,7 +1,12 @@
 // U10 方法一：EA 智能体视图（B3）owner vs public 的脚本化旅程（CDP + 截图）。
 // 旅程叙述：compare-v34/journeys/u10-agent-view-public.md（U10-C01…C14）。
+//
+// 历史证据（冻结于 v3.4）：本文件不在 Playwright/Deno 测试发现范围内，保留
+// 当时的 CDP 截图复现步骤，里面的页头编辑/OS、构建器版本线与行按钮定位器
+// 故意不迁移。2026-09-09 咳嗦方案的现行可执行验收见
+// u10-agent-view.spec.ts 与 keso-agent-flow.spec.ts；请勿把本文件当作当前冒烟命令。
 // 对战预算 0：全程不点任何派发按钮；OS 面板只开不派。
-// 用法：node tests/e2e/compare/u10-journey.mjs
+// 仅对历史 v3.4 构建复现：node tests/e2e/compare/u10-journey.mjs
 //   AXIIA_BASE_URL（默认远端 dev）· AXIIA_U10_EMAIL（复用已建账号，缺省新建一个）
 //
 // 2026-08-25 移植（#137/#138 合入后）：
@@ -107,7 +112,10 @@ try {
   const versA = await apiJSON(owner, 'GET', `/agents/${A}/versions`)
   if ((versA.body.versions?.length ?? 0) < 2) {
     await save(A, 'U10 商鞅 v1：奖励耕战，立木为信。', '首稿')
-    await save(A, 'U10 商鞅 v2：奖励耕战，立木为信；徙木立信之外再加连坐之法。')
+    await save(
+      A,
+      'U10 商鞅 v2：奖励耕战，立木为信；徙木立信之外再加连坐之法。',
+    )
   }
   await apiJSON(owner, 'PATCH', `/agents/${A}`, { name: '贪婪' })
 
@@ -132,7 +140,9 @@ try {
       name: '激进',
     })
     B = created.body.agentID
-    if (!B) throw new Error(`sibling create failed: ${JSON.stringify(created)}`)
+    if (!B) {
+      throw new Error(`sibling create failed: ${JSON.stringify(created)}`)
+    }
     await save(B, 'U10 商鞅 B v1：不法古，不循今，法后王。')
   }
   log.agents = { A, G, B }
@@ -147,7 +157,8 @@ try {
   await page.waitForTimeout(500)
 
   // C01 展示名（#63/#87/P1）
-  const h1 = (await page.getByRole('heading', { level: 1 }).textContent()) ?? ''
+  const h1 = (await page.getByRole('heading', { level: 1 }).textContent()) ??
+    ''
   const sub = (await page.locator('h1 + p').textContent()) ?? ''
   check(
     'U10-C01',

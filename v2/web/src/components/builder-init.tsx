@@ -1,5 +1,5 @@
-import { Check, Copy } from 'lucide-react'
-import { useState } from 'react'
+import { Check, Copy, X } from 'lucide-react'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 
 import {
   assembleDeck,
@@ -10,36 +10,118 @@ import {
 import { promptLength } from '../lib/prompt-length'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
-import { Card, CardContent } from './ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { Textarea } from './ui/textarea'
-
-// 新建流程的初始化方式三选一（E6/#83，mock S25 的三 tab 形态）：MCQ 拼装
-// （默认，#12）/ Basic 直写 / 元提示词。只在版本数为 0 且工作区为空时由
-// 构建器挂载（E7 门在 lib/deck.ts initModesAvailable）；「填入工作区」把拼
-// 好的纯文本交回构建器后，工作区非空、本组件即被卸载——保存 v1 之后迭代
-// 只有文本工作台，清空工作区也不再回到这里（重选初始化＝「再建一个」，#90）。
-// MCQ 选择只活在组件内存里（不持久化；E5「选项随版本存档」等 P5 后端批次
-// 由保存接口承接）——调用方用 key 绑定 deck 身份，切侧/切角色即重置。
 
 interface InitModesProps {
-  deck: Deck
+  deck: Deck | null
   metaPrompt: string
+  currentPrompt: string
   onFill: (text: string, method: 'mcq' | 'builder') => void
-  // GET /v1/config 的 promptUnitLimit；未到手前为 null，计数器只报已用数。
   promptUnitLimit: number | null
 }
 
-export function InitModes(
-  { deck, metaPrompt, onFill, promptUnitLimit }: InitModesProps,
-) {
-  // 受控 tab：元提示词面板的粘贴框只在其 tab 激活时挂载——页面上「策略
-  // 提示词」工作区始终是唯一常驻的 textarea（选择器与工具脚本据此定位）。
-  const [tab, setTab] = useState('mcq')
-  const [selections, setSelections] = useState<DeckSelections>({})
-  const [pasted, setPasted] = useState('')
-  const [copied, setCopied] = useState(false)
+// Keso 2026-09-09: the builder stays visually quiet. These two optional
+// helpers are always discoverable, while their detailed workflows live in
+// dialogs instead of competing with the primary strategy textarea.
+export function InitModes({
+  deck,
+  metaPrompt,
+  currentPrompt,
+  onFill,
+  promptUnitLimit,
+}: InitModesProps) {
+  const [open, setOpen] = useState<'mcq' | 'meta' | null>(null)
 
+  return (
+    <div
+      className='flex flex-wrap items-center gap-x-2 gap-y-1'
+      aria-label='策略辅助'
+      {...tm('E.init-card')}
+    >
+      <span className='text-xs text-(--foreground-subtle)'>
+        不知道怎么指挥智能体？
+      </span>
+      <div className='flex flex-wrap items-center gap-1'>
+        <Button
+          size='sm'
+          variant='ghost'
+          className='h-11 md:h-8'
+          onClick={() => setOpen('mcq')}
+          {...tm('E.init-tab-mcq')}
+        >
+          选择预设策略
+        </Button>
+        <Button
+          size='sm'
+          variant='ghost'
+          className='h-11 md:h-8'
+          onClick={() => setOpen('meta')}
+          {...tm('E.init-tab-meta')}
+        >
+          让你的AI帮你想策略
+        </Button>
+      </div>
+
+      {open === 'mcq'
+        ? (
+          <ToolDialog title='选择预设策略' onClose={() => setOpen(null)}>
+            {deck
+              ? (
+                <McqDraft
+                  deck={deck}
+                  currentPrompt={currentPrompt}
+                  promptUnitLimit={promptUnitLimit}
+                  onFill={(text) => {
+                    onFill(text, 'mcq')
+                    setOpen(null)
+                  }}
+                />
+              )
+              : (
+                <div className='space-y-4'>
+                  <p className='text-sm text-(--foreground-subtle)'>
+                    这个角色暂时没有预设策略。你可以直接编写，或让你的 AI
+                    帮你想策略。
+                  </p>
+                  <Button
+                    size='sm'
+                    variant='secondary'
+                    onClick={() => setOpen('meta')}
+                  >
+                    让你的AI帮你想策略
+                  </Button>
+                </div>
+              )}
+          </ToolDialog>
+        )
+        : null}
+
+      {open === 'meta'
+        ? (
+          <ToolDialog
+            title='让你的AI帮你想策略'
+            onClose={() => setOpen(null)}
+          >
+            <MetaDraft metaPrompt={metaPrompt} />
+          </ToolDialog>
+        )
+        : null}
+    </div>
+  )
+}
+
+function McqDraft({
+  deck,
+  currentPrompt,
+  promptUnitLimit,
+  onFill,
+}: {
+  deck: Deck
+  currentPrompt: string
+  promptUnitLimit: number | null
+  onFill: (text: string) => void
+}) {
+  const [selections, setSelections] = useState<DeckSelections>({})
+  const [confirmReplace, setConfirmReplace] = useState(false)
   const assembled = assembleDeck(deck, selections)
   const complete = deckComplete(deck, selections)
   const units = promptLength(assembled)
@@ -48,210 +130,260 @@ export function InitModes(
     (question) =>
       !question.options.some((option) => option.id === selections[question.id]),
   ).length
-  // combo deck（电车）：选完才有产物可预览；fragment deck 边选边长。
   const comboPending = deck.comboPrompts != null && !complete
 
-  const copyMeta = () => {
-    // 非安全上下文没有 clipboard——静默降级，文本仍可手动全选复制。
+  const requestFill = () => {
+    if (
+      currentPrompt.trim() !== '' &&
+      currentPrompt.trim() !== assembled.trim()
+    ) {
+      setConfirmReplace(true)
+      return
+    }
+    onFill(assembled)
+  }
+
+  return (
+    <div className='space-y-5'>
+      {deck.intro
+        ? (
+          <p className='text-sm text-(--foreground-subtle)'>
+            {deck.intro}
+          </p>
+        )
+        : null}
+      {deck.questions.map((question, index) => (
+        <fieldset
+          key={question.id}
+          className='space-y-2'
+          {...tm('E.mcq-question')}
+        >
+          <legend className='mb-2 text-sm text-(--foreground)'>
+            <span className='mr-1.5 font-mono text-xs text-(--foreground-muted)'>
+              {index + 1}/{deck.questions.length}
+            </span>
+            {question.prompt}
+          </legend>
+          <div className='flex flex-wrap gap-2'>
+            {question.options.map((option) => {
+              const active = selections[question.id] === option.id
+              return (
+                <button
+                  key={option.id}
+                  type='button'
+                  aria-pressed={active}
+                  onClick={() => {
+                    setConfirmReplace(false)
+                    setSelections((current) => ({
+                      ...current,
+                      [question.id]: option.id,
+                    }))
+                  }}
+                  className={active
+                    ? 'cursor-pointer rounded-full border border-(--accent) bg-[rgba(224,74,47,0.1)] px-3 py-1.5 text-left text-xs font-semibold text-(--accent)'
+                    : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-left text-xs font-medium text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'}
+                  {...tm('E.mcq-option')}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
+      ))}
+
+      <section
+        aria-label='拼装预览'
+        className='space-y-3 border-t border-(--border-soft) pt-4'
+        {...tm('E.mcq-preview')}
+      >
+        <div className='flex items-center justify-between gap-2'>
+          <h3 className='text-sm font-semibold text-(--foreground)'>
+            拼装预览
+          </h3>
+          <span
+            className={`font-mono text-xs ${
+              overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
+            }`}
+            title='按汉字或英文词计数（非 token）'
+            {...tm('E.mcq-counter')}
+          >
+            {units} / {promptUnitLimit ?? '—'}
+          </span>
+        </div>
+        {assembled
+          ? (
+            <pre className='max-h-56 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-xs leading-6 text-(--foreground-subtle)'>
+              {assembled}
+            </pre>
+          )
+          : (
+            <p className='rounded-md border border-dashed border-(--border-soft) p-3 text-xs text-(--foreground-muted)'>
+              {comboPending
+                ? `选完全部 ${deck.questions.length} 题后生成完整提示词`
+                : '选择上面的选项，提示词会在这里逐节拼出'}
+            </p>
+          )}
+        {overLimit
+          ? (
+            <p role='alert' className='text-xs text-(--accent)'>
+              拼装结果超过上限，请调整选项。
+            </p>
+          )
+          : null}
+        <div className='flex flex-wrap items-center gap-3'>
+          <Button
+            size='sm'
+            disabled={!complete || assembled === '' || overLimit}
+            onClick={requestFill}
+            {...tm('E.mcq-fill-button')}
+          >
+            填入工作区
+          </Button>
+          {!complete
+            ? (
+              <span
+                role='status'
+                className='text-xs text-(--foreground-muted)'
+                {...tm('E.mcq-remaining')}
+              >
+                还差 {unanswered} 题
+              </span>
+            )
+            : null}
+        </div>
+        {confirmReplace
+          ? (
+            <div
+              role='alert'
+              className='space-y-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] p-3'
+            >
+              <p className='text-sm text-(--warning)'>
+                主输入框已有策略，是否用这份预设策略替换？
+              </p>
+              <div className='flex gap-2'>
+                <Button size='sm' onClick={() => onFill(assembled)}>
+                  替换当前草稿
+                </Button>
+                <Button
+                  size='sm'
+                  variant='secondary'
+                  onClick={() => setConfirmReplace(false)}
+                >
+                  取消
+                </Button>
+              </div>
+            </div>
+          )
+          : null}
+      </section>
+    </div>
+  )
+}
+
+function MetaDraft({ metaPrompt }: { metaPrompt: string }) {
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+    'idle',
+  )
+
+  const copyMeta = async () => {
     try {
-      void navigator.clipboard.writeText(metaPrompt).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      }).catch(() => {})
+      await navigator.clipboard.writeText(metaPrompt)
+      setCopyState('copied')
     } catch {
-      // 忽略
+      setCopyState('failed')
     }
   }
 
   return (
-    <Card {...tm('E.init-card')}>
-      <CardContent className='space-y-4 pt-5'>
-        <div>
-          <p className='text-sm font-semibold text-(--foreground)'>
-            初始化方式 · 三选一生成首稿
+    <div className='space-y-4'>
+      <p className='text-sm leading-7 text-(--foreground-subtle)'>
+        复制下面的请求，发给你常用的
+        AI。拿到最终策略后，回到构建器，把它原样粘贴到主输入框即可。
+      </p>
+      <pre
+        aria-label='元提示词内容'
+        tabIndex={0}
+        className='max-h-72 select-text overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-xs leading-6 text-(--foreground-subtle)'
+        {...tm('E.meta-prompt-text')}
+      >
+        {metaPrompt}
+      </pre>
+      {copyState === 'failed'
+        ? (
+          <p role='status' className='text-xs text-(--warning)'>
+            无法自动复制，请手动选择上方元提示词并复制。
           </p>
-          {
-            /* #90：「复制为新智能体」已废止；保存 v1 后清空工作区也不复活
-            三选一（E7/#83）——想重新选卡＝「再建一个」智能体或创建对侧 */
-          }
-          <p
-            className='mt-0.5 text-xs text-(--foreground-muted)'
-            {...tm('E.init-subtitle')}
-          >
-            保存即成为 v1；此后的迭代只有文本编辑（想重新选卡：再建一个智能体）
-          </p>
-        </div>
-        <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
-          <TabsList {...tm('E.init-tabs')}>
-            <TabsTrigger value='mcq' {...tm('E.init-tab-mcq')}>
-              MCQ 拼装
-            </TabsTrigger>
-            <TabsTrigger value='basic' {...tm('E.init-tab-basic')}>
-              Basic 直写
-            </TabsTrigger>
-            <TabsTrigger value='meta' {...tm('E.init-tab-meta')}>
-              元提示词
-            </TabsTrigger>
-          </TabsList>
+        )
+        : null}
+      <Button
+        size='sm'
+        variant='secondary'
+        onClick={() => void copyMeta()}
+        {...tm('E.meta-copy-button')}
+      >
+        {copyState === 'copied'
+          ? <Check aria-hidden='true' className='mr-1.5 h-3.5 w-3.5' />
+          : <Copy aria-hidden='true' className='mr-1.5 h-3.5 w-3.5' />}
+        {copyState === 'copied' ? '已复制' : '复制元提示词'}
+      </Button>
+    </div>
+  )
+}
 
-          <TabsContent value='mcq' className='space-y-4'>
-            {deck.intro
-              ? (
-                <p
-                  className='text-sm text-(--foreground-subtle)'
-                  {...tm('E.mcq-intro')}
-                >
-                  {deck.intro}
-                </p>
-              )
-              : null}
-            {deck.questions.map((question, index) => (
-              <div
-                key={question.id}
-                className='space-y-2'
-                {...tm('E.mcq-question')}
-              >
-                <p className='text-sm text-(--foreground)'>
-                  <span className='mr-1.5 font-mono text-xs text-(--foreground-muted)'>
-                    {index + 1}/{deck.questions.length}
-                  </span>
-                  {question.prompt}
-                </p>
-                <div className='flex flex-wrap gap-2'>
-                  {question.options.map((option) => {
-                    const active = selections[question.id] === option.id
-                    return (
-                      <button
-                        key={option.id}
-                        type='button'
-                        aria-pressed={active}
-                        {...tm('E.mcq-option')}
-                        onClick={() =>
-                          setSelections((current) => ({
-                            ...current,
-                            [question.id]: option.id,
-                          }))}
-                        className={active
-                          ? 'cursor-pointer rounded-full border border-(--accent) bg-[rgba(224,74,47,0.1)] px-3 py-1.5 text-left text-xs font-semibold text-(--accent)'
-                          : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-left text-xs font-medium text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'}
-                      >
-                        {option.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-            <div
-              className='space-y-2 border-t border-(--border-soft) pt-3'
-              {...tm('E.mcq-preview')}
-            >
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <p className='text-xs font-semibold tracking-[0.06em] text-(--foreground-muted)'>
-                  拼装预览
-                </p>
-                <span
-                  className={`font-mono text-xs ${
-                    overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
-                  }`}
-                  title='按汉字或英文词计数（非 token）'
-                  {...tm('E.mcq-counter')}
-                >
-                  {units} / {promptUnitLimit ?? '—'}
-                </span>
-              </div>
-              {assembled
-                ? (
-                  <pre className='max-h-56 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 font-sans text-xs leading-relaxed text-(--foreground-subtle)'>
-                    {assembled}
-                  </pre>
-                )
-                : (
-                  <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-xs text-(--foreground-muted)'>
-                    {comboPending
-                      ? `选完全部 ${deck.questions.length} 题后生成完整提示词`
-                      : '选择上面的选项，提示词会在这里逐节拼出'}
-                  </p>
-                )}
-              <div className='flex items-center gap-3'>
-                <Button
-                  size='sm'
-                  disabled={!complete || assembled === '' || overLimit}
-                  onClick={() => onFill(assembled, 'mcq')}
-                  {...tm('E.mcq-fill-button')}
-                >
-                  填入工作区
-                </Button>
-                {!complete
-                  ? (
-                    <span
-                      className='text-xs text-(--foreground-muted)'
-                      {...tm('E.mcq-remaining')}
-                    >
-                      还差 {unanswered} 题
-                    </span>
-                  )
-                  : null}
-              </div>
-            </div>
-          </TabsContent>
+function ToolDialog({
+  title,
+  onClose,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  children: ReactNode
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const titleID = useId()
 
-          <TabsContent value='basic'>
-            <p
-              className='text-sm text-(--foreground-subtle)'
-              {...tm('E.basic-hint')}
-            >
-              直接在下方编辑框书写策略提示词——写下任何文字后，这里会自动收起。
-            </p>
-          </TabsContent>
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const opener = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    const previousOverflow = document.body.style.overflow
+    dialog.showModal()
+    document.body.style.overflow = 'hidden'
+    return () => {
+      dialog.close()
+      document.body.style.overflow = previousOverflow
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [])
 
-          <TabsContent value='meta' className='space-y-3'>
-            {tab === 'meta'
-              ? (
-                <>
-                  <p className='text-sm text-(--foreground-subtle)'>
-                    复制这段元提示词发给你常用的 AI，再把生成结果粘贴回来。
-                  </p>
-                  <pre
-                    className='max-h-48 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 font-sans text-xs leading-relaxed text-(--foreground-subtle)'
-                    {...tm('E.meta-prompt-text')}
-                  >
-                    {metaPrompt}
-                  </pre>
-                  <Button
-                    size='sm'
-                    variant='secondary'
-                    onClick={copyMeta}
-                    {...tm('E.meta-copy-button')}
-                  >
-                    {copied
-                      ? (
-                        <Check className='mr-1.5 h-3.5 w-3.5 text-(--success)' />
-                      )
-                      : <Copy className='mr-1.5 h-3.5 w-3.5' />}
-                    {copied ? '已复制' : '复制元提示词'}
-                  </Button>
-                  <Textarea
-                    rows={5}
-                    value={pasted}
-                    onChange={(event) => setPasted(event.target.value)}
-                    placeholder='把 AI 生成的策略提示词粘贴到这里…'
-                    {...tm('E.meta-paste-input')}
-                  />
-                  <Button
-                    size='sm'
-                    disabled={pasted.trim() === ''}
-                    onClick={() => onFill(pasted, 'builder')}
-                    {...tm('E.meta-fill-button')}
-                  >
-                    填入工作区
-                  </Button>
-                </>
-              )
-              : null}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleID}
+      onCancel={(event) => {
+        event.preventDefault()
+        onClose()
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      className='fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-(--border) bg-(--surface-elevated) p-0 text-(--foreground) shadow-2xl outline-none backdrop:bg-black/55'
+    >
+      <div className='sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-(--border-soft) bg-(--surface-elevated) px-5 py-4'>
+        <h2 id={titleID} className='font-semibold'>{title}</h2>
+        <button
+          type='button'
+          aria-label='关闭弹窗'
+          onClick={onClose}
+          className='flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-(--foreground-subtle) transition hover:bg-white/4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-(--accent) md:h-8 md:w-8'
+        >
+          <X aria-hidden='true' className='h-4 w-4' />
+        </button>
+      </div>
+      <div className='space-y-5 p-5'>{children}</div>
+    </dialog>
   )
 }

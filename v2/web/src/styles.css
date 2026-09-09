@@ -140,3 +140,36 @@ select.app-input:focus {
   color: var(--foreground-subtle);
   line-height: 1.8;
 }
+
+/* Agent creation is anchored to its source control on desktop. Route-driven
+   openings have no source element, so they receive a centered safe fallback. */
+@media (min-width: 768px) {
+  .new-agent-positioner[data-unanchored='true'] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}
+
+/* On touch screens the same popover becomes a keyboard-aware bottom sheet.
+   Base UI continues to own focus trapping, Escape, and outside dismissal. */
+@media (max-width: 767px) {
+  .new-agent-positioner {
+    position: fixed !important;
+    top: auto !important;
+    bottom: var(--new-agent-bottom-inset, 0px) !important;
+    left: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  .new-agent-panel {
+    width: 100%;
+    max-width: none;
+    max-height: var(--new-agent-available-height, 85dvh);
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 20px max(20px, env(safe-area-inset-bottom));
+  }
+}

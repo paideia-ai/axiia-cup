@@ -1,6 +1,6 @@
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { builder, matches } from '../api/client'
@@ -1058,8 +1058,8 @@ export function MatchDetailPage() {
         : null}
 
       {
-        /* 旅程卡（A3 ④/#67/V23）：首战完局置底——三格方向性 CTA + 三种构建
-        模式 tab 卡（#12）。回放中不渲染（回放隐藏一切终局层）。 */
+        /* 旅程卡（A3 ④/#67/V23）：首战完局置底——三格方向性 CTA +
+        低复杂度构建器说明。回放中不渲染（回放隐藏一切终局层）。 */
       }
       {expressArrival && finished && !replaying
         ? (
@@ -1074,8 +1074,7 @@ export function MatchDetailPage() {
 }
 
 // 首战旅程卡（#67，mock V23 初版）：三格用方向性关键词指路——下一轮 /
-// 对侧 / PVP；随后是三种构建模式 tab 卡（#12：首战后「解锁」三种初始化方式
-// ——新建流程可用，存量智能体的迭代仍是纯文本，E7）。participants 缺席
+// 对侧 / PVP；随后说明 Keso 2026-09-09 的单一工作区与常驻辅助入口。participants 缺席
 // （老服务器）时按通用落点降级：智能体格去 /my-agents、对侧格去场景页。
 function FirstBattleJourney({
   scenarioID,
@@ -1087,6 +1086,8 @@ function FirstBattleJourney({
   const navigate = useNavigate()
   const [creating, setCreating] = useState(false)
   const [journeyError, setJourneyError] = useState<string | null>(null)
+  const liveRef = useRef(true)
+  const createRequestRef = useRef(0)
 
   const mine: { agentID: number | null; side: Side } | null =
     participants?.a.isMine
@@ -1102,11 +1103,33 @@ function FirstBattleJourney({
     : mine.side === 'a'
     ? 'b'
     : 'a'
+  const journeyContext = `${scenarioID}:${oppositeSide ?? ''}`
+  const journeyContextRef = useRef(journeyContext)
+  journeyContextRef.current = journeyContext
 
-  // 「解锁对侧」＝#59/#64 的 ensure（get-or-create）+ 预选参数进构建器——
-  // 对侧是新建流程，三种初始化方式在那里全量可选。
+  useEffect(() => {
+    liveRef.current = true
+    return () => {
+      liveRef.current = false
+      createRequestRef.current += 1
+    }
+  }, [])
+
+  useEffect(() => {
+    createRequestRef.current += 1
+    setCreating(false)
+    setJourneyError(null)
+  }, [journeyContext])
+
+  // 「解锁对侧」＝#59/#64 的 ensure（get-or-create）。新建后先到智能体主页，
+  // 再由版本标题旁的铅笔加号进入低复杂度构建器。
   const createOpposite = async () => {
     if (oppositeSide == null) return
+    const requestID = ++createRequestRef.current
+    const requestContext = journeyContext
+    const isCurrent = () =>
+      liveRef.current && createRequestRef.current === requestID &&
+      journeyContextRef.current === requestContext
     setCreating(true)
     setJourneyError(null)
     try {
@@ -1114,10 +1137,10 @@ function FirstBattleJourney({
         scenarioID,
         side: oppositeSide,
       })
-      navigate(
-        `/agents/${agentID}/build?scenario=${scenarioID}&side=${oppositeSide}`,
-      )
+      if (!isCurrent()) return
+      navigate(`/agents/${agentID}`)
     } catch (cause) {
+      if (!isCurrent()) return
       setJourneyError(messageOf(cause, '创建对侧智能体失败'))
       setCreating(false)
     }
@@ -1208,20 +1231,20 @@ function FirstBattleJourney({
         </div>
       </div>
 
-      {
-        /* #12：三种构建模式 tab 卡——新建流程（如「解锁对侧」）三选一；
-        已有智能体的迭代始终是文本工作台（E7），不提供选项回改。 */
-      }
+      {/* Keso 2026-09-09：工作区始终相同，两个辅助入口始终可用。 */}
       <Card {...tm('FA.journey-modes-card')}>
         <CardContent className='space-y-3 pt-5'>
           <p className='text-sm font-semibold text-(--foreground)'>
-            三种构建模式已解锁（新建智能体时三选一）
+            构建器辅助工具随时可用
           </p>
           <div className='grid gap-2 sm:grid-cols-3'>
             {([
-              ['MCQ 拼装', '默认——答几道选择题，拼出你的首稿'],
-              ['Basic 直写', '直接书写策略提示词'],
-              ['元提示词', '复制给你常用的 AI 生成，再粘贴回来'],
+              ['策略工作区', '在主文本区直接书写或继续修改策略'],
+              ['选择预设策略', '需要灵感时，在弹窗里答几道选择题并替换工作区'],
+              [
+                '让你的 AI 帮你想策略',
+                '复制元提示词给常用 AI，再把结果粘贴回来',
+              ],
             ] as const).map(([name, blurb]) => (
               <div
                 {...tm('FA.journey-mode-item')}
@@ -1238,12 +1261,11 @@ function FirstBattleJourney({
             ))}
           </div>
           <div className='flex flex-wrap items-center justify-between gap-2'>
-            {/* E7/#83（2026-08-25 收紧）：重用选卡的唯一出口是再建一个/创建对侧。 */}
             <p
               {...tm('FA.journey-modes-hint')}
               className='text-xs text-(--foreground-muted)'
             >
-              已保存过版本的智能体只有文本工作台——想再用选卡，再建一个智能体或创建对侧。
+              两个辅助入口在首版和已有版本后都保留；版本管理与出战回到智能体主页。
             </p>
             {mine?.agentID != null
               ? (
@@ -1252,7 +1274,7 @@ function FirstBattleJourney({
                   to={`/agents/${mine.agentID}/build`}
                   className='text-xs font-semibold text-(--accent) underline-offset-2 hover:underline'
                 >
-                  去构建器继续迭代 →
+                  去构建器继续写策略 →
                 </Link>
               )
               : null}

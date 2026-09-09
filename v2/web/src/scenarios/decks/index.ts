@@ -6,7 +6,7 @@ import { shangyangCourtDecks } from './shangyang-court'
 import { trolleyProblemDecks } from './trolley-problem'
 
 // 场景 deck 注册表（与 ../index.ts 的 MODULES 同一习惯）：deck 缺席的场景
-// 不是坏场景——构建器退回 Basic 直写，初始化三选一整个不出现。
+// 不是坏场景——构建器仍可直写，只是不显示「选择预设策略」辅助入口。
 const DECK_SETS: ScenarioDeckSet[] = [
   shangyangCourtDecks,
   honnojiDecisionDecks,

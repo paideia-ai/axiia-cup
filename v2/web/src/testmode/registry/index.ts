@@ -50,7 +50,7 @@ export const STEP_HINTS: StepHints = {
   // 两组都登记了的步骤，显式裁决：
   // j10s1「铃铛上有未读提醒」——观察点在铃铛（NAV），路由放通知页让铃铛与列表同屏
   j10s1: { route: '/notifications', marker: 'NAV.bell' },
-  // j5s1「在智能体页点出战」——面板打开前只能聚光 EA 页的出战按钮（OS.tabs 此时还不在 DOM）
+  // j5s1「在智能体页点出战」——面板打开前聚光 EA 版本卡的出战按钮（OS.tabs 此时还不在 DOM）
   j5s1: { route: '/agents/:id', marker: 'EA.field-button' },
   // j6s4「在战报里复制对手版本号」——动作起点在战报；后半段「按 id 约战」在 OS 面板，见 OS.byid-input
   j6s4: { route: '/matches/:id', marker: 'FA.copy-id-button' },

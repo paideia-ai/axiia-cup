@@ -26,6 +26,7 @@ import {
   FIXTURE_SIDE_B_NAME,
   FIXTURE_WIN_TOKEN,
   installFixtureScenario,
+  openBattlePanel,
   registrationCode,
   sameOrigin,
   saveEntryVersion,
@@ -401,10 +402,7 @@ test('锁定场景里左右手互搏不上锁', async () => {
     const agentID = honnoji?.sides.a.find((row) => row.versionCount > 0)
       ?.agentID
     expect(agentID).toBeTruthy()
-    await page.goto(`/agents/${agentID}`)
-    const open = page.getByTestId('open-os-panel')
-    await expect(open).toBeEnabled({ timeout: 30_000 })
-    await open.click()
+    await openBattlePanel(page, agentID!)
   })
   await test.step('那么 「左右手互搏」tab 没有锁形图标，可选对侧并且「自打一场」按钮可用', async () => {
     const hotseatTab = page.getByRole('tab', { name: '左右手互搏' })
@@ -552,10 +550,7 @@ test('解锁态 OS 面板呈已解锁与双侧 ✓ 徽章（固定局自证，�
     expect(fixture?.gateUnlocked).toBe(true)
   })
   await test.step('并且 OS 面板「玩家约战」tab 呈解锁态，显示「玩家约战已解锁」与双侧 ✓ 徽章', async () => {
-    await page.goto(`/agents/${fixtureA.agentID}`)
-    const open = page.getByTestId('open-os-panel')
-    await expect(open).toBeEnabled({ timeout: 30_000 })
-    await open.click()
+    await openBattlePanel(page, fixtureA.agentID)
     await page.getByRole('tab', { name: '玩家约战' }).click()
     await expect(page.getByText('玩家约战已解锁')).toBeVisible()
     await expect(page.getByText(`${FIXTURE_SIDE_A_NAME} 1/1 ✓`)).toBeVisible()
@@ -577,10 +572,7 @@ test('PVP 双侧阵容默认取各侧参赛版本（#91，固定局自证）', a
     expect(entryAgentB).toBeGreaterThan(0)
   })
   await test.step('当 我打开出战面板的「玩家约战」tab', async () => {
-    await page.goto(`/agents/${fixtureA.agentID}`)
-    const open = page.getByTestId('open-os-panel')
-    await expect(open).toBeEnabled({ timeout: 30_000 })
-    await open.click()
+    await openBattlePanel(page, fixtureA.agentID)
     await page.getByRole('tab', { name: '玩家约战' }).click()
   })
   await test.step('那么 双侧阵容选择器分别预选各侧 ★ 参赛版本（与 /v1/agents/:id/versions 的 entryVersionID 一致）', async () => {
@@ -615,10 +607,7 @@ test('配额脚注与配置旋钮在位', async () => {
     const honnoji = await getMyScenario(HONNOJI)
     const agentID = honnoji?.sides.a.find((row) => row.versionCount > 0)
       ?.agentID
-    await page.goto(`/agents/${agentID}`)
-    const open = page.getByTestId('open-os-panel')
-    await expect(open).toBeEnabled({ timeout: 30_000 })
-    await open.click()
+    await openBattlePanel(page, agentID!)
     await expect(page.getByText(
       `今日已用 ${cfg.usage.battlesToday}/${cfg.dailyBattleLimit}（PVP ${cfg.usage.pvpBattlesToday}/${cfg.pvpDailyLimit}）`,
     )).toBeVisible()

@@ -52,7 +52,8 @@ export const LockedMobile: Story = {
     viewport: { defaultViewport: 'mobile1' },
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+    // Base UI Dialog portals the modal beside Storybook's canvas root.
+    const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
     await expect(canvas.getByText('每侧各赢 ≥1 场 NPC 练习解锁玩家约战'))
       .toBeVisible()
@@ -116,7 +117,7 @@ export const UnlockedDesktop: Story = {
     ],
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+    const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
     // 解锁态＝真约战 UI：双子模式切换 + 按侧达标徽章。
     await expect(
@@ -141,7 +142,7 @@ export const OpponentLoading: Story = {
     ],
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+    const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
     await expect(canvas.getByText('加载中…')).toBeVisible()
   },
@@ -162,7 +163,7 @@ export const TrialsBlocked: Story = {
   },
   play: async ({ canvasElement }) => {
     await expect(
-      await within(canvasElement).findByText(
+      await within(canvasElement.ownerDocument.body).findByText(
         '赛事进行中，试炼暂时关闭——请稍后再来',
       ),
     ).toBeVisible()

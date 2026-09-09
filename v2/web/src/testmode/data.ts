@@ -149,8 +149,8 @@ export const IMPL_LABEL: Record<Impl, string> = {
 }
 
 export const ROUND_LABEL: Record<JourneyRound, string> = {
-  r1: '第一轮',
-  r2: '第二轮',
+  r1: '历史归档 · 第一轮（非当前验收）',
+  r2: '历史归档 · 第二轮（非当前验收）',
   handoff: 'B3 / A5 · 固定版本可交接',
 }
 
