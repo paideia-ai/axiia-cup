@@ -484,7 +484,8 @@ function BallotDetails({ children, secret = false }: {
       </summary>
       {secret && (
         <p className='mt-2 text-xs text-(--foreground-subtle)'>
-          个人票型对其他场内 Agent 保密；改票时会注明上一次秘密意向投票的选择。
+          个人票型对其他场内 Agent
+          保密；箭头左侧为上次秘密意向投票，右侧徽标为当前票型。
         </p>
       )}
       {children}
@@ -544,15 +545,26 @@ function BallotGrid({
               </p>
               <div className='flex items-center gap-2'>
                 {changed && (
-                  <span
-                    className={`text-[10px] font-normal ${
-                      previous === 'GUILTY'
-                        ? 'text-(--accent)'
-                        : 'text-(--info)'
-                    }`}
-                  >
-                    原投{previous === 'GUILTY' ? '有罪' : '无罪'}
-                  </span>
+                  <>
+                    <span
+                      aria-label={`上次票型：${
+                        previous === 'GUILTY' ? '有罪' : '无罪'
+                      }`}
+                      className={`text-[10px] font-normal ${
+                        previous === 'GUILTY'
+                          ? 'text-(--accent)'
+                          : 'text-(--info)'
+                      }`}
+                    >
+                      {previous === 'GUILTY' ? '有罪' : '无罪'}
+                    </span>
+                    <span
+                      aria-hidden='true'
+                      className='text-xs text-(--foreground-subtle)'
+                    >
+                      →
+                    </span>
+                  </>
                 )}
                 <span
                   aria-label={kind === 'verdict'
