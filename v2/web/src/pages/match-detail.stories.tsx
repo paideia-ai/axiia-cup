@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { finishedMatch, finishedNoInquiryMatch } from '../testing/v34-fixtures'
+import { harborMatch } from '../testing/harbor-fixtures'
 import { MatchDetailPage } from './match-detail'
 
 function MatchReport() {
@@ -138,5 +139,136 @@ export const ReplayHidesSpoilers: Story = {
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
     await expect(canvas.queryByText(RAW_ACT_MARKUP)).toBeNull()
     await expect(canvas.getByText('甘龙补上了改革成本。')).toBeVisible()
+  },
+}
+
+export const HarborBallots: Story = {
+  parameters: {
+    msw: [http.get('/v1/matches/9001', () => HttpResponse.json(harborMatch))],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('heading', { name: '结果' })
+    const polls = canvas.getAllByText('真人幕后 · 秘密意向投票结果').map((el) =>
+      el.parentElement!
+    )
+    const final = canvas.getByText('十一人最终判决').closest<HTMLElement>(
+      '[data-tm="FA.jury-final-vote-reveal"]',
+    )!
+    const folds = [...polls, final].map((el) => el.querySelector('details')!)
+    for (const fold of folds) await expect(fold).not.toHaveAttribute('open')
+    await expect(within(polls[1]).getByText('有罪 6 · 无罪 5')).toBeVisible()
+    await expect(within(polls[1]).getByLabelText('上次票型：有罪')).not
+      .toBeVisible()
+    await userEvent.click(folds[0].querySelector('summary')!)
+    await expect(within(polls[0]).queryByLabelText(/^上次票型：/)).toBeNull()
+    await userEvent.click(folds[1].querySelector('summary')!)
+    await expect(within(polls[1]).getByLabelText('上次票型：有罪'))
+      .toBeVisible()
+    await expect(within(polls[1]).getByLabelText('上次票型：无罪'))
+      .toBeVisible()
+    const previousGuilty = within(polls[1]).getByLabelText('上次票型：有罪')
+    const previousNotGuilty = within(polls[1]).getByLabelText('上次票型：无罪')
+    const currentNotGuilty = within(previousGuilty.parentElement!)
+      .getByLabelText('当前票型：无罪')
+    const currentGuilty = within(previousNotGuilty.parentElement!)
+      .getByLabelText('当前票型：有罪')
+    await expect(getComputedStyle(previousGuilty).color).toBe(
+      getComputedStyle(currentGuilty).color,
+    )
+    await expect(getComputedStyle(previousNotGuilty).color).toBe(
+      getComputedStyle(currentNotGuilty).color,
+    )
+    await expect(getComputedStyle(currentGuilty).color).not.toBe(
+      getComputedStyle(currentNotGuilty).color,
+    )
+    await expect(parseFloat(getComputedStyle(currentGuilty).fontSize))
+      .toBe(parseFloat(getComputedStyle(previousGuilty).fontSize))
+    await expect(getComputedStyle(previousGuilty).backgroundColor).toBe(
+      'rgba(0, 0, 0, 0)',
+    )
+    await expect(getComputedStyle(currentGuilty).backgroundColor).not.toBe(
+      'rgba(0, 0, 0, 0)',
+    )
+    await expect(previousGuilty.parentElement!.querySelector('svg'))
+      .toBeVisible()
+    await expect(previousNotGuilty.parentElement!.querySelector('svg'))
+      .toBeVisible()
+    await expect(parseInt(getComputedStyle(currentGuilty).fontWeight))
+      .toBeGreaterThan(parseInt(getComputedStyle(previousGuilty).fontWeight))
+    await expect(within(polls[1]).getAllByLabelText('当前票型：有罪'))
+      .toHaveLength(6)
+    await expect(within(polls[1]).getAllByLabelText('当前票型：无罪'))
+      .toHaveLength(5)
+    await userEvent.click(folds[1].querySelector('summary')!)
+    await expect(within(polls[1]).getByLabelText('上次票型：有罪')).not
+      .toBeVisible()
+    await userEvent.click(folds[2].querySelector('summary')!)
+    await expect(within(final).getByText('陪审员 1')).toBeVisible()
+    await expect(within(final).queryByLabelText(/^上次票型：/)).toBeNull()
+  },
+}
+
+export const HarborReplay: Story = {
+  parameters: HarborBallots.parameters,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('heading', { name: '结果' })
+    await userEvent.click(canvas.getByRole('button', { name: '回放' }))
+    await expect(canvas.queryByLabelText('上次票型：有罪')).toBeNull()
+    await expect(canvas.queryByText('十一人最终判决')).toBeNull()
+    await userEvent.click(canvas.getByRole('button', { name: '步进' }))
+    await userEvent.click(canvas.getByRole('button', { name: '步进' }))
+    await userEvent.click(canvas.getByRole('button', { name: '步进' }))
+    const polls = canvas.getAllByText('真人幕后 · 秘密意向投票结果')
+    await expect(polls).toHaveLength(2)
+    const second = polls[1].parentElement!
+    await userEvent.click(second.querySelector('summary')!)
+    await expect(within(second).getByLabelText('上次票型：有罪')).toBeVisible()
+    await expect(canvas.queryByText('十一人最终判决')).toBeNull()
+  },
+}
+
+// A stable, interactive preview; unlike acceptance stories it does not auto-click.
+export const HarborPreview: Story = {
+  parameters: HarborBallots.parameters,
+  decorators: [(Story) => (
+    <>
+      <p className='mb-4 text-sm text-(--foreground-subtle)'>
+        界面预览 · 示例对局（非真实比赛）
+      </p>
+      <Story />
+    </>
+  )],
+}
+
+export const HarborMissingHistory: Story = {
+  parameters: {
+    msw: [http.get('/v1/matches/9001', () =>
+      HttpResponse.json({
+        ...harborMatch,
+        turns: harborMatch.turns.map((turn, index) =>
+          index === 0
+            ? {
+              ...turn,
+              event: {
+                type: 'observer_secret_poll',
+                round: 1,
+                ballots: [{ juror: 'j01', verdict: 'UNKNOWN' }],
+              },
+            }
+            : turn
+        ),
+      }))],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('heading', { name: '结果' })
+    const poll = canvas.getAllByText('真人幕后 · 秘密意向投票结果')[1]
+      .parentElement!
+    await userEvent.click(poll.querySelector('summary')!)
+    await expect(within(poll).queryByLabelText(/^上次票型：/)).toBeNull()
+    await expect(within(poll).getAllByText('有罪')).toHaveLength(6)
+    await expect(within(poll).getAllByText('无罪')).toHaveLength(5)
   },
 }

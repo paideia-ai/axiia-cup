@@ -1,3 +1,5 @@
+import { ArrowRight } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { JSONValue } from '../../api/types'
 import type { ScriptEvent } from '../../lib/event'
 import {
@@ -11,6 +13,7 @@ import {
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { Badge } from '../ui/badge'
 import { tm } from '../../testmode/mark'
 
 const ACTION_LABELS: Record<string, string> = {
@@ -234,7 +237,9 @@ function SecretPollResult({
   event,
   labels,
   showReasoning,
+  previousSecretPoll,
 }: {
+  previousSecretPoll?: ScriptEvent
   event: ScriptEvent
   labels: SpeakerLabels
   showReasoning: boolean
@@ -259,12 +264,17 @@ function SecretPollResult({
           {round == null ? '' : `第 ${round} 轮 · `}不约束最终判决
         </p>
       </div>
-      <BallotGrid
-        ballots={ballots}
-        labels={labels}
-        kind='verdict'
-        showReasoning={showReasoning}
-      />
+      <BallotDetails secret>
+        <BallotGrid
+          ballots={ballots}
+          previousBallots={previousSecretPoll
+            ? ballotsOf(previousSecretPoll, 'ballots')
+            : []}
+          labels={labels}
+          kind='verdict'
+          showReasoning={showReasoning}
+        />
+      </BallotDetails>
     </div>
   )
 }
@@ -463,12 +473,36 @@ function MotionResult({ event }: { event: ScriptEvent }) {
   )
 }
 
+function BallotDetails({ children, secret = false }: {
+  children: ReactNode
+  secret?: boolean
+}) {
+  return (
+    <details className='group -mb-2 mt-3 border-t border-(--border-soft) open:mb-0'>
+      <summary className='min-h-9 cursor-pointer rounded-sm py-2.5 text-xs font-semibold text-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--info)'>
+        <span className='group-open:hidden'>展开详细票型</span>
+        <span className='hidden group-open:inline'>收起详细票型</span>
+        {secret ? ' · 仅观众可见' : ''}
+      </summary>
+      {secret && (
+        <p className='mt-2 text-xs text-(--foreground-subtle)'>
+          个人票型对其他场内 Agent
+          保密；箭头左侧为上次秘密意向投票，右侧徽标为当前票型。
+        </p>
+      )}
+      {children}
+    </details>
+  )
+}
+
 function BallotGrid({
   ballots,
+  previousBallots = [],
   labels,
   kind,
   showReasoning,
 }: {
+  previousBallots?: Ballot[]
   ballots: Ballot[]
   labels: SpeakerLabels
   kind: 'procedure' | 'verdict'
@@ -482,6 +516,12 @@ function BallotGrid({
   return (
     <div className='mt-3 grid gap-2 sm:grid-cols-2'>
       {ballots.map((ballot) => {
+        const previous = previousBallots.find((item) =>
+          item.juror === ballot.juror
+        )?.vote
+        const changed = kind === 'verdict' && previous !== ballot.vote &&
+          (previous === 'GUILTY' || previous === 'NOT_GUILTY') &&
+          (ballot.vote === 'GUILTY' || ballot.vote === 'NOT_GUILTY')
         const guilty = ballot.vote === 'GUILTY'
         const endNow = ballot.vote === 'END_NOW'
         const voteLabel = kind === 'verdict'
@@ -505,15 +545,38 @@ function BallotGrid({
               <p className='text-xs font-semibold text-(--foreground)'>
                 {speakerName(labels, ballot.juror)}
               </p>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                  guilty || endNow
-                    ? 'bg-[rgba(224,74,47,0.14)] text-(--accent)'
-                    : 'bg-[rgba(96,165,250,0.14)] text-(--info)'
-                }`}
-              >
-                {voteLabel}
-              </span>
+              <div className='flex shrink-0 items-center gap-1.5'>
+                {changed && (
+                  <>
+                    <Badge
+                      aria-label={`上次票型：${
+                        previous === 'GUILTY' ? '有罪' : '无罪'
+                      }`}
+                      tone={previous === 'GUILTY' ? 'accent' : 'info'}
+                      className='bg-transparent px-2 py-0.5 font-normal ring-1 ring-inset ring-(--border)'
+                    >
+                      {previous === 'GUILTY' ? '有罪' : '无罪'}
+                    </Badge>
+                    <ArrowRight
+                      aria-hidden='true'
+                      size={12}
+                      strokeWidth={1.5}
+                      className='text-(--foreground-subtle)'
+                    />
+                  </>
+                )}
+                <Badge
+                  aria-label={kind === 'verdict'
+                    ? `当前票型：${voteLabel}`
+                    : undefined}
+                  tone={guilty || endNow ? 'accent' : 'info'}
+                  className={`px-2 py-0.5 ${
+                    kind === 'procedure' ? 'text-[10px]' : ''
+                  }`}
+                >
+                  {voteLabel}
+                </Badge>
+              </div>
             </div>
             {ballot.keyEvidence.length > 0
               ? (
@@ -573,12 +636,14 @@ function FinalVoteReveal({
           {threshold ?? 6} 票形成裁决 · {endLabel}
         </p>
       </div>
-      <BallotGrid
-        ballots={ballotsOf(event, 'votes')}
-        labels={labels}
-        kind='verdict'
-        showReasoning={showReasoning}
-      />
+      <BallotDetails>
+        <BallotGrid
+          ballots={ballotsOf(event, 'votes')}
+          labels={labels}
+          kind='verdict'
+          showReasoning={showReasoning}
+        />
+      </BallotDetails>
     </div>
   )
 }
@@ -615,6 +680,7 @@ export function renderJuryEvent(
   event: ScriptEvent,
   labels: SpeakerLabels,
   showReasoning: boolean,
+  previousSecretPoll?: ScriptEvent,
 ) {
   switch (eventType(event)) {
     case 'jury_speech':
@@ -640,6 +706,7 @@ export function renderJuryEvent(
     case 'observer_secret_poll':
       return (
         <SecretPollResult
+          previousSecretPoll={previousSecretPoll}
           event={event}
           labels={labels}
           showReasoning={showReasoning}

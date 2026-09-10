@@ -29,6 +29,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { VerdictCard } from '../components/verdict-card'
 import { useOptionalAuth } from '../context/auth'
 import { cn } from '../lib/cn'
+import { previousSecretPolls } from '../lib/jury-polls'
 import { outcomeCopy } from '../lib/outcome'
 import { buildReplaySteps, replayBeats, replayReveal } from '../lib/replay'
 import type { LedgerItem, ScoreBreakdown } from '../lib/scoring-reasoning'
@@ -183,6 +184,7 @@ export function MatchDetailPage() {
     : reveal == null
     ? data.turns
     : data.turns.filter((turn) => reveal.seqs.has(turn.seq))
+  const previousPolls = previousSecretPolls(shownTurns)
   const stageGroups = data
     ? groupTranscript(shownTurns, data.stages, stream.bubbles, data.verdicts)
     : []
@@ -373,6 +375,7 @@ export function MatchDetailPage() {
           // B1 · 08-10：回放是公开教学层，进行中强制隐藏 debug/trace 层。
           showReasoning={debug && !replaying}
           verdictsBySeq={bySeq}
+          previousPolls={previousPolls}
         />
         {atGroupEnd.map(renderVerdict)}
       </div>

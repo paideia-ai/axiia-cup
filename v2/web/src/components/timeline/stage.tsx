@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import type { ScriptEvent } from '../../lib/event'
 import type { StageGroup } from '../../lib/transcript'
 import { DialogueRow, LiveDialogueRow } from './dialogue-row'
 import { EventRow } from './event-row'
@@ -14,7 +15,9 @@ export function TranscriptStage({
   scenarioID,
   showReasoning,
   verdictsBySeq,
+  previousPolls,
 }: {
+  previousPolls?: ReadonlyMap<number, ScriptEvent>
   group: StageGroup
   index: number
   total: number
@@ -95,6 +98,7 @@ export function TranscriptStage({
                     ? (
                       <EventRow
                         turn={item.turn}
+                        previousSecretPoll={previousPolls?.get(item.seq)}
                         labels={labels}
                         scenarioID={scenarioID}
                         showReasoning={showReasoning}
