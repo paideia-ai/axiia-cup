@@ -13,12 +13,9 @@ const preview: Preview = {
     }),
   ],
   parameters: {
-    // Report, don't fail. Storybook only started loading Tailwind in this commit,
-    // so the a11y run suddenly sees real colours for the first time and reports 13
-    // contrast violations — every one of them on --foreground-muted (#5b5b5b) over
-    // --background (#0c0c0c), about 2.7:1 where 4.5:1 is required. Raising that token
-    // changes the look of the whole product, so it is a design call, not a drive-by
-    // edit; until it is made, keep the findings visible instead of hiding them.
+    // Report, don't fail. The restrained style raises the shared muted token, but
+    // report and Builder still contain component-specific contrast debt. Keep those
+    // findings visible until the remaining surfaces are fixed deliberately.
     a11y: { test: 'todo' },
     controls: { expanded: true },
     layout: 'fullscreen',

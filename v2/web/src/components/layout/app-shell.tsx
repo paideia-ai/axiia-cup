@@ -37,10 +37,7 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigationItems = account?.isAdmin
     ? [...navigation, { to: '/admin', label: '管理面板', icon: Shield }]
     : navigation
-  const contentWidth =
-    pathname === '/my-agents' || pathname.startsWith('/agents/')
-      ? 'max-w-[1040px]'
-      : 'max-w-7xl'
+  const contentWidth = 'max-w-[1040px]'
   const navigationActive = (to: string) =>
     to === '/my-agents'
       ? pathname === '/my-agents' || pathname.startsWith('/agents/')
@@ -52,7 +49,7 @@ export function AppShell({ children }: PropsWithChildren) {
         {...tm('NAV.header')}
         className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'
       >
-        {/* #72 顶栏降噪（mock V30）：h-16→h-12、激活态只变字色不加底 */}
+        {/* #72 顶栏保持 48px；当前项只加极淡中性底色。 */}
         <div
           className={`mx-auto flex h-12 w-full ${contentWidth} items-center gap-3 px-4 sm:px-6`}
         >

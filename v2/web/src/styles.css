@@ -3,20 +3,27 @@
 @import 'tailwindcss';
 
 :root {
+  --font-sans:
+    'Satoshi', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei',
+    Arial, sans-serif;
+  --font-mono:
+    'SFMono-Regular', Consolas, 'DejaVu Sans Mono', 'Noto Sans SC', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
   --background: #0c0c0c;
   --surface: #161616;
   --surface-elevated: #1e1e1e;
   --foreground: #e8e8e8;
-  --foreground-subtle: #8b8b8b;
-  --foreground-muted: #5b5b5b;
+  --foreground-subtle: #aaa;
+  --foreground-muted: #929292;
   --accent: #e04a2f;
   --accent-hover: #f25a3f;
   --border: #2a2a2a;
-  --border-soft: #232323;
+  --border-soft: #303030;
   --success: #34d399;
   --warning: #fbbf24;
   --info: #60a5fa;
-  font-family: 'Satoshi', 'Noto Sans SC', sans-serif;
+  font-family: var(--font-sans);
   color: var(--foreground);
   background: var(--background);
 }
@@ -50,7 +57,7 @@
       radial-gradient(circle at top, rgba(224, 74, 47, 0.08), transparent 24%),
       linear-gradient(180deg, #0c0c0c 0%, #090909 100%);
     color: var(--foreground);
-    font-family: 'Satoshi', 'Noto Sans SC', sans-serif;
+    font-family: var(--font-sans);
   }
 
   a {
@@ -171,5 +178,252 @@ select.app-input:focus {
     overflow-y: auto;
     border-radius: 16px 16px 0 0;
     padding: 16px 20px max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Keso's restrained presentation keeps the product structure unchanged while
+   giving the four primary tabs one neutral visual system. */
+[data-tm='NAV.nav-link'][aria-current='page'] {
+  background: #ffffff06;
+}
+
+main h1,
+main h1.page-title {
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.035em;
+}
+
+main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #c7c7c7;
+  outline-offset: 3px;
+}
+
+:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) {
+  display: block;
+  border-radius: 10px;
+}
+
+:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+  border: 1px solid #303030;
+  border-radius: 10px;
+  background: #161616;
+  box-shadow: none;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+}
+
+:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']):hover > div {
+  border-color: #505050;
+  background: #1a1a1a;
+}
+
+[data-tm='D.scenario-list'] {
+  gap: 18px;
+}
+
+[data-tm='D.scenario-card'] > div > div {
+  padding: 24px;
+}
+
+[data-tm='D.card-title'] {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+}
+
+[data-tm='D.card-education'] {
+  padding-block: 3px;
+}
+
+[data-tm='D.card-sides'] {
+  line-height: 1.85;
+}
+
+[data-tm='D.card-sides'] > p + p {
+  margin-top: 5px;
+}
+
+:is([data-tm='D.card-stats'], [data-tm='D.card-stats-empty']) {
+  border-radius: 6px;
+  background: #ffffff02;
+  line-height: 1.8;
+}
+
+:is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+  padding: 20px 24px;
+}
+
+:is([data-tm='G.tournament-name'], [data-tm='L.match-id']) {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+:is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+  line-height: 1.8;
+}
+
+[data-tm='G.round-timeline'] {
+  margin-top: 12px;
+}
+
+[data-tm='G.round-chip'] {
+  padding: 4px 8px;
+}
+
+[data-tm='G.round-chip'] > span {
+  opacity: 1;
+}
+
+[data-tm='G.standings-table'] {
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+[data-tm='G.standings-table'] > div {
+  padding: 8px 24px;
+}
+
+[data-tm='G.standings-table'] :is(th, td) {
+  padding-block: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-tm='G.standings-table'] th {
+  color: var(--foreground-subtle);
+  font-weight: 500;
+}
+
+[data-tm='G.standings-row']:hover {
+  background: #ffffff03;
+}
+
+[data-tm='G.standings-row'] td:first-child {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+[data-tm='G.standings-buchholz'] > span {
+  color: var(--foreground-muted);
+}
+
+[data-tm='L.pair-group'] {
+  border-radius: 10px;
+  background: #ffffff02;
+  padding: 10px;
+}
+
+[data-tm='L.pair-header'] {
+  padding: 5px 12px 4px;
+  line-height: 1.8;
+}
+
+[data-testid='scenario-intro-card'] {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+[data-tm='DA.overview-story'] {
+  line-height: 1.85;
+}
+
+[data-tm='FA.result-card'] {
+  border: 1px solid #383838;
+  background: #1b1b1b;
+  box-shadow: none;
+}
+
+[data-tm='FA.result-winner'] {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+[data-tm='FA.result-summary'] {
+  line-height: 1.8;
+}
+
+:is([data-tm='FA.report-section'], [data-tm='FA.hidden-goal-section'], [data-tm='FA.scoring-section']) > h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+[data-tm='FA.dialogue-row'] {
+  box-shadow: none;
+}
+
+[data-tm='FA.dialogue-text'] {
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+[data-tm='FA.aside-card'] {
+  background: #ffffff02;
+}
+
+[data-tm='FA.aside-text'] {
+  font-style: normal;
+  line-height: 1.85;
+}
+
+[data-tm='FA.verdict-card'] {
+  box-shadow: none;
+}
+
+:is([data-tm='FA.verdict-field'], [data-tm='FA.verdict-field'] p) {
+  line-height: 1.85;
+}
+
+main .text-\(--accent\) {
+  color: #f17a61;
+}
+
+[data-tm='DA.side-actions'] button.bg-\(--accent\) {
+  background: #b93925;
+}
+
+@media (max-width: 767px) {
+  main h1,
+  main h1.page-title {
+    font-size: 24px;
+  }
+
+  [data-tm='D.scenario-card'] > div > div {
+    padding: 20px;
+  }
+
+  [data-tm='D.card-title'] {
+    font-size: 19px;
+  }
+
+  :is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+    flex-wrap: wrap;
+    padding: 18px 16px;
+  }
+
+  :is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+    display: inline-block;
+    width: 100%;
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  [data-tm='G.standings-table'] > div {
+    padding: 12px;
+  }
+
+  [data-tm='FA.result-winner'] {
+    font-size: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+    transition: none;
   }
 }
