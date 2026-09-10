@@ -53,7 +53,9 @@ import { messageOf, useAsync } from '../lib/use-async'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
 
-export function MatchDetailPage() {
+export function MatchDetailPage(
+  { resultAction }: { resultAction?: ReactNode } = {},
+) {
   const { matchId = '' } = useParams()
   const matchID = Number(matchId)
   const location = useLocation()
@@ -664,6 +666,7 @@ export function MatchDetailPage() {
                         </div>
                       )
                       : null}
+                    {resultAction}
                   </CardContent>
                 </Card>
               )}

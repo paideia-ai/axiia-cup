@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { auth } from '../api/client'
 import { Badge } from '../components/ui/badge'
+import { SoundControls } from '../components/sound-controls'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -219,6 +220,12 @@ export function SettingsPage() {
                 : <Badge tone='info' {...tm('K.role-badge')}>选手</Badge>}
             </span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <SoundControls />
         </CardContent>
       </Card>
 

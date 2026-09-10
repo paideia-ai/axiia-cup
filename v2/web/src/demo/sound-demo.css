@@ -1,0 +1,121 @@
+.sound-demo {
+  --accent: #bd3b25;
+  --accent-hover: #ab321f;
+}
+
+.sound-demo header .font-black {
+  color: #e04a2f;
+}
+
+.sound-demo-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 28px;
+  align-items: start;
+}
+
+.sound-tab {
+  min-height: 48px;
+  padding: 0 4px;
+  margin-right: 24px;
+  border-bottom: 2px solid transparent;
+  color: var(--foreground-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.sound-tab.is-active {
+  color: var(--foreground);
+  border-bottom-color: var(--foreground);
+}
+.sound-prompt {
+  width: 100%;
+  min-height: 275px;
+  resize: vertical;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.sound-prompt:disabled {
+  opacity: 0.7;
+}
+.sound-transcript {
+  height: 386px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sound-demo button,
+.sound-demo input,
+.sound-demo textarea {
+  outline-offset: 4px;
+}
+.sound-demo input {
+  accent-color: var(--accent);
+}
+.sound-demo :focus-visible {
+  outline: 2px solid var(--foreground);
+}
+.sound-spin {
+  animation: sound-spin 1.4s linear infinite;
+}
+.sound-meter {
+  display: flex;
+  height: 18px;
+  gap: 3px;
+  align-items: center;
+}
+.sound-meter i {
+  width: 3px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--foreground-muted);
+  animation: sound-meter 0.65s ease-out both;
+}
+.sound-meter i:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.sound-meter i:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.sound-meter i:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.sound-meter i:nth-child(5) {
+  animation-delay: 0.16s;
+}
+@keyframes sound-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sound-meter {
+  0%,
+  100% {
+    height: 4px;
+  }
+  25% {
+    height: 16px;
+  }
+  60% {
+    height: 8px;
+  }
+}
+@media (max-width: 760px) {
+  .sound-demo-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .sound-prompt {
+    min-height: 250px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sound-spin,
+  .sound-meter i {
+    animation: none;
+  }
+}

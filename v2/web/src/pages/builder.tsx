@@ -25,6 +25,7 @@ import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { VersionNote } from '../components/version-note'
 import { useOptionalAuth } from '../context/auth'
+import { useSound } from '../context/sound'
 import {
   builderDraftJournalIdentity,
   builderDraftJournalStoragePrefix,
@@ -273,6 +274,7 @@ function compareAndDeleteDraftJournal(
 // 版本浏览、参赛选择、对比与出战集中在智能体主页；保存普通版本后返回主页。
 // 草稿仍由服务端自动暂存，保存仍生成不可变的线性版本，express 首战保持例外。
 export function BuilderPage() {
+  const sound = useSound()
   const { agentId = '' } = useParams()
   const agentID = Number(agentId)
   const [params, setParams] = useSearchParams()
@@ -798,6 +800,7 @@ export function BuilderPage() {
         presetKey: preset.key,
       })
       if (!requestIsCurrent()) return
+      sound.play('dispatch', String(response.matchID))
       navigate(`/matches/${response.matchID}`, { state: { express: true } })
     } catch (cause) {
       if (!requestIsCurrent()) return
@@ -813,6 +816,7 @@ export function BuilderPage() {
   }
 
   const save = async () => {
+    void sound.unlock()
     if (
       saving || modelID == null || draftLoading || loadedAgentID !== agentID ||
       !expressDependenciesReady || !prompt.trim() || recovery != null
@@ -869,6 +873,7 @@ export function BuilderPage() {
         ...(snapshot.options == null ? {} : { options: snapshot.options }),
       })
       if (!requestIsCurrent()) return
+      sound.play('save', `${agentID}:${saved.id}`)
       if (snapshot.journal != null) {
         compareAndDeleteDraftJournal(journalScope, snapshot.journal)
       }
@@ -1209,6 +1214,7 @@ export function BuilderPage() {
             }}
           />
           <Button
+            soundFeedback
             data-testid='save-version'
             className='h-11 sm:ml-auto md:h-10'
             onClick={() => void save()}

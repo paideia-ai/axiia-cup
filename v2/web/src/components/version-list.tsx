@@ -296,6 +296,7 @@ export function VersionList({
                       size='sm'
                       variant='secondary'
                       className='h-11 cursor-pointer gap-1.5 px-3 md:h-9'
+                      soundFeedback
                       aria-label={`用 ${tag} 出战`}
                       disabled={unavailable}
                       onClick={() => onField(version)}

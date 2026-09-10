@@ -1,7 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { ButtonHTMLAttributes } from 'react'
+import { type ButtonHTMLAttributes, useRef } from 'react'
 
 import { cn } from '../../lib/cn'
+import { useSound } from '../../context/sound'
 
 const buttonVariants = cva(
   // The focus ring needs an offset: a half-opacity accent ring drawn flush against
@@ -31,12 +32,54 @@ const buttonVariants = cva(
 type ButtonProps =
   & ButtonHTMLAttributes<HTMLButtonElement>
   & VariantProps<typeof buttonVariants>
+  & { soundFeedback?: boolean }
 
-export function Button({ className, size, variant, ...props }: ButtonProps) {
+export function Button(
+  {
+    className,
+    size,
+    variant,
+    soundFeedback = false,
+    onPointerMove,
+    onPointerLeave,
+    onClick,
+    ...props
+  }: ButtonProps,
+) {
+  const sound = useSound()
+  const hovered = useRef(false)
   return (
     <button
       className={cn(buttonVariants({ className, size, variant }))}
       {...props}
+      onPointerMove={(event) => {
+        onPointerMove?.(event)
+        if (
+          soundFeedback && !event.currentTarget.disabled &&
+          event.pointerType === 'mouse' && !hovered.current &&
+          (event.movementX !== 0 || event.movementY !== 0)
+        ) {
+          // Require actual mouse movement: re-enabling a button under a still
+          // pointer can synthesize pointerenter after a save completes.
+          hovered.current = true
+          // Hover never tries to unlock browser audio or queues a delayed cue.
+          sound.play('hover', crypto.randomUUID())
+        }
+      }}
+      onPointerLeave={(event) => {
+        hovered.current = false
+        onPointerLeave?.(event)
+      }}
+      onClick={(event) => {
+        if (soundFeedback && !event.currentTarget.disabled) {
+          // Resume within this gesture, but let action handlers cancel old audio
+          // first (the demo resets its previous run synchronously).
+          void sound.unlock().then((ready) => {
+            if (ready) sound.play('click', crypto.randomUUID())
+          })
+        }
+        onClick?.(event)
+      }}
     />
   )
 }

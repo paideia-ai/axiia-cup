@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import App from './app'
 import { AuthProvider } from './context/auth'
+import { SoundProvider } from './context/sound'
 import './styles.css'
 
 const rootElement = document.getElementById('root')
@@ -13,8 +14,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <SoundProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </SoundProvider>
   </StrictMode>,
 )

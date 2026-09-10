@@ -13,6 +13,7 @@ import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
 import { useScrollMemory } from '../../lib/scroll'
 import { BattleStrip } from '../battle-strip'
+import { SoundToggle } from '../sound-controls'
 import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
 import { IcpRecord } from './icp-record'
@@ -56,7 +57,7 @@ export function AppShell({ children }: PropsWithChildren) {
           <NavLink
             {...tm('NAV.logo')}
             to='/scenarios'
-            className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'
+            className='mr-0 whitespace-nowrap text-sm font-black tracking-[0.24em] text-(--accent) sm:mr-4'
           >
             AXIIA CUP
           </NavLink>
@@ -83,10 +84,12 @@ export function AppShell({ children }: PropsWithChildren) {
               )
             })}
           </nav>
-          <div className='ml-auto flex items-center gap-2'>
+          <div className='ml-auto flex items-center gap-1 sm:gap-2'>
+            <SoundToggle />
             <BellIndicator />
             <NavLink
               {...tm('NAV.settings-link')}
+              aria-label='账户设置'
               to='/settings'
               className={({ isActive }) =>
                 cn(
@@ -95,11 +98,14 @@ export function AppShell({ children }: PropsWithChildren) {
                 )}
             >
               <UserRound className='h-4 w-4' />
-              <span>{account?.displayName ?? '选手'}</span>
+              <span className='hidden sm:inline'>
+                {account?.displayName ?? '选手'}
+              </span>
             </NavLink>
             <Button
               {...tm('NAV.logout-button')}
               data-testid='logout'
+              className='shrink-0 whitespace-nowrap'
               size='sm'
               variant='secondary'
               onClick={() => {

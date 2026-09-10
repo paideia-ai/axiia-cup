@@ -1,6 +1,7 @@
 import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock, Unlock, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSound } from '../context/sound'
 import { Link, useNavigate } from 'react-router-dom'
 
 import {
@@ -82,6 +83,7 @@ export function OsPanel({
   entryVersionID,
   preferVersionID = null,
 }: OsPanelProps) {
+  const sound = useSound()
   const navigate = useNavigate()
   const liveRef = useRef(true)
   const scenarioID = scenario.summary.id
@@ -203,6 +205,7 @@ export function OsPanel({
   )
 
   const dispatchPVE = async () => {
+    void sound.unlock()
     if (fieldedVersionID == null || presetKey == null) return
     setDispatching(true)
     setError(null)
@@ -212,6 +215,7 @@ export function OsPanel({
         presetKey,
       })
       if (!liveRef.current) return
+      sound.play('dispatch', String(response.matchID))
       navigate(`/matches/${response.matchID}`)
     } catch (cause) {
       if (!liveRef.current) return
@@ -222,6 +226,7 @@ export function OsPanel({
   }
 
   const dispatchHotseat = async () => {
+    void sound.unlock()
     if (fieldedVersionID == null || opponentAgentID == null) return
     setDispatching(true)
     setError(null)
@@ -231,6 +236,7 @@ export function OsPanel({
         opponentAgentID,
       })
       if (!liveRef.current) return
+      sound.play('dispatch', String(response.matchID))
       navigate(`/matches/${response.matchID}`)
     } catch (cause) {
       if (!liveRef.current) return
@@ -605,6 +611,7 @@ export function OsPanel({
                           </Select>
                         </div>
                         <Button
+                          soundFeedback
                           data-testid='dispatch-match'
                           onClick={() => void dispatchPVE()}
                           {...tm('OS.pve-dispatch-button')}
