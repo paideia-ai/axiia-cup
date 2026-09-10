@@ -478,8 +478,8 @@ function BallotDetails({ children, secret = false }: {
   secret?: boolean
 }) {
   return (
-    <details className='group mt-3 border-t border-(--border-soft) pt-3'>
-      <summary className='cursor-pointer rounded-sm text-xs font-semibold text-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--info)'>
+    <details className='group -mb-2 mt-3 border-t border-(--border-soft) open:mb-0'>
+      <summary className='min-h-9 cursor-pointer rounded-sm py-2.5 text-xs font-semibold text-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--info)'>
         <span className='group-open:hidden'>展开详细票型</span>
         <span className='hidden group-open:inline'>收起详细票型</span>
         {secret ? ' · 仅观众可见' : ''}
