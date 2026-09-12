@@ -175,6 +175,7 @@ function quotaRejectionStory(
   code: 'daily_limit' | 'pvp_daily_limit',
   refreshedUsage: UsageDTO | null,
   expected: string,
+  refreshHangs = false,
 ): Story {
   let rejected = false
   let readsAfterRejection = 0
@@ -189,8 +190,9 @@ function quotaRejectionStory(
     }],
     parameters: {
       msw: [
-        http.get('/v1/config', () => {
+        http.get('/v1/config', async () => {
           if (rejected) readsAfterRejection += 1
+          if (rejected && refreshHangs) await delay('infinite')
           if (rejected && refreshedUsage === null) {
             return HttpResponse.json({
               error: 'internal',
@@ -249,7 +251,11 @@ function quotaRejectionStory(
       })
       await expect(confirm).toBeEnabled()
       await userEvent.click(confirm)
-      await expect(await canvas.findByText(expected)).toBeVisible()
+      await expect(
+        await canvas.findByText(expected, {}, {
+          timeout: refreshHangs ? 6000 : 1000,
+        }),
+      ).toBeVisible()
       await expect(confirm).toBeEnabled()
       expect(readsAfterRejection).toBe(1)
       expect(attempts).toEqual([{
@@ -293,3 +299,11 @@ export const FailedQuotaRefreshDropsStaleNumbers: Story = quotaRejectionStory(
   null,
   'PVP 配额不足一整对——一次约战计 2 场，明天再来',
 )
+
+export const HangingQuotaRefreshStillShowsRejection: Story =
+  quotaRejectionStory(
+    'pvp_daily_limit',
+    null,
+    'PVP 配额不足一整对——一次约战计 2 场，明天再来',
+    true,
+  )

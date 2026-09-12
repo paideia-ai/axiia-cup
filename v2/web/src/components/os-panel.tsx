@@ -192,7 +192,10 @@ export function OsPanel({
     const requestID = ++configRequestRef.current
     // Another tab or an in-flight battle can consume the last slot after this
     // panel opens. Re-read before deciding between exhausted and one-slot copy.
-    const fresh = await configApi.get().catch(() => null)
+    // This read improves a rejection already received. A stalled read must not
+    // hide that rejection or leave the dispatch button disabled indefinitely.
+    const fresh = await configApi.get({ signal: AbortSignal.timeout(3000) })
+      .catch(() => null)
     if (!liveRef.current || requestID !== configRequestRef.current) return null
     setCfg(fresh)
     return fresh

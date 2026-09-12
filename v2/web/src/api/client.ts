@@ -96,7 +96,7 @@ async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
-  options?: Pick<RequestInit, 'keepalive' | 'credentials'>,
+  options?: Pick<RequestInit, 'keepalive' | 'credentials' | 'signal'>,
 ): Promise<T> {
   const headers = new Headers()
   const init: RequestInit = {
@@ -104,6 +104,7 @@ async function request<T>(
     credentials: options?.credentials ?? 'include',
     headers,
     keepalive: options?.keepalive,
+    signal: options?.signal,
   }
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json')
@@ -209,7 +210,8 @@ export const landing = {
 export const config = {
   // §C2 read-only projection: quotas, gate threshold, models, trials switch,
   // plus the caller's usage. Callers must degrade gracefully on failure.
-  get: () => request<ConfigResponse>('GET', '/config'),
+  get: (options?: Pick<RequestInit, 'signal'>) =>
+    request<ConfigResponse>('GET', '/config', undefined, options),
 }
 
 export const myAgents = {
