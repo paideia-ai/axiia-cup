@@ -20,7 +20,7 @@ describe('v3.4 rejection copy contracts', () => {
   it.each([
     ['daily_limit', '今日次数已用完（12/12），明天再来'],
     ['concurrency_limit', '同时进行的对局已达上限（2），等一场结束再来'],
-    ['pvp_daily_limit', '今日玩家对战次数已用完（4/4），明天再来'],
+    ['pvp_daily_limit', '今日次数已用完（4/4），明天再来'],
     ['trials_blocked', '赛事进行中，试炼暂时关闭——请稍后再来'],
     [
       'gate_locked',
@@ -88,6 +88,25 @@ describe('v3.4 rejection copy contracts', () => {
 })
 
 describe('P3 challenge (paired) rejection copy', () => {
+  it.each(
+    [
+      ['daily_limit', 12, 0, '今日次数已用完（12/12），明天再来'],
+      ['pvp_daily_limit', 5, 4, '今日次数已用完（4/4），明天再来'],
+      // The total-quota check can reject a pair first while PVP is already zero.
+      ['daily_limit', 11, 4, '今日次数已用完（4/4），明天再来'],
+      // Configuration can be lowered below an already-spent count.
+      ['pvp_daily_limit', 5, 5, '今日次数已用完（4/4），明天再来'],
+    ] as const,
+  )(
+    'uses exact exhausted copy for %s at zero remaining',
+    (code, total, pvp, expected) => {
+      expect(challengeRejectCopy(new ApiError('rejected', 429, code), {
+        ...config,
+        usage: { battlesToday: total, pvpBattlesToday: pvp },
+      })).toBe(expected)
+    },
+  )
+
   it.each([
     [
       'daily_limit',
@@ -103,7 +122,10 @@ describe('P3 challenge (paired) rejection copy', () => {
     ],
   ])('maps %s to pair-quota copy', (code, copy) => {
     expect(
-      challengeRejectCopy(new ApiError('raw server text', 429, code), config),
+      challengeRejectCopy(new ApiError('raw server text', 429, code), {
+        ...config,
+        usage: { battlesToday: 11, pvpBattlesToday: 3 },
+      }),
     )
       .toBe(copy)
   })
@@ -121,5 +143,7 @@ describe('P3 challenge (paired) rejection copy', () => {
   it('degrades to numberless copy without config', () => {
     expect(challengeRejectCopy(new ApiError('x', 409, 'daily_limit'), null))
       .toBe('今日配额不足一整对——一次约战计 2 场，明天再来')
+    expect(rejectCopy(new ApiError('x', 429, 'pvp_daily_limit'), null))
+      .toBe('今日次数已用完，明天再来')
   })
 })
