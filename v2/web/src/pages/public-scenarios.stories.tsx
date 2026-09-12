@@ -147,6 +147,8 @@ export const GuestCatalogAndDetail: Story = {
     expect(canvas.queryByRole('link', { name: '通知' })).toBeNull()
     expect(canvas.queryByTestId('logout')).toBeNull()
     expect(canvas.queryByText(/PVP 解锁|PVE 练习解锁/)).toBeNull()
+    await expect(canvas.getByText('难度 简单', { exact: false })).toBeVisible()
+    await expect(canvas.getByText('适合新手', { exact: true })).toBeVisible()
     await userEvent.click(canvas.getByTestId('scenario-shangyang-court'))
     await expect(
       await canvas.findByRole('heading', { name: '商鞅变法 · 朝堂辩法' }),
@@ -154,12 +156,73 @@ export const GuestCatalogAndDetail: Story = {
     await expect(await canvas.findByText('数据积累中', { exact: true }))
       .toBeVisible()
     expect(canvas.queryByText(/对局数不足/)).toBeNull()
+    await expect(canvas.getByText('难度 简单', { exact: false })).toBeVisible()
+    await expect(canvas.getByText('适合新手', { exact: true })).toBeVisible()
     await expect(canvas.getByTestId('build-agent-b')).toBeEnabled()
     expect(personalRequests).toEqual([])
     expect(ensures).toEqual([])
     expect(canvas.getByTestId('route-address')).toHaveTextContent(
       '/scenarios/shangyang-court',
     )
+  },
+}
+
+export const PublicDifficultyLevels: Story = {
+  args: { path: '/scenarios' },
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios', () =>
+        HttpResponse.json({
+          scenarios: [
+            publicScenario.summary,
+            {
+              ...publicScenario.summary,
+              id: 'honnoji-decision',
+              title: '本能寺',
+            },
+            {
+              ...publicScenario.summary,
+              id: 'fengyiting-real',
+              title: '凤仪亭',
+            },
+          ],
+        })),
+      http.get('/v1/scenarios/:id', ({ params }) =>
+        HttpResponse.json({
+          ...publicScenario,
+          summary: {
+            ...publicScenario.summary,
+            id: params.id,
+            title: '难度检查',
+          },
+        })),
+      ...handlers.filter((handler) =>
+        !handler.info.path.toString().startsWith('/v1/scenarios')
+      ),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    for (
+      const [id, label, novice] of [
+        ['shangyang-court', '简单', true],
+        ['honnoji-decision', '中等', false],
+        ['fengyiting-real', '困难', false],
+      ] as const
+    ) {
+      const card = within(await canvas.findByTestId(`scenario-${id}`))
+      await expect(card.getByText(`难度 ${label}`, { exact: false }))
+        .toBeVisible()
+      expect(card.queryByText('适合新手', { exact: true }) !== null).toBe(
+        novice,
+      )
+    }
+    await userEvent.click(canvas.getByTestId('scenario-honnoji-decision'))
+    await expect(await canvas.findByText('难度 中等', { exact: false }))
+      .toBeVisible()
+    expect(canvas.queryByText('适合新手', { exact: true })).toBeNull()
+    expect(personalRequests).toEqual([])
+    expect(ensures).toEqual([])
   },
 }
 
