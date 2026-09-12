@@ -992,6 +992,7 @@ export function BuilderPage() {
                 scenario?.summary.title ?? scenarioID,
                 side,
                 sideDisplayName,
+                scenario?.scoring,
               )}
               currentPrompt={prompt}
               onFill={fillWorkspace}
