@@ -147,6 +147,15 @@ export interface ScenarioDetail {
   summary: ScenarioSummary
   stages: StageDTO[]
   presets: PresetOpponentDTO[]
+  scoring?: ScenarioScoringDTO | null
+}
+
+// Explicit public script metadata, including exact weights; absent on older
+// scripts. Item names/count and notes are scenario-specific.
+export interface ScenarioScoringDTO {
+  summary: string
+  items: { id: string; label: string; points: number }[]
+  notes?: string[]
 }
 
 export interface ScenarioListResponse {

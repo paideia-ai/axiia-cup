@@ -5,7 +5,12 @@ import { StrictMode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import { AppRoutes } from '../app-router'
-import type { MeResponse, ScenarioDetail, ScenarioSummary } from '../api/types'
+import type {
+  MeResponse,
+  ScenarioDetail,
+  ScenarioScoringDTO,
+  ScenarioSummary,
+} from '../api/types'
 import { AuthProvider } from '../context/auth'
 import { scenarioModule } from '../scenarios'
 import { config, scenario } from '../testing/v34-fixtures'
@@ -258,7 +263,10 @@ export const PublicDifficultyLevels: Story = {
 }
 
 // The public API can describe scenarios without any local editorial module.
-function metadataHandlers(summaries: ScenarioSummary[]) {
+function publicScenarioHandlers(
+  summaries: ScenarioSummary[],
+  scoring?: ScenarioScoringDTO,
+) {
   return [
     http.get('/v1/scenarios', ({ request }) => {
       expect(request.credentials).toBe('omit')
@@ -268,7 +276,12 @@ function metadataHandlers(summaries: ScenarioSummary[]) {
       expect(request.credentials).toBe('omit')
       const summary = summaries.find((item) => item.id === params.id)
       expect(summary).toBeDefined()
-      return HttpResponse.json({ ...publicScenario, summary, presets: [] })
+      return HttpResponse.json({
+        ...publicScenario,
+        summary,
+        presets: [],
+        scoring,
+      })
     }),
     ...handlers.filter((handler) =>
       !handler.info.path.toString().startsWith('/v1/scenarios')
@@ -279,7 +292,7 @@ function metadataHandlers(summaries: ScenarioSummary[]) {
 export const ServerMetadataAndEditorialFallbacks: Story = {
   args: { path: '/scenarios' },
   parameters: {
-    msw: metadataHandlers([
+    msw: publicScenarioHandlers([
       {
         ...publicScenario.summary,
         id: 'server-guidance',
@@ -353,7 +366,7 @@ export const ServerMetadataAndEditorialFallbacks: Story = {
 export const MissingMetadataDoesNotInventGuidance: Story = {
   args: { path: '/scenarios' },
   parameters: {
-    msw: metadataHandlers([{
+    msw: publicScenarioHandlers([{
       ...publicScenario.summary,
       id: 'unannotated-scenario',
       title: '未附导读的场景',
@@ -381,6 +394,105 @@ export const MissingMetadataDoesNotInventGuidance: Story = {
       .toBeVisible()
     expect(overview.queryByText(/难度|分钟|适合新手|侧方胜率|对局数不足/))
       .toBeNull()
+    expect(personalRequests).toEqual([])
+    expect(ensures).toEqual([])
+  },
+}
+
+const customScoring: ScenarioScoringDTO = {
+  summary: '逐项累计本场得分。',
+  items: [
+    { id: 'evidence', label: '证据闭环', points: 2.75 },
+    { id: 'repetition', label: '重复论证', points: -1.125 },
+    { id: 'unused', label: '未使用机会', points: 0 },
+  ],
+  notes: ['分数相同时比较证据完整性。', '每项仅计入一次。'],
+}
+const obsoleteWeights = /\+0\.5|[−-]0\.25|[−-]0\.75|\+1(?![\d.])|[−-]1(?![\d.])/
+
+export const PublicScoringUsesExactServerItems: Story = {
+  args: { path: '/scenarios' },
+  parameters: {
+    msw: publicScenarioHandlers([
+      {
+        ...publicScenario.summary,
+        id: 'server-scoring',
+        title: '公开计分场景',
+      },
+      publicScenario.summary,
+      { ...publicScenario.summary, id: 'honnoji-decision', title: '本能寺' },
+      { ...publicScenario.summary, id: 'trolley-problem', title: '电车难题' },
+    ], customScoring),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    for (
+      const id of [
+        'server-scoring',
+        'shangyang-court',
+        'honnoji-decision',
+        'trolley-problem',
+      ]
+    ) {
+      await userEvent.click(await canvas.findByTestId(`scenario-${id}`))
+      await expect(
+        await canvas.findByText('逐项累计本场得分。', { exact: true }),
+      )
+        .toBeVisible()
+      const rows = canvasElement.querySelectorAll<HTMLElement>(
+        '[data-tm="DA.score-rule-row"]',
+      )
+      expect(rows).toHaveLength(3)
+      for (
+        const [index, label, points] of [
+          [0, '证据闭环', '+2.75'],
+          [1, '重复论证', '−1.125'],
+          [2, '未使用机会', '0'],
+        ] as const
+      ) {
+        const row = within(rows[index])
+        await expect(row.getByText(label, { exact: true })).toBeVisible()
+        await expect(row.getByText(points, { exact: true })).toBeVisible()
+      }
+      await expect(
+        canvas.getByText('分数相同时比较证据完整性。', { exact: true }),
+      )
+        .toBeVisible()
+      await expect(canvas.getByText('每项仅计入一次。', { exact: true }))
+        .toBeVisible()
+      expect(canvas.queryByText('计分规则整理中', { exact: true })).toBeNull()
+      expect(canvasElement.querySelector('[data-tm="DA.page"]')!.textContent)
+        .not.toMatch(obsoleteWeights)
+      await userEvent.click(canvas.getByRole('link', { name: 'AXIIA CUP' }))
+    }
+    expect(personalRequests).toEqual([])
+    expect(ensures).toEqual([])
+  },
+}
+
+export const MissingPublicScoringDoesNotInventWeights: Story = {
+  args: { path: '/scenarios' },
+  parameters: {
+    msw: publicScenarioHandlers([
+      publicScenario.summary,
+      { ...publicScenario.summary, id: 'honnoji-decision', title: '本能寺' },
+      { ...publicScenario.summary, id: 'trolley-problem', title: '电车难题' },
+    ]),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    for (
+      const id of ['shangyang-court', 'honnoji-decision', 'trolley-problem']
+    ) {
+      await userEvent.click(await canvas.findByTestId(`scenario-${id}`))
+      await expect(await canvas.findByText('计分规则整理中', { exact: true }))
+        .toBeVisible()
+      expect(canvasElement.querySelectorAll('[data-tm="DA.score-rule-row"]'))
+        .toHaveLength(0)
+      expect(canvasElement.querySelector('[data-tm="DA.page"]')!.textContent)
+        .not.toMatch(obsoleteWeights)
+      await userEvent.click(canvas.getByRole('link', { name: 'AXIIA CUP' }))
+    }
     expect(personalRequests).toEqual([])
     expect(ensures).toEqual([])
   },

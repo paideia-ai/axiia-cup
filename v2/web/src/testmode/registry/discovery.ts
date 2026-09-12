@@ -334,7 +334,7 @@ export const TM_DISCOVERY: TmRegistry = {
   'DA.score-rule-row': {
     label: '计分条目',
     clauses: ['U04-C11'],
-    when: '商鞅类有结构化 requestScoring 的场景',
+    when: '服务端场景详情提供公开 scoring.items 时，逐项展示名称与精确分值',
   },
 
   // ======================= OS 出战面板 =======================
