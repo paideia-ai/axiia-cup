@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import reviewedSource from '../src/testmode/data/vivian-a3-a4-a6.json' with {
+  type: 'json',
+}
 import {
   A6_QUOTA_ALIAS,
   type A6QuotaCheckpoint,
@@ -269,6 +272,35 @@ Deno.test('A6 quota provisions only its fresh dedicated actor and two real v1 en
     '/v1/matches/pve',
   ])
   assert.equal(h.snapshots.at(-1)?.bundle.agents.length, 2)
+})
+
+Deno.test('A6 ready quota role and emitted fields match the current guide contract', async () => {
+  const ready = await fixture().run()
+  const groups: Array<{
+    roles: Array<{
+      id: string
+      accountAlias: string
+      variables: string[]
+      defaults: object
+    }>
+  }> = reviewedSource.fixtureProfiles
+  const profile = groups.flatMap((group) => group.roles)
+    .find((role) => role.id === 'a6-daily-exhausted')
+  assert(profile)
+  assert.equal(profile.accountAlias, ready.accountAlias)
+  assert.deepEqual(profile.defaults, {})
+  const fields = Object.keys(ready.testModeFixtures!).sort()
+  assert.deepEqual(profile.variables.slice().sort(), fields)
+  const variables = reviewedSource.manualVariables as Record<
+    string,
+    { profileId?: string; persistence?: string }
+  >
+  const defaults = reviewedSource.manualDefaults as Record<string, string>
+  for (const field of fields) {
+    assert.equal(variables[field]?.profileId, profile.id)
+    assert.equal(variables[field]?.persistence, 'session')
+    assert.equal(defaults[field] ?? '', '')
+  }
 })
 
 Deno.test('A6 quota rejects unsafe origin and budget before provisioning', async () => {
