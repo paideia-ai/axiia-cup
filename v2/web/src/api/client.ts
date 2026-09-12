@@ -267,8 +267,10 @@ export const builder = {
 // ── Matches ─────────────────────────────────────────────────────────────────
 
 export const matches = {
-  dispatchPVE: (input: DispatchPVERequest) =>
-    request<DispatchResponse>('POST', '/matches/pve', input),
+  dispatchPVE: (
+    input: DispatchPVERequest,
+    options?: Pick<RequestInit, 'signal'>,
+  ) => request<DispatchResponse>('POST', '/matches/pve', input, options),
   dispatchPVP: (input: DispatchPVPRequest) =>
     request<DispatchResponse>('POST', '/matches/pvp', input),
   list: () => request<MatchListResponse>('GET', '/matches'),
