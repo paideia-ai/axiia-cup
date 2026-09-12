@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { ScenarioDetail } from '../api/types'
 import { ScenarioDetailPage } from './scenario-detail'
+import { AuthProvider } from '../context/auth'
 
 const gateProgress = {
   a: { beaten: 0, needed: 1 },
@@ -97,9 +98,14 @@ const details: Record<string, ScenarioDetail> = {
 function Surface({ scenarioID }: { scenarioID: keyof typeof details }) {
   return (
     <MemoryRouter initialEntries={[`/scenarios/${scenarioID}`]}>
-      <Routes>
-        <Route path='/scenarios/:scenarioId' element={<ScenarioDetailPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route
+            path='/scenarios/:scenarioId'
+            element={<ScenarioDetailPage />}
+          />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>
   )
 }
@@ -109,6 +115,15 @@ const meta = {
   component: Surface,
   parameters: {
     msw: [
+      http.get('/v1/auth/me', () =>
+        HttpResponse.json({
+          account: {
+            id: 'scenario-reader',
+            displayName: '场景读者',
+            isAdmin: false,
+          },
+          elevated: false,
+        })),
       http.get(
         '/v1/scenarios/:id',
         ({ params }) => HttpResponse.json(details[String(params.id)]),
@@ -133,7 +148,7 @@ export const ShangyangFourCards: Story = {
     ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(
-      canvas.getByText('每侧各赢 ≥1 场 PVE 练习解锁 PVP'),
+      await canvas.findByText('每侧各赢 ≥1 场 PVE 练习解锁 PVP'),
     ).toBeVisible()
     await expect(canvas.getByText('国策之外，还有隐藏目标')).toBeVisible()
     const hiddenGoalButtons = canvas.getAllByRole('button', {

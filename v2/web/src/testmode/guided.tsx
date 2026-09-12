@@ -13,7 +13,6 @@ import {
 import { useNavigate } from 'react-router-dom'
 
 import {
-  B3_A5_MANUAL_URL,
   DASHBOARD,
   type Journey,
   type JourneyRound,
@@ -22,6 +21,7 @@ import {
   manualUrl,
   markersOfStep,
   pageNameOfRoute,
+  REVIEWED_MANUAL_URL,
   ROUND_LABEL,
   routeHasParams,
   routeMatches,
@@ -34,12 +34,13 @@ import {
   useReducedMotion,
 } from './dom'
 import {
+  captureIdFromUrl,
   fillFixtureText,
   fixtureLabel,
   type FixtureValues,
   fixtureVariables,
-  matchIdFromUrl,
   readFixtureValues,
+  resetFixtureValues,
   resolveFixtureUrl,
   writeFixtureValues,
 } from './fixtures'
@@ -87,6 +88,15 @@ function tally(j: Journey, p: JourneyProgress) {
     else if (c === 'skip') skip++
   }
   return { pass, fail, skip, done: pass + fail + skip }
+}
+
+function currentProgress(journey: Journey): JourneyProgress {
+  return readProgress(
+    journey.id,
+    Object.fromEntries(
+      journey.steps.map((step) => [step.id, step.versionPins]),
+    ),
+  )
 }
 
 function localTime(iso: string): string {
@@ -180,7 +190,6 @@ function FixtureUrlBlock(
   )
   const labelOf = (name: string) =>
     fields.find((field) => field.name === name)?.label ?? fixtureLabel(name)
-  const currentMatchId = matchIdFromUrl(pathname)
 
   return (
     <div className='tm-block tm-fixture-card'>
@@ -303,8 +312,11 @@ function FixtureUrlBlock(
                                   const entered = event.target.value
                                   onChange(
                                     field.name,
-                                    field.extract === 'matchId'
-                                      ? matchIdFromUrl(entered) ?? entered
+                                    field.extract
+                                      ? captureIdFromUrl(
+                                        entered,
+                                        field.extract,
+                                      ) ?? entered
                                       : entered,
                                   )
                                 }}
@@ -396,6 +408,9 @@ function FixtureUrlBlock(
         : null}
       {step.captures?.map((capture) => {
         const inputId = `tm-capture-${step.id}-${capture.variable}`
+        const captureKind = capture.extract ?? 'matchId'
+        const currentId = captureIdFromUrl(pathname, captureKind)
+        const sourceLabel = captureKind === 'agentId' ? '智能体' : '对局'
         return (
           <section key={capture.variable} className='tm-runtime-capture'>
             <div className='tm-fixture-profile-title'>
@@ -415,22 +430,22 @@ function FixtureUrlBlock(
                   const entered = event.target.value
                   onChange(
                     capture.variable,
-                    matchIdFromUrl(entered) ?? entered,
+                    captureIdFromUrl(entered, captureKind) ?? entered,
                   )
                 }}
               />
               <button
                 type='button'
                 className='tm-btn'
-                disabled={!currentMatchId}
-                title={currentMatchId
-                  ? `捕获 ${currentMatchId}`
-                  : '请先打开本轮 /matches/:id 对局页'}
+                disabled={!currentId}
+                title={currentId
+                  ? `捕获 ${currentId}`
+                  : `请先打开本轮${sourceLabel}页`}
                 onClick={() => {
-                  if (currentMatchId) onChange(capture.variable, currentMatchId)
+                  if (currentId) onChange(capture.variable, currentId)
                 }}
               >
-                从当前对局网址捕获
+                从当前{sourceLabel}网址捕获
               </button>
             </div>
             <small>{capture.hint}</small>
@@ -564,8 +579,8 @@ export function Guided(
   }, [target])
 
   useEffect(() => {
-    if (journeyId) setProgress(readProgress(journeyId))
-  }, [journeyId])
+    if (journey) setProgress(currentProgress(journey))
+  }, [journey])
 
   useEffect(() => {
     if (!journeyId || fixtureValuesByJourney[journeyId] !== fixtureValues) {
@@ -727,7 +742,11 @@ export function Guided(
       })
       const next = {
         ...progress,
-        [step.id]: { choice, at: new Date().toISOString() },
+        [step.id]: {
+          choice,
+          at: new Date().toISOString(),
+          ...(step.versionPins ? { versionPins: step.versionPins } : {}),
+        },
       }
       setProgress(next)
       writeProgress(journey.id, next)
@@ -796,6 +815,43 @@ export function Guided(
     if (route) navigate(route)
   }
 
+  const startNewRun = () => {
+    if (!journey || busy) return
+    const fresh = resetFixtureValues(journey.id, journey.fixtureDefaults)
+    setFixtureValuesByJourney((current) => ({
+      ...current,
+      [journey.id]: fresh,
+    }))
+    writeProgress(journey.id, {})
+    setProgress({})
+    setStepIdx(0)
+    setNote('')
+    setErr(null)
+    setPending(null)
+    setCollapsed(false)
+    setSpotOff(false)
+    setAltMarker(null)
+    manualExpand.current = false
+  }
+  const newRunControl = (
+    <section className='tm-block' aria-label='本轮测试'>
+      <button
+        type='button'
+        className='tm-btn tm-btn--sm'
+        disabled={busy}
+        onClick={startNewRun}
+      >
+        开始新一轮
+      </button>
+      <p className='tm-dimt' style={{ margin: '6px 0 0', fontSize: 11.5 }}>
+        清空本旅程的本机进度、待刷新 fixture 和本轮捕获 ID，回到第 1 步。
+        已消耗状态的旅程需先领取新准备的账号与
+        fixture；服务器账号状态和看板历史不会重置。
+        普通切换登录角色会保留本轮记录。
+      </p>
+    </section>
+  )
+
   /* ── 旅程列表 ── */
   if (!journey) {
     const groups: [JourneyRound, Journey[]][] = [
@@ -814,7 +870,7 @@ export function Guided(
           <div className='tm-h-title'>
             <div>导测 · 选一条旅程</div>
             <div className='tm-eyebrow'>
-              {JOURNEYS.length} 条旅程 · 当前 B3/A5 可交接 + 历史两轮
+              {JOURNEYS.length} 条旅程 · 当前 A3/A4/A6/B3/A5 可交接 + 历史两轮
             </div>
           </div>
           <button
@@ -836,7 +892,7 @@ export function Guided(
                   ? (
                     <a
                       className='tm-ext'
-                      href={B3_A5_MANUAL_URL}
+                      href={REVIEWED_MANUAL_URL}
                       target='_blank'
                       rel='noreferrer'
                     >
@@ -847,7 +903,8 @@ export function Guided(
               </div>
               <div className='tm-jlist'>
                 {list.map((j) => {
-                  const t = tally(j, readProgress(j.id))
+                  const saved = currentProgress(j)
+                  const t = tally(j, saved)
                   return (
                     <button
                       key={j.id}
@@ -855,9 +912,7 @@ export function Guided(
                       className='tm-jrow'
                       onClick={() => {
                         setJourneyId(j.id)
-                        const first = j.steps.findIndex((s) =>
-                          !readProgress(j.id)[s.id]
-                        )
+                        const first = j.steps.findIndex((s) => !saved[s.id])
                         setStepIdx(first >= 0 ? first : 0)
                       }}
                       aria-label={`旅程 ${j.n}：${j.title}，已确认 ${t.done} / ${j.steps.length} 步`}
@@ -925,6 +980,7 @@ export function Guided(
           </button>
         </div>
         <div className='tm-body'>
+          {newRunControl}
           <div className='tm-summary'>
             <span style={{ color: 'var(--tm-pass)' }}>看到了 {t.pass}</span>
             <span style={{ color: 'var(--tm-fail)' }}>不是这样 {t.fail}</span>
@@ -1173,6 +1229,7 @@ export function Guided(
             {compact ? <div className='tm-steps-nav'>{navButtons}</div> : null}
           </div>
 
+          {newRunControl}
           {stepIdx === 0 && journey.prerequisites?.length
             ? (
               <details className='tm-details'>

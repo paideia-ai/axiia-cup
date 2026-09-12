@@ -12,6 +12,8 @@ import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
 import { scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
+import { useAuth } from '../context/auth'
+import { protectedLoginUrl } from '../lib/login-return'
 import type {
   ScenarioEducation,
   ScenarioHiddenGoalList,
@@ -31,6 +33,7 @@ import type {
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
   const navigate = useNavigate()
+  const { account } = useAuth()
   const [pending, setPending] = useState<string | null>(null)
   const [buildError, setBuildError] = useState<string | null>(null)
   const liveRef = useRef(true)
@@ -42,8 +45,11 @@ export function ScenarioDetailPage() {
   const education = module?.education ?? null
 
   const { data, error, loading } = useAsync(
-    () => catalog.scenario(scenarioId, 'a'),
-    [scenarioId],
+    () =>
+      catalog.scenario(scenarioId, 'a', {
+        credentials: account ? 'include' : 'omit',
+      }),
+    [scenarioId, account?.id],
   )
   const {
     data: mine,
@@ -51,8 +57,8 @@ export function ScenarioDetailPage() {
     loading: mineLoading,
     reload: reloadMine,
   } = useAsync(
-    () => myAgents.list(),
-    [scenarioId],
+    () => account ? myAgents.list() : Promise.resolve({ scenarios: [] }),
+    [scenarioId, account?.id],
   )
   const mineOf = (side: Side) =>
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
@@ -73,6 +79,14 @@ export function ScenarioDetailPage() {
   }, [scenarioId])
 
   const enter = async (side: Side, target: 'build' | 'view') => {
+    if (!account) {
+      navigate(protectedLoginUrl({
+        pathname: `/scenarios/${encodeURIComponent(scenarioId)}/build`,
+        search: `?side=${side}`,
+        hash: '',
+      }))
+      return
+    }
     const requestID = ++enterRequestRef.current
     const requestScenarioID = scenarioId
     const isCurrent = () =>
@@ -165,7 +179,7 @@ export function ScenarioDetailPage() {
                     )}
                 </p>
               </div>
-              <GateStatus summary={data.summary} />
+              {account ? <GateStatus summary={data.summary} /> : null}
             </header>
 
             <OverviewCard
@@ -221,7 +235,7 @@ export function ScenarioDetailPage() {
                       : data.summary.sideBLabel}
                     fallbackGoal={education?.winConditions[side] ?? null}
                     hiddenGoals={module?.hiddenGoals?.[side] ?? null}
-                    agents={mine == null ? null : mineOf(side)}
+                    agents={!account ? [] : mine == null ? null : mineOf(side)}
                     inventoryError={mineError}
                     inventoryLoading={mineLoading}
                     pending={pending}
@@ -437,7 +451,7 @@ function OverviewCard({
               className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
               {...tm('DA.stats-empty')}
             >
-              侧方胜率 · 对局数不足，暂无统计——早期对局正在进行
+              数据积累中
             </p>
           )
           : null}

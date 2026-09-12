@@ -1,0 +1,2220 @@
+{
+  "schemaVersion": 3,
+  "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
+  "sourceSha256": "56e7eead8d0bd28d27f612f6f99b622c3683470591add2025c80fe2e6cd37654",
+  "capturedAt": "2026-09-09",
+  "handoffReadyClauseIds": [
+    "U03-C01",
+    "U03-C02",
+    "U03-C03",
+    "U03-C04",
+    "U03-C05",
+    "U03-C06",
+    "U03-C07",
+    "U03-C09",
+    "U03-C10",
+    "U03-C12",
+    "U11-C06",
+    "U04-C01",
+    "U04-C02",
+    "U04-C03",
+    "U04-C04",
+    "U04-C05",
+    "U04-C06",
+    "U04-C07",
+    "U04-C08",
+    "U04-C09",
+    "U04-C10",
+    "U04-C11",
+    "U04-C12",
+    "U04-C13",
+    "U04-C15",
+    "U06-C01",
+    "U06-C02",
+    "U06-C04",
+    "U06-C06",
+    "U06-C07",
+    "U06-C08",
+    "U06-C09",
+    "U06-C10",
+    "U06-C11",
+    "U06-C12",
+    "U06-C13",
+    "U06-C14",
+    "U06-C15",
+    "U06-C16",
+    "U11-C07"
+  ],
+  "confirmedClauses": {
+    "U03-C01": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C01",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须在注册成功并自动建立会话后把尚未完成首战的玩家送入首次对战快速通道。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:34:37.706028+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C02": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C02",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须新手 express 轨道看简化版 DA（与正常用户不同）。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:35:30.157984+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C03": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C03",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须「去构建」直接进 E；首战＝创建一个单侧 agent。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:35:49.928382+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C04": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C04",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须express 默认进 MCQ；express 内可切换到正常模式。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:36:06.469297+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C05": {
+      "chapter": "A3",
+      "version": "v2",
+      "versionId": "comment-v2:U03-C05",
+      "canonical": "在玩家尚未完成首次对战且已保存首个可出战版本的情况下，当玩家点击「开始首战」时，Axiia 系统必须使用新手预设直接派发首战并跳过常规对手选择步骤。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:52:41.890744+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C06": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C06",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须为首战自动选择该场景中最低难度的 PVE NPC，不要求玩家另选对手。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:40:56.969218+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C07": {
+      "chapter": "A3",
+      "version": "v2",
+      "versionId": "comment-v2:U03-C07",
+      "canonical": "在任一对战已经派发的情况下，当玩家进入该对战时，Axiia 系统必须直接展示实时战况，并在对局结束后原地转换为最终战报而无需刷新。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:53:35.268788+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C09": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C09",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须在首战结束后解锁并展示 MCQ、直接编写和元提示词三种新建方式。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:42:47.323232+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "skipped",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C10": {
+      "chapter": "A3",
+      "version": "v1",
+      "versionId": "baseline:U03-C10",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入快速通道或保存首个可出战版本时，Axiia 系统必须只向尚未完成首战的玩家开放快速通道，并把已完成首战的玩家送回常规场景流程。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-02T15:43:24.239064+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U03-C12": {
+      "chapter": "A3",
+      "version": "v2",
+      "versionId": "comment-v2:U03-C12",
+      "canonical": "在玩家尚未完成首次对战的情况下，当玩家进入新手模式时，Axiia 系统必须预设场景、玩家角色和对手 NPC，具体配置必须取自 §C2。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:54:46.946517+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U11-C06": {
+      "chapter": "A3",
+      "version": "v2",
+      "versionId": "comment-v2:U11-C06",
+      "canonical": "在赛事规则启用试炼阻挡的情况下，当玩家尝试发起普通试炼或系统运行该赛事的锦标赛对局时，Axiia 系统必须阻止普通试炼并继续允许锦标赛对局运行。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:56:32.968763+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "pending_ruling",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "skipped",
+        "assignment": "prepare-fixture-and-run"
+      }
+    },
+    "U04-C01": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C01",
+      "canonical": "在玩家正在浏览可用场景的情况下，当玩家查看场景卡片时，Axiia 系统必须展示一句话介绍，并仅在该场景达到 §C2 配置的最小已完成对局数后展示统计。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:56:47.342222+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C02": {
+      "chapter": "A4",
+      "version": "v1",
+      "versionId": "baseline:U04-C02",
+      "canonical": "在玩家正在浏览可用场景的情况下，当玩家选择场景或打开场景介绍时，Axiia 系统必须卡片传达：难度（简单/中等/困难）、适合新手独立标注、预计一场时长、侧方胜率。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-01T07:38:29.855951+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C03": {
+      "chapter": "A4",
+      "version": "v1",
+      "versionId": "baseline:U04-C03",
+      "canonical": "在玩家正在浏览可用场景的情况下，当玩家选择场景或打开场景介绍时，Axiia 系统必须最近上线的场景固定插在列表第 2 位 + 「新上线」徽章。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-01T07:38:40.215336+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C04": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C04",
+      "canonical": "在玩家查看尚未达到统计门槛的场景卡片的情况下，当统计区域渲染时，Axiia 系统必须显示「数据积累中」空态且不得显示空数字。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:57:00.243243+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C05": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C05",
+      "canonical": "在「最热门」场景规则尚未批准或能力尚未交付的情况下，当玩家浏览场景入口时，Axiia 系统必须不显示「最热门」入口。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:57:07.527859+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C06": {
+      "chapter": "A4",
+      "version": "v1",
+      "versionId": "baseline:U04-C06",
+      "canonical": "在玩家正在浏览可用场景的情况下，当玩家选择场景或打开场景介绍时，Axiia 系统必须让场景卡只进入场景介绍页，并把“去构建”行动放在介绍页内。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-01T07:40:51.353166+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C07": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C07",
+      "canonical": "在玩家打开场景介绍页的情况下，当玩家阅读规则或准备创建智能体时，Axiia 系统必须展示场景规则，并提供清晰入口进入对应智能体构建器。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T12:57:16.532071+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C08": {
+      "chapter": "A4",
+      "version": "v4",
+      "versionId": "99c8c1fd-ad1b-4277-b903-c63a720d3f09",
+      "canonical": "在玩家打开场景介绍页的情况下，当页面展示场景信息时，Axiia 系统必须依次直接展示场景摘要、双方角色信息与胜利条件，并将裁判提示词原文和隐藏目标列表默认折叠，允许玩家按需展开。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T16:15:24.131528+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C09": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C09",
+      "canonical": "在玩家查看场景介绍的情况下，当该场景达到统计门槛时，Axiia 系统必须展示两个阵营各自的胜率；未达到门槛时必须显示「数据积累中」且不显示空数字。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:06:44.794169+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C10": {
+      "chapter": "A4",
+      "version": "v4",
+      "versionId": "8b4aaf8d-042e-461a-b394-c2073380a589",
+      "canonical": "在玩家展开场景介绍详情的情况下，当页面读取场景配置时，Axiia 系统必须展示背景故事、双方身份与胜利条件、裁判摘要、裁判提示词原文、隐藏目标说明、计分规则和预计时长，但不得另行展示裁判评判权重。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T16:15:15.872005+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C11": {
+      "chapter": "A4",
+      "version": "v4",
+      "versionId": "d1a9f85b-27f1-464d-87dd-d6227b471fb5",
+      "canonical": "在场景配置定义了公开计分规则及权重的情况下，当玩家查看场景介绍时，Axiia 系统必须从场景数据读取并展示各计分项目及其分值，不得在前端硬编码这些数值。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T16:15:10.103817+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U04-C12": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C12",
+      "canonical": "在 DA 场景为玩家配置了隐藏目标的情况下，当玩家展开场景详情时，Axiia 系统必须在折叠区域向该玩家展示其隐藏目标。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:09:03.860907+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "keep-strengthen",
+        "priority": "P2",
+        "automaticState": "has_test",
+        "implementationState": "match",
+        "requiresTestChange": false
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C13": {
+      "chapter": "A4",
+      "version": "v2",
+      "versionId": "comment-v2:U04-C13",
+      "canonical": "在场景配置包含可选立场、请求项或开场白的情况下，当玩家展开角色详情时，Axiia 系统必须展示已配置的项目，并省略未配置的项目。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:09:30.661521+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U04-C15": {
+      "chapter": "A4",
+      "version": "v4",
+      "versionId": "d152d1b2-544d-437d-8cf7-70c8276754e2",
+      "canonical": "在场景配置指定了裁判或计分模型的情况下，当玩家查看场景介绍时，Axiia 系统必须展示普通裁判提示词原文，但不得展示裁判内心 OS 提示词（judgeOsPrompt）。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T16:16:08.921027+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "has_test",
+        "implementationState": "gap_open",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U06-C01": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U06-C01",
+      "canonical": "在玩家尝试解锁某场景的 PVP 的情况下，当系统检查该玩家的试炼成绩时，Axiia 系统必须要求玩家在两个阵营分别达到 §C2 配置的最少 PVE 胜场数。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:17:32.371809+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C02": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C02",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须仅在玩家于同一场景的两个阵营都至少赢得一场 PVE 后解锁 PVP。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:22:28.703768+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C04": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C04",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须仅在发起方与被约方都已解锁该场景 PVP 时接受约战。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:24:09.073794+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C06": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U06-C06",
+      "canonical": "在玩家发起按 ID 约战的情况下，当系统检查当日同一对手的约战次数时，Axiia 系统必须在达到 §C2 配置的每日上限后拒绝约战，并把每次成功约战计为发起人的两场配额。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:18:32.230365+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C07": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C07",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须已有 1 个商鞅、想建第 2 个商鞅 → 必须先建过 ≥1 个甘龙；两侧都有后不再限制。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:31:24.55108+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U06-C08": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C08",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须仅在另一阵营的策略至少有一个保存版本时打开跨阵营引导门，空策略不得满足该条件。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:24:22.974515+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U06-C09": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U06-C09",
+      "canonical": "在系统检查玩家的 PVP 解锁资格的情况下，当玩家进入某个场景时，Axiia 系统必须只使用该玩家在该场景两个阵营的 PVE 成绩计算资格。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:18:50.418247+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U06-C10": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C10",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须一侧同时只能有一个 ★；在任一策略的任一版本上点「设为参赛版本」＝把这一侧的出战席位交给它，自动清除同侧其他策略的 ★。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:32:44.19487+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C11": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C11",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须自动参赛只在本侧尚无 ★ 时发生；该侧还没有任何 ★ 时，首存的版本才自动接管；否则；交接席位必须是一次显式的「设为；参赛版本」。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:33:00.843151+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C12": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U06-C12",
+      "canonical": "在系统创建约战或成对对战的情况下，当确定双方出战版本时，Axiia 系统必须优先使用各自标记的参赛版本，并仅在未标记时使用最新版。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:19:13.021048+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C13": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C13",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须为每个阵营显示唯一的参赛版本标记，并在所有相关页面指向同一版本。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:33:48.700228+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U06-C14": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C14",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须仅允许两个阵营都各有一个参赛版本的玩家报名锦标赛，并对缺少任一阵营的报名给出明确拒绝原因。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:24:58.034798+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "pending_ruling",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "skipped",
+        "assignment": "prepare-fixture-and-run"
+      }
+    },
+    "U06-C15": {
+      "chapter": "A6",
+      "version": "v1",
+      "versionId": "baseline:U06-C15",
+      "canonical": "在玩家正在参与试炼、约战或竞技的情况下，当系统检查门槛、配额、评分或晋级条件时，Axiia 系统必须触顶行为已定：按钮可点 → 提示「今日次数已用完（N/N），明天再来」→ 拒绝入队。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T02:34:00.840284+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "tested",
+        "assignment": "rerun-current-version"
+      }
+    },
+    "U06-C16": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U06-C16",
+      "canonical": "在系统计算玩家某个场景的评分的情况下，当不存在已完成且已计分的 PVP 或锦标赛结果时，Axiia 系统必须显示 0 或空状态；PVE 结果不得改变该评分。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:19:35.67186+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "new-coverage",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "match",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "untested",
+        "assignment": "first-run"
+      }
+    },
+    "U11-C07": {
+      "chapter": "A6",
+      "version": "v2",
+      "versionId": "comment-v2:U11-C07",
+      "canonical": "在锦标赛配置了评分资格门槛的情况下，当玩家任一智能体的天梯评分达到该门槛时，Axiia 系统必须向玩家授予对应的直邀或跳过海选资格，并发送锦标赛资格通知。",
+      "handoffReady": true,
+      "textReview": {
+        "status": "confirmed",
+        "needsFurtherAttention": false,
+        "confirmedBy": "Vivian",
+        "confirmedAt": "2026-09-03T13:19:41.585469+00:00",
+        "source": "live-team-pick"
+      },
+      "testImpact": {
+        "category": "capture-current-gap",
+        "priority": "P1",
+        "automaticState": "none",
+        "implementationState": "untestable",
+        "requiresTestChange": true
+      },
+      "humanVerification": {
+        "priorState": "skipped",
+        "assignment": "prepare-fixture-and-run"
+      }
+    }
+  },
+  "manualDefaults": {
+    "appBaseUrl": "https://axiia-cup-2-web.isofucius.cn"
+  },
+  "manualVariables": {
+    "appBaseUrl": {
+      "label": "被测环境根地址",
+      "kind": "environment",
+      "inputType": "url",
+      "hint": "不要带末尾 /。"
+    },
+    "a3FreshAgentId": {
+      "label": "本轮首战单侧智能体 ID",
+      "profileId": "a3-first-battle",
+      "kind": "runtime",
+      "extract": "agentId",
+      "hint": "点击去构建后从 /agents/:id/build 记录，不预填。"
+    },
+    "a3FirstMatchId": {
+      "label": "本轮首战对局 ID",
+      "profileId": "a3-first-battle",
+      "kind": "runtime",
+      "extract": "matchId",
+      "hint": "明确点击开始首战后从 /matches/:id 记录，不预填。"
+    },
+    "a3Preset": {
+      "label": "§C2 当前新手预设三元组",
+      "profileId": "a3-first-battle",
+      "hint": "测试当天从 /v1/config 记录场景、玩家侧、最低难度 NPC；不沿用旧值。"
+    },
+    "a3BlockedAgentId": {
+      "label": "赛事阻挡期间的智能体 ID",
+      "profileId": "a3-trials-blocked",
+      "hint": "可复用稳定智能体 228。"
+    },
+    "a3TournamentMatchId": {
+      "label": "阻挡期间仍运行的锦标赛对局 ID",
+      "profileId": "a3-trials-blocked",
+      "hint": "由赛事管理员当天提供，不猜 ID。"
+    },
+    "a4ScenarioSlug": {
+      "label": "结构完整的详情场景 slug",
+      "profileId": "a4-detail",
+      "hint": "默认 shangyang-court；执行前确认配置字段仍齐全。"
+    },
+    "a4StatsScenarioSlug": {
+      "label": "达到 §C2 统计门槛的场景 slug",
+      "profileId": "a4-catalog",
+      "hint": "当天从接口选择，不伪造。"
+    },
+    "a4LowStatsScenarioSlug": {
+      "label": "未达到 §C2 统计门槛的场景 slug",
+      "profileId": "a4-catalog",
+      "hint": "当天从接口选择，用于数据积累中空态。"
+    },
+    "a4LatestScenarioSlug": {
+      "label": "onlineAt 最新场景 slug",
+      "profileId": "a4-catalog",
+      "hint": "当天按接口 onlineAt 计算。"
+    },
+    "a6GateAgentId": {
+      "label": "PVP 门槛账号智能体 ID",
+      "profileId": "a6-gates",
+      "hint": "可复用 231，执行前刷新状态。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "persistence": "session"
+    },
+    "a6OtherScenarioSlug": {
+      "label": "门槛隔离的另一场景 slug",
+      "profileId": "a6-gates",
+      "hint": "必须不同于主场景。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "persistence": "session"
+    },
+    "a6LockedOpponentVersionId": {
+      "label": "PVP 未解锁被约方真实版本 ID",
+      "profileId": "a6-gates",
+      "hint": "当天查询填写，不猜 ID。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "persistence": "session"
+    },
+    "a6CreationAgentId": {
+      "label": "创建门现有单侧智能体 ID",
+      "profileId": "a6-creation",
+      "hint": "可复用 230 并重置状态。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "persistence": "session"
+    },
+    "a6EntryAgentId": {
+      "label": "参赛版本主智能体 ID",
+      "profileId": "a6-entry",
+      "hint": "复用多版本智能体 228。"
+    },
+    "a6EntrySiblingAgentId": {
+      "label": "同场景同侧第二智能体 ID",
+      "profileId": "a6-entry",
+      "hint": "当天准备真实 ID，不预填。"
+    },
+    "a6NoEntryAgentId": {
+      "label": "本侧无 ★ 的零版本智能体 ID",
+      "profileId": "a6-entry-first-save",
+      "hint": "当天准备，不预填。"
+    },
+    "a6PvpAgentId": {
+      "label": "PVP 已解锁发起方智能体 ID",
+      "profileId": "a6-quota",
+      "hint": "可复用 228。"
+    },
+    "a6PvpOpponentVersionId": {
+      "label": "有效被约方版本 ID",
+      "profileId": "a6-quota",
+      "hint": "可复用 372，执行前确认仍有效。"
+    },
+    "a6DailyExhaustedAgentId": {
+      "label": "当日总次数 N/N 的智能体 ID",
+      "profileId": "a6-daily-exhausted",
+      "hint": "可复用 233，当天准备触顶。"
+    },
+    "a6DailyExhaustedOpponentVersionId": {
+      "label": "总次数负例的有效对手版本 ID",
+      "profileId": "a6-daily-exhausted",
+      "hint": "可复用 367。"
+    },
+    "a6ScoreAgentId": {
+      "label": "无计分 PVP/赛事结果的智能体 ID",
+      "profileId": "a6-score",
+      "hint": "当天准备，不预填。"
+    },
+    "a6TournamentId": {
+      "label": "双侧参赛版本报名门槛赛事 ID",
+      "profileId": "a6-entry-tournament",
+      "hint": "管理员当天提供真实可报名赛事。"
+    },
+    "a6QualificationTournamentId": {
+      "label": "评分资格门槛赛事 ID",
+      "profileId": "a6-qualification",
+      "hint": "能力交付后由管理员提供；不猜 ID。"
+    },
+    "a6QualificationAgentId": {
+      "label": "评分门槛前一档智能体 ID",
+      "profileId": "a6-qualification",
+      "hint": "能力交付后准备；不直接改线上分数。"
+    }
+  },
+  "fixtureProfiles": [
+    {
+      "journeyId": "HV-A3-FIRST-BATTLE",
+      "title": "A3 全新账号首战",
+      "reviewer": "Vivian",
+      "status": "refresh-required",
+      "description": "每轮使用从未完成对局的新账号；运行时 ID 由步骤产生，不保存邮箱、密码或 token。",
+      "roles": [
+        {
+          "id": "a3-first-battle",
+          "title": "全新首战账号",
+          "accountAlias": "A3 人测·全新首战账号（每轮刷新）",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "开始时 0 智能体、0 版本、0 对局；当天读取 §C2。",
+          "variables": [
+            "a3Preset",
+            "a3FreshAgentId",
+            "a3FirstMatchId"
+          ],
+          "defaults": {}
+        }
+      ]
+    },
+    {
+      "journeyId": "HV-A3-TRIALS-BLOCKED",
+      "title": "A3 赛事试炼阻挡",
+      "reviewer": "Vivian",
+      "status": "refresh-required",
+      "description": "管理员在隔离测试窗开启 trialsBlocked，并提供真实运行中锦标赛对局。",
+      "roles": [
+        {
+          "id": "a3-trials-blocked",
+          "title": "赛事阻挡观察账号",
+          "accountAlias": "A5 人测·完整发起方",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "复用智能体 228；赛事开关与 match ID 当天刷新。",
+          "variables": [
+            "a3BlockedAgentId",
+            "a3TournamentMatchId"
+          ],
+          "defaults": {
+            "a3BlockedAgentId": "228"
+          }
+        }
+      ]
+    },
+    {
+      "journeyId": "HV-A4-CATALOG-DETAIL",
+      "title": "A4 场景目录与详情",
+      "reviewer": "Vivian",
+      "status": "refresh-required",
+      "description": "公开页面；统计样本与最新场景当天刷新，详情默认使用 shangyang-court。",
+      "roles": [
+        {
+          "id": "a4-catalog",
+          "title": "公开目录读者",
+          "accountAlias": "无需登录（公开场景页）",
+          "credentialRef": "none",
+          "status": "refresh-required",
+          "description": "从 /v1/config 与 /v1/scenarios 选真实达标、未达标和最新样本。",
+          "variables": [
+            "a4StatsScenarioSlug",
+            "a4LowStatsScenarioSlug",
+            "a4LatestScenarioSlug"
+          ],
+          "defaults": {}
+        },
+        {
+          "id": "a4-detail",
+          "title": "公开详情读者",
+          "accountAlias": "无需登录（公开场景页）",
+          "credentialRef": "none",
+          "status": "ready",
+          "description": "保存公开字段期望表；judgeOsPrompt 只保留去敏搜索片段。公开浏览无需登录；S03 验证构建入口时，使用群内当前可登录测试账号完成登录。",
+          "variables": [
+            "a4ScenarioSlug"
+          ],
+          "defaults": {
+            "a4ScenarioSlug": "shangyang-court"
+          }
+        }
+      ]
+    },
+    {
+      "journeyId": "HV-A6-GATES-CREATION",
+      "title": "A6 PVP 与创建门",
+      "reviewer": "Vivian",
+      "status": "refresh-required",
+      "description": "2026-09-12 已核验 9 月 10 日交付的 A6 门槛、单侧已保存与未解锁被约方账号包仍有效。当前初始状态尚未消耗对局；这里的 ID 只供本轮填写并按会话保存，不表示其他 A6 配额、参赛或赛事资格角色已经准备好。",
+      "roles": [
+        {
+          "id": "a6-gates",
+          "title": "PVP 门槛账号",
+          "accountAlias": "A6 人测·PVP 门槛",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "使用 9 月 10 日群账号包中的「A6 人测·PVP 门槛」。2026-09-12 核验：主场景 fengyiting-real 的两侧智能体为 240 / 241，参赛版本为 376 / 377，双方门槛进度均为 0/1；另一场景 honnoji 的两侧智能体为 242 / 243。另用「A6 人测·未解锁被约方」的版本 381 核对被约方资格。本轮填写 a6GateAgentId=240、a6OtherScenarioSlug=honnoji、a6LockedOpponentVersionId=381；不要填写旧账号 231，执行后应重新核验状态。",
+          "variables": [
+            "a6GateAgentId",
+            "a6OtherScenarioSlug",
+            "a6LockedOpponentVersionId"
+          ],
+          "defaults": {}
+        },
+        {
+          "id": "a6-creation",
+          "title": "单侧已保存账号",
+          "accountAlias": "A6 人测·单侧已保存",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "使用 9 月 10 日群账号包中的「A6 人测·单侧已保存」。2026-09-12 核验：主场景 fengyiting-real 仅 A 侧有智能体 244、已保存版本 380，B 侧尚无智能体。本轮填写 a6CreationAgentId=244；不要复用旧账号 230。创建或保存对侧后，此初始状态即被消耗，需要重新准备。",
+          "variables": [
+            "a6CreationAgentId"
+          ],
+          "defaults": {}
+        }
+      ]
+    },
+    {
+      "journeyId": "HV-A6-ENTRY-QUOTA",
+      "title": "A6 参赛版本、配额与评分",
+      "reviewer": "Vivian",
+      "status": "refresh-required",
+      "description": "复用安全 A5 ID；同侧第二智能体、首存态、赛事与评分空态不预造 ID。",
+      "roles": [
+        {
+          "id": "a6-entry",
+          "title": "同侧多智能体多版本",
+          "accountAlias": "A5 人测·完整发起方",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "主智能体 228 有 364/365/366；当天补真实同侧第二智能体。",
+          "variables": [
+            "a6EntryAgentId",
+            "a6EntrySiblingAgentId"
+          ],
+          "defaults": {
+            "a6EntryAgentId": "228"
+          }
+        },
+        {
+          "id": "a6-entry-first-save",
+          "title": "本侧无 ★ 的首存账号",
+          "accountAlias": "A6 人测·首存自动参赛（每轮刷新）",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "目标为零版本且全侧无 ★。",
+          "variables": [
+            "a6NoEntryAgentId"
+          ],
+          "defaults": {}
+        },
+        {
+          "id": "a6-entry-tournament",
+          "title": "双侧报名门槛账号",
+          "accountAlias": "A6 人测·赛事报名（每轮刷新）",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "两侧有保存版本、初始仅一侧有 ★；真实可报名赛事。",
+          "variables": [
+            "a6TournamentId"
+          ],
+          "defaults": {}
+        },
+        {
+          "id": "a6-quota",
+          "title": "同一对手边界前一档",
+          "accountAlias": "A5 人测·完整发起方",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "228/372；双方解锁、同一对手计数 M-1、总配额余量至少 2。",
+          "variables": [
+            "a6PvpAgentId",
+            "a6PvpOpponentVersionId"
+          ],
+          "defaults": {
+            "a6PvpAgentId": "228",
+            "a6PvpOpponentVersionId": "372"
+          }
+        },
+        {
+          "id": "a6-daily-exhausted",
+          "title": "当日总次数触顶",
+          "accountAlias": "A5 人测·配额被约方",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "233 当天准备到 N/N；367 为有效对手。",
+          "variables": [
+            "a6DailyExhaustedAgentId",
+            "a6DailyExhaustedOpponentVersionId"
+          ],
+          "defaults": {
+            "a6DailyExhaustedAgentId": "233",
+            "a6DailyExhaustedOpponentVersionId": "367"
+          }
+        },
+        {
+          "id": "a6-score",
+          "title": "评分空态账号",
+          "accountAlias": "A6 人测·评分空态（每轮刷新）",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "refresh-required",
+          "description": "无已计分 PVP/赛事结果，可完成一场 PVE。",
+          "variables": [
+            "a6ScoreAgentId"
+          ],
+          "defaults": {}
+        },
+        {
+          "id": "a6-qualification",
+          "title": "赛事评分资格账号",
+          "accountAlias": "A6 人测·评分资格（能力交付后刷新）",
+          "credentialRef": "axiia-cup-product 群账号包",
+          "status": "known-gap",
+          "description": "现行 untestable；能力交付后填真实赛事和门槛前一档智能体。",
+          "variables": [
+            "a6QualificationTournamentId",
+            "a6QualificationAgentId"
+          ],
+          "defaults": {}
+        }
+      ]
+    }
+  ],
+  "journeys": [
+    {
+      "id": "HV-A3-FIRST-BATTLE",
+      "chapter": "A3",
+      "title": "注册到首战完成的固定版本旅程",
+      "startUrl": "{{appBaseUrl}}/register",
+      "prerequisites": [
+        "使用无会话、无智能体、无版本、无对局的新账号。",
+        "从 GET /v1/config 记录 §C2 新手预设三元组到 {{a3Preset}}。",
+        "本旅程会保存版本并消耗一场 PVE；开启录屏和网络记录。",
+        "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
+      ],
+      "steps": [
+        {
+          "id": "HV-A3-FIRST-BATTLE-S01",
+          "url": "{{appBaseUrl}}/register",
+          "route": "/register",
+          "marker": "C.form",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "action": "清空站点会话后完成注册；不手动登录或改 URL，记录首次落地。",
+          "expected": "注册成功自动建立会话并直接落到 /express，不先到登录页、首页或场景目录。",
+          "clauses": [
+            "U03-C01"
+          ],
+          "versionPins": {
+            "U03-C01": "baseline:U03-C01"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S01-register.png",
+            "HV-A3-FIRST-BATTLE-S01-express.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S02",
+          "url": "{{appBaseUrl}}/express",
+          "route": "/express",
+          "marker": "X.role-card",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "captures": [
+            {
+              "variable": "a3FreshAgentId",
+              "label": "记录新建 agentId",
+              "placeholder": "/agents/123/build?express=1",
+              "hint": "只取本轮地址栏。"
+            }
+          ],
+          "action": "核对简化 DA 只有一张我方角色卡和一句规则，且场景/阵营符合 {{a3Preset}}；点击「去构建」并记录 agentId。",
+          "expected": "express 明显少于正常 DA；点击后直接进入 /agents/{{a3FreshAgentId}}/build?express=1，只创建预设单侧智能体。",
+          "clauses": [
+            "U03-C02",
+            "U03-C03",
+            "U03-C12"
+          ],
+          "versionPins": {
+            "U03-C02": "baseline:U03-C02",
+            "U03-C03": "baseline:U03-C03",
+            "U03-C12": "comment-v2:U03-C12"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S02-simplified.png",
+            "HV-A3-FIRST-BATTLE-S02-builder.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S03",
+          "url": "{{appBaseUrl}}/agents/{{a3FreshAgentId}}/build?express=1",
+          "route": "/agents/:id/build",
+          "marker": "E.init-card",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "action": "记录默认 tab，再依次切换直接编写和元提示词后返回；本步不保存。",
+          "expected": "默认 MCQ，且 MCQ、直接编写、元提示词三种模式均可切换并显示各自内容。",
+          "clauses": [
+            "U03-C04"
+          ],
+          "versionPins": {
+            "U03-C04": "baseline:U03-C04"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S03-modes.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S04",
+          "url": "{{appBaseUrl}}/agents/{{a3FreshAgentId}}/build?express=1",
+          "route": "/agents/:id/build",
+          "marker": "E.save-button",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "captures": [
+            {
+              "variable": "a3FirstMatchId",
+              "label": "记录首战 matchId",
+              "placeholder": "/matches/123",
+              "hint": "明确点击开始首战后记录。"
+            }
+          ],
+          "action": "保存首个版本并确认尚未派发；再明确点击「开始首战」，不得经过常规对手选择；记录派发参数和 matchId。",
+          "expected": "仅保存不派发；点击开始首战后按 {{a3Preset}} 选择最低难度 NPC，跳过对手面板且只创建一场对局。",
+          "clauses": [
+            "U03-C05",
+            "U03-C06"
+          ],
+          "versionPins": {
+            "U03-C05": "comment-v2:U03-C05",
+            "U03-C06": "baseline:U03-C06"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S04-saved.png",
+            "HV-A3-FIRST-BATTLE-S04-dispatched.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S05",
+          "url": "{{appBaseUrl}}/matches/{{a3FirstMatchId}}",
+          "route": "/matches/:id",
+          "marker": "FA.status-badge",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "action": "派发后留在同一对局页，不刷新，连续观察直播直到完局。",
+          "expected": "先直接展示实时战况；完局后同一 URL 原地变为最终战报，无需刷新。",
+          "clauses": [
+            "U03-C07"
+          ],
+          "versionPins": {
+            "U03-C07": "comment-v2:U03-C07"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S05-live.png",
+            "HV-A3-FIRST-BATTLE-S05-final.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S06",
+          "url": "{{appBaseUrl}}/matches/{{a3FirstMatchId}}",
+          "route": "/matches/:id",
+          "marker": "FA.journey-modes-card",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "action": "完局后只检查新建方式区域；不评价方向性 CTA 的布局或文案。",
+          "expected": "MCQ、直接编写、元提示词三个新建入口均展示；gated U03-C08 不纳入判定。",
+          "clauses": [
+            "U03-C09"
+          ],
+          "versionPins": {
+            "U03-C09": "baseline:U03-C09"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S06-three-modes.png"
+          ]
+        },
+        {
+          "id": "HV-A3-FIRST-BATTLE-S07",
+          "url": "{{appBaseUrl}}/express",
+          "route": "/scenarios",
+          "marker": "D.scenario-card",
+          "fixtureRefs": [
+            "a3-first-battle"
+          ],
+          "action": "首战完成后直接访问 /express 并刷新一次。",
+          "expected": "两次均重定向常规 /scenarios，已完成首战的玩家不能重入快速通道。",
+          "clauses": [
+            "U03-C10"
+          ],
+          "versionPins": {
+            "U03-C10": "baseline:U03-C10"
+          },
+          "screenshotEvidence": [
+            "HV-A3-FIRST-BATTLE-S07-redirect.png"
+          ]
+        }
+      ],
+      "evidenceRequirements": [
+        "提交指定截图、连续录屏、去敏 §C2 配置和派发响应。",
+        "记录 tester、时间、build SHA、agentId、matchId；不得提交凭证或 token。"
+      ],
+      "completion": "S01–S07 全部执行；S04 证明保存与开始首战为两个事件，S06 明确排除 U03-C08。"
+    },
+    {
+      "id": "HV-A3-TRIALS-BLOCKED",
+      "chapter": "A3",
+      "title": "赛事阻挡普通试炼且允许赛事对局",
+      "startUrl": "{{appBaseUrl}}/agents/{{a3BlockedAgentId}}",
+      "prerequisites": [
+        "管理员确认 trialsBlocked=true 并记录测试窗。",
+        "a3TournamentMatchId 属于同一时段真实运行赛事。",
+        "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
+      ],
+      "steps": [
+        {
+          "id": "HV-A3-TRIALS-BLOCKED-S01",
+          "url": "{{appBaseUrl}}/agents/{{a3BlockedAgentId}}",
+          "links": [
+            {
+              "label": "赛事对局",
+              "url": "{{appBaseUrl}}/matches/{{a3TournamentMatchId}}"
+            }
+          ],
+          "route": "/agents/:id",
+          "marker": "OS.trials-blocked-notice",
+          "fixtureRefs": [
+            "a3-trials-blocked"
+          ],
+          "knownGap": {
+            "title": "动态管理员 fixture",
+            "detail": "当前实现状态 pending_ruling。",
+            "instruction": "缺 fixture 记 blocked；fixture 齐备而行为不符记 fail。"
+          },
+          "action": "在出战面板尝试发起普通 NPC 练习并核对无新对局；随后打开赛事对局，观察至少一次状态或回合推进。",
+          "expected": "普通试炼被明确阻止；同一时段锦标赛对局仍可排队、运行或推进。",
+          "clauses": [
+            "U11-C06"
+          ],
+          "versionPins": {
+            "U11-C06": "comment-v2:U11-C06"
+          },
+          "screenshotEvidence": [
+            "HV-A3-TRIALS-BLOCKED-S01-rejected.png",
+            "HV-A3-TRIALS-BLOCKED-S01-tournament.png"
+          ]
+        }
+      ],
+      "evidenceRequirements": [
+        "提交开关、普通对局基线、赛事状态时间线和截图；测试后恢复开关。"
+      ],
+      "completion": "普通试炼负例与锦标赛正例同时完成。"
+    },
+    {
+      "id": "HV-A4-CATALOG-DETAIL",
+      "chapter": "A4",
+      "title": "场景目录与详情的当前 Vivian 版本",
+      "startUrl": "{{appBaseUrl}}/scenarios",
+      "prerequisites": [
+        "当天从 /v1/config 与 /v1/scenarios 填写达标、未达标、onlineAt 最新场景。",
+        "确认 shangyang-court 仍含双方、隐藏目标、开场白、普通 judgePrompt、judgeOsPrompt 和结构化计分；保存去敏期望表。",
+        "公开视角执行并记录 build SHA。"
+      ],
+      "steps": [
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S01",
+          "url": "{{appBaseUrl}}/scenarios",
+          "route": "/scenarios",
+          "marker": "D.scenario-card",
+          "fixtureRefs": [
+            "a4-catalog"
+          ],
+          "action": "逐卡核对一句话介绍、难度、独立新手标记、时长与双方统计；比较真实达标和未达标样本。",
+          "expected": "每场景一张卡；{{a4StatsScenarioSlug}} 达 §C2 门槛才显示真实统计，{{a4LowStatsScenarioSlug}} 显示「数据积累中」且不显示 0/0%/空数字。",
+          "clauses": [
+            "U04-C01",
+            "U04-C02",
+            "U04-C04"
+          ],
+          "versionPins": {
+            "U04-C01": "comment-v2:U04-C01",
+            "U04-C02": "baseline:U04-C02",
+            "U04-C04": "comment-v2:U04-C04"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S01-stats.png",
+            "HV-A4-CATALOG-DETAIL-S01-empty.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S02",
+          "url": "{{appBaseUrl}}/scenarios",
+          "route": "/scenarios",
+          "marker": "D.scenario-list",
+          "fixtureRefs": [
+            "a4-catalog"
+          ],
+          "action": "按接口 onlineAt 独立确定最新场景，再编号页面卡片；全文搜索「最热门」。",
+          "expected": "{{a4LatestScenarioSlug}} 固定第 2 位且只有它带「新上线」；列表与导航没有「最热门」。",
+          "clauses": [
+            "U04-C03",
+            "U04-C05"
+          ],
+          "versionPins": {
+            "U04-C03": "baseline:U04-C03",
+            "U04-C05": "comment-v2:U04-C05"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S02-order.png",
+            "HV-A4-CATALOG-DETAIL-S02-no-hottest.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S03",
+          "url": "{{appBaseUrl}}/scenarios",
+          "route": "/scenarios",
+          "marker": "D.scenario-card",
+          "fixtureRefs": [
+            "a4-catalog",
+            "a4-detail"
+          ],
+          "action": "退出登录后确认目录卡内无去构建，点击 {{a4ScenarioSlug}} 卡并浏览公开详情；在详情页选择阵营并点击「去构建」，确认此时才要求登录。使用群内当前可登录测试账号登录，确认继续进入刚才所选场景/阵营的构建器后返回，不保存。",
+          "expected": "未登录也能从卡片进入 /scenarios/{{a4ScenarioSlug}} 并浏览详情；构建入口仅在详情页。访客点击构建后先登录，登录后保留原场景和阵营并进入对应构建器；已登录时可直接进入。",
+          "clauses": [
+            "U04-C06"
+          ],
+          "versionPins": {
+            "U04-C06": "baseline:U04-C06"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S03-card.png",
+            "HV-A4-CATALOG-DETAIL-S03-build.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S04",
+          "url": "{{appBaseUrl}}/scenarios/{{a4ScenarioSlug}}",
+          "route": "/scenarios/:id",
+          "marker": "DA.page",
+          "fixtureRefs": [
+            "a4-detail"
+          ],
+          "action": "首次加载不展开折叠区，按顺序记录直接可见内容并确认无编辑工作区；定位构建入口。",
+          "expected": "独立规则页提供构建入口；依次直接展示摘要、双方角色与胜利条件，普通裁判提示词和隐藏目标默认折叠且可展开。",
+          "clauses": [
+            "U04-C07",
+            "U04-C08"
+          ],
+          "versionPins": {
+            "U04-C07": "comment-v2:U04-C07",
+            "U04-C08": "99c8c1fd-ad1b-4277-b903-c63a720d3f09"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S04-order.png",
+            "HV-A4-CATALOG-DETAIL-S04-folded.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S05",
+          "url": "{{appBaseUrl}}/scenarios/{{a4StatsScenarioSlug}}",
+          "links": [
+            {
+              "label": "未达标详情",
+              "url": "{{appBaseUrl}}/scenarios/{{a4LowStatsScenarioSlug}}"
+            }
+          ],
+          "route": "/scenarios/:id",
+          "marker": "DA.stats-line",
+          "fixtureRefs": [
+            "a4-catalog"
+          ],
+          "action": "核对达标详情两侧真实胜率，再打开未达标详情核对同位置。",
+          "expected": "达标时两阵营分别显示接口胜率；未达标时只显示「数据积累中」，无空数字。",
+          "clauses": [
+            "U04-C09"
+          ],
+          "versionPins": {
+            "U04-C09": "comment-v2:U04-C09"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S05-rates.png",
+            "HV-A4-CATALOG-DETAIL-S05-empty.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S06",
+          "url": "{{appBaseUrl}}/scenarios/{{a4ScenarioSlug}}",
+          "route": "/scenarios/:id",
+          "marker": "DA.judge-card",
+          "fixtureRefs": [
+            "a4-detail"
+          ],
+          "action": "展开全部详情，对照配置核对背景、双方身份/胜利条件、裁判摘要、普通提示词原文、隐藏目标说明、计分规则和时长；搜索 judgeOsPrompt 唯一片段和裁判评判权重。",
+          "expected": "八类内容均可读；普通裁判提示词展示，judgeOsPrompt 与另列的裁判评判权重均不出现。",
+          "clauses": [
+            "U04-C10",
+            "U04-C15"
+          ],
+          "versionPins": {
+            "U04-C10": "8b4aaf8d-042e-461a-b394-c2073380a589",
+            "U04-C15": "d152d1b2-544d-437d-8cf7-70c8276754e2"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S06-content.png",
+            "HV-A4-CATALOG-DETAIL-S06-prompt.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S07",
+          "url": "{{appBaseUrl}}/scenarios/{{a4ScenarioSlug}}",
+          "route": "/scenarios/:id",
+          "marker": "DA.score-rule-row",
+          "fixtureRefs": [
+            "a4-detail"
+          ],
+          "action": "逐行抄录公开计分项目/分值，与当天场景数据比较，至少核对一个非默认分值。",
+          "expected": "项目和分值完整来自场景数据；非默认值也同步出现，不是前端硬编码。",
+          "clauses": [
+            "U04-C11"
+          ],
+          "versionPins": {
+            "U04-C11": "d1a9f85b-27f1-464d-87dd-d6227b471fb5"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S07-scoring.png"
+          ]
+        },
+        {
+          "id": "HV-A4-CATALOG-DETAIL-S08",
+          "url": "{{appBaseUrl}}/scenarios/{{a4ScenarioSlug}}",
+          "route": "/scenarios/:id",
+          "marker": "DA.hidden-goals",
+          "fixtureRefs": [
+            "a4-detail"
+          ],
+          "action": "展开双方隐藏目标；再核对已配置立场/请求项和开场白，并选一个未配置字段检查省略。",
+          "expected": "玩家能展开查看各自隐藏目标且不串侧；已配置选项/开场白展示，未配置项目整段省略，无空标题或假内容。",
+          "clauses": [
+            "U04-C12",
+            "U04-C13"
+          ],
+          "versionPins": {
+            "U04-C12": "comment-v2:U04-C12",
+            "U04-C13": "comment-v2:U04-C13"
+          },
+          "screenshotEvidence": [
+            "HV-A4-CATALOG-DETAIL-S08-goals.png",
+            "HV-A4-CATALOG-DETAIL-S08-options.png"
+          ]
+        }
+      ],
+      "evidenceRequirements": [
+        "提交所有截图和公开字段期望表；judgeOsPrompt 原文不得进入公开证据。",
+        "记录 tester、时间、viewport、build SHA 和动态 slug。",
+        "S04/S06/S07 按 Vivian v4 pin 判定，不沿用 v3 口径。"
+      ],
+      "completion": "S01–S08 全部执行；U04-C16 不在覆盖范围。"
+    },
+    {
+      "id": "HV-A6-GATES-CREATION",
+      "chapter": "A6",
+      "title": "PVP 双侧门槛、场景隔离、双方资格与创建门",
+      "startUrl": "{{appBaseUrl}}/agents/{{a6GateAgentId}}",
+      "prerequisites": [
+        "当天记录 §C2 每侧 PVE 胜场门槛 N；a6GateAgentId 两侧齐全且至少一侧低于 N。",
+        "填写另一真实场景和主场景 PVP 未解锁被约方版本。",
+        "创建门账号开始时本侧恰有一个已保存智能体，对侧无保存版本；操作会改状态，需可重置账号。",
+        "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
+      ],
+      "steps": [
+        {
+          "id": "HV-A6-GATES-CREATION-S01",
+          "url": "{{appBaseUrl}}/agents/{{a6GateAgentId}}",
+          "links": [
+            {
+              "label": "当前配置",
+              "url": "{{appBaseUrl}}/v1/config"
+            }
+          ],
+          "route": "/agents/:id",
+          "marker": "OS.gate-side-badge",
+          "fixtureRefs": [
+            "a6-gates"
+          ],
+          "action": "打开玩家约战，记录两侧进度和门槛；只把一侧做到 N 胜后重开。",
+          "expected": "数字来自当前 §C2 且两侧分别显示；仅一侧达 N 仍锁定，必须同场景两侧都达 N 才解锁。",
+          "clauses": [
+            "U06-C01",
+            "U06-C02"
+          ],
+          "versionPins": {
+            "U06-C01": "comment-v2:U06-C01",
+            "U06-C02": "baseline:U06-C02"
+          },
+          "screenshotEvidence": [
+            "HV-A6-GATES-CREATION-S01-before.png",
+            "HV-A6-GATES-CREATION-S01-one-side.png"
+          ]
+        },
+        {
+          "id": "HV-A6-GATES-CREATION-S02",
+          "url": "{{appBaseUrl}}/agents/{{a6GateAgentId}}",
+          "links": [
+            {
+              "label": "另一场景",
+              "url": "{{appBaseUrl}}/scenarios/{{a6OtherScenarioSlug}}"
+            }
+          ],
+          "route": "/agents/:id",
+          "marker": "OS.gate-locked",
+          "fixtureRefs": [
+            "a6-gates"
+          ],
+          "action": "先在另一场景完成足量 PVE 胜场，返回主场景确认不计入；再只用主场景两侧胜场补齐并重开约战。",
+          "expected": "资格只读取该玩家当前场景两阵营 PVE 成绩；跨场景胜场不解锁，主场景两侧达标后才解锁。",
+          "clauses": [
+            "U06-C09"
+          ],
+          "versionPins": {
+            "U06-C09": "comment-v2:U06-C09"
+          },
+          "screenshotEvidence": [
+            "HV-A6-GATES-CREATION-S02-isolated.png",
+            "HV-A6-GATES-CREATION-S02-unlocked.png"
+          ]
+        },
+        {
+          "id": "HV-A6-GATES-CREATION-S03",
+          "url": "{{appBaseUrl}}/agents/{{a6GateAgentId}}",
+          "route": "/agents/:id",
+          "marker": "OS.challenge-button",
+          "fixtureRefs": [
+            "a6-gates"
+          ],
+          "action": "发起方已解锁后，按 ID 查询 {{a6LockedOpponentVersionId}} 并点击发起；记录双方资格和对局前后。",
+          "expected": "被约方未解锁同场景 PVP 时整次约战被拒，零腿创建；系统不能只检查发起方。",
+          "clauses": [
+            "U06-C04"
+          ],
+          "versionPins": {
+            "U06-C04": "baseline:U06-C04"
+          },
+          "screenshotEvidence": [
+            "HV-A6-GATES-CREATION-S03-rejected.png",
+            "HV-A6-GATES-CREATION-S03-no-match.png"
+          ]
+        },
+        {
+          "id": "HV-A6-GATES-CREATION-S04",
+          "url": "{{appBaseUrl}}/my-agents",
+          "route": "/my-agents",
+          "marker": "MA.new-agent-button",
+          "fixtureRefs": [
+            "a6-creation"
+          ],
+          "action": "在 {{a6CreationAgentId}} 同侧点「再建一个」；再创建对侧空壳但不保存后重试；最后保存对侧首版并第三次重试。",
+          "expected": "无对侧保存版本和仅有 0 版本空壳时都阻挡第二个同侧智能体；对侧至少一条保存版本后门打开，两侧都有后不再限制。",
+          "clauses": [
+            "U06-C07",
+            "U06-C08"
+          ],
+          "versionPins": {
+            "U06-C07": "baseline:U06-C07",
+            "U06-C08": "baseline:U06-C08"
+          },
+          "screenshotEvidence": [
+            "HV-A6-GATES-CREATION-S04-blocked.png",
+            "HV-A6-GATES-CREATION-S04-shell.png",
+            "HV-A6-GATES-CREATION-S04-open.png"
+          ]
+        }
+      ],
+      "evidenceRequirements": [
+        "提交 §C2、两场景胜场、双方资格、对局基线和创建状态前后去敏证据。",
+        "记录 tester、时间、build SHA 和本轮产生的 match/agent/version ID。"
+      ],
+      "completion": "S01–S04 全部执行；三个门槛负例都不得产生越权状态。"
+    },
+    {
+      "id": "HV-A6-ENTRY-QUOTA",
+      "chapter": "A6",
+      "title": "参赛版本、配额、评分与赛事资格",
+      "startUrl": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
+      "prerequisites": [
+        "记录 228 与真实同侧第二智能体的版本/★；另准备本侧全局无 ★ 的 0 版本智能体。",
+        "当天记录同一对手上限 M、总上限 N；准备 M-1 发起方与 N/N 账号。",
+        "准备真实可报名赛事、评分空态账号；评分资格能力未交付时按 knownGap 留证，不造 ID。",
+        "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
+      ],
+      "steps": [
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S01",
+          "url": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
+          "links": [
+            {
+              "label": "同侧第二智能体",
+              "url": "{{appBaseUrl}}/agents/{{a6EntrySiblingAgentId}}"
+            }
+          ],
+          "route": "/agents/:id",
+          "marker": "E.set-entry-button",
+          "fixtureRefs": [
+            "a6-entry"
+          ],
+          "action": "在主智能体主页的版本卡上，把一个非 ★ 版本设为参赛；再打开上方同侧第二智能体主页，对其版本执行同一操作。每次重新打开两页核对 ★。",
+          "expected": "同一阵营跨所有智能体始终恰好一个 ★；新版本接管时同侧所有旧 ★ 自动清除。",
+          "clauses": [
+            "U06-C10"
+          ],
+          "versionPins": {
+            "U06-C10": "baseline:U06-C10"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S01-before.png",
+            "HV-A6-ENTRY-QUOTA-S01-after.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S02",
+          "url": "{{appBaseUrl}}/agents/{{a6NoEntryAgentId}}/build",
+          "route": "/agents/:id/build",
+          "marker": "E.save-button",
+          "fixtureRefs": [
+            "a6-entry-first-save"
+          ],
+          "action": "确认本侧无 ★ 后，在工作区保存首版；等待自动返回智能体主页后核对 ★。再点击「新建版本」进入工作区，修改并保存第二版，返回主页核对；整个过程不点「设为参赛版本」。",
+          "expected": "本侧无 ★ 时首存自动获得 ★；第二次保存不移动 ★，交接只能显式操作。",
+          "clauses": [
+            "U06-C11"
+          ],
+          "versionPins": {
+            "U06-C11": "baseline:U06-C11"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S02-first.png",
+            "HV-A6-ENTRY-QUOTA-S02-second.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S03",
+          "url": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
+          "links": [
+            {
+              "label": "构建器",
+              "url": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}/build"
+            },
+            {
+              "label": "我的智能体",
+              "url": "{{appBaseUrl}}/my-agents"
+            }
+          ],
+          "route": "/agents/:id",
+          "marker": "OS.lineup",
+          "fixtureRefs": [
+            "a6-entry",
+            "a6-quota"
+          ],
+          "action": "在智能体主页、我的智能体和出战面板中记录两侧唯一 ★ 版本；用 {{a6PvpOpponentVersionId}} 发起合法成对约战并记录两腿实际版本；对无 ★ 侧另核对最新版回落。工作区用于编辑和保存，参赛版本在保存后返回的智能体主页核对。",
+          "expected": "所有展示参赛版本的相关页面指向同一每侧唯一参赛版；成对对战优先取各自对应侧 ★，仅无标记时取最新版，两腿与记录一致。",
+          "clauses": [
+            "U06-C12",
+            "U06-C13"
+          ],
+          "versionPins": {
+            "U06-C12": "comment-v2:U06-C12",
+            "U06-C13": "baseline:U06-C13"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S03-pages.png",
+            "HV-A6-ENTRY-QUOTA-S03-pair.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S04",
+          "url": "{{appBaseUrl}}/my-agents",
+          "links": [
+            {
+              "label": "报名赛事",
+              "url": "{{appBaseUrl}}/tournaments/{{a6TournamentId}}"
+            }
+          ],
+          "route": "/my-agents",
+          "marker": "MA.entry-ready",
+          "fixtureRefs": [
+            "a6-entry-tournament"
+          ],
+          "knownGap": {
+            "title": "当前 pending_ruling",
+            "detail": "赛事报名入口可能未交付。",
+            "instruction": "入口缺失记 fail；只有真实赛事 fixture 未准备才记 blocked。"
+          },
+          "action": "仅一侧有 ★ 时尝试报名；再给另一侧设唯一 ★ 后重试。",
+          "expected": "缺侧 ★ 时明确拒绝并点名缺失侧；两侧各有一个 ★ 后才允许报名，仅有保存版本不算。",
+          "clauses": [
+            "U06-C14"
+          ],
+          "versionPins": {
+            "U06-C14": "baseline:U06-C14"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S04-rejected.png",
+            "HV-A6-ENTRY-QUOTA-S04-accepted.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S05",
+          "url": "{{appBaseUrl}}/agents/{{a6PvpAgentId}}",
+          "route": "/agents/:id",
+          "marker": "OS.challenge-button",
+          "fixtureRefs": [
+            "a6-quota"
+          ],
+          "action": "同一对手计数 M-1 时按 ID 约战 {{a6PvpOpponentVersionId}}；记录两腿/配额后对同一人再发一次。",
+          "expected": "边界内成功约战恰创建两场并计发起人 2 场配额；达到 M 后下一次拒绝且零腿创建，原因是同一对手上限。",
+          "clauses": [
+            "U06-C06"
+          ],
+          "versionPins": {
+            "U06-C06": "comment-v2:U06-C06"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S05-pair.png",
+            "HV-A6-ENTRY-QUOTA-S05-limit.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S06",
+          "url": "{{appBaseUrl}}/agents/{{a6DailyExhaustedAgentId}}",
+          "route": "/agents/:id",
+          "marker": "OS.quota-footer",
+          "fixtureRefs": [
+            "a6-daily-exhausted"
+          ],
+          "action": "确认今日已用 N/N；用有效版本 {{a6DailyExhaustedOpponentVersionId}} 点击仍可点的派发按钮并核对对局前后。",
+          "expected": "显示「今日次数已用完（N/N），明天再来」并拒绝入队；没有新增、排队或派发对局。",
+          "clauses": [
+            "U06-C15"
+          ],
+          "versionPins": {
+            "U06-C15": "baseline:U06-C15"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S06-copy.png",
+            "HV-A6-ENTRY-QUOTA-S06-no-match.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S07",
+          "url": "{{appBaseUrl}}/tournaments",
+          "links": [
+            {
+              "label": "评分空态智能体",
+              "url": "{{appBaseUrl}}/agents/{{a6ScoreAgentId}}"
+            }
+          ],
+          "route": "/tournaments",
+          "marker": "G.page-intro",
+          "fixtureRefs": [
+            "a6-score"
+          ],
+          "knownGap": {
+            "title": "玩家天梯可能未交付",
+            "detail": "页面可能只写待后续版本。",
+            "instruction": "缺 UI 记 fail，并附数据查询证明 PVE 未播种；不要当通过。"
+          },
+          "action": "记录主场景评分 0/空，完成一场 PVE 后再次查询；同时核对另一场景不变，不创建 PVP/赛事结果。",
+          "expected": "无已计分 PVP/赛事结果时评分为 0 或空；PVE 前后不变且按玩家×场景隔离。",
+          "clauses": [
+            "U06-C16"
+          ],
+          "versionPins": {
+            "U06-C16": "comment-v2:U06-C16"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S07-before.png",
+            "HV-A6-ENTRY-QUOTA-S07-after-or-gap.png"
+          ]
+        },
+        {
+          "id": "HV-A6-ENTRY-QUOTA-S08",
+          "url": "{{appBaseUrl}}/notifications",
+          "links": [
+            {
+              "label": "资格赛事",
+              "url": "{{appBaseUrl}}/tournaments/{{a6QualificationTournamentId}}"
+            },
+            {
+              "label": "门槛智能体",
+              "url": "{{appBaseUrl}}/agents/{{a6QualificationAgentId}}"
+            }
+          ],
+          "route": "/notifications",
+          "marker": "I.notification-row",
+          "fixtureRefs": [
+            "a6-qualification"
+          ],
+          "knownGap": {
+            "title": "当前实现 untestable",
+            "detail": "不可用普通赛事通知或人工消息冒充。",
+            "instruction": "能力缺失时截取赛事/评分/通知三处并记 fail；fixture 未提供才 blocked。"
+          },
+          "action": "确认配置门槛 T、资格类型及 T-1 无资格；用真实计分 PVP/赛事结果使任一智能体达到 T，刷新赛事和通知。",
+          "expected": "任一智能体达 T 后账号获得配置的直邀或跳过海选资格，并收到指向该赛事的资格通知；此前均无。",
+          "clauses": [
+            "U11-C07"
+          ],
+          "versionPins": {
+            "U11-C07": "comment-v2:U11-C07"
+          },
+          "screenshotEvidence": [
+            "HV-A6-ENTRY-QUOTA-S08-before.png",
+            "HV-A6-ENTRY-QUOTA-S08-qualification.png",
+            "HV-A6-ENTRY-QUOTA-S08-notification-or-gap.png"
+          ]
+        }
+      ],
+      "evidenceRequirements": [
+        "提交 ★ 矩阵、两腿版本/配额、M/N 配置、评分前后、赛事资格与通知的去敏证据。",
+        "记录 tester、时间、build SHA 和所有真实业务 ID；不得提交秘密或直接改生产分数。"
+      ],
+      "completion": "S01–S08 全部执行；knownGap 要形成明确 fail 证据，不能用历史状态代替本轮检查。"
+    }
+  ]
+}

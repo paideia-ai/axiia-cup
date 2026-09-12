@@ -1,14 +1,39 @@
-/* B3/A5 人测手册里的 {{fixture}} 解析。
+/* 固定版本人测手册里的 {{fixture}} 解析。
    appBaseUrl 始终使用当前被测站点；其他非敏感 ID 按旅程隔离并只保存在本机。 */
+
+import type { CaptureKind } from './data'
+import { REVIEWED_JOURNEYS } from './data/reviewed-journeys'
 
 export type FixtureValues = Record<string, string>
 
 export const FIXTURE_STORAGE_KEY = 'axiia:tm:fixtures:v2'
 export const FIXTURE_SESSION_STORAGE_KEY = 'axiia:tm:fixture-runtime:v1'
 
-const RUNTIME_VARIABLES = new Set(['a5HotseatActiveMatchId'])
+const SESSION_ONLY_VARIABLES = new Map(
+  REVIEWED_JOURNEYS.map((journey) => [
+    journey.id,
+    new Set(
+      (journey.fixtureProfiles ?? []).flatMap((profile) =>
+        profile.fields.filter((field) =>
+          field.kind === 'runtime' ||
+          profile.readiness === 'refresh-required' ||
+          profile.readiness === 'known-gap'
+        ).map((field) => field.name)
+      ),
+    ),
+  ]),
+)
+const NO_SESSION_ONLY_VARIABLES = new Set<string>()
+
+function sessionOnlyVariables(journeyId: string): ReadonlySet<string> {
+  return SESSION_ONLY_VARIABLES.get(journeyId) ?? NO_SESSION_ONLY_VARIABLES
+}
 
 const FIXTURE_RE = /\{\{([A-Za-z][A-Za-z0-9]*)\}\}/g
+const CAPTURE_PATTERNS: Record<CaptureKind, RegExp> = {
+  agentId: /^\/agents\/([^/]+)(?:\/build)?\/?$/,
+  matchId: /^\/matches\/([^/]+)\/?$/,
+}
 
 const FIXTURE_LABELS: Record<string, string> = {
   b3OwnerAgentId: 'B3 主智能体 ID',
@@ -28,6 +53,8 @@ const FIXTURE_LABELS: Record<string, string> = {
   a5PvpExhaustedOpponentVersionId: '触顶检查对手版本 ID',
   a5PvpChallengerAgentId: 'A5 约战发起方智能体 ID',
   a5PvpOpponentVersionId: 'A5 被约方版本 ID',
+  a3FreshAgentId: 'A3 本轮首战智能体 ID',
+  a3FirstMatchId: 'A3 本轮首战对局 ID',
 }
 
 export function fixtureLabel(name: string): string {
@@ -148,7 +175,16 @@ export function readFixtureValues(
   journeyId: string | null,
   defaults: FixtureValues = {},
 ): FixtureValues {
-  const stored = journeyId ? readFixtureStore()[journeyId] ?? {} : {}
+  const sessionOnly = journeyId
+    ? sessionOnlyVariables(journeyId)
+    : NO_SESSION_ONLY_VARIABLES
+  const stored = journeyId
+    ? Object.fromEntries(
+      Object.entries(readFixtureStore()[journeyId] ?? {}).filter(([name]) =>
+        !sessionOnly.has(name)
+      ),
+    )
+    : {}
   const runtime = journeyId ? readRuntimeStore()[journeyId] ?? {} : {}
   return { ...defaults, ...stored, ...runtime, appBaseUrl: currentOrigin() }
 }
@@ -159,9 +195,10 @@ export function writeFixtureValues(
 ): void {
   try {
     const { appBaseUrl: _currentSite, ...persisted } = values
+    const sessionOnly = sessionOnlyVariables(journeyId)
     const stableValues = Object.fromEntries(
       Object.entries(persisted).filter(([name, value]) =>
-        !RUNTIME_VARIABLES.has(name) && value.trim() !== ''
+        !sessionOnly.has(name) && value.trim() !== ''
       ),
     )
     const store = readFixtureStore()
@@ -170,7 +207,7 @@ export function writeFixtureValues(
 
     const runtimeValues = Object.fromEntries(
       Object.entries(persisted).filter(([name, value]) =>
-        RUNTIME_VARIABLES.has(name) && value.trim() !== ''
+        sessionOnly.has(name) && value.trim() !== ''
       ),
     )
     const runtimeStore = readRuntimeStore()
@@ -184,13 +221,37 @@ export function writeFixtureValues(
   }
 }
 
-/** 运行时对局不能预填；只接受产品的 /matches/:id 路径，避免误抓 agent 等其他 ID。 */
-export function matchIdFromUrl(input: string): string | null {
+/** 显式开启本旅程的新一轮；正常切换登录角色时不清空多角色 fixture。 */
+export function resetFixtureValues(
+  journeyId: string,
+  defaults: FixtureValues = {},
+): FixtureValues {
+  const sessionOnly = sessionOnlyVariables(journeyId)
+  const fresh = Object.fromEntries(
+    Object.entries(readFixtureValues(journeyId, defaults)).filter(([name]) =>
+      !sessionOnly.has(name)
+    ),
+  )
+  writeFixtureValues(journeyId, fresh)
+  return fresh
+}
+
+/** 运行时业务 ID 不能预填；只接受对应产品路径，避免从别的 URL 误抓 ID。 */
+export function captureIdFromUrl(
+  input: string,
+  kind: CaptureKind,
+): string | null {
   try {
     const url = new URL(input, currentOrigin() || 'https://fixture.invalid')
-    const match = url.pathname.match(/^\/matches\/([^/]+)\/?$/)
+    const match = url.pathname.match(CAPTURE_PATTERNS[kind])
     return match ? decodeURIComponent(match[1]) : null
   } catch {
     return null
   }
 }
+
+export const matchIdFromUrl = (input: string): string | null =>
+  captureIdFromUrl(input, 'matchId')
+
+export const agentIdFromUrl = (input: string): string | null =>
+  captureIdFromUrl(input, 'agentId')

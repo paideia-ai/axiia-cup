@@ -96,12 +96,12 @@ async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
-  options?: Pick<RequestInit, 'keepalive'>,
+  options?: Pick<RequestInit, 'keepalive' | 'credentials'>,
 ): Promise<T> {
   const headers = new Headers()
   const init: RequestInit = {
     method,
-    credentials: 'include',
+    credentials: options?.credentials ?? 'include',
     headers,
     keepalive: options?.keepalive,
   }
@@ -178,11 +178,18 @@ export const auth = {
 // ── Catalog ─────────────────────────────────────────────────────────────────
 
 export const catalog = {
-  scenarios: () => request<ScenarioListResponse>('GET', '/scenarios'),
-  scenario: (id: string, side: Side) =>
+  scenarios: (options?: Pick<RequestInit, 'credentials'>) =>
+    request<ScenarioListResponse>('GET', '/scenarios', undefined, options),
+  scenario: (
+    id: string,
+    side: Side,
+    options?: Pick<RequestInit, 'credentials'>,
+  ) =>
     request<ScenarioDetail>(
       'GET',
       `/scenarios/${encodeURIComponent(id)}?side=${side}`,
+      undefined,
+      options,
     ),
   models: () => request<ModelListResponse>('GET', '/models'),
   opponents: (id: string, side: Side) =>

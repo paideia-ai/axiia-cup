@@ -4,7 +4,9 @@
    U05-C11 / U05-C12 虽各自规范句已确认，但两者的默认取版规则冲突，解决前不得进入本集合。 */
 import type { FixtureField, FixtureProfile, Journey, Step } from '../data'
 
-export const B3_A5_MANUAL_PATH = '/spec-v4-b3-a5-human-test'
+import { REVIEWED_MANUAL_PATH } from './reviewed-manual'
+
+export const B3_A5_MANUAL_PATH = REVIEWED_MANUAL_PATH
 
 /**
  * 只允许注入可公开的稳定业务 ID。账号别名留在 profile 文案；密码、cookie、
@@ -69,7 +71,9 @@ function preparedId(name: string, label: string, help: string): FixtureField {
 
 function handoffJourney(input: HandoffJourney): Journey {
   const fieldNames = new Set(
-    input.fixtureProfiles.flatMap((profile) =>
+    input.fixtureProfiles.filter((profile) =>
+      profile.readiness !== 'refresh-required'
+    ).flatMap((profile) =>
       profile.fields.filter((field) => field.kind !== 'runtime').map((field) =>
         field.name
       )
@@ -728,9 +732,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id/build',
         marker: 'OS.battle-strip',
         action:
-          '派发后立即返回工作区，定位「进行中的对战」条，确认 a5HotseatActiveMatchId 卡片并点击折叠/展开；随后打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点，再等待对局完成并返回工作区。',
+          '派发后立即返回工作区，定位「进行中的对战」条，确认 a5HotseatActiveMatchId 卡片立即出现并点击折叠/展开；打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点。对局结束后记录 finishedAt，返回工作区核对「刚完成」卡片；到 finishedAt + 15 分钟后，再等待一次最多 30 秒的轮询，检查是否隐藏空条。',
         expected:
-          '横条只在派发相关区域出现；派发后立即包含本人发起且仍进行中的 a5HotseatActiveMatchId，可折叠；非派发处不出现；对局完成且列表为空后卡片移出并自动隐藏空条。',
+          '横条只在派发相关区域出现；派发后立即包含本人发起且仍进行中的 a5HotseatActiveMatchId，也保留结束未满 15 分钟的「刚完成」对局，可折叠；非派发处不出现。「0 进行 · 1 刚完成」不是空态，横条应保留。finishedAt + 15 分钟后，最多再等 30 秒轮询；仅在没有进行中对局、也没有未过期的「刚完成」卡片时自动隐藏。后台标签页暂停轮询，回到前台后立即刷新。',
         clauseIds: ['U05-C09', 'U05-C09b'],
         versionPins: {
           'U05-C09': 'baseline:U05-C09',

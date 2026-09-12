@@ -12,6 +12,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
 import { useScrollMemory } from '../../lib/scroll'
+import { protectedLoginUrl } from '../../lib/login-return'
 import { BattleStrip } from '../battle-strip'
 import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
@@ -32,9 +33,12 @@ const COMMIT_SHA = (import.meta.env.VITE_COMMIT_SHA as string | undefined) ??
 export function AppShell({ children }: PropsWithChildren) {
   const { account, logout } = useAuth()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
   useScrollMemory()
-  const navigationItems = account?.isAdmin
+  const navigationItems = !account
+    ? navigation.filter((item) => item.to === '/scenarios')
+    : account.isAdmin
     ? [...navigation, { to: '/admin', label: '管理面板', icon: Shield }]
     : navigation
   const contentWidth = 'max-w-[1040px]'
@@ -84,30 +88,43 @@ export function AppShell({ children }: PropsWithChildren) {
             })}
           </nav>
           <div className='ml-auto flex items-center gap-2'>
-            <BellIndicator />
-            <NavLink
-              {...tm('NAV.settings-link')}
-              to='/settings'
-              className={({ isActive }) =>
-                cn(
-                  'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
-                  isActive && 'text-(--foreground)',
-                )}
-            >
-              <UserRound className='h-4 w-4' />
-              <span>{account?.displayName ?? '选手'}</span>
-            </NavLink>
-            <Button
-              {...tm('NAV.logout-button')}
-              data-testid='logout'
-              size='sm'
-              variant='secondary'
-              onClick={() => {
-                void logout().then(() => navigate('/', { replace: true }))
-              }}
-            >
-              退出
-            </Button>
+            {account
+              ? (
+                <>
+                  <BellIndicator />
+                  <NavLink
+                    {...tm('NAV.settings-link')}
+                    to='/settings'
+                    className={({ isActive }) =>
+                      cn(
+                        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                        isActive && 'text-(--foreground)',
+                      )}
+                  >
+                    <UserRound className='h-4 w-4' />
+                    <span>{account?.displayName ?? '选手'}</span>
+                  </NavLink>
+                  <Button
+                    {...tm('NAV.logout-button')}
+                    data-testid='logout'
+                    size='sm'
+                    variant='secondary'
+                    onClick={() => {
+                      void logout().then(() => navigate('/', { replace: true }))
+                    }}
+                  >
+                    退出
+                  </Button>
+                </>
+              )
+              : (
+                <Link
+                  to={protectedLoginUrl(location)}
+                  className='rounded-md px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)'
+                >
+                  登录
+                </Link>
+              )}
           </div>
         </div>
       </header>
@@ -115,7 +132,7 @@ export function AppShell({ children }: PropsWithChildren) {
         className={`mx-auto flex w-full ${contentWidth} flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8`}
       >
         {/* #72 对战条：只在派发处路由出现，空态自动隐藏（组件内自守）。 */}
-        <BattleStrip />
+        {account ? <BattleStrip /> : null}
         {children}
       </main>
       <footer

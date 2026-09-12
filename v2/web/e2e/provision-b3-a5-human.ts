@@ -3,7 +3,7 @@
 // Credentials are written only to an explicitly supplied private file; stdout
 // contains a redacted summary. This tool never changes existing users or slots.
 
-import { adminSession, HttpError, Session, totp } from './http.ts'
+import { adminSession, Session } from './http.ts'
 
 type Side = 'a' | 'b'
 
@@ -119,25 +119,12 @@ async function writePrivate(state: string) {
 }
 
 async function elevatedAdmin() {
-  try {
-    return await adminSession(
-      baseURL,
-      adminEmail,
-      adminPassword,
-      adminTotpSecret,
-    )
-  } catch (error) {
-    if (!(error instanceof HttpError) || error.status !== 401) throw error
-  }
-  const session = new Session(baseURL)
-  await session.call('POST', '/v1/auth/login', {
-    email: adminEmail,
-    password: adminPassword,
-  })
-  await session.call('POST', '/v1/auth/elevate', {
-    code: await totp(adminTotpSecret, Math.floor(Date.now() / 1000) + 30),
-  })
-  return session
+  return await adminSession(
+    baseURL,
+    adminEmail,
+    adminPassword,
+    adminTotpSecret,
+  )
 }
 
 async function signup(role: PrivateRole, code: string) {
