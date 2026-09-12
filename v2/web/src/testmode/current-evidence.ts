@@ -18,21 +18,20 @@ export const CURRENT_EVIDENCE: Readonly<
   'U04-C01': {
     versionPin: 'comment-v2:U04-C01',
     checkedAt: '2026-09-12',
-    scope: '部分覆盖',
+    scope: '当前公开场景已工程核验',
     summary:
-      '游客场景卡与详情访问、“数据积累中”文案已部署，并完成真实接口和浏览器检查。',
-    remaining:
-      '这些证据不覆盖本条全部要求；一句话介绍与 §C2 最小已完成对局数的统计边界，仍需本轮逐场景核验。',
+      '当前5个公开场景的一句话介绍与学科分类已在桌面/手机分别核对；目录与详情的统计展示已对照真实已计分对局核验，最小样本边界由后端接口测试覆盖。',
+    remaining: '本轮真人验收仍需完成，后续场景内容需另行核对。',
     releases: [
       {
-        label: '前端 #175',
-        revision: 'caf86f74aee381579c72b04453fe34e679f805b3',
-        url: 'https://github.com/paideia-ai/axiia-cup/pull/175',
+        label: '前端 #182',
+        revision: '28a5d69cef3707a2dc3e1ce0a6ffdb70dadd4b5c',
+        url: 'https://github.com/paideia-ai/axiia-cup/pull/182',
       },
       {
-        label: '后端 #55',
-        revision: 'e30884710ebb649ebb2f8284c012064ad40b403b',
-        url: 'https://github.com/paideia-ai/axiia-cup-v2/pull/55',
+        label: '后端边界测试 #60',
+        revision: '6c7fa7848621aa5f7280fa7b340c075f11f65eec',
+        url: 'https://github.com/paideia-ai/axiia-cup-v2/pull/60',
       },
     ],
   },

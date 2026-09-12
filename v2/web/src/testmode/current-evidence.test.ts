@@ -20,11 +20,16 @@ describe('current engineering evidence stays separate from the reviewed audit', 
     expect(currentClauseEvidence('unknown-clause')).toBeUndefined()
   })
 
-  it('does not infer full difficulty/statistics acceptance from public browsing proof', () => {
+  it('keeps current-scene engineering proof separate from human acceptance', () => {
     expect(currentClauseEvidence('U04-C02')).toBeUndefined()
-    expect(currentClauseEvidence('U04-C01')?.scope).toBe('部分覆盖')
+    expect(currentClauseEvidence('U04-C01')?.scope).toBe(
+      '当前公开场景已工程核验',
+    )
     expect(currentClauseEvidence('U04-C01')?.remaining).toContain(
-      '最小已完成对局数',
+      '本轮真人验收仍需完成',
+    )
+    expect(currentClauseEvidence('U04-C01')?.remaining).toContain(
+      '后续场景内容需另行核对',
     )
     expect(currentClauseEvidence('U06-C14')?.remaining).toContain('仍待准备')
   })
