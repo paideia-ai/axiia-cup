@@ -655,6 +655,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       '按 fixture 卡登录「A5 人测·锁定热座」：PVP 未解锁，但每日总对战仍有至少 1 场余量；同一场景两侧智能体齐全。',
       '操作前记录 battlesToday、pvpBattlesToday、总配额和 PVP 配额；确保没有其他进行中对局。',
       '打开网络记录和屏幕录制。a5HotseatActiveMatchId 不能预填：S01 派发成功后，把落地 /matches/:id 网址粘贴到本步的运行时记录框。',
+      '执行顺序为 S01 → S03 → S02：派发后立即取证并在对局仍进行中时完成 S03 观战跳转，最后完成 S02 的完局与 15 分钟到期观察；全程使用 S01 的同一场对局，不另开一场只为观测。步骤 ID 与条款 pin 保持原编号。',
     ],
     evidenceRequirements: [
       '提交指定截图、a5HotseatActiveMatchId、配额前后值和去敏后的派发响应。',
@@ -719,6 +720,26 @@ export const B3_A5_JOURNEYS: Journey[] = [
         ],
       },
       {
+        id: 'HV-A5-HOTSEAT-LIFECYCLE-S03',
+        testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
+        links: [
+          {
+            label: '预期观战落点',
+            url: '{{appBaseUrl}}/matches/{{a5HotseatActiveMatchId}}',
+          },
+        ],
+        fixtureRefs: ['a5-hotseat'],
+        route: '/agents/:id/build',
+        marker: 'OS.battle-card',
+        action:
+          '派发后立即返回工作区，确认 a5HotseatActiveMatchId 卡片立即出现，并同时保留 S02 所需的立即出现证据；在该对局仍进行中时点击横条里的卡片，把实际落地与上方「预期观战落点」比较。先完成本步，再执行 S02 的完局与到期等待。',
+        expected:
+          '系统打开可观看的 a5HotseatActiveMatchId 对局视图；本条不要求 A5 内出现分享入口。',
+        clauseIds: ['U05-C10'],
+        versionPins: { 'U05-C10': 'comment-v2:U05-C10' },
+        screenshotEvidence: ['HV-A5-HOTSEAT-LIFECYCLE-S03-watch.png'],
+      },
+      {
         id: 'HV-A5-HOTSEAT-LIFECYCLE-S02',
         testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
         links: [
@@ -732,7 +753,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id/build',
         marker: 'OS.battle-strip',
         action:
-          '派发后立即返回工作区，定位「进行中的对战」条，确认 a5HotseatActiveMatchId 卡片立即出现并点击折叠/展开；打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点。对局结束后记录 finishedAt，返回工作区核对「刚完成」卡片；到 finishedAt + 15 分钟后，再等待一次最多 30 秒的轮询，检查是否隐藏空条。',
+          '先核对 S03 阶段采集的「派发后立即出现」证据；返回工作区，定位「进行中的对战」条并点击折叠/展开；打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点。对局结束后记录 finishedAt，返回工作区核对「刚完成」卡片；到 finishedAt + 15 分钟后，再等待一次最多 30 秒的轮询，检查是否隐藏空条。',
         expected:
           '横条只在派发相关区域出现；派发后立即包含本人发起且仍进行中的 a5HotseatActiveMatchId，也保留结束未满 15 分钟的「刚完成」对局，可折叠；非派发处不出现。「0 进行 · 1 刚完成」不是空态，横条应保留。finishedAt + 15 分钟后，最多再等 30 秒轮询；仅在没有进行中对局、也没有未过期的「刚完成」卡片时自动隐藏。后台标签页暂停轮询，回到前台后立即刷新。',
         clauseIds: ['U05-C09', 'U05-C09b'],
@@ -746,26 +767,6 @@ export const B3_A5_JOURNEYS: Journey[] = [
           'HV-A5-HOTSEAT-LIFECYCLE-S02-absent.png',
           'HV-A5-HOTSEAT-LIFECYCLE-S02-finished-hidden.png',
         ],
-      },
-      {
-        id: 'HV-A5-HOTSEAT-LIFECYCLE-S03',
-        testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
-        links: [
-          {
-            label: '预期观战落点',
-            url: '{{appBaseUrl}}/matches/{{a5HotseatActiveMatchId}}',
-          },
-        ],
-        fixtureRefs: ['a5-hotseat'],
-        route: '/agents/:id/build',
-        marker: 'OS.battle-card',
-        action:
-          '在 a5HotseatActiveMatchId 仍进行中时点击横条里的该对局卡，并把实际落地与上方「预期观战落点」比较。',
-        expected:
-          '系统打开可观看的 a5HotseatActiveMatchId 对局视图；本条不要求 A5 内出现分享入口。',
-        clauseIds: ['U05-C10'],
-        versionPins: { 'U05-C10': 'comment-v2:U05-C10' },
-        screenshotEvidence: ['HV-A5-HOTSEAT-LIFECYCLE-S03-watch.png'],
       },
     ],
   }),
