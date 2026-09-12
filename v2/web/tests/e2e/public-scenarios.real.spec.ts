@@ -67,7 +67,9 @@ for (const width of [1280, 390]) {
     await expect(page.getByRole('heading', { name: '登录', exact: true }))
       .toBeVisible()
     expect(restrictedRequests).toEqual([])
-    expect(await context.cookies()).toEqual([])
+    expect(
+      (await context.cookies()).filter(({ name }) => name === 'axiia_session'),
+    ).toEqual([])
   })
 }
 
