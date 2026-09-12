@@ -78,6 +78,13 @@ async function main() { …; return { winner, scoreA, scoreB, reasoning } }
   lanes.
 - `main`'s return value finishes the match (`winner` is `'a'`/`'b'`); a throw
   fails it. Scoring is **plain JS in the script** — there is no LLM scorer.
+- Declare public scoring as optional
+  `meta.scoring: { summary, items: [{ id,
+  label, points }], notes? }`. Items
+  need unique nonblank IDs and labels and finite numeric points; `notes` is an
+  optional string array. Reference the same constants used by the scoring code
+  so the public detail page reads the actual values. Include only rules intended
+  for public display.
 
 ## Injected API (the whole surface)
 
