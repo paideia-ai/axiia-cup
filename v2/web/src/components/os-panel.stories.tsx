@@ -179,7 +179,7 @@ const dispatchWallet: RewardsResponse = {
   balance: 100,
   battleCost: 100,
   dailyAllowance: 2000,
-  dailyRunsPerScenario: 5,
+  dailyRuns: 20,
   pveWinRefundPercent: 50,
   pvpWinRefundPercent: 75,
   pointsPerYuan: 100,
@@ -201,6 +201,16 @@ export const DispatchBalanceBoundary: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/rewards/quote',
+        () =>
+          HttpResponse.json({
+            cost: 100,
+            perBattleCost: 100,
+            repeatRoleSurcharge: false,
+            battleCosts: [100],
+          }),
+      ),
       http.get('/v1/rewards', () =>
         HttpResponse.json({
           ...dispatchWallet,
@@ -218,14 +228,14 @@ export const DispatchBalanceBoundary: Story = {
     ],
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+    const canvas = within(canvasElement.ownerDocument.body)
     const dispatch = await canvas.findByRole('button', { name: '发起对战' })
     await expect(await canvas.findByText(/余额 100/)).toBeVisible()
     await userEvent.click(
       canvas.getByRole('combobox', { name: '选择预设对手' }),
     )
     await userEvent.click(
-      within(canvasElement.ownerDocument.body).getByRole('option', {
+      await within(canvasElement.ownerDocument.body).findByRole('option', {
         name: '稳健守旧派',
       }),
     )

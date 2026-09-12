@@ -12,6 +12,8 @@ identifies a processed game sample from an unofficial Balatro source mirror.
 Slay the Spire and Balatro remain references for tactile timing, not sources of
 shipped audio.
 
-The Storybook `v4/Sound feedback` story provides all five auditions. Unit and
-browser tests verify event policy, controls and buffer properties; headphone and
-phone-speaker listening are separate subjective validation.
+The Storybook `v4/Sound feedback` story provides all nine auditions. Typing and
+deletion add two original quiet taps; hover/click retain the demo’s clear tonal
+family. There is no looping background music. Unit and browser tests verify
+event policy, controls and buffer properties; headphone and phone-speaker
+listening are separate subjective validation.

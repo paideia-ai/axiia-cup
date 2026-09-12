@@ -27,8 +27,8 @@ import type {
 } from '../api/types'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { BattleCostNotice } from './rewards'
-import { useInsufficientPoints } from '../context/rewards'
-import { playSound, unlockAudio } from '../lib/sound'
+import { useBattleQuote } from '../context/rewards'
+import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { trackSoundMatch } from '../lib/match-sound'
 import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -100,7 +100,13 @@ export function OsPanel({
   const [error, setError] = useState<string | null>(null)
   // 受控 tab：锁定态的「去练习该侧」要能把玩家切回 NPC 练习页签。
   const [tab, setTab] = useState('pve')
-  const insufficientPoints = useInsufficientPoints(tab === 'pvp' ? 2 : 1)
+  const quoteState = useBattleQuote(
+    scenarioID,
+    side,
+    tab === 'pvp' ? 'challenge' : tab,
+    open,
+  )
+  const insufficientPoints = quoteState.blocked
   // null 双关「未加载」与「加载失败」：两种情况都按无 config 降级渲染。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
 
@@ -212,6 +218,7 @@ export function OsPanel({
       return
     }
     unlockAudio()
+    playSound('click')
     setDispatching(true)
     setError(null)
     try {
@@ -236,6 +243,7 @@ export function OsPanel({
       fieldedVersionID == null || opponentAgentID == null || insufficientPoints
     ) return
     unlockAudio()
+    playSound('click')
     setDispatching(true)
     setError(null)
     try {
@@ -386,6 +394,7 @@ export function OsPanel({
       return
     }
     unlockAudio()
+    playSound('click')
     if (opponent.pinnedVersionID != null) {
       const currentID = Number(idInputRef.current.trim())
       if (
@@ -552,7 +561,7 @@ export function OsPanel({
             </div>
 
             <div className='px-5 py-4'>
-              <BattleCostNotice kind={tab} />
+              <BattleCostNotice kind={tab} quoteState={quoteState} />
               {/* #47 被阻挡态：提前告知；按钮仍可点，点了由 trials_blocked 拒绝 */}
               {cfg?.trialsBlocked
                 ? (
@@ -628,6 +637,8 @@ export function OsPanel({
                         <Button
                           data-testid='dispatch-match'
                           onClick={() => void dispatchPVE()}
+                          onPointerEnter={playButtonHover}
+                          data-spec='U19-C07 U19-C19 U19-C20'
                           {...tm('OS.pve-dispatch-button')}
                           disabled={dispatching || insufficientPoints ||
                             presetKey == null ||
@@ -729,6 +740,8 @@ export function OsPanel({
                         </p>
                         <Button
                           onClick={() => void dispatchHotseat()}
+                          onPointerEnter={playButtonHover}
+                          data-spec='U19-C07 U19-C19 U19-C20'
                           {...tm('OS.hotseat-dispatch-button')}
                           disabled={dispatching || insufficientPoints ||
                             opponentAgentID == null ||
@@ -993,6 +1006,8 @@ export function OsPanel({
                                               void submitChallenge({
                                                 accountID: rival.accountID,
                                               })}
+                                            onPointerEnter={playButtonHover}
+                                            data-spec='U19-C07 U19-C19 U19-C20'
                                             {...tm('OS.challenge-button')}
                                           >
                                             {dispatching
@@ -1080,6 +1095,8 @@ export function OsPanel({
                                                   pinnedVersionID:
                                                     idRef.versionID,
                                                 })}
+                                              onPointerEnter={playButtonHover}
+                                              data-spec='U19-C07 U19-C19 U19-C20'
                                               {...tm('OS.challenge-button')}
                                             >
                                               {dispatching
@@ -1211,7 +1228,7 @@ export function OsPanel({
             </div>
 
             {/* 面板脚注：三类配额中的两条日额（#52/#46），数字来自 /v1/config */}
-            {cfg
+            {cfg && (cfg.dailyBattleLimit > 0 || cfg.pvpDailyLimit > 0)
               ? (
                 <div
                   className='border-t border-(--border-soft) px-5 py-3 text-xs text-(--foreground-muted)'

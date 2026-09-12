@@ -190,7 +190,7 @@ const expressWallet: RewardsResponse = {
   balance: 99,
   battleCost: 100,
   dailyAllowance: 2000,
-  dailyRunsPerScenario: 5,
+  dailyRuns: 20,
   pveWinRefundPercent: 50,
   pvpWinRefundPercent: 75,
   pointsPerYuan: 100,
@@ -213,6 +213,16 @@ export const ExpressBalanceBoundary: Story = {
     msw: [
       ...handlers(v1.prompt, () => HttpResponse.json({ versions: [] })),
       http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/rewards/quote',
+        () =>
+          HttpResponse.json({
+            cost: 100,
+            perBattleCost: 100,
+            repeatRoleSurcharge: false,
+            battleCosts: [100],
+          }),
+      ),
       http.get('/v1/rewards', () =>
         HttpResponse.json({
           ...expressWallet,

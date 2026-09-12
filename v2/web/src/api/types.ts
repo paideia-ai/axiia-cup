@@ -12,12 +12,19 @@ export interface RewardsResponse {
   balance: number
   dailyAllowance: number
   battleCost: number
-  dailyRunsPerScenario: number
+  dailyRuns: number
   pveWinRefundPercent: number
   pvpWinRefundPercent: number
   pointsPerYuan: number
   nextGrantAt: number
   claimableRewards: { matchID: number; points: number; kind: 'pve' | 'pvp' }[]
+}
+
+export interface RewardQuoteResponse {
+  cost: number
+  perBattleCost: number
+  repeatRoleSurcharge: boolean
+  battleCosts: number[]
 }
 
 export interface MatchRewardResponse {

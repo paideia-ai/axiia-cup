@@ -53,7 +53,7 @@ export function RewardsPage() {
                     <dd>{wallet.dailyAllowance} 积分</dd>
                   </div>
                   <div className='flex justify-between gap-3'>
-                    <dt>每场消耗</dt>
+                    <dt>每场基础消耗</dt>
                     <dd>{wallet.battleCost} 积分</dd>
                   </div>
                   <div className='flex justify-between gap-3'>
@@ -67,13 +67,13 @@ export function RewardsPage() {
                 </dl>
                 <p className='text-xs leading-relaxed text-(--foreground-subtle)'>
                   北京时间每日 00:00
-                  后首次访问补充当日积分，余额保留；未访问日不补发。每日额度按每个在线场景
+                  后首次访问补充当日积分，余额保留；未访问日不补发。每日额度相当于
                   {' '}
-                  {wallet.dailyRunsPerScenario}{' '}
-                  场计算，可跨场景使用。双场约战消耗两场积分，胜利返还由付费发起人逐场领取。自打不返还胜利积分，运行失败自动退回该场消耗。
+                  {wallet.dailyRuns}{' '}
+                  场基础消耗，可跨场景使用。尝试不同角色，可以让积分玩得更久；每次出战前显示本次消耗。双场约战按两场计费，胜利返还由付费发起人逐场领取。自打不返还胜利积分，运行失败自动退回该场消耗。
                 </p>
                 <p className='text-xs text-(--foreground-subtle)'>
-                  积分仅用于平台对战，不支持购买、转账或提现。原有每日场次与并发上限仍适用。
+                  积分仅用于平台对战，不支持购买、转账或提现。出战次数由积分决定，并发上限与玩家约战解锁条件仍适用。
                 </p>
               </CardContent>
             </Card>

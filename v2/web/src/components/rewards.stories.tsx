@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { useState } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 
 import type { MatchRewardResponse, RewardsResponse } from '../api/types'
-import { RewardsProvider } from '../context/rewards'
+import { RewardsProvider, useBattleQuote } from '../context/rewards'
 import { RewardsPage } from '../pages/rewards'
 import { BattleCostNotice, PointsIndicator, RewardClaimCard } from './rewards'
 import { Button } from './ui/button'
@@ -14,7 +14,7 @@ const wallet: RewardsResponse = {
   balance: 1900,
   battleCost: 100,
   dailyAllowance: 2000,
-  dailyRunsPerScenario: 5,
+  dailyRuns: 20,
   pveWinRefundPercent: 50,
   pvpWinRefundPercent: 75,
   pointsPerYuan: 100,
@@ -49,6 +49,68 @@ const meta = { title: 'v4/Rewards', component: Surface } satisfies Meta<
 >
 export default meta
 type Story = StoryObj<typeof meta>
+
+function RoleQuoteSurface() {
+  const [side, setSide] = useState('a')
+  const quoteState = useBattleQuote('shangyang-court', side, 'pve')
+  return (
+    <div>
+      <p>当前角色：{side === 'a' ? '商鞅' : '甘龙'}</p>
+      <BattleCostNotice quoteState={quoteState} />
+      <Button disabled={quoteState.blocked}>发起对战</Button>
+      <Button onClick={() => setSide(side === 'a' ? 'b' : 'a')}>
+        切换角色
+      </Button>
+    </div>
+  )
+}
+
+// U18-C28–C31: a lower balance can afford a different role. An unresolved
+// quote never leaves the preceding role's price enabled during a switch.
+export const RoleVarietyQuote: Story = {
+  render: () => (
+    <MemoryRouter>
+      <RewardsProvider>
+        <RoleQuoteSurface />
+      </RewardsProvider>
+    </MemoryRouter>
+  ),
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/rewards',
+        () => HttpResponse.json({ ...wallet, balance: 150 }),
+      ),
+      http.get('/v1/rewards/quote', async ({ request }) => {
+        const repeated = new URL(request.url).searchParams.get('side') === 'a'
+        await delay(100)
+        return HttpResponse.json({
+          cost: repeated ? 200 : 100,
+          perBattleCost: 100,
+          repeatRoleSurcharge: repeated,
+          battleCosts: [repeated ? 200 : 100],
+        })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByText('200 积分')).toBeVisible()
+    await expect(canvas.getByText('试试其他角色，让下一场消耗更少。'))
+      .toBeVisible()
+    await expect(canvas.getByRole('button', { name: '发起对战' }))
+      .toBeDisabled()
+    await userEvent.click(canvas.getByRole('button', { name: '切换角色' }))
+    await expect(await canvas.findByText('100 积分')).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+    await userEvent.click(canvas.getByRole('button', { name: '切换角色' }))
+    await expect(canvas.getByRole('button', { name: '发起对战' }))
+      .toBeDisabled()
+    await expect(await canvas.findByText('200 积分')).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '发起对战' }))
+      .toBeDisabled()
+  },
+}
 
 function handlers(
   {

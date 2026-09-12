@@ -69,6 +69,10 @@ export const SOUND_LABELS: Record<SoundCue, string> = {
   output: '模型回复',
   finish: '对战完成',
   reward: '领取奖励',
+  type: '输入文字',
+  delete: '删除文字',
+  hover: '按钮悬停',
+  click: '按钮点击',
 }
 
 export function SoundControls() {
@@ -88,7 +92,7 @@ export function SoundControls() {
           音效
         </h2>
         <p className='mt-1 text-xs leading-relaxed text-(--foreground-muted)'>
-          保存、出战、完局和领取奖励时轻响一下。仅在当前窗口播放，设置保存在此浏览器。
+          编写策略、操作关键按钮、保存、出战、完局和领奖时给予声音反馈。仅在当前窗口播放，设置保存在此浏览器。
         </p>
       </div>
       <label className='flex items-center justify-between gap-3 text-sm'>

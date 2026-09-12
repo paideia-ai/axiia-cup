@@ -33,6 +33,7 @@ import type {
   PhoneVerifyRequest,
   PublicAgentResponse,
   RenameAgentRequest,
+  RewardQuoteResponse,
   RewardsResponse,
   SaveVersionRequest,
   ScenarioDetail,
@@ -287,6 +288,11 @@ export const challenges = {
 
 export const rewards = {
   get: () => request<RewardsResponse>('GET', '/rewards'),
+  quote: (scenarioID: string, side: string, kind: string) =>
+    request<RewardQuoteResponse>(
+      'GET',
+      `/rewards/quote?${new URLSearchParams({ scenarioID, side, kind })}`,
+    ),
   match: (matchID: number) =>
     request<MatchRewardResponse>('GET', `/rewards/matches/${matchID}`),
   claim: (matchID: number) =>

@@ -70,6 +70,9 @@ jobs:
       - name: Stateful UI contracts
         run: deno task test:storybook
 
+      - name: Rewards and sound Gherkin browser journeys
+        run: deno task test:e2e:rewards
+
       - name: Build
         run: deno task build
 

@@ -9,13 +9,18 @@ import {
 } from 'react'
 
 import { ApiError, rewards } from '../api/client'
-import type { ClaimRewardResponse, RewardsResponse } from '../api/types'
+import type {
+  ClaimRewardResponse,
+  RewardQuoteResponse,
+  RewardsResponse,
+} from '../api/types'
 import { REWARDS_CHANGED } from '../lib/reward-events'
 
 interface RewardsState {
   wallet: RewardsResponse | null
   error: string | null
   loading: boolean
+  unavailable: boolean
   refresh: () => void
   applyClaim: (claim: ClaimRewardResponse) => void
 }
@@ -27,6 +32,7 @@ export function RewardsProvider({ children }: PropsWithChildren) {
   const [wallet, setWallet] = useState<RewardsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [unavailable, setUnavailable] = useState(false)
   const generation = useRef(0)
   const applyClaim = useCallback((claim: ClaimRewardResponse) => {
     generation.current++
@@ -49,12 +55,14 @@ export function RewardsProvider({ children }: PropsWithChildren) {
       if (current !== generation.current) return
       setWallet(value)
       setError(null)
+      setUnavailable(false)
     }).catch((cause: unknown) => {
       if (current !== generation.current) return
+      const unsupported = cause instanceof ApiError &&
+        [404, 405].includes(cause.status)
+      setUnavailable(unsupported)
       setError(
-        cause instanceof ApiError && [404, 405].includes(cause.status)
-          ? '积分功能暂未开放'
-          : '积分更新失败，请重试',
+        unsupported ? '积分功能暂未开放' : '积分更新失败，请重试',
       )
     }).finally(() => {
       if (current === generation.current) setLoading(false)
@@ -82,7 +90,7 @@ export function RewardsProvider({ children }: PropsWithChildren) {
 
   return (
     <RewardsContext.Provider
-      value={{ wallet, error, loading, refresh, applyClaim }}
+      value={{ wallet, error, loading, unavailable, refresh, applyClaim }}
     >
       {children}
     </RewardsContext.Provider>
@@ -93,8 +101,67 @@ export function useRewards() {
   return useContext(RewardsContext)
 }
 
-export function useInsufficientPoints(battles = 1) {
-  const state = useRewards()
-  return state?.wallet != null && !state.error &&
-    state.wallet.balance < state.wallet.battleCost * battles
+export interface BattleQuoteState {
+  quote: RewardQuoteResponse | null
+  loading: boolean
+  error: boolean
+  blocked: boolean
+  retry: () => void
+}
+
+// Costs depend on the payer's recent roles. Never infer a surcharge locally or
+// reuse the previous role's quote while an updated request is in flight.
+export function useBattleQuote(
+  scenarioID: string,
+  side: string,
+  kind: string,
+  enabled = true,
+): BattleQuoteState {
+  const rewardsState = useRewards()
+  const wallet = rewardsState?.wallet
+  const awaitingWallet = enabled && rewardsState?.loading === true &&
+    wallet == null
+  const walletFailure = enabled && wallet == null &&
+    rewardsState?.error != null && !rewardsState.unavailable
+  const active = enabled && wallet != null && scenarioID !== ''
+  const key = `${scenarioID}:${side}:${kind}`
+  const [result, setResult] = useState<
+    {
+      key: string
+      wallet: RewardsResponse
+      quote: RewardQuoteResponse | null
+      error: boolean
+    } | null
+  >(null)
+  const [nonce, setNonce] = useState(0)
+  useEffect(() => {
+    if (!active) return
+    let alive = true
+    setResult(null)
+    void rewards.quote(scenarioID, side, kind).then((quote) => {
+      if (alive && wallet) setResult({ key, wallet, quote, error: false })
+    }).catch(() => {
+      if (alive && wallet) setResult({ key, wallet, quote: null, error: true })
+    })
+    return () => {
+      alive = false
+    }
+  }, [active, scenarioID, side, kind, key, wallet, nonce])
+  const current = result?.key === key && result.wallet === wallet
+    ? result
+    : null
+  const loading = awaitingWallet || (active && current == null)
+  const error = walletFailure || (active && current?.error === true)
+  const quote = active ? current?.quote ?? null : null
+  return {
+    quote,
+    loading,
+    error,
+    blocked: awaitingWallet || walletFailure || (active &&
+      (loading || error || (quote != null && wallet!.balance < quote.cost))),
+    retry: () => {
+      if (wallet == null) rewardsState?.refresh()
+      else setNonce((value) => value + 1)
+    },
+  }
 }

@@ -39,6 +39,10 @@ describe('original sound buffers', () => {
           'output',
           'finish',
           'reward',
+          'type',
+          'delete',
+          'hover',
+          'click',
         ] as SoundCue[]
       ) {
         const data = renderSound(cue, rate)
@@ -55,13 +59,23 @@ describe('original sound buffers', () => {
         }
         expect(finite).toBe(true)
         expect(peak).toBeLessThanOrEqual(0.851)
-        expect(energy / data.length).toBeGreaterThan(0.0005)
+        expect(energy / data.length).toBeGreaterThan(0.0001)
       }
     }
   })
 })
 
 describe('sound event policy', () => {
+  it('shares a 50ms editing limit and a separate 250ms hover limit', () => {
+    const policy = new SoundPolicy()
+    expect(policy.accept('type', '1', 0)).toBe(true)
+    expect(policy.accept('delete', '2', 20)).toBe(false)
+    expect(policy.accept('delete', '3', 50)).toBe(true)
+    expect(policy.accept('hover', '4', 51)).toBe(true)
+    expect(policy.accept('hover', '5', 300)).toBe(false)
+    expect(policy.accept('hover', '6', 301)).toBe(true)
+    expect(policy.accept('click', '7', 301)).toBe(true)
+  })
   it('consumes repeated and throttled outputs permanently', () => {
     const policy = new SoundPolicy()
     expect(policy.accept('output', '1:1', 0)).toBe(true)
@@ -146,6 +160,21 @@ describe('playback lifecycle', () => {
     engine.unlock()
     expect(engine.play('save', 'before-gesture')).toBe(false)
     expect(engine.play('save', 'new-save')).toBe(true)
+  })
+
+  it('hover never unlocks audio, and a click stops the quieter hover cue', () => {
+    const engine = new SoundEngine()
+    expect(engine.play('hover', 'first-hover')).toBe(false)
+    expect(context.createGain).not.toHaveBeenCalled()
+    engine.unlock()
+    // A second engine has a fresh throttle clock; it represents an already
+    // unlocked interaction surface independently of the blocked initial hover.
+    const active = new SoundEngine()
+    active.unlock()
+    expect(active.play('hover', 'active-hover')).toBe(true)
+    expect(active.play('click', 'button-press')).toBe(true)
+    expect(sources[0].stop).toHaveBeenCalledOnce()
+    expect(sources[1].start).toHaveBeenCalledWith(0)
   })
 
   it('consumes muted and background events with no unmute/focus backlog', () => {

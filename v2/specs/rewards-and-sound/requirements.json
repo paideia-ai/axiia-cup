@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "title": "积分奖励与交互音效 · v4 扩展规格",
   "createdAt": "2026-09-12",
   "canonical": true,
@@ -56,6 +56,46 @@
         "spec-v4/docs/SPEC_WRITING_REVIEW.md"
       ],
       "note": "JSON 为规范真相源；稳定条款 ID；五个独立状态维度；EARS 规范句与解释/证据分离。"
+    },
+    {
+      "id": "minutes-sep11",
+      "kind": "product-meeting-transcript",
+      "title": "会议原始逐字稿已归档（2026-09-11）",
+      "url": "https://stoooges.feishu.cn/docx/BKZJdRj5boTWZsxCKGncpT0rnEc",
+      "minutesToken": "obcnyowo5qn9a3yc3638ybc2",
+      "meetingStartedAt": "2026-09-11T19:32:34+08:00",
+      "duration": "24:17",
+      "archiveMessageID": "om_x100b650b58fe50a0c426b87c8d1e6ea",
+      "archiveMarker": "[lark-minutes-sync:obcnyowo5qn9a3yc3638ybc2]",
+      "reviewed": "complete-transcript",
+      "ranges": [
+        {
+          "from": "00:11:57",
+          "to": "00:13:22",
+          "topic": "周期积分代替硬编码局数，约 20 局全局额度，12/24 小时及确切金额待定"
+        },
+        {
+          "from": "00:13:47",
+          "to": "00:17:12",
+          "topic": "多角色鼓励、PvE 也适用的连续角色加价；5 次后第 6 次双倍为示例"
+        },
+        {
+          "from": "00:17:27",
+          "to": "00:19:48",
+          "topic": "输入/删除、关键按钮 hover/click、完成通知和领取奖励音"
+        },
+        {
+          "from": "00:20:52",
+          "to": "00:23:09",
+          "topic": "全局背景音乐讨论并决定先不上"
+        },
+        {
+          "from": "00:23:16",
+          "to": "00:23:48",
+          "topic": "音效原型反馈与采用确认"
+        }
+      ],
+      "note": "20 局、24 小时、5 次阈值、2 倍倍率为本次选用默认，不能当作会议最终定值；首胜奖没有形成确定规则。"
     }
   ],
   "units": [
@@ -63,13 +103,13 @@
       "id": "U18",
       "title": "积分与胜利返还",
       "anchor": "spec-rewards",
-      "clauseCount": 27
+      "clauseCount": 33
     },
     {
       "id": "U19",
       "title": "交互音效",
       "anchor": "spec-sound",
-      "clauseCount": 16
+      "clauseCount": 21
     }
   ],
   "clauses": [
@@ -105,15 +145,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "concurrentReservationCannotOverspendAndChallengesChargeBothOrNeither",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -122,13 +182,20 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C02",
       "unit": "U18",
-      "version": "v1",
-      "title": "每日额度计算",
+      "version": "v2",
+      "title": "全局周期额度计算",
       "kind": "default",
       "strength": "must",
       "scope": "v2",
@@ -136,13 +203,161 @@
         "spec-rewards",
         "spec-u18-c02"
       ],
-      "canonical": "当用户当天首次触发积分发放时，系统必须按当前可用场景数 × 每场景 5 局 × 每局 100 积分计算当天额度。",
-      "context": "每场景约 5 次来自 Keso；固定价格为实现选择。",
-      "consequence": "已经发放的当天额度不随之后的场景数变化重新计算。",
-      "compliant": "4 个可用场景时发放 2000 积分。",
-      "violation": "因同日新增一个场景又发放完整的第二笔每日额度。",
+      "canonical": "当用户当前周期首次触发积分发放时，系统必须发放 dailyRuns × 基础单局价格的全局额度，本次默认 dailyRuns=20、基础单局价格=100，不乘场景数量。",
+      "context": "会议 12:02–13:22 提出全局约 20 局的周期积分并留待确定金额；替代初稿每场景 5 局。",
+      "consequence": "默认每周期 2000 积分，跨场景共享；新增或下线场景不改变额度。",
+      "compliant": "1 个场景与 6 个场景的用户都获当前周期 2000 分。",
+      "violation": "6 个场景时发放 6×5×100 分。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [
+        "server-policy-configuration"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R01"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "sixthRoleIsPricedHigherAndSwitchingOrANewDayResetsTheStreak",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "直接验证默认全局 2000 及周期策略；无单独场景数量变化测试。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C02",
+          "unit": "U18",
+          "version": "v1",
+          "title": "每日额度计算",
+          "kind": "default",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c02"
+          ],
+          "canonical": "当用户当天首次触发积分发放时，系统必须按当前可用场景数 × 每场景 5 局 × 每局 100 积分计算当天额度。",
+          "context": "每场景约 5 次来自 Keso；固定价格为实现选择。",
+          "consequence": "已经发放的当天额度不随之后的场景数变化重新计算。",
+          "compliant": "4 个可用场景时发放 2000 积分。",
+          "violation": "因同日新增一个场景又发放完整的第二笔每日额度。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-01"
+          ],
+          "overridable_by": [
+            "future-reviewed-configuration-change"
+          ],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R01"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C03",
+      "unit": "U18",
+      "version": "v2",
+      "title": "本次周期边界默认",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c03"
+      ],
+      "canonical": "当系统判定当前积分周期及下次发放时间时，系统必须按本次采用的 Asia/Shanghai 自然日午夜边界计算。",
+      "context": "会议讨论 12 或 24 小时且未定值；本次选择 24 小时并沿用北京时间自然日。",
+      "consequence": "服务端负责周期；客户端时区不影响发放或角色连续计数。",
+      "compliant": "UTC 16:00 进入下一个北京时间自然日。",
+      "violation": "用户修改设备时区后获得第二份同日额度。",
+      "source_refs": [
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
         "RS-01"
@@ -152,72 +367,41 @@
       ],
       "supersedes": [],
       "acceptance": [
-        "AC-R01"
-      ],
-      "code_paths": [],
-      "conformance": {
-        "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
-        "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
-        },
-        "human": {
-          "state": "untested",
-          "latest": null,
-          "records": []
-        },
-        "freshness": "unknown",
-        "bugs": []
-      }
-    },
-    {
-      "id": "U18-C03",
-      "unit": "U18",
-      "version": "v1",
-      "title": "日历边界",
-      "kind": "rule",
-      "strength": "must",
-      "scope": "v2",
-      "anchors": [
-        "spec-rewards",
-        "spec-u18-c03"
-      ],
-      "canonical": "当系统确定发放日期及下次发放时间时，系统必须使用 Asia/Shanghai 自然日的午夜作为边界。",
-      "context": "明确用户可预期的切日时刻。",
-      "consequence": "日期判定由服务端决定。",
-      "compliant": "UTC 16:00 进入下一个北京时间自然日。",
-      "violation": "用户修改设备时区后获得第二份同日额度。",
-      "source_refs": [
-        "lark-rewards"
-      ],
-      "decisions": [
-        "RS-01"
-      ],
-      "overridable_by": [],
-      "supersedes": [],
-      "acceptance": [
         "AC-R02"
       ],
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "currentDayGrantIsIdempotentAndDoesNotBackfillMissedDays",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -226,6 +410,68 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C03",
+          "unit": "U18",
+          "version": "v1",
+          "title": "日历边界",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c03"
+          ],
+          "canonical": "当系统确定发放日期及下次发放时间时，系统必须使用 Asia/Shanghai 自然日的午夜作为边界。",
+          "context": "明确用户可预期的切日时刻。",
+          "consequence": "日期判定由服务端决定。",
+          "compliant": "UTC 16:00 进入下一个北京时间自然日。",
+          "violation": "用户修改设备时区后获得第二份同日额度。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-01"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R02"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -260,15 +506,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "currentDayGrantIsIdempotentAndDoesNotBackfillMissedDays",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "concurrentReservationCannotOverspendAndChallengesChargeBothOrNeither",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -277,6 +552,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -311,15 +593,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "currentDayGrantIsIdempotentAndDoesNotBackfillMissedDays",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -328,6 +630,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -362,15 +671,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "currentDayGrantIsIdempotentAndDoesNotBackfillMissedDays",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -379,13 +708,20 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C07",
       "unit": "U18",
-      "version": "v1",
-      "title": "默认单局价格",
+      "version": "v2",
+      "title": "基础单局价格",
       "kind": "default",
       "strength": "must",
       "scope": "v2",
@@ -393,19 +729,21 @@
         "spec-rewards",
         "spec-u18-c07"
       ],
-      "canonical": "当玩家发起一场普通 PvE、PvP 或自我对战时，系统必须以每局 100 积分作为本次版本的默认费用。",
-      "context": "固定值是本次实现选择，不是 Keso 确认的价格。",
-      "consequence": "自动锦标赛对局不套用玩家开局费用。",
-      "compliant": "两局挑战显示总费用 200。",
-      "violation": "同一普通对局因客户端传入金额只扣 1 分。",
+      "canonical": "当系统计算玩家 PvE、PvP 或自我对战的费用时，系统必须使用默认 100 积分作为基础单局价格，并按当前角色连续规则决定实际费用。",
+      "context": "100 为基础价实施默认；会议接受重复角色加价方向。",
+      "consequence": "实际单局费用可以高于基础价，客户端必须读取角色报价；自动锦标赛不套用玩家开局费用。",
+      "compliant": "前 5 次同角色费用 100，第 6 次同角色为 200。",
+      "violation": "无视连续角色记录，所有单局永远扣 100。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
-        "RS-01"
+        "RS-01",
+        "RS-06"
       ],
       "overridable_by": [
-        "future-reviewed-configuration-change"
+        "server-policy-configuration"
       ],
       "supersedes": [],
       "acceptance": [
@@ -414,16 +752,36 @@
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "quoteValidatesInputsAndTheDispatchRepricesAStaleQuote",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -432,12 +790,76 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C07",
+          "unit": "U18",
+          "version": "v1",
+          "title": "默认单局价格",
+          "kind": "default",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c07"
+          ],
+          "canonical": "当玩家发起一场普通 PvE、PvP 或自我对战时，系统必须以每局 100 积分作为本次版本的默认费用。",
+          "context": "固定值是本次实现选择，不是 Keso 确认的价格。",
+          "consequence": "自动锦标赛对局不套用玩家开局费用。",
+          "compliant": "两局挑战显示总费用 200。",
+          "violation": "同一普通对局因客户端传入金额只扣 1 分。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-01"
+          ],
+          "overridable_by": [
+            "future-reviewed-configuration-change"
+          ],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R03"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C08",
       "unit": "U18",
-      "version": "v1",
+      "version": "v2",
       "title": "对局经济规则快照",
       "kind": "invariant",
       "strength": "must",
@@ -446,16 +868,18 @@
         "spec-rewards",
         "spec-u18-c08"
       ],
-      "canonical": "当系统预留对局费用时，系统必须保存该局实际扣款及适用的返还比例供后续结算使用。",
-      "context": "历史权益不能受未来默认值修改影响。",
-      "consequence": "退款使用原始扣款，奖励使用原始比例。",
-      "compliant": "已按 100 分和 50% 开局，后来涨价仍可领 50。",
-      "violation": "开局后价格升为 200，旧局奖励变成 100。",
+      "canonical": "当系统预留对局费用时，系统必须保存该局包含角色加价的实际扣款及由当时返还比例计算的胜利返还金额快照供后续结算使用。",
+      "context": "动态角色报价与后续配置不能改变已产生的权益。",
+      "consequence": "失败退实际费用；胜利返还按本局实际费用固定，不被后续切换角色或政策变动重算。",
+      "compliant": "加价 PvE 扣 200 时固定可返 100，之后切换角色仍返 100。",
+      "violation": "加价局只按基础费用退款，或事后把已固定奖励降为 50。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
-        "RS-03"
+        "RS-03",
+        "RS-06"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -465,16 +889,45 @@
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "policyIsFrozenAtDispatchAndLossesDrawsHotseatAndUnpaidMatchesDoNotEarn",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "refundedRunsDoNotCountAndAlreadyChargedPricesRemainFrozen",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -483,6 +936,68 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C08",
+          "unit": "U18",
+          "version": "v1",
+          "title": "对局经济规则快照",
+          "kind": "invariant",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c08"
+          ],
+          "canonical": "当系统预留对局费用时，系统必须保存该局实际扣款及适用的返还比例供后续结算使用。",
+          "context": "历史权益不能受未来默认值修改影响。",
+          "consequence": "退款使用原始扣款，奖励使用原始比例。",
+          "compliant": "已按 100 分和 50% 开局，后来涨价仍可领 50。",
+          "violation": "开局后价格升为 200，旧局奖励变成 100。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-03"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R06"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -517,15 +1032,53 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "everyPublicDispatchPathConsumesPointsAndRejectsInsufficientBalance",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "hotseatAndChallengeBindChargesBeforeRunning",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "gateLockRefusesBeforeReservingPoints",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "覆盖真实派发绑定和 gate 拒绝；未列举所有无效输入。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -534,6 +1087,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -568,15 +1128,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "everyPublicDispatchPathConsumesPointsAndRejectsInsufficientBalance",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -585,12 +1165,19 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C11",
       "unit": "U18",
-      "version": "v1",
+      "version": "v2",
       "title": "两局挑战整体预留",
       "kind": "invariant",
       "strength": "must",
@@ -599,16 +1186,18 @@
         "spec-rewards",
         "spec-u18-c11"
       ],
-      "canonical": "当系统接受包含两局的挑战时，系统必须在开始任何一局前原子预留两局总费用。",
-      "context": "角色互换挑战包含两份模型成本。",
-      "consequence": "只够一局的余额不能先跑一局。",
-      "compliant": "余额 199 时 200 分挑战不创建可运行的第一局。",
-      "violation": "第一局开跑之后才发现第二局付不起。",
+      "canonical": "当系统接受包含两局的挑战时，系统必须按发起人 a 再 b 的角色顺序计算两局实际费用，并在开始任何一局前原子预留其总和。",
+      "context": "两局均有成本，连续角色规则可能使第一局加价；第二局换侧。",
+      "consequence": "只够一部分实际总价不能先跑第一局。",
+      "compliant": "已连续 5 次 a 时挑战报价 [200,100]，余额 299 全部拒绝。",
+      "violation": "按基础价 100×2 预留后仍启动需 300 分的挑战。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
-        "RS-03"
+        "RS-03",
+        "RS-06"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -618,16 +1207,54 @@
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/ChallengeTests.swift",
+              "title": "pairPointBudgetIsAllOrNothing",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/ChallengeTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "sixthRoleIsPricedHigherAndSwitchingOrANewDayResetsTheStreak",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "concurrentReservationCannotOverspendAndChallengesChargeBothOrNeither",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "原子两局预算和 [200,100] 动态报价分别被验证；没有单独真实 HTTP 299/300 加价挑战案例。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -636,6 +1263,68 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C11",
+          "unit": "U18",
+          "version": "v1",
+          "title": "两局挑战整体预留",
+          "kind": "invariant",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c11"
+          ],
+          "canonical": "当系统接受包含两局的挑战时，系统必须在开始任何一局前原子预留两局总费用。",
+          "context": "角色互换挑战包含两份模型成本。",
+          "consequence": "只够一局的余额不能先跑一局。",
+          "compliant": "余额 199 时 200 分挑战不创建可运行的第一局。",
+          "violation": "第一局开跑之后才发现第二局付不起。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-03"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R05"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -670,15 +1359,53 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "terminalScriptFailureAutomaticallyRefundsThePaidDispatch",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "refundedRunsDoNotCountAndAlreadyChargedPricesRemainFrozen",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "failureAndCancellationRefundExactlyOnceAndSurviveSweep",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -687,6 +1414,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -721,15 +1455,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "failureAndCancellationRefundExactlyOnceAndSurviveSweep",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -738,12 +1492,19 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C14",
       "unit": "U18",
-      "version": "v1",
+      "version": "v2",
       "title": "胜利返还金额",
       "kind": "default",
       "strength": "must",
@@ -752,19 +1513,21 @@
         "spec-rewards",
         "spec-u18-c14"
       ],
-      "canonical": "当系统计算有资格领取的胜利返还时，系统必须按该局费用快照乘以 PvE 50% 或 PvP 75% 并向下取整。",
-      "context": "Keso 给出 PvE 25%–50% 和 PvP 75%；PvE 50% 是实现选择。",
-      "consequence": "奖励为整数且不会超过本局扣款。",
-      "compliant": "100 分 PvE 胜利可领 50，PvP 可领 75。",
-      "violation": "100 分 PvE 胜利可领 100。",
+      "canonical": "当系统计算有资格领取的胜利返还时，系统必须按该局包含角色加价的实际费用快照乘以 PvE 默认 50% 或 PvP 默认 75% 并向下取整。",
+      "context": "原讨论提供比例方向；重复角色费用是本局实际已付成本。",
+      "consequence": "基础价和加价局各按自己的已固定金额返还。",
+      "compliant": "100 分 PvE 返 50；200 分 PvE 返 100，PvP 返 150。",
+      "violation": "加价局仍只按基础价计算返还。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
-        "RS-02"
+        "RS-02",
+        "RS-06"
       ],
       "overridable_by": [
-        "future-reviewed-configuration-change"
+        "server-policy-configuration"
       ],
       "supersedes": [],
       "acceptance": [
@@ -773,16 +1536,54 @@
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "quoteValidatesInputsAndTheDispatchRepricesAStaleQuote",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "everyPublicDispatchPathConsumesPointsAndRejectsInsufficientBalance",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "racingFifthAndSixthReservationsPriceAtomicallyAndClaimActualCost",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "覆盖基础价/加价返还与配置快照；没有单独不能整除的向下取整数据。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -791,6 +1592,70 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C14",
+          "unit": "U18",
+          "version": "v1",
+          "title": "胜利返还金额",
+          "kind": "default",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c14"
+          ],
+          "canonical": "当系统计算有资格领取的胜利返还时，系统必须按该局费用快照乘以 PvE 50% 或 PvP 75% 并向下取整。",
+          "context": "Keso 给出 PvE 25%–50% 和 PvP 75%；PvE 50% 是实现选择。",
+          "consequence": "奖励为整数且不会超过本局扣款。",
+          "compliant": "100 分 PvE 胜利可领 50，PvP 可领 75。",
+          "violation": "100 分 PvE 胜利可领 100。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-02"
+          ],
+          "overridable_by": [
+            "future-reviewed-configuration-change"
+          ],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R06"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -825,15 +1690,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "winningOwnerMustClaimAndConcurrentRepeatedClaimsCreditOnce",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -842,6 +1736,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -876,15 +1777,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "policyIsFrozenAtDispatchAndLossesDrawsHotseatAndUnpaidMatchesDoNotEarn",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "hotseatAndChallengeBindChargesBeforeRunning",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "覆盖输/平/自打/历史未付费；锦标赛无付费的排除由同一权益条件及代码审阅支持。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -893,6 +1823,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -927,15 +1864,35 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -944,6 +1901,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -982,28 +1946,45 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
             {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "积分入口在桌面和移动端都可用",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
+            {
               "layer": "storybook",
               "file": "v2/web/src/components/rewards.stories.tsx",
               "title": "ClaimAndRevisit",
               "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "积分入口在桌面和移动端都可用",
+              "run": "AUTO-RS-UI-02"
             }
           ],
-          "coverage": "partial",
-          "note": "验证页头余额入口与领取后的余额；未执行点击路由或完整钱包数据验收。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
-            "run": "AUTO-RS-UI-01",
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
             "result": "passed",
-            "reportedAt": "2026-09-12T13:56:38Z"
-          }
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1012,6 +1993,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1049,13 +2037,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取后刷新与回放不会再次领取",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "storybook",
               "file": "v2/web/src/components/rewards.stories.tsx",
@@ -1073,16 +2069,25 @@
               "file": "v2/web/src/components/rewards.stories.tsx",
               "title": "LoadFailureRetry",
               "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取后刷新与回放不会再次领取",
+              "run": "AUTO-RS-UI-02"
             }
           ],
           "coverage": "partial",
-          "note": "验证独立领取卡的待领取/已领取/无资格及加载重试；未覆盖 MatchDetailPage 回放与终局集成。",
+          "note": "无资格卡片另有 Storybook 测试；本 BDD 覆盖终局/刷新/回放。",
           "in_ci": false,
           "last_green": {
-            "run": "AUTO-RS-UI-01",
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
             "result": "passed",
-            "reportedAt": "2026-09-12T13:56:38Z"
-          }
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1091,12 +2096,19 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C20",
       "unit": "U18",
-      "version": "v1",
+      "version": "v2",
       "title": "登录保护",
       "kind": "invariant",
       "strength": "must",
@@ -1105,13 +2117,14 @@
         "spec-rewards",
         "spec-u18-c20"
       ],
-      "canonical": "当未登录请求访问积分钱包、对局奖励状态或领取端点时，系统必须拒绝请求。",
+      "canonical": "当未登录请求访问积分钱包、角色报价、对局奖励状态或领取端点时，系统必须拒绝请求。",
       "context": "积分属于用户会话内的私有数据。",
-      "consequence": "不能按任意用户 ID 读取或增加余额。",
+      "consequence": "报价也属于当前用户的积分记录，不能按任意用户 ID 读取或修改额度。",
       "compliant": "未登录请求无法领取。",
       "violation": "匿名调用直接拿到已登录用户余额。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
         "RS-03"
@@ -1124,16 +2137,36 @@
       "code_paths": [],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "rewardEndpointsRequireAuthentication",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1142,6 +2175,68 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C20",
+          "unit": "U18",
+          "version": "v1",
+          "title": "登录保护",
+          "kind": "invariant",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c20"
+          ],
+          "canonical": "当未登录请求访问积分钱包、对局奖励状态或领取端点时，系统必须拒绝请求。",
+          "context": "积分属于用户会话内的私有数据。",
+          "consequence": "不能按任意用户 ID 读取或增加余额。",
+          "compliant": "未登录请求无法领取。",
+          "violation": "匿名调用直接拿到已登录用户余额。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-03"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R07"
+          ],
+          "code_paths": [],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1176,15 +2271,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "winningOwnerMustClaimAndConcurrentRepeatedClaimsCreditOnce",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1193,6 +2317,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1227,15 +2358,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "winningOwnerMustClaimAndConcurrentRepeatedClaimsCreditOnce",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1244,6 +2404,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1278,15 +2445,44 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
-          "in_ci": false,
-          "last_green": null
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift",
+              "title": "failureAndCancellationRefundExactlyOnceAndSurviveSweep",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardsTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "paidPveWinRequiresOwnerClaimAndPersistsAcrossReads",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "验证持久 Store 读写、重复读取和预留清扫；没有专项进程重启/重开数据库的完整钱包旅程。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1295,12 +2491,19 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
       "id": "U18-C24",
       "unit": "U18",
-      "version": "v1",
+      "version": "v2",
       "title": "派发前展示费用",
       "kind": "rule",
       "strength": "must",
@@ -1309,21 +2512,24 @@
         "spec-rewards",
         "spec-u18-c24"
       ],
-      "canonical": "当玩家可以确认派发对局时，界面必须展示本次总费用与当前余额。",
-      "context": "玩家应在消耗前知道费用，包括 express 首战及两局挑战。",
-      "consequence": "客户端余额不足时禁用派发，服务端仍负责最终校验。",
-      "compliant": "两局挑战显示费用 200 与余额 150，并禁用派发。",
-      "violation": "点击后才提示该操作已扣两局费用。",
+      "canonical": "当玩家确认派发对局前，界面必须展示服务端对当前场景、执方与模式给出的总费用及当前余额。",
+      "context": "角色加价和两局挑战不能以客户端基础价乘局数估算。",
+      "consequence": "等待报价、报价失效或已知余额不足时阻止确认；加价时提示可更换角色恢复基础费用。报价仅预览，最终服务端事务按最新记录重新计算。",
+      "compliant": "服务端返回 [200,100] 时展示 300 分；余额 250 禁用挑战。",
+      "violation": "角色已切换仍沿用前一个角色报价，或把 300 分挑战显示成 200。",
       "source_refs": [
-        "lark-rewards"
+        "lark-rewards",
+        "minutes-sep11"
       ],
       "decisions": [
-        "RS-01"
+        "RS-01",
+        "RS-06"
       ],
       "overridable_by": [],
       "supersedes": [],
       "acceptance": [
-        "AC-R03"
+        "AC-R03",
+        "AC-R12"
       ],
       "code_paths": [
         "v2/web/src/components/rewards.tsx",
@@ -1331,29 +2537,58 @@
       ],
       "conformance": {
         "spec_status": "improving",
-        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "spec_status_reason": "会议方向已纳入；数值、边界和本条新版本待产品审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
             {
-              "layer": "storybook",
-              "file": "v2/web/src/components/rewards.stories.tsx",
-              "title": "IneligibleAndInsufficient",
-              "run": "AUTO-RS-UI-01"
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "连续同角色报价不足时换角色再出战",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "报价失败时先重试再允许出战",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "钱包暂时不可用时不跳过计费确认",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "连续同角色报价不足时换角色再出战",
+              "run": "AUTO-RS-UI-02"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "报价失败时先重试再允许出战",
+              "run": "AUTO-RS-UI-02"
             }
           ],
           "coverage": "partial",
-          "note": "验证双局 200 分费用与余额不足提示；没有真实派发按钮，不能证明不足时按钮禁用。",
+          "note": "覆盖 express 的新报价与钱包错误恢复；完整 OsPanel 模式和乱序响应组合仍未逐项端到端断言。",
           "in_ci": false,
           "last_green": {
-            "run": "AUTO-RS-UI-01",
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
             "result": "passed",
-            "reportedAt": "2026-09-12T13:56:38Z"
-          }
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1362,6 +2597,84 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "version_history": [
+        {
+          "id": "U18-C24",
+          "unit": "U18",
+          "version": "v1",
+          "title": "派发前展示费用",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-rewards",
+            "spec-u18-c24"
+          ],
+          "canonical": "当玩家可以确认派发对局时，界面必须展示本次总费用与当前余额。",
+          "context": "玩家应在消耗前知道费用，包括 express 首战及两局挑战。",
+          "consequence": "客户端余额不足时禁用派发，服务端仍负责最终校验。",
+          "compliant": "两局挑战显示费用 200 与余额 150，并禁用派发。",
+          "violation": "点击后才提示该操作已扣两局费用。",
+          "source_refs": [
+            "lark-rewards"
+          ],
+          "decisions": [
+            "RS-01"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-R03"
+          ],
+          "code_paths": [
+            "v2/web/src/components/rewards.tsx",
+            "v2/web/src/context/rewards.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "unknown",
+            "impl_asOf": null,
+            "observed": null,
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "storybook",
+                  "file": "v2/web/src/components/rewards.stories.tsx",
+                  "title": "IneligibleAndInsufficient",
+                  "run": "AUTO-RS-UI-01"
+                }
+              ],
+              "coverage": "partial",
+              "note": "验证双局 200 分费用与余额不足提示；没有真实派发按钮，不能证明不足时按钮禁用。",
+              "in_ci": false,
+              "last_green": {
+                "run": "AUTO-RS-UI-01",
+                "result": "passed",
+                "reportedAt": "2026-09-12T13:56:38Z"
+              }
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1399,13 +2712,27 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取后刷新与回放不会再次领取",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取回执不被后续余额刷新失败覆盖",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "storybook",
               "file": "v2/web/src/components/rewards.stories.tsx",
@@ -1417,16 +2744,31 @@
               "file": "v2/web/src/components/rewards.stories.tsx",
               "title": "LostResponseRetry",
               "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取后刷新与回放不会再次领取",
+              "run": "AUTO-RS-UI-02"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取回执不被后续余额刷新失败覆盖",
+              "run": "AUTO-RS-UI-02"
             }
           ],
           "coverage": "covered",
-          "note": "使用模拟服务端响应验证领取后页头余额及卡片状态；不证明服务端记账。",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
-            "run": "AUTO-RS-UI-01",
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
             "result": "passed",
-            "reportedAt": "2026-09-12T13:56:38Z"
-          }
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1435,6 +2777,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1472,13 +2821,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取已入账但响应丢失后安全重试",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "storybook",
               "file": "v2/web/src/components/rewards.stories.tsx",
@@ -1490,16 +2847,25 @@
               "file": "v2/web/src/components/rewards.stories.tsx",
               "title": "LoadFailureRetry",
               "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/reward-points.spec.ts",
+              "title": "领取已入账但响应丢失后安全重试",
+              "run": "AUTO-RS-UI-02"
             }
           ],
           "coverage": "partial",
-          "note": "验证失败后提示和安全重试；没有独立断言提交中的禁用时机。",
+          "note": "响应丢失后错误与重试已测；提交中的防重复时机没有独立断言。",
           "in_ci": false,
           "last_green": {
-            "run": "AUTO-RS-UI-01",
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
             "result": "passed",
-            "reportedAt": "2026-09-12T13:56:38Z"
-          }
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1508,6 +2874,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1538,19 +2911,24 @@
       "acceptance": [
         "AC-R09"
       ],
-      "code_paths": [],
+      "code_paths": [
+        "v2/web/src/pages/rewards.tsx",
+        "v2/web/src/api/client.ts"
+      ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "none",
           "has_test": false,
           "strong": [],
           "in_ci": false,
-          "last_green": null
+          "last_green": null,
+          "note": "无直接自动测试宣称完整证明该产品边界；由实现代码及素材来源审阅确认。",
+          "coverage": "manual-code-review-only"
         },
         "human": {
           "state": "untested",
@@ -1559,6 +2937,585 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "planned",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C28",
+      "unit": "U18",
+      "version": "v1",
+      "title": "服务端角色报价",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c28"
+      ],
+      "canonical": "当已登录玩家请求已知场景、合法执方及模式的角色报价时，系统必须按该用户当前付费角色记录返回总费用、基础单局价格、是否加价及有序各局实际费用，而不改变积分账目。",
+      "context": "报价是读取，不能消费额度或先占一次角色。",
+      "consequence": "使用 /v1/rewards/quote；未知场景 404，缺失或非法 side/kind 400；派发事务重新计算，查询不锁价。",
+      "compliant": "重复查询第六次报价 200，未派发时余额和连续次数不变。",
+      "violation": "请求报价就提前扣款或累加角色次数。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-06"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R12"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "quoteValidatesInputsAndTheDispatchRepricesAStaleQuote",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "sixthRoleIsPricedHigherAndSwitchingOrANewDayResetsTheStreak",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C29",
+      "unit": "U18",
+      "version": "v1",
+      "title": "连续角色加价默认",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c29"
+      ],
+      "canonical": "当同一付费用户在当前周期再次派发同一场景和执方时，系统必须在连续前 5 次使用基础价，从第 6 次起使用基础价的 2 倍作为本次默认。",
+      "context": "会议接受即使 PvE 也通过连续角色加价鼓励多角色；5 和 2 为例子选用的默认。",
+      "consequence": "PvE、PvP、自我对战及挑战付款角色共用规则；更换同角色的智能体、版本、模型或对手不重置。",
+      "compliant": "换一个商鞅智能体再玩第六次仍扣 200。",
+      "violation": "PvE 或换了同角色版本就绕过加价。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-06"
+      ],
+      "overridable_by": [
+        "server-policy-configuration"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R13"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "sixthRoleIsPricedHigherAndSwitchingOrANewDayResetsTheStreak",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift",
+              "title": "quoteValidatesInputsAndTheDispatchRepricesAStaleQuote",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/RewardRoutesTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "覆盖第六次和重置；更换同角色模型/智能体不重置由角色键设计支持，无逐组合专项断言。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C30",
+      "unit": "U18",
+      "version": "v1",
+      "title": "角色连续记录重置",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c30"
+      ],
+      "canonical": "当付费用户换场景、换执方或进入新积分周期时，系统必须从基础价重新开始该用户的连续角色记录。",
+      "context": "角色以 scenarioID+side 标识，计数窗口默认北京时间自然日。",
+      "consequence": "角色切换即重置，不要求先胜利或领取奖励。",
+      "compliant": "连续商鞅五次后改玩甘龙，下一局基础价；次日商鞅也基础价。",
+      "violation": "仅换侧仍沿用旧角色的第六次加价。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-06"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R13"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "sixthRoleIsPricedHigherAndSwitchingOrANewDayResetsTheStreak",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C31",
+      "unit": "U18",
+      "version": "v1",
+      "title": "付费预留参与计价",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c31"
+      ],
+      "canonical": "当系统计算用户当前周期的连续角色记录时，系统必须按预留顺序包含未退款的已付费预留和对局，并排除已退款失败或取消记录。",
+      "context": "正在运行的预留需要立即计入以避免并发请求同时占最后一个基础价名额。",
+      "consequence": "胜、负、平局都计；退款只影响未来报价，不重算其他既有费用和返还。",
+      "compliant": "已有四次同角色时两个并发新局分别扣 100、200；退款后未来报价按剩余有效序列算。",
+      "violation": "所有并发请求都只看已完成局而按旧价格扣费。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-06"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R14"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "racingFifthAndSixthReservationsPriceAtomicallyAndClaimActualCost",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "store",
+              "file": "packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift",
+              "title": "refundedRunsDoNotCountAndAlreadyChargedPricesRemainFrozen",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaStore/Tests/RewardQuoteTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C32",
+      "unit": "U18",
+      "version": "v1",
+      "title": "积分替代硬性日场数",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c32"
+      ],
+      "canonical": "当用户的付费派发满足积分条件时，系统必须不再以旧的用户每日总场数或每日 PvP 场数硬上限拒绝该次派发。",
+      "context": "会议将积分系统作为硬编码日游戏次数的替代。",
+      "consequence": "配置 dailyBattleLimit/pvpDailyLimit 以 0 表示积分限制；这不绕过其他保护。",
+      "compliant": "超过旧的 10 局总量仍有余额时可继续派发。",
+      "violation": "余额足够却仍返回旧的 daily_limit 或 pvp_daily_limit。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-07"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R15"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "pointsReplaceLegacyDailyCapsForPvpAndHotseat",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "configProjectionAndUsageCounting",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U18-C33",
+      "unit": "U18",
+      "version": "v1",
+      "title": "保留对战资格与保护",
+      "kind": "boundary",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c33"
+      ],
+      "canonical": "当系统采用积分限制派发时，系统必须继续执行并发上限、PvE 解锁、对战暂停与被挑战方每日保护规则。",
+      "context": "这些约束保护运行资源、进度与对手，不是用户付费额度。",
+      "consequence": "不能把移除两项用户日场数上限理解为取消所有对战限制。",
+      "compliant": "余额充足但达到并发上限仍拒绝；未解锁 PvP 仍不能挑战。",
+      "violation": "有积分就绕过 PvE 门槛或持续骚扰达到保护上限的对手。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-07"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R15"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "concurrencyLimitCountsTheInitiatorsUnfinishedMatches",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "pvpGateLocksBothHumansAndExemptsTheHotseat",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift",
+              "title": "trialsBlockedStopsEveryDispatchKind",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/GateConfigTests.swift"
+            },
+            {
+              "repository": "paideia-ai/axiia-cup-v2",
+              "layer": "real-http",
+              "file": "packages/axiia/Targets/AxiiaServer/Tests/ChallengeTests.swift",
+              "title": "opponentDailyChallengeLimitProtectsTheTarget",
+              "run": "AUTO-RS-BACKEND-V2",
+              "revision": "1c0d205",
+              "url": "https://github.com/paideia-ai/axiia-cup-v2/blob/1c0d205/packages/axiia/Targets/AxiiaServer/Tests/ChallengeTests.swift"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实 HTTP/SQLite 或 Store 测试覆盖本条；全量服务端 CI 通过。",
+          "in_ci": true,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-BACKEND-V2"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "external_code_paths": [
+        {
+          "repository": "paideia-ai/axiia-cup-v2",
+          "path": "packages/axiia/Targets/AxiiaStore/Sources/Rewards.swift"
+        }
+      ],
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/reward-points.feature",
+        "spec": "v2/web/tests/e2e/reward-points.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1598,13 +3555,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -1619,16 +3584,16 @@
             }
           ],
           "coverage": "covered",
-          "note": "默认值的纯逻辑和控制显示均被断言。",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01",
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1637,6 +3602,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1676,13 +3648,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -1697,16 +3677,16 @@
             }
           ],
           "coverage": "covered",
-          "note": "默认音量 25% 被断言；舒适度需真人试听。",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01",
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1715,6 +3695,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1754,13 +3741,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -1775,16 +3770,16 @@
             }
           ],
           "coverage": "covered",
-          "note": "输出默认关闭被断言。",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01",
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1793,6 +3788,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1831,13 +3833,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "storybook",
               "file": "v2/web/src/components/sound-controls.stories.tsx",
@@ -1845,16 +3855,17 @@
               "run": "AUTO-RS-SOUND-02"
             }
           ],
-          "coverage": "partial",
-          "note": "断言开关联动与音量控制存在；未独立执行键盘旅程。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1863,6 +3874,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1901,13 +3919,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -1921,17 +3947,17 @@
               "run": "AUTO-RS-SOUND-02"
             }
           ],
-          "coverage": "partial",
-          "note": "断言偏好解析与同页多控件联动；未证明刷新和真实多标签页 storage 同步。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01",
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1940,6 +3966,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -1978,15 +4011,38 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "输入有轻点，自动暂存不重复发声，保存与首战派发按顺序确认",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "失败操作保留点击反馈，只有成功结果播放确认音",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
-          "last_green": null
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -1995,6 +4051,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2033,15 +4096,38 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "输入有轻点，自动暂存不重复发声，保存与首战派发按顺序确认",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "失败操作保留点击反馈，只有成功结果播放确认音",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "真实浏览器验证 express 保存/派发及拒绝；OsPanel 其他入口由源代码和组件覆盖支持，未逐入口播放观测。",
           "in_ci": false,
-          "last_green": null
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2050,6 +4136,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2089,13 +4182,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/match-sound.test.ts",
@@ -2116,15 +4217,16 @@
             }
           ],
           "coverage": "partial",
-          "note": "覆盖实时完整回合、限频及优先级核心；未执行真实 SSE 浏览器全程。",
+          "note": "真实 EventSource 与音频启动覆盖回合结束；限频/优先级由单元共同验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2133,6 +4235,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2172,13 +4281,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/match-sound.test.ts",
@@ -2198,16 +4315,17 @@
               "run": "AUTO-RS-SOUND-01"
             }
           ],
-          "coverage": "partial",
-          "note": "覆盖终局观察器的成功/失败区分及轮询间完成；未执行完整实时 API 链路。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2216,6 +4334,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2254,15 +4379,32 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
-          "state": "none",
-          "has_test": false,
-          "strong": [],
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
-          "last_green": null
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2271,6 +4413,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2310,13 +4459,21 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -2337,15 +4494,16 @@
             }
           ],
           "coverage": "partial",
-          "note": "覆盖事件重复和共享存储替身下的两个引擎；非真实多标签页端到端测试。",
+          "note": "验证单事件去重与跨引擎存储逻辑；没有所有并发标签页竞争组合。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2354,6 +4512,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2391,13 +4556,27 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "音效偏好在刷新和同浏览器页签之间保持一致",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "storybook",
               "file": "v2/web/src/components/sound-controls.stories.tsx",
@@ -2417,17 +4596,17 @@
               "run": "AUTO-RS-SOUND-01"
             }
           ],
-          "coverage": "partial",
-          "note": "验证总静音和独立输出开关；音量为零的独立分支未单独断言。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01",
-              "AUTO-RS-SOUND-02"
+              "AUTO-RS-FRONTEND-FINAL-BDD"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2436,6 +4615,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2475,13 +4661,27 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes muted and background events with no unmute/focus backlog",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "consumes background completions silently when returning to the foreground",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -2496,15 +4696,16 @@
             }
           ],
           "coverage": "partial",
-          "note": "覆盖引擎和追踪器的静音/后台消费；未验证浏览器真实标签页切换完整链路。",
+          "note": "引擎与追踪器验证后台消费，无真实后台轮询网络重入的完整浏览器旅程。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-UNIT"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2513,6 +4714,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2552,13 +4760,27 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "历史战报与失败完局保持安静",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "excludes old rows, hidden reasoning, repair calls, generic events and replayed backlog",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/match-sound.test.ts",
@@ -2572,16 +4794,18 @@
               "run": "AUTO-RS-SOUND-01"
             }
           ],
-          "coverage": "partial",
-          "note": "覆盖历史/重连判别核心；未运行完整战报回放页面。",
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-BDD",
+              "AUTO-RS-FRONTEND-FINAL-UNIT"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2590,6 +4814,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2627,13 +4858,33 @@
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "has_test",
           "has_test": true,
           "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "does not create a context until a gesture or replay blocked events later",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "keeps output independently muted and survives blocked audio/storage",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [
             {
               "layer": "unit",
               "file": "v2/web/src/lib/sound.test.ts",
@@ -2648,15 +4899,17 @@
             }
           ],
           "coverage": "partial",
-          "note": "覆盖音频/存储不可用下引擎不抛异常；保存/派发/领取的业务链路及 Safari/iOS 手势行为未单独验收。",
+          "note": "Chrome 真实手势和替身异常分支验证；未人工验证 Safari/iOS 或全部业务失败组合。",
           "in_ci": false,
           "last_green": {
             "runs": [
-              "AUTO-RS-SOUND-01"
+              "AUTO-RS-FRONTEND-FINAL-BDD",
+              "AUTO-RS-FRONTEND-FINAL-UNIT"
             ],
             "result": "passed",
             "reportedAt": "2026-09-12"
-          }
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
@@ -2665,6 +4918,13 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     },
     {
@@ -2697,20 +4957,23 @@
         "AC-S06"
       ],
       "code_paths": [
-        "v2/web/src/lib/sound.ts"
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/SOUND_PROVENANCE.md"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
-        "impl_status": "unknown",
-        "impl_asOf": null,
-        "observed": null,
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
         "auto": {
           "state": "none",
           "has_test": false,
           "strong": [],
           "in_ci": false,
-          "last_green": null
+          "last_green": null,
+          "note": "无直接自动测试宣称完整证明该产品边界；由实现代码及素材来源审阅确认。",
+          "coverage": "manual-code-review-only"
         },
         "human": {
           "state": "untested",
@@ -2719,6 +4982,443 @@
         },
         "freshness": "unknown",
         "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "planned",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U19-C17",
+      "unit": "U19",
+      "version": "v1",
+      "title": "提示词输入音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c17"
+      ],
+      "canonical": "当玩家在策略提示词编辑区真实插入文本且满足声音播放条件时，系统必须提供一次轻输入反馈；输入法组合期间的临时变化必须等到实际提交后再反馈一次。",
+      "context": "会议 17:27 起明确要求输入提示词有声音。",
+      "consequence": "包括粘贴；程序填入和撤销/重做静默；输入和删除共享默认 50 毫秒限频，抑制后不补播。",
+      "compliant": "中文输入法提交一段文字只响一次，候选变化不连响。",
+      "violation": "每个组合临时变化或程序初始化都触发输入声。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-08"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S07"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/prompt-sound.test.ts",
+              "title": "distinguishes insertion/paste from deletion/cut, and ignores undo/redo",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/prompt-sound.test.ts",
+              "title": "plays once for a committed IME edit, not the candidates or duplicate final input",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "shares a 50ms editing limit and a separate 250ms hover limit",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD",
+              "AUTO-RS-FRONTEND-FINAL-UNIT"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U19-C18",
+      "unit": "U19",
+      "version": "v1",
+      "title": "提示词删除音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c18"
+      ],
+      "canonical": "当玩家在策略提示词编辑区真实删除或剪切已有文本且满足声音播放条件时，系统必须提供一次区别于输入的轻删除反馈。",
+      "context": "会议明确同时要求输入和删除反馈。",
+      "consequence": "没有文本变化、撤销/重做及程序清空不响；删除与输入共享默认 50 毫秒限频。",
+      "compliant": "退格删除文字触发删除声，在空编辑区退格静默。",
+      "violation": "空编辑区按退格仍连响，或删除音被当成保存成功音。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-08"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S07"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/prompt-sound.test.ts",
+              "title": "distinguishes insertion/paste from deletion/cut, and ignores undo/redo",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/prompt-sound.test.ts",
+              "title": "plays once for a committed IME edit, not the candidates or duplicate final input",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "shares a 50ms editing limit and a separate 250ms hover limit",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "covered",
+          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD",
+              "AUTO-RS-FRONTEND-FINAL-UNIT"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "executed-for-current-clause",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U19-C19",
+      "unit": "U19",
+      "version": "v1",
+      "title": "关键按钮悬停音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c19"
+      ],
+      "canonical": "当鼠标进入可用的保存或出战关键按钮且音频已经获浏览器许可时，系统必须提供受默认 250 毫秒限频约束的轻悬停反馈。",
+      "context": "会议 18 分钟左右要求关键按钮 hover 提示。",
+      "consequence": "覆盖构建器保存/首战和出战面板 PvE、自我对战、双侧挑战；悬停不解锁音频，不可用按钮静默。",
+      "compliant": "已解锁后悬停保存按钮有轻声；首次仅悬停不会启动 AudioContext。",
+      "violation": "鼠标路过禁用按钮或未手势解锁时强行播放。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-08"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S08"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx",
+        "v2/web/src/components/os-panel.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "真实浏览器验证保存按钮 hover 和手势边界；全部出战按钮范围来自源代码与组件审阅。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U19-C20",
+      "unit": "U19",
+      "version": "v1",
+      "title": "关键按钮即时点击音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c20"
+      ],
+      "canonical": "当玩家点击或用键盘激活可用的保存或出战关键按钮时，系统必须在异步业务完成前提供一次轻点击反馈。",
+      "context": "会议要求点击比 hover 更清脆；点击与服务器成功是不同事件。",
+      "consequence": "按钮范围与 U19-C19 相同；点击声受主设置约束，失败请求可以有点击声但不能有成功保存/派发声。",
+      "compliant": "点击时轻声，服务器接受后另响派发成功声；拒绝时只保留点击反馈。",
+      "violation": "点击就播放派发成功音，或同一次键盘激活重复响两次。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-08"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S08"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx",
+        "v2/web/src/components/os-panel.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "真实浏览器验证保存/express 键盘激活和失败点击语义；未逐个出战入口模拟全部激活方式。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+      }
+    },
+    {
+      "id": "U19-C21",
+      "unit": "U19",
+      "version": "v1",
+      "title": "暂不上背景音乐",
+      "kind": "boundary",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c21"
+      ],
+      "canonical": "当本次积分与音效功能运行时，系统必须不自动播放全局或场景循环背景音乐。",
+      "context": "会议 23:03 明确先不上背景音乐，后续可独立补充。",
+      "consequence": "短交互音不构成授权交付或开启持续音乐。",
+      "compliant": "设置和游戏只有事件提示音，无循环音轨。",
+      "violation": "开启主音效后同时自动启动全局 BGM。",
+      "source_refs": [
+        "minutes-sep11"
+      ],
+      "decisions": [
+        "RS-08"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S09"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+        "impl_status": "match",
+        "impl_asOf": "2026-09-12",
+        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+            }
+          ],
+          "historicalStrong": [],
+          "coverage": "partial",
+          "note": "浏览器检查测试旅程中的所有音频启动均不循环且短于 1 秒；全站没有额外音乐的结论另由代码审阅支持。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-FRONTEND-FINAL-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          },
+          "latest_result": "passed"
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      },
+      "test_plan": {
+        "layer": "mock-integration",
+        "feature": "v2/web/tests/e2e/sound-feedback.feature",
+        "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+        "status": "partially-executed",
+        "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       }
     }
   ],
@@ -2743,7 +5443,8 @@
       ],
       "scope": "Storybook browser tests with MSW API doubles; does not verify real Swift server accounting, authentication, persistence or concurrent transactions.",
       "human": false,
-      "in_ci": false
+      "in_ci": false,
+      "revisionCoverage": "会议补充纳入前的历史基线；不能证明角色加价/全局新额度/新增编辑和按钮声音。"
     },
     {
       "id": "AUTO-RS-SOUND-01",
@@ -2757,7 +5458,8 @@
       "passed": 14,
       "scope": "Deterministic sound engine and event observer tests with audio/DOM doubles; no human listening or full route→live API integration.",
       "human": false,
-      "in_ci": false
+      "in_ci": false,
+      "revisionCoverage": "会议补充纳入前的历史基线；不能证明角色加价/全局新额度/新增编辑和按钮声音。"
     },
     {
       "id": "AUTO-RS-SOUND-02",
@@ -2774,7 +5476,221 @@
       ],
       "scope": "Settings render and interaction checks; Audition is a render-only story, not a human listening result.",
       "human": false,
-      "in_ci": false
+      "in_ci": false,
+      "revisionCoverage": "会议补充纳入前的历史基线；不能证明角色加价/全局新额度/新增编辑和按钮声音。"
+    },
+    {
+      "id": "AUTO-RS-BACKEND-BASELINE",
+      "repository": "paideia-ai/axiia-cup-v2",
+      "revision": "a8c015b",
+      "reportedBy": "backend implementing agent",
+      "command": "deno task check --platform linux",
+      "url": "https://github.com/paideia-ai/axiia-cup-v2/actions/runs/34698505114",
+      "result": "passed",
+      "in_ci": true,
+      "human": false,
+      "scope": "真实 Store/HTTP/config/migration/DTO 基线测试；会议补充之前的修订。",
+      "revisionCoverage": "仅历史基线；角色报价、global dailyRuns、重复角色加价与日场数替代仍待新修订实际测试。"
+    },
+    {
+      "id": "AUTO-RS-UI-02",
+      "reportedAt": "2026-09-12",
+      "reportedBy": "implementing root agent",
+      "revisionCoverage": "会议 v2 规则的前端报价/领取集成；未记录精确被测工作区哈希，freshness 保持 unknown。",
+      "workingDirectory": "v2/web",
+      "testFile": "v2/web/tests/e2e/reward-points.spec.ts",
+      "runtime": "Chromium · actual Vite http://127.0.0.1:5189",
+      "result": "passed",
+      "passed": 6,
+      "tests": [
+        "积分入口在桌面和移动端都可用",
+        "领取后刷新与回放不会再次领取",
+        "领取已入账但响应丢失后安全重试",
+        "领取回执不被后续余额刷新失败覆盖",
+        "连续同角色报价不足时换角色再出战",
+        "报价失败时先重试再允许出战"
+      ],
+      "scope": "mock-integration: real SPA with stateful same-origin HTTP doubles; no real server pricing or ledger assertion.",
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "human": false,
+      "in_ci": false,
+      "reproductionTask": "deno task test:e2e:rewards",
+      "note": "上述任务现在包含两个 BDD 文件及后续新增测试；本次报告仅以上 6 项，不代表整个新增套件已通过。"
+    },
+    {
+      "id": "AUTO-RS-BACKEND-V2",
+      "repository": "paideia-ai/axiia-cup-v2",
+      "revision": "1c0d205",
+      "reportedBy": "backend implementing agent and root agent",
+      "command": "deno task check --platform linux",
+      "url": "https://github.com/paideia-ai/axiia-cup-v2/actions/runs/34699428891",
+      "result": "passed",
+      "buildTargets": 59,
+      "testTargetsPassed": 38,
+      "testTargetsRerun": 5,
+      "in_ci": true,
+      "human": false,
+      "revisionCoverage": "当前会议 v2 经济规则，包含角色报价/全局 dailyRuns/硬日场数替代。",
+      "scope": "真实 Store/HTTP/SQLite、配置与其他服务端契约；具体条款按精确测试名映射，不把全部 CI 当作每条全覆盖。"
+    },
+    {
+      "id": "AUTO-RS-FRONTEND-FINAL-UNIT",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-12",
+      "baseCommit": "c1a11c529965934f166c9119b3a4308b96e38e3b",
+      "revisionNote": "提交前工作区；完整文件快照未附，freshness 保持 unknown。",
+      "command": "deno task test:unit",
+      "result": "passed",
+      "files": 26,
+      "passed": 196,
+      "in_ci": false,
+      "human": false,
+      "scope": "前端全量单元；其中音效相关 19 项，不能重复相加。"
+    },
+    {
+      "id": "AUTO-RS-FRONTEND-FINAL-GATES",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-12",
+      "baseCommit": "c1a11c529965934f166c9119b3a4308b96e38e3b",
+      "commands": [
+        "deno task fmt",
+        "deno task lint",
+        "deno task typecheck",
+        "deno task typecheck:tests",
+        "deno task build"
+      ],
+      "result": "passed",
+      "formatFiles": 220,
+      "lintFiles": 164,
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-FRONTEND-FINAL-STORIES",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-12",
+      "baseCommit": "c1a11c529965934f166c9119b3a4308b96e38e3b",
+      "result": "passed-after-targeted-rerun",
+      "storiesCovered": 56,
+      "initial": {
+        "passed": 55,
+        "total": 56,
+        "failure": "ShangyangFourCards 15-second timeout during concurrent suites"
+      },
+      "rerun": {
+        "file": "v2/web/src/pages/scenario-detail.stories.tsx",
+        "passed": 5,
+        "total": 5,
+        "durationSeconds": 10.48,
+        "evidenceFile": "/tmp/axiia-rs-story-rerun.log",
+        "evidenceInspected": true
+      },
+      "focusedSoundStoriesPassed": 3,
+      "scope": "56 项均有通过记录，由首轮 55 项与对应文件 5 项顺序重跑共同覆盖；不声称单次全量 56/56。",
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-FRONTEND-FINAL-BDD",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-12",
+      "baseCommit": "c1a11c529965934f166c9119b3a4308b96e38e3b",
+      "command": "deno task test:e2e:rewards",
+      "result": "passed",
+      "passed": 13,
+      "rewardTests": 7,
+      "soundTests": 6,
+      "durationSeconds": 49.3,
+      "initial": {
+        "passed": 12,
+        "total": 13,
+        "failure": "领取回执不被后续余额刷新失败覆盖 reached its 30-second timeout"
+      },
+      "rerun": "all 13 run sequentially after Storybook; all passed",
+      "evidenceFile": "/tmp/axiia-rs-bdd-rerun.log",
+      "evidenceInspected": true,
+      "scope": "真实 SPA/Chromium/AudioContext/EventSource，HTTP 与 SSE 内容来自有状态同源夹具；不等同真实 Swift 后端端到端或真人听感。",
+      "in_ci": false,
+      "human": false,
+      "viewportWidths": [
+        320,
+        390,
+        768,
+        1280
+      ]
     }
-  ]
+  ],
+  "revision": "v2",
+  "updatedAt": "2026-09-12",
+  "revisionReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+  "sourcePrecedence": [
+    "minutes-sep11 for subsequent explicit decisions",
+    "lark-rewards / lark-sound for unchanged original requests",
+    "sound-prototype for reference preferences",
+    "RS-* for explicitly identified implementation defaults"
+  ],
+  "configurationDefaults": [
+    {
+      "name": "AXIIA_BATTLE_POINT_COST",
+      "default": 100,
+      "role": "基础单局价格"
+    },
+    {
+      "name": "AXIIA_DAILY_POINT_RUNS",
+      "default": 20,
+      "role": "每周期全局基础局数"
+    },
+    {
+      "name": "AXIIA_REPEAT_ROLE_THRESHOLD",
+      "default": 5,
+      "role": "同角色连续基础价次数"
+    },
+    {
+      "name": "AXIIA_REPEAT_ROLE_MULTIPLIER",
+      "default": 2,
+      "role": "超阈值倍率"
+    },
+    {
+      "name": "AXIIA_PVE_WIN_REFUND_PERCENT",
+      "default": 50,
+      "role": "PvE 胜利返还百分比"
+    },
+    {
+      "name": "AXIIA_PVP_WIN_REFUND_PERCENT",
+      "default": 75,
+      "role": "PvP 胜利返还百分比"
+    }
+  ],
+  "verificationSummary": {
+    "asOf": "2026-09-12",
+    "specification": "all 54 clauses remain proposed/improving; defaults are not final product confirmation",
+    "backend": {
+      "revision": "1c0d205",
+      "testTargetsPassed": 38,
+      "ci": "passed"
+    },
+    "frontend": {
+      "format": "passed",
+      "lint": "passed",
+      "types": "passed",
+      "build": "passed",
+      "unitTests": 196,
+      "unitFiles": 26,
+      "storybook": "56 covered through initial run plus targeted sequential rerun",
+      "bdd": "13/13 passed in final sequential run"
+    },
+    "human": "untested",
+    "production": "not-verified",
+    "frontendCI": "not-claimed",
+    "freshness": "unknown for uncommitted frontend snapshot",
+    "notes": [
+      "历史超时记录保留，最终顺序重跑已通过。",
+      "代码、单元、浏览器、真实服务端、真人五类证据不能互相替代。"
+    ]
+  }
 }

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { ApiError, rewards } from '../api/client'
 import type { MatchRewardResponse } from '../api/types'
-import { useRewards } from '../context/rewards'
+import { type BattleQuoteState, useRewards } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
 import { playSound, unlockAudio } from '../lib/sound'
 import { Button } from './ui/button'
@@ -26,16 +26,38 @@ export function PointsIndicator() {
   )
 }
 
-export function BattleCostNotice({ kind = 'pve' }: { kind?: string }) {
+export function BattleCostNotice(
+  { kind = 'pve', quoteState }: {
+    kind?: string
+    quoteState?: BattleQuoteState
+  },
+) {
   const state = useRewards()
   const wallet = state?.wallet
+  if (quoteState?.loading) {
+    return (
+      <p role='status' className='mb-3 text-xs text-(--foreground-subtle)'>
+        正在确认本次积分…
+      </p>
+    )
+  }
+  if (quoteState?.error) {
+    return (
+      <div className='mb-3 text-xs text-(--warning)'>
+        <p role='alert'>暂时无法确认本次消耗，请重试。</p>
+        <Button variant='secondary' size='sm' onClick={quoteState.retry}>
+          重新确认积分
+        </Button>
+      </div>
+    )
+  }
   if (!wallet) return null
   const paired = kind === 'pvp'
-  const cost = wallet.battleCost * (paired ? 2 : 1)
+  const cost = quoteState?.quote?.cost ?? wallet.battleCost * (paired ? 2 : 1)
   return (
     <div
       className='mb-3 space-y-1 text-xs text-(--foreground-subtle)'
-      data-spec='U18-C24'
+      data-spec='U18-C24 U18-C28 U18-C29'
     >
       <p>
         {paired ? '双场约战' : '本次对战'}消耗 <strong>{cost} 积分</strong>
@@ -47,6 +69,9 @@ export function BattleCostNotice({ kind = 'pve' }: { kind?: string }) {
             paired ? wallet.pvpWinRefundPercent : wallet.pveWinRefundPercent
           }% 返还`}
       </p>
+      {quoteState?.quote?.repeatRoleSurcharge
+        ? <p>试试其他角色，让下一场消耗更少。</p>
+        : null}
       {!state.error && wallet.balance < cost
         ? (
           <p className='text-(--warning)'>

@@ -1,6 +1,15 @@
 // Original tonal synthesis, adapted from Keso's 清透轻点 demo at c28c9a8.
 // The reward is newly synthesized; no third-party game samples are shipped.
-export type SoundCue = 'save' | 'dispatch' | 'output' | 'finish' | 'reward'
+export type SoundCue =
+  | 'save'
+  | 'dispatch'
+  | 'output'
+  | 'finish'
+  | 'reward'
+  | 'type'
+  | 'delete'
+  | 'hover'
+  | 'click'
 
 export interface SoundPreferences {
   enabled: boolean
@@ -40,6 +49,10 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
     output: 0.065,
     finish: 0.72,
     reward: 0.48,
+    type: 0.055,
+    delete: 0.075,
+    hover: 0.045,
+    click: 0.11,
   }[cue]
   const samples = new Float32Array(Math.ceil(sampleRate * duration))
   const pluck = (t: number, hz: number, decay: number) => {
@@ -54,6 +67,18 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
     const t = i / sampleRate
     let value: number
     switch (cue) {
+      case 'type':
+        value = 0.12 * pluck(t, 480, 0.013)
+        break
+      case 'delete':
+        value = 0.12 * pluck(t, 285, 0.017)
+        break
+      case 'hover':
+        value = 0.065 * pluck(t, 610, 0.012)
+        break
+      case 'click':
+        value = 0.28 * pluck(t, 330, 0.024) + 0.08 * pluck(t, 660, 0.018)
+        break
       case 'save':
         value = 0.3 * pluck(t, 330, 0.025) +
           0.2 * pluck(t - 0.025, 880, 0.052) +
@@ -93,6 +118,10 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
     output: 0.032,
     finish: 0.075,
     reward: 0.105,
+    type: 0.022,
+    delete: 0.024,
+    hover: 0.017,
+    click: 0.079,
   }[cue]
   let energy = 0
   let peak = 0
@@ -111,6 +140,8 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
 export class SoundPolicy {
   private seen = new Set<string>()
   private lastOutput = -Infinity
+  private lastTyping = -Infinity
+  private lastHover = -Infinity
 
   accept(cue: SoundCue, key: string, now: number) {
     const identity = `${cue}:${key}`
@@ -123,14 +154,27 @@ export class SoundPolicy {
       if (now - this.lastOutput < 300) return false
       this.lastOutput = now
     }
+    if (cue === 'type' || cue === 'delete') {
+      if (now - this.lastTyping < 50) return false
+      this.lastTyping = now
+    }
+    if (cue === 'hover') {
+      if (now - this.lastHover < 250) return false
+      this.lastHover = now
+    }
     return true
   }
 }
 
 // Only the focused window may claim an audible milestone. Persist a small set
 // of event identities so switching tabs cannot replay a polling/SSE duplicate.
+function isMilestone(cue: SoundCue): boolean {
+  return cue === 'save' || cue === 'dispatch' || cue === 'finish' ||
+    cue === 'reward'
+}
+
 function claimMilestone(cue: SoundCue, key: string): boolean {
-  if (cue === 'output') return true
+  if (!isMilestone(cue)) return true
   try {
     const stored: unknown = JSON.parse(
       localStorage.getItem('axiia-sound-events-v1') ?? '[]',
@@ -201,6 +245,7 @@ export class SoundEngine {
     ) return false
     if (!audition && !claimMilestone(cue, key)) return false
     try {
+      if (cue === 'click') this.stop('hover')
       if (cue === 'finish' || cue === 'reward') this.stop('output')
       // Output ticks must never obscure a milestone already playing/queued.
       if (cue === 'output' && ctx.currentTime < this.nextMilestone) return false
@@ -213,14 +258,14 @@ export class SoundEngine {
         buffer.copyToChannel(samples, 0)
         this.buffers.set(bufferKey, buffer)
       }
-      const start = cue === 'output'
-        ? ctx.currentTime
-        : Math.max(ctx.currentTime, this.nextMilestone)
+      const start = isMilestone(cue)
+        ? Math.max(ctx.currentTime, this.nextMilestone)
+        : ctx.currentTime
       if (start - ctx.currentTime > 0.8) return false
       const source = ctx.createBufferSource()
       source.buffer = buffer
       source.connect(this.gain)
-      if (cue !== 'output') this.nextMilestone = start + buffer.duration + 0.025
+      if (isMilestone(cue)) this.nextMilestone = start + buffer.duration + 0.025
       this.sources.set(source, cue)
       source.onended = () => {
         this.sources.delete(source)
@@ -294,6 +339,12 @@ export function playSound(
 ): boolean {
   getSoundPreferences()
   return engine.play(cue, key, audition)
+}
+
+// Attached only to the product's save and battle buttons. Hover is not a user
+// activation, so it deliberately never creates or resumes an AudioContext.
+export function playButtonHover(event: { pointerType: string }): void {
+  if (event.pointerType === 'mouse') playSound('hover')
 }
 
 // Install once above routes. Keyboard and pointer gestures support direct links
