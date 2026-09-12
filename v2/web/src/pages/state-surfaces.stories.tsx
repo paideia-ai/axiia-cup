@@ -6,11 +6,18 @@ import { MemoryRouter } from 'react-router-dom'
 import { notificationsFixture, scenarioList } from '../testing/v34-fixtures'
 import { CatalogPage } from './catalog'
 import { NotificationsPage } from './notifications'
+import { AuthProvider } from '../context/auth'
 
 function Surface({ page }: { page: 'catalog' | 'notifications' }) {
   return (
     <MemoryRouter>
-      {page === 'catalog' ? <CatalogPage /> : <NotificationsPage />}
+      {page === 'catalog'
+        ? (
+          <AuthProvider>
+            <CatalogPage />
+          </AuthProvider>
+        )
+        : <NotificationsPage />}
     </MemoryRouter>
   )
 }
@@ -27,13 +34,22 @@ export const CatalogGateAndHonestStats: Story = {
   args: { page: 'catalog' },
   parameters: {
     msw: [
+      http.get('/v1/auth/me', () =>
+        HttpResponse.json({
+          account: {
+            id: 'catalog-reader',
+            displayName: '场景读者',
+            isAdmin: false,
+          },
+          elevated: false,
+        })),
       http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
     ],
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(await canvas.findByText('PVP 解锁 1/1·0/1')).toBeVisible()
-    await expect(canvas.getByText('侧方胜率 · 对局数不足，暂无统计'))
+    await expect(canvas.getByText('数据积累中', { exact: true }))
       .toBeVisible()
     await expect(canvas.queryByText(/0%/)).toBeNull()
   },

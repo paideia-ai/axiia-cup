@@ -134,6 +134,7 @@ export async function recordStep(
       via: `guided:${stepId}`,
       step: stepId,
       at,
+      ...(input.versionPins ? { versionPins: input.versionPins } : {}),
       ...(clauseVersion ? { clauseVersion } : {}),
     })
   const pick = (card: string, clauseVersion?: string) =>
@@ -176,16 +177,46 @@ export async function recordStep(
 export interface StepProgress {
   choice: Choice
   at: string
+  /** 缺失或过期的 pin 不能算作当前固定版本旅程的完成记录。 */
+  versionPins?: Record<string, string>
 }
 export type JourneyProgress = Record<string, StepProgress>
+export type JourneyVersionPins = Record<
+  string,
+  Record<string, string> | undefined
+>
 
 export function progressKey(journeyId: string): string {
   return `axiia:tm:guided:${journeyId}`
 }
-export function readProgress(journeyId: string): JourneyProgress {
+export function versionPinsEqual(
+  left: Record<string, string> | undefined,
+  right: Record<string, string> | undefined,
+): boolean {
+  if (!left || !right) return left === right
+  const leftEntries = Object.entries(left).sort(([a], [b]) =>
+    a.localeCompare(b)
+  )
+  const rightEntries = Object.entries(right).sort(([a], [b]) =>
+    a.localeCompare(b)
+  )
+  return JSON.stringify(leftEntries) === JSON.stringify(rightEntries)
+}
+
+export function readProgress(
+  journeyId: string,
+  currentPins: JourneyVersionPins = {},
+): JourneyProgress {
   try {
     const raw = localStorage.getItem(progressKey(journeyId))
-    return raw ? (JSON.parse(raw) as JourneyProgress) : {}
+    const parsed = raw ? JSON.parse(raw) as JourneyProgress : {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([stepId, progress]) => {
+        if (!Object.hasOwn(currentPins, stepId)) return true
+        const expected = currentPins[stepId]
+        return !expected || versionPinsEqual(progress.versionPins, expected)
+      }),
+    )
   } catch {
     return {}
   }

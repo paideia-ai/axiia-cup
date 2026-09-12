@@ -1,6 +1,9 @@
-/* 测试模式的数据面：spec v4 条款索引 + 历史两轮旅程 + B3/A5 固定版本交接旅程，加几个查询小工具。
+/* 测试模式的数据面：spec v4 条款索引 + 历史两轮旅程 + 当前固定版本交接旅程，加几个查询小工具。
    只在 overlay 分块里被引用（index.tsx 不 import 这里），关掉测试模式时零成本。 */
-import { B3_A5_JOURNEYS, B3_A5_MANUAL_PATH } from './data/b3-a5-journeys'
+import {
+  REVIEWED_JOURNEYS,
+  REVIEWED_MANUAL_PATH,
+} from './data/reviewed-journeys'
 import journeysJson from './data/journeys.json'
 import specJson from './data/spec-index.json'
 import { TM } from './registry/index'
@@ -28,6 +31,8 @@ export interface Clause {
 }
 
 export type JourneyRound = 'r1' | 'r2' | 'handoff'
+export type ReviewedChapter = 'A3' | 'A4' | 'A5' | 'A6' | 'B3'
+export type CaptureKind = 'agentId' | 'matchId'
 
 /** 一套 fixture 里的非敏感引用。账号密码由项目同学私下交付，不进入 Test Mode。 */
 export interface FixtureField {
@@ -35,7 +40,7 @@ export interface FixtureField {
   label: string
   help: string
   kind?: 'runtime'
-  extract?: 'matchId'
+  extract?: CaptureKind
 }
 
 /** 同一旅程可能需要多种互斥账号状态；每个 profile 对应一个登录角色。 */
@@ -60,6 +65,7 @@ export interface StepCapture {
   label: string
   placeholder: string
   hint: string
+  extract?: CaptureKind
 }
 
 export interface KnownGap {
@@ -107,7 +113,7 @@ export interface Journey {
   title: string
   manual: string
   steps: Step[]
-  chapter?: 'B3' | 'A5'
+  chapter?: ReviewedChapter
   manualAnchor?: string
   prerequisites?: string[]
   evidenceRequirements?: string[]
@@ -118,8 +124,10 @@ export interface Journey {
 }
 
 export const DASHBOARD = 'https://deploy-v2-ebon-beta.vercel.app'
-export { B3_A5_MANUAL_PATH }
-export const B3_A5_MANUAL_URL = `${DASHBOARD}${B3_A5_MANUAL_PATH}`
+export { REVIEWED_MANUAL_PATH }
+export { B3_A5_MANUAL_PATH } from './data/b3-a5-journeys'
+export const B3_A5_MANUAL_URL = `${DASHBOARD}${REVIEWED_MANUAL_PATH}`
+export const REVIEWED_MANUAL_URL = `${DASHBOARD}${REVIEWED_MANUAL_PATH}`
 
 const rawClauses = (specJson as { clauses: Record<string, Omit<Clause, 'id'>> })
   .clauses
@@ -129,7 +137,7 @@ export const CLAUSES: Record<string, Clause> = Object.fromEntries(
 export const CLAUSE_IDS = Object.keys(CLAUSES)
 
 const LEGACY_JOURNEYS = (journeysJson as { journeys: Journey[] }).journeys
-export const JOURNEYS: Journey[] = [...LEGACY_JOURNEYS, ...B3_A5_JOURNEYS]
+export const JOURNEYS: Journey[] = [...LEGACY_JOURNEYS, ...REVIEWED_JOURNEYS]
 export const STEPS: Record<string, Step> = Object.fromEntries(
   JOURNEYS.flatMap((j) => j.steps.map((s) => [s.id, s])),
 )
@@ -151,7 +159,7 @@ export const IMPL_LABEL: Record<Impl, string> = {
 export const ROUND_LABEL: Record<JourneyRound, string> = {
   r1: '历史归档 · 第一轮（非当前验收）',
   r2: '历史归档 · 第二轮（非当前验收）',
-  handoff: 'B3 / A5 · 固定版本可交接',
+  handoff: 'Spec V4 · 固定版本可交接',
 }
 
 /** 条款 page 字段为空或不是页面代号时，按章节把它归到最可能出现的页面（清单里才列得出来） */

@@ -118,8 +118,48 @@ export async function adminSession(
 ): Promise<Session> {
   const session = new Session(baseURL)
   await session.call('POST', '/v1/auth/login', { email, password })
-  await session.call('POST', '/v1/auth/elevate', {
-    code: await totp(totpSecret),
-  })
-  return session
+  // The server accepts each TOTP counter once and counts successful elevation
+  // toward its five-attempt / 60-second limit. Consecutive fixture scripts can
+  // hit that limit even after waiting for a new code, so allow one full throttle
+  // window while keeping all retry waits within two minutes.
+  const deadline = Date.now() + 120_000
+  const attempted = new Set<number>()
+  for (;;) {
+    if (Date.now() >= deadline) {
+      throw new Error(
+        'admin elevation failed after waiting for a fresh TOTP window or rate limit',
+      )
+    }
+    const now = Math.floor(Date.now() / 1000)
+    let throttled = false
+    for (const at of [now, now + 30]) {
+      const counter = Math.floor(at / 30)
+      if (attempted.has(counter)) continue
+      attempted.add(counter)
+      try {
+        await session.call('POST', '/v1/auth/elevate', {
+          code: await totp(totpSecret, at),
+        })
+        return session
+      } catch (error) {
+        if (!(error instanceof HttpError)) throw error
+        if (error.status === 429) {
+          // A throttled request never checks its code; it may be valid after
+          // the throttle expires. Do not spend another attempt immediately.
+          attempted.delete(counter)
+          throttled = true
+          break
+        }
+        if (error.status !== 401) throw error
+      }
+    }
+    const remaining = deadline - Date.now()
+    if (remaining <= 0) continue
+    const delay = throttled
+      ? 60_000
+      : (31 - Math.floor(Date.now() / 1000) % 30) * 1000
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(delay, remaining))
+    )
+  }
 }

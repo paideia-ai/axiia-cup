@@ -151,10 +151,10 @@ test('U04-C01/C02/C04：D 页每张产品卡一句话介绍 + 统计槽位（点
       expect(text.trim().split('\n').length).toBeGreaterThanOrEqual(2)
     }
   })
-  await test.step('并且 每张产品场景卡的统计槽位：有数据则显示「侧方胜率 · N 场 · 两侧胜率」，未过门槛则显示引导式空态「对局数不足」', () => {
+  await test.step('并且 每张产品场景卡的统计槽位：有数据则显示「侧方胜率 · N 场 · 两侧胜率」，未过门槛则显示「数据积累中」', () => {
     for (const text of texts) {
       const lit = /侧方胜率/.test(text) && /\d+ 场 ·/.test(text)
-      const outline = /侧方胜率/.test(text) && /对局数不足/.test(text)
+      const outline = /数据积累中/.test(text) && !/对局数不足/.test(text)
       expect(
         lit || outline,
         `每张产品卡都要有统计槽位（点亮或空态轮廓），这张两者皆无：${
@@ -304,9 +304,28 @@ test('U04-C09：侧方胜率出现在背景故事卡（#38 GLANCE）', async () 
   await test.step('假如 我打开商鞅场景的 DA 页', async () => {
     await gotoDA()
   })
-  await test.step('那么 背景故事卡内出现「侧方胜率」——有数据点亮，无数据为空态轮廓', async () => {
+  await test.step('那么 背景故事卡内按接口展示两侧胜率或「数据积累中」', async () => {
     const glance = page.locator('[data-testid="scenario-intro-card"]').first()
-    await expect(glance.getByText('侧方胜率')).toBeVisible()
+    const response = await page.request.get(`/v1/scenarios/${SHANGYANG}?side=a`)
+    expect(response.ok()).toBe(true)
+    const { summary } = await response.json() as {
+      summary: {
+        stats?: { battleCount: number; sideWinRate: { a: number; b: number } }
+      }
+    }
+    if (summary.stats) {
+      const line = glance.locator('[data-tm="DA.stats-line"]')
+      await expect(line).toContainText(
+        `${Math.round(summary.stats.sideWinRate.a * 100)}%`,
+      )
+      await expect(line).toContainText(
+        `${Math.round(summary.stats.sideWinRate.b * 100)}%`,
+      )
+    } else {
+      await expect(glance.getByText('数据积累中', { exact: true }))
+        .toBeVisible()
+      await expect(glance.getByText(/0%|0 场/)).toHaveCount(0)
+    }
   })
 })
 

@@ -180,6 +180,7 @@ printf 'Running Playwright against Swift %s and web %s\n' "$API_PORT" "$WEB_PORT
 # deterministic fixture scenario (a model-free script) over the real admin API
 # (scripts + slots), which is how completed matches exist without model inference.
 AXIIA_BASE_URL="$ORIGIN" \
+AXIIA_E2E_ISOLATED='1' \
 AXIIA_REGISTRATION_CODE="$REGISTRATION_CODE" \
 AXIIA_SCENARIO_ID="$SCENARIO_ID" \
 AXIIA_ADMIN_EMAIL='admin@axiia.test' \
