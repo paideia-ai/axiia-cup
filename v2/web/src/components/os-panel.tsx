@@ -98,6 +98,7 @@ export function OsPanel({
   const [tab, setTab] = useState('pve')
   // null 双关「未加载」与「加载失败」：两种情况都按无 config 降级渲染。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
+  const configRequestRef = useRef(0)
 
   // ── P3 约战态（#66，mock V20） ────────────────────────────────────────
   // 我的双侧阵容候选：每侧一组 {版本, 所属 agent, ★}；null=未加载。
@@ -166,20 +167,36 @@ export function OsPanel({
   useEffect(() => {
     if (!open) return
     let live = true
+    const requestID = ++configRequestRef.current
     // 配额脚注 + 拒绝文案数字 + 试炼开关；失败降级为 null（脚注隐藏、
     // 文案无数字），派发本身不受影响。
     void configApi
       .get()
       .then((value) => {
-        if (live) setCfg(value)
+        if (live && requestID === configRequestRef.current) setCfg(value)
       })
       .catch(() => {
-        if (live) setCfg(null)
+        if (live && requestID === configRequestRef.current) setCfg(null)
       })
     return () => {
       live = false
+      configRequestRef.current += 1
     }
   }, [open])
+
+  const configAfterRejection = async (cause: unknown) => {
+    if (
+      !(cause instanceof ApiError) ||
+      !['daily_limit', 'pvp_daily_limit'].includes(cause.code)
+    ) return cfg
+    const requestID = ++configRequestRef.current
+    // Another tab or an in-flight battle can consume the last slot after this
+    // panel opens. Re-read before deciding between exhausted and one-slot copy.
+    const fresh = await configApi.get().catch(() => null)
+    if (!liveRef.current || requestID !== configRequestRef.current) return null
+    setCfg(fresh)
+    return fresh
+  }
 
   const selfOpponents = (opponents ?? []).filter(
     (opponent) => opponent.isSelf,
@@ -216,7 +233,9 @@ export function OsPanel({
     } catch (cause) {
       if (!liveRef.current) return
       // #52/#47：按钮保持可点，拒绝在点击后给产品文案（数字来自 config）。
-      setError(rejectCopy(cause, cfg, '发起对战失败'))
+      const freshConfig = await configAfterRejection(cause)
+      if (!liveRef.current) return
+      setError(rejectCopy(cause, freshConfig, '发起对战失败'))
       setDispatching(false)
     }
   }
@@ -234,7 +253,9 @@ export function OsPanel({
       navigate(`/matches/${response.matchID}`)
     } catch (cause) {
       if (!liveRef.current) return
-      setError(rejectCopy(cause, cfg, '发起对战失败'))
+      const freshConfig = await configAfterRejection(cause)
+      if (!liveRef.current) return
+      setError(rejectCopy(cause, freshConfig, '发起对战失败'))
       setDispatching(false)
     }
   }
@@ -412,7 +433,9 @@ export function OsPanel({
         setChallengeUnavailable(true)
       } else {
         // #52/Q7 成对语义的配额文案 + P3 错误码族，都在 reject-copy。
-        setError(challengeRejectCopy(cause, cfg))
+        const freshConfig = await configAfterRejection(cause)
+        if (!liveRef.current) return
+        setError(challengeRejectCopy(cause, freshConfig))
       }
     } finally {
       if (liveRef.current) setDispatching(false)

@@ -8,6 +8,12 @@ import type { ConfigResponse } from '../api/types'
 import { PROMPT_UNIT_LIMIT } from './prompt-length'
 import { messageOf } from './use-async'
 
+function exhaustedQuotaCopy(limit?: number): string {
+  return limit != null
+    ? `今日次数已用完（${limit}/${limit}），明天再来`
+    : '今日次数已用完，明天再来'
+}
+
 export function rejectCopy(
   error: unknown,
   config?: ConfigResponse | null,
@@ -17,10 +23,7 @@ export function rejectCopy(
   switch (error.code) {
     // #52 触顶行为已定：按钮可点 → 点击后给这句 → 不入队。
     case 'daily_limit': {
-      const n = config?.dailyBattleLimit
-      return n != null
-        ? `今日次数已用完（${n}/${n}），明天再来`
-        : '今日次数已用完，明天再来'
+      return exhaustedQuotaCopy(config?.dailyBattleLimit)
     }
     case 'concurrency_limit': {
       const n = config?.concurrencyLimit
@@ -29,10 +32,7 @@ export function rejectCopy(
         : '同时进行的对局已达上限，等一场结束再来'
     }
     case 'pvp_daily_limit': {
-      const m = config?.pvpDailyLimit
-      return m != null
-        ? `今日玩家对战次数已用完（${m}/${m}），明天再来`
-        : '今日玩家对战次数已用完，明天再来'
+      return exhaustedQuotaCopy(config?.pvpDailyLimit)
     }
     // #47 规格行为：赛事运行期间可阻挡全部试炼，不是 bug。
     case 'trials_blocked':
@@ -109,15 +109,22 @@ export function accountRejectCopy(
   return rejectCopy(error, null, fallback)
 }
 
-// 约战上下文的配额文案（#52/Q7 成对语义）：一次约战计 2 场、要么整对要么
-// 不发——普通单场文案在这里会误导（「已用完」不准确，是「不足一整对」）。
-// 三个配额码换成对版本，其余仍走 rejectCopy。
+// 一次约战计 2 场：零余额使用 U03-C11 的准确触顶文案；还剩一场时，
+// 明确说明余额不足一整对。调用方在配额拒绝后刷新 config，避免沿用旧余额。
 export function challengeRejectCopy(
   error: unknown,
   config?: ConfigResponse | null,
   fallback = '发起约战失败',
 ): string {
   if (error instanceof ApiError) {
+    if (config && ['daily_limit', 'pvp_daily_limit'].includes(error.code)) {
+      if (config.usage.battlesToday >= config.dailyBattleLimit) {
+        return exhaustedQuotaCopy(config.dailyBattleLimit)
+      }
+      if (config.usage.pvpBattlesToday >= config.pvpDailyLimit) {
+        return exhaustedQuotaCopy(config.pvpDailyLimit)
+      }
+    }
     switch (error.code) {
       case 'daily_limit': {
         const n = config?.dailyBattleLimit
