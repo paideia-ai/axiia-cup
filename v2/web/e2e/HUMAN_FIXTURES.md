@@ -32,6 +32,43 @@ verified preparation. Their Test Mode fields remain `refresh-required`. Daily
 quota changes at midnight UTC+8; an exhausted account cannot be treated as a
 permanent fixture.
 
+`deno task prepare:human:a6-entry --apply` prepares only `HV-A6-ENTRY-QUOTA-S01`
+and `S02`. It creates two independent accounts and leaves the existing
+three-role command and all shared accounts unchanged. Supply the admin
+environment above, `AXIIA_A6_ENTRY_SCENARIO` as an explicit live scenario slug,
+and new absolute `AXIIA_PRIVATE_OUT` (`.jsonl`) and `AXIIA_PUBLIC_OUT` (`.json`)
+paths. `AXIIA_A6_ENTRY_MODEL_ID` is optional; the command otherwise selects from
+the current server model catalog.
+
+The entry-switch account, **A6 人测·参赛版本切换**, has a main A agent with v1 ★
+and non-entry v2, a B agent with v1 ★, and a sibling A agent with non-entry v1.
+The separate **A6 人测·首存自动参赛** account has one empty A agent, no saved
+versions or ★, and an untouched draft. Preparation performs no entry switches,
+draft mutations, gameplay or model inference. Vivian performs the two switches
+and the first/second saves herself.
+
+Only a public manifest with `fixtureKind: "a6-entry-first-save"`,
+`state: "ready"` and both roles `verified: true` is ready for handoff. After
+starting a new Test Mode round, copy `testModeFixtures.a6EntryAgentId`,
+`a6EntrySiblingAgentId` and `a6NoEntryAgentId` into its three session fields.
+The manifest includes the actual version/★ matrix and zero-match/usage evidence;
+it contains no credentials. Deliver the private journal's role credentials
+separately through the authorized handoff. Do not reuse A5 agent 228 or the A6
+creation-gate role for these steps.
+
+The synced private journal retains credentials and the pending operation before
+each write. On a timeout, a save may already have committed: inspect that role
+and its journal; no write is automatically retried. A failed run produces a
+partial manifest with no ready session fields. A replacement run uses new paths
+and fresh accounts, preserving any previous generation. Readiness describes the
+initial state at preparation time; it does not imply S03–S08 are ready or that
+the human checks have passed.
+
+`tests/e2e/a6-entry-fixture-preparation.real.spec.ts` runs this exact command on
+the isolated Swift server, exercises S01's two browser entry switches and S02's
+two browser saves, checks the resulting API state and zero gameplay, and proves
+a replacement generation leaves the consumed original accounts unchanged.
+
 `deno task prepare:human:a5 --apply` prepares the **existing A5 quota invitee**
 through real model-backed duels. It spends real model usage and the invitee's
 daily allowance. It requires player credentials, not admin access. Keep both
