@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-  "sourceSha256": "053164f34a463b15c4daa7335a7f509f261c248971390bd0ed7754e8f9c7b550",
+  "sourceSha256": "c988f3a3b5615e90a2cad9c8cc7242433b16fcf9f723541ecfbb235ee234beac",
   "capturedAt": "2026-09-09",
   "handoffReadyClauseIds": [
     "U03-C01",
@@ -1133,17 +1133,20 @@
     "a6EntryAgentId": {
       "label": "参赛版本主智能体 ID",
       "profileId": "a6-entry",
-      "hint": "复用多版本智能体 228。"
+      "hint": "从本轮独立参赛矩阵账号包的 testModeFixtures.a6EntryAgentId 填写；主 A 智能体应有 v1★ 与 v2 非★。不要复用共享 A5 智能体 228。 输入只保存在当前浏览器会话，不沿用旧 localStorage 值。",
+      "persistence": "session"
     },
     "a6EntrySiblingAgentId": {
       "label": "同场景同侧第二智能体 ID",
       "profileId": "a6-entry",
-      "hint": "当天准备真实 ID，不预填。"
+      "hint": "从同一份本轮参赛矩阵账号包的 testModeFixtures.a6EntrySiblingAgentId 填写；必须是主智能体同场景同侧的兄弟 A，已保存 v1 且非★。 输入只保存在当前浏览器会话，不沿用旧 localStorage 值。",
+      "persistence": "session"
     },
     "a6NoEntryAgentId": {
       "label": "本侧无 ★ 的零版本智能体 ID",
       "profileId": "a6-entry-first-save",
-      "hint": "当天准备，不预填。"
+      "hint": "从本轮独立首存账号包的 testModeFixtures.a6NoEntryAgentId 填写；目标为 A 侧空壳、零保存版本，整个账号没有★。S02 保存会消耗该前态，下一轮另备新账号。 输入只保存在当前浏览器会话，不沿用旧 localStorage 值。",
+      "persistence": "session"
     },
     "a6PvpAgentId": {
       "label": "PVP 已解锁发起方智能体 ID",
@@ -1160,13 +1163,13 @@
     "a6DailyExhaustedAgentId": {
       "label": "当日总次数 N/N 的智能体 ID",
       "profileId": "a6-daily-exhausted",
-      "hint": "按本步独立专用账号包填写并核验当前总次数 N/N 与有效对手；不要使用 A5 共用账号 233 或沿用旧版本默认值。",
+      "hint": "按本轮专用账号 manifest 的 testModeFixtures.a6DailyExhaustedAgentId 填写；核对 fixture=a6-daily-exhausted、state=ready、未到 expiresAt，以及总次数 N/N、PVP 次数 0。过期后领取新准备的账号包。",
       "persistence": "session"
     },
     "a6DailyExhaustedOpponentVersionId": {
       "label": "总次数负例的有效对手版本 ID",
       "profileId": "a6-daily-exhausted",
-      "hint": "按本步独立专用账号包填写并核验当前总次数 N/N 与有效对手；不要使用 A5 共用账号 233 或沿用旧版本默认值。",
+      "hint": "按同一 manifest 的 testModeFixtures.a6DailyExhaustedOpponentVersionId 填写本账号 B 侧★版本。进入「左右手互搏」后 B 会自动选中，核对★版本 ID 后点「自打一场」；这里没有独立的版本选择器。",
       "persistence": "session"
     },
     "a6ScoreAgentId": {
@@ -1319,26 +1322,24 @@
       "roles": [
         {
           "id": "a6-entry",
-          "title": "同侧多智能体多版本",
-          "accountAlias": "A5 人测·完整发起方",
+          "title": "独立参赛切换矩阵",
+          "accountAlias": "A6 人测·参赛版本切换",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "主智能体 228 有 364/365/366；当天补真实同侧第二智能体。",
+          "description": "为 S01 独立新建并核验的账号：主 A 智能体含 v1★ 与 v2 非★，B 智能体有 v1★，同侧兄弟 A 有 v1 非★。准备过程不运行对局，不代表 PVP 已解锁；S03 合法约战使用另外准备的已解锁账号。按本轮账号包填写两个真实 ID，不复用共享 A5 智能体 228；本说明不表示已有账号包交付或该步骤通过。",
           "variables": [
             "a6EntryAgentId",
             "a6EntrySiblingAgentId"
           ],
-          "defaults": {
-            "a6EntryAgentId": "228"
-          }
+          "defaults": {}
         },
         {
           "id": "a6-entry-first-save",
           "title": "本侧无 ★ 的首存账号",
-          "accountAlias": "A6 人测·首存自动参赛（每轮刷新）",
+          "accountAlias": "A6 人测·首存自动参赛",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "目标为零版本且全侧无 ★。",
+          "description": "为 S02 单独新建并核验的首存账号：只有 A 侧空壳、零保存版本，整个账号没有★。它与 S01 参赛矩阵账号是两个独立角色；不运行对局、不保存首版。S02 第一次保存会消耗前态，再跑必须另备新账号。本说明不表示已有账号包交付或该步骤通过。",
           "variables": [
             "a6NoEntryAgentId"
           ],
@@ -1358,7 +1359,7 @@
         },
         {
           "id": "a6-quota",
-          "title": "同一对手边界前一档",
+          "title": "S03 合法约战与 S05 独立边界",
           "accountAlias": "A5 人测·完整发起方",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
@@ -1371,11 +1372,11 @@
         },
         {
           "id": "a6-daily-exhausted",
-          "title": "当日总次数触顶",
-          "accountAlias": "A6 人测·总次数触顶（独立账号，每轮刷新）",
+          "title": "独立总次数触顶（每轮刷新）",
+          "accountAlias": "A6 人测·总配额耗尽",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "本步尚未准备。使用独立专用账号达到当天总次数 N/N，并另核验有效对手版本；不得消耗 A5 共用账号 233 的总次数余量，它用于仅 PVP 触顶而总次数仍有余量的负例。按本步当前账号包填写真实 ID，不沿用旧默认值。",
+          "description": "本步使用当日独立准备的「A6 人测·总配额耗尽」账号：A/B 双侧各有 v1 参赛版本，当日总次数为 N/N，PVP 次数为 0。准备工具按给定场次预算顺序运行真实左右手互搏，并保存检查点与 UTC+8 过期时间。这套账号与 A5、参赛切换和首存账号分开。开测时从 A 智能体点「出战」→「左右手互搏」，B 智能体会自动选中并使用其★版本；核对版本 ID 与 a6DailyExhaustedOpponentVersionId 一致后点「自打一场」。准备结果以本轮未过期、state=ready 的公开 manifest 为准；准备成功与本步骤人工检查通过分别记录。",
           "variables": [
             "a6DailyExhaustedAgentId",
             "a6DailyExhaustedOpponentVersionId"
@@ -1997,8 +1998,11 @@
       "title": "参赛版本、配额、评分与赛事资格",
       "startUrl": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
       "prerequisites": [
-        "记录 228 与真实同侧第二智能体的版本/★；另准备本侧全局无 ★ 的 0 版本智能体。",
+        "S01 使用本轮独立参赛矩阵：主 A 的 v1★/v2非★、B 的 v1★、同侧兄弟 A 的 v1非★；S02 另用整个账号无★的 A 侧零版本空壳。三个 ID 都按本轮账号包填写，不复用共享智能体 228，不互换两套账号。",
+        "准备方在 v2/web 运行 deno task prepare:human:a6-entry --apply；只接收 fixtureKind=a6-entry-first-save 且 state=ready 的公开 manifest，并核对两个角色均 verified=true。按 testModeFixtures 填写 a6EntryAgentId、a6EntrySiblingAgentId、a6NoEntryAgentId；私密登录信息另行交付。重复准备必须使用新的输出路径和新账号，不重置共享账号；准备完成不等于 S01/S02 已通过。",
+        "S03 另领双方已解锁且配额充足的合法 PVP 账号包，使用 a6PvpAgentId / a6PvpOpponentVersionId；S01/S02 的无对局新账号不满足该前提。无★但已有保存版本的最新版回落分支还需真实遗留前态，不能用零版本空壳或人工改写状态代替，未提供时不标 S03 全部通过。",
         "当天记录同一对手上限 M、PVP 日上限与总上限 N；S05 须先确认同一发起方的边界在配额内可达，S06 须另备独立总次数 N/N 账号，不消耗 A5 共用账号 233 的总次数余量。",
+        "S06 由准备方在 v2/web 运行 deno task prepare:human:a6-quota --apply，另备「A6 人测·总配额耗尽」账号。使用 fixture=a6-daily-exhausted、state=ready 且未到 expiresAt 的 manifest；核对实际 PVE 请求已返回 429 daily_limit、对局列表与计数未变化、总次数 N/N 且 PVP 次数 0。登录该账号，从 A 智能体点「出战」→「左右手互搏」，核对自动采用的 B 侧★ ID 等于 a6DailyExhaustedOpponentVersionId，再点「自打一场」。跨 UTC+8 午夜后重新准备账号与拒绝证据。",
         "S03 会消耗同一对手次数和配额，不能作为 S05 未复核的起点。当前 M=3、PVP 日上限 5 且每对计 2 次，所需边界不可由同一发起方正常准备；S05 按 knownGap 暂停，先协调口径与配额，不改计数或借多发起方聚合偷换判据。协调后再独立准备并核验 ID/状态；「开始新一轮」只清本地记录，不恢复服务端次数。",
         "S04 报名、S07 玩家×场景评分及 S08 评分资格存在能力缺口，按各步 knownGap 留证；不得把缺少 UI/API 仅归为账号或赛事未准备，也不造 ID。",
         "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
@@ -2054,11 +2058,11 @@
         },
         {
           "id": "HV-A6-ENTRY-QUOTA-S03",
-          "url": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
+          "url": "{{appBaseUrl}}/agents/{{a6PvpAgentId}}",
           "links": [
             {
               "label": "构建器",
-              "url": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}/build"
+              "url": "{{appBaseUrl}}/agents/{{a6PvpAgentId}}/build"
             },
             {
               "label": "我的智能体",
@@ -2068,7 +2072,6 @@
           "route": "/agents/:id",
           "marker": "OS.lineup",
           "fixtureRefs": [
-            "a6-entry",
             "a6-quota"
           ],
           "action": "在智能体主页、我的智能体和出战面板中记录两侧唯一 ★ 版本；用 {{a6PvpOpponentVersionId}} 发起合法成对约战并记录两腿实际版本；对无 ★ 侧另核对最新版回落。工作区用于编辑和保存，参赛版本在保存后返回的智能体主页核对。",
@@ -2084,7 +2087,12 @@
           "screenshotEvidence": [
             "HV-A6-ENTRY-QUOTA-S03-pages.png",
             "HV-A6-ENTRY-QUOTA-S03-pair.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "S03 回落分支仍需真实遗留前态",
+            "detail": "S01/S02 新建账号只准备参赛切换与首存自动★，不解锁 PVP，也不能构造已有保存版本但整侧无★的历史状态。合法成对约战使用另行核验的 PVP 账号包；最新版回落需要真实遗留数据。",
+            "instruction": "先用合法 PVP 账号包核对已标★的成对约战；未提供合格遗留前态时，把无★回落分支记为 blocked，并保留 S03 的未完成状态。零版本空壳不满足这一前提；回落分支需要真实的已保存版本且全侧无★状态。"
+          }
         },
         {
           "id": "HV-A6-ENTRY-QUOTA-S04",

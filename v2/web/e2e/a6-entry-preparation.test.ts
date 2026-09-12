@@ -3,8 +3,12 @@ import {
   type EntryBundle,
   type EntryManifest,
   EntryPreparationError,
+  entryRoles,
   prepareA6Entry,
 } from './a6-entry-preparation.ts'
+import reviewedSource from '../src/testmode/data/vivian-a3-a4-a6.json' with {
+  type: 'json',
+}
 
 function assert(value: unknown, message = 'assertion failed'): asserts value {
   if (!value) throw new Error(message)
@@ -362,6 +366,52 @@ Deno.test('replacement generation leaves every original role and version unchang
       replacement.testModeFixtures.a6EntryAgentId,
   )
   equal(new Set(server.players.map((player) => player.email)).size, 4)
+})
+
+Deno.test('ready role aliases and session fields match the generated guide contract', async () => {
+  const manifest = await new FixtureServer().prepare()
+  const groups: Array<{
+    roles: Array<{
+      id: string
+      accountAlias: string
+      variables: string[]
+      defaults: object
+    }>
+  }> = reviewedSource.fixtureProfiles
+  const profiles = groups.flatMap((group) => group.roles)
+  const fields = {
+    a6EntryAgentId: 'a6-entry',
+    a6EntrySiblingAgentId: 'a6-entry',
+    a6NoEntryAgentId: 'a6-entry-first-save',
+  }
+  equal(
+    Object.keys(manifest.testModeFixtures).sort(),
+    Object.keys(fields).sort(),
+  )
+  for (const role of entryRoles) {
+    const profile = profiles.find((profile) => profile.id === role.id)
+    assert(profile, `guide role missing: ${role.id}`)
+    equal(profile.accountAlias, role.accountAlias)
+    equal(
+      profile.variables.slice().sort(),
+      Object.entries(fields).filter(([, id]) => id === role.id).map(([key]) =>
+        key
+      )
+        .sort(),
+    )
+    equal(profile.defaults, {})
+  }
+  const variables = reviewedSource.manualVariables as Record<
+    string,
+    { profileId?: string; persistence?: string }
+  >
+  const defaults = reviewedSource.manualDefaults as Record<string, string>
+  for (const [field, roleID] of Object.entries(fields)) {
+    assert(variables[field], `guide field missing: ${field}`)
+    equal(variables[field].profileId, roleID)
+    equal(variables[field].persistence, 'session')
+    equal(defaults[field] ?? '', '')
+  }
 })
 
 Deno.test('state or identity drift prevents ready session fields', async (test) => {
