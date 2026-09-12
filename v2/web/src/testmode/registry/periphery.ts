@@ -150,10 +150,10 @@ export const TM_PERIPHERY: TmRegistry = {
   },
   'G.standings-submissions': {
     label: '两侧版本号小字',
-    clauses: ['U11-C04'],
+    clauses: ['U11-C04', 'U10-C11b'],
     journeys: ['j9s2'],
-    note: '#64：名次属于人，两侧投的版本 #id 降为小字下钻线索',
-    when: '视口 ≥ md 时',
+    note: '#64：名次属于人；点击提交版本 #id 后解析并进入其智能体主页',
+    when: '桌面与移动端均可用',
   },
   'G.standings-buchholz': {
     label: '小分',
@@ -542,6 +542,12 @@ export const TM_PERIPHERY: TmRegistry = {
     clauses: ['U12-C10', 'U12-C09'],
     journeys: ['j10s2', 'jR7s5'],
     note: '整行是链接 → /matches/:id 战报（行点开 → 战报）',
+  },
+  'L.owned-agent': {
+    label: '历史智能体入口',
+    clauses: ['U10-C11b'],
+    note: '按对局参与者的 agentID 直接进入本人智能体主页；与战报入口分开',
+    when: '该侧属于当前登录玩家且有关联智能体时',
   },
   'L.match-id': {
     label: '对战编号',

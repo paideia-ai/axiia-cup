@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-  "sourceSha256": "93e050a498e1069854d01263172fa14988f6dca20310434968bb3a04f893dc6a",
+  "sourceSha256": "053164f34a463b15c4daa7335a7f509f261c248971390bd0ed7754e8f9c7b550",
   "capturedAt": "2026-09-09",
   "handoffReadyClauseIds": [
     "U03-C01",
@@ -1109,25 +1109,25 @@
     "a6GateAgentId": {
       "label": "PVP 门槛账号智能体 ID",
       "profileId": "a6-gates",
-      "hint": "可复用 231，执行前刷新状态。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "hint": "按当前已准备账号包或公开 manifest 的 testModeFixtures.a6GateAgentId 填写，并核对角色卡要求的门槛进度；角色卡中的日期与 ID 仅是当时观察，不能沿用为本轮状态保证。输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
       "persistence": "session"
     },
     "a6OtherScenarioSlug": {
       "label": "门槛隔离的另一场景 slug",
       "profileId": "a6-gates",
-      "hint": "必须不同于主场景。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "hint": "按当前账号包或公开 manifest 的 testModeFixtures.a6OtherScenarioSlug 填写，并核对该场景确有本角色两侧智能体且不同于主场景；不要由显示名猜 slug。输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
       "persistence": "session"
     },
     "a6LockedOpponentVersionId": {
       "label": "PVP 未解锁被约方真实版本 ID",
       "profileId": "a6-gates",
-      "hint": "当天查询填写，不猜 ID。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "hint": "按当前账号包或公开 manifest 的 testModeFixtures.a6LockedOpponentVersionId 填写，执行前核对被约方仍未解锁 PVP。输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
       "persistence": "session"
     },
     "a6CreationAgentId": {
       "label": "创建门现有单侧智能体 ID",
       "profileId": "a6-creation",
-      "hint": "可复用 230 并重置状态。 本轮已核验参考值见 A6 门槛与创建角色卡；输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
+      "hint": "按当前新准备账号包或公开 manifest 的 testModeFixtures.a6CreationAgentId 填写，核对本侧已有保存版本、对侧无保存版本；初始状态消耗后另备新账号，不重置共享账号。输入只保存在当前浏览器会话，旧 localStorage 值不再沿用。",
       "persistence": "session"
     },
     "a6EntryAgentId": {
@@ -1148,34 +1148,36 @@
     "a6PvpAgentId": {
       "label": "PVP 已解锁发起方智能体 ID",
       "profileId": "a6-quota",
-      "hint": "按当前步骤已重新准备并核验的账号包填写；S03 后执行 S05 前重新准备边界状态并核对 ID，不沿用旧计数。",
+      "hint": "S03 按当前已核验的合法约战账号包填写；S05 先处理已知配额口径冲突，再另备可达的独立边界状态。不得沿用 S03 后的旧计数，或用多个发起方累计被约量替代原预期。",
       "persistence": "session"
     },
     "a6PvpOpponentVersionId": {
       "label": "有效被约方版本 ID",
       "profileId": "a6-quota",
-      "hint": "按当前步骤已重新准备并核验的账号包填写；S03 后执行 S05 前重新准备边界状态并核对 ID，不沿用旧计数。",
+      "hint": "S03 按当前已核验的合法约战账号包填写；S05 先处理已知配额口径冲突，再另备可达的独立边界状态。不得沿用 S03 后的旧计数，或用多个发起方累计被约量替代原预期。",
       "persistence": "session"
     },
     "a6DailyExhaustedAgentId": {
       "label": "当日总次数 N/N 的智能体 ID",
       "profileId": "a6-daily-exhausted",
-      "hint": "可复用 233，当天准备触顶。"
+      "hint": "按本步独立专用账号包填写并核验当前总次数 N/N 与有效对手；不要使用 A5 共用账号 233 或沿用旧版本默认值。",
+      "persistence": "session"
     },
     "a6DailyExhaustedOpponentVersionId": {
       "label": "总次数负例的有效对手版本 ID",
       "profileId": "a6-daily-exhausted",
-      "hint": "可复用 367。"
+      "hint": "按本步独立专用账号包填写并核验当前总次数 N/N 与有效对手；不要使用 A5 共用账号 233 或沿用旧版本默认值。",
+      "persistence": "session"
     },
     "a6ScoreAgentId": {
       "label": "无计分 PVP/赛事结果的智能体 ID",
       "profileId": "a6-score",
-      "hint": "当天准备，不预填。"
+      "hint": "评分 UI/API 交付后再准备无已计分 PVP/赛事的真实账号；当前按 knownGap 留证，不把空白或缺入口当作合格评分空态。"
     },
     "a6TournamentId": {
       "label": "双侧参赛版本报名门槛赛事 ID",
       "profileId": "a6-entry-tournament",
-      "hint": "管理员当天提供真实可报名赛事。"
+      "hint": "报名 UI/API 交付后再由管理员提供真实可报名赛事；当前按 knownGap 记录能力缺失，不猜 ID。"
     },
     "a6QualificationTournamentId": {
       "label": "评分资格门槛赛事 ID",
@@ -1278,7 +1280,7 @@
       "title": "A6 PVP 与创建门",
       "reviewer": "Vivian",
       "status": "refresh-required",
-      "description": "2026-09-12 已核验 9 月 10 日交付的 A6 门槛、单侧已保存与未解锁被约方账号包仍有效。当前初始状态尚未消耗对局；这里的 ID 只供本轮填写并按会话保存，不表示其他 A6 配额、参赛或赛事资格角色已经准备好。",
+      "description": "以下保留 2026-09-12 对 9 月 10 日交付账号包的观察记录；当时 A6 门槛、单侧已保存与未解锁被约方初始状态尚未消耗。开测时必须按当前账号包或公开 manifest 重新核验并填写 ID；旧观察不保证当前状态，也不表示其他 A6 配额、参赛或赛事资格角色已经准备好。",
       "roles": [
         {
           "id": "a6-gates",
@@ -1286,7 +1288,7 @@
           "accountAlias": "A6 人测·PVP 门槛",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "使用 9 月 10 日群账号包中的「A6 人测·PVP 门槛」。2026-09-12 核验：主场景 fengyiting-real 的两侧智能体为 240 / 241，参赛版本为 376 / 377，双方门槛进度均为 0/1；另一场景 honnoji 的两侧智能体为 242 / 243。另用「A6 人测·未解锁被约方」的版本 381 核对被约方资格。本轮填写 a6GateAgentId=240、a6OtherScenarioSlug=honnoji、a6LockedOpponentVersionId=381；不要填写旧账号 231，执行后应重新核验状态。",
+          "description": "9 月 10 日群账号包中的「A6 人测·PVP 门槛」在 2026-09-12 的观察：主场景 fengyiting-real 两侧智能体为 240 / 241，参赛版本为 376 / 377，双方门槛进度均为 0/1；另一场景 honnoji-decision 两侧智能体为 242 / 243。「A6 人测·未解锁被约方」版本为 381。当时参考值为 a6GateAgentId=240、a6OtherScenarioSlug=honnoji-decision、a6LockedOpponentVersionId=381。实际本轮按当前账号包或公开 manifest 填写并核验状态，不沿用旧账号 231 或把这次观察当作永久就绪保证。",
           "variables": [
             "a6GateAgentId",
             "a6OtherScenarioSlug",
@@ -1300,7 +1302,7 @@
           "accountAlias": "A6 人测·单侧已保存",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "使用 9 月 10 日群账号包中的「A6 人测·单侧已保存」。2026-09-12 核验：主场景 fengyiting-real 仅 A 侧有智能体 244、已保存版本 380，B 侧尚无智能体。本轮填写 a6CreationAgentId=244；不要复用旧账号 230。创建或保存对侧后，此初始状态即被消耗，需要重新准备。",
+          "description": "9 月 10 日群账号包中的「A6 人测·单侧已保存」在 2026-09-12 的观察：主场景 fengyiting-real 仅 A 侧有智能体 244、已保存版本 380，B 侧尚无智能体，当时参考值为 a6CreationAgentId=244。实际本轮按当前账号包或公开 manifest 填写并核验状态，不复用旧账号 230。创建或保存对侧会消耗初始状态，重复执行前另备新账号。",
           "variables": [
             "a6CreationAgentId"
           ],
@@ -1313,7 +1315,7 @@
       "title": "A6 参赛版本、配额与评分",
       "reviewer": "Vivian",
       "status": "refresh-required",
-      "description": "复用安全 A5 ID；同侧第二智能体、首存态、赛事与评分空态不预造 ID。",
+      "description": "参赛切换可在核验后的账号上执行；首次保存、无标记回落与总次数触顶需要独立状态。报名和评分存在已知能力缺口，同一对手边界与现行日配额不相容；不能只准备账号就宣称整条旅程可执行。",
       "roles": [
         {
           "id": "a6-entry",
@@ -1347,8 +1349,8 @@
           "title": "双侧报名门槛账号",
           "accountAlias": "A6 人测·赛事报名（每轮刷新）",
           "credentialRef": "axiia-cup-product 群账号包",
-          "status": "refresh-required",
-          "description": "两侧有保存版本、初始仅一侧有 ★；真实可报名赛事。",
+          "status": "known-gap",
+          "description": "当前玩家赛事报名 UI/API 尚未交付；仅提供真实赛事 ID 不能补足能力。两侧均有保存版本但整侧无 ★ 的前态仅可能来自遗留数据，当前首存自动设 ★，不能通过正常流程取消 ★ 或删除有版本的智能体来构造。保留原条款，先记录能力缺口，不伪造或重置线上状态。",
           "variables": [
             "a6TournamentId"
           ],
@@ -1360,7 +1362,7 @@
           "accountAlias": "A5 人测·完整发起方",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "本步状态尚未准备：需要双方已解锁、同一对手计数 M−1、总配额余量至少 2。S03 会消耗该边界；执行 S05 前另行准备并核验状态，按本步账号包重新填写发起方与被约方版本 ID，不沿用未复核的旧 ID 或旧计数。",
+          "description": "S03 的合法双侧约战需要当前已核验的双方已解锁状态。S05 的同一对手边界仍未准备且当前配置不可达：同一发起方前两次成对约战已用 4 次 PVP，第三次需累计 6 次，超过当前日上限 5。同一对手上限 M=3 的含义和配额关系待协调；不能用多个发起方累计被约总量冒充同一对手边界。S03 与 S05 不共享未复核的旧 ID 或计数。",
           "variables": [
             "a6PvpAgentId",
             "a6PvpOpponentVersionId"
@@ -1370,26 +1372,23 @@
         {
           "id": "a6-daily-exhausted",
           "title": "当日总次数触顶",
-          "accountAlias": "A5 人测·配额被约方",
+          "accountAlias": "A6 人测·总次数触顶（独立账号，每轮刷新）",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "233 当天准备到 N/N；367 为有效对手。",
+          "description": "本步尚未准备。使用独立专用账号达到当天总次数 N/N，并另核验有效对手版本；不得消耗 A5 共用账号 233 的总次数余量，它用于仅 PVP 触顶而总次数仍有余量的负例。按本步当前账号包填写真实 ID，不沿用旧默认值。",
           "variables": [
             "a6DailyExhaustedAgentId",
             "a6DailyExhaustedOpponentVersionId"
           ],
-          "defaults": {
-            "a6DailyExhaustedAgentId": "233",
-            "a6DailyExhaustedOpponentVersionId": "367"
-          }
+          "defaults": {}
         },
         {
           "id": "a6-score",
           "title": "评分空态账号",
           "accountAlias": "A6 人测·评分空态（每轮刷新）",
           "credentialRef": "axiia-cup-product 群账号包",
-          "status": "refresh-required",
-          "description": "无已计分 PVP/赛事结果，可完成一场 PVE。",
+          "status": "known-gap",
+          "description": "可准备没有已计分 PVP/赛事的玩家，但当前缺少玩家×场景评分 UI/API，无法观察原条款的 0/空和 PVE 前后隔离；W11 天梯在现行 v3.4 中延期。先记录能力缺失，不以新账号存在代替验收通过。",
           "variables": [
             "a6ScoreAgentId"
           ],
@@ -1880,7 +1879,7 @@
       "prerequisites": [
         "当天记录 §C2 每侧 PVE 胜场门槛 N；a6GateAgentId 两侧齐全且至少一侧低于 N。",
         "填写另一真实场景和主场景 PVP 未解锁被约方版本。",
-        "创建门账号开始时本侧恰有一个已保存智能体，对侧无保存版本；操作会改状态，需可重置账号。",
+        "创建门账号开始时本侧恰有一个已保存智能体，对侧无保存版本；操作会消耗初始状态，重复执行前另备并核验新账号，不重置共享账号。",
         "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
       ],
       "steps": [
@@ -1999,9 +1998,9 @@
       "startUrl": "{{appBaseUrl}}/agents/{{a6EntryAgentId}}",
       "prerequisites": [
         "记录 228 与真实同侧第二智能体的版本/★；另准备本侧全局无 ★ 的 0 版本智能体。",
-        "当天记录同一对手上限 M、总上限 N；准备 M-1 发起方与 N/N 账号。",
-        "S03 的成功约战会消耗同一对手次数和总配额。完成 S03 后，S05 必须另行领取或准备已核验的 M−1 边界状态，并重新填写本步发起方与被约方版本 ID；旧 ID 和旧计数不能直接沿用。「开始新一轮」只清本地记录，不恢复服务端次数。此边界状态尚未准备，未核验前不得执行 S05。",
-        "准备真实可报名赛事、评分空态账号；评分资格能力未交付时按 knownGap 留证，不造 ID。",
+        "当天记录同一对手上限 M、PVP 日上限与总上限 N；S05 须先确认同一发起方的边界在配额内可达，S06 须另备独立总次数 N/N 账号，不消耗 A5 共用账号 233 的总次数余量。",
+        "S03 会消耗同一对手次数和配额，不能作为 S05 未复核的起点。当前 M=3、PVP 日上限 5 且每对计 2 次，所需边界不可由同一发起方正常准备；S05 按 knownGap 暂停，先协调口径与配额，不改计数或借多发起方聚合偷换判据。协调后再独立准备并核验 ID/状态；「开始新一轮」只清本地记录，不恢复服务端次数。",
+        "S04 报名、S07 玩家×场景评分及 S08 评分资格存在能力缺口，按各步 knownGap 留证；不得把缺少 UI/API 仅归为账号或赛事未准备，也不造 ID。",
         "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
       ],
       "steps": [
@@ -2102,9 +2101,9 @@
             "a6-entry-tournament"
           ],
           "knownGap": {
-            "title": "当前 pending_ruling",
-            "detail": "赛事报名入口可能未交付。",
-            "instruction": "入口缺失记 fail；只有真实赛事 fixture 未准备才记 blocked。"
+            "title": "已知能力缺口：玩家赛事报名未交付",
+            "detail": "当前缺少玩家报名 UI/API；有保存版本但整侧无 ★ 的前态也不能由当前正常创建流程构造，不能把能力缺失仅归为 fixture 未准备。",
+            "instruction": "保留原动作、预期与 pin；截取报名入口缺失并记 fail，不标通过。能力交付后再准备真实赛事与合规前态重跑。"
           },
           "action": "仅一侧有 ★ 时尝试报名；再给另一侧设唯一 ★ 后重试。",
           "expected": "缺侧 ★ 时明确拒绝并点名缺失侧；两侧各有一个 ★ 后才允许报名，仅有保存版本不算。",
@@ -2138,7 +2137,12 @@
           "screenshotEvidence": [
             "HV-A6-ENTRY-QUOTA-S05-pair.png",
             "HV-A6-ENTRY-QUOTA-S05-limit.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "验收暂停：同一对手边界与日配额不相容",
+            "detail": "2026-09-12 配置为同一对手上限 M=3、PVP 日上限 5；每次成功成对约战计发起方 2 次。前两次用 4 次，边界内第三次需要累计 6 次，因此不能用同一发起方正常准备 M−1 且仍有 2 次 PVP 余量的状态。多发起方累计被约量不证明原条款的同一对手口径。",
+            "instruction": "保留原动作、预期与版本 pin，记录配置及算式并暂停 S05，不标通过；待正式协调计数口径和配额后再准备可达的独立边界状态，禁止改线上计数或替换 oracle。"
+          }
         },
         {
           "id": "HV-A6-ENTRY-QUOTA-S06",
@@ -2176,9 +2180,9 @@
             "a6-score"
           ],
           "knownGap": {
-            "title": "玩家天梯可能未交付",
-            "detail": "页面可能只写待后续版本。",
-            "instruction": "缺 UI 记 fail，并附数据查询证明 PVE 未播种；不要当通过。"
+            "title": "已知能力缺口：玩家×场景评分未交付",
+            "detail": "当前没有原条款所需的玩家×场景评分 UI/API；现行 v3.4 将 W11 天梯列为延期。新建无 PVP 账号不能补足可观察评分的能力。",
+            "instruction": "保留原动作、预期与版本 pin；记录缺 UI/API 的证据并记 fail，不把页面空白或未实现当作评分 0/空通过；能力交付后再准备前态并重跑 PVE 前后隔离。"
           },
           "action": "记录主场景评分 0/空，完成一场 PVE 后再次查询；同时核对另一场景不变，不创建 PVP/赛事结果。",
           "expected": "无已计分 PVP/赛事结果时评分为 0 或空；PVE 前后不变且按玩家×场景隔离。",
