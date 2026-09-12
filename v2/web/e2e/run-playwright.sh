@@ -101,7 +101,7 @@ export AXIIA_CONCURRENCY_LIMIT='10'
 # P6 #39: low display threshold so two deterministic fixture matches cross it
 # inside a single journey (production default is 20 — too many for a browser gate).
 export AXIIA_STATS_DISPLAY_THRESHOLD='2'
-# P3 #76: per-player daily received-challenge cap. Explicit and dev-realistic so
+# P3 #76: daily challenge cap for each initiator/opponent pair. Explicit so
 # the paired-leg journey never trips it while /v1/config still projects a real value.
 export AXIIA_OPPONENT_DAILY_CHALLENGE_LIMIT='5'
 # P5 #10: the express-lane pointer names the OPPONENT preset (scenarioID:side:presetKey);

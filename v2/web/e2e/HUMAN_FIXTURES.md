@@ -118,7 +118,8 @@ Entry versions are used even when a newer draft exists.
 Only the quota invitee initiates preparation duels; the rich challenger retains
 at least two total and two PVP slots for the later positive paired challenge.
 Direct duels do not consume the receiver's paired-challenge cap. Both roles'
-existing received-challenge counts are checked before preparation. Accepted
+existing same-opponent challenge counts are checked in each direction before
+preparation and refreshed before readiness. Accepted
 duels are charged at dispatch, including terminal failures. The tool waits for
 each duel before starting another and leaves at least two total slots on the
 invitee, so the A5 negative check reaches PVP quota rather than total quota.
