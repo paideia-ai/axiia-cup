@@ -8,6 +8,8 @@ import type { ScenarioModule, ScenarioRole } from './types'
 
 export type { ScenarioModule, ScenarioRole } from './types'
 
+export const DIFFICULTY_LABEL = { 1: '简单', 2: '中等', 3: '困难' } as const
+
 // Every scenario the SPA knows something extra about. A scenario absent from here
 // is not broken: it renders through the generic, server-driven path.
 const MODULES: ScenarioModule[] = [

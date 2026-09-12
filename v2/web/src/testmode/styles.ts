@@ -87,6 +87,12 @@ export const TM_CSS = `
 [data-tm-root] .tm-row-id{font-family:var(--tm-mono);font-size:11.5px;color:var(--tm);flex:none;min-width:5.5em}
 [data-tm-root] .tm-row-q{flex:1;min-width:0;color:var(--tm-text)}
 [data-tm-root] .tm-row-q.tm-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+[data-tm-root] .tm-clause-main{flex:1;min-width:0}
+[data-tm-root] .tm-clause-heading{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+[data-tm-root] .tm-clause-evidence{margin-top:8px;padding:8px 10px;border-left:2px solid var(--tm);background:var(--tm-ink2);font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+[data-tm-root] .tm-clause-evidence p{margin:5px 0}
+[data-tm-root] .tm-evidence-links{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px}
+[data-tm-root] .tm-chip.tm-clause-chip{height:auto;min-height:18px;max-width:100%;white-space:normal;flex-wrap:wrap;line-height:1.5}
 [data-tm-root] .tm-chips{display:flex;flex-wrap:wrap;gap:4px}
 [data-tm-root] .tm-chip{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 6px;border:1px solid var(--tm-line-soft);border-radius:4px;
   font-family:var(--tm-mono);font-size:10.5px;color:var(--tm-mute);white-space:nowrap;line-height:1}

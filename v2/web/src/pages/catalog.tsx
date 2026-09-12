@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideProgressText } from '../lib/gate'
 import { useAsync } from '../lib/use-async'
-import { scenarioModule } from '../scenarios'
+import { DIFFICULTY_LABEL, scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 import { useAuth } from '../context/auth'
 
@@ -183,8 +183,11 @@ export function CatalogPage() {
                             {...tm('D.card-education')}
                           >
                             <span title={`难度 ${education.difficulty} / 3`}>
-                              难度{' '}
-                              <span className='tracking-[0.12em] text-(--warning)'>
+                              难度 {DIFFICULTY_LABEL[education.difficulty]}{' '}
+                              <span
+                                aria-hidden='true'
+                                className='tracking-[0.12em] text-(--warning)'
+                              >
                                 {'★'.repeat(education.difficulty)}
                                 <span className='text-(--foreground-muted)'>
                                   {'☆'.repeat(3 - education.difficulty)}

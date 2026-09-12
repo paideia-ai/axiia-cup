@@ -276,9 +276,9 @@ export function Panel(
             )}
         </details>
         <p className='tm-dimt' style={{ margin: '14px 0 0', fontSize: 11.5 }}>
-          实现状态来自 spec v4 审计（<ImplChip impl='match' />{' '}
-          等）；点条款号去看板那一行。共享部件（版本卡、出战面板）在 EA / DA
-          页上仍以 E. / OS. 开头。
+          状态标签是带日期的审计快照（<ImplChip impl='match' />{' '}
+          等），不是本轮验收结果；有新工程证据时另列说明。点条款号去看板那一行。共享部件（版本卡、出战面板）在
+          EA / DA 页上仍以 E. / OS. 开头。
         </p>
       </div>
     </div>
