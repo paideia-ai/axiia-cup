@@ -6,6 +6,7 @@ import specIndexJson from './data/spec-index.json'
 import {
   VIVIAN_A3_A4_A6_JOURNEYS,
   VIVIAN_HANDOFF_READY_CLAUSE_IDS,
+  VIVIAN_SOURCE_COMMIT,
   VIVIAN_SOURCE_SHA256,
 } from './data/vivian-a3-a4-a6-journeys'
 import snapshotJson from './data/vivian-a3-a4-a6.json'
@@ -27,6 +28,9 @@ interface SnapshotFixtureRole {
 }
 
 interface VivianSnapshot {
+  sourceRevision: string
+  sourceCommit: string
+  capturedAt: string
   sourceSha256: string
   handoffReadyClauseIds: string[]
   confirmedClauses: Record<string, SnapshotClause>
@@ -179,6 +183,9 @@ describe('Vivian A3 / A4 / A6 固定版本人测交接', () => {
     for (const journey of VIVIAN_A3_A4_A6_JOURNEYS) {
       expect(handoff).toContain(journey)
       for (const step of journey.steps) expect(STEPS[step.id]).toBe(step)
+      if (journey.id === 'HV-A3-FIRST-BATTLE') {
+        expect(journey.steps.every((step) => !step.knownGap)).toBe(true)
+      }
     }
     for (const journey of handoff) {
       expect(journey.manual).toBe(MANUAL_PATH)
@@ -431,8 +438,15 @@ describe('Vivian A3 / A4 / A6 固定版本人测交接', () => {
     expect(VIVIAN_SOURCE_SHA256).toBe(source.sourceSha256)
     expect(VIVIAN_SOURCE_SHA256).toMatch(/^[0-9a-f]{64}$/)
     expect(specIndexJson.vivianOverlay).toMatchObject({
+      sourceCommit: VIVIAN_SOURCE_COMMIT,
       sourceSha256: VIVIAN_SOURCE_SHA256,
       handoffReadyClauseIds: [...HANDOFF_READY_CLAUSES].sort(),
     })
+    expect(VIVIAN_SOURCE_COMMIT).toBe(source.sourceCommit)
+    expect(VIVIAN_SOURCE_COMMIT).toMatch(/^[0-9a-f]{40}$/)
+    expect(source.sourceRevision).toBe(
+      '286c97c106cc0590f6e466f78a4ca234b896dba4',
+    )
+    expect(source.capturedAt).toBe('2026-09-09')
   })
 })

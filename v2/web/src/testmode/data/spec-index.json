@@ -2952,7 +2952,8 @@
   },
   "vivianOverlay": {
     "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-    "sourceSha256": "6104ef6282da7f2afe25826c28a61dc430d2c5daa9caf59b8576e82e73f5a952",
+    "sourceCommit": "db9b9fe2f3e2b889f893a1904bdec48f7af42cc4",
+    "sourceSha256": "0946d2ea09980ebe3d7a447f7ff3bb8092172ded8b51deea329d58d97f56c5dc",
     "capturedAt": "2026-09-09",
     "clauseIds": [
       "U03-C01",

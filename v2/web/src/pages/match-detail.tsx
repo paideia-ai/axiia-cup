@@ -1234,29 +1234,37 @@ function FirstBattleJourney({
         </div>
       </div>
 
-      {/* Keso 2026-09-09：工作区始终相同，两个辅助入口始终可用。 */}
+      {/* U03-C09: each entry opens the chosen tool; none rewrites the draft. */}
       <Card {...tm('FA.journey-modes-card')}>
         <CardContent className='space-y-3 pt-5'>
           <p className='text-sm font-semibold text-(--foreground)'>
-            构建器辅助工具随时可用
+            选择下一次构建方式
           </p>
           <div className='grid gap-2 sm:grid-cols-3'>
             {([
-              ['策略工作区', '在主文本区直接书写或继续修改策略'],
-              ['选择预设策略', '需要灵感时，在弹窗里答几道选择题并替换工作区'],
+              ['mcq', 'MCQ', '回答选择题，确认后填入策略工作区'],
+              ['raw', '直接编写', '在主文本区直接书写或继续修改策略'],
               [
-                '让你的 AI 帮你想策略',
+                'meta',
+                '元提示词',
                 '复制元提示词给常用 AI，再把结果粘贴回来',
               ],
-            ] as const).map(([name, blurb]) => (
+            ] as const).map(([tool, name, blurb]) => (
               <div
                 {...tm('FA.journey-mode-item')}
                 key={name}
                 className='rounded-lg border border-(--border-soft) px-3 py-2.5'
               >
-                <p className='text-sm font-semibold text-(--foreground)'>
-                  {name}
-                </p>
+                {mine?.agentID != null
+                  ? (
+                    <Link
+                      to={`/agents/${mine.agentID}/build?init=${tool}`}
+                      className='inline-flex min-h-11 items-center text-sm font-semibold text-(--accent) underline-offset-2 hover:underline'
+                    >
+                      {name}
+                    </Link>
+                  )
+                  : <p className='text-sm font-semibold'>{name}</p>}
                 <p className='mt-0.5 text-xs text-(--foreground-muted)'>
                   {blurb}
                 </p>

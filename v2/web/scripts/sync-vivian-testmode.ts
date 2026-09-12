@@ -3,6 +3,8 @@
 // checked-in projection keeps the product bundle independent of that sibling
 // checkout while preserving stable HV-* ids and clause-version pins.
 
+import { verifiedSourceCommit } from './source-provenance.ts'
+
 interface ConfirmedClause {
   chapter: string
   versionId: string
@@ -64,8 +66,10 @@ const parse = async <T>(path: string | URL): Promise<T> =>
 
 const sourceText = await Deno.readTextFile(sourcePath)
 const source = JSON.parse(sourceText) as VerificationSource
+const sourceBytes = new TextEncoder().encode(sourceText)
+const sourceCommit = verifiedSourceCommit(sourcePath, sourceBytes)
 const sourceDigest = new Uint8Array(
-  await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sourceText)),
+  await crypto.subtle.digest('SHA-256', sourceBytes),
 )
 const sourceSha256 = [...sourceDigest]
   .map((byte) => byte.toString(16).padStart(2, '0'))
@@ -112,9 +116,10 @@ for (const journey of source.journeys) {
 
 const snapshot = {
   schemaVersion: source.schemaVersion,
-  // sourceRevision is the revision declared by the UIUX worktree source. The
-  // content hash remains authoritative even while that source file is untracked.
+  // Preserve the historical capture declaration separately from the clean
+  // Git commit whose source bytes produced this projection.
   sourceRevision: source.sourceRevision,
+  sourceCommit,
   sourceSha256,
   capturedAt: source.capturedAt,
   handoffReadyClauseIds: ready,
@@ -131,8 +136,8 @@ const snapshot = {
   journeys: source.journeys,
 }
 
-// The overlay's clause card should show the reviewed canonical sentence and
-// current implementation state, not the older shorthand copied from v3.4.
+// Keep the reviewed canonical sentence and its dated implementation audit;
+// current engineering evidence is maintained separately.
 const specIndex = await parse<SpecIndex>(specIndexPath)
 for (const [id, confirmed] of Object.entries(snapshot.confirmedClauses)) {
   const clause = specIndex.clauses[id]
@@ -140,11 +145,11 @@ for (const [id, confirmed] of Object.entries(snapshot.confirmedClauses)) {
   clause.q = confirmed.canonical
   clause.impl = confirmed.testImpact.implementationState
 }
-// Do not pretend the older spec-index generator revision produced these
-// reviewed sentences. Record the exact overlay separately until the UIUX source
-// is committed and the complete index can be regenerated from one revision.
+// The older spec-index generator revision did not produce this guide overlay.
+// Record its verified source commit separately from the historical capture.
 specIndex.vivianOverlay = {
   sourceRevision: source.sourceRevision,
+  sourceCommit,
   sourceSha256,
   capturedAt: source.capturedAt,
   clauseIds: Object.keys(snapshot.confirmedClauses).sort(),
@@ -171,6 +176,7 @@ console.log(JSON.stringify({
   checkOnly,
   sourcePath: sourcePath instanceof URL ? sourcePath.pathname : sourcePath,
   sourceRevision: source.sourceRevision,
+  sourceCommit,
   sourceSha256,
   journeys: source.journeys.length,
   steps: source.journeys.flatMap((journey) => journey.steps).length,
