@@ -1,7 +1,8 @@
 {
   "schemaVersion": 3,
   "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-  "sourceSha256": "6104ef6282da7f2afe25826c28a61dc430d2c5daa9caf59b8576e82e73f5a952",
+  "sourceCommit": "db9b9fe2f3e2b889f893a1904bdec48f7af42cc4",
+  "sourceSha256": "0946d2ea09980ebe3d7a447f7ff3bb8092172ded8b51deea329d58d97f56c5dc",
   "capturedAt": "2026-09-09",
   "handoffReadyClauseIds": [
     "U03-C01",
@@ -1319,7 +1320,7 @@
       "title": "A6 参赛版本、配额与评分",
       "reviewer": "Vivian",
       "status": "refresh-required",
-      "description": "参赛切换可在核验后的账号上执行；首次保存、无标记回落与总次数触顶需要独立状态。报名和评分存在已知能力缺口，同一对手边界与现行日配额不相容；不能只准备账号就宣称整条旅程可执行。",
+      "description": "参赛切换可在核验后的账号上执行；首次保存、无标记回落与总次数触顶需要独立状态。双侧报名校验已实现，S04 仍需主办方协作窗口、专用账号、赛事与完整前态；玩家×场景评分和评分资格仍有能力缺口，同一对手边界与现行日配额不相容。各步按实际缺失条件记录，不能只准备账号就宣称整条旅程可执行。",
       "roles": [
         {
           "id": "a6-entry",
@@ -1419,7 +1420,7 @@
       "title": "注册到首战完成的固定版本旅程",
       "startUrl": "{{appBaseUrl}}/register",
       "prerequisites": [
-        "S04 及依赖首战派发/完局的 S05–S07 暂停验收：Vivian 于 2026-09-03 确认的 U03-C05 v2 要求已保存后再点「开始首战」，而 2026-09-09 DESIGN_SPEC 与当前产品保留「保存并自动开战」。产品裁决尚未完成；不得标通过或改写本页固定判据。S01–S03 可独立检查。",
+        "按 Vivian 于 2026-09-03 确认的 U03-C05 v2 执行：先保存首个可出战版本并确认未派发，再明确点击「开始首战」。S05–S07 须使用本轮实际派发的 matchId，并在对应步骤核验运行或完局结果；未取得所需结果时保留未完成，不用准备状态或历史证据代替本轮通过。",
         "使用无会话、无智能体、无版本、无对局的新账号。",
         "从 GET /v1/config 记录 §C2 新手预设三元组到 {{a3Preset}}。",
         "本旅程会保存版本并消耗一场 PVE；开启录屏和网络记录。",
@@ -1529,12 +1530,7 @@
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S04-saved.png",
             "HV-A3-FIRST-BATTLE-S04-dispatched.png"
-          ],
-          "knownGap": {
-            "title": "验收暂停：首战触发方式待产品裁决",
-            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
-            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
-          }
+          ]
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S05",
@@ -1555,12 +1551,7 @@
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S05-live.png",
             "HV-A3-FIRST-BATTLE-S05-final.png"
-          ],
-          "knownGap": {
-            "title": "验收暂停：首战触发方式待产品裁决",
-            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
-            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
-          }
+          ]
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S06",
@@ -1580,12 +1571,7 @@
           },
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S06-three-modes.png"
-          ],
-          "knownGap": {
-            "title": "验收暂停：首战触发方式待产品裁决",
-            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
-            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
-          }
+          ]
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S07",
@@ -1605,12 +1591,7 @@
           },
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S07-redirect.png"
-          ],
-          "knownGap": {
-            "title": "验收暂停：首战触发方式待产品裁决",
-            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
-            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
-          }
+          ]
         }
       ],
       "evidenceRequirements": [
@@ -1646,7 +1627,7 @@
           ],
           "knownGap": {
             "title": "动态管理员 fixture",
-            "detail": "当前实现状态 pending_ruling。",
+            "detail": "U11-C06 规范已确认；后端 #56 的隔离真实服务器测试已验证普通 PVE 请求被拒且不增加对局或用量，锦标赛仍可推进并产生结果。该证据不覆盖共享环境的真人测试窗；仍需管理员安排开关、账号与运行中赛事，不属于待产品裁决。",
             "instruction": "缺 fixture 记 blocked；fixture 齐备而行为不符记 fail。"
           },
           "action": "在出战面板尝试发起普通 NPC 练习并核对无新对局；随后打开赛事对局，观察至少一次状态或回合推进。",
@@ -2248,7 +2229,7 @@
         "提交 ★ 矩阵、两腿版本/配额、M/N 配置、评分前后、赛事资格与通知的去敏证据。",
         "记录 tester、时间、build SHA 和所有真实业务 ID；不得提交秘密或直接改生产分数。"
       ],
-      "completion": "S01–S08 全部执行；knownGap 要形成明确 fail 证据，不能用历史状态代替本轮检查。"
+      "completion": "逐步记录实际结果；已知能力缺口留存失败证据，缺前态、缺协作窗口或待裁决步骤保留未完成并记录原因，不统一判为 fail。S01–S08 的所有必要分支完成后才结束旅程，不能用历史状态代替本轮检查。"
     }
   ]
 }

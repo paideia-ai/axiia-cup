@@ -68,6 +68,7 @@ interface SourceJourney {
 interface VivianSnapshot {
   schemaVersion: number
   sourceRevision: string
+  sourceCommit: string
   sourceSha256: string
   capturedAt: string
   handoffReadyClauseIds: string[]
@@ -85,6 +86,7 @@ interface VivianSnapshot {
 const source = snapshotJson as unknown as VivianSnapshot
 
 export const VIVIAN_SOURCE_REVISION = source.sourceRevision
+export const VIVIAN_SOURCE_COMMIT = source.sourceCommit
 export const VIVIAN_SOURCE_SHA256 = source.sourceSha256
 export const VIVIAN_CAPTURED_AT = source.capturedAt
 export const VIVIAN_HANDOFF_READY_CLAUSE_IDS = source.handoffReadyClauseIds
