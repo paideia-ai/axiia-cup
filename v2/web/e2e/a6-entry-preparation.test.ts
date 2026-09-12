@@ -33,6 +33,7 @@ interface FakeAgent {
 interface FakePlayer {
   id: string
   email: string
+  displayName: string
   isAdmin: false
   agents: FakeAgent[]
 }
@@ -49,6 +50,7 @@ class FixtureServer {
   > = []
   snapshots: Array<{ bundle: EntryBundle; manifest: EntryManifest }> = []
   fault = ''
+  checkpointFailure: 'ready' | 'partial' | undefined
   nextID = 200
   entropy = 0
   adminOpens = 0
@@ -66,6 +68,7 @@ class FixtureServer {
           const created: FakePlayer = {
             id: `player-${this.players.length + 1}`,
             email: String(body.email),
+            displayName: String(body.displayName),
             isAdmin: false,
             agents: [],
           }
@@ -117,6 +120,9 @@ class FixtureServer {
             account: {
               ...player,
               id: this.fault === 'wrong-owner' ? 'unexpected' : player.id,
+              displayName: this.fault === 'wrong-alias'
+                ? 'Unrecognized role'
+                : player.displayName,
             },
           })
         }
@@ -288,6 +294,9 @@ class FixtureServer {
       },
       openPlayer: () => this.session(),
       checkpoint: (bundle, manifest) => {
+        if (manifest.state === this.checkpointFailure) {
+          return Promise.reject(new Error('private storage unavailable'))
+        }
         this.snapshots.push(structuredClone({ bundle, manifest }))
         return Promise.resolve()
       },
@@ -367,6 +376,7 @@ Deno.test('state or identity drift prevents ready session fields', async (test) 
       'extra-agent',
       'dirty-first-draft',
       'wrong-owner',
+      'wrong-alias',
       'wrong-version-owner',
       'used-quota',
       'owned-match',
@@ -409,4 +419,51 @@ Deno.test('ambiguous committed save is recorded once and never retried', async (
   })
   equal(last.manifest.failure, 'preparation-failed-inspect-private-journal')
   assert(!JSON.stringify(last.manifest).includes('untrusted response'))
+})
+
+Deno.test('failed ready checkpoint removes success evidence and preserves the original failure if partial storage also fails', async () => {
+  const finalWriteFails = new FixtureServer()
+  finalWriteFails.checkpointFailure = 'ready'
+  let finalError: unknown
+  try {
+    await finalWriteFails.prepare()
+  } catch (error) {
+    finalError = error
+  }
+  assert(finalError instanceof EntryPreparationError)
+  equal(finalError.code, 'preparation-failed-inspect-private-journal')
+  const partial = finalWriteFails.snapshots.at(-1)!.manifest
+  equal(partial.state, 'partial')
+  equal(partial.testModeFixtures, {})
+  equal(partial.verification, undefined)
+  assert(partial.fixtures.every((fixture) => !fixture.verified))
+
+  const partialWriteFails = new FixtureServer()
+  partialWriteFails.fault = 'wrong-alias'
+  partialWriteFails.checkpointFailure = 'partial'
+  let originalError: unknown
+  try {
+    await partialWriteFails.prepare()
+  } catch (error) {
+    originalError = error
+  }
+  assert(originalError instanceof EntryPreparationError)
+  equal(originalError.code, 'player-identity-mismatch')
+
+  const ambiguousSave = new FixtureServer()
+  ambiguousSave.fault = 'save-committed-then-timeout'
+  ambiguousSave.checkpointFailure = 'partial'
+  try {
+    await ambiguousSave.prepare()
+  } catch { /* inspect the last durable record */ }
+  equal(ambiguousSave.players[0].agents[0].versions.length, 1)
+  equal(
+    ambiguousSave.calls.filter((call) => call.path.endsWith('/save')).length,
+    1,
+  )
+  equal(ambiguousSave.snapshots.at(-1)!.bundle.pendingOperation, {
+    action: 'save-version',
+    roleID: 'a6-entry',
+    agentID: ambiguousSave.players[0].agents[0].agentID,
+  })
 })

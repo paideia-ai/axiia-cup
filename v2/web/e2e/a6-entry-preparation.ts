@@ -179,10 +179,18 @@ async function verifyRole(
   gateWins: number,
 ) {
   const me = await api.call<
-    { account: { id: string; email: string; isAdmin: boolean } }
+    {
+      account: {
+        id: string
+        email: string
+        displayName: string | null
+        isAdmin: boolean
+      }
+    }
   >('GET', '/v1/auth/me')
   requireState(
     me.account?.id === role.accountID && me.account.email === role.email &&
+      me.account.displayName === role.accountAlias &&
       me.account.isAdmin === false,
     'player-identity-mismatch',
   )
@@ -508,7 +516,13 @@ export async function prepareA6Entry(
       ? error.code
       : 'preparation-failed-inspect-private-journal'
     manifest.testModeFixtures = {}
-    await checkpoint()
+    delete manifest.verification
+    try {
+      await checkpoint()
+    } catch {
+      // Preserve the original failure if storage is unavailable. The last synced
+      // private checkpoint still identifies any pending mutation for inspection.
+    }
     throw new EntryPreparationError(manifest.failure)
   }
 }

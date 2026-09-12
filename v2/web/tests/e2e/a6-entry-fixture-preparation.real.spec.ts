@@ -77,6 +77,9 @@ async function login(browser: Browser, role: PrivateEntryRole) {
   })
   expect(response.ok()).toBe(true)
   expect((await response.json()).account.id).toBe(role.accountID)
+  const me = await context.request.get('/v1/auth/me')
+  expect(me.ok()).toBe(true)
+  expect((await me.json()).account.displayName).toBe(role.accountAlias)
   return context
 }
 
