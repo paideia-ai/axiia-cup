@@ -1,3 +1,7 @@
+import reviewedSource from '../src/testmode/data/vivian-a3-a4-a6.json' with {
+  type: 'json',
+}
+
 export const REVIEWED_BETA_ORIGIN = 'https://axiia-cup-2-web.isofucius.cn'
 
 export function assertFixtureOrigin(origin: string): void {
@@ -10,13 +14,11 @@ export function assertFixtureOrigin(origin: string): void {
   throw new Error('fixture origin must be the reviewed beta or a local server')
 }
 
-export const VIVIAN_A6_SOURCE_REVISION =
-  '286c97c106cc0590f6e466f78a4ca234b896dba4'
-
-export const VIVIAN_A6_SOURCE_SHA256 =
-  '56e7eead8d0bd28d27f612f6f99b622c3683470591add2025c80fe2e6cd37654'
-
-export const VIVIAN_A6_SOURCE_CAPTURED_AT = '2026-09-09'
+// Provisioning manifests cite the same generated source as product Test Mode.
+// Derive these values so a source sync cannot leave a second manual hash stale.
+export const VIVIAN_A6_SOURCE_REVISION = reviewedSource.sourceRevision
+export const VIVIAN_A6_SOURCE_SHA256 = reviewedSource.sourceSha256
+export const VIVIAN_A6_SOURCE_CAPTURED_AT = reviewedSource.capturedAt
 
 export type FixtureSide = 'a' | 'b'
 

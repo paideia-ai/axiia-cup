@@ -119,8 +119,8 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'B3',
     title: '所有者 EA：入口、身份、版本与动作',
     prerequisites: [
-      '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体有 v1、v2 两个版本，最新版文本已知，v2 已标为本阵营唯一参赛版本。',
-      '种子数据口径固定：版本 359 有 1 场已计分、0 胜；参赛版本 360 为 0 场。执行中新增版本或对局后，先记录变化再按当时实际统计判定。',
+      '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体保留 v1=359、v2=360，可能已有额外版本。开测前按当前版本 API 记录最新版 ID/文本与本阵营唯一 ★；不要假定 v2 仍为最新版或参赛版，也不要为恢复种子状态而改标或删除版本。',
+      '初始种子统计基线：版本 359 有 1 场已计分、0 胜；版本 360 为 0 场。这不是当前参赛标记或版本总数的保证；执行前记录当前版本与统计，新增版本或对局后按当时实际统计判定。',
       '同一阵营另有 b3OwnerSiblingAgentId，另一阵营有且仅有 b3OwnerSoloSideAgentId；缺侧检查必须切换到「B3 人测·访客缺侧」。',
       '准备 b3OwnerTournamentId 对应积分榜条目、D/DA「我的智能体」入口、玩家对局列表、b3OwnerCompletedMatchId 战报和一次 E 保存后返回主页的结果，全部指向 b3OwnerAgentId。',
       '记录环境 URL、build SHA、所有相关 agent/version/match ID 和预期统计。',
@@ -139,7 +139,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·完整所有者',
         readiness: 'ready',
         description:
-          '双侧齐全；主智能体 224 的 v1=版本 359（已计分 1 场、0 胜），v2=版本 360（参赛版、0 场）；同侧兄弟=226，对侧唯一智能体=225。登录信息已通过 axiia-cup-product 群账号包交付。',
+          '双侧齐全；主智能体 224 保留 v1=版本 359、v2=版本 360，初始种子统计分别为 1 场已计分、0 胜与 0 场。可能已有额外版本；最新版与当前唯一 ★ 以开测时的版本 API 记录为准，不重置共享版本状态。同侧兄弟=226，对侧唯一智能体=225。登录信息已通过 axiia-cup-product 群账号包交付。',
         fields: [
           preparedId(
             'b3OwnerAgentId',
@@ -204,7 +204,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/tournaments/:id',
         marker: null,
         action:
-          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本并观察自动返回。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
+          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 积分榜点击属于 b3OwnerAgentId 的参赛版本入口；在玩家对局列表点击同一智能体的独立入口；打开已完成战报后点击该侧的「← 我的智能体」；在「我的智能体」侧卡点击该智能体的展示名；在 E 保存一个新版本并观察自动返回。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
         expected:
           '每个入口都打开 /agents/{{b3OwnerAgentId}}，没有落到别的智能体或只停在中间列表页。',
         clauseIds: ['U10-C11', 'U10-C11b'],
@@ -301,7 +301,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'E.entry-badge',
         action:
-          '检查 v1、v2 的参赛徽章；点击非参赛版本的勾选图标并等待请求完成，再次检查两张卡。',
+          '检查全部已保存版本的参赛徽章，记录当前唯一参赛版；点击一个非参赛版本的勾选图标并等待请求完成，再次核对全部版本卡，包括之前测试新增的版本。',
         expected:
           '操作前后本阵营始终恰好一个版本带参赛标记；改标后旧标记消失，新标记只出现在所选版本。',
         clauseIds: ['U10-C06'],
@@ -452,14 +452,14 @@ export const B3_A5_JOURNEYS: Journey[] = [
         knownGap: {
           title: '已知实现缺口 · U10-C14 仍需真人取证',
           detail:
-            '当前产品的 PVE NPC 没有 agent 实体或 /agents/:id 聚合页，因此没有真实 npcAgentId 可以预填。',
+            '当前场景详情页不展示 NPC 区域或逐 NPC 入口；产品也没有 NPC agent 实体或 /agents/:id 聚合页，因此没有真实 npcAgentId 可以预填。',
           instruction:
-            '不要跳过，也不要拼造 ID。若场景页找不到 NPC 的可查看入口，请截取目标 NPC 区域和地址栏，结果选「有问题」并写明缺少入口；只有入口存在时才继续核对两侧胜率。',
+            '不要跳过，也不要拼造 ID 或寻找当前不存在的 NPC 区域。截取完整场景页和地址栏，明确记录缺少逐 NPC 查看入口，结果选「有问题」；只有入口实际交付后才继续核对两侧胜率。',
         },
         route: '/scenarios/:id',
         marker: null,
         action:
-          '在场景页找到目标 PVE NPC，查找其可查看入口。若入口不存在，按上方已知缺口说明直接取证；若入口已经实现，点击进入聚合视图并核对两个阵营的胜率。',
+          '打开并检查场景详情页，记录是否存在逐 NPC 的可查看入口。当前入口缺失时截取场景页与地址栏并按已知缺口记 fail；若入口已经交付，再进入目标 NPC 聚合视图核对两个阵营胜率。',
         expected:
           '每个 PVE NPC 都有可查看的聚合视图；目标 NPC 在当前场景分别展示两个阵营胜率，数值与种子数据一致，不显示成玩家胜率。',
         clauseIds: ['U10-C14'],

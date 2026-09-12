@@ -7,9 +7,28 @@ import {
   redactFixtureError,
   selectA6Scenarios,
   utc8QuotaDate,
+  VIVIAN_A6_SOURCE_CAPTURED_AT,
+  VIVIAN_A6_SOURCE_REVISION,
+  VIVIAN_A6_SOURCE_SHA256,
 } from './reviewed-human-fixtures.ts'
 
 import assert from 'node:assert/strict'
+import specIndex from '../src/testmode/data/spec-index.json' with {
+  type: 'json',
+}
+
+Deno.test('A6 manifest provenance matches the product clause overlay', () => {
+  assert.deepEqual({
+    sourceRevision: VIVIAN_A6_SOURCE_REVISION,
+    sourceSha256: VIVIAN_A6_SOURCE_SHA256,
+    capturedAt: VIVIAN_A6_SOURCE_CAPTURED_AT,
+  }, {
+    sourceRevision: specIndex.vivianOverlay.sourceRevision,
+    sourceSha256: specIndex.vivianOverlay.sourceSha256,
+    capturedAt: specIndex.vivianOverlay.capturedAt,
+  })
+  assert.match(VIVIAN_A6_SOURCE_SHA256, /^[0-9a-f]{64}$/)
+})
 
 const scenario = (id: string, count: number) => ({
   id,
