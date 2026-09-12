@@ -109,3 +109,5 @@ POST /v1/rewards/matches/:id/claim
 - [音效 Gherkin](../../web/tests/e2e/sound-feedback.feature) 与 [浏览器 BDD](../../web/tests/e2e/sound-feedback.spec.ts)。
 
 浏览器 BDD 使用有状态 HTTP 替身，属于界面集成测试；真实 HTTP + SQLite 的服务端测试在配套仓库，两者不可互相替代。旧版本通过记录只证明当时版本，不能覆盖这次会议补充的角色加价与编辑/按钮音。具体状态见 [验收记录](./acceptance.md)；没有实际执行的新增条款保持待验证，真人听感与产品数值审核单独记录。部署、产品群通知与看板发布以实际 PR/发布记录为准，不能从规格已写好推导。
+
+最终自动验证：后端 `1c0d205` 的 38 个 CI 测试目标通过；前端格式/lint/两类类型检查/构建通过，196 项单元通过，56 项 Storybook 均有通过记录（含超时文件顺序重跑），13 项浏览器 BDD 最终全过。具体运行历史及部分覆盖见 [acceptance.md](./acceptance.md)。规格默认仍待产品确认，没有真人或生产验证结论。
