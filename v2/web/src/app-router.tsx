@@ -30,6 +30,7 @@ import { ScenarioBuildEntry } from './pages/scenario-build-entry'
 import { SettingsPage } from './pages/settings'
 import { StandingsPage } from './pages/standings'
 import { TournamentsPage } from './pages/tournaments'
+import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
 
 function Loading() {
@@ -72,6 +73,7 @@ function ProtectedShell() {
         <Route path='/matches/:matchId' element={<MatchDetailPage />} />
         <Route path='/tournaments' element={<TournamentsPage />} />
         <Route path='/tournaments/:tournamentId' element={<StandingsPage />} />
+        <Route path='/versions/:versionId' element={<VersionAgentPage />} />
         <Route path='/notifications' element={<NotificationsPage />} />
         <Route path='/settings' element={<SettingsPage />} />
         <Route

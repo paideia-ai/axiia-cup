@@ -1,9 +1,29 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { tournaments } from '../api/client'
 import { Card, CardContent } from '../components/ui/card'
 import { useAsync } from '../lib/use-async'
 import { tm } from '../testmode/mark'
+
+function SubmittedVersions({ ids }: { ids: number[] }) {
+  return (
+    <span
+      className='inline-flex flex-wrap gap-x-2 font-mono text-[11px] text-(--foreground-muted)'
+      {...tm('G.standings-submissions')}
+    >
+      {ids.map((id) => (
+        <Link
+          key={id}
+          to={`/versions/${id}`}
+          className='underline decoration-(--border) underline-offset-4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-offset-2'
+          aria-label={`查看版本 #${id} 的智能体`}
+        >
+          #{id}
+        </Link>
+      ))}
+    </span>
+  )
+}
 
 export function StandingsPage() {
   const { tournamentId = '' } = useParams()
@@ -86,6 +106,9 @@ export function StandingsPage() {
                         </span>
                       </span>
                     </div>
+                    <div className='mt-2'>
+                      <SubmittedVersions ids={entry.submissionIDs} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -127,13 +150,8 @@ export function StandingsPage() {
                           {entry.playerName}
                         </span>
                         {/* #64：名次属于人；两侧投的版本降为小字下钻线索。 */}
-                        <span
-                          className='ml-2 font-mono text-[11px] text-(--foreground-muted)'
-                          {...tm('G.standings-submissions')}
-                        >
-                          {entry.submissionIDs.map((id) => `#${id}`).join(
-                            ' · ',
-                          )}
+                        <span className='ml-2'>
+                          <SubmittedVersions ids={entry.submissionIDs} />
                         </span>
                       </td>
                       <td className='py-2 text-right'>{entry.wins}</td>

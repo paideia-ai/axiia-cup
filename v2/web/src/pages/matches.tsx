@@ -77,12 +77,15 @@ export function MatchesPage() {
   const rolesOf = (summary: MatchSummary) => roles[summary.scenarioID] ?? null
 
   const matchCard = (summary: MatchSummary) => (
-    <Link
+    <Card
       key={summary.id}
-      to={`/matches/${summary.id}`}
-      {...tm('L.match-card')}
+      className='transition hover:border-(--foreground-muted)'
     >
-      <Card className='transition hover:border-(--foreground-muted)'>
+      <Link
+        to={`/matches/${summary.id}`}
+        className='block'
+        {...tm('L.match-card')}
+      >
         <CardContent className='flex items-center justify-between gap-3 py-4'>
           <div>
             <span
@@ -113,8 +116,33 @@ export function MatchesPage() {
             {statusLabel(summary, rolesOf(summary))}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      {(['a', 'b'] as const).some((side) =>
+        summary.participants?.[side]?.isMine &&
+        summary.participants[side].agentID != null
+      ) && (
+        <div className='flex flex-wrap gap-x-4 gap-y-2 px-6 pb-4 text-xs'>
+          {(['a', 'b'] as const).map((side) => {
+            const participant = summary.participants?.[side]
+            if (!participant?.isMine || participant.agentID == null) {
+              return null
+            }
+            return (
+              <Link
+                key={side}
+                to={`/agents/${participant.agentID}`}
+                className='text-(--foreground-subtle) underline underline-offset-4 hover:text-(--foreground)'
+                {...tm('L.owned-agent')}
+              >
+                {rolesOf(summary)?.[side] ?? (side === 'a' ? '甲方' : '乙方')}
+                {' · 我的智能体 #'}
+                {participant.agentID}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </Card>
   )
 
   // 成对表头：两条腿都判完时把两场结果并排写清（测试者的字面诉求）。

@@ -287,8 +287,10 @@ export const challenges = {
 export const versions = {
   // #25/#62 按 id 约战的解析读：版本 id → {玩家/场景/侧/模型}；不存在 → 404
   // not_found；老服务器无此端点，同样按降级处理。
-  ref: (id: number) =>
-    request<VersionRefResponse>('GET', `/versions/${id}/ref`),
+  ref: (id: number, signal?: AbortSignal) =>
+    request<VersionRefResponse>('GET', `/versions/${id}/ref`, undefined, {
+      signal,
+    }),
 }
 
 // ── Notifications ───────────────────────────────────────────────────────────
