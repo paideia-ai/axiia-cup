@@ -1,5 +1,10 @@
 import { AppRouter } from './app-router'
+import { SoundProvider } from './context/sound'
 
 export default function App() {
-  return <AppRouter />
+  return (
+    <SoundProvider>
+      <AppRouter />
+    </SoundProvider>
+  )
 }

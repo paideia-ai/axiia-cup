@@ -29,6 +29,7 @@
     "storybook": "deno run -A npm:storybook dev -p 6006 --ci",
     "storybook:build": "deno run -A npm:storybook build",
     "test:e2e": "deno run -A npm:playwright test",
+    "test:e2e:rewards": "deno run -A npm:playwright test --config playwright.rewards.config.ts",
     "test:e2e:handoff": "AXIIA_HANDOFF_E2E=1 deno run -A npm:playwright test tests/e2e/b3-a5-testmode.real.spec.ts",
     "test:e2e:real": "bash e2e/run-playwright.sh",
     "seed-dev": "deno run -A e2e/seed-dev.ts",

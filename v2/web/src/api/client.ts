@@ -4,6 +4,7 @@ import type {
   BindPhoneRequest,
   ChallengeResponse,
   ChangePasswordRequest,
+  ClaimRewardResponse,
   ConfigResponse,
   CreateAgentRequest,
   CreateChallengeRequest,
@@ -21,6 +22,7 @@ import type {
   LoginRequest,
   MatchDetail,
   MatchListResponse,
+  MatchRewardResponse,
   MeResponse,
   ModelListResponse,
   MyAgentsResponse,
@@ -31,6 +33,8 @@ import type {
   PhoneVerifyRequest,
   PublicAgentResponse,
   RenameAgentRequest,
+  RewardQuoteResponse,
+  RewardsResponse,
   SaveVersionRequest,
   ScenarioDetail,
   ScenarioListResponse,
@@ -49,6 +53,7 @@ import type {
   VersionRefResponse,
 } from './types'
 import { retryAfterSeconds } from '../lib/cooldown'
+import { refreshRewards } from '../lib/reward-events'
 
 // Same-origin by design (plan §6): the SPA is served from the Swift origin (dev:
 // via the vite `/v1` proxy) so the HttpOnly cookie and CSRF Sec-Fetch-Site gate
@@ -259,9 +264,13 @@ export const builder = {
 
 export const matches = {
   dispatchPVE: (input: DispatchPVERequest) =>
-    request<DispatchResponse>('POST', '/matches/pve', input),
+    request<DispatchResponse>('POST', '/matches/pve', input).finally(
+      refreshRewards,
+    ),
   dispatchPVP: (input: DispatchPVPRequest) =>
-    request<DispatchResponse>('POST', '/matches/pvp', input),
+    request<DispatchResponse>('POST', '/matches/pvp', input).finally(
+      refreshRewards,
+    ),
   list: () => request<MatchListResponse>('GET', '/matches'),
   detail: (id: number) => request<MatchDetail>('GET', `/matches/${id}`),
 }
@@ -272,7 +281,22 @@ export const challenges = {
   // 双侧成对约战：一次产生两场（正/反），配额对发起人计 2 场。后端批次未
   // 上线时答 404/405，调用方降级为功能提示，不摆假控件。
   create: (input: CreateChallengeRequest) =>
-    request<ChallengeResponse>('POST', '/challenges', input),
+    request<ChallengeResponse>('POST', '/challenges', input).finally(
+      refreshRewards,
+    ),
+}
+
+export const rewards = {
+  get: () => request<RewardsResponse>('GET', '/rewards'),
+  quote: (scenarioID: string, side: string, kind: string) =>
+    request<RewardQuoteResponse>(
+      'GET',
+      `/rewards/quote?${new URLSearchParams({ scenarioID, side, kind })}`,
+    ),
+  match: (matchID: number) =>
+    request<MatchRewardResponse>('GET', `/rewards/matches/${matchID}`),
+  claim: (matchID: number) =>
+    request<ClaimRewardResponse>('POST', `/rewards/matches/${matchID}/claim`),
 }
 
 export const versions = {

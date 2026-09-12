@@ -3,7 +3,9 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import type { AgentVersionDTO } from '../api/types'
+import type { AgentVersionDTO, RewardsResponse } from '../api/types'
+import { RewardsProvider } from '../context/rewards'
+import { refreshRewards } from '../lib/reward-events'
 import { config, scenario } from '../testing/v34-fixtures'
 import { BuilderPage } from './builder'
 
@@ -168,5 +170,92 @@ export const SaveReturnsToAgentHome: Story = {
     await expect(save).toBeEnabled()
     await userEvent.click(save)
     await expect(await canvas.findByTestId('agent-home')).toBeVisible()
+  },
+}
+
+function ExpressRewardsSurface() {
+  return (
+    <MemoryRouter initialEntries={['/agents/101/build?express=1']}>
+      <RewardsProvider>
+        <Routes>
+          <Route path='/agents/:agentId/build' element={<BuilderPage />} />
+          <Route path='/matches/:matchId' element={<p>首战已派发</p>} />
+        </Routes>
+      </RewardsProvider>
+    </MemoryRouter>
+  )
+}
+
+const expressWallet: RewardsResponse = {
+  balance: 99,
+  battleCost: 100,
+  dailyAllowance: 2000,
+  dailyRuns: 20,
+  pveWinRefundPercent: 50,
+  pvpWinRefundPercent: 75,
+  pointsPerYuan: 100,
+  nextGrantAt: 1789228800,
+  claimableRewards: [],
+}
+const expressFundsWorld = { balance: 99, saves: 0, dispatches: 0 }
+
+// U18-C24: insufficient funds block the combined first-battle action before a
+// version is created. A refreshed balance of exactly 100 permits save+dispatch.
+export const ExpressBalanceBoundary: Story = {
+  render: () => <ExpressRewardsSurface />,
+  loaders: [() => {
+    expressFundsWorld.balance = 99
+    expressFundsWorld.saves = 0
+    expressFundsWorld.dispatches = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      ...handlers(v1.prompt, () => HttpResponse.json({ versions: [] })),
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/rewards/quote',
+        () =>
+          HttpResponse.json({
+            cost: 100,
+            perBattleCost: 100,
+            repeatRoleSurcharge: false,
+            battleCosts: [100],
+          }),
+      ),
+      http.get('/v1/rewards', () =>
+        HttpResponse.json({
+          ...expressWallet,
+          balance: expressFundsWorld.balance,
+        })),
+      http.post('/v1/agents/101/save', () => {
+        expressFundsWorld.saves++
+        return HttpResponse.json(v1)
+      }),
+      http.post('/v1/matches/pve', () => {
+        expressFundsWorld.dispatches++
+        return HttpResponse.json({ matchID: 402 })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const start = await canvas.findByRole('button', { name: '保存并开始首战' })
+    await expect(
+      await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
+    ).toBeVisible()
+    await expect(start).toBeDisabled()
+    start.click()
+    await expect(expressFundsWorld.saves).toBe(0)
+    await expect(expressFundsWorld.dispatches).toBe(0)
+
+    expressFundsWorld.balance = 100
+    refreshRewards()
+    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
+    await expect(start).toBeEnabled()
+    await userEvent.click(start)
+    await expect(await canvas.findByText('首战已派发')).toBeVisible()
+    await expect(expressFundsWorld.saves).toBe(1)
+    await expect(expressFundsWorld.dispatches).toBe(1)
   },
 }

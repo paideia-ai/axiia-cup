@@ -12,6 +12,8 @@ import {
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
 import { protectedLoginUrl } from './lib/login-return'
+import { RewardsProvider } from './context/rewards'
+import { RewardsPage } from './pages/rewards'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
@@ -55,37 +57,46 @@ function ProtectedShell() {
   if (!account) return <Navigate replace to={protectedLoginUrl(location)} />
 
   return (
-    <AppShell>
-      <Routes>
-        {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
-        <Route path='/express' element={<ExpressPage />} />
-        <Route path='/scenarios' element={<CatalogPage />} />
-        <Route path='/scenarios/:scenarioId' element={<ScenarioDetailPage />} />
-        <Route path='/my-agents' element={<MyAgentsPage />} />
-        {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
-        <Route path='/agents/:agentId' element={<AgentViewPage />} />
-        <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
-        <Route path='/matches' element={<MatchesPage />} />
-        <Route path='/matches/:matchId' element={<MatchDetailPage />} />
-        <Route path='/tournaments' element={<TournamentsPage />} />
-        <Route path='/tournaments/:tournamentId' element={<StandingsPage />} />
-        <Route path='/notifications' element={<NotificationsPage />} />
-        <Route path='/settings' element={<SettingsPage />} />
-        <Route
-          path='/admin'
-          element={account.isAdmin
-            ? <AdminPage />
-            : <Navigate replace to='/scenarios' />}
-        />
-        <Route
-          path='/admin/slots/:slotId'
-          element={account.isAdmin
-            ? <AdminSlotPage />
-            : <Navigate replace to='/scenarios' />}
-        />
-        <Route path='*' element={<Navigate replace to='/scenarios' />} />
-      </Routes>
-    </AppShell>
+    <RewardsProvider key={account.id}>
+      <AppShell>
+        <Routes>
+          {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
+          <Route path='/express' element={<ExpressPage />} />
+          <Route path='/scenarios' element={<CatalogPage />} />
+          <Route
+            path='/scenarios/:scenarioId'
+            element={<ScenarioDetailPage />}
+          />
+          <Route path='/my-agents' element={<MyAgentsPage />} />
+          {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
+          <Route path='/agents/:agentId' element={<AgentViewPage />} />
+          <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
+          <Route path='/matches' element={<MatchesPage />} />
+          <Route path='/matches/:matchId' element={<MatchDetailPage />} />
+          <Route path='/tournaments' element={<TournamentsPage />} />
+          <Route
+            path='/tournaments/:tournamentId'
+            element={<StandingsPage />}
+          />
+          <Route path='/notifications' element={<NotificationsPage />} />
+          <Route path='/settings' element={<SettingsPage />} />
+          <Route path='/rewards' element={<RewardsPage />} />
+          <Route
+            path='/admin'
+            element={account.isAdmin
+              ? <AdminPage />
+              : <Navigate replace to='/scenarios' />}
+          />
+          <Route
+            path='/admin/slots/:slotId'
+            element={account.isAdmin
+              ? <AdminSlotPage />
+              : <Navigate replace to='/scenarios' />}
+          />
+          <Route path='*' element={<Navigate replace to='/scenarios' />} />
+        </Routes>
+      </AppShell>
+    </RewardsProvider>
   )
 }
 

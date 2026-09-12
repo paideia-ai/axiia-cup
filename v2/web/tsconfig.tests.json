@@ -7,6 +7,7 @@
     "src/testing",
     "tests",
     "playwright.config.ts",
+    "playwright.rewards.config.ts",
     "vitest.config.ts",
     "vitest.storybook.config.ts"
   ],

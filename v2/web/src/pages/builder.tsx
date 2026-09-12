@@ -19,6 +19,11 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
+import { BattleCostNotice } from '../components/rewards'
+import { useBattleQuote } from '../context/rewards'
+import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
+import { usePromptSounds } from '../lib/use-prompt-sounds'
+import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
@@ -293,6 +298,9 @@ export function BuilderPage() {
   // A3 首战快速通道（#9/#10/#17 例外）：?express=1 时保存＝自动派发首战并
   // 直进实况；无侧别选择（#57——执方本就来自 agent，本页从无切侧控件）。
   const express = params.get('express') === '1'
+  const quoteState = useBattleQuote(scenarioID, side, 'pve', express)
+  const insufficientPoints = quoteState.blocked
+  const promptSoundHandlers = usePromptSounds()
 
   const [prompt, setPrompt] = useState('')
   const [roleKey, setRoleKey] = useState<string | null>(null)
@@ -798,6 +806,8 @@ export function BuilderPage() {
         presetKey: preset.key,
       })
       if (!requestIsCurrent()) return
+      playSound('dispatch', String(response.matchID))
+      trackSoundMatch(response.matchID)
       navigate(`/matches/${response.matchID}`, { state: { express: true } })
     } catch (cause) {
       if (!requestIsCurrent()) return
@@ -815,8 +825,11 @@ export function BuilderPage() {
   const save = async () => {
     if (
       saving || modelID == null || draftLoading || loadedAgentID !== agentID ||
-      !expressDependenciesReady || !prompt.trim() || recovery != null
+      !expressDependenciesReady || !prompt.trim() || recovery != null ||
+      (express && insufficientPoints)
     ) return
+    unlockAudio()
+    playSound('click')
     // Everything below uses this immutable click-time snapshot. The controls
     // are disabled on the same render as `saving`, so a slow final draft flush
     // cannot silently mix a newer prompt/note/model/role into this version.
@@ -869,6 +882,7 @@ export function BuilderPage() {
         ...(snapshot.options == null ? {} : { options: snapshot.options }),
       })
       if (!requestIsCurrent()) return
+      playSound('save', `${agentID}:${saved.id}`)
       if (snapshot.journal != null) {
         compareAndDeleteDraftJournal(journalScope, snapshot.journal)
       }
@@ -1095,6 +1109,8 @@ export function BuilderPage() {
         </div>
         <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
           <Textarea
+            {...promptSoundHandlers}
+            data-spec='U19-C17 U19-C18'
             id='prompt-input'
             rows={18}
             value={prompt}
@@ -1131,6 +1147,7 @@ export function BuilderPage() {
             </p>
           )
           : null}
+        {express ? <BattleCostNotice quoteState={quoteState} /> : null}
         <div className='flex flex-wrap items-end gap-2 border-t border-(--border-soft) pt-4'>
           {roles.length > 0
             ? (
@@ -1210,11 +1227,14 @@ export function BuilderPage() {
           />
           <Button
             data-testid='save-version'
+            data-spec='U19-C06 U19-C19 U19-C20'
+            onPointerEnter={playButtonHover}
             className='h-11 sm:ml-auto md:h-10'
             onClick={() => void save()}
             disabled={saving || draftLoading || loadedAgentID !== agentID ||
               !prompt.trim() || modelID == null || overLimit ||
-              !expressDependenciesReady || recovery != null}
+              !expressDependenciesReady || recovery != null ||
+              (express && insufficientPoints)}
             {...tm('E.save-button')}
           >
             {saving
