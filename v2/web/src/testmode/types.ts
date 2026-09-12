@@ -52,6 +52,7 @@ export const ROUTE_PAGES: { pattern: RegExp; pages: PageCode[] }[] = [
   { pattern: /^\/register$/, pages: ['C'] },
   { pattern: /^\/express$/, pages: ['X'] },
   { pattern: /^\/scenarios$/, pages: ['D'] },
+  { pattern: /^\/scenarios\/[^/]+\/npcs\/[^/]+$/, pages: ['EA'] },
   { pattern: /^\/scenarios\/[^/]+$/, pages: ['DA', 'OS'] },
   { pattern: /^\/my-agents$/, pages: ['MA'] },
   { pattern: /^\/agents\/[^/]+$/, pages: ['EA', 'OS'] },

@@ -184,7 +184,7 @@ export const catalog = {
   scenario: (
     id: string,
     side: Side,
-    options?: Pick<RequestInit, 'credentials'>,
+    options?: Pick<RequestInit, 'credentials' | 'signal'>,
   ) =>
     request<ScenarioDetail>(
       'GET',

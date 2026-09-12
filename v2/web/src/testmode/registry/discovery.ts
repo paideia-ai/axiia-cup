@@ -5,6 +5,23 @@
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_DISCOVERY: TmRegistry = {
+  'EA.npc-page': {
+    label: '当前NPC',
+    clauses: ['U10-C14'],
+    note:
+      '当前身份、执方、模型可查看；原条款要求的两侧胜率仍未交付，不能据此判整条通过。',
+  },
+  'EA.npc-identity': { label: 'NPC身份', clauses: ['U10-C14'] },
+  'EA.npc-metadata': { label: 'NPC资料', clauses: ['U10-C14'] },
+  'EA.npc-error': { label: '读取失败', clauses: ['LACK-10'] },
+  'EA.npc-unavailable': { label: '预设已移除', clauses: ['LACK-10'] },
+  'DA.npc-list': { label: 'NPC练习对手', clauses: ['U10-C14'] },
+  'DA.npc-view-link': { label: '查看NPC', clauses: ['U10-C14'] },
+  'OS.npc-view-link': {
+    label: '查看NPC',
+    clauses: ['U10-C14'],
+    note: '只用于当前练习选择，不作为历史对局 NPC 的配置入口。',
+  },
   // ======================= D 场景选择 =======================
   'D.page-header': {
     label: '页面标题与导语',
