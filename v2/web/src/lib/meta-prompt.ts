@@ -1,8 +1,8 @@
 // 外部 AI 辅助（Keso 2026-09-09 / E8）：给玩家一段拿去外部 AI 用的元提示
-// 词——由场景模块的教育内容与只读角色模板就地拼成，纯前端、零调用（产品
+// 词——由已加载的公开计分、场景教育内容与只读角色模板就地拼成，纯前端、零调用（产品
 // 内不提供聊天）。#84 无说明书：文案本身就是全部说明。
 
-import type { Side } from '../api/types'
+import type { ScenarioScoringDTO, Side } from '../api/types'
 import type { ScenarioModule } from '../scenarios/types'
 import { PROMPT_UNIT_LIMIT } from './prompt-length'
 
@@ -11,6 +11,7 @@ export function metaPromptFor(
   scenarioTitle: string,
   side: Side,
   sideName: string,
+  scoring: ScenarioScoringDTO | null | undefined,
 ): string {
   const education = module?.education ?? null
   const roleTemplate = module?.roleTemplates?.[side] ?? null
@@ -22,8 +23,17 @@ export function metaPromptFor(
       '',
       `场景一句话：${education.hook}`,
       `我方胜利条件：${education.winConditions[side]}`,
-      `计分规则：${education.scoring}`,
     )
+  }
+  if (scoring) {
+    lines.push(
+      '',
+      `计分规则：${scoring.summary}`,
+      ...scoring.items.map((item) => `- ${item.label}：${item.points} 分`),
+      ...(scoring.notes ?? []),
+    )
+  } else {
+    lines.push('', `计分规则：${education?.scoring ?? '计分规则整理中'}`)
   }
   if (roleTemplate) {
     lines.push(

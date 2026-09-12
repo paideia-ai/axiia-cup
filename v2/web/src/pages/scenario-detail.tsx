@@ -3,14 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { builder, catalog, myAgents } from '../api/client'
-import type { ScenarioSummary, Side } from '../api/types'
+import type { ScenarioScoringDTO, ScenarioSummary, Side } from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
-import { DIFFICULTY_LABEL, scenarioModule } from '../scenarios'
+import {
+  DIFFICULTY_LABEL,
+  scenarioGuidance,
+  scenarioModule,
+} from '../scenarios'
 import { tm } from '../testmode/mark'
 import { useAuth } from '../context/auth'
 import { protectedLoginUrl } from '../lib/login-return'
@@ -24,7 +28,6 @@ import type {
   ScenarioIntroImage,
   ScenarioIntroSide,
   ScenarioIntroTimeline,
-  ScenarioRequestScoring,
 } from '../scenarios/types'
 
 // 场景介绍的主体为四张顶层卡：背景故事、甲方、乙方、裁判与计分。
@@ -288,7 +291,7 @@ export function ScenarioDetailPage() {
             <JudgeScoringCard
               intro={intro}
               education={education}
-              requestScoring={module?.requestScoring ?? null}
+              scoring={data.scoring ?? null}
               scoringLabel={module?.scoringLabel ?? '计分规则'}
               scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
                 false}
@@ -320,6 +323,7 @@ function OverviewCard({
   timelineAtEnd: boolean
 }) {
   const overview = intro?.source.overview ?? null
+  const guidance = scenarioGuidance(summary, education)
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.overview-card')}>
       <CardContent className='space-y-5 pt-5'>
@@ -430,30 +434,41 @@ function OverviewCard({
           )
           : null}
 
-        {education
+        {guidance.difficulty != null || guidance.minutes != null ||
+            guidance.noviceFriendly || education?.formatLabel
           ? (
             <div
               className='flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-soft) pt-4 text-xs text-(--foreground-subtle)'
               {...tm('DA.education-row')}
             >
-              <span title={`难度 ${education.difficulty} / 3`}>
-                难度 {DIFFICULTY_LABEL[education.difficulty]}{' '}
-                <span
-                  aria-hidden='true'
-                  className='tracking-[0.12em] text-(--warning)'
-                >
-                  {'★'.repeat(education.difficulty)}
-                  <span className='text-(--foreground-muted)'>
-                    {'☆'.repeat(3 - education.difficulty)}
+              {guidance.difficulty != null
+                ? (
+                  <span title={`难度 ${guidance.difficulty} / 3`}>
+                    难度 {DIFFICULTY_LABEL[guidance.difficulty]}{' '}
+                    <span
+                      aria-hidden='true'
+                      className='tracking-[0.12em] text-(--warning)'
+                    >
+                      {'★'.repeat(guidance.difficulty)}
+                      <span className='text-(--foreground-muted)'>
+                        {'☆'.repeat(3 - guidance.difficulty)}
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </span>
-              <span className='inline-flex items-center gap-1'>
-                <Clock className='h-3.5 w-3.5' />
-                一场约 {education.minutes} 分钟
-              </span>
-              <span>{education.formatLabel}</span>
-              {education.noviceFriendly
+                )
+                : null}
+              {guidance.minutes != null
+                ? (
+                  <span className='inline-flex items-center gap-1'>
+                    <Clock className='h-3.5 w-3.5' />
+                    一场约 {guidance.minutes} 分钟
+                  </span>
+                )
+                : null}
+              {education?.formatLabel
+                ? <span>{education.formatLabel}</span>
+                : null}
+              {guidance.noviceFriendly
                 ? <Badge tone='success'>适合新手</Badge>
                 : null}
             </div>
@@ -472,16 +487,14 @@ function OverviewCard({
               {statsLine(summary)}
             </p>
           )
-          : education
-          ? (
+          : (
             <p
               className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
               {...tm('DA.stats-empty')}
             >
               数据积累中
             </p>
-          )
-          : null}
+          )}
       </CardContent>
     </Card>
   )
@@ -885,13 +898,13 @@ function HiddenGoalList({
 function JudgeScoringCard({
   intro,
   education,
-  requestScoring,
+  scoring,
   scoringLabel,
   scoringInitiallyCollapsed,
 }: {
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
-  requestScoring: ScenarioRequestScoring | null
+  scoring: ScenarioScoringDTO | null
   scoringLabel: string
   scoringInitiallyCollapsed: boolean
 }) {
@@ -952,7 +965,7 @@ function JudgeScoringCard({
           <ScoringRules
             initiallyCollapsed={scoringInitiallyCollapsed}
             label={scoringLabel}
-            requestScoring={requestScoring}
+            scoring={scoring}
             text={education?.scoring ?? '计分规则整理中'}
           />
         </div>
@@ -972,12 +985,12 @@ function JudgeScoringCard({
 function ScoringRules({
   initiallyCollapsed,
   label,
-  requestScoring,
+  scoring,
   text,
 }: {
   initiallyCollapsed: boolean
   label: string
-  requestScoring: ScenarioRequestScoring | null
+  scoring: ScenarioScoringDTO | null
   text: string
 }) {
   if (initiallyCollapsed) {
@@ -993,7 +1006,7 @@ function ScoringRules({
             triggerClassName='text-lg font-semibold text-(--foreground)'
           >
             <div className='border-t border-(--border-soft) pt-3'>
-              <ScoringContent requestScoring={requestScoring} text={text} />
+              <ScoringContent scoring={scoring} text={text} />
             </div>
           </AccordionItem>
         </Accordion>
@@ -1009,20 +1022,20 @@ function ScoringRules({
         {label}
       </h3>
       <div className='mt-4'>
-        <ScoringContent requestScoring={requestScoring} text={text} />
+        <ScoringContent scoring={scoring} text={text} />
       </div>
     </section>
   )
 }
 
 function ScoringContent({
-  requestScoring,
+  scoring,
   text,
 }: {
-  requestScoring: ScenarioRequestScoring | null
+  scoring: ScenarioScoringDTO | null
   text: string
 }) {
-  if (!requestScoring) {
+  if (!scoring) {
     return (
       <p className='whitespace-pre-line border-l-2 border-(--accent) pl-4 text-sm leading-7 text-(--foreground-subtle)'>
         {text}
@@ -1030,85 +1043,52 @@ function ScoringContent({
     )
   }
 
-  const penalty = requestScoring.discoveryPenalty
-  const mainRule = {
-    title: '裁判支持你的立场',
-    score: '+1',
-    scoreClassName:
-      'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-  }
-  const requestRules = [
-    {
-      title: '你的真请求被裁判同意',
-      score: '+0.5',
-      scoreClassName:
-        'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20',
-    },
-    {
-      title: '你的假请求被裁判同意',
-      score: '−0.25',
-      scoreClassName:
-        'bg-amber-500/12 text-amber-300 ring-1 ring-inset ring-amber-500/20',
-    },
-    {
-      title: '你的真请求被对手猜中',
-      score: `−${penalty}`,
-      scoreClassName:
-        'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20',
-    },
-  ]
-
   return (
     <div className='space-y-5'>
-      <p className='text-[11px] leading-5 text-(--foreground-muted)'>
-        每局双方独立计分，总分高者胜。
+      <p className='whitespace-pre-line text-sm leading-7 text-(--foreground-subtle)'>
+        {scoring.summary}
       </p>
-      <section className='space-y-2'>
-        <h4 className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-          主要目标
-        </h4>
-        <ScoreRuleRow rule={mainRule} />
-      </section>
-      <section className='space-y-2'>
-        <h4 className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-          隐藏请求
-        </h4>
-        <div className='divide-y divide-(--border-soft) border-y border-(--border-soft)'>
-          {requestRules.map((rule) => (
-            <ScoreRuleRow key={rule.title} rule={rule} />
-          ))}
-        </div>
-      </section>
-      <p className='text-[11px] leading-5 text-(--foreground-muted)'>
-        总分相同时，大政方针归属的一方获胜。
-      </p>
+      <div className='divide-y divide-(--border-soft) border-y border-(--border-soft)'>
+        {scoring.items.map((item) => (
+          <ScoreRuleRow
+            key={item.id}
+            item={item}
+          />
+        ))}
+      </div>
+      {scoring.notes?.map((note, index) => (
+        <p
+          key={`${index}:${note}`}
+          className='whitespace-pre-line text-xs leading-6 text-(--foreground-muted)'
+        >
+          {note}
+        </p>
+      ))}
     </div>
   )
 }
 
-function ScoreRuleRow({
-  rule,
-}: {
-  rule: {
-    title: string
-    score: string
-    scoreClassName: string
-  }
-}) {
+function ScoreRuleRow({ item }: { item: ScenarioScoringDTO['items'][number] }) {
+  const score = `${item.points > 0 ? '+' : item.points < 0 ? '−' : ''}${
+    Math.abs(item.points)
+  }`
+  const scoreClassName = item.points > 0
+    ? 'bg-emerald-500/12 text-emerald-300 ring-1 ring-inset ring-emerald-500/20'
+    : item.points < 0
+    ? 'bg-rose-500/12 text-rose-300 ring-1 ring-inset ring-rose-500/20'
+    : 'bg-white/5 text-(--foreground-subtle) ring-1 ring-inset ring-(--border-soft)'
   return (
     <div
       className='flex items-center justify-between gap-4 py-3'
       {...tm('DA.score-rule-row')}
     >
-      <div className='min-w-0 space-y-1'>
-        <p className='text-xs font-medium text-(--foreground)'>
-          {rule.title}
-        </p>
-      </div>
+      <p className='min-w-0 text-xs font-medium text-(--foreground)'>
+        {item.label}
+      </p>
       <span
-        className={`inline-flex min-w-16 shrink-0 items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${rule.scoreClassName}`}
+        className={`inline-flex min-w-16 shrink-0 items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${scoreClassName}`}
       >
-        {rule.score}
+        {score}
       </span>
     </div>
   )

@@ -1,14 +1,30 @@
-import type { JSONValue, Side } from '../api/types'
+import type { JSONValue, ScenarioSummary, Side } from '../api/types'
 import { fengyitingReal } from './fengyiting-real'
 import { honnojiDecision } from './honnoji-decision'
 import { legalHarborMurderJury } from './legal-harbor-murder-jury'
 import { shangyangCourt } from './shangyang-court'
 import { trolleyProblem } from './trolley-problem'
-import type { ScenarioModule, ScenarioRole } from './types'
+import type { ScenarioEducation, ScenarioModule, ScenarioRole } from './types'
 
 export type { ScenarioModule, ScenarioRole } from './types'
 
 export const DIFFICULTY_LABEL = { 1: '简单', 2: '中等', 3: '困难' } as const
+const SERVER_DIFFICULTY = { easy: 1, medium: 2, hard: 3 } as const
+
+// Server metadata wins field by field. Missing fields may use reviewed local
+// copy, but beginner suitability is independent of the difficulty level.
+export function scenarioGuidance(
+  summary: ScenarioSummary,
+  education: ScenarioEducation | null,
+) {
+  return {
+    difficulty: summary.difficulty != null
+      ? SERVER_DIFFICULTY[summary.difficulty]
+      : education?.difficulty,
+    minutes: summary.estimatedMinutes ?? education?.minutes,
+    noviceFriendly: summary.beginnerFriendly ?? education?.noviceFriendly,
+  }
+}
 
 // Every scenario the SPA knows something extra about. A scenario absent from here
 // is not broken: it renders through the generic, server-driven path.

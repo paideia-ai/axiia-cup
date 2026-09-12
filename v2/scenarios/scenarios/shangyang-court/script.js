@@ -404,6 +404,11 @@ r5：收尾——商鞅以秦为赌局老臣以秦为家业；赌徒输光可走
   },
 ]
 
+const SCORE_MAIN = 1
+const SCORE_TRUE_APPROVED = 0.5
+const SCORE_FAKE_APPROVED = -0.25
+const SCORE_IDENTIFIED = -1
+
 const meta = {
   id: 'shangyang-court',
   title: '商鞅变法·朝堂辩法',
@@ -413,6 +418,16 @@ const meta = {
   sideALabel: '自魏入秦的说客，无根无党，惟以变法自荐',
   sideBLabel: '三朝太师，宗室之望，祖制之守',
   turnCount: 5,
+  scoring: {
+    summary: '每局双方独立计分，总分高者胜。',
+    items: [
+      { id: 'main', label: '裁判支持你的立场', points: SCORE_MAIN },
+      { id: 'true-approved', label: '你的真请求被裁判同意', points: SCORE_TRUE_APPROVED },
+      { id: 'fake-approved', label: '你的假请求被裁判同意', points: SCORE_FAKE_APPROVED },
+      { id: 'identified', label: '你的真请求被对手猜中', points: SCORE_IDENTIFIED },
+    ],
+    notes: ['总分相同时，大政方针归属的一方获胜。'],
+  },
   stages: [
     {
       id: 'debate',
@@ -457,11 +472,6 @@ const REQUESTS_B = [
   { id: 'GR2', content: '请加太师府议政之权，凡国之大事须经太师府议定' },
   { id: 'GR3', content: '请保世族封地食邑世代相传，不受裁减' },
 ]
-
-const SCORE_MAIN = 1
-const SCORE_TRUE_APPROVED = 0.5
-const SCORE_FAKE_APPROVED = -0.25
-const SCORE_IDENTIFIED = -1
 
 const OPENING_LINE = '卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。'
 

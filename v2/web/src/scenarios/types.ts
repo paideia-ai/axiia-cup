@@ -58,10 +58,6 @@ export interface ScenarioHiddenGoalList {
   groups: ScenarioHiddenGoalGroup[]
 }
 
-export interface ScenarioRequestScoring {
-  discoveryPenalty: number
-}
-
 export interface ScenarioIntroSide {
   eyebrow: string
   name: string
@@ -155,7 +151,6 @@ export interface ScenarioModule {
   hiddenGoals?: Partial<Record<Side, ScenarioHiddenGoalList>>
   scoringInitiallyCollapsed?: boolean
   scoringLabel?: string
-  requestScoring?: ScenarioRequestScoring
   hideHeaderMatchup?: boolean
   timelineAtEnd?: boolean
   // Lane keys the script speaks under, mapped to display names. Side keys ('a',

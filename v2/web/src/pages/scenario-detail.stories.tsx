@@ -28,6 +28,16 @@ const details: Record<string, ScenarioDetail> = {
     },
     stages: [],
     presets: [],
+    scoring: {
+      summary: '每局双方独立计分，总分高者胜。',
+      items: [
+        { id: 'policy', label: '裁判支持你的立场', points: 1 },
+        { id: 'true-request', label: '你的真请求被裁判同意', points: 0.5 },
+        { id: 'false-request', label: '你的假请求被裁判同意', points: -0.25 },
+        { id: 'discovered', label: '你的真请求被对手猜中', points: -1 },
+      ],
+      notes: ['总分相同时，大政方针归属的一方获胜。'],
+    },
   },
   'honnoji-decision': {
     summary: {
@@ -44,6 +54,16 @@ const details: Record<string, ScenarioDetail> = {
     },
     stages: [],
     presets: [],
+    scoring: {
+      summary: '每局双方独立计分，总分高者胜。',
+      items: [
+        { id: 'policy', label: '裁判支持你的立场', points: 1 },
+        { id: 'true-request', label: '你的真请求被裁判同意', points: 0.5 },
+        { id: 'false-request', label: '你的假请求被裁判同意', points: -0.25 },
+        { id: 'discovered', label: '你的真请求被对手猜中', points: -0.75 },
+      ],
+      notes: ['总分相同时，大政方针归属的一方获胜。'],
+    },
   },
   'trolley-problem': {
     summary: {
@@ -60,6 +80,10 @@ const details: Record<string, ScenarioDetail> = {
     },
     stages: [],
     presets: [],
+    scoring: {
+      summary: '三个案件各裁给一方，拿下多数案件的一方获胜。',
+      items: [{ id: 'case-won', label: '一个案件裁给你的立场', points: 1 }],
+    },
   },
   'fengyiting-real': {
     summary: {
@@ -163,9 +187,9 @@ export const ShangyangFourCards: Story = {
     await expect(
       canvas.getByRole('heading', { name: '计分规则' }),
     ).toBeVisible()
-    await expect(canvas.getByRole('heading', { name: '主要目标' }))
+    await expect(canvas.getByText('裁判支持你的立场', { exact: true }))
       .toBeVisible()
-    await expect(canvas.getByRole('heading', { name: '隐藏请求' }))
+    await expect(canvas.getByText('你的真请求被裁判同意', { exact: true }))
       .toBeVisible()
     await expect(canvas.queryByText('谁来判')).toBeNull()
     await expect(canvas.queryByText('怎么算分')).toBeNull()
@@ -252,6 +276,16 @@ export const TrolleyFourCards: Story = {
       await canvas.findByRole('heading', { name: '电车难题 · 一人与五人' }),
     ).toBeVisible()
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
+    const scoreRows = canvasElement.querySelectorAll<HTMLElement>(
+      '[data-tm="DA.score-rule-row"]',
+    )
+    expect(scoreRows).toHaveLength(1)
+    await expect(
+      within(scoreRows[0]).getByText('一个案件裁给你的立场', { exact: true }),
+    )
+      .toBeVisible()
+    await expect(within(scoreRows[0]).getByText('+1', { exact: true }))
+      .toBeVisible()
     await expect(
       canvas.getByRole('heading', { name: '袖手旁观，还是双手沾上鲜血？' }),
     ).toBeVisible()

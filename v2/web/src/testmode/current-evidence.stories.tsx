@@ -82,9 +82,27 @@ export const DatedAuditAndSeparateEngineeringEvidence: Story = {
           '工程记录不替代本轮真人验收，也不更改已记录的结果。',
         ),
       ).toBeVisible()
-      await expect(
+      const catalog = within(
         surface.getByRole('region', { name: 'U04-C01 当前工程证据' }),
-      ).toHaveTextContent('部分覆盖')
+      )
+      await expect(catalog.getByText('当前工程证据 · 当前公开场景已工程核验'))
+        .toBeVisible()
+      await expect(
+        catalog.getByText('本轮真人验收仍需完成，后续场景内容需另行核对。'),
+      )
+        .toBeVisible()
+      await expect(catalog.getByRole('link', { name: '前端 #182 · 28a5d69' }))
+        .toHaveAttribute(
+          'href',
+          'https://github.com/paideia-ai/axiia-cup/pull/182',
+        )
+      await expect(
+        catalog.getByRole('link', { name: '后端边界测试 #60 · 6c7fa78' }),
+      )
+        .toHaveAttribute(
+          'href',
+          'https://github.com/paideia-ai/axiia-cup-v2/pull/60',
+        )
       expect(surface.queryByRole('region', { name: 'U04-C02 当前工程证据' }))
         .toBeNull()
     }
