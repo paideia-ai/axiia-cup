@@ -15,6 +15,8 @@ export function rejectCopy(
 ): string {
   if (!(error instanceof ApiError)) return messageOf(error, fallback)
   switch (error.code) {
+    case 'insufficient_points':
+      return '积分不足，未发起对战。可先领取胜利奖励，或等待北京时间次日 00:00 的每日积分。'
     // #52 触顶行为已定：按钮可点 → 点击后给这句 → 不入队。
     case 'daily_limit': {
       const n = config?.dailyBattleLimit

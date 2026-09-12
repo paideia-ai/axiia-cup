@@ -13,6 +13,8 @@ import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
 import { useScrollMemory } from '../../lib/scroll'
 import { BattleStrip } from '../battle-strip'
+import { PointsIndicator } from '../rewards'
+import { SoundToggle } from '../sound-controls'
 import { Button } from '../ui/button'
 import { BellIndicator } from './bell'
 import { IcpRecord } from './icp-record'
@@ -56,9 +58,10 @@ export function AppShell({ children }: PropsWithChildren) {
           <NavLink
             {...tm('NAV.logo')}
             to='/scenarios'
-            className='mr-4 text-sm font-black tracking-[0.24em] text-(--accent)'
+            aria-label='AXIIA CUP'
+            className='shrink-0 text-sm font-black tracking-[0.12em] text-(--accent) sm:mr-4 sm:tracking-[0.24em]'
           >
-            AXIIA CUP
+            AXIIA<span className='hidden sm:ml-1 sm:inline'>CUP</span>
           </NavLink>
           <nav
             {...tm('NAV.desktop-nav')}
@@ -83,11 +86,14 @@ export function AppShell({ children }: PropsWithChildren) {
               )
             })}
           </nav>
-          <div className='ml-auto flex items-center gap-2'>
+          <div className='ml-auto flex items-center gap-1 sm:gap-2'>
+            <PointsIndicator />
+            <SoundToggle />
             <BellIndicator />
             <NavLink
               {...tm('NAV.settings-link')}
               to='/settings'
+              aria-label='账户设置'
               className={({ isActive }) =>
                 cn(
                   'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
@@ -95,7 +101,9 @@ export function AppShell({ children }: PropsWithChildren) {
                 )}
             >
               <UserRound className='h-4 w-4' />
-              <span>{account?.displayName ?? '选手'}</span>
+              <span className='hidden sm:inline'>
+                {account?.displayName ?? '选手'}
+              </span>
             </NavLink>
             <Button
               {...tm('NAV.logout-button')}

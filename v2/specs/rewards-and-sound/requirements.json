@@ -1,0 +1,2780 @@
+{
+  "schemaVersion": 1,
+  "title": "积分奖励与交互音效 · v4 扩展规格",
+  "createdAt": "2026-09-12",
+  "canonical": true,
+  "status": "implementation-proposal",
+  "baseline": {
+    "conventions": "paideia-ai/axiia-cup-uiux/spec-v4",
+    "verifiedExistingUnitRange": "U01–U17",
+    "dashboardImport": "not-performed",
+    "note": "本文件是新增功能的规范真相源；尚未合并进私有 v4 看板。"
+  },
+  "precedence": [
+    "product-invariant",
+    "scoped-rule",
+    "configured-default",
+    "user-choice"
+  ],
+  "sources": [
+    {
+      "id": "lark-rewards",
+      "kind": "product-discussion",
+      "author": "Keso",
+      "threadID": "omt_19c7f688a2ce1b86",
+      "messageIDs": [
+        "om_x100b6513bbc680e8b4ceb2079e6c7e3",
+        "om_x100b6513b6b794acc372949480cc0ee",
+        "om_x100b651c4ecd4914c102f43e111aa5f"
+      ],
+      "url": "https://applink.feishu.cn/client/thread/open?open_chat_id=oc_1ceb1f489fbff0ac9579b836f0087cfc&open_thread_id=omt_19c7f688a2ce1b86"
+    },
+    {
+      "id": "lark-sound",
+      "kind": "product-discussion",
+      "author": "Keso",
+      "threadID": "omt_19c4691b340f1b94",
+      "messageIDs": [
+        "om_x100b652a6da288a0dfe7782d432e35f",
+        "om_x100b652a650d64a0b17414b090a0e2a"
+      ],
+      "url": "https://applink.feishu.cn/client/thread/open?open_chat_id=oc_1ceb1f489fbff0ac9579b836f0087cfc&open_thread_id=omt_19c4691b340f1b94"
+    },
+    {
+      "id": "sound-prototype",
+      "kind": "design-reference",
+      "commit": "c28c9a87d8519415809a26b5dc0cc378722a5238",
+      "url": "https://github.com/paideia-ai/axiia-cup/blob/c28c9a87d8519415809a26b5dc0cc378722a5238/docs/competition/SOUND_EFFECTS_PLAN.md",
+      "note": "默认主音效开启、25% 音量和输出音关闭来自原型；未导入其第三方游戏样本。"
+    },
+    {
+      "id": "v4-conventions",
+      "kind": "spec-convention",
+      "repository": "paideia-ai/axiia-cup-uiux",
+      "paths": [
+        "spec-v4/README.md",
+        "spec-v4/docs/SPEC_WRITING_REVIEW.md"
+      ],
+      "note": "JSON 为规范真相源；稳定条款 ID；五个独立状态维度；EARS 规范句与解释/证据分离。"
+    }
+  ],
+  "units": [
+    {
+      "id": "U18",
+      "title": "积分与胜利返还",
+      "anchor": "spec-rewards",
+      "clauseCount": 27
+    },
+    {
+      "id": "U19",
+      "title": "交互音效",
+      "anchor": "spec-sound",
+      "clauseCount": 16
+    }
+  ],
+  "clauses": [
+    {
+      "id": "U18-C01",
+      "unit": "U18",
+      "version": "v1",
+      "title": "余额不透支",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c01"
+      ],
+      "canonical": "系统必须将用户积分余额保持为非负整数。",
+      "context": "额度守恒是所有操作的共同约束。",
+      "consequence": "并发操作也不能产生负数或小数。",
+      "compliant": "余额 100 时只有一个 100 积分派发成功。",
+      "violation": "两个并发请求把余额扣成 -100。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R04"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C02",
+      "unit": "U18",
+      "version": "v1",
+      "title": "每日额度计算",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c02"
+      ],
+      "canonical": "当用户当天首次触发积分发放时，系统必须按当前可用场景数 × 每场景 5 局 × 每局 100 积分计算当天额度。",
+      "context": "每场景约 5 次来自 Keso；固定价格为实现选择。",
+      "consequence": "已经发放的当天额度不随之后的场景数变化重新计算。",
+      "compliant": "4 个可用场景时发放 2000 积分。",
+      "violation": "因同日新增一个场景又发放完整的第二笔每日额度。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R01"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C03",
+      "unit": "U18",
+      "version": "v1",
+      "title": "日历边界",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c03"
+      ],
+      "canonical": "当系统确定发放日期及下次发放时间时，系统必须使用 Asia/Shanghai 自然日的午夜作为边界。",
+      "context": "明确用户可预期的切日时刻。",
+      "consequence": "日期判定由服务端决定。",
+      "compliant": "UTC 16:00 进入下一个北京时间自然日。",
+      "violation": "用户修改设备时区后获得第二份同日额度。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R02"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C04",
+      "unit": "U18",
+      "version": "v1",
+      "title": "当天至多发放一次",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c04"
+      ],
+      "canonical": "当同一用户在同一天重复或并发读取钱包、派发或领取时，系统必须至多记入一次当天额度。",
+      "context": "读取钱包也是懒发放触发器。",
+      "consequence": "用户无需单独签到且重试不会多领。",
+      "compliant": "刷新 3 次仍只有 1 笔当天发放。",
+      "violation": "两个标签页首次打开钱包获得双倍额度。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R01"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C05",
+      "unit": "U18",
+      "version": "v1",
+      "title": "不补发离线日期",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c05"
+      ],
+      "canonical": "当用户跨过一个或多个未发放日期后再次触发发放时，系统必须仅发放当前日期的额度。",
+      "context": "讨论没有提出离线累积补领。",
+      "consequence": "不存在按离线天数补发的额度。",
+      "compliant": "三天后回来只获得今天额度。",
+      "violation": "三天后回来一次补发三天额度。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R02"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C06",
+      "unit": "U18",
+      "version": "v1",
+      "title": "保留已有结余",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c06"
+      ],
+      "canonical": "当系统发放新的每日额度时，系统必须将该额度加到已有余额。",
+      "context": "每日额度按次发放，余额不在午夜清零。",
+      "consequence": "前一天保存的余额仍可消费。",
+      "compliant": "原余额 350，今日额度 2000，结果 2350。",
+      "violation": "午夜把原有 350 积分清零。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R02"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C07",
+      "unit": "U18",
+      "version": "v1",
+      "title": "默认单局价格",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c07"
+      ],
+      "canonical": "当玩家发起一场普通 PvE、PvP 或自我对战时，系统必须以每局 100 积分作为本次版本的默认费用。",
+      "context": "固定值是本次实现选择，不是 Keso 确认的价格。",
+      "consequence": "自动锦标赛对局不套用玩家开局费用。",
+      "compliant": "两局挑战显示总费用 200。",
+      "violation": "同一普通对局因客户端传入金额只扣 1 分。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R03"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C08",
+      "unit": "U18",
+      "version": "v1",
+      "title": "对局经济规则快照",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c08"
+      ],
+      "canonical": "当系统预留对局费用时，系统必须保存该局实际扣款及适用的返还比例供后续结算使用。",
+      "context": "历史权益不能受未来默认值修改影响。",
+      "consequence": "退款使用原始扣款，奖励使用原始比例。",
+      "compliant": "已按 100 分和 50% 开局，后来涨价仍可领 50。",
+      "violation": "开局后价格升为 200，旧局奖励变成 100。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R06"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C09",
+      "unit": "U18",
+      "version": "v1",
+      "title": "接受派发才消耗额度",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c09"
+      ],
+      "canonical": "当系统接受玩家的有效对局派发时，系统必须为该局记录一次且仅一次扣款。",
+      "context": "预留、入队和请求失败必须可协调恢复。",
+      "consequence": "无效或拒绝的请求不能净消耗余额。",
+      "compliant": "有效对局有唯一扣款记录。",
+      "violation": "校验失败且没有对局仍留下扣款。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R03"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C10",
+      "unit": "U18",
+      "version": "v1",
+      "title": "不足时拒绝派发",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c10"
+      ],
+      "canonical": "当余额不足本次派发总费用时，系统必须以 HTTP 402 和 insufficient_points 拒绝派发。",
+      "context": "余额不足不能依赖界面守卫。",
+      "consequence": "拒绝后余额与排队中的对局数量不变。",
+      "compliant": "余额 99 请求 100 分对局被拒绝。",
+      "violation": "客户端绕过按钮禁用后仍派发成功。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R04"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C11",
+      "unit": "U18",
+      "version": "v1",
+      "title": "两局挑战整体预留",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c11"
+      ],
+      "canonical": "当系统接受包含两局的挑战时，系统必须在开始任何一局前原子预留两局总费用。",
+      "context": "角色互换挑战包含两份模型成本。",
+      "consequence": "只够一局的余额不能先跑一局。",
+      "compliant": "余额 199 时 200 分挑战不创建可运行的第一局。",
+      "violation": "第一局开跑之后才发现第二局付不起。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R05"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C12",
+      "unit": "U18",
+      "version": "v1",
+      "title": "失败任务退款",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c12"
+      ],
+      "canonical": "当已扣款对局运行失败或已预留的派发未能成功入队时，系统必须自动退回该局的全部实际扣款。",
+      "context": "失败任务没有完成玩家支付购买的游戏体验。",
+      "consequence": "两局挑战分别按各局结果退款，完成局保留扣款。",
+      "compliant": "两局各扣 100，仅失败的一局退 100。",
+      "violation": "失败对局需用户先赢另一局才给退款。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R05"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C13",
+      "unit": "U18",
+      "version": "v1",
+      "title": "退款不重复",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c13"
+      ],
+      "canonical": "当系统重复处理同一对局的失败或取消记录时，系统必须至多记入一次该局退款。",
+      "context": "失败回调和恢复过程可重复。",
+      "consequence": "重试不会创造积分。",
+      "compliant": "连续两次失败回调只退 100。",
+      "violation": "同一局第二次失败回调又退 100。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R05"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C14",
+      "unit": "U18",
+      "version": "v1",
+      "title": "胜利返还金额",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c14"
+      ],
+      "canonical": "当系统计算有资格领取的胜利返还时，系统必须按该局费用快照乘以 PvE 50% 或 PvP 75% 并向下取整。",
+      "context": "Keso 给出 PvE 25%–50% 和 PvP 75%；PvE 50% 是实现选择。",
+      "consequence": "奖励为整数且不会超过本局扣款。",
+      "compliant": "100 分 PvE 胜利可领 50，PvP 可领 75。",
+      "violation": "100 分 PvE 胜利可领 100。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R06"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C15",
+      "unit": "U18",
+      "version": "v1",
+      "title": "返还只归付款胜方",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c15"
+      ],
+      "canonical": "当系统判断胜利返还资格时，系统必须仅允许支付并发起该对局且最终获胜的用户领取。",
+      "context": "本机制返还用户自己支付的成本。",
+      "consequence": "被动参赛的胜方和旁观者都不能领该局返还。",
+      "compliant": "发起人获胜得到资格；未付费被挑战者获胜无资格。",
+      "violation": "旁观者通过直接调用领取端点获得奖励。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R07"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C16",
+      "unit": "U18",
+      "version": "v1",
+      "title": "无返还对局范围",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c16"
+      ],
+      "canonical": "当对局为平局、失败、自我对战、锦标赛自动对局或历史未扣款对局时，系统必须将胜利返还状态判定为 ineligible。",
+      "context": "这些对局没有本次规则定义的可领取净胜利返还。",
+      "consequence": "自我对战仍按普通开局收费；任务失败退款另行处理。",
+      "compliant": "自我对战获胜结果不出现奖励领取。",
+      "violation": "历史完局上线后被批量生成奖励。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R07"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C17",
+      "unit": "U18",
+      "version": "v1",
+      "title": "领取前不自动入账",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c17"
+      ],
+      "canonical": "当付费玩家赢得符合条件的对局时，系统必须保留可领取权益直到玩家明确执行领取。",
+      "context": "Keso 要求点击领取时才加积分并反馈声音。",
+      "consequence": "看完战报或加载钱包不会自动领取。",
+      "compliant": "赢局后余额未变，点击领取成功才增加 50。",
+      "violation": "终局事件到达就自动增加奖励。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R08"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C18",
+      "unit": "U18",
+      "version": "v1",
+      "title": "钱包入口",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c18"
+      ],
+      "canonical": "当已登录玩家使用应用时，界面必须提供显示当前余额并进入积分页的入口。",
+      "context": "玩家需要在开局之前理解可用额度。",
+      "consequence": "积分页可查看当前余额、每日额度、费用及待领取列表。",
+      "compliant": "页头余额可点击进入积分页。",
+      "violation": "只能在余额不足报错后知道剩余积分。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R09"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx",
+        "v2/web/src/pages/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "ClaimAndRevisit",
+              "run": "AUTO-RS-UI-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "验证页头余额入口与领取后的余额；未执行点击路由或完整钱包数据验收。",
+          "in_ci": false,
+          "last_green": {
+            "run": "AUTO-RS-UI-01",
+            "result": "passed",
+            "reportedAt": "2026-09-12T13:56:38Z"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C19",
+      "unit": "U18",
+      "version": "v1",
+      "title": "胜利战报领取状态",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c19"
+      ],
+      "canonical": "当玩家查看对局最终战报时，界面必须按服务端返回的状态展示可领取金额、已领取状态或无可领取奖励的结果。",
+      "context": "终局呈现和回放过程不能混同。",
+      "consequence": "领取卡不在历史回放过程中抢先出现。",
+      "compliant": "可领取显示 50 分按钮，成功后显示已领取。",
+      "violation": "不参考服务端资格，所有观看者都显示领取按钮。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R08"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "ClaimAndRevisit",
+              "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "IneligibleAndInsufficient",
+              "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "LoadFailureRetry",
+              "run": "AUTO-RS-UI-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "验证独立领取卡的待领取/已领取/无资格及加载重试；未覆盖 MatchDetailPage 回放与终局集成。",
+          "in_ci": false,
+          "last_green": {
+            "run": "AUTO-RS-UI-01",
+            "result": "passed",
+            "reportedAt": "2026-09-12T13:56:38Z"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C20",
+      "unit": "U18",
+      "version": "v1",
+      "title": "登录保护",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c20"
+      ],
+      "canonical": "当未登录请求访问积分钱包、对局奖励状态或领取端点时，系统必须拒绝请求。",
+      "context": "积分属于用户会话内的私有数据。",
+      "consequence": "不能按任意用户 ID 读取或增加余额。",
+      "compliant": "未登录请求无法领取。",
+      "violation": "匿名调用直接拿到已登录用户余额。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R07"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C21",
+      "unit": "U18",
+      "version": "v1",
+      "title": "领取事务校验",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c21"
+      ],
+      "canonical": "当系统执行领取时，系统必须在同一原子结算中校验当前用户的付款归属、最终获胜结果与未领取权益后再记入服务端计算的金额。",
+      "context": "客户端请求可能过期或被修改。",
+      "consequence": "不能信任请求携带的金额、胜负或用户 ID。",
+      "compliant": "请求伪造金额不改变服务端计算的 50 分。",
+      "violation": "先查资格后无条件更新使并发领取都生效。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R08"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C22",
+      "unit": "U18",
+      "version": "v1",
+      "title": "重复领取幂等",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c22"
+      ],
+      "canonical": "当玩家重复领取已领取的对局奖励时，系统必须返回 alreadyClaimed=true、creditedPoints=0 且不再次增加余额。",
+      "context": "双击、网络重试和多标签页属于正常边界。",
+      "consequence": "第一次成功后刷新仍显示已领取。",
+      "compliant": "两个并发领取请求合计只加 50 分。",
+      "violation": "客户端超时重试后多领一次。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R08"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C23",
+      "unit": "U18",
+      "version": "v1",
+      "title": "持久积分账目",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c23"
+      ],
+      "canonical": "当系统成功发放、扣款、退款或领取积分时，系统必须持久保存可关联到用户及该次业务事件的账目。",
+      "context": "余额需要能够跨会话恢复并核对变动。",
+      "consequence": "重新登录或重启不能重置领取状态。",
+      "compliant": "重新登录后余额与已领取状态一致。",
+      "violation": "localStorage 清空后恢复成初始积分并可重复领取。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-03"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R10"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C24",
+      "unit": "U18",
+      "version": "v1",
+      "title": "派发前展示费用",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c24"
+      ],
+      "canonical": "当玩家可以确认派发对局时，界面必须展示本次总费用与当前余额。",
+      "context": "玩家应在消耗前知道费用，包括 express 首战及两局挑战。",
+      "consequence": "客户端余额不足时禁用派发，服务端仍负责最终校验。",
+      "compliant": "两局挑战显示费用 200 与余额 150，并禁用派发。",
+      "violation": "点击后才提示该操作已扣两局费用。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-01"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R03"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "IneligibleAndInsufficient",
+              "run": "AUTO-RS-UI-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "验证双局 200 分费用与余额不足提示；没有真实派发按钮，不能证明不足时按钮禁用。",
+          "in_ci": false,
+          "last_green": {
+            "run": "AUTO-RS-UI-01",
+            "result": "passed",
+            "reportedAt": "2026-09-12T13:56:38Z"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C25",
+      "unit": "U18",
+      "version": "v1",
+      "title": "到账后刷新余额",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c25"
+      ],
+      "canonical": "当领取请求成功完成时，界面必须根据服务端结果刷新显示的积分余额与领取状态。",
+      "context": "客户端不能乐观创造已到账余额。",
+      "consequence": "实际到账和已领取重试均呈现服务端最终状态。",
+      "compliant": "返回余额 1950 后页头与钱包更新为 1950。",
+      "violation": "领取失败但界面先显示奖励已到账。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R08"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "ClaimAndRevisit",
+              "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "LostResponseRetry",
+              "run": "AUTO-RS-UI-01"
+            }
+          ],
+          "coverage": "covered",
+          "note": "使用模拟服务端响应验证领取后页头余额及卡片状态；不证明服务端记账。",
+          "in_ci": false,
+          "last_green": {
+            "run": "AUTO-RS-UI-01",
+            "result": "passed",
+            "reportedAt": "2026-09-12T13:56:38Z"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C26",
+      "unit": "U18",
+      "version": "v1",
+      "title": "领取提交与错误恢复",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c26"
+      ],
+      "canonical": "当领取请求进行中或失败时，界面必须分别展示不可重复提交的进行中状态或允许安全重试的错误状态。",
+      "context": "请求延迟和失败不能让用户误判奖励状态。",
+      "consequence": "前端防重复只是体验守卫，服务端幂等仍为必须。",
+      "compliant": "提交时按钮禁用；失败后保留可重试入口。",
+      "violation": "失败后永久显示已领取，且没有错误提示。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-02"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R11"
+      ],
+      "code_paths": [
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/src/context/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "LostResponseRetry",
+              "run": "AUTO-RS-UI-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/rewards.stories.tsx",
+              "title": "LoadFailureRetry",
+              "run": "AUTO-RS-UI-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "验证失败后提示和安全重试；没有独立断言提交中的禁用时机。",
+          "in_ci": false,
+          "last_green": {
+            "run": "AUTO-RS-UI-01",
+            "result": "passed",
+            "reportedAt": "2026-09-12T13:56:38Z"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U18-C27",
+      "unit": "U18",
+      "version": "v1",
+      "title": "不提供现金兑换",
+      "kind": "boundary",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-rewards",
+        "spec-u18-c27"
+      ],
+      "canonical": "当系统展示或使用积分时，系统必须将 100 积分/元仅用于成本核算，不提供本次范围以外的充值、提现或现金兑换功能。",
+      "context": "讨论未授权建设支付产品。",
+      "consequence": "积分余额不能显示为可提现金额。",
+      "compliant": "积分页说明每日游戏额度。",
+      "violation": "提供把胜利积分兑换成人民币的按钮。",
+      "source_refs": [
+        "lark-rewards"
+      ],
+      "decisions": [
+        "RS-04"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-R09"
+      ],
+      "code_paths": [],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C01",
+      "unit": "U19",
+      "version": "v1",
+      "title": "主音效默认开启",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c01"
+      ],
+      "canonical": "当当前浏览器没有声音偏好记录时，系统必须默认开启主音效。",
+      "context": "采用已讨论原型的默认偏好。",
+      "consequence": "仍受浏览器用户手势策略限制。",
+      "compliant": "首次打开设置显示音效已开启。",
+      "violation": "设置默认为关闭且没有设计记录。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "uses quiet defaults for absent, invalid, and hostile storage",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            }
+          ],
+          "coverage": "covered",
+          "note": "默认值的纯逻辑和控制显示均被断言。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01",
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C02",
+      "unit": "U19",
+      "version": "v1",
+      "title": "默认音量",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c02"
+      ],
+      "canonical": "当当前浏览器没有声音偏好记录时，系统必须将主音量默认设为 25%。",
+      "context": "采用原型默认值，保留后续试听调节空间。",
+      "consequence": "用户可调节到完全无声。",
+      "compliant": "首次打开音量为 25%。",
+      "violation": "首次播放使用满音量。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "uses quiet defaults for absent, invalid, and hostile storage",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            }
+          ],
+          "coverage": "covered",
+          "note": "默认音量 25% 被断言；舒适度需真人试听。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01",
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C03",
+      "unit": "U19",
+      "version": "v1",
+      "title": "输出音默认关闭",
+      "kind": "default",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c03"
+      ],
+      "canonical": "当当前浏览器没有声音偏好记录时，系统必须默认关闭模型输出音效。",
+      "context": "逐段声音可能干扰长对局阅读。",
+      "consequence": "玩家主动开启后才有逐回合声音。",
+      "compliant": "主音效开启但新用户阅读输出仍无输出提示音。",
+      "violation": "首次观看自动为每条输出发声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [
+        "future-reviewed-configuration-change"
+      ],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "uses quiet defaults for absent, invalid, and hostile storage",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            }
+          ],
+          "coverage": "covered",
+          "note": "输出默认关闭被断言。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01",
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C04",
+      "unit": "U19",
+      "version": "v1",
+      "title": "可操作的声音设置",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c04"
+      ],
+      "canonical": "当玩家打开设置页时，界面必须提供主音效开关、音量调节和独立的模型输出音效开关。",
+      "context": "可静音是声音体验的必要条件。",
+      "consequence": "控制具备清楚标签并能用键盘操作。",
+      "compliant": "玩家可只关闭输出声而保留领取声。",
+      "violation": "只有系统音量可用，应用没有关闭入口。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/components/sound-controls.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            }
+          ],
+          "coverage": "partial",
+          "note": "断言开关联动与音量控制存在；未独立执行键盘旅程。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C05",
+      "unit": "U19",
+      "version": "v1",
+      "title": "浏览器偏好持久化",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c05"
+      ],
+      "canonical": "当玩家修改声音偏好时，系统必须在当前浏览器保存该偏好并同步到其他同源标签页。",
+      "context": "音效偏好属于设备环境，不增加账户服务端依赖。",
+      "consequence": "刷新不会重置偏好；存储失效时仍能使用当前会话设置。",
+      "compliant": "一个标签页关闭音效，另一个标签页同步关闭。",
+      "violation": "刷新后又开启已关闭的声音。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/components/sound-controls.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "uses quiet defaults for absent, invalid, and hostile storage",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            }
+          ],
+          "coverage": "partial",
+          "note": "断言偏好解析与同页多控件联动；未证明刷新和真实多标签页 storage 同步。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01",
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C06",
+      "unit": "U19",
+      "version": "v1",
+      "title": "保存成功音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c06"
+      ],
+      "canonical": "当玩家主动保存操作成功创建新版本时，系统必须为本次成功播放一次保存音效。",
+      "context": "Keso 指定“成功保存版本”的反馈。",
+      "consequence": "自动暂存、无新版本和保存失败不触发成功音。",
+      "compliant": "创建版本响应成功后播放一次。",
+      "violation": "自动暂存每次按键都播放保存声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S02"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/pages/builder.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C07",
+      "unit": "U19",
+      "version": "v1",
+      "title": "派发成功音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c07"
+      ],
+      "canonical": "当服务端接受玩家的派发并返回对局标识时，系统必须为本次派发动作播放一次派发音效。",
+      "context": "按钮点击不等于实际派发成功。",
+      "consequence": "包括普通、express、自我对战和两局挑战入口；挑战按动作播放一次。",
+      "compliant": "一次两局挑战被接受后播放一次。",
+      "violation": "被余额不足拒绝仍播放成功派发声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S02"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/api/client.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C08",
+      "unit": "U19",
+      "version": "v1",
+      "title": "实时完整输出音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c08"
+      ],
+      "canonical": "当玩家已开启输出音效、正在观看的模型对话文本回合结束且包含本次连接已观察到的实时输出、距离前次输出提示至少 300 毫秒并且没有主动作音播放或排队时，系统必须为该完整回合播放一次轻提示音。",
+      "context": "Keso 希望每段输出可选声音；300 毫秒限频与主动作音优先为本次实现选择。",
+      "consequence": "token、推理与修复片段不独立计作完整回合；因限频或主动作音被抑制的输出提示直接消费。 文本回合指 say（或未标调用名的旧版文本）产生的可见对话；结构化 act 调用不独立发声。",
+      "compliant": "同一回合收到 50 个 token 后仅在回合结束时提示；紧邻结束音的输出提示被抑制。",
+      "violation": "每个 token 都响，或领取音期间继续密集叠加输出音。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S03"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/match-sound.ts",
+        "v2/web/src/context/sound.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "rings once per fresh completed visible model response, never per token",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes repeated and throttled outputs permanently",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "gives milestones priority over output and deduplicates milestones across engines",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖实时完整回合、限频及优先级核心；未执行真实 SSE 浏览器全程。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C09",
+      "unit": "U19",
+      "version": "v1",
+      "title": "对局成功完成音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c09"
+      ],
+      "canonical": "当系统观察到对局新进入成功完成状态时，系统必须为该对局播放一次完成音效。",
+      "context": "运行完成是 Keso 指定的事件。",
+      "consequence": "失败状态不冒充成功完成；重连和轮询不能重复播放。",
+      "compliant": "实况成功结束触发一次完成声。",
+      "violation": "运行失败触发胜利完成声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S04"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/match-sound.ts",
+        "v2/web/src/context/sound.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "plays successful termination even in the fetch/connect race, but never failure",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "tracks owned running matches and ignores initial historical and failed rows",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "observes locally dispatched matches that finish between polls",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖终局观察器的成功/失败区分及轮询间完成；未执行完整实时 API 链路。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C10",
+      "unit": "U19",
+      "version": "v1",
+      "title": "实际奖励到账音",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c10"
+      ],
+      "canonical": "当玩家领取请求成功且 creditedPoints 大于 0 时，系统必须播放一次奖励音效。",
+      "context": "Keso 指定领取时增加积分并发声。",
+      "consequence": "打开战报、失败领取、已领取重试均不触发。",
+      "compliant": "成功新增 50 分后播放奖励声。",
+      "violation": "alreadyClaimed=true 时再次播放奖励声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S05"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/components/rewards.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C11",
+      "unit": "U19",
+      "version": "v1",
+      "title": "事件去重",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c11"
+      ],
+      "canonical": "当同一语义声音事件经重复渲染、轮询或重连再次到达时，系统必须避免为该事件重复播放。",
+      "context": "事件源可能重复而成功动作只发生一次。",
+      "consequence": "声音控制层记录已消费的事件身份。",
+      "compliant": "SSE 和轮询观察同一终局只播放一次。",
+      "violation": "React 重渲染再次播放奖励声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S04"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/match-sound.ts",
+        "v2/web/src/context/sound.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes repeated and throttled outputs permanently",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "gives milestones priority over output and deduplicates milestones across engines",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "tracks owned running matches and ignores initial historical and failed rows",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖事件重复和共享存储替身下的两个引擎；非真实多标签页端到端测试。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C12",
+      "unit": "U19",
+      "version": "v1",
+      "title": "主静音覆盖所有事件",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c12"
+      ],
+      "canonical": "当主音效关闭或音量为零时，系统必须使所有音效事件保持无声。",
+      "context": "输出偏好不能绕过总静音。",
+      "consequence": "包含主动作音与独立启用的输出音。",
+      "compliant": "主音效关闭、输出开启时仍无任何声音。",
+      "violation": "输出开关开启后绕过总静音。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S01"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "storybook",
+              "file": "v2/web/src/components/sound-controls.stories.tsx",
+              "title": "MuteAndOutputPreferences",
+              "run": "AUTO-RS-SOUND-02"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes muted and background events with no unmute/focus backlog",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "keeps output independently muted and survives blocked audio/storage",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "验证总静音和独立输出开关；音量为零的独立分支未单独断言。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01",
+              "AUTO-RS-SOUND-02"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C13",
+      "unit": "U19",
+      "version": "v1",
+      "title": "仅前台播放",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c13"
+      ],
+      "canonical": "当页面处于后台、声音关闭或声音事件不可播放时，系统必须无声消费当时的声音事件而不在恢复后补播。",
+      "context": "恢复窗口不应喷发积压提示。",
+      "consequence": "玩家返回标签页或重新开声时保持安静。",
+      "compliant": "后台结束三局后切回不会连响三次。",
+      "violation": "取消静音后补播之前全部输出。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S04"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/match-sound.ts",
+        "v2/web/src/context/sound.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes muted and background events with no unmute/focus backlog",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "consumes background completions silently when returning to the foreground",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖引擎和追踪器的静音/后台消费；未验证浏览器真实标签页切换完整链路。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C14",
+      "unit": "U19",
+      "version": "v1",
+      "title": "历史内容静默",
+      "kind": "rule",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c14"
+      ],
+      "canonical": "当系统加载历史战报、开始回放或重连补齐已有事件时，系统必须保持这些历史事件无声。",
+      "context": "声音表示新的实时反馈而非历史加载。",
+      "consequence": "当前连接之后发生的真实新事件仍可按规则播放。",
+      "compliant": "打开昨天的战报没有结束或输出音。",
+      "violation": "每次刷新完成战报都响结束声。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S03"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts",
+        "v2/web/src/lib/match-sound.ts",
+        "v2/web/src/context/sound.tsx"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "excludes old rows, hidden reasoning, repair calls, generic events and replayed backlog",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "tracks owned running matches and ignores initial historical and failed rows",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖历史/重连判别核心；未运行完整战报回放页面。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C15",
+      "unit": "U19",
+      "version": "v1",
+      "title": "音频失败不阻断操作",
+      "kind": "invariant",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c15"
+      ],
+      "canonical": "当浏览器要求用户手势、缺少音频能力或音频初始化/播放失败时，系统必须保持保存、派发、阅读及领取功能可用。",
+      "context": "声音是附加反馈。",
+      "consequence": "只在浏览器允许的手势后解锁音频，不绕过自动播放限制。",
+      "compliant": "AudioContext 被阻止时保存仍正常且无未处理异常。",
+      "violation": "领取成功因音频失败被显示成领取失败。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S06"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "has_test",
+          "has_test": true,
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "does not create a context until a gesture or replay blocked events later",
+              "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "keeps output independently muted and survives blocked audio/storage",
+              "run": "AUTO-RS-SOUND-01"
+            }
+          ],
+          "coverage": "partial",
+          "note": "覆盖音频/存储不可用下引擎不抛异常；保存/派发/领取的业务链路及 Safari/iOS 手势行为未单独验收。",
+          "in_ci": false,
+          "last_green": {
+            "runs": [
+              "AUTO-RS-SOUND-01"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-12"
+          }
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    },
+    {
+      "id": "U19-C16",
+      "unit": "U19",
+      "version": "v1",
+      "title": "原创交付音效",
+      "kind": "boundary",
+      "strength": "must",
+      "scope": "v2",
+      "anchors": [
+        "spec-sound",
+        "spec-u19-c16"
+      ],
+      "canonical": "当本次代码交付音效时，系统必须使用原创合成提示音，不分发原型引用的第三方游戏声音样本。",
+      "context": "参考游戏用于表达听感，不自动提供素材使用权。",
+      "consequence": "后续替换素材需要明确来源。",
+      "compliant": "交付代码生成短促原创提示音。",
+      "violation": "把原型中来自游戏镜像的音频直接加入静态目录。",
+      "source_refs": [
+        "lark-sound",
+        "sound-prototype"
+      ],
+      "decisions": [
+        "RS-05"
+      ],
+      "overridable_by": [],
+      "supersedes": [],
+      "acceptance": [
+        "AC-S06"
+      ],
+      "code_paths": [
+        "v2/web/src/lib/sound.ts"
+      ],
+      "conformance": {
+        "spec_status": "improving",
+        "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+        "impl_status": "unknown",
+        "impl_asOf": null,
+        "observed": null,
+        "auto": {
+          "state": "none",
+          "has_test": false,
+          "strong": [],
+          "in_ci": false,
+          "last_green": null
+        },
+        "human": {
+          "state": "untested",
+          "latest": null,
+          "records": []
+        },
+        "freshness": "unknown",
+        "bugs": []
+      }
+    }
+  ],
+  "verificationRuns": [
+    {
+      "id": "AUTO-RS-UI-01",
+      "reportedAt": "2026-09-12T13:56:38Z",
+      "reportedBy": "implementing root agent",
+      "baseCommit": "03912a3e9b84667e4aa329bc0eb51961184ca5a3",
+      "revisionNote": "未提交工作区；未提供测试时各文件内容哈希，freshness 保持 unknown。",
+      "workingDirectory": "v2/web",
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.storybook.config.ts src/components/rewards.stories.tsx",
+      "runtime": "Node · Vitest 4.1.10 · Chromium",
+      "result": "passed",
+      "passed": 5,
+      "tests": [
+        "ClaimAndRevisit",
+        "LostResponseRetry",
+        "IneligibleAndInsufficient",
+        "OldServer",
+        "LoadFailureRetry"
+      ],
+      "scope": "Storybook browser tests with MSW API doubles; does not verify real Swift server accounting, authentication, persistence or concurrent transactions.",
+      "human": false,
+      "in_ci": false
+    },
+    {
+      "id": "AUTO-RS-SOUND-01",
+      "reportedAt": "2026-09-12",
+      "reportedBy": "sound implementing agent",
+      "workingDirectory": "v2/web",
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.config.ts src/lib/sound.test.ts src/lib/match-sound.test.ts",
+      "runtime": "Node · Vitest",
+      "result": "passed",
+      "files": 2,
+      "passed": 14,
+      "scope": "Deterministic sound engine and event observer tests with audio/DOM doubles; no human listening or full route→live API integration.",
+      "human": false,
+      "in_ci": false
+    },
+    {
+      "id": "AUTO-RS-SOUND-02",
+      "reportedAt": "2026-09-12",
+      "reportedBy": "sound implementing agent",
+      "workingDirectory": "v2/web",
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.storybook.config.ts src/components/sound-controls.stories.tsx",
+      "runtime": "Node · Vitest · Chromium",
+      "result": "passed",
+      "passed": 2,
+      "tests": [
+        "Audition",
+        "MuteAndOutputPreferences"
+      ],
+      "scope": "Settings render and interaction checks; Audition is a render-only story, not a human listening result.",
+      "human": false,
+      "in_ci": false
+    }
+  ]
+}

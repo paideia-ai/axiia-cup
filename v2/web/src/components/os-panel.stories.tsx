@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { delay, http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
+import type { RewardsResponse } from '../api/types'
+import { RewardsProvider } from '../context/rewards'
+import { refreshRewards } from '../lib/reward-events'
 
 import {
   config,
@@ -167,5 +170,81 @@ export const TrialsBlocked: Story = {
         '赛事进行中，试炼暂时关闭——请稍后再来',
       ),
     ).toBeVisible()
+  },
+}
+
+// U18-C24: exercise the real provider and dispatch surface against a wallet
+// response. Exactly one battle's cost is sufficient; one point less is not.
+const dispatchWallet: RewardsResponse = {
+  balance: 100,
+  battleCost: 100,
+  dailyAllowance: 2000,
+  dailyRunsPerScenario: 5,
+  pveWinRefundPercent: 50,
+  pvpWinRefundPercent: 75,
+  pointsPerYuan: 100,
+  nextGrantAt: 1789228800,
+  claimableRewards: [],
+}
+const dispatchFundsWorld = { balance: 100, dispatches: 0 }
+
+export const DispatchBalanceBoundary: Story = {
+  decorators: [(Story) => (
+    <RewardsProvider>
+      <Story />
+    </RewardsProvider>
+  )],
+  loaders: [() => {
+    dispatchFundsWorld.balance = 100
+    dispatchFundsWorld.dispatches = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      http.get('/v1/rewards', () =>
+        HttpResponse.json({
+          ...dispatchWallet,
+          balance: dispatchFundsWorld.balance,
+        })),
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/scenarios/:id/opponents',
+        () => HttpResponse.json({ opponents: [] }),
+      ),
+      http.post('/v1/matches/pve', () => {
+        dispatchFundsWorld.dispatches++
+        return HttpResponse.json({ matchID: 401 })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const dispatch = await canvas.findByRole('button', { name: '发起对战' })
+    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
+    await userEvent.click(
+      canvas.getByRole('combobox', { name: '选择预设对手' }),
+    )
+    await userEvent.click(
+      within(canvasElement.ownerDocument.body).getByRole('option', {
+        name: '稳健守旧派',
+      }),
+    )
+    await expect(dispatch).toBeEnabled()
+
+    dispatchFundsWorld.balance = 99
+    refreshRewards()
+    await expect(
+      await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
+    ).toBeVisible()
+    await expect(dispatch).toBeDisabled()
+    dispatch.click()
+    await expect(dispatchFundsWorld.dispatches).toBe(0)
+
+    dispatchFundsWorld.balance = 100
+    refreshRewards()
+    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
+    await expect(dispatch).toBeEnabled()
+    await userEvent.click(dispatch)
+    await waitFor(() => expect(dispatchFundsWorld.dispatches).toBe(1))
   },
 }
