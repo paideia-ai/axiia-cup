@@ -7,6 +7,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { AppRoutes } from '../app-router'
 import type { MeResponse, ScenarioDetail } from '../api/types'
 import { AuthProvider } from '../context/auth'
+import { scenarioModule } from '../scenarios'
 import { config, scenario } from '../testing/v34-fixtures'
 
 const member: MeResponse = {
@@ -149,6 +150,17 @@ export const GuestCatalogAndDetail: Story = {
     expect(canvas.queryByText(/PVP 解锁|PVE 练习解锁/)).toBeNull()
     await expect(canvas.getByText('难度 简单', { exact: false })).toBeVisible()
     await expect(canvas.getByText('适合新手', { exact: true })).toBeVisible()
+    const card = within(canvas.getByTestId('scenario-shangyang-court'))
+    const introduction = card.getByText(
+      '五轮朝堂对辩定国策：说动秦孝公只是明线，把真请求悄悄送过关、再看穿甘龙所图，才是全部胜负。',
+      { exact: true },
+    )
+    await expect(introduction).toBeVisible()
+    await expect(card.getByText(scenario.summary.subject, { exact: true }))
+      .toBeVisible()
+    expect(introduction).not.toBe(
+      card.getByText(scenario.summary.subject, { exact: true }),
+    )
     await userEvent.click(canvas.getByTestId('scenario-shangyang-court'))
     await expect(
       await canvas.findByRole('heading', { name: '商鞅变法 · 朝堂辩法' }),
@@ -185,6 +197,16 @@ export const PublicDifficultyLevels: Story = {
               id: 'fengyiting-real',
               title: '凤仪亭',
             },
+            {
+              ...publicScenario.summary,
+              id: 'trolley-problem',
+              title: '电车难题',
+            },
+            {
+              ...publicScenario.summary,
+              id: 'legal-harbor-murder-jury',
+              title: '港口谋杀案陪审团',
+            },
           ],
         })),
       http.get('/v1/scenarios/:id', ({ params }) =>
@@ -208,6 +230,8 @@ export const PublicDifficultyLevels: Story = {
         ['shangyang-court', '简单', true],
         ['honnoji-decision', '中等', false],
         ['fengyiting-real', '困难', false],
+        ['trolley-problem', '简单', true],
+        ['legal-harbor-murder-jury', '困难', false],
       ] as const
     ) {
       const card = within(await canvas.findByTestId(`scenario-${id}`))
@@ -216,6 +240,13 @@ export const PublicDifficultyLevels: Story = {
       expect(card.queryByText('适合新手', { exact: true }) !== null).toBe(
         novice,
       )
+      const hook = scenarioModule(id)?.education?.hook
+      expect(hook).toBeTruthy()
+      await expect(card.getByText(hook!, { exact: true })).toBeVisible()
+      await expect(
+        card.getByText(publicScenario.summary.subject, { exact: true }),
+      )
+        .toBeVisible()
     }
     await userEvent.click(canvas.getByTestId('scenario-honnoji-decision'))
     await expect(await canvas.findByText('难度 中等', { exact: false }))

@@ -170,12 +170,19 @@ export function CatalogPage() {
                             )}
                         </div>
                       </div>
-                      <p
-                        className='text-sm text-(--foreground-subtle)'
-                        {...tm('D.card-subject')}
-                      >
+                      <p className='text-sm text-(--foreground-subtle)'>
                         {scenario.subject}
                       </p>
+                      {education
+                        ? (
+                          <p
+                            className='text-sm leading-relaxed text-(--foreground)'
+                            {...tm('D.card-subject')}
+                          >
+                            {education.hook}
+                          </p>
+                        )
+                        : null}
                       {education
                         ? (
                           <div
