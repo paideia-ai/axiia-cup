@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-  "sourceSha256": "56e7eead8d0bd28d27f612f6f99b622c3683470591add2025c80fe2e6cd37654",
+  "sourceSha256": "93e050a498e1069854d01263172fa14988f6dca20310434968bb3a04f893dc6a",
   "capturedAt": "2026-09-09",
   "handoffReadyClauseIds": [
     "U03-C01",
@@ -1148,12 +1148,14 @@
     "a6PvpAgentId": {
       "label": "PVP 已解锁发起方智能体 ID",
       "profileId": "a6-quota",
-      "hint": "可复用 228。"
+      "hint": "按当前步骤已重新准备并核验的账号包填写；S03 后执行 S05 前重新准备边界状态并核对 ID，不沿用旧计数。",
+      "persistence": "session"
     },
     "a6PvpOpponentVersionId": {
       "label": "有效被约方版本 ID",
       "profileId": "a6-quota",
-      "hint": "可复用 372，执行前确认仍有效。"
+      "hint": "按当前步骤已重新准备并核验的账号包填写；S03 后执行 S05 前重新准备边界状态并核对 ID，不沿用旧计数。",
+      "persistence": "session"
     },
     "a6DailyExhaustedAgentId": {
       "label": "当日总次数 N/N 的智能体 ID",
@@ -1358,15 +1360,12 @@
           "accountAlias": "A5 人测·完整发起方",
           "credentialRef": "axiia-cup-product 群账号包",
           "status": "refresh-required",
-          "description": "228/372；双方解锁、同一对手计数 M-1、总配额余量至少 2。",
+          "description": "本步状态尚未准备：需要双方已解锁、同一对手计数 M−1、总配额余量至少 2。S03 会消耗该边界；执行 S05 前另行准备并核验状态，按本步账号包重新填写发起方与被约方版本 ID，不沿用未复核的旧 ID 或旧计数。",
           "variables": [
             "a6PvpAgentId",
             "a6PvpOpponentVersionId"
           ],
-          "defaults": {
-            "a6PvpAgentId": "228",
-            "a6PvpOpponentVersionId": "372"
-          }
+          "defaults": {}
         },
         {
           "id": "a6-daily-exhausted",
@@ -1419,6 +1418,7 @@
       "title": "注册到首战完成的固定版本旅程",
       "startUrl": "{{appBaseUrl}}/register",
       "prerequisites": [
+        "S04 及依赖首战派发/完局的 S05–S07 暂停验收：Vivian 于 2026-09-03 确认的 U03-C05 v2 要求已保存后再点「开始首战」，而 2026-09-09 DESIGN_SPEC 与当前产品保留「保存并自动开战」。产品裁决尚未完成；不得标通过或改写本页固定判据。S01–S03 可独立检查。",
         "使用无会话、无智能体、无版本、无对局的新账号。",
         "从 GET /v1/config 记录 §C2 新手预设三元组到 {{a3Preset}}。",
         "本旅程会保存版本并消耗一场 PVE；开启录屏和网络记录。",
@@ -1528,7 +1528,12 @@
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S04-saved.png",
             "HV-A3-FIRST-BATTLE-S04-dispatched.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "验收暂停：首战触发方式待产品裁决",
+            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
+            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
+          }
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S05",
@@ -1549,7 +1554,12 @@
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S05-live.png",
             "HV-A3-FIRST-BATTLE-S05-final.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "验收暂停：首战触发方式待产品裁决",
+            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
+            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
+          }
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S06",
@@ -1569,7 +1579,12 @@
           },
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S06-three-modes.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "验收暂停：首战触发方式待产品裁决",
+            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
+            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
+          }
         },
         {
           "id": "HV-A3-FIRST-BATTLE-S07",
@@ -1589,7 +1604,12 @@
           },
           "screenshotEvidence": [
             "HV-A3-FIRST-BATTLE-S07-redirect.png"
-          ]
+          ],
+          "knownGap": {
+            "title": "验收暂停：首战触发方式待产品裁决",
+            "detail": "U03-C05 的 comment-v2（Vivian 2026-09-03 已确认）要求已保存首版后点击「开始首战」；2026-09-09 DESIGN_SPEC / PR #169 与当前产品保留保存并自动开战。两处权威要求尚未协调，本步保留原动作、预期与条款 pin。",
+            "instruction": "暂停 S04 及依赖它的 S05–S07 验收，记录待裁决原因，不标通过；不要把当前实现当作已确认的新判据。待正式产品决策后再按确定口径重跑。"
+          }
         }
       ],
       "evidenceRequirements": [
@@ -1980,6 +2000,7 @@
       "prerequisites": [
         "记录 228 与真实同侧第二智能体的版本/★；另准备本侧全局无 ★ 的 0 版本智能体。",
         "当天记录同一对手上限 M、总上限 N；准备 M-1 发起方与 N/N 账号。",
+        "S03 的成功约战会消耗同一对手次数和总配额。完成 S03 后，S05 必须另行领取或准备已核验的 M−1 边界状态，并重新填写本步发起方与被约方版本 ID；旧 ID 和旧计数不能直接沿用。「开始新一轮」只清本地记录，不恢复服务端次数。此边界状态尚未准备，未核验前不得执行 S05。",
         "准备真实可报名赛事、评分空态账号；评分资格能力未交付时按 knownGap 留证，不造 ID。",
         "重复执行本旅程前，先领取新的已准备账号包，或确认原账号已重新准备；再在产品 Test Mode 的本旅程点「开始新一轮」，按当前账号包重新填写本轮 ID。此按钮只清理本机本旅程的运行时 ID 与本机进度，不重置服务端账号，也不删除共享看板结果；同一轮内普通角色切换无需点击。"
       ],
@@ -2106,7 +2127,7 @@
           "fixtureRefs": [
             "a6-quota"
           ],
-          "action": "同一对手计数 M-1 时按 ID 约战 {{a6PvpOpponentVersionId}}；记录两腿/配额后对同一人再发一次。",
+          "action": "先使用为本步单独准备并重新核验的发起方/被约方状态，记录同一对手计数恰为 M−1、总配额余量至少 2；不得把 S03 执行后的旧状态当作本步起点。按 ID 约战 {{a6PvpOpponentVersionId}}；记录两腿/配额后对同一人再发一次。",
           "expected": "边界内成功约战恰创建两场并计发起人 2 场配额；达到 M 后下一次拒绝且零腿创建，原因是同一对手上限。",
           "clauses": [
             "U06-C06"
