@@ -58,6 +58,8 @@ class FixtureServer {
   nextID = 200
   entropy = 0
   adminOpens = 0
+  suppliedCode?: string
+  codeUses = 2
   private modelReads = 0
 
   session(admin = false): EntryAPI {
@@ -69,6 +71,18 @@ class FixtureServer {
         const response = (value: unknown) =>
           Promise.resolve(structuredClone(value) as T)
         if (path === '/v1/auth/signup') {
+          if (this.suppliedCode !== undefined) {
+            assert(body.code === this.suppliedCode)
+            assert(this.snapshots.at(-1)?.bundle.registrationCode === body.code)
+            assert(
+              this.snapshots.at(-1)?.bundle.pendingOperation?.action ===
+                'signup',
+            )
+            if (this.codeUses === 0) {
+              return Promise.reject(new Error('code exhausted: private echo'))
+            }
+            this.codeUses--
+          }
           const created: FakePlayer = {
             id: `player-${this.players.length + 1}`,
             email: String(body.email),
@@ -78,6 +92,11 @@ class FixtureServer {
           }
           player = created
           this.players.push(created)
+          if (this.fault === 'signup-committed-then-timeout') {
+            return Promise.reject(
+              new Error(`private signup body ${JSON.stringify(body)}`),
+            )
+          }
           return response({ account: created })
         }
         if (path === '/v1/admin/registration-codes') {
@@ -85,6 +104,7 @@ class FixtureServer {
           return response({ ok: true })
         }
         if (path === '/v1/config') {
+          assert(admin || player, 'config requires authentication')
           return response({
             models: [{ id: 'offline-model' }],
             pvpUnlockPerSideWins: 7,
@@ -99,6 +119,7 @@ class FixtureServer {
           })
         }
         if (path === '/v1/models') {
+          assert(admin || player, 'models requires authentication')
           this.modelReads++
           return response({
             models: this.fault === 'no-models' ? [] : [{
@@ -289,6 +310,7 @@ class FixtureServer {
     return prepareA6Entry({
       baseURL: 'http://127.0.0.1:1234',
       scenarioID: 'entry-test',
+      registrationCode: this.suppliedCode,
     }, {
       now: () => new Date('2026-09-12T20:00:00Z'),
       randomBytes: (size) => new Uint8Array(size).fill(++this.entropy),
@@ -366,6 +388,78 @@ Deno.test('replacement generation leaves every original role and version unchang
       replacement.testModeFixtures.a6EntryAgentId,
   )
   equal(new Set(server.players.map((player) => player.email)).size, 4)
+})
+
+Deno.test('supplied entry code creates only its two fresh actors without admin operations', async () => {
+  const server = new FixtureServer()
+  server.suppliedCode = 'explicit-private-entry-code'
+  const manifest = await server.prepare()
+  equal(manifest.state, 'ready')
+  equal(server.adminOpens, 0)
+  equal(server.codeUses, 0)
+  equal(server.players.length, 2)
+  equal(
+    server.calls.filter((call) => call.path === '/v1/auth/signup').length,
+    2,
+  )
+  assert(!server.calls.some((call) => /admin|login|elevate/.test(call.path)))
+  equal(server.players.map((player) => player.agents.length), [3, 1])
+  equal(server.players[1].agents[0].versions, [])
+  assert(!JSON.stringify(manifest).includes(server.suppliedCode))
+})
+
+Deno.test('insufficient supplied entry code preserves the first account and never retries signup', async () => {
+  const server = new FixtureServer()
+  server.suppliedCode = 'one-use-private-entry-code'
+  server.codeUses = 1
+  try {
+    await server.prepare()
+  } catch { /* inspect partial state */ }
+  equal(server.adminOpens, 0)
+  equal(server.players.length, 1)
+  equal(server.players[0].agents, [])
+  equal(
+    server.calls.filter((call) => call.path === '/v1/auth/signup').length,
+    2,
+  )
+  const last = server.snapshots.at(-1)!
+  equal(last.manifest.state, 'partial')
+  equal(last.manifest.testModeFixtures, {})
+  equal(last.bundle.roles[0].accountID, server.players[0].id)
+  equal(last.bundle.pendingOperation, {
+    action: 'signup',
+    roleID: 'a6-entry-first-save',
+  })
+})
+
+Deno.test('supplied entry code journals accepted or uncertain signup before stopping on preflight failure', async () => {
+  for (
+    const fault of ['no-models', 'signup-committed-then-timeout', 'not-live']
+  ) {
+    const server = new FixtureServer()
+    server.suppliedCode = 'private-entry-code'
+    server.fault = fault
+    try {
+      await server.prepare()
+    } catch { /* inspect partial state */ }
+    const last = server.snapshots.at(-1)!
+    equal(server.adminOpens, 0)
+    equal(server.players.length, fault === 'not-live' ? 0 : 1)
+    assert(server.players.every((player) => player.agents.length === 0))
+    equal(last.manifest.state, 'partial')
+    equal(last.manifest.testModeFixtures, {})
+    assert(!JSON.stringify(last.manifest).includes(server.suppliedCode))
+    if (fault === 'no-models') {
+      equal(last.bundle.roles[0].accountID, server.players[0].id)
+    }
+    if (fault === 'signup-committed-then-timeout') {
+      equal(last.bundle.pendingOperation, {
+        action: 'signup',
+        roleID: 'a6-entry',
+      })
+      assert(!JSON.stringify(last.manifest).includes('signup body'))
+    }
+  }
 })
 
 Deno.test('ready role aliases and session fields match the generated guide contract', async () => {

@@ -333,6 +333,15 @@ export function assertPublicManifestRedacted(
         !EMAIL_VALUE.test(candidate),
         `${path} contains an email address`,
       )
+      for (const secret of secrets) {
+        if (secret.length < 8) continue
+        // Check decoded strings too: JSON escaping can hide quotes/backslashes
+        // from the serialized check, including explicitly supplied signup codes.
+        invariant(
+          !candidate.includes(secret),
+          'public manifest contains a private value',
+        )
+      }
       return
     }
     if (Array.isArray(candidate)) {

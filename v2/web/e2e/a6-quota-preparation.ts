@@ -7,6 +7,7 @@ import type {
   VersionListResponse,
   VersionRefResponse,
 } from '../src/api/types.ts'
+import { validA6RegistrationCode } from './a6-signup-input.ts'
 import {
   type Credentials,
   type QuotaAPI,
@@ -28,6 +29,7 @@ export interface A6QuotaRequest {
   modelID: string
   maxMatches: number
   matchTimeoutSeconds: number
+  registrationCode?: string
 }
 interface Binding {
   agentID: number
@@ -140,13 +142,22 @@ export async function prepareA6Quota(
   previous?: A6QuotaCheckpoint,
 ): Promise<A6QuotaManifest> {
   validateA6QuotaRequest(request)
+  requireState(
+    validA6RegistrationCode(request.registrationCode),
+    'invalid-supplied-registration-code',
+  )
+  requireState(
+    !previous || request.registrationCode === undefined,
+    'registration-code-not-allowed-on-resume',
+  )
   const nonce = token(operations.randomBytes(12))
   const bundle: A6QuotaBundle = previous ? structuredClone(previous.bundle) : {
     actor: {
       email: `hv-a6-daily-exhausted-${nonce}@axiia.test`,
       password: `Hv!${token(operations.randomBytes(18))}`,
     },
-    registrationCode: `HVA6Q-${token(operations.randomBytes(16))}`,
+    registrationCode: request.registrationCode ??
+      `HVA6Q-${token(operations.randomBytes(16))}`,
     agents: [],
   }
   const manifest: A6QuotaManifest = previous
@@ -382,13 +393,18 @@ export async function prepareA6Quota(
     await checkpoint()
     api = operations.openPlayer()
     if (!previous) {
-      const admin = await operations.openAdmin()
-      const config = await readConfig(admin)
-      requireState(
-        config.dailyBattleLimit <= request.maxMatches,
-        'daily-deficit-exceeds-match-bound',
-      )
-      const detail = await admin.call<ScenarioDetail>(
+      const admin = request.registrationCode === undefined
+        ? await operations.openAdmin()
+        : undefined
+      const preflightConfig = async (session: QuotaAPI) => {
+        const config = await readConfig(session)
+        requireState(
+          config.dailyBattleLimit <= request.maxMatches,
+          'daily-deficit-exceeds-match-bound',
+        )
+      }
+      if (admin) await preflightConfig(admin)
+      const detail = await (admin ?? api).call<ScenarioDetail>(
         'GET',
         `/v1/scenarios/${request.scenarioID}`,
       )
@@ -400,10 +416,17 @@ export async function prepareA6Quota(
         'valid-pve-opponent-missing',
       )
       manifest.presetKey = preset.key
-      await mutate(admin, 'registration-code', '/v1/admin/registration-codes', {
-        code: bundle.registrationCode,
-        uses: 1,
-      })
+      if (admin) {
+        await mutate(
+          admin,
+          'registration-code',
+          '/v1/admin/registration-codes',
+          {
+            code: bundle.registrationCode,
+            uses: 1,
+          },
+        )
+      }
       const signup = await mutate<{ account: { id: string } }>(
         api,
         'signup',
@@ -416,6 +439,11 @@ export async function prepareA6Quota(
       )
       bundle.accountID = signup.account.id
       await checkpoint()
+      // /config needs a session. Record the real account before this can fail;
+      // an ordinary-code partial provision is never silently replaced/resumed.
+      if (!admin) {
+        await preflightConfig(api)
+      }
       const bindings = {} as { a: Binding; b: Binding }
       for (const side of ['a', 'b'] as const) {
         const agent = await mutate<{ agentID: number }>(

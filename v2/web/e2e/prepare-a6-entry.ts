@@ -1,4 +1,5 @@
 import { totp } from './http.ts'
+import { a6SignupInputError } from './a6-signup-input.ts'
 import { assertPublicManifestRedacted } from './reviewed-human-fixtures.ts'
 import {
   type EntryAPI,
@@ -27,13 +28,19 @@ Usage: deno task prepare:human:a6-entry --apply
 
 Required environment (keep credentials out of shell history):
   AXIIA_BASE_URL=https://axiia-cup-2-web.isofucius.cn
-  AXIIA_ADMIN_EMAIL=<admin email>
-  AXIIA_ADMIN_PASSWORD=<admin password>
-  AXIIA_ADMIN_TOTP_SECRET=<admin TOTP secret>
   AXIIA_A6_ENTRY_SCENARIO=<explicit live scenario slug>
   AXIIA_PRIVATE_OUT=<new absolute private .jsonl path>
   AXIIA_PUBLIC_OUT=<new absolute redacted .json path>
 Optional: AXIIA_A6_ENTRY_MODEL_ID=<selectable model ID>
+Choose exactly one fresh signup source:
+  AXIIA_A6_REGISTRATION_CODE=<authorized, unreserved code with >=2 available uses>
+  OR AXIIA_ADMIN_EMAIL, AXIIA_ADMIN_PASSWORD, AXIIA_ADMIN_TOTP_SECRET.
+Supplied codes must be 8..256 characters without whitespace/control characters.
+They are never printed or placed in public output. Do not use the reserved A3
+code. Supplied-code mode performs no admin login/elevation/code creation.
+Code capacity cannot be queried as a guest: a rejected/uncertain signup stops
+without retry. Config/model checks follow the first accepted signup; failure
+leaves a private partial journal and never replaces or resets that account.
 
 The first-save account is left untouched after creating its empty agent shell.
 Each rerun uses NEW output paths and creates new accounts. A partial run is never
@@ -52,9 +59,8 @@ export function validateEntryCLI(
     throw new EntryPreparationError('exactly-one-apply-argument-required')
   }
   validateEntryRequest(config)
-  if (!config.adminEmail || !config.adminPassword || !config.adminTotpSecret) {
-    throw new EntryPreparationError('admin-credentials-required')
-  }
+  const inputError = a6SignupInputError(config)
+  if (inputError) throw new EntryPreparationError(inputError)
   for (const path of [config.privateOut, config.publicOut]) {
     if (
       !path.startsWith('/') || path.endsWith('/') ||
@@ -223,6 +229,7 @@ export async function createEntryJournal(config: EntryEnvironment) {
         config.adminEmail,
         config.adminPassword,
         config.adminTotpSecret,
+        config.registrationCode ?? '',
         config.privateOut,
         bundle.registrationCode,
         ...bundle.roles.flatMap((
@@ -263,6 +270,7 @@ if (import.meta.main) {
         baseURL: Deno.env.get('AXIIA_BASE_URL') ?? '',
         scenarioID: Deno.env.get('AXIIA_A6_ENTRY_SCENARIO') ?? '',
         modelID: Deno.env.get('AXIIA_A6_ENTRY_MODEL_ID'),
+        registrationCode: Deno.env.get('AXIIA_A6_REGISTRATION_CODE'),
         adminEmail: Deno.env.get('AXIIA_ADMIN_EMAIL') ?? '',
         adminPassword: Deno.env.get('AXIIA_ADMIN_PASSWORD') ?? '',
         adminTotpSecret: Deno.env.get('AXIIA_ADMIN_TOTP_SECRET') ?? '',

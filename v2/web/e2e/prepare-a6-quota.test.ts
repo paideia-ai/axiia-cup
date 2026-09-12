@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createPreparationJournal } from './prepare-a5-quota.ts'
+import { QuotaSession } from './prepare-a5-quota.ts'
 import {
   type A6QuotaEnvironment,
   lockA6QuotaResume,
@@ -76,7 +77,7 @@ Deno.test('A6 private journal preserves complete checkpoints, excludes credentia
       email: 'private-role@axiia.test',
       password: 'private-player-password',
     },
-    registrationCode: 'PRIVATECODE',
+    registrationCode: 'PRIVATE"CODE\\value',
     agents: [],
   }
   const manifest = {
@@ -112,6 +113,9 @@ Deno.test('A6 private journal preserves complete checkpoints, excludes credentia
     await assert.rejects(
       journal.checkpoint({ ...manifest, failure: bundle.actor.password }),
     )
+    await assert.rejects(
+      journal.checkpoint({ ...manifest, failure: bundle.registrationCode }),
+    )
     assert.deepEqual(
       JSON.parse(await Deno.readTextFile(paths.publicOut)),
       manifest,
@@ -120,6 +124,72 @@ Deno.test('A6 private journal preserves complete checkpoints, excludes credentia
     journal.close()
     await Deno.remove(directory, { recursive: true })
   }
+})
+
+Deno.test('A6 quota accepts an explicit private signup code but rejects mixed, malformed and resume inputs', () => {
+  const supplied = {
+    ...config(),
+    adminEmail: '',
+    adminPassword: '',
+    adminTotpSecret: '',
+    registrationCode: 'private-supplied-code',
+  }
+  assert.equal(validateA6QuotaCLI(['--apply'], supplied), supplied)
+  for (
+    const registrationCode of [
+      '',
+      'short',
+      ' code-whitespace',
+      'code\nnewline',
+      'code\u0000control',
+      'code\u200bhidden',
+      'x'.repeat(257),
+    ]
+  ) {
+    assert.throws(() =>
+      validateA6QuotaCLI(['--apply'], { ...supplied, registrationCode })
+    )
+  }
+  for (
+    const key of ['adminEmail', 'adminPassword', 'adminTotpSecret'] as const
+  ) {
+    assert.throws(() =>
+      validateA6QuotaCLI(['--apply'], { ...supplied, [key]: config()[key] })
+    )
+  }
+  assert.throws(
+    () =>
+      validateA6QuotaCLI(['--apply', '--resume'], {
+        ...supplied,
+        resumeFrom: '/tmp/previous-private.jsonl',
+      }),
+    /registration-code-not-allowed-on-resume/,
+  )
+})
+
+Deno.test('A6 signup HTTP rejection never echoes private code or request body and is not retried', async () => {
+  const code = 'private-supplied-code'
+  let calls = 0
+  const session = new QuotaSession(config().baseURL, (_input, init) => {
+    calls++
+    assert.equal(JSON.parse(String(init?.body)).code, code)
+    return Promise.resolve(
+      Response.json({ error: code, message: init?.body }, { status: 401 }),
+    )
+  })
+  await assert.rejects(
+    session.call('POST', '/v1/auth/signup', {
+      code,
+      email: 'private@axiia.test',
+      password: 'private-password',
+    }),
+    (error: Error) => {
+      assert.ok(!String(error).includes(code))
+      assert.ok(!String(error).includes('password'))
+      return true
+    },
+  )
+  assert.equal(calls, 1)
 })
 
 Deno.test('A6 resume rejects symlinks, public permissions, malformed complete records and missing checkpoints', async () => {
