@@ -103,6 +103,10 @@ export interface ScenarioSummary {
   stats?: ScenarioStatsDTO | null
   // #54：场景槽位上线的 epoch 秒，「新上线」徽章的依据。
   onlineAt?: number | null
+  // Optional public scenario metadata; older scripts may omit each field.
+  difficulty?: 'easy' | 'medium' | 'hard' | null
+  beginnerFriendly?: boolean | null
+  estimatedMinutes?: number | null
 }
 
 export interface SideWinRateDTO {

@@ -10,7 +10,11 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { messageOf, useAsync } from '../lib/use-async'
-import { DIFFICULTY_LABEL, scenarioModule } from '../scenarios'
+import {
+  DIFFICULTY_LABEL,
+  scenarioGuidance,
+  scenarioModule,
+} from '../scenarios'
 import { tm } from '../testmode/mark'
 import { useAuth } from '../context/auth'
 import { protectedLoginUrl } from '../lib/login-return'
@@ -320,6 +324,7 @@ function OverviewCard({
   timelineAtEnd: boolean
 }) {
   const overview = intro?.source.overview ?? null
+  const guidance = scenarioGuidance(summary, education)
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.overview-card')}>
       <CardContent className='space-y-5 pt-5'>
@@ -430,30 +435,41 @@ function OverviewCard({
           )
           : null}
 
-        {education
+        {guidance.difficulty != null || guidance.minutes != null ||
+            guidance.noviceFriendly || education?.formatLabel
           ? (
             <div
               className='flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-(--border-soft) pt-4 text-xs text-(--foreground-subtle)'
               {...tm('DA.education-row')}
             >
-              <span title={`难度 ${education.difficulty} / 3`}>
-                难度 {DIFFICULTY_LABEL[education.difficulty]}{' '}
-                <span
-                  aria-hidden='true'
-                  className='tracking-[0.12em] text-(--warning)'
-                >
-                  {'★'.repeat(education.difficulty)}
-                  <span className='text-(--foreground-muted)'>
-                    {'☆'.repeat(3 - education.difficulty)}
+              {guidance.difficulty != null
+                ? (
+                  <span title={`难度 ${guidance.difficulty} / 3`}>
+                    难度 {DIFFICULTY_LABEL[guidance.difficulty]}{' '}
+                    <span
+                      aria-hidden='true'
+                      className='tracking-[0.12em] text-(--warning)'
+                    >
+                      {'★'.repeat(guidance.difficulty)}
+                      <span className='text-(--foreground-muted)'>
+                        {'☆'.repeat(3 - guidance.difficulty)}
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </span>
-              <span className='inline-flex items-center gap-1'>
-                <Clock className='h-3.5 w-3.5' />
-                一场约 {education.minutes} 分钟
-              </span>
-              <span>{education.formatLabel}</span>
-              {education.noviceFriendly
+                )
+                : null}
+              {guidance.minutes != null
+                ? (
+                  <span className='inline-flex items-center gap-1'>
+                    <Clock className='h-3.5 w-3.5' />
+                    一场约 {guidance.minutes} 分钟
+                  </span>
+                )
+                : null}
+              {education?.formatLabel
+                ? <span>{education.formatLabel}</span>
+                : null}
+              {guidance.noviceFriendly
                 ? <Badge tone='success'>适合新手</Badge>
                 : null}
             </div>
@@ -472,16 +488,14 @@ function OverviewCard({
               {statsLine(summary)}
             </p>
           )
-          : education
-          ? (
+          : (
             <p
               className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
               {...tm('DA.stats-empty')}
             >
               数据积累中
             </p>
-          )
-          : null}
+          )}
       </CardContent>
     </Card>
   )

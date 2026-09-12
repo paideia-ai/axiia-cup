@@ -5,7 +5,7 @@ import { StrictMode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import { AppRoutes } from '../app-router'
-import type { MeResponse, ScenarioDetail } from '../api/types'
+import type { MeResponse, ScenarioDetail, ScenarioSummary } from '../api/types'
 import { AuthProvider } from '../context/auth'
 import { scenarioModule } from '../scenarios'
 import { config, scenario } from '../testing/v34-fixtures'
@@ -252,6 +252,135 @@ export const PublicDifficultyLevels: Story = {
     await expect(await canvas.findByText('难度 中等', { exact: false }))
       .toBeVisible()
     expect(canvas.queryByText('适合新手', { exact: true })).toBeNull()
+    expect(personalRequests).toEqual([])
+    expect(ensures).toEqual([])
+  },
+}
+
+// The public API can describe scenarios without any local editorial module.
+function metadataHandlers(summaries: ScenarioSummary[]) {
+  return [
+    http.get('/v1/scenarios', ({ request }) => {
+      expect(request.credentials).toBe('omit')
+      return HttpResponse.json({ scenarios: summaries })
+    }),
+    http.get('/v1/scenarios/:id', ({ params, request }) => {
+      expect(request.credentials).toBe('omit')
+      const summary = summaries.find((item) => item.id === params.id)
+      expect(summary).toBeDefined()
+      return HttpResponse.json({ ...publicScenario, summary, presets: [] })
+    }),
+    ...handlers.filter((handler) =>
+      !handler.info.path.toString().startsWith('/v1/scenarios')
+    ),
+  ]
+}
+
+export const ServerMetadataAndEditorialFallbacks: Story = {
+  args: { path: '/scenarios' },
+  parameters: {
+    msw: metadataHandlers([
+      {
+        ...publicScenario.summary,
+        id: 'server-guidance',
+        title: '服务端场景',
+        difficulty: 'hard',
+        beginnerFriendly: true,
+        estimatedMinutes: 17,
+      },
+      {
+        ...publicScenario.summary,
+        difficulty: 'medium',
+        beginnerFriendly: false,
+        estimatedMinutes: 23,
+      },
+      {
+        ...publicScenario.summary,
+        id: 'trolley-problem',
+        title: '电车难题',
+        beginnerFriendly: false,
+      },
+    ]),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    for (
+      const [id, difficulty, minutes, novice] of [
+        ['server-guidance', '困难', 17, true],
+        ['shangyang-court', '中等', 23, false],
+        ['trolley-problem', '简单', 12, false],
+      ] as const
+    ) {
+      const cardElement = await canvas.findByTestId(`scenario-${id}`)
+      const card = within(cardElement)
+      await expect(card.getByText(`难度 ${difficulty}`, { exact: false }))
+        .toBeVisible()
+      await expect(card.getByText(`约 ${minutes} 分钟`, { exact: true }))
+        .toBeVisible()
+      expect(card.queryByText('适合新手', { exact: true }) !== null).toBe(
+        novice,
+      )
+      await expect(card.getByText('数据积累中', { exact: true })).toBeVisible()
+      expect(card.queryByText(/侧方胜率|对局数不足/)).toBeNull()
+      await userEvent.click(cardElement)
+      const overview = within(
+        (await canvas.findAllByTestId('scenario-intro-card')).find((card) =>
+          card.dataset.tm === 'DA.overview-card'
+        )!,
+      )
+      await expect(overview.getByText(`难度 ${difficulty}`, { exact: false }))
+        .toBeVisible()
+      await expect(
+        overview.getByText(`一场约 ${minutes} 分钟`, { exact: true }),
+      )
+        .toBeVisible()
+      expect(overview.queryByText('适合新手', { exact: true }) !== null).toBe(
+        novice,
+      )
+      await expect(overview.getByText('数据积累中', { exact: true }))
+        .toBeVisible()
+      expect(overview.queryByText(/侧方胜率|对局数不足/)).toBeNull()
+      expect(canvas.getByTestId('route-address')).toHaveTextContent(
+        `/scenarios/${id}`,
+      )
+      await userEvent.click(canvas.getByRole('link', { name: 'AXIIA CUP' }))
+    }
+    expect(personalRequests).toEqual([])
+    expect(ensures).toEqual([])
+  },
+}
+
+export const MissingMetadataDoesNotInventGuidance: Story = {
+  args: { path: '/scenarios' },
+  parameters: {
+    msw: metadataHandlers([{
+      ...publicScenario.summary,
+      id: 'unannotated-scenario',
+      title: '未附导读的场景',
+    }]),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const cardElement = await canvas.findByTestId(
+      'scenario-unannotated-scenario',
+    )
+    const card = within(cardElement)
+    await expect(card.getByText('数据积累中', { exact: true })).toBeVisible()
+    expect(card.queryByText(/难度|分钟|适合新手|侧方胜率|对局数不足/))
+      .toBeNull()
+    expect(card.queryByText(/五轮朝堂对辩/)).toBeNull()
+    await userEvent.click(cardElement)
+    const overview = within(
+      (await canvas.findAllByTestId('scenario-intro-card')).find((card) =>
+        card.dataset.tm === 'DA.overview-card'
+      )!,
+    )
+    await expect(overview.getByText('数据积累中', { exact: true }))
+      .toBeVisible()
+    await expect(overview.getByText('场景导读整理中', { exact: true }))
+      .toBeVisible()
+    expect(overview.queryByText(/难度|分钟|适合新手|侧方胜率|对局数不足/))
+      .toBeNull()
     expect(personalRequests).toEqual([])
     expect(ensures).toEqual([])
   },

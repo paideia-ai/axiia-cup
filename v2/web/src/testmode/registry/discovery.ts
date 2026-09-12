@@ -85,13 +85,14 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U04-C02'],
     anchors: ['spec-change-40'],
     journeys: ['j2s1'],
-    note: '来自前端场景模块；「码头疑云」缺（已知）',
+    note: '优先使用服务端难度/时长；字段缺席时回落场景模块，无来源则省略',
   },
   'D.novice-badge': {
     label: '适合新手徽章',
     clauses: ['U04-C02'],
     anchors: ['spec-change-40'],
-    when: '场景模块标 noviceFriendly 时',
+    when:
+      '服务端 beginnerFriendly 为 true；字段缺席时读取场景模块 noviceFriendly',
   },
   'D.card-sides': {
     label: '双方与轮数',
