@@ -5,6 +5,7 @@ import type {
   VersionListResponse,
   VersionRefResponse,
 } from '../src/api/types.ts'
+import { validA6RegistrationCode } from './a6-signup-input.ts'
 import {
   assertFixtureOrigin,
   REVIEWED_BETA_ORIGIN,
@@ -21,6 +22,7 @@ export interface EntryRequest {
   baseURL: string
   scenarioID: string
   modelID?: string
+  registrationCode?: string
 }
 
 export class EntryPreparationError extends Error {
@@ -119,6 +121,10 @@ const positiveID = (id: number) => Number.isSafeInteger(id) && id > 0
 export function validateEntryRequest(request: EntryRequest) {
   assertFixtureOrigin(request.baseURL)
   requireState(
+    validA6RegistrationCode(request.registrationCode),
+    'invalid-supplied-registration-code',
+  )
+  requireState(
     /^[a-z0-9][a-z0-9-]*$/.test(request.scenarioID),
     'explicit-scenario-slug-required',
   )
@@ -128,8 +134,7 @@ export function validateEntryRequest(request: EntryRequest) {
   )
 }
 
-async function readInputs(api: EntryAPI, request: EntryRequest) {
-  const config = await api.call<ConfigResponse>('GET', '/v1/config')
+async function readScenario(api: EntryAPI, request: EntryRequest) {
   const catalog = await api.call<{ scenarios: Array<{ id: string }> }>(
     'GET',
     '/v1/scenarios',
@@ -146,6 +151,11 @@ async function readInputs(api: EntryAPI, request: EntryRequest) {
     detail.summary?.id === request.scenarioID,
     'scenario-identity-mismatch',
   )
+}
+
+async function readInputs(api: EntryAPI, request: EntryRequest) {
+  const config = await api.call<ConfigResponse>('GET', '/v1/config')
+  await readScenario(api, request)
   const models = await api.call<{ models: Array<{ id: string }> }>(
     'GET',
     '/v1/models',
@@ -308,7 +318,8 @@ export async function prepareA6Entry(
   validateEntryRequest(request)
   const nonce = token(operations.randomBytes(12))
   const bundle: EntryBundle = {
-    registrationCode: `HVA6E-${token(operations.randomBytes(16))}`,
+    registrationCode: request.registrationCode ??
+      `HVA6E-${token(operations.randomBytes(16))}`,
     roles: entryRoles.map((role) => ({
       ...role,
       email: `hv-${role.id}-${nonce}@axiia.test`,
@@ -369,15 +380,23 @@ export async function prepareA6Entry(
   }
   try {
     await checkpoint()
-    const admin = await operations.openAdmin()
-    const inputs = await readInputs(admin, request)
-    manifest.modelID = inputs.modelID
-    await mutate(
-      admin,
-      'create-registration-code',
-      '/v1/admin/registration-codes',
-      { code: bundle.registrationCode, uses: 2 },
-    )
+    let inputs: Awaited<ReturnType<typeof readInputs>> | undefined
+    const admin = request.registrationCode === undefined
+      ? await operations.openAdmin()
+      : undefined
+    if (admin) {
+      inputs = await readInputs(admin, request)
+      manifest.modelID = inputs.modelID
+      await mutate(
+        admin,
+        'create-registration-code',
+        '/v1/admin/registration-codes',
+        { code: bundle.registrationCode, uses: 2 },
+      )
+    } else {
+      // Public preflight cannot inspect code capacity or authenticated config.
+      await readScenario(operations.openPlayer(), request)
+    }
     const sessions: EntryAPI[] = []
     for (const role of bundle.roles) {
       const api = operations.openPlayer()
@@ -403,7 +422,16 @@ export async function prepareA6Entry(
       )
       sessions.push(api)
       await checkpoint()
+      if (!inputs) {
+        // Persist the accepted signup before any authenticated preflight can fail.
+        // Stop partial on failure; never create a replacement account or code.
+        inputs = await readInputs(api, request)
+        manifest.modelID = inputs.modelID
+        await checkpoint()
+      }
     }
+    requireState(inputs, 'authenticated-inputs-missing')
+    const verifiedInputs = inputs
     const create = async (
       api: EntryAPI,
       role: PrivateEntryRole,
@@ -443,7 +471,7 @@ export async function prepareA6Entry(
         {
           prompt:
             `A6 entry fixture ${agent.side} revision ${ordinal}. State a claim, evidence, and a condition.`,
-          modelID: inputs.modelID,
+          modelID: verifiedInputs.modelID,
           method: 'raw',
           parentVersionID: null,
         },
@@ -466,7 +494,8 @@ export async function prepareA6Entry(
       await checkpoint()
       requireState(
         actual.agentID === agent.agentID && actual.ordinal === ordinal &&
-          actual.isEntry === isEntry && actual.modelID === inputs.modelID,
+          actual.isEntry === isEntry &&
+          actual.modelID === verifiedInputs.modelID,
         'save-did-not-preserve-entry-contract',
       )
     }
@@ -491,7 +520,7 @@ export async function prepareA6Entry(
       )
     }
     requireState(
-      same(await readInputs(admin, request), inputs),
+      same(await readInputs(admin ?? sessions[0], request), inputs),
       'live-inputs-changed-during-preparation',
     )
     manifest.testModeFixtures = {

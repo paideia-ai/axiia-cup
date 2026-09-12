@@ -79,6 +79,63 @@ Deno.test('entry transport forbids gameplay, draft edits, entry marks and redire
   assert(Number(requests) === 1)
 })
 
+Deno.test('entry CLI accepts only an explicit private code or complete admin credentials', async () => {
+  const supplied = {
+    ...environment,
+    adminEmail: '',
+    adminPassword: '',
+    adminTotpSecret: '',
+    registrationCode: 'supplied-private-code',
+  }
+  assert(validateEntryCLI(['--apply'], supplied) === supplied)
+  for (
+    const registrationCode of [
+      '',
+      'short',
+      ' leading-code',
+      'trailing-code ',
+      'code\nnewline',
+      'code\u0000control',
+      'code\u200bhidden',
+      'x'.repeat(257),
+    ]
+  ) {
+    await rejects(() =>
+      validateEntryCLI(['--apply'], { ...supplied, registrationCode })
+    )
+  }
+  for (
+    const key of ['adminEmail', 'adminPassword', 'adminTotpSecret'] as const
+  ) {
+    await rejects(() =>
+      validateEntryCLI(['--apply'], { ...supplied, [key]: environment[key] })
+    )
+  }
+})
+
+Deno.test('supplied-code signup transport errors never expose echoed code or raw request body', async () => {
+  const code = 'private-supplied-signup-code'
+  let calls = 0
+  const api = new EntrySession(environment.baseURL, (_input, init) => {
+    calls++
+    assert(JSON.parse(String(init?.body)).code === code)
+    return Promise.resolve(
+      Response.json({ error: code, message: init?.body }, { status: 401 }),
+    )
+  })
+  try {
+    await api.call('POST', '/v1/auth/signup', {
+      code,
+      email: 'private@fixture.test',
+      password: 'private-password',
+    })
+  } catch (error) {
+    assert(error instanceof Error && error.message === 'entry-http-status-401')
+    assert(!String(error).includes(code))
+  }
+  assert(calls === 1)
+})
+
 Deno.test('entry transport keeps isolated session/elevation cookies and redacts API errors', async () => {
   let count = 0
   const api = new EntrySession(environment.baseURL, (_input, init) => {
@@ -190,6 +247,19 @@ Deno.test('entry journal reserves both paths, preserves partial records and reje
           failure: bundle.roles[0].password,
         })
       )
+      for (
+        const registrationCode of [
+          'private-"quoted-code',
+          'private-\\escaped-code',
+        ]
+      ) {
+        await rejects(() =>
+          journal.checkpoint({ ...bundle, registrationCode }, {
+            ...manifest,
+            failure: `response echoed ${registrationCode}`,
+          })
+        )
+      }
       assert(await Deno.readTextFile(config.publicOut) === publicText)
       await Deno.rename(config.publicOut, `${directory}/previous-public`)
       await Deno.writeTextFile(config.publicOut, 'replacement')

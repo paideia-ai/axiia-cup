@@ -63,6 +63,7 @@ function fixture() {
     }
   }>()
   const controls = {
+    adminOpens: 0,
     beforeCall: (_call: Call) => {},
     afterCheckpoint: (_checkpoint: A6QuotaCheckpoint) => {},
     finish: true,
@@ -78,8 +79,13 @@ function fixture() {
         calls.push(call)
         controls.beforeCall(call)
         let result: unknown
-        if (path === '/v1/config') result = config
-        else if (path === '/v1/scenarios/quota-fixture') {
+        if (path === '/v1/config') {
+          assert.ok(
+            role === 'admin' || actor.email,
+            'config needs authentication',
+          )
+          result = config
+        } else if (path === '/v1/scenarios/quota-fixture') {
           result = {
             summary: { id: input.scenarioID },
             presets: [{ key: 'npc-b', side: 'b' }],
@@ -214,6 +220,7 @@ function fixture() {
       return Promise.resolve()
     },
     openAdmin() {
+      controls.adminOpens++
       return Promise.resolve(api('admin'))
     },
     openPlayer: () => api('player'),
@@ -301,6 +308,91 @@ Deno.test('A6 ready quota role and emitted fields match the current guide contra
     assert.equal(variables[field]?.persistence, 'session')
     assert.equal(defaults[field] ?? '', '')
   }
+})
+
+Deno.test('supplied A6 quota code signs up exactly one dedicated actor without any admin operation', async () => {
+  const h = fixture()
+  h.input.registrationCode = 'explicit-private-quota-code'
+  h.controls.beforeCall = (call) => {
+    if (call.path === '/v1/auth/signup') {
+      assert.equal(
+        (call.body as { code: string }).code,
+        h.input.registrationCode,
+      )
+      assert.equal(
+        h.snapshots.at(-1)?.bundle.registrationCode,
+        h.input.registrationCode,
+      )
+      assert.equal(
+        h.snapshots.at(-1)?.bundle.pendingOperation?.action,
+        'signup',
+      )
+    }
+  }
+  const ready = await h.run()
+  assert.equal(ready.state, 'ready')
+  assert.equal(h.controls.adminOpens, 0)
+  assert.equal(h.posts('/v1/auth/signup').length, 1)
+  assert.ok(!h.calls.some((call) => /admin|login|elevate/.test(call.path)))
+  assert.equal(h.agents.length, 2)
+  assert.equal(h.versions.length, 2)
+  assert.equal(h.posts('/v1/matches/pvp').length, 3)
+  assert.deepEqual(ready.latest?.usage, { battlesToday: 3, pvpBattlesToday: 0 })
+  assert.ok(!JSON.stringify(ready).includes(h.input.registrationCode))
+})
+
+Deno.test('supplied quota code records accepted signup before config failure and refuses incomplete resume', async () => {
+  const h = fixture()
+  h.input.registrationCode = 'private-quota-code'
+  h.config.trialsBlocked = true
+  await assert.rejects(h.run(), /trials-blocked/)
+  const partial = h.snapshots.at(-1)!
+  assert.equal(h.controls.adminOpens, 0)
+  assert.equal(h.posts('/v1/auth/signup').length, 1)
+  assert.equal(partial.bundle.accountID, h.actor.id)
+  assert.equal(partial.manifest.state, 'partial')
+  assert.equal(partial.manifest.testModeFixtures, undefined)
+  assert.equal(h.agents.length, 0)
+  assert.equal(h.matches.size, 0)
+  delete h.input.registrationCode
+  const before = h.calls.length
+  await assert.rejects(h.run(partial), /incomplete-provisioning-cannot-resume/)
+  assert.equal(h.calls.length, before)
+})
+
+Deno.test('supplied quota signup rejection or uncertain response retains one pending attempt without secret leakage', async () => {
+  const h = fixture()
+  h.input.registrationCode = 'private-quota-code'
+  h.controls.beforeCall = (call) => {
+    if (call.path === '/v1/auth/signup') {
+      throw new Error(`untrusted body ${JSON.stringify(call.body)}`)
+    }
+  }
+  await assert.rejects(h.run(), /preparation-failed-inspect-private-journal/)
+  const partial = h.snapshots.at(-1)!
+  assert.equal(h.posts('/v1/auth/signup').length, 1)
+  assert.equal(h.controls.adminOpens, 0)
+  assert.equal(partial.bundle.pendingOperation?.action, 'signup')
+  assert.equal(partial.manifest.state, 'partial')
+  assert.ok(
+    !JSON.stringify(partial.manifest).includes(h.input.registrationCode),
+  )
+  assert.ok(!JSON.stringify(partial.manifest).includes('untrusted body'))
+  assert.equal(h.agents.length, 0)
+  assert.equal(h.matches.size, 0)
+})
+
+Deno.test('supplied quota code is never accepted as an override on a genuine resume checkpoint', async () => {
+  const h = fixture()
+  await h.run()
+  const previous = h.snapshots.at(-1)!
+  const before = h.calls.length
+  h.input.registrationCode = 'replacement-private-code'
+  await assert.rejects(
+    h.run(previous),
+    /registration-code-not-allowed-on-resume/,
+  )
+  assert.equal(h.calls.length, before)
 })
 
 Deno.test('A6 quota rejects unsafe origin and budget before provisioning', async () => {

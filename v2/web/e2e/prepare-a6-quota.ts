@@ -12,6 +12,7 @@ import {
   validateQuotaOutputPaths,
 } from './prepare-a5-quota.ts'
 import { totp } from './http.ts'
+import { a6SignupInputError } from './a6-signup-input.ts'
 import { assertPublicManifestRedacted } from './reviewed-human-fixtures.ts'
 
 export interface A6QuotaEnvironment extends A6QuotaRequest {
@@ -30,8 +31,14 @@ Usage: deno task prepare:human:a6-quota --apply [--resume]
 Required: AXIIA_BASE_URL, AXIIA_A6_QUOTA_SCENARIO, AXIIA_A6_QUOTA_MODEL_ID,
 AXIIA_A6_QUOTA_MAX_MATCHES (explicit 0..20 for the WHOLE preparation),
 AXIIA_PRIVATE_OUT and AXIIA_PUBLIC_OUT (two NEW absolute paths, both mode0600).
-Fresh run also requires AXIIA_ADMIN_EMAIL, AXIIA_ADMIN_PASSWORD,
-AXIIA_ADMIN_TOTP_SECRET. It creates one dedicated account and two saved v1s.
+Fresh run requires exactly one signup source: AXIIA_A6_REGISTRATION_CODE
+(authorized, unreserved code with >=1 available use), OR AXIIA_ADMIN_EMAIL,
+AXIIA_ADMIN_PASSWORD and AXIIA_ADMIN_TOTP_SECRET. Codes must be 8..256 characters
+without whitespace/control characters; never use the reserved A3 code.
+Supplied-code mode makes no admin login/elevation/code-creation request. Config
+and cost-limit checks require the first accepted signup; failure is partial,
+never an automatic replacement account/code. No code goes to public output.
+It creates one dedicated account and two saved v1s.
 --resume instead requires AXIIA_A6_QUOTA_RESUME_FROM (previous private JSONL).
 Resume uses the recorded player credentials, never provisions another actor,
 waits accepted IDs and preserves the original full-run budget/UTC+8 expiry.
@@ -68,10 +75,8 @@ export function validateA6QuotaCLI(
       'resume-flag-and-private-journal-required-together',
     )
   }
-  if (
-    !resume &&
-    (!config.adminEmail || !config.adminPassword || !config.adminTotpSecret)
-  ) throw new QuotaPreparationError('fresh-run-admin-credentials-required')
+  const inputError = a6SignupInputError(config, resume)
+  if (inputError) throw new QuotaPreparationError(inputError)
   if (
     config.resumeFrom &&
     (!config.resumeFrom.startsWith('/') ||
@@ -162,6 +167,7 @@ function environment(): A6QuotaEnvironment {
     adminEmail: env('AXIIA_ADMIN_EMAIL'),
     adminPassword: env('AXIIA_ADMIN_PASSWORD'),
     adminTotpSecret: env('AXIIA_ADMIN_TOTP_SECRET'),
+    registrationCode: Deno.env.get('AXIIA_A6_REGISTRATION_CODE'),
     privateOut: env('AXIIA_PRIVATE_OUT'),
     publicOut: env('AXIIA_PUBLIC_OUT'),
     ...(env('AXIIA_A6_QUOTA_RESUME_FROM')
@@ -194,6 +200,7 @@ async function run(config: A6QuotaEnvironment) {
     config.adminEmail,
     config.adminPassword,
     config.adminTotpSecret,
+    config.registrationCode ?? '',
   ]
   const journal = await createPreparationJournal<A6QuotaManifest>(config, {
     record: 'preparation',

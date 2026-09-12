@@ -1,10 +1,10 @@
 # Vivian human-test fixture preparation — 2026-09-12
 
-Run these commands from `v2/web`. A3 and A6 require an explicitly supplied admin
-email, password, and TOTP secret through `AXIIA_ADMIN_EMAIL`,
-`AXIIA_ADMIN_PASSWORD`, and `AXIIA_ADMIN_TOTP_SECRET`. Keep those values outside
-the repository and command history. `AXIIA_BASE_URL` must be the reviewed beta
-origin or an isolated HTTP loopback server.
+Run these commands from `v2/web`. A3 and the original three-role A6 pack require
+an explicitly supplied admin email, password, and TOTP secret through
+`AXIIA_ADMIN_EMAIL`, `AXIIA_ADMIN_PASSWORD`, and `AXIIA_ADMIN_TOTP_SECRET`. Keep
+those values outside the repository and command history. `AXIIA_BASE_URL` must
+be the reviewed beta origin or an isolated HTTP loopback server.
 
 `deno task prepare:human:a3 --apply` creates a one-use registration code and
 proposed credentials in a new absolute `AXIIA_PRIVATE_OUT` file, mode 0600. It
@@ -34,11 +34,31 @@ permanent fixture.
 
 `deno task prepare:human:a6-entry --apply` prepares only `HV-A6-ENTRY-QUOTA-S01`
 and `S02`. It creates two independent accounts and leaves the existing
-three-role command and all shared accounts unchanged. Supply the admin
-environment above, `AXIIA_A6_ENTRY_SCENARIO` as an explicit live scenario slug,
-and new absolute `AXIIA_PRIVATE_OUT` (`.jsonl`) and `AXIIA_PUBLIC_OUT` (`.json`)
-paths. `AXIIA_A6_ENTRY_MODEL_ID` is optional; the command otherwise selects from
-the current server model catalog.
+three-role command and all shared accounts unchanged. Supply either the admin
+environment above or the ordinary signup-code option below,
+`AXIIA_A6_ENTRY_SCENARIO` as an explicit live scenario slug, and new absolute
+`AXIIA_PRIVATE_OUT` (`.jsonl`) and `AXIIA_PUBLIC_OUT` (`.json`) paths.
+`AXIIA_A6_ENTRY_MODEL_ID` is optional; the command otherwise selects from the
+current server model catalog.
+
+The entry and total-quota commands also accept an explicitly authorized,
+unreserved `AXIIA_A6_REGISTRATION_CODE` in the private environment. The entry
+pack needs two available uses; the quota pack needs one (three total if sharing
+a code). This A6-specific variable is distinct from the browser runner's general
+`AXIIA_REGISTRATION_CODE`. Unset all three admin variables in supplied-code
+mode; mixed credentials are rejected. Codes must contain 8–256 characters with
+no whitespace or control characters. Never reuse A3's reserved one-use code.
+
+Supplied-code mode performs no admin login, elevation, or code-creation request.
+It checks public scenario metadata, then signs up the first fresh player before
+reading authenticated configuration/models. Code capacity has no public
+preflight endpoint. Invalid/exhausted codes, timeouts, or a configuration/budget
+failure after signup stop the run with a private partial journal; an accepted
+account may already exist even though no agents or matches were created. No
+signup is retried and no replacement code/account is chosen automatically.
+Inspect partial state before any replacement. Codes and credentials stay in
+mode-0600 private output, never public manifests or errors. Existing admin mode
+remains available.
 
 The entry-switch account, **A6 人测·参赛版本切换**, has a main A agent with v1 ★
 and non-entry v2, a B agent with v1 ★, and a sibling A agent with non-entry v1.
@@ -139,9 +159,9 @@ screenshots, traces, and videos containing test credentials.
 `deno task prepare:human:a6-quota --apply` prepares the **separate A6 S06 total
 quota actor**, with exact alias `A6 人测·总配额耗尽`. It creates one fresh
 account and two owned agents, each with a saved v1 and its automatic ★ entry,
-through admin registration-code and player APIs. It never reuses an A5,
-entry-matrix, or first-save actor. Supply fresh-run admin credentials as above,
-plus:
+through supported registration-code/signup and player APIs. It never reuses an
+A5, entry-matrix, or first-save actor. Supply fresh-run admin credentials or the
+ordinary signup-code option above, plus:
 
 ```text
 AXIIA_BASE_URL=<reviewed beta origin or isolated loopback server>
@@ -152,8 +172,10 @@ AXIIA_PRIVATE_OUT=<new absolute private .jsonl path>
 AXIIA_PUBLIC_OUT=<new absolute redacted .json path>
 ```
 
-The command refuses provisioning if the fresh daily total exceeds that budget.
-It sequentially dispatches real Hotseat matches between its two owned entries,
+The command refuses gameplay if the fresh daily total exceeds that budget. With
+admin credentials it checks this before provisioning; with a supplied code it
+must first create the ordinary account to read authenticated configuration. It
+sequentially dispatches real Hotseat matches between its two owned entries,
 awaits each scored completion, and spends total quota with **zero PVP charge**.
 This can invoke the selected model and consume real model usage; it has no quota
 or result override. `AXIIA_A6_QUOTA_MATCH_TIMEOUT_SECONDS` defaults to 600 and
@@ -166,8 +188,9 @@ interrupted accepted match can resume with
 `AXIIA_A6_QUOTA_RESUME_FROM` to its prior private JSONL and choosing **two new
 output paths**. Keep the same base URL, scenario, model, and original max-match
 budget. Resume uses the recorded player credentials, waits recorded IDs, and
-only dispatches the remainder. It refuses incomplete provisioning, uncertain
-POST outcomes, changed ownership/entries/usage, and expired checkpoints. Inspect
+rejects `AXIIA_A6_REGISTRATION_CODE` (unset it before resuming). It only
+dispatches the remainder. It refuses incomplete provisioning, uncertain POST
+outcomes, changed ownership/entries/usage, and expired checkpoints. Inspect
 partial evidence rather than guessing whether an uncertain request succeeded.
 The private bundle retains provisioned agent IDs and pending mutation targets.
 
@@ -177,6 +200,14 @@ interruption can leave a lock that must be inspected before manual removal. This
 does not coordinate copied journals or an actively written output: never resume
 those concurrently. Both output files are mode0600, and the public manifest
 excludes emails, passwords, registration codes, and account IDs.
+
+`tests/e2e/a6-signup-code.real.spec.ts` runs both exact CLIs against isolated
+SQLite/worker APIs using one three-use code. An ordinary-route proxy forbids
+admin requests; read-only database checks prove exactly three new players, six
+agents, six saved versions, bounded real fixed-scenario matches, and an
+untouched separate reserved code. The fixture scenario invokes no models. This
+is isolated tooling evidence, not proof that a shared-beta fixture has been
+prepared.
 
 A `ready` manifest includes generated source provenance, original budget,
 UTC+8-midnight `expiresAt`, owned agent/version bindings, accepted match IDs,
