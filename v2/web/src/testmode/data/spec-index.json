@@ -2952,8 +2952,8 @@
   },
   "vivianOverlay": {
     "sourceRevision": "286c97c106cc0590f6e466f78a4ca234b896dba4",
-    "sourceCommit": "db9b9fe2f3e2b889f893a1904bdec48f7af42cc4",
-    "sourceSha256": "0946d2ea09980ebe3d7a447f7ff3bb8092172ded8b51deea329d58d97f56c5dc",
+    "sourceCommit": "0d70e9df97ea418a78eeada51d6d051b3651ee2e",
+    "sourceSha256": "c7fd05b72e85849294a0a4fed4b52348b74ec9077ba3344e294b23c6a06c2c35",
     "capturedAt": "2026-09-09",
     "clauseIds": [
       "U03-C01",

@@ -117,6 +117,7 @@ function fixture() {
     beforeCall: (_call: Call): void => {},
     afterCheckpoint: (_manifest: QuotaManifest): void => {},
     afterSleep: (): void => {},
+    listMatches: (_role: Role, rows: MatchSummary[]): MatchSummary[] => rows,
     dispatch: (id: number): unknown => ({ matchID: id }),
     probe: (): unknown => {
       throw new QuotaHTTPError(429, 'pvp_daily_limit')
@@ -148,17 +149,20 @@ function fixture() {
           result = { summary: { id: 'shangyang-court', gateUnlocked: true } }
         } else if (method === 'GET' && path === '/v1/matches') {
           result = {
-            matches: role === 'initiator' ? [...matches.values()] : [
-              ...rivalMatches,
-              ...[...matches.values()].map((row) => ({
-                ...row,
-                initiatorIsMe: false,
-                participants: {
-                  a: { isMine: false },
-                  b: { isMine: true },
-                },
-              })),
-            ],
+            matches: controls.listMatches(
+              role,
+              role === 'initiator' ? [...matches.values()] : [
+                ...rivalMatches,
+                ...[...matches.values()].map((row) => ({
+                  ...row,
+                  initiatorIsMe: false,
+                  participants: {
+                    a: { isMine: false },
+                    b: { isMine: true },
+                  },
+                })),
+              ],
+            ),
             open: true,
           }
         } else if (method === 'GET' && /^\/v1\/matches\/\d+$/.test(path)) {
@@ -405,9 +409,9 @@ Deno.test('A5 rerun waits old initiated matches in other scenarios and ignores o
   )
 })
 
-Deno.test('A5 receiver capacity counts distinct current-day received pairs without counting direct duels', async (t) => {
+Deno.test('A5 challenge capacity counts each directed player pair across both authenticated histories', async (t) => {
   const today = Date.parse('2026-09-12T08:00:00Z') / 1000
-  function received(id: number, challengeID: number): MatchSummary {
+  function row(id: number, challengeID: number): MatchSummary {
     return match(id, {
       challengeID,
       createdAt: today,
@@ -417,37 +421,121 @@ Deno.test('A5 receiver capacity counts distinct current-day received pairs witho
       participants: { a: { isMine: true }, b: { isMine: false } },
     })
   }
+  function setup() {
+    const h = fixture()
+    h.controls.listMatches = (role) =>
+      role === 'initiator' ? [...h.matches.values()] : h.rivalMatches
+    const addPair = (
+      id: number,
+      sender: Role | 'third-player',
+      receiver: Role | 'third-player',
+      overrides: Partial<MatchSummary> = {},
+    ) => {
+      for (const leg of [0, 1]) {
+        for (const role of ['initiator', 'rival'] as const) {
+          const summary = {
+            ...row(id + leg, id),
+            ...overrides,
+            initiatorIsMe: role === sender,
+            participants: {
+              a: { isMine: role === (leg === 0 ? sender : receiver) },
+              b: { isMine: role === (leg === 0 ? receiver : sender) },
+            },
+          }
+          if (role === 'initiator') h.matches.set(summary.id, summary)
+          else h.rivalMatches.push(summary)
+        }
+      }
+    }
+    return { h, addPair }
+  }
   await t.step(
-    'both legs count once, historical and unrelated public pairs do not count',
+    'two legs count once across scenarios; yesterday and direct duels do not count',
     async () => {
-      const h = fixture()
-      h.rivalMatches.push(
-        received(80, 80),
-        received(81, 80),
-        received(82, 82),
-        received(83, 82),
-        { ...received(84, 84), createdAt: today - 86_400 },
-        {
-          ...received(85, 85),
-          participants: { a: { isMine: false }, b: { isMine: false } },
-        },
-      )
+      const { h, addPair } = setup()
+      h.configs.initiator.usage = { battlesToday: 4, pvpBattlesToday: 4 }
+      addPair(80, 'initiator', 'rival')
+      addPair(82, 'initiator', 'rival', { scenarioID: 'another-scenario' })
+      addPair(84, 'initiator', 'rival', { createdAt: today - 86_400 })
+      h.matches.set(86, { ...row(86, 86), challengeID: undefined })
       const ready = await h.run()
       assert.equal(ready.state, 'ready')
-      assert.equal(ready.attempts.length, 5)
+      assert.equal(ready.attempts.length, 1)
     },
   )
-  for (const role of ['initiator', 'rival'] as const) {
-    await t.step(`${role} received cap reached`, async () => {
-      const h = fixture()
+  await t.step(
+    'other challengers and other opponents cannot exhaust this pair',
+    async () => {
+      const { h, addPair } = setup()
       for (const id of [80, 82, 84]) {
-        if (role === 'initiator') h.matches.set(id, received(id, id))
-        else h.rivalMatches.push(received(id, id))
+        addPair(id, 'third-player', 'rival')
+        addPair(id + 10, 'third-player', 'initiator')
       }
-      await fails(h, 'receiver-challenge-cap-reached')
+      addPair(100, 'initiator', 'third-player')
+      addPair(110, 'rival', 'third-player')
+      h.configs.initiator.usage = { battlesToday: 2, pvpBattlesToday: 2 }
+      h.configs.rival.usage = { battlesToday: 2, pvpBattlesToday: 2 }
+      const ready = await h.run()
+      assert.equal(ready.state, 'ready')
+    },
+  )
+  await t.step('opposite directions have separate counts', async () => {
+    const { h, addPair } = setup()
+    h.configs.initiator.opponentDailyChallengeLimit = 2
+    h.configs.rival.opponentDailyChallengeLimit = 2
+    h.configs.initiator.usage = { battlesToday: 2, pvpBattlesToday: 2 }
+    h.configs.rival.usage = { battlesToday: 2, pvpBattlesToday: 2 }
+    addPair(80, 'initiator', 'rival')
+    addPair(82, 'rival', 'initiator')
+    assert.equal((await h.run()).state, 'ready')
+  })
+  for (const role of ['initiator', 'rival'] as const) {
+    await t.step(`${role}'s same-opponent cap reached`, async () => {
+      const { h, addPair } = setup()
+      h.configs.initiator.opponentDailyChallengeLimit = 1
+      h.configs.rival.opponentDailyChallengeLimit = 1
+      h.configs[role].usage = { battlesToday: 2, pvpBattlesToday: 2 }
+      addPair(80, role, role === 'initiator' ? 'rival' : 'initiator', {
+        scenarioID: 'another-scenario',
+      })
+      await fails(h, 'same-opponent-challenge-cap-reached')
       assert.equal(h.posts().length, 0)
     })
   }
+  await t.step(
+    'incomplete paired ownership cannot establish available capacity',
+    async () => {
+      const { h, addPair } = setup()
+      addPair(80, 'initiator', 'rival')
+      h.rivalMatches[0].participants = undefined
+      await fails(h, 'invalid-challenge-list')
+      assert.equal(h.posts().length, 0)
+    },
+  )
+  await t.step(
+    'rival history is refreshed before the quota probe',
+    async () => {
+      const { h, addPair } = setup()
+      h.configs.initiator.opponentDailyChallengeLimit = 1
+      h.configs.rival.opponentDailyChallengeLimit = 1
+      let refreshed = false
+      h.controls.beforeCall = (call) => {
+        if (
+          !refreshed && call.role === 'initiator' && call.method === 'GET' &&
+          call.path === '/v1/matches' && h.posts().length > 0
+        ) {
+          addPair(80, 'rival', 'initiator')
+          refreshed = true
+        }
+      }
+      await fails(h, 'same-opponent-challenge-cap-reached')
+      assert.equal(refreshed, true)
+      assert.equal(
+        h.posts().some((call) => call.path === '/v1/challenges'),
+        false,
+      )
+    },
+  )
 })
 
 Deno.test('A5 keeps the rival able to initiate its positive paired challenge', async (t) => {

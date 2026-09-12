@@ -48,7 +48,7 @@ describe('v3.4 rejection copy contracts', () => {
     ],
     [
       'opponent_challenge_limit',
-      '对方今日收到的约战已达上限（2 次/日），明天再约',
+      '你今日向该玩家发起的约战已达上限（2 次/日），明天再约',
     ],
     [
       'wrong_side',
@@ -137,7 +137,7 @@ describe('P3 challenge (paired) rejection copy', () => {
         config,
       ),
     )
-      .toBe('对方今日收到的约战已达上限（2 次/日），明天再约')
+      .toBe('你今日向该玩家发起的约战已达上限（2 次/日），明天再约')
   })
 
   it('degrades to numberless copy without config', () => {

@@ -362,26 +362,42 @@ export async function prepareA5Quota(
         rivalBefore.pvpDailyLimit - rivalBefore.usage.pvpBattlesToday >= 2,
       'rival-positive-challenge-headroom-required',
     )
-    const assertReceiverCapacity = (matches: MatchSummary[]) => {
-      const received = new Set<number>()
+    const assertChallengeCapacity = (
+      senderMatches: MatchSummary[],
+      receiverMatches: MatchSummary[],
+    ) => {
       const dayStart = (expires - 86_400_000) / 1000
-      for (const match of matches) {
-        if (match.challengeID == null || match.initiatorIsMe) continue
-        requireState(
-          integer(match.createdAt) && integer(match.challengeID, 1),
-          'invalid-challenge-list',
-        )
-        if (
-          match.createdAt >= dayStart &&
-          (match.participants?.a.isMine || match.participants?.b.isMine)
-        ) received.add(match.challengeID)
+      // The two authenticated views establish the directed player pair without
+      // exposing account IDs or assuming an opponent still uses the same version.
+      const challengeIDs = (matches: MatchSummary[], initiated: boolean) => {
+        const ids = new Set<number>()
+        for (const match of matches) {
+          if (match.challengeID == null) continue
+          requireState(
+            integer(match.createdAt) && integer(match.challengeID, 1) &&
+              typeof match.initiatorIsMe === 'boolean' &&
+              typeof match.participants?.a.isMine === 'boolean' &&
+              typeof match.participants?.b.isMine === 'boolean',
+            'invalid-challenge-list',
+          )
+          if (
+            match.createdAt >= dayStart &&
+            match.initiatorIsMe === initiated &&
+            (initiated || match.participants.a.isMine ||
+              match.participants.b.isMine)
+          ) ids.add(match.challengeID)
+        }
+        return ids
       }
+      const received = challengeIDs(receiverMatches, false)
+      const againstReceiver = [...challengeIDs(senderMatches, true)].filter((
+        id,
+      ) => received.has(id))
       requireState(
-        received.size < initial.opponentDailyChallengeLimit,
-        'receiver-challenge-cap-reached',
+        againstReceiver.length < initial.opponentDailyChallengeLimit,
+        'same-opponent-challenge-cap-reached',
       )
     }
-    assertReceiverCapacity(listed.matches)
     const rivalListed = await rival.call<{ matches: MatchSummary[] }>(
       'GET',
       '/v1/matches',
@@ -393,7 +409,8 @@ export async function prepareA5Quota(
       ),
       'rival-match-still-running',
     )
-    assertReceiverCapacity(rivalListed.matches)
+    assertChallengeCapacity(listed.matches, rivalListed.matches)
+    assertChallengeCapacity(rivalListed.matches, listed.matches)
     const bindings = {
       initiator: await eligibleBinding(
         initiator,
@@ -531,7 +548,7 @@ export async function prepareA5Quota(
     }
 
     // The reviewed A5 action is a paired challenge. Only its exact quota
-    // rejection establishes that earlier guards (including receiver cap) pass.
+    // rejection establishes that earlier guards (including same-opponent cap) pass.
     // Compare the authenticated match IDs and counters to prove no enqueue/charge.
     const ownedIDs = async () => {
       const response = await initiator.call<{ matches: MatchSummary[] }>(
@@ -539,7 +556,13 @@ export async function prepareA5Quota(
         '/v1/matches',
       )
       requireState(Array.isArray(response.matches), 'invalid-match-list')
-      assertReceiverCapacity(response.matches)
+      const rivalResponse = await rival.call<{ matches: MatchSummary[] }>(
+        'GET',
+        '/v1/matches',
+      )
+      requireState(Array.isArray(rivalResponse.matches), 'invalid-match-list')
+      assertChallengeCapacity(response.matches, rivalResponse.matches)
+      assertChallengeCapacity(rivalResponse.matches, response.matches)
       const owned = response.matches.filter((match) =>
         match.initiatorIsMe === true
       )

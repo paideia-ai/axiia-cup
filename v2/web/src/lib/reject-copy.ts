@@ -64,12 +64,12 @@ export function rejectCopy(
     // #66：对方缺侧（单侧玩家不能被约战）。
     case 'opponent_both_sides_required':
       return 'PVP 约战需双方双侧齐备——对方还没有双侧齐备的智能体，换个对手'
-    // #76：同一玩家每日被约战限次，护对方配额不被刷。
+    // #76 / U06-C06：按发起玩家与对手玩家计当日次数，每对两腿只算一次约战。
     case 'opponent_challenge_limit': {
       const m = config?.opponentDailyChallengeLimit
       return m != null
-        ? `对方今日收到的约战已达上限（${m} 次/日），明天再约`
-        : '对方今日收到的约战已达上限，明天再约'
+        ? `你今日向该玩家发起的约战已达上限（${m} 次/日），明天再约`
+        : '你今日向该玩家发起的约战已达上限，明天再约'
     }
     // 版本与场景/执侧不匹配（按 id 约战或阵容选择传错侧）。
     case 'wrong_side':
