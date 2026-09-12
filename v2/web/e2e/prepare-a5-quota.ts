@@ -53,6 +53,13 @@ export function validateQuotaCLI(
     throw new QuotaPreparationError('exactly-one-apply-argument-required')
   }
   validateQuotaRequest(config)
+  validateQuotaOutputPaths(config)
+  return config
+}
+
+export function validateQuotaOutputPaths(
+  config: { privateOut: string; publicOut: string },
+) {
   for (const path of [config.privateOut, config.publicOut]) {
     if (
       !path.startsWith('/') || path.endsWith('/') ||
@@ -69,7 +76,6 @@ export function validateQuotaCLI(
   if (config.privateOut === config.publicOut) {
     throw new QuotaPreparationError('distinct-output-paths-required')
   }
-  return config
 }
 
 /** Bounded same-origin cookie session. Never follows redirects or retries. */
@@ -138,15 +144,25 @@ export class QuotaSession implements QuotaAPI {
 
 /** A synced JSONL journal preserves the last full record across interruptions. */
 export async function createQuotaJournal(config: QuotaEnvironment) {
-  const files: Array<{ path: string; file: Deno.FsFile; info: Deno.FileInfo }> =
-    []
-  const encoder = new TextEncoder()
-  const secrets = [
+  return await createPreparationJournal<QuotaManifest>(config, {
+    record: 'credentials',
+    request: config,
+  }, [
     config.initiator.email,
     config.initiator.password,
     config.rival.email,
     config.rival.password,
-  ]
+  ])
+}
+
+export async function createPreparationJournal<Manifest>(
+  paths: { privateOut: string; publicOut: string },
+  initialRecord: unknown,
+  secrets: readonly string[],
+) {
+  const files: Array<{ path: string; file: Deno.FsFile; info: Deno.FileInfo }> =
+    []
+  const encoder = new TextEncoder()
   const close = () => files.forEach(({ file }) => file.close())
   async function verify(index: number) {
     const { path, info } = files[index]
@@ -174,7 +190,7 @@ export async function createQuotaJournal(config: QuotaEnvironment) {
   }
   try {
     // Reserve BOTH new paths before writing credentials or making requests.
-    for (const path of [config.privateOut, config.publicOut]) {
+    for (const path of [paths.privateOut, paths.publicOut]) {
       const file = await Deno.open(path, {
         write: true,
         createNew: true,
@@ -183,16 +199,19 @@ export async function createQuotaJournal(config: QuotaEnvironment) {
       const info = await file.stat()
       files.push({ path, file, info })
     }
-    await write(0, { record: 'credentials', request: config }, true)
+    await write(0, initialRecord, true)
   } catch {
     close()
     throw new QuotaPreparationError('cannot-create-new-private-output-files')
   }
   return {
     close,
-    async checkpoint(manifest: QuotaManifest) {
-      assertPublicManifestRedacted(manifest, secrets)
-      await write(0, { record: 'checkpoint', manifest }, true)
+    async checkpoint(
+      manifest: Manifest,
+      privateRecord: unknown = { record: 'checkpoint', manifest },
+    ) {
+      assertPublicManifestRedacted(manifest, [...secrets])
+      await write(0, privateRecord, true)
       await write(1, manifest, false)
     },
   }

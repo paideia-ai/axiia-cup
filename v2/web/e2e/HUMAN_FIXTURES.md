@@ -135,3 +135,67 @@ restricted to loopback servers created by `e2e/run-playwright.sh`, which sets
 `AXIIA_E2E_ISOLATED=1` after starting its own database and server. Do not set
 this flag for a development proxy to the shared beta. The test disables
 screenshots, traces, and videos containing test credentials.
+
+`deno task prepare:human:a6-quota --apply` prepares the **separate A6 S06 total
+quota actor**, with exact alias `A6 人测·总配额耗尽`. It creates one fresh
+account and two owned agents, each with a saved v1 and its automatic ★ entry,
+through admin registration-code and player APIs. It never reuses an A5,
+entry-matrix, or first-save actor. Supply fresh-run admin credentials as above,
+plus:
+
+```text
+AXIIA_BASE_URL=<reviewed beta origin or isolated loopback server>
+AXIIA_A6_QUOTA_SCENARIO=<explicit live scenario slug>
+AXIIA_A6_QUOTA_MODEL_ID=<explicit selectable model ID>
+AXIIA_A6_QUOTA_MAX_MATCHES=<explicit 0..20 for the entire preparation>
+AXIIA_PRIVATE_OUT=<new absolute private .jsonl path>
+AXIIA_PUBLIC_OUT=<new absolute redacted .json path>
+```
+
+The command refuses provisioning if the fresh daily total exceeds that budget.
+It sequentially dispatches real Hotseat matches between its two owned entries,
+awaits each scored completion, and spends total quota with **zero PVP charge**.
+This can invoke the selected model and consume real model usage; it has no quota
+or result override. `AXIIA_A6_QUOTA_MATCH_TIMEOUT_SECONDS` defaults to 600 and
+accepts 1–1800 seconds per match. Requests time out after 30 seconds, never
+follow redirects, and never retry POSTs automatically.
+
+Each accepted match ID is synced privately before polling. A timed-out or
+interrupted accepted match can resume with
+`deno task prepare:human:a6-quota --apply --resume`, setting
+`AXIIA_A6_QUOTA_RESUME_FROM` to its prior private JSONL and choosing **two new
+output paths**. Keep the same base URL, scenario, model, and original max-match
+budget. Resume uses the recorded player credentials, waits recorded IDs, and
+only dispatches the remainder. It refuses incomplete provisioning, uncertain
+POST outcomes, changed ownership/entries/usage, and expired checkpoints. Inspect
+partial evidence rather than guessing whether an uncertain request succeeded.
+The private bundle retains provisioned agent IDs and pending mutation targets.
+
+Use one process per account. Resume locks the exact input path with a private
+`.resume.lock`; normal completion or handled failure releases it. An abrupt
+interruption can leave a lock that must be inspected before manual removal. This
+does not coordinate copied journals or an actively written output: never resume
+those concurrently. Both output files are mode0600, and the public manifest
+excludes emails, passwords, registration codes, and account IDs.
+
+A `ready` manifest includes generated source provenance, original budget,
+UTC+8-midnight `expiresAt`, owned agent/version bindings, accepted match IDs,
+and `verification.expectedCopy`. It requires total N/N, PVP0, an actual ordinary
+PVE POST rejected with HTTP429 `daily_limit`, and identical owned match IDs and
+counters before and after that rejection. This probe is additional API evidence.
+The human S06 action is: open `a6DailyExhaustedAgentId`, choose **出战 →
+左右手互搏**, verify the automatically selected own B agent's ★ entry equals
+`a6DailyExhaustedOpponentVersionId`, then click the enabled **自打一场** button.
+Require exactly `今日次数已用完（N/N），明天再来` with no new match. PVP gates
+remain locked, so use this Hotseat flow to reach total quota directly. Readiness
+expires at midnight UTC+8; start a fresh run/account after reset.
+
+`tests/e2e/a6-quota-fixture-preparation.real.spec.ts` runs only against a
+runner-owned isolated server. It interrupts one GET after a real accepted-ID
+checkpoint, resumes the exact CLI, exhausts the normal total limit through real
+dispatch and worker/scoring lifecycles, revalidates readiness without duplicate
+dispatch, and clicks the enabled Hotseat button to verify the exact429 copy and
+unchanged matches/counters. Its deterministic scenario uses no model calls; this
+verifies fixture plumbing and S06 behavior, not production scenario quality or
+shared-beta fixture readiness. Credentials are never written to screenshots,
+traces, or videos.
