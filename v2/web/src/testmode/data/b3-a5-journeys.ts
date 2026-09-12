@@ -388,7 +388,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     title: '非所有者公开 EA 与 PVE NPC 聚合视图',
     prerequisites: [
       '按 fixture 卡登录「B3 人测·访客缺侧」；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
-      'NPC 步骤直接从场景页开始。当前产品没有 NPC agent 实体或可填写的 NPC ID；不得拼造 npcAgentId。若入口缺失，按已知实现缺口提交失败证据。',
+      'NPC 步骤从场景页「NPC 练习对手」开始，可查看当前预设的身份、执方与模型；出战面板选中 NPC 后也有「查看当前 NPC」入口。两侧胜率仍待口径裁决与实现，不得把当前元数据视图判为整条通过；不用填写或拼造 npcAgentId。',
       '记录环境 URL、build SHA、账号角色和所有预期值。',
     ],
     evidenceRequirements: [
@@ -420,7 +420,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         kind: 'known-gap',
         readiness: 'known-gap',
         description:
-          '当前产品没有 NPC agent 实体或 /agents/:id 入口。不要填写或拼造 npcAgentId；真人从场景页查找入口并把缺失记录为 U10-C14 的实现失败。',
+          '从场景页逐 NPC 链接查看当前预设身份、执方、模型；此入口不代表历史对局配置。两侧胜率仍未交付，保留 U10-C14 的未完成状态，不填写或拼造 npcAgentId。',
         fields: [],
       },
     ],
@@ -450,16 +450,16 @@ export const B3_A5_JOURNEYS: Journey[] = [
         testUrl: '{{appBaseUrl}}/scenarios/shangyang-court',
         fixtureRefs: ['b3-public-viewer', 'b3-npc-gap'],
         knownGap: {
-          title: '已知实现缺口 · U10-C14 仍需真人取证',
+          title: '当前 NPC 可查看；两侧胜率验收仍未完成',
           detail:
-            '当前场景详情页不展示 NPC 区域或逐 NPC 入口；产品也没有 NPC agent 实体或 /agents/:id 聚合页，因此没有真实 npcAgentId 可以预填。',
+            '场景详情与当前 PVE 对手选择已提供预设视图，显示当前身份、执方、模型与场景。原条款的两侧胜率尚待正式口径裁决与实现；页面不使用场景总体胜率或空统计占位替代。',
           instruction:
-            '不要跳过，也不要拼造 ID 或寻找当前不存在的 NPC 区域。截取完整场景页和地址栏，明确记录缺少逐 NPC 查看入口，结果选「有问题」；只有入口实际交付后才继续核对两侧胜率。',
+            '分别记录逐 NPC 入口与当前元数据页面的真实结果；两侧胜率要求仍未满足，结果选「有问题」，不标整条通过。保留原预期与版本 pin，不把预设元数据当作统计证据；不要拼造 ID。',
         },
         route: '/scenarios/:id',
-        marker: null,
+        marker: 'DA.npc-list',
         action:
-          '打开并检查场景详情页，记录是否存在逐 NPC 的可查看入口。当前入口缺失时截取场景页与地址栏并按已知缺口记 fail；若入口已经交付，再进入目标 NPC 聚合视图核对两个阵营胜率。',
+          '从场景详情页「NPC 练习对手」打开目标 NPC，记录当前身份、执方、模型与场景。也可在当前出战面板选中 NPC 后点「查看当前 NPC」。保留原两侧胜率预期；统计尚未交付时记录缺失并判整条未通过。',
         expected:
           '每个 PVE NPC 都有可查看的聚合视图；目标 NPC 在当前场景分别展示两个阵营胜率，数值与种子数据一致，不显示成玩家胜率。',
         clauseIds: ['U10-C14'],
