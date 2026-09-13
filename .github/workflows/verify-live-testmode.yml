@@ -1,0 +1,85 @@
+name: Verify live Test Mode
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Exact 40-character commit SHA currently deployed to v2 web
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - .github/scripts/verify-live-testmode*
+      - .github/workflows/verify-live-testmode.yml
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: Live verifier contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+      - name: Format and lint
+        run: |
+          deno fmt --check .github/scripts/verify-live-testmode.mjs .github/scripts/verify-live-testmode.test.mjs
+          deno lint --no-config .github/scripts/verify-live-testmode.mjs .github/scripts/verify-live-testmode.test.mjs
+      - name: Input and lifecycle contracts
+        run: deno test --no-config --allow-read --allow-write .github/scripts/verify-live-testmode.test.mjs
+
+  live:
+    name: Guest live guide verification
+    if: github.event_name == 'workflow_dispatch'
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AXIIA_EXPECTED_SHA: ${{ inputs.release_sha }}
+    steps:
+      - name: Validate exact release SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$AXIIA_EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "release_sha must be a full lowercase commit SHA"
+            exit 1
+          }
+      - name: Checkout verifier
+        uses: actions/checkout@v4
+        with:
+          path: verifier
+          persist-credentials: false
+      - name: Checkout release expectations
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_sha }}
+          path: release
+          persist-credentials: false
+      - name: Verify release checkout
+        run: test "$(git -C release rev-parse HEAD)" = "$AXIIA_EXPECTED_SHA"
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+      - name: Install Chromium
+        run: deno run -A --no-config npm:playwright@1.62.1 install --with-deps chromium
+      - name: Verify published guest guide
+        run: |
+          deno run -A --no-config verifier/.github/scripts/verify-live-testmode.mjs \
+            --run --expected-sha "$AXIIA_EXPECTED_SHA" \
+            --release-dir "$GITHUB_WORKSPACE/release" \
+            --output-dir "$RUNNER_TEMP/live-testmode-report"
+      - name: Preserve verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-testmode-${{ inputs.release_sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/live-testmode-report
+          if-no-files-found: warn
+          retention-days: 14
