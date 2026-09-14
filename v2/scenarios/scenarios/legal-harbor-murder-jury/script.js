@@ -30,7 +30,7 @@ const meta = {
       key: 'guilt-motive-concealment',
       side: 'a',
       label: '动机与掩饰',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“动机与掩饰”：让陪审团先看清顾衡为何在当晚面临货运记录危机，再看他在纪川受伤前后如何一次次选择保护自己。
 
 你的核心打法：
@@ -49,7 +49,7 @@ const meta = {
       key: 'guilt-evidence-chain',
       side: 'a',
       label: '闭合证据链',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“累积推理”：不要求任何一项证据单独证明故意，而要说明 E1—E5 如何相互补强，使故意击打成为对全部公开事实最有解释力的结论。
 
 把证据分成三层：
@@ -70,7 +70,7 @@ const meta = {
       key: 'guilt-deliberation-map',
       side: 'a',
       label: '争点推进',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“推进审议”：你仍要证明故意击打，但不背诵一篇固定的有罪陈词。每次公开发言先判断陪审团此刻真正卡在哪一个争点，再用最少的证据把该争点向前推进。
 
 把全场分歧持续整理成三个问题：
@@ -96,7 +96,7 @@ const meta = {
       key: 'doubt-unseen-moment',
       side: 'b',
       label: '室内未明',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“室内未明”：把陪审团牢牢带回控方真正必须证明、却没有被镜头或痕迹直接记录的那一刻——顾衡是否故意挥动维修锤击打纪川。
 
 你的核心打法：
@@ -115,7 +115,7 @@ const meta = {
       key: 'doubt-burden-of-proof',
       side: 'b',
       label: '紧守证明责任',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“紧守证明责任”：不把案件拆成一堆互不相干的小疑点，也不试图证明顾衡清白；你要检验全部证据合在一起以后，控方是否仍缺少从冲突与可疑行为通往故意击打的可靠桥梁。
 
 先承认已经证明的部分：顾衡面临内审和停约风险，发出过用办公室的锤子伤人的条件性威胁；他与纪川独处并发生近距离冲突；维修锤造成一次致命伤；他先否认接触，后来改口，且没有求助。这些事实足以让人严重怀疑，也足以否定他最初的说法，但“严重怀疑”仍不是排除合理怀疑。
@@ -137,7 +137,7 @@ const meta = {
       key: 'doubt-supported-alternative',
       side: 'b',
       label: '最小替代叙事',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: `你的路线是“最小替代叙事”：给陪审团一条由公开材料支持、但不过度填空的事故可能性，用它检验控方是否真的排除了合理怀疑。你不是要证明这就是事实，而是要说明它不是凭空想象。
 
 只使用能够落地的骨架：纪川因货运记录约顾衡见面，两人发生争执；锤子在桌旁数步可及；现场有翻倒座椅，纪川手腕与顾衡前臂有新鲜擦伤，说明出现过短暂抓握或碰撞；锤子只造成一次致命伤，顾衡当时在近处。由此可以合理提出：双方控制锤子或彼此失衡时发生一次意外碰击。谁先拿锤、手怎样握、座椅何时翻倒、锤头以何角度接触都不知道，不要替这条叙事编出答案。
