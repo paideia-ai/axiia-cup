@@ -181,7 +181,7 @@ export function CatalogPage() {
                       {education
                         ? (
                           <p
-                            className='text-sm leading-relaxed text-(--foreground)'
+                            className='text-sm leading-relaxed text-(--foreground-subtle)'
                             {...tm('D.card-subject')}
                           >
                             {education.hook}

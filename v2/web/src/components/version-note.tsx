@@ -64,10 +64,6 @@ export function VersionNote({
               placeholder='简短记下这一版的变化'
               onChange={(event) => onChange(event.target.value)}
             />
-            <div className='mt-2 flex justify-between text-[10px] text-(--foreground-muted)'>
-              <Popover.Description>随版本一起保存</Popover.Description>
-              <span>{[...value].length}/60</span>
-            </div>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

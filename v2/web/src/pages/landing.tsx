@@ -39,9 +39,9 @@ export function LandingPage() {
   )
 
   return (
-    <div className='relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,rgba(224,74,47,0.18),transparent_28%),linear-gradient(180deg,#111_0%,#0c0c0c_38%,#090909_100%)]'>
+    <div className='relative min-h-dvh overflow-hidden bg-[radial-gradient(circle_at_top,rgba(224,74,47,0.18),transparent_28%),linear-gradient(180deg,#111_0%,#0c0c0c_38%,#090909_100%)]'>
       <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(224,74,47,0.08),transparent_24%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.04),transparent_18%)]' />
-      <div className='mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 sm:px-6'>
+      <div className='mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-4 py-8 sm:px-6'>
         <header
           {...tm('A.header')}
           className='flex items-center justify-between py-4'

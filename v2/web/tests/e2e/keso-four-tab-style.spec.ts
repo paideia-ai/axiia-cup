@@ -103,10 +103,11 @@ async function cardStyles(
   const card = page.locator(cardSelector).first()
   await expect(card).toBeVisible()
   return await card.evaluate((element, nestedTitleSelector) => {
-    const surface = element.firstElementChild
+    const surface = element.closest('.history-card') ??
+      element.firstElementChild
     const title = element.querySelector(nestedTitleSelector)
     if (surface == null || title == null) {
-      throw new Error('Expected a direct card surface and its title')
+      throw new Error('Expected a card surface and its title')
     }
     const surfaceStyle = getComputedStyle(surface)
     const titleStyle = getComputedStyle(title)
@@ -335,7 +336,9 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
       if (!('card' in tab)) continue
       await waitForTab(page, tab)
       const card = page.locator(tab.card).first()
-      const surface = card.locator(':scope > div')
+      const surface = tab.path === '/matches'
+        ? page.locator('.history-card').first()
+        : card.locator(':scope > div')
       await card.hover()
       await expect(surface).toHaveCSS('background-color', 'rgb(26, 26, 26)')
       await expect(surface).toHaveCSS('border-top-color', 'rgb(80, 80, 80)')
@@ -367,9 +370,13 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
 
       if (!('card' in tab)) continue
       const card = page.locator(tab.card).first()
-      const surface = card.locator(':scope > div')
+      const surface = tab.path === '/matches'
+        ? page.locator('.history-card').first()
+        : card.locator(':scope > div')
       await expect(surface).toHaveCSS('transition-duration', '0s')
-      const content = surface.locator(':scope > div')
+      const content = tab.path === '/matches'
+        ? surface.locator('.history-card-content')
+        : surface.locator(':scope > div')
       if (tab.path === '/scenarios') {
         await expect(content).toHaveCSS('padding', '20px')
         await expect(card.locator(tab.cardTitle)).toHaveCSS(

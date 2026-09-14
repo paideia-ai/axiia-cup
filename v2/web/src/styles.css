@@ -23,6 +23,8 @@
   --success: #34d399;
   --warning: #fbbf24;
   --info: #60a5fa;
+  --scrollbar-thumb: #626262;
+  --scrollbar-thumb-hover: #929292;
   font-family: var(--font-sans);
   color: var(--foreground);
   background: var(--background);
@@ -34,6 +36,8 @@
 @layer base {
   * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   input:-webkit-autofill,
@@ -65,8 +69,67 @@
     text-decoration: none;
   }
 
+  /* Use the platform's pointing hand for actions, including Base UI triggers
+     and native disclosures. Text fields retain their text-selection cursor. */
+  :is(button, a[href], summary, select, [role='button'], [role='tab'], [role='menuitem'], [role='menuitemcheckbox'], [role='menuitemradio'], [role='option'], input:is([type='button'], [type='submit'], [type='reset'], [type='checkbox'], [type='radio'], [type='range'])):not(:disabled):not([aria-disabled='true']):not([data-disabled]) {
+    cursor: pointer;
+  }
+
+  :is(button, input, select, [role='button'], [role='tab'], [role='menuitem'], [role='option']):is(:disabled, [aria-disabled='true'], [data-disabled]) {
+    cursor: not-allowed;
+  }
+
   #root {
-    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Chromium/WebKit support rounded, inset thumbs. Other browsers use the
+     standard thin scrollbar above. Keep native scrolling and gutter stability. */
+  @supports selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: auto;
+      scrollbar-color: auto;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      min-height: 32px;
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background-color: var(--scrollbar-thumb);
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: var(--scrollbar-thumb-hover);
+    }
+
+    ::-webkit-scrollbar-button {
+      display: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    * {
+      scrollbar-color: auto;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: CanvasText;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: Highlight;
+    }
   }
 }
 
@@ -205,7 +268,10 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   border-radius: 10px;
 }
 
-:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+/* History has sibling report/agent links inside its surface. Give the actual
+   surface a class rather than assuming every card is wrapped in a link. */
+:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']) > div,
+.history-card {
   border: 1px solid #303030;
   border-radius: 10px;
   background: #161616;
@@ -215,7 +281,8 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
     background-color 150ms;
 }
 
-:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']):hover > div {
+:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']):hover > div,
+.history-card:hover {
   border-color: #505050;
   background: #1a1a1a;
 }
@@ -239,6 +306,11 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   padding-block: 3px;
 }
 
+/* A status badge stays readable when a long scenario title shares its row. */
+[data-tm='D.card-badges'] > span {
+  white-space: nowrap;
+}
+
 [data-tm='D.card-sides'] {
   line-height: 1.85;
 }
@@ -253,8 +325,13 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   line-height: 1.8;
 }
 
-:is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+[data-tm='G.tournament-card'] > div > div,
+.history-card-content {
   padding: 20px 24px;
+}
+
+.history-card:has(.history-card-agents) .history-card-content {
+  padding-bottom: 8px;
 }
 
 :is([data-tm='G.tournament-name'], [data-tm='L.match-id']) {
@@ -401,7 +478,16 @@ main .text-\(--accent\) {
     font-size: 19px;
   }
 
-  :is([data-tm='G.tournament-card'], [data-tm='L.match-card']) > div > div {
+  [data-tm='D.scenario-card'] > div > div > div:first-child {
+    flex-wrap: wrap;
+  }
+
+  [data-tm='D.card-badges'] {
+    justify-content: flex-start;
+  }
+
+  [data-tm='G.tournament-card'] > div > div,
+  .history-card-content {
     flex-wrap: wrap;
     padding: 18px 16px;
   }
@@ -423,7 +509,8 @@ main .text-\(--accent\) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) > div {
+  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']) > div,
+  .history-card {
     transition: none;
   }
 }

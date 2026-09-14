@@ -107,7 +107,7 @@ export function TabsTrigger({
       aria-controls={contentId}
       aria-selected={isActive}
       className={cn(
-        'relative -mb-px inline-flex h-11 items-center justify-center whitespace-nowrap border-b-2 border-transparent px-4 text-sm font-semibold text-(--foreground-subtle) transition-colors duration-150 hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(224,74,47,0.35)] disabled:pointer-events-none disabled:opacity-50',
+        'relative inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 border-transparent px-4 text-sm font-semibold text-(--foreground-subtle) transition-colors duration-150 hover:text-(--foreground) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[rgba(224,74,47,0.35)] disabled:pointer-events-none disabled:opacity-50',
         isActive && 'border-(--accent) text-(--foreground)',
         className,
       )}
