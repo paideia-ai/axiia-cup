@@ -1,5 +1,5 @@
-// Build-time only: ship the authored end-user builders, never the maintainer
-// meta-builders. Keep the Docker build independent of the rest of the repository.
+// Build-time only: package reviewed product templates and runtime references.
+// Research documents are not a build input.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 
@@ -14,41 +14,19 @@ export interface BuilderAsset {
   references: Record<string, string>
 }
 
-export function generatePromptBuilders(): Record<
-  string,
-  Record<string, BuilderAsset>
-> {
+export function generatePromptBuilders(): {
+  roles: Record<string, Record<string, BuilderAsset>>
+  otherRules: string
+  fallback: string
+  roleSelection: string
+} {
   const result: Record<string, Record<string, BuilderAsset>> = {}
-  const definitions = [
-    ['shangyang-court', 'shang-yang-reform', /^# .+ Prompt Builder$/gm, [
-      'a',
-      'b',
-    ]],
-    ['fengyiting-real', 'fengyiting', /^## .+ Prompt Builder$/gm, ['a', 'b']],
-    ['trolley-problem', 'trolley-problem', /^# .+Prompt Builder$/gm, [
-      'a',
-      'b',
-    ]],
-    ['honnoji-decision', 'honnoji', /^[A-D]\..+ Prompt Builder$/gm, [
-      'chosokabe',
-      'hosokawa',
-      'ashigaru',
-      'yoshiaki',
-    ]],
-    [
-      'legal-harbor-murder-jury',
-      'harbor-murder-jury',
-      /^# .+ Prompt Builder$/gm,
-      ['a', 'b'],
-    ],
-  ] as const
+  const definitions: Record<
+    string,
+    Record<string, { side: 'a' | 'b'; file: string }>
+  > = JSON.parse(read('v2/prompt-builders/manifest.json'))
 
-  for (const [id, file, heading, keys] of definitions) {
-    const markdown = read(`docs/prompt-builders/${file}-prompt-builders.md`)
-    const headings = [...markdown.matchAll(heading)]
-    if (headings.length !== keys.length) {
-      throw new Error(`${file}: unexpected role sections`)
-    }
+  for (const [id, roles] of Object.entries(definitions)) {
     const source = read(`v2/scenarios/scenarios/${id}/script.js`)
     const defaultRounds = (parameter: string) => {
       const match = source.match(
@@ -66,10 +44,12 @@ export function generatePromptBuilders(): Record<
         { timeout: 1000 },
       )
     result[id] = {}
-    for (const [index, key] of keys.entries()) {
-      const side = key === 'a' || key === 'chosokabe' || key === 'yoshiaki'
-        ? 'a'
-        : 'b'
+    for (const [key, { side, file }] of Object.entries(roles)) {
+      if (side !== 'a' && side !== 'b') {
+        throw new Error(`${id}/${key}: invalid side`)
+      }
+      const template = read(`v2/prompt-builders/${file}`).trim()
+      if (!template) throw new Error(`${id}/${key}: empty product template`)
       let references: Record<string, string>
       if (id === 'legal-harbor-murder-jury') {
         // Harbor declares its reference material inside main. Stop before agent
@@ -161,15 +141,17 @@ export function generatePromptBuilders(): Record<
       }
       result[id][key] = {
         side,
-        template: markdown.slice(
-          headings[index].index,
-          headings[index + 1]?.index,
-        ).trim(),
+        template,
         references,
       }
     }
   }
-  return result
+  return {
+    roles: result,
+    otherRules: read('v2/prompt-builders/shared/other-rules.md').trim(),
+    fallback: read('v2/prompt-builders/shared/fallback.md').trim(),
+    roleSelection: read('v2/prompt-builders/shared/role-selection.md').trim(),
+  }
 }
 
 if (process.argv.includes('--write')) {
