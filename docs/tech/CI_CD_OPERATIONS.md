@@ -178,3 +178,32 @@ on the server, not the workflow.
   deploys where
 - [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md) and [CLI.md](CLI.md) —
   **historical**; they describe the retired v1 bun stack
+
+## 11. Live Test Mode handoff verification
+
+Deployment webhook success proves the server switch. Before reporting a Test
+Mode guide handoff as browser-verified, run the separate read-only workflow:
+
+```bash
+gh workflow run verify-live-testmode.yml --ref main \
+  -f release_sha=<full-40-character-deployed-web-commit>
+```
+
+`Verify live Test Mode` uses a fresh GitHub-hosted Chromium session, with the
+verifier from the workflow revision and guide expectations from a separate
+checkout of the requested release. It requires the exact live footer revision
+and published source provenance, then checks the A3 Save/Start guidance and A6
+directed-opponent counting guidance at desktop and mobile widths. Existing
+fixture gaps must remain visible. Reports, downloaded application assets, and
+screenshots are retained as workflow artifacts, including failed attempts.
+
+The live job runs only on manual dispatch; pull requests affecting the verifier
+run its input and asynchronous-lifecycle contracts. It uses no product account,
+registration code, repository secret, or OIDC token. Browser requests that could
+mutate state are blocked, and human test progress must remain untouched. Neither
+the workflow nor its installation redeploys the application or scenarios.
+
+A passing report proves the guest guide checks it executed. Fresh account
+availability, gameplay, operator-assisted test windows, and Vivian's human
+acceptance require their own evidence. A timeout, a different deployed build,
+or an incomplete report is not a pass and must remain visible in the handoff.

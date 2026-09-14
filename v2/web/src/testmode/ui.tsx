@@ -2,20 +2,60 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 import { anchorUrl, type Clause, CLAUSES, clauseUrl, IMPL_LABEL } from './data'
+import { clauseAuditDate, currentClauseEvidence } from './current-evidence'
 import { type Identity, type Role } from './supabase'
 
-export function ImplChip({ impl }: { impl: Clause['impl'] }) {
+export function ImplChip(
+  { impl, capturedAt }: { impl: Clause['impl']; capturedAt?: string },
+) {
   return (
     <span
       className={`tm-chip tm-chip--${impl}`}
-      title={`实现状态：${IMPL_LABEL[impl]}`}
+      title={`审计快照${capturedAt ? ` ${capturedAt}` : ''}：${
+        IMPL_LABEL[impl]
+      }；不是当前部署或真人验收结果`}
     >
+      审计快照{' '}
+      {capturedAt ? <time dateTime={capturedAt}>{capturedAt}</time> : null}
+      {' · '}
       {IMPL_LABEL[impl]}
     </span>
   )
 }
 
-/** 一行条款：id · 规格原话 · 实现状态；整行是到看板那一行的链接 */
+function CurrentEvidence({ id }: { id: string }) {
+  const evidence = currentClauseEvidence(id)
+  if (!evidence) return null
+  return (
+    <section className='tm-clause-evidence' aria-label={`${id} 当前工程证据`}>
+      <strong>当前工程证据 · {evidence.scope}</strong>
+      <div className='tm-muted'>
+        <time dateTime={evidence.checkedAt}>{evidence.checkedAt}</time>
+        {' · '}
+        {id}
+      </div>
+      <p>{evidence.summary}</p>
+      <p>{evidence.remaining}</p>
+      <div className='tm-evidence-links'>
+        {evidence.releases.map((release) => (
+          <a
+            key={release.url}
+            href={release.url}
+            target='_blank'
+            rel='noreferrer'
+          >
+            {release.label} · {release.revision.slice(0, 7)}
+          </a>
+        ))}
+      </div>
+      <p className='tm-muted'>
+        工程记录不替代本轮真人验收，也不更改已记录的结果。
+      </p>
+    </section>
+  )
+}
+
+/** Canonical clause, dated audit snapshot, and separately pinned engineering evidence. */
 export function ClauseRow(
   { id, lead, clamp = true }: { id: string; lead?: ReactNode; clamp?: boolean },
 ) {
@@ -32,19 +72,24 @@ export function ClauseRow(
   return (
     <div className='tm-row'>
       {lead}
-      <a
-        className='tm-row-id'
-        href={clauseUrl(id)}
-        target='_blank'
-        rel='noreferrer'
-        title={`在看板里打开 ${id}`}
-      >
-        {id}
-      </a>
-      <span className={`tm-row-q${clamp ? ' tm-clamp' : ''}`} title={c.q}>
-        {c.q}
-      </span>
-      <ImplChip impl={c.impl} />
+      <div className='tm-clause-main'>
+        <div className='tm-clause-heading'>
+          <a
+            className='tm-row-id'
+            href={clauseUrl(id)}
+            target='_blank'
+            rel='noreferrer'
+            title={`在看板里打开 ${id}`}
+          >
+            {id}
+          </a>
+          <ImplChip impl={c.impl} capturedAt={clauseAuditDate(id)} />
+        </div>
+        <span className={`tm-row-q${clamp ? ' tm-clamp' : ''}`} title={c.q}>
+          {c.q}
+        </span>
+        <CurrentEvidence id={id} />
+      </div>
     </div>
   )
 }
@@ -70,22 +115,38 @@ export function AnchorChips({ anchors }: { anchors: string[] }) {
 
 export function ClauseChips({ ids }: { ids: string[] }) {
   return (
-    <div className='tm-chips'>
-      {ids.map((id) => {
-        const c = CLAUSES[id]
-        return (
-          <a
-            key={id}
-            className={`tm-chip${c ? ` tm-chip--${c.impl}` : ''}`}
-            href={clauseUrl(id)}
-            target='_blank'
-            rel='noreferrer'
-            title={c ? `${c.q}（${IMPL_LABEL[c.impl]}）` : id}
-          >
-            {id}
-          </a>
-        )
-      })}
+    <div>
+      <div className='tm-chips'>
+        {ids.map((id) => {
+          const c = CLAUSES[id]
+          return (
+            <a
+              key={id}
+              className={`tm-chip tm-clause-chip${
+                c ? ` tm-chip--${c.impl}` : ''
+              }`}
+              href={clauseUrl(id)}
+              target='_blank'
+              rel='noreferrer'
+              title={c
+                ? `${c.q}（审计快照 ${clauseAuditDate(id)}：${
+                  IMPL_LABEL[c.impl]
+                }）`
+                : id}
+            >
+              {id}
+              {c
+                ? (
+                  <span>
+                    审计快照 {clauseAuditDate(id)} · {IMPL_LABEL[c.impl]}
+                  </span>
+                )
+                : null}
+            </a>
+          )
+        })}
+      </div>
+      {ids.map((id) => <CurrentEvidence key={id} id={id} />)}
     </div>
   )
 }

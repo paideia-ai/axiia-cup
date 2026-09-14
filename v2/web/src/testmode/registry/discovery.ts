@@ -5,6 +5,23 @@
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_DISCOVERY: TmRegistry = {
+  'EA.npc-page': {
+    label: '当前NPC',
+    clauses: ['U10-C14'],
+    note:
+      '当前身份、执方、模型可查看；原条款要求的两侧胜率仍未交付，不能据此判整条通过。',
+  },
+  'EA.npc-identity': { label: 'NPC身份', clauses: ['U10-C14'] },
+  'EA.npc-metadata': { label: 'NPC资料', clauses: ['U10-C14'] },
+  'EA.npc-error': { label: '读取失败', clauses: ['LACK-10'] },
+  'EA.npc-unavailable': { label: '预设已移除', clauses: ['LACK-10'] },
+  'DA.npc-list': { label: 'NPC练习对手', clauses: ['U10-C14'] },
+  'DA.npc-view-link': { label: '查看NPC', clauses: ['U10-C14'] },
+  'OS.npc-view-link': {
+    label: '查看NPC',
+    clauses: ['U10-C14'],
+    note: '只用于当前练习选择，不作为历史对局 NPC 的配置入口。',
+  },
   // ======================= D 场景选择 =======================
   'D.page-header': {
     label: '页面标题与导语',
@@ -68,13 +85,14 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U04-C02'],
     anchors: ['spec-change-40'],
     journeys: ['j2s1'],
-    note: '来自前端场景模块；「码头疑云」缺（已知）',
+    note: '优先使用服务端难度/时长；字段缺席时回落场景模块，无来源则省略',
   },
   'D.novice-badge': {
     label: '适合新手徽章',
     clauses: ['U04-C02'],
     anchors: ['spec-change-40'],
-    when: '场景模块标 noviceFriendly 时',
+    when:
+      '服务端 beginnerFriendly 为 true；字段缺席时读取场景模块 noviceFriendly',
   },
   'D.card-sides': {
     label: '双方与轮数',
@@ -316,7 +334,7 @@ export const TM_DISCOVERY: TmRegistry = {
   'DA.score-rule-row': {
     label: '计分条目',
     clauses: ['U04-C11'],
-    when: '商鞅类有结构化 requestScoring 的场景',
+    when: '服务端场景详情提供公开 scoring.items 时，逐项展示名称与精确分值',
   },
 
   // ======================= OS 出战面板 =======================

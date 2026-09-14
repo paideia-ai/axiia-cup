@@ -12,6 +12,7 @@
     "vitest.storybook.config.ts"
   ],
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "types": [
       "vite/client",
       "node",

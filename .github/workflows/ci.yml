@@ -64,6 +64,9 @@ jobs:
       - name: Unit contracts
         run: deno task test:unit
 
+      - name: Human fixture preparation contracts
+        run: deno task test:human-fixtures
+
       - name: Install browser
         run: deno run -A npm:playwright install --with-deps chromium
 

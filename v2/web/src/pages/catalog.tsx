@@ -7,15 +7,20 @@ import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideProgressText } from '../lib/gate'
 import { useAsync } from '../lib/use-async'
-import { scenarioModule } from '../scenarios'
+import {
+  DIFFICULTY_LABEL,
+  scenarioGuidance,
+  scenarioModule,
+} from '../scenarios'
 import { tm } from '../testmode/mark'
+import { useAuth } from '../context/auth'
 
 // D 卡（A4）：标题/学科/双方/轮数/门槛徽章来自服务端；难度·时长·适合新手
-// （#40）来自前端场景模块的编辑内容。门槛徽章 P2 起按侧进度显示（#65，
+// （#40）优先使用服务端字段，缺席时回落前端场景模块。门槛徽章 P2 起按侧进度显示（#65，
 // mock V16 的紧凑形态「PVP 解锁 1/1·0/1」）；gateProgress 缺席（老服务器）
 // 时回落到 P1 的静态 PvE/PvP 徽章（#54）。统计 P6 点亮（#38/#39）：展示门槛
 // 由服务端把关——stats 到手即显示对局数+侧方胜率，缺席（未过门槛/老服务器）
-// 时按 #54 画一条说明「对局数不足」的空态轮廓、绝不摆零或假数字。
+// 时按 #54 显示「数据积累中」，不摆零或假数字。
 // 新上线（#54，W8 选 A）：
 // onlineAt 最新的场景固定插在第 2 位 + 「新上线」徽章；字段缺席（老服务器）
 // 时保持服务端原序、无徽章。
@@ -55,7 +60,11 @@ function statsLine(summary: ScenarioSummary): string | null {
 }
 
 export function CatalogPage() {
-  const { data, error, loading } = useAsync(() => catalog.scenarios(), [])
+  const { account } = useAuth()
+  const { data, error, loading } = useAsync(() =>
+    catalog.scenarios({
+      credentials: account ? 'include' : 'omit',
+    }), [account?.id])
 
   // 新上线置顶第 2 位只在列表 >1 且 onlineAt 存在时生效；否则保持原序。
   const scenarios = data?.scenarios ?? []
@@ -96,6 +105,7 @@ export function CatalogPage() {
             {ordered.map((scenario) => {
               const module = scenarioModule(scenario.id)
               const education = module?.education ?? null
+              const guidance = scenarioGuidance(scenario, education)
               const stats = statsLine(scenario)
               return (
                 <Link
@@ -125,7 +135,9 @@ export function CatalogPage() {
                               </Badge>
                             )
                             : null}
-                          {scenario.gateProgress
+                          {!account
+                            ? null
+                            : scenario.gateProgress
                             ? gateMet(scenario.gateProgress)
                               ? (
                                 <Badge tone='success' {...tm('D.gate-badge')}>
@@ -163,29 +175,48 @@ export function CatalogPage() {
                             )}
                         </div>
                       </div>
-                      <p
-                        className='text-sm text-(--foreground-subtle)'
-                        {...tm('D.card-subject')}
-                      >
+                      <p className='text-sm text-(--foreground-subtle)'>
                         {scenario.subject}
                       </p>
                       {education
+                        ? (
+                          <p
+                            className='text-sm leading-relaxed text-(--foreground)'
+                            {...tm('D.card-subject')}
+                          >
+                            {education.hook}
+                          </p>
+                        )
+                        : null}
+                      {guidance.difficulty != null ||
+                          guidance.minutes != null ||
+                          guidance.noviceFriendly
                         ? (
                           <div
                             className='flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--foreground-subtle)'
                             {...tm('D.card-education')}
                           >
-                            <span title={`难度 ${education.difficulty} / 3`}>
-                              难度{' '}
-                              <span className='tracking-[0.12em] text-(--warning)'>
-                                {'★'.repeat(education.difficulty)}
-                                <span className='text-(--foreground-muted)'>
-                                  {'☆'.repeat(3 - education.difficulty)}
+                            {guidance.difficulty != null
+                              ? (
+                                <span title={`难度 ${guidance.difficulty} / 3`}>
+                                  难度 {DIFFICULTY_LABEL[guidance.difficulty]}
+                                  {' '}
+                                  <span
+                                    aria-hidden='true'
+                                    className='tracking-[0.12em] text-(--warning)'
+                                  >
+                                    {'★'.repeat(guidance.difficulty)}
+                                    <span className='text-(--foreground-muted)'>
+                                      {'☆'.repeat(3 - guidance.difficulty)}
+                                    </span>
+                                  </span>
                                 </span>
-                              </span>
-                            </span>
-                            <span>约 {education.minutes} 分钟</span>
-                            {education.noviceFriendly
+                              )
+                              : null}
+                            {guidance.minutes != null
+                              ? <span>约 {guidance.minutes} 分钟</span>
+                              : null}
+                            {guidance.noviceFriendly
                               ? (
                                 <Badge tone='success' {...tm('D.novice-badge')}>
                                   适合新手
@@ -232,16 +263,14 @@ export function CatalogPage() {
                             {stats}
                           </p>
                         )
-                        : education
-                        ? (
+                        : (
                           <p
                             className='rounded-md border border-dashed border-(--border-soft) px-3 py-2 text-xs text-(--foreground-muted)'
                             {...tm('D.card-stats-empty')}
                           >
-                            侧方胜率 · 对局数不足，暂无统计
+                            数据积累中
                           </p>
-                        )
-                        : null}
+                        )}
                     </CardContent>
                   </Card>
                 </Link>

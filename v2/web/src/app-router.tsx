@@ -19,6 +19,7 @@ import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
+import { CurrentNpcPage } from './pages/current-npc'
 import { ExpressPage } from './pages/express'
 import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
@@ -28,9 +29,11 @@ import { MatchesPage } from './pages/matches'
 import { NotificationsPage } from './pages/notifications'
 import { RegisterPage } from './pages/register'
 import { ScenarioDetailPage } from './pages/scenario-detail'
+import { ScenarioBuildEntry } from './pages/scenario-build-entry'
 import { SettingsPage } from './pages/settings'
 import { StandingsPage } from './pages/standings'
 import { TournamentsPage } from './pages/tournaments'
+import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
 
 function Loading() {
@@ -49,6 +52,11 @@ function BuilderRoute() {
   return <BuilderPage key={agentId} />
 }
 
+function CurrentNpcRoute() {
+  const { scenarioId, presetKey } = useParams()
+  return <CurrentNpcPage key={`${scenarioId}:${presetKey}`} />
+}
+
 function ProtectedShell() {
   const { isLoading, account } = useAuth()
   const location = useLocation()
@@ -62,10 +70,9 @@ function ProtectedShell() {
         <Routes>
           {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
           <Route path='/express' element={<ExpressPage />} />
-          <Route path='/scenarios' element={<CatalogPage />} />
           <Route
-            path='/scenarios/:scenarioId'
-            element={<ScenarioDetailPage />}
+            path='/scenarios/:scenarioId/build'
+            element={<ScenarioBuildEntry />}
           />
           <Route path='/my-agents' element={<MyAgentsPage />} />
           {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
@@ -78,6 +85,7 @@ function ProtectedShell() {
             path='/tournaments/:tournamentId'
             element={<StandingsPage />}
           />
+          <Route path='/versions/:versionId' element={<VersionAgentPage />} />
           <Route path='/notifications' element={<NotificationsPage />} />
           <Route path='/settings' element={<SettingsPage />} />
           <Route path='/rewards' element={<RewardsPage />} />
@@ -100,6 +108,18 @@ function ProtectedShell() {
   )
 }
 
+function ScenarioShell({ children }: { children: ReactNode }) {
+  const { isLoading, account } = useAuth()
+  if (isLoading) return <Loading />
+  return account
+    ? (
+      <RewardsProvider key={account.id}>
+        <AppShell>{children}</AppShell>
+      </RewardsProvider>
+    )
+    : <AppShell key='guest'>{children}</AppShell>
+}
+
 function GuestOnly({ children }: { children: ReactNode }) {
   const { isLoading, account } = useAuth()
   // 只挡「本来就已登录」的访客。表单提交成功后的落点由表单页自己决定
@@ -120,8 +140,40 @@ function GuestOnly({ children }: { children: ReactNode }) {
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  )
+}
+
+export function AppRoutes() {
+  return (
+    <>
       <Routes>
         <Route path='/' element={<LandingPage />} />
+        <Route
+          path='/scenarios'
+          element={
+            <ScenarioShell>
+              <CatalogPage />
+            </ScenarioShell>
+          }
+        />
+        <Route
+          path='/scenarios/:scenarioId'
+          element={
+            <ScenarioShell>
+              <ScenarioDetailPage />
+            </ScenarioShell>
+          }
+        />
+        <Route
+          path='/scenarios/:scenarioId/npcs/:presetKey'
+          element={
+            <ScenarioShell>
+              <CurrentNpcRoute />
+            </ScenarioShell>
+          }
+        />
         <Route
           path='/login'
           element={
@@ -142,6 +194,6 @@ export function AppRouter() {
       </Routes>
       {/* 测试模式（?tm=1）：挂在 Routes 旁边，所有路由都能用；关着时零成本。 */}
       <TestModeRoot />
-    </BrowserRouter>
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -10,9 +10,14 @@ import { PhoneAuthForm } from '../components/auth/phone-form'
 import type { MeResponse } from '../api/types'
 import { useAuth } from '../context/auth'
 import { tm } from '../testmode/mark'
+import { loginReturnPath } from '../lib/login-return'
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnPath = new URLSearchParams(location.search).has('next')
+    ? loginReturnPath(location.search)
+    : null
   const { signup } = useAuth()
   const [code, setCode] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -21,12 +26,14 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // A3：注册（自动登录）后未打过首战 → 直落快速通道；否则照旧进场景。手机号
-  // 一路可能是登录也可能是开号，落点判据相同。
+  // 已选择的构建入口保留阵营；普通注册继续按 A3 进入首战快速通道。
   const land = (me: MeResponse) => {
-    navigate(me.firstBattleDone === true ? '/scenarios' : '/express', {
-      replace: true,
-    })
+    navigate(
+      returnPath ?? (me.firstBattleDone === true ? '/scenarios' : '/express'),
+      {
+        replace: true,
+      },
+    )
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -154,7 +161,9 @@ export function RegisterPage() {
           <p className='text-center text-sm text-(--foreground-muted)'>
             已有账户？{' '}
             <Link
-              to='/login'
+              to={returnPath
+                ? `/login?${new URLSearchParams({ next: returnPath })}`
+                : '/login'}
               className='text-(--accent)'
               {...tm('C.login-link')}
             >

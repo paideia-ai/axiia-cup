@@ -3,6 +3,11 @@ import { expect, test } from '@playwright/test'
 import { assembleDeck } from '../../src/lib/deck'
 import { deckFor } from '../../src/scenarios/decks'
 import {
+  a3DatabaseCounts,
+  a3Dialogue,
+  installA3OfflineFixture,
+} from './a3-offline-fixture'
+import {
   apiSignup,
   FIXTURE_SIDE_A_NAME,
   FIXTURE_SIDE_B_NAME,
@@ -210,158 +215,292 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await target.context.dispose()
   })
 
-  test('P5 #9–#12 Express lands after signup, opens a preset on demand, saves, and enters live first battle', async ({ page }) => {
+  test('P5 #9–#12 Express saves without dispatch, then explicitly starts one scored offline first battle', async ({ page }) => {
     test.setTimeout(120_000)
-    // A3：新账号注册直落 /express（严格断言，不接受 /scenarios 回落）。
-    await signup(page, `express-${Date.now()}`)
-    await expect(page).toHaveURL(/\/express$/)
-
-    // 简化版 DA（#11）：钩子 + 我方角色卡。AXIIA_EXPRESS_PRESET 指定对手为
-    // 商鞅场景 b 侧预设 → 我执 a（商鞅）。
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      // 2026-08-25 集成注：#142 起 express 页头用 intro 标题（「·」两侧带空格）。
-      '商鞅变法 · 朝堂辩法',
+    test.skip(
+      process.env.AXIIA_E2E_ISOLATED !== '1',
+      'Only a runner-owned local slot may be replaced',
     )
-    await expect(page.getByText('你的角色')).toBeVisible()
-    await expect(page.getByText('自魏入秦的说客，无根无党，惟以变法自荐'))
-      .toBeVisible()
-
+    const fixture = await installA3OfflineFixture()
     const releaseConfig = deferred()
     const seenConfig = deferred()
-    const deliveredConfig = deferred()
     const releaseScenario = deferred()
     const seenScenario = deferred()
-    const deliveredScenario = deferred()
-    await page.route(/\/v1\/config$/, async (route) => {
-      const response = await route.fetch()
-      seenConfig.resolve()
-      await releaseConfig.promise
-      await route.fulfill({ response })
-      deliveredConfig.resolve()
-    })
-    await page.route(
-      /\/v1\/scenarios\/shangyang-court\?side=a$/,
-      async (route) => {
+    const releaseLive = deferred()
+    const pveBodies: unknown[] = []
+    try {
+      await signup(page, `express-${Date.now()}`)
+      await expect(page).toHaveURL(/\/express$/)
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+        '商鞅变法 · 朝堂辩法',
+      )
+      await expect(page.getByText('你的角色')).toBeVisible()
+      const before = await (await page.request.get('/v1/config')).json()
+      const databaseBefore = await a3DatabaseCounts()
+      expect(
+        (await (await page.request.get('/v1/auth/me')).json()).firstBattleDone,
+      ).toBe(false)
+      expect((await (await page.request.get('/v1/matches')).json()).matches)
+        .toEqual([])
+      await page.route(/\/v1\/config$/, async (route) => {
         const response = await route.fetch()
-        seenScenario.resolve()
-        await releaseScenario.promise
+        seenConfig.resolve()
+        await releaseConfig.promise
         await route.fulfill({ response })
-        deliveredScenario.resolve()
-      },
-    )
-
-    await page.getByTestId('express-build').click()
-    await expect(page).toHaveURL(/\/agents\/\d+\/build\?.*express=1/)
-    await expect(page.getByText('首战快速通道 · 保存即自动开战并直达实况'))
-      .toBeVisible()
-
-    // 2026-09-09：辅助入口常驻但默认收起；express 仍保留保存自动开战。
-    await expect(page.getByRole('button', { name: '选择预设策略' }))
-      .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
-      .toBeVisible()
-    await expect(page.getByRole('tab')).toHaveCount(0)
-    await page.getByRole('button', { name: '选择预设策略' }).click()
-    const presetDialog = page.getByRole('dialog', { name: '选择预设策略' })
-    const deck = deckFor('shangyang-court', 'a', null)
-    expect(deck, 'the shangyang side-a MCQ deck ships with the SPA').not
-      .toBeNull()
-    await expect(presetDialog.getByText(deck!.questions[0].prompt))
-      .toBeVisible()
-
-    // 快速答题：每题点第一个选项；答完前「填入工作区」保持不可点。
-    const fill = presetDialog.getByRole('button', { name: '填入工作区' })
-    await expect(fill).toBeDisabled()
-    const selections: Record<string, string> = {}
-    for (const question of deck!.questions) {
-      selections[question.id] = question.options[0].id
-      await presetDialog
-        .getByRole('button', { name: question.options[0].label, exact: true })
-        .click()
-    }
-    await fill.click()
-
-    // 拼装文本进入工作区（所见即所存），辅助入口仍然常驻。
-    const assembled = assembleDeck(deck!, selections)
-    await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
-    await expect(page.getByRole('button', { name: '选择预设策略' }))
-      .toBeVisible()
-
-    await test.step('当 首战构建器的配置与场景详情响应都被延迟', async () => {
+      })
+      await page.route(
+        /\/v1\/scenarios\/shangyang-court\?side=a$/,
+        async (route) => {
+          const response = await route.fetch()
+          seenScenario.resolve()
+          await releaseScenario.promise
+          await route.fulfill({ response })
+        },
+      )
+      await page.getByTestId('express-build').click()
+      await expect(page).toHaveURL(/\/agents\/\d+\/build\?.*express=1/)
+      const builderURL = page.url()
+      const agentID = Number(/\/agents\/(\d+)\/build/.exec(builderURL)![1])
+      await expect(page.getByRole('button', { name: 'MCQ', exact: true }))
+        .toHaveAttribute('aria-pressed', 'true')
+      const mcq = page.getByRole('region', { name: 'MCQ', exact: true })
+      const deck = deckFor('shangyang-court', 'a', null)!
+      await expect(mcq.getByText(deck.questions[0].prompt)).toBeVisible()
+      const selections: Record<string, string> = {}
+      for (const question of deck.questions) {
+        selections[question.id] = question.options[0].id
+        await mcq.getByRole('button', {
+          name: question.options[0].label,
+          exact: true,
+        }).click()
+      }
+      await mcq.getByRole('button', { name: '填入工作区' }).click()
+      const assembled = assembleDeck(deck, selections)
+      await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
+      await page.getByRole('button', { name: 'MCQ', exact: true }).click()
+      await page.getByRole('button', { name: '直接编写', exact: true }).click()
+      await expect(page.getByLabel('策略提示词')).toBeFocused()
+      await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
+      const savedPrompt = `${assembled}\n\n明确先试行、后评估。`
+      await page.getByLabel('策略提示词').fill(savedPrompt)
       await Promise.all([seenConfig.promise, seenScenario.promise])
-    })
-
-    await test.step('那么 即使工作区已有策略，「加载首战配置…」按钮仍不可用', async () => {
-      const save = page.getByTestId('save-version')
-      await expect(save).toHaveText('加载首战配置…')
-      await expect(save).toBeDisabled()
-    })
-
-    await test.step('当 配置先返回但场景详情仍被延迟', async () => {
-      releaseConfig.resolve()
-      await deliveredConfig.promise
-    })
-
-    await test.step('那么 保存仍不可用', async () => {
-      await expect(page.getByTestId('save-version')).toHaveText(
-        '加载首战配置…',
+      page.on('request', (request) => {
+        if (
+          request.method() === 'POST' &&
+          new URL(request.url()).pathname === '/v1/matches/pve'
+        ) pveBodies.push(request.postDataJSON())
+      })
+      const savedResponse = page.waitForResponse((response) =>
+        response.request().method() === 'POST' &&
+        response.url().endsWith(`/v1/agents/${agentID}/save`)
       )
-      await expect(page.getByTestId('save-version')).toBeDisabled()
-    })
-
-    await test.step('当 场景详情也返回', async () => {
-      releaseScenario.resolve()
-      await deliveredScenario.promise
-    })
-
-    await test.step('那么 保存恢复为「保存并开始首战」', async () => {
-      await expect(page.getByTestId('save-version')).toHaveText(
-        '保存并开始首战',
-      )
+      await expect(page.getByTestId('save-version')).toHaveText('保存版本')
       await expect(page.getByTestId('save-version')).toBeEnabled()
-    })
-
-    // #9/#17 例外：express 下保存即自动派发首战并直达实况。
-    let matchID = 0
-    let dispatchStatus = 0
-    await test.step('当 我点击保存', async () => {
-      const dispatched = page.waitForResponse((response) =>
-        response.url().endsWith('/v1/matches/pve') &&
-        response.request().method() === 'POST'
-      )
       await page.getByTestId('save-version').click()
-      const dispatchHttp = await dispatched
-      dispatchStatus = dispatchHttp.status()
-      matchID = (await dispatchHttp.json() as { matchID: number }).matchID
-    })
+      const savedHttp = await savedResponse
+      expect(savedHttp.ok()).toBe(true)
+      const saved = await savedHttp.json() as {
+        id: number
+        ordinal: number
+        prompt: string
+      }
+      expect(saved.prompt).toBe(savedPrompt)
+      await expect(page).toHaveURL(builderURL)
+      await expect(page.getByTestId('first-battle-start')).toContainText(
+        `已保存版本 v${saved.ordinal}（#${saved.id}）`,
+      )
+      await expect(page.getByTestId('start-first-battle')).toBeDisabled()
+      expect(pveBodies).toEqual([])
+      const versions =
+        await (await page.request.get(`/v1/agents/${agentID}/versions`)).json()
+      expect(versions.versions.map((version: { id: number }) => version.id))
+        .toEqual([saved.id])
+      expect((await (await page.request.get('/v1/matches')).json()).matches)
+        .toEqual([])
+      expect((await (await page.request.get('/v1/config')).json()).usage)
+        .toEqual(before.usage)
+      expect(await a3DatabaseCounts()).toEqual({
+        ...databaseBefore,
+        agent_versions: databaseBefore.agent_versions + 1,
+      })
+      await page.screenshot({
+        path: test.info().outputPath('saved-desktop.png'),
+        fullPage: true,
+      })
+      await page.setViewportSize({ width: 390, height: 844 })
+      await expect(page.getByTestId('first-battle-start')).toBeVisible()
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.scrollWidth <= innerWidth
+        ),
+      ).toBe(true)
+      await page.screenshot({
+        path: test.info().outputPath('saved-mobile.png'),
+        fullPage: true,
+      })
+      await page.setViewportSize({ width: 1280, height: 900 })
+      releaseConfig.resolve()
+      await expect(page.getByTestId('start-first-battle')).toBeDisabled()
+      releaseScenario.resolve()
+      await expect(page.getByTestId('start-first-battle')).toBeEnabled()
+      await page.unroute(/\/v1\/config$/)
+      await page.unroute(/\/v1\/scenarios\/shangyang-court\?side=a$/)
+      await page.reload()
+      await expect(page.getByTestId('first-battle-start')).toContainText(
+        `#${saved.id}`,
+      )
+      await expect(page.getByTestId('start-first-battle')).toBeEnabled()
+      await expect(page.getByLabel('策略提示词')).toHaveValue(savedPrompt)
+      expect(pveBodies).toEqual([])
 
-    await test.step('那么 使用真实配置的预设派发并直达首战实况', async () => {
-      expect(dispatchStatus).toBe(200)
-      await expect(page).toHaveURL(new RegExp(`/matches/${matchID}$`))
+      // Replay only a real unfinished GET captured just after dispatch. Later
+      // network delivery waits for the live UI assertion; no payload is edited.
+      let unfinishedBody = ''
+      let matchID = 0
+      let allowFinished = false
+      await page.route(/\/v1\/matches\/\d+$/, async (route) => {
+        if (!allowFinished) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: unfinishedBody,
+          })
+        } else {
+          await releaseLive.promise
+          await route.continue()
+        }
+      })
+      await page.route(
+        /\/v1\/matches\/\d+\/stream(?:\?.*)?$/,
+        async (route) => {
+          await releaseLive.promise
+          await route.continue()
+        },
+      )
+      await page.route(/\/v1\/matches\/pve$/, async (route) => {
+        const response = await route.fetch()
+        expect(response.ok()).toBe(true)
+        matchID = (await response.json()).matchID
+        const live = await page.request.get(`/v1/matches/${matchID}`)
+        expect(live.ok()).toBe(true)
+        unfinishedBody = await live.text()
+        expect(JSON.parse(unfinishedBody).summary.finished).toBe(false)
+        await route.fulfill({ response })
+      })
+      let documentLoads = 0
+      page.on('request', (request) => {
+        if (
+          request.isNavigationRequest() && request.frame() === page.mainFrame()
+        ) documentLoads++
+      })
+      await page.getByTestId('start-first-battle').click()
+      await expect(page).toHaveURL(/\/matches\/\d+$/)
       await expect(page.getByRole('heading', { name: `对战 #${matchID}` }))
         .toBeVisible()
-    })
-
-    // API 复核：恰好这一场 PVE 首战存在于我的对局列表。
-    const matches = await (await page.request.get('/v1/matches'))
-      .json() as { matches: MatchSummaryJSON[] }
-    expect(matches.matches).toHaveLength(1)
-    expect(matches.matches[0].id).toBe(matchID)
-    expect(matches.matches[0].kind).toBe('pve')
-    expect(matches.matches[0].scenarioID).toBe('shangyang-court')
-
-    // #12 收尾：首战一完局（哪怕是败局/失败局——本 harness 无模型密钥，商鞅
-    // 真场景会快速失败收场），/v1/auth/me 的 firstBattleDone 必须翻真。
-    await expect
-      .poll(async () => {
-        const me = await page.request.get('/v1/auth/me')
-        return (await me.json() as { firstBattleDone?: boolean })
-          .firstBattleDone === true
-      }, {
-        message: 'firstBattleDone flips once the battle finishes',
-        timeout: 30000,
+      await expect(page.getByText('进行中', { exact: true })).toBeVisible()
+      expect(pveBodies).toEqual([{
+        versionID: saved.id,
+        presetKey: 'ganlong-conservative',
+      }])
+      await page.screenshot({
+        path: test.info().outputPath('live-desktop.png'),
+        fullPage: true,
       })
-      .toBe(true)
+      allowFinished = true
+      releaseLive.resolve()
+      await expect.poll(async () => {
+        const detail = await (await page.request.get(`/v1/matches/${matchID}`))
+          .json()
+        return detail.summary.finished && detail.summary.scored
+      }, { timeout: 30_000 }).toBe(true)
+      const detail = await (await page.request.get(`/v1/matches/${matchID}`))
+        .json()
+      expect(detail.summary.kind).toBe('pve')
+      expect(detail.summary.scenarioID).toBe('shangyang-court')
+      expect(detail.summary.winner).toBe('a')
+      expect([detail.scoreA, detail.scoreB]).toEqual([1, 0])
+      expect(detail.error ?? null).toBeNull()
+      expect(
+        detail.turns.filter((turn: { kind: string }) => turn.kind === 'event')
+          .map((turn: { event: { text?: string } }) => turn.event.text),
+      ).toEqual(a3Dialogue)
+      for (const text of a3Dialogue) {
+        await expect(page.getByText(text, { exact: true })).toBeVisible()
+      }
+      await expect(
+        page.getByRole('heading', { name: '首战打完，接下来' }),
+      ).toBeVisible()
+      expect(documentLoads, 'live becomes scored without document reload').toBe(
+        0,
+      )
+      expect(
+        (await (await page.request.get('/v1/auth/me')).json()).firstBattleDone,
+      ).toBe(true)
+      const after = await (await page.request.get('/v1/config')).json()
+      expect(after.usage.battlesToday).toBe(before.usage.battlesToday + 1)
+      expect(after.usage.pvpBattlesToday).toBe(before.usage.pvpBattlesToday)
+      expect(
+        (await (await page.request.get('/v1/matches')).json()).matches.map((
+          match: { id: number },
+        ) => match.id),
+      ).toEqual([matchID])
+      expect(await a3DatabaseCounts()).toEqual({
+        agent_versions: databaseBefore.agent_versions + 1,
+        matches: databaseBefore.matches + 1,
+        dispatches: databaseBefore.dispatches + 1,
+        journal: databaseBefore.journal + 129,
+        turns: databaseBefore.turns + 2,
+      })
+      await page.screenshot({
+        path: test.info().outputPath('scored-desktop.png'),
+        fullPage: true,
+      })
+      await page.setViewportSize({ width: 390, height: 844 })
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.scrollWidth <= innerWidth
+        ),
+      ).toBe(true)
+      await page.screenshot({
+        path: test.info().outputPath('scored-mobile.png'),
+        fullPage: true,
+      })
+      for (
+        const [name, init, dialog] of [
+          ['MCQ', 'mcq', '选择预设策略'],
+          ['直接编写', 'raw', null],
+          ['元提示词', 'meta', '让你的AI帮你想策略'],
+        ] as const
+      ) {
+        await expect(page.getByRole('link', { name, exact: true }))
+          .toHaveAttribute('href', `/agents/${agentID}/build?init=${init}`)
+        await page.getByRole('link', { name, exact: true }).click()
+        await expect(page).toHaveURL(
+          new RegExp(`/agents/${agentID}/build\\?init=${init}$`),
+        )
+        if (dialog) {
+          await expect(page.getByRole('dialog', { name: dialog, exact: true }))
+            .toBeVisible()
+        } else await expect(page.getByLabel('策略提示词')).toBeFocused()
+        await expect(page.getByLabel('策略提示词')).toHaveValue(savedPrompt)
+        await page.goBack()
+      }
+      await page.goto('/express')
+      await expect(page).toHaveURL(/\/scenarios$/)
+      await page.reload()
+      await expect(page).toHaveURL(/\/scenarios$/)
+      expect(pveBodies).toHaveLength(1)
+      expect(
+        (await (await page.request.get(`/v1/agents/${agentID}/versions`))
+          .json()).versions,
+      ).toHaveLength(1)
+    } finally {
+      releaseConfig.resolve()
+      releaseScenario.resolve()
+      releaseLive.resolve()
+      await page.unrouteAll({ behavior: 'ignoreErrors' })
+      await fixture.restore()
+    }
   })
 
   test('P6 #59/#79 blocks a second same-side agent until an opposite-side agent exists', async ({ page }) => {
@@ -492,14 +631,18 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     expect('stats' in freshEntry!).toBe(false)
     expect(freshEntry!.onlineAt).toBeGreaterThan(0)
 
-    // 浏览器复核：固定局卡无统计行；有教育内容的真场景卡画「对局数不足」
+    // 浏览器复核：无统计时，通用固定局卡与真场景卡都画「数据积累中」
     // 引导式空态（电车场景全程无人完局，永远低于门槛）。
     await page.goto('/scenarios')
     const fixtureCard = page.getByTestId(`scenario-${fixtureID}`)
     await expect(fixtureCard).toBeVisible()
     await expect(fixtureCard.getByText('侧方胜率')).toHaveCount(0)
+    await expect(fixtureCard.getByText('数据积累中', { exact: true }))
+      .toBeVisible()
     await expect(
-      page.getByTestId('scenario-trolley-problem').getByText(/对局数不足/),
+      page.getByTestId('scenario-trolley-problem').getByText('数据积累中', {
+        exact: true,
+      }),
     ).toBeVisible()
 
     // 两场固定局完局跨过门槛（a 侧带暗记连胜两场 → 100% / 0%）。

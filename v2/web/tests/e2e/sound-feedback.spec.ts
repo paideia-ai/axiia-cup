@@ -1,5 +1,5 @@
 // U19 executable BDD. Steps mirror sound-feedback.feature on product baseline
-// e6de29f. HTTP is fixture-controlled; the SPA, EventSource and Web Audio are real.
+// 18515a3. HTTP is fixture-controlled; the SPA, EventSource and Web Audio are real.
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 import type {
@@ -28,6 +28,7 @@ interface AudioStart {
 interface SoundWorld {
   prompt: string
   versions: AgentVersionDTO[]
+  firstBattleDone: boolean
   saveFails: boolean
   dispatchFails: boolean
   saves: number
@@ -48,6 +49,7 @@ async function installWorld(page: Page): Promise<SoundWorld> {
   const world: SoundWorld = {
     prompt: '先给出可验证的承诺，再回应对方的顾虑。',
     versions: [],
+    firstBattleDone: true,
     saveFails: false,
     dispatchFails: false,
     saves: 0,
@@ -129,7 +131,7 @@ async function installWorld(page: Page): Promise<SoundWorld> {
           hasTOTP: false,
         },
         elevated: false,
-        firstBattleDone: true,
+        firstBattleDone: world.firstBattleDone,
       })
     }
     if (path === '/v1/config') return json(config)
@@ -378,8 +380,9 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
   await test.step('假如 我打开首战构建器并允许同源保存和派发成功', async () => {
     world = await installWorld(page)
     world.match = runningMatch()
+    world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '保存版本' }))
       .toBeEnabled()
   })
   await test.step('当 我编辑策略并等待草稿自动暂存', async () => {
@@ -392,8 +395,12 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
   await test.step('那么 输入播放一次轻点，自动暂存没有追加声音', async () => {
     await expectCues(page, [75])
   })
-  await test.step('当 我点击保存并开始首战', async () => {
+  await test.step('当 我保存版本，再明确点击开始首战', async () => {
     await pressSave(page)
+    await expect(page).toHaveURL(/\/build\?express=1$/)
+    expect(world.dispatches).toBe(0)
+    await page.getByTestId('start-first-battle').focus()
+    await page.keyboard.press('Enter')
   })
   await test.step('那么 真实页面进入新对局，且保存与派发接口各成功一次', async () => {
     await expect(page).toHaveURL(new RegExp(`/matches/${MATCH_ID}$`))
@@ -403,9 +410,9 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
     expect(world.dispatches).toBe(1)
   })
   await test.step('并且 按键立即响起点击音，随后保存音和派发音依次确认且没有重叠', async () => {
-    await expectCues(page, [75, 110, 260, 340])
+    await expectCues(page, [75, 110, 260, 110, 340])
     const starts = await audioStarts(page)
-    expect(starts[3].when).toBeGreaterThanOrEqual(
+    expect(starts[4].when).toBeGreaterThanOrEqual(
       starts[2].when + starts[2].duration,
     )
   })
@@ -416,9 +423,10 @@ test('失败操作保留点击反馈，只有成功结果播放确认音', async
   await test.step('假如 首战构建器的保存接口返回失败', async () => {
     world = await installWorld(page)
     world.saveFails = true
+    world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
   })
-  await test.step('当 我点击保存并开始首战', async () => {
+  await test.step('当 我点击保存版本', async () => {
     await pressSave(page)
   })
   await test.step('那么 页面展示保存错误，浏览器只有点击反馈而无保存确认', async () => {
@@ -431,14 +439,20 @@ test('失败操作保留点击反馈，只有成功结果播放确认音', async
     world.saveFails = false
     world.dispatchFails = true
     await pressSave(page)
+    await page.getByTestId('start-first-battle').focus()
+    await page.keyboard.press('Enter')
   })
-  await test.step('那么 页面说明版本已保存并可手动出战', async () => {
-    await expect(page).toHaveURL(/\/agents\/101$/)
-    await expect(page.getByText(/版本已保存，可从「出战」面板手动发起/))
+  await test.step('那么 页面保留已保存版本并提示核对未确认的派发', async () => {
+    await expect(page).toHaveURL(/\/build\?express=1$/)
+    await expect(
+      page.getByText(
+        '首战请求结果尚未确认，请到「我的对局」核对；不要重复派发。',
+      ),
+    )
       .toBeVisible()
   })
-  await test.step('并且 两次点击各有反馈，只追加一次保存确认且没有派发确认', async () => {
-    await expectCues(page, [110, 110, 260])
+  await test.step('并且 三次点击各有反馈，只追加一次保存确认且没有派发确认', async () => {
+    await expectCues(page, [110, 110, 260, 110])
     expect(world.saves).toBe(1)
     expect(world.dispatches).toBe(1)
   })

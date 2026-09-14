@@ -4,21 +4,28 @@ import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import type { AgentVersionDTO, MeResponse } from '../api/types'
-import { AuthProvider } from '../context/auth'
+import { AuthProvider, useAuth } from '../context/auth'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
-import { B3_A5_MANUAL_URL, STEPS } from './data'
-import { FIXTURE_SESSION_STORAGE_KEY, FIXTURE_STORAGE_KEY } from './fixtures'
+import { JOURNEYS, REVIEWED_MANUAL_URL, STEPS } from './data'
+import {
+  FIXTURE_SESSION_STORAGE_KEY,
+  FIXTURE_STORAGE_KEY,
+  readFixtureValues,
+  writeFixtureValues,
+} from './fixtures'
 import { TestModeRoot } from './index'
 import { STEP_HINTS } from './registry/index'
-import { BOARD_URL } from './supabase'
+import { BOARD_URL, readProgress, writeProgress } from './supabase'
 
 // 测试模式压在真实的构建器（E 页）上：徽标 → 弹层 → 清单 → 导测（j3s5 聚光）→ 确认写看板。
 // 断言只依赖「页面上有标记」，不钉具体 id，登记表增删不必改这里。
 
-function Surface() {
+function Surface(
+  { initialEntry = '/agents/101/build?tm=1' }: { initialEntry?: string },
+) {
   return (
-    <MemoryRouter initialEntries={['/agents/101/build?tm=1']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path='/agents/:agentId/build' element={<BuilderPage />} />
       </Routes>
@@ -113,6 +120,64 @@ function accountHandler(displayName: string) {
   return http.get('/v1/auth/me', () => HttpResponse.json(me))
 }
 
+function SwitchFixtureRole() {
+  const { login } = useAuth()
+  return (
+    <button
+      type='button'
+      onClick={() =>
+        void login({ email: 'creation@example.test', password: 'test' })}
+    >
+      切换到创建角色
+    </button>
+  )
+}
+
+function A6RunSurface() {
+  return (
+    <MemoryRouter
+      initialEntries={[
+        '/agents/9001?tm=1&tmJourney=HV-A6-GATES-CREATION&tmStep=HV-A6-GATES-CREATION-S01',
+      ]}
+    >
+      <AuthProvider>
+        <RouteProbe />
+        <SwitchFixtureRole />
+        <TestModeRoot />
+      </AuthProvider>
+    </MemoryRouter>
+  )
+}
+
+function seedCompletedFixtureRuns() {
+  writeFixtureValues('HV-A3-FIRST-BATTLE', {
+    a3Preset: 'previous-run-preset',
+    a3FreshAgentId: '101',
+    a3FirstMatchId: '5001',
+  })
+  writeFixtureValues('HV-A6-GATES-CREATION', {
+    a6GateAgentId: '9001',
+    a6OtherScenarioSlug: 'previous-scenario',
+    a6LockedOpponentVersionId: '9002',
+    a6CreationAgentId: '9003',
+  })
+  for (const id of ['HV-A3-FIRST-BATTLE', 'HV-A6-GATES-CREATION']) {
+    const journey = JOURNEYS.find((item) => item.id === id)!
+    writeProgress(
+      id,
+      Object.fromEntries(journey.steps.map((step) => [
+        step.id,
+        {
+          choice: 'pass',
+          at: '2026-09-12T00:00:00.000Z',
+          versionPins: step.versionPins,
+        },
+      ])),
+    )
+  }
+  return {}
+}
+
 const meta = {
   title: 'v3.4/Test mode',
   component: Surface,
@@ -128,13 +193,8 @@ const meta = {
       localStorage.removeItem(FIXTURE_STORAGE_KEY)
       sessionStorage.removeItem(FIXTURE_SESSION_STORAGE_KEY)
       for (
-        const journey of [
-          'HV-B3-OWNER-EA',
-          'HV-B3-PUBLIC-NPC',
-          'HV-A5-OS-CORE',
-          'HV-A5-HOTSEAT-LIFECYCLE',
-          'HV-A5-PVP-BOUNDARIES',
-        ]
+        const journey of JOURNEYS.filter((item) => item.round === 'handoff')
+          .map((item) => item.id)
       ) {
         localStorage.removeItem(`axiia:tm:guided:${journey}`)
       }
@@ -370,12 +430,12 @@ export const ConfirmedB3A5Handoff: Story = {
     await userEvent.click(within(pill).getByRole('button', { name: '导测' }))
     const runner = await body.findByRole('dialog', { name: '导测' })
 
-    await expect(within(runner).getByText('B3 / A5 · 固定版本可交接'))
+    await expect(within(runner).getByText('Spec V4 · 固定版本可交接'))
       .toBeVisible()
     const handoffManual = within(runner).getByRole('link', {
       name: '详细手册 · 截图提交',
     }) as HTMLAnchorElement
-    expect(handoffManual.href).toBe(B3_A5_MANUAL_URL)
+    expect(handoffManual.href).toBe(REVIEWED_MANUAL_URL)
 
     await userEvent.click(
       within(runner).getByRole('button', { name: /^旅程 B3\.1：/ }),
@@ -417,7 +477,7 @@ export const ConfirmedB3A5Handoff: Story = {
       name: '在详细手册提交这些文件',
     }) as HTMLAnchorElement
     expect(b3Upload.href).toBe(
-      `${B3_A5_MANUAL_URL}#HV-B3-OWNER-EA-S01`,
+      `${REVIEWED_MANUAL_URL}#HV-B3-OWNER-EA-S01`,
     )
 
     await userEvent.click(body.getByRole('button', { name: /^第 9 步/ }))
@@ -439,5 +499,205 @@ export const ConfirmedB3A5Handoff: Story = {
       body.getByText('HV-A5-OS-CORE-S05-mobile-sheet.png'),
     ).toBeVisible()
     expect(body.queryByText('HV-A5-OS-CORE-S06')).toBeNull()
+  },
+}
+
+export const ReviewedManualDeepLinkAndA3Capture: Story = {
+  args: {
+    initialEntry:
+      '/agents/101/build?tm=1&tmJourney=HV-A3-FIRST-BATTLE&tmStep=HV-A3-FIRST-BATTLE-S02',
+  },
+  play: async () => {
+    const body = within(document.body)
+    const runner = await body.findByRole('dialog', { name: '导测' })
+    await expect(runner).toBeVisible()
+    await expect(await body.findByText('HV-A3-FIRST-BATTLE-S02')).toBeVisible()
+
+    const capture = body.getByRole('button', {
+      name: '从当前智能体网址捕获',
+    })
+    await expect(capture).toBeEnabled()
+    await userEvent.click(capture)
+    await expect(body.getByLabelText('记录新建 agentId')).toHaveValue('101')
+
+    const manual = body.getByRole('link', {
+      name: '详细手册与 fixture 说明',
+    }) as HTMLAnchorElement
+    expect(manual.href).toBe(
+      `${REVIEWED_MANUAL_URL}#HV-A3-FIRST-BATTLE-S02`,
+    )
+  },
+}
+
+export const VivianJourneysAreSelectable: Story = {
+  play: async () => {
+    const body = within(document.body)
+    const pill = await body.findByRole('navigation', { name: '测试模式' })
+    await userEvent.click(within(pill).getByRole('button', { name: '导测' }))
+    for (
+      const [number, journeyId] of [
+        ['A3.1', 'HV-A3-FIRST-BATTLE'],
+        ['A3.2', 'HV-A3-TRIALS-BLOCKED'],
+        ['A4.1', 'HV-A4-CATALOG-DETAIL'],
+        ['A6.1', 'HV-A6-GATES-CREATION'],
+        ['A6.2', 'HV-A6-ENTRY-QUOTA'],
+      ]
+    ) {
+      const runner = await body.findByRole('dialog', { name: '导测' })
+      await userEvent.click(
+        within(runner).getByRole('button', {
+          name: new RegExp(`^旅程 ${number.replace('.', '\\.')}：`),
+        }),
+      )
+      await expect(await body.findByText(`${journeyId}-S01`)).toBeVisible()
+      const activeRunner = body.getByRole('dialog', { name: '导测' })
+      await expect(
+        within(activeRunner).getByRole('link', {
+          name: '详细手册与 fixture 说明',
+        }),
+      ).toHaveAttribute('href', `${REVIEWED_MANUAL_URL}#${journeyId}-S01`)
+      if (journeyId === 'HV-A6-GATES-CREATION') {
+        const gateAgent = within(activeRunner).getByLabelText(
+          /^PVP 门槛账号智能体 ID/,
+        )
+        await expect(gateAgent).toHaveValue('')
+        await expect(
+          within(activeRunner).getByRole('button', {
+            name: '先填写：PVP 门槛账号智能体 ID',
+          }),
+        ).toBeDisabled()
+        await userEvent.type(gateAgent, '9001')
+        await expect(
+          within(activeRunner).getByRole('link', {
+            name: '打开网页：本步起始页',
+          }),
+        ).toHaveAttribute('href', `${globalThis.location.origin}/agents/9001`)
+      }
+      await userEvent.click(
+        within(activeRunner).getByRole('button', {
+          name: '旅程列表',
+        }),
+      )
+    }
+  },
+}
+
+export const A3NewRunClearsCapturedUrlsAndProgress: Story = {
+  args: {
+    initialEntry:
+      '/agents/101/build?tm=1&tmJourney=HV-A3-FIRST-BATTLE&tmStep=HV-A3-FIRST-BATTLE-S03',
+  },
+  loaders: [seedCompletedFixtureRuns],
+  play: async () => {
+    const body = within(document.body)
+    const guide = within(await body.findByRole('dialog', { name: '导测' }))
+    await expect(await guide.findByRole('button', { name: '第 3 步，看到了' }))
+      .toBeVisible()
+    await expect(guide.getByRole('link', { name: '打开网页：本步起始页' }))
+      .toHaveAttribute(
+        'href',
+        `${globalThis.location.origin}/agents/101/build?express=1`,
+      )
+
+    await userEvent.click(guide.getByRole('button', { name: '开始新一轮' }))
+    await expect(await guide.findByText('HV-A3-FIRST-BATTLE-S01')).toBeVisible()
+    await expect(guide.getByRole('region', { name: '本轮测试' }))
+      .toHaveTextContent('服务器账号状态和看板历史不会重置')
+    for (let index = 1; index <= 7; index += 1) {
+      await expect(guide.getByRole('button', { name: `第 ${index} 步` }))
+        .toBeVisible()
+    }
+    await userEvent.click(guide.getByRole('button', { name: '第 3 步' }))
+    await expect(
+      guide.getByRole('button', { name: '先填写：本轮首战单侧智能体 ID' }),
+    )
+      .toBeDisabled()
+    expect(guide.queryByRole('link', { name: '打开网页：本步起始页' }))
+      .toBeNull()
+    await userEvent.click(guide.getByRole('button', { name: '第 5 步' }))
+    await expect(guide.getByRole('button', { name: '先填写：本轮首战对局 ID' }))
+      .toBeDisabled()
+    expect(readFixtureValues('HV-A3-FIRST-BATTLE')).toEqual({
+      appBaseUrl: globalThis.location.origin,
+    })
+    expect(readProgress('HV-A3-FIRST-BATTLE')).toEqual({})
+    expect(readFixtureValues('HV-A6-GATES-CREATION')).toMatchObject({
+      a6GateAgentId: '9001',
+      a6CreationAgentId: '9003',
+    })
+    expect(Object.keys(readProgress('HV-A6-GATES-CREATION'))).toHaveLength(4)
+    expect(calls).toEqual([])
+  },
+}
+
+export const A6RoleSwitchPreservesRunAndReplacementClearsIt: Story = {
+  render: A6RunSurface,
+  loaders: [seedCompletedFixtureRuns],
+  parameters: {
+    msw: [
+      accountHandler('A6 人测·PVP 门槛'),
+      http.post('/v1/auth/login', () =>
+        HttpResponse.json({
+          account: {
+            id: 'creation-role',
+            email: 'creation@example.test',
+            displayName: 'A6 人测·单侧已保存',
+            isAdmin: false,
+            hasTOTP: false,
+          },
+          elevated: false,
+          firstBattleDone: false,
+        })),
+    ],
+  },
+  play: async () => {
+    const body = within(document.body)
+    const guide = within(await body.findByRole('dialog', { name: '导测' }))
+    await expect(await guide.findByRole('button', { name: '第 1 步，看到了' }))
+      .toBeVisible()
+    await expect(guide.getByLabelText(/^PVP 门槛账号智能体 ID/)).toHaveValue(
+      '9001',
+    )
+    await userEvent.click(body.getByRole('button', { name: '切换到创建角色' }))
+    await waitFor(() =>
+      expect(guide.getByTestId('tm-current-account-email'))
+        .toHaveTextContent('creation@example.test')
+    )
+    await expect(guide.getByLabelText(/^PVP 门槛账号智能体 ID/)).toHaveValue(
+      '9001',
+    )
+    await userEvent.click(
+      guide.getByRole('button', { name: '第 4 步，看到了' }),
+    )
+    expect(readFixtureValues('HV-A6-GATES-CREATION').a6CreationAgentId)
+      .toBe('9003')
+    await expect(guide.getByRole('button', { name: '第 1 步，看到了' }))
+      .toBeVisible()
+
+    await userEvent.click(guide.getByRole('button', { name: '开始新一轮' }))
+    await expect(await guide.findByText('HV-A6-GATES-CREATION-S01'))
+      .toBeVisible()
+    await expect(guide.getByLabelText(/^PVP 门槛账号智能体 ID/)).toHaveValue('')
+    await expect(
+      guide.getByRole('button', { name: '先填写：PVP 门槛账号智能体 ID' }),
+    )
+      .toBeDisabled()
+    for (let index = 1; index <= 4; index += 1) {
+      await expect(guide.getByRole('button', { name: `第 ${index} 步` }))
+        .toBeVisible()
+    }
+    expect(readProgress('HV-A6-GATES-CREATION')).toEqual({})
+    expect(readFixtureValues('HV-A6-GATES-CREATION')).toEqual({
+      appBaseUrl: globalThis.location.origin,
+    })
+    await userEvent.type(guide.getByLabelText(/^PVP 门槛账号智能体 ID/), '9101')
+    await expect(guide.getByRole('link', { name: '打开网页：本步起始页' }))
+      .toHaveAttribute('href', `${globalThis.location.origin}/agents/9101`)
+    expect(readFixtureValues('HV-A3-FIRST-BATTLE')).toMatchObject({
+      a3FreshAgentId: '101',
+      a3FirstMatchId: '5001',
+    })
+    expect(Object.keys(readProgress('HV-A3-FIRST-BATTLE'))).toHaveLength(7)
+    expect(calls).toEqual([])
   },
 }

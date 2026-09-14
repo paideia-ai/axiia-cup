@@ -101,14 +101,15 @@ async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
-  options?: Pick<RequestInit, 'keepalive'>,
+  options?: Pick<RequestInit, 'keepalive' | 'credentials' | 'signal'>,
 ): Promise<T> {
   const headers = new Headers()
   const init: RequestInit = {
     method,
-    credentials: 'include',
+    credentials: options?.credentials ?? 'include',
     headers,
     keepalive: options?.keepalive,
+    signal: options?.signal,
   }
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json')
@@ -183,11 +184,18 @@ export const auth = {
 // ── Catalog ─────────────────────────────────────────────────────────────────
 
 export const catalog = {
-  scenarios: () => request<ScenarioListResponse>('GET', '/scenarios'),
-  scenario: (id: string, side: Side) =>
+  scenarios: (options?: Pick<RequestInit, 'credentials'>) =>
+    request<ScenarioListResponse>('GET', '/scenarios', undefined, options),
+  scenario: (
+    id: string,
+    side: Side,
+    options?: Pick<RequestInit, 'credentials' | 'signal'>,
+  ) =>
     request<ScenarioDetail>(
       'GET',
       `/scenarios/${encodeURIComponent(id)}?side=${side}`,
+      undefined,
+      options,
     ),
   models: () => request<ModelListResponse>('GET', '/models'),
   opponents: (id: string, side: Side) =>
@@ -207,7 +215,8 @@ export const landing = {
 export const config = {
   // §C2 read-only projection: quotas, gate threshold, models, trials switch,
   // plus the caller's usage. Callers must degrade gracefully on failure.
-  get: () => request<ConfigResponse>('GET', '/config'),
+  get: (options?: Pick<RequestInit, 'signal'>) =>
+    request<ConfigResponse>('GET', '/config', undefined, options),
 }
 
 export const myAgents = {
@@ -263,8 +272,11 @@ export const builder = {
 // ── Matches ─────────────────────────────────────────────────────────────────
 
 export const matches = {
-  dispatchPVE: (input: DispatchPVERequest) =>
-    request<DispatchResponse>('POST', '/matches/pve', input).finally(
+  dispatchPVE: (
+    input: DispatchPVERequest,
+    options?: Pick<RequestInit, 'signal'>,
+  ) =>
+    request<DispatchResponse>('POST', '/matches/pve', input, options).finally(
       refreshRewards,
     ),
   dispatchPVP: (input: DispatchPVPRequest) =>
@@ -302,8 +314,10 @@ export const rewards = {
 export const versions = {
   // #25/#62 按 id 约战的解析读：版本 id → {玩家/场景/侧/模型}；不存在 → 404
   // not_found；老服务器无此端点，同样按降级处理。
-  ref: (id: number) =>
-    request<VersionRefResponse>('GET', `/versions/${id}/ref`),
+  ref: (id: number, signal?: AbortSignal) =>
+    request<VersionRefResponse>('GET', `/versions/${id}/ref`, undefined, {
+      signal,
+    }),
 }
 
 // ── Notifications ───────────────────────────────────────────────────────────

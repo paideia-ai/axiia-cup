@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  agentIdFromUrl,
+  captureIdFromUrl,
   fillFixtureText,
   FIXTURE_SESSION_STORAGE_KEY,
   FIXTURE_STORAGE_KEY,
   fixtureVariables,
   matchIdFromUrl,
   readFixtureValues,
+  resetFixtureValues,
   resolveFixtureUrl,
   writeFixtureValues,
 } from './fixtures'
@@ -89,6 +92,24 @@ describe('Test Mode fixture 解析', () => {
     expect(matchIdFromUrl('/agents/42')).toBeNull()
     expect(matchIdFromUrl('/matches')).toBeNull()
   })
+
+  it('按资源类型捕获 agentId / matchId，并拒绝串用产品路径', () => {
+    expect(
+      agentIdFromUrl(
+        'https://cup.example/agents/agent%2042/build?express=1',
+      ),
+    ).toBe('agent 42')
+    expect(agentIdFromUrl('/agents/fresh-9')).toBe('fresh-9')
+    expect(captureIdFromUrl('/agents/fresh-9/build', 'agentId')).toBe(
+      'fresh-9',
+    )
+    expect(captureIdFromUrl('/matches/live%209', 'matchId')).toBe('live 9')
+
+    expect(agentIdFromUrl('/matches/live-9')).toBeNull()
+    expect(matchIdFromUrl('/agents/fresh-9/build')).toBeNull()
+    expect(captureIdFromUrl('/agents', 'agentId')).toBeNull()
+    expect(captureIdFromUrl('/matches/live-9/transcript', 'matchId')).toBeNull()
+  })
 })
 
 describe('Test Mode fixture 按旅程隔离', () => {
@@ -154,5 +175,99 @@ describe('Test Mode fixture 按旅程隔离', () => {
         b3PublicTargetAgentId: 'prepared-default',
       }).b3PublicTargetAgentId,
     ).toBe('local-override')
+  })
+
+  it('A3 开测前刷新值与本轮 ID 都只写进 sessionStorage', () => {
+    writeFixtureValues('HV-A3-FIRST-BATTLE', {
+      appBaseUrl: 'https://ignored.example',
+      a3Preset: 'scenario/player-side/minimum-npc',
+      a3FreshAgentId: 'fresh-agent',
+      a3FirstMatchId: 'first-match',
+    })
+
+    expect(readFixtureValues('HV-A3-FIRST-BATTLE')).toEqual({
+      appBaseUrl: 'https://cup.example',
+      a3Preset: 'scenario/player-side/minimum-npc',
+      a3FreshAgentId: 'fresh-agent',
+      a3FirstMatchId: 'first-match',
+    })
+
+    const stable = JSON.parse(
+      localStorage.getItem(FIXTURE_STORAGE_KEY) ?? '{}',
+    )
+    expect(stable['HV-A3-FIRST-BATTLE']).toEqual({})
+    const runtime = JSON.parse(
+      sessionStorage.getItem(FIXTURE_SESSION_STORAGE_KEY) ?? '{}',
+    )
+    expect(runtime['HV-A3-FIRST-BATTLE']).toEqual({
+      a3Preset: 'scenario/player-side/minimum-npc',
+      a3FreshAgentId: 'fresh-agent',
+      a3FirstMatchId: 'first-match',
+    })
+  })
+
+  it('忽略旧 localStorage 里的 A6 可变 ID，只读取本轮 session 值', () => {
+    localStorage.setItem(
+      FIXTURE_STORAGE_KEY,
+      JSON.stringify({
+        'HV-A6-GATES-CREATION': {
+          a6GateAgentId: 'stale-gate-agent',
+          a6OtherScenarioSlug: 'stale-scenario',
+        },
+      }),
+    )
+
+    expect(readFixtureValues('HV-A6-GATES-CREATION')).toEqual({
+      appBaseUrl: 'https://cup.example',
+    })
+
+    writeFixtureValues('HV-A6-GATES-CREATION', {
+      appBaseUrl: 'https://cup.example',
+      a6GateAgentId: 'fresh-gate-agent',
+      a6OtherScenarioSlug: 'fresh-scenario',
+    })
+    expect(readFixtureValues('HV-A6-GATES-CREATION')).toMatchObject({
+      a6GateAgentId: 'fresh-gate-agent',
+      a6OtherScenarioSlug: 'fresh-scenario',
+    })
+    expect(
+      JSON.parse(localStorage.getItem(FIXTURE_STORAGE_KEY) ?? '{}')[
+        'HV-A6-GATES-CREATION'
+      ],
+    ).toEqual({})
+  })
+
+  it('显式开新一轮只清本旅程可变值，其他旅程和稳定 ID 保留', () => {
+    writeFixtureValues('HV-A3-FIRST-BATTLE', {
+      a3Preset: 'old-preset',
+      a3FreshAgentId: 'old-agent',
+      a3FirstMatchId: 'old-match',
+    })
+    writeFixtureValues('HV-A6-GATES-CREATION', {
+      a6GateAgentId: 'old-gate',
+      a6CreationAgentId: 'old-creation',
+      a6OtherScenarioSlug: 'old-scenario',
+      a6LockedOpponentVersionId: 'old-version',
+    })
+    writeFixtureValues('HV-B3-PUBLIC-NPC', {
+      b3PublicTargetAgentId: 'stable-target',
+    })
+
+    expect(resetFixtureValues('HV-A6-GATES-CREATION')).toEqual({
+      appBaseUrl: 'https://cup.example',
+    })
+    expect(readFixtureValues('HV-A6-GATES-CREATION')).toEqual({
+      appBaseUrl: 'https://cup.example',
+    })
+    expect(readFixtureValues('HV-A3-FIRST-BATTLE')).toMatchObject({
+      a3FreshAgentId: 'old-agent',
+      a3FirstMatchId: 'old-match',
+    })
+    expect(resetFixtureValues('HV-B3-PUBLIC-NPC')).toMatchObject({
+      b3PublicTargetAgentId: 'stable-target',
+    })
+    expect(resetFixtureValues('HV-A3-FIRST-BATTLE')).toEqual({
+      appBaseUrl: 'https://cup.example',
+    })
   })
 })

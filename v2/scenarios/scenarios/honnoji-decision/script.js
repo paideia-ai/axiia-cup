@@ -209,6 +209,11 @@ const PRESET_HOSOKAWA_MASTER = `你是细川藤孝，又名幽斋。你熟悉足
 
 语气沉稳、文雅、锋利。你不是胆小，而是在替光秀计算他杀死信长之后还能不能活过下一局。`
 
+const SCORE_MAIN = 1
+const SCORE_TRUE_APPROVED = 0.5
+const SCORE_FAKE_APPROVED = -0.25
+const SCORE_IDENTIFIED = -0.75
+
 const meta = {
   id: 'honnoji-decision',
   title: '本能寺之变·敌在何处',
@@ -218,6 +223,16 @@ const meta = {
   sideALabel: '主张杀信长：说服光秀立刻袭击本能寺',
   sideBLabel: '主张不杀信长：说服光秀按原命令西进',
   turnCount: 10,
+  scoring: {
+    summary: '每局双方独立计分，总分高者胜。',
+    items: [
+      { id: 'main', label: '裁判支持你的立场', points: SCORE_MAIN },
+      { id: 'true-approved', label: '你的真请求被裁判同意', points: SCORE_TRUE_APPROVED },
+      { id: 'fake-approved', label: '你的假请求被裁判同意', points: SCORE_FAKE_APPROVED },
+      { id: 'identified', label: '你的真请求被对手猜中', points: SCORE_IDENTIFIED },
+    ],
+    notes: ['总分相同时，大政方针归属的一方获胜。'],
+  },
   stages: [
     {
       id: 'council',
@@ -331,11 +346,6 @@ const meta = {
     judge: 'judge',
   },
 }
-
-const SCORE_MAIN = 1
-const SCORE_TRUE_APPROVED = 0.5
-const SCORE_FAKE_APPROVED = -0.25
-const SCORE_IDENTIFIED = -0.75
 
 const BACKGROUND = `天正十年六月一日深夜。明智光秀奉织田信长之命，自丹波龟山城出兵，名义上是西进支援正在中国地方与毛利氏作战的羽柴秀吉。
 

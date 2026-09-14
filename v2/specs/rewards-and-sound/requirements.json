@@ -4298,7 +4298,26 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "后台事件流完局仍提醒一次且返回不重播",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "离开对战页后后台轮询仍提醒并尊重总静音",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "多个后台标签页收到同一完局时只提醒一次",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "unit",
@@ -4326,24 +4345,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -4496,7 +4522,20 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/approved-sounds.test.ts",
+              "title": "ships the exact stereo B cash-out recording",
+              "run": "AUTO-RS-DEMO-UNIT"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "mock-integration",
@@ -4506,24 +4545,32 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD",
+              "AUTO-RS-DEMO-UNIT"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -4857,7 +4904,26 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "后台事件流完局仍提醒一次且返回不重播",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "离开对战页后后台轮询仍提醒并尊重总静音",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "多个后台标签页收到同一完局时只提醒一次",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "unit",
@@ -4885,24 +4951,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -5259,27 +5332,47 @@
         "auto": {
           "state": "none",
           "has_test": false,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/approved-sounds.test.ts",
+              "title": "ships the exact stereo B cash-out recording",
+              "run": "AUTO-RS-DEMO-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/approved-sounds.test.ts",
+              "title": "preserves the approved type waveform",
+              "run": "AUTO-RS-DEMO-UNIT"
+            }
+          ],
           "in_ci": false,
-          "last_green": null,
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-UNIT"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "coverage": "partial",
           "historicalStrong": [],
-          "latest_result": "pending"
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -5397,7 +5490,20 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "弹性短线与柔音保留编辑行为和独立控制",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "mock-integration",
@@ -5425,24 +5531,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -5593,7 +5706,14 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "mock-integration",
@@ -5621,24 +5741,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -5788,7 +5915,20 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "保存返回主页后出战按钮保留悬停与点击反馈",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "mock-integration",
@@ -5798,24 +5938,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -5947,7 +6094,20 @@
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [],
+          "strong": [
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "保存返回主页后出战按钮保留悬停与点击反馈",
+              "run": "AUTO-RS-DEMO-BDD"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "失败操作保留点击反馈，只有成功结果播放确认音",
+              "run": "AUTO-RS-DEMO-BDD"
+            }
+          ],
           "historicalStrong": [
             {
               "layer": "mock-integration",
@@ -5957,24 +6117,31 @@
             }
           ],
           "coverage": "partial",
-          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "note": "已执行当前修订的真实浏览器/单元测试；HTTP 为夹具。保留部分覆盖，不把素材身份或音频启动当作真人听感、全浏览器或全激活方式验证。",
           "in_ci": false,
-          "last_green": null,
-          "latest_result": "pending"
+          "last_green": {
+            "runs": [
+              "AUTO-RS-DEMO-BDD"
+            ],
+            "result": "passed",
+            "reportedAt": "2026-09-14",
+            "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe"
+          },
+          "latest_result": "passed"
         },
         "human": {
           "state": "untested",
           "latest": null,
           "records": []
         },
-        "freshness": "unknown",
+        "freshness": "v2/web tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
         "bugs": []
       },
       "test_plan": {
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned-for-current-clause",
+        "status": "executed-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
       },
       "version_history": [
@@ -6341,6 +6508,81 @@
         768,
         1280
       ]
+    },
+    {
+      "id": "AUTO-RS-DEMO-UNIT",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "18515a3",
+      "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+      "command": "deno task test:unit",
+      "result": "passed",
+      "passed": 236,
+      "scope": "31 unit files; exact approved WAV and typing waveform hashes",
+      "evidenceFile": "/tmp/pr174-combined-unit.log",
+      "evidenceInspected": true,
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-DEMO-STORIES",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "18515a3",
+      "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+      "command": "deno task test:storybook",
+      "result": "passed",
+      "passed": 97,
+      "scope": "18 files; separate Save/Start, 402 retry, public guest/member routes, points and audio controls",
+      "evidenceFile": "/tmp/pr174-final-story.log",
+      "evidenceInspected": true,
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-DEMO-BDD",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "18515a3",
+      "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+      "command": "deno task test:e2e:rewards",
+      "result": "passed",
+      "passed": 18,
+      "scope": "7 rewards and 11 sound journeys; real Chromium/Web Audio/SSE with fixture HTTP; native background focus and multi-tab checks",
+      "evidenceFile": "/tmp/pr174-verified-bdd.log",
+      "evidenceInspected": true,
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-DEMO-QUALITY",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "18515a3",
+      "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+      "command": "deno task fmt; deno task lint; deno task typecheck; deno task typecheck:tests; deno task build",
+      "result": "passed",
+      "passed": null,
+      "scope": "format, lint, application/test types and production build",
+      "evidenceFile": "/tmp/pr174-final-build.log",
+      "evidenceInspected": true,
+      "in_ci": false,
+      "human": false
+    },
+    {
+      "id": "AUTO-RS-DEMO-FIXTURES",
+      "reportedBy": "root agent",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "18515a3",
+      "webTree": "36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+      "command": "deno task test:human-fixtures",
+      "result": "passed",
+      "passed": 76,
+      "scope": "automated fixture preparation contracts, 65 steps; not human acceptance",
+      "evidenceFile": "/tmp/pr174-final-human-fixtures.log",
+      "evidenceInspected": true,
+      "in_ci": false,
+      "human": false
     }
   ],
   "revision": "v3",
@@ -6386,7 +6628,7 @@
     }
   ],
   "verificationSummary": {
-    "asOf": "2026-09-12",
+    "asOf": "2026-09-14",
     "specification": "all 54 clauses remain proposed/improving; defaults are not final product confirmation",
     "backend": {
       "revision": "1c0d205",
@@ -6398,19 +6640,31 @@
       "lint": "passed",
       "types": "passed",
       "build": "passed",
+      "unitTests": 236,
+      "unitFiles": 31,
+      "storybook": "97/97 in one full run; 18 files",
+      "bdd": "18/18 in one full run; 7 rewards + 11 sound",
+      "fixturePreparation": "76 automated tests with 65 steps"
+    },
+    "human": "untested",
+    "production": "not-verified",
+    "frontendCI": "not-claimed; consult PR checks for final pushed revision",
+    "freshness": "Frontend evidence pinned to v2/web Git tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+    "notes": [
+      "浏览器使用真实 SPA/Chromium/Web Audio/SSE，业务 HTTP 内容为夹具；不代表 Swift 全栈、真人听感或生产验证。",
+      "合并 main 后首轮发现旧合并保存/出战夹具及公开场景缺少钱包替身，已修正；角色切换夹具随后补齐明确首战对手配置。完整最终运行通过，历史失败日志保留在 /tmp/pr174-combined-{bdd,story}.log 和 /tmp/pr174-final-bdd.log。",
+      "保留当前 main 的保存与开始首战分离：保存免费，报价检查只阻止派发；HTTP 402 可重试已保存版本。"
+    ],
+    "demoAlignmentRevision": "v3 verified locally against main 18515a3; backend evidence remains historical at 1c0d205",
+    "historicalFrontendSep12": {
+      "format": "passed",
+      "lint": "passed",
+      "types": "passed",
+      "build": "passed",
       "unitTests": 196,
       "unitFiles": 26,
       "storybook": "56 covered through initial run plus targeted sequential rerun",
       "bdd": "13/13 passed in final sequential run"
-    },
-    "human": "untested",
-    "production": "not-verified",
-    "frontendCI": "not-claimed",
-    "freshness": "unknown for uncommitted frontend snapshot",
-    "notes": [
-      "历史超时记录保留，最终顺序重跑已通过。",
-      "代码、单元、浏览器、真实服务端、真人五类证据不能互相替代。"
-    ],
-    "demoAlignmentRevision": "v3; pending fresh frontend verification; earlier runs remain historical"
+    }
   }
 }

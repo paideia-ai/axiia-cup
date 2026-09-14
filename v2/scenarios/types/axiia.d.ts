@@ -47,6 +47,11 @@ interface ScenarioMeta {
   sideALabel?: string
   sideBLabel?: string
   turnCount?: number
+  scoring?: {
+    summary: string
+    items: { id: string; label: string; points: number }[]
+    notes?: string[]
+  }
   stages?: ScenarioStage[]
   presets?: PresetOpponent[]
   speakerLabels?: Record<string, string>

@@ -63,11 +63,9 @@ const STEP_IDS = [
     { length: 5 },
     (_, index) => `HV-A5-OS-CORE-S${String(index + 1).padStart(2, '0')}`,
   ),
-  ...Array.from(
-    { length: 3 },
-    (_, index) =>
-      `HV-A5-HOTSEAT-LIFECYCLE-S${String(index + 1).padStart(2, '0')}`,
-  ),
+  'HV-A5-HOTSEAT-LIFECYCLE-S01',
+  'HV-A5-HOTSEAT-LIFECYCLE-S03',
+  'HV-A5-HOTSEAT-LIFECYCLE-S02',
   ...Array.from(
     { length: 2 },
     (_, index) => `HV-A5-PVP-BOUNDARIES-S${String(index + 1).padStart(2, '0')}`,
@@ -217,7 +215,9 @@ describe('B3 / A5 固定版本人测交接', () => {
     ])
 
     const npcStep = steps['HV-B3-PUBLIC-NPC-S02']
-    expect(npcStep.knownGap?.detail).toContain('没有真实 npcAgentId')
+    expect(npcStep.knownGap?.detail).toContain('两侧胜率尚待正式口径裁决与实现')
+    expect(npcStep.marker).toBe('DA.npc-list')
+    expect(npcStep.expected).toContain('分别展示两个阵营胜率')
     expect(npcStep.knownGap?.instruction).toContain('不要拼造 ID')
     expect(
       fixtureVariables(
@@ -227,6 +227,20 @@ describe('B3 / A5 固定版本人测交接', () => {
         ...(npcStep.links ?? []).map((link) => link.url),
       ),
     ).not.toContain('npcAgentId')
+  })
+
+  it('进行中观战检查先于完局过期检查，保持原条款和步骤 ID', () => {
+    const journey = B3_A5_JOURNEYS.find((item) =>
+      item.id === 'HV-A5-HOTSEAT-LIFECYCLE'
+    )!
+    const position = (id: string) =>
+      journey.steps.findIndex((step) =>
+        step.id === `HV-A5-HOTSEAT-LIFECYCLE-${id}`
+      )
+    expect(position('S01')).toBeLessThan(position('S03'))
+    expect(position('S03')).toBeLessThan(position('S02'))
+    expect(journey.steps[position('S03')].clauseIds).toContain('U05-C10')
+    expect(journey.steps[position('S02')].clauseIds).toContain('U05-C09b')
   })
 
   it('安全业务 ID 已预填；运行时对局绝不预填', () => {

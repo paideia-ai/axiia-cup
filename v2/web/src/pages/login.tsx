@@ -116,7 +116,9 @@ export function LoginPage() {
           <p className='text-center text-sm text-(--foreground-muted)'>
             还没有账户？{' '}
             <Link
-              to='/register'
+              to={new URLSearchParams(location.search).has('next')
+                ? `/register?${new URLSearchParams({ next: returnPath })}`
+                : '/register'}
               className='text-(--accent)'
               {...tm('B.register-link')}
             >

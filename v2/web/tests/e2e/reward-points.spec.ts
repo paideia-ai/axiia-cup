@@ -12,6 +12,8 @@ async function rewardWorld(page: Page, options: {
   failWallet?: boolean
 } = {}) {
   const world = {
+    firstBattleDone: true,
+    expressOpponentSide: 'b' as 'a' | 'b',
     claimed: false,
     claims: 0,
     saves: 0,
@@ -36,7 +38,7 @@ async function rewardWorld(page: Page, options: {
           isAdmin: false,
         },
         elevated: false,
-        firstBattleDone: true,
+        firstBattleDone: world.firstBattleDone,
       })
     }
     if (path === '/v1/rewards') {
@@ -104,7 +106,18 @@ async function rewardWorld(page: Page, options: {
       return json({ notifications: [], unreadCount: 0 })
     }
     if (path === '/v1/config') {
-      return json({ ...config, dailyBattleLimit: 0, pvpDailyLimit: 0 })
+      return json({
+        ...config,
+        dailyBattleLimit: 0,
+        pvpDailyLimit: 0,
+        expressPreset: {
+          scenarioID: scenario.summary.id,
+          side: world.expressOpponentSide,
+          presetKey: world.expressOpponentSide === 'a'
+            ? 'shangyang-direct'
+            : 'ganlong-steady',
+        },
+      })
     }
     if (path === '/v1/models') return json({ models: config.models })
     if (path === '/v1/my/agents') return json({ scenarios: [] })
@@ -122,7 +135,7 @@ async function rewardWorld(page: Page, options: {
       world.saves++
       return json({
         id: 1002,
-        agentID: 102,
+        agentID: Number(path.split('/')[3]),
         ordinal: 1,
         isEntry: true,
         prompt: '用可验证的小承诺说服君上。',
@@ -172,15 +185,17 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
   let world: Awaited<ReturnType<typeof rewardWorld>>
   await test.step('假如 首次钱包请求暂时失败', async () => {
     world = await rewardWorld(page, { failWallet: true })
+    world.firstBattleDone = false
   })
-  await test.step('当 我打开首战构建器', async () => {
+  await test.step('当 我打开首战构建器并保存版本', async () => {
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 我不能保存出战也没有创建版本或派发请求', async () => {
+  await test.step('那么 版本已保存但不能开始首战也没有派发请求', async () => {
     await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '开始首战' }))
       .toBeDisabled()
-    expect(world.saves).toBe(0)
+    expect(world.saves).toBe(1)
     expect(world.dispatches).toBe(0)
   })
   await test.step('当 我重试并拿到钱包与角色报价', async () => {
@@ -189,7 +204,7 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
   })
   await test.step('那么 显示实际消耗并允许出战', async () => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '开始首战' }))
       .toBeEnabled()
     expect(world.quotes).toBeGreaterThan(0)
   })
@@ -264,29 +279,33 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
   let world: Awaited<ReturnType<typeof rewardWorld>>
   await test.step('假如 我有 150 积分且商鞅报价 200 而甘龙报价 100', async () => {
     world = await rewardWorld(page, { balance: 150, surcharge: true })
+    world.firstBattleDone = false
   })
-  await test.step('当 我打开商鞅首战构建器', async () => {
+  await test.step('当 我打开商鞅首战构建器并保存版本', async () => {
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 我看到本次 200 积分和换角色提示且保存出战不可用', async () => {
+  await test.step('那么 我看到本次 200 积分和换角色提示且开始首战不可用', async () => {
     await expect(page.getByText('200 积分', { exact: true })).toBeVisible()
     await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '开始首战' }))
       .toBeDisabled()
-    expect(world.saves).toBe(0)
+    expect(world.saves).toBe(1)
     expect(world.dispatches).toBe(0)
   })
-  await test.step('当 我切换到甘龙首战构建器', async () => {
+  await test.step('当 首战配置指向商鞅对手，我切换到甘龙构建器', async () => {
+    world.expressOpponentSide = 'a'
     await page.goto('/agents/102/build?express=1')
+    await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 本次消耗变成 100 积分并能保存出战', async () => {
+  await test.step('那么 本次消耗变成 100 积分并能开始首战', async () => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
     await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
       .toHaveCount(0)
-    await page.getByRole('button', { name: '保存并开始首战' }).click()
+    await page.getByRole('button', { name: '开始首战' }).click()
     await expect(page).toHaveURL(/\/matches\/9001$/)
-    expect(world.saves).toBe(1)
+    expect(world.saves).toBe(2)
     expect(world.dispatches).toBe(1)
   })
   await test.step('而且 没有每天零场的旧配额提示', async () => {
@@ -296,22 +315,24 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
 
 test('报价失败时先重试再允许出战', async ({ page }) => {
   await test.step('假如 当前角色报价暂时不可用', async () => {
-    await rewardWorld(page, { failQuote: true })
+    const world = await rewardWorld(page, { failQuote: true })
+    world.firstBattleDone = false
   })
-  await test.step('当 我打开首战构建器', async () => {
+  await test.step('当 我打开首战构建器并保存版本', async () => {
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 我看到重试提示且不能保存出战', async () => {
+  await test.step('那么 我看到重试提示且不能开始首战', async () => {
     await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '开始首战' }))
       .toBeDisabled()
   })
   await test.step('当 我重新确认积分', async () => {
     await page.getByRole('button', { name: '重新确认积分' }).click()
   })
-  await test.step('那么 正确报价显示后才允许保存出战', async () => {
+  await test.step('那么 正确报价显示后才允许开始首战', async () => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: '保存并开始首战' }))
+    await expect(page.getByRole('button', { name: '开始首战' }))
       .toBeEnabled()
   })
 })

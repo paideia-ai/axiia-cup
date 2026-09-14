@@ -1,8 +1,15 @@
 import { Check, Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 import {
+  ApiError,
   builder,
   catalog,
   config as configApi,
@@ -40,6 +47,13 @@ import { promptLength } from '../lib/prompt-length'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
+import {
+  creationTool,
+  type FirstBattleAttempt,
+  firstBattlePreset,
+  readFirstBattleAttempt,
+  writeFirstBattleAttempt,
+} from '../lib/first-battle'
 import {
   roleByKey,
   roleOfOptions,
@@ -282,6 +296,7 @@ export function BuilderPage() {
   const agentID = Number(agentId)
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const auth = useOptionalAuth()
   const journalScope = useMemo<DraftJournalScope>(() => ({
     identity: builderDraftJournalIdentity(auth?.account?.id, agentID),
@@ -295,11 +310,11 @@ export function BuilderPage() {
   const [side, setSide] = useState<Side>(
     (params.get('side') as Side | null) ?? 'a',
   )
-  // A3 首战快速通道（#9/#10/#17 例外）：?express=1 时保存＝自动派发首战并
-  // 直进实况；无侧别选择（#57——执方本就来自 agent，本页从无切侧控件）。
+  // Vivian U03-C05 v2: saving and explicitly starting are separate operations.
   const express = params.get('express') === '1'
   const quoteState = useBattleQuote(scenarioID, side, 'pve', express)
   const insufficientPoints = quoteState.blocked
+  const requestedTool = creationTool(params.get('init'))
 
   const [prompt, setPrompt] = useState('')
   const [roleKey, setRoleKey] = useState<string | null>(null)
@@ -313,13 +328,33 @@ export function BuilderPage() {
   const [recovery, setRecovery] = useState<DraftRecovery | null>(null)
   const [draftLoading, setDraftLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [starting, setStarting] = useState(false)
+  const [startAttempt, setStartAttempt] = useState<FirstBattleAttempt | null>(
+    null,
+  )
+  const [attemptError, setAttemptError] = useState<string | null>(null)
+  const [startError, setStartError] = useState<string | null>(null)
+  const [configurationAttempt, setConfigurationAttempt] = useState(0)
+  const [configurationError, setConfigurationError] = useState<string | null>(
+    null,
+  )
+  const saveBusyRef = useRef(false)
+  const startBusyRef = useRef(false)
+  const currentRouteRef = useRef(location.key)
+  const currentIdentityRef = useRef(journalScope.identity)
+  currentRouteRef.current = location.key
+  currentIdentityRef.current = journalScope.identity
+  const focusPrompt = useCallback(
+    () => document.getElementById('prompt-input')?.focus(),
+    [],
+  )
   const [copied, setCopied] = useState(false)
   // P10：保存时的可选备注，写一次不再改；保存成功即清空，下一版重新填。
   const [note, setNote] = useState('')
   // P1：策略展示名（#63）。draft 接口不带 name，先从 /my/agents 取。
   const [agentName, setAgentName] = useState<string | null>(null)
-  // config 供字数上限、拒绝文案数字与 express 的新手预设对手 key；失败按
-  // null 降级（不显示上限、对手回落到第一个对侧预设）。
+  // config 供字数上限、拒绝文案数字与 express 的新手预设对手 key；失败时
+  // 保存仍可进行，首战等待重新加载成功后才允许派发。
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
   const [configSettled, setConfigSettled] = useState(false)
   const [loadedAgentID, setLoadedAgentID] = useState<number | null>(null)
@@ -350,6 +385,30 @@ export function BuilderPage() {
       saveRequestRef.current += 1
     }
   }, [])
+
+  useEffect(() => {
+    setStartError(null)
+    setAttemptError(null)
+    setStarting(false)
+    startBusyRef.current = false
+    saveBusyRef.current = false
+    try {
+      setStartAttempt(
+        express ? readFirstBattleAttempt(journalScope.identity) : null,
+      )
+    } catch {
+      setStartAttempt(null)
+      setAttemptError(
+        '无法读取首战派发记录，请先到「我的对局」核对；不会自动重试。',
+      )
+    }
+  }, [express, journalScope.identity])
+
+  useEffect(() => {
+    if (express && auth?.firstBattleDone) {
+      navigate('/scenarios', { replace: true })
+    }
+  }, [express, auth?.firstBattleDone, navigate])
 
   // Serialize field mutations so a slow older request can never overwrite a
   // newer draft. The keepalive form is used while leaving the route, when the
@@ -604,24 +663,30 @@ export function BuilderPage() {
   useEffect(() => {
     let live = true
     setConfigSettled(false)
-    void configApi.get().then((value) => {
+    setConfigurationError(null)
+    void configApi.get({ signal: AbortSignal.timeout(10000) }).then((value) => {
       if (live) setCfg(value)
     }).catch(() => {
-      if (live) setCfg(null)
+      if (live) {
+        setCfg(null)
+        setConfigurationError(
+          '首战配置加载失败，请重新加载后再开始；已保存版本不受影响。',
+        )
+      }
     }).finally(() => {
       if (live) setConfigSettled(true)
     })
     return () => {
       live = false
     }
-  }, [])
+  }, [configurationAttempt])
 
   useEffect(() => {
     if (!scenarioID) return
     let live = true
     setScenario(null)
     void catalog
-      .scenario(scenarioID, side)
+      .scenario(scenarioID, side, { signal: AbortSignal.timeout(10000) })
       .then((value) => {
         if (live) setScenario(value)
       })
@@ -633,7 +698,7 @@ export function BuilderPage() {
     return () => {
       live = false
     }
-  }, [express, scenarioID, side])
+  }, [express, scenarioID, side, configurationAttempt])
 
   useEffect(() => {
     const source = new EventSource(sseUrl(`/agents/${agentID}/stream`), {
@@ -780,52 +845,116 @@ export function BuilderPage() {
     setLastEvent('已保留服务器草稿')
   }
 
-  // A3 ③：首战的保存自动派发（#17 的唯一例外）——对手＝新手预设指定的
-  // 对侧 NPC（#10，config 缺席回落第一个对侧预设），成功直进实况（#9），
-  // express 标记走一次性导航 state（旅程卡 #67 的诚实判据）。派发失败降级
-  // 为 EA 导航 + 错误文案（版本已保存，玩家可从出战面板手动发起）。
-  const expressDependenciesReady = !express ||
-    (scenario != null && configSettled)
-
-  const expressDispatch = async (
-    versionID: number,
-    requestIsCurrent: () => boolean,
-  ) => {
-    const opponentPresets = (scenario?.presets ?? []).filter(
-      (preset) => preset.side !== side,
-    )
-    const configured = cfg?.expressPreset ?? null
-    const preset = opponentPresets.find(
-      (item) => item.key === configured?.presetKey,
-    ) ?? opponentPresets[0] ?? null
+  const expressDependenciesReady = scenario != null && configSettled &&
+    cfg != null
+  let presetKey: string | null = null
+  let presetError = configurationError
+  if (express && expressDependenciesReady) {
     try {
-      if (preset == null) throw new Error('未找到首战对手预设')
-      const response = await matches.dispatchPVE({
-        versionID,
-        presetKey: preset.key,
-      })
-      if (!requestIsCurrent()) return
-      playSound('dispatch', String(response.matchID))
-      trackSoundMatch(response.matchID)
-      navigate(`/matches/${response.matchID}`, { state: { express: true } })
+      presetKey = firstBattlePreset(cfg, scenario, side)
     } catch (cause) {
-      if (!requestIsCurrent()) return
-      navigate(`/agents/${agentID}`, {
-        state: {
-          savedVersionID: versionID,
-          expressDispatchError: `${
-            rejectCopy(cause, cfg, '首战自动派发失败')
-          }——版本已保存，可从「出战」面板手动发起`,
-        },
-      })
+      presetError = messageOf(cause)
+    }
+  }
+
+  const continueFirstBattle = (matchID: number) => {
+    navigate(`/matches/${matchID}`, { state: { express: true } })
+  }
+
+  const startFirstBattle = async () => {
+    if (
+      !express || startBusyRef.current || saveBusyRef.current || saving ||
+      starting || draftLoading || loadedAgentID !== agentID ||
+      !latestVersion || !presetKey || startAttempt || attemptError ||
+      auth?.firstBattleDone || recovery != null || insufficientPoints
+    ) return
+    unlockAudio()
+    playSound('click')
+    // Freeze the SAVED version, not the editable workspace or the latest ★.
+    const attempt: FirstBattleAttempt = {
+      versionID: latestVersion.id,
+      presetKey,
+      status: 'pending',
+    }
+    const identity = journalScope.identity
+    const route = location.key
+    const requestID = ++saveRequestRef.current
+    const belongsToBuilder = () =>
+      liveRef.current &&
+      saveRequestRef.current === requestID &&
+      currentIdentityRef.current === identity
+    const isCurrent = () =>
+      belongsToBuilder() && currentRouteRef.current === route
+    startBusyRef.current = true
+    setStarting(true)
+    setStartError(null)
+    try {
+      // Persist BEFORE sending. A reload after a lost response must not turn an
+      // uncertain POST into a second dispatch. This is tab-scoped, not server
+      // idempotency or a cross-tab exactly-once guarantee.
+      writeFirstBattleAttempt(identity, attempt)
+    } catch {
+      setAttemptError('无法保留首战派发记录，请检查浏览器存储；尚未派发对局。')
+      startBusyRef.current = false
+      setStarting(false)
+      return
+    }
+    setStartAttempt(attempt)
+    try {
+      const response = await matches.dispatchPVE({
+        versionID: attempt.versionID,
+        presetKey: attempt.presetKey,
+      }, { signal: AbortSignal.timeout(30000) })
+      const accepted: FirstBattleAttempt = {
+        ...attempt,
+        status: 'accepted',
+        matchID: response.matchID,
+      }
+      try {
+        writeFirstBattleAttempt(identity, accepted)
+      } catch {
+        // The pre-POST pending record remains conservative if this write fails.
+      }
+      if (belongsToBuilder()) setStartAttempt(accepted)
+      trackSoundMatch(response.matchID)
+      if (isCurrent()) {
+        playSound('dispatch', String(response.matchID))
+        continueFirstBattle(response.matchID)
+      }
+    } catch (cause) {
+      const rejected = cause instanceof ApiError &&
+        [400, 401, 402, 403, 404, 409, 413, 422, 429].includes(cause.status)
+      if (rejected) {
+        try {
+          writeFirstBattleAttempt(identity, null)
+        } catch {
+          if (belongsToBuilder()) {
+            setAttemptError('无法更新首战派发记录，请先到「我的对局」核对。')
+          }
+        }
+      }
+      if (!belongsToBuilder()) return
+      if (rejected) setStartAttempt(null)
+      setStartError(
+        rejected
+          ? `${
+            rejectCopy(cause, cfg, '首战派发被拒绝')
+          }；版本已保存，可再次点击「开始首战」。`
+          : '首战请求结果尚未确认，请到「我的对局」核对；不要重复派发。',
+      )
+    } finally {
+      if (belongsToBuilder()) {
+        startBusyRef.current = false
+        setStarting(false)
+      }
     }
   }
 
   const save = async () => {
     if (
-      saving || modelID == null || draftLoading || loadedAgentID !== agentID ||
-      !expressDependenciesReady || !prompt.trim() || recovery != null ||
-      (express && insufficientPoints)
+      saveBusyRef.current || startBusyRef.current || saving || starting ||
+      modelID == null || draftLoading || loadedAgentID !== agentID ||
+      !prompt.trim() || recovery != null || (express && auth?.firstBattleDone)
     ) return
     unlockAudio()
     playSound('click')
@@ -849,8 +978,14 @@ export function BuilderPage() {
       })(),
     }
     const requestID = ++saveRequestRef.current
+    const identity = journalScope.identity
+    const route = location.key
+    const belongsToBuilder = () =>
+      liveRef.current && saveRequestRef.current === requestID &&
+      currentIdentityRef.current === identity
     const requestIsCurrent = () =>
-      liveRef.current && saveRequestRef.current === requestID
+      belongsToBuilder() && currentRouteRef.current === route
+    saveBusyRef.current = true
     setSaving(true)
     setError(null)
     // 保存后立刻离开本页：把还压在 debounce 里的最后一段输入先冲给服务器
@@ -863,15 +998,15 @@ export function BuilderPage() {
       mutateTimer.current = null
     }
     try {
-      await enqueueDraftMutation()
-    } catch {
+      try {
+        await enqueueDraftMutation()
+      } catch {
+        if (requestIsCurrent()) {
+          setError('草稿暂存失败，请检查网络后重试；尚未创建新版本。')
+        }
+        return
+      }
       if (!requestIsCurrent()) return
-      setError('草稿暂存失败，请检查网络后重试；尚未创建新版本。')
-      setSaving(false)
-      return
-    }
-    if (!requestIsCurrent()) return
-    try {
       // E2（#82）：版本严格线性、不记父子——保存不再携带 parentVersionID。
       const saved = await builder.save(agentID, {
         prompt: snapshot.prompt,
@@ -880,13 +1015,27 @@ export function BuilderPage() {
         ...(snapshot.note === '' ? {} : { note: snapshot.note }),
         ...(snapshot.options == null ? {} : { options: snapshot.options }),
       })
+      // A hash/query navigation can retain this builder. Reconcile the known
+      // immutable result for its identity without taking over the new route or
+      // clearing draft fields that the new location may now own.
+      if (belongsToBuilder()) {
+        setVersions((
+          current,
+        ) => [...current.filter((version) => version.id !== saved.id), saved])
+      }
       if (!requestIsCurrent()) return
       playSound('save', `${agentID}:${saved.id}`)
       if (snapshot.journal != null) {
-        compareAndDeleteDraftJournal(journalScope, snapshot.journal)
+        if (compareAndDeleteDraftJournal(journalScope, snapshot.journal)) {
+          journalTokenRef.current = null
+        }
       }
       if (express) {
-        await expressDispatch(saved.id, requestIsCurrent)
+        setNote('')
+        basePromptRef.current = snapshot.prompt
+        setLastEvent(
+          `版本 v${saved.ordinal} 已保存；点击「开始首战」才会派发对局`,
+        )
         return
       }
       // Keso's low-complexity builder returns to the high-information home,
@@ -901,7 +1050,11 @@ export function BuilderPage() {
       // #14：计数器仅提示、保存由服务端强制；prompt_too_long 的产品文案
       // 把玩家指回右下角计数器（映射集中在 lib/reject-copy）。
       setError(rejectCopy(cause, null, '保存失败'))
-      setSaving(false)
+    } finally {
+      if (belongsToBuilder()) {
+        saveBusyRef.current = false
+        setSaving(false)
+      }
     }
   }
 
@@ -952,6 +1105,13 @@ export function BuilderPage() {
   // #68 只读角色模板：内容由场景模块供稿（并行编写中），缺席走通用兜底。
   const roleTemplate = roleModule?.roleTemplates?.[side] ??
     '该场景的角色模板文案整理中——比赛时系统仍会自动为你合并官方角色模板，无需在提示词里重复编写。'
+  const savedRoleKey = latestVersion
+    ? roleOfOptions(roleModule, latestVersion.options)?.key ?? null
+    : null
+  const unsavedFirstBattleChanges = latestVersion != null && (
+    prompt !== latestVersion.prompt || modelID !== latestVersion.modelID ||
+    roleKey !== savedRoleKey || note.trim() !== ''
+  )
 
   return (
     <div className='space-y-6'>
@@ -985,7 +1145,7 @@ export function BuilderPage() {
           {...tm('E.workspace-hint')}
         >
           {express
-            ? '首战快速通道 · 保存即自动开战并直达实况'
+            ? '首战快速通道 · 先保存版本，再点击「开始首战」'
             : '工作区 · 输入自动暂存；保存才会生成新版本'}
         </p>
       </div>
@@ -993,19 +1153,25 @@ export function BuilderPage() {
       {workspaceReady
         ? (
           <fieldset
-            disabled={saving || recovery != null}
+            disabled={saving || starting || recovery != null}
             className='min-w-0 border-0 p-0'
             aria-busy={saving}
           >
             <legend className='sr-only'>策略辅助</legend>
             <InitModes
-              key={`${scenarioID}:${side}:${roleKey ?? ''}:${saving}`}
+              key={`${scenarioID}:${side}:${roleKey ?? ''}:${
+                requestedTool ?? (express ? 'express' : 'default')
+              }`}
+              express={express}
+              initialTool={requestedTool}
+              onDirect={focusPrompt}
               deck={deck}
               metaPrompt={metaPromptFor(
                 roleModule,
                 scenario?.summary.title ?? scenarioID,
                 side,
                 sideDisplayName,
+                scenario?.scoring,
               )}
               currentPrompt={prompt}
               onFill={fillWorkspace}
@@ -1073,7 +1239,7 @@ export function BuilderPage() {
         : null}
 
       <fieldset
-        disabled={saving || !workspaceReady || recovery != null}
+        disabled={saving || starting || !workspaceReady || recovery != null}
         aria-busy={saving}
         className='space-y-4 rounded-xl border border-(--border-soft) bg-white/2 p-4 sm:p-5'
         {...tm('E.workspace-card')}
@@ -1146,7 +1312,6 @@ export function BuilderPage() {
             </p>
           )
           : null}
-        {express ? <BattleCostNotice quoteState={quoteState} /> : null}
         <div className='flex flex-wrap items-end gap-2 border-t border-(--border-soft) pt-4'>
           {roles.length > 0
             ? (
@@ -1230,17 +1395,13 @@ export function BuilderPage() {
             onPointerEnter={playButtonHover}
             className='h-11 sm:ml-auto md:h-10'
             onClick={() => void save()}
-            disabled={saving || draftLoading || loadedAgentID !== agentID ||
+            disabled={saving || starting || draftLoading ||
+              loadedAgentID !== agentID ||
               !prompt.trim() || modelID == null || overLimit ||
-              !expressDependenciesReady || recovery != null ||
-              (express && insufficientPoints)}
+              recovery != null}
             {...tm('E.save-button')}
           >
-            {saving
-              ? express ? '开战中…' : '保存中…'
-              : express
-              ? expressDependenciesReady ? '保存并开始首战' : '加载首战配置…'
-              : '保存并返回主页'}
+            {saving ? '保存中…' : express ? '保存版本' : '保存并返回主页'}
           </Button>
           {lastEvent
             ? (
@@ -1279,6 +1440,77 @@ export function BuilderPage() {
           )
           : null}
       </fieldset>
+
+      {express && latestVersion
+        ? (
+          <section
+            aria-label='开始首战'
+            className='space-y-3 rounded-xl border border-(--border-soft) p-4'
+            data-testid='first-battle-start'
+          >
+            <p className='font-semibold'>
+              已保存版本 v{latestVersion.ordinal}（#{latestVersion.id}）
+            </p>
+            <p className='text-sm text-(--foreground-subtle)'>
+              保存不会发起对局或消耗积分。点击「开始首战」后使用此版本和新手预设对手。
+            </p>
+            <BattleCostNotice quoteState={quoteState} />
+            {unsavedFirstBattleChanges
+              ? (
+                <p role='status' className='text-sm text-(--warning)'>
+                  工作区有未保存修改；本次首战只使用上述已保存版本。需要使用修改后的策略时，请先保存。
+                </p>
+              )
+              : null}
+            {presetError ? <p role='alert'>{presetError}</p> : null}
+            {startError ? <p role='alert'>{startError}</p> : null}
+            {attemptError ? <p role='alert'>{attemptError}</p> : null}
+            {startAttempt?.status === 'accepted' && startAttempt.matchID != null
+              ? (
+                <Button
+                  onClick={() => continueFirstBattle(startAttempt.matchID!)}
+                >
+                  继续首战 #{startAttempt.matchID}
+                </Button>
+              )
+              : startAttempt?.status === 'pending' && !starting
+              ? (
+                <p role='status'>
+                  首战请求结果尚未确认，请先核对对局记录，不会自动重新派发。
+                </p>
+              )
+              : (
+                <Button
+                  data-testid='start-first-battle'
+                  data-spec='U19-C07 U19-C19 U19-C20'
+                  onPointerEnter={playButtonHover}
+                  onClick={() => void startFirstBattle()}
+                  disabled={saving || starting || !presetKey ||
+                    !!attemptError || recovery != null || insufficientPoints}
+                >
+                  {starting ? '派发中…' : '开始首战'}
+                </Button>
+              )}
+            {(!expressDependenciesReady || presetError) && !starting
+              ? (
+                <Button
+                  variant='secondary'
+                  onClick={() => setConfigurationAttempt((value) => value + 1)}
+                >
+                  重新加载首战配置
+                </Button>
+              )
+              : null}
+            {startAttempt?.status === 'pending' || attemptError
+              ? (
+                <Link className='block text-sm underline' to='/matches'>
+                  查看我的对局
+                </Link>
+              )
+              : null}
+          </section>
+        )
+        : null}
 
       <Accordion className='rounded-xl border border-(--border-soft) px-4'>
         <AccordionItem

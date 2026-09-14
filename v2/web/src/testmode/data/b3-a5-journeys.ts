@@ -4,7 +4,9 @@
    U05-C11 / U05-C12 虽各自规范句已确认，但两者的默认取版规则冲突，解决前不得进入本集合。 */
 import type { FixtureField, FixtureProfile, Journey, Step } from '../data'
 
-export const B3_A5_MANUAL_PATH = '/spec-v4-b3-a5-human-test'
+import { REVIEWED_MANUAL_PATH } from './reviewed-manual'
+
+export const B3_A5_MANUAL_PATH = REVIEWED_MANUAL_PATH
 
 /**
  * 只允许注入可公开的稳定业务 ID。账号别名留在 profile 文案；密码、cookie、
@@ -69,7 +71,9 @@ function preparedId(name: string, label: string, help: string): FixtureField {
 
 function handoffJourney(input: HandoffJourney): Journey {
   const fieldNames = new Set(
-    input.fixtureProfiles.flatMap((profile) =>
+    input.fixtureProfiles.filter((profile) =>
+      profile.readiness !== 'refresh-required'
+    ).flatMap((profile) =>
       profile.fields.filter((field) => field.kind !== 'runtime').map((field) =>
         field.name
       )
@@ -115,8 +119,8 @@ export const B3_A5_JOURNEYS: Journey[] = [
     chapter: 'B3',
     title: '所有者 EA：入口、身份、版本与动作',
     prerequisites: [
-      '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体有 v1、v2 两个版本，最新版文本已知，v2 已标为本阵营唯一参赛版本。',
-      '种子数据口径固定：版本 359 有 1 场已计分、0 胜；参赛版本 360 为 0 场。执行中新增版本或对局后，先记录变化再按当时实际统计判定。',
+      '先按 fixture 卡切换到「B3 人测·完整所有者」；主智能体保留 v1=359、v2=360，可能已有额外版本。开测前按当前版本 API 记录最新版 ID/文本与本阵营唯一 ★；不要假定 v2 仍为最新版或参赛版，也不要为恢复种子状态而改标或删除版本。',
+      '初始种子统计基线：版本 359 有 1 场已计分、0 胜；版本 360 为 0 场。这不是当前参赛标记或版本总数的保证；执行前记录当前版本与统计，新增版本或对局后按当时实际统计判定。',
       '同一阵营另有 b3OwnerSiblingAgentId，另一阵营有且仅有 b3OwnerSoloSideAgentId；缺侧检查必须切换到「B3 人测·访客缺侧」。',
       '准备 b3OwnerTournamentId 对应积分榜条目、D/DA「我的智能体」入口、玩家对局列表、b3OwnerCompletedMatchId 战报和一次 E 保存后返回主页的结果，全部指向 b3OwnerAgentId。',
       '记录环境 URL、build SHA、所有相关 agent/version/match ID 和预期统计。',
@@ -135,7 +139,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'B3 人测·完整所有者',
         readiness: 'ready',
         description:
-          '双侧齐全；主智能体 224 的 v1=版本 359（已计分 1 场、0 胜），v2=版本 360（参赛版、0 场）；同侧兄弟=226，对侧唯一智能体=225。登录信息已通过 axiia-cup-product 群账号包交付。',
+          '双侧齐全；主智能体 224 保留 v1=版本 359、v2=版本 360，初始种子统计分别为 1 场已计分、0 胜与 0 场。可能已有额外版本；最新版与当前唯一 ★ 以开测时的版本 API 记录为准，不重置共享版本状态。同侧兄弟=226，对侧唯一智能体=225。登录信息已通过 axiia-cup-product 群账号包交付。',
         fields: [
           preparedId(
             'b3OwnerAgentId',
@@ -200,7 +204,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/tournaments/:id',
         marker: null,
         action:
-          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 的积分榜点 b3OwnerAgentId；在玩家对局列表点同一智能体；打开已完成战报后点「查看该智能体」；从 D/DA 侧卡点「查看我的…」；在 E 保存一个新版本并观察自动返回。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
+          '以「B3 人测·完整所有者」依次执行入口矩阵：在 b3OwnerTournamentId 积分榜点击属于 b3OwnerAgentId 的参赛版本入口；在玩家对局列表点击同一智能体的独立入口；打开已完成战报后点击该侧的「← 我的智能体」；在「我的智能体」侧卡点击该智能体的展示名；在 E 保存一个新版本并观察自动返回。上方每个辅助网址都可直接打开；每次记录落地 URL，再返回下一个入口。',
         expected:
           '每个入口都打开 /agents/{{b3OwnerAgentId}}，没有落到别的智能体或只停在中间列表页。',
         clauseIds: ['U10-C11', 'U10-C11b'],
@@ -297,7 +301,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'E.entry-badge',
         action:
-          '检查 v1、v2 的参赛徽章；点击非参赛版本的勾选图标并等待请求完成，再次检查两张卡。',
+          '检查全部已保存版本的参赛徽章，记录当前唯一参赛版；点击一个非参赛版本的勾选图标并等待请求完成，再次核对全部版本卡，包括之前测试新增的版本。',
         expected:
           '操作前后本阵营始终恰好一个版本带参赛标记；改标后旧标记消失，新标记只出现在所选版本。',
         clauseIds: ['U10-C06'],
@@ -384,7 +388,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     title: '非所有者公开 EA 与 PVE NPC 聚合视图',
     prerequisites: [
       '按 fixture 卡登录「B3 人测·访客缺侧」；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
-      'NPC 步骤直接从场景页开始。当前产品没有 NPC agent 实体或可填写的 NPC ID；不得拼造 npcAgentId。若入口缺失，按已知实现缺口提交失败证据。',
+      'NPC 步骤从场景页「NPC 练习对手」开始，可查看当前预设的身份、执方与模型；出战面板选中 NPC 后也有「查看当前 NPC」入口。两侧胜率仍待口径裁决与实现，不得把当前元数据视图判为整条通过；不用填写或拼造 npcAgentId。',
       '记录环境 URL、build SHA、账号角色和所有预期值。',
     ],
     evidenceRequirements: [
@@ -416,7 +420,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         kind: 'known-gap',
         readiness: 'known-gap',
         description:
-          '当前产品没有 NPC agent 实体或 /agents/:id 入口。不要填写或拼造 npcAgentId；真人从场景页查找入口并把缺失记录为 U10-C14 的实现失败。',
+          '从场景页逐 NPC 链接查看当前预设身份、执方、模型；此入口不代表历史对局配置。两侧胜率仍未交付，保留 U10-C14 的未完成状态，不填写或拼造 npcAgentId。',
         fields: [],
       },
     ],
@@ -446,16 +450,16 @@ export const B3_A5_JOURNEYS: Journey[] = [
         testUrl: '{{appBaseUrl}}/scenarios/shangyang-court',
         fixtureRefs: ['b3-public-viewer', 'b3-npc-gap'],
         knownGap: {
-          title: '已知实现缺口 · U10-C14 仍需真人取证',
+          title: '当前 NPC 可查看；两侧胜率验收仍未完成',
           detail:
-            '当前产品的 PVE NPC 没有 agent 实体或 /agents/:id 聚合页，因此没有真实 npcAgentId 可以预填。',
+            '场景详情与当前 PVE 对手选择已提供预设视图，显示当前身份、执方、模型与场景。原条款的两侧胜率尚待正式口径裁决与实现；页面不使用场景总体胜率或空统计占位替代。',
           instruction:
-            '不要跳过，也不要拼造 ID。若场景页找不到 NPC 的可查看入口，请截取目标 NPC 区域和地址栏，结果选「有问题」并写明缺少入口；只有入口存在时才继续核对两侧胜率。',
+            '分别记录逐 NPC 入口与当前元数据页面的真实结果；两侧胜率要求仍未满足，结果选「有问题」，不标整条通过。保留原预期与版本 pin，不把预设元数据当作统计证据；不要拼造 ID。',
         },
         route: '/scenarios/:id',
-        marker: null,
+        marker: 'DA.npc-list',
         action:
-          '在场景页找到目标 PVE NPC，查找其可查看入口。若入口不存在，按上方已知缺口说明直接取证；若入口已经实现，点击进入聚合视图并核对两个阵营的胜率。',
+          '从场景详情页「NPC 练习对手」打开目标 NPC，记录当前身份、执方、模型与场景。也可在当前出战面板选中 NPC 后点「查看当前 NPC」。保留原两侧胜率预期；统计尚未交付时记录缺失并判整条未通过。',
         expected:
           '每个 PVE NPC 都有可查看的聚合视图；目标 NPC 在当前场景分别展示两个阵营胜率，数值与种子数据一致，不显示成玩家胜率。',
         clauseIds: ['U10-C14'],
@@ -651,6 +655,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       '按 fixture 卡登录「A5 人测·锁定热座」：PVP 未解锁，但每日总对战仍有至少 1 场余量；同一场景两侧智能体齐全。',
       '操作前记录 battlesToday、pvpBattlesToday、总配额和 PVP 配额；确保没有其他进行中对局。',
       '打开网络记录和屏幕录制。a5HotseatActiveMatchId 不能预填：S01 派发成功后，把落地 /matches/:id 网址粘贴到本步的运行时记录框。',
+      '执行顺序为 S01 → S03 → S02：派发后立即取证并在对局仍进行中时完成 S03 观战跳转，最后完成 S02 的完局与 15 分钟到期观察；全程使用 S01 的同一场对局，不另开一场只为观测。步骤 ID 与条款 pin 保持原编号。',
     ],
     evidenceRequirements: [
       '提交指定截图、a5HotseatActiveMatchId、配额前后值和去敏后的派发响应。',
@@ -715,6 +720,26 @@ export const B3_A5_JOURNEYS: Journey[] = [
         ],
       },
       {
+        id: 'HV-A5-HOTSEAT-LIFECYCLE-S03',
+        testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
+        links: [
+          {
+            label: '预期观战落点',
+            url: '{{appBaseUrl}}/matches/{{a5HotseatActiveMatchId}}',
+          },
+        ],
+        fixtureRefs: ['a5-hotseat'],
+        route: '/agents/:id/build',
+        marker: 'OS.battle-card',
+        action:
+          '派发后立即返回工作区，确认 a5HotseatActiveMatchId 卡片立即出现，并同时保留 S02 所需的立即出现证据；在该对局仍进行中时点击横条里的卡片，把实际落地与上方「预期观战落点」比较。先完成本步，再执行 S02 的完局与到期等待。',
+        expected:
+          '系统打开可观看的 a5HotseatActiveMatchId 对局视图；本条不要求 A5 内出现分享入口。',
+        clauseIds: ['U05-C10'],
+        versionPins: { 'U05-C10': 'comment-v2:U05-C10' },
+        screenshotEvidence: ['HV-A5-HOTSEAT-LIFECYCLE-S03-watch.png'],
+      },
+      {
         id: 'HV-A5-HOTSEAT-LIFECYCLE-S02',
         testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
         links: [
@@ -728,9 +753,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id/build',
         marker: 'OS.battle-strip',
         action:
-          '派发后立即返回工作区，定位「进行中的对战」条，确认 a5HotseatActiveMatchId 卡片并点击折叠/展开；随后打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点，再等待对局完成并返回工作区。',
+          '先核对 S03 阶段采集的「派发后立即出现」证据；返回工作区，定位「进行中的对战」条并点击折叠/展开；打开上方「场景目录」和「本轮进行中对局」核对非派发处与观战落点。对局结束后记录 finishedAt，返回工作区核对「刚完成」卡片；到 finishedAt + 15 分钟后，再等待一次最多 30 秒的轮询，检查是否隐藏空条。',
         expected:
-          '横条只在派发相关区域出现；派发后立即包含本人发起且仍进行中的 a5HotseatActiveMatchId，可折叠；非派发处不出现；对局完成且列表为空后卡片移出并自动隐藏空条。',
+          '横条只在派发相关区域出现；派发后立即包含本人发起且仍进行中的 a5HotseatActiveMatchId，也保留结束未满 15 分钟的「刚完成」对局，可折叠；非派发处不出现。「0 进行 · 1 刚完成」不是空态，横条应保留。finishedAt + 15 分钟后，最多再等 30 秒轮询；仅在没有进行中对局、也没有未过期的「刚完成」卡片时自动隐藏。后台标签页暂停轮询，回到前台后立即刷新。',
         clauseIds: ['U05-C09', 'U05-C09b'],
         versionPins: {
           'U05-C09': 'baseline:U05-C09',
@@ -742,26 +767,6 @@ export const B3_A5_JOURNEYS: Journey[] = [
           'HV-A5-HOTSEAT-LIFECYCLE-S02-absent.png',
           'HV-A5-HOTSEAT-LIFECYCLE-S02-finished-hidden.png',
         ],
-      },
-      {
-        id: 'HV-A5-HOTSEAT-LIFECYCLE-S03',
-        testUrl: '{{appBaseUrl}}/agents/{{a5HotseatAgentId}}/build',
-        links: [
-          {
-            label: '预期观战落点',
-            url: '{{appBaseUrl}}/matches/{{a5HotseatActiveMatchId}}',
-          },
-        ],
-        fixtureRefs: ['a5-hotseat'],
-        route: '/agents/:id/build',
-        marker: 'OS.battle-card',
-        action:
-          '在 a5HotseatActiveMatchId 仍进行中时点击横条里的该对局卡，并把实际落地与上方「预期观战落点」比较。',
-        expected:
-          '系统打开可观看的 a5HotseatActiveMatchId 对局视图；本条不要求 A5 内出现分享入口。',
-        clauseIds: ['U05-C10'],
-        versionPins: { 'U05-C10': 'comment-v2:U05-C10' },
-        screenshotEvidence: ['HV-A5-HOTSEAT-LIFECYCLE-S03-watch.png'],
       },
     ],
   }),

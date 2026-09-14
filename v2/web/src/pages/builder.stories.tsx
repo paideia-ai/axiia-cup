@@ -3,7 +3,11 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import type { AgentVersionDTO, RewardsResponse } from '../api/types'
+import type {
+  AgentVersionDTO,
+  RewardsResponse,
+  ScenarioScoringDTO,
+} from '../api/types'
 import { RewardsProvider } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
 import { config, scenario } from '../testing/v34-fixtures'
@@ -45,6 +49,7 @@ const v2: AgentVersionDTO = {
 function handlers(
   draftPrompt: string,
   versionHandler: Parameters<typeof http.get>[1],
+  scoring?: ScenarioScoringDTO,
 ) {
   return [
     http.get('/v1/config', () => HttpResponse.json(config)),
@@ -53,7 +58,10 @@ function handlers(
         models: [{ id: 'fixture-model', label: 'Fixture Model' }],
       })),
     http.get('/v1/my/agents', () => HttpResponse.json({ scenarios: [] })),
-    http.get('/v1/scenarios/:id', () => HttpResponse.json(scenario)),
+    http.get(
+      '/v1/scenarios/:id',
+      () => HttpResponse.json({ ...scenario, scoring }),
+    ),
     http.get('/v1/agents/101/draft', () =>
       HttpResponse.json({
         fields: { prompt: draftPrompt },
@@ -128,6 +136,15 @@ export const ExternalAiHelperLivesInDialog: Story = {
     msw: handlers(
       v1.prompt,
       () => HttpResponse.json({ versions: [v1], entryVersionID: v1.id }),
+      {
+        summary: '逐项累计本场得分。',
+        items: [
+          { id: 'evidence', label: '证据闭环', points: 2.75 },
+          { id: 'repetition', label: '重复论证', points: -1.125 },
+          { id: 'unused', label: '未使用机会', points: 0 },
+        ],
+        notes: ['每项仅计入一次。'],
+      },
     ),
   },
   play: async ({ canvasElement }) => {
@@ -144,6 +161,17 @@ export const ExternalAiHelperLivesInDialog: Story = {
     await expect(dialog).toBeVisible()
     await expect(within(dialog).getByRole('button', { name: '复制元提示词' }))
       .toBeVisible()
+    const prompt = within(dialog).getByLabelText('元提示词内容')
+    await waitFor(() =>
+      expect(prompt).toHaveTextContent('计分规则：逐项累计本场得分。')
+    )
+    expect(prompt).toHaveTextContent('证据闭环：2.75 分')
+    expect(prompt).toHaveTextContent('重复论证：-1.125 分')
+    expect(prompt).toHaveTextContent('未使用机会：0 分')
+    expect(prompt).toHaveTextContent('每项仅计入一次。')
+    expect(prompt).not.toHaveTextContent(
+      /计分规则整理中|undefined|\+0\.5|[−-]0\.25|[−-]0\.75|\+1(?![\d.])|[−-]1(?![\d.])/,
+    )
   },
 }
 
@@ -199,8 +227,8 @@ const expressWallet: RewardsResponse = {
 }
 const expressFundsWorld = { balance: 99, saves: 0, dispatches: 0 }
 
-// U18-C24: insufficient funds block the combined first-battle action before a
-// version is created. A refreshed balance of exactly 100 permits save+dispatch.
+// U18-C24: saving is free; insufficient funds block only the explicit start.
+// A refreshed balance of exactly 100 permits dispatch of the saved version.
 export const ExpressBalanceBoundary: Story = {
   render: () => <ExpressRewardsSurface />,
   loaders: [() => {
@@ -240,13 +268,16 @@ export const ExpressBalanceBoundary: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const start = await canvas.findByRole('button', { name: '保存并开始首战' })
+    const save = await canvas.findByRole('button', { name: '保存版本' })
+    await waitFor(() => expect(save).toBeEnabled())
+    await userEvent.click(save)
+    const start = await canvas.findByRole('button', { name: '开始首战' })
     await expect(
       await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
     ).toBeVisible()
     await expect(start).toBeDisabled()
     start.click()
-    await expect(expressFundsWorld.saves).toBe(0)
+    await expect(expressFundsWorld.saves).toBe(1)
     await expect(expressFundsWorld.dispatches).toBe(0)
 
     expressFundsWorld.balance = 100

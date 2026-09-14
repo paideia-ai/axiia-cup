@@ -8,6 +8,7 @@ import {
   type DeckSelections,
 } from '../lib/deck'
 import { promptLength } from '../lib/prompt-length'
+import type { CreationTool } from '../lib/first-battle'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
 
@@ -17,6 +18,9 @@ interface InitModesProps {
   currentPrompt: string
   onFill: (text: string, method: 'mcq' | 'builder') => void
   promptUnitLimit: number | null
+  express?: boolean
+  initialTool?: CreationTool | null
+  onDirect?: () => void
 }
 
 // Keso 2026-09-09: the builder stays visually quiet. These two optional
@@ -28,8 +32,82 @@ export function InitModes({
   currentPrompt,
   onFill,
   promptUnitLimit,
+  express = false,
+  initialTool = null,
+  onDirect,
 }: InitModesProps) {
-  const [open, setOpen] = useState<'mcq' | 'meta' | null>(null)
+  const [open, setOpen] = useState<'mcq' | 'meta' | null>(
+    !express && initialTool !== 'raw' ? initialTool : null,
+  )
+  const [tool, setTool] = useState<CreationTool>(initialTool ?? 'mcq')
+
+  useEffect(() => {
+    if (initialTool === 'raw') onDirect?.()
+  }, [initialTool, onDirect])
+
+  if (express) {
+    return (
+      <section
+        className='space-y-4'
+        aria-label='新建方式'
+        {...tm('E.init-card')}
+      >
+        <div className='flex flex-wrap gap-2'>
+          {(['mcq', 'raw', 'meta'] as const).map((value) => (
+            <Button
+              key={value}
+              variant={tool === value ? 'primary' : 'secondary'}
+              aria-pressed={tool === value}
+              onClick={() => {
+                setTool(value)
+                if (value === 'raw') onDirect?.()
+              }}
+              {...(value === 'mcq'
+                ? tm('E.init-tab-mcq')
+                : value === 'meta'
+                ? tm('E.init-tab-meta')
+                : {})}
+            >
+              {value === 'mcq'
+                ? 'MCQ'
+                : value === 'raw'
+                ? '直接编写'
+                : '元提示词'}
+            </Button>
+          ))}
+        </div>
+        {tool === 'mcq'
+          ? (
+            <section
+              aria-label='MCQ'
+              className='rounded-lg border border-(--border-soft) p-4'
+            >
+              {deck
+                ? (
+                  <McqDraft
+                    deck={deck}
+                    currentPrompt={currentPrompt}
+                    promptUnitLimit={promptUnitLimit}
+                    onFill={(text) => {
+                      onFill(text, 'mcq')
+                      setTool('raw')
+                      onDirect?.()
+                    }}
+                  />
+                )
+                : <p>这个角色暂时没有 MCQ 预设，请选择直接编写或元提示词。</p>}
+            </section>
+          )
+          : tool === 'meta'
+          ? (
+            <section aria-label='元提示词'>
+              <MetaDraft metaPrompt={metaPrompt} />
+            </section>
+          )
+          : <p>直接在下方策略提示词中编写；切换方式不会替换已有草稿。</p>}
+      </section>
+    )
+  }
 
   return (
     <div

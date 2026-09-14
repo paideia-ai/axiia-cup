@@ -1,7 +1,7 @@
 /* 各页面组的登记合并成一份。加新页面组：新建 registry/<组>.ts 导出 `TM_<组>` 与可选的 `STEPS_<组>`，在这里合并。
    合并顺序无意义，id 必须全局唯一（registry.test.ts 会查）。STEP_HINTS 若同一步骤由两组登记，后面的覆盖前面的——
    冲突的步骤在下面显式裁决，不靠顺序。B3/A5 固定版本旅程已经自带 route/marker，直接由其数据投影，避免另抄一份。 */
-import { B3_A5_JOURNEYS } from '../data/b3-a5-journeys'
+import { REVIEWED_JOURNEYS } from '../data/reviewed-journeys'
 import type { StepHints, TmRegistry } from '../types'
 import { STEPS_AGENTS, TM_AGENTS } from './agents'
 import { STEPS_DISCOVERY, TM_DISCOVERY } from './discovery'
@@ -19,7 +19,7 @@ export const TM: TmRegistry = {
   ...TM_PERIPHERY,
 }
 
-const HANDOFF_STEPS = B3_A5_JOURNEYS.flatMap((journey) => journey.steps)
+const HANDOFF_STEPS = REVIEWED_JOURNEYS.flatMap((journey) => journey.steps)
 for (const step of HANDOFF_STEPS) {
   if (!step.marker || !TM[step.marker]) continue
   const entry = TM[step.marker]

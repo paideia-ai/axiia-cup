@@ -22,6 +22,7 @@ const NAME_A = '奕仁'
 const NAME_B = '武仁'
 const SIDE_A = '一人侧'
 const SIDE_B = '五人侧'
+const SCORE_CASE = 1
 
 const meta = {
   id: 'trolley-problem',
@@ -32,6 +33,12 @@ const meta = {
   sideALabel: '一人侧：在每个案件中保护一人，拒绝为救五人而牺牲一人',
   sideBLabel: '五人侧：在每个案件中保护五人，接受由一人承受伤害',
   turnCount: 15,
+  scoring: {
+    summary: '三个案件各裁给一方，拿下多数案件的一方获胜。',
+    items: [
+      { id: 'case-won', label: '一个案件裁给你的立场', points: SCORE_CASE },
+    ],
+  },
   stages: [
     {
       id: 'debate',
@@ -337,8 +344,8 @@ async function main() {
   for (let caseIndex = 0; caseIndex < cases.length; caseIndex++) {
     const ruling = verdict.fields[cases[caseIndex].id]
     rulings[cases[caseIndex].id] = ruling
-    if (ruling === SIDE_A) scoreA += 1
-    else scoreB += 1
+    if (ruling === SIDE_A) scoreA += SCORE_CASE
+    else scoreB += SCORE_CASE
   }
   const winner = scoreA > scoreB ? 'a' : 'b'
 

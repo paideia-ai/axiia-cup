@@ -49,7 +49,7 @@ export const trolleyProblem: ScenarioModule = {
     // 运行时实填原文。三案没有对双方统一说出的开场首句——openingLine 缺席。
     judgePrompt: runtimeQuotes['trolley-problem'].judgePrompt,
     judgeModel: runtimeQuotes['trolley-problem'].judgeModel,
-    scoring: '三个案件各裁给一方，每案 1 分，拿下多数案件的一方获胜。',
+    scoring: '计分规则整理中',
     background:
       '三个案件依次辩论，案情全文如下——\n\nA·原始电车：一辆失控电车正驶向主轨上的五个人。你是驾驶员，唯一能做的是把电车转向一条岔轨；岔轨上有一个人。若不转向，五人死；若转向，一人死。\n\nB·自动驾驶车：一辆自动驾驶车刹车失灵。它若保持直行，会撞死五名行人；若转向，会撞死车内的一名乘客。系统的选择是预先设置好的。\n\nC·缸中之脑：一辆电车刹车失灵，必须在两条路线中选择一条。路线一撞死轨道上的一名维修工；路线二撞向缸中之脑的接口，使缸中之脑体验到五个人被电车撞死时的恐惧和疼痛，但没有真实身体死亡。\n\n双方立场全程固定：奕仁代表一人侧，武仁代表五人侧。每案单独辩论五轮、每轮奕仁先发言，共十五轮；不得声称存在第三条路，不得否认或改写案件设定。',
     hiddenGoalHowTo:
