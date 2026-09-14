@@ -376,7 +376,7 @@ function MetaDraft({ metaPrompt }: { metaPrompt: string }) {
   return (
     <div className='space-y-4'>
       <p className='text-sm leading-7 text-(--foreground-subtle)'>
-        复制下面的策略构建提示词（Prompt Builder），发给你常用的
+        复制下面的策略构建提示词，发给你常用的
         AI。它会与你讨论、帮你完善策略；等你确认后，再生成最终策略提示词。
         将最终策略粘贴回构建器的主输入框。
       </p>

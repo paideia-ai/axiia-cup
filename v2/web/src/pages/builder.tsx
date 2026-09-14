@@ -706,11 +706,8 @@ export function BuilderPage() {
     })
     source.onmessage = (message) => {
       const event = JSON.parse(message.data) as BuilderEventDTO
-      if ('fieldMutated' in event) {
-        // E1：状态行按「自动暂存」口径措辞——确认本次草稿已经写入服务端。
-        setLastEvent('已自动暂存')
-      } else if ('versionCreated' in event) {
-        setLastEvent(`版本已创建：#${event.versionCreated.versionID}`)
+      if ('fieldMutated' in event || 'versionCreated' in event) {
+        setLastEvent(null)
       }
     }
     return () => source.close()
@@ -1139,15 +1136,6 @@ export function BuilderPage() {
             ? `${sideDisplayName}「${agentName}」`
             : `${sideDisplayName} #${agentID}`}
         </p>
-        {/* E1（#81）工作区语义：一句话说清「暂存 ≠ 版本」，不配说明书（E9） */}
-        <p
-          className='mt-1 text-xs text-(--foreground-muted)'
-          {...tm('E.workspace-hint')}
-        >
-          {express
-            ? '首战快速通道 · 先保存版本，再点击「开始首战」'
-            : '工作区 · 输入自动暂存；保存才会生成新版本'}
-        </p>
       </div>
 
       {workspaceReady
@@ -1289,14 +1277,7 @@ export function BuilderPage() {
             {...tm('E.prompt-input')}
           />
         </div>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          {/* #68 三层说明的固定文案 */}
-          <p
-            className='text-xs text-(--foreground-muted)'
-            {...tm('E.merge-hint')}
-          >
-            你只需编写策略提示词；比赛时系统会自动将它与场景的角色模板合并。
-          </p>
+        <div className='flex justify-end'>
           <span
             className={`shrink-0 font-mono text-xs ${
               overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
@@ -1416,21 +1397,6 @@ export function BuilderPage() {
             )
             : null}
         </div>
-        {/* P5：模型随版本快照（#13）——说清这一版会用哪个模型 */}
-        {latestVersion != null
-          ? (
-            <p
-              className='text-xs text-(--foreground-muted)'
-              {...tm('E.model-inherit-hint')}
-            >
-              {modelID === latestVersion.modelID
-                ? `沿用 ${versionTag(latestVersion, versions)} 的模型`
-                : `已改为新模型，保存后 v${versions.length + 1} 用新模型（${
-                  versionTag(latestVersion, versions)
-                } 不受影响）`}
-            </p>
-          )
-          : null}
         {selectedRole
           ? (
             <p
@@ -1523,9 +1489,6 @@ export function BuilderPage() {
             </span>
           }
         >
-          <p className='mb-3 text-xs text-(--foreground-muted)'>
-            比赛时系统会自动合并这份角色模板，无需复制到策略提示词。
-          </p>
           <p
             className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'
             {...tm('E.role-template-text')}

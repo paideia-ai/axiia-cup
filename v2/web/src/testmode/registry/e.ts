@@ -20,12 +20,6 @@ export const TM_E: TmRegistry = {
     clauses: ['U01-C20', 'U01-C23', 'U01-C20b'],
     note: 'P1：有自起名显示「商鞅「激进」」，无名回落「商鞅 #id」',
   },
-  'E.workspace-hint': {
-    label: '工作区一句话说明',
-    clauses: ['U01-C01', 'U01-C16', 'U01-C11', 'U02-C09'],
-    note:
-      '「输入自动暂存；保存才会生成新版本」；普通保存返回主页，express 首战改为「保存即自动开战」（#17 唯一例外）',
-  },
 
   // ---------- 次要辅助工具（InitModes；任何草稿/版本状态都可发现） ----------
   'E.init-card': {
@@ -130,10 +124,6 @@ export const TM_E: TmRegistry = {
     journeys: ['j3s3'],
     note: '打字 400ms 后自动暂存到服务端草稿；版本数不变；草稿永不参战',
   },
-  'E.merge-hint': {
-    label: '角色模板合并说明',
-    clauses: ['U02-C13'],
-  },
   'E.length-counter': {
     label: '字数计数器',
     clauses: ['U02-C08'],
@@ -170,18 +160,10 @@ export const TM_E: TmRegistry = {
       '普通保存＝存一个版本、不派发、返回 EA 主页；express 首战例外：「保存并开始首战」自动派发直进实况；method 标签只在请求体里',
   },
   'E.autosave-status': {
-    label: '暂存状态',
+    label: '草稿恢复与保存',
     clauses: ['U01-C01', 'U01-C16'],
-    note: 'SSE 回「已自动暂存」/「版本已创建：#id」',
-    when: '打字或保存之后',
-  },
-  'E.model-inherit-hint': {
-    label: '模型沿用说明',
-    clauses: ['U02-C17', 'U01-C24', 'U01-C24b', 'U02-C07'],
-    journeys: ['j3s4'],
-    note:
-      '「沿用 vN 的模型」/「已改为新模型，保存后 vN+1 用新模型」；草稿层不持久化模型（U01-C24b 缺口）',
-    when: '已有至少一个版本',
+    note: '仅显示草稿恢复或首战保存反馈；自动暂存确认不显示文案',
+    when: '恢复草稿或首战保存之后',
   },
   'E.role-pitch': {
     label: '角色一句话介绍',
