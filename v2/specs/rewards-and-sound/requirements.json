@@ -45,7 +45,7 @@
       "kind": "design-reference",
       "commit": "c28c9a87d8519415809a26b5dc0cc378722a5238",
       "url": "https://github.com/paideia-ai/axiia-cup/blob/c28c9a87d8519415809a26b5dc0cc378722a5238/docs/competition/SOUND_EFFECTS_PLAN.md",
-      "note": "默认主音效开启、25% 音量和输出音关闭来自原型；未导入其第三方游戏样本。"
+      "note": "原始提交提供清透轻点、选定 B 和完整输入体验；后续后台修复与最终范围以 approved-demo-sep14 为准。"
     },
     {
       "id": "v4-conventions",
@@ -96,6 +96,15 @@
         }
       ],
       "note": "20 局、24 小时、5 次阈值、2 倍倍率为本次选用默认，不能当作会议最终定值；首胜奖没有形成确定规则。"
+    },
+    {
+      "id": "approved-demo-sep14",
+      "kind": "explicit-user-instruction",
+      "author": "Keso",
+      "date": "2026-09-14",
+      "url": "https://axiia-sound-journey-demo.vercel.app/",
+      "sessionID": "01a08aa2-d609-7213-b1da-e102859244c1",
+      "note": "用户审核 PR #174 后明确要求修改分支、提交并更新 PR 以忠实呈现该 demo。选定 B 样本及完整输入体验在 c28c9a8；后台修复随后只在 demo 工作区和 Vercel 部署中。"
     }
   ],
   "units": [
@@ -4247,7 +4256,7 @@
     {
       "id": "U19-C09",
       "unit": "U19",
-      "version": "v1",
+      "version": "v2",
       "title": "对局成功完成音",
       "kind": "rule",
       "strength": "must",
@@ -4256,17 +4265,19 @@
         "spec-sound",
         "spec-u19-c09"
       ],
-      "canonical": "当系统观察到对局新进入成功完成状态时，系统必须为该对局播放一次完成音效。",
-      "context": "运行完成是 Keso 指定的事件。",
-      "consequence": "失败状态不冒充成功完成；重连和轮询不能重复播放。",
-      "compliant": "实况成功结束触发一次完成声。",
-      "violation": "运行失败触发胜利完成声。",
+      "canonical": "当系统观察到对局新进入成功完成状态、主音效开启且音量非零并已获浏览器播放许可时，系统必须播放一次完成音效，即使窗口失焦或标签页隐藏；播放中切换窗口不得截断该完成音。",
+      "context": "用户明确将结束音定义为后台提醒；SSE 与跨路由轮询均须遵守。",
+      "consequence": "历史终态不响；SSE/轮询及支持 Web Locks 的同源标签页共享去重；总静音仍生效。",
+      "compliant": "打开对战后切换窗口，成功完局仍响一次，返回不重复。",
+      "violation": "因为窗口失焦而丢弃完成音，或切换窗口截断正在响的完成音。",
       "source_refs": [
         "lark-sound",
-        "sound-prototype"
+        "sound-prototype",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-05"
+        "RS-05",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -4282,19 +4293,12 @@
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
-            {
-              "layer": "mock-integration",
-              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
-              "title": "实时回复、成功完局和确认领奖各播放一次",
-              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
-            }
-          ],
+          "strong": [],
           "historicalStrong": [
             {
               "layer": "unit",
@@ -4313,19 +4317,19 @@
               "file": "v2/web/src/lib/match-sound.test.ts",
               "title": "observes locally dispatched matches that finish between polls",
               "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "mock-integration",
+              "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+              "title": "实时回复、成功完局和确认领奖各播放一次",
+              "run": "AUTO-RS-FRONTEND-FINAL-BDD"
             }
           ],
-          "coverage": "covered",
-          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "coverage": "partial",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -4339,14 +4343,117 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "executed-for-current-clause",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C09",
+          "unit": "U19",
+          "version": "v1",
+          "title": "对局成功完成音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c09"
+          ],
+          "canonical": "当系统观察到对局新进入成功完成状态时，系统必须为该对局播放一次完成音效。",
+          "context": "运行完成是 Keso 指定的事件。",
+          "consequence": "失败状态不冒充成功完成；重连和轮询不能重复播放。",
+          "compliant": "实况成功结束触发一次完成声。",
+          "violation": "运行失败触发胜利完成声。",
+          "source_refs": [
+            "lark-sound",
+            "sound-prototype"
+          ],
+          "decisions": [
+            "RS-05"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S04"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/lib/match-sound.ts",
+            "v2/web/src/context/sound.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "实时回复、成功完局和确认领奖各播放一次",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                }
+              ],
+              "historicalStrong": [
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/match-sound.test.ts",
+                  "title": "plays successful termination even in the fetch/connect race, but never failure",
+                  "run": "AUTO-RS-SOUND-01"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/match-sound.test.ts",
+                  "title": "tracks owned running matches and ignores initial historical and failed rows",
+                  "run": "AUTO-RS-SOUND-01"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/match-sound.test.ts",
+                  "title": "observes locally dispatched matches that finish between polls",
+                  "run": "AUTO-RS-SOUND-01"
+                }
+              ],
+              "coverage": "covered",
+              "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "executed-for-current-clause",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C10",
       "unit": "U19",
-      "version": "v1",
+      "version": "v2",
       "title": "实际奖励到账音",
       "kind": "rule",
       "strength": "must",
@@ -4355,17 +4462,19 @@
         "spec-sound",
         "spec-u19-c10"
       ],
-      "canonical": "当玩家领取请求成功且 creditedPoints 大于 0 时，系统必须播放一次奖励音效。",
-      "context": "Keso 指定领取时增加积分并发声。",
+      "canonical": "当玩家领取请求成功、不是已领取回执且 creditedPoints 大于 0 时，系统必须播放一次已选定的 B · 原速 · 收高频奖励音，其播放增益为主音量的三倍且最高为 1。",
+      "context": "保留真实服务端到账条件，同时恢复用户选定样本及 louder 调整。",
       "consequence": "打开战报、失败领取、已领取重试均不触发。",
-      "compliant": "成功新增 50 分后播放奖励声。",
-      "violation": "alreadyClaimed=true 时再次播放奖励声。",
+      "compliant": "默认主音量 25% 时，新增积分到账后以 75% 增益播放原始 B WAV 一次。",
+      "violation": "以新的合成四音旋律替换选定 B，或重复领取也播放。",
       "source_refs": [
         "lark-sound",
-        "sound-prototype"
+        "sound-prototype",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-05"
+        "RS-05",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -4374,18 +4483,21 @@
       ],
       "code_paths": [
         "v2/web/src/lib/sound.ts",
-        "v2/web/src/components/rewards.tsx"
+        "v2/web/src/components/rewards.tsx",
+        "v2/web/public/sounds/reward-cashout-b.wav",
+        "v2/web/src/lib/approved-sounds.test.ts"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
+          "strong": [],
+          "historicalStrong": [
             {
               "layer": "mock-integration",
               "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
@@ -4393,18 +4505,11 @@
               "run": "AUTO-RS-FRONTEND-FINAL-BDD"
             }
           ],
-          "historicalStrong": [],
-          "coverage": "covered",
-          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "coverage": "partial",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -4418,9 +4523,92 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "executed-for-current-clause",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C10",
+          "unit": "U19",
+          "version": "v1",
+          "title": "实际奖励到账音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c10"
+          ],
+          "canonical": "当玩家领取请求成功且 creditedPoints 大于 0 时，系统必须播放一次奖励音效。",
+          "context": "Keso 指定领取时增加积分并发声。",
+          "consequence": "打开战报、失败领取、已领取重试均不触发。",
+          "compliant": "成功新增 50 分后播放奖励声。",
+          "violation": "alreadyClaimed=true 时再次播放奖励声。",
+          "source_refs": [
+            "lark-sound",
+            "sound-prototype"
+          ],
+          "decisions": [
+            "RS-05"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S05"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/components/rewards.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "实时回复、成功完局和确认领奖各播放一次",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                }
+              ],
+              "historicalStrong": [],
+              "coverage": "covered",
+              "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "executed-for-current-clause",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C11",
@@ -4627,8 +4815,8 @@
     {
       "id": "U19-C13",
       "unit": "U19",
-      "version": "v1",
-      "title": "仅前台播放",
+      "version": "v2",
+      "title": "后台完成提醒与无积压播放",
       "kind": "rule",
       "strength": "must",
       "scope": "v2",
@@ -4636,17 +4824,19 @@
         "spec-sound",
         "spec-u19-c13"
       ],
-      "canonical": "当页面处于后台、声音关闭或声音事件不可播放时，系统必须无声消费当时的声音事件而不在恢复后补播。",
-      "context": "恢复窗口不应喷发积压提示。",
-      "consequence": "玩家返回标签页或重新开声时保持安静。",
-      "compliant": "后台结束三局后切回不会连响三次。",
-      "violation": "取消静音后补播之前全部输出。",
+      "canonical": "当页面处于后台时，系统必须仅允许新的完成音通知播放；当主音效关闭、音量为零或无法播放时，系统必须无声消费事件且不在恢复后补播。",
+      "context": "后台完成通知是用户明确要求，普通交互仍以前台为限。",
+      "consequence": "后台轮询不因隐藏暂停；返回触发同步时依靠事件身份避免重复。",
+      "compliant": "后台完成时已提醒，返回不重播；静音时完成的对局取消静音后也不补响。",
+      "violation": "所有后台事件一律静音，或恢复窗口后补播已处理的完成事件。",
       "source_refs": [
         "lark-sound",
-        "sound-prototype"
+        "sound-prototype",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-05"
+        "RS-05",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -4662,25 +4852,12 @@
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
-            {
-              "layer": "unit",
-              "file": "v2/web/src/lib/sound.test.ts",
-              "title": "consumes muted and background events with no unmute/focus backlog",
-              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
-            },
-            {
-              "layer": "unit",
-              "file": "v2/web/src/lib/match-sound.test.ts",
-              "title": "consumes background completions silently when returning to the foreground",
-              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
-            }
-          ],
+          "strong": [],
           "historicalStrong": [
             {
               "layer": "unit",
@@ -4693,19 +4870,25 @@
               "file": "v2/web/src/lib/match-sound.test.ts",
               "title": "consumes background completions silently when returning to the foreground",
               "run": "AUTO-RS-SOUND-01"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/sound.test.ts",
+              "title": "consumes muted and background events with no unmute/focus backlog",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+            },
+            {
+              "layer": "unit",
+              "file": "v2/web/src/lib/match-sound.test.ts",
+              "title": "consumes background completions silently when returning to the foreground",
+              "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
             }
           ],
           "coverage": "partial",
-          "note": "引擎与追踪器验证后台消费，无真实后台轮询网络重入的完整浏览器旅程。",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-UNIT"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -4719,9 +4902,112 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "partially-executed",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C13",
+          "unit": "U19",
+          "version": "v1",
+          "title": "仅前台播放",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c13"
+          ],
+          "canonical": "当页面处于后台、声音关闭或声音事件不可播放时，系统必须无声消费当时的声音事件而不在恢复后补播。",
+          "context": "恢复窗口不应喷发积压提示。",
+          "consequence": "玩家返回标签页或重新开声时保持安静。",
+          "compliant": "后台结束三局后切回不会连响三次。",
+          "violation": "取消静音后补播之前全部输出。",
+          "source_refs": [
+            "lark-sound",
+            "sound-prototype"
+          ],
+          "decisions": [
+            "RS-05"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S04"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/lib/match-sound.ts",
+            "v2/web/src/context/sound.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/sound.test.ts",
+                  "title": "consumes muted and background events with no unmute/focus backlog",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/match-sound.test.ts",
+                  "title": "consumes background completions silently when returning to the foreground",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                }
+              ],
+              "historicalStrong": [
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/sound.test.ts",
+                  "title": "consumes muted and background events with no unmute/focus backlog",
+                  "run": "AUTO-RS-SOUND-01"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/match-sound.test.ts",
+                  "title": "consumes background completions silently when returning to the foreground",
+                  "run": "AUTO-RS-SOUND-01"
+                }
+              ],
+              "coverage": "partial",
+              "note": "引擎与追踪器验证后台消费，无真实后台轮询网络重入的完整浏览器旅程。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-UNIT"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "partially-executed",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C14",
@@ -4930,8 +5216,8 @@
     {
       "id": "U19-C16",
       "unit": "U19",
-      "version": "v1",
-      "title": "原创交付音效",
+      "version": "v2",
+      "title": "已批准音效与来源一致",
       "kind": "boundary",
       "strength": "must",
       "scope": "v2",
@@ -4939,17 +5225,19 @@
         "spec-sound",
         "spec-u19-c16"
       ],
-      "canonical": "当本次代码交付音效时，系统必须使用原创合成提示音，不分发原型引用的第三方游戏声音样本。",
-      "context": "参考游戏用于表达听感，不自动提供素材使用权。",
-      "consequence": "后续替换素材需要明确来源。",
-      "compliant": "交付代码生成短促原创提示音。",
-      "violation": "把原型中来自游戏镜像的音频直接加入静态目录。",
+      "canonical": "当交付本次音效时，系统必须保留清透轻点、65 毫秒低回复音和已选 B · 原速 · 收高频样本；如实记录 B 的游戏音频衍生来源，不得改称原创或 CC0。",
+      "context": "用户在 PR 审核后明确要求对齐 demo，取代此 PR 自行选择的原创领奖替代音。",
+      "consequence": "B SHA-256 固定为 43ee4c05e2b9a9837c7050ad871a53db1cedd25dd4bf4112770be95309d81b63；不额外变速、滤波或归一化。",
+      "compliant": "分发与 demo 相同的 WAV 并保留来源说明。",
+      "violation": "未经重新选择，以合成旋律替换该样本或声称该录音为原创。",
       "source_refs": [
         "lark-sound",
-        "sound-prototype"
+        "sound-prototype",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-05"
+        "RS-05",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -4958,22 +5246,26 @@
       ],
       "code_paths": [
         "v2/web/src/lib/sound.ts",
-        "v2/web/src/lib/SOUND_PROVENANCE.md"
+        "v2/web/src/lib/SOUND_PROVENANCE.md",
+        "v2/web/public/sounds/reward-cashout-b.wav",
+        "v2/web/src/lib/approved-sounds.test.ts"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "none",
           "has_test": false,
           "strong": [],
           "in_ci": false,
           "last_green": null,
-          "note": "无直接自动测试宣称完整证明该产品边界；由实现代码及素材来源审阅确认。",
-          "coverage": "manual-code-review-only"
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
+          "coverage": "partial",
+          "historicalStrong": [],
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -4987,15 +5279,83 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "planned",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C16",
+          "unit": "U19",
+          "version": "v1",
+          "title": "原创交付音效",
+          "kind": "boundary",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c16"
+          ],
+          "canonical": "当本次代码交付音效时，系统必须使用原创合成提示音，不分发原型引用的第三方游戏声音样本。",
+          "context": "参考游戏用于表达听感，不自动提供素材使用权。",
+          "consequence": "后续替换素材需要明确来源。",
+          "compliant": "交付代码生成短促原创提示音。",
+          "violation": "把原型中来自游戏镜像的音频直接加入静态目录。",
+          "source_refs": [
+            "lark-sound",
+            "sound-prototype"
+          ],
+          "decisions": [
+            "RS-05"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S06"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/lib/SOUND_PROVENANCE.md"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增条款待产品审核；数值与边界的实施选择不代表 Keso 确认。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "none",
+              "has_test": false,
+              "strong": [],
+              "in_ci": false,
+              "last_green": null,
+              "note": "无直接自动测试宣称完整证明该产品边界；由实现代码及素材来源审阅确认。",
+              "coverage": "manual-code-review-only"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "planned",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C17",
       "unit": "U19",
-      "version": "v1",
-      "title": "提示词输入音",
+      "version": "v2",
+      "title": "弹性短线与柔音输入体验",
       "kind": "rule",
       "strength": "must",
       "scope": "v2",
@@ -5003,16 +5363,18 @@
         "spec-sound",
         "spec-u19-c17"
       ],
-      "canonical": "当玩家在策略提示词编辑区真实插入文本且满足声音播放条件时，系统必须提供一次轻输入反馈；输入法组合期间的临时变化必须等到实际提交后再反馈一次。",
-      "context": "会议 17:27 起明确要求输入提示词有声音。",
-      "consequence": "包括粘贴；程序填入和撤销/重做静默；输入和删除共享默认 50 毫秒限频，抑制后不补播。",
-      "compliant": "中文输入法提交一段文字只响一次，候选变化不连响。",
-      "violation": "每个组合临时变化或程序初始化都触发输入声。",
+      "canonical": "当玩家编辑策略提示词时，系统必须呈现已批准的弹性短线光标和柔音反馈，保留原生编辑、选择与输入法；提供编辑区独立柔音开关和音量且服从主静音与主音量。",
+      "context": "完整纳入 session 01a08acd-b96b-7512-93ee-9aebd8d69e30 的 end product。",
+      "consequence": "75 毫秒普通输入音，粘贴一次且更轻，换行更长更低；组合中间态无声、提交一次；撤销/重做及程序恢复不响；28 毫秒限频不补播。",
+      "compliant": "键入显示 13×3 像素弹性短线；关闭柔音后编辑安静但保存音仍启用。",
+      "violation": "只有新合成的输入音，没有短线光标、工作区样式或独立控制。",
       "source_refs": [
-        "minutes-sep11"
+        "minutes-sep11",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-08"
+        "RS-08",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -5020,19 +5382,23 @@
         "AC-S07"
       ],
       "code_paths": [
-        "v2/web/src/lib/sound.ts",
+        "v2/web/src/components/typing-feedback.tsx",
+        "v2/web/src/lib/typing/audio.ts",
+        "v2/web/src/lib/typing/feedback.ts",
+        "v2/web/src/lib/typing/typing.css",
         "v2/web/src/pages/builder.tsx"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
+          "strong": [],
+          "historicalStrong": [
             {
               "layer": "mock-integration",
               "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
@@ -5058,19 +5424,11 @@
               "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
             }
           ],
-          "historicalStrong": [],
-          "coverage": "covered",
-          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "coverage": "partial",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD",
-              "AUTO-RS-FRONTEND-FINAL-UNIT"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -5084,14 +5442,115 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "executed-for-current-clause",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C17",
+          "unit": "U19",
+          "version": "v1",
+          "title": "提示词输入音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c17"
+          ],
+          "canonical": "当玩家在策略提示词编辑区真实插入文本且满足声音播放条件时，系统必须提供一次轻输入反馈；输入法组合期间的临时变化必须等到实际提交后再反馈一次。",
+          "context": "会议 17:27 起明确要求输入提示词有声音。",
+          "consequence": "包括粘贴；程序填入和撤销/重做静默；输入和删除共享默认 50 毫秒限频，抑制后不补播。",
+          "compliant": "中文输入法提交一段文字只响一次，候选变化不连响。",
+          "violation": "每个组合临时变化或程序初始化都触发输入声。",
+          "source_refs": [
+            "minutes-sep11"
+          ],
+          "decisions": [
+            "RS-08"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S07"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/pages/builder.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/prompt-sound.test.ts",
+                  "title": "distinguishes insertion/paste from deletion/cut, and ignores undo/redo",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/prompt-sound.test.ts",
+                  "title": "plays once for a committed IME edit, not the candidates or duplicate final input",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/sound.test.ts",
+                  "title": "shares a 50ms editing limit and a separate 250ms hover limit",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                }
+              ],
+              "historicalStrong": [],
+              "coverage": "covered",
+              "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD",
+                  "AUTO-RS-FRONTEND-FINAL-UNIT"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "executed-for-current-clause",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C18",
       "unit": "U19",
-      "version": "v1",
+      "version": "v2",
       "title": "提示词删除音",
       "kind": "rule",
       "strength": "must",
@@ -5100,16 +5559,18 @@
         "spec-sound",
         "spec-u19-c18"
       ],
-      "canonical": "当玩家在策略提示词编辑区真实删除或剪切已有文本且满足声音播放条件时，系统必须提供一次区别于输入的轻删除反馈。",
+      "canonical": "当玩家真实删除或剪切策略文本且满足声音播放条件时，系统必须使用已批准柔音中的较低删除音，并保留原生文本编辑结果。",
       "context": "会议明确同时要求输入和删除反馈。",
-      "consequence": "没有文本变化、撤销/重做及程序清空不响；删除与输入共享默认 50 毫秒限频。",
+      "consequence": "与输入共用 28 毫秒限频；独立柔音静音和全局静音都可关闭，选区与撤销保持可用。",
       "compliant": "退格删除文字触发删除声，在空编辑区退格静默。",
       "violation": "空编辑区按退格仍连响，或删除音被当成保存成功音。",
       "source_refs": [
-        "minutes-sep11"
+        "minutes-sep11",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-08"
+        "RS-08",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -5117,19 +5578,23 @@
         "AC-S07"
       ],
       "code_paths": [
-        "v2/web/src/lib/sound.ts",
+        "v2/web/src/components/typing-feedback.tsx",
+        "v2/web/src/lib/typing/audio.ts",
+        "v2/web/src/lib/typing/feedback.ts",
+        "v2/web/src/lib/typing/typing.css",
         "v2/web/src/pages/builder.tsx"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
+          "strong": [],
+          "historicalStrong": [
             {
               "layer": "mock-integration",
               "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
@@ -5155,19 +5620,11 @@
               "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
             }
           ],
-          "historicalStrong": [],
-          "coverage": "covered",
-          "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+          "coverage": "partial",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD",
-              "AUTO-RS-FRONTEND-FINAL-UNIT"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -5181,14 +5638,115 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "executed-for-current-clause",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C18",
+          "unit": "U19",
+          "version": "v1",
+          "title": "提示词删除音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c18"
+          ],
+          "canonical": "当玩家在策略提示词编辑区真实删除或剪切已有文本且满足声音播放条件时，系统必须提供一次区别于输入的轻删除反馈。",
+          "context": "会议明确同时要求输入和删除反馈。",
+          "consequence": "没有文本变化、撤销/重做及程序清空不响；删除与输入共享默认 50 毫秒限频。",
+          "compliant": "退格删除文字触发删除声，在空编辑区退格静默。",
+          "violation": "空编辑区按退格仍连响，或删除音被当成保存成功音。",
+          "source_refs": [
+            "minutes-sep11"
+          ],
+          "decisions": [
+            "RS-08"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S07"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/pages/builder.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/prompt-sound.test.ts",
+                  "title": "distinguishes insertion/paste from deletion/cut, and ignores undo/redo",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/prompt-sound.test.ts",
+                  "title": "plays once for a committed IME edit, not the candidates or duplicate final input",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                },
+                {
+                  "layer": "unit",
+                  "file": "v2/web/src/lib/sound.test.ts",
+                  "title": "shares a 50ms editing limit and a separate 250ms hover limit",
+                  "run": "AUTO-RS-FRONTEND-FINAL-UNIT"
+                }
+              ],
+              "historicalStrong": [],
+              "coverage": "covered",
+              "note": "真实浏览器/单元断言覆盖本条；API/SSE 内容为夹具，非生产或真人验证。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD",
+                  "AUTO-RS-FRONTEND-FINAL-UNIT"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "executed-for-current-clause",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C19",
       "unit": "U19",
-      "version": "v1",
+      "version": "v2",
       "title": "关键按钮悬停音",
       "kind": "rule",
       "strength": "must",
@@ -5197,16 +5755,18 @@
         "spec-sound",
         "spec-u19-c19"
       ],
-      "canonical": "当鼠标进入可用的保存或出战关键按钮且音频已经获浏览器许可时，系统必须提供受默认 250 毫秒限频约束的轻悬停反馈。",
+      "canonical": "当鼠标进入可用的保存、智能体主页版本出战或出战面板按钮且音频已获许可时，系统必须提供清透轻点的轻悬停音，限频 250 毫秒。",
       "context": "会议 18 分钟左右要求关键按钮 hover 提示。",
-      "consequence": "覆盖构建器保存/首战和出战面板 PvE、自我对战、双侧挑战；悬停不解锁音频，不可用按钮静默。",
+      "consequence": "主页用 vN 出战入口也有反馈；hover 不解锁音频、不可用按钮静默。",
       "compliant": "已解锁后悬停保存按钮有轻声；首次仅悬停不会启动 AudioContext。",
       "violation": "鼠标路过禁用按钮或未手势解锁时强行播放。",
       "source_refs": [
-        "minutes-sep11"
+        "minutes-sep11",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-08"
+        "RS-08",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -5216,18 +5776,20 @@
       "code_paths": [
         "v2/web/src/lib/sound.ts",
         "v2/web/src/pages/builder.tsx",
-        "v2/web/src/components/os-panel.tsx"
+        "v2/web/src/components/os-panel.tsx",
+        "v2/web/src/components/version-list.tsx"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
+          "strong": [],
+          "historicalStrong": [
             {
               "layer": "mock-integration",
               "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
@@ -5235,18 +5797,11 @@
               "run": "AUTO-RS-FRONTEND-FINAL-BDD"
             }
           ],
-          "historicalStrong": [],
           "coverage": "partial",
-          "note": "真实浏览器验证保存按钮 hover 和手势边界；全部出战按钮范围来自源代码与组件审阅。",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -5260,14 +5815,97 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "partially-executed",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C19",
+          "unit": "U19",
+          "version": "v1",
+          "title": "关键按钮悬停音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c19"
+          ],
+          "canonical": "当鼠标进入可用的保存或出战关键按钮且音频已经获浏览器许可时，系统必须提供受默认 250 毫秒限频约束的轻悬停反馈。",
+          "context": "会议 18 分钟左右要求关键按钮 hover 提示。",
+          "consequence": "覆盖构建器保存/首战和出战面板 PvE、自我对战、双侧挑战；悬停不解锁音频，不可用按钮静默。",
+          "compliant": "已解锁后悬停保存按钮有轻声；首次仅悬停不会启动 AudioContext。",
+          "violation": "鼠标路过禁用按钮或未手势解锁时强行播放。",
+          "source_refs": [
+            "minutes-sep11"
+          ],
+          "decisions": [
+            "RS-08"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S08"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/pages/builder.tsx",
+            "v2/web/src/components/os-panel.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                }
+              ],
+              "historicalStrong": [],
+              "coverage": "partial",
+              "note": "真实浏览器验证保存按钮 hover 和手势边界；全部出战按钮范围来自源代码与组件审阅。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "partially-executed",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C20",
       "unit": "U19",
-      "version": "v1",
+      "version": "v2",
       "title": "关键按钮即时点击音",
       "kind": "rule",
       "strength": "must",
@@ -5276,16 +5914,18 @@
         "spec-sound",
         "spec-u19-c20"
       ],
-      "canonical": "当玩家点击或用键盘激活可用的保存或出战关键按钮时，系统必须在异步业务完成前提供一次轻点击反馈。",
+      "canonical": "当玩家点击或键盘激活可用的保存、智能体主页版本出战或出战面板按钮时，系统必须立即提供清透轻点的点击反馈，业务成功音仍等待服务端确认。",
       "context": "会议要求点击比 hover 更清脆；点击与服务器成功是不同事件。",
-      "consequence": "按钮范围与 U19-C19 相同；点击声受主设置约束，失败请求可以有点击声但不能有成功保存/派发声。",
+      "consequence": "打开出战面板的版本按钮也响；不能把点击音当成派发成功。",
       "compliant": "点击时轻声，服务器接受后另响派发成功声；拒绝时只保留点击反馈。",
       "violation": "点击就播放派发成功音，或同一次键盘激活重复响两次。",
       "source_refs": [
-        "minutes-sep11"
+        "minutes-sep11",
+        "approved-demo-sep14"
       ],
       "decisions": [
-        "RS-08"
+        "RS-08",
+        "RS-09"
       ],
       "overridable_by": [],
       "supersedes": [],
@@ -5295,18 +5935,20 @@
       "code_paths": [
         "v2/web/src/lib/sound.ts",
         "v2/web/src/pages/builder.tsx",
-        "v2/web/src/components/os-panel.tsx"
+        "v2/web/src/components/os-panel.tsx",
+        "v2/web/src/components/version-list.tsx"
       ],
       "conformance": {
         "spec_status": "improving",
         "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
         "impl_status": "match",
-        "impl_asOf": "2026-09-12",
-        "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+        "impl_asOf": "2026-09-14",
+        "observed": "按已批准 demo 更新，自动与人工验证分开记录。",
         "auto": {
           "state": "has_test",
           "has_test": true,
-          "strong": [
+          "strong": [],
+          "historicalStrong": [
             {
               "layer": "mock-integration",
               "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
@@ -5314,18 +5956,11 @@
               "run": "AUTO-RS-FRONTEND-FINAL-BDD"
             }
           ],
-          "historicalStrong": [],
           "coverage": "partial",
-          "note": "真实浏览器验证保存/express 键盘激活和失败点击语义；未逐个出战入口模拟全部激活方式。",
+          "note": "本次修订尚待完整验证；旧记录只属于历史版本。",
           "in_ci": false,
-          "last_green": {
-            "runs": [
-              "AUTO-RS-FRONTEND-FINAL-BDD"
-            ],
-            "result": "passed",
-            "reportedAt": "2026-09-12"
-          },
-          "latest_result": "passed"
+          "last_green": null,
+          "latest_result": "pending"
         },
         "human": {
           "state": "untested",
@@ -5339,9 +5974,92 @@
         "layer": "mock-integration",
         "feature": "v2/web/tests/e2e/sound-feedback.feature",
         "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
-        "status": "partially-executed",
+        "status": "planned-for-current-clause",
         "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
-      }
+      },
+      "version_history": [
+        {
+          "id": "U19-C20",
+          "unit": "U19",
+          "version": "v1",
+          "title": "关键按钮即时点击音",
+          "kind": "rule",
+          "strength": "must",
+          "scope": "v2",
+          "anchors": [
+            "spec-sound",
+            "spec-u19-c20"
+          ],
+          "canonical": "当玩家点击或用键盘激活可用的保存或出战关键按钮时，系统必须在异步业务完成前提供一次轻点击反馈。",
+          "context": "会议要求点击比 hover 更清脆；点击与服务器成功是不同事件。",
+          "consequence": "按钮范围与 U19-C19 相同；点击声受主设置约束，失败请求可以有点击声但不能有成功保存/派发声。",
+          "compliant": "点击时轻声，服务器接受后另响派发成功声；拒绝时只保留点击反馈。",
+          "violation": "点击就播放派发成功音，或同一次键盘激活重复响两次。",
+          "source_refs": [
+            "minutes-sep11"
+          ],
+          "decisions": [
+            "RS-08"
+          ],
+          "overridable_by": [],
+          "supersedes": [],
+          "acceptance": [
+            "AC-S08"
+          ],
+          "code_paths": [
+            "v2/web/src/lib/sound.ts",
+            "v2/web/src/pages/builder.tsx",
+            "v2/web/src/components/os-panel.tsx"
+          ],
+          "conformance": {
+            "spec_status": "improving",
+            "spec_status_reason": "新增会议条款；方向有来源，实施细节与默认待审核。",
+            "impl_status": "match",
+            "impl_asOf": "2026-09-12",
+            "observed": "实现代码已完成并经独立审阅；是否全覆盖由 auto.coverage 单列，尚无真人或生产验证。",
+            "auto": {
+              "state": "has_test",
+              "has_test": true,
+              "strong": [
+                {
+                  "layer": "mock-integration",
+                  "file": "v2/web/tests/e2e/sound-feedback.spec.ts",
+                  "title": "策略输入、删除、输入法提交与关键按钮反馈受静音控制",
+                  "run": "AUTO-RS-FRONTEND-FINAL-BDD"
+                }
+              ],
+              "historicalStrong": [],
+              "coverage": "partial",
+              "note": "真实浏览器验证保存/express 键盘激活和失败点击语义；未逐个出战入口模拟全部激活方式。",
+              "in_ci": false,
+              "last_green": {
+                "runs": [
+                  "AUTO-RS-FRONTEND-FINAL-BDD"
+                ],
+                "result": "passed",
+                "reportedAt": "2026-09-12"
+              },
+              "latest_result": "passed"
+            },
+            "human": {
+              "state": "untested",
+              "latest": null,
+              "records": []
+            },
+            "freshness": "unknown",
+            "bugs": []
+          },
+          "test_plan": {
+            "layer": "mock-integration",
+            "feature": "v2/web/tests/e2e/sound-feedback.feature",
+            "spec": "v2/web/tests/e2e/sound-feedback.spec.ts",
+            "status": "partially-executed",
+            "note": "新增/更新 Gherkin 和有状态 HTTP 替身浏览器 BDD；只有实际执行后才更新 auto 证据，服务端事务另行验证。"
+          }
+        }
+      ],
+      "previousVersion": "v1",
+      "changeReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。"
     },
     {
       "id": "U19-C21",
@@ -5625,10 +6343,11 @@
       ]
     }
   ],
-  "revision": "v2",
-  "updatedAt": "2026-09-12",
-  "revisionReason": "纳入 2026-09-11 完整会议：全局周期积分、角色连续加价、积分替代硬日场数、编辑/按钮声音及背景音乐暂缓。",
+  "revision": "v3",
+  "updatedAt": "2026-09-14",
+  "revisionReason": "按用户对 PR #174 的明确要求，对齐完整已批准 demo：后台完成提醒、B 领奖样本及音量、弹性短线与柔音、主页出战入口反馈。",
   "sourcePrecedence": [
+    "approved-demo-sep14 for the final sound and typing experience",
     "minutes-sep11 for subsequent explicit decisions",
     "lark-rewards / lark-sound for unchanged original requests",
     "sound-prototype for reference preferences",
@@ -5691,6 +6410,7 @@
     "notes": [
       "历史超时记录保留，最终顺序重跑已通过。",
       "代码、单元、浏览器、真实服务端、真人五类证据不能互相替代。"
-    ]
+    ],
+    "demoAlignmentRevision": "v3; pending fresh frontend verification; earlier runs remain historical"
   }
 }

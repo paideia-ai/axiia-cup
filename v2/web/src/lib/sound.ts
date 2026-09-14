@@ -1,5 +1,8 @@
 // Original tonal synthesis, adapted from Keso's 清透轻点 demo at c28c9a8.
-// The reward is newly synthesized; no third-party game samples are shipped.
+// Reward B and typing feedback follow the final approved journey demo.
+import { renderTypingSound } from './typing/audio'
+
+export const REWARD_SOUND_URL = '/sounds/reward-cashout-b.wav'
 export type SoundCue =
   | 'save'
   | 'dispatch'
@@ -29,7 +32,9 @@ export function readSoundPreferences(value: string | null): SoundPreferences {
     const parsed = JSON.parse(value ?? '{}')
     return {
       enabled: typeof parsed?.enabled === 'boolean' ? parsed.enabled : true,
-      outputs: typeof parsed?.outputs === 'boolean' ? parsed.outputs : false,
+      outputs: typeof parsed?.outputs === 'boolean'
+        ? parsed.outputs
+        : parsed?.responses === true,
       volume:
         typeof parsed?.volume === 'number' && Number.isFinite(parsed.volume)
           ? Math.max(0, Math.min(1, parsed.volume))
@@ -42,15 +47,19 @@ export function readSoundPreferences(value: string | null): SoundPreferences {
 
 // Prepare small buffers lazily and cache them. No media fetch or decoding can
 // delay the save/dispatch/claim request. Soft attacks and short tails avoid clicks.
-export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
+export function renderSound(
+  cue: Exclude<SoundCue, 'reward'>,
+  sampleRate: number,
+  variant = 0,
+) {
+  if (cue === 'type' || cue === 'delete') {
+    return renderTypingSound(cue, sampleRate, variant)
+  }
   const duration = {
     save: 0.26,
     dispatch: 0.34,
     output: 0.065,
     finish: 0.72,
-    reward: 0.48,
-    type: 0.055,
-    delete: 0.075,
     hover: 0.045,
     click: 0.11,
   }[cue]
@@ -67,12 +76,6 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
     const t = i / sampleRate
     let value: number
     switch (cue) {
-      case 'type':
-        value = 0.12 * pluck(t, 480, 0.013)
-        break
-      case 'delete':
-        value = 0.12 * pluck(t, 285, 0.017)
-        break
       case 'hover':
         value = 0.065 * pluck(t, 610, 0.012)
         break
@@ -101,13 +104,6 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
           0.17 * pluck(t - 0.11, 659.25, 0.14) +
           0.18 * pluck(t - 0.17, 1046.5, 0.12)
         break
-      case 'reward':
-        // Warm ascending collection flourish, deliberately distinct from finish.
-        value = 0.24 * pluck(t, 523.25, 0.04) +
-          0.24 * pluck(t - 0.055, 659.25, 0.05) +
-          0.25 * pluck(t - 0.11, 783.99, 0.07) +
-          0.28 * pluck(t - 0.17, 1046.5, 0.075)
-        break
     }
     samples[i] = value *
       Math.max(0, Math.min(1, t / 0.001, (duration - t) / 0.018))
@@ -117,9 +113,6 @@ export function renderSound(cue: SoundCue, sampleRate: number, variant = 0) {
     dispatch: 0.09,
     output: 0.032,
     finish: 0.075,
-    reward: 0.105,
-    type: 0.022,
-    delete: 0.024,
     hover: 0.017,
     click: 0.079,
   }[cue]
@@ -166,8 +159,8 @@ export class SoundPolicy {
   }
 }
 
-// Only the focused window may claim an audible milestone. Persist a small set
-// of event identities so switching tabs cannot replay a polling/SSE duplicate.
+// Persist milestone identities across tabs and SSE/poll sources. Completion
+// callers use a Web Lock so simultaneous background tabs cannot both claim it.
 function isMilestone(cue: SoundCue): boolean {
   return cue === 'save' || cue === 'dispatch' || cue === 'finish' ||
     cue === 'reward'
@@ -195,6 +188,9 @@ function claimMilestone(cue: SoundCue, key: string): boolean {
 export class SoundEngine {
   private context: AudioContext | null = null
   private gain: GainNode | null = null
+  private rewardGain: GainNode | null = null
+  private rewardData: Promise<ArrayBuffer | null> | null = null
+  private rewardDecode: Promise<boolean> | null = null
   private buffers = new Map<string, AudioBuffer>()
   private sources = new Map<AudioBufferSourceNode, SoundCue>()
   private nextMilestone = 0
@@ -210,10 +206,14 @@ export class SoundEngine {
         this.gain = this.context.createGain()
         this.gain.gain.value = this.preferences.volume
         this.gain.connect(this.context.destination)
+        this.rewardGain = this.context.createGain()
+        this.rewardGain.gain.value = Math.min(1, this.preferences.volume * 3)
+        this.rewardGain.connect(this.context.destination)
       }
       if (this.context.state === 'suspended') {
         void this.context.resume().catch(() => {})
       }
+      void this.prepareReward()
     } catch {
       // Unsupported/blocked audio must never interfere with a business action.
     }
@@ -224,6 +224,13 @@ export class SoundEngine {
     if (this.gain && this.context) {
       this.gain.gain.setTargetAtTime(
         preferences.volume,
+        this.context.currentTime,
+        0.015,
+      )
+    }
+    if (this.rewardGain && this.context) {
+      this.rewardGain.gain.setTargetAtTime(
+        Math.min(1, preferences.volume * 3),
         this.context.currentTime,
         0.015,
       )
@@ -239,8 +246,8 @@ export class SoundEngine {
     if (
       !this.preferences.enabled || this.preferences.volume === 0 ||
       (!audition && cue === 'output' && !this.preferences.outputs) ||
-      typeof document === 'undefined' || document.hidden ||
-      !document.hasFocus() ||
+      typeof document === 'undefined' ||
+      (cue !== 'finish' && (document.hidden || !document.hasFocus())) ||
       !ctx || ctx.state !== 'running' || !this.gain
     ) return false
     if (!audition && !claimMilestone(cue, key)) return false
@@ -253,19 +260,24 @@ export class SoundEngine {
       const bufferKey = `${cue}:${variant}`
       let buffer = this.buffers.get(bufferKey)
       if (!buffer) {
+        if (cue === 'reward') return false
         const samples = renderSound(cue, ctx.sampleRate, variant)
         buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate)
         buffer.copyToChannel(samples, 0)
         this.buffers.set(bufferKey, buffer)
       }
-      const start = isMilestone(cue)
+      const start = isMilestone(cue) && cue !== 'reward'
         ? Math.max(ctx.currentTime, this.nextMilestone)
         : ctx.currentTime
       if (start - ctx.currentTime > 0.8) return false
       const source = ctx.createBufferSource()
       source.buffer = buffer
-      source.connect(this.gain)
-      if (isMilestone(cue)) this.nextMilestone = start + buffer.duration + 0.025
+      source.connect(
+        cue === 'reward' && this.rewardGain ? this.rewardGain : this.gain,
+      )
+      if (isMilestone(cue) && cue !== 'reward') {
+        this.nextMilestone = start + buffer.duration + 0.025
+      }
       this.sources.set(source, cue)
       source.onended = () => {
         this.sources.delete(source)
@@ -276,6 +288,51 @@ export class SoundEngine {
     } catch {
       return false
     }
+  }
+
+  prefetchReward = (): Promise<ArrayBuffer | null> => {
+    if (this.rewardData) return this.rewardData
+    this.rewardData = fetch(REWARD_SOUND_URL, {
+      signal: AbortSignal.timeout(5000),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('Reward audio unavailable')
+        return response.arrayBuffer()
+      }).catch(() => {
+        this.rewardData = null
+        return null
+      })
+    return this.rewardData
+  }
+
+  prepareReward = (): Promise<boolean> => {
+    if (this.buffers.has('reward:0')) return Promise.resolve(true)
+    if (this.rewardDecode) return this.rewardDecode
+    const context = this.context
+    if (!context) return Promise.resolve(false)
+    this.rewardDecode = this.prefetchReward().then(async (data) => {
+      if (!data) return false
+      this.buffers.set('reward:0', await context.decodeAudioData(data.slice(0)))
+      return true
+    }).catch(() => {
+      this.rewardData = null
+      return false
+    }).finally(() => {
+      this.rewardDecode = null
+    })
+    return this.rewardDecode
+  }
+
+  // Switching windows never cuts short an already playing completion alert.
+  stopForeground = () => {
+    for (const [source, cue] of this.sources) {
+      if (cue === 'finish') continue
+      try {
+        source.stop()
+      } catch { /* Already ended. */ }
+      this.sources.delete(source)
+    }
+    if (this.sources.size === 0) this.nextMilestone = 0
   }
 
   stop = (cue?: SoundCue) => {
@@ -350,6 +407,7 @@ export function playButtonHover(event: { pointerType: string }): void {
 // Install once above routes. Keyboard and pointer gestures support direct links
 // into ongoing games, where there was no dispatch click in this tab.
 export function installSoundListeners(): () => void {
+  void engine.prefetchReward()
   const onStorage = (event: StorageEvent) => {
     if (event.key !== SOUND_STORAGE_KEY && event.key !== null) return
     preferences = readSoundPreferences(event.newValue)
@@ -357,9 +415,9 @@ export function installSoundListeners(): () => void {
     for (const listener of listeners) listener()
   }
   const onVisibility = () => {
-    if (document.hidden) engine.stop()
+    if (document.hidden) engine.stopForeground()
   }
-  const onBlur = () => engine.stop()
+  const onBlur = () => engine.stopForeground()
   globalThis.addEventListener('pointerdown', unlockAudio, { passive: true })
   globalThis.addEventListener('keydown', unlockAudio)
   globalThis.addEventListener('blur', onBlur)
@@ -373,4 +431,9 @@ export function installSoundListeners(): () => void {
     document.removeEventListener('visibilitychange', onVisibility)
     engine.stop()
   }
+}
+
+export function prepareRewardSound(): Promise<boolean> {
+  unlockAudio()
+  return engine.prepareReward()
 }

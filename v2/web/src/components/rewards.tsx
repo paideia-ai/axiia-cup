@@ -6,7 +6,11 @@ import { ApiError, rewards } from '../api/client'
 import type { MatchRewardResponse } from '../api/types'
 import { type BattleQuoteState, useRewards } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
-import { playSound, unlockAudio } from '../lib/sound'
+import {
+  getSoundPreferences,
+  playSound,
+  prepareRewardSound,
+} from '../lib/sound'
 import { Button } from './ui/button'
 
 export function PointsIndicator() {
@@ -125,7 +129,7 @@ export function RewardClaimCard({ matchID }: { matchID: number }) {
 
   const claim = async () => {
     if (inFlight.current || reward?.status !== 'claimable') return
-    unlockAudio()
+    const audioReady = prepareRewardSound()
     inFlight.current = true
     setBusy(true)
     setError(null)
@@ -136,7 +140,21 @@ export function RewardClaimCard({ matchID }: { matchID: number }) {
       refreshRewards()
       setReward({ ...reward, status: 'claimed' })
       if (!result.alreadyClaimed && result.creditedPoints > 0) {
-        playSound('reward', `reward:${matchID}`)
+        const preferences = getSoundPreferences()
+        // Loading audio never delays the receipt or balance update. Only retain
+        // a foreground, unmuted claim, and cancel it if preferences change.
+        if (
+          preferences.enabled && preferences.volume > 0 && !document.hidden &&
+          document.hasFocus()
+        ) {
+          void audioReady.then((ready) => {
+            if (
+              ready && alive.current && getSoundPreferences() === preferences
+            ) {
+              playSound('reward', `reward:${matchID}`)
+            }
+          })
+        }
       }
     } catch {
       if (alive.current) setError('领取未确认，请重试；同一奖励只会到账一次。')

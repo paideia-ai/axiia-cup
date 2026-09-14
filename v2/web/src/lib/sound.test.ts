@@ -4,6 +4,7 @@ import {
   DEFAULT_SOUND_PREFERENCES,
   readSoundPreferences,
   renderSound,
+  REWARD_SOUND_URL,
   type SoundCue,
   SoundEngine,
   SoundPolicy,
@@ -38,12 +39,11 @@ describe('original sound buffers', () => {
           'dispatch',
           'output',
           'finish',
-          'reward',
           'type',
           'delete',
           'hover',
           'click',
-        ] as SoundCue[]
+        ] as Exclude<SoundCue, 'reward'>[]
       ) {
         const data = renderSound(cue, rate)
         expect(data.length / rate).toBeLessThanOrEqual(0.73)
@@ -103,11 +103,19 @@ describe('playback lifecycle', () => {
     createGain: ReturnType<typeof vi.fn>
     createBuffer: ReturnType<typeof vi.fn>
     createBufferSource: ReturnType<typeof vi.fn>
+    decodeAudioData: ReturnType<typeof vi.fn>
   }
   beforeEach(() => {
     sources.length = 0
     focused = true
     hidden = false
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(16)),
+      }),
+    )
     const storage = new Map<string, string>()
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
@@ -120,6 +128,10 @@ describe('playback lifecycle', () => {
       hasFocus: () => focused,
     })
     context = {
+      decodeAudioData: vi.fn().mockResolvedValue({
+        duration: 15613 / 44100,
+        numberOfChannels: 2,
+      }),
       state: 'running',
       currentTime: 0,
       sampleRate: 44100,
@@ -177,7 +189,7 @@ describe('playback lifecycle', () => {
     expect(sources[1].start).toHaveBeenCalledWith(0)
   })
 
-  it('consumes muted and background events with no unmute/focus backlog', () => {
+  it('consumes muted and ordinary background events without a backlog', () => {
     const engine = new SoundEngine()
     engine.unlock()
     engine.configure({ ...DEFAULT_SOUND_PREFERENCES, enabled: false })
@@ -185,14 +197,56 @@ describe('playback lifecycle', () => {
     engine.configure(DEFAULT_SOUND_PREFERENCES)
     expect(engine.play('finish', 'muted')).toBe(false)
     hidden = true
-    expect(engine.play('finish', 'hidden')).toBe(false)
+    expect(engine.play('click', 'hidden')).toBe(false)
     hidden = false
-    expect(engine.play('finish', 'hidden')).toBe(false)
+    expect(engine.play('click', 'hidden')).toBe(false)
     focused = false
     expect(engine.play('reward', 'unfocused')).toBe(false)
     focused = true
     expect(engine.play('reward', 'unfocused')).toBe(false)
     expect(sources).toHaveLength(0)
+  })
+
+  it('plays a background completion once and does not cut it short on blur', () => {
+    const engine = new SoundEngine()
+    engine.unlock()
+    hidden = true
+    focused = false
+    expect(engine.play('finish', 'background')).toBe(true)
+    engine.stopForeground()
+    expect(sources[0].stop).not.toHaveBeenCalled()
+    hidden = false
+    focused = true
+    expect(engine.play('finish', 'background')).toBe(false)
+    engine.configure({ ...DEFAULT_SOUND_PREFERENCES, volume: 0 })
+    expect(sources[0].stop).toHaveBeenCalledOnce()
+    expect(engine.play('finish', 'zero-volume')).toBe(false)
+  })
+
+  it('preloads the approved stereo reward and uses the capped 3x gain', async () => {
+    const engine = new SoundEngine()
+    engine.unlock()
+    expect(await engine.prepareReward()).toBe(true)
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      REWARD_SOUND_URL,
+      expect.anything(),
+    )
+    expect(context.decodeAudioData).toHaveBeenCalledOnce()
+    expect(context.createGain.mock.results[1].value.gain.value).toBe(.75)
+    expect(engine.play('reward', 'first')).toBe(true)
+    expect(engine.play('reward', 'first')).toBe(false)
+    engine.configure({ ...DEFAULT_SOUND_PREFERENCES, volume: 1 })
+    expect(context.createGain.mock.results[1].value.gain.setTargetAtTime)
+      .toHaveBeenLastCalledWith(1, 0, .015)
+  })
+
+  it('can retry unavailable reward audio without blocking ordinary feedback', async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error('offline'))
+    const engine = new SoundEngine()
+    engine.unlock()
+    expect(await engine.prepareReward()).toBe(false)
+    expect(engine.play('click', 'still-works')).toBe(true)
+    expect(await engine.prepareReward()).toBe(true)
   })
 
   it('sequences express save and dispatch without delaying the app, and stops on mute', () => {
@@ -220,7 +274,7 @@ describe('playback lifecycle', () => {
     expect(otherTab.play('finish', 'match')).toBe(false)
   })
 
-  it('keeps output independently muted and survives blocked audio/storage', () => {
+  it('keeps output independently muted and survives blocked audio/storage', async () => {
     const engine = new SoundEngine()
     engine.unlock()
     expect(engine.play('output', 'quiet')).toBe(false)
@@ -229,6 +283,7 @@ describe('playback lifecycle', () => {
         throw new Error('disabled')
       },
     })
+    await engine.prepareReward()
     expect(engine.play('reward', 'claim')).toBe(true)
     vi.stubGlobal('AudioContext', function () {
       throw new Error('not supported')

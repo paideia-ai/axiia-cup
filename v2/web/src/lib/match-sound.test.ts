@@ -115,11 +115,11 @@ describe('cross-route completion tracking', () => {
     expect(playSound).toHaveBeenCalledExactlyOnceWith('finish', '7')
   })
 
-  it('consumes background completions silently when returning to the foreground', () => {
+  it('rings for a background poll and does not ring again on return', () => {
     const tracker = new MatchCompletionTracker()
     tracker.observe([row(1)])
-    tracker.observe([row(1, { finished: true, scored: true })], false)
     tracker.observe([row(1, { finished: true, scored: true })])
-    expect(playSound).not.toHaveBeenCalled()
+    tracker.observe([row(1, { finished: true, scored: true })])
+    expect(playSound).toHaveBeenCalledExactlyOnceWith('finish', '1')
   })
 })

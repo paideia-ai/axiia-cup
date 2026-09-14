@@ -10,7 +10,7 @@ import {
   unlockAudio,
   updateSoundPreferences,
 } from '../lib/sound'
-import { usePromptSounds } from '../lib/use-prompt-sounds'
+import { TypingFeedback } from './typing-feedback'
 import { OutputSoundToggle, SoundControls, SoundToggle } from './sound-controls'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
@@ -42,12 +42,14 @@ type Story = StoryObj<typeof meta>
 export const Audition: Story = {}
 
 function PromptFeedbackSurface() {
-  const promptSounds = usePromptSounds()
   useEffect(installSoundListeners, [])
   return (
     <div className='max-w-xl space-y-4 p-5'>
       <SoundToggle />
-      <Textarea aria-label='策略提示词' {...promptSounds} />
+      <TypingFeedback />
+      <div>
+        <Textarea id='prompt-input' aria-label='策略提示词' />
+      </div>
       <Button
         onPointerEnter={playButtonHover}
         onClick={() => {

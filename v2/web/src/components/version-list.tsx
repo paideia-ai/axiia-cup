@@ -1,3 +1,4 @@
+import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { Check, ChevronDown, ChevronUp, Copy, Sword } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
@@ -298,7 +299,12 @@ export function VersionList({
                       className='h-11 cursor-pointer gap-1.5 px-3 md:h-9'
                       aria-label={`用 ${tag} 出战`}
                       disabled={unavailable}
-                      onClick={() => onField(version)}
+                      onPointerEnter={playButtonHover}
+                      onClick={() => {
+                        unlockAudio()
+                        playSound('click')
+                        onField(version)
+                      }}
                       {...tm('E.field-button')}
                     >
                       <Sword aria-hidden='true' className='h-4 w-4' />

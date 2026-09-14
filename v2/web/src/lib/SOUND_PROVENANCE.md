@@ -1,19 +1,29 @@
 # Sound provenance
 
-The save, dispatch, output and completion cues retain Keso's original
-synthesized **清透轻点** palette and 65 ms low output tap, reviewed in the
-September 10 demo at
-[commit c28c9a8](https://github.com/paideia-ai/axiia-cup/commit/c28c9a87d8519415809a26b5dc0cc378722a5238).
-`sound.ts` generates and caches the buffers with no external audio assets.
+The save, dispatch, output, completion, hover and click cues preserve the
+approved **清透轻点** synthesis, including the 65 ms low output tap. The
+reference is
+[the complete journey demo](https://axiia-sound-journey-demo.vercel.app/),
+including its subsequent background-completion correction.
 
-The production reward flourish is an original synthesized four-note collection
-cue. The demo's `reward-cashout-b.wav` is not included: its attribution
-identifies a processed game sample from an unofficial Balatro source mirror.
-Slay the Spire and Balatro remain references for tactile timing, not sources of
-shipped audio.
+The reward is the exact selected **B · 原速 · 收高频** stereo WAV, with playback
+at three times the master gain, capped at unity (75% at the default 25% master
+volume). It is not resynthesized, filtered again or normalized. Its SHA-256 is
+`43ee4c05e2b9a9837c7050ad871a53db1cedd25dd4bf4112770be95309d81b63`. See
+[the asset attribution](../../public/sounds/ATTRIBUTION.md) for its Balatro
+sample origin and processing. This derivative game sample is not original Axiia
+or CC0 audio. The user explicitly requested this approved demo asset for PR #174
+on 2026-09-14, superseding the PR's synthesized replacement.
 
-The Storybook `v4/Sound feedback` story provides all nine auditions. Typing and
-deletion add two original quiet taps; hover/click retain the demo’s clear tonal
-family. There is no looping background music. Unit and browser tests verify
-event policy, controls and buffer properties; headphone and phone-speaker
-listening are separate subjective validation.
+`typing/audio.ts`, `typing/feedback.ts`, `typing/typing.css` and
+`components/typing-feedback.tsx` incorporate the selected **弹性短线 + 柔音**
+experience from session `01a08acd-b96b-7512-93ee-9aebd8d69e30` via the complete
+journey demo. The typing renderer is extracted without changing its samples: 75
+ms typing/deletion/paste, softer paste, and a longer lower enter cue. The
+builder retains the native textarea and adds its decorative underline, workspace
+styling and separate typing mute/volume controls under the global master.
+
+`approved-sounds.test.ts` checks the WAV hash and frozen typing waveform hashes.
+The Gherkin browser tests check actual audio starts, reward channels/gain,
+background completion, mute, IME, caret and button interactions. Human listening
+and Safari/iOS verification remain separate from these automated checks.

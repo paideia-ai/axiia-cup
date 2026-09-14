@@ -12,7 +12,7 @@ import { clearSoundMatches, MatchCompletionTracker } from '../lib/match-sound'
 import { installSoundListeners } from '../lib/sound'
 import { useOptionalAuth } from './auth'
 
-// Shared with BattleStrip: one account-scoped foreground poll survives route
+// Shared with BattleStrip: one account-scoped poll survives route
 // changes and supplies both completion sounds and the strip's unchanged rows.
 const MatchFeed = createContext<MatchSummary[] | null | undefined>(undefined)
 export function useSoundMatchFeed() {
@@ -31,22 +31,13 @@ export function SoundProvider({ children }: PropsWithChildren) {
     const tracker = new MatchCompletionTracker()
     let active = true
     let pending = false
-    let silentResync = false
-    let visibilityGeneration = 0
     const load = async () => {
-      if (document.hidden || pending) return
+      if (pending) return
       pending = true
-      const audible = !silentResync
-      const startedGeneration = visibilityGeneration
-      silentResync = false
       try {
         const response = await matches.list()
         if (!active) return
-        tracker.observe(
-          response.matches,
-          audible && !document.hidden &&
-            startedGeneration === visibilityGeneration,
-        )
+        tracker.observe(response.matches)
         setRows(response.matches)
       } catch {
         if (active) setRows(null)
@@ -57,8 +48,6 @@ export function SoundProvider({ children }: PropsWithChildren) {
     void load()
     const timer = setInterval(() => void load(), 30_000)
     const visibility = () => {
-      visibilityGeneration++
-      silentResync = true
       if (!document.hidden) void load()
     }
     document.addEventListener('visibilitychange', visibility)

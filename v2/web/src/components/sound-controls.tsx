@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from 'react'
 import {
   getSoundPreferences,
   playSound,
+  prepareRewardSound,
   type SoundCue,
   subscribeSound,
   unlockAudio,
@@ -92,7 +93,7 @@ export function SoundControls() {
           音效
         </h2>
         <p className='mt-1 text-xs leading-relaxed text-(--foreground-muted)'>
-          编写策略、操作关键按钮、保存、出战、完局和领奖时给予声音反馈。仅在当前窗口播放，设置保存在此浏览器。
+          编写策略、操作关键按钮、保存、出战、完局和领奖时给予声音反馈。对战结束也会在后台提醒，设置保存在此浏览器。
         </p>
       </div>
       <label className='flex items-center justify-between gap-3 text-sm'>
@@ -154,8 +155,9 @@ export function SoundControls() {
             size='sm'
             variant='secondary'
             disabled={!preferences.enabled || preferences.volume === 0}
-            onClick={() => {
+            onClick={async () => {
               unlockAudio()
+              if (cue === 'reward') await prepareRewardSound()
               // One microtask permits an already-allowed resume to settle. If the
               // browser still blocks audio, skip this cue and explain honestly.
               queueMicrotask(() => {

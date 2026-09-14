@@ -22,7 +22,7 @@ import { InitModes } from '../components/builder-init'
 import { BattleCostNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
-import { usePromptSounds } from '../lib/use-prompt-sounds'
+import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
@@ -300,7 +300,6 @@ export function BuilderPage() {
   const express = params.get('express') === '1'
   const quoteState = useBattleQuote(scenarioID, side, 'pve', express)
   const insufficientPoints = quoteState.blocked
-  const promptSoundHandlers = usePromptSounds()
 
   const [prompt, setPrompt] = useState('')
   const [roleKey, setRoleKey] = useState<string | null>(null)
@@ -956,6 +955,7 @@ export function BuilderPage() {
 
   return (
     <div className='space-y-6'>
+      <TypingFeedback />
       <div>
         <Link
           to={`/agents/${agentID}`}
@@ -1109,7 +1109,6 @@ export function BuilderPage() {
         </div>
         <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
           <Textarea
-            {...promptSoundHandlers}
             data-spec='U19-C17 U19-C18'
             id='prompt-input'
             rows={18}

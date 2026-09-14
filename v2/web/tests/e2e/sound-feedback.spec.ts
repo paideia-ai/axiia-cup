@@ -20,6 +20,10 @@ interface AudioStart {
   when: number
   duration: number
   loop: boolean
+  channels: number
+  gain: number | null
+  hidden: boolean
+  focused: boolean
 }
 interface SoundWorld {
   prompt: string
@@ -33,6 +37,8 @@ interface SoundWorld {
   match: MatchDetail
   streams: Route[]
   streamRequests: number
+  listMatches: boolean
+  listRequests: number
   unhandled: string[]
 }
 const worlds = new WeakMap<Page, SoundWorld>()
@@ -51,6 +57,8 @@ async function installWorld(page: Page): Promise<SoundWorld> {
     match: structuredClone(finishedMatch),
     streams: [],
     streamRequests: 0,
+    listMatches: false,
+    listRequests: 0,
     unhandled: [],
   }
   worlds.set(page, world)
@@ -68,6 +76,21 @@ async function installWorld(page: Page): Promise<SoundWorld> {
         return Reflect.construct(target, args)
       },
     })
+    const gains = new WeakMap<AudioNode, AudioNode>()
+    const connect = AudioBufferSourceNode.prototype.connect as (
+      this: AudioBufferSourceNode,
+      destination: AudioNode,
+      output?: number,
+      input?: number,
+    ) => AudioNode
+    AudioBufferSourceNode.prototype.connect = function (
+      this: AudioBufferSourceNode,
+      destination: AudioNode,
+      ...args: [number?, number?]
+    ) {
+      gains.set(this, destination)
+      return connect.call(this, destination, ...args)
+    } as typeof AudioBufferSourceNode.prototype.connect
     const start = AudioBufferSourceNode.prototype.start
     AudioBufferSourceNode.prototype.start = function (
       this: AudioBufferSourceNode,
@@ -78,6 +101,10 @@ async function installWorld(page: Page): Promise<SoundWorld> {
         milliseconds: Math.round((this.buffer?.duration ?? 0) * 1000),
         duration: this.buffer?.duration ?? 0,
         loop: this.loop,
+        channels: this.buffer?.numberOfChannels ?? 0,
+        gain: (gains.get(this) as GainNode | undefined)?.gain?.value ?? null,
+        hidden: document.hidden,
+        focused: document.hasFocus(),
         when: args[0] ?? this.context.currentTime,
       })
     }
@@ -161,7 +188,15 @@ async function installWorld(page: Page): Promise<SoundWorld> {
       }
       return json({ matchID: MATCH_ID })
     }
-    if (path === '/v1/matches') return json({ matches: [], open: false })
+    if (path === '/v1/matches') {
+      world.listRequests++
+      return json({
+        matches: world.listMatches
+          ? [{ ...world.match.summary, initiatorIsMe: true }]
+          : [],
+        open: false,
+      })
+    }
     if (path === `/v1/matches/${MATCH_ID}`) return json(world.match)
     if (path === `/v1/matches/${MATCH_ID}/stream`) {
       // Hold this native EventSource HTTP response until the test releases its
@@ -274,6 +309,7 @@ async function releaseStream(world: SoundWorld, events: MatchEventDTO[]) {
   )
 }
 
+test.use({ channel: 'chromium' })
 test.describe.configure({ timeout: 45_000 })
 test.beforeEach(({ baseURL }) => {
   expect(['127.0.0.1', 'localhost']).toContain(new URL(baseURL!).hostname)
@@ -354,7 +390,7 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
     await expect.poll(() => world.mutations).toBeGreaterThan(0)
   })
   await test.step('那么 输入播放一次轻点，自动暂存没有追加声音', async () => {
-    await expectCues(page, [55])
+    await expectCues(page, [75])
   })
   await test.step('当 我点击保存并开始首战', async () => {
     await pressSave(page)
@@ -367,7 +403,7 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
     expect(world.dispatches).toBe(1)
   })
   await test.step('并且 按键立即响起点击音，随后保存音和派发音依次确认且没有重叠', async () => {
-    await expectCues(page, [55, 110, 260, 340])
+    await expectCues(page, [75, 110, 260, 340])
     const starts = await audioStarts(page)
     expect(starts[3].when).toBeGreaterThanOrEqual(
       starts[2].when + starts[2].duration,
@@ -467,7 +503,10 @@ test('实时回复、成功完局和确认领奖各播放一次', async ({ page 
   })
   await test.step('那么 页面显示已领取，浏览器追加一次领奖音', async () => {
     await expect(page.getByText('已领取 · +50 积分')).toBeVisible()
-    await expectCues(page, [65, 720, 480])
+    await expectCues(page, [65, 720, 354])
+    const reward = (await audioStarts(page)).at(-1)!
+    expect(reward.channels).toBe(2)
+    expect(reward.gain).toBeCloseTo(.75)
     expect(world.claimed).toBe(true)
   })
 })
@@ -530,13 +569,13 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
   await test.step('当 我在策略框输入一个字符并删除它', async () => {
     await page.getByLabel('策略提示词').press('End')
     await page.getByLabel('策略提示词').press('a')
-    await expectCues(page, [55])
-    // Deliberate edits are separated beyond the specified 50 ms repeat cap.
+    await expectCues(page, [75])
+    // Deliberate edits are separated beyond the approved 28 ms repeat cap.
     await page.waitForTimeout(60)
     await page.getByLabel('策略提示词').press('Backspace')
   })
   await test.step('那么 浏览器分别播放输入音和删除音', async () => {
-    await expectCues(page, [55, 75])
+    await expectCues(page, [75, 75])
   })
   await test.step('当 我通过原生组合事件模拟输入法候选', async () => {
     await page.getByLabel('策略提示词').evaluate((element) => {
@@ -563,7 +602,7 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
     })
   })
   await test.step('那么 候选变化保持安静', async () => {
-    await expectCues(page, [55, 75])
+    await expectCues(page, [75, 75])
   })
   await test.step('当 我提交中文候选并发送重复的最终输入事件', async () => {
     await page.waitForTimeout(60)
@@ -582,7 +621,7 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
     })
   })
   await test.step('那么 这次输入法提交只追加一次输入音', async () => {
-    await expectCues(page, [55, 75, 55])
+    await expectCues(page, [75, 75, 75])
   })
   await test.step('当 我悬停并用键盘激活保存按钮', async () => {
     await page.mouse.move(0, 0)
@@ -594,7 +633,7 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
     )
   })
   await test.step('那么 浏览器追加悬停音和点击音，保存失败没有成功确认音', async () => {
-    await expectCues(page, [55, 75, 55, 45, 110])
+    await expectCues(page, [75, 75, 75, 45, 110])
   })
   await test.step('当 我关闭总音效，再次编辑策略并激活保存', async () => {
     await page.getByRole('button', { name: '关闭音效' }).click()
@@ -605,10 +644,259 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
     )
   })
   await test.step('那么 后续交互保持安静，且没有任何循环背景音乐', async () => {
-    await expectCues(page, [55, 75, 55, 45, 110])
+    await expectCues(page, [75, 75, 75, 45, 110])
     const starts = await audioStarts(page)
     expect(starts.every((start) => !start.loop && start.duration <= 0.72)).toBe(
       true,
     )
+  })
+})
+
+test('保存返回主页后出战按钮保留悬停与点击反馈', async ({ page }) => {
+  await installWorld(page)
+  await test.step('假如 我在构建器保存一个新版本并返回智能体主页', async () => {
+    await page.goto('/agents/101/build')
+    await pressSave(page)
+    await expect(page).toHaveURL(/\/agents\/101$/)
+    await expectCues(page, [110, 260])
+  })
+  await test.step('当 我悬停并激活这个版本的出战按钮', async () => {
+    const field = page.getByRole('button', { name: '用 v1 出战', exact: true })
+    await field.hover()
+    await field.click()
+  })
+  await test.step('那么 悬停和点击各响一次，并打开指定版本的出战面板', async () => {
+    await expectCues(page, [110, 260, 45, 110])
+    await expect(page.getByRole('dialog')).toContainText(
+      '出战版本：★参赛版本 v1',
+    )
+  })
+})
+
+test('弹性短线与柔音保留编辑行为和独立控制', async ({ page }) => {
+  await installWorld(page)
+  await page.goto('/agents/101/build')
+  const prompt = page.getByLabel('策略提示词')
+  const caret = page.locator('.fancy-caret')
+  await test.step('当 我编辑提示词，光标使用已选定的弹性短线与柔音', async () => {
+    await prompt.press('End')
+    await prompt.press('a')
+    await expectCues(page, [75])
+    await expect(caret).toBeVisible()
+    await expect(caret).toHaveCSS('height', '3px')
+    await expect(caret).toHaveCSS('width', '13px')
+    await expect(page.getByRole('slider', { name: '柔音音量' })).toHaveValue(
+      '25',
+    )
+  })
+  await test.step('当 我选择、撤销和重做文本，不额外发声', async () => {
+    await prompt.press('Shift+ArrowLeft')
+    await expect(caret).toBeHidden()
+    await prompt.press('ArrowRight')
+    await prompt.press('Control+z')
+    await prompt.press('Control+Shift+z')
+    await expectCues(page, [75])
+  })
+  await test.step('当 我换行和粘贴，分别使用换行音和一次更轻的粘贴音', async () => {
+    await page.waitForTimeout(40)
+    await prompt.press('Enter')
+    await expectCues(page, [75, 113])
+    await page.waitForTimeout(40)
+    await prompt.evaluate((element) => {
+      const input = element as HTMLTextAreaElement
+      input.setRangeText(
+        '粘贴测试',
+        input.selectionStart,
+        input.selectionEnd,
+        'end',
+      )
+      input.dispatchEvent(
+        new InputEvent('input', {
+          bubbles: true,
+          inputType: 'insertFromPaste',
+          data: '粘贴测试',
+        }),
+      )
+    })
+    await expectCues(page, [75, 113, 75])
+  })
+  await test.step('当 我单独关闭柔音，编辑安静但保存仍有反馈', async () => {
+    await page.getByRole('button', { name: '静音柔音', exact: true }).click()
+    await prompt.press('b')
+    await expectCues(page, [75, 113, 75])
+    await pressSave(page)
+    await expectCues(page, [75, 113, 75, 110, 260])
+    await page.goto('/agents/101/build')
+    await expect(page.getByRole('button', { name: '开启柔音', exact: true }))
+      .toBeVisible()
+  })
+  await test.step('那么 减少动态和高对比设置仍保留可用光标与窄屏布局', async () => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await prompt.press('End')
+    await expect(caret.locator('span')).toHaveCSS('animation-name', 'none')
+    await page.emulateMedia({ forcedColors: 'active' })
+    await expect(page.locator('.typing-caret-overlay')).toBeHidden()
+    await expect(prompt).not.toHaveCSS('caret-color', 'rgba(0, 0, 0, 0)')
+    await page.emulateMedia({ forcedColors: 'none' })
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 1000 })
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.scrollWidth <= innerWidth
+        ),
+      ).toBe(true)
+    }
+  })
+})
+
+// Playwright forces focus on its own CDP session. A separate CDPSession cannot
+// undo that override; use the pinned in-process session to test real visibility.
+function nativeFocus(page: Page, enabled: boolean) {
+  const internal = page as unknown as {
+    _connection: {
+      toImpl(page: Page): {
+        delegate: {
+          _mainFrameSession: {
+            _client: {
+              send(
+                method: string,
+                params: { enabled: boolean },
+              ): Promise<unknown>
+            }
+          }
+        }
+      }
+    }
+  }
+  return internal._connection.toImpl(page).delegate._mainFrameSession._client
+    .send(
+      'Emulation.setFocusEmulationEnabled',
+      { enabled },
+    )
+}
+
+test.describe('后台完局提醒', () => {
+  test('后台事件流完局仍提醒一次且返回不重播', async ({ page, context }) => {
+    const world = await installWorld(page)
+    world.match = runningMatch()
+    await page.goto(`/matches/${MATCH_ID}`)
+    await page.getByRole('switch', { name: '模型回复提示音' }).click()
+    await expect.poll(() => world.streamRequests).toBeGreaterThan(0)
+    await test.step('当 我切换到另一个标签页后，对局事件流报告胜利', async () => {
+      await nativeFocus(page, false)
+      const other = await context.newPage()
+      await other.goto('about:blank')
+      await other.bringToFront()
+      await expect.poll(() =>
+        page.evaluate(() => document.hidden && !document.hasFocus())
+      ).toBe(true)
+      world.match = structuredClone(finishedMatch)
+      await releaseStream(world, [{
+        matchFinished: { matchID: MATCH_ID, winner: 'a' },
+      }])
+    })
+    await test.step('那么 后台播放一次完成音，回到页面不重播', async () => {
+      await expectCues(page, [720])
+      expect((await audioStarts(page))[0]).toMatchObject({
+        hidden: true,
+        focused: false,
+      })
+      await page.bringToFront()
+      await nativeFocus(page, true)
+      await expect(page.getByRole('button', { name: '领取奖励', exact: true }))
+        .toBeVisible()
+      await expectCues(page, [720])
+    })
+  })
+
+  test('离开对战页后后台轮询仍提醒并尊重总静音', async ({ page, context }) => {
+    await page.clock.install()
+    const world = await installWorld(page)
+    world.match = runningMatch()
+    world.listMatches = true
+    await page.goto('/settings')
+    await expect.poll(() => world.listRequests).toBeGreaterThan(0)
+    await page.getByRole('button', { name: '试听保存版本' }).click()
+    await expectCues(page, [260])
+    await nativeFocus(page, false)
+    const other = await context.newPage()
+    await other.goto('about:blank')
+    await other.bringToFront()
+    await expect.poll(() => page.evaluate(() => document.hidden)).toBe(true)
+    await test.step('当 页面留在设置页的后台，对局在两次轮询之间完成', async () => {
+      world.match = structuredClone(finishedMatch)
+      await page.clock.fastForward(31_000)
+      await expectCues(page, [260, 720])
+      expect((await audioStarts(page)).at(-1)).toMatchObject({
+        hidden: true,
+        focused: false,
+      })
+    })
+    await test.step('那么 返回页面不重播，总静音下另一个完局也不响', async () => {
+      await page.bringToFront()
+      await nativeFocus(page, true)
+      await page.getByRole('button', { name: '关闭音效', exact: true }).click()
+      world.match = runningMatch()
+      world.match.summary.id = 9002
+      await page.clock.fastForward(31_000)
+      world.match.summary.finished = true
+      world.match.summary.scored = true
+      await nativeFocus(page, false)
+      await other.bringToFront()
+      await page.clock.fastForward(31_000)
+      await expectCues(page, [260, 720])
+      await page.bringToFront()
+      await nativeFocus(page, true)
+      await page.getByRole('button', { name: '开启音效', exact: true }).click()
+      await page.clock.fastForward(31_000)
+      await expectCues(page, [260, 720])
+    })
+  })
+})
+
+test('多个后台标签页收到同一完局时只提醒一次', async ({ page, context }) => {
+  const first = await installWorld(page)
+  first.match = runningMatch()
+  await page.goto(`/matches/${MATCH_ID}`)
+  await page.getByRole('switch', { name: '模型回复提示音' }).click()
+  await expect.poll(() => first.streamRequests).toBeGreaterThan(0)
+  await nativeFocus(page, false)
+  const secondPage = await context.newPage()
+  const second = await installWorld(secondPage)
+  second.match = runningMatch()
+  await secondPage.goto(`/matches/${MATCH_ID}`)
+  await secondPage.getByRole('switch', { name: '模型回复提示音' }).click()
+  await expect.poll(() => second.streamRequests).toBeGreaterThan(0)
+  await nativeFocus(secondPage, false)
+  const other = await context.newPage()
+  await other.goto('about:blank')
+  await other.bringToFront()
+  await expect.poll(() => page.evaluate(() => document.hidden)).toBe(true)
+  await expect.poll(() => secondPage.evaluate(() => document.hidden)).toBe(true)
+  await test.step('当 两个后台标签页同时收到同一对局完成事件', async () => {
+    first.match = structuredClone(finishedMatch)
+    second.match = structuredClone(finishedMatch)
+    const events: MatchEventDTO[] = [{
+      matchFinished: { matchID: MATCH_ID, winner: 'a' },
+    }]
+    await Promise.all([
+      releaseStream(first, events),
+      releaseStream(second, events),
+    ])
+  })
+  await test.step('那么 原生音频合计只启动一次完成音', async () => {
+    await expect.poll(async () => {
+      const all = [...await audioStarts(page), ...await audioStarts(secondPage)]
+      return all.filter((entry) => entry.milliseconds === 720).length
+    }).toBe(1)
+    // Wait until both pages consumed the terminal event, not just the first sound.
+    await expect(page.getByRole('button', { name: '领取奖励', exact: true }))
+      .toBeVisible()
+    await expect(
+      secondPage.getByRole('button', { name: '领取奖励', exact: true }),
+    ).toBeVisible()
+    const all = [...await audioStarts(page), ...await audioStarts(secondPage)]
+    expect(all.filter((entry) => entry.milliseconds === 720)).toHaveLength(1)
+    expect(all.find((entry) => entry.milliseconds === 720)?.hidden).toBe(true)
   })
 })
