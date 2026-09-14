@@ -1,0 +1,60 @@
+{
+  "shangyang-court": {
+    "a": {
+      "side": "a",
+      "file": "shangyang-court/shangyang.md"
+    },
+    "b": {
+      "side": "b",
+      "file": "shangyang-court/ganlong.md"
+    }
+  },
+  "fengyiting-real": {
+    "a": {
+      "side": "a",
+      "file": "fengyiting-real/dongzhuo.md"
+    },
+    "b": {
+      "side": "b",
+      "file": "fengyiting-real/lvbu.md"
+    }
+  },
+  "trolley-problem": {
+    "a": {
+      "side": "a",
+      "file": "trolley-problem/yiren.md"
+    },
+    "b": {
+      "side": "b",
+      "file": "trolley-problem/wuren.md"
+    }
+  },
+  "honnoji-decision": {
+    "chosokabe": {
+      "side": "a",
+      "file": "honnoji-decision/chosokabe.md"
+    },
+    "hosokawa": {
+      "side": "b",
+      "file": "honnoji-decision/hosokawa.md"
+    },
+    "ashigaru": {
+      "side": "b",
+      "file": "honnoji-decision/ashigaru.md"
+    },
+    "yoshiaki": {
+      "side": "a",
+      "file": "honnoji-decision/yoshiaki.md"
+    }
+  },
+  "legal-harbor-murder-jury": {
+    "a": {
+      "side": "a",
+      "file": "legal-harbor-murder-jury/lin.md"
+    },
+    "b": {
+      "side": "b",
+      "file": "legal-harbor-murder-jury/su.md"
+    }
+  }
+}

@@ -376,11 +376,12 @@ function MetaDraft({ metaPrompt }: { metaPrompt: string }) {
   return (
     <div className='space-y-4'>
       <p className='text-sm leading-7 text-(--foreground-subtle)'>
-        复制下面的请求，发给你常用的
-        AI。拿到最终策略后，回到构建器，把它原样粘贴到主输入框即可。
+        复制下面的策略构建提示词（Prompt Builder），发给你常用的
+        AI。它会与你讨论、帮你完善策略；等你确认后，再生成最终策略提示词。
+        将最终策略粘贴回构建器的主输入框。
       </p>
       <pre
-        aria-label='元提示词内容'
+        aria-label='策略构建提示词内容'
         tabIndex={0}
         className='max-h-72 select-text overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-xs leading-6 text-(--foreground-subtle)'
         {...tm('E.meta-prompt-text')}
@@ -390,7 +391,7 @@ function MetaDraft({ metaPrompt }: { metaPrompt: string }) {
       {copyState === 'failed'
         ? (
           <p role='status' className='text-xs text-(--warning)'>
-            无法自动复制，请手动选择上方元提示词并复制。
+            无法自动复制，请手动选择上方策略构建提示词并复制。
           </p>
         )
         : null}
@@ -403,7 +404,7 @@ function MetaDraft({ metaPrompt }: { metaPrompt: string }) {
         {copyState === 'copied'
           ? <Check aria-hidden='true' className='mr-1.5 h-3.5 w-3.5' />
           : <Copy aria-hidden='true' className='mr-1.5 h-3.5 w-3.5' />}
-        {copyState === 'copied' ? '已复制' : '复制元提示词'}
+        {copyState === 'copied' ? '已复制' : '复制策略构建提示词'}
       </Button>
     </div>
   )

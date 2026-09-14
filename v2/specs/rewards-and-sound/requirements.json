@@ -6583,6 +6583,36 @@
       "evidenceInspected": true,
       "in_ci": false,
       "human": false
+    },
+    {
+      "id": "AUTO-RS-MERGE-READY-SEP14",
+      "reportedAt": "2026-09-14",
+      "baseCommit": "df77fcd",
+      "webTree": "b845546cde081a8ad3ccc901e99a46d3cd202813",
+      "result": "passed",
+      "commands": [
+        "deno task fmt",
+        "deno task lint",
+        "deno task typecheck",
+        "deno task typecheck:tests",
+        "deno task test:unit",
+        "deno task test:storybook",
+        "deno task test:e2e:rewards",
+        "deno task build"
+      ],
+      "unitTests": 256,
+      "unitFiles": 32,
+      "storybookTests": 98,
+      "bddTests": 18,
+      "scope": "Merged the concurrent prompt-builder PR without changing the approved audio. Real browser/fixture HTTP evidence; no human or production acceptance.",
+      "evidenceFiles": [
+        "/tmp/pr174-merge-final-unit.log",
+        "/tmp/pr174-merge-final-story.log",
+        "/tmp/pr174-merge-final-bdd.log",
+        "/tmp/pr174-merge-final-build.log"
+      ],
+      "in_ci": false,
+      "human": false
     }
   ],
   "revision": "v3",
@@ -6631,31 +6661,34 @@
     "asOf": "2026-09-14",
     "specification": "all 54 clauses remain proposed/improving; defaults are not final product confirmation",
     "backend": {
-      "revision": "1c0d205",
+      "revision": "d992c681d168b452e10eb1410317dfa31e91ec8c",
+      "baseCommit": "fdeba41",
       "testTargetsPassed": 38,
-      "ci": "passed"
+      "ci": "passed",
+      "url": "https://github.com/paideia-ai/axiia-cup-v2/actions/runs/34896815466",
+      "mergedAs": "fcea8b07513dffc58bdba3e4e0a803dfe5c20713"
     },
     "frontend": {
       "format": "passed",
       "lint": "passed",
       "types": "passed",
       "build": "passed",
-      "unitTests": 236,
-      "unitFiles": 31,
-      "storybook": "97/97 in one full run; 18 files",
+      "unitTests": 256,
+      "unitFiles": 32,
+      "storybook": "98/98 in one full run; 18 files",
       "bdd": "18/18 in one full run; 7 rewards + 11 sound",
       "fixturePreparation": "76 automated tests with 65 steps"
     },
     "human": "untested",
     "production": "not-verified",
     "frontendCI": "not-claimed; consult PR checks for final pushed revision",
-    "freshness": "Frontend evidence pinned to v2/web Git tree 36ed01a9e2c22c27665e8474cff20491aa2f14fe",
+    "freshness": "Frontend evidence pinned to v2/web Git tree b845546cde081a8ad3ccc901e99a46d3cd202813",
     "notes": [
       "浏览器使用真实 SPA/Chromium/Web Audio/SSE，业务 HTTP 内容为夹具；不代表 Swift 全栈、真人听感或生产验证。",
       "合并 main 后首轮发现旧合并保存/出战夹具及公开场景缺少钱包替身，已修正；角色切换夹具随后补齐明确首战对手配置。完整最终运行通过，历史失败日志保留在 /tmp/pr174-combined-{bdd,story}.log 和 /tmp/pr174-final-bdd.log。",
       "保留当前 main 的保存与开始首战分离：保存免费，报价检查只阻止派发；HTTP 402 可重试已保存版本。"
     ],
-    "demoAlignmentRevision": "v3 verified locally against main 18515a3; backend evidence remains historical at 1c0d205",
+    "demoAlignmentRevision": "v3; merge-ready validation includes main df77fcd and the approved demo",
     "historicalFrontendSep12": {
       "format": "passed",
       "lint": "passed",

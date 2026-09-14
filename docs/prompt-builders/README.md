@@ -1,5 +1,10 @@
 # Prompt Builders
 
+These are research and authoring assets. The website ships the reviewed templates
+in [`v2/prompt-builders`](../../v2/prompt-builders/README.md); it does not read this
+directory. Promote changes explicitly to the product templates and review their
+rendered output before release.
+
 This directory contains prompt-engineering assets for debate preparation.
 
 These documents are designed for both human contributors and AI systems. Rather than serving as debate prompts themselves, they support the construction of prompts that are ultimately used by debate agents.
