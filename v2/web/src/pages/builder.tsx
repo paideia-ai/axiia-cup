@@ -1155,6 +1155,8 @@ export function BuilderPage() {
                 side,
                 sideDisplayName,
                 scenario?.scoring,
+                roleKey,
+                promptUnitLimit,
               )}
               currentPrompt={prompt}
               onFill={fillWorkspace}

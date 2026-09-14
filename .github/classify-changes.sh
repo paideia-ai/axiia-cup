@@ -47,6 +47,9 @@ is_docs_only_path() {
   local path="$1"
 
   case "$path" in
+    docs/prompt-builders/*-prompt-builders.md)
+      return 1
+      ;;
     docs/*)
       return 0
       ;;
@@ -130,6 +133,13 @@ else
     elif is_v2_path "$file"; then
       v2_web_changed=true
     fi
+    # These are sources for the bundled end-user Prompt Builders. Run the web
+    # parity contract even when only a document or scenario script changes.
+    case "$file" in
+      docs/prompt-builders/*-prompt-builders.md|v2/scenarios/scenarios/*/script.js)
+        v2_web_changed=true
+        ;;
+    esac
   done
 fi
 

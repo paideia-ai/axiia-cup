@@ -159,7 +159,7 @@ export const SaveReloadAndExplicitStart: Story = {
       'true',
     )
     await userEvent.click(canvas.getByRole('button', { name: '元提示词' }))
-    expect(canvas.getByLabelText('元提示词内容')).toBeVisible()
+    expect(canvas.getByLabelText('策略构建提示词内容')).toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: '直接编写' }))
     await userEvent.type(input, saved.prompt)
     await userEvent.click(canvas.getByRole('button', { name: '保存版本' }))
@@ -444,7 +444,8 @@ export const CompletedJourneyOpensEachActualTool: Story = {
         })
         expect(dialog).toBeVisible()
         if (tool === 'meta') {
-          expect(within(dialog).getByLabelText('元提示词内容')).toBeVisible()
+          expect(within(dialog).getByLabelText('策略构建提示词内容'))
+            .toBeVisible()
         } else {expect(within(dialog).getByRole('region', { name: '拼装预览' }))
             .toBeVisible()}
         await userEvent.click(

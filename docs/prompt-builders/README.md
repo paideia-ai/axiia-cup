@@ -24,12 +24,13 @@ Prompt Builders are therefore **interactive strategy-construction tools**, not d
 
 ### LiquidJS reference variables
 
-The current Prompt Builders include three LiquidJS variables:
+The non-jury Prompt Builders use these reference variables:
 
 ```liquid
 {{ agent_prompt_template }}
 {{ judge_prompt }}
 {{ other_rules }}
+{{ strategy_prompt_limit }}
 ```
 
 These variables provide the model with authoritative reference material before
@@ -41,15 +42,46 @@ it begins the strategy-building conversation:
   and decision logic that the strategy should address.
 - `other_rules` contains short supplementary rules, such as scoring,
   competition flow, and the strategy prompt's length limit.
+- `strategy_prompt_limit` contains the configured final-strategy limit and
+  counting convention (Chinese characters and English words, not all characters).
+
+The Harbor jury builders instead use `agent_prompt_template`,
+`public_case_packet`, `player_visible_rules`,
+`npc_juror_system_prompt_template`, `npc_juror_personas`,
+`npc_final_verdict_prompt`, and `strategy_prompt_limit`.
 
 The Prompt Builder may use this material to understand the eventual debate
 environment, but it must not ask the player to supply information that is only
 selected at match runtime. Examples include the current true request, current
 opponent, selected Trolley cases, and current Trolley case.
 
-The Markdown files do not render these variables by themselves. A product
-integration or rendering script must use LiquidJS to substitute the reference
-material before presenting the Prompt Builder to a model.
+The Markdown files do not render these variables by themselves. The builder UI's
+“让你的AI帮你想策略” helper selects the end-user document section for the current
+scenario and role, then substitutes its reference variables before copying.
+These documents only need simple variable substitution; the integration does
+not evaluate Liquid tags, filters, or loops.
+
+The frontend bundles `v2/web/src/scenarios/prompt-builders.json`, generated from
+these documents and the scenario scripts. It includes player role templates and
+judge/NPC reference material, including Harbor's E1–E5 packet and nine personas.
+It excludes judge inner-monologue instructions and actual match state. Honnoji
+includes both possible opponents for the selected role without choosing either
+opponent or assigning a true request in advance. Templates show default match
+parameters; the copied builder tells the AI to follow actual runtime information
+when a match begins. Public scoring and the strategy length limit come from the
+loaded API data.
+
+After editing a source document or scenario script, run:
+
+```sh
+cd v2/web
+deno task prompt-builders
+deno task test:unit src/scenarios/prompt-builders.test.ts src/lib/meta-prompt.test.ts
+```
+
+Commit the generated JSON with its sources. CI checks parity and runs the web
+lane for changes to these builder documents or scenario scripts. The generated
+file lets the frontend Docker build use its existing `v2/web`-only context.
 
 ---
 
