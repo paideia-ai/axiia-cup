@@ -24,6 +24,10 @@ deno task lint
 
 ## Working on it
 
+For product reviewers and human-test operators, see the
+[human-testing README](../docs/human-testing/README.md) for Test Mode, reviewed
+spec journeys, account preparation, and evidence submission.
+
 You need deno 2.9.1 and nothing else — no Swift toolchain, no docker, no
 database.
 
