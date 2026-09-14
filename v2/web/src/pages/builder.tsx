@@ -26,6 +26,11 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
+import { BattleCostNotice } from '../components/rewards'
+import { useBattleQuote } from '../context/rewards'
+import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
+import { TypingFeedback } from '../components/typing-feedback'
+import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Button } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
@@ -307,6 +312,8 @@ export function BuilderPage() {
   )
   // Vivian U03-C05 v2: saving and explicitly starting are separate operations.
   const express = params.get('express') === '1'
+  const quoteState = useBattleQuote(scenarioID, side, 'pve', express)
+  const insufficientPoints = quoteState.blocked
   const requestedTool = creationTool(params.get('init'))
 
   const [prompt, setPrompt] = useState('')
@@ -859,8 +866,10 @@ export function BuilderPage() {
       !express || startBusyRef.current || saveBusyRef.current || saving ||
       starting || draftLoading || loadedAgentID !== agentID ||
       !latestVersion || !presetKey || startAttempt || attemptError ||
-      auth?.firstBattleDone || recovery != null
+      auth?.firstBattleDone || recovery != null || insufficientPoints
     ) return
+    unlockAudio()
+    playSound('click')
     // Freeze the SAVED version, not the editable workspace or the latest ★.
     const attempt: FirstBattleAttempt = {
       versionID: latestVersion.id,
@@ -907,10 +916,14 @@ export function BuilderPage() {
         // The pre-POST pending record remains conservative if this write fails.
       }
       if (belongsToBuilder()) setStartAttempt(accepted)
-      if (isCurrent()) continueFirstBattle(response.matchID)
+      trackSoundMatch(response.matchID)
+      if (isCurrent()) {
+        playSound('dispatch', String(response.matchID))
+        continueFirstBattle(response.matchID)
+      }
     } catch (cause) {
       const rejected = cause instanceof ApiError &&
-        [400, 401, 403, 404, 409, 413, 422, 429].includes(cause.status)
+        [400, 401, 402, 403, 404, 409, 413, 422, 429].includes(cause.status)
       if (rejected) {
         try {
           writeFirstBattleAttempt(identity, null)
@@ -943,6 +956,8 @@ export function BuilderPage() {
       modelID == null || draftLoading || loadedAgentID !== agentID ||
       !prompt.trim() || recovery != null || (express && auth?.firstBattleDone)
     ) return
+    unlockAudio()
+    playSound('click')
     // Everything below uses this immutable click-time snapshot. The controls
     // are disabled on the same render as `saving`, so a slow final draft flush
     // cannot silently mix a newer prompt/note/model/role into this version.
@@ -1009,6 +1024,7 @@ export function BuilderPage() {
         ) => [...current.filter((version) => version.id !== saved.id), saved])
       }
       if (!requestIsCurrent()) return
+      playSound('save', `${agentID}:${saved.id}`)
       if (snapshot.journal != null) {
         if (compareAndDeleteDraftJournal(journalScope, snapshot.journal)) {
           journalTokenRef.current = null
@@ -1099,6 +1115,7 @@ export function BuilderPage() {
 
   return (
     <div className='space-y-6'>
+      <TypingFeedback />
       <div>
         <Link
           to={`/agents/${agentID}`}
@@ -1260,6 +1277,7 @@ export function BuilderPage() {
         </div>
         <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
           <Textarea
+            data-spec='U19-C17 U19-C18'
             id='prompt-input'
             rows={18}
             value={prompt}
@@ -1375,6 +1393,8 @@ export function BuilderPage() {
           />
           <Button
             data-testid='save-version'
+            data-spec='U19-C06 U19-C19 U19-C20'
+            onPointerEnter={playButtonHover}
             className='h-11 sm:ml-auto md:h-10'
             onClick={() => void save()}
             disabled={saving || starting || draftLoading ||
@@ -1434,8 +1454,9 @@ export function BuilderPage() {
               已保存版本 v{latestVersion.ordinal}（#{latestVersion.id}）
             </p>
             <p className='text-sm text-(--foreground-subtle)'>
-              保存不会发起对局或消耗次数。点击「开始首战」后使用此版本和新手预设对手。
+              保存不会发起对局或消耗积分。点击「开始首战」后使用此版本和新手预设对手。
             </p>
+            <BattleCostNotice quoteState={quoteState} />
             {unsavedFirstBattleChanges
               ? (
                 <p role='status' className='text-sm text-(--warning)'>
@@ -1463,9 +1484,11 @@ export function BuilderPage() {
               : (
                 <Button
                   data-testid='start-first-battle'
+                  data-spec='U19-C07 U19-C19 U19-C20'
+                  onPointerEnter={playButtonHover}
                   onClick={() => void startFirstBattle()}
                   disabled={saving || starting || !presetKey ||
-                    !!attemptError || recovery != null}
+                    !!attemptError || recovery != null || insufficientPoints}
                 >
                   {starting ? '派发中…' : '开始首战'}
                 </Button>

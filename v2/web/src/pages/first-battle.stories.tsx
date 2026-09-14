@@ -233,6 +233,28 @@ export const RejectedStartRetriesSavedVersion: Story = {
   },
 }
 
+// A price can change after the displayed quote. HTTP 402 is a definite
+// rejection and must allow retrying the saved version after topping up.
+export const InsufficientPointsRetriesSavedVersion: Story = {
+  ...RejectedStartRetriesSavedVersion,
+  parameters: {
+    msw: [
+      http.post('/v1/matches/pve', async ({ request }) => {
+        posts.push(await request.json() as DispatchPVERequest)
+        return posts.length === 1
+          ? HttpResponse.json({
+            error: 'insufficient_points',
+            message: 'insufficient points',
+          }, { status: 402 })
+          : HttpResponse.json({ matchID: 7002 })
+      }),
+      ...handlers.filter((handler) =>
+        !handler.info.path?.toString().includes('/matches/pve')
+      ),
+    ],
+  },
+}
+
 export const AmbiguousStartSurvivesReload: Story = {
   beforeEach: () => {
     versions = [saved]

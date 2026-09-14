@@ -59,6 +59,10 @@ function Surface({ path }: { path: string }) {
 }
 
 const handlers = [
+  http.get('/v1/rewards', () => {
+    personalRequests.push('rewards')
+    return HttpResponse.json({ error: 'not_found' }, { status: 404 })
+  }),
   http.get(
     '/v1/auth/me',
     () =>

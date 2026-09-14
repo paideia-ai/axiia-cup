@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { BindPhoneCard } from '../components/auth/bind-phone-card'
+import { SoundControls } from '../components/sound-controls'
 import { useAuth } from '../context/auth'
 import { accountRejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -223,6 +224,12 @@ export function SettingsPage() {
       </Card>
 
       <BindPhoneCard />
+
+      <Card>
+        <CardContent className='pt-5'>
+          <SoundControls />
+        </CardContent>
+      </Card>
 
       <Card {...tm('K.password-card')}>
         <CardContent className='space-y-3 pt-5'>

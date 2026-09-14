@@ -7,6 +7,40 @@
 
 export type Side = 'a' | 'b'
 
+// Server-owned points: the browser never derives balances or eligibility.
+export interface RewardsResponse {
+  balance: number
+  dailyAllowance: number
+  battleCost: number
+  dailyRuns: number
+  pveWinRefundPercent: number
+  pvpWinRefundPercent: number
+  pointsPerYuan: number
+  nextGrantAt: number
+  claimableRewards: { matchID: number; points: number; kind: 'pve' | 'pvp' }[]
+}
+
+export interface RewardQuoteResponse {
+  cost: number
+  perBattleCost: number
+  repeatRoleSurcharge: boolean
+  battleCosts: number[]
+}
+
+export interface MatchRewardResponse {
+  matchID: number
+  points: number
+  status: 'pending' | 'claimable' | 'claimed' | 'ineligible'
+  kind?: 'pve' | 'pvp' | 'hotseat' | null
+}
+
+export interface ClaimRewardResponse {
+  matchID: number
+  creditedPoints: number
+  alreadyClaimed: boolean
+  balance: number
+}
+
 // ── AccountDTOs ─────────────────────────────────────────────────────────────
 
 export interface SignupRequest {

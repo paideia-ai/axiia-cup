@@ -1,5 +1,15 @@
 # v3.4 real-server journeys
 
+`deno task test:e2e:rewards` runs the reward and sound Gherkin mirrors in
+`reward-points.spec.ts` and `sound-feedback.spec.ts`. It starts the real Vite
+SPA on port 5189 and intercepts `/v1` with stateful, isolated HTTP fixtures. The
+Chinese `test.step` descriptions mirror the neighboring `.feature` scenarios;
+the sound journeys observe native Web Audio playback. This suite runs in web CI
+without a backend, credentials, or model calls. Durable accounting,
+authorization, atomic pricing and refunds are independently covered by the
+companion backend's real HTTP/SQLite tests. Run the real-server suite below for
+the existing full-stack journeys.
+
 `deno task test:e2e:real` builds and boots the local Swift server with an
 isolated SQLite database, seeds users through public HTTP APIs, starts this Vite
 app, and runs Playwright in Chromium. Every mutation is checked again through a

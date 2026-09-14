@@ -13,6 +13,8 @@ import type {
   VerdictDTO,
 } from '../api/types'
 import { JudgeTrendChart } from '../components/judge-trend'
+import { OutputSoundToggle } from '../components/sound-controls'
+import { RewardClaimCard } from '../components/rewards'
 import { ReplayControls, useReplay } from '../components/replay-controls'
 import type { SpeakerLabels } from '../components/timeline/labels'
 import {
@@ -86,7 +88,11 @@ export function MatchDetailPage() {
   const sideB = sideName(labels, 'b', speakers)
 
   const live = data != null && !data.summary.finished
-  const stream = useMatchStream(matchID, live)
+  const stream = useMatchStream(
+    matchID,
+    live,
+    Math.max(-1, ...(data?.turns.map((turn) => turn.seq) ?? [])),
+  )
 
   // 约战 ①/② 互链（#66，mock V21）：契约只带本场的 challengeID/leg，没有
   // siblingMatchID——另一条腿从 matches.list() 里按同 challengeID 找（两条腿
@@ -485,6 +491,7 @@ export function MatchDetailPage() {
             : null}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
+          {live ? <OutputSoundToggle /> : null}
           <button
             {...tm('FA.debug-toggle')}
             type='button'
@@ -584,6 +591,15 @@ export function MatchDetailPage() {
             )}
         </div>
       </div>
+
+      {finished && !replaying && optionalAuth?.account
+        ? (
+          <RewardClaimCard
+            key={`${optionalAuth.account.id}:${matchID}`}
+            matchID={matchID}
+          />
+        )
+        : null}
 
       {/* 参战双方（P3 G20，#71/#25）：老服务器无 participants → 整块不渲染。 */}
       {participants
