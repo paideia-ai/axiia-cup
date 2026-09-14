@@ -25,7 +25,7 @@ describe('sound preferences', () => {
       expect(readSoundPreferences(value)).toEqual(DEFAULT_SOUND_PREFERENCES)
     }
     expect(readSoundPreferences('{"enabled":false,"outputs":true,"volume":3}'))
-      .toEqual({ enabled: false, outputs: true, volume: 1 })
+      .toEqual({ enabled: false, volume: 1 })
     expect(readSoundPreferences('{"volume":-3}').volume).toBe(0)
   })
 })
@@ -265,7 +265,7 @@ describe('playback lifecycle', () => {
   it('gives milestones priority over output and deduplicates milestones across engines', () => {
     const first = new SoundEngine()
     first.unlock()
-    first.configure({ ...DEFAULT_SOUND_PREFERENCES, outputs: true })
+    first.configure(DEFAULT_SOUND_PREFERENCES)
     expect(first.play('output', '1:1')).toBe(true)
     expect(first.play('finish', 'match')).toBe(true)
     expect(sources[0].stop).toHaveBeenCalledOnce()
@@ -274,10 +274,10 @@ describe('playback lifecycle', () => {
     expect(otherTab.play('finish', 'match')).toBe(false)
   })
 
-  it('keeps output independently muted and survives blocked audio/storage', async () => {
+  it('enables reply feedback with master audio and survives blocked audio/storage', async () => {
     const engine = new SoundEngine()
     engine.unlock()
-    expect(engine.play('output', 'quiet')).toBe(false)
+    expect(engine.play('output', 'reply')).toBe(true)
     vi.stubGlobal('localStorage', {
       getItem() {
         throw new Error('disabled')

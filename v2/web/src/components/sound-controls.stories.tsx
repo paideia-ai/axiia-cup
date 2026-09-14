@@ -11,7 +11,7 @@ import {
   updateSoundPreferences,
 } from '../lib/sound'
 import { TypingFeedback } from './typing-feedback'
-import { OutputSoundToggle, SoundControls, SoundToggle } from './sound-controls'
+import { SoundControls, SoundToggle } from './sound-controls'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 
@@ -20,7 +20,6 @@ function Surface() {
     <div className='max-w-xl space-y-5 p-5'>
       <div className='flex items-center gap-3'>
         <SoundToggle />
-        <OutputSoundToggle />
       </div>
       <SoundControls />
     </div>
@@ -39,7 +38,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Audition: Story = {}
+export const Settings: Story = {}
 
 function PromptFeedbackSurface() {
   useEffect(installSoundListeners, [])
@@ -87,22 +86,18 @@ export const PromptAndButtonFeedback: Story = {
   },
 }
 
-export const MuteAndOutputPreferences: Story = {
+export const MasterSoundPreferences: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const master = canvas.getByRole('switch', { name: '启用音效' })
-    const outputs = canvas.getAllByRole('switch', { name: '模型回复提示音' })
+    await expect(canvas.getAllByRole('switch')).toHaveLength(1)
     await expect(master).toBeChecked()
-    for (const output of outputs) await expect(output).not.toBeChecked()
-    await userEvent.click(outputs[0])
-    for (const output of outputs) await expect(output).toBeChecked()
     await userEvent.click(canvas.getByRole('button', { name: '关闭音效' }))
     await expect(master).not.toBeChecked()
-    for (const output of outputs) await expect(output).toBeDisabled()
-    await expect(canvas.getByRole('button', { name: '试听领取奖励' }))
-      .toBeDisabled()
+    await expect(canvas.getByRole('slider', { name: '音量' })).toBeDisabled()
+    await expect(canvas.queryAllByRole('button', { name: /试听/ }))
+      .toHaveLength(0)
     await userEvent.click(canvas.getByRole('button', { name: '开启音效' }))
-    for (const output of outputs) await expect(output).toBeChecked()
     await expect(canvas.getByRole('slider', { name: '音量' })).toHaveValue('25')
   },
 }

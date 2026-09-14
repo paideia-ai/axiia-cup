@@ -1,16 +1,12 @@
 import { Volume2, VolumeX } from 'lucide-react'
-import { useState, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 
 import {
   getSoundPreferences,
-  playSound,
-  prepareRewardSound,
-  type SoundCue,
   subscribeSound,
   unlockAudio,
   updateSoundPreferences,
 } from '../lib/sound'
-import { Button } from './ui/button'
 
 function useSoundPreferences() {
   return useSyncExternalStore(
@@ -40,45 +36,8 @@ export function SoundToggle() {
   )
 }
 
-export function OutputSoundToggle() {
-  const preferences = useSoundPreferences()
-  return (
-    <button
-      type='button'
-      role='switch'
-      data-spec='U19-C03 U19-C04 U19-C08'
-      aria-label='模型回复提示音'
-      aria-checked={preferences.outputs}
-      disabled={!preferences.enabled}
-      title={!preferences.enabled
-        ? '请先在顶栏开启音效'
-        : '每条模型回复完成时轻响一次'}
-      className='inline-flex cursor-pointer items-center rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) hover:text-(--foreground) disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2'
-      onClick={() => {
-        updateSoundPreferences({ outputs: !preferences.outputs })
-        unlockAudio()
-      }}
-    >
-      回复提示音：{preferences.outputs ? '开' : '关'}
-    </button>
-  )
-}
-
-export const SOUND_LABELS: Record<SoundCue, string> = {
-  save: '保存版本',
-  dispatch: '发起对战',
-  output: '模型回复',
-  finish: '对战完成',
-  reward: '领取奖励',
-  type: '输入文字',
-  delete: '删除文字',
-  hover: '按钮悬停',
-  click: '按钮点击',
-}
-
 export function SoundControls() {
   const preferences = useSoundPreferences()
-  const [notice, setNotice] = useState('')
   return (
     <section
       aria-labelledby='sound-settings-title'
@@ -109,23 +68,6 @@ export function SoundControls() {
           className='h-4 w-4 accent-(--accent)'
         />
       </label>
-      <label className='flex items-center justify-between gap-3 text-sm'>
-        <span>模型回复提示音</span>
-        <input
-          type='checkbox'
-          role='switch'
-          checked={preferences.outputs}
-          disabled={!preferences.enabled}
-          onChange={(event) => {
-            updateSoundPreferences({ outputs: event.target.checked })
-            unlockAudio()
-          }}
-          className='h-4 w-4 accent-(--accent)'
-        />
-      </label>
-      <p className='text-xs text-(--foreground-muted)'>
-        每条回复完成时轻响一次，默认关闭。
-      </p>
       <label className='flex items-center gap-3 text-sm' data-spec='U19-C02'>
         <span className='shrink-0'>音量</span>
         <input
@@ -147,36 +89,6 @@ export function SoundControls() {
           {Math.round(preferences.volume * 100)}%
         </span>
       </label>
-      <div className='flex flex-wrap gap-2' aria-label='试听音效'>
-        {(Object.keys(SOUND_LABELS) as SoundCue[]).map((cue) => (
-          <Button
-            key={cue}
-            type='button'
-            size='sm'
-            variant='secondary'
-            disabled={!preferences.enabled || preferences.volume === 0}
-            onClick={async () => {
-              unlockAudio()
-              if (cue === 'reward') await prepareRewardSound()
-              // One microtask permits an already-allowed resume to settle. If the
-              // browser still blocks audio, skip this cue and explain honestly.
-              queueMicrotask(() => {
-                const played = playSound(cue, undefined, true)
-                setNotice(
-                  played
-                    ? `正在试听：${SOUND_LABELS[cue]}`
-                    : '浏览器尚未允许播放，请再次点击试听。',
-                )
-              })
-            }}
-          >
-            试听{SOUND_LABELS[cue]}
-          </Button>
-        ))}
-      </div>
-      <p role='status' className='min-h-4 text-xs text-(--foreground-muted)'>
-        {notice}
-      </p>
     </section>
   )
 }

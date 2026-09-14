@@ -17,14 +17,12 @@ export type SoundCue =
 export interface SoundPreferences {
   enabled: boolean
   volume: number
-  outputs: boolean
 }
 
 export const SOUND_STORAGE_KEY = 'axiia-sound-v1'
 export const DEFAULT_SOUND_PREFERENCES: SoundPreferences = {
   enabled: true,
   volume: 0.25,
-  outputs: false,
 }
 
 export function readSoundPreferences(value: string | null): SoundPreferences {
@@ -32,9 +30,6 @@ export function readSoundPreferences(value: string | null): SoundPreferences {
     const parsed = JSON.parse(value ?? '{}')
     return {
       enabled: typeof parsed?.enabled === 'boolean' ? parsed.enabled : true,
-      outputs: typeof parsed?.outputs === 'boolean'
-        ? parsed.outputs
-        : parsed?.responses === true,
       volume:
         typeof parsed?.volume === 'number' && Number.isFinite(parsed.volume)
           ? Math.max(0, Math.min(1, parsed.volume))
@@ -236,7 +231,6 @@ export class SoundEngine {
       )
     }
     if (!preferences.enabled || preferences.volume === 0) this.stop()
-    else if (!preferences.outputs) this.stop('output')
   }
 
   play = (cue: SoundCue, key: string, audition = false): boolean => {
@@ -245,7 +239,6 @@ export class SoundEngine {
     const ctx = this.context
     if (
       !this.preferences.enabled || this.preferences.volume === 0 ||
-      (!audition && cue === 'output' && !this.preferences.outputs) ||
       typeof document === 'undefined' ||
       (cue !== 'finish' && (document.hidden || !document.hasFocus())) ||
       !ctx || ctx.state !== 'running' || !this.gain
