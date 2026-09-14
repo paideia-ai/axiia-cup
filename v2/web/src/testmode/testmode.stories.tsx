@@ -7,7 +7,7 @@ import type { AgentVersionDTO, MeResponse } from '../api/types'
 import { AuthProvider, useAuth } from '../context/auth'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
-import { JOURNEYS, REVIEWED_MANUAL_URL, STEPS } from './data'
+import { JOURNEYS, manualUrl, REVIEWED_MANUAL_URL, STEPS } from './data'
 import {
   FIXTURE_SESSION_STORAGE_KEY,
   FIXTURE_STORAGE_KEY,
@@ -239,19 +239,9 @@ export const AccountAwareHandoffEntry: Story = {
     await expect(body.getByRole('dialog', { name: '导测' })).toBeVisible()
 
     const pill = body.getByRole('navigation', { name: '测试模式' })
-    await userEvent.click(
-      within(pill).getByRole('button', { name: '设置身份' }),
-    )
-    const identity = await body.findByRole('dialog', { name: '身份' })
-    await expect(within(identity).getByLabelText('名字')).toHaveValue('')
-    const boardPasscode = within(identity).getByLabelText(
-      '看板口令（不是产品账号密码）',
-    )
-    await expect(boardPasscode).toHaveValue('')
-    await expect(boardPasscode).toHaveAttribute('autocomplete', 'off')
-    await userEvent.click(
-      within(identity).getByRole('button', { name: '取消' }),
-    )
+    expect(within(pill).queryByRole('button', { name: '设置身份' })).toBeNull()
+    expect(body.queryByLabelText('看板口令（不是产品账号密码）')).toBeNull()
+    expect(calls).toEqual([])
   },
 }
 
@@ -360,66 +350,16 @@ export const BuilderUnderTestMode: Story = {
       )
     }
 
-    // ⑤a 没身份点「看到了」→ 问身份 → 取消 → 换一步 → 从药丸设身份：什么都不能写
-    await userEvent.click(body.getByRole('button', { name: '看到了 ✓' }))
-    const ask = await body.findByRole('dialog', { name: '先署个名' })
-    await userEvent.click(within(ask).getByRole('button', { name: '取消' }))
-    await waitFor(() =>
-      expect(body.queryByRole('dialog', { name: '先署个名' })).toBeNull()
-    )
-    await gotoStep(4)
-    await expect(await body.findByText('j3s4')).toBeVisible()
-    await userEvent.click(
-      within(pill).getByRole('button', { name: '设置身份' }),
-    )
-    const who0 = await body.findByRole('dialog', { name: '身份' })
-    await userEvent.type(within(who0).getByLabelText('名字'), 'story-tester')
-    await userEvent.type(
-      within(who0).getByLabelText('看板口令（不是产品账号密码）'),
-      'story-pwd',
-    )
-    await userEvent.click(
-      within(who0).getByRole('button', { name: '保存身份' }),
-    )
-    await waitFor(() =>
-      expect(body.queryByRole('dialog', { name: '身份' })).toBeNull()
-    )
-    await new Promise((r) => setTimeout(r, 300))
-    expect(calls).toEqual([])
-    // ⑤ 身份已有：回到第 5 步点「看到了」直接扇出到看板（身份对话框那条路在 ⑤a 走过了）
+    // Guide navigation must not submit results or ask for board credentials.
+    expect(body.queryByRole('button', { name: '看到了 ✓' })).toBeNull()
+    expect(within(pill).queryByRole('button', { name: '设置身份' })).toBeNull()
+    expect(body.queryByLabelText('看板口令（不是产品账号密码）')).toBeNull()
     await gotoStep(5)
-    await expect(await body.findByText('j3s5')).toBeVisible()
-    await userEvent.click(body.getByRole('button', { name: '看到了 ✓' }))
-
-    const step = STEPS.j3s5
-    await waitFor(
-      () =>
-        expect(calls.filter((c) => c.fn === 'set_pick').length).toBe(
-          step.clauseIds.length + 1,
-        ),
-      { timeout: 8000 },
-    )
-    const picks = calls.filter((c) => c.fn === 'set_pick')
-    for (const c of step.clauseIds) {
-      expect(picks.map((p) => p.body.p_card)).toContain(`ss:${c}`)
-    }
-    expect(picks.map((p) => p.body.p_card)).toContain('pjg:j3s5')
-    for (const p of picks) {
-      expect(p.body.p_author).toBe('story-tester')
-      expect(p.body.p_pwd).toBe('story-pwd')
-      expect(p.body.p_choice).toBe('pass')
-      const note = JSON.parse(String(p.body.p_note)) as Record<string, unknown>
-      expect(note.via).toBe('guided:j3s5')
-      expect(note.step).toBe('j3s5')
-      expect(note.role).toBe('tester')
-      expect(note.build).toEqual({ web: expect.any(String) })
-    }
-    // 没写备注就不留评论
-    expect(calls.filter((c) => c.fn === 'post_comment')).toEqual([])
-    await expect(await body.findByText(/已记录 \d+ 条到看板/)).toBeVisible()
-    // 走到下一步（旅程 3 只有 5 步：落到小结卡）
-    await expect(await body.findByText(/第 6 步|走完了|已确认 \d+ \/ \d+/))
-      .toBeVisible()
+    expect(body.getByRole('link', { name: '到手册提交结果与截图' }))
+      .toHaveAttribute('href', manualUrl(STEPS.j3s5))
+    await userEvent.click(body.getByRole('button', { name: '看小结 →' }))
+    await expect(await body.findByText(/导测小结/)).toBeVisible()
+    expect(calls).toEqual([])
   },
 }
 
@@ -476,6 +416,9 @@ export const ConfirmedB3A5Handoff: Story = {
     const b3Upload = body.getByRole('link', {
       name: '在详细手册提交这些文件',
     }) as HTMLAnchorElement
+    expect(body.getByRole('link', { name: '到手册提交结果与截图' }))
+      .toHaveAttribute('href', `${REVIEWED_MANUAL_URL}#HV-B3-OWNER-EA-S01`)
+    expect(calls).toEqual([])
     expect(b3Upload.href).toBe(
       `${REVIEWED_MANUAL_URL}#HV-B3-OWNER-EA-S01`,
     )
@@ -499,6 +442,9 @@ export const ConfirmedB3A5Handoff: Story = {
       body.getByText('HV-A5-OS-CORE-S05-mobile-sheet.png'),
     ).toBeVisible()
     expect(body.queryByText('HV-A5-OS-CORE-S06')).toBeNull()
+    expect(body.getByRole('link', { name: '到手册提交结果与截图' }))
+      .toHaveAttribute('href', `${REVIEWED_MANUAL_URL}#HV-A5-OS-CORE-S05`)
+    expect(calls).toEqual([])
   },
 }
 
@@ -582,7 +528,7 @@ export const VivianJourneysAreSelectable: Story = {
   },
 }
 
-export const A3NewRunClearsCapturedUrlsAndProgress: Story = {
+export const A3NewRunClearsCapturedUrlsAndPreservesHistory: Story = {
   args: {
     initialEntry:
       '/agents/101/build?tm=1&tmJourney=HV-A3-FIRST-BATTLE&tmStep=HV-A3-FIRST-BATTLE-S03',
@@ -591,7 +537,7 @@ export const A3NewRunClearsCapturedUrlsAndProgress: Story = {
   play: async () => {
     const body = within(document.body)
     const guide = within(await body.findByRole('dialog', { name: '导测' }))
-    await expect(await guide.findByRole('button', { name: '第 3 步，看到了' }))
+    await expect(await guide.findByRole('button', { name: '第 3 步' }))
       .toBeVisible()
     await expect(guide.getByRole('link', { name: '打开网页：本步起始页' }))
       .toHaveAttribute(
@@ -620,7 +566,7 @@ export const A3NewRunClearsCapturedUrlsAndProgress: Story = {
     expect(readFixtureValues('HV-A3-FIRST-BATTLE')).toEqual({
       appBaseUrl: globalThis.location.origin,
     })
-    expect(readProgress('HV-A3-FIRST-BATTLE')).toEqual({})
+    expect(Object.keys(readProgress('HV-A3-FIRST-BATTLE'))).toHaveLength(7)
     expect(readFixtureValues('HV-A6-GATES-CREATION')).toMatchObject({
       a6GateAgentId: '9001',
       a6CreationAgentId: '9003',
@@ -653,7 +599,7 @@ export const A6RoleSwitchPreservesRunAndReplacementClearsIt: Story = {
   play: async () => {
     const body = within(document.body)
     const guide = within(await body.findByRole('dialog', { name: '导测' }))
-    await expect(await guide.findByRole('button', { name: '第 1 步，看到了' }))
+    await expect(await guide.findByRole('button', { name: '第 1 步' }))
       .toBeVisible()
     await expect(guide.getByLabelText(/^PVP 门槛账号智能体 ID/)).toHaveValue(
       '9001',
@@ -667,11 +613,11 @@ export const A6RoleSwitchPreservesRunAndReplacementClearsIt: Story = {
       '9001',
     )
     await userEvent.click(
-      guide.getByRole('button', { name: '第 4 步，看到了' }),
+      guide.getByRole('button', { name: '第 4 步' }),
     )
     expect(readFixtureValues('HV-A6-GATES-CREATION').a6CreationAgentId)
       .toBe('9003')
-    await expect(guide.getByRole('button', { name: '第 1 步，看到了' }))
+    await expect(guide.getByRole('button', { name: '第 1 步' }))
       .toBeVisible()
 
     await userEvent.click(guide.getByRole('button', { name: '开始新一轮' }))
@@ -686,7 +632,7 @@ export const A6RoleSwitchPreservesRunAndReplacementClearsIt: Story = {
       await expect(guide.getByRole('button', { name: `第 ${index} 步` }))
         .toBeVisible()
     }
-    expect(readProgress('HV-A6-GATES-CREATION')).toEqual({})
+    expect(Object.keys(readProgress('HV-A6-GATES-CREATION'))).toHaveLength(4)
     expect(readFixtureValues('HV-A6-GATES-CREATION')).toEqual({
       appBaseUrl: globalThis.location.origin,
     })

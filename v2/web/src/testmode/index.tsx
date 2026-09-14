@@ -7,7 +7,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { testModeEntryTarget } from './entry'
 import { BASE_CSS } from './styles'
-import { getIdentity, IDENTITY_EVENT } from './supabase'
 
 const TM_KEY = 'axiia:tm'
 const BADGES_KEY = 'axiia:tm:badges'
@@ -20,7 +19,6 @@ export interface TmUi {
   badges: BadgeMode
   panel: boolean
   guided: boolean
-  identity: boolean
 }
 export type SetUi = (patch: Partial<TmUi>) => void
 
@@ -71,9 +69,7 @@ export function TestModeRoot() {
     badges: readBadges(),
     panel: false,
     guided: entryTarget !== null,
-    identity: false,
   }))
-  const [who, setWho] = useState(() => getIdentity()?.name ?? null)
   const [host] = useState(() => {
     if (typeof document === 'undefined') return null
     const el = document.createElement('div')
@@ -145,17 +141,6 @@ export function TestModeRoot() {
     }
   }, [on, host, location.pathname])
 
-  useEffect(() => {
-    if (!on) return
-    const refresh = () => setWho(getIdentity()?.name ?? null)
-    globalThis.addEventListener(IDENTITY_EVENT, refresh)
-    globalThis.addEventListener('storage', refresh)
-    return () => {
-      globalThis.removeEventListener(IDENTITY_EVENT, refresh)
-      globalThis.removeEventListener('storage', refresh)
-    }
-  }, [on])
-
   const setUi = useCallback<SetUi>((patch) => {
     setUiState((u) => {
       const next = { ...u, ...patch }
@@ -181,7 +166,7 @@ export function TestModeRoot() {
   const close = useCallback(() => {
     write(TM_KEY, '0')
     setOn(false)
-    setUiState((u) => ({ ...u, panel: false, guided: false, identity: false }))
+    setUiState((u) => ({ ...u, panel: false, guided: false }))
   }, [])
 
   if (!on || !host) return null
@@ -209,7 +194,7 @@ export function TestModeRoot() {
           type='button'
           className='tm-pill-btn'
           aria-pressed={ui.guided}
-          title='导测：按旅程手册一步步走，逐步确认'
+          title='导测：按旅程手册一步步走，结果与截图在手册提交'
           onClick={() => setUi({ guided: !ui.guided })}
         >
           导测
@@ -222,24 +207,6 @@ export function TestModeRoot() {
           onClick={() => setUi({ panel: !ui.panel })}
         >
           清单
-        </button>
-        <button
-          type='button'
-          className='tm-pill-btn tm-pill-btn--who'
-          title={who
-            ? `当前身份：${who}（点击修改）`
-            : '设置看板身份：名字 + 看板口令（不是产品账号密码）'}
-          aria-label={who ? `身份：${who}，点击修改` : '设置身份'}
-          onClick={() => setUi({ identity: true })}
-        >
-          {who
-            ? (
-              <>
-                <span className='tm-pill-who-k' aria-hidden='true'>身份</span>
-                {who}
-              </>
-            )
-            : '设置身份'}
         </button>
         <button
           type='button'
