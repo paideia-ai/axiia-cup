@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
+import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -153,12 +153,39 @@ export const ExternalAiHelperLivesInDialog: Story = {
       name: '让你的AI帮你想策略',
     })
     await expect(dialog).toBeVisible()
-    await expect(within(dialog).getByRole('button', { name: '复制元提示词' }))
+    await expect(
+      within(dialog).getByRole('button', { name: '复制策略构建提示词' }),
+    )
       .toBeVisible()
-    const prompt = within(dialog).getByLabelText('元提示词内容')
+    const prompt = within(dialog).getByLabelText('策略构建提示词内容')
     await waitFor(() =>
       expect(prompt).toHaveTextContent('计分规则：逐项累计本场得分。')
     )
+    expect(prompt).toHaveTextContent('# 商鞅 Prompt Builder')
+    expect(prompt).toHaveTextContent('等我确认后再生成')
+    expect(prompt).not.toHaveTextContent(/\{\{|只输出策略提示词正文/)
+    const clipboard = spyOn(navigator.clipboard, 'writeText').mockResolvedValue(
+      undefined,
+    )
+    try {
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: '复制策略构建提示词' }),
+      )
+      await expect(
+        await within(dialog).findByRole('button', { name: '已复制' }),
+      ).toBeVisible()
+      expect(clipboard).toHaveBeenCalledWith(prompt.textContent)
+      clipboard.mockRejectedValueOnce(new Error('Clipboard permission denied'))
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: '已复制' }),
+      )
+      await expect(await within(dialog).findByRole('status')).toHaveTextContent(
+        '请手动选择上方策略构建提示词并复制',
+      )
+    } finally {
+      clipboard.mockRestore()
+    }
+    await expect(input).toHaveValue(v1.prompt)
     expect(prompt).toHaveTextContent('证据闭环：2.75 分')
     expect(prompt).toHaveTextContent('重复论证：-1.125 分')
     expect(prompt).toHaveTextContent('未使用机会：0 分')
@@ -192,5 +219,59 @@ export const SaveReturnsToAgentHome: Story = {
     await expect(save).toBeEnabled()
     await userEvent.click(save)
     await expect(await canvas.findByTestId('agent-home')).toBeVisible()
+  },
+}
+
+export const ExternalAiHelperFollowsSelectedRole: Story = {
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+    msw: [
+      http.get('/v1/agents/101/draft', () =>
+        HttpResponse.json({
+          fields: { prompt: v1.prompt },
+          scenarioID: 'honnoji-decision',
+          side: 'a',
+        })),
+      http.get('/v1/scenarios/honnoji-decision', () =>
+        HttpResponse.json({
+          ...scenario,
+          summary: {
+            ...scenario.summary,
+            id: 'honnoji-decision',
+            title: '本能寺之变',
+            sideAName: '袭击本能寺',
+            sideBName: '西进毛利',
+          },
+        })),
+      ...handlers(v1.prompt, () => HttpResponse.json({ versions: [] })),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(input).toBeEnabled())
+    for (
+      const [name, heading] of [
+        ['足利义昭的使者', 'D.足利义昭使者辩论策略 Prompt Builder'],
+        ['长宗我部元亲的密使', 'A.长宗我部元亲阵营辩论策略 Prompt Builder'],
+      ]
+    ) {
+      await userEvent.click(canvas.getByRole('combobox', { name: '选择角色' }))
+      await userEvent.click(
+        await within(document.body).findByRole('option', { name }),
+      )
+      await userEvent.click(
+        canvas.getByRole('button', { name: '让你的AI帮你想策略' }),
+      )
+      const dialog = canvas.getByRole('dialog', { name: '让你的AI帮你想策略' })
+      const prompt = within(dialog).getByLabelText('策略构建提示词内容')
+      expect(prompt).toHaveTextContent(heading)
+      expect(prompt).toHaveTextContent(`「${name}」一方`)
+      expect(prompt).not.toHaveTextContent(/\{\{|undefined/)
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: '关闭弹窗' }),
+      )
+      expect(input).toHaveValue(v1.prompt)
+    }
   },
 }

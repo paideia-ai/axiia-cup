@@ -4,6 +4,9 @@ import type { ScenarioScoringDTO } from '../api/types'
 import { honnojiDecision } from '../scenarios/honnoji-decision'
 import { fengyitingReal } from '../scenarios/fengyiting-real'
 import { shangyangCourt } from '../scenarios/shangyang-court'
+import { trolleyProblem } from '../scenarios/trolley-problem'
+import { legalHarborMurderJury } from '../scenarios/legal-harbor-murder-jury'
+import type { ScenarioModule } from '../scenarios/types'
 import { metaPromptFor } from './meta-prompt'
 
 const scoring: ScenarioScoringDTO = {
@@ -37,7 +40,7 @@ describe('external-AI prompt public scoring', () => {
     expect(prompt).toContain('「甲方」一方')
     if (module) {
       expect(prompt).toContain('场景一句话：')
-      expect(prompt).toContain('角色模板如下（仅供参考）')
+      expect(prompt).toContain('角色模板')
     }
   })
 
@@ -77,5 +80,134 @@ describe('external-AI prompt public scoring', () => {
       '计分规则：本场按公开条目计分。\n- 未使用机会：0 分',
     )
     expect(prompt).not.toMatch(/undefined|NaN|证据完整性|2\.75/)
+  })
+})
+
+describe('interactive strategy construction', () => {
+  const roles: [ScenarioModule, 'a' | 'b', string | null, string][] = [
+    [shangyangCourt, 'a', null, '# 商鞅 Prompt Builder'],
+    [shangyangCourt, 'b', null, '# 甘龙 Prompt Builder'],
+    [fengyitingReal, 'a', null, '## 董卓 Prompt Builder'],
+    [fengyitingReal, 'b', null, '## 吕布 Prompt Builder'],
+    [trolleyProblem, 'a', null, '# 奕仁Prompt Builder'],
+    [trolleyProblem, 'b', null, '# 武仁Prompt Builder'],
+    [
+      honnojiDecision,
+      'a',
+      'chosokabe',
+      'A.长宗我部元亲阵营辩论策略 Prompt Builder',
+    ],
+    [honnojiDecision, 'a', 'yoshiaki', 'D.足利义昭使者辩论策略 Prompt Builder'],
+    [honnojiDecision, 'b', 'hosokawa', 'B.细川藤孝辩论策略 Prompt Builder'],
+    [honnojiDecision, 'b', 'ashigaru', 'C.明智军足轻辩论策略 Prompt Builder'],
+    [legalHarborMurderJury, 'a', null, '# 林 Prompt Builder'],
+    [legalHarborMurderJury, 'b', null, '# 苏 Prompt Builder'],
+  ]
+
+  it.each(roles)(
+    'renders the selected role %#',
+    (module, side, role, heading) => {
+      const prompt = metaPromptFor(
+        module,
+        '测试场景',
+        side,
+        '本方',
+        scoring,
+        role,
+        750,
+      )
+      expect(prompt).toContain(heading)
+      expect(prompt).toContain('等我确认后再生成')
+      expect(prompt).toContain('750 个单位（汉字按字、英文按词计）')
+      expect(prompt).not.toMatch(
+        /\{\{|\{%|undefined|NaN|1000|标题、标点和换行均计入|只输出策略提示词正文/,
+      )
+      const roleHeadings = roles.filter(([otherModule]) =>
+        otherModule === module
+      ).map(([, , , title]) => title)
+      for (const other of roleHeadings.filter((title) => title !== heading)) {
+        expect(prompt).not.toContain(other)
+      }
+    },
+  )
+
+  it('includes Harbor evidence, all nine personas, procedures and final verdict criteria', () => {
+    const prompt = metaPromptFor(
+      legalHarborMurderJury,
+      '码头疑云',
+      'b',
+      '苏',
+      null,
+    )
+    for (
+      const name of [
+        '陈岚',
+        '魏笙',
+        '韩朔',
+        '沈青',
+        '杜临',
+        '孟遥',
+        '方稚',
+        '蒋诚',
+        '宁柏',
+      ]
+    ) {
+      expect(prompt).toContain(name)
+    }
+    for (const evidence of ['E1', 'E2', 'E3', 'E4', 'E5']) {
+      expect(prompt).toContain(`【${evidence}：`)
+    }
+    expect(prompt).toContain('第 11 席陪审员 苏')
+    expect(prompt).toContain('最多四句话')
+    expect(prompt).toContain('NOT_GUILTY：你认为控方没有达到该标准')
+    expect(prompt).toContain('秘密意向投票')
+  })
+
+  it('prepares both possible Honnoji opponents without assigning a true request', () => {
+    const prompt = metaPromptFor(
+      honnojiDecision,
+      '本能寺',
+      'a',
+      '袭击',
+      null,
+      'yoshiaki',
+    )
+    expect(prompt).toContain('「足利义昭的使者」一方')
+    expect(prompt).toContain('【可能对阵：细川藤孝')
+    expect(prompt).toContain('【可能对阵：明智军中的足轻')
+    expect(prompt).toContain('请光秀保证义昭使者安全离营')
+    expect(prompt).toContain('真假标记由系统在比赛时分配')
+    expect(prompt).not.toContain('【可能对阵：长宗我部')
+  })
+
+  it.each([null, 'unknown', 'hosokawa'])(
+    'does not substitute an incorrect persona (%s)',
+    (role) => {
+      const prompt = metaPromptFor(
+        honnojiDecision,
+        '本能寺',
+        'a',
+        '袭击',
+        null,
+        role,
+      )
+      expect(prompt).toContain('先请我确认本方角色')
+      expect(prompt).not.toContain('B.细川藤孝辩论策略 Prompt Builder')
+      expect(prompt).toContain('不要立即生成最终策略')
+    },
+  )
+
+  it('does not invent a limit before config loads', () => {
+    const prompt = metaPromptFor(
+      shangyangCourt,
+      '商鞅',
+      'a',
+      '商鞅',
+      null,
+      null,
+      null,
+    )
+    expect(prompt).toContain('构建器显示的单位上限')
+    expect(prompt).not.toContain('1000')
   })
 })

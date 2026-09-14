@@ -130,6 +130,13 @@ else
     elif is_v2_path "$file"; then
       v2_web_changed=true
     fi
+    # Scenario references feed the product Prompt Builders. Check their parity
+    # in the web lane when a script changes. Product templates already live in v2/.
+    case "$file" in
+      v2/scenarios/scenarios/*/script.js)
+        v2_web_changed=true
+        ;;
+    esac
   done
 fi
 

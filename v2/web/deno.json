@@ -5,6 +5,7 @@
     "dist",
     "node_modules",
     "playwright-report",
+    "prompt-builder-previews",
     "storybook-static",
     "test-results"
   ],
@@ -20,6 +21,8 @@
   "tasks": {
     "dev": "deno run -A npm:vite",
     "build": "deno run -A npm:vite build",
+    "prompt-builders": "deno run --allow-read --allow-write scripts/prompt-builders.ts --write",
+    "prompt-builders:preview": "deno run -A scripts/preview-prompt-builders.ts",
     "typecheck": "deno run -A npm:typescript/tsc -p tsconfig.check.json",
     "typecheck:tests": "deno run -A npm:typescript/tsc -p tsconfig.tests.json",
     "test": "deno task test:unit && deno task test:storybook",
