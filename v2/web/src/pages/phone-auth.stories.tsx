@@ -84,6 +84,12 @@ export const LoginKnownPhone: StoryObj = {
     const canvas = within(canvasElement)
     await userEvent.click(await canvas.findByRole('tab', { name: '手机号' }))
 
+    // A negative tab margin used to overflow the horizontal tab strip by 1px,
+    // producing an unnecessary vertical scrollbar in the login form.
+    const tablist = canvas.getByRole('tablist')
+    await expect(tablist.scrollHeight).toBeLessThanOrEqual(tablist.clientHeight)
+    await expect(tablist.scrollWidth).toBeLessThanOrEqual(tablist.clientWidth)
+
     const send = canvas.getByRole('button', { name: '发送验证码' })
     await expect(send).toBeDisabled()
     await userEvent.type(phoneInput(canvas), PHONE)

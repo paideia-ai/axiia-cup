@@ -50,7 +50,7 @@ export function AppShell({ children }: PropsWithChildren) {
       : pathname === to || pathname.startsWith(`${to}/`)
 
   return (
-    <div className='flex min-h-screen flex-col bg-(--background)'>
+    <div className='flex min-h-dvh flex-col bg-(--background)'>
       <header
         {...tm('NAV.header')}
         className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'
@@ -145,10 +145,10 @@ export function AppShell({ children }: PropsWithChildren) {
       </main>
       <footer
         {...tm('NAV.footer')}
-        className='hidden border-t border-(--border-soft) px-4 py-4 sm:px-6 md:block'
+        className='hidden border-t border-(--border-soft) py-4 md:block'
       >
         <div
-          className={`mx-auto flex w-full ${contentWidth} items-center justify-between gap-3`}
+          className={`mx-auto flex w-full ${contentWidth} items-center justify-between gap-3 px-4 sm:px-6`}
         >
           <IcpRecord />
           <code

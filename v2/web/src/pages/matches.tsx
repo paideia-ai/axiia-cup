@@ -79,14 +79,14 @@ export function MatchesPage() {
   const matchCard = (summary: MatchSummary) => (
     <Card
       key={summary.id}
-      className='transition hover:border-(--foreground-muted)'
+      className='history-card'
     >
       <Link
         to={`/matches/${summary.id}`}
         className='block'
         {...tm('L.match-card')}
       >
-        <CardContent className='flex items-center justify-between gap-3 py-4'>
+        <CardContent className='history-card-content flex items-center justify-between gap-3'>
           <div>
             <span
               className='font-mono text-sm text-(--foreground)'
@@ -121,7 +121,7 @@ export function MatchesPage() {
         summary.participants?.[side]?.isMine &&
         summary.participants[side].agentID != null
       ) && (
-        <div className='flex flex-wrap gap-x-4 gap-y-2 px-6 pb-4 text-xs'>
+        <div className='history-card-agents flex flex-wrap gap-x-4 gap-y-2 px-4 pb-4 text-xs md:px-6'>
           {(['a', 'b'] as const).map((side) => {
             const participant = summary.participants?.[side]
             if (!participant?.isMine || participant.agentID == null) {

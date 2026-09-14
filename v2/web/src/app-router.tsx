@@ -38,7 +38,7 @@ import { TestModeRoot } from './testmode/index'
 
 function Loading() {
   return (
-    <div className='flex min-h-screen items-center justify-center bg-(--background) text-sm text-(--foreground-subtle)'>
+    <div className='flex min-h-dvh items-center justify-center bg-(--background) text-sm text-(--foreground-subtle)'>
       正在恢复会话...
     </div>
   )
