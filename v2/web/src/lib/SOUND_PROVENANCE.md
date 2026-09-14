@@ -1,8 +1,9 @@
 # Sound provenance
 
 The save, dispatch, output, completion, hover and click cues preserve the
-approved **清透轻点** synthesis, including the 65 ms low output tap. The
-reference is
+approved **清透轻点** synthesis, including the 65 ms low output tap. Reply
+feedback now follows the global sound setting without a separate reply toggle.
+The reference is
 [the complete journey demo](https://axiia-sound-journey-demo.vercel.app/),
 including its subsequent background-completion correction.
 
@@ -21,7 +22,8 @@ experience from session `01a08acd-b96b-7512-93ee-9aebd8d69e30` via the complete
 journey demo. The typing renderer is extracted without changing its samples: 75
 ms typing/deletion/paste, softer paste, and a longer lower enter cue. The
 builder retains the native textarea and adds its decorative underline, workspace
-styling and separate typing mute/volume controls under the global master.
+styling. Following the subsequent builder-toolbar request, its toolbar keeps
+only the copy button; typing audio follows the global mute and volume settings.
 
 `approved-sounds.test.ts` checks the WAV hash and frozen typing waveform hashes.
 The Gherkin browser tests check actual audio starts, reward channels/gain,

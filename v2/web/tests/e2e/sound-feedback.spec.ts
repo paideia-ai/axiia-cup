@@ -330,36 +330,31 @@ test('音效偏好在刷新和同浏览器页签之间保持一致', async ({ pa
     await expect(page.getByRole('heading', { name: '音效', exact: true }))
       .toBeVisible()
   })
-  await test.step('那么 总音效默认开启、音量为百分之二十五、回复提示音默认关闭', async () => {
+  await test.step('那么 总音效默认开启、音量为百分之二十五且没有单独回复开关', async () => {
     await expect(page.getByRole('switch', { name: '启用音效' })).toBeChecked()
     await expect(page.getByRole('slider', { name: '音量' })).toHaveValue('25')
-    await expect(page.getByRole('switch', { name: '模型回复提示音' })).not
-      .toBeChecked()
+    await expect(page.getByRole('switch', { name: '模型回复提示音' }))
+      .toHaveCount(0)
   })
-  await test.step('当 我开启回复提示音、用键盘调高一格音量，并关闭总音效', async () => {
-    await page.getByRole('switch', { name: '模型回复提示音' }).check()
+  await test.step('当 我用键盘调高一格音量，并关闭总音效', async () => {
     await page.getByRole('slider', { name: '音量' }).press('ArrowRight')
     await page.getByRole('button', { name: '关闭音效' }).click()
   })
   await test.step('并且 我刷新页面', async () => {
     await page.reload()
   })
-  await test.step('那么 总静音、百分之二十六音量和回复提示音选择都被保留', async () => {
+  await test.step('那么 总静音和百分之二十六音量都被保留', async () => {
     await expect(page.getByRole('switch', { name: '启用音效' })).not
       .toBeChecked()
     await expect(page.getByRole('slider', { name: '音量' })).toHaveValue('26')
-    await expect(page.getByRole('switch', { name: '模型回复提示音' }))
-      .toBeChecked()
-    await expect(page.getByRole('switch', { name: '模型回复提示音' }))
-      .toBeDisabled()
     await expectCues(page, [])
   })
-  await test.step('当 我重新开启音效并试听保存版本', async () => {
+  await test.step('当 我重新开启音效', async () => {
     await page.getByRole('button', { name: '开启音效' }).click()
-    await page.getByRole('button', { name: '试听保存版本' }).click()
   })
-  await test.step('那么 浏览器真实播放一次保存音', async () => {
-    await expectCues(page, [260])
+  await test.step('那么 页面不显示试听按钮且没有播放声音', async () => {
+    await expect(page.getByRole('button', { name: /试听/ })).toHaveCount(0)
+    await expectCues(page, [])
   })
   await test.step('当 我在另一个页签关闭总音效', async () => {
     const other = await context.newPage()
@@ -468,10 +463,10 @@ test('实时回复、成功完局和确认领奖各播放一次', async ({ page 
       .toBeVisible()
     await expect.poll(() => world.streamRequests).toBeGreaterThan(0)
   })
-  await test.step('当 我开启回复提示音', async () => {
-    await page.getByRole('switch', { name: '模型回复提示音' }).click()
+  await test.step('当 我点击对战标题解锁声音，页面没有单独回复开关', async () => {
+    await page.getByRole('heading', { name: `对战 #${MATCH_ID}` }).click()
     await expect(page.getByRole('switch', { name: '模型回复提示音' }))
-      .toBeChecked()
+      .toHaveCount(0)
   })
   await test.step('并且 原生事件流送达历史行、推理、文本分片、重复完成事件和成功完局', async () => {
     world.match = structuredClone(finishedMatch)
@@ -541,10 +536,10 @@ test('历史战报与失败完局保持安静', async ({ page }) => {
     await expectCues(page, [])
     expect(world.streamRequests).toBe(0)
   })
-  await test.step('当 我打开另一份进行中夹具并开启回复提示音', async () => {
+  await test.step('当 我打开另一份进行中夹具并通过点击解锁声音', async () => {
     world.match = runningMatch()
     await page.reload()
-    await page.getByRole('switch', { name: '模型回复提示音' }).click()
+    await page.getByRole('heading', { name: `对战 #${MATCH_ID}` }).click()
     await expect.poll(() => world.streamRequests).toBeGreaterThan(0)
   })
   await test.step('并且 原生事件流报告对局失败', async () => {
@@ -556,8 +551,9 @@ test('历史战报与失败完局保持安静', async ({ page }) => {
     await releaseStream(world, [{ matchFailed: { matchID: MATCH_ID } }])
   })
   await test.step('那么 页面结束直播，浏览器仍没有播放完局音', async () => {
-    await expect(page.getByRole('switch', { name: '模型回复提示音' }))
-      .toHaveCount(0)
+    await expect(page.locator('[data-tm="FA.match-error"]')).toHaveText(
+      '对战错误：fixture run failed',
+    )
     await expectCues(page, [])
   })
 })
@@ -687,7 +683,7 @@ test('保存返回主页后出战按钮保留悬停与点击反馈', async ({ pa
   })
 })
 
-test('弹性短线与柔音保留编辑行为和独立控制', async ({ page }) => {
+test('弹性短线保留编辑行为，工具栏只保留复制按钮', async ({ page }) => {
   await installWorld(page)
   await page.goto('/agents/101/build')
   const prompt = page.getByLabel('策略提示词')
@@ -699,9 +695,14 @@ test('弹性短线与柔音保留编辑行为和独立控制', async ({ page }) 
     await expect(caret).toBeVisible()
     await expect(caret).toHaveCSS('height', '3px')
     await expect(caret).toHaveCSS('width', '13px')
-    await expect(page.getByRole('slider', { name: '柔音音量' })).toHaveValue(
-      '25',
+    const toolbar = page.locator('[data-tm="E.copy-prompt-button"]').locator(
+      '..',
     )
+    await expect(toolbar.getByRole('button')).toHaveCount(1)
+    await expect(toolbar.getByRole('button', { name: '复制当前草稿' }))
+      .toBeVisible()
+    await expect(toolbar.getByRole('slider')).toHaveCount(0)
+    await expect(toolbar.getByText('柔音', { exact: true })).toHaveCount(0)
   })
   await test.step('当 我选择、撤销和重做文本，不额外发声', async () => {
     await prompt.press('Shift+ArrowLeft')
@@ -734,15 +735,17 @@ test('弹性短线与柔音保留编辑行为和独立控制', async ({ page }) 
     })
     await expectCues(page, [75, 113, 75])
   })
-  await test.step('当 我单独关闭柔音，编辑安静但保存仍有反馈', async () => {
-    await page.getByRole('button', { name: '静音柔音', exact: true }).click()
+  await test.step('当 我复制草稿并切换总音效，复制可用且编辑遵守总静音', async () => {
+    await page.getByRole('button', { name: '复制当前草稿', exact: true })
+      .click()
+    await expect(page.getByRole('button', { name: '已复制当前草稿' }))
+      .toBeVisible()
+    await page.getByRole('button', { name: '关闭音效', exact: true }).click()
     await prompt.press('b')
     await expectCues(page, [75, 113, 75])
-    await pressSave(page)
-    await expectCues(page, [75, 113, 75, 110, 260])
-    await page.goto('/agents/101/build')
-    await expect(page.getByRole('button', { name: '开启柔音', exact: true }))
-      .toBeVisible()
+    await page.getByRole('button', { name: '开启音效', exact: true }).click()
+    await prompt.press('c')
+    await expectCues(page, [75, 113, 75, 75])
   })
   await test.step('那么 减少动态和高对比设置仍保留可用光标与窄屏布局', async () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -794,7 +797,7 @@ test.describe('后台完局提醒', () => {
     const world = await installWorld(page)
     world.match = runningMatch()
     await page.goto(`/matches/${MATCH_ID}`)
-    await page.getByRole('switch', { name: '模型回复提示音' }).click()
+    await page.getByRole('heading', { name: `对战 #${MATCH_ID}` }).click()
     await expect.poll(() => world.streamRequests).toBeGreaterThan(0)
     await test.step('当 我切换到另一个标签页后，对局事件流报告胜利', async () => {
       await nativeFocus(page, false)
@@ -830,8 +833,8 @@ test.describe('后台完局提醒', () => {
     world.listMatches = true
     await page.goto('/settings')
     await expect.poll(() => world.listRequests).toBeGreaterThan(0)
-    await page.getByRole('button', { name: '试听保存版本' }).click()
-    await expectCues(page, [260])
+    await page.getByRole('heading', { name: '音效', exact: true }).click()
+    await expectCues(page, [])
     await nativeFocus(page, false)
     const other = await context.newPage()
     await other.goto('about:blank')
@@ -840,7 +843,7 @@ test.describe('后台完局提醒', () => {
     await test.step('当 页面留在设置页的后台，对局在两次轮询之间完成', async () => {
       world.match = structuredClone(finishedMatch)
       await page.clock.fastForward(31_000)
-      await expectCues(page, [260, 720])
+      await expectCues(page, [720])
       expect((await audioStarts(page)).at(-1)).toMatchObject({
         hidden: true,
         focused: false,
@@ -858,12 +861,12 @@ test.describe('后台完局提醒', () => {
       await nativeFocus(page, false)
       await other.bringToFront()
       await page.clock.fastForward(31_000)
-      await expectCues(page, [260, 720])
+      await expectCues(page, [720])
       await page.bringToFront()
       await nativeFocus(page, true)
       await page.getByRole('button', { name: '开启音效', exact: true }).click()
       await page.clock.fastForward(31_000)
-      await expectCues(page, [260, 720])
+      await expectCues(page, [720])
     })
   })
 })
@@ -872,14 +875,14 @@ test('多个后台标签页收到同一完局时只提醒一次', async ({ page,
   const first = await installWorld(page)
   first.match = runningMatch()
   await page.goto(`/matches/${MATCH_ID}`)
-  await page.getByRole('switch', { name: '模型回复提示音' }).click()
+  await page.getByRole('heading', { name: `对战 #${MATCH_ID}` }).click()
   await expect.poll(() => first.streamRequests).toBeGreaterThan(0)
   await nativeFocus(page, false)
   const secondPage = await context.newPage()
   const second = await installWorld(secondPage)
   second.match = runningMatch()
   await secondPage.goto(`/matches/${MATCH_ID}`)
-  await secondPage.getByRole('switch', { name: '模型回复提示音' }).click()
+  await secondPage.getByRole('heading', { name: `对战 #${MATCH_ID}` }).click()
   await expect.poll(() => second.streamRequests).toBeGreaterThan(0)
   await nativeFocus(secondPage, false)
   const other = await context.newPage()

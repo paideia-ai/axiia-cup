@@ -13,7 +13,6 @@ import type {
   VerdictDTO,
 } from '../api/types'
 import { JudgeTrendChart } from '../components/judge-trend'
-import { OutputSoundToggle } from '../components/sound-controls'
 import { RewardClaimCard } from '../components/rewards'
 import { ReplayControls, useReplay } from '../components/replay-controls'
 import type { SpeakerLabels } from '../components/timeline/labels'
@@ -491,7 +490,6 @@ export function MatchDetailPage() {
             : null}
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          {live ? <OutputSoundToggle /> : null}
           <button
             {...tm('FA.debug-toggle')}
             type='button'
