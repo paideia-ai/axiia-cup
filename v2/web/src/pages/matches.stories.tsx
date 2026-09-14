@@ -100,3 +100,48 @@ export const BothOwnedSidesRemainReachable: Story = {
       .toBeVisible()
   },
 }
+
+export const CompactHistorySurface: Story = {
+  parameters: {
+    msw: [
+      http.get('/v1/matches', () =>
+        HttpResponse.json({
+          matches: [
+            { ...summary, participants: undefined },
+            { ...summary, id: 9002 },
+          ],
+          open: false,
+        })),
+      http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const links = await canvas.findAllByRole('link', { name: /对战 #900[12]/ })
+    const mobile = canvasElement.ownerDocument.defaultView!.innerWidth <= 767
+    for (const link of links) {
+      const surface = link.parentElement!
+      const content = link.firstElementChild!
+      const description = content.firstElementChild!
+      // Check the outer card and inner row independently: checking only the
+      // marked link missed the old CSS styling the wrong nesting level.
+      await expect(getComputedStyle(surface).boxShadow).toBe('none')
+      await expect(getComputedStyle(surface).borderRadius).toBe('10px')
+      await expect(getComputedStyle(surface).borderTopWidth).toBe('1px')
+      await expect(getComputedStyle(content).borderTopWidth).toBe('0px')
+      await expect(getComputedStyle(content).paddingTop).toBe(
+        mobile ? '18px' : '20px',
+      )
+      await expect(getComputedStyle(description).padding).toBe('0px')
+    }
+    const plainContent = links[0].firstElementChild!
+    await expect(getComputedStyle(plainContent).paddingBottom).toBe(
+      mobile ? '18px' : '20px',
+    )
+    await expect(getComputedStyle(links[1].firstElementChild!).paddingBottom)
+      .toBe('8px')
+    await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
+      .toBeVisible()
+    await expect(canvasElement.querySelector('a a')).toBeNull()
+  },
+}

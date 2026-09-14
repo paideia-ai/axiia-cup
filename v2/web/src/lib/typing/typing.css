@@ -1,28 +1,11 @@
-/* Only the actual builder's prompt workspace receives the new visual treatment. */
-.typing-preview-workspace {
-  background: #161616;
-  border-color: #303030;
-  transition: border-color 180ms;
-}
-.typing-preview-workspace:has(#prompt-input:focus) {
-  border-color: #805045;
-  box-shadow: 0 0 0 3px #ed755c0a;
-}
+/* Feedback adds a caret; the builder owns its surfaces,
+   text contrast and focus outline, including the native textarea fallback. */
 .typing-preview-editor {
   position: relative;
-  overflow: hidden;
 }
 #prompt-input.typing-preview-textarea {
   margin-block: 0;
-  outline: none;
-  background: transparent;
-  border-color: transparent;
-  border-radius: 0;
-  color: #dedede;
-  box-shadow: none;
   caret-color: #ed755c;
-  scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
 }
 #prompt-input.typing-preview-textarea.custom-caret {
   caret-color: transparent;

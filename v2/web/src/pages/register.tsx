@@ -60,7 +60,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className='flex min-h-screen flex-col px-4 py-12'>
+    <div className='flex min-h-dvh flex-col px-4 py-6 sm:py-12'>
       <div className='flex flex-1 items-center justify-center'>
         <div className='w-full max-w-sm space-y-5'>
           <h1
