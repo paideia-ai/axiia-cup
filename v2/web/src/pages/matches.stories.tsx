@@ -3,6 +3,7 @@ import { expect, userEvent, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
 
+import type { MatchSummary } from '../api/types'
 import { finishedMatch, scenarioList } from '../testing/v34-fixtures'
 import { MatchesPage } from './matches'
 
@@ -143,5 +144,97 @@ export const CompactHistorySurface: Story = {
     await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
       .toBeVisible()
     await expect(canvasElement.querySelector('a a')).toBeNull()
+    await userEvent.click(canvas.getByRole('checkbox', { name: '仅自己对局' }))
+    // Closed history already belongs to the viewer, even without metadata.
+    await expect(canvas.getAllByRole('link', { name: /对战 #900[12]/ }))
+      .toHaveLength(2)
+  },
+}
+
+const otherMatch: MatchSummary = {
+  ...summary,
+  id: 9003,
+  participants: {
+    a: { ...summary.participants.a, isMine: false },
+    b: { ...summary.participants.b, isMine: false },
+  },
+}
+
+const openHistory = (rows: MatchSummary[]) => ({
+  msw: [
+    http.get(
+      '/v1/matches',
+      () => HttpResponse.json({ matches: rows, open: true }),
+    ),
+    http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
+  ],
+})
+
+export const OnlyOwnGames: Story = {
+  parameters: openHistory([
+    { ...summary, challengeID: 81, challengeLeg: 1 },
+    {
+      ...summary,
+      id: 9002,
+      challengeID: 81,
+      challengeLeg: 2,
+      participants: {
+        a: { ...summary.participants.a, isMine: false },
+        b: { ...summary.participants.b, isMine: true },
+      },
+    },
+    otherMatch,
+    { ...otherMatch, id: 9004, participants: undefined, initiatorIsMe: true },
+    { ...otherMatch, id: 9005, participants: undefined },
+  ]),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('link', { name: /对战 #9005/ })
+    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
+    await expect(checkbox).not.toBeChecked()
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      5,
+    )
+    // Clicking the caption toggles the native checkbox as well.
+    await userEvent.click(canvas.getByText('仅自己对局'))
+    await expect(checkbox).toBeChecked()
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
+    for (const id of [9001, 9002, 9004]) {
+      await expect(
+        canvas.getByRole('link', { name: new RegExp(`对战 #${id}`) }),
+      )
+        .toBeVisible()
+    }
+    await expect(canvas.queryByRole('link', { name: /对战 #9003/ })).toBeNull()
+    await expect(canvas.queryByRole('link', { name: /对战 #9005/ })).toBeNull()
+    await expect(canvas.getByText(/^约战 #81：/)).toBeVisible()
+    await expect(canvas.getByText('你的全部对战记录。')).toBeVisible()
+    checkbox.focus()
+    await userEvent.keyboard('[Space]')
+    await expect(checkbox).not.toBeChecked()
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      5,
+    )
+    await expect(canvas.getByText('全部对战记录。')).toBeVisible()
+  },
+}
+
+export const NoOwnGames: Story = {
+  parameters: openHistory([otherMatch]),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('link', { name: /对战 #9003/ })
+    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
+    await userEvent.click(checkbox)
+    await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
+    await expect(
+      canvas.getByText(
+        '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。',
+      ),
+    ).toBeVisible()
+    await userEvent.click(checkbox)
+    await expect(canvas.getByRole('link', { name: /对战 #9003/ })).toBeVisible()
   },
 }
