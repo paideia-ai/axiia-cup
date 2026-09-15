@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { catalog, matches } from '../api/client'
@@ -58,6 +59,7 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 }
 
 export function MatchesPage() {
+  const [onlyMine, setOnlyMine] = useState(false)
   const { data, error, loading } = useAsync(
     async () => {
       const [list, scenarios] = await Promise.all([
@@ -68,6 +70,12 @@ export function MatchesPage() {
       return { list, scenarios }
     },
     [],
+  )
+  // Closed history is already scoped by the server, including older responses
+  // without participant metadata. Open history uses viewer-relative ownership.
+  const visibleMatches = (data?.list.matches ?? []).filter((summary) =>
+    !onlyMine || !data?.list.open || summary.initiatorIsMe ||
+    summary.participants?.a.isMine || summary.participants?.b.isMine
   )
 
   // 角色名映射走 lib/outcome 的共用构建（round4 评审 #10）。
@@ -163,12 +171,25 @@ export function MatchesPage() {
       >
         历史
       </h1>
-      <p
-        className='-mt-4 text-sm text-(--foreground-subtle)'
-        {...tm('L.page-intro')}
-      >
-        {data?.list.open ? '全部对战记录。' : '你的全部对战记录。'}
-      </p>
+      <div className='-mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1'>
+        <p
+          className='text-sm text-(--foreground-subtle)'
+          {...tm('L.page-intro')}
+        >
+          {data?.list.open && !onlyMine
+            ? '全部对战记录。'
+            : '你的全部对战记录。'}
+        </p>
+        <label className='inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle)'>
+          <input
+            type='checkbox'
+            checked={onlyMine}
+            onChange={(event) => setOnlyMine(event.target.checked)}
+            className='size-3.5 accent-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--foreground-subtle)'
+          />
+          仅自己对局
+        </label>
+      </div>
 
       {loading
         ? (
@@ -181,10 +202,10 @@ export function MatchesPage() {
         )
         : error
         ? <p className='text-sm text-(--accent)' {...tm('L.error')}>{error}</p>
-        : data && data.list.matches.length > 0
+        : data && visibleMatches.length > 0
         ? (
           <div className='space-y-2' {...tm('L.match-list')}>
-            {groupHistory(data.list.matches).map((row) => {
+            {groupHistory(visibleMatches).map((row) => {
               if (row.kind === 'single') return matchCard(row.match)
               const legs = [...row.legs].sort(
                 (a, b) => (a.challengeLeg ?? 0) - (b.challengeLeg ?? 0),
@@ -209,7 +230,9 @@ export function MatchesPage() {
         )
         : (
           <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
-            {data?.list.open
+            {onlyMine && data?.list.open
+              ? '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。'
+              : data?.list.open
               ? '还没有任何对战。到场景页构建智能体并发起对战。'
               : '还没有对战。到场景页构建智能体并发起对战。'}
           </p>
