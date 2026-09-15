@@ -6,10 +6,13 @@ import { catalog, matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
+import { Select, SelectItem } from '../components/ui/select'
 import type { RoleNames } from '../lib/outcome'
 import { outcomeCopy, scenarioRoles } from '../lib/outcome'
 import { useAsync } from '../lib/use-async'
 import { tm } from '../testmode/mark'
+
+const ALL_SCENARIOS = '__all_scenarios__'
 
 function statusTone(summary: MatchSummary) {
   if (!summary.dispatched) return 'info' as const
@@ -61,6 +64,7 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 
 export function MatchesPage() {
   const [onlyMine, setOnlyMine] = useState(false)
+  const [scenarioID, setScenarioID] = useState('')
   const { data, error, loading } = useAsync(
     async () => {
       const [list, scenarios] = await Promise.all([
@@ -72,11 +76,20 @@ export function MatchesPage() {
     },
     [],
   )
+  // Derive choices from all history so ownership filtering cannot remove the
+  // selected option, and retired scenarios remain selectable without a catalog.
+  const historyScenarios = new Map<string, string>()
+  for (const summary of data?.list.matches ?? []) {
+    if (!historyScenarios.has(summary.scenarioID)) {
+      historyScenarios.set(summary.scenarioID, summary.scenarioTitle)
+    }
+  }
   // Closed history is already scoped by the server, including older responses
   // without participant metadata. Open history uses viewer-relative ownership.
   const visibleMatches = (data?.list.matches ?? []).filter((summary) =>
-    !onlyMine || !data?.list.open || summary.initiatorIsMe ||
-    summary.participants?.a.isMine || summary.participants?.b.isMine
+    (!scenarioID || summary.scenarioID === scenarioID) &&
+    (!onlyMine || !data?.list.open || summary.initiatorIsMe ||
+      summary.participants?.a.isMine || summary.participants?.b.isMine)
   )
 
   // 角色名映射走 lib/outcome 的共用构建（round4 评审 #10）。
@@ -177,26 +190,46 @@ export function MatchesPage() {
           className='text-sm text-(--foreground-subtle)'
           {...tm('L.page-intro')}
         >
-          {data?.list.open && !onlyMine
+          {scenarioID
+            ? (onlyMine || !data?.list.open
+              ? '你在该场景的对战记录。'
+              : '该场景的对战记录。')
+            : data?.list.open && !onlyMine
             ? '全部对战记录。'
             : '你的全部对战记录。'}
         </p>
-        <label className='group inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle) hover:text-(--foreground)'>
-          <span className='relative flex size-4 shrink-0'>
-            <input
-              type='checkbox'
-              checked={onlyMine}
-              onChange={(event) => setOnlyMine(event.target.checked)}
-              className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
-            />
-            <Check
-              aria-hidden='true'
-              strokeWidth={2.5}
-              className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
-            />
-          </span>
-          仅自己对局
-        </label>
+        <div className='flex max-w-full flex-wrap items-center gap-x-4 gap-y-1'>
+          <Select
+            value={scenarioID || ALL_SCENARIOS}
+            onValueChange={(value) =>
+              setScenarioID(value === ALL_SCENARIOS ? '' : value ?? '')}
+            placeholder='全部场景'
+            renderValue={(value) => historyScenarios.get(value) ?? '全部场景'}
+            disabled={loading || !historyScenarios.size}
+            className='h-9 w-40 max-w-full rounded-lg border-(--border-soft) bg-transparent px-2.5 text-xs focus:border-(--foreground-muted) focus:ring-0 focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) [&>span]:min-w-0 [&>span]:truncate [&>span]:text-(--foreground-subtle)'
+          >
+            <SelectItem value={ALL_SCENARIOS}>全部场景</SelectItem>
+            {[...historyScenarios].map(([id, title]) => (
+              <SelectItem key={id} value={id}>{title}</SelectItem>
+            ))}
+          </Select>
+          <label className='group inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle) hover:text-(--foreground)'>
+            <span className='relative flex size-4 shrink-0'>
+              <input
+                type='checkbox'
+                checked={onlyMine}
+                onChange={(event) => setOnlyMine(event.target.checked)}
+                className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
+              />
+              <Check
+                aria-hidden='true'
+                strokeWidth={2.5}
+                className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
+              />
+            </span>
+            仅自己对局
+          </label>
+        </div>
       </div>
 
       {loading
@@ -238,7 +271,9 @@ export function MatchesPage() {
         )
         : (
           <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
-            {onlyMine && data?.list.open
+            {scenarioID
+              ? '没有符合筛选条件的对战。试试切换场景或取消「仅自己对局」。'
+              : onlyMine && data?.list.open
               ? '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。'
               : data?.list.open
               ? '还没有任何对战。到场景页构建智能体并发起对战。'

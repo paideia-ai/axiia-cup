@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
 
@@ -236,5 +236,111 @@ export const NoOwnGames: Story = {
     ).toBeVisible()
     await userEvent.click(checkbox)
     await expect(canvas.getByRole('link', { name: /对战 #9003/ })).toBeVisible()
+  },
+}
+
+const scenarioHistory: MatchSummary[] = [
+  { ...summary, challengeID: 81, challengeLeg: 1 },
+  { ...summary, id: 9002, challengeID: 81, challengeLeg: 2 },
+  otherMatch,
+  {
+    ...summary,
+    id: 9004,
+    scenarioID: 'legal-harbor',
+    scenarioTitle: '疑案港湾',
+  },
+  {
+    ...otherMatch,
+    id: 9005,
+    scenarioID: 'archived-scenario',
+    scenarioTitle: '已归档场景',
+  },
+]
+
+export const ScenarioFilterPreview: Story = {
+  parameters: openHistory(scenarioHistory),
+}
+
+export const ScenarioAndOwnershipFilters: Story = {
+  parameters: openHistory(scenarioHistory),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const body = within(canvasElement.ownerDocument.body)
+    await canvas.findByRole('link', { name: /对战 #9005/ })
+    const filter = canvas.getByRole('combobox', { name: '全部场景' })
+    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
+    const choose = async (name: string) => {
+      await userEvent.click(filter)
+      await userEvent.click(
+        await body.findByRole('option', { name }),
+      )
+    }
+    await waitFor(() => expect(filter).toHaveTextContent('全部场景'))
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      5,
+    )
+    await userEvent.click(filter)
+    // Repeated matches create one option per scenario, not one per match.
+    await expect(await body.findAllByRole('option')).toHaveLength(4)
+    await userEvent.click(body.getByRole('option', { name: '商鞅庭辩' }))
+    await expect(filter).toHaveTextContent('商鞅庭辩')
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
+    await userEvent.click(checkbox)
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      2,
+    )
+    await expect(canvas.getByText(/^约战 #81：/)).toBeVisible()
+    await choose('已归档场景')
+    await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
+    await expect(
+      canvas.getByText(
+        '没有符合筛选条件的对战。试试切换场景或取消「仅自己对局」。',
+      ),
+    )
+      .toBeVisible()
+    await expect(filter).toHaveTextContent('已归档场景')
+    await userEvent.click(checkbox)
+    await expect(canvas.getByRole('link', { name: /对战 #9005/ })).toBeVisible()
+    await choose('疑案港湾')
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      1,
+    )
+    await expect(canvas.getByRole('link', { name: /对战 #9004/ })).toBeVisible()
+    await userEvent.click(checkbox)
+    await choose('全部场景')
+    await expect(checkbox).toBeChecked()
+    await expect(filter).toHaveTextContent('全部场景')
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
+    await userEvent.click(checkbox)
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      5,
+    )
+  },
+}
+
+export const ScenarioFilterWithoutCatalog: Story = {
+  ...ScenarioAndOwnershipFilters,
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/matches',
+        () => HttpResponse.json({ matches: scenarioHistory, open: true }),
+      ),
+      http.get('/v1/scenarios', () => new HttpResponse(null, { status: 503 })),
+    ],
+  },
+}
+
+export const EmptyHistory: Story = {
+  parameters: openHistory([]),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByText('还没有任何对战。到场景页构建智能体并发起对战。')
+    await expect(canvas.getByRole('combobox', { name: '全部场景' }))
+      .toBeDisabled()
   },
 }
