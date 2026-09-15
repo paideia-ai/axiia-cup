@@ -558,7 +558,7 @@ async function main() {
   })
   const judge = game.agent('judge', {
     system: judgeSystem(roleAKey, roleBKey),
-    model: game.params.judgeModel ?? 'deepseek-v4-pro',
+    model: game.params.judgeModel ?? 'kimi-k2.6',
   })
 
   const osFields = {

@@ -109,7 +109,7 @@ export const UnlockedDesktop: Story = {
                 id: 2001,
                 agentID: 102,
                 prompt: '乙侧策略',
-                modelID: 'deepseek-v4-pro',
+                modelID: 'kimi-k2.6',
                 isEntry: true,
                 ordinal: 1,
                 // 同样的非线性诱饵：按 snapshotSeq 渲染会显示 v3。

@@ -118,7 +118,7 @@ await game.parallelAct([{ agent, spec }, …]) // independent private acts in pa
   agents may observe another entry's result before answering.
 - `side: 'a'` on an agent makes it speak with that participant's model and, when
   `model` is omitted, supplies it. NPC/judge agents pass an explicit `model`,
-  conventionally overridable: `game.params.judgeModel ?? 'deepseek-v4-pro'`.
+  conventionally overridable: `game.params.judgeModel ?? 'kimi-k2.6'`.
 - Message convention the shipped prompts rely on: stage directions start with
   `【系统】`; everything else is in-fiction speech. State this rule in every
   system prompt.

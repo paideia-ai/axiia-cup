@@ -260,7 +260,7 @@ async function main() {
   })
   const judge = game.agent('judge', {
     system: judgeSystem(cases),
-    model: game.params.judgeModel ?? 'deepseek-v4-pro',
+    model: game.params.judgeModel ?? 'kimi-k2.6',
   })
 
   const osInterval = game.params.judgeOsInterval ?? game.params.judgePullInterval ?? 2
