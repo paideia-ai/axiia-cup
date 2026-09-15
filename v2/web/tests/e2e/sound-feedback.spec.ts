@@ -757,11 +757,14 @@ test('弹性短线保留编辑行为，工具栏只保留复制按钮', async ({
     await page.emulateMedia({ forcedColors: 'none' })
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 1000 })
-      expect(
-        await page.evaluate(() =>
-          document.documentElement.scrollWidth <= innerWidth
-        ),
-      ).toBe(true)
+      // Resize and media-query updates can settle after setViewportSize returns.
+      await expect.poll(
+        () =>
+          page.evaluate(() =>
+            document.documentElement.scrollWidth - innerWidth
+          ),
+        { message: `No horizontal overflow at ${width}px` },
+      ).toBeLessThanOrEqual(0)
     }
   })
 })
