@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -180,13 +181,20 @@ export function MatchesPage() {
             ? '全部对战记录。'
             : '你的全部对战记录。'}
         </p>
-        <label className='inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle)'>
-          <input
-            type='checkbox'
-            checked={onlyMine}
-            onChange={(event) => setOnlyMine(event.target.checked)}
-            className='size-3.5 accent-(--foreground-subtle) focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-(--foreground-subtle)'
-          />
+        <label className='group inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle) hover:text-(--foreground)'>
+          <span className='relative flex size-4 shrink-0'>
+            <input
+              type='checkbox'
+              checked={onlyMine}
+              onChange={(event) => setOnlyMine(event.target.checked)}
+              className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
+            />
+            <Check
+              aria-hidden='true'
+              strokeWidth={2.5}
+              className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
+            />
+          </span>
           仅自己对局
         </label>
       </div>
