@@ -66,7 +66,7 @@ export const shangyangCourt: ScenarioModule = {
     // v2/scenarios 的 deno task validate 把关。
     openingLine: runtimeQuotes['shangyang-court'].openingLine,
     judgeSummary:
-      '裁判是秦孝公（官方裁判模型扮演，默认 deepseek-v4-pro）。他端坐堂上全程不发言，殿下进言每两轮批呈一次，每读一批便记下一段「君上心声」——战报回放中公开可见，能看到他此刻倾向何人、最挂心哪件事；最后一轮的进言他要到临判前才读到。辩论毕，他先屏退左右分别独问二人猜对方真目标，再作最终裁决：先定大政方针（推行变法／维持现状），再对六项请求逐项准驳。设定上他是务实的政治家：只认实据、利害与可行性，不吃慷慨空言；宗室是他的权力根基，天然偏向稳妥一方——商鞅执甲是逆风盘。',
+      '裁判是秦孝公（官方裁判模型扮演，默认 kimi-k2.6）。他端坐堂上全程不发言，殿下进言每两轮批呈一次，每读一批便记下一段「君上心声」——战报回放中公开可见，能看到他此刻倾向何人、最挂心哪件事；最后一轮的进言他要到临判前才读到。辩论毕，他先屏退左右分别独问二人猜对方真目标，再作最终裁决：先定大政方针（推行变法／维持现状），再对六项请求逐项准驳。设定上他是务实的政治家：只认实据、利害与可行性，不吃慷慨空言；宗室是他的权力根基，天然偏向稳妥一方——商鞅执甲是逆风盘。',
     // 同源引用（u04-c10）：秦孝公的扮演 system prompt 原文与默认裁判模型，
     // 逐字来自 script.js（runtime-quotes.json 由 deno task web-quotes 生成）。
     judgePrompt: runtimeQuotes['shangyang-court'].judgePrompt,

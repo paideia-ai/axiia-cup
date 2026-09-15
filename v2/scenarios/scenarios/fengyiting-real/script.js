@@ -237,7 +237,7 @@ async function main() {
   }
   const diaochan = game.agent('diaochan', {
     system: diaochanSystem,
-    model: game.params.diaochanModel ?? 'deepseek-v4-pro',
+    model: game.params.diaochanModel ?? 'kimi-k2.6',
   })
   const stripActions = (line) => line.replace(/（[^）]*）/g, '').trim()
   const dialogueRoundPrompt = (stage, round, rounds) =>

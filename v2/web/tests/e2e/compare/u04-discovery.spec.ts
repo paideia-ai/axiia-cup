@@ -514,9 +514,9 @@ test('U04-C15：裁判/计分模型公开；judgeOsPrompt 不公开（#51）', a
     await gotoDA()
     await expandJudgePrompt()
   })
-  await test.step('那么 原文块交代裁判／计分模型（默认 deepseek-v4-pro）', async () => {
+  await test.step('那么 原文块交代裁判／计分模型（默认 kimi-k2.6）', async () => {
     await expect(
-      page.getByText(/裁判／计分模型：默认 deepseek-v4-pro/),
+      page.getByText(/裁判／计分模型：默认 kimi-k2.6/),
     ).toBeVisible()
   })
   await test.step('并且 场景详情接口的返回里没有 judgeOsPrompt 字段', async () => {
