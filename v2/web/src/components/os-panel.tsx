@@ -32,7 +32,6 @@ import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
 import { roleOfOptions, scenarioModule } from '../scenarios'
-import { currentNpcPath } from '../lib/current-npc'
 import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -561,20 +560,6 @@ export function OsPanel({
                             ))}
                           </Select>
                         </div>
-                        {presetKey && opponentPresets.some((preset) =>
-                            preset.key === presetKey
-                          )
-                          ? (
-                            <Link
-                              to={currentNpcPath(scenarioID, presetKey)}
-                              onClick={onClose}
-                              className='inline-flex min-h-11 items-center text-sm underline underline-offset-4'
-                              {...tm('OS.npc-view-link')}
-                            >
-                              查看当前 NPC
-                            </Link>
-                          )
-                          : null}
                         <Button
                           data-testid='dispatch-match'
                           onClick={() => void dispatchPVE()}

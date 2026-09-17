@@ -388,7 +388,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     title: '非所有者公开 EA 与 PVE NPC 聚合视图',
     prerequisites: [
       '按 fixture 卡登录「B3 人测·访客缺侧」；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
-      'NPC 步骤从场景页「NPC 练习对手」开始，可查看当前预设的身份、执方与模型；出战面板选中 NPC 后也有「查看当前 NPC」入口。两侧胜率仍待口径裁决与实现，不得把当前元数据视图判为整条通过；不用填写或拼造 npcAgentId。',
+      'NPC 预设详情页及入口已按产品要求移除，NPC 练习仍从出战面板发起。原 NPC 聚合视图条款保留为历史验收缺口，不用填写或拼造 npcAgentId。',
       '记录环境 URL、build SHA、账号角色和所有预期值。',
     ],
     evidenceRequirements: [
@@ -450,16 +450,16 @@ export const B3_A5_JOURNEYS: Journey[] = [
         testUrl: '{{appBaseUrl}}/scenarios/shangyang-court',
         fixtureRefs: ['b3-public-viewer', 'b3-npc-gap'],
         knownGap: {
-          title: '当前 NPC 可查看；两侧胜率验收仍未完成',
+          title: 'NPC 预设详情已移除；原聚合视图条款待更新',
           detail:
-            '场景详情与当前 PVE 对手选择已提供预设视图，显示当前身份、执方、模型与场景。原条款的两侧胜率尚待正式口径裁决与实现；页面不使用场景总体胜率或空统计占位替代。',
+            'NPC 预设详情页、场景页列表及出战面板查看入口已按产品要求移除。原条款的两侧胜率尚待正式口径裁决与实现；该历史条款不再对应当前产品入口。',
           instruction:
-            '分别记录逐 NPC 入口与当前元数据页面的真实结果；两侧胜率要求仍未满足，结果选「有问题」，不标整条通过。保留原预期与版本 pin，不把预设元数据当作统计证据；不要拼造 ID。',
+            '记录 NPC 详情功能已移除，原条款待更新，结果选「有问题」，不标整条通过。保留原预期与版本 pin；不要拼造 ID。',
         },
         route: '/scenarios/:id',
-        marker: 'DA.npc-list',
+        marker: 'DA.page',
         action:
-          '从场景详情页「NPC 练习对手」打开目标 NPC，记录当前身份、执方、模型与场景。也可在当前出战面板选中 NPC 后点「查看当前 NPC」。保留原两侧胜率预期；统计尚未交付时记录缺失并判整条未通过。',
+          '打开场景详情页，记录 NPC 预设列表与详情入口已移除。原两侧胜率预期保留为历史条款，记录待更新，不再寻找或拼造 NPC 详情网址。',
         expected:
           '每个 PVE NPC 都有可查看的聚合视图；目标 NPC 在当前场景分别展示两个阵营胜率，数值与种子数据一致，不显示成玩家胜率。',
         clauseIds: ['U10-C14'],
