@@ -265,6 +265,7 @@ export interface GateProgressDTO {
 // One of the caller's agents in the GET /v1/my/agents inventory. Names arrive
 // in P6; until then an agent is identified by its scenario/side position.
 export interface MyAgentDTO {
+  isArchived?: boolean
   agentID: number
   versionCount: number
   entryVersionID?: number | null
@@ -750,4 +751,13 @@ export interface LandingResponse {
   topPlayers: LandingPlayerDTO[]
   excerpt?: LandingExcerptDTO | null
   demoMatches: LandingDemoDTO[]
+}
+
+export interface ArchivedAgentsResponse {
+  agents: {
+    agent: MyAgentDTO
+    scenarioID: string
+    scenarioTitle: string
+    sideName: string
+  }[]
 }

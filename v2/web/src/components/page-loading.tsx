@@ -2,6 +2,7 @@ import type { HTMLAttributes } from 'react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useIsFetching } from '@tanstack/react-query'
 
+import { useScrollPending } from '../context/navigation-memory'
 import { navigationCache } from '../lib/navigation-cache'
 import { canRetainPageData } from '../lib/use-page-query'
 
@@ -10,6 +11,8 @@ export function PageLoading(
     variant?: 'cards' | 'list' | 'detail'
   },
 ) {
+  // Wait for actual page content, but never hold cached content for a refresh.
+  useScrollPending(true)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 150)

@@ -12,11 +12,16 @@ import {
 
 import { AppShell } from './components/layout/app-shell'
 import { useAuth } from './context/auth'
+import {
+  NavigationMemoryProvider,
+  useScrollPending,
+} from './context/navigation-memory'
 import { protectedLoginUrl } from './lib/login-return'
 import { RewardsProvider } from './context/rewards'
 import { RewardsPage } from './pages/rewards'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
+import { ArchivedAgentsPage } from './pages/archived-agents'
 import { AgentViewPage } from './pages/agent-view'
 import { AgentEntryPage } from './pages/agent-entry'
 import { BuilderPage } from './pages/builder'
@@ -38,6 +43,7 @@ import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
 
 function Loading() {
+  useScrollPending(true)
   return (
     <div className='flex min-h-dvh items-center justify-center bg-(--background) text-sm text-(--foreground-subtle)'>
       正在恢复会话...
@@ -106,8 +112,12 @@ export function AppRouter() {
 }
 
 export function AppRoutes() {
+  const { account, isLoading } = useAuth()
   return (
-    <>
+    <NavigationMemoryProvider
+      scope={account?.id ?? 'guest'}
+      enabled={!isLoading}
+    >
       <Routes>
         <Route path='/' element={<LandingPage />} />
         <Route
@@ -151,6 +161,10 @@ export function AppRoutes() {
             />
             <Route path='/versions/:versionId' element={<VersionAgentPage />} />
             <Route path='/notifications' element={<NotificationsPage />} />
+            <Route
+              path='/settings/archived-agents'
+              element={<ArchivedAgentsPage />}
+            />
             <Route path='/settings' element={<SettingsPage />} />
             <Route path='/rewards' element={<RewardsPage />} />
             <Route
@@ -175,6 +189,6 @@ export function AppRoutes() {
       </Routes>
       {/* 测试模式（?tm=1）：挂在 Routes 旁边，所有路由都能用；关着时零成本。 */}
       <TestModeRoot />
-    </>
+    </NavigationMemoryProvider>
   )
 }

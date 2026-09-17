@@ -28,8 +28,9 @@ import { OsBeatCard } from '../components/timeline/os-beat-card'
 import { ReasoningFold } from '../components/timeline/reasoning-fold'
 import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
-import { ButtonLink } from '../components/ui/button'
+import { BackLink } from '../components/back-link'
 import { agentEntryUrl } from '../lib/agent-entry'
+import { ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { VerdictCard } from '../components/verdict-card'
 import { useOptionalAuth } from '../context/auth'
@@ -259,13 +260,12 @@ export function MatchDetailPage() {
             该对局可能已被删除或链接无效。
           </p>
           <div className='mt-5 flex justify-center'>
-            <Link
+            <BackLink
               {...tm('FA.not-found-back-link')}
               to='/matches'
               className='inline-flex items-center rounded-lg bg-(--accent) px-4 py-2 text-sm font-medium text-white transition hover:opacity-90'
-            >
-              返回对战列表
-            </Link>
+              label='对战列表'
+            />
           </div>
         </div>
       </div>
@@ -453,13 +453,12 @@ export function MatchDetailPage() {
     <div className='space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <Link
+          <BackLink
             {...tm('FA.back-link')}
             to='/my-agents'
             className='text-sm text-(--accent)'
-          >
-            ← 我的智能体
-          </Link>
+            label='我的智能体'
+          />
           <h1
             {...tm('FA.page-title')}
             className='mt-1 text-2xl font-black tracking-tight text-(--foreground)'

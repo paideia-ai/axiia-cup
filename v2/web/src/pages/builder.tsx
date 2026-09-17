@@ -34,6 +34,8 @@ import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
+import { useScrollPending } from '../context/navigation-memory'
+import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
@@ -329,6 +331,7 @@ export function BuilderPage() {
   const [error, setError] = useState<string | null>(null)
   const [recovery, setRecovery] = useState<DraftRecovery | null>(null)
   const [draftLoading, setDraftLoading] = useState(true)
+  useScrollPending(draftLoading)
   const [saving, setSaving] = useState(false)
   const [starting, setStarting] = useState(false)
   const [startAttempt, setStartAttempt] = useState<FirstBattleAttempt | null>(
@@ -1116,13 +1119,12 @@ export function BuilderPage() {
     <div className='space-y-6'>
       <TypingFeedback />
       <div>
-        <Link
+        <BackLink
           to={`/agents/${agentID}`}
           className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
           {...tm('E.back-link')}
-        >
-          ← 智能体主页
-        </Link>
+          label='智能体主页'
+        />
         <h1
           className='mt-2 text-2xl font-black tracking-tight text-(--foreground)'
           {...tm('E.page-title')}

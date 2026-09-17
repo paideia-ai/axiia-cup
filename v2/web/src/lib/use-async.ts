@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { ApiError } from '../api/client'
+import { useScrollPending } from '../context/navigation-memory'
 
 export interface AsyncState<T> {
   data: T | null
@@ -23,6 +24,14 @@ export function useAsync<T>(
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [nonce, setNonce] = useState(0)
+  const [resolvedDeps, setResolvedDeps] = useState<readonly unknown[] | null>(
+    null,
+  )
+  useScrollPending(
+    loading || resolvedDeps == null ||
+      deps.length !== resolvedDeps.length ||
+      deps.some((value, index) => !Object.is(value, resolvedDeps[index])),
+  )
 
   useEffect(() => {
     let live = true
@@ -36,7 +45,10 @@ export function useAsync<T>(
         if (live) setError(messageOf(cause))
       })
       .finally(() => {
-        if (live) setLoading(false)
+        if (live) {
+          setResolvedDeps(deps)
+          setLoading(false)
+        }
       })
     return () => {
       live = false

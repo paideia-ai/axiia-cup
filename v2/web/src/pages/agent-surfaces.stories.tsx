@@ -71,6 +71,24 @@ export const MinimalInventoryWithReadiness: Story = {
   },
 }
 
+export const ActionMenuKeyboard: Story = {
+  args: { page: 'agent' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const body = within(canvasElement.ownerDocument.body)
+    const trigger = await canvas.findByRole('button', {
+      name: '智能体更多操作',
+    })
+    await userEvent.click(trigger)
+    await expect(await body.findByRole('menuitem', { name: '重命名' }))
+      .toBeVisible()
+    await expect(body.getByRole('menuitem', { name: '归档智能体' }))
+      .not.toHaveAttribute('aria-disabled', 'true')
+    await userEvent.keyboard('{Escape}')
+    await expect(trigger).toHaveFocus()
+  },
+}
+
 export const HighFunctionAgentHome: Story = {
   args: { page: 'agent' },
   play: async ({ canvasElement }) => {
@@ -116,23 +134,5 @@ export const CompactVersionControls: Story = {
     await expect(
       canvas.getByRole('button', { name: '将 v2 设为商鞅参赛版本' }),
     ).toHaveAttribute('aria-pressed', 'true')
-  },
-}
-
-export const ActionMenuKeyboard: Story = {
-  args: { page: 'agent' },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    const body = within(canvasElement.ownerDocument.body)
-    const trigger = await canvas.findByRole('button', {
-      name: '智能体更多操作',
-    })
-    await userEvent.click(trigger)
-    await expect(await body.findByRole('menuitem', { name: '重命名' }))
-      .toBeVisible()
-    await expect(body.getByRole('menuitem', { name: '删除智能体' }))
-      .toHaveAttribute('aria-disabled', 'true')
-    await userEvent.keyboard('{Escape}')
-    await expect(trigger).toHaveFocus()
   },
 }

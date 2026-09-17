@@ -9,6 +9,7 @@ export default defineConfig({
     'reward-points.spec.ts',
     'sound-feedback.spec.ts',
     'navigation-loading.spec.ts',
+    'header-navigation.spec.ts',
   ],
   use: { ...config.use, baseURL: 'http://127.0.0.1:5189' },
   webServer: {
