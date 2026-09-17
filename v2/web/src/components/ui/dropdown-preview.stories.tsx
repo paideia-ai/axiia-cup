@@ -42,7 +42,7 @@ const examples = [
     options: ['守住旧制', '先问证据，再逐项回应', '从百姓的负担谈起'],
   },
   { label: '对侧智能体', options: ['甘龙 · agent #102', '甘龙 · agent #103'] },
-  { label: '槽位状态', options: ['draft', 'active', 'archived'] },
+  { label: '槽位状态', options: ['live', 'draft', 'retired'] },
 ]
 
 function Example({ label, options }: typeof examples[number]) {
