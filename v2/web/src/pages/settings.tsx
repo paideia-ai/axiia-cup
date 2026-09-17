@@ -1,3 +1,4 @@
+import { Archive, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
@@ -221,6 +222,28 @@ export function SettingsPage() {
             </span>
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+        <Link
+          to='/settings/archived-agents'
+          className='flex min-h-20 items-center gap-3 rounded-xl p-5 transition hover:bg-white/4 focus-visible:outline-2 focus-visible:outline-(--accent)'
+        >
+          <Archive
+            aria-hidden='true'
+            className='h-5 w-5 shrink-0 text-(--foreground-muted)'
+          />
+          <div className='flex-1'>
+            <h2 className='text-sm font-semibold'>已归档的智能体</h2>
+            <p className='mt-1 text-sm text-(--foreground-subtle)'>
+              查看和恢复已隐藏的智能体
+            </p>
+          </div>
+          <ChevronRight
+            aria-hidden='true'
+            className='h-4 w-4 shrink-0 text-(--foreground-subtle)'
+          />
+        </Link>
       </Card>
 
       <BindPhoneCard />
