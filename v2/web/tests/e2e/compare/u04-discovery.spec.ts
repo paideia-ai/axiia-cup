@@ -8,7 +8,7 @@
 //   · #142 把 DA 重写为四张顶层卡——DA 侧全部定位按新结构改写；
 //   · C10/C13 按裁定本轮直接实现（裁判提示词原文 + 同源开场白，
 //     runtime-quotes.json ⇄ script.js 由 v2/scenarios 的 deno task validate
-//     逐字把关）——断言新实现；
+//     逐字把关）。2026-09-17 移除场景页开场白区块，C13 改验区块缺席；
 //   · C14 的「赛后问询方式」与 C16 的叙事↔原始规则切换是仍开缺口——
 //     test.fixme 保留断言体，台账见 fixme-u04.json；不为凑绿改断言。
 //
@@ -417,7 +417,7 @@ test('U04-C12：隐藏目标机制对人公开', async () => {
   })
 })
 
-test('U04-C13：EXPAND-1 请求项 + 同源开场白（#51）', async () => {
+test('U04-C13：EXPAND-1 请求项；场景页不展示开场白', async () => {
   test.setTimeout(180_000)
   await test.step('假如 我打开商鞅场景的 DA 页', async () => {
     await gotoDA()
@@ -429,18 +429,11 @@ test('U04-C13：EXPAND-1 请求项 + 同源开场白（#51）', async () => {
     await hiddenLists.nth(1).click()
     await expect(page.getByText('GR1', { exact: true })).toBeVisible()
   })
-  await test.step('并且 「开场白」块只读展示秦孝公的统一首句——文与运行时 OPENING_LINE 同源', async () => {
-    // 同源由 deno task validate 对照 script.js 的 OPENING_LINE 把关；这里
-    // 断言页面展示的正是那句话（规格锚定的引文）。
-    const opening = page.getByTestId('opening-line')
-    await expect(opening).toBeVisible()
-    await expect(opening).toContainText(
-      '卫鞅，寡人今日召你与甘龙太师当堂论辩，就变法一事各陈其辞。你先说。',
-    )
-    await expect(opening).toContainText('开场白')
+  await test.step('并且 场景页没有开场白块', async () => {
+    await expect(page.getByTestId('opening-line')).toHaveCount(0)
   })
   const ids = await catalogIDs()
-  await test.step('当 我打开本能寺场景的 DA 页；那么 那里的开场白同样与其脚本同源', async () => {
+  await test.step('当 我打开本能寺场景的 DA 页；那么 那里也没有开场白块', async () => {
     if (!ids.includes('honnoji-decision')) {
       test.info().annotations.push({
         type: 'partial',
@@ -449,11 +442,9 @@ test('U04-C13：EXPAND-1 请求项 + 同源开场白（#51）', async () => {
       return
     }
     await gotoDA('honnoji-decision')
-    await expect(page.getByTestId('opening-line')).toContainText(
-      '诸位，今夜军势已动，敌在何处，须在此刻决断。先陈杀信长之议。',
-    )
+    await expect(page.getByTestId('opening-line')).toHaveCount(0)
   })
-  await test.step('当 我打开电车难题的 DA 页；那么 没有开场白块——无统一开场首句的场景不许编造', async () => {
+  await test.step('当 我打开电车难题的 DA 页；那么 仍然没有开场白块', async () => {
     if (!ids.includes('trolley-problem')) {
       test.info().annotations.push({
         type: 'partial',
