@@ -404,9 +404,6 @@ for (const entry of cases) {
     expect(await link.evaluate((el) => el.tagName)).toBe('A')
     await expect(link.locator('button, a, input')).toHaveCount(0)
     await link.hover()
-    await link.click({ button: 'right' })
-    // Dismiss the native menu before testing a separate middle-click gesture.
-    await page.keyboard.press('Escape')
     expect(ensures).toHaveLength(0)
 
     await checkNewTab(page, link, entry.destination, false)
@@ -418,6 +415,18 @@ for (const entry of cases) {
     expect(errors).toEqual([])
   })
 }
+
+test('right-click preserves the source and does not resolve an agent', async ({ page }) => {
+  const { ensures } = await fixtures(page)
+  await page.goto('/express')
+  const link = page.locator('[data-tm="X.build-button"]')
+  await expect(link).toHaveAttribute('href', /^\/agents\/entry\?/)
+  await link.click({ button: 'right' })
+  await expect(page).toHaveURL(/\/express$/)
+  expect(ensures).toHaveLength(0)
+  // End this gesture independently: sending Escape in a headless browser can
+  // dismiss the application's dialog rather than a native context menu.
+})
 
 test('inventory fallback opens or creates in the destination tab', async ({ page }) => {
   const { ensures } = await fixtures(page, { inventoryFailed: true })
