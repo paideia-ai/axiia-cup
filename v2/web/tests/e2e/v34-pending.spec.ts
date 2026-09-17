@@ -258,9 +258,14 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       await expect(page).toHaveURL(/\/agents\/\d+\/build\?.*express=1/)
       const builderURL = page.url()
       const agentID = Number(/\/agents\/(\d+)\/build/.exec(builderURL)![1])
-      await expect(page.getByRole('button', { name: 'MCQ', exact: true }))
+      await expect(
+        page.getByRole('button', { name: '选择预设策略', exact: true }),
+      )
         .toHaveAttribute('aria-pressed', 'true')
-      const mcq = page.getByRole('region', { name: 'MCQ', exact: true })
+      const mcq = page.getByRole('region', {
+        name: '选择预设策略',
+        exact: true,
+      })
       const deck = deckFor('shangyang-court', 'a', null)!
       await expect(mcq.getByText(deck.questions[0].prompt)).toBeVisible()
       const selections: Record<string, string> = {}
@@ -274,7 +279,8 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       await mcq.getByRole('button', { name: '填入工作区' }).click()
       const assembled = assembleDeck(deck, selections)
       await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
-      await page.getByRole('button', { name: 'MCQ', exact: true }).click()
+      await page.getByRole('button', { name: '选择预设策略', exact: true })
+        .click()
       await page.getByRole('button', { name: '直接编写', exact: true }).click()
       await expect(page.getByLabel('策略提示词')).toBeFocused()
       await expect(page.getByLabel('策略提示词')).toHaveValue(assembled)
@@ -464,9 +470,9 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       })
       for (
         const [name, init, dialog] of [
-          ['MCQ', 'mcq', '选择预设策略'],
+          ['选择预设策略', 'mcq', '选择预设策略'],
           ['直接编写', 'raw', null],
-          ['元提示词', 'meta', '让你的AI帮你想策略'],
+          ['让 AI 帮你想策略', 'meta', '让 AI 帮你想策略'],
         ] as const
       ) {
         await expect(page.getByRole('link', { name, exact: true }))

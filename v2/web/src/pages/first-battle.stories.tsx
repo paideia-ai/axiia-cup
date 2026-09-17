@@ -154,11 +154,14 @@ export const SaveReloadAndExplicitStart: Story = {
     const canvas = within(canvasElement)
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
-    expect(canvas.getByRole('button', { name: 'MCQ' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    expect(canvas.getByRole('button', { name: '选择预设策略' }))
+      .toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    await userEvent.click(
+      canvas.getByRole('button', { name: '让 AI 帮你想策略' }),
     )
-    await userEvent.click(canvas.getByRole('button', { name: '元提示词' }))
     expect(canvas.getByLabelText('策略构建提示词内容')).toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: '直接编写' }))
     await userEvent.type(input, saved.prompt)
@@ -282,7 +285,7 @@ export const AmbiguousStartSurvivesReload: Story = {
     )
     await canvas.findByText(/不会自动重新派发/)
     expect(canvas.queryByTestId('start-first-battle')).toBeNull()
-    expect(canvas.getByRole('link', { name: '查看我的对局' })).toHaveAttribute(
+    expect(canvas.getByRole('link', { name: '查看历史' })).toHaveAttribute(
       'href',
       '/matches',
     )
@@ -446,8 +449,8 @@ export const CompletedJourneyOpensEachActualTool: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     for (
-      const [name, tool] of [['MCQ', 'mcq'], ['直接编写', 'raw'], [
-        '元提示词',
+      const [name, tool] of [['选择预设策略', 'mcq'], ['直接编写', 'raw'], [
+        '让 AI 帮你想策略',
         'meta',
       ]] as const
     ) {
@@ -462,7 +465,7 @@ export const CompletedJourneyOpensEachActualTool: Story = {
         expect(canvas.queryByRole('dialog')).toBeNull()
       } else {
         const dialog = await canvas.findByRole('dialog', {
-          name: tool === 'mcq' ? '选择预设策略' : '让你的AI帮你想策略',
+          name: tool === 'mcq' ? '选择预设策略' : '让 AI 帮你想策略',
         })
         expect(dialog).toBeVisible()
         if (tool === 'meta') {

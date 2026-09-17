@@ -142,7 +142,7 @@ export const UnlockedDesktop: Story = {
       await canvas.findByRole('button', { name: '对手玩家' }),
     ).toBeVisible()
     await expect(
-      canvas.getByRole('button', { name: '按 id 约战' }),
+      canvas.getByRole('button', { name: '指定版本约战' }),
     ).toBeVisible()
     await expect(canvas.getByText('商鞅 1/1 ✓')).toBeVisible()
     await expect(canvas.getByText('甘龙 1/1 ✓')).toBeVisible()
@@ -341,7 +341,7 @@ function quotaRejectionStory(
         .toBeVisible()
       await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
       await userEvent.click(
-        await canvas.findByRole('button', { name: '按 id 约战' }),
+        await canvas.findByRole('button', { name: '指定版本约战' }),
       )
       await userEvent.type(
         canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
@@ -525,7 +525,7 @@ export const RejectSameSidePinnedVersion: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
-    await userEvent.click(canvas.getByRole('button', { name: '按 id 约战' }))
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本约战' }))
     await userEvent.type(
       canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
       '367',

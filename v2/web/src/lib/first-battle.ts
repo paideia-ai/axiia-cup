@@ -60,7 +60,7 @@ export function readFirstBattleAttempt(
     !['pending', 'accepted'].includes(value.status) ||
     (value.status === 'accepted' &&
       (!Number.isSafeInteger(value.matchID) || (value.matchID ?? 0) <= 0))
-  ) throw new Error('首战派发记录无法读取，请先到「我的对局」核对。')
+  ) throw new Error('首战派发记录无法读取，请到「历史」核对对局记录。')
   return value
 }
 

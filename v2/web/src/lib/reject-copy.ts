@@ -65,9 +65,9 @@ export function rejectCopy(
     case 'opponent_side_required':
       return '对方还没有可出战的对侧版本，请换个对手'
     case 'both_sides_required':
-      return '该服务器尚未支持单场约战，请更新后重试'
+      return '单场约战暂不可用，请稍后重试。'
     case 'opponent_both_sides_required':
-      return '该服务器尚未支持单场约战，请更新后重试'
+      return '单场约战暂不可用，请稍后重试。'
     case 'opponent_challenge_limit': {
       const m = config?.opponentDailyChallengeLimit
       return m != null

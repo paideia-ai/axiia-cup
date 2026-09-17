@@ -373,7 +373,7 @@ export function OsPanel({
     }
   }
 
-  // 按 id 约战（#66②/#25）：版本 id → 公开身份卡；跨场景就地报错。
+  // 指定版本约战（#66②/#25）：版本 id → 公开身份卡；跨场景就地报错。
   const lookupRef = async () => {
     const normalizedInput = idInputRef.current.trim()
     const id = Number(normalizedInput)
@@ -758,14 +758,14 @@ export function OsPanel({
                                 </p>
                               </div>
 
-                              {/* 子模式切换：① 对手玩家 · ② 按 id 约战。 */}
+                              {/* 子模式切换：① 对手玩家 · ② 指定版本约战。 */}
                               <div
                                 className='flex gap-2'
                                 {...tm('OS.pvp-mode-switch')}
                               >
                                 {([
                                   ['players', '对手玩家'],
-                                  ['byid', '按 id 约战'],
+                                  ['byid', '指定版本约战'],
                                 ] as const).map(([mode, label]) => (
                                   <button
                                     key={mode}
@@ -801,7 +801,7 @@ export function OsPanel({
                                           {...tm('OS.rivals-empty')}
                                         >
                                           {rivalsUnattributed
-                                            ? '服务器版本暂不支持按玩家约战——试试按 id 约战'
+                                            ? '服务器版本暂不支持按玩家约战——试试指定版本约战'
                                             : '暂无可约战的对手玩家——等其他玩家在本场景出战后再来'}
                                         </p>
                                       )
@@ -900,11 +900,7 @@ export function OsPanel({
                                             · v#{idRef.versionID}
                                           </p>
                                           <p className='mt-1 text-[11px] text-(--foreground-muted)'>
-                                            按 id 钉住其
-                                            {idRef.side === 'a'
-                                              ? sideNameOf('a')
-                                              : sideNameOf('b')}
-                                            侧版本，与当前出战版本对战。
+                                            本次将挑战对方的这个版本。
                                           </p>
                                           <div className='mt-2'>
                                             <Button

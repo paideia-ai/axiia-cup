@@ -71,10 +71,10 @@ test('两个辅助入口始终可见，详细流程按需打开', async () => {
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   })
 
-  await test.step('那么 页面直接显示「选择预设策略」与「让你的AI帮你想策略」', async () => {
+  await test.step('那么 页面直接显示「选择预设策略」与「让 AI 帮你想策略」', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
   })
 
@@ -85,11 +85,11 @@ test('两个辅助入口始终可见，详细流程按需打开', async () => {
   })
 
   await test.step('当 我打开外部 AI 辅助', async () => {
-    await page.getByRole('button', { name: '让你的AI帮你想策略' }).click()
+    await page.getByRole('button', { name: '让 AI 帮你想策略' }).click()
   })
 
   await test.step('那么 对话框只提供可复制元提示词，不提供产品内聊天或粘贴框', async () => {
-    const dialog = page.getByRole('dialog', { name: '让你的AI帮你想策略' })
+    const dialog = page.getByRole('dialog', { name: '让 AI 帮你想策略' })
     await expect(dialog.getByLabel('元提示词内容')).not.toBeEmpty()
     await expect(dialog.getByRole('button', { name: '复制元提示词' }))
       .toBeVisible()
@@ -118,7 +118,7 @@ test('两个辅助入口始终可见，详细流程按需打开', async () => {
   await test.step('并且 两个辅助入口仍然可见', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
   })
 })
@@ -213,7 +213,7 @@ test('已有版本后辅助仍存在，构建器不承担版本管理', async ()
   await test.step('那么 两个辅助入口仍可用，模型沿用最新版', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     const models = await (await page.request.get('/v1/models')).json() as {
       models: Array<{ id: string; label: string }>

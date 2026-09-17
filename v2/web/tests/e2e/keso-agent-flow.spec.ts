@@ -86,7 +86,7 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
       .toHaveAttribute('aria-current', 'page')
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible({ timeout: 30_000 })
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
   })
 
@@ -200,7 +200,7 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
   await test.step('那么 两个辅助入口仍然可见，版本列表仍然不出现', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(page.getByTestId('version-card')).toHaveCount(0)
     const versions = await page.request.get(`/v1/agents/${agentID}/versions`)

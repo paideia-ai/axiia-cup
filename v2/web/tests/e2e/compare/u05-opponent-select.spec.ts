@@ -649,10 +649,10 @@ test('U05-C11：【桩】解锁态呈现单场约战表单（#66；不派发）'
     await expect(dialog().getByText(/出战版本：v/)).toBeVisible()
     await expect(dialog().getByRole('combobox')).toHaveCount(0)
   })
-  await test.step('并且 子模式为「对手玩家」与「按 id 约战」', async () => {
+  await test.step('并且 子模式为「对手玩家」与「指定版本约战」', async () => {
     await expect(dialog().getByRole('button', { name: '对手玩家' }))
       .toBeVisible()
-    await expect(dialog().getByRole('button', { name: '按 id 约战' }))
+    await expect(dialog().getByRole('button', { name: '指定版本约战' }))
       .toBeVisible()
   })
   await test.step('并且 「对手玩家」列出可约战的对手玩家行与「发起约战」按钮（不点击）', async () => {
@@ -722,19 +722,19 @@ test('U05-C11b：【桩】当前角色可出战时无需补侧阵容', async () 
   })
 })
 
-test('U05-C12：【桩】按 id 约战：校验、解析卡与钉版语义（真实查询；绝不点「发起约战」）', async () => {
+test('U05-C12：【桩】指定版本约战：校验、解析卡与钉版语义（真实查询；绝不点「发起约战」）', async () => {
   test.setTimeout(180_000)
   const input = () => dialog().getByPlaceholder(/输入对方对侧版本 id/)
   const lookup = async (value: string) => {
     await input().fill(value)
     await dialog().getByRole('button', { name: /^查询/ }).click()
   }
-  await test.step('假如 存在另一玩家在本场景的版本 id；当 我切到「按 id 约战」', async () => {
+  await test.step('假如 存在另一玩家在本场景的版本 id；当 我切到「指定版本约战」', async () => {
     expect(rivalVersionID).toBeGreaterThan(0)
     await mockGateMet()
     await openFromHeader()
     await dialog().getByRole('tab', { name: /玩家约战/ }).click()
-    await dialog().getByRole('button', { name: '按 id 约战' }).click()
+    await dialog().getByRole('button', { name: '指定版本约战' }).click()
   })
   await test.step('那么 输入框占位注明「输入对方对侧版本 id（战报页可复制）」（#25 发现路径）', async () => {
     await expect(input()).toBeVisible()
@@ -758,9 +758,7 @@ test('U05-C12：【桩】按 id 约战：校验、解析卡与钉版语义（真
       .toBeVisible()
   })
   await test.step('并且 注明钉住对方对侧版本，与当前出战版本对战', async () => {
-    await expect(dialog().getByText(/按 id 钉住其/)).toBeVisible()
-    await expect(dialog().getByText(/侧版本，与当前出战版本对战。/))
-      .toBeVisible()
+    await expect(dialog().getByText('本次将挑战对方的这个版本。')).toBeVisible()
   })
   await test.step('并且 存在「发起约战」按钮（本审计不点击）', async () => {
     await expect(dialog().getByRole('button', { name: '发起约战' }))
@@ -798,7 +796,7 @@ test('U05-C12b：【桩】按 id 查询结果只属于当前输入，旧响应�
     )
     await openFromHeader()
     await dialog().getByRole('tab', { name: /玩家约战/ }).click()
-    await dialog().getByRole('button', { name: '按 id 约战' }).click()
+    await dialog().getByRole('button', { name: '指定版本约战' }).click()
     await input().fill(String(rivalVersionID))
     await dialog().getByRole('button', { name: /^查询/ }).click()
     await oldSeen
@@ -868,7 +866,7 @@ test('U05-C15：【桩】发起约战成功后直达第 ① 场实况（F6；桩
     // 等阵容载入完（默认取版脚注出现）——picks 未就位时按钮 disabled。
     await expect(dialog().getByText(/出战版本：v/))
       .toBeVisible()
-    await dialog().getByRole('button', { name: '按 id 约战' }).click()
+    await dialog().getByRole('button', { name: '指定版本约战' }).click()
     await dialog().getByPlaceholder(/输入对方对侧版本 id/).fill(
       String(rivalVersionID),
     )

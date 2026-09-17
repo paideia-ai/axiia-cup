@@ -40,11 +40,11 @@ describe('v3.4 rejection copy contracts', () => {
     ],
     [
       'both_sides_required',
-      '该服务器尚未支持单场约战，请更新后重试',
+      '单场约战暂不可用，请稍后重试。',
     ],
     [
       'opponent_both_sides_required',
-      '该服务器尚未支持单场约战，请更新后重试',
+      '单场约战暂不可用，请稍后重试。',
     ],
     [
       'opponent_challenge_limit',
