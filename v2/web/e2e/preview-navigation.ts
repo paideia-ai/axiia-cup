@@ -9,6 +9,13 @@ import {
   versions,
 } from '../src/testing/v34-fixtures.ts'
 
+import {
+  agentPreviewInventory,
+  agentPreviewScenarios,
+  previewAgent,
+} from '../src/testing/scenario-agent-fixtures.ts'
+
+const scenarioAgents = Deno.args.includes('--scenario-agents')
 const root = resolve('build/client')
 const html = (await Deno.readTextFile(`${root}/index.html`)).replace(
   '</body>',
@@ -28,6 +35,30 @@ async function api(request: Request, path: string): Promise<Response> {
       error: 'preview_only',
       message: '这里只预览页面跳转，不保存更改或发起对战。',
     }, { status: 409 })
+  }
+  if (scenarioAgents) {
+    if (path === '/my/agents') return json(agentPreviewInventory)
+    if (path === '/scenarios') {
+      return json({
+        scenarios: agentPreviewScenarios.map((item) => item.summary),
+      })
+    }
+    const detail = agentPreviewScenarios.find((item) =>
+      path === `/scenarios/${item.summary.id}`
+    )
+    if (detail) return json(detail)
+    const match = /^\/agents\/(\d+)\/(draft|versions)$/.exec(path)
+    const agent = match ? previewAgent(Number(match[1])) : null
+    if (agent && match) {
+      return json(
+        match[2] === 'draft'
+          ? { fields: {}, scenarioID: agent.scenarioID, side: agent.side }
+          : {
+            versions: agent.versions,
+            entryVersionID: agent.agent.entryVersionID,
+          },
+      )
+    }
   }
   switch (path) {
     case '/auth/me':
@@ -132,32 +163,35 @@ const contentTypes: Record<string, string> = {
   '.woff2': 'font/woff2',
 }
 
-Deno.serve({ hostname: '127.0.0.1', port: 5177 }, async (request) => {
-  const path = new URL(request.url).pathname
-  if (path.startsWith('/v1/')) return api(request, path.slice(3))
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response('Method not allowed', { status: 405 })
-  }
-  if (path.startsWith('/assets/') || path.startsWith('/scenario-assets/')) {
-    const file = resolve(root, `.${decodeURIComponent(path)}`)
-    if (!file.startsWith(`${root}${sep}`)) {
-      return new Response(null, { status: 404 })
+Deno.serve(
+  { hostname: '127.0.0.1', port: scenarioAgents ? 5178 : 5177 },
+  async (request) => {
+    const path = new URL(request.url).pathname
+    if (path.startsWith('/v1/')) return api(request, path.slice(3))
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return new Response('Method not allowed', { status: 405 })
     }
-    try {
-      return new Response(await Deno.readFile(file), {
-        headers: {
-          'Content-Type': contentTypes[extname(file)] ??
-            'application/octet-stream',
-        },
-      })
-    } catch {
-      return new Response(null, { status: 404 })
+    if (path.startsWith('/assets/') || path.startsWith('/scenario-assets/')) {
+      const file = resolve(root, `.${decodeURIComponent(path)}`)
+      if (!file.startsWith(`${root}${sep}`)) {
+        return new Response(null, { status: 404 })
+      }
+      try {
+        return new Response(await Deno.readFile(file), {
+          headers: {
+            'Content-Type': contentTypes[extname(file)] ??
+              'application/octet-stream',
+          },
+        })
+      } catch {
+        return new Response(null, { status: 404 })
+      }
     }
-  }
-  return new Response(html, {
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
-  })
-})
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+      },
+    })
+  },
+)

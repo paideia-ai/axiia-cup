@@ -210,8 +210,9 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
   })
 })
 
-test('场景详情保留角色上下文：单个直达主页，多个进入可刷新的聚焦清单', async ({ page }) => {
+test('场景详情直达主页：优先参赛智能体，同角色切换，兼容旧聚焦链接', async ({ page }) => {
   let firstAgentID = 0
+  let secondAgentID = 0
   let catalogCount = 0
   let browserEnsureCount = 0
   let releaseInventory = () => {}
@@ -297,7 +298,7 @@ test('场景详情保留角色上下文：单个直达主页，多个进入可�
       .toBeVisible()
   })
 
-  await test.step('假如 对侧保存一版后，我再通过真实 API 新建第二个商鞅智能体', async () => {
+  await test.step('假如 对侧保存一版后，我新建第二个商鞅智能体并保存为参赛版本', async () => {
     const ensured = await page.request.post('/v1/agents/ensure', {
       headers: sameOrigin,
       data: { scenarioID: KESO_SCENARIO, side: 'b' },
@@ -324,11 +325,48 @@ test('场景详情保留角色上下文：单个直达主页，多个进入可�
       data: { scenarioID: KESO_SCENARIO, side: 'a', name: '第二方案' },
     })
     expect(created.ok()).toBe(true)
+    secondAgentID = (await created.json() as { agentID: number }).agentID
+    const entrySaved = await page.request.post(
+      `/v1/agents/${secondAgentID}/save`,
+      {
+        headers: sameOrigin,
+        data: {
+          prompt: '先立可信的执行办法，再逐项落实新法。',
+          modelID,
+          parentVersionID: null,
+        },
+      },
+    )
+    expect(entrySaved.ok()).toBe(true)
   })
 
   await test.step('当 我再次点「查看我的商鞅（2）」', async () => {
     await page.goto(`/scenarios/${KESO_SCENARIO}`)
     await page.getByRole('link', { name: `查看我的${SIDE_A}（2）` }).click()
+  })
+
+  await test.step('那么 我直接进入第二方案主页，同角色栏只显示两个商鞅', async () => {
+    await expect(page).toHaveURL(new RegExp(`/agents/${secondAgentID}$`))
+    await expect(page.getByRole('heading', { name: `${SIDE_A}「第二方案」` }))
+      .toBeVisible()
+    const links = page.getByRole('navigation', { name: '同角色智能体' })
+      .getByRole('link')
+    await expect(links).toHaveCount(2)
+    await expect(links.nth(0)).toContainText(SIDE_A)
+    await expect(links.nth(1)).toContainText(SIDE_A)
+    await page.reload()
+    await expect(links).toHaveCount(2)
+    await page.locator(
+      `[data-tm="EA.sibling-pill"][href="/agents/${firstAgentID}"]`,
+    ).click()
+    await expect(page).toHaveURL(new RegExp(`/agents/${firstAgentID}$`))
+    await expect(page.getByRole('heading', { name: `${SIDE_A}「第一方案」` }))
+      .toBeVisible()
+    expect(browserEnsureCount).toBe(0)
+  })
+
+  await test.step('当 我打开旧的场景与侧聚焦链接', async () => {
+    await page.goto(`/my-agents?scenario=${KESO_SCENARIO}&side=a`)
   })
 
   await test.step('那么 我进入带场景与侧参数的聚焦清单，只看到该侧的两个智能体', async () => {
