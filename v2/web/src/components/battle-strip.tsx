@@ -1,8 +1,10 @@
+import { navigationCache } from '../lib/navigation-cache'
+import { catalogQuery } from '../lib/navigation-queries'
 import { ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
-import { catalog, matches } from '../api/client'
+import { matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
 import { useSoundMatchFeed } from '../context/sound'
 import { cn } from '../lib/cn'
@@ -52,8 +54,8 @@ export function BattleStrip() {
   useEffect(() => {
     if (!whitelisted || roles != null) return
     let live = true
-    void catalog
-      .scenarios()
+    void navigationCache
+      .fetchQuery(catalogQuery())
       .then((response) => {
         if (!live) return
         setRoles(scenarioRoles(response.scenarios))

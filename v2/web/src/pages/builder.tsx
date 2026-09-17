@@ -1,3 +1,5 @@
+import { navigationCache } from '../lib/navigation-cache'
+import { draftQuery, versionsQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -32,7 +34,7 @@ import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
-import { Button } from '../components/ui/button'
+import { Button, ButtonLink } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { VersionNote } from '../components/version-note'
@@ -480,8 +482,8 @@ export function BuilderPage() {
     void (async () => {
       try {
         const [draft, list] = await Promise.all([
-          builder.draft(agentID),
-          builder.versions(agentID),
+          navigationCache.fetchQuery(draftQuery(agentID)),
+          navigationCache.fetchQuery(versionsQuery(agentID)),
         ])
         if (!live) return
         setScenarioID(draft.scenarioID)
@@ -1435,11 +1437,11 @@ export function BuilderPage() {
             {attemptError ? <p role='alert'>{attemptError}</p> : null}
             {startAttempt?.status === 'accepted' && startAttempt.matchID != null
               ? (
-                <Button
-                  onClick={() => continueFirstBattle(startAttempt.matchID!)}
+                <ButtonLink
+                  to={`/matches/${startAttempt.matchID}?express=1`}
                 >
                   继续首战 #{startAttempt.matchID}
-                </Button>
+                </ButtonLink>
               )
               : startAttempt?.status === 'pending' && !starting
               ? (

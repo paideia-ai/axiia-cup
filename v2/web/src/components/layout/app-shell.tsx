@@ -1,3 +1,5 @@
+import { NavigationActivity } from '../page-loading'
+import { prefetchNavigation } from '../../lib/prefetch-navigation'
 import {
   Bot,
   History,
@@ -6,7 +8,7 @@ import {
   Trophy,
   UserRound,
 } from 'lucide-react'
-import type { PropsWithChildren } from 'react'
+import type { PropsWithChildren, SyntheticEvent } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../../context/auth'
@@ -43,6 +45,19 @@ export function AppShell({ children }: PropsWithChildren) {
     : account.isAdmin
     ? [...navigation, { to: '/admin', label: '管理面板', icon: Shield }]
     : navigation
+  const prefetch = (event: SyntheticEvent) => {
+    if (!(event.target instanceof Element)) return
+    const anchor = event.target.closest('a[href]')
+    if (
+      !(anchor instanceof HTMLAnchorElement) ||
+      anchor.origin !== locationOrigin()
+    ) return
+    if (
+      'relatedTarget' in event && event.relatedTarget instanceof Node &&
+      anchor.contains(event.relatedTarget)
+    ) return
+    prefetchNavigation(anchor.pathname, !!account)
+  }
   const contentWidth = 'max-w-[1040px]'
   const navigationActive = (to: string) =>
     to === '/my-agents'
@@ -50,7 +65,12 @@ export function AppShell({ children }: PropsWithChildren) {
       : pathname === to || pathname.startsWith(`${to}/`)
 
   return (
-    <div className='flex min-h-dvh flex-col bg-(--background)'>
+    <div
+      className='flex min-h-dvh flex-col bg-(--background)'
+      onPointerOver={prefetch}
+      onFocus={prefetch}
+      onPointerDown={prefetch}
+    >
       <header
         {...tm('NAV.header')}
         className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'
@@ -135,6 +155,7 @@ export function AppShell({ children }: PropsWithChildren) {
               )}
           </div>
         </div>
+        <NavigationActivity />
       </header>
       <main
         className={`mx-auto flex w-full ${contentWidth} flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8`}
@@ -184,4 +205,8 @@ export function AppShell({ children }: PropsWithChildren) {
       </nav>
     </div>
   )
+}
+
+function locationOrigin() {
+  return globalThis.location.origin
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { landing as landingApi } from '../api/client'
 import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
+import { ButtonLink } from '../components/ui/button'
 import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
 import { useAsync } from '../lib/use-async'
@@ -64,11 +64,13 @@ export function LandingPage() {
               )
               : account
               ? (
-                <Link to='/scenarios'>
-                  <Button size='sm' {...tm('A.header-enter-button')}>
-                    进入场景
-                  </Button>
-                </Link>
+                <ButtonLink
+                  to='/scenarios'
+                  size='sm'
+                  {...tm('A.header-enter-button')}
+                >
+                  进入场景
+                </ButtonLink>
               )
               : (
                 <>
@@ -79,11 +81,13 @@ export function LandingPage() {
                   >
                     登录
                   </Link>
-                  <Link to='/register'>
-                    <Button size='sm' {...tm('A.header-register-button')}>
-                      注册
-                    </Button>
-                  </Link>
+                  <ButtonLink
+                    to='/register'
+                    size='sm'
+                    {...tm('A.header-register-button')}
+                  >
+                    注册
+                  </ButtonLink>
                 </>
               )}
           </div>
@@ -115,32 +119,31 @@ export function LandingPage() {
             {account
               ? (
                 <div className='mt-10 flex justify-center'>
-                  <Link to='/scenarios'>
-                    <Button size='lg' {...tm('A.cta-enter')}>
-                      进入场景
-                      <ArrowRight className='ml-2 h-4 w-4' />
-                    </Button>
-                  </Link>
+                  <ButtonLink to='/scenarios' size='lg' {...tm('A.cta-enter')}>
+                    进入场景
+                    <ArrowRight className='ml-2 h-4 w-4' />
+                  </ButtonLink>
                 </div>
               )
               : !isLoading
               ? (
                 <div className='mt-10 flex justify-center gap-4'>
-                  <Link to='/register'>
-                    <Button size='lg' {...tm('A.cta-register')}>
-                      立即注册
-                      <ArrowRight className='ml-2 h-4 w-4' />
-                    </Button>
-                  </Link>
-                  <Link to='/login'>
-                    <Button
-                      size='lg'
-                      variant='secondary'
-                      {...tm('A.cta-login')}
-                    >
-                      已有账户，登录
-                    </Button>
-                  </Link>
+                  <ButtonLink
+                    to='/register'
+                    size='lg'
+                    {...tm('A.cta-register')}
+                  >
+                    立即注册
+                    <ArrowRight className='ml-2 h-4 w-4' />
+                  </ButtonLink>
+                  <ButtonLink
+                    to='/login'
+                    size='lg'
+                    variant='secondary'
+                    {...tm('A.cta-login')}
+                  >
+                    已有账户，登录
+                  </ButtonLink>
                 </div>
               )
               : null}

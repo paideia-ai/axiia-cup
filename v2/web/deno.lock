@@ -7,6 +7,7 @@
     "npm:@storybook/addon-vitest@10.5.7": "10.5.7_@vitest+browser-playwright@4.1.10__playwright@1.62.1__vitest@4.1.10__@types+node@22.20.1__msw@2.15.0___typescript@5.9.3___@types+node@22.20.1__typescript@5.9.3__vite@8.1.3___@types+node@22.20.1_storybook@10.5.7__@types+react@19.2.17__react@19.2.7_vitest@4.1.10__@types+node@22.20.1__@vitest+browser-playwright@4.1.10__vite@8.1.3___@types+node@22.20.1__msw@2.15.0___typescript@5.9.3___@types+node@22.20.1__playwright@1.62.1__typescript@5.9.3_@types+node@22.20.1_@types+react@19.2.17_msw@2.15.0__typescript@5.9.3__@types+node@22.20.1_playwright@1.62.1_react@19.2.7_typescript@5.9.3_vite@8.1.3__@types+node@22.20.1",
     "npm:@storybook/react-vite@10.5.7": "10.5.7_react@19.2.7_react-dom@19.2.7__react@19.2.7_storybook@10.5.7__@types+react@19.2.17__react@19.2.7_typescript@5.9.3_vite@8.1.3__@types+node@22.20.1_@types+react@19.2.17_@types+react-dom@19.2.3__@types+react@19.2.17",
     "npm:@tailwindcss/vite@^4.1.0": "4.3.3_vite@8.1.3__@types+node@22.20.1_@types+node@22.20.1",
+    "npm:@tanstack/react-query@^5.103.1": "5.103.1_react@19.2.7",
     "npm:@types/node@22": "22.20.1",
     "npm:@types/react-dom@^19.2.0": "19.2.3_@types+react@19.2.17",
     "npm:@types/react@^19.2.0": "19.2.17",
@@ -1064,6 +1065,16 @@
         "@tailwindcss/oxide",
         "tailwindcss",
         "vite"
+      ]
+    },
+    "@tanstack/query-core@5.103.1": {
+      "integrity": "sha512-rms8HqTGp6zA00dM+cUQ2eBcgzNJefuu5CAMB37i/6MiGT1zulPOytCFu2a0qjLqVR2n1jENPj9woqFQNuCzWA=="
+    },
+    "@tanstack/react-query@5.103.1_react@19.2.7": {
+      "integrity": "sha512-rmAPPApNEK17VXRJhtE1rja53n23VV5w30C0saCgJhhX+EpdUnVqMGV/s5nnzV43X75KTHKzuoiuxSzGTBIkag==",
+      "dependencies": [
+        "@tanstack/query-core",
+        "react"
       ]
     },
     "@testing-library/dom@10.4.1": {
@@ -2411,6 +2422,7 @@
         "npm:@storybook/addon-vitest@10.5.7",
         "npm:@storybook/react-vite@10.5.7",
         "npm:@tailwindcss/vite@^4.1.0",
+        "npm:@tanstack/react-query@^5.103.1",
         "npm:@types/node@22",
         "npm:@types/react-dom@^19.2.0",
         "npm:@types/react@^19.2.0",
