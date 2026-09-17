@@ -183,29 +183,31 @@ export const VersionComparison: Story = {
   },
 }
 
+const identicalHandlers = [
+  http.get('/v1/models', () => new HttpResponse(null, { status: 503 })),
+  http.get('/v1/agents/101/draft', () =>
+    HttpResponse.json({
+      fields: {},
+      scenarioID: scenario.summary.id,
+      side: 'a',
+    })),
+  http.get('/v1/scenarios/:id', () => HttpResponse.json(scenario)),
+  http.get('/v1/my/agents', () => HttpResponse.json(inventory)),
+  http.get(
+    '/v1/agents/101/versions',
+    () => HttpResponse.json({ versions }),
+  ),
+  http.get('/v1/agents/101/diff', () =>
+    HttpResponse.json({
+      base: versions[0],
+      head: { ...versions[1], prompt: versions[0].prompt },
+    })),
+]
+
 export const IdenticalVersionPrompts: Story = {
   args: { page: 'agent' },
   parameters: {
-    msw: [
-      http.get('/v1/models', () => new HttpResponse(null, { status: 503 })),
-      http.get('/v1/agents/101/draft', () =>
-        HttpResponse.json({
-          fields: {},
-          scenarioID: scenario.summary.id,
-          side: 'a',
-        })),
-      http.get('/v1/scenarios/:id', () => HttpResponse.json(scenario)),
-      http.get('/v1/my/agents', () => HttpResponse.json(inventory)),
-      http.get(
-        '/v1/agents/101/versions',
-        () => HttpResponse.json({ versions }),
-      ),
-      http.get('/v1/agents/101/diff', () =>
-        HttpResponse.json({
-          base: versions[0],
-          head: { ...versions[1], prompt: versions[0].prompt },
-        })),
-    ],
+    msw: identicalHandlers,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -220,5 +222,16 @@ export const IdenticalVersionPrompts: Story = {
     for (const title of titles) {
       await expect(title).toHaveTextContent('fixture-model')
     }
+  },
+}
+
+// An incomplete catalog response must not prevent reading saved versions.
+export const IncompleteModelCatalog: Story = {
+  ...IdenticalVersionPrompts,
+  parameters: {
+    msw: [
+      http.get('/v1/models', () => HttpResponse.json({})),
+      ...identicalHandlers.slice(1),
+    ],
   },
 }

@@ -896,7 +896,7 @@ function VersionCompare({
 }) {
   const { data: modelList } = usePageQuery(modelsQuery())
   const modelLabels = new Map(
-    modelList?.models.map((model) => [model.id, model.label]),
+    modelList?.models?.map((model) => [model.id, model.label]),
   )
   const sorted = [...versions].sort((a, b) => b.id - a.id)
   const [baseID, setBaseID] = useState(String(sorted[1]?.id ?? ''))
