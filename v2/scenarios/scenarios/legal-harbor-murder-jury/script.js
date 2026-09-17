@@ -4,8 +4,8 @@ const meta = {
   subject: '法律',
   sideAName: '林',
   sideBName: '苏',
-  sideALabel: '证据足以定罪',
-  sideBLabel: '仍有合理怀疑',
+  sideALabel: '串联案件证据，说服陪审团认定顾衡有罪。',
+  sideBLabel: '指出现有证据中的合理疑点，说服陪审团判顾衡无罪。',
   adjudicationMode: 'jury-vote',
   turnCount: 10,
   stages: [
