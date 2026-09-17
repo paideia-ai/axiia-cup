@@ -1,14 +1,15 @@
+import { PageLoading } from '../components/page-loading'
 import { Clock, Hammer } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
-import { catalog, myAgents } from '../api/client'
 import type { ScenarioScoringDTO, ScenarioSummary, Side } from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
-import { useAsync } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
+import { inventoryQuery, scenarioQuery } from '../lib/navigation-queries'
 import {
   DIFFICULTY_LABEL,
   scenarioGuidance,
@@ -33,27 +34,28 @@ import type {
 // 重排，但不改写或省略。计分、难度、时长和状态属于额外的产品信息，单独渲染。
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
-  const { account } = useAuth()
+  const { account, isLoading: authLoading } = useAuth()
   const module = scenarioModule(scenarioId)
   const intro = module?.intro ?? null
   const education = module?.education ?? null
 
-  const { data, error, loading } = useAsync(
-    () =>
-      catalog.scenario(scenarioId, 'a', {
-        credentials: account ? 'include' : 'omit',
-      }),
-    [scenarioId, account?.id],
+  const { data, error, loading: queryLoading } = usePageQuery(
+    {
+      ...scenarioQuery(scenarioId, 'a', account ? 'include' : 'omit'),
+      enabled: !authLoading,
+    },
   )
+  const loading = authLoading || queryLoading
+
   const {
     data: mine,
     error: mineError,
     loading: mineLoading,
     reload: reloadMine,
-  } = useAsync(
-    () => account ? myAgents.list() : Promise.resolve({ scenarios: [] }),
-    [scenarioId, account?.id],
-  )
+  } = usePageQuery({
+    ...inventoryQuery(),
+    enabled: !!account,
+  })
   const mineOf = (side: Side) =>
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
       ?.sides[side] ?? []
@@ -61,14 +63,7 @@ export function ScenarioDetailPage() {
   return (
     <div className='mx-auto w-full max-w-6xl space-y-6' {...tm('DA.page')}>
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('DA.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='detail' {...tm('DA.loading')} />
         : error
         ? (
           <p className='text-sm text-(--accent)' {...tm('DA.error')}>

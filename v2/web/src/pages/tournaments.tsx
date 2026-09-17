@@ -1,10 +1,11 @@
+import { PageLoading } from '../components/page-loading'
+import { tournamentsQuery } from '../lib/navigation-queries'
 import { Link } from 'react-router-dom'
 
-import { tournaments } from '../api/client'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { cn } from '../lib/cn'
-import { useAsync } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
 
 // 阶段名（#32）：线上词汇是中文的「海选 / 正赛」，qualifier/main 只是传输值。
@@ -16,10 +17,10 @@ function phaseName(phase: string): string {
 }
 
 export function TournamentsPage() {
-  const { data, error, loading } = useAsync(() => tournaments.list(), [])
+  const { data, error, loading } = usePageQuery(tournamentsQuery())
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       <h1
         className='text-2xl font-black tracking-tight text-(--foreground)'
         {...tm('G.page-title')}
@@ -34,14 +35,7 @@ export function TournamentsPage() {
       </p>
 
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('G.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='list' {...tm('G.loading')} />
         : error
         ? <p className='text-sm text-(--accent)' {...tm('G.error')}>{error}</p>
         : data && data.tournaments.length > 0
