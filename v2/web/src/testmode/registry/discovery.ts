@@ -475,8 +475,7 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '约战成功块',
     clauses: ['U05-C11', 'U05-C13'],
     anchors: ['spec-change-66', 'spec-change-29'],
-    note:
-      '仅在服务器没回 matchIDs 时的回退形态；正常成功直接跳第 ① 场实况（F6）',
+    note: '仅在服务器没回 matchIDs 时的回退形态；正常成功直接跳本场实况',
     when: '回退态，正常路径看不到',
   },
   'OS.challenge-unavailable': {
@@ -484,48 +483,12 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['LACK-10'],
     when: 'POST /v1/challenges 404/405（老服务器）',
   },
-  'OS.lineup-failed': {
-    label: '阵容加载失败',
-    clauses: ['LACK-10'],
-    when: 'my/agents 或版本列表接口失败时',
-  },
-  'OS.lineup-loading': {
-    label: '阵容加载中',
-    clauses: ['LACK-10'],
-    when: '解锁态刚打开面板时',
-  },
-  'OS.missing-side-guide': {
-    label: '缺侧引导',
-    clauses: ['U05-C11', 'U05-C04'],
-    anchors: ['spec-change-66', 'spec-change-64'],
-    note: '「PVP 约战需双方双侧齐备」+ 去创建缺的那侧',
-    when: '解锁但某侧没有带版本的智能体时',
-  },
-  'OS.create-side-button': {
-    label: '去创建某侧按钮',
-    clauses: ['U05-C04'],
-    anchors: ['spec-change-64'],
-    when: '缺侧引导里',
-  },
   'OS.lineup': {
-    label: '我的双侧出战阵容',
+    label: '出战角色与版本',
     clauses: ['U05-C11', 'U06-C12', 'U06-C13', 'U05-C11p1'],
     anchors: ['spec-change-66', 'spec-change-91', 'spec-p1'],
     journeys: ['j6s2'],
-    note:
-      '① 我甲 vs 他乙 · ② 他甲 vs 我乙；候选标签是「#agentID · vN · 模型 ★」而非策略展示名（待裁决）',
-  },
-  'OS.lineup-select': {
-    label: '一侧出战版本下拉',
-    clauses: ['U06-C12', 'U05-C11p1', 'U01-C20b'],
-    anchors: ['spec-change-91'],
-    note:
-      '默认预选 ★（参赛优先于最新）；U01-C20b：候选标签仍是裸 #id（待裁决）',
-  },
-  'OS.lineup-default-note': {
-    label: '默认取版说明',
-    clauses: ['U06-C12', 'U05-C11'],
-    anchors: ['spec-change-91'],
+    note: '固定使用当前智能体的出战版本，只与对方对侧版本对战',
   },
   'OS.pvp-mode-switch': {
     label: '约战子模式切换',
@@ -555,7 +518,7 @@ export const TM_DISCOVERY: TmRegistry = {
     note: '按玩家去重（ownerAccountID），显示昵称 + 其 agent',
   },
   'OS.challenge-button': {
-    label: '发起双侧约战按钮',
+    label: '发起约战按钮',
     clauses: ['U05-C11', 'U05-C13', 'U06-C04', 'U06-C06'],
     anchors: [
       'spec-change-66',
@@ -565,14 +528,14 @@ export const TM_DISCOVERY: TmRegistry = {
     ],
     journeys: ['j6s2', 'j6s5', 'jR6s1'],
     note:
-      '对手玩家行与按 id 解析卡共用；一次约战＝成对两场；成功关面板直达第 ① 场实况；双方都须解锁、同人每日限 M 次',
+      '对手玩家行与按 id 解析卡共用；一次约战只产生一场；成功关面板直达实况；双方都须解锁、同人每日限 M 次',
   },
   'OS.byid-input': {
     label: '版本 id 框',
     clauses: ['U05-C12'],
     anchors: ['spec-change-25'],
     journeys: ['j6s4'],
-    note: '占位「输入对方任一版本 id（战报页可复制）」',
+    note: '占位「输入对方对侧版本 id（战报页可复制）」',
   },
   'OS.byid-lookup-button': {
     label: '查询按钮',
@@ -590,7 +553,7 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-change-25', 'spec-change-66'],
     journeys: ['j6s4'],
     note:
-      '昵称 · 场景 · 执方 · 模型 · v#id；钉住该侧版本，另一侧取对方 ★（否则最新版）',
+      '昵称 · 场景 · 执方 · 模型 · v#id；钉住对方对侧版本，与当前出战版本对战',
     when: '查询到本场景的真实版本 id 后',
   },
   'OS.pvp-footnotes': {
@@ -598,7 +561,7 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U05-C13', 'U06-C06', 'U06-C15'],
     anchors: ['spec-change-29', 'spec-change-76', 'spec-change-52'],
     note:
-      '「一次约战＝成对两场，计 2 场配额」「友谊赛不计分；对方会收到通知，无需同意、不能拒绝」',
+      '「一次约战只产生一场，仅发起人支付积分」「友谊赛不计排名；对方会收到通知，无需同意、不能拒绝」',
   },
   'OS.gate-locked': {
     label: '约战锁定态',

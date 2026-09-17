@@ -415,9 +415,7 @@ export interface DispatchResponse {
   matchID: number
 }
 
-// POST /v1/challenges（P3 #66）：一次约战＝成对两场 PVP。`mine` 必须为我的
-// 每一侧各给一个版本（缺 key 是业务错误 both_sides_required，不是解码失败）；
-// `opponent` 二选一：按账号，或钉住一个版本（钉住的版本占它自己那一侧）。
+// POST /v1/challenges: mine contains exactly one side, matching the selected agent.
 export interface ChallengeSideRef {
   versionID: number
 }
@@ -438,7 +436,7 @@ export interface CreateChallengeRequest {
   opponent: ChallengeOpponentRequest
 }
 
-// `matchIDs` 固定 [leg1, leg2]；`challengeID` 是这一对的共享 id。
+// Each new challenge returns one match ID.
 export interface ChallengeResponse {
   challengeID: number
   matchIDs: number[]

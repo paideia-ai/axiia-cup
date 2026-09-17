@@ -61,7 +61,7 @@ export async function pollMatchDone(
     .toBe(true)
 }
 
-// P3 双侧约战：一次挑战两条腿，返回 [leg1, leg2] 的 matchID。
+// This ranking fixture needs two wins, requested separately on each side.
 export async function dispatchChallenge(
   context: APIRequestContext,
   scenarioID: string,
@@ -69,18 +69,22 @@ export async function dispatchChallenge(
   mineB: number,
   opponentAccountID: string,
 ): Promise<number[]> {
-  const response = await context.post('/v1/challenges', {
-    headers: sameOrigin,
-    data: {
-      scenarioID,
-      mine: { a: { versionID: mineA }, b: { versionID: mineB } },
-      opponent: { accountID: opponentAccountID },
-    },
-  })
-  expect(response.ok(), 'challenge dispatch succeeds').toBe(true)
-  const body = await response.json() as { matchIDs: number[] }
-  expect(body.matchIDs).toHaveLength(2)
-  return body.matchIDs
+  const matchIDs: number[] = []
+  for (const [side, versionID] of [['a', mineA], ['b', mineB]] as const) {
+    const response = await context.post('/v1/challenges', {
+      headers: sameOrigin,
+      data: {
+        scenarioID,
+        mine: { [side]: { versionID } },
+        opponent: { accountID: opponentAccountID },
+      },
+    })
+    expect(response.ok(), 'single challenge dispatch succeeds').toBe(true)
+    const body = await response.json() as { matchIDs: number[] }
+    expect(body.matchIDs).toHaveLength(1)
+    matchIDs.push(...body.matchIDs)
+  }
+  return matchIDs
 }
 
 export interface NotificationRow {

@@ -194,13 +194,12 @@ function fixture() {
           assert.equal(role, 'initiator')
           const payload = body as {
             scenarioID: string
-            mine: { a: { versionID: number }; b: { versionID: number } }
+            mine: { a: { versionID: number } }
             opponent: { pinnedVersionID?: number; accountID?: string }
           }
           assert.equal(payload.scenarioID, 'shangyang-court')
           assert.deepEqual(payload.mine, {
             a: { versionID: 21 },
-            b: { versionID: 22 },
           })
           assert.ok(
             payload.opponent.accountID === 'rival-account' ||

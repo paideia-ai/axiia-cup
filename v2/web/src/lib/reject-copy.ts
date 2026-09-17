@@ -60,13 +60,14 @@ export function rejectCopy(
       return `提示词超出上限（按汉字或英文词计，上限 ${limit}）——对照输入框右下的计数器删减后再保存`
     }
     // ── P3 约战错误码族（#66/#76，mock V20 口吻） ─────────────────────────
-    // #66 双侧成对：发起方缺侧。
+    case 'single_side_required':
+      return '请选择当前角色的一个出战版本，刷新页面后重试'
+    case 'opponent_side_required':
+      return '对方还没有可出战的对侧版本，请换个对手'
     case 'both_sides_required':
-      return 'PVP 约战需双方双侧齐备——你这边还缺一侧（有版本的智能体），先去创建对侧'
-    // #66：对方缺侧（单侧玩家不能被约战）。
+      return '该服务器尚未支持单场约战，请更新后重试'
     case 'opponent_both_sides_required':
-      return 'PVP 约战需双方双侧齐备——对方还没有双侧齐备的智能体，换个对手'
-    // #76 / U06-C06：按发起玩家与对手玩家计当日次数，每对两腿只算一次约战。
+      return '该服务器尚未支持单场约战，请更新后重试'
     case 'opponent_challenge_limit': {
       const m = config?.opponentDailyChallengeLimit
       return m != null
@@ -111,42 +112,10 @@ export function accountRejectCopy(
   return rejectCopy(error, null, fallback)
 }
 
-// 一次约战计 2 场：零余额使用 U03-C11 的准确触顶文案；还剩一场时，
-// 明确说明余额不足一整对。调用方在配额拒绝后刷新 config，避免沿用旧余额。
 export function challengeRejectCopy(
   error: unknown,
   config?: ConfigResponse | null,
   fallback = '发起约战失败',
 ): string {
-  if (error instanceof ApiError) {
-    if (config && ['daily_limit', 'pvp_daily_limit'].includes(error.code)) {
-      if (config.usage.battlesToday >= config.dailyBattleLimit) {
-        return exhaustedQuotaCopy(config.dailyBattleLimit)
-      }
-      if (config.usage.pvpBattlesToday >= config.pvpDailyLimit) {
-        return exhaustedQuotaCopy(config.pvpDailyLimit)
-      }
-    }
-    switch (error.code) {
-      case 'daily_limit': {
-        const n = config?.dailyBattleLimit
-        return n != null
-          ? `今日配额不足一整对——一次约战计 2 场（上限 ${n}/日），明天再来`
-          : '今日配额不足一整对——一次约战计 2 场，明天再来'
-      }
-      case 'pvp_daily_limit': {
-        const m = config?.pvpDailyLimit
-        return m != null
-          ? `PVP 配额不足一整对——一次约战计 2 场（上限 ${m}/日），明天再来`
-          : 'PVP 配额不足一整对——一次约战计 2 场，明天再来'
-      }
-      case 'concurrency_limit': {
-        const c = config?.concurrencyLimit
-        return c != null
-          ? `并发名额不足 2 场（同时进行上限 ${c}），等一场结束再约`
-          : '并发名额不足 2 场，等一场结束再约'
-      }
-    }
-  }
   return rejectCopy(error, config, fallback)
 }

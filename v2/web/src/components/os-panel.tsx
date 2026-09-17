@@ -10,7 +10,6 @@ import {
   challenges,
   config as configApi,
   matches,
-  myAgents,
   versions as versionsApi,
 } from '../api/client'
 import type {
@@ -18,7 +17,6 @@ import type {
   ChallengeOpponentRequest,
   ChallengeResponse,
   ConfigResponse,
-  MyAgentDTO,
   OpponentAgentDTO,
   PresetOpponentDTO,
   ScenarioDetail,
@@ -42,17 +40,6 @@ import { Input } from './ui/input'
 import { Select, SelectItem } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
-// OS 出战面板（A5/G17）：桌面居中 Modal、移动端（<md）底部弹层。
-// tabs：NPC 练习（PVE 预设）· 左右手互搏（#61——对手是你自己 isSelf 的对侧
-// agent 的 PVP）· 玩家约战（P3 #66，mock V20：解锁后两个子模式——① 对手
-// 玩家（按玩家去重的公开对手列表，按 accountID 约）· ② 按 id 约战（版本 id
-// → /versions/:id/ref 解析出玩家/场景/侧/模型再钉住约）；两者共用「我的双侧
-// 出战阵容」选择器（各侧一个版本，默认 ★参赛版否则最新版），一次约战＝成对
-// 两场。锁定态仍按 gateProgress 呈现按侧进度徽章（#65/mock V16）。PVE/自打
-// 的派发版本 = ★参赛版本，否则最新版——与服务器对对手侧的取法一致。配额
-// 脚注与拒绝文案的数字来自 GET /v1/config，接口失败时静默降级（无脚注、无
-// 数字文案），不碍派发。约战端点未上线（404/405）时降级为功能提示。
-
 interface OsPanelProps {
   open: boolean
   onClose: () => void
@@ -62,20 +49,6 @@ interface OsPanelProps {
   entryVersionID: number | null
   // #88：从版本卡「出战」呼出时，钉住玩家点的那一版（否则回落 ★ / 最新版）。
   preferVersionID?: number | null
-}
-
-// 双侧阵容选择器的一个候选：我的某侧 agent 的一个版本。
-interface LineupOption {
-  versionID: number
-  agentID: number
-  isEntry: boolean
-  label: string
-}
-
-// 默认出战版本：★参赛版优先，否则最新版（列表旧→新，取末位）。
-function defaultLineupPick(options: LineupOption[]): number | null {
-  return (options.find((option) => option.isEntry) ??
-    options[options.length - 1])?.versionID ?? null
 }
 
 export function OsPanel({
@@ -104,7 +77,7 @@ export function OsPanel({
   const quoteState = useBattleQuote(
     scenarioID,
     side,
-    tab === 'pvp' ? 'challenge' : tab,
+    tab,
     open,
   )
   const insufficientPoints = quoteState.blocked
@@ -112,14 +85,6 @@ export function OsPanel({
   const [cfg, setCfg] = useState<ConfigResponse | null>(null)
   const configRequestRef = useRef(0)
 
-  // ── P3 约战态（#66，mock V20） ────────────────────────────────────────
-  // 我的双侧阵容候选：每侧一组 {版本, 所属 agent, ★}；null=未加载。
-  const [lineup, setLineup] = useState<
-    { a: LineupOption[]; b: LineupOption[] } | null
-  >(null)
-  const [lineupFailed, setLineupFailed] = useState(false)
-  const [pickA, setPickA] = useState<number | null>(null)
-  const [pickB, setPickB] = useState<number | null>(null)
   const [pvpMode, setPvpMode] = useState<'players' | 'byid'>('players')
   const [idInput, setIdInput] = useState('')
   const [idRef, setIdRef] = useState<VersionRefResponse | null>(null)
@@ -330,62 +295,6 @@ export function OsPanel({
     setIdError(null)
   }, [open])
 
-  // 解锁后加载我的双侧阵容：my/agents 圈出本场景两侧的 agent，再逐个拉版本
-  // 列表拼候选。任一接口失败 → lineupFailed，整块降级为提示（老服务器同）。
-  useEffect(() => {
-    if (!open || !pvpUnlocked) return
-    let live = true
-    const loadSide = async (agents: MyAgentDTO[]): Promise<LineupOption[]> => {
-      const fielded = agents.filter((agent) => agent.versionCount > 0)
-      const lists = await Promise.all(fielded.map(async (agent) => {
-        const list = await builder.versions(agent.agentID)
-        return list.versions.map((version) => ({
-          versionID: version.id,
-          agentID: agent.agentID,
-          isEntry: list.entryVersionID === version.id,
-          label: `#${agent.agentID} · ${
-            versionTag(version, list.versions)
-          } · ${version.modelID}${
-            list.entryVersionID === version.id ? ' ★' : ''
-          }`,
-        }))
-      }))
-      return lists.flat()
-    }
-    void (async () => {
-      try {
-        const inventory = await myAgents.list()
-        const entry = inventory.scenarios.find(
-          (item) => item.scenarioID === scenarioID,
-        )
-        const [a, b] = await Promise.all([
-          loadSide(entry?.sides.a ?? []),
-          loadSide(entry?.sides.b ?? []),
-        ])
-        if (!live) return
-        setLineup({ a, b })
-        setLineupFailed(false)
-        const prefer = (
-          options: LineupOption[],
-          which: Side,
-        ): number | null =>
-          which === side && preferVersionID != null &&
-            options.some((o) => o.versionID === preferVersionID)
-            ? preferVersionID
-            : defaultLineupPick(options)
-        setPickA(prefer(a, 'a'))
-        setPickB(prefer(b, 'b'))
-      } catch {
-        if (!live) return
-        setLineup(null)
-        setLineupFailed(true)
-      }
-    })()
-    return () => {
-      live = false
-    }
-  }, [open, pvpUnlocked, scenarioID, preferVersionID])
-
   // 对手玩家（#66①）：对侧可对战 agent 中非 isSelf 的，按 ownerAccountID
   // 去重成「玩家」行；老服务器条目无 ownerAccountID → 过滤掉（不给假按钮）。
   const rivals = useMemo(() => {
@@ -415,7 +324,7 @@ export function OsPanel({
     (opponents ?? []).some((opponent) => !opponent.isSelf)
 
   const submitChallenge = async (opponent: ChallengeOpponentRequest) => {
-    if (pickA == null || pickB == null || dispatching || insufficientPoints) {
+    if (fieldedVersionID == null || dispatching || insufficientPoints) {
       return
     }
     unlockAudio()
@@ -436,25 +345,16 @@ export function OsPanel({
     try {
       const response = await challenges.create({
         scenarioID,
-        mine: { a: { versionID: pickA }, b: { versionID: pickB } },
+        mine: { [side]: { versionID: fieldedVersionID } },
         opponent,
       })
       if (!liveRef.current) return
       playSound('dispatch', `challenge:${response.challengeID}`)
       for (const matchID of response.matchIDs) trackSoundMatch(matchID)
       if (response.matchIDs.length > 0) {
-        // F6/#66：与 PVE/互搏路径一致——成功即关面板、站内跳到第 ① 场
-        // 实况（A7:429 不开新窗口）；siblingID 随导航 state 带给实况页，
-        // 第 ② 场靠「查看另一场」互链可达。
         onClose()
-        navigate(`/matches/${response.matchIDs[0]}`, {
-          state: {
-            challengeID: response.challengeID,
-            siblingID: response.matchIDs[1] ?? null,
-          },
-        })
+        navigate(`/matches/${response.matchIDs[0]}`)
       } else {
-        // 回退：服务器没回 matchIDs 时仍用面板内成功块（两张对局卡）。
         setChallengeDone(response)
       }
     } catch (cause) {
@@ -465,7 +365,6 @@ export function OsPanel({
       ) {
         setChallengeUnavailable(true)
       } else {
-        // #52/Q7 成对语义的配额文案 + P3 错误码族，都在 reject-copy。
         const freshConfig = await configAfterRejection(cause)
         if (!liveRef.current) return
         setError(challengeRejectCopy(cause, freshConfig))
@@ -497,6 +396,12 @@ export function OsPanel({
         setIdError(
           `该版本属于其他场景（${ref.scenarioID}），不能用于本场景约战`,
         )
+      } else if (ref.side !== oppositeSide) {
+        setIdError(
+          `请选择对方的${sideNameOf(oppositeSide)}版本，与当前${
+            sideNameOf(side)
+          }对战`,
+        )
       } else {
         setIdRef(ref)
       }
@@ -521,11 +426,6 @@ export function OsPanel({
       }
     }
   }
-
-  // #66：发起方缺侧 → 表单换成「去创建对侧」引导（单侧玩家不能约战）。
-  const missingSides: Side[] = lineup == null
-    ? []
-    : (['a', 'b'] as const).filter((which) => lineup[which].length === 0)
 
   return (
     <Dialog.Root
@@ -821,18 +721,16 @@ export function OsPanel({
                         </div>
                         {challengeDone
                           ? (
-                            // 成功态（mock V21 的入口面）：两张对局卡 ①/②。
                             <div
                               className='space-y-3 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-4'
                               {...tm('OS.challenge-success')}
                             >
                               <p className='text-sm font-medium text-(--foreground)'>
-                                已发起双侧约战 · 两场对局已入队
+                                已发起约战 · 对局已入队
                               </p>
                               <div className='flex flex-wrap gap-2'>
                                 {challengeDone.matchIDs.map((
                                   matchID,
-                                  index,
                                 ) => (
                                   <Link
                                     key={matchID}
@@ -840,13 +738,12 @@ export function OsPanel({
                                     onClick={onClose}
                                     className='inline-flex items-center gap-1.5 rounded-lg border border-(--border) px-3 py-2 text-sm font-medium text-(--foreground) transition hover:border-(--foreground-muted) hover:bg-white/3'
                                   >
-                                    对局{index === 0 ? '①' : '②'} · #{matchID}
+                                    对局 · #{matchID}
                                   </Link>
                                 ))}
                               </div>
                               <p className='text-xs text-(--foreground-muted)'>
-                                每次成对约战计 2
-                                场；对方会收到一条合并通知，无需同意、不能拒绝。
+                                本次只发起一场对战；对方会收到通知，无需同意。
                               </p>
                             </div>
                           )
@@ -859,119 +756,20 @@ export function OsPanel({
                               约战功能尚未在该服务器启用——敬请期待
                             </p>
                           )
-                          : lineupFailed
-                          ? (
-                            <p
-                              className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'
-                              {...tm('OS.lineup-failed')}
-                            >
-                              无法加载你的双侧阵容——稍后再试
-                            </p>
-                          )
-                          : lineup == null
-                          ? (
-                            <p
-                              className='text-sm text-(--foreground-subtle)'
-                              {...tm('OS.lineup-loading')}
-                            >
-                              加载双侧阵容…
-                            </p>
-                          )
-                          : missingSides.length > 0
-                          ? (
-                            // #66：单侧玩家不能约战——引导创建缺的那侧。
-                            <div
-                              className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
-                              {...tm('OS.missing-side-guide')}
-                            >
-                              <p className='text-sm font-medium text-(--foreground)'>
-                                PVP 约战需双方双侧齐备
-                              </p>
-                              <p className='mt-1 text-xs text-(--foreground-muted)'>
-                                一次约战＝两场（你的{sideNameOf('a')}打他的
-                                {sideNameOf('b')}，他的{sideNameOf('a')}打你的
-                                {sideNameOf('b')}）。你还缺
-                                {missingSides.map(sideNameOf).join('与')}
-                                （有版本的智能体）。
-                              </p>
-                              <div className='mt-4 flex flex-wrap justify-center gap-2'>
-                                {missingSides.map((which) => (
-                                  <Button
-                                    key={which}
-                                    size='sm'
-                                    variant='secondary'
-                                    disabled={creatingOpposite}
-                                    onClick={() => void createSide(which)}
-                                    {...tm('OS.create-side-button')}
-                                  >
-                                    {creatingOpposite
-                                      ? '创建中…'
-                                      : `去创建${sideNameOf(which)}`}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                          )
                           : (
                             <>
-                              {/* 共用双侧阵容选择器（mock V20）：各侧一个版本。 */}
                               <div
                                 className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
                                 {...tm('OS.lineup')}
                               >
-                                <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-                                  我的双侧出战阵容——① 我{sideNameOf('a')} vs 他
-                                  {sideNameOf('b')} · ② 他{sideNameOf('a')}{' '}
-                                  vs 我
-                                  {sideNameOf('b')}
+                                <p className='text-sm font-medium text-(--foreground)'>
+                                  我方{sideNameOf(side)}{' '}
+                                  vs 对方{sideNameOf(oppositeSide)}
                                 </p>
-                                <div className='mt-2 grid gap-3 sm:grid-cols-2'>
-                                  {(['a', 'b'] as const).map((which) => (
-                                    <div
-                                      key={which}
-                                      {...tm('OS.lineup-select')}
-                                    >
-                                      <p className='mb-1 text-xs text-(--foreground-subtle)'>
-                                        执{which.toUpperCase()} ·{' '}
-                                        {sideNameOf(which)}
-                                      </p>
-                                      <Select
-                                        placeholder='选择出战版本'
-                                        value={(which === 'a'
-                                            ? pickA
-                                            : pickB) !=
-                                            null
-                                          ? String(
-                                            which === 'a' ? pickA : pickB,
-                                          )
-                                          : undefined}
-                                        renderValue={(v) =>
-                                          lineup[which].find(
-                                            (option) =>
-                                              String(option.versionID) === v,
-                                          )?.label ?? v}
-                                        onValueChange={(v) =>
-                                          (which === 'a' ? setPickA : setPickB)(
-                                            v ? Number(v) : null,
-                                          )}
-                                      >
-                                        {lineup[which].map((option) => (
-                                          <SelectItem
-                                            key={option.versionID}
-                                            value={String(option.versionID)}
-                                          >
-                                            {option.label}
-                                          </SelectItem>
-                                        ))}
-                                      </Select>
-                                    </div>
-                                  ))}
-                                </div>
-                                <p
-                                  className='mt-2 text-[11px] text-(--foreground-muted)'
-                                  {...tm('OS.lineup-default-note')}
-                                >
-                                  默认各侧 ★参赛版本（未标记则最新版）。
+                                <p className='mt-1 text-xs text-(--foreground-subtle)'>
+                                  出战版本：{fieldedVersion
+                                    ? versionTag(fieldedVersion, versions)
+                                    : '尚未保存版本'}
                                 </p>
                               </div>
 
@@ -1041,8 +839,7 @@ export function OsPanel({
                                             variant='secondary'
                                             disabled={dispatching ||
                                               insufficientPoints ||
-                                              pickA == null ||
-                                              pickB == null}
+                                              fieldedVersionID == null}
                                             onClick={() =>
                                               void submitChallenge({
                                                 accountID: rival.accountID,
@@ -1053,7 +850,7 @@ export function OsPanel({
                                           >
                                             {dispatching
                                               ? '约战中…'
-                                              : '发起双侧约战'}
+                                              : '发起约战'}
                                           </Button>
                                         </div>
                                       ))}
@@ -1073,7 +870,7 @@ export function OsPanel({
                                           setIdError(null)
                                           setIdLooking(false)
                                         }}
-                                        placeholder='输入对方任一版本 id（战报页可复制）'
+                                        placeholder='输入对方对侧版本 id（战报页可复制）'
                                         {...tm('OS.byid-input')}
                                       />
                                       <Button
@@ -1122,15 +919,14 @@ export function OsPanel({
                                             {idRef.side === 'a'
                                               ? sideNameOf('a')
                                               : sideNameOf('b')}
-                                            侧版本；另一侧取对方★参赛版（否则最新版）。
+                                            侧版本，与当前出战版本对战。
                                           </p>
                                           <div className='mt-2'>
                                             <Button
                                               size='sm'
                                               disabled={dispatching ||
                                                 insufficientPoints ||
-                                                pickA == null ||
-                                                pickB == null}
+                                                fieldedVersionID == null}
                                               onClick={() =>
                                                 void submitChallenge({
                                                   pinnedVersionID:
@@ -1142,7 +938,7 @@ export function OsPanel({
                                             >
                                               {dispatching
                                                 ? '约战中…'
-                                                : '发起双侧约战'}
+                                                : '发起约战'}
                                             </Button>
                                           </div>
                                         </div>
@@ -1156,11 +952,10 @@ export function OsPanel({
                                 {...tm('OS.pvp-footnotes')}
                               >
                                 <li>
-                                  一次约战＝成对两场（①正/②反），每次成对约战计
-                                  2 场配额。
+                                  一次约战只发起一场，仅发起人支付本场积分并可领取胜利返还。
                                 </li>
                                 <li>
-                                  友谊赛不计分；对方会收到通知，无需同意、不能拒绝。
+                                  友谊赛不计排名；对方会收到通知，无需同意、不能拒绝。
                                 </li>
                               </ul>
                             </>

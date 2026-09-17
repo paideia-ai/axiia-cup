@@ -40,11 +40,11 @@ describe('v3.4 rejection copy contracts', () => {
     ],
     [
       'both_sides_required',
-      'PVP 约战需双方双侧齐备——你这边还缺一侧（有版本的智能体），先去创建对侧',
+      '该服务器尚未支持单场约战，请更新后重试',
     ],
     [
       'opponent_both_sides_required',
-      'PVP 约战需双方双侧齐备——对方还没有双侧齐备的智能体，换个对手',
+      '该服务器尚未支持单场约战，请更新后重试',
     ],
     [
       'opponent_challenge_limit',
@@ -87,13 +87,12 @@ describe('v3.4 rejection copy contracts', () => {
   })
 })
 
-describe('P3 challenge (paired) rejection copy', () => {
+describe('single challenge rejection copy', () => {
   it.each(
     [
       ['daily_limit', 12, 0, '今日次数已用完（12/12），明天再来'],
       ['pvp_daily_limit', 5, 4, '今日次数已用完（4/4），明天再来'],
-      // The total-quota check can reject a pair first while PVP is already zero.
-      ['daily_limit', 11, 4, '今日次数已用完（4/4），明天再来'],
+      ['daily_limit', 11, 4, '今日次数已用完（12/12），明天再来'],
       // Configuration can be lowered below an already-spent count.
       ['pvp_daily_limit', 5, 5, '今日次数已用完（4/4），明天再来'],
     ] as const,
@@ -110,17 +109,17 @@ describe('P3 challenge (paired) rejection copy', () => {
   it.each([
     [
       'daily_limit',
-      '今日配额不足一整对——一次约战计 2 场（上限 12/日），明天再来',
+      '今日次数已用完（12/12），明天再来',
     ],
     [
       'pvp_daily_limit',
-      'PVP 配额不足一整对——一次约战计 2 场（上限 4/日），明天再来',
+      '今日次数已用完（4/4），明天再来',
     ],
     [
       'concurrency_limit',
-      '并发名额不足 2 场（同时进行上限 2），等一场结束再约',
+      '同时进行的对局已达上限（2），等一场结束再来',
     ],
-  ])('maps %s to pair-quota copy', (code, copy) => {
+  ])('maps %s to quota copy', (code, copy) => {
     expect(
       challengeRejectCopy(new ApiError('raw server text', 429, code), {
         ...config,
@@ -142,7 +141,7 @@ describe('P3 challenge (paired) rejection copy', () => {
 
   it('degrades to numberless copy without config', () => {
     expect(challengeRejectCopy(new ApiError('x', 409, 'daily_limit'), null))
-      .toBe('今日配额不足一整对——一次约战计 2 场，明天再来')
+      .toBe('今日次数已用完，明天再来')
     expect(rejectCopy(new ApiError('x', 429, 'pvp_daily_limit'), null))
       .toBe('今日次数已用完，明天再来')
   })

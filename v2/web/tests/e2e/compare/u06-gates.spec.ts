@@ -325,7 +325,7 @@ test('发起方未解锁，约战被服务端整对拒绝', async () => {
   await test.step('当 我绕过 UI 直接 POST /v1/challenges', async () => {
     const rejected = await api<{ error?: string }>('POST', '/challenges', {
       scenarioID: HONNOJI,
-      mine: { a: { versionID: mineA }, b: { versionID: mineB } },
+      mine: { a: { versionID: mineA } },
       opponent: { accountID: probeAccountID },
     })
     await test.step('那么 服务端以 403 gate_locked 拒绝（发起方门槛）', () => {
@@ -377,7 +377,6 @@ test('被约方未解锁，约战同样被整对拒绝（#29 的配套保护）'
       scenarioID: FIXTURE_ID,
       mine: {
         a: { versionID: fixtureA.versionID },
-        b: { versionID: fixtureB.versionID },
       },
       opponent: { accountID: probeAccountID },
     })

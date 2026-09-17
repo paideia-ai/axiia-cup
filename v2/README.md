@@ -22,6 +22,9 @@ deno task lint
 `main`: it exchanges a GitHub OIDC assertion for a short-lived token at
 `/v1/auth/federated` and runs `deno task push`. No token is stored here.
 
+Current PvP behavior is specified in
+[Single-match PvP (2026-09-17)](../docs/competition/2026-09-17-single-match-pvp.md).
+
 ## Working on it
 
 You need deno 2.9.1 and nothing else — no Swift toolchain, no docker, no
