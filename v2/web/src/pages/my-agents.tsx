@@ -1,8 +1,9 @@
+import { PageLoading } from '../components/page-loading'
 import { ChevronRight } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { builder, catalog, myAgents } from '../api/client'
+import { builder } from '../api/client'
 import type {
   MyAgentDTO,
   MyAgentsScenarioDTO,
@@ -14,7 +15,9 @@ import { NewAgentDialog } from '../components/new-agent-dialog'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { subscribeAgentsChanged } from '../lib/agent-events'
-import { messageOf, useAsync } from '../lib/use-async'
+import { messageOf } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
+import { catalogQuery, inventoryQuery } from '../lib/navigation-queries'
 import { tm } from '../testmode/mark'
 
 interface CreateTarget {
@@ -25,13 +28,21 @@ interface CreateTarget {
 
 export function MyAgentsPage() {
   const navigate = useNavigate()
-  const { data, error, loading, reload } = useAsync(async () => {
-    const [catalogResponse, inventory] = await Promise.all([
-      catalog.scenarios(),
-      myAgents.list().catch(() => null),
-    ])
-    return { scenarios: catalogResponse.scenarios, inventory }
-  }, [])
+  const catalog = usePageQuery(catalogQuery())
+  const inventory = usePageQuery(inventoryQuery())
+  const data = useMemo(() =>
+    catalog.data
+      ? {
+        scenarios: catalog.data.scenarios,
+        inventory: inventory.data,
+      }
+      : null, [catalog.data, inventory.data])
+  const loading = catalog.loading || inventory.loading
+  const error = catalog.error
+  const reload = useCallback(() => {
+    catalog.reload()
+    inventory.reload()
+  }, [catalog.reload, inventory.reload])
   const [pending, setPending] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [creating, setCreating] = useState<CreateTarget | null>(null)
@@ -138,7 +149,7 @@ export function MyAgentsPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       <div
         className='flex flex-wrap items-start justify-between gap-3'
         {...tm('MA.page-header')}
@@ -181,14 +192,7 @@ export function MyAgentsPage() {
         : null}
 
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('MA.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='cards' {...tm('MA.loading')} />
         : error
         ? (
           <div className='space-y-3' role='alert' {...tm('MA.error')}>

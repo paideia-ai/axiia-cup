@@ -1,3 +1,5 @@
+import { navigationCache } from '../lib/navigation-cache'
+import { draftQuery, versionsQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -480,8 +482,8 @@ export function BuilderPage() {
     void (async () => {
       try {
         const [draft, list] = await Promise.all([
-          builder.draft(agentID),
-          builder.versions(agentID),
+          navigationCache.fetchQuery(draftQuery(agentID)),
+          navigationCache.fetchQuery(versionsQuery(agentID)),
         ])
         if (!live) return
         setScenarioID(draft.scenarioID)

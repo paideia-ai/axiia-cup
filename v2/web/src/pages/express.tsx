@@ -1,3 +1,4 @@
+import { PageLoading } from '../components/page-loading'
 import { Clock } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
@@ -76,11 +77,7 @@ export function ExpressPage() {
   }
 
   if (loading) {
-    return (
-      <p className='text-sm text-(--foreground-subtle)' {...tm('X.loading')}>
-        加载中…
-      </p>
-    )
+    return <PageLoading variant='detail' {...tm('X.loading')} />
   }
   if (error || !data) {
     return (

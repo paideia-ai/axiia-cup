@@ -1,3 +1,6 @@
+import { invalidateNavigation } from '../lib/navigation-cache'
+import { PageLoading } from '../components/page-loading'
+import { matchQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -50,7 +53,8 @@ import {
   isInquiryChannel,
   placeVerdicts,
 } from '../lib/transcript'
-import { messageOf, useAsync } from '../lib/use-async'
+import { messageOf } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
 
@@ -66,10 +70,7 @@ export function MatchDetailPage() {
   // 实况页——只有确知是首战的对局才展示，不做「猜第一场」的启发式。
   const expressArrival =
     (location.state as { express?: boolean } | null)?.express === true
-  const { data, error, loading, reload } = useAsync(
-    () => matches.detail(matchID),
-    [matchID],
-  )
+  const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
   // 调试模式 (#22)：model reasoning traces (内心 folds, live thinking deltas) are
   // hidden until switched on. A UI mask only in this stage — the stream still
   // carries the deltas; the renderer just never mounts them. Dialogue, events,
@@ -121,7 +122,10 @@ export function MatchDetailPage() {
   }, [challengeID, matchID])
 
   useEffect(() => {
-    if (stream.done) reload()
+    if (stream.done) {
+      invalidateNavigation('/matches/completed')
+      reload()
+    }
   }, [stream.done, reload])
 
   // Chunks carry the content of the turn in flight; the committed row still comes
@@ -236,9 +240,7 @@ export function MatchDetailPage() {
   if (loading && data == null) {
     return (
       <div className='space-y-6'>
-        <p {...tm('FA.loading')} className='text-sm text-(--foreground-subtle)'>
-          加载中…
-        </p>
+        <PageLoading variant='detail' {...tm('FA.loading')} />
       </div>
     )
   }
