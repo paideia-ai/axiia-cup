@@ -9,6 +9,7 @@ import {
 } from 'react'
 
 import { ApiError, auth } from '../api/client'
+import { setNavigationIdentity } from '../lib/navigation-cache'
 import type {
   AccountDTO,
   BindPhoneRequest,
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true)
 
   const land = useCallback((me: MeResponse) => {
+    setNavigationIdentity(`${me.account.id}:${me.elevated}`)
     setAccount(me.account)
     setElevated(me.elevated)
     setFirstBattleDone(me.firstBattleDone === true)
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       land(await auth.me())
     } catch (error) {
       if (error instanceof ApiError && error.isUnauthorized) {
+        setNavigationIdentity(null)
         setAccount(null)
         setElevated(false)
         setFirstBattleDone(false)
@@ -96,6 +99,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       bindPhone: async (input) => land(await auth.bindPhone(input)),
       logout: async () => {
         await auth.logout()
+        setNavigationIdentity(null)
         setAccount(null)
         setElevated(false)
         setFirstBattleDone(false)

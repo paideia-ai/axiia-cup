@@ -3,8 +3,12 @@ import { setupWorker } from 'msw/browser'
 import { mswLoader } from 'msw-storybook-addon/csf3'
 
 import '../src/styles.css'
+import { resetNavigationCache } from '../src/lib/navigation-cache'
 
 const preview: Preview = {
+  beforeEach: () => {
+    resetNavigationCache()
+  },
   loaders: [
     mswLoader(async () => {
       const worker = setupWorker()
@@ -21,11 +25,14 @@ const preview: Preview = {
     layout: 'fullscreen',
   },
   decorators: [
-    (Story) => (
-      <main className='mx-auto min-h-screen max-w-6xl bg-(--background) px-4 py-8 text-(--foreground) md:px-8'>
-        <Story />
-      </main>
-    ),
+    (Story, context) =>
+      context.parameters.fullApp
+        ? <Story />
+        : (
+          <main className='mx-auto min-h-screen max-w-6xl bg-(--background) px-4 py-8 text-(--foreground) md:px-8'>
+            <Story />
+          </main>
+        ),
   ],
 }
 

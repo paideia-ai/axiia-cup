@@ -1,15 +1,16 @@
+import { PageLoading } from '../components/page-loading'
 import { Check } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { catalog, matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { Select, SelectItem } from '../components/ui/select'
 import type { RoleNames } from '../lib/outcome'
 import { outcomeCopy, scenarioRoles } from '../lib/outcome'
-import { useAsync } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
+import { catalogQuery, matchesQuery } from '../lib/navigation-queries'
 import { tm } from '../testmode/mark'
 
 const ALL_SCENARIOS = '__all_scenarios__'
@@ -65,17 +66,11 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 export function MatchesPage() {
   const [onlyMine, setOnlyMine] = useState(false)
   const [scenarioID, setScenarioID] = useState('')
-  const { data, error, loading } = useAsync(
-    async () => {
-      const [list, scenarios] = await Promise.all([
-        matches.list(),
-        // 角色名尽力而为：目录失败不拖垮历史列表（文案回退 甲方/乙方）。
-        catalog.scenarios().catch(() => null),
-      ])
-      return { list, scenarios }
-    },
-    [],
-  )
+  const list = usePageQuery(matchesQuery())
+  const scenarios = usePageQuery(catalogQuery())
+  const { loading, error } = list
+  // Role names are optional enrichment; history can render as soon as it arrives.
+  const data = list.data ? { list: list.data, scenarios: scenarios.data } : null
   // Derive choices from all history so ownership filtering cannot remove the
   // selected option, even when the catalog is unavailable.
   const historyScenarios = new Map<string, string>()
@@ -180,7 +175,7 @@ export function MatchesPage() {
   }
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       <h1
         className='text-2xl font-black tracking-tight text-(--foreground)'
         {...tm('L.page-title')}
@@ -206,7 +201,8 @@ export function MatchesPage() {
             onValueChange={(value) =>
               setScenarioID(value === ALL_SCENARIOS ? '' : value ?? '')}
             placeholder='全部场景'
-            renderValue={(value) => historyScenarios.get(value) ?? '全部场景'}
+            renderValue={(value) =>
+              historyScenarios.get(value) ?? '全部场景'}
             disabled={loading || !historyScenarios.size}
             className='h-9 w-40 max-w-full rounded-lg border-(--border-soft) bg-transparent px-2.5 text-xs focus:border-(--foreground-muted) focus:ring-0 focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) [&>span]:min-w-0 [&>span]:truncate [&>span]:text-(--foreground-subtle)'
           >
@@ -235,14 +231,7 @@ export function MatchesPage() {
       </div>
 
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('L.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='list' {...tm('L.loading')} />
         : error
         ? <p className='text-sm text-(--accent)' {...tm('L.error')}>{error}</p>
         : data && visibleMatches.length > 0
@@ -251,7 +240,8 @@ export function MatchesPage() {
             {groupHistory(visibleMatches).map((row) => {
               if (row.kind === 'single') return matchCard(row.match)
               const legs = [...row.legs].sort(
-                (a, b) => (a.challengeLeg ?? 0) - (b.challengeLeg ?? 0),
+                (a, b) =>
+                  (a.challengeLeg ?? 0) - (b.challengeLeg ?? 0),
               )
               return (
                 <div

@@ -53,72 +53,31 @@ function BuilderRoute() {
   return <BuilderPage key={agentId} />
 }
 
-function ProtectedRoutes() {
-  const { isLoading, account } = useAuth()
+function RequireAccount() {
+  const { account } = useAuth()
   const location = useLocation()
-
-  if (isLoading) return <Loading />
-  if (!account) return <Navigate replace to={protectedLoginUrl(location)} />
-
-  return (
-    <Routes>
-      {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
-      <Route path='/express' element={<ExpressPage />} />
-      <Route
-        path='/scenarios/:scenarioId/build'
-        element={<ScenarioBuildEntry />}
-      />
-      <Route path='/my-agents' element={<MyAgentsPage />} />
-      <Route path='/agents/entry' element={<AgentEntryPage />} />
-      {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
-      <Route path='/agents/:agentId' element={<AgentViewPage />} />
-      <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
-      <Route path='/matches' element={<MatchesPage />} />
-      <Route path='/matches/:matchId' element={<MatchDetailPage />} />
-      <Route path='/tournaments' element={<TournamentsPage />} />
-      <Route
-        path='/tournaments/:tournamentId'
-        element={<StandingsPage />}
-      />
-      <Route path='/versions/:versionId' element={<VersionAgentPage />} />
-      <Route path='/notifications' element={<NotificationsPage />} />
-      <Route path='/settings' element={<SettingsPage />} />
-      <Route path='/rewards' element={<RewardsPage />} />
-      <Route
-        path='/admin'
-        element={account.isAdmin
-          ? <AdminPage />
-          : <Navigate replace to='/scenarios' />}
-      />
-      <Route
-        path='/admin/slots/:slotId'
-        element={account.isAdmin
-          ? <AdminSlotPage />
-          : <Navigate replace to='/scenarios' />}
-      />
-      <Route path='*' element={<Navigate replace to='/scenarios' />} />
-    </Routes>
-  )
+  return account
+    ? <Outlet />
+    : <Navigate replace to={protectedLoginUrl(location)} />
 }
 
-// Keep the shell, wallet and bell stream mounted across public scenario and
-// protected routes. Only a change of account should reset their session state.
-function SessionShell() {
+// One layout survives navigation between public scenarios and account pages.
+function ApplicationShell() {
   const { isLoading, account } = useAuth()
   if (isLoading) return <Loading />
+  const content = (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  )
   return account
-    ? (
-      <RewardsProvider key={account.id}>
-        <AppShell>
-          <Outlet />
-        </AppShell>
-      </RewardsProvider>
-    )
-    : (
-      <AppShell key='guest'>
-        <Outlet />
-      </AppShell>
-    )
+    ? <RewardsProvider key={account.id}>{content}</RewardsProvider>
+    : content
+}
+
+function AdminGate({ children }: { children: ReactNode }) {
+  const { account } = useAuth()
+  return account?.isAdmin ? children : <Navigate replace to='/scenarios' />
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
@@ -151,14 +110,6 @@ export function AppRoutes() {
     <>
       <Routes>
         <Route path='/' element={<LandingPage />} />
-        <Route element={<SessionShell />}>
-          <Route path='/scenarios' element={<CatalogPage />} />
-          <Route
-            path='/scenarios/:scenarioId'
-            element={<ScenarioDetailPage />}
-          />
-          <Route path='/*' element={<ProtectedRoutes />} />
-        </Route>
         <Route
           path='/login'
           element={
@@ -175,6 +126,52 @@ export function AppRoutes() {
             </GuestOnly>
           }
         />
+        <Route element={<ApplicationShell />}>
+          <Route path='/scenarios' element={<CatalogPage />} />
+          <Route
+            path='/scenarios/:scenarioId'
+            element={<ScenarioDetailPage />}
+          />
+          <Route element={<RequireAccount />}>
+            <Route path='/express' element={<ExpressPage />} />
+            <Route
+              path='/scenarios/:scenarioId/build'
+              element={<ScenarioBuildEntry />}
+            />
+            <Route path='/my-agents' element={<MyAgentsPage />} />
+            <Route path='/agents/entry' element={<AgentEntryPage />} />
+            <Route path='/agents/:agentId' element={<AgentViewPage />} />
+            <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
+            <Route path='/matches' element={<MatchesPage />} />
+            <Route path='/matches/:matchId' element={<MatchDetailPage />} />
+            <Route path='/tournaments' element={<TournamentsPage />} />
+            <Route
+              path='/tournaments/:tournamentId'
+              element={<StandingsPage />}
+            />
+            <Route path='/versions/:versionId' element={<VersionAgentPage />} />
+            <Route path='/notifications' element={<NotificationsPage />} />
+            <Route path='/settings' element={<SettingsPage />} />
+            <Route path='/rewards' element={<RewardsPage />} />
+            <Route
+              path='/admin'
+              element={
+                <AdminGate>
+                  <AdminPage />
+                </AdminGate>
+              }
+            />
+            <Route
+              path='/admin/slots/:slotId'
+              element={
+                <AdminGate>
+                  <AdminSlotPage />
+                </AdminGate>
+              }
+            />
+            <Route path='*' element={<Navigate replace to='/scenarios' />} />
+          </Route>
+        </Route>
       </Routes>
       {/* 测试模式（?tm=1）：挂在 Routes 旁边，所有路由都能用；关着时零成本。 */}
       <TestModeRoot />
