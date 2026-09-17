@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import {
   BrowserRouter,
   Navigate,
+  Outlet,
   Route,
   Routes,
   useLocation,
@@ -51,7 +52,7 @@ function BuilderRoute() {
   return <BuilderPage key={agentId} />
 }
 
-function ProtectedShell() {
+function ProtectedRoutes() {
   const { isLoading, account } = useAuth()
   const location = useLocation()
 
@@ -59,59 +60,63 @@ function ProtectedShell() {
   if (!account) return <Navigate replace to={protectedLoginUrl(location)} />
 
   return (
-    <RewardsProvider key={account.id}>
-      <AppShell>
-        <Routes>
-          {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
-          <Route path='/express' element={<ExpressPage />} />
-          <Route
-            path='/scenarios/:scenarioId/build'
-            element={<ScenarioBuildEntry />}
-          />
-          <Route path='/my-agents' element={<MyAgentsPage />} />
-          {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
-          <Route path='/agents/:agentId' element={<AgentViewPage />} />
-          <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
-          <Route path='/matches' element={<MatchesPage />} />
-          <Route path='/matches/:matchId' element={<MatchDetailPage />} />
-          <Route path='/tournaments' element={<TournamentsPage />} />
-          <Route
-            path='/tournaments/:tournamentId'
-            element={<StandingsPage />}
-          />
-          <Route path='/versions/:versionId' element={<VersionAgentPage />} />
-          <Route path='/notifications' element={<NotificationsPage />} />
-          <Route path='/settings' element={<SettingsPage />} />
-          <Route path='/rewards' element={<RewardsPage />} />
-          <Route
-            path='/admin'
-            element={account.isAdmin
-              ? <AdminPage />
-              : <Navigate replace to='/scenarios' />}
-          />
-          <Route
-            path='/admin/slots/:slotId'
-            element={account.isAdmin
-              ? <AdminSlotPage />
-              : <Navigate replace to='/scenarios' />}
-          />
-          <Route path='*' element={<Navigate replace to='/scenarios' />} />
-        </Routes>
-      </AppShell>
-    </RewardsProvider>
+    <Routes>
+      {/* A3 首战快速通道：注册落点；已完成首战的账号进来会被让路。 */}
+      <Route path='/express' element={<ExpressPage />} />
+      <Route
+        path='/scenarios/:scenarioId/build'
+        element={<ScenarioBuildEntry />}
+      />
+      <Route path='/my-agents' element={<MyAgentsPage />} />
+      {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
+      <Route path='/agents/:agentId' element={<AgentViewPage />} />
+      <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
+      <Route path='/matches' element={<MatchesPage />} />
+      <Route path='/matches/:matchId' element={<MatchDetailPage />} />
+      <Route path='/tournaments' element={<TournamentsPage />} />
+      <Route
+        path='/tournaments/:tournamentId'
+        element={<StandingsPage />}
+      />
+      <Route path='/versions/:versionId' element={<VersionAgentPage />} />
+      <Route path='/notifications' element={<NotificationsPage />} />
+      <Route path='/settings' element={<SettingsPage />} />
+      <Route path='/rewards' element={<RewardsPage />} />
+      <Route
+        path='/admin'
+        element={account.isAdmin
+          ? <AdminPage />
+          : <Navigate replace to='/scenarios' />}
+      />
+      <Route
+        path='/admin/slots/:slotId'
+        element={account.isAdmin
+          ? <AdminSlotPage />
+          : <Navigate replace to='/scenarios' />}
+      />
+      <Route path='*' element={<Navigate replace to='/scenarios' />} />
+    </Routes>
   )
 }
 
-function ScenarioShell({ children }: { children: ReactNode }) {
+// Keep the shell, wallet and bell stream mounted across public scenario and
+// protected routes. Only a change of account should reset their session state.
+function SessionShell() {
   const { isLoading, account } = useAuth()
   if (isLoading) return <Loading />
   return account
     ? (
       <RewardsProvider key={account.id}>
-        <AppShell>{children}</AppShell>
+        <AppShell>
+          <Outlet />
+        </AppShell>
       </RewardsProvider>
     )
-    : <AppShell key='guest'>{children}</AppShell>
+    : (
+      <AppShell key='guest'>
+        <Outlet />
+      </AppShell>
+    )
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
@@ -144,22 +149,14 @@ export function AppRoutes() {
     <>
       <Routes>
         <Route path='/' element={<LandingPage />} />
-        <Route
-          path='/scenarios'
-          element={
-            <ScenarioShell>
-              <CatalogPage />
-            </ScenarioShell>
-          }
-        />
-        <Route
-          path='/scenarios/:scenarioId'
-          element={
-            <ScenarioShell>
-              <ScenarioDetailPage />
-            </ScenarioShell>
-          }
-        />
+        <Route element={<SessionShell />}>
+          <Route path='/scenarios' element={<CatalogPage />} />
+          <Route
+            path='/scenarios/:scenarioId'
+            element={<ScenarioDetailPage />}
+          />
+          <Route path='/*' element={<ProtectedRoutes />} />
+        </Route>
         <Route
           path='/login'
           element={
@@ -176,7 +173,6 @@ export function AppRoutes() {
             </GuestOnly>
           }
         />
-        <Route path='/*' element={<ProtectedShell />} />
       </Routes>
       {/* 测试模式（?tm=1）：挂在 Routes 旁边，所有路由都能用；关着时零成本。 */}
       <TestModeRoot />
