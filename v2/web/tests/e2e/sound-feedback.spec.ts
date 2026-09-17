@@ -637,6 +637,9 @@ test('策略输入、删除、输入法提交与关键按钮反馈受静音控�
     await page.mouse.move(0, 0)
     await page.waitForTimeout(260)
     await page.getByTestId('save-version').hover()
+    // Keep the pointer away during keyboard activation: disabling/re-enabling
+    // the button after failure can otherwise cause another genuine hover.
+    await page.mouse.move(0, 0)
     await pressSave(page)
     await expect(page.locator('[data-tm="E.error"]')).toContainText(
       '保存测试失败',

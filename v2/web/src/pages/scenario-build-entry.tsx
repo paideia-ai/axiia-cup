@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { builder } from '../api/client'
+import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { messageOf } from '../lib/use-async'
 
@@ -59,12 +60,11 @@ export function ScenarioBuildEntry() {
           </>
         )
         : <p role='status'>正在准备你的智能体…</p>}
-      <Link
+      <BackLink
         to={`/scenarios/${encodeURIComponent(scenarioId)}`}
         className='text-(--accent)'
-      >
-        返回场景介绍
-      </Link>
+        label='场景介绍'
+      />
     </section>
   )
 }

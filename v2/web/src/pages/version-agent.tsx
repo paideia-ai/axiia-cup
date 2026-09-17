@@ -1,6 +1,7 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 
 import { versions } from '../api/client'
+import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { useAsync } from '../lib/use-async'
 
@@ -26,9 +27,11 @@ export function VersionAgentPage() {
         <p role='alert'>暂时无法打开该版本所属的智能体。</p>
         <div className='flex items-center gap-4'>
           {valid && <Button onClick={reload}>重试</Button>}
-          <Link to='/tournaments' className='text-sm underline'>
-            返回锦标赛
-          </Link>
+          <BackLink
+            to='/tournaments'
+            className='text-sm underline'
+            label='锦标赛'
+          />
         </div>
       </div>
     )
