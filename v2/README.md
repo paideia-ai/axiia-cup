@@ -79,7 +79,7 @@ destination tab resolves the agent and replaces the entry with the agent home
 or builder, with a retry on failure. Continuing an accepted first battle uses
 `?express=1` to preserve its guidance in new tabs, without dispatching again.
 
-`deno task test:e2e:navigation` starts a local dev server and verifies navigation
+`deno task test:e2e:navigation` builds and serves the SPA locally, then verifies navigation
 using intercepted API fixtures, including new tabs and entry error/retry behavior.
 It needs Chromium but no backend or live account, and also runs in CI.
 

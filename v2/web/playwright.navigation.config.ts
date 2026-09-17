@@ -1,13 +1,15 @@
 import { defineConfig } from '@playwright/test'
 import config from './playwright.config'
 
-// Real browser navigation, isolated API fixtures; never contacts a live backend.
+// Test the shipped bundle: no dev dependency optimizer/HMR reloads while tabs
+// open and close. API fixtures never contact a live backend.
 export default defineConfig({
   ...config,
   testMatch: ['navigation-links.spec.ts'],
   use: { ...config.use, baseURL: 'http://127.0.0.1:5190' },
   webServer: {
-    command: 'deno task dev --host 127.0.0.1 --port 5190',
+    command:
+      'deno task build && deno run -A npm:vite preview --host 127.0.0.1 --port 5190',
     url: 'http://127.0.0.1:5190',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

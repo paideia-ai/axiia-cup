@@ -369,11 +369,15 @@ async function checkNewTab(
   ctrl: boolean,
 ) {
   const original = page.url()
+  // A background-tab close does not consistently restore focus in headless
+  // Chromium. Model the user returning to the source before the next gesture.
+  await page.bringToFront()
   const popupPromise = page.context().waitForEvent('page')
   await link.click(
     ctrl ? { modifiers: ['ControlOrMeta'] } : { button: 'middle' },
   )
   const popup = await popupPromise
+  await popup.bringToFront()
   await expect(popup).toHaveURL(destination)
   await expect(popup.getByRole('heading').first()).toBeVisible()
   if (
@@ -386,6 +390,7 @@ async function checkNewTab(
   await expect(page).toHaveURL(original)
   await expect(link).toBeVisible()
   await popup.close()
+  await page.bringToFront()
 }
 
 for (const entry of cases) {
@@ -400,6 +405,8 @@ for (const entry of cases) {
     await expect(link.locator('button, a, input')).toHaveCount(0)
     await link.hover()
     await link.click({ button: 'right' })
+    // Dismiss the native menu before testing a separate middle-click gesture.
+    await page.keyboard.press('Escape')
     expect(ensures).toHaveLength(0)
 
     await checkNewTab(page, link, entry.destination, false)
@@ -442,6 +449,7 @@ test('Shift-click opens a separate page; Meta-click is not intercepted', async (
     return prevented
   })
   expect(intercepted).toBe(false)
+  await page.bringToFront()
   const popupPromise = page.context().waitForEvent('page')
   await link.click({ modifiers: ['Shift'] })
   const popup = await popupPromise
