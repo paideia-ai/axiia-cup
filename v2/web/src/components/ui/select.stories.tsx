@@ -69,10 +69,10 @@ export const StableScrolling: Story = {
     // Keyboard navigation must still reach an offscreen option and restore focus.
     await userEvent.keyboard('{End}{Enter}')
     await expect(trigger).toHaveTextContent('模型 24')
-    await expect(trigger).toHaveFocus()
+    await waitFor(() => expect(trigger).toHaveFocus())
     await userEvent.click(trigger)
     await userEvent.keyboard('{Escape}')
-    await expect(trigger).toHaveFocus()
+    await waitFor(() => expect(trigger).toHaveFocus())
   },
 }
 
@@ -94,6 +94,6 @@ export const ShortList: Story = {
     await expect(list.scrollHeight).toBe(list.clientHeight)
     await userEvent.click(body.getByRole('option', { name: '模型 3' }))
     await expect(trigger).toHaveTextContent('模型 3')
-    await expect(trigger).toHaveFocus()
+    await waitFor(() => expect(trigger).toHaveFocus())
   },
 }
