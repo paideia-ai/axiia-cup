@@ -261,13 +261,13 @@ test.describe('U07 · 战报（§A7）', () => {
     const { summary } = await assertPveFixture(page, pveMatchID)
     const mine = summary.participants!.a
     await test.step(
-      '那么 我方参战卡显示版本 id 并可复制（可用于按 id 约战）',
+      '那么 我方参战卡显示版本 id 并可复制（可用于指定版本约战）',
       async () => {
         await expect(page.getByText(`v#${mine.versionID}`).first())
           .toBeVisible()
         await expect(page.getByRole('button', { name: '复制 id' }).first())
           .toBeVisible()
-        await expect(page.getByText('可用于按 id 约战').first()).toBeVisible()
+        await expect(page.getByText('可用于指定版本约战').first()).toBeVisible()
       },
     )
     await test.step(

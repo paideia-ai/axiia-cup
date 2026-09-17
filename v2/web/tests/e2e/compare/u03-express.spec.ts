@@ -72,18 +72,18 @@ test('U03：新号一路走到「保存并开始首战」按钮前（不消耗�
     await expect(page.getByTestId('version-card')).toHaveCount(0)
   })
 
-  await test.step('那么 「选择预设策略」与「让你的AI帮你想策略」都立即可见，页面没有初始化 tab 或默认展开的 MCQ 大卡（U03-C04，2026-09-09 修订）', async () => {
+  await test.step('那么 「选择预设策略」与「让 AI 帮你想策略」都立即可见，页面没有初始化 tab 或默认展开的 MCQ 大卡（U03-C04，2026-09-09 修订）', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(page.getByRole('tab')).toHaveCount(0)
     await expect(page.getByText('初始化方式 · 三选一生成首稿')).toHaveCount(0)
   })
 
   await test.step('当 我依次打开外部 AI 与预设策略对话框；那么 两个辅助流程都能正常展示，主输入框保持独立', async () => {
-    await page.getByRole('button', { name: '让你的AI帮你想策略' }).click()
-    const meta = page.getByRole('dialog', { name: '让你的AI帮你想策略' })
+    await page.getByRole('button', { name: '让 AI 帮你想策略' }).click()
+    const meta = page.getByRole('dialog', { name: '让 AI 帮你想策略' })
     await expect(meta.getByRole('button', { name: '复制元提示词' }))
       .toBeVisible()
     await meta.getByRole('button', { name: '关闭弹窗' }).click()
@@ -123,7 +123,7 @@ test('U03：新号一路走到「保存并开始首战」按钮前（不消耗�
     await expect(page.getByLabel('策略提示词')).not.toHaveValue('')
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(page.getByTestId('save-version')).toHaveText('保存并开始首战')
     // 到此为止不点保存——真实派发由人工旅程消耗（预算 1 场）。

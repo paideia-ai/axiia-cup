@@ -477,7 +477,7 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '约战子模式切换',
     clauses: ['U05-C05', 'U05-C12'],
     anchors: ['spec-change-25'],
-    note: '① 对手玩家 · ② 按 id 约战',
+    note: '① 对手玩家 · ② 指定版本约战',
   },
   'OS.pvp-mode-button': {
     label: '子模式按钮',

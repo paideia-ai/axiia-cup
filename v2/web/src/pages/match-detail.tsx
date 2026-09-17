@@ -1256,12 +1256,12 @@ function FirstBattleJourney({
           </p>
           <div className='grid gap-2 sm:grid-cols-3'>
             {([
-              ['mcq', 'MCQ', '回答选择题，确认后填入策略工作区'],
+              ['mcq', '选择预设策略', '回答选择题，确认后填入策略工作区'],
               ['raw', '直接编写', '在主文本区直接书写或继续修改策略'],
               [
                 'meta',
-                '元提示词',
-                '复制元提示词给常用 AI，再把结果粘贴回来',
+                '让 AI 帮你想策略',
+                '复制策略构建提示词给常用 AI，再把结果粘贴回来',
               ],
             ] as const).map(([tool, name, blurb]) => (
               <div
@@ -1311,7 +1311,7 @@ function FirstBattleJourney({
 }
 
 // 参战方卡（P3 G20）：展示名 + 模型（#21 永远公开）+ 版本 id 与复制按钮
-// （#25，按 id 约战的发现路径）。我方＝醒目「← 我的智能体」按钮（#71）；
+// （#25，指定版本约战的发现路径）。我方＝醒目「← 我的智能体」按钮（#71）；
 // 对手侧＝低调一行「对手：{名} · v#{id}」——公开 EA（G6）在 P6 后端才有，
 // 本阶段不给链接，id 可复制即可闭环。契约只有 ownerDisplayName，没有对手
 // 的 agent 名。
@@ -1415,7 +1415,7 @@ function ParticipantCard({
                 {...tm('FA.version-id-hint')}
                 className='text-(--foreground-muted)'
               >
-                可用于按 id 约战
+                可用于指定版本约战
               </span>
             </>
           )

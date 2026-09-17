@@ -141,7 +141,7 @@ export const TM_FA: TmRegistry = {
     label: '版本 id',
     clauses: ['U07-C03', 'U05-C12'],
     journeys: ['j6s4'],
-    note: '「v#252」——按 id 约战的发现路径（#25）',
+    note: '「v#252」——指定版本约战的发现路径（#25）',
   },
   'FA.copy-id-button': {
     label: '复制 id 按钮',

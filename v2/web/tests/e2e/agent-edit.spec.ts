@@ -215,7 +215,7 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
   await test.step('那么 预设策略与外部 AI 辅助仍然可见', async () => {
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
   })
 
@@ -452,7 +452,7 @@ test('保存等待最终暂存时锁定快照；暂存失败不创建版本', as
     await expect(page.getByLabel('策略提示词')).toBeDisabled()
     await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeDisabled()
-    await expect(page.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeDisabled()
     await expect(page.getByRole('button', { name: '复制当前草稿' }))
       .toBeDisabled()

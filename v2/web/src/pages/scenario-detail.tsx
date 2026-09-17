@@ -1138,7 +1138,7 @@ function JudgePromptDisclosure({
               )
               : null}
             <p className='text-[11px] leading-5 text-(--foreground-muted)'>
-              依 #51，裁判内心独白（judge OS）的生成提示词不公开，不含在下文中。
+              以下不包含用于生成裁判内心独白的提示词。
             </p>
             <pre className='whitespace-pre-wrap border-l-2 border-(--border-soft) pl-3 font-sans text-xs leading-6 text-(--foreground-subtle)'>
               {prompt}

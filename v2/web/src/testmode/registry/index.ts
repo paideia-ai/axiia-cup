@@ -52,7 +52,7 @@ export const STEP_HINTS: StepHints = {
   j10s1: { route: '/notifications', marker: 'NAV.bell' },
   // j5s1「在智能体页点出战」——面板打开前聚光 EA 版本卡的出战按钮（OS.tabs 此时还不在 DOM）
   j5s1: { route: '/agents/:id', marker: 'EA.field-button' },
-  // j6s4「在战报里复制对手版本号」——动作起点在战报；后半段「按 id 约战」在 OS 面板，见 OS.byid-input
+  // j6s4「在战报里复制对手版本号」——动作起点在战报；后半段「指定版本约战」在 OS 面板，见 OS.byid-input
   j6s4: { route: '/matches/:id', marker: 'FA.copy-id-button' },
 }
 

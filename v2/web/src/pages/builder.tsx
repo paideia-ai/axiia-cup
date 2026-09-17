@@ -399,7 +399,7 @@ export function BuilderPage() {
     } catch {
       setStartAttempt(null)
       setAttemptError(
-        '无法读取首战派发记录，请先到「我的对局」核对；不会自动重试。',
+        '无法读取首战派发记录，请到「历史」核对对局记录；不会自动重试。',
       )
     }
   }, [express, journalScope.identity])
@@ -926,7 +926,7 @@ export function BuilderPage() {
           writeFirstBattleAttempt(identity, null)
         } catch {
           if (belongsToBuilder()) {
-            setAttemptError('无法更新首战派发记录，请先到「我的对局」核对。')
+            setAttemptError('无法更新首战派发记录，请到「历史」核对对局记录。')
           }
         }
       }
@@ -937,7 +937,7 @@ export function BuilderPage() {
           ? `${
             rejectCopy(cause, cfg, '首战派发被拒绝')
           }；版本已保存，可再次点击「开始首战」。`
-          : '首战请求结果尚未确认，请到「我的对局」核对；不要重复派发。',
+          : '首战请求结果尚未确认，请到「历史」核对对局记录；不要重复派发。',
       )
     } finally {
       if (belongsToBuilder()) {
@@ -1472,7 +1472,7 @@ export function BuilderPage() {
             {startAttempt?.status === 'pending' || attemptError
               ? (
                 <Link className='block text-sm underline' to='/matches'>
-                  查看我的对局
+                  查看历史
                 </Link>
               )
               : null}

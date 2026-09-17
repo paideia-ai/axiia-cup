@@ -101,7 +101,7 @@ export const BlankWorkspaceWithSecondaryHelpers: Story = {
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
     await expect(canvas.getByRole('button', { name: '保存并返回主页' }))
@@ -123,7 +123,7 @@ export const HelpersRemainAfterVersions: Story = {
     await expect(input).toHaveValue(v2.prompt)
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '让你的AI帮你想策略' }))
+    await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(canvas.queryByText('版本（2）')).toBeNull()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
@@ -152,11 +152,11 @@ export const ExternalAiHelperLivesInDialog: Story = {
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
     const helper = await canvas.findByRole('button', {
-      name: '让你的AI帮你想策略',
+      name: '让 AI 帮你想策略',
     })
     await userEvent.click(helper)
     const dialog = canvas.getByRole('dialog', {
-      name: '让你的AI帮你想策略',
+      name: '让 AI 帮你想策略',
     })
     await expect(dialog).toBeVisible()
     await expect(
@@ -357,9 +357,9 @@ export const ExternalAiHelperFollowsSelectedRole: Story = {
         await within(document.body).findByRole('option', { name }),
       )
       await userEvent.click(
-        canvas.getByRole('button', { name: '让你的AI帮你想策略' }),
+        canvas.getByRole('button', { name: '让 AI 帮你想策略' }),
       )
-      const dialog = canvas.getByRole('dialog', { name: '让你的AI帮你想策略' })
+      const dialog = canvas.getByRole('dialog', { name: '让 AI 帮你想策略' })
       const prompt = within(dialog).getByLabelText('策略构建提示词内容')
       expect(prompt).toHaveTextContent(heading)
       expect(prompt).toHaveTextContent(`「${name}」一方`)

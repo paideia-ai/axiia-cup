@@ -69,17 +69,17 @@ export function InitModes({
                 : {})}
             >
               {value === 'mcq'
-                ? 'MCQ'
+                ? '选择预设策略'
                 : value === 'raw'
                 ? '直接编写'
-                : '元提示词'}
+                : '让 AI 帮你想策略'}
             </Button>
           ))}
         </div>
         {tool === 'mcq'
           ? (
             <section
-              aria-label='MCQ'
+              aria-label='选择预设策略'
               className='rounded-lg border border-(--border-soft) p-4'
             >
               {deck
@@ -95,12 +95,17 @@ export function InitModes({
                     }}
                   />
                 )
-                : <p>这个角色暂时没有 MCQ 预设，请选择直接编写或元提示词。</p>}
+                : (
+                  <p>
+                    这个角色暂时没有预设策略。你可以直接编写，或让 AI
+                    帮你想策略。
+                  </p>
+                )}
             </section>
           )
           : tool === 'meta'
           ? (
-            <section aria-label='元提示词'>
+            <section aria-label='让 AI 帮你想策略'>
               <MetaDraft metaPrompt={metaPrompt} />
             </section>
           )
@@ -135,7 +140,7 @@ export function InitModes({
           onClick={() => setOpen('meta')}
           {...tm('E.init-tab-meta')}
         >
-          让你的AI帮你想策略
+          让 AI 帮你想策略
         </Button>
       </div>
 
@@ -165,7 +170,7 @@ export function InitModes({
                     variant='secondary'
                     onClick={() => setOpen('meta')}
                   >
-                    让你的AI帮你想策略
+                    让 AI 帮你想策略
                   </Button>
                 </div>
               )}
@@ -176,7 +181,7 @@ export function InitModes({
       {open === 'meta'
         ? (
           <ToolDialog
-            title='让你的AI帮你想策略'
+            title='让 AI 帮你想策略'
             onClose={() => setOpen(null)}
           >
             <MetaDraft metaPrompt={metaPrompt} />

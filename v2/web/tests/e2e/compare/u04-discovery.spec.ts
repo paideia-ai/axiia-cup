@@ -362,8 +362,8 @@ test('U04-C10：内容基线八项齐备，裁判 prompt 原文可查（同源�
     expect(combined).toContain('你正在参与一个策略对话游戏，在游戏中扮演秦孝公')
     expect(combined).toContain('你是秦笑公嬴渠良')
   })
-  await test.step('并且 原文块注明依 #51 裁判内心独白（judge OS）的生成提示词不公开', () => {
-    expect(combined).toContain('裁判内心独白（judge OS）的生成提示词不公开')
+  await test.step('并且 原文块注明以下不包含用于生成裁判内心独白的提示词。', () => {
+    expect(combined).toContain('以下不包含用于生成裁判内心独白的提示词。')
   })
 })
 

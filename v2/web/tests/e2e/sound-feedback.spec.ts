@@ -441,7 +441,7 @@ test('失败操作保留点击反馈，只有成功结果播放确认音', async
     await expect(page).toHaveURL(/\/build\?express=1$/)
     await expect(
       page.getByText(
-        '首战请求结果尚未确认，请到「我的对局」核对；不要重复派发。',
+        '首战请求结果尚未确认，请到「历史」核对对局记录；不要重复派发。',
       ),
     )
       .toBeVisible()

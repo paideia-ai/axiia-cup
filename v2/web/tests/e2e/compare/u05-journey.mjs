@@ -504,7 +504,7 @@ try {
         }（P1 要求策略展示名 + id 可复制小字）`,
       )
       const modes = await dialog().getByRole('button', {
-        name: /^(对手玩家|按 id 约战)$/,
+        name: /^(对手玩家|指定版本约战)$/,
       }).allTextContents()
       note(`子模式：${JSON.stringify(modes)}`)
       await dialog().getByText(/一次约战＝成对两场/).waitFor()
@@ -531,9 +531,9 @@ try {
 
   await step(
     'U05-C12',
-    '#25 按 id 约战：占位/校验/解析卡（真实查询；不点约战）',
+    '#25 指定版本约战：占位/校验/解析卡（真实查询；不点约战）',
     async () => {
-      await dialog().getByRole('button', { name: '按 id 约战' }).click()
+      await dialog().getByRole('button', { name: '指定版本约战' }).click()
       const input = dialog().getByPlaceholder(/输入对方任一版本 id/)
       await input.waitFor()
       note('占位符「输入对方任一版本 id（战报页可复制）」✓（#25 发现路径）')
@@ -568,7 +568,8 @@ try {
       await dialog().getByText(bDisplayName).first().waitFor()
       const card = await dialog().getByText(/执[AB]（/).textContent()
       note(`解析卡身份行：「${card.trim()}」（玩家/场景/侧/模型/v#id）`)
-      const pin = await dialog().getByText(/按 id 钉住其/).textContent()
+      const pin = await dialog().getByText(/本次将挑战对方的这个版本。/)
+        .textContent()
       note(`钉住语义：「${pin.trim()}」（另一侧取对方★参赛版否则最新版）`)
       const btn = await dialog().getByRole('button', { name: '发起双侧约战' })
         .count()
