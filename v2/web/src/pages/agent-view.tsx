@@ -35,6 +35,7 @@ import { Modal } from '../components/modal'
 import { NewAgentButton } from '../components/new-agent-button'
 import { NewAgentDialog } from '../components/new-agent-dialog'
 import { OsPanel } from '../components/os-panel'
+import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -349,13 +350,12 @@ export function AgentViewPage() {
     return (
       <div className='space-y-6' {...tm('EA.public-view')}>
         <div>
-          <Link
+          <BackLink
             to='/scenarios'
             className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
             {...tm('EA.public-back-link')}
-          >
-            ← 场景
-          </Link>
+            label='场景'
+          />
         </div>
         <div>
           <h1
@@ -432,13 +432,12 @@ export function AgentViewPage() {
 
   return (
     <div className='space-y-6'>
-      <Link
+      <BackLink
         to='/my-agents'
         className='block text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
         {...tm('EA.back-link')}
-      >
-        ← 我的智能体
-      </Link>
+        label='我的智能体'
+      />
 
       {error
         ? <p className='text-sm text-(--accent)' {...tm('EA.error')}>{error}</p>

@@ -8,6 +8,7 @@
     "tests",
     "playwright.config.ts",
     "playwright.rewards.config.ts",
+    "playwright.navigation.config.ts",
     "vitest.config.ts",
     "vitest.storybook.config.ts"
   ],

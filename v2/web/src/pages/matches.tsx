@@ -1,6 +1,5 @@
 import { Check } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { catalog, matches } from '../api/client'
 import type { MatchSummary } from '../api/types'
@@ -63,8 +62,19 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 }
 
 export function MatchesPage() {
-  const [onlyMine, setOnlyMine] = useState(false)
-  const [scenarioID, setScenarioID] = useState('')
+  const [params, setParams] = useSearchParams()
+  const onlyMine = params.get('mine') === '1'
+  const scenarioID = params.get('scenario') ?? ''
+  const updateFilter = (key: string, value: string) => {
+    setParams((previous) => {
+      const next = new URLSearchParams(previous)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
+  const setOnlyMine = (value: boolean) => updateFilter('mine', value ? '1' : '')
+  const setScenarioID = (value: string) => updateFilter('scenario', value)
   const { data, error, loading } = useAsync(
     async () => {
       const [list, scenarios] = await Promise.all([
@@ -103,6 +113,7 @@ export function MatchesPage() {
   const matchCard = (summary: MatchSummary) => (
     <Card
       key={summary.id}
+      data-scroll-anchor={`match-${summary.id}`}
       className='history-card'
     >
       <Link
