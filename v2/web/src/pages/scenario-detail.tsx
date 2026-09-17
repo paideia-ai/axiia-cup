@@ -544,8 +544,6 @@ function SideCard({
   const name = copy?.name ?? fallbackName
   const homeAgent = agents?.find((agent) => agent.entryVersionID != null) ??
     agents?.[0]
-  const alignPrimaryGoal = hiddenGoals?.groups.every((group) => !group.role) ??
-    false
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>
@@ -566,11 +564,7 @@ function SideCard({
             : null}
         </div>
 
-        <div
-          className={alignPrimaryGoal && side === 'b'
-            ? 'space-y-4 md:pb-14 lg:pb-7'
-            : 'space-y-4'}
-        >
+        <div className='space-y-4'>
           {copy?.paragraphs.map((paragraph) => (
             <p
               key={paragraph}
