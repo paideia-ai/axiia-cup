@@ -272,7 +272,7 @@ test('新版本、重命名、删除和版本对比集中在主页', async ({ pa
   })
 
   await test.step('当 所有者点“新建版本”', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
   })
 
   await test.step('那么 进入低信息构建器，构建器没有版本卡', async () => {

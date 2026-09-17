@@ -199,7 +199,7 @@ export const ShangyangFourCards: Story = {
     await expect(canvas.queryByText('谁来判')).toBeNull()
     await expect(canvas.queryByText('怎么算分')).toBeNull()
     await expect(canvas.getByText('−1')).toBeVisible()
-    await expect(await canvas.findByRole('button', { name: '去构建商鞅' }))
+    await expect(await canvas.findByRole('link', { name: '去构建商鞅' }))
       .toBeVisible()
     await expect(canvas.queryByText(/深读/)).toBeNull()
     await expect(canvas.queryByTestId('opening-line')).toBeNull()
@@ -361,7 +361,7 @@ export const FengyitingFourCards: Story = {
     await expect(
       canvas.queryByRole('button', { name: '隐藏目标列表' }),
     ).toBeNull()
-    await expect(await canvas.findByRole('button', { name: '去构建董卓' }))
+    await expect(await canvas.findByRole('link', { name: '去构建董卓' }))
       .toBeVisible()
   },
 }
@@ -400,7 +400,7 @@ export const HarborFourCards: Story = {
     await expect(
       canvas.queryByRole('button', { name: '隐藏目标列表' }),
     ).toBeNull()
-    await expect(await canvas.findByRole('button', { name: '去构建苏' }))
+    await expect(await canvas.findByRole('link', { name: '去构建苏' }))
       .toBeVisible()
   },
 }

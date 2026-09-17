@@ -383,11 +383,6 @@ export const TM_FA: TmRegistry = {
       '首战完局置底：三格方向性 CTA + 单一工作区/常驻辅助说明；回放中不渲染',
     when: '从 express 首战导航过来且完局、非回放',
   },
-  'FA.journey-error': {
-    label: '旅程卡错误',
-    clauses: ['LACK-10'],
-    when: '「去创建对侧」失败时',
-  },
   'FA.journey-next-round': {
     label: '通往下一轮格',
     clauses: ['U03-C08'],

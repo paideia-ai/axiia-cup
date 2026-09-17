@@ -79,7 +79,7 @@ export const HighFunctionAgentHome: Story = {
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '智能体更多操作' }))
       .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '新建版本' })).toBeVisible()
+    await expect(canvas.getByRole('link', { name: '新建版本' })).toBeVisible()
     await expect(canvas.getByRole('button', { name: '新建商鞅智能体' }))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '复制 v1 提示词' }))

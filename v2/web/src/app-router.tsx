@@ -18,6 +18,7 @@ import { RewardsPage } from './pages/rewards'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
+import { AgentEntryPage } from './pages/agent-entry'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
 import { ExpressPage } from './pages/express'
@@ -68,6 +69,7 @@ function ProtectedRoutes() {
         element={<ScenarioBuildEntry />}
       />
       <Route path='/my-agents' element={<MyAgentsPage />} />
+      <Route path='/agents/entry' element={<AgentEntryPage />} />
       {/* EA/E 拆分（B3/#70/#75）：/agents/:id 是智能体主页，/build 才是构建器 */}
       <Route path='/agents/:agentId' element={<AgentViewPage />} />
       <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
