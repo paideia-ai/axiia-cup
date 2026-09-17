@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, within } from 'storybook/test'
+import { expect, userEvent, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -30,6 +30,13 @@ const meta = {
   component: Surface,
   parameters: {
     msw: [
+      http.get('/v1/agents/101/diff', ({ request }) => {
+        const query = new URL(request.url).searchParams
+        return HttpResponse.json({
+          base: versions.find((v) => v.id === Number(query.get('base'))),
+          head: versions.find((v) => v.id === Number(query.get('head'))),
+        })
+      }),
       http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
       http.get('/v1/my/agents', () => HttpResponse.json(inventory)),
       http.get('/v1/agents/101/draft', () =>
@@ -116,5 +123,62 @@ export const CompactVersionControls: Story = {
     await expect(
       canvas.getByRole('button', { name: '将 v2 设为商鞅参赛版本' }),
     ).toHaveAttribute('aria-pressed', 'true')
+  },
+}
+
+export const VersionComparison: Story = {
+  args: { page: 'agent' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await userEvent.click(
+      await canvas.findByRole('button', { name: '版本对比' }),
+    )
+    const oldText = await canvas.findByLabelText('v1 策略正文')
+    const newText = canvas.getByLabelText('v2 策略正文')
+    await expect(oldText.textContent).toBe(versions[0].prompt)
+    await expect(newText.textContent).toBe(versions[1].prompt)
+    await expect(oldText.querySelector('del')).not.toBeNull()
+    await expect(oldText.querySelector('ins')).toBeNull()
+    await expect(newText.querySelector('ins')).not.toBeNull()
+    await expect(newText.querySelector('del')).toBeNull()
+    await expect(canvas.getByRole('combobox', { name: '选择基准版本' }))
+      .toHaveTextContent(/^v1$/)
+    await expect(canvas.getByRole('combobox', { name: '选择对比版本' }))
+      .toHaveTextContent(/^v2$/)
+    const prompt = canvasElement.querySelector('[data-version-prompt]')!
+    await expect(getComputedStyle(prompt).color).toBe('rgb(222, 222, 222)')
+  },
+}
+
+export const IdenticalVersionPrompts: Story = {
+  args: { page: 'agent' },
+  parameters: {
+    msw: [
+      http.get('/v1/agents/101/draft', () =>
+        HttpResponse.json({
+          fields: {},
+          scenarioID: scenario.summary.id,
+          side: 'a',
+        })),
+      http.get('/v1/scenarios/:id', () => HttpResponse.json(scenario)),
+      http.get('/v1/my/agents', () => HttpResponse.json(inventory)),
+      http.get(
+        '/v1/agents/101/versions',
+        () => HttpResponse.json({ versions }),
+      ),
+      http.get('/v1/agents/101/diff', () =>
+        HttpResponse.json({
+          base: versions[0],
+          head: { ...versions[1], prompt: versions[0].prompt },
+        })),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await userEvent.click(
+      await canvas.findByRole('button', { name: '版本对比' }),
+    )
+    await expect(await canvas.findByText('两版策略正文相同。')).toBeVisible()
+    await expect(canvasElement.querySelectorAll('del, ins').length).toBe(0)
   },
 }

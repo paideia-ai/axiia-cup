@@ -11,6 +11,9 @@ import type {
 import { RewardsProvider } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
 import { config, scenario } from '../testing/v34-fixtures'
+import { deckFor } from '../scenarios/decks'
+import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
+import { assembleDeck } from '../lib/deck'
 import { BuilderPage } from './builder'
 
 function Surface() {
@@ -369,5 +372,101 @@ export const ExternalAiHelperFollowsSelectedRole: Story = {
       )
       expect(input).toHaveValue(v1.prompt)
     }
+  },
+}
+
+const honnojiScenario = {
+  ...scenario,
+  summary: {
+    ...scenario.summary,
+    id: 'honnoji-decision',
+    title: '本能寺之变',
+    sideAName: '主战方',
+    sideBName: '止战方',
+  },
+}
+let savedRoleOptions: string | null = null
+export const RolePickerCommitsOnlyWhenFilled: Story = {
+  beforeEach: () => {
+    savedRoleOptions = null
+    purgeBuilderDraftJournals(101)
+  },
+  parameters: {
+    msw: [
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/models',
+        () => HttpResponse.json({ models: config.models }),
+      ),
+      http.get('/v1/my/agents', () => HttpResponse.json({ scenarios: [] })),
+      http.get('/v1/scenarios/:id', () => HttpResponse.json(honnojiScenario)),
+      http.get('/v1/agents/101/draft', () =>
+        HttpResponse.json({
+          fields: { prompt: '保留原有策略' },
+          scenarioID: 'honnoji-decision',
+          side: 'a',
+        })),
+      http.get(
+        '/v1/agents/101/versions',
+        () => HttpResponse.json({ versions: [] }),
+      ),
+      http.get('/v1/agents/101/stream', () =>
+        new HttpResponse('', {
+          headers: { 'Content-Type': 'text/event-stream' },
+        })),
+      http.post('/v1/agents/101/mutate', () => HttpResponse.json({ ok: true })),
+      http.post('/v1/agents/101/save', async ({ request }) => {
+        const body = await request.json() as {
+          options: string
+          prompt: string
+          modelID: string
+        }
+        savedRoleOptions = body.options
+        return HttpResponse.json({ ...v1, ...body })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(input).toBeEnabled())
+    const role = canvas.getByRole('combobox', { name: '选择角色' })
+    await expect(role).toHaveTextContent('长宗我部元亲的密使')
+    await userEvent.click(canvas.getByRole('button', { name: '选择预设策略' }))
+    let dialog = within(canvas.getByRole('dialog', { name: '选择预设策略' }))
+    await userEvent.click(
+      dialog.getByRole('button', { name: '足利义昭的使者' }),
+    )
+    await userEvent.click(dialog.getByRole('button', { name: '关闭弹窗' }))
+    await expect(role).toHaveTextContent('长宗我部元亲的密使')
+    await expect(input).toHaveValue('保留原有策略')
+    await userEvent.click(canvas.getByRole('button', { name: '选择预设策略' }))
+    dialog = within(canvas.getByRole('dialog', { name: '选择预设策略' }))
+    await expect(dialog.getByRole('button', { name: '长宗我部元亲的密使' }))
+      .toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(
+      dialog.getByRole('button', { name: '足利义昭的使者' }),
+    )
+    const deck = deckFor('honnoji-decision', 'a', 'yoshiaki')!
+    const selections: Record<string, string> = {}
+    for (const question of deck.questions) {
+      selections[question.id] = question.options[0].id
+      await userEvent.click(
+        dialog.getByRole('button', {
+          name: question.options[0].label,
+        }),
+      )
+    }
+    await userEvent.click(dialog.getByRole('button', { name: '填入工作区' }))
+    await expect(input).toHaveValue('保留原有策略')
+    await expect(role).toHaveTextContent('长宗我部元亲的密使')
+    await userEvent.click(dialog.getByRole('button', { name: '替换当前草稿' }))
+    await expect(input).toHaveValue(assembleDeck(deck, selections))
+    await expect(role).toHaveTextContent('足利义昭的使者')
+    await userEvent.click(
+      canvas.getByRole('button', { name: '保存并返回主页' }),
+    )
+    await expect(await canvas.findByTestId('agent-home')).toBeVisible()
+    await expect(JSON.parse(savedRoleOptions!)).toEqual({ role: 'yoshiaki' })
   },
 }
