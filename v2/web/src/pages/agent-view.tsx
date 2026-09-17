@@ -1,6 +1,8 @@
 import { PageLoading } from '../components/page-loading'
 import { Menu } from '@base-ui-components/react/menu'
 import {
+  Archive,
+  ArchiveRestore,
   ArrowLeftRight,
   Check,
   ChevronDown,
@@ -75,7 +77,7 @@ export function AgentViewPage() {
   const data = currentView?.kind === 'owner'
     ? {
       ...currentView,
-      siblings,
+      siblings: siblings.filter((agent) => !agent.isArchived),
       self: siblings.find((agent) => agent.agentID === agentID) ?? null,
     }
     : null
@@ -147,6 +149,8 @@ export function AgentViewPage() {
     : null
   const railAgents = data == null
     ? []
+    : data.self?.isArchived
+    ? data.siblings
     : data.siblings.some((agent) => agent.agentID === agentID)
     ? data.siblings
     : fallbackSelf == null
@@ -154,6 +158,8 @@ export function AgentViewPage() {
     : [fallbackSelf, ...data.siblings]
   const entryVersion = sorted.find((version) => version.isEntry) ?? null
   const canDelete = data?.versions.length === 0
+  const isArchived = data?.self?.isArchived ?? false
+  const [archiveBusy, setArchiveBusy] = useState(false)
   const nameLength = [...nameDraft].length
   const nameTooLong = nameLength > AGENT_NAME_LIMIT
 
@@ -309,6 +315,37 @@ export function AgentViewPage() {
       if (!requestIsCurrent()) return
       setDeleteError(messageOf(cause, '删除智能体失败'))
       setDeleteBusy(false)
+    }
+  }
+
+  const changeArchive = async () => {
+    if (archiveBusy) return
+    setArchiveBusy(true)
+    setActionError(null)
+    const requestedID = agentID
+    try {
+      if (isArchived) await agentAPI.restore(requestedID)
+      else await agentAPI.archive(requestedID)
+      notifyAgentsChanged()
+      if (!mountedRef.current || currentAgentIDRef.current !== requestedID) {
+        return
+      }
+      if (!isArchived) {
+        navigate('/my-agents', {
+          replace: true,
+          state: {
+            archivedAgentName: displayName(sideName, agentID, currentName),
+          },
+        })
+      }
+    } catch (cause) {
+      if (mountedRef.current && currentAgentIDRef.current === requestedID) {
+        setActionError(
+          messageOf(cause, isArchived ? '恢复智能体失败' : '归档智能体失败'),
+        )
+      }
+    } finally {
+      if (mountedRef.current) setArchiveBusy(false)
     }
   }
 
@@ -552,29 +589,45 @@ export function AgentViewPage() {
                           className='my-1 border-t border-(--border-soft)'
                         />
                         <Menu.Item
-                          disabled={!canDelete}
-                          aria-describedby={!canDelete
-                            ? 'delete-unavailable'
-                            : undefined}
+                          disabled={archiveBusy}
                           onClick={() => {
-                            setDeleteError(null)
-                            setDeleteOpen(true)
+                            if (canDelete && !isArchived) {
+                              setDeleteError(null)
+                              setDeleteOpen(true)
+                            } else {
+                              void changeArchive()
+                            }
                           }}
                           className='flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm text-(--accent) outline-none data-[highlighted]:bg-white/6 data-[disabled]:cursor-not-allowed data-[disabled]:text-(--foreground-subtle)'
                         >
-                          <Trash2 aria-hidden='true' className='h-4 w-4' />
-                          删除智能体
+                          {isArchived
+                            ? (
+                              <ArchiveRestore
+                                aria-hidden='true'
+                                className='h-4 w-4'
+                              />
+                            )
+                            : canDelete
+                            ? (
+                              <Trash2
+                                aria-hidden='true'
+                                className='h-4 w-4'
+                              />
+                            )
+                            : (
+                              <Archive
+                                aria-hidden='true'
+                                className='h-4 w-4'
+                              />
+                            )}
+                          {archiveBusy
+                            ? '处理中…'
+                            : isArchived
+                            ? '恢复智能体'
+                            : canDelete
+                            ? '删除智能体'
+                            : '归档智能体'}
                         </Menu.Item>
-                        {!canDelete
-                          ? (
-                            <p
-                              id='delete-unavailable'
-                              className='px-3 pb-2 text-xs text-(--foreground-subtle)'
-                            >
-                              已有版本，无法删除
-                            </p>
-                          )
-                          : null}
                       </Menu.Popup>
                     </Menu.Positioner>
                   </Menu.Portal>
@@ -595,6 +648,19 @@ export function AgentViewPage() {
                 </span>
               </p>
             </header>
+
+            {isArchived && (
+              <p className='flex items-center gap-2 text-sm text-(--foreground-subtle)'>
+                <Archive aria-hidden='true' className='h-4 w-4' />
+                此智能体已归档。
+                <Link
+                  to='/settings/archived-agents'
+                  className='underline underline-offset-4'
+                >
+                  查看归档
+                </Link>
+              </p>
+            )}
 
             {actionError
               ? (

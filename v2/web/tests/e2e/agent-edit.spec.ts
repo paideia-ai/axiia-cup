@@ -872,11 +872,12 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
     ).toBeNull()
   })
 
-  await test.step('但是 已有版本的智能体在主页显示“已有版本，无法删除”', async () => {
+  await test.step('但是 已有版本的智能体在主页提供归档', async () => {
     await page.goto(`/agents/${agentA}`)
     await page.getByRole('button', { name: '智能体更多操作' }).click()
-    await expect(page.getByText('已有版本，无法删除')).toBeVisible()
+    await expect(page.getByRole('menuitem', { name: '归档智能体' }))
+      .toBeEnabled()
     await expect(page.getByRole('menuitem', { name: '删除智能体' }))
-      .toBeDisabled()
+      .toHaveCount(0)
   })
 })

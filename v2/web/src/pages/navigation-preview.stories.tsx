@@ -167,15 +167,20 @@ export const SlowNetwork: Story = {
   parameters: { msw: handlers(900) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByTestId(`scenario-${scenario.summary.id}`)
+    // Session restoration and the catalog each have a simulated 900ms delay.
+    await canvas.findByTestId(`scenario-${scenario.summary.id}`, {}, {
+      timeout: 5000,
+    })
     const header = canvasElement.querySelector('[data-tm="NAV.header"]')
     const navigation = within(
       canvasElement.querySelector('[data-tm="NAV.desktop-nav"]') as HTMLElement,
     )
     await userEvent.click(navigation.getByRole('link', { name: '历史' }))
-    await waitFor(() =>
-      expect(canvasElement.querySelector('[data-tm="L.match-card"]')).not
-        .toBeNull()
+    await waitFor(
+      () =>
+        expect(canvasElement.querySelector('[data-tm="L.match-card"]')).not
+          .toBeNull(),
+      { timeout: 5000 },
     )
     await userEvent.click(navigation.getByRole('link', { name: '场景' }))
     await expect(canvas.getByTestId(`scenario-${scenario.summary.id}`))

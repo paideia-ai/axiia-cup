@@ -17,6 +17,7 @@ export default defineConfig({
       'msw-storybook-addon/csf3',
       'react-dom',
       '@base-ui-components/react/dialog',
+      '@tanstack/react-query',
     ],
   },
   test: {

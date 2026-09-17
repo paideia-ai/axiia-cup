@@ -263,11 +263,12 @@ test('新版本、重命名、删除和版本对比集中在主页', async ({ pa
     await page.getByRole('button', { name: '智能体更多操作' }).click()
   })
 
-  await test.step('那么 可以重命名，但已有版本的智能体不可删除', async () => {
+  await test.step('那么 可以重命名和归档，但已有版本的智能体不可删除', async () => {
     await expect(page.getByRole('menuitem', { name: '重命名' })).toBeEnabled()
     await expect(page.getByRole('menuitem', { name: '删除智能体' }))
-      .toBeDisabled()
-    await expect(page.getByText('已有版本，无法删除')).toBeVisible()
+      .toHaveCount(0)
+    await expect(page.getByRole('menuitem', { name: '归档智能体' }))
+      .toBeEnabled()
     await page.keyboard.press('Escape')
   })
 

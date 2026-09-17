@@ -1,6 +1,7 @@
 import type {
   AgentRefResponse,
   AgentVersionDTO,
+  ArchivedAgentsResponse,
   BindPhoneRequest,
   ChallengeResponse,
   ChangePasswordRequest,
@@ -253,6 +254,7 @@ export const config = {
 }
 
 export const myAgents = {
+  archived: () => request<ArchivedAgentsResponse>('GET', '/my/archived-agents'),
   // Cross-scenario inventory of the caller's agents (#64/#58).
   list: () => request<MyAgentsResponse>('GET', '/my/agents'),
 }
@@ -260,6 +262,10 @@ export const myAgents = {
 // ── Agents（多槽位，#56/#84） ────────────────────────────────────────────────
 
 export const agents = {
+  archive: (agentID: number) =>
+    request<OKResponse>('PUT', `/agents/${agentID}/archive`),
+  restore: (agentID: number) =>
+    request<OKResponse>('DELETE', `/agents/${agentID}/archive`),
   // P2 改名：空名＝清除，展示名回落「侧名 #id」。老服务器无此端点 → 404/405。
   rename: (agentID: number, input: RenameAgentRequest) =>
     request<OKResponse>('PATCH', `/agents/${agentID}`, input),
