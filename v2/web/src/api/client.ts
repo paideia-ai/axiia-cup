@@ -54,6 +54,11 @@ import type {
 } from './types'
 import { retryAfterSeconds } from '../lib/cooldown'
 import { refreshRewards } from '../lib/reward-events'
+import {
+  invalidateNavigation,
+  navigationEpoch,
+  navigationReadEpoch,
+} from '../lib/navigation-cache'
 
 // Same-origin by design (plan §6): the SPA is served from the Swift origin (dev:
 // via the vite `/v1` proxy) so the HttpOnly cookie and CSRF Sec-Fetch-Site gate
@@ -97,12 +102,13 @@ function isErrorResponse(value: unknown): value is ErrorResponse {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
-async function request<T>(
+async function performRequest<T>(
   method: Method,
   path: string,
   body?: unknown,
   options?: Pick<RequestInit, 'keepalive' | 'credentials' | 'signal'>,
 ): Promise<T> {
+  const epoch = navigationEpoch()
   const headers = new Headers()
   const init: RequestInit = {
     method,
@@ -147,7 +153,34 @@ async function request<T>(
     )
   }
 
+  if (method !== 'GET' && epoch === navigationEpoch()) {
+    invalidateNavigation(path)
+  }
   return (payload ?? {}) as T
+}
+
+// Coalesce concurrent GETs, including StrictMode and auxiliary consumers. An
+// explicitly abortable request keeps its own lifetime. No response cache here.
+const pendingReads = new Map<string, Promise<unknown>>()
+function request<T>(
+  method: Method,
+  path: string,
+  body?: unknown,
+  options?: Pick<RequestInit, 'keepalive' | 'credentials' | 'signal'>,
+): Promise<T> {
+  if (method !== 'GET' || options?.signal) {
+    return performRequest<T>(method, path, body, options)
+  }
+  const key = `${navigationReadEpoch()}:${
+    options?.credentials ?? 'include'
+  }:${path}`
+  const existing = pendingReads.get(key)
+  if (existing) return existing as Promise<T>
+  const promise = performRequest<T>(method, path, body, options).finally(() => {
+    if (pendingReads.get(key) === promise) pendingReads.delete(key)
+  })
+  pendingReads.set(key, promise)
+  return promise
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────

@@ -8,6 +8,8 @@ async function installWorld(page: Page) {
     turnCount: 60,
     streams: [] as Route[],
     delay: 0,
+    listRequests: 0,
+    completedListRequests: 0,
     extraRows: 0,
     empty: false,
     authenticated: true,
@@ -39,7 +41,9 @@ async function installWorld(page: Page) {
     if (path === '/v1/scenarios') return json({ scenarios: [scenario.summary] })
     if (path === '/v1/my/agents') return json({ scenarios: [] })
     if (path === '/v1/matches') {
+      world.listRequests++
       await new Promise((resolve) => setTimeout(resolve, world.delay))
+      world.completedListRequests++
       return json({
         open: true,
         matches: world.empty
@@ -138,14 +142,48 @@ async function expectRestored(page: Page, y: number) {
   ).toBeLessThan(3)
 }
 
-test('browser back and page back restore the filtered list after slow loading', async ({ page }) => {
+test('browser back and page back restore cached content without another request', async ({ page }) => {
   const world = await installWorld(page)
   const y = await openFromList(page)
   world.delay = 1400
+  const requests = world.listRequests
   await page.goBack()
   await expectRestored(page, y)
   await card(page).getByRole('link', { name: /对战 #1040/ }).click()
   await page.getByRole('link', { name: '← 对战列表', exact: true }).click()
+  await expectRestored(page, y)
+  expect(world.listRequests).toBe(requests)
+})
+
+test('cold history waits for slow content before restoring the filtered list', async ({ page }) => {
+  const world = await installWorld(page)
+  const y = await openFromList(page)
+  // A document reload discards the in-memory query cache, but retains history.
+  await page.reload()
+  await expect(page.getByText(/^第 60 段/)).toBeAttached()
+  world.delay = 1400
+  await page.goBack()
+  await expect(page.getByRole('status', { name: '正在加载内容' }))
+    .toBeAttached()
+  await expectRestored(page, y)
+})
+
+test('stale cached content restores before a slow background refresh completes', async ({ page }) => {
+  const world = await installWorld(page)
+  const y = await openFromList(page)
+  await page.clock.install()
+  await page.clock.fastForward(11_000)
+  world.delay = 1800
+  const completed = world.completedListRequests
+  await page.goBack()
+  await expectRestored(page, y)
+  expect(world.completedListRequests).toBe(completed)
+  await expect(page.getByRole('status', { name: '正在加载内容' })).toHaveCount(
+    0,
+  )
+  await expect.poll(() => world.completedListRequests).toBeGreaterThan(
+    completed,
+  )
   await expectRestored(page, y)
 })
 
@@ -173,6 +211,8 @@ test('new rows above the saved card preserve the card position', async ({ page }
   const world = await installWorld(page)
   await openFromList(page)
   world.extraRows = 4
+  await page.reload()
+  await expect(page.getByText(/^第 60 段/)).toBeAttached()
   await page.goBack()
   await expect.poll(() =>
     card(page).evaluate((element) => element.getBoundingClientRect().top)
@@ -207,7 +247,11 @@ test('user scrolling cancels delayed restoration and a shorter list settles safe
   const world = await installWorld(page)
   await openFromList(page)
   world.delay = 1600
+  await page.reload()
+  await expect(page.getByText(/^第 60 段/)).toBeAttached()
   await page.goBack()
+  await expect(page.getByRole('status', { name: '正在加载内容' }))
+    .toBeAttached()
   // A deliberate scroll gesture while the list is loading takes precedence.
   await page.evaluate(() =>
     window.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }))
@@ -217,6 +261,8 @@ test('user scrolling cancels delayed restoration and a shorter list settles safe
   world.delay = 0
   await openFromList(page)
   world.empty = true
+  await page.reload()
+  await expect(page.getByText(/^第 60 段/)).toBeAttached()
   await page.goBack()
   await expect(page.locator('[data-scroll-anchor]')).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)

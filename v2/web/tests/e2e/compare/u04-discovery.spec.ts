@@ -572,10 +572,10 @@ test('U04-C17：P13 侧卡按钮组随「该侧已有策略」切换', async () 
     countA = 1
   }
   await test.step('那么 甲方侧卡按钮组换成「再建一个商鞅」与「查看我的商鞅（N）」', async () => {
-    await expect(page.getByRole('button', { name: '再建一个商鞅' }))
+    await expect(page.getByRole('link', { name: '再建一个商鞅' }))
       .toBeVisible()
     await expect(
-      page.getByRole('button', { name: `查看我的商鞅（${countA}）` }),
+      page.getByRole('link', { name: `查看我的商鞅（${countA}）` }),
     ).toBeVisible()
     await expect(buildA).toHaveCount(0)
   })
@@ -586,7 +586,7 @@ test('U04-C17：P13 侧卡按钮组随「该侧已有策略」切换', async () 
     if (countB === 0) {
       await expect(page.getByTestId('build-agent-b')).toBeVisible()
     } else {
-      await expect(page.getByRole('button', { name: '再建一个甘龙' }))
+      await expect(page.getByRole('link', { name: '再建一个甘龙' }))
         .toBeVisible()
     }
   })

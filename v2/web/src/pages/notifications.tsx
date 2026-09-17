@@ -1,3 +1,5 @@
+import { PageLoading } from '../components/page-loading'
+import { notificationsQuery } from '../lib/navigation-queries'
 import { CheckCheck, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -7,7 +9,8 @@ import type { NotificationDTO } from '../api/types'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
-import { messageOf, useAsync } from '../lib/use-async'
+import { messageOf } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
 
 // 通知页（B5/G25，mock 通知页样式）：按 kind 分组（PVP/锦标赛 优先于
@@ -71,10 +74,7 @@ const NO_MUTATIONS: NotificationMutations = {
 }
 
 export function NotificationsPage() {
-  const { data, error, loading, reload } = useAsync(
-    () => notifications.list(),
-    [],
-  )
+  const { data, error, loading, reload } = usePageQuery(notificationsQuery())
   const [actionError, setActionError] = useState<string | null>(null)
   const [acting, setActing] = useState(false)
   const [mutations, setMutations] = useState<NotificationMutations>(
@@ -176,7 +176,7 @@ export function NotificationsPage() {
   ].filter((group) => group.items.length > 0)
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       {
         /* F3：操作条 sticky（贴在 h-12 顶栏下沿），长列表滚到哪都看得见
         「全部已读 / 清除」；铺页面底色避免下方行卡透出。 */
@@ -217,7 +217,8 @@ export function NotificationsPage() {
                 size='sm'
                 variant='secondary'
                 disabled={acting}
-                onClick={() => void clearAll()}
+                onClick={() =>
+                  void clearAll()}
                 {...tm('I.clear-button')}
               >
                 <Trash2 className='mr-1.5 h-4 w-4' />
@@ -241,14 +242,7 @@ export function NotificationsPage() {
         保持挂载——文档高度不塌，scrollY 不会被浏览器钳回顶部。 */
       }
       {loading && data == null
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('I.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='list' {...tm('I.loading')} />
         : error && data == null
         ? <p className='text-sm text-(--accent)' {...tm('I.error')}>{error}</p>
         : groups.length > 0

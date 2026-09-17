@@ -272,7 +272,7 @@ test.describe('B3/A5 Test Mode with real handoff accounts', () => {
     await page.goto(`/agents/${b3Owner.agentID}`)
     await expect(page.getByRole('button', { name: /用 v\d+ 出战/ }).first())
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '新建版本' }))
+    await expect(page.getByRole('link', { name: '新建版本' }))
       .toBeVisible()
     await expect(page.getByText('版本对比', { exact: true })).toBeVisible()
     await expect(page.getByText('提示词与版本对比只有主人可见。'))

@@ -413,8 +413,8 @@ export const SameAgentNavigationReconcilesCompletedRequests: Story = {
     await waitFor(() => expect(posts).toHaveLength(2))
     await userEvent.click(canvas.getByRole('link', { name: '切换构建器位置' }))
     releasePost?.()
-    expect(await canvas.findByRole('button', { name: '继续首战 #7003' }))
-      .toBeEnabled()
+    expect(await canvas.findByRole('link', { name: '继续首战 #7003' }))
+      .toHaveAttribute('href', '/matches/7003?express=1')
     expect(canvas.queryByTestId('destination')).toBeNull()
     expect(saves).toBe(1)
     expect(posts).toEqual([

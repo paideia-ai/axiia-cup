@@ -126,7 +126,7 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
   })
 
   await test.step('当 我在低信息构建器写入独特草稿并立刻点击「← 智能体主页」（不等待 debounce）', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     const input = page.getByLabel('策略提示词')
     await expect(input).toBeEnabled()
     await input.fill(draft)
@@ -134,7 +134,7 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
   })
 
   await test.step('并且 我立刻重新打开构建器', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
   })
 
   await test.step('那么 服务端草稿与输入框都恢复完全相同的文本，且还没有产生版本', async () => {
@@ -166,7 +166,7 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
   })
 
   await test.step('当 我再次进入构建器保存第二稿', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await saveFromBuilder(
       page,
       agentID,
@@ -209,7 +209,7 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
   })
 
   await test.step('当 我再次打开 A 的构建器', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
   })
 
   await test.step('那么 预设策略与外部 AI 辅助仍然可见', async () => {
@@ -349,7 +349,7 @@ test('同一智能体卸载重挂后仍共用自动暂存队列', async ({ page 
   test.setTimeout(180_000)
   await signup(page, `edit-remount-queue-${Date.now()}`)
   const agentID = await createFromInventory(page, SIDE_A, '重挂队列')
-  await page.getByRole('button', { name: '新建版本' }).click()
+  await page.getByRole('link', { name: '新建版本' }).click()
   await expect(page.getByLabel('策略提示词')).toBeEnabled()
 
   const oldPrompt = '旧组件发出的延迟草稿。'
@@ -377,7 +377,7 @@ test('同一智能体卸载重挂后仍共用自动暂存队列', async ({ page 
 
   await test.step('当 我经 SPA 返回主页并重新挂载同一智能体构建器', async () => {
     await page.getByRole('link', { name: '← 智能体主页' }).click()
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await expect(page.getByLabel('策略提示词')).toHaveValue(oldPrompt)
   })
 
@@ -414,7 +414,7 @@ test('保存等待最终暂存时锁定快照；暂存失败不创建版本', as
   test.setTimeout(180_000)
   await signup(page, `edit-save-barrier-${Date.now()}`)
   const agentID = await createFromInventory(page, SIDE_A, '保存屏障')
-  await page.getByRole('button', { name: '新建版本' }).click()
+  await page.getByRole('link', { name: '新建版本' }).click()
   await expect(page.getByLabel('策略提示词')).toBeEnabled()
 
   await page.getByRole('button', { name: '版本备注' }).click()
@@ -489,7 +489,7 @@ test('硬刷新恢复本机最后编辑，成功保存后清理恢复日志', as
   test.setTimeout(180_000)
   await signup(page, `edit-reload-journal-${Date.now()}`)
   const agentID = await createFromInventory(page, SIDE_A, '刷新保护')
-  await page.getByRole('button', { name: '新建版本' }).click()
+  await page.getByRole('link', { name: '新建版本' }).click()
   await expect(page.getByLabel('策略提示词')).toBeEnabled()
 
   const mutatePattern = `**/v1/agents/${agentID}/mutate`
@@ -574,7 +574,7 @@ test('旧标签页保存只清理点击时 token，不删除另一标签页的�
   test.setTimeout(180_000)
   await signup(page, `edit-journal-cas-${Date.now()}`)
   const agentID = await createFromInventory(page, SIDE_A, '并发日志')
-  await page.getByRole('button', { name: '新建版本' }).click()
+  await page.getByRole('link', { name: '新建版本' }).click()
   const prompt = '旧标签页准备保存的稳定草稿。'
   await page.getByLabel('策略提示词').fill(prompt)
   await expect.poll(async () => {
@@ -756,7 +756,7 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
 
   await test.step('假如 我只有一个已有版本的商鞅 A', async () => {
     agentA = await createFromInventory(page, SIDE_A, 'A')
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await saveFromBuilder(page, agentA, 'A v1：先立可信的小承诺。')
   })
 
@@ -783,7 +783,7 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
     await opposite.getByRole('button', { name: '创建智能体' }).click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const sideBID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await saveFromBuilder(page, sideBID, '甘龙 v1：先问变法失败由谁承担。')
     agentB = await createFromInventory(page, SIDE_A, 'B')
   })
@@ -795,7 +795,7 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
   })
 
   await test.step('并且 B 的版本从 v1 独立计数', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await saveFromBuilder(page, agentB, 'B v1：另起一路。')
     await expect(
       page.getByTestId('version-card').getByText('v1', {
@@ -807,7 +807,7 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
   await test.step('假如 我有一个没有版本、但本机留有多份草稿日志的智能体', async () => {
     agentB = await createFromInventory(page, SIDE_B, '待命')
     expect((await versionState(page, agentB)).versions).toHaveLength(0)
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await page.getByLabel('策略提示词').fill(deletedPrompt)
     await expect.poll(async () => {
       const response = await page.request.get(`/v1/agents/${agentB}/draft`)
