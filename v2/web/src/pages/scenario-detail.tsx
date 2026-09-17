@@ -1,15 +1,14 @@
 import { Clock, Hammer } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
-import { builder, catalog, myAgents } from '../api/client'
+import { catalog, myAgents } from '../api/client'
 import type { ScenarioScoringDTO, ScenarioSummary, Side } from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
+import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
-import { messageOf, useAsync } from '../lib/use-async'
+import { useAsync } from '../lib/use-async'
 import {
   DIFFICULTY_LABEL,
   scenarioGuidance,
@@ -17,7 +16,6 @@ import {
 } from '../scenarios'
 import { tm } from '../testmode/mark'
 import { useAuth } from '../context/auth'
-import { protectedLoginUrl } from '../lib/login-return'
 import type {
   ScenarioEducation,
   ScenarioHiddenGoalList,
@@ -35,14 +33,7 @@ import type {
 // 重排，但不改写或省略。计分、难度、时长和状态属于额外的产品信息，单独渲染。
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
-  const navigate = useNavigate()
   const { account } = useAuth()
-  const [pending, setPending] = useState<string | null>(null)
-  const [buildError, setBuildError] = useState<string | null>(null)
-  const liveRef = useRef(true)
-  const enterRequestRef = useRef(0)
-  const scenarioIDRef = useRef(scenarioId)
-  scenarioIDRef.current = scenarioId
   const module = scenarioModule(scenarioId)
   const intro = module?.intro ?? null
   const education = module?.education ?? null
@@ -66,66 +57,6 @@ export function ScenarioDetailPage() {
   const mineOf = (side: Side) =>
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
       ?.sides[side] ?? []
-
-  useEffect(() => {
-    liveRef.current = true
-    return () => {
-      liveRef.current = false
-      enterRequestRef.current += 1
-    }
-  }, [])
-
-  useEffect(() => {
-    enterRequestRef.current += 1
-    setPending(null)
-    setBuildError(null)
-  }, [scenarioId])
-
-  const enter = async (side: Side, target: 'build' | 'view') => {
-    if (!account) {
-      navigate(protectedLoginUrl({
-        pathname: `/scenarios/${encodeURIComponent(scenarioId)}/build`,
-        search: `?side=${side}`,
-        hash: '',
-      }))
-      return
-    }
-    const requestID = ++enterRequestRef.current
-    const requestScenarioID = scenarioId
-    const isCurrent = () =>
-      liveRef.current && enterRequestRef.current === requestID &&
-      scenarioIDRef.current === requestScenarioID
-    setPending(`${side}:${target}`)
-    setBuildError(null)
-    try {
-      const { agentID } = await builder.ensure({
-        scenarioID: requestScenarioID,
-        side,
-      })
-      if (!isCurrent()) return
-      navigate(
-        target === 'build'
-          ? `/agents/${agentID}/build?scenario=${requestScenarioID}&side=${side}`
-          : `/agents/${agentID}`,
-      )
-    } catch (cause) {
-      if (!isCurrent()) return
-      setBuildError(messageOf(cause, '创建智能体失败'))
-      setPending(null)
-    }
-  }
-
-  const viewMine = (side: Side) => {
-    const agents = mineOf(side)
-    if (agents.length === 1) {
-      navigate(`/agents/${agents[0].agentID}`)
-      return
-    }
-    if (agents.length > 1) {
-      const focus = new URLSearchParams({ scenario: scenarioId, side })
-      navigate(`/my-agents?${focus.toString()}`)
-    }
-  }
 
   return (
     <div className='mx-auto w-full max-w-6xl space-y-6' {...tm('DA.page')}>
@@ -220,6 +151,7 @@ export function ScenarioDetailPage() {
                   <SideCard
                     key={side}
                     side={side}
+                    scenarioID={scenarioId}
                     copy={intro?.source.participants.sides[side] ?? null}
                     fallbackName={side === 'a'
                       ? data.summary.sideAName
@@ -232,27 +164,10 @@ export function ScenarioDetailPage() {
                     agents={!account ? [] : mine == null ? null : mineOf(side)}
                     inventoryError={mineError}
                     inventoryLoading={mineLoading}
-                    pending={pending}
-                    onEnter={enter}
-                    onViewAll={() => viewMine(side)}
                     onRetryInventory={reloadMine}
-                    onNew={() =>
-                      navigate(
-                        `/my-agents?new=${side}&scenario=${scenarioId}`,
-                      )}
                   />
                 ))}
               </div>
-              {buildError
-                ? (
-                  <p
-                    className='text-sm text-(--accent)'
-                    {...tm('DA.build-error')}
-                  >
-                    {buildError}
-                  </p>
-                )
-                : null}
             </section>
 
             <JudgeScoringCard
@@ -603,6 +518,7 @@ function CollectionBlock(
 
 function SideCard({
   side,
+  scenarioID,
   copy,
   fallbackName,
   fallbackLabel,
@@ -611,13 +527,10 @@ function SideCard({
   agents,
   inventoryError,
   inventoryLoading,
-  pending,
-  onEnter,
-  onViewAll,
   onRetryInventory,
-  onNew,
 }: {
   side: Side
+  scenarioID: string
   copy: ScenarioIntroSide | null
   fallbackName: string
   fallbackLabel: string | null | undefined
@@ -626,11 +539,7 @@ function SideCard({
   agents: Array<{ agentID: number; name?: string | null }> | null
   inventoryError: string | null
   inventoryLoading: boolean
-  pending: string | null
-  onEnter: (side: Side, target: 'build' | 'view') => Promise<void>
-  onViewAll: () => void
   onRetryInventory: () => void
-  onNew: () => void
 }) {
   const name = copy?.name ?? fallbackName
   const alignPrimaryGoal = hiddenGoals?.groups.every((group) => !group.role) ??
@@ -765,37 +674,43 @@ function SideCard({
               )
             : agents.length === 0
             ? (
-              <Button
+              <ButtonLink
                 size='sm'
                 data-testid={side === 'a' ? 'build-agent' : 'build-agent-b'}
-                disabled={pending != null}
-                onClick={() => void onEnter(side, 'build')}
+                to={`/scenarios/${
+                  encodeURIComponent(scenarioID)
+                }/build?side=${side}`}
                 {...tm('DA.build-button')}
               >
                 <Hammer className='mr-1.5 h-3.5 w-3.5' />
-                {pending === `${side}:build`
-                  ? '创建中…'
-                  : copy?.actionLabel ?? `去构建${name}`}
-              </Button>
+                {copy?.actionLabel ?? `去构建${name}`}
+              </ButtonLink>
             )
             : (
               <>
-                <Button
+                <ButtonLink
                   size='sm'
-                  onClick={onNew}
+                  to={`/my-agents?${new URLSearchParams({
+                    new: side,
+                    scenario: scenarioID,
+                  })}`}
                   {...tm('DA.build-more-button')}
                 >
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   再建一个{name}
-                </Button>
-                <button
-                  type='button'
-                  onClick={onViewAll}
+                </ButtonLink>
+                <Link
+                  to={agents.length === 1
+                    ? `/agents/${agents[0].agentID}`
+                    : `/my-agents?${new URLSearchParams({
+                      scenario: scenarioID,
+                      side,
+                    })}`}
                   className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
                   {...tm('DA.view-mine-button')}
                 >
                   查看我的{name}（{agents.length}）
-                </button>
+                </Link>
               </>
             )}
         </div>

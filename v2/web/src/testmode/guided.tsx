@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import {
   DASHBOARD,
@@ -506,7 +506,6 @@ export function Guided(
     onClose: () => void
   },
 ) {
-  const navigate = useNavigate()
   const reduced = useReducedMotion()
   const narrow = useNarrow()
   const [journeyId, setJourneyId] = useState<string | null>(
@@ -810,10 +809,6 @@ export function Guided(
   useEffect(() => {
     if (!identityOpen && !identity) setPending(null)
   }, [identityOpen, identity])
-
-  const goRoute = () => {
-    if (route) navigate(route)
-  }
 
   const startNewRun = () => {
     if (!journey || busy) return
@@ -1325,13 +1320,12 @@ export function Guided(
                   : (
                     <>
                       <span>这一步发生在「{pageNameOfRoute(route)}」页。</span>
-                      <button
-                        type='button'
+                      <Link
                         className='tm-btn tm-btn--sm'
-                        onClick={goRoute}
+                        to={route}
                       >
                         去这一页 →
-                      </button>
+                      </Link>
                     </>
                   )}
               </div>

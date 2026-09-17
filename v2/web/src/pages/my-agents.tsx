@@ -1,8 +1,8 @@
-import { ChevronRight } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Bot, ChevronRight, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
-import { builder, catalog, myAgents } from '../api/client'
+import { catalog, myAgents } from '../api/client'
 import type {
   MyAgentDTO,
   MyAgentsScenarioDTO,
@@ -11,10 +11,11 @@ import type {
 } from '../api/types'
 import { NewAgentButton } from '../components/new-agent-button'
 import { NewAgentDialog } from '../components/new-agent-dialog'
-import { Button } from '../components/ui/button'
+import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { subscribeAgentsChanged } from '../lib/agent-events'
-import { messageOf, useAsync } from '../lib/use-async'
+import { useAsync } from '../lib/use-async'
+import { agentEntryUrl } from '../lib/agent-entry'
 import { tm } from '../testmode/mark'
 
 interface CreateTarget {
@@ -24,7 +25,6 @@ interface CreateTarget {
 }
 
 export function MyAgentsPage() {
-  const navigate = useNavigate()
   const { data, error, loading, reload } = useAsync(async () => {
     const [catalogResponse, inventory] = await Promise.all([
       catalog.scenarios(),
@@ -32,20 +32,8 @@ export function MyAgentsPage() {
     ])
     return { scenarios: catalogResponse.scenarios, inventory }
   }, [])
-  const [pending, setPending] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [creating, setCreating] = useState<CreateTarget | null>(null)
   const [params, setParams] = useSearchParams()
-  const mountedRef = useRef(true)
-  const fallbackRequestRef = useRef(0)
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-      fallbackRequestRef.current += 1
-    }
-  }, [])
 
   // A side-wide entry change can finish after navigation from an agent home.
   // Refresh this inventory on completion so its readiness badges and selected
@@ -81,24 +69,6 @@ export function MyAgentsPage() {
       return next
     }, { replace: true })
   }, [data, params, setParams])
-
-  const enterFallback = async (scenarioID: string, side: Side) => {
-    const requestID = ++fallbackRequestRef.current
-    const requestIsCurrent = () =>
-      mountedRef.current && fallbackRequestRef.current === requestID
-    const key = `${scenarioID}:${side}`
-    setPending(key)
-    setActionError(null)
-    try {
-      const { agentID } = await builder.ensure({ scenarioID, side })
-      if (!requestIsCurrent()) return
-      navigate(`/agents/${agentID}`)
-    } catch (cause) {
-      if (!requestIsCurrent()) return
-      setActionError(messageOf(cause, '打开智能体失败'))
-      setPending(null)
-    }
-  }
 
   const inventoryByScenario = new Map(
     data?.inventory?.scenarios.map((scenario) => [
@@ -168,18 +138,6 @@ export function MyAgentsPage() {
           : null}
       </div>
 
-      {actionError
-        ? (
-          <p
-            role='alert'
-            className='text-sm text-(--accent)'
-            {...tm('MA.action-error')}
-          >
-            {actionError}
-          </p>
-        )
-        : null}
-
       {loading
         ? (
           <p
@@ -226,8 +184,6 @@ export function MyAgentsPage() {
                       onlySide={focusedScenario == null
                         ? null
                         : requestedFocusSide}
-                      pending={pending}
-                      onEnter={(side) => void enterFallback(scenario.id, side)}
                     />
                   )
                   : (
@@ -455,13 +411,9 @@ function ScenarioGroup({
 function FallbackScenarioGroup({
   scenario,
   onlySide,
-  pending,
-  onEnter,
 }: {
   scenario: ScenarioSummary
   onlySide: Side | null
-  pending: string | null
-  onEnter: (side: Side) => void
 }) {
   const sides = ([
     ['a', scenario.sideAName, scenario.sideALabel],
@@ -486,8 +438,6 @@ function FallbackScenarioGroup({
         </div>
 
         {sides.map(([side, role, description]) => {
-          const key = `${scenario.id}:${side}`
-          const isPending = pending === key
           const headingID = `my-agents-fallback-${scenario.id}-${side}`
           return (
             <section
@@ -514,17 +464,25 @@ function FallbackScenarioGroup({
                     )
                     : null}
                 </div>
-                <NewAgentButton
-                  role={role}
-                  disabled={pending != null}
-                  label={isPending
-                    ? `正在打开${role}智能体`
-                    : `打开或创建${role}智能体`}
-                  onClick={() => onEnter(side)}
-                />
+                <ButtonLink
+                  to={agentEntryUrl(scenario.id, side)}
+                  size='sm'
+                  variant='ghost'
+                  className='h-11 w-11 shrink-0 rounded-full p-0 md:h-8 md:w-8'
+                  aria-label={`打开或创建${role}智能体`}
+                  title={`打开或创建${role}智能体`}
+                >
+                  <span aria-hidden='true' className='relative h-5 w-5'>
+                    <Bot className='h-5 w-5' />
+                    <Plus
+                      className='absolute -right-1 -bottom-0.5 h-3 w-3 rounded-sm bg-(--background)'
+                      strokeWidth={2.5}
+                    />
+                  </span>
+                </ButtonLink>
               </div>
               <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'>
-                {isPending ? '正在确认智能体…' : '清单不可用，当前状态未知'}
+                清单不可用，当前状态未知
               </p>
             </section>
           )

@@ -578,7 +578,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     })
     expect(stillBlocked.status()).toBe(409)
 
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     const oppositeInput = page.getByLabel('策略提示词')
     await expect(oppositeInput).toBeEnabled()
     await oppositeInput.fill('对侧首稿：先谈代价，再谈道理。')
