@@ -15,17 +15,29 @@ import { Button } from './ui/button'
 
 export function PointsIndicator() {
   const state = useRewards()
-  if (!state?.wallet) return null
+  if (!state || (state.unavailable && !state.wallet)) return null
+  const balance = state.wallet?.balance
+  const pending = balance == null && state.loading
+  const label = balance != null
+    ? `${balance} 积分，查看积分与奖励`
+    : pending
+    ? '积分加载中，查看积分与奖励'
+    : '积分暂时无法加载，查看积分与奖励'
   return (
     <Link
       to='/rewards'
-      aria-label={`${state.wallet.balance} 积分，查看积分与奖励`}
-      title={state.error ? '上次确认余额，刷新失败' : undefined}
-      className='inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold text-(--foreground-subtle) hover:text-(--foreground)'
+      aria-label={label}
+      aria-busy={pending || undefined}
+      title={state.error
+        ? balance == null ? state.error : '上次确认余额，刷新失败'
+        : undefined}
+      className='inline-flex shrink-0 items-center gap-1 rounded-full px-1 py-1.5 text-xs font-semibold text-(--foreground-subtle) hover:text-(--foreground) sm:px-2'
       data-spec='U18-C18'
     >
-      <Coins aria-hidden className='h-4 w-4' />
-      {state.wallet.balance.toLocaleString('zh-CN')}
+      <Coins aria-hidden className='h-4 w-4 shrink-0' />
+      <span className='min-w-[5ch] text-right tabular-nums'>
+        {balance == null ? '—' : balance.toLocaleString('zh-CN')}
+      </span>
     </Link>
   )
 }
