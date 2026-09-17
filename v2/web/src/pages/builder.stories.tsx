@@ -53,13 +53,11 @@ function handlers(
   draftPrompt: string,
   versionHandler: Parameters<typeof http.get>[1],
   scoring?: ScenarioScoringDTO,
+  models = [{ id: 'fixture-model', label: 'Fixture Model' }],
 ) {
   return [
     http.get('/v1/config', () => HttpResponse.json(config)),
-    http.get('/v1/models', () =>
-      HttpResponse.json({
-        models: [{ id: 'fixture-model', label: 'Fixture Model' }],
-      })),
+    http.get('/v1/models', () => HttpResponse.json({ models })),
     http.get('/v1/my/agents', () => HttpResponse.json({ scenarios: [] })),
     http.get(
       '/v1/scenarios/:id',
@@ -90,6 +88,21 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+export const ModelDropdownPreview: Story = {
+  name: '模型下拉菜单：稳定高度预览',
+  parameters: {
+    msw: handlers(
+      '',
+      () => HttpResponse.json({ versions: [] }),
+      undefined,
+      Array.from({ length: 12 }, (_, index) => ({
+        id: `preview-model-${index + 1}`,
+        label: `预览模型 ${index + 1}`,
+      })),
+    ),
+  },
+}
 
 export const BlankWorkspaceWithSecondaryHelpers: Story = {
   parameters: {
