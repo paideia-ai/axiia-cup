@@ -4,7 +4,7 @@ import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import type { AgentVersionDTO, SaveVersionRequest } from '../api/types'
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
-import { useScrollMemory } from '../lib/scroll'
+import { NavigationMemoryProvider } from '../context/navigation-memory'
 import { config, scenario } from '../testing/v34-fixtures'
 import { AgentViewPage } from './agent-view'
 import { BuilderPage } from './builder'
@@ -65,7 +65,6 @@ function reset() {
 }
 reset()
 function Pages() {
-  useScrollMemory()
   return (
     <div className='mx-auto max-w-[1040px] space-y-6'>
       <div className='flex flex-wrap items-center gap-4 border-b border-(--border-soft) pb-4 text-sm'>
@@ -86,7 +85,9 @@ const meta = {
   title: 'Agents/Demo parity preview',
   render: () => (
     <MemoryRouter initialEntries={['/agents/101']}>
-      <Pages />
+      <NavigationMemoryProvider scope='agent-parity-preview'>
+        <Pages />
+      </NavigationMemoryProvider>
     </MemoryRouter>
   ),
   beforeEach: reset,

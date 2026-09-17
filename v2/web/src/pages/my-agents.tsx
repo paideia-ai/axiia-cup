@@ -1,7 +1,7 @@
 import { PageLoading } from '../components/page-loading'
 import { Bot, ChevronRight, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 
 import type {
   MyAgentDTO,
@@ -26,6 +26,7 @@ interface CreateTarget {
 }
 
 export function MyAgentsPage() {
+  const location = useLocation()
   const catalog = usePageQuery(catalogQuery())
   const inventory = usePageQuery(inventoryQuery())
   const data = useMemo(() =>
@@ -146,6 +147,18 @@ export function MyAgentsPage() {
           )
           : null}
       </div>
+
+      {location.state?.archivedAgentName && (
+        <p role='status' className='text-sm text-(--foreground-muted)'>
+          已归档 {location.state.archivedAgentName}。
+          <Link
+            className='underline underline-offset-4'
+            to='/settings/archived-agents'
+          >
+            查看已归档的智能体
+          </Link>
+        </p>
+      )}
 
       {loading
         ? <PageLoading variant='cards' {...tm('MA.loading')} />
@@ -321,7 +334,7 @@ function ScenarioGroup({
         </div>
 
         {sides.map(([side, role, description]) => {
-          const agents = agentsOf(side)
+          const agents = agentsOf(side).filter((agent) => !agent.isArchived)
           const headingID = `my-agents-${scenario.id}-${side}`
           return (
             <section
@@ -398,7 +411,18 @@ function ScenarioGroup({
                     className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'
                     {...tm('MA.empty-side')}
                   >
-                    还没有{role}智能体
+                    {agentsOf(side).length > 0
+                      ? (
+                        <>
+                          你的{role}智能体已全部归档。<Link
+                            to='/settings/archived-agents'
+                            className='underline underline-offset-4'
+                          >
+                            查看归档
+                          </Link>
+                        </>
+                      )
+                      : <>还没有{role}智能体</>}
                   </p>
                 )
                 : null}

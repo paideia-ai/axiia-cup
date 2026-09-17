@@ -167,7 +167,7 @@ export const SlowNetwork: Story = {
   parameters: { msw: handlers(900) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    // Allow auth setup, the simulated catalog latency, and rendering.
+    // The fixture itself waits 900ms; allow room for rendering on CI hosts.
     await canvas.findByTestId(`scenario-${scenario.summary.id}`, {}, {
       timeout: 5000,
     })

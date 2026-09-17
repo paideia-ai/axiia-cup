@@ -18,6 +18,7 @@ export default defineConfig({
       'react-dom',
       '@tanstack/react-query',
       '@base-ui-components/react/dialog',
+      '@tanstack/react-query',
     ],
   },
   test: {

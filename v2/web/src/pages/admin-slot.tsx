@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { admin } from '../api/client'
 import type { SlotDTO, UpdateSlotRequest } from '../api/types'
 import { ScriptView } from '../components/script-view'
+import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
@@ -301,13 +302,12 @@ export function AdminSlotPage() {
   return (
     <div className='space-y-6'>
       <div className='flex flex-wrap items-center gap-3'>
-        <Link
+        <BackLink
           {...tm('ADM.slot-back-link')}
           to='/admin'
           className='text-sm text-(--accent)'
-        >
-          ← 管理面板
-        </Link>
+          label='管理面板'
+        />
         <h1
           {...tm('ADM.slot-page-title')}
           className='text-2xl font-black tracking-tight text-(--foreground)'

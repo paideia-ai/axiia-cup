@@ -11,11 +11,18 @@ import {
   versions,
 } from '../../src/testing/v34-fixtures'
 
+import {
+  agentPreviewInventory,
+  agentPreviewScenarios,
+  previewAgent,
+} from '../../src/testing/scenario-agent-fixtures'
+
 interface FixtureOptions {
   guest?: boolean
   empty?: boolean
   inventoryFailed?: boolean
   multiple?: boolean
+  noEntry?: boolean
   opponents?: boolean
   unlocked?: boolean
   scenarioFailed?: boolean
@@ -102,7 +109,12 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       if (options.empty) return json({ scenarios: [] })
       const data = structuredClone(inventory)
       if (options.multiple) {
-        data.scenarios[0].sides.a.push({ agentID: 103, versionCount: 0 })
+        data.scenarios[0].sides.a.unshift({ agentID: 103, versionCount: 0 })
+      }
+      if (options.noEntry) {
+        data.scenarios[0].sides.a.forEach((agent) =>
+          agent.entryVersionID = null
+        )
       }
       return json(data)
     }
@@ -244,8 +256,15 @@ const cases: {
     name: 'scenario multiple agents',
     path: scenarioPath,
     marker: 'DA.view-mine-button',
-    destination: /\/my-agents\?scenario=shangyang-court&side=a$/,
+    destination: /\/agents\/101$/,
     options: { multiple: true },
+  },
+  {
+    name: 'scenario multiple agents without entry',
+    path: scenarioPath,
+    marker: 'DA.view-mine-button',
+    destination: /\/agents\/103$/,
+    options: { multiple: true, noEntry: true },
   },
   {
     name: 'express build',
@@ -547,3 +566,90 @@ test('invalid entry parameters never call get-or-create', async ({ page }) => {
   }
   expect(ensures).toHaveLength(0)
 })
+
+for (const detail of agentPreviewScenarios) {
+  for (const side of ['a', 'b'] as const) {
+    test(`${detail.summary.id} ${side}: direct home, scoped siblings, refresh and full inventory`, async ({ page }) => {
+      const { ensures, unexpected, errors } = await fixtures(page)
+      await page.context().route('**/v1/**', async (route) => {
+        const path = new URL(route.request().url()).pathname.slice(3)
+        if (path === '/my/agents') {
+          return route.fulfill({ json: agentPreviewInventory })
+        }
+        if (path === '/scenarios') {
+          return route.fulfill({
+            json: {
+              scenarios: agentPreviewScenarios.map((item) => item.summary),
+            },
+          })
+        }
+        const scenario = agentPreviewScenarios.find((item) =>
+          path === `/scenarios/${item.summary.id}`
+        )
+        if (scenario) return route.fulfill({ json: scenario })
+        const match = /^\/agents\/(\d+)\/(draft|versions)$/.exec(path)
+        const agent = match ? previewAgent(Number(match[1])) : null
+        if (agent && match) {
+          return route.fulfill({
+            json: match[2] === 'draft'
+              ? { fields: {}, scenarioID: agent.scenarioID, side: agent.side }
+              : {
+                versions: agent.versions,
+                entryVersionID: agent.agent.entryVersionID,
+              },
+          })
+        }
+        return route.fallback()
+      })
+      const inventory = agentPreviewInventory.scenarios.find((item) =>
+        item.scenarioID === detail.summary.id
+      )!
+      const agents = inventory.sides[side]
+      const selected = agents[side === 'a' ? 1 : 0]
+      if (side === 'b') await page.setViewportSize({ width: 390, height: 844 })
+      await page.goto(`/scenarios/${detail.summary.id}`)
+      const link = page.locator('[data-tm="DA.view-mine-button"]').nth(
+        side === 'a' ? 0 : 1,
+      )
+      await expect(link).toHaveAttribute('href', `/agents/${selected.agentID}`)
+      await expect(link).toContainText(`（${agents.length}）`)
+      await link.click()
+      await expect(page).toHaveURL(new RegExp(`/agents/${selected.agentID}$`))
+      const siblings = page.getByRole('navigation', { name: '同角色智能体' })
+        .getByRole('link')
+      await expect(siblings).toHaveCount(agents.length)
+      expect(
+        await siblings.evaluateAll((links) =>
+          links.map((link) => link.getAttribute('href'))
+        ),
+      )
+        .toEqual(agents.map((agent) => `/agents/${agent.agentID}`))
+      await page.reload()
+      await expect(siblings).toHaveCount(agents.length)
+      const other = agents[side === 'a' ? 0 : 1]
+      await page.locator(
+        `[data-tm="EA.sibling-pill"][href="/agents/${other.agentID}"]`,
+      ).click()
+      await expect(page).toHaveURL(new RegExp(`/agents/${other.agentID}$`))
+      await expect(
+        page.locator(
+          `[data-tm="EA.sibling-pill"][href="/agents/${other.agentID}"]`,
+        ),
+      ).toHaveAttribute('aria-current', 'page')
+      await page.locator('[data-tm="EA.back-link"]').click()
+      await expect(page).toHaveURL(new RegExp(`/agents/${selected.agentID}$`))
+      await page.locator('[data-tm="EA.back-link"]').click()
+      await expect(page).toHaveURL(
+        new RegExp(`/scenarios/${detail.summary.id}$`),
+      )
+      // The page back link follows the actual source; main navigation still
+      // opens the complete inventory regardless of the current scenario.
+      await page.getByRole('link', { name: '我的智能体', exact: true }).click()
+      await expect(page).toHaveURL(/\/my-agents$/)
+      await expect(page.locator('[data-tm="MA.scenario-group"]')).toHaveCount(5)
+      expect(ensures).toHaveLength(0)
+      expect(unexpected).toEqual([])
+      expect(errors).toEqual([])
+    })
+  }
+}

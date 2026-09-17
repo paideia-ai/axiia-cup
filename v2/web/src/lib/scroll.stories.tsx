@@ -8,10 +8,16 @@ import {
   useLocation,
 } from 'react-router-dom'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
-import { useScrollMemory } from './scroll'
+import {
+  NavigationMemoryProvider,
+  useScrollPending,
+} from '../context/navigation-memory'
+import { BackLink } from '../components/back-link'
+import { NAVIGATION_STORAGE_KEY } from './navigation-memory'
 
 function Inventory() {
   const [loaded, setLoaded] = useState(false)
+  useScrollPending(!loaded)
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 150)
     return () => clearTimeout(timer)
@@ -23,14 +29,13 @@ function Inventory() {
   )
 }
 function Pages() {
-  useScrollMemory()
   const { pathname } = useLocation()
   return (
     <>
       <nav className='fixed top-2 left-2 z-50 bg-(--background) p-3'>
         {pathname === '/my-agents'
           ? <Link to='/agents/1'>进入智能体</Link>
-          : <Link to='/my-agents'>返回清单</Link>}
+          : <BackLink to='/my-agents' label='我的智能体' />}
       </nav>
       <Routes>
         <Route path='/my-agents' element={<Inventory />} />
@@ -44,6 +49,9 @@ function Pages() {
 }
 const meta = {
   title: 'Agents/Scroll memory',
+  beforeEach: () => {
+    sessionStorage.removeItem(NAVIGATION_STORAGE_KEY)
+  },
   render: () => (
     <MemoryRouter
       initialEntries={[{
@@ -51,7 +59,9 @@ const meta = {
         key: 'inventory-scroll-story',
       }]}
     >
-      <Pages />
+      <NavigationMemoryProvider scope='inventory-scroll-story'>
+        <Pages />
+      </NavigationMemoryProvider>
     </MemoryRouter>
   ),
 } satisfies Meta
@@ -70,7 +80,7 @@ export const ExplicitReturnAfterAsyncLoad: StoryObj = {
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     )
     await userEvent.click(canvas.getByRole('link', { name: '进入智能体' }))
-    await userEvent.click(canvas.getByRole('link', { name: '返回清单' }))
+    await userEvent.click(canvas.getByRole('link', { name: /我的智能体/ }))
     await waitFor(() => expect(globalThis.scrollY).toBe(1500))
   },
 }
