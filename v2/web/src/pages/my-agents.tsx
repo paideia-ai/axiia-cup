@@ -1,6 +1,6 @@
 import { PageLoading } from '../components/page-loading'
-import { Bot, ChevronRight, Plus } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 
 import type {
@@ -9,21 +9,13 @@ import type {
   ScenarioSummary,
   Side,
 } from '../api/types'
-import { NewAgentButton } from '../components/new-agent-button'
-import { NewAgentDialog } from '../components/new-agent-dialog'
-import { Button, ButtonLink } from '../components/ui/button'
+import { CreateAgentAction } from '../components/create-agent-action'
+import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { subscribeAgentsChanged } from '../lib/agent-events'
 import { usePageQuery } from '../lib/use-page-query'
 import { catalogQuery, inventoryQuery } from '../lib/navigation-queries'
-import { agentEntryUrl } from '../lib/agent-entry'
 import { tm } from '../testmode/mark'
-
-interface CreateTarget {
-  scenario: ScenarioSummary
-  side: Side
-  anchor: HTMLElement | null
-}
 
 export function MyAgentsPage() {
   const location = useLocation()
@@ -36,13 +28,15 @@ export function MyAgentsPage() {
         inventory: inventory.data,
       }
       : null, [catalog.data, inventory.data])
-  const loading = catalog.loading || inventory.loading
+  const inventorySettled = useRef(false)
+  if (!inventory.loading) inventorySettled.current = true
+  const loading = catalog.loading ||
+    (!inventorySettled.current && inventory.loading)
   const error = catalog.error
   const reload = useCallback(() => {
     catalog.reload()
     inventory.reload()
   }, [catalog.reload, inventory.reload])
-  const [creating, setCreating] = useState<CreateTarget | null>(null)
   const [params, setParams] = useSearchParams()
 
   // A side-wide entry change can finish after navigation from an agent home.
@@ -51,34 +45,6 @@ export function MyAgentsPage() {
   useEffect(() => {
     return subscribeAgentsChanged(reload)
   }, [reload])
-
-  // Scenario detail links can open a side-specific creation surface directly.
-  // There is no triggering element in that flow, so the dialog uses its
-  // centered desktop fallback and still behaves as a bottom sheet on mobile.
-  useEffect(() => {
-    const requestedSide = params.get('new')
-    const scenarioID = params.get('scenario')
-    if (requestedSide == null || data == null) return
-
-    const side = requestedSide === 'a' || requestedSide === 'b'
-      ? requestedSide
-      : null
-    const scenario = side == null
-      ? null
-      : data.scenarios.find((item) =>
-        scenarioID == null || item.id === scenarioID
-      )
-    if (side != null && scenario != null) {
-      setCreating({ scenario, side, anchor: null })
-    }
-
-    setParams((previous) => {
-      const next = new URLSearchParams(previous)
-      next.delete('new')
-      next.delete('scenario')
-      return next
-    }, { replace: true })
-  }, [data, params, setParams])
 
   const inventoryByScenario = new Map(
     data?.inventory?.scenarios.map((scenario) => [
@@ -180,7 +146,7 @@ export function MyAgentsPage() {
                   role='status'
                 >
                   <p className='text-sm text-(--foreground-subtle)'>
-                    智能体清单暂时不可用。你仍可打开场景，或安全地打开／创建某一侧智能体。
+                    智能体清单暂时不可用。你仍可打开场景，或新建某一侧智能体。
                   </p>
                   <Button size='sm' variant='secondary' onClick={reload}>
                     重试清单
@@ -190,30 +156,15 @@ export function MyAgentsPage() {
               : null}
 
             <div className='space-y-6' {...tm('MA.scenario-list')}>
-              {visibleScenarios.map((scenario) =>
-                data?.inventory == null
-                  ? (
-                    <FallbackScenarioGroup
-                      key={scenario.id}
-                      scenario={scenario}
-                      onlySide={focusedScenario == null
-                        ? null
-                        : requestedFocusSide}
-                    />
-                  )
-                  : (
-                    <ScenarioGroup
-                      key={scenario.id}
-                      scenario={scenario}
-                      inventory={inventoryByScenario.get(scenario.id) ?? null}
-                      onlySide={focusedScenario == null
-                        ? null
-                        : requestedFocusSide}
-                      onNewAgent={(side, anchor) =>
-                        setCreating({ scenario, side, anchor })}
-                    />
-                  )
-              )}
+              {visibleScenarios.map((scenario) => (
+                <ScenarioGroup
+                  key={scenario.id}
+                  scenario={scenario}
+                  inventory={inventoryByScenario.get(scenario.id) ?? null}
+                  inventoryAvailable={data?.inventory != null}
+                  onlySide={focusedScenario == null ? null : requestedFocusSide}
+                />
+              ))}
               {data != null && data.scenarios.length === 0
                 ? (
                   <p
@@ -227,18 +178,6 @@ export function MyAgentsPage() {
             </div>
           </>
         )}
-
-      {creating != null
-        ? (
-          <NewAgentDialog
-            key={`${creating.scenario.id}:${creating.side}`}
-            scenario={creating.scenario}
-            initialSide={creating.side}
-            anchor={creating.anchor}
-            onClose={() => setCreating(null)}
-          />
-        )
-        : null}
     </div>
   )
 }
@@ -246,13 +185,13 @@ export function MyAgentsPage() {
 function ScenarioGroup({
   scenario,
   inventory,
+  inventoryAvailable,
   onlySide,
-  onNewAgent,
 }: {
   scenario: ScenarioSummary
   inventory: MyAgentsScenarioDTO | null
+  inventoryAvailable: boolean
   onlySide: Side | null
-  onNewAgent: (side: Side, anchor: HTMLElement) => void
 }) {
   const sides = ([
     ['a', scenario.sideAName, scenario.sideALabel],
@@ -276,7 +215,12 @@ function ScenarioGroup({
   const statusReady = focusedStatus?.done ?? entryReady
 
   return (
-    <Card className='shadow-none' {...tm('MA.scenario-group')}>
+    <Card
+      className='shadow-none'
+      {...(inventoryAvailable
+        ? tm('MA.scenario-group')
+        : tm('MA.fallback-group'))}
+    >
       <CardContent className='p-4 sm:p-6'>
         <div
           className='grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-2 border-b border-(--border-soft) pb-4 md:flex md:flex-wrap md:items-center md:gap-2 md:pb-5'
@@ -300,6 +244,7 @@ function ScenarioGroup({
           <div
             className='flex flex-wrap items-center gap-1.5'
             aria-label={onlySide == null ? '两侧参赛状态' : '当前侧参赛状态'}
+            hidden={!inventoryAvailable}
           >
             {sideStatus.map(({ side, name, built, done }) => (
               <span
@@ -316,6 +261,7 @@ function ScenarioGroup({
             ))}
           </div>
           <span
+            hidden={!inventoryAvailable}
             className={`max-w-36 text-right text-xs leading-5 md:ml-auto md:max-w-none ${
               statusReady ? 'text-(--success)' : 'text-(--foreground-muted)'
             }`}
@@ -343,9 +289,11 @@ function ScenarioGroup({
               className={side === 'a'
                 ? 'mt-3'
                 : 'mt-4 border-t border-(--border-soft) pt-2 md:mt-5 md:pt-3'}
-              {...tm('MA.side-section')}
+              {...(inventoryAvailable
+                ? tm('MA.side-section')
+                : tm('MA.fallback-row'))}
             >
-              <div className='mb-2 flex items-center justify-between gap-3'>
+              <div className='mb-2 flex flex-wrap items-center justify-between gap-3'>
                 <div className='min-w-0'>
                   <h3
                     id={headingID}
@@ -361,12 +309,15 @@ function ScenarioGroup({
                     )
                     : null}
                 </div>
-                <span {...tm('MA.new-agent-button')}>
-                  <NewAgentButton
-                    role={role}
-                    onClick={(anchor) => onNewAgent(side, anchor)}
-                  />
-                </span>
+                <CreateAgentAction
+                  marker={tm('MA.new-agent-button')['data-tm']}
+                  scenarioID={scenario.id}
+                  side={side}
+                  role={role}
+                  oppositeRole={side === 'a'
+                    ? scenario.sideBName
+                    : scenario.sideAName}
+                />
               </div>
 
               {agents.map((agent) => {
@@ -411,7 +362,9 @@ function ScenarioGroup({
                     className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'
                     {...tm('MA.empty-side')}
                   >
-                    {agentsOf(side).length > 0
+                    {!inventoryAvailable
+                      ? '清单不可用，当前状态未知'
+                      : agentsOf(side).length > 0
                       ? (
                         <>
                           你的{role}智能体已全部归档。<Link
@@ -429,94 +382,11 @@ function ScenarioGroup({
             </section>
           )
         })}
-      </CardContent>
-    </Card>
-  )
-}
-
-function FallbackScenarioGroup({
-  scenario,
-  onlySide,
-}: {
-  scenario: ScenarioSummary
-  onlySide: Side | null
-}) {
-  const sides = ([
-    ['a', scenario.sideAName, scenario.sideALabel],
-    ['b', scenario.sideBName, scenario.sideBLabel],
-  ] as const).filter(([side]) => onlySide == null || side === onlySide)
-
-  return (
-    <Card className='shadow-none' {...tm('MA.fallback-group')}>
-      <CardContent className='p-4 sm:p-6'>
-        <div className='flex flex-wrap items-baseline gap-2 border-b border-(--border-soft) pb-4'>
-          <h2 className='text-base font-semibold sm:text-lg'>
-            <Link
-              to={`/scenarios/${scenario.id}`}
-              className='text-(--foreground) hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-(--accent)'
-            >
-              {scenario.title}
-            </Link>
-          </h2>
-          <span className='text-xs text-(--foreground-muted)'>
-            {scenario.subject}
-          </span>
-        </div>
-
-        {sides.map(([side, role, description]) => {
-          const headingID = `my-agents-fallback-${scenario.id}-${side}`
-          return (
-            <section
-              key={side}
-              aria-labelledby={headingID}
-              className={side === 'a'
-                ? 'mt-3'
-                : 'mt-4 border-t border-(--border-soft) pt-2 md:mt-5 md:pt-3'}
-              {...tm('MA.fallback-row')}
-            >
-              <div className='mb-2 flex items-center justify-between gap-3'>
-                <div className='min-w-0'>
-                  <h3
-                    id={headingID}
-                    className='text-sm font-semibold text-(--foreground)'
-                  >
-                    {role}智能体
-                  </h3>
-                  {description
-                    ? (
-                      <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
-                        {description}
-                      </p>
-                    )
-                    : null}
-                </div>
-                <ButtonLink
-                  to={agentEntryUrl(scenario.id, side)}
-                  size='sm'
-                  variant='ghost'
-                  className='h-11 w-11 shrink-0 rounded-full p-0 md:h-8 md:w-8'
-                  aria-label={`打开或创建${role}智能体`}
-                  title={`打开或创建${role}智能体`}
-                >
-                  <span aria-hidden='true' className='relative h-5 w-5'>
-                    <Bot className='h-5 w-5' />
-                    <Plus
-                      className='absolute -right-1 -bottom-0.5 h-3 w-3 rounded-sm bg-(--background)'
-                      strokeWidth={2.5}
-                    />
-                  </span>
-                </ButtonLink>
-              </div>
-              <p className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'>
-                清单不可用，当前状态未知
-              </p>
-            </section>
-          )
-        })}
-
-        <p className='sr-only' {...tm('MA.fallback-hint')}>
-          完成度与参赛资格将在清单恢复后显示
-        </p>
+        {!inventoryAvailable && (
+          <p className='sr-only' {...tm('MA.fallback-hint')}>
+            完成度与参赛资格将在清单恢复后显示
+          </p>
+        )}
       </CardContent>
     </Card>
   )

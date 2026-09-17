@@ -1,3 +1,4 @@
+import { CreateAgentAction } from '../components/create-agent-action'
 import { PageLoading } from '../components/page-loading'
 import { Clock, Hammer } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
@@ -541,6 +542,7 @@ function SideCard({
   inventoryLoading: boolean
   onRetryInventory: () => void
 }) {
+  const { account } = useAuth()
   const name = copy?.name ?? fallbackName
   const homeAgent = agents?.find((agent) => agent.entryVersionID != null) ??
     agents?.[0]
@@ -668,7 +670,7 @@ function SideCard({
                     : `暂时无法确认我的${name}`}
                 </Button>
               )
-            : agents.length === 0
+            : !account
             ? (
               <ButtonLink
                 size='sm'
@@ -684,24 +686,31 @@ function SideCard({
             )
             : (
               <>
-                <ButtonLink
-                  size='sm'
-                  to={`/my-agents?${new URLSearchParams({
-                    new: side,
-                    scenario: scenarioID,
-                  })}`}
-                  {...tm('DA.build-more-button')}
+                <CreateAgentAction
+                  scenarioID={scenarioID}
+                  side={side}
+                  role={name}
+                  testID={agents.length === 0
+                    ? (side === 'a' ? 'build-agent' : 'build-agent-b')
+                    : undefined}
+                  marker={agents.length === 0
+                    ? tm('DA.build-button')['data-tm']
+                    : tm('DA.build-more-button')['data-tm']}
                 >
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
-                  再建一个{name}
-                </ButtonLink>
-                <Link
-                  to={`/agents/${homeAgent!.agentID}`}
-                  className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
-                  {...tm('DA.view-mine-button')}
-                >
-                  查看我的{name}（{agents.length}）
-                </Link>
+                  {agents.length === 0
+                    ? (copy?.actionLabel ?? `去构建${name}`)
+                    : `再建一个${name}`}
+                </CreateAgentAction>
+                {homeAgent && (
+                  <Link
+                    to={`/agents/${homeAgent.agentID}`}
+                    className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
+                    {...tm('DA.view-mine-button')}
+                  >
+                    查看我的{name}（{agents.length}）
+                  </Link>
+                )}
               </>
             )}
         </div>

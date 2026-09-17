@@ -15,16 +15,84 @@ import {
   previewAgent,
 } from '../src/testing/scenario-agent-fixtures.ts'
 
-const scenarioAgents = Deno.args.includes('--scenario-agents')
+const agentCreation = Deno.args.includes('--agent-creation')
+const scenarioAgents = agentCreation || Deno.args.includes('--scenario-agents')
 const root = resolve('build/client')
 const html = (await Deno.readTextFile(`${root}/index.html`)).replace(
   '</body>',
-  '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">交互预览 · 模拟数据 · 无需登录 · 不保存更改</aside></body>',
+  '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">交互预览 · 模拟数据 · 无需登录 · 不影响真实账号</aside></body>',
 )
 const mine = structuredClone(inventory)
 mine.scenarios[0].sides.b = []
 
+const sessions = new Map<string, typeof agentPreviewInventory>()
+let nextAgentID = 2000
+
 async function api(request: Request, path: string): Promise<Response> {
+  if (agentCreation) {
+    const cookie = /preview-session=([a-z0-9-]+)/.exec(
+      request.headers.get('cookie') ?? '',
+    )?.[1]
+    const sessionID = cookie ?? crypto.randomUUID()
+    if (!sessions.has(sessionID)) {
+      sessions.set(sessionID, structuredClone(agentPreviewInventory))
+    }
+    const data = sessions.get(sessionID)!
+    const respond = (body: unknown, status = 200) =>
+      Response.json(body, {
+        status,
+        headers: {
+          'Set-Cookie':
+            `preview-session=${sessionID}; Path=/; HttpOnly; SameSite=Lax`,
+        },
+      })
+    if (path === '/my/agents') return respond(data)
+    if (path === '/agents' && request.method === 'POST') {
+      const { scenarioID, side } = await request.json()
+      const scenario = data.scenarios.find((item) =>
+        item.scenarioID === scenarioID
+      )
+      if (!scenario || (side !== 'a' && side !== 'b')) {
+        return respond({ error: 'invalid' }, 400)
+      }
+      const agentID = nextAgentID++
+      scenario.sides[side].push({
+        agentID,
+        name: null,
+        versionCount: 0,
+        entryVersionID: null,
+      })
+      return respond({ agentID })
+    }
+    const match = /^\/agents\/(\d+)(?:\/(draft|versions))?$/.exec(path)
+    if (match) {
+      for (const scenario of data.scenarios) {
+        for (const side of ['a', 'b'] as const) {
+          const agent = scenario.sides[side].find((item) =>
+            item.agentID === Number(match[1])
+          )
+          if (!agent) continue
+          if (request.method === 'PATCH') {
+            agent.name = (await request.json()).name
+            return respond({ ok: true })
+          }
+          if (match[2] === 'draft') {
+            return respond({
+              fields: {},
+              scenarioID: scenario.scenarioID,
+              side,
+            })
+          }
+          if (match[2] === 'versions') {
+            return respond({
+              versions: previewAgent(agent.agentID)?.versions ?? [],
+              entryVersionID: agent.entryVersionID,
+            })
+          }
+        }
+      }
+    }
+  }
   const json = Response.json
   if (request.method === 'POST' && path === '/agents/ensure') {
     const { side } = await request.json()
@@ -164,7 +232,10 @@ const contentTypes: Record<string, string> = {
 }
 
 Deno.serve(
-  { hostname: '127.0.0.1', port: scenarioAgents ? 5178 : 5177 },
+  {
+    hostname: '127.0.0.1',
+    port: agentCreation ? 5188 : scenarioAgents ? 5178 : 5177,
+  },
   async (request) => {
     const path = new URL(request.url).pathname
     if (path.startsWith('/v1/')) return api(request, path.slice(3))

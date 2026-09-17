@@ -41,10 +41,11 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
 
   await test.step('当 我点「新建商鞅智能体」，填写可选名称并创建', async () => {
     await page.getByRole('button', { name: `新建${SIDE_A}智能体` }).click()
-    const dialog = page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
-    await expect(dialog).toBeVisible()
-    await dialog.getByLabel('名称（可选）').fill('低高低')
-    await dialog.getByRole('button', { name: '创建智能体' }).click()
+    const input = page.getByRole('textbox', { name: '智能体名称' })
+    await expect(input).toBeFocused()
+    await expect(input).toHaveValue('')
+    await input.fill('低高低')
+    await input.press('Enter')
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     agentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
     expect(agentID).toBeGreaterThan(0)
@@ -434,7 +435,7 @@ test('场景详情直达主页：优先参赛智能体，同角色切换，兼�
   })
 })
 
-test('咳嗦移动端：新建入口为 44px，窄屏弹层可操作', async ({ page }) => {
+test('咳嗦移动端：新建入口为 44px，窄屏主页改名可操作', async ({ page }) => {
   await test.step('假如 我把视口切换为 390 × 844', async () => {
     await page.setViewportSize({ width: 390, height: 844 })
   })
@@ -460,12 +461,12 @@ test('咳嗦移动端：新建入口为 44px，窄屏弹层可操作', async ({ 
     await page.getByRole('button', { name: `新建${SIDE_B}智能体` }).click()
   })
 
-  await test.step('那么 名称输入和创建动作在移动端弹层中可见，页面没有水平溢出', async () => {
-    const dialog = page.getByRole('dialog', { name: `新建${SIDE_B}智能体` })
-    await expect(dialog.getByLabel('名称（可选）')).toBeVisible()
-    await expect(dialog.getByRole('button', { name: '创建智能体' }))
-      .toBeVisible()
-    const box = await dialog.boundingBox()
+  await test.step('那么 名称输入在移动端智能体主页中可见，页面没有水平溢出', async () => {
+    const input = page.getByRole('textbox', { name: '智能体名称' })
+    await expect(input).toBeVisible()
+    await expect(input).toBeFocused()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    const box = await input.boundingBox()
     expect(box).not.toBeNull()
     expect(box!.x).toBeGreaterThanOrEqual(0)
     expect(box!.x + box!.width).toBeLessThanOrEqual(390)

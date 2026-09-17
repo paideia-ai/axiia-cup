@@ -19,6 +19,7 @@
   "nodeModulesDir": "manual",
   "nodeModulesLinker": "hoisted",
   "tasks": {
+    "preview:agent-creation": "deno task build && deno run -A e2e/preview-navigation.ts --agent-creation",
     "preview:scenario-agents": "deno task build && deno run -A e2e/preview-navigation.ts --scenario-agents",
     "dev": "deno run -A npm:vite",
     "build": "deno run -A npm:vite build",

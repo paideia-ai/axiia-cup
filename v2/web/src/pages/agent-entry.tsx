@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 
-import { builder } from '../api/client'
+import { builder, myAgents } from '../api/client'
 import type { Side } from '../api/types'
 import { Button, ButtonLink } from '../components/ui/button'
 import { useAuth } from '../context/auth'
@@ -40,9 +40,17 @@ function AgentEntry({ scenarioID, side, target, express }: {
   express: boolean
 }) {
   // StrictMode replays effects; share the get-or-create request for this entry.
-  const request = useRef<ReturnType<typeof builder.ensure> | null>(null)
+  const open = async () => {
+    const before = await myAgents.list().catch(() => null)
+    const result = await builder.ensure({ scenarioID, side })
+    const existed = before?.scenarios.some((scenario) =>
+      scenario.sides[side].some((agent) => agent.agentID === result.agentID)
+    )
+    return { ...result, created: existed === false }
+  }
+  const request = useRef<ReturnType<typeof open> | null>(null)
   const { data, error, loading, reload } = useAsync(
-    () => request.current ??= builder.ensure({ scenarioID, side }),
+    () => request.current ??= open(),
     [scenarioID, side],
   )
 
@@ -79,9 +87,10 @@ function AgentEntry({ scenarioID, side, target, express }: {
   return (
     <Navigate
       replace
-      to={target === 'build'
+      state={data.created ? { renameNewAgent: true } : null}
+      to={target === 'build' && !data.created
         ? `/agents/${data.agentID}/build?${params}`
-        : `/agents/${data.agentID}`}
+        : `/agents/${data.agentID}${express ? '?express=1' : ''}`}
     />
   )
 }

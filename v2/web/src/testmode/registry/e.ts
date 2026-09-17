@@ -1,6 +1,6 @@
 /* E 构建器（/agents/:id/build）——大输入框为主，辅助工具与版本备注为次；保存后返回 EA。
    2026-09-09 咳嗽方案移除了构建器内嵌版本线。VersionList 的 E.version-* 标记仍放在这里，
-   但它现在只渲染于 EA 智能体主页。「新建智能体」浮层可从 MA 或 EA 打开，创建后也先到 EA。 */
+   但它现在只渲染于 EA 智能体主页。新建动作直接进入 EA 并展开改名。 */
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_E: TmRegistry = {
@@ -271,33 +271,7 @@ export const TM_E: TmRegistry = {
     note: 'EA 主页版本卡内打开选择对手面板（OS），并预选这一个版本',
   },
 
-  // ---------- 新建智能体浮层（从 MA 或 EA 的机器人加号打开） ----------
-  'E.new-agent-dialog': {
-    label: '新建智能体浮层',
-    clauses: ['U01-C17', 'U01-C26', 'U01-C23'],
-    note: '桌面锚定触发按钮、移动端贴底；创建成功先进入 EA 主页',
-    when: 'MA 或 EA 点某一侧的机器人加号',
-  },
-  'E.new-agent-close': {
-    label: '关闭弹窗',
-    when: '新建智能体弹窗内',
-  },
-  'E.new-agent-name-input': {
-    label: '自起名输入',
-    clauses: ['U01-C20', 'U01-C22'],
-    note: '#63：展示为「侧角色名「自起名」」；≤30 字与改名同限',
-    when: '新建智能体弹窗内',
-  },
-  'E.new-agent-name-error': {
-    label: '名字行内提示',
-    clauses: ['U01-C22', 'LACK-10'],
-    when: '名字超 30 字或服务端 name_too_long',
-  },
-  'E.new-agent-name-counter': {
-    label: '名字字数',
-    clauses: ['U01-C22'],
-    when: '新建智能体弹窗内',
-  },
+  // ---------- 创建失败时的就地提示 ----------
   'E.new-agent-gate': {
     label: '引导门提示',
     clauses: ['U01-C25', 'U01-C26', 'U01-C17'],
@@ -308,20 +282,14 @@ export const TM_E: TmRegistry = {
   'E.new-agent-gate-switch': {
     label: '先创建对侧',
     clauses: ['U01-C25', 'U01-C17'],
-    note: '切侧不关窗',
+    note: '打开对侧智能体，补齐策略后可再建同侧',
     when: '引导门出现时',
   },
   'E.new-agent-error': {
-    label: '弹窗错误提示',
+    label: '创建错误提示',
     clauses: ['LACK-10'],
     note: '通用失败 / 旧服务器无端点降级 / 网络',
     when: '创建失败',
-  },
-  'E.new-agent-submit': {
-    label: '创建智能体',
-    clauses: ['U01-C17', 'U01-C26', 'U02-C01'],
-    note: '成功后进入新智能体主页；用主页版本标题旁的铅笔加号再进入构建器',
-    when: '新建智能体弹窗内',
   },
 }
 

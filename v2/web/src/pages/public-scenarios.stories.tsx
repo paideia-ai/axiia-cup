@@ -524,9 +524,9 @@ export const BuildAfterLoginKeepsChosenSide: Story = {
     await userEvent.click(
       canvas.getByRole('button', { name: '登录' }),
     )
-    await expect(await canvas.findByLabelText('策略提示词')).toBeVisible()
+    await expect(await canvas.findByLabelText('智能体名称')).toHaveValue('')
     expect(canvas.getByTestId('route-address')).toHaveTextContent(
-      '/agents/902/build?scenario=shangyang-court&side=b',
+      '/agents/902',
     )
     expect(ensures).toEqual([{ scenarioID: 'shangyang-court', side: 'b' }])
   },
@@ -553,9 +553,9 @@ export const BuildAfterRegistrationKeepsChosenSide: Story = {
     )
     await userEvent.type(form.getByLabelText('密码'), 'fixture-password')
     await userEvent.click(canvas.getByRole('button', { name: '创建账户' }))
-    await expect(await canvas.findByLabelText('策略提示词')).toBeVisible()
+    await expect(await canvas.findByLabelText('智能体名称')).toHaveValue('')
     expect(canvas.getByTestId('route-address')).toHaveTextContent(
-      '/agents/902/build?scenario=shangyang-court&side=b',
+      '/agents/902',
     )
     expect(ensures).toEqual([{ scenarioID: 'shangyang-court', side: 'b' }])
   },

@@ -79,9 +79,12 @@ async function createFromInventory(
   await expect(page.getByRole('heading', { name: '我的智能体' }))
     .toBeVisible({ timeout: 30_000 })
   await page.getByRole('button', { name: `新建${role}智能体` }).click()
-  const dialog = page.getByRole('dialog', { name: `新建${role}智能体` })
-  if (name) await dialog.getByLabel('名称（可选）').fill(name)
-  await dialog.getByRole('button', { name: '创建智能体' }).click()
+  const input = page.getByRole('textbox', { name: '智能体名称' })
+  await expect(input).toBeFocused()
+  if (name) {
+    await input.fill(name)
+    await input.press('Enter')
+  } else await input.press('Escape')
   await expect(page).toHaveURL(/\/agents\/\d+$/)
   const agentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
   expect(agentID).toBeGreaterThan(0)
@@ -763,24 +766,16 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
   await test.step('当 我从 A 主页尝试新建另一个商鞅', async () => {
     const rail = page.getByRole('navigation', { name: '同角色智能体' })
     await rail.getByRole('button', { name: `新建${SIDE_A}智能体` }).click()
-    await page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
-      .getByRole('button', { name: '创建智能体' }).click()
   })
 
   await test.step('那么 服务端拒绝并引导我去创建甘龙智能体', async () => {
-    const dialog = page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
-    await expect(dialog.getByRole('alert')).toBeVisible()
-    await expect(dialog.getByRole('button', {
-      name: `去创建${SIDE_B}智能体`,
-    })).toBeVisible()
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.getByRole('link', { name: `去完善${SIDE_B}智能体` }))
+      .toBeVisible()
   })
 
   await test.step('当 我创建甘龙、保存一版，再新建商鞅 B', async () => {
-    const blocked = page.getByRole('dialog', { name: `新建${SIDE_A}智能体` })
-    await blocked.getByRole('button', { name: `去创建${SIDE_B}智能体` })
-      .click()
-    const opposite = page.getByRole('dialog', { name: `新建${SIDE_B}智能体` })
-    await opposite.getByRole('button', { name: '创建智能体' }).click()
+    await page.getByRole('link', { name: `去完善${SIDE_B}智能体` }).click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const sideBID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
     await page.getByRole('link', { name: '新建版本' }).click()
