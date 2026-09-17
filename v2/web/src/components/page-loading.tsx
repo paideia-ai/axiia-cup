@@ -6,6 +6,10 @@ import { useScrollPending } from '../context/navigation-memory'
 import { navigationCache } from '../lib/navigation-cache'
 import { canRetainPageData } from '../lib/use-page-query'
 
+// Only signal a noticeable wait. Data is shown immediately when it arrives;
+// there is deliberately no minimum animation duration.
+const LOADING_FEEDBACK_DELAY_MS = 350
+
 export function PageLoading(
   { variant = 'list', ...props }: HTMLAttributes<HTMLDivElement> & {
     variant?: 'cards' | 'list' | 'detail'
@@ -15,7 +19,7 @@ export function PageLoading(
   useScrollPending(true)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 150)
+    const timer = setTimeout(() => setVisible(true), LOADING_FEEDBACK_DELAY_MS)
     return () => clearTimeout(timer)
   }, [])
   return (
@@ -73,7 +77,7 @@ export function NavigationActivity() {
       setVisible(false)
       return
     }
-    const timer = setTimeout(() => setVisible(true), 150)
+    const timer = setTimeout(() => setVisible(true), LOADING_FEEDBACK_DELAY_MS)
     return () => clearTimeout(timer)
   }, [fetching])
   return (

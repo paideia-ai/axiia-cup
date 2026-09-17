@@ -521,7 +521,7 @@ main .text-\(--accent\) {
   display: grid;
   gap: 1rem;
   opacity: 0;
-  transition: opacity 160ms ease-out;
+  transition: opacity 150ms ease-in-out;
 }
 
 .page-loading[data-visible] .page-loading-shapes {
@@ -594,6 +594,7 @@ main .text-\(--accent\) {
   height: 2px;
   overflow: hidden;
   background: var(--border-soft);
+  animation: loading-feedback-reveal 150ms ease-in-out;
 }
 .navigation-activity::after {
   content: '';
@@ -619,6 +620,14 @@ main .text-\(--accent\) {
   margin-left: 12px;
   text-decoration: underline;
 }
+@keyframes loading-feedback-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 @keyframes content-reveal {
   from {
     opacity: 0.92;
@@ -640,6 +649,7 @@ main .text-\(--accent\) {
     transition: none;
   }
   .page-content-ready,
+  .navigation-activity,
   .navigation-activity::after {
     animation: none;
   }
