@@ -489,8 +489,8 @@ export interface MatchParticipantsDTO {
 }
 
 // P3 新增字段全部 additive：老服务器缺席时按 P1/P2 行为渲染。
-// `createdAt`/`finishedAt` 是 epoch 秒；`challengeID`/`challengeLeg` 标记
-// 约战成对的两条腿；`initiatorIsMe` 按观众视角计算。
+// `createdAt`/`finishedAt` 是 epoch 秒；`challengeID` 标识约战，只有历史双场
+// 记录有 `challengeLeg`；新约战为单场。`initiatorIsMe` 按观众视角计算。
 export interface MatchSummary {
   id: number
   scenarioID: string

@@ -176,6 +176,29 @@ const A6_REQUIRED_VARIABLES = [
 ].sort()
 
 describe('Vivian A3 / A4 / A6 固定版本人测交接', () => {
+  it('单场修订使用新 pin，不沿用旧双场的人审与工程证据', () => {
+    for (const id of ['U06-C06', 'U06-C12']) {
+      expect(source.confirmedClauses[id].versionId).toBe(
+        `policy-2026-09-17:${id}`,
+      )
+      expect(source.confirmedClauses[id]).toMatchObject({
+        textReview: {
+          status: 'pending',
+          source: 'repository-policy-amendment',
+        },
+        humanVerification: { priorState: 'untested' },
+      })
+    }
+    const boundary = STEPS['HV-A6-ENTRY-QUOTA-S05']
+    expect(boundary.expected).toContain('只创建一场')
+    expect(boundary.expected).toContain('被挑战方不扣款、不领奖')
+    expect(boundary.specLine).not.toContain('Vivian 已确认')
+    expect(STEPS['HV-A6-ENTRY-QUOTA-S06'].knownGap?.detail).toContain('已退役')
+    expect(STEPS['HV-A5-PVP-BOUNDARIES-S01'].knownGap?.detail).toContain(
+      '已退役',
+    )
+  })
+
   it('产品实际加载全部当前交接旅程与步骤，而不是只检查未引用的快照', () => {
     const handoff = JOURNEYS.filter((journey) => journey.round === 'handoff')
     expect(handoff).toHaveLength(10)

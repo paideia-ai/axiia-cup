@@ -775,9 +775,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
     id: 'HV-A5-PVP-BOUNDARIES',
     n: 'A5.3',
     chapter: 'A5',
-    title: 'PVP 配额触顶、成对约战与被约方通知',
+    title: 'PVP 单场约战、积分边界与被约方通知',
     prerequisites: [
-      '「A5 人测·配额被约方」：稳定 ID 已预置；测试当天先将 PVP 解锁并刷新到当日可用次数 N/N，再以 {{a5PvpExhaustedOpponentVersionId}} 这个有效对手执行负例；操作前记录队列和对局基线。',
+      '旧 N/N 次数负例已由积分规则取代，S01 保持 blocked；不要为旧负例消耗对局。{{a5PvpExhaustedOpponentVersionId}} 仅为历史预留引用。',
       '「A5 人测·完整发起方」与「A5 人测·配额被约方」在同一场景两侧智能体齐全；测试当天先完成双方 PVP 解锁，每侧显式标记一个参赛版本，成功约战时显式选择 {{a5PvpOpponentVersionId}}。',
       '「A5 人测·配额被约方」保持另一个浏览器会话并打开通知页；两边都打开网络记录，记录环境 URL 与 build SHA。',
     ],
@@ -787,7 +787,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
       '记录 tester、执行时间、build SHA 和每一步实际结果。',
     ],
     completion:
-      'S01–S02 全部执行并提交证据；配额触顶仍入队，或友谊约战等待同意/没有通知，都必须标记对应条款失败。',
+      'S01 记录旧次数条款已被取代，不计为当前通过；S02 提交本轮单场约战通知证据，等待同意或没有通知则标记失败。',
     fixtureProfiles: [
       {
         id: 'a5-pvp-exhausted',
@@ -795,17 +795,17 @@ export const B3_A5_JOURNEYS: Journey[] = [
         accountAlias: 'A5 人测·配额被约方',
         readiness: 'refresh-required',
         description:
-          '稳定智能体与有效对手版本已就绪；当日 PVP 次数 N/N 必须在测试当天刷新。',
+          '旧每日次数负例已停用；该账号不代表当前积分不足，S01 保持 blocked。',
         fields: [
           preparedId(
             'a5PvpExhaustedAgentId',
-            'PVP 当日次数 N/N 的发起智能体 ID',
+            '旧每日次数负例的发起智能体 ID',
             '必须已解锁 PVP，且执行前后都要核对队列与对局基线。',
           ),
           preparedId(
             'a5PvpExhaustedOpponentVersionId',
             '触顶负例使用的有效对手版本 ID',
-            '仅证明拒绝原因是配额触顶，而不是对手无效。',
+            '历史预留版本；不得据此声称已准备好当前积分不足状态。',
           ),
         ],
       },
@@ -850,9 +850,16 @@ export const B3_A5_JOURNEYS: Journey[] = [
         route: '/agents/:id',
         marker: 'OS.challenge-button',
         action:
-          '以「A5 人测·配额被约方」点击「出战」→「玩家约战」，显式选择有效对手版本 {{a5PvpExhaustedOpponentVersionId}} 并点击确认发起；随后检查页面文案、网络响应、队列和上方对局列表。',
+          '本步骤原每日次数验收已过时，请先阅读下方规则变更说明；不要继续消耗对局尝试达到 N/N。 原预留对手版本 {{a5PvpExhaustedOpponentVersionId}} 不能证明当前积分不足，不据此派发。',
         expected:
-          '系统显示完整文案「今日次数已用完（N/N），明天再来」并拒绝入队；操作前后不得新增、排队或派发任何对局。',
+          '旧次数条款保持 blocked，不因当前积分系统允许继续派发而判为产品失败。',
+        knownGap: {
+          'title': '旧每日次数条款已由积分规则取代',
+          'detail':
+            '本步骤原版本验证每日总场数／PvP 次数上限。当前服务端以 0 表示这些上限已退役，不能继续按 N/N 准备账号或判定失败。',
+          'instruction':
+            '保留本步骤的原版本与既有评审，不对旧条款写入当前通过结果。当前余额不足应按奖励规格 U18-C24/C32/C33 使用独立积分 fixture 验证；本步等待替代条款与账号准备。',
+        },
         clauseIds: ['U03-C11'],
         versionPins: {
           'U03-C11': 'confirmed-2026-09-06-u03-c11',

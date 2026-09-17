@@ -71,6 +71,9 @@ export function currentClauseEvidence(id: string) {
 }
 
 export function clauseAuditDate(id: string): string {
+  if (reviewedClauses[id]?.versionId.startsWith('policy-2026-09-17:')) {
+    return '2026-09-17'
+  }
   return reviewedClauses[id]
     ? reviewed.capturedAt
     : spec.generatedAt.slice(0, 10)

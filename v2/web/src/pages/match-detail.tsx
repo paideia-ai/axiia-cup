@@ -534,7 +534,7 @@ export function MatchDetailPage() {
               </button>
             )
             : null}
-          {/* #66 成对约战：标出这是一对中的第几场，另一场给互链（mock V21）。 */}
+          {/* #66 历史双场约战：标出这是一对中的第几场，另一场给互链（mock V21）。 */}
           {challengeLeg != null
             ? (
               <Badge {...tm('FA.challenge-leg-badge')} tone='accent'>

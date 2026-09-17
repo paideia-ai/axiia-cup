@@ -534,7 +534,7 @@ export const TM_PERIPHERY: TmRegistry = {
     clauses: ['U12-C09'],
     journeys: ['j10s2'],
     note:
-      '一行一场；成对约战（#66）并成一组；不含「进行中的对战」条（U05-C09：历史页恒不出现）',
+      '一行一场；历史双场约战（#66）并成一组；不含「进行中的对战」条（U05-C09：历史页恒不出现）',
     when: '有对局时出现',
   },
   'L.match-card': {

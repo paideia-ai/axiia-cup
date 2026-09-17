@@ -1,5 +1,25 @@
 # Vivian human-test fixture preparation — 2026-09-12
 
+## Current policy — 2026-09-17
+
+PvP challenges now create one match on the selected side. Only the initiator
+pays and may claim a winning refund; the opponent supplies a prompt without a
+charge or reward. Both players still need the configured PvE unlock.
+
+The daily total/PvP count limits described below are **legacy fixture
+contracts**. Current points-backed servers publish both limits as zero
+(retired), so these exhaustion provisioners cannot prepare a current
+points-insufficient state. Do not run them to consume points in an attempt to
+reach an obsolete count limit. Use a separately authorized, verified points
+fixture and current server quote for that test; this documentation change does
+not add such a provisioner.
+
+The same-opponent cap is separate: one accepted challenge creates one match and
+consumes one challenge allowance. At the cap, refusal must create no match and
+make no charge. Historical paired records retain their metadata.
+
+## Original fixture tooling
+
 Run these commands from `v2/web`. A3 and the original three-role A6 pack require
 an explicitly supplied admin email, password, and TOTP secret through
 `AXIIA_ADMIN_EMAIL`, `AXIIA_ADMIN_PASSWORD`, and `AXIIA_ADMIN_TOTP_SECRET`. Keep
@@ -116,23 +136,24 @@ unlocked gates and entry versions on both sides of the selected live scenario.
 Entry versions are used even when a newer draft exists.
 
 Only the quota invitee initiates preparation duels; the rich challenger retains
-at least two total and two PVP slots for the later positive paired challenge.
-Direct duels do not consume the same-opponent challenge allowance. Both roles'
-existing same-opponent challenge counts are checked in each direction before
-preparation and refreshed before readiness. Accepted duels are charged at
-dispatch, including terminal failures. The tool waits for each duel before
-starting another and leaves at least two total slots on the invitee, so the A5
-negative check reaches PVP quota rather than total quota.
+the legacy tool’s conservative minimum of two total and two PVP slots for the
+later positive single-match challenge. Direct duels do not consume the
+same-opponent challenge allowance. Both roles' existing same-opponent challenge
+counts are checked in each direction before preparation and refreshed before
+readiness. Accepted duels are charged at dispatch, including terminal failures.
+The tool waits for each duel before starting another and leaves at least two
+total slots on the invitee, so the A5 negative check reaches PVP quota rather
+than total quota.
 
-The final verification submits the actual paired challenge from the exhausted
-invitee. `ready` requires HTTP 429 `pvp_daily_limit`, unchanged initiated match
-IDs, unchanged counters on both accounts, and current gate/entry checks. A
-different rejection leaves `partial`; unexpected acceptance records both match
-IDs and stops. The tool has no cancellation, refund, or quota override. The
-public manifest records the verification and its expiry at midnight UTC+8 (16:00
-UTC). It refuses to begin new work or declare readiness within two minutes of
-reset and stops if a run crosses reset. Readiness is a point-in-time
-observation; later account use can invalidate it before expiry.
+The final verification submits the actual single-match challenge from the
+exhausted invitee. `ready` requires HTTP 429 `pvp_daily_limit`, unchanged
+initiated match IDs, unchanged counters on both accounts, and current gate/entry
+checks. A different rejection leaves `partial`; unexpected acceptance records
+the returned match ID and stops. The tool has no cancellation, refund, or quota
+override. The public manifest records the verification and its expiry at
+midnight UTC+8 (16:00 UTC). It refuses to begin new work or declare readiness
+within two minutes of reset and stops if a run crosses reset. Readiness is a
+point-in-time observation; later account use can invalidate it before expiry.
 
 The private mode-0600 JSONL journal contains credentials followed by synced,
 append-only checkpoint records. The public JSON contains only IDs, usage,
@@ -148,7 +169,7 @@ required by this preparation.
 
 `deno task test:human-fixtures` checks preparation contracts without creating
 accounts or allowing network access. A5's offline contracts cover bounded
-dispatch, role isolation, resumption, UTC+8 expiry, exact paired rejection,
+dispatch, role isolation, resumption, UTC+8 expiry, exact challenge rejection,
 unexpected acceptance, and private output durability. The local real-server test
 `tests/e2e/human-fixture-preparation.real.spec.ts` verifies a prepared A3 signup
 through the browser and the three A6 roles through the real API. It is
