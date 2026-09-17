@@ -686,7 +686,9 @@ function SideCard({
               <ButtonLink
                 size='sm'
                 data-testid={side === 'a' ? 'build-agent' : 'build-agent-b'}
-                to={`/scenarios/${encodeURIComponent(scenarioID)}/build?side=${side}`}
+                to={`/scenarios/${
+                  encodeURIComponent(scenarioID)
+                }/build?side=${side}`}
                 {...tm('DA.build-button')}
               >
                 <Hammer className='mr-1.5 h-3.5 w-3.5' />

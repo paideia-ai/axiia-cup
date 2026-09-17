@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import {
   ApiError,
-  builder,
   catalog,
   challenges,
   config as configApi,

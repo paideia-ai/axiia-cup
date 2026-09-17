@@ -76,6 +76,9 @@ jobs:
       - name: Rewards and sound Gherkin browser journeys
         run: deno task test:e2e:rewards
 
+      - name: Native navigation browser journeys
+        run: deno task test:e2e:navigation
+
       - name: Build
         run: deno task build
 

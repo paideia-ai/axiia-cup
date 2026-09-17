@@ -46,6 +46,32 @@ async function api(request: Request, path: string): Promise<Response> {
       return json({ demoMatches: [], topPlayers: [], totalMatches: 1 })
     case '/config':
       return json(config)
+    case '/rewards':
+      return json({
+        balance: 1000,
+        dailyAllowance: 1000,
+        battleCost: 100,
+        dailyRuns: 10,
+        pveWinRefundPercent: 50,
+        pvpWinRefundPercent: 80,
+        pointsPerYuan: 100,
+        nextGrantAt: 0,
+        claimableRewards: [{ matchID: 9001, points: 50, kind: 'pve' }],
+      })
+    case '/rewards/quote':
+      return json({
+        cost: 100,
+        perBattleCost: 100,
+        repeatRoleSurcharge: false,
+        battleCosts: [100],
+      })
+    case '/rewards/matches/9001':
+      return json({
+        matchID: 9001,
+        points: 50,
+        status: 'claimable',
+        kind: 'pve',
+      })
     case '/models':
       return json({ models: config.models })
     case '/scenarios':

@@ -54,6 +54,35 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       return json({ demoMatches: [], topPlayers: [], totalMatches: 0 })
     }
     if (path === '/models') return json({ models: config.models })
+    if (path === '/rewards') {
+      return json({
+        balance: 1000,
+        dailyAllowance: 1000,
+        battleCost: 100,
+        dailyRuns: 10,
+        pveWinRefundPercent: 50,
+        pvpWinRefundPercent: 80,
+        pointsPerYuan: 100,
+        nextGrantAt: 0,
+        claimableRewards: [{ matchID: 9001, points: 50, kind: 'pve' }],
+      })
+    }
+    if (path === '/rewards/quote') {
+      return json({
+        cost: 100,
+        perBattleCost: 100,
+        repeatRoleSurcharge: false,
+        battleCosts: [100],
+      })
+    }
+    if (path === '/rewards/matches/9001') {
+      return json({
+        matchID: 9001,
+        points: 50,
+        status: 'claimable',
+        kind: 'pve',
+      })
+    }
     if (path === '/config') return json(config)
     if (path === '/scenarios') return json(scenarioList)
     if (path === `/scenarios/${scenario.summary.id}`) {
@@ -107,7 +136,23 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
     if (path === '/tournaments') {
       return json({ tournaments: [{ id: 1, phase: 'qualifier', round: 1 }] })
     }
-    if (path === '/tournaments/1/standings') return json({ entries: [] })
+    if (path === '/tournaments/1/standings') {
+      return json({
+        entries: [{
+          playerID: 'navigation-test',
+          playerName: '导航测试',
+          rank: 1,
+          wins: 1,
+          losses: 0,
+          buchholz: 0,
+          winRate: 100,
+          submissionIDs: [1002],
+        }],
+      })
+    }
+    if (path === '/versions/1002/ref') {
+      return json({ versionID: 1002, agentID: 101 })
+    }
     unexpected.push(`${request.method()} ${path}`)
     return json({ error: 'unexpected_fixture_request', message: path }, 500)
   })
@@ -131,7 +176,8 @@ async function showJourney(page: Page) {
 const cases: {
   name: string
   path: string
-  marker: string
+  marker?: string
+  selector?: string
   destination: RegExp
   options?: FixtureOptions
   prepare?: (page: Page) => Promise<void>
@@ -238,19 +284,31 @@ const cases: {
     prepare: (page) => openPanel(page, 'pvp'),
   },
   {
-    name: 'battle panel missing side',
-    path: '/agents/101',
-    marker: 'OS.create-side-button',
-    destination: /\/agents\/101$/,
-    options: { empty: true, unlocked: true },
-    prepare: (page) => openPanel(page, 'pvp'),
-  },
-  {
     name: 'first battle rematch',
     path: '/matches/9001',
     marker: 'FA.journey-rematch-button',
     destination: /\/agents\/101$/,
     prepare: showJourney,
+  },
+  {
+    name: 'continue accepted first battle',
+    path: '/agents/101/build?scenario=shangyang-court&side=a&express=1',
+    selector: 'a[href="/matches/9001?express=1"]',
+    destination: /\/matches\/9001\?express=1$/,
+    prepare: async (page) => {
+      await page.evaluate(() =>
+        sessionStorage.setItem(
+          'axiia:first-battle-attempt:v1:navigation-test:101',
+          JSON.stringify({
+            versionID: 1002,
+            presetKey: 'test',
+            status: 'accepted',
+            matchID: 9001,
+          }),
+        )
+      )
+      await page.reload()
+    },
   },
   {
     name: 'first battle opposite',
@@ -284,6 +342,24 @@ const cases: {
     marker: 'G.tournament-card',
     destination: /\/tournaments\/1$/,
   },
+  {
+    name: 'tournament submitted version',
+    path: '/tournaments/1',
+    selector: 'a[href="/versions/1002"]:visible',
+    destination: /\/agents\/101$/,
+  },
+  {
+    name: 'header rewards',
+    path: '/my-agents',
+    selector: 'a[href="/rewards"]',
+    destination: /\/rewards$/,
+  },
+  {
+    name: 'reward match details',
+    path: '/rewards',
+    selector: 'a[href="/matches/9001"]',
+    destination: /\/matches\/9001$/,
+  },
 ]
 
 async function checkNewTab(
@@ -300,6 +376,13 @@ async function checkNewTab(
   const popup = await popupPromise
   await expect(popup).toHaveURL(destination)
   await expect(popup.getByRole('heading').first()).toBeVisible()
+  if (
+    new URL(popup.url()).searchParams.get('express') === '1' &&
+    new URL(popup.url()).pathname.startsWith('/matches/')
+  ) {
+    await expect(popup.locator('[data-tm="FA.journey-rematch-button"]'))
+      .toBeVisible()
+  }
   await expect(page).toHaveURL(original)
   await expect(link).toBeVisible()
   await popup.close()
@@ -310,7 +393,8 @@ for (const entry of cases) {
     const { ensures, unexpected, errors } = await fixtures(page, entry.options)
     await page.goto(entry.path)
     await entry.prepare?.(page)
-    const link = page.locator(`[data-tm="${entry.marker}"]`).first()
+    const link = page.locator(entry.selector ?? `[data-tm="${entry.marker}"]`)
+      .first()
     await expect(link).toHaveAttribute('href', /^\//)
     expect(await link.evaluate((el) => el.tagName)).toBe('A')
     await expect(link.locator('button, a, input')).toHaveCount(0)
@@ -382,8 +466,8 @@ test('entry errors can retry, and back does not repeat get-or-create', async ({ 
     }
     await route.fallback()
   })
-  await page.goto(scenarioPath)
-  await page.getByTestId('build-agent').click()
+  await page.goto('/express')
+  await page.locator('[data-tm="X.build-button"]').click()
   await expect(page.getByRole('alert')).toHaveText('请稍后重试')
   expect(attempts).toBe(1)
   await page.getByRole('button', { name: '重试', exact: true }).click()
@@ -391,7 +475,7 @@ test('entry errors can retry, and back does not repeat get-or-create', async ({ 
   expect(attempts).toBe(2)
   expect(ensures).toHaveLength(1)
   await page.goBack()
-  await expect(page).toHaveURL(scenarioPath)
+  await expect(page).toHaveURL(/\/express$/)
   expect(attempts).toBe(2)
 })
 
@@ -405,7 +489,7 @@ test('leaving a pending entry cannot redirect the current page', async ({ page }
   })
   await page.goto(scenarioPath)
   await page.getByTestId('build-agent').click()
-  await expect(page.getByRole('status')).toHaveText('正在打开智能体…')
+  await expect(page.getByRole('status')).toHaveText('正在准备你的智能体…')
   await page.goBack()
   await expect(page).toHaveURL(scenarioPath)
   release()

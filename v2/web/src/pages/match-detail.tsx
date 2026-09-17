@@ -63,10 +63,11 @@ export function MatchDetailPage() {
   // （stories）拿到 null，静默跳过。
   const optionalAuth = useOptionalAuth()
   const refreshAuth = optionalAuth?.refresh ?? null
-  // 旅程卡（#67/V23）的诚实判据：express 流程把标记随导航 state 一路带到
-  // 实况页——只有确知是首战的对局才展示，不做「猜第一场」的启发式。
+  // 首战流程显式传递标记；「继续首战」使用 URL，让新标签也保留引导。
+  // 这里只决定展示，不影响服务端首战资格、积分或派发。
   const expressArrival =
-    (location.state as { express?: boolean } | null)?.express === true
+    (location.state as { express?: boolean } | null)?.express === true ||
+    new URLSearchParams(location.search).get('express') === '1'
   const { data, error, loading, reload } = useAsync(
     () => matches.detail(matchID),
     [matchID],

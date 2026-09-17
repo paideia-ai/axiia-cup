@@ -74,14 +74,14 @@ button styling. Do not nest buttons inside links or implement page shortcuts
 with button click handlers: native anchors preserve middle-click, Ctrl/Cmd-click,
 Shift-click, keyboard activation, and the browser's link context menu. Dialogs,
 disclosures, and form submissions remain buttons. Get-or-create shortcuts link
-to `/agents/entry`; that page resolves the agent in the destination tab and
-replaces itself with the agent home or builder, with a retry on failure.
+to `/agents/entry` (or the public scene's `/scenarios/:id/build` entry); the
+destination tab resolves the agent and replaces the entry with the agent home
+or builder, with a retry on failure. Continuing an accepted first battle uses
+`?express=1` to preserve its guidance in new tabs, without dispatching again.
 
-With the local dev server running, `deno task test:e2e
-tests/e2e/navigation-links.spec.ts` verifies navigation using intercepted API
-fixtures, including new tabs and entry error/retry behavior. It needs Chromium
-but no backend or live account. Set `AXIIA_BASE_URL` to the local dev URL if
-using a port other than 5173.
+`deno task test:e2e:navigation` starts a local dev server and verifies navigation
+using intercepted API fixtures, including new tabs and entry error/retry behavior.
+It needs Chromium but no backend or live account, and also runs in CI.
 
 For a manual navigation preview, run `deno task preview:navigation` and open
 `http://127.0.0.1:5177/agents/101` or
