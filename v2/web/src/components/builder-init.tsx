@@ -14,9 +14,11 @@ import { Button } from './ui/button'
 
 interface InitModesProps {
   deck: Deck | null
+  presetRoleKey?: string | null
+  presetRoles?: { key: string; name: string; deck: Deck }[]
   metaPrompt: string
   currentPrompt: string
-  onFill: (text: string, method: 'mcq' | 'builder') => void
+  onFill: (text: string, method: 'mcq' | 'builder', roleKey?: string) => void
   promptUnitLimit: number | null
   express?: boolean
   initialTool?: CreationTool | null
@@ -28,6 +30,8 @@ interface InitModesProps {
 // dialogs instead of competing with the primary strategy textarea.
 export function InitModes({
   deck,
+  presetRoleKey = null,
+  presetRoles = [],
   metaPrompt,
   currentPrompt,
   onFill,
@@ -40,6 +44,36 @@ export function InitModes({
     !express && initialTool !== 'raw' ? initialTool : null,
   )
   const [tool, setTool] = useState<CreationTool>(initialTool ?? 'mcq')
+
+  const [previewRoleKey, setPreviewRoleKey] = useState(presetRoleKey)
+  const previewRole = presetRoles.find((role) => role.key === previewRoleKey) ??
+    presetRoles[0]
+  const previewDeck = previewRole?.deck ?? deck
+  const rolePicker = presetRoles.length > 0
+    ? (
+      <fieldset className='mb-5 space-y-2'>
+        <legend className='mb-2 text-sm font-semibold'>选择角色</legend>
+        <div className='flex flex-wrap gap-2'>
+          {presetRoles.map((role) => (
+            <Button
+              key={role.key}
+              type='button'
+              size='sm'
+              variant={previewRole?.key === role.key ? 'primary' : 'secondary'}
+              aria-pressed={previewRole?.key === role.key}
+              onClick={() => setPreviewRoleKey(role.key)}
+            >
+              {role.name}
+            </Button>
+          ))}
+        </div>
+      </fieldset>
+    )
+    : null
+  const fillPreset = (text: string) => {
+    if (previewRole) onFill(text, 'mcq', previewRole.key)
+    else onFill(text, 'mcq')
+  }
 
   useEffect(() => {
     if (initialTool === 'raw') onDirect?.()
@@ -128,7 +162,10 @@ export function InitModes({
           size='sm'
           variant='ghost'
           className='h-11 md:h-8'
-          onClick={() => setOpen('mcq')}
+          onClick={() => {
+            setPreviewRoleKey(presetRoleKey)
+            setOpen('mcq')
+          }}
           {...tm('E.init-tab-mcq')}
         >
           选择预设策略
@@ -147,14 +184,16 @@ export function InitModes({
       {open === 'mcq'
         ? (
           <ToolDialog title='选择预设策略' onClose={() => setOpen(null)}>
-            {deck
+            {rolePicker}
+            {previewDeck
               ? (
                 <McqDraft
-                  deck={deck}
+                  key={previewRole?.key}
+                  deck={previewDeck}
                   currentPrompt={currentPrompt}
                   promptUnitLimit={promptUnitLimit}
                   onFill={(text) => {
-                    onFill(text, 'mcq')
+                    fillPreset(text)
                     setOpen(null)
                   }}
                 />

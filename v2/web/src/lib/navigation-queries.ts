@@ -28,6 +28,12 @@ export const scenarioQuery = (
     queryFn: () => catalog.scenario(id, side, { credentials }),
     staleTime: 30_000,
   })
+export const modelsQuery = () =>
+  queryOptions({
+    queryKey: ['models'],
+    queryFn: () => catalog.models(),
+    staleTime: 30_000,
+  })
 export const inventoryQuery = () =>
   queryOptions({
     queryKey: ['inventory'],

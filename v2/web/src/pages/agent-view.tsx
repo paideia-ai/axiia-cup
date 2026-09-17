@@ -16,6 +16,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -36,7 +37,8 @@ import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import { Select, SelectItem } from '../components/ui/select'
+import { VersionPicker } from '../components/version-picker'
+import { promptDiff } from '../lib/prompt-diff'
 import { VersionList } from '../components/version-list'
 import {
   beginEntryMutation,
@@ -50,7 +52,11 @@ import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
 import { cn } from '../lib/cn'
 import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
-import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
+import {
+  agentQuery,
+  inventoryQuery,
+  modelsQuery,
+} from '../lib/navigation-queries'
 import { versionTag } from '../lib/version-label'
 import { tm } from '../testmode/mark'
 import {
@@ -900,6 +906,10 @@ function VersionCompare({
   agentID: number
   versions: AgentVersionDTO[]
 }) {
+  const { data: modelList } = usePageQuery(modelsQuery())
+  const modelLabels = new Map(
+    modelList?.models?.map((model) => [model.id, model.label]),
+  )
   const sorted = [...versions].sort((a, b) => b.id - a.id)
   const [baseID, setBaseID] = useState(String(sorted[1]?.id ?? ''))
   const [headID, setHeadID] = useState(String(sorted[0]?.id ?? ''))
@@ -937,16 +947,12 @@ function VersionCompare({
     }
   }, [agentID, baseID, headID, open])
 
-  if (sorted.length === 0) return null
+  const changes = useMemo(
+    () => diff ? promptDiff(diff.base.prompt, diff.head.prompt) : [],
+    [diff],
+  )
 
-  const optionLabel = (id: string) => {
-    const version = sorted.find((candidate) => String(candidate.id) === id)
-    if (!version) return id
-    const note = version.note?.trim()
-    return `${versionTag(version, sorted)}${version.isEntry ? ' ★' : ''}${
-      note ? ` · ${note}` : ''
-    } · ${version.modelID}`
-  }
+  if (sorted.length === 0) return null
 
   if (sorted.length === 1) {
     return (
@@ -995,25 +1001,18 @@ function VersionCompare({
           </Button>
         </h2>
 
-        <div className='w-32 sm:w-44' {...tm('EA.diff-base-select')}>
-          <Select
+        <div {...tm('EA.diff-base-select')}>
+          <VersionPicker
+            label='选择基准版本'
             value={baseID}
-            placeholder='选择基准版本'
-            renderValue={optionLabel}
-            onValueChange={(value) => {
-              if (!value) return
+            otherID={headID}
+            versions={sorted}
+            modelLabels={modelLabels}
+            onChange={(value) => {
               setBaseID(value)
               setOpen(true)
             }}
-          >
-            {sorted.filter((version) => String(version.id) !== headID).map(
-              (version) => (
-                <SelectItem key={version.id} value={String(version.id)}>
-                  {optionLabel(String(version.id))}
-                </SelectItem>
-              ),
-            )}
-          </Select>
+          />
         </div>
 
         <ArrowLeftRight
@@ -1021,25 +1020,18 @@ function VersionCompare({
           className='h-3.5 w-3.5 shrink-0 text-(--foreground-muted)'
         />
 
-        <div className='w-32 sm:w-44' {...tm('EA.diff-head-select')}>
-          <Select
+        <div {...tm('EA.diff-head-select')}>
+          <VersionPicker
+            label='选择对比版本'
             value={headID}
-            placeholder='选择对比版本'
-            renderValue={optionLabel}
-            onValueChange={(value) => {
-              if (!value) return
+            otherID={baseID}
+            versions={sorted}
+            modelLabels={modelLabels}
+            onChange={(value) => {
               setHeadID(value)
               setOpen(true)
             }}
-          >
-            {sorted.filter((version) => String(version.id) !== baseID).map(
-              (version) => (
-                <SelectItem key={version.id} value={String(version.id)}>
-                  {optionLabel(String(version.id))}
-                </SelectItem>
-              ),
-            )}
-          </Select>
+          />
         </div>
       </div>
 
@@ -1074,27 +1066,57 @@ function VersionCompare({
                     className='grid gap-3 md:grid-cols-2'
                     {...tm('EA.diff-result')}
                   >
+                    <p
+                      className='flex gap-4 text-xs md:col-span-2'
+                      role='status'
+                    >
+                      {diff.base.prompt === diff.head.prompt
+                        ? '两版策略正文相同。'
+                        : (
+                          <>
+                            <span className='text-red-300'>− 删去</span>
+                            <span className='text-emerald-300'>＋ 新增</span>
+                          </>
+                        )}
+                    </p>
                     {([
                       ['基准', diff.base],
                       ['对比', diff.head],
-                    ] as const).map(([label, version]) => (
+                    ] as const).map(([label, version], index) => (
                       <div
                         key={label}
                         className='min-w-0 space-y-1.5'
                         {...tm('EA.diff-column')}
                       >
                         <p
-                          className='text-xs font-semibold text-(--foreground-subtle)'
+                          className='text-xs text-(--foreground-subtle)'
                           {...tm('EA.diff-column-title')}
                         >
-                          {label} {versionTag(version, sorted)} ·{' '}
-                          {version.modelID}
+                          <span className='font-semibold'>
+                            {versionTag(version, sorted)}
+                          </span>
+                          {version.note?.trim() && (
+                            <span className='ml-2 break-words'>
+                              {version.note.trim()}
+                            </span>
+                          )}
+                          {version.modelID && (
+                            <span className='ml-2 text-(--foreground-muted)'>
+                              {modelLabels.get(version.modelID) ??
+                                version.modelID}
+                            </span>
+                          )}
                         </p>
                         <pre
-                          className='max-h-80 overflow-auto whitespace-pre-wrap wrap-anywhere rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-sm leading-7 text-(--foreground-subtle)'
+                          aria-label={`${versionTag(version, sorted)} 策略正文`}
+                          className='max-h-96 overflow-auto whitespace-pre-wrap wrap-anywhere rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-sm leading-7 text-(--foreground-subtle)'
                           {...tm('EA.diff-prompt')}
                         >
-                          {version.prompt}
+                          {changes.filter((change) => change.kind !== (index === 0 ? 'added' : 'removed')).map((change, part) =>
+                            change.kind === 'same' ? change.text : change.kind === 'removed'
+                              ? <del key={part} className='rounded-sm bg-red-400/15 text-red-200 decoration-red-300/60'>{change.text}</del>
+                              : <ins key={part} className='rounded-sm bg-emerald-400/15 text-emerald-200 underline decoration-emerald-300/60 underline-offset-4'>{change.text}</ins>
+                          )}
                         </pre>
                       </div>
                     ))}

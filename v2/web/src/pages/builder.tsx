@@ -39,6 +39,7 @@ import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
+import { ModelSelect } from '../components/model-select'
 import { VersionNote } from '../components/version-note'
 import { useOptionalAuth } from '../context/auth'
 import {
@@ -773,7 +774,14 @@ export function BuilderPage() {
   }
 
   // Preset fills use the same authoritative server-draft channel as typing.
-  const fillWorkspace = (value: string, method?: 'mcq' | 'builder') => {
+  const fillWorkspace = (
+    value: string,
+    method?: 'mcq' | 'builder',
+    presetRoleKey?: string,
+  ) => {
+    const presetRole = roleByKey(roleModule, presetRoleKey)
+    const nextRoleKey = presetRole?.side === side ? presetRole.key : roleKey
+    setRoleKey(nextRoleKey)
     if (mutateTimer.current) {
       clearTimeout(mutateTimer.current)
       mutateTimer.current = null
@@ -788,6 +796,7 @@ export function BuilderPage() {
       prompt: value,
       promptPersisted: false,
       method: nextMethod,
+      roleKey: nextRoleKey,
     })
     void enqueueDraftMutation().catch(() => {})
   }
@@ -1158,6 +1167,15 @@ export function BuilderPage() {
               initialTool={requestedTool}
               onDirect={focusPrompt}
               deck={deck}
+              presetRoleKey={roleKey}
+              presetRoles={deckFor(scenarioID, side)
+                ? []
+                : roles.flatMap((role) => {
+                  const roleDeck = deckFor(scenarioID, side, role.key)
+                  return roleDeck
+                    ? [{ key: role.key, name: role.name, deck: roleDeck }]
+                    : []
+                })}
               metaPrompt={metaPromptFor(
                 roleModule,
                 scenario?.summary.title ?? scenarioID,
@@ -1347,25 +1365,16 @@ export function BuilderPage() {
               className='w-[min(14rem,calc(100vw-3rem))]'
               {...tm('E.model-select')}
             >
-              <Select
+              <ModelSelect
                 key={`model:${saving}`}
                 value={modelID}
-                className='h-11 md:h-10'
                 disabled={!workspaceReady || saving}
-                renderValue={(v) =>
-                  modelOptions.find((model) => model.id === v)?.label ?? v}
-                onValueChange={(v) => {
-                  if (!v) return
+                options={modelOptions}
+                onChange={(v) => {
                   setModelID(v)
                   journalWorkspace({ modelID: v })
                 }}
-              >
-                {modelOptions.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.label}
-                  </SelectItem>
-                ))}
-              </Select>
+              />
             </div>
           </label>
           <VersionNote
