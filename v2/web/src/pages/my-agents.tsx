@@ -15,6 +15,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { subscribeAgentsChanged } from '../lib/agent-events'
 import { messageOf, useAsync } from '../lib/use-async'
+import { myAgentsDescriptions } from '../scenarios/my-agents-copy'
 import { tm } from '../testmode/mark'
 
 interface CreateTarget {
@@ -284,8 +285,8 @@ function ScenarioGroup({
   onNewAgent: (side: Side, anchor: HTMLElement) => void
 }) {
   const sides = ([
-    ['a', scenario.sideAName, scenario.sideALabel],
-    ['b', scenario.sideBName, scenario.sideBLabel],
+    ['a', scenario.sideAName, myAgentsDescriptions(scenario, 'a')],
+    ['b', scenario.sideBName, myAgentsDescriptions(scenario, 'b')],
   ] as const).filter(([side]) => onlySide == null || side === onlySide)
   const agentsOf = (side: Side): MyAgentDTO[] => inventory?.sides[side] ?? []
   const sideStatus = sides.map(([side, name]) => {
@@ -362,7 +363,7 @@ function ScenarioGroup({
           </span>
         </div>
 
-        {sides.map(([side, role, description]) => {
+        {sides.map(([side, role, descriptions]) => {
           const agents = agentsOf(side)
           const headingID = `my-agents-${scenario.id}-${side}`
           return (
@@ -382,13 +383,14 @@ function ScenarioGroup({
                   >
                     {role}智能体
                   </h3>
-                  {description
-                    ? (
-                      <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
-                        {description}
-                      </p>
-                    )
-                    : null}
+                  {descriptions.map((description) => (
+                    <p
+                      key={description}
+                      className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'
+                    >
+                      {description}
+                    </p>
+                  ))}
                 </div>
                 <span {...tm('MA.new-agent-button')}>
                   <NewAgentButton
@@ -464,8 +466,8 @@ function FallbackScenarioGroup({
   onEnter: (side: Side) => void
 }) {
   const sides = ([
-    ['a', scenario.sideAName, scenario.sideALabel],
-    ['b', scenario.sideBName, scenario.sideBLabel],
+    ['a', scenario.sideAName, myAgentsDescriptions(scenario, 'a')],
+    ['b', scenario.sideBName, myAgentsDescriptions(scenario, 'b')],
   ] as const).filter(([side]) => onlySide == null || side === onlySide)
 
   return (
@@ -485,7 +487,7 @@ function FallbackScenarioGroup({
           </span>
         </div>
 
-        {sides.map(([side, role, description]) => {
+        {sides.map(([side, role, descriptions]) => {
           const key = `${scenario.id}:${side}`
           const isPending = pending === key
           const headingID = `my-agents-fallback-${scenario.id}-${side}`
@@ -506,13 +508,14 @@ function FallbackScenarioGroup({
                   >
                     {role}智能体
                   </h3>
-                  {description
-                    ? (
-                      <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
-                        {description}
-                      </p>
-                    )
-                    : null}
+                  {descriptions.map((description) => (
+                    <p
+                      key={description}
+                      className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'
+                    >
+                      {description}
+                    </p>
+                  ))}
                 </div>
                 <NewAgentButton
                   role={role}
