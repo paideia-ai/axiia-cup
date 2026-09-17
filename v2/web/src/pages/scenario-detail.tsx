@@ -146,15 +146,6 @@ export function ScenarioDetailPage() {
                   : null}
               </div>
 
-              {education?.openingLine
-                ? (
-                  <OpeningLine
-                    line={education.openingLine}
-                    speaker={intro?.source.participants.judge.name ?? null}
-                  />
-                )
-                : null}
-
               <div className='grid items-start gap-4 md:grid-cols-2'>
                 {(['a', 'b'] as const).map((side) => (
                   <SideCard
@@ -982,33 +973,6 @@ function ScoreRuleRow({ item }: { item: ScenarioScoringDTO['items'][number] }) {
         {score}
       </span>
     </div>
-  )
-}
-
-// #51 W2 EXPAND-1「开场白」（u04-c13 裁定）：对局开始、双方发言之前，场景/裁判
-// 对双方同时说的统一首句。文与运行时 OPENING_LINE 同源——值取自
-// runtime-quotes.json，v2/scenarios 的 deno task validate 逐字核对；这里只读
-// 展示，不另写会漂移的第二份。没有统一开场首句的场景不渲染本块。
-function OpeningLine({
-  line,
-  speaker,
-}: {
-  line: string
-  speaker: string | null
-}) {
-  return (
-    <figure
-      data-testid='opening-line'
-      className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
-      {...tm('DA.opening-line')}
-    >
-      <figcaption className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-        开场白{speaker ? ` · 对局开始时${speaker}对双方说的第一句话` : ''}
-      </figcaption>
-      <blockquote className='mt-1 text-sm leading-7 text-(--foreground-subtle)'>
-        「{line}」
-      </blockquote>
-    </figure>
   )
 }
 
