@@ -67,7 +67,7 @@ function deferred() {
 }
 
 test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
-  test('P3 #66/#76 creates two paired PVP legs, charges two uses, and emits one merged notification', async ({ page }) => {
+  test('Single PvP challenge preserves the selected role, charges once, and notifies the opponent', async ({ page }) => {
     test.setTimeout(120_000)
     const stamp = Date.now()
     const arenaID = `e2e-arena-${stamp}`
@@ -116,11 +116,16 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       }
 
     // UI 旅程（mock V20）：出战面板 → 玩家约战（已解锁）→ 对手玩家 → 发起
-    // 双侧约战。
+    // 单场约战。
     await openBattlePanel(page, mineA.agentID)
     await page.getByRole('tab', { name: /玩家约战/ }).click()
     await expect(page.getByText('玩家约战已解锁')).toBeVisible()
-    await expect(page.getByText('我的双侧出战阵容', { exact: false }))
+    await expect(
+      page.getByText(
+        `我方${FIXTURE_SIDE_A_NAME} vs 对方${FIXTURE_SIDE_B_NAME}`,
+        { exact: true },
+      ),
+    )
       .toBeVisible()
     await expect(page.getByText(target.displayName, { exact: true }))
       .toBeVisible()
@@ -128,28 +133,24 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       response.url().endsWith('/v1/challenges') &&
       response.request().method() === 'POST'
     )
-    await page.getByRole('button', { name: '发起双侧约战' }).click()
+    await page.getByRole('button', { name: '发起约战' }).click()
     const challengeHttp = await dispatched
     expect(challengeHttp.status()).toBe(200)
     const challenge = await challengeHttp.json() as {
       challengeID: number
       matchIDs: number[]
     }
-    expect(challenge.matchIDs).toHaveLength(2)
+    expect(challenge.matchIDs).toHaveLength(1)
 
-    // F6 成功态：镜像 PVE——面板关闭并重定向到第 ① 场实况（站内路由）；
-    // 约战① 徽记 + 「查看另一场」互链保证两场都可达（mock V21 语义上移）。
     await expect(page).toHaveURL(
       new RegExp(`/matches/${challenge.matchIDs[0]}$`),
     )
-    await expect(page.getByText('约战①', { exact: true })).toBeVisible()
-    // F7：② 判完后互链会带上结果（查看另一场（②：对方（甘龙）胜）→），
-    // 前缀匹配两态皆中，不与判分赛跑。
-    await expect(page.getByRole('link', { name: /查看另一场（②/ }))
-      .toHaveAttribute('href', `/matches/${challenge.matchIDs[1]}`)
+    await expect(page.getByText('约战①', { exact: true })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /查看另一场/ })).toHaveCount(0)
+    expect(challengeHttp.request().postDataJSON().mine).toEqual({
+      a: { versionID: mineA.versionID },
+    })
 
-    // API 复核 ①：两条腿成对——同 challengeID、leg 1/2、kind pvp、执侧成对
-    // 交叉（我甲对他乙，他甲对我乙），且都在固定局上真实跑完。
     const legs: MatchSummaryJSON[] = []
     for (const matchID of challenge.matchIDs) {
       await expect
@@ -165,9 +166,8 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     }
     expect(legs.map((leg) => leg.challengeID)).toEqual([
       challenge.challengeID,
-      challenge.challengeID,
     ])
-    expect(legs.map((leg) => leg.challengeLeg)).toEqual([1, 2])
+    expect(legs[0].challengeLeg ?? null).toBeNull()
     for (const leg of legs) {
       expect(leg.kind).toBe('pvp')
       expect(leg.scenarioID).toBe(arenaID)
@@ -176,23 +176,20 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     expect(legs[0].participants?.a.versionID).toBe(mineA.versionID)
     expect(legs[0].participants?.a.isMine).toBe(true)
     expect(legs[0].participants?.b.ownerDisplayName).toBe(target.displayName)
-    expect(legs[1].participants?.a.ownerDisplayName).toBe(target.displayName)
-    expect(legs[1].participants?.b.versionID).toBe(mineB.versionID)
-    expect(legs[1].participants?.b.isMine).toBe(true)
 
-    // API 复核 ②：一次成对约战对发起人计 2 场（总额与 PVP 日额都 +2）。
+    // API 复核 ②：一次约战对发起人计一场。
     const usageAfter =
       (await (await page.request.get('/v1/config')).json()) as {
         usage: { battlesToday: number; pvpBattlesToday: number }
       }
     expect(usageAfter.usage.battlesToday).toBe(
-      usageBefore.usage.battlesToday + 2,
+      usageBefore.usage.battlesToday + 1,
     )
     expect(usageAfter.usage.pvpBattlesToday).toBe(
-      usageBefore.usage.pvpBattlesToday + 2,
+      usageBefore.usage.pvpBattlesToday + 1,
     )
 
-    // API 复核 ③：被约战方恰好一条合并 challenged 通知，锚在 challengeID 上。
+    // API 复核 ③：被约战方恰好一条 challenged 通知，锚在 challengeID 上。
     const inbox = await (await target.context.get('/v1/notifications'))
       .json() as {
         notifications: {
@@ -209,7 +206,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     expect(challenged).toHaveLength(1)
     expect(challenged[0].matchID).toBe(challenge.challengeID)
     expect(challenged[0].read).toBe(false)
-    expect(challenged[0].title ?? '').toContain('向你发起双侧约战')
+    expect(challenged[0].title ?? '').toContain('向你发起约战')
     expect(challenged[0].title ?? '').toContain(`测试玩家 ${challengerLabel}`)
 
     await target.context.dispose()

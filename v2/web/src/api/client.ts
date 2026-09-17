@@ -290,8 +290,6 @@ export const matches = {
 // ── Challenges（P3 #66） ────────────────────────────────────────────────────
 
 export const challenges = {
-  // 双侧成对约战：一次产生两场（正/反），配额对发起人计 2 场。后端批次未
-  // 上线时答 404/405，调用方降级为功能提示，不摆假控件。
   create: (input: CreateChallengeRequest) =>
     request<ChallengeResponse>('POST', '/challenges', input).finally(
       refreshRewards,

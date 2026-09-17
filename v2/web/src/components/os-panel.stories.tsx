@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { delay, http, HttpResponse, type RequestHandler } from 'msw'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import type { RewardsResponse } from '../api/types'
 import { RewardsProvider } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
@@ -330,12 +330,12 @@ function quotaRejectionStory(
         await canvas.findByRole('button', { name: '按 id 约战' }),
       )
       await userEvent.type(
-        canvas.getByPlaceholderText('输入对方任一版本 id（战报页可复制）'),
+        canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
         '367',
       )
       await userEvent.click(canvas.getByRole('button', { name: '查询' }))
       const confirm = await canvas.findByRole('button', {
-        name: '发起双侧约战',
+        name: '发起约战',
       })
       await expect(confirm).toBeEnabled()
       await userEvent.click(confirm)
@@ -348,10 +348,10 @@ function quotaRejectionStory(
       expect(readsAfterRejection).toBe(1)
       expect(attempts).toEqual([{
         scenarioID: unlockedScenario.summary.id,
-        mine: { a: { versionID: 1002 }, b: { versionID: 2001 } },
+        mine: { a: { versionID: 1002 } },
         opponent: { pinnedVersionID: 367 },
       }])
-      expect(canvas.queryByText('已发起双侧约战 · 两场对局已入队')).toBeNull()
+      expect(canvas.queryByText('已发起约战 · 对局已入队')).toBeNull()
       if (refreshedUsage?.battlesToday !== 4) {
         expect(canvas.queryByText('今日已用 4/10（PVP 4/5）')).toBeNull()
       }
@@ -376,22 +376,150 @@ export const ExhaustedTotalUsesCanonicalCopy: Story = quotaRejectionStory(
   '今日次数已用完（10/10），明天再来',
 )
 
-export const OnePvpSlotStillExplainsPairedQuota: Story = quotaRejectionStory(
+export const QuotaRejectionUsesSingleBattleCopy: Story = quotaRejectionStory(
   'pvp_daily_limit',
   { battlesToday: 4, pvpBattlesToday: 4 },
-  'PVP 配额不足一整对——一次约战计 2 场（上限 5/日），明天再来',
+  '今日次数已用完（5/5），明天再来',
 )
 
 export const FailedQuotaRefreshDropsStaleNumbers: Story = quotaRejectionStory(
   'pvp_daily_limit',
   null,
-  'PVP 配额不足一整对——一次约战计 2 场，明天再来',
+  '今日次数已用完，明天再来',
 )
 
 export const HangingQuotaRefreshStillShowsRejection: Story =
   quotaRejectionStory(
     'pvp_daily_limit',
     null,
-    'PVP 配额不足一整对——一次约战计 2 场，明天再来',
+    '今日次数已用完，明天再来',
     true,
   )
+
+function MatchLocation() {
+  return <output aria-label='当前路径'>{useLocation().pathname}</output>
+}
+
+function singleChallengeStory(side: 'a' | 'b'): Story {
+  const attempts: unknown[] = []
+  const quotes: URLSearchParams[] = []
+  return {
+    args: { scenario: unlockedScenario, side, preferVersionID: 1001 },
+    decorators: [(Story) => (
+      <RewardsProvider>
+        <Story />
+      </RewardsProvider>
+    )],
+    render: (args) => (
+      <>
+        <OsPanel {...args} />
+        <MatchLocation />
+      </>
+    ),
+    parameters: {
+      msw: [
+        http.get(
+          '/v1/rewards',
+          () => HttpResponse.json({ ...dispatchWallet, balance: 150 }),
+        ),
+        http.get('/v1/rewards/quote', ({ request }) => {
+          quotes.push(new URL(request.url).searchParams)
+          return HttpResponse.json({
+            cost: 100,
+            perBattleCost: 100,
+            repeatRoleSurcharge: false,
+            battleCosts: [100],
+          })
+        }),
+        http.get('/v1/config', () => HttpResponse.json(config)),
+        http.get('/v1/scenarios/:id/opponents', () =>
+          HttpResponse.json({
+            opponents: [{
+              agentID: 301,
+              displayName: '对手',
+              isSelf: false,
+              ownerAccountID: 'rival',
+            }],
+          })),
+        http.post('/v1/challenges', async ({ request }) => {
+          attempts.push(await request.json())
+          return HttpResponse.json({ challengeID: 701, matchIDs: [701] })
+        }),
+      ],
+    },
+    play: async ({ canvasElement }) => {
+      attempts.length = 0
+      const canvas = within(canvasElement.ownerDocument.body)
+      await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+      await expect(
+        canvas.getByText(
+          side === 'a' ? '我方商鞅 vs 对方甘龙' : '我方甘龙 vs 对方商鞅',
+        ),
+      ).toBeVisible()
+      const dispatch = await canvas.findByRole('button', { name: '发起约战' })
+      await waitFor(() => expect(dispatch).toBeEnabled())
+      await expect(canvas.getByText('100 积分', { selector: 'strong' }))
+        .toBeVisible()
+      expect(
+        quotes.some((query) =>
+          query.get('kind') === 'pvp' && query.get('side') === side
+        ),
+      ).toBe(true)
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '发起约战' }),
+      )
+      await waitFor(() =>
+        expect(attempts).toEqual([{
+          scenarioID: unlockedScenario.summary.id,
+          mine: { [side]: { versionID: 1001 } },
+          opponent: { accountID: 'rival' },
+        }])
+      )
+      await waitFor(() =>
+        expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+          '/matches/701',
+        )
+      )
+    },
+  }
+}
+
+export const SingleChallengeFromShangyang: Story = singleChallengeStory('a')
+export const SingleChallengeFromGanlong: Story = singleChallengeStory('b')
+
+export const RejectSameSidePinnedVersion: Story = {
+  args: { scenario: unlockedScenario },
+  parameters: {
+    msw: [
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/scenarios/:id/opponents',
+        () => HttpResponse.json({ opponents: [] }),
+      ),
+      http.get('/v1/versions/367/ref', () =>
+        HttpResponse.json({
+          versionID: 367,
+          agentID: 301,
+          side: 'a',
+          scenarioID: unlockedScenario.summary.id,
+          ownerAccountID: 'rival',
+          ownerDisplayName: '对手',
+          modelID: 'fixture',
+        })),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await userEvent.click(canvas.getByRole('button', { name: '按 id 约战' }))
+    await userEvent.type(
+      canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
+      '367',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+    await expect(
+      await canvas.findByText('请选择对方的甘龙版本，与当前商鞅对战'),
+    ).toBeVisible()
+    expect(canvas.queryByRole('button', { name: '发起约战' })).toBeNull()
+  },
+}

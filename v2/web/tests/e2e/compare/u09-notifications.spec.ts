@@ -12,7 +12,7 @@
 //   专用变量（AXIIA_U09_EMAIL / AXIIA_LENT_EMAIL…）。「有存量战绩的账号」
 //   由本文件经 API 现场装配：管理员装载无模型固定局场景，该账号双侧各胜
 //   1 场 PVE（battle_finished ×2 + 门槛翻转 gate_unlocked），对手账号同样
-//   解锁后发起一次双侧约战（合并 challenged ×1，两条腿完局再 +2
+//   解锁后发起一次单场约战（合并 challenged ×1，本场完局再 +1
 //   battle_finished）。②被挑战（U09-C08）由此转为可执行场景，PVP 组真实
 //   出现，组序断言不再空转。
 // · 执行顺序＝文件顺序（workers=1）：破坏性动作（全部已读/清除）靠后，
@@ -39,7 +39,7 @@ const PASSWORD = 'playwrightpw-123456'
 
 test.beforeEach(() => {
   // 首个存量场景要付一次性装配成本（固定局装载 + TOTP 提权 + 4 场零推理
-  // PVE + 双侧约战两条腿完局）——给足预算，后续场景远用不满。
+  // PVE + 单场约战完局）——给足预算，后续场景远用不满。
   test.setTimeout(120_000)
 })
 
@@ -173,7 +173,7 @@ async function provisionStock(): Promise<StockState> {
     rival.context,
     fixtureID,
     'a',
-    `${FIXTURE_WIN_TOKEN} 对手正方：解锁后向存量账号发起双侧约战。`,
+    `${FIXTURE_WIN_TOKEN} 对手正方：解锁后向存量账号发起单场约战。`,
   )
   const rivalB = await saveEntryVersion(
     rival.context,
@@ -190,14 +190,13 @@ async function provisionStock(): Promise<StockState> {
       scenarioID: fixtureID,
       mine: {
         a: { versionID: rivalA.versionID },
-        b: { versionID: rivalB.versionID },
       },
       opponent: { accountID: owner.accountID },
     },
   })
   expect(challenge.ok(), 'challenge dispatch succeeds').toBe(true)
   const { matchIDs } = await challenge.json() as { matchIDs: number[] }
-  expect(matchIDs.length, 'challenge returns both leg ids').toBe(2)
+  expect(matchIDs.length, 'challenge returns one match id').toBe(1)
   for (const matchID of matchIDs) await pollMatchDone(rival.context, matchID)
 
   const state: StockState = {
@@ -382,9 +381,9 @@ test.describe('存量账号：持久 / 未读数 / 分组 / 深链 / 已读 / �
     })
   })
 
-  test('② 被约战通知合并成一条，深链落在约战第 ① 场（U09-C08 · U09-C04）', async ({ page }) => {
+  test('② 被约战通知只有一条，深链落在本场对局（U09-C08 · U09-C04）', async ({ page }) => {
     let state: StockState | null = null
-    await test.step('假如 我登录有存量战绩的账号（对手账号已向它发起一次双侧约战）', async () => {
+    await test.step('假如 我登录有存量战绩的账号（对手账号已向它发起一次单场约战）', async () => {
       state = await loginStock(page)
     })
     let challengedRows: NotificationRowDTO[] = []
@@ -393,13 +392,13 @@ test.describe('存量账号：持久 / 未读数 / 分组 / 深链 / 已读 / �
       challengedRows = (await fetchNotifications(page)).notifications
         .filter((row) => row.kind === 'challenged')
     })
-    await test.step('那么 列表里有一条被约战通知——标题带对手昵称与「向你发起双侧约战」，两条腿只合并成这一条（#66 成对语义）', async () => {
-      // 一次约战两条腿，只许合并成 1 条通知（服务端在创建事务里合并）。
+    await test.step('那么 列表里有一条被约战通知——标题带对手昵称与「向你发起约战」，单场约战只发一条通知', async () => {
+      // 每次约战只发一条通知。
       expect(challengedRows.length).toBe(1)
       await expect(page.getByText('被约战').first()).toBeVisible()
       await expect(
         page.getByText(
-          new RegExp(`${state!.rivalName}.*向你发起双侧约战`),
+          new RegExp(`${state!.rivalName}.*向你发起约战`),
         ),
       ).toBeVisible()
     })
@@ -414,12 +413,12 @@ test.describe('存量账号：持久 / 未读数 / 分组 / 深链 / 已读 / �
         .first()
         .click()
     })
-    await test.step('那么 我落在第 ① 场战报页，页内带「约战①」徽记（F6/F7 的成对标注）', async () => {
+    await test.step('那么 我落在唯一一场战报页，不显示分场徽记', async () => {
       await expect(page).toHaveURL(
         new RegExp(`/matches/${state!.challengeLegIDs[0]}$`),
       )
       await expect(page.getByText('约战①').first())
-        .toBeVisible({ timeout: 30_000 })
+        .toHaveCount(0)
     })
   })
 

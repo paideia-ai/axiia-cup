@@ -220,14 +220,27 @@ export const ClaimSurvivesRefreshFailure: Story = {
 }
 
 export const IneligibleAndInsufficient: Story = {
-  parameters: { msw: handlers({ status: 'ineligible', balance: 150 }) },
+  parameters: { msw: handlers({ status: 'ineligible', balance: 50 }) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByText('200 积分')).toBeVisible()
+    await expect(await canvas.findByText('100 积分', { selector: 'strong' }))
+      .toBeVisible()
     await expect(
       await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
     ).toBeVisible()
     await expect(canvas.queryByRole('button', { name: '领取奖励' })).toBeNull()
+  },
+}
+
+export const SinglePvpCostFitsBalance: Story = {
+  parameters: { msw: handlers({ status: 'ineligible', balance: 150 }) },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByText('100 积分', { selector: 'strong' }))
+      .toBeVisible()
+    await expect(canvas.getByText(/胜利后可领取 75% 返还/)).toBeVisible()
+    expect(canvas.queryByText('积分不足，可领取胜利奖励或等待每日积分。'))
+      .toBeNull()
   },
 }
 

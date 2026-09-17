@@ -547,7 +547,7 @@ export async function prepareA5Quota(
       )
     }
 
-    // The reviewed A5 action is a paired challenge. Only its exact quota
+    // The reviewed A5 action is a single-match challenge. Only its exact quota
     // rejection establishes that earlier guards (including same-opponent cap) pass.
     // Compare the authenticated match IDs and counters to prove no enqueue/charge.
     const ownedIDs = async () => {
@@ -586,7 +586,6 @@ export async function prepareA5Quota(
           scenarioID: request.scenarioID,
           mine: {
             a: { versionID: bindings.initiator.a.versionID },
-            b: { versionID: bindings.initiator.b.versionID },
           },
           opponent: { pinnedVersionID: bindings.rival.b.versionID },
         },

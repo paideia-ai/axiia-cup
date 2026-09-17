@@ -56,21 +56,21 @@ export function BattleCostNotice(
     )
   }
   if (!wallet) return null
-  const paired = kind === 'pvp'
-  const cost = quoteState?.quote?.cost ?? wallet.battleCost * (paired ? 2 : 1)
+  const pvp = kind === 'pvp'
+  const cost = quoteState?.quote?.cost ?? wallet.battleCost
   return (
     <div
       className='mb-3 space-y-1 text-xs text-(--foreground-subtle)'
       data-spec='U18-C24 U18-C28 U18-C29'
     >
       <p>
-        {paired ? '双场约战' : '本次对战'}消耗 <strong>{cost} 积分</strong>
+        本次对战消耗 <strong>{cost} 积分</strong>
         {' · '}
         {state.error ? '余额待更新' : `余额 ${wallet.balance}`}
         {kind === 'hotseat'
           ? ' · 自打无胜利返还'
-          : ` · 胜利后可领取${paired ? '各场消耗的' : ''} ${
-            paired ? wallet.pvpWinRefundPercent : wallet.pveWinRefundPercent
+          : ` · 胜利后可领取 ${
+            pvp ? wallet.pvpWinRefundPercent : wallet.pveWinRefundPercent
           }% 返还`}
       </p>
       {quoteState?.quote?.repeatRoleSurcharge
