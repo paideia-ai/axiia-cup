@@ -3,10 +3,10 @@ import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
 
-import { builder, matches } from '../api/client'
+import { matches } from '../api/client'
 import { useMatchStream } from '../api/sse'
 import type {
   MatchParticipantDTO,
@@ -28,7 +28,8 @@ import { OsBeatCard } from '../components/timeline/os-beat-card'
 import { ReasoningFold } from '../components/timeline/reasoning-fold'
 import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
+import { ButtonLink } from '../components/ui/button'
+import { agentEntryUrl } from '../lib/agent-entry'
 import { Card, CardContent } from '../components/ui/card'
 import { VerdictCard } from '../components/verdict-card'
 import { useOptionalAuth } from '../context/auth'
@@ -53,7 +54,6 @@ import {
   isInquiryChannel,
   placeVerdicts,
 } from '../lib/transcript'
-import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
@@ -66,10 +66,11 @@ export function MatchDetailPage() {
   // （stories）拿到 null，静默跳过。
   const optionalAuth = useOptionalAuth()
   const refreshAuth = optionalAuth?.refresh ?? null
-  // 旅程卡（#67/V23）的诚实判据：express 流程把标记随导航 state 一路带到
-  // 实况页——只有确知是首战的对局才展示，不做「猜第一场」的启发式。
+  // 首战流程显式传递标记；「继续首战」使用 URL，让新标签也保留引导。
+  // 这里只决定展示，不影响服务端首战资格、积分或派发。
   const expressArrival =
-    (location.state as { express?: boolean } | null)?.express === true
+    (location.state as { express?: boolean } | null)?.express === true ||
+    new URLSearchParams(location.search).get('express') === '1'
   const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
   // 调试模式 (#22)：model reasoning traces (内心 folds, live thinking deltas) are
   // hidden until switched on. A UI mask only in this stage — the stream still
@@ -1102,12 +1103,6 @@ function FirstBattleJourney({
   scenarioID: string
   participants: MatchParticipantsDTO | null
 }) {
-  const navigate = useNavigate()
-  const [creating, setCreating] = useState(false)
-  const [journeyError, setJourneyError] = useState<string | null>(null)
-  const liveRef = useRef(true)
-  const createRequestRef = useRef(0)
-
   const mine: { agentID: number | null; side: Side } | null =
     participants?.a.isMine
       ? { agentID: participants.a.agentID ?? null, side: 'a' }
@@ -1122,49 +1117,6 @@ function FirstBattleJourney({
     : mine.side === 'a'
     ? 'b'
     : 'a'
-  const journeyContext = `${scenarioID}:${oppositeSide ?? ''}`
-  const journeyContextRef = useRef(journeyContext)
-  journeyContextRef.current = journeyContext
-
-  useEffect(() => {
-    liveRef.current = true
-    return () => {
-      liveRef.current = false
-      createRequestRef.current += 1
-    }
-  }, [])
-
-  useEffect(() => {
-    createRequestRef.current += 1
-    setCreating(false)
-    setJourneyError(null)
-  }, [journeyContext])
-
-  // 「解锁对侧」＝#59/#64 的 ensure（get-or-create）。新建后先到智能体主页，
-  // 再由版本标题旁的铅笔加号进入低复杂度构建器。
-  const createOpposite = async () => {
-    if (oppositeSide == null) return
-    const requestID = ++createRequestRef.current
-    const requestContext = journeyContext
-    const isCurrent = () =>
-      liveRef.current && createRequestRef.current === requestID &&
-      journeyContextRef.current === requestContext
-    setCreating(true)
-    setJourneyError(null)
-    try {
-      const { agentID } = await builder.ensure({
-        scenarioID,
-        side: oppositeSide,
-      })
-      if (!isCurrent()) return
-      navigate(`/agents/${agentID}`)
-    } catch (cause) {
-      if (!isCurrent()) return
-      setJourneyError(messageOf(cause, '创建对侧智能体失败'))
-      setCreating(false)
-    }
-  }
-
   const cellClass =
     'flex flex-col gap-2 rounded-xl border border-(--border-soft) bg-white/2 px-4 py-4'
 
@@ -1177,13 +1129,6 @@ function FirstBattleJourney({
       <h2 className='text-sm font-semibold text-(--foreground)'>
         首战打完，接下来
       </h2>
-      {journeyError
-        ? (
-          <p {...tm('FA.journey-error')} className='text-sm text-(--accent)'>
-            {journeyError}
-          </p>
-        )
-        : null}
       <div className='grid gap-3 sm:grid-cols-3'>
         <div {...tm('FA.journey-next-round')} className={cellClass}>
           <p className='text-base font-bold text-(--foreground)'>
@@ -1192,15 +1137,14 @@ function FirstBattleJourney({
           <p className='flex-1 text-xs text-(--foreground-muted)'>
             回到智能体主页，改一版策略、从「出战」面板再打一场。
           </p>
-          <Link to={agentPath}>
-            <Button
-              {...tm('FA.journey-rematch-button')}
-              size='sm'
-              variant='secondary'
-            >
-              再战一场
-            </Button>
-          </Link>
+          <ButtonLink
+            to={agentPath}
+            {...tm('FA.journey-rematch-button')}
+            size='sm'
+            variant='secondary'
+          >
+            再战一场
+          </ButtonLink>
         </div>
         <div {...tm('FA.journey-opposite')} className={cellClass}>
           <p className='text-base font-bold text-(--foreground)'>解锁对侧</p>
@@ -1209,26 +1153,24 @@ function FirstBattleJourney({
           </p>
           {oppositeSide != null
             ? (
-              <Button
+              <ButtonLink
                 {...tm('FA.journey-opposite-button')}
                 size='sm'
                 variant='secondary'
-                disabled={creating}
-                onClick={() => void createOpposite()}
+                to={agentEntryUrl(scenarioID, oppositeSide)}
               >
-                {creating ? '创建中…' : '去创建对侧'}
-              </Button>
+                去创建对侧
+              </ButtonLink>
             )
             : (
-              <Link to={`/scenarios/${scenarioID}`}>
-                <Button
-                  {...tm('FA.journey-opposite-button')}
-                  size='sm'
-                  variant='secondary'
-                >
-                  去场景页选侧
-                </Button>
-              </Link>
+              <ButtonLink
+                to={`/scenarios/${scenarioID}`}
+                {...tm('FA.journey-opposite-button')}
+                size='sm'
+                variant='secondary'
+              >
+                去场景页选侧
+              </ButtonLink>
             )}
         </div>
         <div {...tm('FA.journey-pvp')} className={cellClass}>
@@ -1238,15 +1180,14 @@ function FirstBattleJourney({
           <p className='flex-1 text-xs text-(--foreground-muted)'>
             每侧各赢下 NPC 练习即解锁玩家约战——进度在「出战」面板随时可看。
           </p>
-          <Link to={agentPath}>
-            <Button
-              {...tm('FA.journey-progress-button')}
-              size='sm'
-              variant='secondary'
-            >
-              查看解锁进度
-            </Button>
-          </Link>
+          <ButtonLink
+            to={agentPath}
+            {...tm('FA.journey-progress-button')}
+            size='sm'
+            variant='secondary'
+          >
+            查看解锁进度
+          </ButtonLink>
         </div>
       </div>
 

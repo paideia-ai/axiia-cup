@@ -30,7 +30,7 @@ import { Modal } from '../components/modal'
 import { NewAgentButton } from '../components/new-agent-button'
 import { NewAgentDialog } from '../components/new-agent-dialog'
 import { OsPanel } from '../components/os-panel'
-import { Button } from '../components/ui/button'
+import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Select, SelectItem } from '../components/ui/select'
@@ -691,14 +691,13 @@ export function AgentViewPage() {
                     ? tm('EA.version-empty-build-button')
                     : {})}
                 >
-                  <Button
-                    type='button'
+                  <ButtonLink
+                    to={`/agents/${agentID}/build`}
                     size='sm'
                     variant='ghost'
                     className='h-11 w-11 shrink-0 cursor-pointer p-0 text-white md:h-8 md:w-8'
                     aria-label='新建版本'
                     title='新建版本'
-                    onClick={() => navigate(`/agents/${agentID}/build`)}
                     {...tm('EA.edit-button')}
                   >
                     <span aria-hidden='true' className='relative h-5 w-5'>
@@ -708,7 +707,7 @@ export function AgentViewPage() {
                         strokeWidth={2}
                       />
                     </span>
-                  </Button>
+                  </ButtonLink>
                 </span>
               }
               emptyState={

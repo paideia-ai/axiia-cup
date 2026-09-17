@@ -70,12 +70,12 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
   })
 
   await test.step('并且 主页提供「新建版本」铅笔入口与空版本状态', async () => {
-    await expect(page.getByRole('button', { name: '新建版本' })).toBeVisible()
+    await expect(page.getByRole('link', { name: '新建版本' })).toBeVisible()
     await expect(page.getByText('还没有保存过版本')).toBeVisible()
   })
 
   await test.step('当 我从主页点「新建版本」', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
   })
 
   await test.step('那么 我进入构建器，「我的智能体」导航保持选中，并立即看到两个辅助入口', async () => {
@@ -193,7 +193,7 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
   })
 
   await test.step('当 我再次进入构建器', async () => {
-    await page.getByRole('button', { name: '新建版本' }).click()
+    await page.getByRole('link', { name: '新建版本' }).click()
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   })
 
@@ -271,7 +271,7 @@ test('场景详情保留角色上下文：单个直达主页，多个进入可�
       page.getByRole('button', { name: `正在确认我的${SIDE_A}…` }),
     ).toBeDisabled()
     await expect(page.getByTestId('build-agent')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /查看我的商鞅/ }))
+    await expect(page.getByRole('link', { name: /查看我的商鞅/ }))
       .toHaveCount(0)
     expect(browserEnsureCount).toBe(0)
   })
@@ -281,14 +281,14 @@ test('场景详情保留角色上下文：单个直达主页，多个进入可�
   })
 
   await test.step('那么 才出现「查看我的商鞅（1）」', async () => {
-    await expect(page.getByRole('button', {
+    await expect(page.getByRole('link', {
       name: `查看我的${SIDE_A}（1）`,
     })).toBeVisible()
     expect(browserEnsureCount).toBe(0)
   })
 
   await test.step('当 我在场景详情点「查看我的商鞅（1）」', async () => {
-    await page.getByRole('button', { name: `查看我的${SIDE_A}（1）` }).click()
+    await page.getByRole('link', { name: `查看我的${SIDE_A}（1）` }).click()
   })
 
   await test.step('那么 我直接进入唯一智能体主页，而不是通用清单', async () => {
@@ -328,7 +328,7 @@ test('场景详情保留角色上下文：单个直达主页，多个进入可�
 
   await test.step('当 我再次点「查看我的商鞅（2）」', async () => {
     await page.goto(`/scenarios/${KESO_SCENARIO}`)
-    await page.getByRole('button', { name: `查看我的${SIDE_A}（2）` }).click()
+    await page.getByRole('link', { name: `查看我的${SIDE_A}（2）` }).click()
   })
 
   await test.step('那么 我进入带场景与侧参数的聚焦清单，只看到该侧的两个智能体', async () => {

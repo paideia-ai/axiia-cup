@@ -34,7 +34,7 @@ import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
-import { Button } from '../components/ui/button'
+import { Button, ButtonLink } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
 import { VersionNote } from '../components/version-note'
@@ -1437,11 +1437,11 @@ export function BuilderPage() {
             {attemptError ? <p role='alert'>{attemptError}</p> : null}
             {startAttempt?.status === 'accepted' && startAttempt.matchID != null
               ? (
-                <Button
-                  onClick={() => continueFirstBattle(startAttempt.matchID!)}
+                <ButtonLink
+                  to={`/matches/${startAttempt.matchID}?express=1`}
                 >
                   继续首战 #{startAttempt.matchID}
-                </Button>
+                </ButtonLink>
               )
               : startAttempt?.status === 'pending' && !starting
               ? (

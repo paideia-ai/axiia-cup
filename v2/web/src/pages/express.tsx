@@ -1,15 +1,15 @@
 import { PageLoading } from '../components/page-loading'
 import { Clock } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 
-import { builder, catalog, config as configApi } from '../api/client'
+import { catalog, config as configApi } from '../api/client'
 import type { Side } from '../api/types'
 import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
+import { ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { useAuth } from '../context/auth'
-import { messageOf, useAsync } from '../lib/use-async'
+import { useAsync } from '../lib/use-async'
+import { agentEntryUrl } from '../lib/agent-entry'
 import { scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 
@@ -20,22 +20,7 @@ import { tm } from '../testmode/mark'
 // 我执 a、对手取第一个 b 侧预设——回落的对手选择在构建器派发时兜底）。
 // 已完成首战（firstBattleDone）→ 本页直接让路去场景列表。
 export function ExpressPage() {
-  const navigate = useNavigate()
   const { firstBattleDone } = useAuth()
-  const [entering, setEntering] = useState(false)
-  const [enterError, setEnterError] = useState<string | null>(null)
-  const liveRef = useRef(true)
-  const enterRequestRef = useRef(0)
-  const firstBattleDoneRef = useRef(firstBattleDone)
-  firstBattleDoneRef.current = firstBattleDone
-
-  useEffect(() => {
-    liveRef.current = true
-    return () => {
-      liveRef.current = false
-      enterRequestRef.current += 1
-    }
-  }, [])
 
   const { data, error, loading } = useAsync(async () => {
     // config 失败不挡首战：按默认三元组渲染（对手预设由构建器兜底）。
@@ -49,32 +34,6 @@ export function ExpressPage() {
   }, [])
 
   if (firstBattleDone) return <Navigate replace to='/scenarios' />
-
-  const goBuild = async () => {
-    if (!data) return
-    const requestID = ++enterRequestRef.current
-    const { scenarioID, mySide } = data
-    const isCurrent = () =>
-      liveRef.current && enterRequestRef.current === requestID &&
-      !firstBattleDoneRef.current
-    setEntering(true)
-    setEnterError(null)
-    try {
-      // 首战＝创建一个单侧 agent（#57）：懒 ensure 后带 express 标记进构建器。
-      const { agentID } = await builder.ensure({
-        scenarioID,
-        side: mySide,
-      })
-      if (!isCurrent()) return
-      navigate(
-        `/agents/${agentID}/build?scenario=${scenarioID}&side=${mySide}&express=1`,
-      )
-    } catch (cause) {
-      if (!isCurrent()) return
-      setEnterError(messageOf(cause, '创建智能体失败'))
-      setEntering(false)
-    }
-  }
 
   if (loading) {
     return <PageLoading variant='detail' {...tm('X.loading')} />
@@ -92,11 +51,13 @@ export function ExpressPage() {
           可以先从场景列表任选一个开始。
         </p>
         <div className='mt-5 flex justify-center'>
-          <Link to='/scenarios'>
-            <Button variant='secondary' {...tm('X.error-browse-button')}>
-              浏览全部场景
-            </Button>
-          </Link>
+          <ButtonLink
+            to='/scenarios'
+            variant='secondary'
+            {...tm('X.error-browse-button')}
+          >
+            浏览全部场景
+          </ButtonLink>
         </div>
       </div>
     )
@@ -168,23 +129,14 @@ export function ExpressPage() {
         </CardContent>
       </Card>
 
-      {enterError
-        ? (
-          <p className='text-sm text-(--accent)' {...tm('X.enter-error')}>
-            {enterError}
-          </p>
-        )
-        : null}
-
       <div className='flex flex-wrap items-center gap-4' {...tm('X.actions')}>
-        <Button
+        <ButtonLink
           data-testid='express-build'
-          onClick={() => void goBuild()}
-          disabled={entering}
+          to={agentEntryUrl(data.scenarioID, mySide, 'build', true)}
           {...tm('X.build-button')}
         >
-          {entering ? '进入中…' : '去构建 →'}
-        </Button>
+          去构建 →
+        </ButtonLink>
         <Link
           to='/scenarios'
           className='text-xs text-(--foreground-muted) transition hover:text-(--foreground)'

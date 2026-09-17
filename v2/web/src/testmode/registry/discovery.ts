@@ -212,16 +212,7 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '双方与胜利条件',
     clauses: ['U04-C08', 'U04-C10', 'U04-C13'],
     journeys: ['j2s2', 'j2s3'],
-    note: 'EXPAND-1 层：开场白 + 甲乙两张侧卡',
-  },
-  'DA.opening-line': {
-    label: '开场白',
-    clauses: ['U04-C13'],
-    anchors: ['spec-change-51'],
-    journeys: ['j2s2'],
-    note:
-      '与运行时 OPENING_LINE 同源（runtime-quotes.json）；手册的「缺开场白」已知问题已修',
-    when: '场景有统一开场首句时',
+    note: 'EXPAND-1 层：甲乙两张侧卡',
   },
   'DA.side-card': {
     label: '一方角色卡',
@@ -282,11 +273,6 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U04-C17', 'U01-C31'],
     anchors: ['spec-p13'],
     when: '该侧已有策略时',
-  },
-  'DA.build-error': {
-    label: '创建失败提示',
-    clauses: ['LACK-10'],
-    when: 'builder.ensure 失败时',
   },
   'DA.judge-card': {
     label: '裁判与计分卡',
