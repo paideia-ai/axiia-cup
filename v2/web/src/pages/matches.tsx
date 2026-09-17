@@ -77,9 +77,11 @@ export function MatchesPage() {
     [],
   )
   // Derive choices from all history so ownership filtering cannot remove the
-  // selected option, and retired scenarios remain selectable without a catalog.
+  // selected option, even when the catalog is unavailable.
   const historyScenarios = new Map<string, string>()
   for (const summary of data?.list.matches ?? []) {
+    // This retired scenario no longer needs a dedicated history filter.
+    if (summary.scenarioID === 'sanguo-chain-stratagem') continue
     if (!historyScenarios.has(summary.scenarioID)) {
       historyScenarios.set(summary.scenarioID, summary.scenarioTitle)
     }
