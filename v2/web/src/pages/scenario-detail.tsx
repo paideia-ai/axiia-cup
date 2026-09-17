@@ -1,6 +1,6 @@
 import { Clock, Hammer } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { builder, catalog, myAgents } from '../api/client'
 import type { ScenarioScoringDTO, ScenarioSummary, Side } from '../api/types'
@@ -18,7 +18,6 @@ import {
 import { tm } from '../testmode/mark'
 import { useAuth } from '../context/auth'
 import { protectedLoginUrl } from '../lib/login-return'
-import { currentNpcPath } from '../lib/current-npc'
 import type {
   ScenarioEducation,
   ScenarioHiddenGoalList,
@@ -194,29 +193,6 @@ export function ScenarioDetailPage() {
               factImages={module?.overviewFactImages ?? null}
               timelineAtEnd={module?.timelineAtEnd ?? false}
             />
-
-            {data.presets.length > 0
-              ? (
-                <section className='space-y-3' {...tm('DA.npc-list')}>
-                  <h2 className='text-lg font-bold'>NPC 练习对手</h2>
-                  <ul className='flex flex-wrap gap-2'>
-                    {data.presets.map((preset) => (
-                      <li key={preset.key}>
-                        <Link
-                          to={currentNpcPath(scenarioId, preset.key)}
-                          className='inline-flex min-h-11 items-center rounded-md border border-(--border) px-3 py-2 text-sm underline underline-offset-4'
-                          {...tm('DA.npc-view-link')}
-                        >
-                          {preset.label} · {preset.side === 'a'
-                            ? data.summary.sideAName
-                            : data.summary.sideBName}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )
-              : null}
 
             <section
               className='space-y-3'

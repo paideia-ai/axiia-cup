@@ -51,6 +51,20 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+// Leave the preview on a selected NPC so the remaining practice flow is visible.
+export const NpcPracticeSelected: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(
+      await canvas.findByRole('combobox', { name: '选择预设对手' }),
+    )
+    await userEvent.click(
+      await canvas.findByRole('option', { name: '稳健守旧派' }),
+    )
+    await expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+  },
+}
+
 export const LockedMobile: Story = {
   parameters: {
     viewport: { defaultViewport: 'mobile1' },

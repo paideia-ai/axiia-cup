@@ -19,7 +19,6 @@ import { AdminSlotPage } from './pages/admin-slot'
 import { AgentViewPage } from './pages/agent-view'
 import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
-import { CurrentNpcPage } from './pages/current-npc'
 import { ExpressPage } from './pages/express'
 import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
@@ -50,11 +49,6 @@ function Loading() {
 function BuilderRoute() {
   const { agentId = '' } = useParams()
   return <BuilderPage key={agentId} />
-}
-
-function CurrentNpcRoute() {
-  const { scenarioId, presetKey } = useParams()
-  return <CurrentNpcPage key={`${scenarioId}:${presetKey}`} />
 }
 
 function ProtectedShell() {
@@ -163,14 +157,6 @@ export function AppRoutes() {
           element={
             <ScenarioShell>
               <ScenarioDetailPage />
-            </ScenarioShell>
-          }
-        />
-        <Route
-          path='/scenarios/:scenarioId/npcs/:presetKey'
-          element={
-            <ScenarioShell>
-              <CurrentNpcRoute />
             </ScenarioShell>
           }
         />

@@ -99,7 +99,12 @@ const details: Record<string, ScenarioDetail> = {
       gateProgress,
     },
     stages: [],
-    presets: [],
+    presets: [{
+      key: 'lyubu-real-military',
+      side: 'b',
+      label: '宫门伏兵',
+      modelID: 'glm-5.3-flash',
+    }],
   },
   'legal-harbor-murder-jury': {
     summary: {
