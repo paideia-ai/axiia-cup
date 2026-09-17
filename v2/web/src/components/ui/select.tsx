@@ -64,13 +64,17 @@ export function Select({
             背后不可见；宽度带回退——部分 base-ui 版本不注入 trigger-width 变量 */
         }
         <BaseSelect.Positioner
+          // Item alignment grows the popup on scroll; use stable anchored sizing.
+          alignItemWithTrigger={false}
           side='bottom'
           sideOffset={6}
           align='start'
           className='z-[60]'
         >
           <BaseSelect.Popup className='w-[var(--anchor-width,var(--trigger-width,16rem))] overflow-hidden rounded-lg border border-(--border) bg-(--surface-elevated) py-1 shadow-[0_20px_60px_rgba(0,0,0,0.5)]'>
-            <BaseSelect.List>{children}</BaseSelect.List>
+            <BaseSelect.List className='max-h-[calc(var(--available-height)-0.625rem)] overflow-y-auto overscroll-contain'>
+              {children}
+            </BaseSelect.List>
           </BaseSelect.Popup>
         </BaseSelect.Positioner>
       </BaseSelect.Portal>
