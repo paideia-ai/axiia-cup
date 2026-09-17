@@ -71,6 +71,12 @@ export const StableScrolling: Story = {
     await expect(trigger).toHaveTextContent('模型 24')
     await waitFor(() => expect(trigger).toHaveFocus())
     await userEvent.click(trigger)
+    const reopened = await body.findByRole('listbox')
+    await waitFor(() =>
+      expect(reopened.contains(canvasElement.ownerDocument.activeElement)).toBe(
+        true,
+      )
+    )
     await userEvent.keyboard('{Escape}')
     await waitFor(() => expect(trigger).toHaveFocus())
   },
