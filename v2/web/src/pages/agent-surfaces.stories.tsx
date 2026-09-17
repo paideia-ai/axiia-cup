@@ -8,10 +8,20 @@ import {
   inventory,
   scenario,
   scenarioList,
-  versions,
+  versions as baseVersions,
 } from '../testing/v34-fixtures'
 import { AgentViewPage } from './agent-view'
 import { MyAgentsPage } from './my-agents'
+
+const versions = baseVersions.map((version, index) => ({
+  ...version,
+  note: index === 0 ? '  澄清争点  ' : '回应最强论点',
+}))
+const modelsHandler = http.get(
+  '/v1/models',
+  () =>
+    HttpResponse.json({ models: [{ id: 'fixture-model', label: '策略模型' }] }),
+)
 
 function Surface({ page }: { page: 'inventory' | 'agent' }) {
   const entry = page === 'agent' ? '/agents/101' : '/my-agents'
@@ -30,6 +40,7 @@ const meta = {
   component: Surface,
   parameters: {
     msw: [
+      modelsHandler,
       http.get('/v1/agents/101/diff', ({ request }) => {
         const query = new URL(request.url).searchParams
         return HttpResponse.json({
@@ -145,6 +156,28 @@ export const VersionComparison: Story = {
       .toHaveTextContent(/^v1$/)
     await expect(canvas.getByRole('combobox', { name: '选择对比版本' }))
       .toHaveTextContent(/^v2$/)
+    const titles = canvasElement.querySelectorAll(
+      '[data-tm="EA.diff-column-title"]',
+    )
+    await expect(within(titles[0] as HTMLElement).getByText('澄清争点'))
+      .toBeVisible()
+    await expect(within(titles[1] as HTMLElement).getByText('回应最强论点'))
+      .toBeVisible()
+    for (const title of titles) {
+      await expect(within(title as HTMLElement).getByText('策略模型'))
+        .toBeVisible()
+      await expect(title).not.toHaveTextContent('fixture-model')
+    }
+    await userEvent.click(
+      canvas.getByRole('combobox', { name: '选择基准版本' }),
+    )
+    const option = await within(document.body).findByRole('option', {
+      name: /v1/,
+    })
+    await expect(within(option).getByText('策略模型')).toBeVisible()
+    await expect(option).toHaveTextContent('澄清争点')
+    await expect(option).not.toHaveTextContent('fixture-model')
+    await userEvent.keyboard('{Escape}')
     const prompt = canvasElement.querySelector('[data-version-prompt]')!
     await expect(getComputedStyle(prompt).color).toBe('rgb(222, 222, 222)')
   },
@@ -154,6 +187,7 @@ export const IdenticalVersionPrompts: Story = {
   args: { page: 'agent' },
   parameters: {
     msw: [
+      http.get('/v1/models', () => new HttpResponse(null, { status: 503 })),
       http.get('/v1/agents/101/draft', () =>
         HttpResponse.json({
           fields: {},
@@ -180,5 +214,11 @@ export const IdenticalVersionPrompts: Story = {
     )
     await expect(await canvas.findByText('两版策略正文相同。')).toBeVisible()
     await expect(canvasElement.querySelectorAll('del, ins').length).toBe(0)
+    const titles = canvasElement.querySelectorAll(
+      '[data-tm="EA.diff-column-title"]',
+    )
+    for (const title of titles) {
+      await expect(title).toHaveTextContent('fixture-model')
+    }
   },
 }

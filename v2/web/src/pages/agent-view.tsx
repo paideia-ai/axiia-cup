@@ -48,7 +48,11 @@ import {
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
 import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
-import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
+import {
+  agentQuery,
+  inventoryQuery,
+  modelsQuery,
+} from '../lib/navigation-queries'
 import { versionTag } from '../lib/version-label'
 import { tm } from '../testmode/mark'
 
@@ -825,6 +829,10 @@ function VersionCompare({
   agentID: number
   versions: AgentVersionDTO[]
 }) {
+  const { data: modelList } = usePageQuery(modelsQuery())
+  const modelLabels = new Map(
+    modelList?.models.map((model) => [model.id, model.label]),
+  )
   const sorted = [...versions].sort((a, b) => b.id - a.id)
   const [baseID, setBaseID] = useState(String(sorted[1]?.id ?? ''))
   const [headID, setHeadID] = useState(String(sorted[0]?.id ?? ''))
@@ -922,6 +930,7 @@ function VersionCompare({
             value={baseID}
             otherID={headID}
             versions={sorted}
+            modelLabels={modelLabels}
             onChange={(value) => {
               setBaseID(value)
               setOpen(true)
@@ -940,6 +949,7 @@ function VersionCompare({
             value={headID}
             otherID={baseID}
             versions={sorted}
+            modelLabels={modelLabels}
             onChange={(value) => {
               setHeadID(value)
               setOpen(true)
@@ -1002,11 +1012,23 @@ function VersionCompare({
                         {...tm('EA.diff-column')}
                       >
                         <p
-                          className='text-xs font-semibold text-(--foreground-subtle)'
+                          className='text-xs text-(--foreground-subtle)'
                           {...tm('EA.diff-column-title')}
                         >
-                          {label} {versionTag(version, sorted)} ·{' '}
-                          {version.modelID}
+                          <span className='font-semibold'>
+                            {versionTag(version, sorted)}
+                          </span>
+                          {version.note?.trim() && (
+                            <span className='ml-2 break-words'>
+                              {version.note.trim()}
+                            </span>
+                          )}
+                          {version.modelID && (
+                            <span className='ml-2 text-(--foreground-muted)'>
+                              {modelLabels.get(version.modelID) ??
+                                version.modelID}
+                            </span>
+                          )}
                         </p>
                         <pre
                           aria-label={`${versionTag(version, sorted)} 策略正文`}

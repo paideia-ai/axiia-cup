@@ -3,13 +3,16 @@ import { Check, ChevronDown } from 'lucide-react'
 import type { AgentVersionDTO } from '../api/types'
 import { versionTag } from '../lib/version-label'
 
-export function VersionPicker({ label, value, otherID, versions, onChange }: {
-  label: string
-  value: string
-  otherID: string
-  versions: AgentVersionDTO[]
-  onChange: (value: string) => void
-}) {
+export function VersionPicker(
+  { label, value, otherID, versions, modelLabels, onChange }: {
+    label: string
+    value: string
+    otherID: string
+    versions: AgentVersionDTO[]
+    modelLabels: ReadonlyMap<string, string>
+    onChange: (value: string) => void
+  },
+) {
   const selected = versions.find((version) => String(version.id) === value)
   return (
     <Select.Root
@@ -64,7 +67,7 @@ export function VersionPicker({ label, value, otherID, versions, onChange }: {
                       </span>
                       {version.modelID && (
                         <span className='mt-0.5 block truncate text-[10px] text-(--foreground-muted)'>
-                          {version.modelID}
+                          {modelLabels.get(version.modelID) ?? version.modelID}
                         </span>
                       )}
                     </Select.ItemText>
