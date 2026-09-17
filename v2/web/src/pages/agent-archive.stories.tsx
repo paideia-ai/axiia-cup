@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { AuthProvider } from '../context/auth'
 import {
+  config,
   inventory,
   scenario,
   scenarioList,
@@ -41,6 +42,7 @@ function handlers(initiallyArchived = false, failRestore = false) {
     isArchived: archived,
   })
   return [
+    http.get('/v1/models', () => HttpResponse.json({ models: config.models })),
     http.get(
       '/v1/auth/me',
       () =>

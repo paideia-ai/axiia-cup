@@ -272,7 +272,7 @@ export const TM_AGENTS: TmRegistry = {
   'EA.diff-column-title': {
     label: '对照栏标题',
     clauses: ['U10-C04', 'U10-C07'],
-    note: '「基准 vN · 模型」/「对比 vN · 模型」',
+    note: '版本号、备注、模型显示名称分层呈现；模型名称缺失时回退 ID',
     when: '点过「对比」后',
   },
   'EA.diff-prompt': {
