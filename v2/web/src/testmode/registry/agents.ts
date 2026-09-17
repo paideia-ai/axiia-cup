@@ -149,7 +149,8 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U01-C22', 'U01-C22b', 'U01-C27'],
     anchors: ['spec-p2', 'spec-p8b'],
     journeys: ['j4s5'],
-    note: '标题旁唯一的省略号菜单；收纳重命名与删除，避免挤占主页主动作',
+    note:
+      '标题旁唯一的省略号菜单；收纳重命名、空智能体删除或已有版本智能体归档',
   },
   'EA.rename-form': {
     label: '主页改名表单',
@@ -163,11 +164,11 @@ export const TM_AGENTS: TmRegistry = {
     label: '删除确认弹窗',
     clauses: ['U01-C27'],
     anchors: ['spec-p8b'],
-    note: '只有 0 版本空壳可以确认删除；已有版本时菜单项禁用并解释原因',
+    note: '只有 0 版本空壳可以确认删除；已有版本时提供归档，设置页可恢复',
     when: '0 版本智能体的身份操作菜单点「删除智能体」后',
   },
   'EA.action-error': {
-    label: '改标失败提示',
+    label: '智能体操作失败提示',
     clauses: ['LACK-10'],
     when: '版本卡「设为参赛版本」请求失败时',
   },
