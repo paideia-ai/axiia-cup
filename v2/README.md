@@ -69,6 +69,28 @@ The v3.4 acceptance stack has three layers:
   when the command must build the server itself. The build uses an isolated
   source copy and does not modify the sibling backend checkout.
 
+Navigation controls use React Router `Link`/`NavLink`, or `ButtonLink` for
+button styling. Do not nest buttons inside links or implement page shortcuts
+with button click handlers: native anchors preserve middle-click, Ctrl/Cmd-click,
+Shift-click, keyboard activation, and the browser's link context menu. Dialogs,
+disclosures, and form submissions remain buttons. Get-or-create shortcuts link
+to `/agents/entry`; that page resolves the agent in the destination tab and
+replaces itself with the agent home or builder, with a retry on failure.
+
+With the local dev server running, `deno task test:e2e
+tests/e2e/navigation-links.spec.ts` verifies navigation using intercepted API
+fixtures, including new tabs and entry error/retry behavior. It needs Chromium
+but no backend or live account. Set `AXIIA_BASE_URL` to the local dev URL if
+using a port other than 5173.
+
+For a manual navigation preview, run `deno task preview:navigation` and open
+`http://127.0.0.1:5177/agents/101` or
+`http://127.0.0.1:5177/scenarios/shangyang-court`. This serves the built frontend
+with local fixture responses, requires no login, and never contacts the live
+backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
+battles are disabled. Stop it with Ctrl+C. On a remote development machine,
+forward port 5177 to your browser's machine first.
+
 Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
 Playwright `fixme` contracts. They are not counted as passing functionality.
 

@@ -297,10 +297,10 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-change-58'],
     note: '只说明「选择一个智能体，继续你的策略」；资格细节留在分组状态里',
   },
-  'MA.action-error': {
-    label: '进入失败提示',
+  'EA.entry-error': {
+    label: '打开失败提示',
     clauses: ['LACK-10'],
-    when: '懒 ensure（创建/进入）请求失败时',
+    when: '打开智能体的目标页中，ensure 请求失败时；可重试或返回场景',
   },
   'MA.loading': {
     label: '加载中',
@@ -469,11 +469,6 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-change-11'],
     journeys: ['j1s3'],
     note: '不展开四层教育，一行讲完「N 轮后裁判判定——写好提示词，AI 替你上场」',
-  },
-  'X.enter-error': {
-    label: '创建失败提示',
-    clauses: ['LACK-10'],
-    when: '「去构建」的懒 ensure 失败时',
   },
   'X.actions': {
     label: '动作行',

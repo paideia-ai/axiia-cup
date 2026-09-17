@@ -37,10 +37,10 @@ async function versions() {
 async function enterBuilder() {
   if (!new RegExp(`/agents/${agentID}$`).test(page.url())) {
     await page.goto(`/agents/${agentID}`)
-    await expect(page.getByRole('button', { name: '新建版本' }))
+    await expect(page.getByRole('link', { name: '新建版本' }))
       .toBeVisible({ timeout: 30_000 })
   }
-  await page.getByRole('button', { name: '新建版本' }).click()
+  await page.getByRole('link', { name: '新建版本' }).click()
   await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   await expect(page.getByLabel('策略提示词')).toBeEnabled({
     timeout: 30_000,

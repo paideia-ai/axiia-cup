@@ -34,7 +34,8 @@ import { versionTag } from '../lib/version-label'
 import { roleOfOptions, scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
-import { Button } from './ui/button'
+import { Button, ButtonLink } from './ui/button'
+import { agentEntryUrl } from '../lib/agent-entry'
 import { Input } from './ui/input'
 import { Select, SelectItem } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
@@ -69,7 +70,6 @@ export function OsPanel({
   const [opponents, setOpponents] = useState<OpponentAgentDTO[] | null>(null)
   const [opponentAgentID, setOpponentAgentID] = useState<number | null>(null)
   const [dispatching, setDispatching] = useState(false)
-  const [creatingOpposite, setCreatingOpposite] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // 受控 tab：锁定态的「去练习该侧」要能把玩家切回 NPC 练习页签。
   const [tab, setTab] = useState('pve')
@@ -96,7 +96,7 @@ export function OsPanel({
   )
   // POST /v1/challenges 在老服务器上 404/405：降级为功能提示，不摆假表单。
   const [challengeUnavailable, setChallengeUnavailable] = useState(false)
-  const dismissLocked = dispatching || creatingOpposite
+  const dismissLocked = dispatching
 
   useEffect(() => {
     liveRef.current = true
@@ -260,24 +260,6 @@ export function OsPanel({
   const pvpUnlocked = gateProgress
     ? gateMet(gateProgress)
     : scenario.summary.gateUnlocked
-
-  // 「去创建对侧/去创建某侧」（mock V7/V20）：懒 ensure（get-or-create）后
-  // 先进入智能体主页；构建器由主页的版本标题动作进入。
-  const createSide = async (which: Side) => {
-    setCreatingOpposite(true)
-    setError(null)
-    try {
-      const { agentID } = await builder.ensure({ scenarioID, side: which })
-      if (!liveRef.current) return
-      onClose()
-      navigate(`/agents/${agentID}`)
-    } catch (cause) {
-      if (!liveRef.current) return
-      setError(messageOf(cause, '创建智能体失败'))
-      setCreatingOpposite(false)
-    }
-  }
-  const createOpposite = () => createSide(oppositeSide)
 
   // ── P3 约战（#66，mock V20） ──────────────────────────────────────────
 
@@ -599,15 +581,14 @@ export function OsPanel({
                           左右手互搏＝拿本方打你自己的对侧。先为另一方构建并保存版本。
                         </p>
                         <div className='mt-4 flex justify-center'>
-                          <Link to='/my-agents' onClick={onClose}>
-                            <Button
-                              size='sm'
-                              variant='secondary'
-                              {...tm('OS.hotseat-go-my-agents')}
-                            >
-                              去我的智能体
-                            </Button>
-                          </Link>
+                          <ButtonLink
+                            to='/my-agents'
+                            size='sm'
+                            variant='secondary'
+                            {...tm('OS.hotseat-go-my-agents')}
+                          >
+                            去我的智能体
+                          </ButtonLink>
                         </div>
                       </div>
                     )
@@ -720,7 +701,6 @@ export function OsPanel({
                                   <Link
                                     key={matchID}
                                     to={`/matches/${matchID}`}
-                                    onClick={onClose}
                                     className='inline-flex items-center gap-1.5 rounded-lg border border-(--border) px-3 py-2 text-sm font-medium text-(--foreground) transition hover:border-(--foreground-muted) hover:bg-white/3'
                                   >
                                     对局 · #{matchID}
@@ -994,32 +974,24 @@ export function OsPanel({
                           {!sideMet(gateProgress[oppositeSide])
                             ? selfOpponents.length > 0
                               ? (
-                                <Button
+                                <ButtonLink
                                   size='sm'
                                   variant='secondary'
-                                  onClick={() => {
-                                    onClose()
-                                    navigate('/my-agents')
-                                  }}
+                                  to='/my-agents'
                                   {...tm('OS.gate-practice-opposite')}
                                 >
                                   去练习对侧（{sideNameOf(oppositeSide)}）
-                                </Button>
+                                </ButtonLink>
                               )
                               : (
-                                <Button
+                                <ButtonLink
                                   size='sm'
                                   variant='secondary'
-                                  disabled={creatingOpposite}
-                                  onClick={() => void createOpposite()}
+                                  to={agentEntryUrl(scenarioID, oppositeSide)}
                                   {...tm('OS.gate-create-opposite')}
                                 >
-                                  {creatingOpposite
-                                    ? '创建中…'
-                                    : `去创建对侧（${
-                                      sideNameOf(oppositeSide)
-                                    }）`}
-                                </Button>
+                                  {`去创建对侧（${sideNameOf(oppositeSide)}）`}
+                                </ButtonLink>
                               )
                             : null}
                         </div>

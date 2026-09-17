@@ -23,6 +23,7 @@
     "build": "deno run -A npm:vite build",
     "prompt-builders": "deno run --allow-read --allow-write scripts/prompt-builders.ts --write",
     "prompt-builders:preview": "deno run -A scripts/preview-prompt-builders.ts",
+    "preview:navigation": "deno task build && deno run --no-prompt --allow-read=build/client --allow-net=127.0.0.1:5177 e2e/preview-navigation.ts",
     "typecheck": "deno run -A npm:typescript/tsc -p tsconfig.check.json",
     "typecheck:tests": "deno run -A npm:typescript/tsc -p tsconfig.tests.json",
     "test": "deno task test:unit && deno task test:storybook",

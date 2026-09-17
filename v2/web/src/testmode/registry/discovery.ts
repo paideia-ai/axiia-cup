@@ -283,11 +283,6 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-p13'],
     when: '该侧已有策略时',
   },
-  'DA.build-error': {
-    label: '创建失败提示',
-    clauses: ['LACK-10'],
-    when: 'builder.ensure 失败时',
-  },
   'DA.judge-card': {
     label: '裁判与计分卡',
     clauses: ['U04-C08', 'U04-C10', 'U04-C15', 'U04-C11'],
