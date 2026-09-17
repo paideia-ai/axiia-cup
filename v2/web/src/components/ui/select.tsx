@@ -3,6 +3,11 @@ import { Check, ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { cn } from '../../lib/cn'
+import {
+  dropdownItemClassName,
+  dropdownPopupClassName,
+  dropdownScrollClassName,
+} from './dropdown-styles'
 
 interface SelectProps {
   children: ReactNode
@@ -32,11 +37,11 @@ export function Select({
       <BaseSelect.Trigger
         aria-label={placeholder}
         className={cn(
-          'flex h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-(--border) bg-[rgba(255,255,255,0.02)] px-3 text-sm text-(--foreground) outline-none transition-colors focus:border-(--accent) focus:ring-2 focus:ring-[rgba(224,74,47,0.4)] disabled:cursor-not-allowed disabled:opacity-50',
+          'group flex h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-(--border) bg-white/2 px-3 text-sm text-(--foreground) outline-none transition-colors hover:border-(--foreground-muted) hover:bg-white/4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent) data-[popup-open]:border-(--foreground-muted) disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none md:h-10',
           className,
         )}
       >
-        <BaseSelect.Value>
+        <BaseSelect.Value className='min-w-0 truncate text-left'>
           {(v: string | null) => {
             // base-ui 只有在「值命中已注册的 Item」时才把值交给这个渲染函数；
             // 受控的初始值在 Item 注册之前就落下来，于是触发器一直显示占位符
@@ -56,7 +61,12 @@ export function Select({
             )
           }}
         </BaseSelect.Value>
-        <ChevronDown className='h-4 w-4 shrink-0 text-(--foreground-muted)' />
+        <BaseSelect.Icon>
+          <ChevronDown
+            aria-hidden='true'
+            className='h-3.5 w-3.5 shrink-0 text-(--foreground-muted) transition-transform duration-150 group-data-[popup-open]:rotate-180 motion-reduce:transition-none'
+          />
+        </BaseSelect.Icon>
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
         {
@@ -69,10 +79,16 @@ export function Select({
           side='bottom'
           sideOffset={6}
           align='start'
+          collisionPadding={16}
           className='z-[60]'
         >
-          <BaseSelect.Popup className='w-[var(--anchor-width,var(--trigger-width,16rem))] overflow-hidden rounded-lg border border-(--border) bg-(--surface-elevated) py-1 shadow-[0_20px_60px_rgba(0,0,0,0.5)]'>
-            <BaseSelect.List className='max-h-[calc(var(--available-height)-0.625rem)] overflow-y-auto overscroll-contain'>
+          <BaseSelect.Popup
+            className={cn(
+              dropdownPopupClassName,
+              'w-[var(--anchor-width,var(--trigger-width,16rem))]',
+            )}
+          >
+            <BaseSelect.List className={dropdownScrollClassName}>
               {children}
             </BaseSelect.List>
           </BaseSelect.Popup>
@@ -91,14 +107,20 @@ export function SelectItem({ children, value }: SelectItemProps) {
   return (
     <BaseSelect.Item
       value={value}
-      className='flex cursor-pointer items-center justify-center gap-2 px-3 py-2 text-sm text-(--foreground-subtle) outline-none transition-colors data-[highlighted]:bg-white/5 data-[highlighted]:text-(--foreground) data-[selected]:text-(--foreground)'
+      className={dropdownItemClassName}
     >
-      <BaseSelect.ItemIndicator className='flex w-4 shrink-0 items-center justify-center text-(--accent)'>
-        <Check className='h-3 w-3' strokeWidth={3} />
-      </BaseSelect.ItemIndicator>
-      <BaseSelect.ItemText className='flex-1 text-center'>
+      <BaseSelect.ItemText className='min-w-0 flex-1 text-left wrap-anywhere'>
         {children}
       </BaseSelect.ItemText>
+      <span className='flex h-4 w-4 shrink-0 items-center justify-center'>
+        <BaseSelect.ItemIndicator>
+          <Check
+            aria-hidden='true'
+            className='h-3.5 w-3.5 text-(--accent)'
+            strokeWidth={2}
+          />
+        </BaseSelect.ItemIndicator>
+      </span>
     </BaseSelect.Item>
   )
 }

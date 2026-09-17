@@ -33,6 +33,11 @@ import { OsPanel } from '../components/os-panel'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
+import {
+  dropdownItemClassName,
+  dropdownPopupClassName,
+  dropdownScrollClassName,
+} from '../components/ui/dropdown-styles'
 import { Select, SelectItem } from '../components/ui/select'
 import { VersionList } from '../components/version-list'
 import {
@@ -44,6 +49,7 @@ import {
   subscribeEntryMutation,
 } from '../lib/agent-events'
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
+import { cn } from '../lib/cn'
 import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
 import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
@@ -530,7 +536,8 @@ export function AgentViewPage() {
                     <Menu.Positioner
                       align='end'
                       sideOffset={6}
-                      className='z-40'
+                      collisionPadding={16}
+                      className='z-[60]'
                     >
                       <Menu.Popup
                         finalFocus={() =>
@@ -538,43 +545,48 @@ export function AgentViewPage() {
                             ? false
                             : renameFormRef.current?.querySelector('input') ??
                               menuTriggerRef.current}
-                        className='w-56 rounded-lg border border-(--border) bg-(--surface-elevated) p-1 shadow-xl outline-none'
+                        className={cn(dropdownPopupClassName, 'w-56')}
                       >
-                        <Menu.Item
-                          onClick={beginRename}
-                          className='flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-white/6'
-                        >
-                          <Pencil aria-hidden='true' className='h-4 w-4' />
-                          重命名
-                        </Menu.Item>
-                        <div
-                          role='separator'
-                          className='my-1 border-t border-(--border-soft)'
-                        />
-                        <Menu.Item
-                          disabled={!canDelete}
-                          aria-describedby={!canDelete
-                            ? 'delete-unavailable'
-                            : undefined}
-                          onClick={() => {
-                            setDeleteError(null)
-                            setDeleteOpen(true)
-                          }}
-                          className='flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm text-(--accent) outline-none data-[highlighted]:bg-white/6 data-[disabled]:cursor-not-allowed data-[disabled]:text-(--foreground-subtle)'
-                        >
-                          <Trash2 aria-hidden='true' className='h-4 w-4' />
-                          删除智能体
-                        </Menu.Item>
-                        {!canDelete
-                          ? (
-                            <p
-                              id='delete-unavailable'
-                              className='px-3 pb-2 text-xs text-(--foreground-subtle)'
-                            >
-                              已有版本，无法删除
-                            </p>
-                          )
-                          : null}
+                        <div className={dropdownScrollClassName}>
+                          <Menu.Item
+                            onClick={beginRename}
+                            className={dropdownItemClassName}
+                          >
+                            <Pencil aria-hidden='true' className='h-4 w-4' />
+                            重命名
+                          </Menu.Item>
+                          <div
+                            role='separator'
+                            className='mx-2.5 my-1 border-t border-(--border-soft)'
+                          />
+                          <Menu.Item
+                            disabled={!canDelete}
+                            aria-describedby={!canDelete
+                              ? 'delete-unavailable'
+                              : undefined}
+                            onClick={() => {
+                              setDeleteError(null)
+                              setDeleteOpen(true)
+                            }}
+                            className={cn(
+                              dropdownItemClassName,
+                              'text-(--accent) data-[highlighted]:text-(--accent) data-[disabled]:text-(--foreground-subtle)',
+                            )}
+                          >
+                            <Trash2 aria-hidden='true' className='h-4 w-4' />
+                            删除智能体
+                          </Menu.Item>
+                          {!canDelete
+                            ? (
+                              <p
+                                id='delete-unavailable'
+                                className='px-2.5 pb-2 text-xs text-(--foreground-subtle)'
+                              >
+                                已有版本，无法删除
+                              </p>
+                            )
+                            : null}
+                        </div>
                       </Menu.Popup>
                     </Menu.Positioner>
                   </Menu.Portal>
