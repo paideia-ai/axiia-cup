@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -103,7 +103,7 @@ export const ActionMenuKeyboard: Story = {
     await expect(body.getByRole('menuitem', { name: '归档智能体' }))
       .not.toHaveAttribute('aria-disabled', 'true')
     await userEvent.keyboard('{Escape}')
-    await expect(trigger).toHaveFocus()
+    await waitFor(() => expect(trigger).toHaveFocus())
   },
 }
 

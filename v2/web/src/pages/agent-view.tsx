@@ -30,8 +30,7 @@ import type {
   VersionDiffResponse,
 } from '../api/types'
 import { Modal } from '../components/modal'
-import { NewAgentButton } from '../components/new-agent-button'
-import { NewAgentDialog } from '../components/new-agent-dialog'
+import { CreateAgentAction } from '../components/create-agent-action'
 import { OsPanel } from '../components/os-panel'
 import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
@@ -75,7 +74,10 @@ function displayName(sideName: string, agentID: number, name?: string | null) {
 // 别人的公开投影仍只展示身份与逐版本战绩，不泄露提示词或 diff。
 export function AgentViewPage() {
   const { agentId = '' } = useParams()
-  const agentID = Number(agentId)
+  return <AgentView key={agentId} agentID={Number(agentId)} />
+}
+
+function AgentView({ agentID }: { agentID: number }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -103,7 +105,9 @@ export function AgentViewPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [savedVersionID, setSavedVersionID] = useState<number | null>(null)
   const [expressError, setExpressError] = useState<string | null>(null)
-  const [renaming, setRenaming] = useState(false)
+  const [renaming, setRenaming] = useState(
+    location.state?.renameNewAgent === true,
+  )
   const [nameDraft, setNameDraft] = useState('')
   const [localName, setLocalName] = useState<string | null | undefined>()
   const [renameBusy, setRenameBusy] = useState(false)
@@ -111,10 +115,10 @@ export function AgentViewPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [createAnchor, setCreateAnchor] = useState<HTMLElement | null>(null)
   const [entryNotice, setEntryNotice] = useState<number | null>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const renameFormRef = useRef<HTMLFormElement>(null)
+  const renameComposingRef = useRef(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const menuTriggerRef = useRef<HTMLElement>(null)
   const wasRenaming = useRef(false)
@@ -182,37 +186,42 @@ export function AgentViewPage() {
     setOsOpen(false)
     setPreferVersionID(null)
     setActionError(null)
-    setRenaming(false)
     setLocalName(undefined)
     setRenameBusy(false)
     setRenameError(null)
     setDeleteOpen(false)
     setDeleteBusy(false)
     setDeleteError(null)
-    setCreateAnchor(null)
     setEntryNotice(null)
     const state = location.state as {
+      renameNewAgent?: boolean
       savedVersionID?: number
       expressDispatchError?: string
     } | null
     setSavedVersionID(state?.savedVersionID ?? null)
     setExpressError(state?.expressDispatchError ?? null)
-    if (state?.savedVersionID != null || state?.expressDispatchError != null) {
-      navigate(location.pathname, { replace: true, state: null })
+    if (
+      state?.renameNewAgent || state?.savedVersionID != null ||
+      state?.expressDispatchError != null
+    ) {
+      navigate(location.pathname + location.search, {
+        replace: true,
+        state: null,
+      })
     }
   }, [agentID])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (renaming) {
-      const frame = requestAnimationFrame(() =>
-        renameFormRef.current?.querySelector('input')?.select()
-      )
+      const input = renameFormRef.current?.querySelector('input')
+      input?.focus({ preventScroll: true })
+      input?.select()
       wasRenaming.current = true
-      return () => cancelAnimationFrame(frame)
+      return
     }
-    if (wasRenaming.current) headingRef.current?.focus()
+    if (wasRenaming.current) headingRef.current?.focus({ preventScroll: true })
     wasRenaming.current = false
-  }, [renaming])
+  }, [renaming, currentView != null])
 
   // Keep the active pill visible without moving the page vertically.
   useLayoutEffect(() => {
@@ -269,13 +278,14 @@ export function AgentViewPage() {
   }
 
   const beginRename = () => {
+    renameComposingRef.current = false
     setNameDraft(currentName ?? '')
     setRenameError(null)
     setRenaming(true)
   }
 
   const saveName = async () => {
-    if (renameBusy || nameTooLong) return
+    if (renameBusy || (nameTooLong && nameDraft.trim() !== '')) return
     const requestID = ++renameRequestRef.current
     const requestIsCurrent = () =>
       mountedRef.current && renameRequestRef.current === requestID &&
@@ -296,6 +306,27 @@ export function AgentViewPage() {
       if (requestIsCurrent()) setRenameBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (!renaming || renameBusy || nameDraft.trim() !== '') return
+    const dismissEmptyName = (event: MouseEvent) => {
+      if (renameComposingRef.current || !(event.target instanceof Node)) return
+      const form = renameFormRef.current
+      const input = form?.querySelector('input')
+      if (!input || input.contains(event.target)) return
+      // Let the explicit save/cancel buttons retain their own behavior.
+      if (
+        event.target instanceof Element &&
+        form?.contains(event.target.closest('button'))
+      ) return
+      // Do not pull focus away from the control the user just clicked.
+      wasRenaming.current = false
+      if (currentName == null) setRenaming(false)
+      else void saveName()
+    }
+    document.addEventListener('click', dismissEmptyName, true)
+    return () => document.removeEventListener('click', dismissEmptyName, true)
+  }, [renaming, renameBusy, nameDraft, currentName])
 
   const removeAgent = async () => {
     if (!canDelete || deleteBusy) return
@@ -508,6 +539,12 @@ export function AgentViewPage() {
                         aria-describedby='inline-agent-name-help'
                         className='h-11 min-w-0 flex-1 text-lg font-semibold'
                         placeholder='智能体名称（可选）'
+                        onCompositionStart={() => {
+                          renameComposingRef.current = true
+                        }}
+                        onCompositionEnd={() => {
+                          renameComposingRef.current = false
+                        }}
                         onChange={(event) => {
                           setNameDraft(event.target.value)
                           setRenameError(null)
@@ -716,12 +753,12 @@ export function AgentViewPage() {
 
             <nav
               aria-label='同角色智能体'
-              className='flex min-w-0 items-center gap-2'
+              className='flex min-w-0 flex-wrap items-center gap-2'
               {...tm('EA.sibling-pills')}
             >
               <div
                 ref={railRef}
-                className='flex min-w-0 items-center gap-2 overflow-x-auto py-1'
+                className='flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1'
               >
                 {railAgents.map((sibling) => {
                   const siblingName = sibling.agentID === agentID
@@ -745,12 +782,15 @@ export function AgentViewPage() {
                   )
                 })}
               </div>
-              <span className='inline-flex' {...tm('EA.sibling-create-button')}>
-                <NewAgentButton
-                  role={sideName}
-                  onClick={(anchor) => setCreateAnchor(anchor)}
-                />
-              </span>
+              <CreateAgentAction
+                marker={tm('EA.sibling-create-button')['data-tm']}
+                scenarioID={data.draft.scenarioID}
+                side={data.draft.side}
+                role={sideName}
+                oppositeRole={data.draft.side === 'a'
+                  ? data.scenario.summary.sideBName
+                  : data.scenario.summary.sideAName}
+              />
             </nav>
 
             <VersionList
@@ -775,7 +815,16 @@ export function AgentViewPage() {
                     : {})}
                 >
                   <ButtonLink
-                    to={`/agents/${agentID}/build`}
+                    to={`/agents/${agentID}/build${
+                      new URLSearchParams(location.search).get('express') ===
+                          '1'
+                        ? `?${new URLSearchParams({
+                          scenario: data.draft.scenarioID,
+                          side: data.draft.side,
+                          express: '1',
+                        })}`
+                        : ''
+                    }`}
                     size='sm'
                     variant='ghost'
                     className='h-11 w-11 shrink-0 cursor-pointer p-0 text-white md:h-8 md:w-8'
@@ -870,17 +919,6 @@ export function AgentViewPage() {
                     </Button>
                   </div>
                 </Modal>
-              )
-              : null}
-
-            {createAnchor
-              ? (
-                <NewAgentDialog
-                  scenario={data.scenario.summary}
-                  initialSide={data.draft.side}
-                  anchor={createAnchor}
-                  onClose={() => setCreateAnchor(null)}
-                />
               )
               : null}
 

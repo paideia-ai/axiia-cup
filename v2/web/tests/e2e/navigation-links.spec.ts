@@ -234,19 +234,6 @@ const cases: {
     destination: /\/agents\/101\/build$/,
   },
   {
-    name: 'scenario build',
-    path: scenarioPath,
-    marker: 'DA.build-button',
-    destination: /\/agents\/101\/build\?scenario=shangyang-court&side=a$/,
-    options: { empty: true },
-  },
-  {
-    name: 'scenario create another',
-    path: scenarioPath,
-    marker: 'DA.build-more-button',
-    destination: /\/my-agents$/,
-  },
-  {
     name: 'scenario single agent',
     path: scenarioPath,
     marker: 'DA.view-mine-button',
@@ -447,13 +434,16 @@ test('right-click preserves the source and does not resolve an agent', async ({ 
   // dismiss the application's dialog rather than a native context menu.
 })
 
-test('inventory fallback opens or creates in the destination tab', async ({ page }) => {
-  const { ensures } = await fixtures(page, { inventoryFailed: true })
+test('inventory fallback directly creates an agent', async ({ page }) => {
+  await fixtures(page, { inventoryFailed: true })
+  await page.context().route(
+    '**/v1/agents',
+    (route) => route.fulfill({ json: { agentID: 101 } }),
+  )
   await page.goto('/my-agents')
-  const link = page.getByRole('link', { name: '打开或创建商鞅智能体' })
-  await checkNewTab(page, link, /\/agents\/101$/, false)
-  expect(ensures).toHaveLength(1)
-  expect(ensures[0].page).not.toBe(page)
+  await page.getByRole('button', { name: '新建商鞅智能体' }).click()
+  await expect(page).toHaveURL(/\/agents\/101$/)
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
 })
 
 test('Shift-click opens a separate page; Meta-click is not intercepted', async ({ page }) => {
@@ -507,39 +497,17 @@ test('entry errors can retry, and back does not repeat get-or-create', async ({ 
   await expect(page.getByRole('alert')).toHaveText('请稍后重试')
   expect(attempts).toBe(1)
   await page.getByRole('button', { name: '重试', exact: true }).click()
-  await expect(page).toHaveURL(/\/agents\/101\/build\?/)
+  await expect(page).toHaveURL(/\/agents\/101\?express=1$/)
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
+  await expect(page.getByRole('link', { name: '新建版本' })).toHaveAttribute(
+    'href',
+    '/agents/101/build?scenario=shangyang-court&side=a&express=1',
+  )
   expect(attempts).toBe(2)
   expect(ensures).toHaveLength(1)
   await page.goBack()
   await expect(page).toHaveURL(/\/express$/)
   expect(attempts).toBe(2)
-})
-
-test('leaving a pending entry cannot redirect the current page', async ({ page }) => {
-  await fixtures(page, { empty: true })
-  let release!: () => void
-  const gate = new Promise<void>((resolve) => release = resolve)
-  await page.context().route('**/v1/agents/ensure', async (route) => {
-    await gate
-    await route.fulfill({ json: { agentID: 101 } })
-  })
-  await page.goto(scenarioPath)
-  await page.getByTestId('build-agent').click()
-  await expect(page.getByRole('status')).toHaveText('正在准备你的智能体…')
-  await page.goBack()
-  await expect(page).toHaveURL(scenarioPath)
-  release()
-  await expect(page.getByTestId('build-agent')).toBeVisible()
-  await expect(page).toHaveURL(scenarioPath)
-})
-
-test('dialogs and disclosure controls remain buttons on the current page', async ({ page }) => {
-  const { ensures } = await fixtures(page)
-  await page.goto('/agents/101')
-  await page.getByRole('button', { name: '新建商鞅智能体' }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page).toHaveURL(/\/agents\/101$/)
-  expect(ensures).toHaveLength(0)
 })
 
 test('a signed-out entry keeps its complete destination through login', async ({ page }) => {

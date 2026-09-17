@@ -258,14 +258,14 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U04-C06', 'U04-C17', 'U04-C07'],
     anchors: ['spec-a2e'],
     journeys: ['j3s1'],
-    note: '懒 ensure（get-or-create）后进构建器；导测里 j3s1 的落点登记在 E 组',
+    note: '直接创建并进入智能体主页，展开空白重命名输入框',
     when: '该侧还没有策略时',
   },
   'DA.build-more-button': {
     label: '再建一个按钮',
     clauses: ['U04-C17', 'U06-C07', 'U01-C31'],
     anchors: ['spec-p13', 'spec-change-79'],
-    note: '去 /my-agents?new=<side>，在那里过 #59/#79 引导门',
+    note: '直接创建并进入主页改名；#59/#79 引导门失败时就地提示',
     when: '该侧已有策略时',
   },
   'DA.view-mine-button': {

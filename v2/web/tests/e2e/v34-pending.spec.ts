@@ -527,27 +527,16 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await scenarioGroup()
       .getByRole('button', { name: `新建${sideAName}智能体` })
       .click()
-    await page.getByRole('dialog', { name: `新建${sideAName}智能体` })
-      .getByRole('button', { name: '创建智能体' }).click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const firstAgentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])
     expect(firstAgentID).toBeGreaterThan(0)
 
-    // 同侧第 2 个：新建弹窗被 #59 引导门拦下，给出切侧引导。
+    // 同侧第 2 个：新建请求被 #59 引导门拦下，给出切侧引导。
     await page.goto('/my-agents')
     await scenarioGroup()
       .getByRole('button', { name: `新建${sideAName}智能体` })
       .click()
-    const dialog = page.getByRole('dialog', {
-      name: `新建${sideAName}智能体`,
-    })
-    await expect(dialog).toBeVisible()
-    await dialog.getByTestId('create-agent').click()
-    await expect(
-      dialog.getByText(
-        '需先有一个对侧智能体，才能在同侧再建第二个——两边都会写才是真本事',
-      ),
-    ).toBeVisible()
+    await expect(page.getByRole('alert')).toBeVisible()
     // API 复核：POST /v1/agents 以 409 + sibling_gate 拒绝。
     const rejected = await page.request.post('/v1/agents', {
       headers: sameOrigin,
@@ -558,11 +547,8 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       'sibling_gate',
     )
 
-    // 引导 CTA 切到对侧并创建成功。
-    await dialog.getByRole('button', { name: `去创建${sideBName}智能体` })
-      .click()
-    await page.getByRole('dialog', { name: `新建${sideBName}智能体` })
-      .getByTestId('create-agent').click()
+    // 引导 CTA 打开对侧智能体主页。
+    await page.getByRole('link', { name: `去完善${sideBName}智能体` }).click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const oppositeAgentID = Number(
       /\/agents\/(\d+)$/.exec(page.url())?.[1],
@@ -589,10 +575,6 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
     await page.goto('/my-agents')
     await scenarioGroup()
       .getByRole('button', { name: `新建${sideAName}智能体` })
-      .click()
-    await page
-      .getByRole('dialog', { name: `新建${sideAName}智能体` })
-      .getByTestId('create-agent')
       .click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const secondAgentID = Number(/\/agents\/(\d+)$/.exec(page.url())?.[1])

@@ -1,7 +1,7 @@
 /* EA 智能体主页（/agents/:id，B3）+ MA 我的智能体（/my-agents，#73/#64）+ X 首战快速通道（/express，A3）。
    2026-09-09 咳嗽方案把三页重排为「清单低复杂度 → 主页高复杂度 → 构建器低复杂度」：
    MA 只负责选择/新建，改名、删除、版本、参赛和出战集中在 EA。EA 的版本卡继续复用
-   VersionList 的 E.version-card… 标记，出战面板是 OS.*，「新建智能体」浮层是 E.new-agent-*。 */
+   VersionList 的 E.version-card… 标记，出战面板是 OS.*，创建失败提示是 E.new-agent-*。 */
 import type { StepHints, TmRegistry } from '../types'
 
 export const TM_AGENTS: TmRegistry = {
@@ -157,8 +157,8 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U01-C22', 'U01-C22b', 'U01-C23'],
     anchors: ['spec-p2', 'spec-p3'],
     note:
-      '从身份菜单展开；1–30 字、空值回落侧角色名 + #id，支持 Enter 保存、Esc 取消及中文输入法组字保护',
-    when: '身份操作菜单点「重命名」后',
+      '创建后自动展开，或从身份菜单展开；1–30 字、空值回落侧角色名 + #id，支持 Enter 保存、Esc 取消、空白点击框外回落默认标识及中文输入法组字保护',
+    when: '创建智能体后或身份操作菜单点「重命名」后',
   },
   'EA.delete-dialog': {
     label: '删除确认弹窗',
@@ -383,7 +383,7 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U01-C17', 'U01-C26', 'U06-C08', 'U02-C19', 'U01-C09'],
     anchors: ['spec-change-59', 'spec-change-79', 'spec-p8a', 'spec-p6a'],
     note:
-      '每侧段头唯一的机器人加号；桌面锚定浮层、移动端底部面板。创建成功先进入智能体主页；#59/#79 引导门仍由浮层处理',
+      '每侧段头唯一的机器人加号；直接创建并进入主页展开空白改名；#59/#79 引导门就地提示',
   },
   'MA.empty-side': {
     label: '缺侧空态行',
@@ -400,7 +400,7 @@ export const TM_AGENTS: TmRegistry = {
   },
   'MA.fallback-row': {
     label: '降级侧行',
-    note: '段头机器人加号懒 ensure，并安全打开既有/新建智能体主页',
+    note: '段头机器人加号直接创建并打开新智能体主页',
     when: '降级骨架时',
   },
   'MA.fallback-hint': {
