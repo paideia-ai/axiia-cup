@@ -2,7 +2,12 @@ import { PageLoading } from '../components/page-loading'
 import { Clock, Hammer } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
-import type { ScenarioScoringDTO, ScenarioSummary, Side } from '../api/types'
+import type {
+  MyAgentDTO,
+  ScenarioScoringDTO,
+  ScenarioSummary,
+  Side,
+} from '../api/types'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { Badge } from '../components/ui/badge'
 import { Button, ButtonLink } from '../components/ui/button'
@@ -531,12 +536,14 @@ function SideCard({
   fallbackLabel: string | null | undefined
   fallbackGoal: string | null
   hiddenGoals: ScenarioHiddenGoalList | null
-  agents: Array<{ agentID: number; name?: string | null }> | null
+  agents: MyAgentDTO[] | null
   inventoryError: string | null
   inventoryLoading: boolean
   onRetryInventory: () => void
 }) {
   const name = copy?.name ?? fallbackName
+  const homeAgent = agents?.find((agent) => agent.entryVersionID != null) ??
+    agents?.[0]
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>
@@ -689,12 +696,7 @@ function SideCard({
                   再建一个{name}
                 </ButtonLink>
                 <Link
-                  to={agents.length === 1
-                    ? `/agents/${agents[0].agentID}`
-                    : `/my-agents?${new URLSearchParams({
-                      scenario: scenarioID,
-                      side,
-                    })}`}
+                  to={`/agents/${homeAgent!.agentID}`}
                   className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
                   {...tm('DA.view-mine-button')}
                 >

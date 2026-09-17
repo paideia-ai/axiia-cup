@@ -270,6 +270,8 @@ export const TM_DISCOVERY: TmRegistry = {
   },
   'DA.view-mine-button': {
     label: '查看我的按钮',
+    note:
+      '直达当前场景与角色的智能体主页；优先参赛智能体，否则清单首个。同角色栏切换其余智能体',
     clauses: ['U04-C17', 'U01-C31'],
     anchors: ['spec-p13'],
     when: '该侧已有策略时',
