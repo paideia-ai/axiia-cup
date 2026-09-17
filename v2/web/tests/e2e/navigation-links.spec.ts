@@ -637,6 +637,14 @@ for (const detail of agentPreviewScenarios) {
         ),
       ).toHaveAttribute('aria-current', 'page')
       await page.locator('[data-tm="EA.back-link"]').click()
+      await expect(page).toHaveURL(new RegExp(`/agents/${selected.agentID}$`))
+      await page.locator('[data-tm="EA.back-link"]').click()
+      await expect(page).toHaveURL(
+        new RegExp(`/scenarios/${detail.summary.id}$`),
+      )
+      // The page back link follows the actual source; main navigation still
+      // opens the complete inventory regardless of the current scenario.
+      await page.getByRole('link', { name: '我的智能体', exact: true }).click()
       await expect(page).toHaveURL(/\/my-agents$/)
       await expect(page.locator('[data-tm="MA.scenario-group"]')).toHaveCount(5)
       expect(ensures).toHaveLength(0)

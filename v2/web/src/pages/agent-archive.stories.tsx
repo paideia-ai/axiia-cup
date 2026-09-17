@@ -138,7 +138,7 @@ export const ArchiveAndRestore: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '商鞅「以民为本」' }),
     ).toBeVisible()
-    await userEvent.click(canvas.getByRole('link', { name: '返回设置' }))
+    await userEvent.click(canvas.getByRole('link', { name: '← 账户设置' }))
     await userEvent.click(
       await canvas.findByRole('link', { name: /已归档的智能体/ }),
     )

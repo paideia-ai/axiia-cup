@@ -13,7 +13,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
-import { useScrollMemory } from '../../lib/scroll'
 import { protectedLoginUrl } from '../../lib/login-return'
 import { BattleStrip } from '../battle-strip'
 import { PointsIndicator } from '../rewards'
@@ -39,7 +38,6 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigate = useNavigate()
   const location = useLocation()
   const { pathname } = location
-  useScrollMemory()
   const navigationItems = !account
     ? navigation.filter((item) => item.to === '/scenarios')
     : account.isAdmin
