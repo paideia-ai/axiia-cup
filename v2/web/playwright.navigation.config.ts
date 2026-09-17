@@ -6,7 +6,13 @@ import config from './playwright.config'
 export default defineConfig({
   ...config,
   testMatch: ['navigation-links.spec.ts'],
-  use: { ...config.use, baseURL: 'http://127.0.0.1:5190' },
+  use: {
+    ...config.use,
+    // Native tabs/windows need the full browser implementation used by users,
+    // not Playwright's default, separate chromium-headless-shell executable.
+    channel: 'chromium',
+    baseURL: 'http://127.0.0.1:5190',
+  },
   webServer: {
     command:
       'deno task build && deno run -A npm:vite preview --host 127.0.0.1 --port 5190',
