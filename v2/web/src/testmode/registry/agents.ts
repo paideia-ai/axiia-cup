@@ -168,7 +168,7 @@ export const TM_AGENTS: TmRegistry = {
     when: '0 版本智能体的身份操作菜单点「删除智能体」后',
   },
   'EA.action-error': {
-    label: '智能体操作失败提示',
+    label: '智能体操作失败',
     clauses: ['LACK-10'],
     when: '版本卡「设为参赛版本」请求失败时',
   },

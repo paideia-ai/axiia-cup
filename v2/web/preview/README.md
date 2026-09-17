@@ -25,7 +25,8 @@ AXIIA_PROXY_TARGET=http://127.0.0.1:8197 deno task dev --host 0.0.0.0 --port 521
 设置入口、恢复、旧版本保留和空智能体菜单，将截图写入忽略的
 `preview/screenshots/`。
 
-产品后端改动位于相邻 `axiia-cup-v2-agent-archive` 工作树。已有数据库通过原有
+产品后端改动见
+[axiia-cup-v2 PR #65](https://github.com/paideia-ai/axiia-cup-v2/pull/65)。已有数据库通过原有
 `axiia migrate --apply` 增加默认值为 false 的 `agents.is_archived`
 列；前端上线前 须先提供归档接口。真实后端与此演示 API 相互独立。
 
