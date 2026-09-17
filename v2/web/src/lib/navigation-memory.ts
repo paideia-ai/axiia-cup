@@ -93,6 +93,7 @@ export function pageLabel(url: string): string | null {
   if (path === '/tournaments') return '锦标赛'
   if (/^\/tournaments\/[^/]+$/.test(path)) return '积分榜'
   if (path === '/notifications') return '通知'
+  if (path === '/settings/archived-agents') return '已归档的智能体'
   if (path === '/settings') return '账户设置'
   if (path === '/rewards') return '积分'
   if (path === '/admin') return '管理面板'

@@ -21,6 +21,7 @@ import { RewardsProvider } from './context/rewards'
 import { RewardsPage } from './pages/rewards'
 import { AdminPage } from './pages/admin'
 import { AdminSlotPage } from './pages/admin-slot'
+import { ArchivedAgentsPage } from './pages/archived-agents'
 import { AgentViewPage } from './pages/agent-view'
 import { AgentEntryPage } from './pages/agent-entry'
 import { BuilderPage } from './pages/builder'
@@ -160,6 +161,10 @@ export function AppRoutes() {
             />
             <Route path='/versions/:versionId' element={<VersionAgentPage />} />
             <Route path='/notifications' element={<NotificationsPage />} />
+            <Route
+              path='/settings/archived-agents'
+              element={<ArchivedAgentsPage />}
+            />
             <Route path='/settings' element={<SettingsPage />} />
             <Route path='/rewards' element={<RewardsPage />} />
             <Route

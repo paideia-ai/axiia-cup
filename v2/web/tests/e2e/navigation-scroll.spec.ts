@@ -39,6 +39,7 @@ async function installWorld(page: Page) {
     }
     if (path === '/v1/config') return json(config)
     if (path === '/v1/scenarios') return json({ scenarios: [scenario.summary] })
+    if (path === '/v1/my/archived-agents') return json({ agents: [] })
     if (path === '/v1/my/agents') return json({ scenarios: [] })
     if (path === '/v1/matches') {
       world.listRequests++
@@ -312,4 +313,29 @@ test('returning to a live transcript restores reading position without following
   )
   await expect(page.getByText(/^第 61 段/)).toBeAttached()
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(1800)
+})
+
+test('archive page back restores the settings reading position', async ({ page }) => {
+  await installWorld(page)
+  await page.goto('/settings')
+  const archive = page.getByRole('link', { name: /已归档的智能体/ })
+  await expect(archive).toBeVisible()
+  await archive.evaluate((element) =>
+    window.scrollTo({
+      top: window.scrollY + element.getBoundingClientRect().top - 130,
+      behavior: 'instant',
+    })
+  )
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(
+    0,
+  )
+  const y = await page.evaluate(() => window.scrollY)
+  await archive.click()
+  await expect(page.getByRole('heading', { name: '暂无已归档的智能体' }))
+    .toBeVisible()
+  await page.getByRole('link', { name: '← 账户设置', exact: true }).click()
+  await expect(page).toHaveURL(/\/settings$/)
+  await expect.poll(async () =>
+    Math.abs(await page.evaluate(() => window.scrollY) - y)
+  ).toBeLessThan(3)
 })

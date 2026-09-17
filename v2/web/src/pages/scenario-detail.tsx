@@ -63,7 +63,7 @@ export function ScenarioDetailPage() {
   })
   const mineOf = (side: Side) =>
     mine?.scenarios.find((item) => item.scenarioID === scenarioId)
-      ?.sides[side] ?? []
+      ?.sides[side].filter((agent) => !agent.isArchived) ?? []
 
   return (
     <div className='mx-auto w-full max-w-6xl space-y-6' {...tm('DA.page')}>
