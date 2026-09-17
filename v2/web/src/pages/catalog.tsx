@@ -1,12 +1,13 @@
+import { PageLoading } from '../components/page-loading'
+import { catalogQuery } from '../lib/navigation-queries'
 import { Lock, Sparkles, Unlock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { catalog } from '../api/client'
 import type { ScenarioSummary } from '../api/types'
 import { Badge } from '../components/ui/badge'
 import { Card, CardContent } from '../components/ui/card'
 import { gateMet, sideProgressText } from '../lib/gate'
-import { useAsync } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
 import {
   DIFFICULTY_LABEL,
   scenarioGuidance,
@@ -60,11 +61,12 @@ function statsLine(summary: ScenarioSummary): string | null {
 }
 
 export function CatalogPage() {
-  const { account } = useAuth()
-  const { data, error, loading } = useAsync(() =>
-    catalog.scenarios({
-      credentials: account ? 'include' : 'omit',
-    }), [account?.id])
+  const { account, isLoading: authLoading } = useAuth()
+  const { data, error, loading: queryLoading } = usePageQuery(
+    { ...catalogQuery(account ? 'include' : 'omit'), enabled: !authLoading },
+  )
+
+  const loading = authLoading || queryLoading
 
   // 新上线置顶第 2 位只在列表 >1 且 onlineAt 存在时生效；否则保持原序。
   const scenarios = data?.scenarios ?? []
@@ -72,7 +74,7 @@ export function CatalogPage() {
   const ordered = fresh ? pinSecond(scenarios, fresh) : scenarios
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       <div {...tm('D.page-header')}>
         <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
           场景
@@ -83,14 +85,7 @@ export function CatalogPage() {
       </div>
 
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('D.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='cards' {...tm('D.loading')} />
         : error
         ? (
           <p className='text-sm text-(--accent)' {...tm('D.error')}>

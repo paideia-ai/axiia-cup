@@ -1,3 +1,4 @@
+import { PageLoading } from '../components/page-loading'
 import { Menu } from '@base-ui-components/react/menu'
 import {
   ArrowLeftRight,
@@ -19,13 +20,7 @@ import {
 } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import {
-  agents as agentAPI,
-  ApiError,
-  builder,
-  catalog,
-  myAgents,
-} from '../api/client'
+import { agents as agentAPI, builder } from '../api/client'
 import type {
   AgentVersionDTO,
   MyAgentDTO,
@@ -49,7 +44,9 @@ import {
   subscribeEntryMutation,
 } from '../lib/agent-events'
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
-import { messageOf, useAsync } from '../lib/use-async'
+import { messageOf } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
+import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
 import { versionTag } from '../lib/version-label'
 import { tm } from '../testmode/mark'
 
@@ -67,45 +64,21 @@ export function AgentViewPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // 只请求一次 owner draft：403 才切换到公开投影。主人数据里彼此独立的场景、
-  // 版本和 inventory 并行获取，inventory 失败仍可使用主页核心功能。
-  const { data: view, error, reload } = useAsync(async () => {
-    let draft
-    try {
-      draft = await builder.draft(agentID)
-    } catch (cause) {
-      if (cause instanceof ApiError && cause.status === 403) {
-        return {
-          kind: 'public' as const,
-          requestedAgentID: agentID,
-          publicView: await builder.public(agentID),
-        }
-      }
-      throw cause
-    }
-
-    const [scenario, list, inventory] = await Promise.all([
-      catalog.scenario(draft.scenarioID, draft.side),
-      builder.versions(agentID),
-      myAgents.list().catch(() => null),
-    ])
-    const siblings: MyAgentDTO[] = inventory?.scenarios
-      .find((item) => item.scenarioID === draft.scenarioID)
-      ?.sides[draft.side] ?? []
-    return {
-      kind: 'owner' as const,
-      requestedAgentID: agentID,
-      draft,
-      scenario,
-      versions: list.versions,
-      entryVersionID: list.entryVersionID ?? null,
+  const { data: view, error, reload } = usePageQuery(agentQuery(agentID))
+  const inventory = usePageQuery(inventoryQuery())
+  const currentView = view?.requestedAgentID === agentID ? view : null
+  const siblings = currentView?.kind === 'owner'
+    ? inventory.data?.scenarios
+      .find((item) => item.scenarioID === currentView.draft.scenarioID)
+      ?.sides[currentView.draft.side] ?? []
+    : []
+  const data = currentView?.kind === 'owner'
+    ? {
+      ...currentView,
       siblings,
       self: siblings.find((agent) => agent.agentID === agentID) ?? null,
     }
-  }, [agentID])
-
-  const currentView = view?.requestedAgentID === agentID ? view : null
-  const data = currentView?.kind === 'owner' ? currentView : null
+    : null
   const publicView = currentView?.kind === 'public'
     ? currentView.publicView
     : null
@@ -443,14 +416,7 @@ export function AgentViewPage() {
       {error
         ? <p className='text-sm text-(--accent)' {...tm('EA.error')}>{error}</p>
         : !data
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('EA.loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='detail' {...tm('EA.loading')} />
         : (
           <>
             <header {...tm('EA.page-header')}>

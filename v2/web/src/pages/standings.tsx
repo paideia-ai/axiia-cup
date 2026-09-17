@@ -1,8 +1,9 @@
+import { PageLoading } from '../components/page-loading'
+import { standingsQuery } from '../lib/navigation-queries'
 import { Link, useParams } from 'react-router-dom'
 
-import { tournaments } from '../api/client'
 import { Card, CardContent } from '../components/ui/card'
-import { useAsync } from '../lib/use-async'
+import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
 
 function SubmittedVersions({ ids }: { ids: number[] }) {
@@ -28,13 +29,10 @@ function SubmittedVersions({ ids }: { ids: number[] }) {
 export function StandingsPage() {
   const { tournamentId = '' } = useParams()
   const id = Number(tournamentId)
-  const { data, error, loading } = useAsync(
-    () => tournaments.standings(id),
-    [id],
-  )
+  const { data, error, loading } = usePageQuery(standingsQuery(id))
 
   return (
-    <div className='space-y-6'>
+    <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
       <div>
         <h1
           className='text-2xl font-black tracking-tight text-(--foreground)'
@@ -51,14 +49,7 @@ export function StandingsPage() {
       </div>
 
       {loading
-        ? (
-          <p
-            className='text-sm text-(--foreground-subtle)'
-            {...tm('G.standings-loading')}
-          >
-            加载中…
-          </p>
-        )
+        ? <PageLoading variant='list' {...tm('G.standings-loading')} />
         : error
         ? (
           <p className='text-sm text-(--accent)' {...tm('G.standings-error')}>
