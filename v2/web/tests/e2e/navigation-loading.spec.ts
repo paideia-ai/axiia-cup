@@ -273,31 +273,61 @@ test('a late response from the previous agent cannot replace the current detail'
   )
 })
 
-test('a fast destination never reveals a loading skeleton', async ({ page }) => {
-  await world(page)
-  await page.goto('/scenarios')
-  await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
-  await page.evaluate(() => {
-    const scope = globalThis as typeof globalThis & { revealedLoading: boolean }
-    scope.revealedLoading = false
-    new MutationObserver(() => {
-      if (document.querySelector('.page-loading[data-visible]')) {
-        scope.revealedLoading = true
+for (const latency of [50, 200, 300]) {
+  test(`a ${latency}ms destination never reveals loading feedback`, async ({ page }) => {
+    const state = await world(page)
+    state.delays['/v1/tournaments'] = latency
+    await page.goto('/scenarios')
+    await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
+    await page.evaluate(() => {
+      const scope = globalThis as typeof globalThis & {
+        revealedLoading: boolean
       }
-    }).observe(document.querySelector('main')!, {
-      subtree: true,
-      attributes: true,
-      childList: true,
+      scope.revealedLoading = false
+      new MutationObserver(() => {
+        if (
+          document.querySelector(
+            '.page-loading[data-visible], .navigation-activity',
+          )
+        ) {
+          scope.revealedLoading = true
+        }
+      }).observe(document.body, {
+        subtree: true,
+        attributes: true,
+        childList: true,
+      })
     })
+    await nav(page, '/tournaments').click()
+    await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
+    expect(
+      await page.evaluate(() =>
+        (globalThis as typeof globalThis & { revealedLoading: boolean })
+          .revealedLoading
+      ),
+    ).toBe(false)
   })
+}
+
+test('a slow background refresh keeps content while feedback appears and clears', async ({ page }) => {
+  const state = await world(page)
+  await page.clock.install()
+  await page.goto('/scenarios')
+  const card = page.locator('[data-tm="D.scenario-card"]')
+  await expect(card).toBeVisible()
   await nav(page, '/tournaments').click()
   await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
-  expect(
-    await page.evaluate(() =>
-      (globalThis as typeof globalThis & { revealedLoading: boolean })
-        .revealedLoading
-    ),
-  ).toBe(false)
+  const refresh = gate()
+  state.holds['/v1/scenarios'] = refresh.promise
+  await page.clock.fastForward(31_000)
+  await nav(page, '/scenarios').click()
+  await expect(card).toBeVisible()
+  await expect(page.locator('.page-loading')).toHaveCount(0)
+  await expect(page.getByRole('progressbar')).toBeVisible()
+  await expect(card).toBeVisible()
+  refresh.release()
+  await expect(page.getByRole('progressbar')).toHaveCount(0)
+  await expect(card).toBeVisible()
 })
 
 test('a server denial removes a cached page instead of retaining its actions', async ({ page }) => {

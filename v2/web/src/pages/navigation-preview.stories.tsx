@@ -7,7 +7,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { AppRoutes } from '../app-router'
 import { AuthProvider } from '../context/auth'
 import { SoundProvider } from '../context/sound'
-import { resetNavigationCache } from '../lib/navigation-cache'
+import { navigationCache, resetNavigationCache } from '../lib/navigation-cache'
 import {
   config,
   finishedMatch,
@@ -122,9 +122,42 @@ function NavigationPreview({ latency }: { latency: number }) {
   return (
     <>
       <aside className='flex flex-wrap items-center justify-between gap-2 border-b border-(--border-soft) bg-(--surface) px-4 py-3 text-sm text-(--foreground-subtle)'>
-        <p>
-          切页预览 · 演示数据 · 接口延迟 {latency}ms · 可切换 tab 和打开详情
-        </p>
+        <div className='space-y-2'>
+          <p>
+            切页预览 · 演示数据 · 接口延迟{' '}
+            {latency}ms · 等待超过 350ms 才显示加载提示
+          </p>
+          <nav aria-label='选择模拟延迟' className='flex flex-wrap gap-3'>
+            {[
+              [50, 'normal-network'],
+              [200, 'quick-network'],
+              [300, 'below-threshold'],
+              [400, 'near-threshold'],
+              [900, 'slow-network'],
+              [1800, 'very-slow-network'],
+            ].map(([ms, story]) => (
+              <a
+                key={ms}
+                href={`/iframe.html?id=preview-navigation-loading--${story}&viewMode=story`}
+                target='_top'
+                aria-current={latency === ms ? 'page' : undefined}
+                className='rounded px-2 py-1 underline underline-offset-4 aria-[current=page]:bg-(--surface-elevated) aria-[current=page]:text-(--foreground)'
+              >
+                {ms}ms
+              </a>
+            ))}
+          </nav>
+          <p className='text-xs'>
+            重置体验首次加载；刷新观察已有内容保留。串行请求的总等待可能超过单次接口延迟。
+          </p>
+        </div>
+        <button
+          type='button'
+          className='rounded-md border border-(--border) px-3 py-1.5 text-(--foreground)'
+          onClick={() => void navigationCache.invalidateQueries()}
+        >
+          刷新当前页
+        </button>
         <button
           type='button'
           className='rounded-md border border-(--border) px-3 py-1.5 text-(--foreground)'
@@ -165,6 +198,30 @@ export const SlowNetwork: Story = {
   name: '慢网络 · 900ms',
   args: { latency: 900 },
   parameters: { msw: handlers(900) },
+}
+
+export const QuickNetwork: Story = {
+  name: '较快网络 · 200ms',
+  args: { latency: 200 },
+  parameters: { msw: handlers(200) },
+}
+
+export const BelowThreshold: Story = {
+  name: '门槛之前 · 300ms',
+  args: { latency: 300 },
+  parameters: { msw: handlers(300) },
+}
+
+export const NearThreshold: Story = {
+  name: '略超门槛 · 400ms',
+  args: { latency: 400 },
+  parameters: { msw: handlers(400) },
+}
+
+export const CachedRevisit: Story = {
+  ...SlowNetwork,
+  name: '缓存回访检查',
+  tags: ['!dev'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     // The fixture itself waits 900ms; allow room for rendering on CI hosts.
