@@ -46,11 +46,17 @@ import {
   subscribeEntryMutation,
 } from '../lib/agent-events'
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
+import { cn } from '../lib/cn'
 import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
 import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
 import { versionTag } from '../lib/version-label'
 import { tm } from '../testmode/mark'
+import {
+  dropdownItemClassName,
+  dropdownPopupClassName,
+  dropdownScrollClassName,
+} from '../components/ui/dropdown-styles'
 
 const AGENT_NAME_LIMIT = 30
 
@@ -574,7 +580,8 @@ function AgentView({ agentID }: { agentID: number }) {
                     <Menu.Positioner
                       align='end'
                       sideOffset={6}
-                      className='z-40'
+                      collisionPadding={16}
+                      className='z-[60]'
                     >
                       <Menu.Popup
                         finalFocus={() =>
@@ -582,59 +589,64 @@ function AgentView({ agentID }: { agentID: number }) {
                             ? false
                             : renameFormRef.current?.querySelector('input') ??
                               menuTriggerRef.current}
-                        className='w-56 rounded-lg border border-(--border) bg-(--surface-elevated) p-1 shadow-xl outline-none'
+                        className={cn(dropdownPopupClassName, 'w-56')}
                       >
-                        <Menu.Item
-                          onClick={beginRename}
-                          className='flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm outline-none data-[highlighted]:bg-white/6'
-                        >
-                          <Pencil aria-hidden='true' className='h-4 w-4' />
-                          重命名
-                        </Menu.Item>
-                        <div
-                          role='separator'
-                          className='my-1 border-t border-(--border-soft)'
-                        />
-                        <Menu.Item
-                          disabled={archiveBusy}
-                          onClick={() => {
-                            if (canDelete && !isArchived) {
-                              setDeleteError(null)
-                              setDeleteOpen(true)
-                            } else {
-                              void changeArchive()
-                            }
-                          }}
-                          className='flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-sm text-(--accent) outline-none data-[highlighted]:bg-white/6 data-[disabled]:cursor-not-allowed data-[disabled]:text-(--foreground-subtle)'
-                        >
-                          {isArchived
-                            ? (
-                              <ArchiveRestore
-                                aria-hidden='true'
-                                className='h-4 w-4'
-                              />
-                            )
-                            : canDelete
-                            ? (
-                              <Trash2
-                                aria-hidden='true'
-                                className='h-4 w-4'
-                              />
-                            )
-                            : (
-                              <Archive
-                                aria-hidden='true'
-                                className='h-4 w-4'
-                              />
+                        <div className={dropdownScrollClassName}>
+                          <Menu.Item
+                            onClick={beginRename}
+                            className={dropdownItemClassName}
+                          >
+                            <Pencil aria-hidden='true' className='h-4 w-4' />
+                            重命名
+                          </Menu.Item>
+                          <div
+                            role='separator'
+                            className='mx-2.5 my-1 border-t border-(--border-soft)'
+                          />
+                          <Menu.Item
+                            disabled={archiveBusy}
+                            onClick={() => {
+                              if (canDelete && !isArchived) {
+                                setDeleteError(null)
+                                setDeleteOpen(true)
+                              } else {
+                                void changeArchive()
+                              }
+                            }}
+                            className={cn(
+                              dropdownItemClassName,
+                              'text-(--accent) data-[highlighted]:text-(--accent) data-[disabled]:text-(--foreground-subtle)',
                             )}
-                          {archiveBusy
-                            ? '处理中…'
-                            : isArchived
-                            ? '恢复智能体'
-                            : canDelete
-                            ? '删除智能体'
-                            : '归档智能体'}
-                        </Menu.Item>
+                          >
+                            {isArchived
+                              ? (
+                                <ArchiveRestore
+                                  aria-hidden='true'
+                                  className='h-4 w-4'
+                                />
+                              )
+                              : canDelete
+                              ? (
+                                <Trash2
+                                  aria-hidden='true'
+                                  className='h-4 w-4'
+                                />
+                              )
+                              : (
+                                <Archive
+                                  aria-hidden='true'
+                                  className='h-4 w-4'
+                                />
+                              )}
+                            {archiveBusy
+                              ? '处理中…'
+                              : isArchived
+                              ? '恢复智能体'
+                              : canDelete
+                              ? '删除智能体'
+                              : '归档智能体'}
+                          </Menu.Item>
+                        </div>
                       </Menu.Popup>
                     </Menu.Positioner>
                   </Menu.Portal>

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, within } from 'storybook/test'
+import { expect, userEvent, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
@@ -68,6 +68,24 @@ export const MinimalInventoryWithReadiness: Story = {
     await expect(canvas.getAllByTestId('agent-row')).toHaveLength(2)
     await expect(canvas.queryByRole('button', { name: /重命名|删除/ }))
       .toBeNull()
+  },
+}
+
+export const ActionMenuKeyboard: Story = {
+  args: { page: 'agent' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const body = within(canvasElement.ownerDocument.body)
+    const trigger = await canvas.findByRole('button', {
+      name: '智能体更多操作',
+    })
+    await userEvent.click(trigger)
+    await expect(await body.findByRole('menuitem', { name: '重命名' }))
+      .toBeVisible()
+    await expect(body.getByRole('menuitem', { name: '归档智能体' }))
+      .not.toHaveAttribute('aria-disabled', 'true')
+    await userEvent.keyboard('{Escape}')
+    await expect(trigger).toHaveFocus()
   },
 }
 

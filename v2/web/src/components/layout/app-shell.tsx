@@ -71,17 +71,17 @@ export function AppShell({ children }: PropsWithChildren) {
     >
       <header
         {...tm('NAV.header')}
-        className='sticky top-0 z-20 border-b border-(--border-soft) bg-[rgba(12,12,12,0.82)] backdrop-blur-xl'
+        className='shell-glass shell-header sticky top-0 z-20'
       >
-        {/* #72 顶栏保持 48px；当前项只加极淡中性底色。 */}
+        {/* Keep the compact 48px navigation above the glass surface. */}
         <div
-          className={`mx-auto flex h-12 w-full ${contentWidth} items-center gap-3 px-4 sm:px-6`}
+          className={`relative mx-auto flex h-12 w-full ${contentWidth} items-center gap-2 px-4 sm:gap-3 sm:px-6`}
         >
           <NavLink
             {...tm('NAV.logo')}
             to='/scenarios'
             aria-label='AXIIA CUP'
-            className='shrink-0 text-sm font-black tracking-[0.12em] text-(--accent) sm:mr-4 sm:tracking-[0.24em]'
+            className='shell-logo shrink-0 text-sm font-black tracking-[0.12em] text-(--accent) lg:mr-4 sm:tracking-[0.24em]'
           >
             AXIIA<span className='hidden sm:ml-1 sm:inline'>CUP</span>
           </NavLink>
@@ -98,17 +98,17 @@ export function AppShell({ children }: PropsWithChildren) {
                   to={item.to}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                    'shell-nav-link inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium whitespace-nowrap text-(--foreground-subtle) lg:px-3',
                     active && 'text-(--foreground)',
                   )}
                 >
-                  <item.icon className='h-4 w-4' />
+                  <item.icon className='hidden h-4 w-4 lg:block' />
                   {item.label}
                 </Link>
               )
             })}
           </nav>
-          <div className='ml-auto flex items-center gap-1 sm:gap-2'>
+          <div className='shell-actions ml-auto flex min-w-0 items-center gap-0 sm:gap-1 lg:gap-2'>
             {account
               ? (
                 <>
@@ -121,12 +121,12 @@ export function AppShell({ children }: PropsWithChildren) {
                     aria-label='账户设置'
                     className={({ isActive }) =>
                       cn(
-                        'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-(--foreground-subtle) transition hover:text-(--foreground)',
+                        'inline-flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-(--foreground-subtle)',
                         isActive && 'text-(--foreground)',
                       )}
                   >
-                    <UserRound className='h-4 w-4' />
-                    <span className='hidden sm:inline'>
+                    <UserRound className='h-4 w-4 shrink-0' />
+                    <span className='hidden max-w-24 truncate sm:inline md:hidden lg:inline'>
                       {account.displayName}
                     </span>
                   </NavLink>
@@ -180,7 +180,7 @@ export function AppShell({ children }: PropsWithChildren) {
       </footer>
       <nav
         {...tm('NAV.mobile-nav')}
-        className='fixed inset-x-0 bottom-0 z-20 flex items-center justify-around border-t border-(--border-soft) bg-[rgba(12,12,12,0.92)] backdrop-blur-xl md:hidden'
+        className='shell-glass shell-mobile-nav fixed inset-x-0 bottom-0 z-20 flex items-center justify-around md:hidden'
       >
         {navigationItems.map((item) => {
           const active = navigationActive(item.to)
@@ -191,11 +191,13 @@ export function AppShell({ children }: PropsWithChildren) {
               to={item.to}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex flex-1 flex-col items-center gap-1 py-3 text-[10px] font-medium text-(--foreground-muted) transition',
+                'shell-mobile-link flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium text-(--foreground-muted)',
                 active && 'text-(--accent)',
               )}
             >
-              <item.icon className='h-5 w-5' />
+              <span className='shell-mobile-icon inline-flex h-7 w-12 items-center justify-center rounded-full'>
+                <item.icon className='h-5 w-5' />
+              </span>
               {item.label}
             </Link>
           )
