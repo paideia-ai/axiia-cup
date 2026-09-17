@@ -3,7 +3,7 @@ import { config, scenario } from '../../src/testing/v34-fixtures'
 
 // Delayed HTTP fixtures make a remounted wallet/bell observable. Navigation,
 // React lifetimes and EventSource delivery run in the real browser.
-async function installWorld(page: Page) {
+async function installWorld(page: Page, walletGate = Promise.resolve()) {
   // External font availability must not delay navigation assertions.
   await page.route(
     /^https:\/\/(?:fonts\.googleapis\.com|api\.fontshare\.com)\//,
@@ -13,6 +13,7 @@ async function installWorld(page: Page) {
     wallets: 0,
     bells: 0,
     balance: 1900,
+    walletStatus: 200,
     unreadCount: 3,
     accountID: 'navigation-player',
     authenticated: true,
@@ -43,7 +44,14 @@ async function installWorld(page: Page) {
     }
     if (path === '/v1/rewards') {
       world.wallets++
+      await walletGate
       await new Promise((resolve) => setTimeout(resolve, 250))
+      if (world.walletStatus !== 200) {
+        return route.fulfill({
+          status: world.walletStatus,
+          json: { error: 'unavailable' },
+        })
+      }
       return json({
         balance: world.balance,
         dailyAllowance: 2000,
@@ -82,6 +90,82 @@ async function installWorld(page: Page) {
     return route.fulfill({ status: 404, json: { error: 'not_found' } })
   })
   return world
+}
+
+for (const width of [320, 390, 768, 1280]) {
+  test(`首次加载积分时保留入口与位置 (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    let releaseWallet!: () => void
+    const gate = new Promise<void>((resolve) => {
+      releaseWallet = resolve
+    })
+    const world = await installWorld(page, gate)
+    try {
+      await page.goto('/scenarios')
+      const indicator = page.locator('header a[href="/rewards"]')
+      const bell = page.getByRole('link', { name: '通知', exact: true })
+      await expect(indicator).toHaveAccessibleName('积分加载中，查看积分与奖励')
+      await expect(indicator).toHaveAttribute('aria-busy', 'true')
+      await expect(indicator).toHaveText('—')
+      await expect(indicator.locator('svg')).toBeVisible()
+      await expect(bell).toBeVisible()
+      const initial = {
+        indicator: await indicator.boundingBox(),
+        bell: await bell.boundingBox(),
+      }
+      releaseWallet()
+      await expect(indicator).toHaveAccessibleName('1900 积分，查看积分与奖励')
+      await expect(indicator).toHaveText('1,900')
+      await expect(indicator).not.toHaveAttribute('aria-busy', 'true')
+      expect({
+        indicator: await indicator.boundingBox(),
+        bell: await bell.boundingBox(),
+      }).toEqual(initial)
+      expect(
+        await page.evaluate(() =>
+          document.documentElement.scrollWidth <= innerWidth
+        ),
+      ).toBe(true)
+      expect(world.unhandled).toEqual([])
+    } finally {
+      releaseWallet()
+    }
+  })
+}
+
+test('首次积分加载失败保留入口，可重试并正确显示零余额', async ({ page }) => {
+  const world = await installWorld(page)
+  world.walletStatus = 503
+  await page.goto('/scenarios')
+  const indicator = page.locator('header a[href="/rewards"]')
+  await expect(indicator).toHaveAccessibleName(
+    '积分暂时无法加载，查看积分与奖励',
+  )
+  await expect(indicator).toHaveText('—')
+  await expect(indicator).not.toHaveAttribute('aria-busy', 'true')
+  await indicator.click()
+  await expect(page.getByRole('alert')).toHaveText('积分更新失败，请重试')
+  world.walletStatus = 200
+  world.balance = 0
+  await page.getByRole('button', { name: '刷新积分' }).click()
+  await expect(indicator).toHaveAccessibleName('0 积分，查看积分与奖励')
+  await expect(indicator).toHaveText('0')
+  expect(world.unhandled).toEqual([])
+})
+
+for (const status of [404, 405]) {
+  test(`服务端未开放积分时仍隐藏入口 (${status})`, async ({ page }) => {
+    const world = await installWorld(page)
+    world.walletStatus = status
+    const response = page.waitForResponse((response) =>
+      new URL(response.url()).pathname === '/v1/rewards' &&
+      response.status() === status
+    )
+    await page.goto('/scenarios')
+    await response
+    await expect(page.locator('header a[href="/rewards"]')).toHaveCount(0)
+    expect(world.unhandled).toEqual([])
+  })
 }
 
 test('回到标签页刷新积分时保留已有顶栏，随后显示新余额', async ({ page }) => {
