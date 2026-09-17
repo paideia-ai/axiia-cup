@@ -91,6 +91,13 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+For the scenario-to-agent flow, run `deno task preview:scenario-agents` and open
+`http://127.0.0.1:5178/scenarios/fengyiting-real`. This preview includes all five
+scenarios: Dong Zhuo has 13 agents and the second holds the entry version; each
+side B has two agents with no entry version. Check direct home navigation,
+same-role switching, refresh, and returning to the full inventory. It uses the
+same local-only fixture server and does not save changes or run battles.
+
 Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
 Playwright `fixme` contracts. They are not counted as passing functionality.
 
