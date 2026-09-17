@@ -36,11 +36,6 @@ import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
-import {
-  dropdownItemClassName,
-  dropdownPopupClassName,
-  dropdownScrollClassName,
-} from '../components/ui/dropdown-styles'
 import { Select, SelectItem } from '../components/ui/select'
 import { VersionList } from '../components/version-list'
 import {
@@ -58,6 +53,11 @@ import { usePageQuery } from '../lib/use-page-query'
 import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
 import { versionTag } from '../lib/version-label'
 import { tm } from '../testmode/mark'
+import {
+  dropdownItemClassName,
+  dropdownPopupClassName,
+  dropdownScrollClassName,
+} from '../components/ui/dropdown-styles'
 
 const AGENT_NAME_LIMIT = 30
 
