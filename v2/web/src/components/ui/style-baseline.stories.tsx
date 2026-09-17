@@ -21,7 +21,7 @@ export const LinkUtilitiesBeatTheAnchorReset: StoryObj = {
         <a
           data-testid='active'
           data-tm='NAV.nav-link'
-          className='rounded-md px-3 py-1.5 text-(--foreground)'
+          className='shell-nav-link rounded-lg px-3 py-1.5 text-(--foreground)'
           aria-current='page'
           href='#scenarios'
         >
@@ -30,7 +30,7 @@ export const LinkUtilitiesBeatTheAnchorReset: StoryObj = {
         <a
           data-testid='idle'
           data-tm='NAV.nav-link'
-          className='rounded-md px-3 py-1.5 text-(--foreground-subtle)'
+          className='shell-nav-link rounded-lg px-3 py-1.5 text-(--foreground-subtle)'
           href='#matches'
         >
           历史
@@ -49,14 +49,15 @@ export const LinkUtilitiesBeatTheAnchorReset: StoryObj = {
       await canvas.findByTestId('accent-copy'),
     ).color
     // Regression: a global unlayered `a { color: inherit }` beat @layer utilities,
-    // so both links became indistinguishable. Keso's replacement is deliberately
-    // neutral: foreground text plus a barely-there white surface, not a red tab.
+    // so both links became indistinguishable. Flat tabs keep neutral text and
+    // a light surface; a small accent marker reinforces the current page.
     await expect(active.color).toBe('rgb(232, 232, 232)')
-    await expect(active.backgroundColor).toBe(
-      'rgba(255, 255, 255, 0.024)',
-    )
+    await expect(active.backgroundColor).toBe('rgba(255, 255, 255, 0.04)')
+    await expect(active.backgroundImage).toBe('none')
+    await expect(active.boxShadow).toBe('none')
     await expect(active.color).not.toBe(idle.color)
     await expect(idle.backgroundColor).toBe('rgba(0, 0, 0, 0)')
+    await expect(idle.backgroundImage).toBe('none')
     // Status text keeps meaning without reusing the stronger button red.
     await expect(accent).toBe('rgb(241, 122, 97)')
   },
