@@ -67,7 +67,7 @@ export const TM_FA: TmRegistry = {
     label: '约战①/② 徽章',
     clauses: ['U05-C11'],
     journeys: ['jR6s2'],
-    note: '#66 成对约战：标出这是一对中的第几场',
+    note: '#66 历史双场约战：标出这是一对中的第几场',
     when: '约战产生的对局（challengeLeg 非空）',
   },
   'FA.sibling-link': {

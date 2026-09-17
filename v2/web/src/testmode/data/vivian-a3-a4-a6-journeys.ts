@@ -178,7 +178,12 @@ function journey(input: SourceJourney): Journey {
       action: step.action,
       expected: step.expected,
       clauseIds: step.clauses,
-      specLine: `${input.chapter} · Vivian 已确认 · 固定现行版本`,
+      specLine:
+        Object.values(step.versionPins).some((pin) =>
+            pin.startsWith('policy-2026-09-17:')
+          )
+          ? `${input.chapter} · 2026-09-17 产品规则修订 · 待本轮验收`
+          : `${input.chapter} · Vivian 已确认 · 固定现行版本`,
       anchors: [],
       primary: step.clauses.slice(0, 1),
       known: null,

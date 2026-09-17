@@ -15,6 +15,7 @@ interface ConfirmedClause {
 
 interface VerificationSource {
   schemaVersion: number
+  policyRevision?: { id: string; source: string; note: string }
   sourceRevision: string
   capturedAt: string
   scope: {
@@ -66,6 +67,17 @@ const parse = async <T>(path: string | URL): Promise<T> =>
 
 const sourceText = await Deno.readTextFile(sourcePath)
 const source = JSON.parse(sourceText) as VerificationSource
+const currentSnapshot = await parse<{
+  policyRevision?: { id: string }
+}>(snapshotPath)
+if (
+  currentSnapshot.policyRevision &&
+  source.policyRevision?.id !== currentSnapshot.policyRevision.id
+) {
+  throw new Error(
+    'The upstream guide predates the current single-match policy. Apply v2/specs/single-match-pvp/uiux-source.patch in axiia-cup-uiux and commit it before syncing; do not overwrite current copy with the old paired guide.',
+  )
+}
 const sourceBytes = new TextEncoder().encode(sourceText)
 const sourceCommit = verifiedSourceCommit(sourcePath, sourceBytes)
 const sourceDigest = new Uint8Array(
@@ -116,6 +128,7 @@ for (const journey of source.journeys) {
 
 const snapshot = {
   schemaVersion: source.schemaVersion,
+  ...(source.policyRevision ? { policyRevision: source.policyRevision } : {}),
   // Preserve the historical capture declaration separately from the clean
   // Git commit whose source bytes produced this projection.
   sourceRevision: source.sourceRevision,
@@ -144,6 +157,10 @@ for (const [id, confirmed] of Object.entries(snapshot.confirmedClauses)) {
   if (!clause) throw new Error(`spec-index is missing ${id}`)
   clause.q = confirmed.canonical
   clause.impl = confirmed.testImpact.implementationState
+  if (confirmed.versionId.startsWith('policy-2026-09-17:')) {
+    clause.historicalAudit ??= { text: clause.s, capturedAt: source.capturedAt }
+    clause.s = '2026-09-17 单场规则修订；旧双场观察已归档，待本轮验收。'
+  }
 }
 // The older spec-index generator revision did not produce this guide overlay.
 // Record its verified source commit separately from the historical capture.

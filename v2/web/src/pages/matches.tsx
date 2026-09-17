@@ -32,7 +32,7 @@ function statusLabel(summary: MatchSummary, roles: RoleNames | null) {
     (summary.winner ? `胜方 ${summary.winner.toUpperCase()}` : '平局')
 }
 
-// F7（#66 成对约战）：相邻且同 challengeID 的行并成一组，挂在成对表头下；
+// F7（#66 历史双场约战）：相邻且同 challengeID 的行并成一组，挂在成对表头下；
 // 落单的腿（另一条不相邻或被过滤）仍按单行渲染，只带 约战①/② 小标。
 type HistoryRow =
   | { kind: 'single'; match: MatchSummary }

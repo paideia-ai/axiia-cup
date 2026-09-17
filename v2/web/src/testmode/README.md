@@ -83,3 +83,16 @@ Vivian A3/A4/A6 的 5 条旅程、28 步、40 个固定版本来自
 旅程前，先领取新的已准备账号包或确认账号已重新准备，
 再在该旅程点击「开始新一轮」并重填当前 ID。按钮只清理本机该旅程的运行时 ID
 与本机进度，不重置服务端账号、不删除共享看板结果；同一轮普通角色切换不需要重开。
+
+### 单场 PvP 修订（2026-09-17）
+
+当前规则来自 `docs/competition/2026-09-17-single-match-pvp.md`。UIUX handoff
+源中的 `policy-2026-09-17:*` 是 Git 产品规则版本，不是新的人审批准。同步脚本保留
+`policyRevision`、源 commit 与 SHA-256；旧批准记录留在 UIUX 源的
+`supersededClauses`，不会自动批准新 pin。
+
+U05-C11 的当前索引同步单场规则；U06-C06/C12 经 Vivian 同步脚本生成。历史
+`journeys.json` 与 `e2e-signals.json`
+保留当时原文，前者在界面明确标为非当前验收归档，后者不进入
+bundle。历史双场战报组件继续可测，但不得要求新约战出现第二局。旧 N/N
+次数步骤保留原 pin 并标记 blocked，当前积分不足按奖励规格另行准备 fixture。

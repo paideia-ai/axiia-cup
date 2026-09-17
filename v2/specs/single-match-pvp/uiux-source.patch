@@ -1,0 +1,287 @@
+diff --git a/UI-Doc-v3.4.md b/UI-Doc-v3.4.md
+index e0a6fe1..089c7f9 100644
+--- a/UI-Doc-v3.4.md
++++ b/UI-Doc-v3.4.md
+@@ -10,0 +11,2 @@ companion: v3.3-work-items.md（工作项清单）· rfc/v33-implementation-rfc.
++> **2026-09-17 当前约战修订：** [单场 PvP 决定](https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md)取代下文旧 #66 的双场创建和双侧阵容要求。每次使用所选角色与版本创建一场，仅发起人付费并可在获胜后领取返还。双侧 PvE 解锁仍保留。本文旧 #66 及旧评审仅为历史来源，不用于当前验收。
++
+diff --git a/spec-v4/README.md b/spec-v4/README.md
+index 2070e92..599c009 100644
+--- a/spec-v4/README.md
++++ b/spec-v4/README.md
+@@ -124,0 +125,6 @@ node --test spec-v4/tests/cli/rephrase-cli.test.mjs
++
++## 2026-09-17 单场 PvP 文案同步
++
++现行规则以 [单场 PvP 决定](https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md) 为准。verification-journeys.json 与 verification-vivian-rest.json 使用 `policy-2026-09-17:*` 表示 Git 产品规则修订；它们不是 Supabase 中的成员评审版本。旧 `confirmedClauses` 条目原样保存在 `supersededClauses`，`sharedVersionSnapshots` 与既有团队审批不变；新 pin 不继承旧通过结果。
++
++同步产品 Test Mode 时应保留 policyRevision 与新的 pin。旧每日次数验收明确标记 blocked，积分不足需另按奖励规格验证。此次只更新源材料，不发布生成页面，也不写入共享评审数据库。历史两轮手册继续作为非当前验收归档。
+diff --git a/spec-v4/sources/verification-journeys.json b/spec-v4/sources/verification-journeys.json
+index 38d77f9..6cb7478 100644
+--- a/spec-v4/sources/verification-journeys.json
++++ b/spec-v4/sources/verification-journeys.json
+@@ -880,3 +880,3 @@
+-      "version": "v2",
+-      "versionId": "8552c685-20c2-4fbb-8ae6-e59da4d12d72",
+-      "canonical": "在玩家准备发起一场对战 pvp的情况下，当玩家打开选择对手面板 并 确认出战时，Axiia 系统必须双侧成对约战：一次约战产生两场（我 A vs 你 B ＋ 我 B vs 你 A），双方都须双侧齐备；双侧默认各取该侧参赛版本。",
++      "version": "policy-2026-09-17",
++      "versionId": "policy-2026-09-17:U05-C11",
++      "canonical": "在玩家从一个智能体版本发起 PvP 约战时，系统必须保留所选角色与版本，只创建其与对手对侧版本的一场对局，不要求本次提交双侧阵容；双方仍须满足 PvE 解锁门槛。",
+@@ -892,5 +892,4 @@
+-        "status": "confirmed",
+-        "needsFurtherAttention": false,
+-        "confirmedBy": "yihan2",
+-        "confirmedAt": "2026-09-04T10:08:49.318725+00:00",
+-        "source": "live-team-pick"
++        "status": "pending",
++        "needsFurtherAttention": true,
++        "source": "repository-policy-amendment",
++        "policy": "https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md"
+@@ -901 +900,3 @@
+-        "automaticState": "has_test"
++        "automaticState": "none",
++        "implementationState": "fixed_unverified",
++        "requiresTestChange": true
+@@ -904 +905 @@
+-        "priorState": "tested",
++        "priorState": "untested",
+@@ -906 +907,2 @@
+-      }
++      },
++      "previousVersionId": "8552c685-20c2-4fbb-8ae6-e59da4d12d72"
+@@ -1063 +1065 @@
+-      "label": "PVP 当日次数 N/N 的发起智能体 ID",
++      "label": "旧每日次数负例的发起智能体 ID",
+@@ -1070 +1072 @@
+-      "hint": "仅证明拒绝原因是配额触顶，而不是对手无效。"
++      "hint": "历史预留版本；不得据此声称已准备好当前积分不足状态。"
+@@ -1262 +1264 @@
+-          "description": "稳定智能体与有效对手版本已就绪；当日 PVP 次数 N/N 必须在测试当天刷新。",
++          "description": "旧每日次数负例已停用；该账号不代表当前积分不足，S01 保持 blocked。",
+@@ -1864 +1866 @@
+-      "title": "PVP 配额触顶、成对约战与被约方通知",
++      "title": "PVP 单场约战、积分边界与被约方通知",
+@@ -1867 +1869 @@
+-        "「A5 人测·配额被约方」：稳定 ID 已预置；测试当天先将 PVP 解锁并刷新到当日可用次数 N/N，再以 {{a5PvpExhaustedOpponentVersionId}} 这个有效对手执行负例；操作前记录队列和对局基线。",
++        "旧 N/N 次数负例已由积分规则取代，S01 保持 blocked；不要为旧负例消耗对局。{{a5PvpExhaustedOpponentVersionId}} 仅为历史预留引用。",
+@@ -1884,2 +1886,2 @@
+-          "action": "以「A5 人测·配额被约方」点击「出战」→「玩家约战」，显式选择有效对手版本 {{a5PvpExhaustedOpponentVersionId}} 并点击确认发起；随后检查页面文案、网络响应、队列和上方对局列表。",
+-          "expected": "系统显示完整文案「今日次数已用完（N/N），明天再来」并拒绝入队；操作前后不得新增、排队或派发任何对局。",
++          "action": "本步骤原每日次数验收已过时，请先阅读下方规则变更说明；不要继续消耗对局尝试达到 N/N。 原预留对手版本 {{a5PvpExhaustedOpponentVersionId}} 不能证明当前积分不足，不据此派发。",
++          "expected": "旧次数条款保持 blocked，不因当前积分系统允许继续派发而判为产品失败。",
+@@ -1895 +1897,6 @@
+-          ]
++          ],
++          "knownGap": {
++            "title": "旧每日次数条款已由积分规则取代",
++            "detail": "本步骤原版本验证每日总场数／PvP 次数上限。当前服务端以 0 表示这些上限已退役，不能继续按 N/N 准备账号或判定失败。",
++            "instruction": "保留本步骤的原版本与既有评审，不对旧条款写入当前通过结果。当前余额不足应按奖励规格 U18-C24/C32/C33 使用独立积分 fixture 验证；本步等待替代条款与账号准备。"
++          }
+@@ -1929 +1936,38 @@
+-      "completion": "S01–S02 全部执行并提交证据；配额触顶仍入队，或友谊约战等待同意/没有通知，都必须标记对应条款失败。"
++      "completion": "S01 记录旧次数条款已被取代，不计为当前通过；S02 提交本轮单场约战通知证据，等待同意或没有通知则标记失败。"
++    }
++  ],
++  "policyRevision": {
++    "id": "single-match-pvp-2026-09-17",
++    "source": "https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md",
++    "note": "Git 中的现行产品规则修订，不是新增的 Supabase 团队评审。原条款、版本及审批记录保存在 supersededClauses 和既有 sharedVersionSnapshots；新 policy pin 不继承旧版本的人测或批准结果。"
++  },
++  "supersededClauses": {
++    "8552c685-20c2-4fbb-8ae6-e59da4d12d72": {
++      "chapter": "A5",
++      "version": "v2",
++      "versionId": "8552c685-20c2-4fbb-8ae6-e59da4d12d72",
++      "canonical": "在玩家准备发起一场对战 pvp的情况下，当玩家打开选择对手面板 并 确认出战时，Axiia 系统必须双侧成对约战：一次约战产生两场（我 A vs 你 B ＋ 我 B vs 你 A），双方都须双侧齐备；双侧默认各取该侧参赛版本。",
++      "handoffReady": false,
++      "handoffBlocker": {
++        "code": "cross_spec_conflict",
++        "conflictsWith": [
++          "U05-C12"
++        ],
++        "note": "双侧默认参赛版本与 U05-C12 的对方各侧最新版默认值冲突；先统一默认版本口径。"
++      },
++      "textReview": {
++        "status": "confirmed",
++        "needsFurtherAttention": false,
++        "confirmedBy": "yihan2",
++        "confirmedAt": "2026-09-04T10:08:49.318725+00:00",
++        "source": "live-team-pick"
++      },
++      "testImpact": {
++        "category": "rewrite-oracle",
++        "priority": "P2",
++        "automaticState": "has_test"
++      },
++      "humanVerification": {
++        "priorState": "tested",
++        "assignment": "rerun-current-version"
++      }
+@@ -1931 +1975 @@
+-  ]
++  }
+diff --git a/spec-v4/sources/verification-vivian-rest.json b/spec-v4/sources/verification-vivian-rest.json
+index 8cef58b..840912e 100644
+--- a/spec-v4/sources/verification-vivian-rest.json
++++ b/spec-v4/sources/verification-vivian-rest.json
+@@ -1088,3 +1088,3 @@
+-      "version": "v2",
+-      "versionId": "comment-v2:U06-C06",
+-      "canonical": "在玩家发起按 ID 约战的情况下，当系统检查当日同一对手的约战次数时，Axiia 系统必须在达到 §C2 配置的每日上限后拒绝约战，并把每次成功约战计为发起人的两场配额。",
++      "version": "policy-2026-09-17",
++      "versionId": "policy-2026-09-17:U06-C06",
++      "canonical": "在玩家发起约战时，系统必须按发起方与对手玩家分别检查当日约战上限；每次成功约战只创建一场、消耗一次约战额度，并仅向发起人扣除这一场的积分；达到上限后拒绝创建且不扣款。",
+@@ -1093,5 +1093,4 @@
+-        "status": "confirmed",
+-        "needsFurtherAttention": false,
+-        "confirmedBy": "Vivian",
+-        "confirmedAt": "2026-09-03T13:18:32.230365+00:00",
+-        "source": "live-team-pick"
++        "status": "pending",
++        "needsFurtherAttention": true,
++        "source": "repository-policy-amendment",
++        "policy": "https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md"
+@@ -1103 +1102 @@
+-        "implementationState": "match",
++        "implementationState": "fixed_unverified",
+@@ -1107 +1106 @@
+-        "priorState": "tested",
++        "priorState": "untested",
+@@ -1109 +1108,2 @@
+-      }
++      },
++      "previousVersionId": "comment-v2:U06-C06"
+@@ -1238,3 +1238,3 @@
+-      "version": "v2",
+-      "versionId": "comment-v2:U06-C12",
+-      "canonical": "在系统创建约战或成对对战的情况下，当确定双方出战版本时，Axiia 系统必须优先使用各自标记的参赛版本，并仅在未标记时使用最新版。",
++      "version": "policy-2026-09-17",
++      "versionId": "policy-2026-09-17:U06-C12",
++      "canonical": "在系统创建玩家约战时，系统必须优先使用发起人显式选择的版本；未指定时取该智能体的参赛版本、再回落最新版。对手按 ID 指定时使用该对侧版本，按玩家选择时使用对侧参赛版本、再回落最新版。",
+@@ -1243,5 +1243,4 @@
+-        "status": "confirmed",
+-        "needsFurtherAttention": false,
+-        "confirmedBy": "Vivian",
+-        "confirmedAt": "2026-09-03T13:19:13.021048+00:00",
+-        "source": "live-team-pick"
++        "status": "pending",
++        "needsFurtherAttention": true,
++        "source": "repository-policy-amendment",
++        "policy": "https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md"
+@@ -1253 +1252 @@
+-        "implementationState": "match",
++        "implementationState": "fixed_unverified",
+@@ -1257 +1256 @@
+-        "priorState": "tested",
++        "priorState": "untested",
+@@ -1259 +1258,2 @@
+-      }
++      },
++      "previousVersionId": "comment-v2:U06-C12"
+@@ -1704 +1704 @@
+-          "description": "S03 的合法双侧约战需要当前已核验的双方已解锁状态。U06-C06 与 #76 已确认按发起方→对手玩家分别计数，不同发起方不得共享计数。S05 的边界仍未准备且当前配置不可达：同一发起方前两次成对约战已用 4 次 PVP，第三次需累计 6 次，超过当前日上限 5。须安排配额内可达的受权测试窗口或隔离 fixture；这属于测试前态准备，不是重新裁定计数规则。S03 与 S05 不共享未复核的旧 ID 或计数。",
++          "description": "为单场约战单独准备并核验双方解锁、当前积分余额及同对手计数 M−1。每日总场数/PvP 上限已退役，不沿用 2026-09-12 的两场消耗算式。S03 与 S05 不共享未经复核的计数。",
+@@ -2395,2 +2395,2 @@
+-          "action": "在智能体主页、我的智能体和出战面板中记录两侧唯一 ★ 版本；用 {{a6PvpOpponentVersionId}} 发起合法成对约战并记录两腿实际版本；对无 ★ 侧另核对最新版回落。工作区用于编辑和保存，参赛版本在保存后返回的智能体主页核对。",
+-          "expected": "所有展示参赛版本的相关页面指向同一每侧唯一参赛版；成对对战优先取各自对应侧 ★，仅无标记时取最新版，两腿与记录一致。",
++          "action": "在智能体主页、我的智能体和出战面板中记录唯一 ★ 版本；从非参赛版本点击出战，用 {{a6PvpOpponentVersionId}} 指定对方对侧版本发起单场约战，记录两方实际 versionID。另核对未指定版本时的 ★／最新版回落。工作区用于编辑和保存。",
++          "expected": "一次约战只有一个 matchID；我方使用点击的版本，对方使用指定的对侧版本。未显式指定时优先使用适用的参赛版本，无参赛版本才回落最新版；各页面的 ★ 标记一致。",
+@@ -2402 +2402 @@
+-            "U06-C12": "comment-v2:U06-C12",
++            "U06-C12": "policy-2026-09-17:U06-C12",
+@@ -2410,3 +2410,3 @@
+-            "title": "S03 回落分支仍需真实遗留前态",
+-            "detail": "S01/S02 新建账号只准备参赛切换与首存自动★，不解锁 PVP，也不能构造已有保存版本但整侧无★的历史状态。合法成对约战使用另行核验的 PVP 账号包；最新版回落需要真实遗留数据。",
+-            "instruction": "先用合法 PVP 账号包核对已标★的成对约战；未提供合格遗留前态时，把无★回落分支记为 blocked，并保留 S03 的未完成状态。零版本空壳不满足这一前提；回落分支需要真实的已保存版本且全侧无★状态。"
++            "title": "需核验当前版本与回落前态",
++            "detail": "当前客户端和服务端须同时包含单场修订。旧双场证据不证明所选版本在单场流程中保持不变；无 ★ 回落仍需已保存版本但没有参赛标记的真实前态。",
++            "instruction": "使用本轮核验的 {{a6PvpOpponentVersionId}}；没有无 ★ 前态时只将该分支记为 blocked，不伪造通过。"
+@@ -2455,2 +2455,2 @@
+-          "action": "先使用为本步单独准备并重新核验的发起方/被约方状态，记录同一对手计数恰为 M−1、总配额余量至少 2；不得把 S03 执行后的旧状态当作本步起点。按 ID 约战 {{a6PvpOpponentVersionId}}；记录两腿/配额后对同一人再发一次。",
+-          "expected": "边界内成功约战恰创建两场并计发起人 2 场配额；达到 M 后下一次拒绝且零腿创建，原因是同一对手上限。",
++          "action": "使用本步独立准备的账号，核验双方 PvE 解锁、同一对手计数为 M−1，且发起人积分足够支付当前单场报价。按 ID 约战 {{a6PvpOpponentVersionId}}，记录一个 matchID 与双方余额后，对同一人再发一次。",
++          "expected": "边界内只创建一场、只向发起人扣除本场积分，计一次同对手约战；被挑战方不扣款、不领奖。达到 M 后返回 opponent_challenge_limit，不创建对局、不扣款。",
+@@ -2461 +2461 @@
+-            "U06-C06": "comment-v2:U06-C06"
++            "U06-C06": "policy-2026-09-17:U06-C06"
+@@ -2468,3 +2468,3 @@
+-            "title": "待准备可达边界：计数规则已确认，当前日配额不足",
+-            "detail": "U06-C06 与 UI-Doc v3.4 #76 已确认按发起方→对手玩家分别计算每日约战次数，每次成功约战占发起人两场配额；不同发起方的次数不能汇总为被约方总量。2026-09-12 配置为同一对手上限 M=3、PVP 日上限 5：前两次用 4 次，边界内第三次需要累计 6 次，无法在当前配额内正常准备 M−1 且仍有 2 次 PVP 余量的状态。这是测试前态的可达性问题，不是未决定的计数规则。",
+-            "instruction": "保留原动作、预期与版本 pin，记录配置及算式并暂停 S05，不标通过。由准备方另行安排受权测试窗口及可达配置，或提供合法隔离 fixture；使用前重新核验双方 ID、同一对手次数与配额。不得改写线上计数，也不以多发起方累计被约量替代原预期；隔离验证与共享环境的真人结果分别记录。"
++            "title": "待准备本轮同对手上限边界",
++            "detail": "旧记录的每日 PvP 上限 5、双场消耗 2 和第三次不可达算式已过时。现行总场数／PvP 日上限字段为 0，表示已退役；同对手约战上限仍独立生效。",
++            "instruction": "按当前服务端配置、积分报价和单场规则准备 M−1 状态；先确认拒绝原因不是余额不足或门槛未解锁。没有本轮证据时保持未完成，不继承旧测试结果。"
+@@ -2481,2 +2481,2 @@
+-          "action": "确认今日已用 N/N；用有效版本 {{a6DailyExhaustedOpponentVersionId}} 点击仍可点的派发按钮并核对对局前后。",
+-          "expected": "显示「今日次数已用完（N/N），明天再来」并拒绝入队；没有新增、排队或派发对局。",
++          "action": "本步骤原每日次数验收已过时，请先阅读下方规则变更说明；不要继续消耗对局尝试达到 N/N。 原预留对手版本 {{a6DailyExhaustedOpponentVersionId}} 不能证明当前积分不足，不据此派发。",
++          "expected": "旧次数条款保持 blocked，不因当前积分系统允许继续派发而判为产品失败。",
+@@ -2492 +2492,6 @@
+-          ]
++          ],
++          "knownGap": {
++            "title": "旧每日次数条款已由积分规则取代",
++            "detail": "本步骤原版本验证每日总场数／PvP 次数上限。当前服务端以 0 表示这些上限已退役，不能继续按 N/N 准备账号或判定失败。",
++            "instruction": "保留本步骤的原版本与既有评审，不对旧条款写入当前通过结果。当前余额不足应按奖励规格 U18-C24/C32/C33 使用独立积分 fixture 验证；本步等待替代条款与账号准备。"
++          }
+@@ -2565 +2570 @@
+-        "提交 ★ 矩阵、两腿版本/配额、M/N 配置、评分前后、赛事资格与通知的去敏证据。",
++        "提交 ★ 矩阵、单场双方版本与积分流水、同对手上限配置、评分前后、赛事资格与通知的去敏证据。",
+@@ -2580,0 +2586,57 @@
++  },
++  "policyRevision": {
++    "id": "single-match-pvp-2026-09-17",
++    "source": "https://github.com/paideia-ai/axiia-cup/blob/f691540ba23d544922a4b1d893387cae94d53cfe/docs/competition/2026-09-17-single-match-pvp.md",
++    "note": "Git 中的现行产品规则修订，不是新增的 Supabase 团队评审。原条款、版本及审批记录保存在 supersededClauses 和既有 sharedVersionSnapshots；新 policy pin 不继承旧版本的人测或批准结果。"
++  },
++  "supersededClauses": {
++    "comment-v2:U06-C06": {
++      "chapter": "A6",
++      "version": "v2",
++      "versionId": "comment-v2:U06-C06",
++      "canonical": "在玩家发起按 ID 约战的情况下，当系统检查当日同一对手的约战次数时，Axiia 系统必须在达到 §C2 配置的每日上限后拒绝约战，并把每次成功约战计为发起人的两场配额。",
++      "handoffReady": true,
++      "textReview": {
++        "status": "confirmed",
++        "needsFurtherAttention": false,
++        "confirmedBy": "Vivian",
++        "confirmedAt": "2026-09-03T13:18:32.230365+00:00",
++        "source": "live-team-pick"
++      },
++      "testImpact": {
++        "category": "new-coverage",
++        "priority": "P1",
++        "automaticState": "none",
++        "implementationState": "match",
++        "requiresTestChange": true
++      },
++      "humanVerification": {
++        "priorState": "tested",
++        "assignment": "rerun-current-version"
++      }
++    },
++    "comment-v2:U06-C12": {
++      "chapter": "A6",
++      "version": "v2",
++      "versionId": "comment-v2:U06-C12",
++      "canonical": "在系统创建约战或成对对战的情况下，当确定双方出战版本时，Axiia 系统必须优先使用各自标记的参赛版本，并仅在未标记时使用最新版。",
++      "handoffReady": true,
++      "textReview": {
++        "status": "confirmed",
++        "needsFurtherAttention": false,
++        "confirmedBy": "Vivian",
++        "confirmedAt": "2026-09-03T13:19:13.021048+00:00",
++        "source": "live-team-pick"
++      },
++      "testImpact": {
++        "category": "new-coverage",
++        "priority": "P1",
++        "automaticState": "none",
++        "implementationState": "match",
++        "requiresTestChange": true
++      },
++      "humanVerification": {
++        "priorState": "tested",
++        "assignment": "rerun-current-version"
++      }
++    }

@@ -635,7 +635,7 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '约战①/② 徽记',
     clauses: ['U05-C11'],
     anchors: ['spec-change-66'],
-    when: '该对局属于一次成对约战时',
+    when: '该对局属于历史双场约战时',
   },
 }
 
