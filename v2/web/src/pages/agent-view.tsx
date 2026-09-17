@@ -112,6 +112,7 @@ function AgentView({ agentID }: { agentID: number }) {
   const [entryNotice, setEntryNotice] = useState<number | null>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const renameFormRef = useRef<HTMLFormElement>(null)
+  const renameComposingRef = useRef(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const menuTriggerRef = useRef<HTMLElement>(null)
   const wasRenaming = useRef(false)
@@ -271,13 +272,14 @@ function AgentView({ agentID }: { agentID: number }) {
   }
 
   const beginRename = () => {
+    renameComposingRef.current = false
     setNameDraft(currentName ?? '')
     setRenameError(null)
     setRenaming(true)
   }
 
   const saveName = async () => {
-    if (renameBusy || nameTooLong) return
+    if (renameBusy || (nameTooLong && nameDraft.trim() !== '')) return
     const requestID = ++renameRequestRef.current
     const requestIsCurrent = () =>
       mountedRef.current && renameRequestRef.current === requestID &&
@@ -298,6 +300,27 @@ function AgentView({ agentID }: { agentID: number }) {
       if (requestIsCurrent()) setRenameBusy(false)
     }
   }
+
+  useEffect(() => {
+    if (!renaming || renameBusy || nameDraft.trim() !== '') return
+    const dismissEmptyName = (event: MouseEvent) => {
+      if (renameComposingRef.current || !(event.target instanceof Node)) return
+      const form = renameFormRef.current
+      const input = form?.querySelector('input')
+      if (!input || input.contains(event.target)) return
+      // Let the explicit save/cancel buttons retain their own behavior.
+      if (
+        event.target instanceof Element &&
+        form?.contains(event.target.closest('button'))
+      ) return
+      // Do not pull focus away from the control the user just clicked.
+      wasRenaming.current = false
+      if (currentName == null) setRenaming(false)
+      else void saveName()
+    }
+    document.addEventListener('click', dismissEmptyName, true)
+    return () => document.removeEventListener('click', dismissEmptyName, true)
+  }, [renaming, renameBusy, nameDraft, currentName])
 
   const removeAgent = async () => {
     if (!canDelete || deleteBusy) return
@@ -510,6 +533,12 @@ function AgentView({ agentID }: { agentID: number }) {
                         aria-describedby='inline-agent-name-help'
                         className='h-11 min-w-0 flex-1 text-lg font-semibold'
                         placeholder='智能体名称（可选）'
+                        onCompositionStart={() => {
+                          renameComposingRef.current = true
+                        }}
+                        onCompositionEnd={() => {
+                          renameComposingRef.current = false
+                        }}
                         onChange={(event) => {
                           setNameDraft(event.target.value)
                           setRenameError(null)

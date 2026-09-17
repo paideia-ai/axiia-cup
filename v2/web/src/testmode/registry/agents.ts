@@ -157,7 +157,7 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U01-C22', 'U01-C22b', 'U01-C23'],
     anchors: ['spec-p2', 'spec-p3'],
     note:
-      '创建后自动展开，或从身份菜单展开；1–30 字、空值回落侧角色名 + #id，支持 Enter 保存、Esc 取消及中文输入法组字保护',
+      '创建后自动展开，或从身份菜单展开；1–30 字、空值回落侧角色名 + #id，支持 Enter 保存、Esc 取消、空白点击框外回落默认标识及中文输入法组字保护',
     when: '创建智能体后或身份操作菜单点「重命名」后',
   },
   'EA.delete-dialog': {
