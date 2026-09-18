@@ -1,5 +1,5 @@
 import { PageLoading } from '../components/page-loading'
-import { Check } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import type { MatchSummary } from '../api/types'
@@ -66,6 +66,7 @@ export function MatchesPage() {
   const [params, setParams] = useSearchParams()
   const onlyMine = params.get('mine') === '1'
   const scenarioID = params.get('scenario') ?? ''
+  const versionID = params.get('version') ?? ''
   const updateFilter = (key: string, value: string) => {
     setParams((previous) => {
       const next = new URLSearchParams(previous)
@@ -97,6 +98,10 @@ export function MatchesPage() {
   // Closed history is already scoped by the server, including older responses
   // without participant metadata. Open history uses viewer-relative ownership.
   const visibleMatches = (data?.list.matches ?? []).filter((summary) =>
+    (!versionID || (['a', 'b'] as const).some((side) => {
+      const id = summary.participants?.[side]?.versionID
+      return id != null && String(id) === versionID
+    })) &&
     (!scenarioID || summary.scenarioID === scenarioID) &&
     (!onlyMine || !data?.list.open || summary.initiatorIsMe ||
       summary.participants?.a.isMine || summary.participants?.b.isMine)
@@ -201,7 +206,9 @@ export function MatchesPage() {
           className='text-sm text-(--foreground-subtle)'
           {...tm('L.page-intro')}
         >
-          {scenarioID
+          {versionID
+            ? '该版本参与的对战记录，包含进行中的对局。'
+            : scenarioID
             ? (onlyMine || !data?.list.open
               ? '你在该场景的对战记录。'
               : '该场景的对战记录。')
@@ -244,6 +251,20 @@ export function MatchesPage() {
         </div>
       </div>
 
+      {versionID && (
+        <div className='flex flex-wrap items-center gap-2 text-xs'>
+          <button
+            type='button'
+            onClick={() => updateFilter('version', '')}
+            aria-label={`清除版本 #${versionID} 筛选`}
+            className='inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border border-(--border-soft) px-3 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
+          >
+            版本 #{versionID}
+            <X aria-hidden='true' className='size-3.5' />
+          </button>
+        </div>
+      )}
+
       {loading
         ? <PageLoading variant='list' {...tm('L.loading')} />
         : error
@@ -277,7 +298,11 @@ export function MatchesPage() {
         )
         : (
           <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
-            {scenarioID
+            {versionID
+              ? (scenarioID || onlyMine
+                ? '该版本没有符合当前筛选条件的对战。试试切换场景或取消「仅自己对局」。'
+                : '该版本还没有对战记录。')
+              : scenarioID
               ? '没有符合筛选条件的对战。试试切换场景或取消「仅自己对局」。'
               : onlyMine && data?.list.open
               ? '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。'

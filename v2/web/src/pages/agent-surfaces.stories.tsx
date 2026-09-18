@@ -135,12 +135,14 @@ export const HighFunctionAgentHome: Story = {
 export const CompactVersionControls: Story = {
   args: { page: 'agent' },
   render: () => (
-    <VersionList
-      versions={versions}
-      sideName='商鞅'
-      onSetEntry={() => {}}
-      onField={() => {}}
-    />
+    <MemoryRouter>
+      <VersionList
+        versions={versions}
+        sideName='商鞅'
+        onSetEntry={() => {}}
+        onField={() => {}}
+      />
+    </MemoryRouter>
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)

@@ -2,6 +2,7 @@ import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { Check, ChevronDown, ChevronUp, Copy, Sword } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import type { AgentVersionDTO } from '../api/types'
 import {
@@ -166,30 +167,55 @@ export function VersionList({
               {...tm('E.version-card')}
             >
               <CardContent className='space-y-3 pt-5'>
-                <div className='flex flex-wrap items-center gap-2'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1'>
+                    <span
+                      className='text-base font-bold text-(--foreground)'
+                      {...tm('E.version-tag')}
+                    >
+                      {tag}
+                    </span>
+                    {!detailsMissing?.(version.id)
+                      ? (
+                        <>
+                          <span
+                            className='font-mono text-xs text-(--foreground-muted)'
+                            {...tm('E.version-id')}
+                          >
+                            #{version.id}
+                          </span>
+                          <Badge tone='info' {...tm('E.version-model-badge')}>
+                            {version.modelID}
+                          </Badge>
+                          <span className='inline-flex items-center gap-3 whitespace-nowrap text-xs text-(--foreground-muted)'>
+                            <Link
+                              to={`/matches?version=${version.id}`}
+                              aria-label={`${
+                                recordCopy(version)
+                              }，查看 ${tag} 的对局记录`}
+                              className='inline-flex min-h-6 items-center rounded-sm text-(--foreground-subtle) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
+                              data-testid='version-record'
+                              {...tm('E.version-record')}
+                            >
+                              {recordCopy(version)}
+                            </Link>
+                            {savedAtCopy(version)
+                              ? (
+                                <span
+                                  data-testid='version-time'
+                                  {...tm('E.version-time')}
+                                >
+                                  {savedAtCopy(version)}
+                                </span>
+                              )
+                              : null}
+                          </span>
+                        </>
+                      )
+                      : null}
+                  </div>
                   <span
-                    className='text-base font-bold text-(--foreground)'
-                    {...tm('E.version-tag')}
-                  >
-                    {tag}
-                  </span>
-                  {!detailsMissing?.(version.id)
-                    ? (
-                      <>
-                        <span
-                          className='font-mono text-xs text-(--foreground-muted)'
-                          {...tm('E.version-id')}
-                        >
-                          #{version.id}
-                        </span>
-                        <Badge tone='info' {...tm('E.version-model-badge')}>
-                          {version.modelID}
-                        </Badge>
-                      </>
-                    )
-                    : null}
-                  <span
-                    className='ml-auto inline-flex'
+                    className='inline-flex shrink-0'
                     {...(version.isEntry ? tm('E.entry-badge') : {})}
                   >
                     <Button
@@ -220,36 +246,14 @@ export function VersionList({
                   </span>
                 </div>
 
-                {!detailsMissing?.(version.id)
+                {!detailsMissing?.(version.id) && version.note?.trim()
                   ? (
-                    <div className='flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--foreground-muted)'>
-                      <span
-                        data-testid='version-record'
-                        {...tm('E.version-record')}
-                      >
-                        {recordCopy(version)}
-                      </span>
-                      {version.note?.trim()
-                        ? (
-                          <span
-                            className='break-words text-(--foreground-subtle)'
-                            {...tm('E.version-note')}
-                          >
-                            备注：{version.note.trim()}
-                          </span>
-                        )
-                        : null}
-                      {savedAtCopy(version)
-                        ? (
-                          <span
-                            data-testid='version-time'
-                            {...tm('E.version-time')}
-                          >
-                            {savedAtCopy(version)}
-                          </span>
-                        )
-                        : null}
-                    </div>
+                    <p
+                      className='break-words text-xs text-(--foreground-subtle)'
+                      {...tm('E.version-note')}
+                    >
+                      备注：{version.note.trim()}
+                    </p>
                   )
                   : null}
 
