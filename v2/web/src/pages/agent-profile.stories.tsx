@@ -148,7 +148,12 @@ const handlers = [
     '/v1/scenarios/:id/npcs/:key/matches',
     () =>
       HttpResponse.json({
-        matches: [match(9002, 'b'), match(9001, 'draw'), match(9000, null)],
+        matches: [
+          match(9002, 'b'),
+          match(9001, 'draw'),
+          match(9000, null),
+          { ...match(8999, null), dispatched: false, scored: false },
+        ],
         open: true,
       }),
   ),
@@ -250,6 +255,11 @@ export const NPCPublicPromptAndOwnResult: Story = {
       .toHaveTextContent('平')
     await expect(canvas.getByRole('link', { name: /对战 #9000/ }))
       .toHaveTextContent('未计分')
+    const failedBeforeDispatch = canvas.getByRole('link', {
+      name: /对战 #8999/,
+    })
+    await expect(failedBeforeDispatch).toHaveTextContent('未计分')
+    await expect(failedBeforeDispatch).not.toHaveTextContent('排队中')
     await userEvent.click(won)
     await expect(await canvas.findByText('战报详情')).toBeVisible()
   },
