@@ -7,7 +7,7 @@ import type { AgentVersionDTO, MeResponse } from '../api/types'
 import { AuthProvider, useAuth } from '../context/auth'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
-import { JOURNEYS, REVIEWED_MANUAL_URL, STEPS } from './data'
+import { JOURNEYS, REVIEWED_MANUAL_URL } from './data'
 import {
   FIXTURE_SESSION_STORAGE_KEY,
   FIXTURE_STORAGE_KEY,
