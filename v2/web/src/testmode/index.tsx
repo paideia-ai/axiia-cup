@@ -1,4 +1,4 @@
-/* 测试模式入口：只管开关、药丸和按需加载。关着的时候只有一次 localStorage 读；
+/* 测试模式入口：只管开关、药丸和按需加载。关闭后保留重新开启入口；
    开着才把 overlay 分块（徽标层 / 弹层 / 清单 / 导测 + 规格与旅程 JSON）拉进来。
    在 <BrowserRouter> 里挂一次（app-router.tsx），每个路由（含首页 / 登录 / 注册）都能用。 */
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { testModeEntryTarget } from './entry'
 import { BASE_CSS } from './styles'
-import { getIdentity, IDENTITY_EVENT } from './supabase'
+import { HUMAN_TEST_SYSTEM_URL } from './human-test-system'
 
 const TM_KEY = 'axiia:tm'
 const BADGES_KEY = 'axiia:tm:badges'
@@ -25,12 +25,12 @@ export interface TmUi {
 export type SetUi = (patch: Partial<TmUi>) => void
 
 const BADGE_NEXT: Record<BadgeMode, BadgeMode> = {
-  all: 'mapped',
+  all: 'off',
   mapped: 'off',
   off: 'all',
 }
 const BADGE_TITLE: Record<BadgeMode, string> = {
-  all: '标记：全部显示（点一下只留有条款的）',
+  all: '标记：全部显示（点一下隐藏，露出被测内容）',
   mapped: '标记：只标有条款的（点一下隐藏）',
   off: '标记：已隐藏（点一下全部显示）',
 }
@@ -51,7 +51,7 @@ function write(key: string, value: string) {
 }
 function readBadges(): BadgeMode {
   const v = read(BADGES_KEY)
-  return v === '0' ? 'off' : v === 'mapped' ? 'mapped' : 'all'
+  return v === '1' ? 'all' : v === 'mapped' ? 'mapped' : 'off'
 }
 
 export function TestModeRoot() {
@@ -67,13 +67,15 @@ export function TestModeRoot() {
     if (v === '1') return true
     return read(TM_KEY) === '1'
   })
+  const [available, setAvailable] = useState(() =>
+    new URLSearchParams(location.search).has('tm') || read(TM_KEY) !== null
+  )
   const [ui, setUiState] = useState<TmUi>(() => ({
     badges: readBadges(),
     panel: false,
     guided: entryTarget !== null,
     identity: false,
   }))
-  const [who, setWho] = useState(() => getIdentity()?.name ?? null)
   const [host] = useState(() => {
     if (typeof document === 'undefined') return null
     const el = document.createElement('div')
@@ -86,6 +88,7 @@ export function TestModeRoot() {
     const params = new URLSearchParams(location.search)
     const v = params.get('tm')
     if (v === null) return
+    if (v === '1' || v === '0') setAvailable(true)
     if (v === '1') {
       write(TM_KEY, '1')
       setOn(true)
@@ -122,16 +125,16 @@ export function TestModeRoot() {
   }, [location.search])
 
   useEffect(() => {
-    if (!on || !host) return
+    if (!available || !host) return
     document.body.appendChild(host)
     return () => {
       host.remove()
     }
-  }, [on, host])
+  }, [available, host])
 
   // 产品的移动端底栏（AppShell 里 fixed bottom-0 的 nav）：量它的高度，药丸 / 抽屉都让开它。
   useEffect(() => {
-    if (!on || !host) return
+    if (!available || !host) return
     const measure = () => {
       const nav = document.querySelector<HTMLElement>('nav.fixed.bottom-0')
       const h = nav && nav.getClientRects().length > 0 ? nav.offsetHeight : 0
@@ -143,18 +146,7 @@ export function TestModeRoot() {
       cancelAnimationFrame(raf)
       globalThis.removeEventListener('resize', measure)
     }
-  }, [on, host, location.pathname])
-
-  useEffect(() => {
-    if (!on) return
-    const refresh = () => setWho(getIdentity()?.name ?? null)
-    globalThis.addEventListener(IDENTITY_EVENT, refresh)
-    globalThis.addEventListener('storage', refresh)
-    return () => {
-      globalThis.removeEventListener(IDENTITY_EVENT, refresh)
-      globalThis.removeEventListener('storage', refresh)
-    }
-  }, [on])
+  }, [available, host, location.pathname])
 
   const setUi = useCallback<SetUi>((patch) => {
     setUiState((u) => {
@@ -184,7 +176,30 @@ export function TestModeRoot() {
     setUiState((u) => ({ ...u, panel: false, guided: false, identity: false }))
   }, [])
 
-  if (!on || !host) return null
+  if (!available || !host) return null
+
+  if (!on) {
+    return createPortal(
+      <>
+        <style>{BASE_CSS}</style>
+        <nav className='tm-pill' aria-label='测试模式开关'>
+          <button
+            type='button'
+            className='tm-pill-btn'
+            aria-pressed={false}
+            onClick={() => {
+              write(TM_KEY, '1')
+              setOn(true)
+              setUi({ badges: 'off' })
+            }}
+          >
+            开启测试模式
+          </button>
+        </nav>
+      </>,
+      host,
+    )
+  }
 
   return createPortal(
     <>
@@ -203,7 +218,7 @@ export function TestModeRoot() {
           aria-label={BADGE_TITLE[ui.badges]}
           onClick={() => setUi({ badges: BADGE_NEXT[ui.badges] })}
         >
-          标记{ui.badges === 'mapped' ? '·条款' : ''}
+          {ui.badges === 'off' ? '显示标记' : '隐藏标记'}
         </button>
         <button
           type='button'
@@ -223,29 +238,19 @@ export function TestModeRoot() {
         >
           清单
         </button>
-        <button
-          type='button'
-          className='tm-pill-btn tm-pill-btn--who'
-          title={who
-            ? `当前身份：${who}（点击修改）`
-            : '设置看板身份：名字 + 看板口令（不是产品账号密码）'}
-          aria-label={who ? `身份：${who}，点击修改` : '设置身份'}
-          onClick={() => setUi({ identity: true })}
+        <a
+          className='tm-pill-btn tm-ext'
+          href={HUMAN_TEST_SYSTEM_URL}
+          target='_blank'
+          rel='noreferrer'
         >
-          {who
-            ? (
-              <>
-                <span className='tm-pill-who-k' aria-hidden='true'>身份</span>
-                {who}
-              </>
-            )
-            : '设置身份'}
-        </button>
+          人测手册 ↗
+        </a>
         <button
           type='button'
           className='tm-pill-btn tm-pill-btn--x'
           aria-label='关闭测试模式'
-          title='关闭测试模式（?tm=1 可再打开）'
+          title='关闭测试模式（保留开启按钮）'
           onClick={close}
         >
           ✕

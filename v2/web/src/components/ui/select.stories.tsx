@@ -66,9 +66,20 @@ export const StableScrolling: Story = {
       0,
     )
     await expect(list.getBoundingClientRect().top).toBeCloseTo(before.top, 0)
+    // Opening and positioning the popup transfers focus asynchronously.
+    // Wait for that transfer before sending keys, especially near the bottom.
+    await waitFor(() =>
+      expect(list.contains(canvasElement.ownerDocument.activeElement)).toBe(
+        true,
+      )
+    )
     // Keyboard navigation must still reach an offscreen option and restore focus.
-    await userEvent.keyboard('{End}{Enter}')
-    await expect(trigger).toHaveTextContent('模型 24')
+    await userEvent.keyboard('{End}')
+    await waitFor(() =>
+      expect(body.getByRole('option', { name: '模型 24' })).toHaveFocus()
+    )
+    await userEvent.keyboard('{Enter}')
+    await waitFor(() => expect(trigger).toHaveTextContent('模型 24'))
     await waitFor(() => expect(trigger).toHaveFocus())
     await userEvent.click(trigger)
     const reopened = await body.findByRole('listbox')
