@@ -1,4 +1,4 @@
-/* 测试模式入口：只管开关、药丸和按需加载。关着的时候只有一次 localStorage 读；
+/* 测试模式入口：只管开关、药丸和按需加载。关闭后保留重新开启入口；
    开着才把 overlay 分块（徽标层 / 弹层 / 清单 / 导测 + 规格与旅程 JSON）拉进来。
    在 <BrowserRouter> 里挂一次（app-router.tsx），每个路由（含首页 / 登录 / 注册）都能用。 */
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
@@ -67,6 +67,9 @@ export function TestModeRoot() {
     if (v === '1') return true
     return read(TM_KEY) === '1'
   })
+  const [available, setAvailable] = useState(() =>
+    new URLSearchParams(location.search).has('tm') || read(TM_KEY) !== null
+  )
   const [ui, setUiState] = useState<TmUi>(() => ({
     badges: readBadges(),
     panel: false,
@@ -85,6 +88,7 @@ export function TestModeRoot() {
     const params = new URLSearchParams(location.search)
     const v = params.get('tm')
     if (v === null) return
+    if (v === '1' || v === '0') setAvailable(true)
     if (v === '1') {
       write(TM_KEY, '1')
       setOn(true)
@@ -121,16 +125,16 @@ export function TestModeRoot() {
   }, [location.search])
 
   useEffect(() => {
-    if (!on || !host) return
+    if (!available || !host) return
     document.body.appendChild(host)
     return () => {
       host.remove()
     }
-  }, [on, host])
+  }, [available, host])
 
   // 产品的移动端底栏（AppShell 里 fixed bottom-0 的 nav）：量它的高度，药丸 / 抽屉都让开它。
   useEffect(() => {
-    if (!on || !host) return
+    if (!available || !host) return
     const measure = () => {
       const nav = document.querySelector<HTMLElement>('nav.fixed.bottom-0')
       const h = nav && nav.getClientRects().length > 0 ? nav.offsetHeight : 0
@@ -142,7 +146,7 @@ export function TestModeRoot() {
       cancelAnimationFrame(raf)
       globalThis.removeEventListener('resize', measure)
     }
-  }, [on, host, location.pathname])
+  }, [available, host, location.pathname])
 
   const setUi = useCallback<SetUi>((patch) => {
     setUiState((u) => {
@@ -172,7 +176,30 @@ export function TestModeRoot() {
     setUiState((u) => ({ ...u, panel: false, guided: false, identity: false }))
   }, [])
 
-  if (!on || !host) return null
+  if (!available || !host) return null
+
+  if (!on) {
+    return createPortal(
+      <>
+        <style>{BASE_CSS}</style>
+        <nav className='tm-pill' aria-label='测试模式开关'>
+          <button
+            type='button'
+            className='tm-pill-btn'
+            aria-pressed={false}
+            onClick={() => {
+              write(TM_KEY, '1')
+              setOn(true)
+              setUi({ badges: 'off' })
+            }}
+          >
+            开启测试模式
+          </button>
+        </nav>
+      </>,
+      host,
+    )
+  }
 
   return createPortal(
     <>
@@ -223,7 +250,7 @@ export function TestModeRoot() {
           type='button'
           className='tm-pill-btn tm-pill-btn--x'
           aria-label='关闭测试模式'
-          title='关闭测试模式（?tm=1 可再打开）'
+          title='关闭测试模式（保留开启按钮）'
           onClick={close}
         >
           ✕
