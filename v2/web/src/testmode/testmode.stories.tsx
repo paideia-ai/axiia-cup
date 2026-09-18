@@ -641,3 +641,25 @@ export const A6RoleSwitchPreservesRunAndReplacementClearsIt: Story = {
     expect(calls).toEqual([])
   },
 }
+
+export const CloseAndReopenTestMode: Story = {
+  loaders: [() => {
+    localStorage.removeItem('axiia:tm:badges')
+    return {}
+  }],
+  play: async () => {
+    const body = within(document.body)
+    await body.findByRole('navigation', { name: '测试模式' })
+    await waitFor(() => expect(document.querySelector(badgeSel)).toBeNull())
+    await userEvent.click(body.getByRole('button', { name: /标记：已隐藏/ }))
+    await waitFor(() => expect(document.querySelector(badgeSel)).not.toBeNull())
+    await userEvent.click(body.getByRole('button', { name: /标记：全部显示/ }))
+    await waitFor(() => expect(document.querySelector(badgeSel)).toBeNull())
+    await userEvent.click(body.getByRole('button', { name: '关闭测试模式' }))
+    expect(body.queryByRole('navigation', { name: '测试模式' })).toBeNull()
+    await userEvent.click(body.getByRole('button', { name: '开启测试模式' }))
+    await body.findByRole('navigation', { name: '测试模式' })
+    await waitFor(() => expect(document.querySelector(badgeSel)).toBeNull())
+    expect(localStorage.getItem('axiia:tm')).toBe('1')
+  },
+}
