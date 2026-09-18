@@ -261,6 +261,51 @@ export const ScenarioFilterPreview: Story = {
   parameters: openHistory(scenarioHistory),
 }
 
+export const RetiredScenarioHistoryRemainsVisible: Story = {
+  parameters: openHistory([
+    summary,
+    {
+      ...summary,
+      id: 9006,
+      scenarioID: 'sanguo-chain-stratagem',
+      scenarioTitle: '三国连环计',
+    },
+    {
+      ...summary,
+      id: 9007,
+      scenarioID: 'sanguo-chain-stratagem-advanced',
+      scenarioTitle: '三国连环计（进阶版）',
+    },
+  ]),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const body = within(canvasElement.ownerDocument.body)
+    await canvas.findByRole('link', { name: /对战 #9007/ })
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
+    const filter = canvas.getByRole('combobox', { name: '全部场景' })
+    await userEvent.click(filter)
+    await body.findByRole('option', { name: '商鞅庭辩' })
+    await expect(body.queryByRole('option', { name: '三国连环计' })).toBeNull()
+    await expect(body.queryByRole('option', { name: '三国连环计（进阶版）' }))
+      .toBeNull()
+    await userEvent.click(body.getByRole('option', { name: '商鞅庭辩' }))
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      1,
+    )
+    await userEvent.click(filter)
+    await userEvent.click(await body.findByRole('option', { name: '全部场景' }))
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
+    const retiredReport = canvas.getByRole('link', { name: /对战 #9007/ })
+    await userEvent.click(retiredReport)
+    await expect(await canvas.findByRole('heading', { name: '战报 9007' }))
+      .toBeVisible()
+  },
+}
+
 export const ScenarioAndOwnershipFilters: Story = {
   parameters: openHistory(scenarioHistory),
   play: async ({ canvasElement }) => {
