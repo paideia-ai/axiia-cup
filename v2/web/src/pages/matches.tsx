@@ -85,8 +85,11 @@ export function MatchesPage() {
   // selected option, even when the catalog is unavailable.
   const historyScenarios = new Map<string, string>()
   for (const summary of data?.list.matches ?? []) {
-    // This retired scenario no longer needs a dedicated history filter.
-    if (summary.scenarioID === 'sanguo-chain-stratagem') continue
+    // These retired scenarios no longer need dedicated history filters.
+    if (
+      summary.scenarioID === 'sanguo-chain-stratagem' ||
+      summary.scenarioID === 'sanguo-chain-stratagem-advanced'
+    ) continue
     if (!historyScenarios.has(summary.scenarioID)) {
       historyScenarios.set(summary.scenarioID, summary.scenarioTitle)
     }
