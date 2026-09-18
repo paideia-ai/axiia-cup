@@ -164,8 +164,8 @@ export function PlayerProfileRecord({
 }
 
 function resultOf(match: MatchSummary, side: Side) {
-  if (!match.dispatched) return '排队中'
-  if (!match.finished) return '进行中'
+  // A job can fail before dispatch; a terminal result must never look queued.
+  if (!match.finished) return match.dispatched ? '进行中' : '排队中'
   if (!match.scored) return '未计分'
   if (!match.winner) return '未计分'
   if (match.winner === 'draw') return '平'
