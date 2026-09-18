@@ -382,6 +382,34 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   background: #1a1a1a;
 }
 
+/* Extend the report's native link over the entire card, keeping the sibling
+   agent links above it so each destination supports normal browser actions. */
+.history-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.history-card > a::after {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  content: '';
+}
+
+.history-card > a:focus-visible {
+  outline: none;
+}
+
+.history-card > a:focus-visible::after {
+  outline: 2px solid #c7c7c7;
+  outline-offset: 3px;
+}
+
+.history-card-agents > a {
+  position: relative;
+  z-index: 1;
+}
+
 [data-tm='D.scenario-list'] {
   gap: 18px;
 }

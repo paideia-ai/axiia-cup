@@ -178,6 +178,87 @@ async function openPanel(page: Page, tab: 'pvp' | 'hotseat') {
   }).click()
 }
 
+for (const width of [1440, 390]) {
+  test(`history whole row and independent agent links at ${width}px`, async ({ page }) => {
+    const { unexpected, errors } = await fixtures(page)
+    await page.setViewportSize({ width, height: 900 })
+    await page.context().route('**/v1/matches', (route) =>
+      route.fulfill({
+        json: {
+          matches: [
+            finishedMatch.summary,
+            { ...finishedMatch.summary, id: 9002, participants: undefined },
+            {
+              ...finishedMatch.summary,
+              id: 9003,
+              participants: {
+                a: { agentID: 101, isMine: true },
+                b: { agentID: 102, isMine: true },
+              },
+            },
+          ],
+        },
+      }))
+    await page.goto('/matches')
+    const cards = page.locator('.history-card')
+    await expect(cards).toHaveCount(3)
+    await expect(page.locator('a a')).toHaveCount(0)
+    // Real browser hit testing catches dead padding and overlays blocking an
+    // agent link; dispatching synthetic clicks directly on links misses both.
+    for (const card of await cards.all()) {
+      const hits = await card.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return [
+          [rect.left + 4, rect.top + 4],
+          [rect.right - 4, rect.bottom - 4],
+          [rect.left + rect.width / 2, rect.bottom - 4],
+        ].map(([x, y]) =>
+          element.ownerDocument.elementFromPoint(x, y)?.closest('a')
+            ?.getAttribute('href')
+        )
+      })
+      const destination = await card.locator('[data-tm="L.match-card"]')
+        .getAttribute('href')
+      expect(hits).toEqual([destination, destination, destination])
+    }
+    for (const link of await page.locator('[data-tm="L.owned-agent"]').all()) {
+      await expect(link).toBeVisible()
+      expect(
+        await link.evaluate((element) => {
+          const rect = element.getBoundingClientRect()
+          return element.ownerDocument.elementFromPoint(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2,
+          )?.closest('a') === element
+        }),
+      ).toBe(true)
+    }
+    const card = cards.first()
+    const rect = (await card.boundingBox())!
+    await page.mouse.click(rect.x + rect.width - 4, rect.y + rect.height - 4)
+    await expect(page).toHaveURL(/\/matches\/9001$/)
+    await page.goBack()
+    const agent = card.locator('[data-tm="L.owned-agent"]')
+    await agent.click()
+    await expect(page).toHaveURL(/\/agents\/101$/)
+    await page.goBack()
+    const popupPromise = page.context().waitForEvent('page')
+    await agent.click({ modifiers: ['ControlOrMeta'] })
+    const popup = await popupPromise
+    await expect(popup).toHaveURL(/\/agents\/101$/)
+    await expect(page).toHaveURL(/\/matches$/)
+    await popup.close()
+    await page.bringToFront()
+    await card.locator('[data-tm="L.match-card"]').focus()
+    await page.keyboard.press('Tab')
+    await expect(agent).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/agents\/101$/)
+    expect(unexpected).toEqual([])
+    expect(errors).toEqual([])
+  })
+}
+
 async function showJourney(page: Page) {
   await page.evaluate(() => {
     history.replaceState({ ...history.state, usr: { express: true } }, '')
