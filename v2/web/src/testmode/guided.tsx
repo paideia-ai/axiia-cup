@@ -1,5 +1,5 @@
 /* 导测：按历史两轮手册或 B3/A5 固定版本交接旅程一步步走。每一步说网址、做什么、该看到什么、截图与规格；有落点就带路、有标记就聚光；
-   确认（看到了 / 不是这样 / 跳过）才写看板——一条条款一条 set_pick，备注落在主条款的评论里，另记一条步骤级进度。 */
+   结果统一回人测手册提交；旧导测进度只供查看，不新增评审写入。 */
 import {
   type ReactNode,
   type Ref,
@@ -46,17 +46,15 @@ import {
 } from './fixtures'
 import { fixtureNicknameState, sameOriginAppPath } from './entry'
 import { TM } from './registry/index'
+import { humanTestStepUrl } from './human-test-system'
 import {
   type Choice,
-  describeError,
-  type Identity,
   type JourneyProgress,
   readProgress,
-  recordStep,
   writeProgress,
 } from './supabase'
 import type { StepHints } from './types'
-import { ClauseChips, type ToastMessage } from './ui'
+import { ClauseChips } from './ui'
 
 export interface GuidedTarget {
   journeyId: string
@@ -479,12 +477,8 @@ export function Guided(
     accountDisplayName,
     accountEmail,
     hints,
-    identity,
-    identityOpen,
     panelOpen,
-    onRequestIdentity,
     onSpotlight,
-    onToast,
     onClose,
   }: {
     ref?: Ref<GuidedHandle>
@@ -494,15 +488,10 @@ export function Guided(
     accountDisplayName: string | null
     accountEmail: string | null
     hints: StepHints
-    identity: Identity | null
-    /** 身份对话框是否开着：关掉而没填身份 = 取消，那一下确认作废 */
-    identityOpen: boolean
     /** 清单抽屉开着（桌面占右侧）：卡片就别挪去右下角 */
     panelOpen: boolean
-    onRequestIdentity: (pendingLabel: string) => void
     /** 聚光正照着哪个标记（徽标层为它让路） */
     onSpotlight: (key: string | null) => void
-    onToast: (t: ToastMessage) => void
     onClose: () => void
   },
 ) {
@@ -520,12 +509,6 @@ export function Guided(
     return initialIndex >= 0 ? initialIndex : 0
   })
   const [progress, setProgress] = useState<JourneyProgress>({})
-  const [note, setNote] = useState('')
-  const [err, setErr] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [pending, setPending] = useState<
-    { choice: Choice; stepId: string } | null
-  >(null)
   const [spotOff, setSpotOff] = useState(false)
   const [altMarker, setAltMarker] = useState<string | null>(null)
   const [dockRight, setDockRight] = useState(false)
@@ -545,7 +528,6 @@ export function Guided(
   })
   // 部件被卡片挡住又推不上去时（页面已到底），把正文收起只留头尾（确认按钮挪到页脚）；也可手动收起
   const [collapsed, setCollapsed] = useState(false)
-  const noteRef = useRef<HTMLTextAreaElement>(null)
   const dockRef = useRef<HTMLElement>(null)
   // 读者手动点了「展开」之后，这一步内不再自动收起（否则页面推不动时会立刻又收回去）
   const manualExpand = useRef(false)
@@ -602,11 +584,8 @@ export function Guided(
 
   // 换步：清备注 / 错误 / 聚光的关闭状态 / 待补的确认
   useEffect(() => {
-    setNote('')
-    setErr(null)
     setSpotOff(false)
     setAltMarker(null)
-    setPending(null)
     setCollapsed(false)
     manualExpand.current = false
   }, [journeyId, stepIdx])
@@ -725,93 +704,8 @@ export function Guided(
     },
   }), [spotlight])
 
-  const submit = useCallback(async (choice: Choice, id: Identity) => {
-    if (!journey || !step) return
-    setBusy(true)
-    setErr(null)
-    try {
-      const res = await recordStep({
-        stepId: step.id,
-        clauseIds: step.clauseIds,
-        primary: step.primary,
-        versionPins: step.versionPins,
-        choice,
-        note,
-        identity: id,
-      })
-      const next = {
-        ...progress,
-        [step.id]: {
-          choice,
-          at: new Date().toISOString(),
-          ...(step.versionPins ? { versionPins: step.versionPins } : {}),
-        },
-      }
-      setProgress(next)
-      writeProgress(journey.id, next)
-      const primary = step.primary[0] ?? step.clauseIds[0]
-      onToast({
-        kind: 'ok',
-        body: (
-          <div>
-            <div>
-              {step.id} {CHOICE_LABEL[choice]} · 已记录 {res.picks.length}{' '}
-              条到看板：<span className='tm-mono'>{res.picks.join(' / ')}</span>
-              {res.commentedOn ? `，备注留在 ${res.commentedOn} 下` : ''}
-            </div>
-            <a
-              className='tm-ext'
-              href={primary
-                ? `${DASHBOARD}/spec-v4#${primary}`
-                : `${DASHBOARD}/spec-v4`}
-              target='_blank'
-              rel='noreferrer'
-            >
-              去看板
-            </a>
-          </div>
-        ),
-      })
-      setStepIdx((i) => i + 1)
-    } catch (e) {
-      setErr(describeError(e))
-    } finally {
-      setBusy(false)
-    }
-  }, [journey, step, note, progress, onToast])
-
-  const confirm = useCallback((choice: Choice) => {
-    if (!step) return
-    if (choice !== 'pass' && !note.trim()) {
-      setErr(
-        choice === 'fail'
-          ? '「不是这样」要写一句你看到了什么，看板那边才知道差在哪。'
-          : '「跳过」要写一句为什么跳过。',
-      )
-      noteRef.current?.focus()
-      return
-    }
-    if (!identity) {
-      setPending({ choice, stepId: step.id })
-      onRequestIdentity(CHOICE_LABEL[choice])
-      return
-    }
-    void submit(choice, identity)
-  }, [note, identity, onRequestIdentity, submit, step])
-
-  // 身份填好了就把刚才那一下补上——只补当时那一步；对话框被取消（关了还没身份）就作废
-  useEffect(() => {
-    if (pending && identity && pending.stepId === step?.id) {
-      setPending(null)
-      void submit(pending.choice, identity)
-    }
-  }, [pending, identity, submit, step?.id])
-  useEffect(() => {
-    if (!identityOpen && !identity) setPending(null)
-  }, [identityOpen, identity])
-
   const startNewRun = () => {
-    if (!journey || busy) return
+    if (!journey) return
     const fresh = resetFixtureValues(journey.id, journey.fixtureDefaults)
     setFixtureValuesByJourney((current) => ({
       ...current,
@@ -820,9 +714,6 @@ export function Guided(
     writeProgress(journey.id, {})
     setProgress({})
     setStepIdx(0)
-    setNote('')
-    setErr(null)
-    setPending(null)
     setCollapsed(false)
     setSpotOff(false)
     setAltMarker(null)
@@ -833,7 +724,6 @@ export function Guided(
       <button
         type='button'
         className='tm-btn tm-btn--sm'
-        disabled={busy}
         onClick={startNewRun}
       >
         开始新一轮
@@ -1080,37 +970,17 @@ export function Guided(
   const onPage = new Set(rects.map((r) => r.id))
 
   const confirmActions = (
-    <div className='tm-actions' role='group' aria-label='确认这一步'>
-      <button
-        type='button'
-        className='tm-btn tm-btn--pass'
-        disabled={busy}
-        onClick={() =>
-          confirm('pass')}
+    <div className='tm-actions' role='group' aria-label='记录结果'>
+      <a
+        className='tm-btn tm-btn--primary tm-ext'
+        href={s.id.startsWith('HV-') ? humanTestStepUrl(s.id) : manualUrl(s)}
+        target='_blank'
+        rel='noreferrer'
       >
-        看到了 ✓
-      </button>
-      <button
-        type='button'
-        className='tm-btn tm-btn--fail'
-        disabled={busy}
-        onClick={() =>
-          confirm('fail')}
-      >
-        不是这样 ✗
-      </button>
-      <button
-        type='button'
-        className='tm-btn tm-btn--skip'
-        disabled={busy}
-        onClick={() =>
-          confirm('skip')}
-      >
-        跳过
-      </button>
-      {busy
-        ? <span className='tm-muted' aria-live='polite'>正在写看板…</span>
-        : null}
+        {s.id.startsWith('HV-')
+          ? '回人测手册记录结果与截图 ↗'
+          : '查看历史手册（不提交本轮结果） ↗'}
+      </a>
     </div>
   )
   const navButtons = (
@@ -1174,7 +1044,7 @@ export function Guided(
             type='button'
             className='tm-btn tm-btn--sm tm-btn--ghost'
             aria-expanded={!collapsed}
-            title={collapsed ? '展开步骤卡' : '收起正文，只留确认按钮'}
+            title={collapsed ? '展开步骤卡' : '收起正文，露出被测内容'}
             onClick={() => {
               manualExpand.current = collapsed
               setCollapsed((c) => !c)
@@ -1455,31 +1325,19 @@ export function Guided(
               : null}
           </Fold>
 
-          <label className='tm-label' htmlFor='tm-guided-note'>
-            备注（看到了可不填；不是这样 / 跳过必填）
-          </label>
-          <textarea
-            id='tm-guided-note'
-            ref={noteRef}
-            className='tm-textarea'
-            value={note}
-            placeholder='你看到了什么？和「应该看到」差在哪？'
-            onChange={(e) => setNote(e.target.value)}
-          />
-          {err ? <div className='tm-err' role='alert'>{err}</div> : null}
           {done
             ? (
               <div className='tm-ok'>
-                这一步已记过：{CHOICE_LABEL[done.choice]} · {localTime(done.at)}
-                。如需更正，改选并再次提交；同一执行人的当前选择会被覆盖，旧备注仍作为审计历史保留。
+                历史导测记录：{CHOICE_LABEL[done.choice]} ·{' '}
+                {localTime(done.at)}。
+                仅供查看，不自动计为本轮通过。本轮结果请在统一人测手册提交。
               </div>
             )
             : null}
           {compact ? null : confirmActions}
           <p className='tm-dimt' style={{ margin: '8px 0 0', fontSize: 11.5 }}>
-            点确认才写看板：{s.clauseIds.length} 条条款各记一笔{identity
-              ? `，署名 ${identity.name}`
-              : '；第一次会先请你手填真实飞书名和看板口令（不是产品账号密码）'}。
+            本页只引导操作。返回人测手册选择通过／有问题／受阻／未执行，
+            上传真实截图；多个检查项分别记录，可修改并保留历史。
           </p>
         </div>
         <div className='tm-foot'>
