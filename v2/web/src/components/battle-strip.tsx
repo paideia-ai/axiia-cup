@@ -136,7 +136,7 @@ export function BattleStrip() {
   return (
     <section
       aria-label='进行中的对战'
-      className='space-y-2'
+      className='min-w-0 max-w-full space-y-2'
       {...tm('OS.battle-strip')}
     >
       <button
@@ -155,7 +155,7 @@ export function BattleStrip() {
       </button>
       {collapsed ? null : (
         <div
-          className='flex gap-2 overflow-x-auto pb-1'
+          className='flex min-w-0 max-w-full gap-2 overflow-x-auto pb-1'
           {...tm('OS.battle-strip-cards')}
         >
           {cards.map((match) => {
