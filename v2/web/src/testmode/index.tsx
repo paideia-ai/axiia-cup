@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { testModeEntryTarget } from './entry'
 import { BASE_CSS } from './styles'
-import { getIdentity, IDENTITY_EVENT } from './supabase'
+import { HUMAN_TEST_SYSTEM_URL } from './human-test-system'
 
 const TM_KEY = 'axiia:tm'
 const BADGES_KEY = 'axiia:tm:badges'
@@ -25,12 +25,12 @@ export interface TmUi {
 export type SetUi = (patch: Partial<TmUi>) => void
 
 const BADGE_NEXT: Record<BadgeMode, BadgeMode> = {
-  all: 'mapped',
+  all: 'off',
   mapped: 'off',
   off: 'all',
 }
 const BADGE_TITLE: Record<BadgeMode, string> = {
-  all: '标记：全部显示（点一下只留有条款的）',
+  all: '标记：全部显示（点一下隐藏，露出被测内容）',
   mapped: '标记：只标有条款的（点一下隐藏）',
   off: '标记：已隐藏（点一下全部显示）',
 }
@@ -51,7 +51,7 @@ function write(key: string, value: string) {
 }
 function readBadges(): BadgeMode {
   const v = read(BADGES_KEY)
-  return v === '0' ? 'off' : v === 'mapped' ? 'mapped' : 'all'
+  return v === '1' ? 'all' : v === 'mapped' ? 'mapped' : 'off'
 }
 
 export function TestModeRoot() {
@@ -73,7 +73,6 @@ export function TestModeRoot() {
     guided: entryTarget !== null,
     identity: false,
   }))
-  const [who, setWho] = useState(() => getIdentity()?.name ?? null)
   const [host] = useState(() => {
     if (typeof document === 'undefined') return null
     const el = document.createElement('div')
@@ -145,17 +144,6 @@ export function TestModeRoot() {
     }
   }, [on, host, location.pathname])
 
-  useEffect(() => {
-    if (!on) return
-    const refresh = () => setWho(getIdentity()?.name ?? null)
-    globalThis.addEventListener(IDENTITY_EVENT, refresh)
-    globalThis.addEventListener('storage', refresh)
-    return () => {
-      globalThis.removeEventListener(IDENTITY_EVENT, refresh)
-      globalThis.removeEventListener('storage', refresh)
-    }
-  }, [on])
-
   const setUi = useCallback<SetUi>((patch) => {
     setUiState((u) => {
       const next = { ...u, ...patch }
@@ -203,7 +191,7 @@ export function TestModeRoot() {
           aria-label={BADGE_TITLE[ui.badges]}
           onClick={() => setUi({ badges: BADGE_NEXT[ui.badges] })}
         >
-          标记{ui.badges === 'mapped' ? '·条款' : ''}
+          {ui.badges === 'off' ? '显示标记' : '隐藏标记'}
         </button>
         <button
           type='button'
@@ -223,24 +211,14 @@ export function TestModeRoot() {
         >
           清单
         </button>
-        <button
-          type='button'
-          className='tm-pill-btn tm-pill-btn--who'
-          title={who
-            ? `当前身份：${who}（点击修改）`
-            : '设置看板身份：名字 + 看板口令（不是产品账号密码）'}
-          aria-label={who ? `身份：${who}，点击修改` : '设置身份'}
-          onClick={() => setUi({ identity: true })}
+        <a
+          className='tm-pill-btn tm-ext'
+          href={HUMAN_TEST_SYSTEM_URL}
+          target='_blank'
+          rel='noreferrer'
         >
-          {who
-            ? (
-              <>
-                <span className='tm-pill-who-k' aria-hidden='true'>身份</span>
-                {who}
-              </>
-            )
-            : '设置身份'}
-        </button>
+          人测手册 ↗
+        </a>
         <button
           type='button'
           className='tm-pill-btn tm-pill-btn--x'
