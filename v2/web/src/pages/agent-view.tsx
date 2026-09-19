@@ -37,6 +37,7 @@ import { Button, ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { VersionPicker } from '../components/version-picker'
+import { OnboardingGlow } from '../components/onboarding-glow'
 import { promptDiff } from '../lib/prompt-diff'
 import { VersionList } from '../components/version-list'
 import {
@@ -784,6 +785,9 @@ function AgentView({ agentID }: { agentID: number }) {
               </div>
               <CreateAgentAction
                 marker={tm('EA.sibling-create-button')['data-tm']}
+                attention={!inventory.loading && !inventory.error &&
+                  !inventory.refreshError && siblings.length === 1 &&
+                  siblings[0]?.agentID === agentID && !isArchived}
                 scenarioID={data.draft.scenarioID}
                 side={data.draft.side}
                 role={sideName}
@@ -832,13 +836,13 @@ function AgentView({ agentID }: { agentID: number }) {
                     title='新建版本'
                     {...tm('EA.edit-button')}
                   >
-                    <span aria-hidden='true' className='relative h-5 w-5'>
+                    <OnboardingGlow active={sorted.length === 0 && !isArchived}>
                       <Pencil className='h-5 w-5' strokeWidth={1.8} />
                       <Plus
                         className='absolute -right-1 -bottom-0.5 h-3 w-3 rounded-sm bg-(--background)'
                         strokeWidth={2}
                       />
-                    </span>
+                    </OnboardingGlow>
                   </ButtonLink>
                 </span>
               }
