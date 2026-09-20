@@ -32,6 +32,7 @@ export function CreateAgentAction({
   children,
   marker,
   testID,
+  attention,
 }: {
   scenarioID: string
   side: Side
@@ -40,6 +41,7 @@ export function CreateAgentAction({
   children?: ReactNode
   marker?: string
   testID?: string
+  attention?: boolean
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -111,6 +113,7 @@ export function CreateAgentAction({
           : (
             <NewAgentButton
               role={role}
+              attention={attention}
               disabled={busy}
               onClick={() => void submit()}
             />
