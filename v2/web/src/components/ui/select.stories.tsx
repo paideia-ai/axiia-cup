@@ -66,8 +66,7 @@ export const StableScrolling: Story = {
       0,
     )
     await expect(list.getBoundingClientRect().top).toBeCloseTo(before.top, 0)
-    // Opening and positioning the popup transfers focus asynchronously.
-    // Wait for that transfer before sending keys, especially near the bottom.
+    // Wait for the popup to receive focus before sending keyboard input.
     await waitFor(() =>
       expect(list.contains(canvasElement.ownerDocument.activeElement)).toBe(
         true,

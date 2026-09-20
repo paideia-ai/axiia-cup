@@ -1,0 +1,122 @@
+@import '../../src/styles.css';
+@source '../../src';
+@source '.';
+
+.motion-preview {
+  max-width: 1152px;
+  margin: auto;
+  padding: 32px 32px 80px;
+}
+.preview-controls {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 24px;
+}
+.preview-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.preview-kicker {
+  color: var(--foreground-muted);
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+.preview-heading h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.6px;
+  margin: 0;
+}
+.preview-note {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--foreground-muted);
+  margin: 0;
+  text-align: right;
+}
+.preview-state button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.preview-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  align-items: center;
+  margin-top: 24px;
+  font-size: 13px;
+}
+.preview-state > span {
+  color: var(--foreground-muted);
+}
+.preview-state label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.preview-state input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+.preview-state button {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+}
+.preview-footnote {
+  font-size: 12px;
+  color: var(--foreground-muted);
+  line-height: 1.8;
+  margin: 14px 0 0;
+}
+.page-preview-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--foreground-muted);
+  padding: 24px 0;
+}
+.agent-preview {
+  padding: 0 4px;
+}
+.paused .onboarding-glow[data-glow] .onboarding-glow-wave,
+.paused .onboarding-glow[data-glow] .onboarding-glow-icon {
+  animation-play-state: paused;
+}
+.preview-destination {
+  padding: 48px 0;
+  line-height: 2.2;
+}
+.preview-destination a {
+  text-decoration: underline;
+}
+@media (max-width: 700px) {
+  .motion-preview {
+    padding: 24px 16px 60px;
+  }
+  .preview-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .preview-heading h1 {
+    font-size: 23px;
+  }
+  .preview-note {
+    text-align: left;
+  }
+  .preview-state {
+    gap: 14px;
+  }
+  .preview-state > span {
+    width: 100%;
+  }
+  .preview-state button {
+    margin-left: 0;
+  }
+}
