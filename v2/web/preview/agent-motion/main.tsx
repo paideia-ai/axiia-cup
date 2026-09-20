@@ -70,6 +70,10 @@ const worker = setupWorker(
         : [],
       entryVersionID: null,
     })),
+  http.get(
+    '/v1/agents/:id/matches',
+    () => HttpResponse.json({ matches: [], open: false }),
+  ),
   http.post('/v1/agents', () => {
     state = { ...state, second: true }
     return HttpResponse.json({ agentID: 102 })
