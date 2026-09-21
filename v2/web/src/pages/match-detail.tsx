@@ -1,7 +1,7 @@
 import { invalidateNavigation } from '../lib/navigation-cache'
 import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, ListChecks, PenLine, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
@@ -1198,44 +1198,38 @@ function FirstBattleJourney({
           </p>
           <div className='grid gap-2 sm:grid-cols-3'>
             {([
-              ['mcq', '选择预设策略', '回答选择题，确认后填入策略工作区'],
-              ['raw', '直接编写', '在主文本区直接书写或继续修改策略'],
-              [
-                'meta',
-                '让 AI 帮你想策略',
-                '复制策略构建提示词给常用 AI，再把结果粘贴回来',
-              ],
-            ] as const).map(([tool, name, blurb]) => (
+              ['raw', '直接编写', PenLine],
+              ['meta', '让 AI 帮你想策略', Sparkles],
+              ['mcq', '选择预设策略', ListChecks],
+            ] as const).map(([tool, name, Icon]) => (
               <div
                 {...tm('FA.journey-mode-item')}
                 key={name}
-                className='rounded-lg border border-(--border-soft) px-3 py-2.5'
+                data-emphasis='primary'
+                className='rounded-lg border border-(--accent)/50 bg-(--accent)/5 px-3 py-2.5 text-(--foreground)'
               >
                 {mine?.agentID != null
                   ? (
                     <Link
                       to={`/agents/${mine.agentID}/build?init=${tool}`}
-                      className='inline-flex min-h-11 items-center text-sm font-semibold text-(--accent) underline-offset-2 hover:underline'
+                      className='inline-flex min-h-11 items-center gap-2 text-sm font-semibold underline-offset-2 hover:underline'
                     >
+                      <Icon aria-hidden='true' className='h-5 w-5' />
                       {name}
                     </Link>
                   )
-                  : <p className='text-sm font-semibold'>{name}</p>}
-                <p className='mt-0.5 text-xs text-(--foreground-muted)'>
-                  {blurb}
-                </p>
+                  : (
+                    <p className='inline-flex items-center gap-2 text-sm font-semibold'>
+                      <Icon aria-hidden='true' className='h-5 w-5' />
+                      {name}
+                    </p>
+                  )}
               </div>
             ))}
           </div>
-          <div className='flex flex-wrap items-center justify-between gap-2'>
-            <p
-              {...tm('FA.journey-modes-hint')}
-              className='text-xs text-(--foreground-muted)'
-            >
-              两个辅助入口在首版和已有版本后都保留；版本管理与出战回到智能体主页。
-            </p>
-            {mine?.agentID != null
-              ? (
+          {mine?.agentID != null
+            ? (
+              <div className='flex justify-end'>
                 <Link
                   {...tm('FA.journey-build-link')}
                   to={`/agents/${mine.agentID}/build`}
@@ -1243,9 +1237,9 @@ function FirstBattleJourney({
                 >
                   去构建器继续写策略 →
                 </Link>
-              )
-              : null}
-          </div>
+              </div>
+            )
+            : null}
         </CardContent>
       </Card>
     </section>
