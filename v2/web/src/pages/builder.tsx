@@ -1,6 +1,6 @@
 import { navigationCache } from '../lib/navigation-cache'
 import { draftQuery, versionsQuery } from '../lib/navigation-queries'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, Scale } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Link,
@@ -28,6 +28,7 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
+import { OnboardingGlow } from '../components/onboarding-glow'
 import { BattleCostNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
@@ -1264,6 +1265,28 @@ export function BuilderPage() {
           >
             策略提示词
           </label>
+          {roleModule?.education?.judgePrompt
+            ? (
+              <Link
+                to={`/scenarios/${scenarioID}#judge-prompt`}
+                aria-label='查看本场裁判提示词原文'
+                title='查看本场裁判提示词原文'
+                data-testid='judge-prompt-link'
+                className='relative ml-auto flex h-12 w-12 items-center justify-center rounded-full text-(--foreground) transition hover:bg-white/5 hover:text-(--foreground-subtle) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--background)'
+              >
+                <OnboardingGlow active={latestVersion == null}>
+                  <Scale aria-hidden='true' className='h-5 w-5' />
+                </OnboardingGlow>
+                {latestVersion == null
+                  ? (
+                    <span className='sr-only' data-testid='judge-prompt-unread'>
+                      尚未保存策略
+                    </span>
+                  )
+                  : null}
+              </Link>
+            )
+            : null}
           {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
           <Button
             type='button'
