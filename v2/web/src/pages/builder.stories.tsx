@@ -113,6 +113,17 @@ export const BlankWorkspaceWithSecondaryHelpers: Story = {
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
     await expect(input).toHaveValue('')
+    const judgePrompt = canvas.getByRole('link', {
+      name: '查看本场裁判提示词原文',
+    })
+    await expect(judgePrompt).toHaveAttribute(
+      'href',
+      `/scenarios/${scenario.summary.id}#judge-prompt`,
+    )
+    await expect(within(judgePrompt).getByTestId('judge-prompt-unread'))
+      .toBeInTheDocument()
+    await expect(judgePrompt.querySelector('[data-glow="ripple"]'))
+      .not.toBeNull()
     await expect(await canvas.findByText('不知道怎么指挥智能体？'))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
@@ -137,6 +148,12 @@ export const HelpersRemainAfterVersions: Story = {
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
     await expect(input).toHaveValue(v2.prompt)
+    const judgePrompt = canvas.getByRole('link', {
+      name: '查看本场裁判提示词原文',
+    })
+    await expect(within(judgePrompt).queryByTestId('judge-prompt-unread'))
+      .toBeNull()
+    await expect(judgePrompt.querySelector('[data-glow="ripple"]')).toBeNull()
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))

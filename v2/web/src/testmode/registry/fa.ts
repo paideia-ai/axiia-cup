@@ -414,20 +414,14 @@ export const TM_FA: TmRegistry = {
     note: '去智能体主页的「出战」面板看进度',
   },
   'FA.journey-modes-card': {
-    label: '构建器辅助说明卡',
+    label: '下次构建方式卡',
     clauses: ['U03-C09', 'U02-C02', 'U02-C01'],
-    note: 'Keso 2026-09-09：单一策略工作区，两个辅助入口在首版与后续版本都可用',
+    note: '三种下一次构建方式只做视觉强调，不增加解释文字',
   },
   'FA.journey-mode-item': {
-    label: '工作辅助格',
+    label: '构建方式格',
     clauses: ['U02-C02'],
-    note: '策略工作区 / 选择预设策略 / 让你的 AI 帮你想策略',
-  },
-  'FA.journey-modes-hint': {
-    label: '文本工作台提示',
-    clauses: ['U01-C09', 'U02-C19', 'U03-C13'],
-    note:
-      '两个辅助入口常驻；版本管理、参赛选择和出战集中在智能体主页；版本对比暂不展示',
+    note: '直接编写 / 让 AI 帮你想策略 / 选择预设策略',
   },
   'FA.journey-build-link': {
     label: '继续写策略',

@@ -448,6 +448,19 @@ export const CompletedJourneyOpensEachActualTool: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
+    await canvas.findByText('选择下一次构建方式')
+    expect(canvas.queryByText('回答选择题，确认后填入策略工作区')).toBeNull()
+    expect(canvasElement.querySelector('[data-tm="FA.journey-modes-hint"]'))
+      .toBeNull()
+    expect(canvas.getByRole('link', { name: '去构建器继续写策略 →' }))
+      .toHaveAttribute('href', '/agents/101/build')
+    const modeItems = canvasElement.querySelectorAll(
+      '[data-tm="FA.journey-mode-item"]',
+    )
+    expect(modeItems).toHaveLength(3)
+    for (const item of modeItems) {
+      expect(item).toHaveAttribute('data-emphasis', 'primary')
+    }
     for (
       const [name, tool] of [['选择预设策略', 'mcq'], ['直接编写', 'raw'], [
         '让 AI 帮你想策略',
