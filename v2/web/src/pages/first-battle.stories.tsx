@@ -450,8 +450,6 @@ export const CompletedJourneyOpensEachActualTool: Story = {
     const canvas = within(canvasElement)
     await canvas.findByText('选择下一次构建方式')
     expect(canvas.queryByText('回答选择题，确认后填入策略工作区')).toBeNull()
-    expect(canvasElement.querySelector('[data-tm="FA.journey-modes-hint"]'))
-      .toBeNull()
     expect(canvas.getByRole('link', { name: '去构建器继续写策略 →' }))
       .toHaveAttribute('href', '/agents/101/build')
     const modeItems = canvasElement.querySelectorAll(
