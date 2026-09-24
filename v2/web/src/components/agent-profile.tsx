@@ -67,12 +67,11 @@ export function ProfileRecord({
                 {rate ?? '暂无战绩'}
               </p>
             </div>
-            <dl className='grid w-full grid-cols-4 gap-4 pb-1 sm:w-auto sm:min-w-80 sm:max-w-sm sm:flex-1'>
+            <dl className='grid w-full grid-cols-3 gap-4 pb-1 sm:w-auto sm:min-w-80 sm:max-w-sm sm:flex-1'>
               {[
                 ['有效完赛', total],
                 ['胜', record.winCount ?? 0],
                 ['负', total === 0 ? 0 : record.lossCount ?? '—'],
-                ['平', total === 0 ? 0 : record.drawCount ?? '—'],
               ].map(([title, value]) => (
                 <div key={title}>
                   <dt className='whitespace-nowrap text-xs text-(--foreground-subtle)'>
@@ -96,10 +95,6 @@ export function ProfileRecord({
                   : ''}
               </p>
             )}
-            <p>
-              胜率 = 胜场 ÷
-              有效完赛场次。包含所有对局类型，平局计入分母；失败、取消与未完成的对局不计入。
-            </p>
           </div>
         </CardContent>
       </Card>
