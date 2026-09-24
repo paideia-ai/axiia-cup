@@ -1,7 +1,8 @@
 import { CreateAgentAction } from '../components/create-agent-action'
 import { PageLoading } from '../components/page-loading'
 import { Clock, Hammer } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
 
 import type {
   MyAgentDTO,
@@ -40,6 +41,7 @@ import type {
 // 重排，但不改写或省略。计分、难度、时长和状态属于额外的产品信息，单独渲染。
 export function ScenarioDetailPage() {
   const { scenarioId = '' } = useParams()
+  const location = useLocation()
   const { account, isLoading: authLoading } = useAuth()
   const module = scenarioModule(scenarioId)
   const intro = module?.intro ?? null
@@ -204,6 +206,7 @@ export function ScenarioDetailPage() {
               scoringLabel={module?.scoringLabel ?? '计分规则'}
               scoringInitiallyCollapsed={module?.scoringInitiallyCollapsed ??
                 false}
+              openJudgePrompt={location.hash === '#judge-prompt'}
             />
 
             {module?.timelineAtEnd && intro?.source.overview.timeline
@@ -809,12 +812,14 @@ function JudgeScoringCard({
   scoring,
   scoringLabel,
   scoringInitiallyCollapsed,
+  openJudgePrompt,
 }: {
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
   scoring: ScenarioScoringDTO | null
   scoringLabel: string
   scoringInitiallyCollapsed: boolean
+  openJudgePrompt: boolean
 }) {
   const participants = intro?.source.participants ?? null
   const scoringHeading = scoringLabel === '胜负规则'
@@ -866,6 +871,7 @@ function JudgeScoringCard({
                   model={education.judgeModel ?? null}
                   note={education.judgePromptNote ?? null}
                   prompt={education.judgePrompt}
+                  initiallyOpen={openJudgePrompt}
                 />
               )
               : null}
@@ -1010,18 +1016,29 @@ function JudgePromptDisclosure({
   model,
   note,
   prompt,
+  initiallyOpen,
 }: {
   model: string | null
   note: string | null
   prompt: string
+  initiallyOpen: boolean
 }) {
+  const [open, setOpen] = useState(initiallyOpen)
+  useEffect(() => {
+    if (initiallyOpen) setOpen(true)
+  }, [initiallyOpen])
   return (
     <div
+      id='judge-prompt'
       data-testid='judge-prompt'
       className='overflow-hidden rounded-lg border border-(--border-soft) bg-white/2 px-3'
       {...tm('DA.judge-prompt')}
     >
-      <Accordion className='divide-y-0'>
+      <Accordion
+        className='divide-y-0'
+        value={open ? ['judge-prompt'] : []}
+        onValueChange={(value) => setOpen(value.includes('judge-prompt'))}
+      >
         <AccordionItem
           value='judge-prompt'
           title='裁判提示词原文'

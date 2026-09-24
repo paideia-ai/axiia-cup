@@ -1198,15 +1198,17 @@ function FirstBattleJourney({
           </p>
           <div className='grid gap-2 sm:grid-cols-3'>
             {([
-              ['raw', '直接编写', PenLine],
-              ['meta', '让 AI 帮你想策略', Sparkles],
-              ['mcq', '选择预设策略', ListChecks],
-            ] as const).map(([tool, name, Icon]) => (
+              ['raw', '直接编写', PenLine, true],
+              ['meta', '让 AI 帮你想策略', Sparkles, true],
+              ['mcq', '选择预设策略', ListChecks, false],
+            ] as const).map(([tool, name, Icon, emphasized]) => (
               <div
                 {...tm('FA.journey-mode-item')}
                 key={name}
-                data-emphasis='primary'
-                className='rounded-lg border border-(--accent)/50 bg-(--accent)/5 px-3 py-2.5 text-(--foreground)'
+                data-emphasis={emphasized ? 'primary' : 'secondary'}
+                className={emphasized
+                  ? 'rounded-lg border border-(--accent)/50 bg-(--accent)/5 px-3 py-2.5 text-(--foreground)'
+                  : 'rounded-lg border border-(--border-soft) px-3 py-2.5 text-(--foreground-subtle)'}
               >
                 {mine?.agentID != null
                   ? (

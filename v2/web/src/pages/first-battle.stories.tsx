@@ -456,9 +456,9 @@ export const CompletedJourneyOpensEachActualTool: Story = {
       '[data-tm="FA.journey-mode-item"]',
     )
     expect(modeItems).toHaveLength(3)
-    for (const item of modeItems) {
-      expect(item).toHaveAttribute('data-emphasis', 'primary')
-    }
+    expect(modeItems[0]).toHaveAttribute('data-emphasis', 'primary')
+    expect(modeItems[1]).toHaveAttribute('data-emphasis', 'primary')
+    expect(modeItems[2]).toHaveAttribute('data-emphasis', 'secondary')
     for (
       const [name, tool] of [['选择预设策略', 'mcq'], ['直接编写', 'raw'], [
         '让 AI 帮你想策略',

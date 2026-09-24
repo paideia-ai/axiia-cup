@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import {
+  Link,
+  MemoryRouter,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router-dom'
 
 import type {
   AgentVersionDTO,
@@ -15,17 +21,42 @@ import { deckFor } from '../scenarios/decks'
 import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
 import { assembleDeck } from '../lib/deck'
 import { BuilderPage } from './builder'
+import { ScenarioDetailPage } from './scenario-detail'
+import { AuthProvider } from '../context/auth'
+
+function ScenarioWithHistoryBack() {
+  const navigate = useNavigate()
+  return (
+    <>
+      <button type='button' onClick={() => navigate(-1)}>
+        模拟浏览器后退
+      </button>
+      <ScenarioDetailPage />
+    </>
+  )
+}
 
 function Surface() {
   return (
     <MemoryRouter initialEntries={['/agents/101/build']}>
-      <Routes>
-        <Route path='/agents/:agentId/build' element={<BuilderPage />} />
-        <Route
-          path='/agents/:agentId'
-          element={<p data-testid='agent-home'>智能体主页</p>}
-        />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path='/agents/:agentId/build' element={<BuilderPage />} />
+          <Route
+            path='/agents/:agentId'
+            element={
+              <>
+                <p data-testid='agent-home'>智能体主页</p>
+                <Link to='/agents/101/build'>重回构建器</Link>
+              </>
+            }
+          />
+          <Route
+            path='/scenarios/:scenarioId'
+            element={<ScenarioWithHistoryBack />}
+          />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>
   )
 }
@@ -56,6 +87,16 @@ function handlers(
   models = [{ id: 'fixture-model', label: 'Fixture Model' }],
 ) {
   return [
+    http.get('/v1/auth/me', () =>
+      HttpResponse.json({
+        account: {
+          id: 'builder-story-user',
+          displayName: '构建器测试员',
+          isAdmin: false,
+        },
+        elevated: false,
+        firstBattleDone: false,
+      })),
     http.get('/v1/config', () => HttpResponse.json(config)),
     http.get('/v1/models', () => HttpResponse.json({ models })),
     http.get('/v1/my/agents', () => HttpResponse.json({ scenarios: [] })),
@@ -151,9 +192,10 @@ export const HelpersRemainAfterVersions: Story = {
     const judgePrompt = canvas.getByRole('link', {
       name: '查看本场裁判提示词原文',
     })
-    await expect(within(judgePrompt).queryByTestId('judge-prompt-unread'))
-      .toBeNull()
-    await expect(judgePrompt.querySelector('[data-glow="ripple"]')).toBeNull()
+    await expect(within(judgePrompt).getByTestId('judge-prompt-unread'))
+      .toBeInTheDocument()
+    await expect(judgePrompt.querySelector('[data-glow="ripple"]'))
+      .not.toBeNull()
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
@@ -161,6 +203,64 @@ export const HelpersRemainAfterVersions: Story = {
     await expect(canvas.queryByText('版本（2）')).toBeNull()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
     await expect(canvas.getByRole('button', { name: '版本备注' })).toBeVisible()
+  },
+}
+
+export const JudgePromptCoachCompletesAfterViewThenSave: Story = {
+  beforeEach: () => {
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index)
+      if (key?.startsWith('axiia:judge-prompt-coach:')) {
+        localStorage.removeItem(key)
+      }
+    }
+  },
+  parameters: {
+    msw: [
+      ...handlers('', () => HttpResponse.json({ versions: [] })),
+      http.post('/v1/agents/101/save', () => HttpResponse.json(v1)),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(input).toBeEnabled())
+
+    const judgeLink = canvas.getByRole('link', {
+      name: '查看本场裁判提示词原文',
+    })
+    expect(judgeLink.querySelector('[data-glow="ripple"]')).not.toBeNull()
+    await userEvent.click(judgeLink)
+
+    const disclosure = await canvas.findByRole('button', {
+      name: '裁判提示词原文',
+    })
+    expect(disclosure).toHaveAttribute('aria-expanded', 'true')
+    expect(canvas.getByTestId('judge-prompt')).toHaveAttribute(
+      'id',
+      'judge-prompt',
+    )
+
+    await userEvent.click(
+      canvas.getByRole('button', { name: '模拟浏览器后退' }),
+    )
+    const restoredInput = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(restoredInput).toBeEnabled())
+    const stillGlowing = canvas.getByRole('link', {
+      name: '查看本场裁判提示词原文',
+    })
+    expect(stillGlowing.querySelector('[data-glow="ripple"]')).not.toBeNull()
+
+    await userEvent.type(restoredInput, '先看裁判，再保存这版策略。')
+    await userEvent.click(
+      canvas.getByRole('button', { name: '保存并返回主页' }),
+    )
+    await canvas.findByTestId('agent-home')
+    await userEvent.click(canvas.getByRole('link', { name: '重回构建器' }))
+    const completedLink = await canvas.findByRole('link', {
+      name: '查看本场裁判提示词原文',
+    })
+    expect(completedLink.querySelector('[data-glow="ripple"]')).toBeNull()
   },
 }
 

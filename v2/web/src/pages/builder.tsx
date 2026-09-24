@@ -32,6 +32,11 @@ import { OnboardingGlow } from '../components/onboarding-glow'
 import { BattleCostNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
+import {
+  completeJudgePromptCoachAfterSave,
+  judgePromptCoachCompleted,
+  markJudgePromptViewed,
+} from '../lib/judge-prompt-coach'
 import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
@@ -620,6 +625,18 @@ export function BuilderPage() {
   // choice rides along the saved version as the options blob the script parses.
   const roleModule = scenarioModule(scenarioID)
   const roles = rolesForSide(roleModule, side)
+  const judgePromptCoachScope = useMemo(() => ({
+    accountID: auth?.account?.id ?? 'anonymous',
+    scenarioID,
+  }), [auth?.account?.id, scenarioID])
+  const [judgePromptCoachDone, setJudgePromptCoachDone] = useState(false)
+
+  useEffect(() => {
+    if (!scenarioID) return
+    setJudgePromptCoachDone(
+      judgePromptCoachCompleted(judgePromptCoachScope),
+    )
+  }, [judgePromptCoachScope, scenarioID])
 
   useEffect(() => {
     if (roles.length === 0) {
@@ -1034,6 +1051,9 @@ export function BuilderPage() {
         setVersions((
           current,
         ) => [...current.filter((version) => version.id !== saved.id), saved])
+        if (completeJudgePromptCoachAfterSave(judgePromptCoachScope)) {
+          setJudgePromptCoachDone(true)
+        }
       }
       if (!requestIsCurrent()) return
       playSound('save', `${agentID}:${saved.id}`)
@@ -1272,15 +1292,16 @@ export function BuilderPage() {
                 aria-label='查看本场裁判提示词原文'
                 title='查看本场裁判提示词原文'
                 data-testid='judge-prompt-link'
+                onClick={() => markJudgePromptViewed(judgePromptCoachScope)}
                 className='relative ml-auto flex h-12 w-12 items-center justify-center rounded-full text-(--foreground) transition hover:bg-white/5 hover:text-(--foreground-subtle) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--background)'
               >
-                <OnboardingGlow active={latestVersion == null}>
+                <OnboardingGlow active={!judgePromptCoachDone}>
                   <Scale aria-hidden='true' className='h-5 w-5' />
                 </OnboardingGlow>
-                {latestVersion == null
+                {!judgePromptCoachDone
                   ? (
                     <span className='sr-only' data-testid='judge-prompt-unread'>
-                      尚未保存策略
+                      查看裁判提示词并保存策略后不再提示
                     </span>
                   )
                   : null}

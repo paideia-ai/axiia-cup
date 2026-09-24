@@ -124,9 +124,19 @@ const details: Record<string, ScenarioDetail> = {
   },
 }
 
-function Surface({ scenarioID }: { scenarioID: keyof typeof details }) {
+function Surface({
+  scenarioID,
+  judgePromptDeepLink = false,
+}: {
+  scenarioID: keyof typeof details
+  judgePromptDeepLink?: boolean
+}) {
   return (
-    <MemoryRouter initialEntries={[`/scenarios/${scenarioID}`]}>
+    <MemoryRouter
+      initialEntries={[
+        `/scenarios/${scenarioID}${judgePromptDeepLink ? '#judge-prompt' : ''}`,
+      ]}
+    >
       <AuthProvider>
         <Routes>
           <Route
@@ -211,6 +221,21 @@ export const ShangyangFourCards: Story = {
     await expect(
       canvas.queryByText(/你正在参与一个策略对话游戏/),
     ).toBeNull()
+  },
+}
+
+export const JudgePromptDeepLinkOpensOriginal: Story = {
+  args: { scenarioID: 'shangyang-court', judgePromptDeepLink: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const disclosure = await canvas.findByRole('button', {
+      name: '裁判提示词原文',
+    })
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'true')
+    await expect(canvas.getByTestId('judge-prompt')).toHaveAttribute(
+      'id',
+      'judge-prompt',
+    )
   },
 }
 
