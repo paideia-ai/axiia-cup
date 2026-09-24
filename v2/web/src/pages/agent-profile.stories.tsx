@@ -9,6 +9,7 @@ import type {
   NPCProfileResponse,
 } from '../api/types'
 import { inventory, scenario } from '../testing/v34-fixtures'
+import { ProfileRecord } from '../components/agent-profile'
 import { AgentViewPage } from './agent-view'
 import { NPCViewPage } from './npc-view'
 
@@ -179,6 +180,26 @@ const meta = {
 } satisfies Meta<typeof Page>
 export default meta
 type Story = StoryObj<typeof meta>
+
+export const WinRateColors: Story = {
+  args: { entry: '/agents/101' },
+  render: () => (
+    <div className='grid gap-6 lg:grid-cols-2'>
+      {[0, 25, 50, 75, 100, null].map((winRate) => (
+        <ProfileRecord
+          key={winRate ?? 'empty'}
+          label={winRate === null ? '暂无战绩示例' : `胜率 ${winRate}% 示例`}
+          record={{
+            matchCount: winRate === null ? 0 : 100,
+            winCount: winRate ?? 0,
+            lossCount: winRate === null ? 0 : 100 - winRate,
+          }}
+          modelID='fixture-model'
+        />
+      ))}
+    </div>
+  ),
+}
 
 export const OwnerCurrentVersion: Story = {
   args: { entry: '/agents/101' },

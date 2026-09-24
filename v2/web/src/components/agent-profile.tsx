@@ -39,14 +39,15 @@ export function ProfileRecord({
 }) {
   const models = usePageQuery(modelsQuery())
   const total = record.matchCount ?? 0
-  const rate = total > 0
+  const winRate = total > 0 ? (record.winCount ?? 0) / total * 100 : null
+  const rate = winRate !== null
     ? new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 }).format(
-      (record.winCount ?? 0) / total * 100,
+      winRate,
     ) + '%'
     : null
   const model = models.data?.models?.find((item) => item.id === modelID)
   return (
-    <section aria-label='版本战绩' data-testid='profile-record'>
+    <section aria-label={`版本战绩：${label}`} data-testid='profile-record'>
       <Card className='overflow-hidden border-(--accent)/30 shadow-none'>
         <CardContent className='space-y-5 pt-5 sm:p-6'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -63,6 +64,13 @@ export function ProfileRecord({
                   rate ? 'text-5xl sm:text-6xl' : 'text-3xl'
                 }`}
                 data-testid='profile-win-rate'
+                style={winRate !== null
+                  ? {
+                    color: `hsl(${
+                      Math.min(100, Math.max(0, winRate)) * 1.2
+                    } 65% 62%)`,
+                  }
+                  : undefined}
               >
                 {rate ?? '暂无战绩'}
               </p>
