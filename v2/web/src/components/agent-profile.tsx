@@ -40,6 +40,13 @@ export function ProfileRecord({
   const models = usePageQuery(modelsQuery())
   const total = record.matchCount ?? 0
   const winRate = total > 0 ? (record.winCount ?? 0) / total * 100 : null
+  const rateColor = winRate === null
+    ? undefined
+    : winRate <= 50
+    ? `color-mix(in oklab, #e87979, #b8b8b2 ${Math.max(0, winRate) * 2}%)`
+    : `color-mix(in oklab, #b8b8b2, var(--success) ${
+      (Math.min(100, winRate) - 50) * 2
+    }%)`
   const rate = winRate !== null
     ? new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 }).format(
       winRate,
@@ -64,13 +71,7 @@ export function ProfileRecord({
                   rate ? 'text-5xl sm:text-6xl' : 'text-3xl'
                 }`}
                 data-testid='profile-win-rate'
-                style={winRate !== null
-                  ? {
-                    color: `hsl(${
-                      Math.min(100, Math.max(0, winRate)) * 1.2
-                    } 65% 62%)`,
-                  }
-                  : undefined}
+                style={{ color: rateColor }}
               >
                 {rate ?? '暂无战绩'}
               </p>
