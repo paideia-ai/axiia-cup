@@ -1,5 +1,6 @@
 import { AppShell } from '../components/layout/app-shell'
-import { AuthProvider } from '../context/auth'
+import { AuthProvider, useAuth } from '../context/auth'
+import type { PropsWithChildren } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { http, HttpResponse } from 'msw'
 import { expect, userEvent, within } from 'storybook/test'
@@ -117,10 +118,22 @@ const handlers = [
   http.get(
     '/v1/auth/me',
     () =>
-      HttpResponse.json({ error: 'unauthorized', message: '请登录' }, {
-        status: 401,
+      HttpResponse.json({
+        account: {
+          id: 'identity-preview',
+          displayName: '预览用户',
+          email: 'preview@example.test',
+          isAdmin: false,
+          hasTOTP: false,
+        },
+        elevated: false,
+        firstBattleDone: true,
       }),
   ),
+  http.get('/v1/notifications/bell', () =>
+    new HttpResponse(': preview\n\n', {
+      headers: { 'Content-Type': 'text/event-stream' },
+    })),
   http.get(
     '/v1/models',
     () =>
@@ -230,12 +243,17 @@ const handlers = [
   ),
 ]
 
+function AuthenticatedPreview({ children }: PropsWithChildren) {
+  const { isLoading } = useAuth()
+  return isLoading ? <p>正在加载预览…</p> : <AppShell>{children}</AppShell>
+}
+
 function Page({ entry }: { entry: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
       <AuthProvider>
         <NavigationMemoryProvider scope='identity-preview'>
-          <AppShell>
+          <AuthenticatedPreview>
             <div className='mb-8 flex flex-wrap items-center gap-4 border-b border-(--border-soft) pb-4 text-sm'>
               <span className='text-(--foreground-muted)'>
                 本地预览 · 示例数据
@@ -275,7 +293,7 @@ function Page({ entry }: { entry: string }) {
                 element={<VersionAgentPage />}
               />
             </Routes>
-          </AppShell>
+          </AuthenticatedPreview>
         </NavigationMemoryProvider>
       </AuthProvider>
     </MemoryRouter>
