@@ -103,7 +103,9 @@ export const FortyVersions: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const nav = canvas.getByRole('navigation', { name: '版本快速导航' })
-    await expect(nav.scrollHeight).toBeGreaterThan(nav.clientHeight)
+    const horizontal = getComputedStyle(nav).flexDirection !== 'column'
+    await expect(horizontal ? nav.scrollWidth : nav.scrollHeight)
+      .toBeGreaterThan(horizontal ? nav.clientWidth : nav.clientHeight)
     await userEvent.click(within(nav).getByRole('link', { name: '跳转到 v1' }))
     await waitFor(
       () =>
@@ -111,7 +113,9 @@ export const FortyVersions: Story = {
           .toHaveAttribute('aria-current', 'location'),
       { timeout: 3000 },
     )
-    await expect(nav.getBoundingClientRect().top).toBeGreaterThanOrEqual(63)
+    await expect(nav.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      horizontal ? 47 : 63,
+    )
   },
 }
 

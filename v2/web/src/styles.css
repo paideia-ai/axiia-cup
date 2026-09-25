@@ -801,7 +801,11 @@ main .text-\(--accent\) {
   padding: 8px 0;
   background: var(--background);
   border-bottom: 1px solid var(--border-soft);
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.version-directory-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .version-directory-link {
@@ -838,21 +842,25 @@ main .text-\(--accent\) {
   scroll-margin-top: 128px;
 }
 
-@media (min-width: 768px) {
-  .version-directory {
-    grid-template-columns: 112px minmax(0, 1fr);
-    gap: 20px;
+/* The 1040px page keeps its original width. Only use a side directory when
+   the outer gutter can hold it; smaller viewports keep the horizontal rail. */
+@media (min-width: 1320px) {
+  .version-directory-nav,
+  .version-directory-content {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .version-directory-nav {
+    width: 112px;
+    margin-left: -136px;
     top: 64px;
     flex-direction: column;
     max-height: calc(100dvh - 88px);
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 0 8px 0 0;
+    padding: 2px;
     border-bottom: 0;
-    border-right: 1px solid var(--border-soft);
   }
 
   .version-directory-link {

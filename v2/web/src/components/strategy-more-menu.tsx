@@ -1,7 +1,6 @@
 import { Menu } from '@base-ui-components/react/menu'
 import { Ellipsis } from 'lucide-react'
 import { type RefObject, useRef } from 'react'
-import { Link } from 'react-router-dom'
 
 import { tm } from '../testmode/mark'
 import {
@@ -9,16 +8,12 @@ import {
   dropdownPopupClassName,
 } from './ui/dropdown-styles'
 
-type Props =
-  & {
-    triggerRef?: RefObject<HTMLButtonElement | null>
-  }
-  & ({ onPresets: () => void; href?: never } | {
-    href: string
-    onPresets?: never
-  })
+interface Props {
+  triggerRef?: RefObject<HTMLButtonElement | null>
+  onPresets: () => void
+}
 
-export function StrategyMoreMenu({ triggerRef, onPresets, href }: Props) {
+export function StrategyMoreMenu({ triggerRef, onPresets }: Props) {
   const ownTrigger = useRef<HTMLButtonElement>(null)
   const trigger = triggerRef ?? ownTrigger
   const openingDialog = useRef(false)
@@ -48,15 +43,13 @@ export function StrategyMoreMenu({ triggerRef, onPresets, href }: Props) {
             finalFocus={() => openingDialog.current ? false : trigger.current}
           >
             <Menu.Item
-              render={href ? <Link to={href} /> : <button type='button' />}
-              nativeButton={!href}
+              render={<button type='button' />}
+              nativeButton
               className={dropdownItemClassName}
-              onClick={onPresets
-                ? () => {
-                  openingDialog.current = true
-                  onPresets()
-                }
-                : undefined}
+              onClick={() => {
+                openingDialog.current = true
+                onPresets()
+              }}
               {...tm('E.init-tab-mcq')}
             >
               选择预设策略

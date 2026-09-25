@@ -475,20 +475,9 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
           ['让 AI 帮你想策略', 'meta', '让 AI 帮你想策略'],
         ] as const
       ) {
-        if (init === 'mcq') {
-          await expect(page.getByRole('link', { name, exact: true }))
-            .toHaveCount(0)
-          await page.getByRole('button', { name: '更多构建方式' }).click()
-        }
-        const entry = page.getByRole(init === 'mcq' ? 'menuitem' : 'link', {
-          name,
-          exact: true,
-        })
-        await expect(entry).toHaveAttribute(
-          'href',
-          `/agents/${agentID}/build?init=${init}`,
-        )
-        await entry.click()
+        await expect(page.getByRole('link', { name, exact: true }))
+          .toHaveAttribute('href', `/agents/${agentID}/build?init=${init}`)
+        await page.getByRole('link', { name, exact: true }).click()
         await expect(page).toHaveURL(
           new RegExp(`/agents/${agentID}/build\\?init=${init}$`),
         )

@@ -28,13 +28,14 @@ export function VersionNavigation({
       const cards = Array.from(
         root.current?.querySelectorAll<HTMLElement>('[data-version-id]') ?? [],
       )
-      const mobile = !matchMedia('(min-width: 768px)').matches
       const nav = navigation.current
+      const horizontal = !nav ||
+        getComputedStyle(nav).flexDirection !== 'column'
       const bounds = root.current?.getBoundingClientRect()
       if (nav && bounds) {
         // Keep a long directory inside the visible portion of the list, even
         // near its bottom where the sticky element meets its containing block.
-        nav.style.maxHeight = mobile ? '' : `${
+        nav.style.maxHeight = horizontal ? '' : `${
           Math.max(
             44,
             Math.min(innerHeight - 24, bounds.bottom) -
@@ -42,7 +43,9 @@ export function VersionNavigation({
           )
         }px`
       }
-      const top = mobile ? (navigation.current?.offsetHeight ?? 0) + 64 : 80
+      const top = cards[0]
+        ? Number.parseFloat(getComputedStyle(cards[0]).scrollMarginTop) + 8
+        : 80
       let current = cards[0]
       for (const card of cards) {
         if (card.getBoundingClientRect().top <= top) current = card
@@ -77,7 +80,7 @@ export function VersionNavigation({
     if (!nav || !link) return
     const bounds = nav.getBoundingClientRect()
     const item = link.getBoundingClientRect()
-    if (matchMedia('(min-width: 768px)').matches) {
+    if (getComputedStyle(nav).flexDirection === 'column') {
       if (item.top < bounds.top) nav.scrollTop -= bounds.top - item.top
       else if (item.bottom > bounds.bottom) {
         nav.scrollTop += item.bottom - bounds.bottom
@@ -145,7 +148,9 @@ export function VersionNavigation({
           })}
         </nav>
       )}
-      <div className='min-w-0 space-y-3'>{children}</div>
+      <div className='version-directory-content min-w-0 space-y-3'>
+        {children}
+      </div>
     </div>
   )
 }
