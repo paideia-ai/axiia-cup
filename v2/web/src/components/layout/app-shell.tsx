@@ -9,7 +9,13 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { PropsWithChildren, SyntheticEvent } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  matchPath,
+  NavLink,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 
 import { useAuth } from '../../context/auth'
 import { cn } from '../../lib/cn'
@@ -57,10 +63,16 @@ export function AppShell({ children }: PropsWithChildren) {
     prefetchNavigation(anchor.pathname, !!account)
   }
   const contentWidth = 'max-w-[1040px]'
+  // Participant identities are standalone, regardless of their URL prefix.
+  const standaloneIdentity = [
+    '/scenarios/:scenarioId/npcs/:presetKey',
+    '/agents/:agentId/identity',
+  ].some((path) => matchPath(path, pathname))
   const navigationActive = (to: string) =>
-    to === '/my-agents'
+    !standaloneIdentity &&
+    (to === '/my-agents'
       ? pathname === '/my-agents' || pathname.startsWith('/agents/')
-      : pathname === to || pathname.startsWith(`${to}/`)
+      : pathname === to || pathname.startsWith(`${to}/`))
 
   return (
     <div
