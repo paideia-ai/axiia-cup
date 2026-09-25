@@ -759,42 +759,42 @@ const meta = {
       key: 'guilt-motive-concealment',
       side: 'a',
       label: '动机与掩饰',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: '…',
     },
     {
       key: 'guilt-evidence-chain',
       side: 'a',
       label: '闭合证据链',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3',
       prompt: '…',
     },
     {
       key: 'guilt-deliberation-map',
       side: 'a',
       label: '争点推进',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3',
       prompt: '…',
     },
     {
       key: 'doubt-unseen-moment',
       side: 'b',
       label: '室内未明',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3-flash',
       prompt: '…',
     },
     {
       key: 'doubt-burden-of-proof',
       side: 'b',
       label: '紧守证明责任',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3',
       prompt: '…',
     },
     {
       key: 'doubt-supported-alternative',
       side: 'b',
       label: '最小替代叙事',
-      modelID: 'deepseek-v4-flash',
+      modelID: 'glm-5.3',
       prompt: '…',
     },
   ],
@@ -812,7 +812,7 @@ const meta = {
 }
 ```
 
-上述 preset 的 `modelID` 对齐当前 V2 默认低成本模型；key、side、label、model 和 prompt 正文均须与 manifest 及运行时一致。如果模型目录改变，发布同一版本前必须更新 preset 并重新 smoke test。NPC 的九模型配置不由参赛 preset 决定：脚本提供可直接运行的默认数组，受控的 scenario params 可以覆盖它。
+上述 preset 按难度选择模型：动机与掩饰、室内未明使用 `glm-5.3-flash`，其余四个使用 `glm-5.3`；key、side、label、model 和 prompt 正文均须与 manifest 及运行时一致。如果模型目录改变，发布同一版本前必须更新 preset 并重新 smoke test。NPC 的九模型配置不由参赛 preset 决定：脚本提供可直接运行的默认数组，受控的 scenario params 可以覆盖它。
 
 ### 13.2 为什么只用现有 `act(enum)`，不用 `turn` affordance
 

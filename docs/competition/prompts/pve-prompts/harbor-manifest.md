@@ -8,12 +8,12 @@ The roster has three routes per side. The first route is a playable opponent wit
 
 | Camp role | Preset key | Route | Label | Model | File |
 |-----------|------------|-------|-------|-------|------|
-| `a` | `guilt-motive-concealment` | Basic behavioral inference | 动机与掩饰 | `deepseek-v4-flash` | `harbor-guilt-motive-concealment.md` |
-| `a` | `guilt-evidence-chain` | Cumulative evidence | 闭合证据链 | `deepseek-v4-flash` | `harbor-guilt-evidence-chain.md` |
-| `a` | `guilt-deliberation-map` | Adaptive deliberation | 争点推进 | `deepseek-v4-flash` | `harbor-guilt-deliberation-map.md` |
-| `b` | `doubt-unseen-moment` | Basic evidentiary gaps | 室内未明 | `deepseek-v4-flash` | `harbor-doubt-unseen-moment.md` |
-| `b` | `doubt-burden-of-proof` | Burden of proof | 紧守证明责任 | `deepseek-v4-flash` | `harbor-doubt-burden-of-proof.md` |
-| `b` | `doubt-supported-alternative` | Supported alternative | 最小替代叙事 | `deepseek-v4-flash` | `harbor-doubt-supported-alternative.md` |
+| `a` | `guilt-motive-concealment` | Basic behavioral inference | 动机与掩饰 | `glm-5.3-flash` | `harbor-guilt-motive-concealment.md` |
+| `a` | `guilt-evidence-chain` | Cumulative evidence | 闭合证据链 | `glm-5.3` | `harbor-guilt-evidence-chain.md` |
+| `a` | `guilt-deliberation-map` | Adaptive deliberation | 争点推进 | `glm-5.3` | `harbor-guilt-deliberation-map.md` |
+| `b` | `doubt-unseen-moment` | Basic evidentiary gaps | 室内未明 | `glm-5.3-flash` | `harbor-doubt-unseen-moment.md` |
+| `b` | `doubt-burden-of-proof` | Burden of proof | 紧守证明责任 | `glm-5.3` | `harbor-doubt-burden-of-proof.md` |
+| `b` | `doubt-supported-alternative` | Supported alternative | 最小替代叙事 | `glm-5.3` | `harbor-doubt-supported-alternative.md` |
 
 Role `a` is juror Lin, whose fixed final vote is `GUILTY`. Role `b` is juror Su, whose fixed final vote is `NOT_GUILTY`.
 
