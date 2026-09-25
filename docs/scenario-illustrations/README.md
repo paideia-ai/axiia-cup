@@ -1,5 +1,7 @@
 # Scenario illustrations
 
+Character portraits for all five scenarios are available in [Scenario pixel portraits](../scenario-portraits/README.md).
+
 This folder contains the approved images prepared for four Axiia Cup scenario introductions. Harbor Murder Jury and Honnoji each have two complementary images, so the folder contains six images in total. Most are black-and-white line illustrations; the Honnoji punishment scene is a cropped historical source image.
 
 | File | Scenario | Intended scene |
