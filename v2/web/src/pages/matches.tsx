@@ -1,6 +1,10 @@
 import { PageLoading } from '../components/page-loading'
 import { Check, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { agents, npcs } from '../api/client'
+import { Button } from '../components/ui/button'
+import { positiveID } from '../lib/identity-links'
 
 import type { MatchSummary } from '../api/types'
 import { Badge } from '../components/ui/badge'
@@ -15,6 +19,7 @@ import { tm } from '../testmode/mark'
 const ALL_SCENARIOS = '__all_scenarios__'
 
 function statusTone(summary: MatchSummary) {
+  if (summary.finished) return 'success' as const
   if (!summary.dispatched) return 'info' as const
   if (!summary.finished) return 'warning' as const
   return 'success' as const
@@ -25,9 +30,8 @@ function statusTone(summary: MatchSummary) {
 // 到角色名时 outcomeCopy 自己回退 甲方/乙方；open 历史（双方都非我）自然落
 // 在「胜方 角色」。
 function statusLabel(summary: MatchSummary, roles: RoleNames | null) {
-  if (!summary.dispatched) return '排队中'
-  if (!summary.finished) return '进行中'
-  if (!summary.scored) return '判定中'
+  if (!summary.finished) return summary.dispatched ? '进行中' : '排队中'
+  if (!summary.scored) return '未计分'
   return outcomeCopy(summary, roles) ??
     (summary.winner ? `胜方 ${summary.winner.toUpperCase()}` : '平局')
 }
@@ -63,10 +67,27 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 }
 
 export function MatchesPage() {
+  const [params] = useSearchParams()
+  return (
+    <MatchHistory
+      key={`${params.get('agent')}:${params.get('version')}:${
+        params.get('npc')
+      }:${params.get('match')}`}
+    />
+  )
+}
+
+function MatchHistory() {
   const [params, setParams] = useSearchParams()
   const onlyMine = params.get('mine') === '1'
   const scenarioID = params.get('scenario') ?? ''
   const versionID = params.get('version') ?? ''
+  const agentID = positiveID(params.get('agent'))
+  const npcKey = params.get('npc') ?? ''
+  const sourceMatchID = positiveID(params.get('match'))
+  const scoped = !!agentID || !!npcKey
+  const [cursors, setCursors] = useState<number[]>([])
+  const before = cursors.at(-1)
   const updateFilter = (key: string, value: string) => {
     setParams((previous) => {
       const next = new URLSearchParams(previous)
@@ -77,7 +98,31 @@ export function MatchesPage() {
   }
   const setOnlyMine = (value: boolean) => updateFilter('mine', value ? '1' : '')
   const setScenarioID = (value: string) => updateFilter('scenario', value)
-  const list = usePageQuery(matchesQuery())
+  const list = usePageQuery({
+    ...(scoped
+      ? {
+        queryKey: [
+          'matches',
+          'identity',
+          agentID,
+          versionID,
+          npcKey,
+          scenarioID,
+          sourceMatchID,
+          before,
+        ].map(String),
+        queryFn: () => {
+          if (agentID && positiveID(versionID)) {
+            return agents.history(agentID, Number(versionID), before)
+          }
+          if (npcKey && scenarioID && sourceMatchID) {
+            return npcs.history(scenarioID, npcKey, before, sourceMatchID)
+          }
+          throw new Error('对战记录筛选信息不完整。请从智能体资料页重新进入。')
+        },
+      }
+      : matchesQuery()),
+  })
   const scenarios = usePageQuery(catalogQuery())
   const { loading, error } = list
   // Role names are optional enrichment; history can render as soon as it arrives.
@@ -206,7 +251,9 @@ export function MatchesPage() {
           className='text-sm text-(--foreground-subtle)'
           {...tm('L.page-intro')}
         >
-          {versionID
+          {npcKey
+            ? '该 NPC 配置参与的对战记录。'
+            : versionID
             ? '该版本参与的对战记录，包含进行中的对局。'
             : scenarioID
             ? (onlyMine || !data?.list.open
@@ -224,7 +271,7 @@ export function MatchesPage() {
             placeholder='全部场景'
             renderValue={(value) =>
               historyScenarios.get(value) ?? '全部场景'}
-            disabled={loading || !historyScenarios.size}
+            disabled={scoped || loading || !historyScenarios.size}
             className='h-9 w-40 max-w-full rounded-lg border-(--border-soft) bg-transparent px-2.5 text-xs focus:border-(--foreground-muted) focus:ring-0 focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) [&>span]:min-w-0 [&>span]:truncate [&>span]:text-(--foreground-subtle)'
           >
             <SelectItem value={ALL_SCENARIOS}>全部场景</SelectItem>
@@ -251,11 +298,22 @@ export function MatchesPage() {
         </div>
       </div>
 
+      {npcKey && (
+        <div className='text-xs text-(--foreground-subtle)'>
+          NPC · {npcKey} · 对战 #{sourceMatchID} 的配置
+        </div>
+      )}
       {versionID && (
         <div className='flex flex-wrap items-center gap-2 text-xs'>
           <button
             type='button'
-            onClick={() => updateFilter('version', '')}
+            onClick={() =>
+              setParams((previous) => {
+                const next = new URLSearchParams(previous)
+                next.delete('version')
+                next.delete('agent')
+                return next
+              }, { replace: true })}
             aria-label={`清除版本 #${versionID} 筛选`}
             className='inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border border-(--border-soft) px-3 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
           >
@@ -268,7 +326,18 @@ export function MatchesPage() {
       {loading
         ? <PageLoading variant='list' {...tm('L.loading')} />
         : error
-        ? <p className='text-sm text-(--accent)' {...tm('L.error')}>{error}</p>
+        ? (
+          <div className='space-y-3'>
+            <p
+              role='alert'
+              className='text-sm text-(--accent)'
+              {...tm('L.error')}
+            >
+              {error}
+            </p>
+            <Button onClick={list.reload}>重试</Button>
+          </div>
+        )
         : data && visibleMatches.length > 0
         ? (
           <div className='space-y-2' {...tm('L.match-list')}>
@@ -298,7 +367,9 @@ export function MatchesPage() {
         )
         : (
           <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
-            {versionID
+            {npcKey
+              ? '该 NPC 配置暂无可查看的对战记录。'
+              : versionID
               ? (scenarioID || onlyMine
                 ? '该版本没有符合当前筛选条件的对战。试试切换场景或取消「仅自己对局」。'
                 : '该版本还没有对战记录。')
@@ -311,6 +382,28 @@ export function MatchesPage() {
               : '还没有对战。到场景页构建智能体并发起对战。'}
           </p>
         )}
+      {scoped && !error &&
+        (cursors.length > 0 || (data?.list.matches.length ?? 0) === 20) && (
+        <div className='flex justify-end gap-2'>
+          <Button
+            variant='secondary'
+            disabled={loading || cursors.length === 0}
+            onClick={() => setCursors((value) => value.slice(0, -1))}
+          >
+            上一页
+          </Button>
+          <Button
+            variant='secondary'
+            disabled={loading || (data?.list.matches.length ?? 0) < 20}
+            onClick={() => {
+              const last = data?.list.matches.at(-1)
+              if (last) setCursors((value) => [...value, last.id])
+            }}
+          >
+            下一页
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

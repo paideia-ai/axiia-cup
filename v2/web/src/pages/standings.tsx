@@ -6,7 +6,9 @@ import { Card, CardContent } from '../components/ui/card'
 import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
 
-function SubmittedVersions({ ids }: { ids: number[] }) {
+function SubmittedVersions(
+  { ids, tournamentID }: { ids: number[]; tournamentID: number },
+) {
   return (
     <span
       className='inline-flex flex-wrap gap-x-2 font-mono text-[11px] text-(--foreground-muted)'
@@ -15,7 +17,7 @@ function SubmittedVersions({ ids }: { ids: number[] }) {
       {ids.map((id) => (
         <Link
           key={id}
-          to={`/versions/${id}`}
+          to={`/versions/${id}?tournament=${tournamentID}`}
           className='underline decoration-(--border) underline-offset-4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-offset-2'
           aria-label={`查看版本 #${id} 的智能体`}
         >
@@ -98,7 +100,10 @@ export function StandingsPage() {
                       </span>
                     </div>
                     <div className='mt-2'>
-                      <SubmittedVersions ids={entry.submissionIDs} />
+                      <SubmittedVersions
+                        ids={entry.submissionIDs}
+                        tournamentID={id}
+                      />
                     </div>
                   </div>
                 ))}
@@ -142,7 +147,10 @@ export function StandingsPage() {
                         </span>
                         {/* #64：名次属于人；两侧投的版本降为小字下钻线索。 */}
                         <span className='ml-2'>
-                          <SubmittedVersions ids={entry.submissionIDs} />
+                          <SubmittedVersions
+                            ids={entry.submissionIDs}
+                            tournamentID={id}
+                          />
                         </span>
                       </td>
                       <td className='py-2 text-right'>{entry.wins}</td>

@@ -1,4 +1,5 @@
-import { Navigate, useParams } from 'react-router-dom'
+import { positiveID } from '../lib/identity-links'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { versions } from '../api/client'
 import { BackLink } from '../components/back-link'
@@ -9,6 +10,8 @@ import { useAsync } from '../lib/use-async'
 // the clicked version; its id is not the id of its owning agent.
 export function VersionAgentPage() {
   const { versionId = '' } = useParams()
+  const [params] = useSearchParams()
+  const tournamentID = positiveID(params.get('tournament'))
   const id = Number(versionId)
   const valid = Number.isSafeInteger(id) && id > 0
   const { data, loading, error, reload } = useAsync(async () => {
@@ -38,7 +41,14 @@ export function VersionAgentPage() {
   }
 
   if (!loading && data?.versionID === id) {
-    return <Navigate replace to={`/agents/${data.agentID}`} />
+    return (
+      <Navigate
+        replace
+        to={`/agents/${data.agentID}/identity?version=${id}${
+          tournamentID ? `&tournament=${tournamentID}` : ''
+        }`}
+      />
+    )
   }
 
   return <p role='status' className='text-sm'>正在打开智能体…</p>

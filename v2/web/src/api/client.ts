@@ -288,20 +288,34 @@ export const agents = {
 }
 
 export const npcs = {
-  profile: (scenarioID: string, key: string) =>
-    request<NPCProfileResponse>(
+  profile: async (scenarioID: string, key: string, matchID?: number) => {
+    const profile = await request<NPCProfileResponse>(
       'GET',
       `/scenarios/${encodeURIComponent(scenarioID)}/npcs/${
         encodeURIComponent(key)
+      }${matchID == null ? '' : `?matchID=${matchID}`}`,
+    )
+    if (matchID != null && profile.sourceMatchID !== matchID) {
+      throw new Error('该场对局的 NPC 配置暂不可用。')
+    }
+    return profile
+  },
+  history: async (
+    scenarioID: string,
+    key: string,
+    before?: number,
+    matchID?: number,
+  ) => {
+    if (matchID != null) await npcs.profile(scenarioID, key, matchID)
+    return request<MatchListResponse>(
+      'GET',
+      `/scenarios/${encodeURIComponent(scenarioID)}/npcs/${
+        encodeURIComponent(key)
+      }/matches?limit=20${before == null ? '' : `&before=${before}`}${
+        matchID == null ? '' : `&matchID=${matchID}`
       }`,
-    ),
-  history: (scenarioID: string, key: string, before?: number) =>
-    request<MatchListResponse>(
-      'GET',
-      `/scenarios/${encodeURIComponent(scenarioID)}/npcs/${
-        encodeURIComponent(key)
-      }/matches?limit=20${before == null ? '' : `&before=${before}`}`,
-    ),
+    )
+  },
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { npcIdentityPath } from '../lib/identity-links'
 import { invalidateNavigation } from '../lib/navigation-cache'
 import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
@@ -609,11 +610,15 @@ export function MatchDetailPage() {
               which='a'
               sideLabel={sideA}
               participant={participants.a}
+              matchID={data.summary.id}
+              scenarioID={data.summary.scenarioID}
             />
             <ParticipantCard
               which='b'
               sideLabel={sideB}
               participant={participants.b}
+              matchID={data.summary.id}
+              scenarioID={data.summary.scenarioID}
             />
           </div>
         )
@@ -1261,7 +1266,11 @@ function ParticipantCard({
   which,
   sideLabel,
   participant,
+  matchID,
+  scenarioID,
 }: {
+  matchID: number
+  scenarioID: string
   which: 'a' | 'b'
   sideLabel: string
   participant: MatchParticipantDTO
@@ -1280,6 +1289,13 @@ function ParticipantCard({
       // 忽略
     }
   }
+  const identityHref = participant.isMine
+    ? null
+    : participant.presetKey != null
+    ? npcIdentityPath(scenarioID, participant.presetKey, matchID)
+    : participant.agentID != null && participant.versionID != null
+    ? `/agents/${participant.agentID}/identity?version=${participant.versionID}&match=${matchID}`
+    : null
   const name = participant.ownerDisplayName ??
     (participant.presetKey != null ? `预设 · ${participant.presetKey}` : '—')
   return (
@@ -1310,11 +1326,23 @@ function ParticipantCard({
                 : name}
             </span>
           )}
+        {identityHref && (
+          <Link
+            to={identityHref}
+            className='ml-auto py-1.5 text-xs text-(--foreground-subtle) underline underline-offset-4'
+          >
+            查看智能体资料
+          </Link>
+        )}
         {participant.isMine && participant.agentID != null
           ? (
             <Link
               {...tm('FA.my-agent-button')}
-              to={`/agents/${participant.agentID}`}
+              to={`/agents/${participant.agentID}${
+                participant.versionID != null
+                  ? `?version=${participant.versionID}`
+                  : ''
+              }`}
               className='ml-auto inline-flex items-center rounded-md bg-(--accent) px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90'
             >
               ← 我的智能体

@@ -28,6 +28,7 @@ import { BuilderPage } from './pages/builder'
 import { CatalogPage } from './pages/catalog'
 import { ExpressPage } from './pages/express'
 import { NPCViewPage } from './pages/npc-view'
+import { AgentIdentityPage } from './pages/agent-identity'
 import { MyAgentsPage } from './pages/my-agents'
 import { LandingPage } from './pages/landing'
 import { LoginPage } from './pages/login'
@@ -156,6 +157,10 @@ export function AppRoutes() {
             />
             <Route path='/agents/entry' element={<AgentEntryPage />} />
             <Route path='/agents/:agentId' element={<AgentViewPage />} />
+            <Route
+              path='/agents/:agentId/identity'
+              element={<AgentIdentityPage />}
+            />
             <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
             <Route path='/matches' element={<MatchesPage />} />
             <Route path='/matches/:matchId' element={<MatchDetailPage />} />

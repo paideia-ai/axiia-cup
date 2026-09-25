@@ -718,6 +718,7 @@ export interface PublicAgentVersionDTO {
 }
 
 export interface NPCProfileResponse {
+  sourceMatchID?: number
   scenarioID: string
   scenarioTitle: string
   key: string
