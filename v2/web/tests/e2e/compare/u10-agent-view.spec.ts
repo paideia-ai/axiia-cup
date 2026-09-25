@@ -220,8 +220,8 @@ test('版本卡提供紧凑而完整的真实动作', async ({ page }) => {
     }
   })
 
-  await test.step('并且 长正文才提供展开按钮，不再提供“基于该版本迭代”', async () => {
-    await expect(page.getByRole('button', { name: '展开 v2 全文' }))
+  await test.step('并且 最新长正文默认展开，短正文不提供展开按钮', async () => {
+    await expect(page.getByRole('button', { name: '收起 v2 全文' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '展开 v1 全文' }))
       .toHaveCount(0)

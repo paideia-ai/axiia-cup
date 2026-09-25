@@ -95,6 +95,24 @@ export const AtThreshold: Story = {
     const canvas = within(canvasElement)
     await expect(within(canvas.getByRole('navigation')).getAllByRole('link'))
       .toHaveLength(5)
+    const nav = within(canvas.getByRole('navigation'))
+    // Near the page bottom, v3 and v2 must not share v1's clamped target.
+    for (const ordinal of [5, 4, 3, 2, 1, 2, 3, 4, 5]) {
+      const link = nav.getByRole('link', {
+        name: new RegExp(`跳转到 v${ordinal}(，|$)`),
+      })
+      await userEvent.click(link)
+      const card = canvasElement.querySelector<HTMLElement>(
+        `#version-${10100 + ordinal}`,
+      )!
+      await waitFor(() => {
+        expect(card).toHaveFocus()
+        expect(link).toHaveAttribute('aria-current', 'location')
+      })
+      // Wait for the smooth scroll to settle before asserting the final choice.
+      await new Promise<void>((resolve) => setTimeout(resolve, 700))
+      await expect(link).toHaveAttribute('aria-current', 'location')
+    }
   },
 }
 
@@ -152,5 +170,43 @@ export const PreviewOnHoverAndFocus: Story = {
     await expect(await body.findByRole('tooltip')).toHaveTextContent('最新版本')
     await userEvent.keyboard('{Enter}')
     await expect(canvasElement.querySelector('#version-10112')).toHaveFocus()
+  },
+}
+
+export const CompactCards: Story = {
+  args: { count: 5 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const latest = canvasElement.querySelector<HTMLElement>(
+      '#version-10105 [data-version-prompt]',
+    )!
+    const older = canvasElement.querySelector<HTMLElement>(
+      '#version-10104 [data-version-prompt]',
+    )!
+    await expect(latest.textContent).toBe(navigationVersions(5).at(-1)!.prompt)
+    await expect(latest).not.toHaveClass('line-clamp-2')
+    await expect(older).toHaveClass('line-clamp-2')
+    await expect(older.clientHeight).toBeLessThanOrEqual(
+      Math.ceil(Number.parseFloat(getComputedStyle(older).lineHeight) * 2),
+    )
+    await userEvent.click(
+      await canvas.findByRole('button', {
+        name: '收起 v5 全文',
+      }),
+    )
+    await expect(latest).toHaveClass('line-clamp-2')
+    await userEvent.click(
+      await canvas.findByRole('button', {
+        name: '展开 v5 全文',
+      }),
+    )
+    await expect(latest).not.toHaveClass('line-clamp-2')
+    await userEvent.click(
+      await canvas.findByRole('button', {
+        name: '展开 v4 全文',
+      }),
+    )
+    await expect(older.textContent).toBe(navigationVersions(5)[3].prompt)
+    await expect(older).not.toHaveClass('line-clamp-2')
   },
 }

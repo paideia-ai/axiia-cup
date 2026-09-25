@@ -3,10 +3,34 @@ import { Check } from 'lucide-react'
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
-import { versionTag } from '../lib/version-label'
+import { versionOrdinal, versionTag } from '../lib/version-label'
 
 export const VERSION_NAVIGATION_THRESHOLD = 5
 export const versionAnchor = (id: number) => `version-${id}`
+
+// Fit card anchors into the actual page scroll range. Near the end of a short
+// list, several native scrollIntoView targets would otherwise clamp to the same
+// position. Both navigation and scroll tracking use these distinct targets.
+function scrollTargets(root: HTMLElement | null) {
+  const cards = Array.from(
+    root?.querySelectorAll<HTMLElement>('[data-version-id]') ?? [],
+  )
+  const offsets = cards.map((card) =>
+    card.getBoundingClientRect().top + scrollY -
+    Number.parseFloat(getComputedStyle(card).scrollMarginTop)
+  )
+  const first = offsets[0] ?? 0
+  const last = offsets.at(-1) ?? first
+  const max = Math.max(0, document.documentElement.scrollHeight - innerHeight)
+  const start = Math.max(0, Math.min(first, max))
+  const end = Math.max(0, Math.min(last, max))
+  return cards.map((card, index) => ({
+    card,
+    top: last > first
+      ? start + (offsets[index] - first) / (last - first) * (end - start)
+      : start,
+  }))
+}
 
 // The directory follows the same order as the cards, including a linked version
 // promoted to the top. It navigates the document; it never selects an entry.
@@ -17,6 +41,7 @@ export function VersionNavigation({
   const previewID = useId()
   const root = useRef<HTMLDivElement>(null)
   const navigation = useRef<HTMLElement>(null)
+  const clickedID = useRef<number | null>(null)
   const [activeID, setActiveID] = useState<number | null>(null)
   const visible = versions.length >= VERSION_NAVIGATION_THRESHOLD
   const order = versions.map(({ id }) => id).join(',')
@@ -27,9 +52,7 @@ export function VersionNavigation({
     let frame = 0
     const measure = () => {
       frame = 0
-      const cards = Array.from(
-        root.current?.querySelectorAll<HTMLElement>('[data-version-id]') ?? [],
-      )
+      const targets = scrollTargets(root.current)
       const nav = navigation.current
       const bounds = root.current?.getBoundingClientRect()
       if (nav && bounds) {
@@ -37,22 +60,22 @@ export function VersionNavigation({
         // vertically centered in the viewport, independent of list scrolling.
         nav.style.setProperty(
           '--version-directory-left',
-          `${bounds.left - 72}px`,
+          `${bounds.left - 100}px`,
         )
       }
-      const top = cards[0]
-        ? Number.parseFloat(getComputedStyle(cards[0]).scrollMarginTop) + 8
-        : 80
-      let current = cards[0]
-      for (const card of cards) {
-        if (card.getBoundingClientRect().top <= top) current = card
+      let current = targets[0]
+      for (const target of targets) {
+        if (target.top <= scrollY + 1) current = target
         else break
       }
-      const last = cards.at(-1)
-      if (last && last.getBoundingClientRect().bottom <= innerHeight) {
-        current = last
+      // When the whole list fits without scrolling, an explicit click still
+      // identifies the chosen version instead of always selecting the last one.
+      if (targets.at(-1)?.top === targets[0]?.top) {
+        current = targets.find(({ card }) =>
+          Number(card.dataset.versionId) === clickedID.current
+        ) ?? targets[0]
       }
-      setActiveID(current ? Number(current.dataset.versionId) : null)
+      setActiveID(current ? Number(current.card.dataset.versionId) : null)
     }
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure)
@@ -119,14 +142,16 @@ export function VersionNavigation({
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
                     ) return
-                    const card = root.current?.querySelector<HTMLElement>(
-                      `#${versionAnchor(version.id)}`,
-                    )
-                    if (!card) return
+                    const target = scrollTargets(root.current).find((
+                      { card },
+                    ) => Number(card.dataset.versionId) === version.id)
+                    if (!target) return
                     event.preventDefault()
-                    card.focus({ preventScroll: true })
-                    card.scrollIntoView({
-                      block: 'start',
+                    clickedID.current = version.id
+                    setActiveID(version.id)
+                    target.card.focus({ preventScroll: true })
+                    globalThis.scrollTo({
+                      top: target.top,
                       behavior:
                         matchMedia('(prefers-reduced-motion: reduce)').matches
                           ? 'instant'
@@ -134,6 +159,9 @@ export function VersionNavigation({
                     })
                   }}
                 >
+                  <span aria-hidden='true' className='version-directory-number'>
+                    {versionOrdinal(version, versions)}
+                  </span>
                   <span aria-hidden='true' className='version-directory-tick' />
                   <span className='version-directory-label'>
                     <span className='font-semibold'>{tag}</span>

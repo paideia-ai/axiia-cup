@@ -55,7 +55,7 @@ export function VersionList({
   const [copyError, setCopyError] = useState<number | null>(null)
   const promptNodes = useRef(new Map<number, HTMLParagraphElement>())
 
-  // Expand is only offered when the current three-line preview actually clips.
+  // Expand is only offered when the current two-line preview actually clips.
   // Re-measure on responsive layout and font changes, not just on first paint.
   useEffect(() => {
     let active = true
@@ -69,7 +69,7 @@ export function VersionList({
         const lineHeight = Number.isFinite(parsedLineHeight)
           ? parsedLineHeight
           : fontSize * 1.75
-        next[id] = node.scrollHeight > Math.ceil(lineHeight * 3) + 1
+        next[id] = node.scrollHeight > Math.ceil(lineHeight * 2) + 1
       }
       setOverflows((current) => {
         const currentKeys = Object.keys(current)
@@ -129,7 +129,7 @@ export function VersionList({
   const toggleExpanded = (versionID: number) => {
     setExpanded((current) => ({
       ...current,
-      [versionID]: !current[versionID],
+      [versionID]: !(current[versionID] ?? versionID === sorted[0]?.id),
     }))
   }
 
@@ -171,6 +171,8 @@ export function VersionList({
               const unavailable = detailsMissing?.(version.id) &&
                 !version.prompt
               const tag = versionTag(version, sorted)
+              const isExpanded = expanded[version.id] ??
+                version.id === sorted[0]?.id
               return (
                 <Card
                   key={version.id}
@@ -183,11 +185,11 @@ export function VersionList({
                     : 'version-directory-card shadow-none'}
                   {...tm('E.version-card')}
                 >
-                  <CardContent className='space-y-3 pt-5'>
+                  <CardContent className='space-y-2 px-4 py-3'>
                     <div className='flex items-center gap-3'>
                       <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1'>
                         <span
-                          className='text-base font-bold text-(--foreground)'
+                          className='text-sm font-bold text-(--foreground)'
                           {...tm('E.version-tag')}
                         >
                           {tag}
@@ -245,7 +247,7 @@ export function VersionList({
                           type='button'
                           size='sm'
                           variant='ghost'
-                          className={`h-11 w-11 shrink-0 cursor-pointer rounded-full border p-0 md:h-9 md:w-9 ${
+                          className={`h-11 w-11 shrink-0 cursor-pointer rounded-full border p-0 md:h-8 md:w-8 ${
                             version.isEntry
                               ? 'border-(--accent) bg-(--accent) text-white hover:bg-(--accent-hover)'
                               : 'border-(--border) text-(--foreground-subtle) hover:border-(--foreground-muted)'
@@ -295,12 +297,16 @@ export function VersionList({
                         if (node) promptNodes.current.set(version.id, node)
                         else promptNodes.current.delete(version.id)
                       }}
-                      className={`whitespace-pre-wrap wrap-anywhere text-[15px] leading-[1.85] text-[#dedede] ${
-                        expanded[version.id] ? '' : 'line-clamp-3'
+                      className={`whitespace-pre-wrap wrap-anywhere text-[13px] leading-[1.65] text-[#dedede] ${
+                        isExpanded ? '' : 'line-clamp-2'
                       }`}
                       {...tm('E.version-prompt')}
                     >
-                      {unavailable ? '列表未提供此版本正文。' : version.prompt}
+                      {unavailable
+                        ? '列表未提供此版本正文。'
+                        : isExpanded
+                        ? version.prompt
+                        : version.prompt.replace(/\n\s*\n/g, '\n')}
                     </p>
 
                     <div className='flex items-center gap-1.5'>
@@ -308,7 +314,7 @@ export function VersionList({
                         type='button'
                         size='sm'
                         variant='ghost'
-                        className='h-11 w-11 shrink-0 cursor-pointer p-0 md:h-9 md:w-9'
+                        className='h-11 w-11 shrink-0 cursor-pointer p-0 md:h-8 md:w-8'
                         aria-label={`复制 ${tag} 提示词`}
                         title={copied === version.id ? '已复制' : '复制提示词'}
                         disabled={unavailable}
@@ -332,7 +338,7 @@ export function VersionList({
                           type='button'
                           size='sm'
                           variant='secondary'
-                          className='h-11 cursor-pointer gap-1.5 px-3 md:h-9'
+                          className='h-11 cursor-pointer gap-1.5 px-3 md:h-8'
                           aria-label={`用 ${tag} 出战`}
                           disabled={unavailable}
                           onPointerEnter={playButtonHover}
@@ -353,19 +359,17 @@ export function VersionList({
                             type='button'
                             size='sm'
                             variant='ghost'
-                            className='ml-auto h-11 w-11 shrink-0 cursor-pointer p-0 md:h-9 md:w-9'
-                            aria-expanded={!!expanded[version.id]}
-                            aria-label={expanded[version.id]
+                            className='ml-auto h-11 w-11 shrink-0 cursor-pointer p-0 md:h-8 md:w-8'
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded
                               ? `收起 ${tag} 全文`
                               : `展开 ${tag} 全文`}
-                            title={expanded[version.id]
-                              ? '收起全文'
-                              : '展开全文'}
+                            title={isExpanded ? '收起全文' : '展开全文'}
                             disabled={unavailable}
                             onClick={() => toggleExpanded(version.id)}
                             {...tm('E.expand-button')}
                           >
-                            {expanded[version.id]
+                            {isExpanded
                               ? (
                                 <ChevronUp
                                   aria-hidden='true'
