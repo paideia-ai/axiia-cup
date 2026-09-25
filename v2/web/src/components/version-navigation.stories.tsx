@@ -133,3 +133,24 @@ export const LinkedOlderVersion: Story = {
       .toBeVisible()
   },
 }
+
+export const PreviewOnHoverAndFocus: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const body = within(canvasElement.ownerDocument.body)
+    const link = canvas.getByRole('link', { name: '跳转到 v12，最新版本' })
+    const before = scrollY
+    await userEvent.hover(link)
+    const preview = await body.findByRole('tooltip')
+    await expect(preview).toHaveTextContent('v12 · 约束执行')
+    await expect(preview).toHaveTextContent('你是商鞅')
+    await expect(scrollY).toBe(before)
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(body.queryByRole('tooltip')).toBeNull())
+    await userEvent.unhover(link)
+    link.focus()
+    await expect(await body.findByRole('tooltip')).toHaveTextContent('最新版本')
+    await userEvent.keyboard('{Enter}')
+    await expect(canvasElement.querySelector('#version-10112')).toHaveFocus()
+  },
+}

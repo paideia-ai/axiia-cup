@@ -821,6 +821,26 @@ main .text-\(--accent\) {
   text-decoration: none;
 }
 
+.version-directory-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.version-directory-tick {
+  display: none;
+}
+
+.version-directory-preview {
+  width: min(360px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  box-shadow: 0 8px 28px #0005;
+  overflow-wrap: anywhere;
+}
+
 .version-directory-link:hover {
   color: var(--foreground);
   background: var(--surface);
@@ -852,10 +872,12 @@ main .text-\(--accent\) {
   }
 
   .version-directory-nav {
-    width: 112px;
-    margin-left: -136px;
+    width: 44px;
+    margin-left: -72px;
     top: 64px;
     flex-direction: column;
+    gap: 0;
+    background: transparent;
     max-height: calc(100dvh - 88px);
     overflow-y: auto;
     overflow-x: hidden;
@@ -864,11 +886,38 @@ main .text-\(--accent\) {
   }
 
   .version-directory-link {
-    min-height: 36px;
+    min-height: 24px;
+    padding: 0 2px;
+    border-radius: 3px;
   }
 
+  .version-directory-label {
+    display: none;
+  }
+
+  .version-directory-tick {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--foreground-muted);
+  }
+
+  .version-directory-link:hover,
   .version-directory-link[aria-current='location'] {
-    box-shadow: inset 2px 0 var(--accent);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .version-directory-link:hover .version-directory-tick,
+  .version-directory-link:focus-visible .version-directory-tick {
+    width: 28px;
+    background: var(--foreground);
+  }
+
+  .version-directory-link[aria-current='location'] .version-directory-tick {
+    width: 36px;
+    height: 3px;
+    background: var(--foreground);
   }
 
   .version-directory-card {

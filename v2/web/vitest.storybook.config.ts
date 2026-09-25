@@ -18,6 +18,7 @@ export default defineConfig({
       'react-dom',
       '@tanstack/react-query',
       '@base-ui-components/react/dialog',
+      '@base-ui-components/react/tooltip',
       '@tanstack/react-query',
     ],
   },

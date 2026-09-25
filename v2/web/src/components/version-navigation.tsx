@@ -1,5 +1,6 @@
+import { Tooltip } from '@base-ui-components/react/tooltip'
 import { Check } from 'lucide-react'
-import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
 import { versionTag } from '../lib/version-label'
@@ -13,6 +14,7 @@ export function VersionNavigation({
   versions,
   children,
 }: { versions: AgentVersionDTO[]; children: ReactNode }) {
+  const previewID = useId()
   const root = useRef<HTMLDivElement>(null)
   const navigation = useRef<HTMLElement>(null)
   const [activeID, setActiveID] = useState<number | null>(null)
@@ -106,44 +108,88 @@ export function VersionNavigation({
             const current = version.id === (activeID ?? versions[0]?.id)
             const latest = version.id === latestID
             return (
-              <a
-                key={version.id}
-                href={`#${versionAnchor(version.id)}`}
-                aria-label={`跳转到 ${tag}${latest ? '，最新版本' : ''}${
-                  version.isEntry ? '，参赛版本' : ''
-                }`}
-                aria-current={current ? 'location' : undefined}
-                title={version.note?.trim() || tag}
-                className='version-directory-link'
-                onClick={(event) => {
-                  if (
-                    event.metaKey || event.ctrlKey || event.shiftKey ||
-                    event.altKey
-                  ) return
-                  const card = root.current?.querySelector<HTMLElement>(
-                    `#${versionAnchor(version.id)}`,
-                  )
-                  if (!card) return
-                  event.preventDefault()
-                  card.focus({ preventScroll: true })
-                  card.scrollIntoView({
-                    block: 'start',
-                    behavior:
-                      matchMedia('(prefers-reduced-motion: reduce)').matches
-                        ? 'instant'
-                        : 'smooth',
-                  })
-                }}
-              >
-                <span className='font-semibold'>{tag}</span>
-                {latest && <span className='text-[11px]'>最新</span>}
-                {version.isEntry && (
-                  <Check
-                    aria-hidden='true'
-                    className='ml-auto h-3.5 w-3.5 shrink-0'
-                  />
-                )}
-              </a>
+              <Tooltip.Root key={version.id}>
+                <Tooltip.Trigger
+                  render={<a href={`#${versionAnchor(version.id)}`} />}
+                  delay={150}
+                  closeDelay={100}
+                  aria-label={`跳转到 ${tag}${latest ? '，最新版本' : ''}${
+                    version.isEntry ? '，参赛版本' : ''
+                  }`}
+                  aria-current={current ? 'location' : undefined}
+                  aria-describedby={`${previewID}-${version.id}`}
+                  className='version-directory-link'
+                  onClick={(event) => {
+                    if (
+                      event.metaKey || event.ctrlKey || event.shiftKey ||
+                      event.altKey
+                    ) return
+                    const card = root.current?.querySelector<HTMLElement>(
+                      `#${versionAnchor(version.id)}`,
+                    )
+                    if (!card) return
+                    event.preventDefault()
+                    card.focus({ preventScroll: true })
+                    card.scrollIntoView({
+                      block: 'start',
+                      behavior:
+                        matchMedia('(prefers-reduced-motion: reduce)').matches
+                          ? 'instant'
+                          : 'smooth',
+                    })
+                  }}
+                >
+                  <span aria-hidden='true' className='version-directory-tick' />
+                  <span className='version-directory-label'>
+                    <span className='font-semibold'>{tag}</span>
+                    {latest && <span className='text-[11px]'>最新</span>}
+                    {version.isEntry && (
+                      <Check
+                        aria-hidden='true'
+                        className='ml-auto h-3.5 w-3.5 shrink-0'
+                      />
+                    )}
+                  </span>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Positioner
+                    side='right'
+                    align='center'
+                    sideOffset={12}
+                    collisionPadding={16}
+                    className='z-50'
+                  >
+                    <Tooltip.Popup
+                      role='tooltip'
+                      id={`${previewID}-${version.id}`}
+                      className='version-directory-preview'
+                    >
+                      <div className='flex items-center gap-2 text-sm font-semibold text-(--foreground)'>
+                        <span>
+                          {tag}
+                          {version.note?.trim()
+                            ? ` · ${version.note.trim()}`
+                            : ''}
+                        </span>
+                        {version.isEntry && (
+                          <Check
+                            aria-label='参赛版本'
+                            className='ml-auto h-4 w-4 shrink-0'
+                          />
+                        )}
+                      </div>
+                      {latest && (
+                        <p className='mt-1 text-xs text-(--foreground-subtle)'>
+                          最新版本
+                        </p>
+                      )}
+                      <p className='mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-(--foreground-subtle)'>
+                        {version.prompt}
+                      </p>
+                    </Tooltip.Popup>
+                  </Tooltip.Positioner>
+                </Tooltip.Portal>
+              </Tooltip.Root>
             )
           })}
         </nav>
