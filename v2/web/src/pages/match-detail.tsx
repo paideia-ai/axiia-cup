@@ -1,3 +1,4 @@
+import { StrategyMoreMenu } from '../components/strategy-more-menu'
 import { npcIdentityPath } from '../lib/identity-links'
 import { TranscriptTabs } from '../components/transcript-tabs'
 import { sliceTranscriptGroup, transcriptTabPlan } from '../lib/transcript-tabs'
@@ -1277,12 +1278,18 @@ function FirstBattleJourney({
       {/* U03-C09: each entry opens the chosen tool; none rewrites the draft. */}
       <Card {...tm('FA.journey-modes-card')}>
         <CardContent className='space-y-3 pt-5'>
-          <p className='text-sm font-semibold text-(--foreground)'>
-            选择下一次构建方式
-          </p>
-          <div className='grid gap-2 sm:grid-cols-3'>
+          <div className='flex items-center justify-between gap-2'>
+            <p className='text-sm font-semibold text-(--foreground)'>
+              选择下一次构建方式
+            </p>
+            {mine?.agentID != null && (
+              <StrategyMoreMenu
+                href={`/agents/${mine.agentID}/build?init=mcq`}
+              />
+            )}
+          </div>
+          <div className='grid gap-2 sm:grid-cols-2'>
             {([
-              ['mcq', '选择预设策略', '回答选择题，确认后填入策略工作区'],
               ['raw', '直接编写', '在主文本区直接书写或继续修改策略'],
               [
                 'meta',
@@ -1316,7 +1323,7 @@ function FirstBattleJourney({
               {...tm('FA.journey-modes-hint')}
               className='text-xs text-(--foreground-muted)'
             >
-              两个辅助入口在首版和已有版本后都保留；版本管理与出战回到智能体主页。
+              版本管理与出战回到智能体主页。
             </p>
             {mine?.agentID != null
               ? (

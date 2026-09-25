@@ -98,6 +98,14 @@ side B has two agents with no entry version. Check direct home navigation,
 same-role switching, refresh, and returning to the full inventory. It uses the
 same local-only fixture server and does not save changes or run battles.
 
+For the version directory and secondary preset-strategy entry, run
+`deno task preview:product-meeting` and open `http://localhost:5237/preview`.
+The local fixture server includes 4, 5, 12, and 40-version agents, an empty
+builder, and the first-battle report. Draft saves and entry selection are
+simulated in memory per browser session; battles and other writes are rejected.
+It binds port 5237 on all interfaces for WSL/Windows preview access and never
+contacts the backend. Stop it with Ctrl+C.
+
 Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
 Playwright `fixme` contracts. They are not counted as passing functionality.
 

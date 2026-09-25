@@ -11,6 +11,7 @@ import { promptLength } from '../lib/prompt-length'
 import type { CreationTool } from '../lib/first-battle'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
+import { StrategyMoreMenu } from './strategy-more-menu'
 
 interface InitModesProps {
   deck: Deck | null
@@ -25,9 +26,8 @@ interface InitModesProps {
   onDirect?: () => void
 }
 
-// Keso 2026-09-09: the builder stays visually quiet. These two optional
-// helpers are always discoverable, while their detailed workflows live in
-// dialogs instead of competing with the primary strategy textarea.
+// The first battle keeps its guided choices. In the regular workspace,
+// presets stay available through More while the AI helper remains visible.
 export function InitModes({
   deck,
   presetRoleKey = null,
@@ -43,6 +43,7 @@ export function InitModes({
   const [open, setOpen] = useState<'mcq' | 'meta' | null>(
     !express && initialTool !== 'raw' ? initialTool : null,
   )
+  const moreTrigger = useRef<HTMLButtonElement>(null)
   const [tool, setTool] = useState<CreationTool>(initialTool ?? 'mcq')
 
   const [previewRoleKey, setPreviewRoleKey] = useState(presetRoleKey)
@@ -162,28 +163,27 @@ export function InitModes({
           size='sm'
           variant='ghost'
           className='h-11 md:h-8'
-          onClick={() => {
-            setPreviewRoleKey(presetRoleKey)
-            setOpen('mcq')
-          }}
-          {...tm('E.init-tab-mcq')}
-        >
-          选择预设策略
-        </Button>
-        <Button
-          size='sm'
-          variant='ghost'
-          className='h-11 md:h-8'
           onClick={() => setOpen('meta')}
           {...tm('E.init-tab-meta')}
         >
           让 AI 帮你想策略
         </Button>
+        <StrategyMoreMenu
+          triggerRef={moreTrigger}
+          onPresets={() => {
+            setPreviewRoleKey(presetRoleKey)
+            setOpen('mcq')
+          }}
+        />
       </div>
 
       {open === 'mcq'
         ? (
-          <ToolDialog title='选择预设策略' onClose={() => setOpen(null)}>
+          <ToolDialog
+            title='选择预设策略'
+            onClose={() => setOpen(null)}
+            returnFocus={moreTrigger.current}
+          >
             {rolePicker}
             {previewDeck
               ? (
@@ -458,10 +458,12 @@ function ToolDialog({
   title,
   onClose,
   children,
+  returnFocus,
 }: {
   title: string
   onClose: () => void
   children: ReactNode
+  returnFocus?: HTMLElement | null
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleID = useId()
@@ -478,9 +480,10 @@ function ToolDialog({
     return () => {
       dialog.close()
       document.body.style.overflow = previousOverflow
-      if (opener?.isConnected) opener.focus()
+      const target = returnFocus?.isConnected ? returnFocus : opener
+      if (target?.isConnected) target.focus()
     }
-  }, [])
+  }, [returnFocus])
 
   return (
     <dialog

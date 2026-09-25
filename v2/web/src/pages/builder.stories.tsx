@@ -115,7 +115,9 @@ export const BlankWorkspaceWithSecondaryHelpers: Story = {
     await expect(input).toHaveValue('')
     await expect(await canvas.findByText('不知道怎么指挥智能体？'))
       .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '选择预设策略' }))
+    await expect(canvas.queryByRole('button', { name: '选择预设策略' }))
+      .toBeNull()
+    await expect(canvas.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -137,13 +139,37 @@ export const HelpersRemainAfterVersions: Story = {
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
     await expect(input).toHaveValue(v2.prompt)
-    await expect(canvas.getByRole('button', { name: '选择预设策略' }))
+    await expect(canvas.queryByRole('button', { name: '选择预设策略' }))
+      .toBeNull()
+    await expect(canvas.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(canvas.queryByText('版本（2）')).toBeNull()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
     await expect(canvas.getByRole('button', { name: '版本备注' })).toBeVisible()
+    const more = canvas.getByRole('button', { name: '更多构建方式' })
+    more.focus()
+    await userEvent.keyboard('{ArrowDown}')
+    const item = await within(canvasElement.ownerDocument.body).findByRole(
+      'menuitem',
+      { name: '选择预设策略' },
+    )
+    await waitFor(() => expect(item).toHaveFocus())
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(more).toHaveFocus())
+    await userEvent.keyboard('{ArrowDown}')
+    await within(canvasElement.ownerDocument.body).findByRole('menuitem', {
+      name: '选择预设策略',
+    })
+    await userEvent.keyboard('{Enter}')
+    const dialog = await canvas.findByRole('dialog', { name: '选择预设策略' })
+    await expect(dialog).toBeVisible()
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: '关闭弹窗' }),
+    )
+    await waitFor(() => expect(more).toHaveFocus())
+    await expect(input).toHaveValue(v2.prompt)
   },
 }
 
@@ -445,7 +471,12 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     await waitFor(() => expect(input).toBeEnabled())
     const role = canvas.getByRole('combobox', { name: '选择角色' })
     await expect(role).toHaveTextContent('长宗我部元亲的密使')
-    await userEvent.click(canvas.getByRole('button', { name: '选择预设策略' }))
+    await userEvent.click(canvas.getByRole('button', { name: '更多构建方式' }))
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('menuitem', {
+        name: '选择预设策略',
+      }),
+    )
     let dialog = within(canvas.getByRole('dialog', { name: '选择预设策略' }))
     await userEvent.click(
       dialog.getByRole('button', { name: '足利义昭的使者' }),
@@ -453,7 +484,12 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     await userEvent.click(dialog.getByRole('button', { name: '关闭弹窗' }))
     await expect(role).toHaveTextContent('长宗我部元亲的密使')
     await expect(input).toHaveValue('保留原有策略')
-    await userEvent.click(canvas.getByRole('button', { name: '选择预设策略' }))
+    await userEvent.click(canvas.getByRole('button', { name: '更多构建方式' }))
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('menuitem', {
+        name: '选择预设策略',
+      }),
+    )
     dialog = within(canvas.getByRole('dialog', { name: '选择预设策略' }))
     await expect(dialog.getByRole('button', { name: '长宗我部元亲的密使' }))
       .toHaveAttribute('aria-pressed', 'true')

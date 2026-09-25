@@ -780,3 +780,90 @@ main .text-\(--accent\) {
     width: 100%;
   }
 }
+
+/* Version anchors preserve the document layout and its direct action controls. */
+.version-directory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.version-directory-nav {
+  position: sticky;
+  top: 48px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  padding: 8px 0;
+  background: var(--background);
+  border-bottom: 1px solid var(--border-soft);
+  scrollbar-width: thin;
+}
+
+.version-directory-link {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--foreground-subtle);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.version-directory-link:hover {
+  color: var(--foreground);
+  background: var(--surface);
+}
+
+.version-directory-link[aria-current='location'] {
+  color: var(--foreground);
+  background: var(--surface-elevated);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.version-directory-link:focus-visible,
+.version-directory-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.version-directory-card {
+  scroll-margin-top: 128px;
+}
+
+@media (min-width: 768px) {
+  .version-directory {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .version-directory-nav {
+    top: 64px;
+    flex-direction: column;
+    max-height: calc(100dvh - 88px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 8px 0 0;
+    border-bottom: 0;
+    border-right: 1px solid var(--border-soft);
+  }
+
+  .version-directory-link {
+    min-height: 36px;
+  }
+
+  .version-directory-link[aria-current='location'] {
+    box-shadow: inset 2px 0 var(--accent);
+  }
+
+  .version-directory-card {
+    scroll-margin-top: 72px;
+  }
+}

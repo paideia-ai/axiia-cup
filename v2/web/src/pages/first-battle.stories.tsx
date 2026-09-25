@@ -454,7 +454,18 @@ export const CompletedJourneyOpensEachActualTool: Story = {
         'meta',
       ]] as const
     ) {
-      const link = await canvas.findByRole('link', { name })
+      if (tool === 'mcq') {
+        await expect(canvas.queryByRole('link', { name })).toBeNull()
+        await userEvent.click(
+          await canvas.findByRole('button', { name: '更多构建方式' }),
+        )
+      }
+      const link = tool === 'mcq'
+        ? await within(canvasElement.ownerDocument.body).findByRole(
+          'menuitem',
+          { name },
+        )
+        : await canvas.findByRole('link', { name })
       expect(link).toHaveAttribute('href', `/agents/101/build?init=${tool}`)
       await userEvent.click(link)
       const input = await canvas.findByLabelText('策略提示词')

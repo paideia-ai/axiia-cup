@@ -66,13 +66,13 @@ test.afterAll(async () => {
   await page?.close()
 })
 
-test('两个辅助入口始终可见，详细流程按需打开', async () => {
+test('AI 辅助可见，预设策略从更多菜单打开', async () => {
   await test.step('假如 我创建一个甘龙智能体并从主页进入构建器', async () => {
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   })
 
-  await test.step('那么 页面直接显示「选择预设策略」与「让 AI 帮你想策略」', async () => {
-    await expect(page.getByRole('button', { name: '选择预设策略' }))
+  await test.step('那么 页面显示「更多构建方式」与「让 AI 帮你想策略」', async () => {
+    await expect(page.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -100,7 +100,8 @@ test('两个辅助入口始终可见，详细流程按需打开', async () => {
   })
 
   await test.step('当 我打开预设策略，逐题选择并填入工作区', async () => {
-    await page.getByRole('button', { name: '选择预设策略' }).click()
+    await page.getByRole('button', { name: '更多构建方式' }).click()
+    await page.getByRole('menuitem', { name: '选择预设策略' }).click()
     const dialog = page.getByRole('dialog', { name: '选择预设策略' })
     for (const label of MCQ_FIRST_OPTIONS) {
       await dialog.getByRole('button', { name: label, exact: true }).click()
@@ -115,8 +116,8 @@ test('两个辅助入口始终可见，详细流程按需打开', async () => {
     await expect(page.getByLabel('策略提示词')).toHaveValue(assembledPrompt)
   })
 
-  await test.step('并且 两个辅助入口仍然可见', async () => {
-    await expect(page.getByRole('button', { name: '选择预设策略' }))
+  await test.step('并且 AI 辅助与更多菜单仍然可见', async () => {
+    await expect(page.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -210,8 +211,8 @@ test('已有版本后辅助仍存在，构建器不承担版本管理', async ()
     await enterBuilder()
   })
 
-  await test.step('那么 两个辅助入口仍可用，模型沿用最新版', async () => {
-    await expect(page.getByRole('button', { name: '选择预设策略' }))
+  await test.step('那么 AI 辅助与更多菜单仍可用，模型沿用最新版', async () => {
+    await expect(page.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -235,7 +236,8 @@ test('已有版本后辅助仍存在，构建器不承担版本管理', async ()
   const current = '这段现有草稿不能被无提示覆盖。'
   await test.step('当 我用预设策略覆盖不同的已有草稿', async () => {
     await page.getByLabel('策略提示词').fill(current)
-    await page.getByRole('button', { name: '选择预设策略' }).click()
+    await page.getByRole('button', { name: '更多构建方式' }).click()
+    await page.getByRole('menuitem', { name: '选择预设策略' }).click()
     const dialog = page.getByRole('dialog', { name: '选择预设策略' })
     for (const label of MCQ_FIRST_OPTIONS) {
       await dialog.getByRole('button', { name: label, exact: true }).click()
