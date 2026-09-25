@@ -48,6 +48,50 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const HonnojiRoleDescriptions: Story = {
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios', () =>
+        HttpResponse.json({
+          scenarios: [{
+            ...scenarioList.scenarios[0],
+            id: 'honnoji-decision',
+            title: '本能寺之变·敌在何处',
+            subject: '历史',
+            sideAName: '主张杀信长',
+            sideBName: '主张不杀信长',
+            sideALabel:
+              '长宗我部元亲的密使：为保全四国，说服光秀趁今夜突袭本能寺。足利义昭的使者：以重振幕府为名，说服光秀起兵讨伐信长。',
+            sideBLabel:
+              '细川藤孝：以故交身份，向光秀讲明起兵的风险，劝他继续西进。明智军中的足轻：从士卒的处境出发，劝光秀放弃夜袭，依令西进。',
+          }],
+        })),
+      http.get('/v1/my/agents', () =>
+        HttpResponse.json({
+          scenarios: [{
+            ...inventory.scenarios[0],
+            scenarioID: 'honnoji-decision',
+            entryReady: true,
+            sides: {
+              a: [164, 211, 252].map((agentID, index) => ({
+                agentID,
+                name: null,
+                versionCount: 2,
+                entryVersionID: index === 0 ? 1001 : null,
+              })),
+              b: [{
+                agentID: 253,
+                name: '2',
+                versionCount: 2,
+                entryVersionID: 1002,
+              }],
+            },
+          }],
+        })),
+    ],
+  },
+}
+
 export const UnevenLeftWithEntryAtEnd: Story = {
   parameters: { msw: handlers(13, 2) },
   play: async ({ canvasElement }) => {
