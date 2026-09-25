@@ -1,11 +1,13 @@
 import { Menu } from '@base-ui-components/react/menu'
-import { Ellipsis } from 'lucide-react'
+import { Ellipsis, ListChecks } from 'lucide-react'
 import { type RefObject, useRef } from 'react'
 
+import { cn } from '../lib/cn'
 import { tm } from '../testmode/mark'
 import {
   dropdownItemClassName,
   dropdownPopupClassName,
+  dropdownScrollClassName,
 } from './ui/dropdown-styles'
 
 interface Props {
@@ -39,21 +41,24 @@ export function StrategyMoreMenu({ triggerRef, onPresets }: Props) {
           className='z-[60]'
         >
           <Menu.Popup
-            className={dropdownPopupClassName}
+            className={cn(dropdownPopupClassName, 'w-56')}
             finalFocus={() => openingDialog.current ? false : trigger.current}
           >
-            <Menu.Item
-              render={<button type='button' />}
-              nativeButton
-              className={dropdownItemClassName}
-              onClick={() => {
-                openingDialog.current = true
-                onPresets()
-              }}
-              {...tm('E.init-tab-mcq')}
-            >
-              选择预设策略
-            </Menu.Item>
+            <div className={dropdownScrollClassName}>
+              <Menu.Item
+                render={<button type='button' />}
+                nativeButton
+                className={cn(dropdownItemClassName, 'w-full')}
+                onClick={() => {
+                  openingDialog.current = true
+                  onPresets()
+                }}
+                {...tm('E.init-tab-mcq')}
+              >
+                <ListChecks aria-hidden='true' className='h-4 w-4' />
+                选择预设策略
+              </Menu.Item>
+            </div>
           </Menu.Popup>
         </Menu.Positioner>
       </Menu.Portal>
