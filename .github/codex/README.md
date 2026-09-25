@@ -17,10 +17,16 @@ Repository specification paths and their authority order are currently embedded
 in that prompt; they will be reviewed separately from the runtime PR number and
 base/head SHAs before a final configurable specification contract is agreed.
 
-The report includes actual changes, a per-change spec-impact table, regression
-and deletion risks, P0–P3 findings with locations, verification limits and an
-advisory recommendation. It is a static review; ordinary CI remains responsible
-for executing tests. The reviewer does not approve or merge PRs.
+The executive report starts with a verdict and ranks material regressions,
+deleted functionality and major baseline-spec violations first. It is written
+in English, retaining Chinese terminology where clearer, with SHA-pinned code
+and spec links for detail. The model targets 150–300 words with a 450-word cap;
+the complete published comment is capped at 500 words. It does not include the
+old six-section audit or an appendix. Investigation remains thorough and static;
+ordinary CI executes tests. The reviewer does not approve or merge PRs.
+
+Deploy this prompt with the controller's `reportFormat: "executive"` configuration.
+Source changes alone do not update the installed reviewer.
 
 Each eligible PR receives one updatable comment labelled as an automated Codex
 review under the server's authenticated GitHub account. Its head/base SHAs and

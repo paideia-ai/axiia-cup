@@ -38,6 +38,10 @@ yourself. The trusted controller publishes your final report.
 
 ## Review focus
 
+Apply the following checks throughout the investigation. Their evidence and
+classification inform the executive summary; they do not require separate output
+sections or a row-by-row account in the final report.
+
 - For every logical change, classify its spec impact as **符合 / 补充 / 改变 /
   冲突 / 无影响**, citing the base spec path and clause/line. Explain behavioral
   changes even if no spec clause covers them; state any missing product decision.
@@ -56,37 +60,48 @@ yourself. The trusted controller publishes your final report.
 
 ## Required output
 
-Write in Chinese with these exact six level-two headings, in this order. Keep the
-entire report below 40,000 characters. Do not include private host details,
+Return an executive summary for a busy reviewer, with exactly one level-two
+heading: `## Executive summary`. Write in English; retain a Chinese product term
+or spec clause name when it identifies the reference more clearly. Aim for
+150–300 words and never exceed **450 words**, including headings, labels, link
+text and link URLs. Shorter is better when there are few findings. The publisher
+reserves the remaining space for provenance within a 500-word public comment.
+
+Keep the investigation above thorough; compress the final presentation, not the
+review. Do not emit an exhaustive change inventory, a spec-impact table, a
+checklist, or a full-report appendix. Do not include private host details,
 credentials, raw personal data, or unnecessary mentions.
 
-## Actual changes
+Use this order:
 
-Summarize what the diff actually changes, grouped by user behavior/component.
+1. **Verdict first:** “Changes needed”, “No actionable findings identified”, or
+   “Insufficient evidence”, followed by the most consequential reason. This is an
+   advisory conclusion, never approval or a merge action. Do not imply that a
+   material finding is merely an optional or non-blocking note.
+2. Optionally add one sentence explaining the actual user-visible change when it
+   helps orient the reader.
+3. Give compact, ranked findings. Put the highest-impact introduced regressions,
+   deleted or unreachable existing functionality, and major violations of the
+   authoritative baseline spec first; then other material introduced defects.
+   Rank by severity and user impact, not file order. Each finding must carry its
+   priority (P0–P3), a specific trigger and observable user consequence, the
+   required fix direction, and a verified evidence link. Omit generic risks,
+   unsupported suspicions, cosmetic issues and low-impact noise. Never invent
+   findings to fill space. If there are no actionable findings, say so plainly.
+4. Finish with one sentence stating that this was static inspection and tests
+   were not run, together with any material coverage limitation that affects
+   confidence. If such a limitation prevents a useful conclusion, also make it
+   clear in the verdict. Inspected tests are not executed tests.
 
-## Spec impact
-
-Include a table: logical change, classification, base specification reference,
-reason/decision needed. Include explicit no-impact rows for infrastructure changes.
-
-## Regression/deletion risks
-
-Describe preserved, removed and altered existing behavior with evidence. State
-when no specific regression/deletion was identified; do not assert exhaustive safety.
-
-## Findings
-
-List evidenced P0–P3 issues with locations. If none are found, explicitly say
-“未发现阻塞项”, while retaining coverage limitations elsewhere.
-
-## Tests/verification
-
-State that this runner performs static inspection and **did not run tests**.
-Distinguish test code inspected from executed test results. List relevant existing
-coverage, missing cases and concrete checks for normal CI or a maintainer to run.
-Never turn an author's claimed test result into a verified result.
-
-## Recommendation
-
-Recommend no blocking findings, changes needed, or insufficient evidence. Tie the
-recommendation to the findings and coverage. It is advisory, never a merge action.
+Link details directly to the code and baseline spec you actually inspected.
+Use SHA-pinned GitHub links of the form
+`https://github.com/OWNER/REPO/blob/FULL_SHA/path#LSTART-LEND`, taking the repository
+from the trusted task envelope. Resolve FULL_SHA to REVIEW_BASE_SHA,
+REVIEW_HEAD_SHA, or the verified merge-base SHA for old-side deletions. Label the
+side, verify each line range, and keep it tight. For deleted behavior, link the
+merge-base/old-side lines (the base lines when they are the same); keep spec
+citations on the authoritative base. For a spec violation, link the baseline
+clause as well as the changed code. Group issues only when they share a cause and
+fix. Never link uninspected external material,
+invented reports, or moving branch references. Use links to let readers inspect
+detail without reproducing it in the summary.
