@@ -24,9 +24,9 @@ import type {
   VersionRefResponse,
 } from '../api/types'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
-import { BattleCostNotice } from './rewards'
+import { BattleOpponentRow } from './battle-opponent-row'
 import { useBattleQuote } from '../context/rewards'
-import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
+import { playSound, unlockAudio } from '../lib/sound'
 import { trackSoundMatch } from '../lib/match-sound'
 import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
@@ -37,7 +37,6 @@ import { Badge } from './ui/badge'
 import { Button, ButtonLink } from './ui/button'
 import { agentEntryUrl } from '../lib/agent-entry'
 import { Input } from './ui/input'
-import { Select, SelectItem } from './ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 interface OsPanelProps {
@@ -46,6 +45,7 @@ interface OsPanelProps {
   scenario: ScenarioDetail
   side: Side
   versions: AgentVersionDTO[]
+  agentName?: string | null
   entryVersionID: number | null
   // #88：从版本卡「出战」呼出时，钉住玩家点的那一版（否则回落 ★ / 最新版）。
   preferVersionID?: number | null
@@ -58,17 +58,22 @@ export function OsPanel({
   side,
   versions,
   entryVersionID,
+  agentName,
   preferVersionID = null,
 }: OsPanelProps) {
   const navigate = useNavigate()
   const liveRef = useRef(true)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const dispatchRef = useRef(false)
+  const [pendingOpponent, setPendingOpponent] = useState<string | null>(null)
+  const [opponentError, setOpponentError] = useState(false)
+  const [opponentRetry, setOpponentRetry] = useState(0)
+  const [search, setSearch] = useState('')
   const scenarioID = scenario.summary.id
   const roleModule = scenarioModule(scenarioID)
 
-  const [presetKey, setPresetKey] = useState<string | null>(null)
   // null = 未加载：hotseat 区在拿到对手列表前显示加载态，而非误报空态。
   const [opponents, setOpponents] = useState<OpponentAgentDTO[] | null>(null)
-  const [opponentAgentID, setOpponentAgentID] = useState<number | null>(null)
   const [dispatching, setDispatching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // 受控 tab：锁定态的「去练习该侧」要能把玩家切回 NPC 练习页签。
@@ -115,17 +120,11 @@ export function OsPanel({
     return role ? `${preset.label} · ${role.name}` : preset.label
   }
 
-  // 与原构建器一致：不预选，占位符「选择预设对手」引导玩家自己挑；
-  // 场景/侧变化时只清掉失效的选择。
-  useEffect(() => {
-    setPresetKey((current) =>
-      opponentPresets.some((preset) => preset.key === current) ? current : null
-    )
-  }, [scenario, side])
-
   useEffect(() => {
     if (!open) return
     let live = true
+    setOpponents(null)
+    setOpponentError(false)
     // 左右手互搏的候选：对侧的可对战 agent 中 isSelf 的那些。
     void catalog
       .opponents(scenarioID, side === 'a' ? 'b' : 'a')
@@ -133,19 +132,18 @@ export function OsPanel({
         if (live) setOpponents(list.opponents)
       })
       .catch(() => {
-        if (live) setOpponents([])
+        if (live) setOpponentError(true)
       })
     return () => {
       live = false
     }
-  }, [open, scenarioID, side])
+  }, [open, scenarioID, side, opponentRetry])
 
   useEffect(() => {
     if (!open) return
     let live = true
     const requestID = ++configRequestRef.current
-    // 配额脚注 + 拒绝文案数字 + 试炼开关；失败降级为 null（脚注隐藏、
-    // 文案无数字），派发本身不受影响。
+    // Keep config for rejection copy and the trial availability notice.
     void configApi
       .get()
       .then((value) => {
@@ -181,14 +179,6 @@ export function OsPanel({
     (opponent) => opponent.isSelf,
   )
 
-  useEffect(() => {
-    setOpponentAgentID((current) =>
-      selfOpponents.some((opponent) => opponent.agentID === current)
-        ? current
-        : selfOpponents[0]?.agentID ?? null
-    )
-  }, [opponents])
-
   // 出战版本 = ★参赛版本，否则最新版（与服务器选对手版本的规则一致）。
   // 派发取版：玩家点的那一版 > ★参赛版本 > 最新版（与服务器对对手侧的取法
   // 一致）。preferVersionID 只在版本卡「出战」路径上有值（#88）。
@@ -198,17 +188,19 @@ export function OsPanel({
     (version) => version.id === fieldedVersionID,
   )
 
-  const dispatchPVE = async () => {
-    if (fieldedVersionID == null || presetKey == null || insufficientPoints) {
+  const dispatchPVE = async (presetKey: string) => {
+    if (fieldedVersion == null || dispatchRef.current || insufficientPoints) {
       return
     }
+    dispatchRef.current = true
+    setPendingOpponent(`pve:${presetKey}`)
     unlockAudio()
     playSound('click')
     setDispatching(true)
     setError(null)
     try {
       const response = await matches.dispatchPVE({
-        versionID: fieldedVersionID,
+        versionID: fieldedVersion.id,
         presetKey,
       })
       if (!liveRef.current) return
@@ -221,21 +213,25 @@ export function OsPanel({
       const freshConfig = await configAfterRejection(cause)
       if (!liveRef.current) return
       setError(rejectCopy(cause, freshConfig, '发起对战失败'))
+      dispatchRef.current = false
+      setPendingOpponent(null)
       setDispatching(false)
     }
   }
 
-  const dispatchHotseat = async () => {
+  const dispatchHotseat = async (opponentAgentID: number) => {
     if (
-      fieldedVersionID == null || opponentAgentID == null || insufficientPoints
+      fieldedVersion == null || dispatchRef.current || insufficientPoints
     ) return
+    dispatchRef.current = true
+    setPendingOpponent(`self:${opponentAgentID}`)
     unlockAudio()
     playSound('click')
     setDispatching(true)
     setError(null)
     try {
       const response = await matches.dispatchPVP({
-        versionID: fieldedVersionID,
+        versionID: fieldedVersion.id,
         opponentAgentID,
       })
       if (!liveRef.current) return
@@ -247,6 +243,8 @@ export function OsPanel({
       const freshConfig = await configAfterRejection(cause)
       if (!liveRef.current) return
       setError(rejectCopy(cause, freshConfig, '发起对战失败'))
+      dispatchRef.current = false
+      setPendingOpponent(null)
       setDispatching(false)
     }
   }
@@ -265,7 +263,16 @@ export function OsPanel({
 
   // 面板每次打开重置约战流的一次性状态。
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      idLookupRequestRef.current += 1
+      return
+    }
+    dispatchRef.current = false
+    setPendingOpponent(null)
+    setDispatching(false)
+    setError(null)
+    setSearch('')
+    setIdLooking(false)
     setChallengeDone(null)
     setChallengeUnavailable(false)
     setPvpMode('players')
@@ -283,7 +290,6 @@ export function OsPanel({
     const list: {
       accountID: string
       displayName: string
-      agentLabel: string
     }[] = []
     for (const opponent of opponents ?? []) {
       if (opponent.isSelf) continue
@@ -295,7 +301,6 @@ export function OsPanel({
       list.push({
         accountID,
         displayName: opponent.displayName,
-        agentLabel: opponent.name ?? `agent #${opponent.agentID}`,
       })
     }
     return list
@@ -305,11 +310,12 @@ export function OsPanel({
     (opponents ?? []).some((opponent) => !opponent.isSelf)
 
   const submitChallenge = async (opponent: ChallengeOpponentRequest) => {
-    if (fieldedVersionID == null || dispatching || insufficientPoints) {
+    if (
+      fieldedVersion == null || dispatchRef.current || insufficientPoints ||
+      !pvpUnlocked
+    ) {
       return
     }
-    unlockAudio()
-    playSound('click')
     if (opponent.pinnedVersionID != null) {
       const currentID = Number(idInputRef.current.trim())
       if (
@@ -321,12 +327,20 @@ export function OsPanel({
         return
       }
     }
+    dispatchRef.current = true
+    setPendingOpponent(
+      opponent.pinnedVersionID != null
+        ? `version:${opponent.pinnedVersionID}`
+        : `player:${opponent.accountID}`,
+    )
+    unlockAudio()
+    playSound('click')
     setDispatching(true)
     setError(null)
     try {
       const response = await challenges.create({
         scenarioID,
-        mine: { [side]: { versionID: fieldedVersionID } },
+        mine: { [side]: { versionID: fieldedVersion.id } },
         opponent,
       })
       if (!liveRef.current) return
@@ -351,7 +365,11 @@ export function OsPanel({
         setError(challengeRejectCopy(cause, freshConfig))
       }
     } finally {
-      if (liveRef.current) setDispatching(false)
+      if (liveRef.current) {
+        dispatchRef.current = false
+        setPendingOpponent(null)
+        setDispatching(false)
+      }
     }
   }
 
@@ -408,6 +426,23 @@ export function OsPanel({
     }
   }
 
+  const rowDisabled = dispatching || insufficientPoints ||
+    fieldedVersion == null
+  const fieldedRoleName = roleIdentity({
+    scenarioID,
+    side,
+    role: fieldedVersion?.role,
+    options: fieldedVersion?.options,
+    fallback: sideNameOf(side),
+  }).name
+  const modelLabel = (modelID: string) =>
+    cfg?.models.find((model) => model.id === modelID)?.label ?? modelID
+  const filteredRivals = rivals.filter((rival) =>
+    rival.displayName.toLocaleLowerCase().includes(
+      search.trim().toLocaleLowerCase(),
+    )
+  )
+
   return (
     <Dialog.Root
       open={open}
@@ -421,94 +456,173 @@ export function OsPanel({
         <Dialog.Backdrop className='fixed inset-0 z-50 bg-black/60 backdrop-blur-sm' />
         <Dialog.Viewport className='fixed inset-0 z-[51] flex items-end justify-center md:items-center md:p-6'>
           <Dialog.Popup
-            initialFocus
+            ref={dialogRef}
+            initialFocus={dialogRef}
             finalFocus
-            className='max-h-[85dvh] w-full overflow-y-auto rounded-t-2xl border border-(--border-soft) bg-(--surface) text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)] outline-none md:max-w-xl md:rounded-xl'
+            className='flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-(--border-soft) bg-(--surface) text-(--foreground) shadow-[0_20px_60px_rgba(0,0,0,0.5)] outline-none md:max-w-xl md:rounded-xl'
             {...tm('OS.panel')}
           >
-            <div className='flex items-start justify-between gap-3 border-b border-(--border-soft) px-5 py-4'>
-              <div className='min-w-0'>
+            <header className='shrink-0 px-5 pt-5 pb-4 md:px-6 md:pt-6'>
+              <div className='flex items-start justify-between gap-3'>
                 <Dialog.Title
-                  id='os-panel-title'
-                  className='text-base font-semibold text-(--foreground)'
+                  className='text-base font-semibold leading-6 text-(--foreground)'
                   {...tm('OS.panel-title')}
                 >
-                  出战 · {scenario.summary.title}
+                  出战{' '}
+                  <span className='font-normal text-(--foreground-muted)'>
+                    · {scenario.summary.title}
+                  </span>
                 </Dialog.Title>
-                <p
-                  className='mt-0.5 text-xs text-(--foreground-muted)'
-                  {...tm('OS.fielded-version')}
+                <Dialog.Close
+                  aria-label='关闭'
+                  disabled={dismissLocked}
+                  className='-m-2 rounded-md p-3.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground) disabled:cursor-not-allowed disabled:opacity-50'
+                  {...tm('OS.close-button')}
                 >
-                  {fieldedVersion
-                    ? fieldedVersionID === entryVersionID
-                      ? `出战版本：★参赛版本 ${
-                        versionTag(fieldedVersion, versions)
-                      }`
-                      : preferVersionID != null
-                      ? `出战版本：指定版本 ${
-                        versionTag(fieldedVersion, versions)
-                      }`
-                      : `出战版本：最新版 ${
-                        versionTag(fieldedVersion, versions)
-                      }`
-                    : '先保存一个版本才能出战。'}
-                </p>
+                  <X aria-hidden='true' className='h-4 w-4' />
+                </Dialog.Close>
               </div>
-              {
-                /* 触控目标 ≥44px（16px 图标 + 14px 内边距×2）；负外边距抵消
-            视觉占位，图标大小不变 */
-              }
-              <Dialog.Close
-                aria-label='关闭'
-                disabled={dismissLocked}
-                className='-m-2 rounded-md p-3.5 text-(--foreground-muted) transition hover:bg-white/4 hover:text-(--foreground) disabled:cursor-not-allowed disabled:opacity-50'
-                {...tm('OS.close-button')}
+              <Dialog.Description className='sr-only'>
+                选择对手
+              </Dialog.Description>
+              <div
+                className='mt-5 flex items-start justify-between gap-4'
+                {...tm('OS.lineup')}
               >
-                <X aria-hidden='true' className='h-4 w-4' />
-              </Dialog.Close>
-            </div>
-
-            <div className='px-5 py-4'>
-              <BattleCostNotice kind={tab} quoteState={quoteState} />
-              {/* #47 被阻挡态：提前告知；按钮仍可点，点了由 trials_blocked 拒绝 */}
-              {cfg?.trialsBlocked
+                <div className='min-w-0'>
+                  <p className='flex flex-wrap items-baseline gap-x-2 text-[18px] leading-7 font-semibold'>
+                    {agentName || fieldedRoleName}
+                    {agentName && (
+                      <span className='text-xs font-normal text-(--foreground-subtle)'>
+                        {fieldedRoleName}
+                      </span>
+                    )}
+                  </p>
+                  <p className='mt-1 text-xs leading-5 text-(--foreground-muted)'>
+                    {fieldedVersion
+                      ? modelLabel(fieldedVersion.modelID)
+                      : '先保存一个版本才能出战。'}
+                  </p>
+                </div>
+                {fieldedVersion && (
+                  <div
+                    className='shrink-0 pt-1 text-right'
+                    {...tm('OS.fielded-version')}
+                  >
+                    <span className='text-sm font-medium text-(--foreground-subtle)'>
+                      {versionTag(fieldedVersion, versions)}
+                    </span>
+                    {fieldedVersionID === entryVersionID && (
+                      <p className='mt-1 text-[11px] leading-5 text-(--foreground-muted)'>
+                        ★参赛版本
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </header>
+            <div className='min-h-0 overflow-y-auto overscroll-contain px-5 pt-0 pb-5 md:px-6 md:pb-6'>
+              {cfg?.trialsBlocked && (
+                <p
+                  className='mb-3 text-sm text-(--warning)'
+                  {...tm('OS.trials-blocked-notice')}
+                >
+                  赛事进行中，试炼暂时关闭——请稍后再来
+                </p>
+              )}
+              {error && (
+                <p
+                  role='alert'
+                  className='mb-3 text-sm text-(--warning)'
+                  {...tm('OS.error-notice')}
+                >
+                  {error}
+                </p>
+              )}
+              {quoteState.loading
                 ? (
                   <p
-                    className='mb-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] px-3 py-2 text-sm text-(--warning)'
-                    {...tm('OS.trials-blocked-notice')}
+                    role='status'
+                    className='mb-3 text-xs text-(--foreground-subtle)'
                   >
-                    赛事进行中，试炼暂时关闭——请稍后再来
+                    正在确认对战资格…
+                  </p>
+                )
+                : quoteState.error
+                ? (
+                  <div
+                    className='mb-3 flex items-center justify-between gap-2 text-xs text-(--warning)'
+                    role='alert'
+                  >
+                    <span>暂时无法开始对战，请重试。</span>
+                    <Button
+                      variant='secondary'
+                      size='sm'
+                      onClick={quoteState.retry}
+                    >
+                      重试
+                    </Button>
+                  </div>
+                )
+                : insufficientPoints
+                ? (
+                  <p role='status' className='mb-3 text-xs text-(--warning)'>
+                    积分不足
                   </p>
                 )
                 : null}
-              {error
-                ? (
-                  <p
-                    className='mb-3 text-sm text-(--accent)'
-                    {...tm('OS.error-notice')}
+              <div className='sr-only' role='status'>
+                {dispatching ? '正在创建对战，请稍候。' : ''}
+              </div>
+              <Tabs
+                value={tab}
+                onValueChange={(value) => {
+                  if (dispatching) return
+                  setTab(value)
+                  setError(null)
+                  setSearch('')
+                }}
+                className='space-y-0'
+              >
+                <TabsList className='mb-5 gap-1' {...tm('OS.tabs')}>
+                  <TabsTrigger
+                    value='pve'
+                    disabled={dispatching}
+                    className='min-w-0 flex-1 px-3 max-[360px]:px-2 max-[360px]:text-xs'
+                    {...tm('OS.tab-pve')}
                   >
-                    {error}
-                  </p>
-                )
-                : null}
-
-              <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
-                <TabsList {...tm('OS.tabs')}>
-                  <TabsTrigger value='pve' {...tm('OS.tab-pve')}>
                     NPC 练习
                   </TabsTrigger>
-                  <TabsTrigger value='hotseat' {...tm('OS.tab-hotseat')}>
+                  <TabsTrigger
+                    value='pvp'
+                    disabled={dispatching}
+                    className='min-w-0 flex-1 px-3 max-[360px]:px-2 max-[360px]:text-xs'
+                    {...tm('OS.tab-pvp')}
+                  >
+                    {pvpUnlocked
+                      ? (
+                        <Unlock
+                          aria-hidden='true'
+                          className='mr-1.5 h-3.5 w-3.5'
+                        />
+                      )
+                      : (
+                        <Lock
+                          aria-hidden='true'
+                          className='mr-1.5 h-3.5 w-3.5'
+                        />
+                      )}玩家约战
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value='hotseat'
+                    disabled={dispatching}
+                    className='min-w-0 flex-1 px-3 max-[360px]:px-2 max-[360px]:text-xs'
+                    {...tm('OS.tab-hotseat')}
+                  >
                     左右手互搏
                   </TabsTrigger>
-                  <TabsTrigger value='pvp' {...tm('OS.tab-pvp')}>
-                    {pvpUnlocked
-                      ? <Unlock className='mr-1.5 h-3.5 w-3.5' />
-                      : <Lock className='mr-1.5 h-3.5 w-3.5' />}
-                    玩家约战
-                  </TabsTrigger>
                 </TabsList>
-
-                <TabsContent value='pve' className='space-y-3'>
+                <TabsContent value='pve' className='space-y-2.5'>
                   {opponentPresets.length === 0
                     ? (
                       <p
@@ -518,48 +632,39 @@ export function OsPanel({
                         该场景暂无对手侧的预设对手。
                       </p>
                     )
-                    : (
-                      <>
-                        <div
-                          className='w-full max-w-xs'
-                          {...tm('OS.preset-select')}
-                        >
-                          <Select
-                            placeholder='选择预设对手'
-                            value={presetKey}
-                            renderValue={(v) => {
-                              const preset = opponentPresets.find(
-                                (item) => item.key === v,
-                              )
-                              return preset ? presetLabel(preset) : v
-                            }}
-                            onValueChange={(v) => setPresetKey(v ?? null)}
-                          >
-                            {opponentPresets.map((preset) => (
-                              <SelectItem key={preset.key} value={preset.key}>
-                                {presetLabel(preset)}
-                              </SelectItem>
-                            ))}
-                          </Select>
-                        </div>
-                        <Button
-                          data-testid='dispatch-match'
-                          onClick={() => void dispatchPVE()}
-                          onPointerEnter={playButtonHover}
-                          data-spec='U19-C07 U19-C19 U19-C20'
-                          {...tm('OS.pve-dispatch-button')}
-                          disabled={dispatching || insufficientPoints ||
-                            presetKey == null ||
-                            fieldedVersionID == null}
-                        >
-                          {dispatching ? '派发中…' : '发起对战'}
-                        </Button>
-                      </>
-                    )}
+                    : opponentPresets.map((preset) => (
+                      <BattleOpponentRow
+                        key={preset.key}
+                        label={presetLabel(preset)}
+                        detail={`${sideNameOf(oppositeSide)} · ${
+                          modelLabel(preset.modelID)
+                        }`}
+                        disabled={rowDisabled}
+                        pending={pendingOpponent === `pve:${preset.key}`}
+                        onClick={() => void dispatchPVE(preset.key)}
+                        data-testid='dispatch-match'
+                        data-spec='U19-C07 U19-C19 U19-C20'
+                        {...tm('OS.pve-dispatch-button')}
+                      />
+                    ))}
                 </TabsContent>
-
-                <TabsContent value='hotseat' className='space-y-3'>
-                  {opponents === null
+                <TabsContent value='hotseat' className='space-y-2.5'>
+                  {opponentError
+                    ? (
+                      <div role='alert' className='space-y-3'>
+                        <p className='text-sm text-(--foreground-subtle)'>
+                          对手暂时没有加载出来
+                        </p>
+                        <Button
+                          variant='secondary'
+                          size='sm'
+                          onClick={() => setOpponentRetry((value) => value + 1)}
+                        >
+                          重新加载
+                        </Button>
+                      </div>
+                    )
+                    : opponents === null
                     ? (
                       <p
                         className='text-sm text-(--foreground-subtle)'
@@ -574,387 +679,265 @@ export function OsPanel({
                         className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center'
                         {...tm('OS.hotseat-empty')}
                       >
-                        <p className='text-sm font-medium text-(--foreground)'>
+                        <p className='mb-4 text-sm font-medium'>
                           你还没有对侧智能体
                         </p>
-                        <p className='mt-1 text-xs text-(--foreground-muted)'>
-                          左右手互搏＝拿本方打你自己的对侧。先为另一方构建并保存版本。
-                        </p>
-                        <div className='mt-4 flex justify-center'>
-                          <ButtonLink
-                            to='/my-agents'
-                            size='sm'
-                            variant='secondary'
-                            {...tm('OS.hotseat-go-my-agents')}
-                          >
-                            去我的智能体
-                          </ButtonLink>
-                        </div>
+                        <ButtonLink
+                          to='/my-agents'
+                          size='sm'
+                          variant='secondary'
+                          {...tm('OS.hotseat-go-my-agents')}
+                        >
+                          去我的智能体
+                        </ButtonLink>
                       </div>
                     )
-                    : (
-                      <>
-                        {selfOpponents.length > 1
-                          ? (
-                            <div
-                              className='w-full max-w-xs'
-                              {...tm('OS.hotseat-opponent-select')}
-                            >
-                              <Select
-                                placeholder='选择你的对侧智能体'
-                                value={opponentAgentID != null
-                                  ? String(opponentAgentID)
-                                  : undefined}
-                                renderValue={(v) => {
-                                  const opponent = selfOpponents.find(
-                                    (item) => String(item.agentID) === v,
-                                  )
-                                  return opponent
-                                    ? `${opponent.displayName} · agent #${opponent.agentID}`
-                                    : v
-                                }}
-                                onValueChange={(v) =>
-                                  setOpponentAgentID(v ? Number(v) : null)}
-                              >
-                                {selfOpponents.map((opponent) => (
-                                  <SelectItem
-                                    key={opponent.agentID}
-                                    value={String(opponent.agentID)}
-                                  >
-                                    {opponent.displayName} · agent #
-                                    {opponent.agentID}
-                                  </SelectItem>
-                                ))}
-                              </Select>
-                            </div>
-                          )
-                          : (
-                            <p
-                              className='text-sm text-(--foreground)'
-                              {...tm('OS.hotseat-opponent-label')}
-                            >
-                              对侧：{selfOpponents[0].displayName} · agent #
-                              {selfOpponents[0].agentID}
-                            </p>
-                          )}
-                        {/* #18：对侧版本选择需后端支持（后续阶段），不放假选择器 */}
-                        <p
-                          className='text-xs text-(--foreground-muted)'
-                          {...tm('OS.hotseat-version-note')}
-                        >
-                          对侧将以其★参赛版本（否则最新版）出战 ·
-                          指定具体版本将在后续版本开放。
-                        </p>
-                        <Button
-                          onClick={() => void dispatchHotseat()}
-                          onPointerEnter={playButtonHover}
-                          data-spec='U19-C07 U19-C19 U19-C20'
-                          {...tm('OS.hotseat-dispatch-button')}
-                          disabled={dispatching || insufficientPoints ||
-                            opponentAgentID == null ||
-                            fieldedVersionID == null}
-                        >
-                          {dispatching ? '派发中…' : '自打一场'}
-                        </Button>
-                      </>
-                    )}
+                    : selfOpponents.map((opponent) => (
+                      <BattleOpponentRow
+                        key={opponent.agentID}
+                        label={opponent.name ||
+                          `${sideNameOf(oppositeSide)} #${opponent.agentID}`}
+                        detail={`${sideNameOf(oppositeSide)} · 我的智能体`}
+                        disabled={rowDisabled}
+                        pending={pendingOpponent === `self:${opponent.agentID}`}
+                        onClick={() => void dispatchHotseat(opponent.agentID)}
+                        data-spec='U19-C07 U19-C19 U19-C20'
+                        {...tm('OS.hotseat-dispatch-button')}
+                      />
+                    ))}
                 </TabsContent>
-
                 <TabsContent value='pvp' className='space-y-3'>
-                  {
-                    /* A5 门槛是状态：锁定/已解锁都如实呈现；解锁态＝P3 真约战
-                （#66，mock V20），锁定态照旧按侧进度徽章。 */
-                  }
                   {pvpUnlocked
-                    ? (
-                      <>
+                    ? challengeDone
+                      ? (
                         <div
-                          className='flex flex-wrap items-center gap-2'
-                          {...tm('OS.pvp-unlocked-header')}
+                          className='space-y-3'
+                          {...tm('OS.challenge-success')}
                         >
-                          <Unlock className='h-4 w-4 shrink-0 text-(--success)' />
-                          <p className='text-sm font-medium text-(--foreground)'>
-                            玩家约战已解锁
+                          <p className='text-sm font-semibold'>
+                            已发起约战 · 对局已入队
                           </p>
-                          {gateProgress
-                            ? (['a', 'b'] as const).map((which) => (
-                              <Badge key={which} tone='success'>
-                                {sideNameOf(which)}{' '}
-                                {sideProgressText(gateProgress[which])} ✓
-                              </Badge>
-                            ))
-                            : null}
+                          {challengeDone.matchIDs.map((matchID) => (
+                            <Link
+                              key={matchID}
+                              to={`/matches/${matchID}`}
+                              className='text-sm underline'
+                            >
+                              对局 · #{matchID}
+                            </Link>
+                          ))}
                         </div>
-                        {challengeDone
-                          ? (
-                            <div
-                              className='space-y-3 rounded-lg border border-[rgba(52,211,153,0.35)] bg-[rgba(52,211,153,0.06)] px-4 py-4'
-                              {...tm('OS.challenge-success')}
-                            >
-                              <p className='text-sm font-medium text-(--foreground)'>
-                                已发起约战 · 对局已入队
-                              </p>
-                              <div className='flex flex-wrap gap-2'>
-                                {challengeDone.matchIDs.map((
-                                  matchID,
-                                ) => (
-                                  <Link
-                                    key={matchID}
-                                    to={`/matches/${matchID}`}
-                                    className='inline-flex items-center gap-1.5 rounded-lg border border-(--border) px-3 py-2 text-sm font-medium text-(--foreground) transition hover:border-(--foreground-muted) hover:bg-white/3'
-                                  >
-                                    对局 · #{matchID}
-                                  </Link>
-                                ))}
-                              </div>
-                              <p className='text-xs text-(--foreground-muted)'>
-                                本次只发起一场对战；对方会收到通知，无需同意。
-                              </p>
-                            </div>
-                          )
-                          : challengeUnavailable
-                          ? (
-                            <p
-                              className='rounded-lg border border-dashed border-(--border-soft) px-4 py-6 text-center text-sm text-(--foreground-muted)'
-                              {...tm('OS.challenge-unavailable')}
-                            >
-                              约战功能尚未在该服务器启用——敬请期待
+                      )
+                      : challengeUnavailable
+                      ? (
+                        <p
+                          className='text-sm text-(--foreground-muted)'
+                          {...tm('OS.challenge-unavailable')}
+                        >
+                          约战功能尚未在该服务器启用——敬请期待
+                        </p>
+                      )
+                      : (
+                        <>
+                          <div
+                            className='flex flex-wrap items-center justify-between gap-2'
+                            {...tm('OS.pvp-mode-switch')}
+                          >
+                            <p className='text-sm text-(--foreground-subtle)'>
+                              {pvpMode === 'byid'
+                                ? '指定对方版本'
+                                : '选择对手玩家'}
                             </p>
-                          )
-                          : (
-                            <>
-                              <div
-                                className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
-                                {...tm('OS.lineup')}
-                              >
-                                <p className='text-sm font-medium text-(--foreground)'>
-                                  我方{roleIdentity({
-                                    scenarioID,
-                                    side,
-                                    options: fieldedVersion?.options,
-                                    role: fieldedVersion?.role,
-                                    fallback: sideNameOf(side),
-                                  }).name} vs 对方{roleIdentity({
-                                    scenarioID,
-                                    side: oppositeSide,
-                                    role: pvpMode === 'byid' &&
-                                        idRef?.side === oppositeSide
-                                      ? idRef.role
-                                      : null,
-                                    fallback: sideNameOf(oppositeSide),
-                                  }).name}
-                                </p>
-                                <p className='mt-1 text-xs text-(--foreground-subtle)'>
-                                  出战版本：{fieldedVersion
-                                    ? versionTag(fieldedVersion, versions)
-                                    : '尚未保存版本'}
-                                </p>
-                              </div>
-
-                              {/* 子模式切换：① 对手玩家 · ② 指定版本约战。 */}
-                              <div
-                                className='flex gap-2'
-                                {...tm('OS.pvp-mode-switch')}
-                              >
-                                {([
-                                  ['players', '对手玩家'],
-                                  ['byid', '指定版本约战'],
-                                ] as const).map(([mode, label]) => (
-                                  <button
-                                    key={mode}
-                                    type='button'
-                                    aria-pressed={pvpMode === mode}
-                                    onClick={() => setPvpMode(mode)}
-                                    {...tm('OS.pvp-mode-button')}
-                                    className={pvpMode === mode
-                                      ? 'cursor-pointer rounded-full border border-(--accent) px-3 py-1.5 text-xs font-semibold text-(--accent)'
-                                      : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:text-(--foreground)'}
-                                  >
-                                    {label}
-                                  </button>
-                                ))}
-                              </div>
-
-                              {pvpMode === 'players'
-                                ? (
-                                  <div className='space-y-2'>
-                                    {opponents === null
-                                      ? (
-                                        <p
-                                          className='text-sm text-(--foreground-subtle)'
-                                          {...tm('OS.rivals-loading')}
-                                        >
-                                          加载中…
-                                        </p>
-                                      )
-                                      : rivals.length === 0
-                                      ? (
-                                        <p
-                                          className='text-sm text-(--foreground-muted)'
-                                          {...tm('OS.rivals-empty')}
-                                        >
-                                          {rivalsUnattributed
-                                            ? '服务器版本暂不支持按玩家约战——试试指定版本约战'
-                                            : '暂无可约战的对手玩家——等其他玩家在本场景出战后再来'}
-                                        </p>
-                                      )
-                                      : rivals.map((rival) => (
-                                        <div
-                                          key={rival.accountID}
-                                          className='flex flex-wrap items-center gap-3 rounded-lg border border-(--border-soft) bg-white/2 px-4 py-2.5'
-                                          {...tm('OS.rival-row')}
-                                        >
-                                          <div className='min-w-0 flex-1'>
-                                            <p className='text-sm font-semibold text-(--foreground)'>
-                                              {rival.displayName}
-                                            </p>
-                                            <p className='text-xs text-(--foreground-muted)'>
-                                              {rival.agentLabel}
-                                            </p>
-                                          </div>
-                                          <Button
-                                            size='sm'
-                                            variant='secondary'
-                                            disabled={dispatching ||
-                                              insufficientPoints ||
-                                              fieldedVersionID == null}
-                                            onClick={() =>
-                                              void submitChallenge({
-                                                accountID: rival.accountID,
-                                              })}
-                                            onPointerEnter={playButtonHover}
-                                            data-spec='U19-C07 U19-C19 U19-C20'
-                                            {...tm('OS.challenge-button')}
-                                          >
-                                            {dispatching
-                                              ? '约战中…'
-                                              : '发起约战'}
-                                          </Button>
-                                        </div>
-                                      ))}
-                                  </div>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              disabled={dispatching}
+                              onClick={() => {
+                                setPvpMode(
+                                  pvpMode === 'players' ? 'byid' : 'players',
                                 )
-                                : (
-                                  <div className='space-y-2'>
-                                    <div className='flex gap-2'>
-                                      <Input
-                                        value={idInput}
-                                        onChange={(event) => {
-                                          const value = event.target.value
-                                          idInputRef.current = value
-                                          idLookupRequestRef.current += 1
-                                          setIdInput(value)
-                                          setIdRef(null)
-                                          setIdError(null)
-                                          setIdLooking(false)
-                                        }}
-                                        placeholder='输入对方对侧版本 id（战报页可复制）'
-                                        {...tm('OS.byid-input')}
+                                setError(null)
+                                setIdError(null)
+                              }}
+                              {...tm('OS.pvp-mode-button')}
+                            >
+                              {pvpMode === 'players'
+                                ? '指定版本 ID'
+                                : '返回玩家列表'}
+                            </Button>
+                          </div>
+                          {pvpMode === 'players'
+                            ? opponentError
+                              ? (
+                                <div role='alert' className='space-y-3'>
+                                  <p className='text-sm text-(--foreground-subtle)'>
+                                    对手暂时没有加载出来
+                                  </p>
+                                  <Button
+                                    variant='secondary'
+                                    size='sm'
+                                    onClick={() =>
+                                      setOpponentRetry((value) => value + 1)}
+                                  >
+                                    重新加载
+                                  </Button>
+                                </div>
+                              )
+                              : opponents === null
+                              ? (
+                                <p
+                                  className='text-sm text-(--foreground-subtle)'
+                                  {...tm('OS.rivals-loading')}
+                                >
+                                  加载中…
+                                </p>
+                              )
+                              : rivals.length === 0
+                              ? (
+                                <p
+                                  className='text-sm text-(--foreground-muted)'
+                                  {...tm('OS.rivals-empty')}
+                                >
+                                  {rivalsUnattributed
+                                    ? '暂不支持按玩家约战，请使用指定版本 ID'
+                                    : '暂无可约战的对手玩家'}
+                                </p>
+                              )
+                              : (
+                                <div className='space-y-2.5'>
+                                  {rivals.length > 6 && (
+                                    <Input
+                                      type='search'
+                                      aria-label='搜索玩家'
+                                      placeholder='输入玩家名称'
+                                      value={search}
+                                      disabled={dispatching}
+                                      onChange={(event) =>
+                                        setSearch(event.target.value)}
+                                    />
+                                  )}
+                                  {filteredRivals.map((rival) => (
+                                    <div
+                                      key={rival.accountID}
+                                      {...tm('OS.rival-row')}
+                                    >
+                                      <BattleOpponentRow
+                                        label={rival.displayName}
+                                        detail={`对方执${
+                                          sideNameOf(oppositeSide)
+                                        }`}
+                                        disabled={rowDisabled}
+                                        pending={pendingOpponent ===
+                                          `player:${rival.accountID}`}
+                                        onClick={() =>
+                                          void submitChallenge({
+                                            accountID: rival.accountID,
+                                          })}
+                                        data-spec='U19-C07 U19-C19 U19-C20'
+                                        {...tm('OS.challenge-button')}
                                       />
-                                      <Button
-                                        size='sm'
-                                        variant='secondary'
-                                        className='h-10 shrink-0'
-                                        disabled={idLooking ||
-                                          idInput.trim() === ''}
-                                        onClick={() => void lookupRef()}
-                                        {...tm('OS.byid-lookup-button')}
-                                      >
-                                        {idLooking ? '查询中…' : '查询'}
-                                      </Button>
                                     </div>
-                                    {idError
-                                      ? (
-                                        <p
-                                          className='text-xs text-(--warning)'
-                                          {...tm('OS.byid-error')}
-                                        >
-                                          {idError}
-                                        </p>
-                                      )
-                                      : null}
-                                    {idRef
-                                      ? (
-                                        // 解析卡：玩家/场景/侧/模型（#25）。
-                                        <div
-                                          className='rounded-lg border border-(--border-soft) bg-white/2 px-4 py-3'
-                                          {...tm('OS.byid-ref-card')}
-                                        >
-                                          <p className='text-sm font-semibold text-(--foreground)'>
-                                            {idRef.ownerDisplayName}
-                                          </p>
-                                          <p className='mt-1 text-xs text-(--foreground-muted)'>
-                                            {scenario.summary.title} · 执
-                                            {idRef.side === 'a'
-                                              ? `A（${
-                                                roleIdentity({
-                                                  scenarioID,
-                                                  side: 'a',
-                                                  role: idRef.role,
-                                                  fallback: sideNameOf('a'),
-                                                }).name
-                                              }）`
-                                              : `B（${
-                                                roleIdentity({
-                                                  scenarioID,
-                                                  side: 'b',
-                                                  role: idRef.role,
-                                                  fallback: sideNameOf('b'),
-                                                }).name
-                                              }）`} · {idRef.modelID}{' '}
-                                            · v#{idRef.versionID}
-                                          </p>
-                                          <p className='mt-1 text-[11px] text-(--foreground-muted)'>
-                                            本次将挑战对方的这个版本。
-                                          </p>
-                                          <div className='mt-2'>
-                                            <Button
-                                              size='sm'
-                                              disabled={dispatching ||
-                                                insufficientPoints ||
-                                                fieldedVersionID == null}
-                                              onClick={() =>
-                                                void submitChallenge({
-                                                  pinnedVersionID:
-                                                    idRef.versionID,
-                                                })}
-                                              onPointerEnter={playButtonHover}
-                                              data-spec='U19-C07 U19-C19 U19-C20'
-                                              {...tm('OS.challenge-button')}
-                                            >
-                                              {dispatching
-                                                ? '约战中…'
-                                                : '发起约战'}
-                                            </Button>
-                                          </div>
-                                        </div>
-                                      )
-                                      : null}
+                                  ))}
+                                  {filteredRivals.length === 0 && (
+                                    <p
+                                      role='status'
+                                      className='text-sm text-(--foreground-muted)'
+                                    >
+                                      没有找到这位玩家，试试其他名称。
+                                    </p>
+                                  )}
+                                </div>
+                              )
+                            : (
+                              <div className='space-y-2'>
+                                <form
+                                  className='flex gap-2'
+                                  onSubmit={(event) => {
+                                    event.preventDefault()
+                                    if (
+                                      !dispatching && !idLooking
+                                    ) void lookupRef()
+                                  }}
+                                >
+                                  <Input
+                                    value={idInput}
+                                    disabled={dispatching}
+                                    aria-label='对方版本 ID'
+                                    aria-invalid={!!idError}
+                                    inputMode='numeric'
+                                    onChange={(event) => {
+                                      const value = event.target.value
+                                      idInputRef.current = value
+                                      idLookupRequestRef.current += 1
+                                      setIdInput(value)
+                                      setIdRef(null)
+                                      setIdError(null)
+                                      setIdLooking(false)
+                                    }}
+                                    placeholder='输入对方版本 ID'
+                                    {...tm('OS.byid-input')}
+                                  />
+                                  <Button
+                                    type='submit'
+                                    size='sm'
+                                    variant='secondary'
+                                    className='h-10 shrink-0'
+                                    disabled={dispatching || idLooking ||
+                                      idInput.trim() === ''}
+                                    {...tm('OS.byid-lookup-button')}
+                                  >
+                                    {idLooking ? '查询中…' : '查询'}
+                                  </Button>
+                                </form>
+                                {idError && (
+                                  <p
+                                    role='alert'
+                                    className='text-xs text-(--warning)'
+                                    {...tm('OS.byid-error')}
+                                  >
+                                    {idError}
+                                  </p>
+                                )}
+                                {idRef && (
+                                  <div {...tm('OS.byid-ref-card')}>
+                                    <BattleOpponentRow
+                                      label={idRef.ownerDisplayName}
+                                      detail={`${
+                                        roleIdentity({
+                                          scenarioID,
+                                          side: oppositeSide,
+                                          role: idRef.role,
+                                          fallback: sideNameOf(oppositeSide),
+                                        }).name
+                                      } · ${
+                                        modelLabel(idRef.modelID)
+                                      } · #${idRef.versionID}`}
+                                      disabled={rowDisabled}
+                                      pending={pendingOpponent ===
+                                        `version:${idRef.versionID}`}
+                                      onClick={() =>
+                                        void submitChallenge({
+                                          pinnedVersionID: idRef.versionID,
+                                        })}
+                                      data-spec='U19-C07 U19-C19 U19-C20'
+                                      {...tm('OS.challenge-button')}
+                                    />
                                   </div>
                                 )}
-
-                              <ul
-                                className='space-y-1 text-[11px] text-(--foreground-muted)'
-                                {...tm('OS.pvp-footnotes')}
-                              >
-                                <li>
-                                  一次约战只发起一场，仅发起人支付本场积分并可领取胜利返还。
-                                </li>
-                                <li>
-                                  友谊赛不计排名；对方会收到通知，无需同意、不能拒绝。
-                                </li>
-                              </ul>
-                            </>
-                          )}
-                      </>
-                    )
+                              </div>
+                            )}
+                        </>
+                      )
                     : gateProgress
                     ? (
                       <div
                         className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'
                         {...tm('OS.gate-locked')}
                       >
-                        <Lock className='h-5 w-5 text-(--foreground-muted)' />
+                        <Lock
+                          aria-hidden='true'
+                          className='h-5 w-5 text-(--foreground-muted)'
+                        />
                         <p
                           className='text-sm font-medium text-(--foreground-subtle)'
                           {...tm('OS.gate-rule-text')}
@@ -962,7 +945,6 @@ export function OsPanel({
                           每侧各赢 ≥{gateProgress.a.needed}{' '}
                           场 NPC 练习解锁玩家约战
                         </p>
-                        {/* 按侧进度徽章（#65，mock V16）：如 商鞅 1/1 ✓ · 甘龙 0/1 */}
                         <div className='flex flex-wrap justify-center gap-2'>
                           {(['a', 'b'] as const).map((which) => (
                             <Badge
@@ -978,26 +960,20 @@ export function OsPanel({
                             </Badge>
                           ))}
                         </div>
-                        {
-                          /* 差哪侧补哪侧（#62/#64，mock V7）：本侧未达标 → 切回
-                      NPC 练习页签；对侧未达标 → 有对侧 agent 去我的智能体换
-                      执侧，没有则懒创建进构建器 */
-                        }
                         <div className='flex flex-wrap justify-center gap-2'>
-                          {!sideMet(gateProgress[side])
-                            ? (
-                              <Button
-                                size='sm'
-                                variant='secondary'
-                                onClick={() => setTab('pve')}
-                                {...tm('OS.gate-practice-this-side')}
-                              >
-                                去练习该侧（{sideNameOf(side)}）
-                              </Button>
-                            )
-                            : null}
-                          {!sideMet(gateProgress[oppositeSide])
-                            ? selfOpponents.length > 0
+                          {!sideMet(gateProgress[side]) && (
+                            <Button
+                              size='sm'
+                              variant='secondary'
+                              onClick={() => setTab('pve')}
+                              {...tm('OS.gate-practice-this-side')}
+                            >
+                              去练习该侧（{sideNameOf(side)}）
+                            </Button>
+                          )}
+                          {!sideMet(gateProgress[oppositeSide]) &&
+                            (opponents === null || opponentError ||
+                                selfOpponents.length > 0
                               ? (
                                 <ButtonLink
                                   size='sm'
@@ -1015,45 +991,29 @@ export function OsPanel({
                                   to={agentEntryUrl(scenarioID, oppositeSide)}
                                   {...tm('OS.gate-create-opposite')}
                                 >
-                                  {`去创建对侧（${sideNameOf(oppositeSide)}）`}
+                                  去创建对侧（{sideNameOf(oppositeSide)}）
                                 </ButtonLink>
-                              )
-                            : null}
+                              ))}
                         </div>
                       </div>
                     )
                     : (
-                      // 老服务器（无 gateProgress）：保留 P1 的锁定占位，不摆假进度
                       <div
                         className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-(--border-soft) px-4 py-8 text-center'
                         {...tm('OS.gate-locked-legacy')}
                       >
-                        <Lock className='h-5 w-5 text-(--foreground-muted)' />
-                        <p className='text-sm font-medium text-(--foreground-subtle)'>
+                        <Lock
+                          aria-hidden='true'
+                          className='h-5 w-5 text-(--foreground-muted)'
+                        />
+                        <p className='text-sm text-(--foreground-subtle)'>
                           双侧各自赢下 PVE 练习后解锁玩家约战
-                        </p>
-                        <p className='text-xs text-(--foreground-muted)'>
-                          解锁进度将在数据接入后点亮
                         </p>
                       </div>
                     )}
                 </TabsContent>
               </Tabs>
             </div>
-
-            {/* 面板脚注：三类配额中的两条日额（#52/#46），数字来自 /v1/config */}
-            {cfg && (cfg.dailyBattleLimit > 0 || cfg.pvpDailyLimit > 0)
-              ? (
-                <div
-                  className='border-t border-(--border-soft) px-5 py-3 text-xs text-(--foreground-muted)'
-                  {...tm('OS.quota-footer')}
-                >
-                  今日已用 {cfg.usage.battlesToday}/{cfg.dailyBattleLimit}（PVP
-                  {' '}
-                  {cfg.usage.pvpBattlesToday}/{cfg.pvpDailyLimit}）
-                </div>
-              )
-              : null}
           </Dialog.Popup>
         </Dialog.Viewport>
       </Dialog.Portal>

@@ -328,7 +328,7 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U05-C02', 'U05-C02b', 'U06-C13'],
     anchors: ['spec-change-88', 'spec-change-91'],
     note:
-      '钉住版 > ★参赛版 > 最新版；面板内无版本下拉；非 ★ 卡显示「指定版本」，只有真正参赛卡显示「★参赛版本」',
+      '钉住版 > ★参赛版 > 最新版；面板内无版本下拉；头部显示固定版本，只有真正参赛卡显示「★参赛版本」',
   },
   'OS.close-button': {
     label: '关闭按钮',
@@ -357,7 +357,7 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-a5'],
     journeys: ['j5s1', 'jR6s4'],
     note:
-      '现为 NPC 练习 / 左右手互搏 / 玩家约战；「顶尖玩家」「自动匹配」缺席（待裁决）',
+      '现为 NPC 练习 / 玩家约战 / 左右手互搏；「顶尖玩家」「自动匹配」缺席（待裁决）',
   },
   'OS.tab-pve': {
     label: 'NPC 练习页签',
@@ -379,15 +379,8 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['LACK-10'],
     when: '场景没有对手侧预设时',
   },
-  'OS.preset-select': {
-    label: 'NPC 对手下拉',
-    clauses: ['U05-C03', 'U05-C03b'],
-    anchors: ['spec-change-62', 'spec-change-34'],
-    journeys: ['j5s2'],
-    note: '只列对手侧 NPC（执方由 agent 隐含）；NPC 两侧胜率缺席（待裁决）',
-  },
   'OS.pve-dispatch-button': {
-    label: '发起对战按钮',
+    label: 'NPC 对手栏',
     clauses: ['U05-C03', 'U06-C15'],
     anchors: ['spec-change-52'],
     journeys: ['j5s2', 'jR6s4'],
@@ -410,37 +403,12 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-change-64'],
     when: '互搏空态里',
   },
-  'OS.hotseat-opponent-select': {
-    label: '对侧智能体下拉',
-    clauses: ['U05-C07', 'U05-C11p1', 'U01-C20b'],
-    anchors: ['spec-change-61'],
-    when: '对侧有 ≥2 个自己的 agent 时',
-  },
-  'OS.hotseat-opponent-label': {
-    label: '对侧身份',
-    clauses: ['U05-C07'],
-    when: '对侧只有 1 个自己的 agent 时直陈',
-  },
-  'OS.hotseat-version-note': {
-    label: '对侧取版说明',
-    clauses: ['U06-C13', 'U06-C12'],
-    anchors: ['spec-change-18'],
-    note: '对侧以其 ★参赛版本（否则最新版）出战；指定版本待后端（#18）',
-  },
   'OS.hotseat-dispatch-button': {
-    label: '自打一场按钮',
+    label: '自有对手栏',
     clauses: ['U05-C07', 'U05-C08', 'U06-C05'],
     anchors: ['spec-change-78', 'spec-change-61'],
     journeys: ['j6s1', 'jR6s4'],
     note: '不受 PVP 门槛限制；占每日总配额不占 PVP 配额；成功直接进实况',
-  },
-  'OS.pvp-unlocked-header': {
-    label: '已解锁标头',
-    clauses: ['U05-C06', 'U06-C03'],
-    anchors: ['spec-change-65'],
-    journeys: ['j5s3'],
-    note: '「玩家约战已解锁」+ 双侧 ✓ 徽章',
-    when: '两侧各赢 ≥1 场 PVE 后',
   },
   'OS.challenge-success': {
     label: '约战成功块',
@@ -486,10 +454,10 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U05-C11'],
     anchors: ['spec-change-66'],
     journeys: ['j6s2'],
-    note: '按玩家去重（ownerAccountID），显示昵称 + 其 agent',
+    note: '按玩家去重（ownerAccountID），显示昵称和对侧角色；点击整栏直接约战',
   },
   'OS.challenge-button': {
-    label: '发起约战按钮',
+    label: '约战对手栏',
     clauses: ['U05-C11', 'U05-C13', 'U06-C04', 'U06-C06'],
     anchors: [
       'spec-change-66',
@@ -506,7 +474,7 @@ export const TM_DISCOVERY: TmRegistry = {
     clauses: ['U05-C12'],
     anchors: ['spec-change-25'],
     journeys: ['j6s4'],
-    note: '占位「输入对方对侧版本 id（战报页可复制）」',
+    note: '占位「输入对方版本 ID」',
   },
   'OS.byid-lookup-button': {
     label: '查询按钮',
@@ -526,13 +494,6 @@ export const TM_DISCOVERY: TmRegistry = {
     note:
       '昵称 · 场景 · 执方 · 模型 · v#id；钉住对方对侧版本，与当前出战版本对战',
     when: '查询到本场景的真实版本 id 后',
-  },
-  'OS.pvp-footnotes': {
-    label: '约战脚注',
-    clauses: ['U05-C13', 'U06-C06', 'U06-C15'],
-    anchors: ['spec-change-29', 'spec-change-76', 'spec-change-52'],
-    note:
-      '「一次约战只产生一场，仅发起人支付积分」「友谊赛不计排名；对方会收到通知，无需同意、不能拒绝」',
   },
   'OS.gate-locked': {
     label: '约战锁定态',
@@ -580,14 +541,6 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '锁定占位',
     clauses: ['U05-C06'],
     when: '服务端不返回 gateProgress 时；不摆假进度',
-  },
-  'OS.quota-footer': {
-    label: '今日配额脚注',
-    clauses: ['U06-C15', 'U03-C11'],
-    anchors: ['spec-change-52', 'spec-change-46'],
-    journeys: ['j5s4'],
-    note:
-      '「今日已用 n/N（PVP m/M）」，数字来自 GET /v1/config；接口失败时不显示',
   },
 
   // ======================= 进行中的对战条（#72） =======================
@@ -638,7 +591,7 @@ export const STEPS_DISCOVERY: StepHints = {
   j5s1: { route: '/agents/:id', marker: 'OS.tabs' },
   j5s2: { route: '/agents/:id', marker: 'OS.pve-dispatch-button' },
   j5s3: { route: '/agents/:id', marker: 'OS.tab-pvp' },
-  j5s4: { route: '/agents/:id', marker: 'OS.quota-footer' },
+  j5s4: { route: '/agents/:id', marker: 'OS.error-notice' },
   // 第一轮旅程 9 第 4 步：赛事进行中试炼关闭——面板 NPC 练习页签里的提示
   j9s4: { route: '/agents/:id', marker: 'OS.trials-blocked-notice' },
   // 第一轮旅程 6 约战 / 互搏（j6s3 在通知页，归 I 组）

@@ -884,6 +884,7 @@ function AgentView({ agentID }: { agentID: number }) {
               versions={data.versions}
               entryVersionID={data.entryVersionID}
               preferVersionID={preferVersionID}
+              agentName={currentName}
             />
           </>
         )}

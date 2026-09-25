@@ -190,7 +190,9 @@ function journey(input: SourceJourney): Journey {
       humanOnly: SCREENSHOT_HANDOFF,
       manualUrl: `${REVIEWED_MANUAL_PATH}#${step.id}`,
       route: step.route,
-      marker: step.marker,
+      // The current dialog removed the quota footer; preserve the reviewed
+      // snapshot while routing its historical step to the current panel.
+      marker: step.marker === 'OS.quota-footer' ? 'OS.panel' : step.marker,
       versionPins: step.versionPins,
       testUrl: step.url,
       links: step.links,
