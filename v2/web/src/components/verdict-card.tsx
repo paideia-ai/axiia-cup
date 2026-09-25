@@ -55,6 +55,7 @@ export function VerdictBody({
 
 export function VerdictCard({
   verdict,
+  title,
   labels,
   interim,
   children,
@@ -62,6 +63,7 @@ export function VerdictCard({
   showTrace = false,
 }: {
   verdict: VerdictDTO
+  title?: string
   labels: SpeakerLabels
   interim: boolean
   children?: ReactNode
@@ -80,7 +82,7 @@ export function VerdictCard({
             {...tm('FA.verdict-title')}
             className='text-sm font-semibold text-(--foreground)'
           >
-            {verdictLabel(verdict.key)}
+            {title ?? verdictLabel(verdict.key)}
           </h2>
           {interim
             ? (

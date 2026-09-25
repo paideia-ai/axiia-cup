@@ -1,3 +1,4 @@
+import { hasSelectableRoles, roleIdentity } from '../lib/role-identity'
 import { tm } from '../testmode/mark'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -30,6 +31,14 @@ export function AgentIdentityPage() {
   const versions = [...agent?.versions ?? []].sort((a, b) =>
     Number(b.id === versionID) - Number(a.id === versionID) || b.id - a.id
   )
+  const nameOf = (role?: typeof versions[number]['role']) =>
+    roleIdentity({
+      scenarioID: agent?.scenarioID,
+      side: agent?.side === 'a' ? 'a' : 'b',
+      role,
+      fallback: agent?.sideName,
+    }).name
+  const roleName = nameOf(versions[0]?.role)
   return (
     <div
       className='min-w-0 w-full space-y-6'
@@ -63,8 +72,8 @@ export function AgentIdentityPage() {
                 className='wrap-anywhere text-2xl font-bold text-(--foreground)'
               >
                 {agent.name
-                  ? `${agent.sideName}「${agent.name}」`
-                  : `${agent.sideName} #${agent.agentID}`}
+                  ? `${roleName}「${agent.name}」`
+                  : `${roleName} #${agent.agentID}`}
               </h1>
               <p
                 {...tm('EA.public-owner-line')}
@@ -97,7 +106,11 @@ export function AgentIdentityPage() {
                 {versions.map((version) => (
                   <IdentityVersionCard
                     key={version.id}
-                    title={`v${version.ordinal} · #${version.id}`}
+                    title={`v${version.ordinal} · #${version.id}${
+                      hasSelectableRoles(agent.scenarioID)
+                        ? ` · ${nameOf(version.role)}`
+                        : ''
+                    }`}
                     href={`/matches?agent=${agent.agentID}&version=${version.id}`}
                     modelID={version.modelID}
                     matchCount={version.matchCount}

@@ -17,7 +17,7 @@ import { scriptEvent } from './event'
 // will land and is replaced there once it arrives.
 
 export type TranscriptItem =
-  | { kind: 'turn'; seq: number; turn: TurnDTO }
+  | { kind: 'turn'; seq: number; turn: TurnDTO; verdictAnchor?: boolean }
   | { kind: 'live'; seq: number; bubble: LiveBubble }
 
 export interface ChannelGroup {
@@ -43,6 +43,25 @@ export interface PhaseMarker {
 }
 
 export const UNSTAGED_GROUP_ID = '__unstaged'
+
+// Court/council judge thoughts belong to the debate, including streamed thoughts.
+export function mergeJudgeAsideStage(stages: StageDTO[]): StageDTO[] {
+  const debate = stages.find((stage) =>
+    stage.channels.some((channel) =>
+      channel.id === 'court' || channel.id === 'council'
+    )
+  )
+  const aside = stages.find((stage) =>
+    stage !== debate && stage.channels.length === 1 &&
+    stage.channels[0].id === 'judge-aside'
+  )
+  if (!debate || !aside) return stages
+  return stages.filter((stage) => stage !== aside).map((stage) =>
+    stage === debate
+      ? { ...stage, channels: [...stage.channels, ...aside.channels] }
+      : stage
+  )
+}
 
 // An `act` and its verdict are one generation in two shapes, and the engine
 // commits the row at exactly the seq the verdict counts up to (`park()` freezes
@@ -87,11 +106,13 @@ export function groupTranscript(
   stages: StageDTO[],
   bubbles: LiveBubble[] = [],
   verdicts: VerdictDTO[] = [],
+  options: { preserveVerdictChannels?: readonly string[] } = {},
 ): StageGroup[] {
   const ordered = [...turns].sort((left, right) => left.seq - right.seq)
   const actTags = actTagsBySeq(ordered, verdicts)
   const phases: TurnDTO[] = []
   const body: TurnDTO[] = []
+  const verdictAnchors = new Set<number>()
   for (const turn of ordered) {
     const event = scriptEvent(turn)
     if (event?.type === 'phase') phases.push(turn)
@@ -101,6 +122,11 @@ export function groupTranscript(
     else {
       const prose = stripActTags(turn.finalText, actTags.get(turn.seq)!)
       if (prose) body.push({ ...turn, finalText: prose })
+      else if (options.preserveVerdictChannels?.includes(turn.channel)) {
+        // The card replaces this act's text, but still belongs inside its stage.
+        body.push({ ...turn, finalText: '' })
+        verdictAnchors.add(turn.seq)
+      }
     }
   }
 
@@ -128,7 +154,12 @@ export function groupTranscript(
         stage: owner?.stage ?? null,
         channelID: owner ? turn.channel : UNSTAGED_GROUP_ID,
         channelLabel: owner?.label ?? '',
-        item: { kind: 'turn', seq: turn.seq, turn } as TranscriptItem,
+        item: {
+          kind: 'turn',
+          seq: turn.seq,
+          turn,
+          ...(verdictAnchors.has(turn.seq) ? { verdictAnchor: true } : {}),
+        } as TranscriptItem,
       }
     }),
     ...live.map((bubble) => {

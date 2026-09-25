@@ -298,7 +298,7 @@ export const OwnerFromTranscript: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     const entry = await c.findByRole('link', {
-      name: /执A · 商鞅.*打开我的智能体主页/,
+      name: /商鞅.*打开我的智能体主页/,
     })
     await expect(entry).toHaveAttribute('href', '/agents/101?version=1002')
     await userEvent.click(c.getByRole('button', { name: '复制 id' }))
@@ -326,7 +326,7 @@ export const PlayerFromTranscript: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     const entry = await c.findByRole('link', {
-      name: /执B · 甘龙.*打开智能体资料/,
+      name: /甘龙.*打开智能体资料/,
     })
     await expect(entry).toHaveAttribute(
       'href',
@@ -450,7 +450,7 @@ export const NPCFromTranscript: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await userEvent.click(
-      await c.findByRole('link', { name: /执B · 甘龙.*打开智能体资料/ }),
+      await c.findByRole('link', { name: /甘龙.*打开智能体资料/ }),
     )
     await expect(await c.findByText(npc.prompt)).toBeVisible()
     await expect(c.getAllByTestId('identity-version')).toHaveLength(1)
@@ -562,5 +562,155 @@ export const NoNPCEntryOnScenario: Story = {
     await c.findByRole('heading', { level: 1 })
     await expect(c.queryByRole('region', { name: '官方 NPC' })).toBeNull()
     await expect(canvasElement.querySelector('a[href*="/npcs/"]')).toBeNull()
+  },
+}
+
+// Role identity comes from the selected version/preset, never its faction.
+const honnojiScenario = {
+  ...scenario,
+  summary: {
+    ...scenario.summary,
+    id: 'honnoji-decision',
+    title: '本能寺之变·敌在何处',
+    sideAName: '主张杀信长',
+    sideBName: '主张不杀信长',
+  },
+  presets: [{
+    key: 'envoy',
+    side: 'a',
+    label: '空旗',
+    modelID: 'fixture-model',
+    options: { role: 'yoshiaki' },
+  }],
+}
+export const HonnojiOwnerRoles: Story = {
+  args: { entry: '/agents/101' },
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/agents/101/draft',
+        () =>
+          HttpResponse.json({
+            fields: {},
+            scenarioID: 'honnoji-decision',
+            side: 'a',
+          }),
+      ),
+      http.get(
+        '/v1/agents/101/versions',
+        () =>
+          HttpResponse.json({
+            versions: versions.map((v, index) => ({
+              ...v,
+              options: JSON.stringify({
+                role: index === 1 ? 'yoshiaki' : 'chosokabe',
+              }),
+            })),
+            entryVersionID: 1001,
+          }),
+      ),
+      http.get('/v1/scenarios/:id', () => HttpResponse.json(honnojiScenario)),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByRole('heading', { level: 1 }))
+      .toHaveTextContent('足利义昭的使者')
+    await expect(
+      canvas.getByRole('button', {
+        name: '将 v1 设为长宗我部元亲的密使参赛版本',
+      }),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('button', { name: '将 v2 设为足利义昭的使者参赛版本' }),
+    ).toBeVisible()
+  },
+}
+export const HonnojiNpcRole: Story = {
+  args: { entry: '/scenarios/honnoji-decision/npcs/envoy?match=9001' },
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/scenarios/:id/npcs/:key',
+        () =>
+          HttpResponse.json({
+            ...npc,
+            sourceMatchID: 9001,
+            scenarioID: 'honnoji-decision',
+            scenarioTitle: honnojiScenario.summary.title,
+            side: 'a',
+            sideName: '主张杀信长',
+            role: { key: 'yoshiaki', name: '足利义昭的使者', side: 'a' },
+            key: 'envoy',
+            label: '空旗',
+          }),
+      ),
+      http.get('/v1/scenarios/:id', () => HttpResponse.json(honnojiScenario)),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(
+      await canvas.findByRole('heading', { name: '足利义昭的使者「空旗」' }),
+    ).toBeVisible()
+  },
+}
+
+export const HonnojiPublicVersionRoles: Story = {
+  args: { entry: '/agents/202' },
+  parameters: {
+    msw: [
+      http.get('/v1/agents/202/public', () =>
+        HttpResponse.json({
+          agentID: 202,
+          scenarioID: 'honnoji-decision',
+          scenarioTitle: honnojiScenario.summary.title,
+          side: 'a',
+          sideName: '主张杀信长',
+          ownerName: '另一位玩家',
+          name: '公开策略',
+          versions: versions.map((v, i) => ({
+            id: v.id,
+            ordinal: v.ordinal,
+            isEntry: v.isEntry,
+            createdAt: 0,
+            matchCount: v.matchCount,
+            winCount: v.winCount,
+            role: {
+              key: i ? 'yoshiaki' : 'chosokabe',
+              name: i ? '足利义昭的使者' : '长宗我部元亲的密使',
+              side: 'a',
+            },
+          })),
+        })),
+      http.get('/v1/scenarios/:id', () => HttpResponse.json(honnojiScenario)),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByRole('heading', { level: 1 }))
+      .toHaveTextContent('足利义昭的使者')
+    const cards = canvas.getAllByTestId('identity-version')
+    await expect(cards[0]).toHaveTextContent('足利义昭的使者')
+    await expect(cards[1]).toHaveTextContent('长宗我部元亲的密使')
+    await expect(cards[1]).toHaveAttribute(
+      'href',
+      '/matches?agent=202&version=1001',
+    )
+  },
+}
+
+export const HonnojiPublicHistoricalRole: Story = {
+  ...HonnojiPublicVersionRoles,
+  args: { entry: '/agents/202/identity?version=1001&match=9002' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByRole('heading', { level: 1 }))
+      .toHaveTextContent('长宗我部元亲的密使')
+    await expect(canvas.getAllByTestId('identity-version')[0])
+      .toHaveTextContent('本场对局版本')
   },
 }

@@ -7,6 +7,13 @@ import { EventRow } from './event-row'
 import type { SpeakerLabels } from './labels'
 import { tm } from '../../testmode/mark'
 
+function stageTitle(title: string): string {
+  return title.replace(
+    /^第([一二三])阶段·?/,
+    (_match, ordinal: string) => `（阶段${'一二三'.indexOf(ordinal) + 1}/3）`,
+  )
+}
+
 export function TranscriptStage({
   group,
   index,
@@ -16,7 +23,9 @@ export function TranscriptStage({
   showReasoning,
   verdictsBySeq,
   previousPolls,
+  hideStageTitle = false,
 }: {
+  hideStageTitle?: boolean
   previousPolls?: ReadonlyMap<number, ScriptEvent>
   group: StageGroup
   index: number
@@ -30,12 +39,17 @@ export function TranscriptStage({
   // 渲染在该行之后。
   verdictsBySeq?: Record<number, ReactNode[]>
 }) {
+  const casesOnly = scenarioID === 'trolley-problem'
+  const numberedStage = /^第[一二三]阶段·/.test(group.title) &&
+    (scenarioID === 'shangyang-court' || scenarioID === 'honnoji-decision')
+  const StageHeading = numberedStage ? 'h2' : 'h3'
   const itemSeqs = group.channels
     .flatMap((channel) => channel.items.map((item) => item.seq))
     .sort((left, right) => left - right)
   const phaseBefore = new Map<number, typeof group.phases>()
   const trailingPhases: typeof group.phases = []
   for (const marker of group.phases) {
+    if (casesOnly && !/^第[一二三]案·/.test(marker.title)) continue
     const nextSeq = itemSeqs.find((seq) => seq > marker.seq)
     if (nextSeq == null) {
       trailingPhases.push(marker)
@@ -45,31 +59,49 @@ export function TranscriptStage({
     markers.push(marker)
     phaseBefore.set(nextSeq, markers)
   }
+  const PhaseHeading = casesOnly ? 'h2' : 'p'
+  const renderPhase = (marker: (typeof group.phases)[number]) => (
+    <PhaseHeading
+      {...tm('FA.phase-marker')}
+      key={`${marker.seq}-${marker.title}`}
+      className={casesOnly
+        ? 'py-1 text-sm font-semibold text-(--foreground)'
+        : 'py-1 text-center text-xs font-semibold text-(--foreground-subtle)'}
+    >
+      {scenarioID === 'fengyiting-real'
+        ? marker.title.replace(/^第一阶段/, '第一场')
+        : stageTitle(marker.title)}
+    </PhaseHeading>
+  )
   const phaseRows = (seq: number) =>
-    (phaseBefore.get(seq) ?? []).map((marker) => (
-      <p
-        {...tm('FA.phase-marker')}
-        key={`${marker.seq}-${marker.title}`}
-        className='py-1 text-center text-xs font-semibold text-(--foreground-subtle)'
-      >
-        {marker.title}
-      </p>
-    ))
+    (phaseBefore.get(seq) ?? []).map(renderPhase)
 
   return (
     <div {...tm('FA.stage')} className='space-y-3'>
-      <div className='space-y-1'>
-        <h3
-          {...tm('FA.stage-title')}
-          className='text-xs font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)'
-        >
-          {group.title}
-          {total > 1 ? `（第 ${index + 1}/${total} 阶段）` : ''}
-        </h3>
-      </div>
+      {!casesOnly && !hideStageTitle
+        ? (
+          <div className='space-y-1'>
+            <StageHeading
+              {...tm('FA.stage-title')}
+              className='text-xs font-semibold uppercase tracking-[0.1em] text-(--foreground-muted)'
+            >
+              {stageTitle(group.title)}
+              {!numberedStage && total > 1
+                ? `（阶段${index + 1}/${total}）`
+                : ''}
+            </StageHeading>
+          </div>
+        )
+        : null}
+      {hideStageTitle && scenarioID === 'fengyiting-real' &&
+          group.id === 'stage-one' &&
+          !group.phases.some((marker) => /^第(一阶段|一场)/.test(marker.title))
+        ? renderPhase({ seq: -1, title: group.title })
+        : null}
       {group.channels.map((channel) => (
         <div key={channel.key} className='space-y-2'>
-          {group.channels.length > 1 && channel.label
+          {!casesOnly && !numberedStage && group.channels.length > 1 &&
+              channel.label
             ? (
               <p
                 {...tm('FA.channel-label')}
@@ -94,7 +126,7 @@ export function TranscriptStage({
               : (
                 <div key={item.seq} className='space-y-2'>
                   {phaseRows(item.seq)}
-                  {item.turn.kind === 'event'
+                  {item.verdictAnchor ? null : item.turn.kind === 'event'
                     ? (
                       <EventRow
                         turn={item.turn}
@@ -117,15 +149,7 @@ export function TranscriptStage({
           )}
         </div>
       ))}
-      {trailingPhases.map((marker) => (
-        <p
-          {...tm('FA.phase-marker')}
-          key={`${marker.seq}-${marker.title}`}
-          className='py-1 text-center text-xs font-semibold text-(--foreground-subtle)'
-        >
-          {marker.title}
-        </p>
-      ))}
+      {trailingPhases.map(renderPhase)}
     </div>
   )
 }

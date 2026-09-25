@@ -55,7 +55,9 @@ export function roleByKey(
   key: string | null | undefined,
 ): ScenarioRole | null {
   if (!key) return null
-  return module?.roles.find((role) => role.key === key) ?? null
+  return module?.roles.find((role) =>
+    role.key === key || role.aliases?.includes(key)
+  ) ?? null
 }
 
 // What the save API stores verbatim, and what the script parses back out.

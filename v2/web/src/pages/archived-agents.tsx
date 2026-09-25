@@ -1,3 +1,4 @@
+import { hasSelectableRoles } from '../lib/role-identity'
 import { Archive, ArchiveRestore } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -106,36 +107,43 @@ export function ArchivedAgentsPage() {
         : (
           <Card>
             <ul className='divide-y divide-(--border-soft)'>
-              {archived.map(({ agent, sideName, scenarioTitle }) => {
-                const name = agent.name
-                  ? `${sideName}「${agent.name}」`
-                  : `${sideName} #${agent.agentID}`
-                return (
-                  <li
-                    key={agent.agentID}
-                    className='flex items-center justify-between gap-4 p-5'
-                  >
-                    <div className='min-w-0'>
-                      <h2 className='break-words text-sm font-semibold'>
-                        {name}
-                      </h2>
-                      <p className='mt-1 text-xs text-(--foreground-subtle)'>
-                        {scenarioTitle} · {agent.versionCount} 个版本
-                      </p>
-                    </div>
-                    <Button
-                      variant='secondary'
-                      className='min-h-11 shrink-0 gap-2'
-                      disabled={busy != null}
-                      aria-label={`恢复 ${name}`}
-                      onClick={() => void restore(agent.agentID, name)}
+              {archived.map(
+                ({ agent, sideName, scenarioTitle, scenarioID }) => {
+                  const identity = agent.role?.name ??
+                    (hasSelectableRoles(scenarioID) ? '角色待确认' : sideName)
+                  const name = agent.name
+                    ? `${identity}「${agent.name}」`
+                    : `${identity} #${agent.agentID}`
+                  return (
+                    <li
+                      key={agent.agentID}
+                      className='flex items-center justify-between gap-4 p-5'
                     >
-                      <ArchiveRestore aria-hidden='true' className='h-4 w-4' />
-                      {busy === agent.agentID ? '恢复中…' : '恢复'}
-                    </Button>
-                  </li>
-                )
-              })}
+                      <div className='min-w-0'>
+                        <h2 className='break-words text-sm font-semibold'>
+                          {name}
+                        </h2>
+                        <p className='mt-1 text-xs text-(--foreground-subtle)'>
+                          {scenarioTitle} · {agent.versionCount} 个版本
+                        </p>
+                      </div>
+                      <Button
+                        variant='secondary'
+                        className='min-h-11 shrink-0 gap-2'
+                        disabled={busy != null}
+                        aria-label={`恢复 ${name}`}
+                        onClick={() => void restore(agent.agentID, name)}
+                      >
+                        <ArchiveRestore
+                          aria-hidden='true'
+                          className='h-4 w-4'
+                        />
+                        {busy === agent.agentID ? '恢复中…' : '恢复'}
+                      </Button>
+                    </li>
+                  )
+                },
+              )}
             </ul>
           </Card>
         )}

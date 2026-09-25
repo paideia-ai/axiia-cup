@@ -1,3 +1,4 @@
+import { roleIdentity } from '../lib/role-identity'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import { npcs } from '../api/client'
@@ -18,6 +19,14 @@ export function NPCViewPage() {
     enabled: matchID != null,
   })
   const npc = profile.data
+  const roleName = npc
+    ? roleIdentity({
+      scenarioID: npc.scenarioID,
+      side: npc.side,
+      role: npc.role,
+      fallback: npc.sideName,
+    }).name
+    : ''
   const history = new URLSearchParams({
     scenario: scenarioId,
     npc: presetKey,
@@ -45,7 +54,7 @@ export function NPCViewPage() {
           <>
             <header className='space-y-2'>
               <h1 className='wrap-anywhere text-2xl font-bold text-(--foreground)'>
-                {npc.sideName}「{npc.label}」
+                {roleName}「{npc.label}」
               </h1>
               <p className='text-sm text-(--foreground-subtle)'>
                 {npc.scenarioTitle} · 官方 NPC
