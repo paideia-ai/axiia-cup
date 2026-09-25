@@ -1257,11 +1257,6 @@ function FirstBattleJourney({
   )
 }
 
-// 参战方卡（P3 G20）：展示名 + 模型（#21 永远公开）+ 版本 id 与复制按钮
-// （#25，指定版本约战的发现路径）。我方＝醒目「← 我的智能体」按钮（#71）；
-// 对手侧＝低调一行「对手：{名} · v#{id}」——公开 EA（G6）在 P6 后端才有，
-// 本阶段不给链接，id 可复制即可闭环。契约只有 ownerDisplayName，没有对手
-// 的 agent 名。
 function ParticipantCard({
   which,
   sideLabel,
@@ -1290,7 +1285,11 @@ function ParticipantCard({
     }
   }
   const identityHref = participant.isMine
-    ? null
+    ? participant.agentID != null
+      ? `/agents/${participant.agentID}${
+        participant.versionID != null ? `?version=${participant.versionID}` : ''
+      }`
+      : null
     : participant.presetKey != null
     ? npcIdentityPath(scenarioID, participant.presetKey, matchID)
     : participant.agentID != null && participant.versionID != null
@@ -1301,8 +1300,18 @@ function ParticipantCard({
   return (
     <div
       {...tm('FA.participant-card')}
-      className='rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'
+      className='relative isolate rounded-xl border border-(--border-soft) bg-white/2 px-4 py-3'
     >
+      {identityHref && (
+        <Link
+          {...tm('FA.participant-link')}
+          to={identityHref}
+          aria-label={`执${which.toUpperCase()} · ${sideLabel} · ${name}${
+            participant.versionID != null ? ` · v#${participant.versionID}` : ''
+          }，${participant.isMine ? '打开我的智能体主页' : '打开智能体资料'}`}
+          className='absolute -inset-px z-10 rounded-xl transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
+        />
+      )}
       <div className='flex flex-wrap items-center gap-2'>
         <Badge {...tm('FA.participant-side-badge')} tone='info'>
           执{which.toUpperCase()} · {sideLabel}
@@ -1326,29 +1335,6 @@ function ParticipantCard({
                 : name}
             </span>
           )}
-        {identityHref && (
-          <Link
-            to={identityHref}
-            className='ml-auto py-1.5 text-xs text-(--foreground-subtle) underline underline-offset-4'
-          >
-            查看智能体资料
-          </Link>
-        )}
-        {participant.isMine && participant.agentID != null
-          ? (
-            <Link
-              {...tm('FA.my-agent-button')}
-              to={`/agents/${participant.agentID}${
-                participant.versionID != null
-                  ? `?version=${participant.versionID}`
-                  : ''
-              }`}
-              className='ml-auto inline-flex items-center rounded-md bg-(--accent) px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90'
-            >
-              ← 我的智能体
-            </Link>
-          )
-          : null}
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {participant.modelID
@@ -1374,7 +1360,7 @@ function ParticipantCard({
                 {...tm('FA.copy-id-button')}
                 type='button'
                 onClick={copyID}
-                className='inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
+                className='relative z-20 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
               >
                 {copied
                   ? <Check className='h-3 w-3 text-(--success)' />

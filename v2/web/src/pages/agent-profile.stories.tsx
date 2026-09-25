@@ -279,6 +279,26 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const MatchCards: Story = {
+  args: { entry: '/matches/9001' },
+}
+
+export const OwnerFromTranscript: Story = {
+  args: { entry: '/matches/9001' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    const entry = await c.findByRole('link', {
+      name: /执A · 商鞅.*打开我的智能体主页/,
+    })
+    await expect(entry).toHaveAttribute('href', '/agents/101?version=1002')
+    await userEvent.click(c.getByRole('button', { name: '复制 id' }))
+    await expect(entry).toBeVisible()
+    await userEvent.click(entry)
+    await expect(await c.findByRole('button', { name: '版本对比' }))
+      .toBeVisible()
+  },
+}
+
 export const OwnerComparison: Story = {
   args: { entry: '/agents/101' },
   play: async ({ canvasElement }) => {
@@ -295,7 +315,9 @@ export const PlayerFromTranscript: Story = {
   args: { entry: '/matches/9002' },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
-    const entry = await c.findByRole('link', { name: '查看智能体资料' })
+    const entry = await c.findByRole('link', {
+      name: /执B · 甘龙.*打开智能体资料/,
+    })
     await expect(entry).toHaveAttribute(
       'href',
       '/agents/202/identity?version=466&match=9002',
@@ -329,7 +351,7 @@ export const NPCFromTranscript: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await userEvent.click(
-      await c.findByRole('link', { name: '查看智能体资料' }),
+      await c.findByRole('link', { name: /执B · 甘龙.*打开智能体资料/ }),
     )
     await expect(await c.findByText(npc.prompt)).toBeVisible()
     await expect(c.getAllByTestId('identity-version')).toHaveLength(1)

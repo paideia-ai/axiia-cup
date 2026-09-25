@@ -29,8 +29,7 @@ export const TM_FA: TmRegistry = {
   'FA.back-link': {
     label: '页头返回链',
     clauses: ['U07-C04'],
-    note:
-      '全局「← 我的智能体」回 /my-agents；参战卡上另有直达我方智能体的醒目按钮',
+    note: '全局「← 我的智能体」回 /my-agents；我方参战卡整卡直达对应智能体主页',
   },
   'FA.page-title': {
     label: '页面标题',
@@ -122,15 +121,15 @@ export const TM_FA: TmRegistry = {
   'FA.opponent-line': {
     label: '对手一行',
     clauses: ['U07-C04', 'U10-C11b'],
-    note:
-      'gap_known：规格要对手侧有低调「查看对手智能体」入口（公开视图 #71）；现在只有纯文本「对手：{名} · v#{id}」，无链接',
+    note: '展示对手身份；点击整张卡片进入该场使用版本的智能体资料',
     when: '参战方不是我的',
   },
-  'FA.my-agent-button': {
-    label: '我的智能体按钮',
+  'FA.participant-link': {
+    label: '参战方卡片链接',
     clauses: ['U07-C04', 'U10-C11b'],
-    note: '我方侧醒目 accent 按钮直达 /agents/:id（高频）',
-    when: '我方参战卡上',
+    note:
+      '整卡点击：我方进入智能体主页，对手进入 identity page；复制 id 独立操作',
+    when: '参战方有对应智能体或 NPC 资料时',
   },
   'FA.model-chip': {
     label: '模型 chip',

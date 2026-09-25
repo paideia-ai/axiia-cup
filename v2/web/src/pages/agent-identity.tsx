@@ -76,7 +76,7 @@ export function AgentIdentityPage() {
                 {...tm('EA.public-owner-only-hint')}
                 className='text-xs text-(--foreground-muted)'
               >
-                提示词仅主人可见。点击版本查看对战记录。
+                提示词仅主人可见。
               </p>
             </header>
             {versionID && !versions.some((v) => v.id === versionID) && (
