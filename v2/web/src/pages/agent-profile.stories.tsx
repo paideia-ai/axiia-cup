@@ -346,6 +346,95 @@ export const PlayerFromTranscript: Story = {
       .toBeVisible()
   },
 }
+export const HistoryReturnKeepsPage: Story = {
+  args: { entry: '/matches?agent=202&version=466' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await userEvent.click(await c.findByRole('button', { name: '下一页' }))
+    await userEvent.click(await c.findByRole('link', { name: /对战 #8900/ }))
+    await userEvent.click(await c.findByRole('link', { name: '← 对战列表' }))
+    await expect(await c.findByRole('link', { name: /对战 #8900/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+    await expect(c.getByRole('button', { name: '上一页' })).toBeEnabled()
+  },
+}
+
+export const HistoryRestoresCursor: Story = {
+  args: { entry: '/matches?agent=202&version=466&cursor=8983' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('link', { name: /对战 #8900/ }))
+      .toBeVisible()
+    await userEvent.click(c.getByRole('button', { name: '上一页' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+  },
+}
+
+const mixedHistory = Array.from({ length: 25 }, (_, index) => ({
+  ...playerMatch.summary,
+  id: 9002 - index,
+  initiatorIsMe: false,
+  participants: {
+    a: { ...playerMatch.summary.participants.a, isMine: index >= 20 },
+    b: playerMatch.summary.participants.b,
+  },
+}))
+const filteredHistory = ({ request }: { request: Request }) => {
+  const params = new URL(request.url).searchParams
+  const before = Number(params.get('before') ?? Infinity)
+  return HttpResponse.json({
+    open: true,
+    matches: mixedHistory.filter((match) =>
+      match.id < before &&
+      (params.get('mine') !== '1' || match.participants.a.isMine)
+    ).slice(0, 20),
+  })
+}
+
+export const OnlyMineBeforePagination: Story = {
+  args: { entry: '/matches?agent=202&version=466&cursor=8983' },
+  parameters: {
+    msw: [http.get('/v1/agents/202/matches', filteredHistory), ...handlers],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await c.findByRole('link', { name: /对战 #8982/ })
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('button', { name: '上一页' })).toBeNull()
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+  },
+}
+
+export const NPCOnlyMineBeforePagination: Story = {
+  args: {
+    entry: '/matches?scenario=shangyang-court&npc=ganlong-steady&match=9001',
+  },
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios/:id/npcs/:key/matches', filteredHistory),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await c.findByRole('link', { name: /对战 #9002/ })
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+  },
+}
+
 export const NPCFromTranscript: Story = {
   args: { entry: '/matches/9001' },
   play: async ({ canvasElement }) => {

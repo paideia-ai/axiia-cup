@@ -1,7 +1,6 @@
 import { PageLoading } from '../components/page-loading'
 import { Check, X } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useState } from 'react'
 import { agents, npcs } from '../api/client'
 import { Button } from '../components/ui/button'
 import { positiveID } from '../lib/identity-links'
@@ -67,17 +66,6 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 }
 
 export function MatchesPage() {
-  const [params] = useSearchParams()
-  return (
-    <MatchHistory
-      key={`${params.get('agent')}:${params.get('version')}:${
-        params.get('npc')
-      }:${params.get('match')}`}
-    />
-  )
-}
-
-function MatchHistory() {
   const [params, setParams] = useSearchParams()
   const onlyMine = params.get('mine') === '1'
   const scenarioID = params.get('scenario') ?? ''
@@ -86,11 +74,21 @@ function MatchHistory() {
   const npcKey = params.get('npc') ?? ''
   const sourceMatchID = positiveID(params.get('match'))
   const scoped = !!agentID || !!npcKey
-  const [cursors, setCursors] = useState<number[]>([])
+  const cursors = params.getAll('cursor').map(positiveID)
+    .filter((id): id is number => id != null)
+  const setCursors = (nextCursors: number[]) => {
+    setParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.delete('cursor')
+      for (const cursor of nextCursors) next.append('cursor', String(cursor))
+      return next
+    }, { replace: true })
+  }
   const before = cursors.at(-1)
   const updateFilter = (key: string, value: string) => {
     setParams((previous) => {
       const next = new URLSearchParams(previous)
+      next.delete('cursor')
       if (value) next.set(key, value)
       else next.delete(key)
       return next
@@ -109,14 +107,21 @@ function MatchHistory() {
           npcKey,
           scenarioID,
           sourceMatchID,
+          onlyMine,
           before,
         ].map(String),
         queryFn: () => {
           if (agentID && positiveID(versionID)) {
-            return agents.history(agentID, Number(versionID), before)
+            return agents.history(agentID, Number(versionID), before, onlyMine)
           }
           if (npcKey && scenarioID && sourceMatchID) {
-            return npcs.history(scenarioID, npcKey, before, sourceMatchID)
+            return npcs.history(
+              scenarioID,
+              npcKey,
+              before,
+              sourceMatchID,
+              onlyMine,
+            )
           }
           throw new Error('对战记录筛选信息不完整。请从智能体资料页重新进入。')
         },
@@ -312,6 +317,7 @@ function MatchHistory() {
                 const next = new URLSearchParams(previous)
                 next.delete('version')
                 next.delete('agent')
+                next.delete('cursor')
                 return next
               }, { replace: true })}
             aria-label={`清除版本 #${versionID} 筛选`}
@@ -388,7 +394,7 @@ function MatchHistory() {
           <Button
             variant='secondary'
             disabled={loading || cursors.length === 0}
-            onClick={() => setCursors((value) => value.slice(0, -1))}
+            onClick={() => setCursors(cursors.slice(0, -1))}
           >
             上一页
           </Button>
@@ -397,7 +403,7 @@ function MatchHistory() {
             disabled={loading || (data?.list.matches.length ?? 0) < 20}
             onClick={() => {
               const last = data?.list.matches.at(-1)
-              if (last) setCursors((value) => [...value, last.id])
+              if (last) setCursors([...cursors, last.id])
             }}
           >
             下一页

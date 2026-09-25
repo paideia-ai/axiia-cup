@@ -263,12 +263,17 @@ export const myAgents = {
 // ── Agents（多槽位，#56/#84） ────────────────────────────────────────────────
 
 export const agents = {
-  history: (agentID: number, versionID: number, before?: number) =>
+  history: (
+    agentID: number,
+    versionID: number,
+    before?: number,
+    onlyMine = false,
+  ) =>
     request<MatchListResponse>(
       'GET',
       `/agents/${agentID}/matches?versionID=${versionID}&limit=20${
         before == null ? '' : `&before=${before}`
-      }`,
+      }${onlyMine ? '&mine=1' : ''}`,
     ),
   archive: (agentID: number) =>
     request<OKResponse>('PUT', `/agents/${agentID}/archive`),
@@ -305,6 +310,7 @@ export const npcs = {
     key: string,
     before?: number,
     matchID?: number,
+    onlyMine = false,
   ) => {
     if (matchID != null) await npcs.profile(scenarioID, key, matchID)
     return request<MatchListResponse>(
@@ -313,7 +319,7 @@ export const npcs = {
         encodeURIComponent(key)
       }/matches?limit=20${before == null ? '' : `&before=${before}`}${
         matchID == null ? '' : `&matchID=${matchID}`
-      }`,
+      }${onlyMine ? '&mine=1' : ''}`,
     )
   },
 }

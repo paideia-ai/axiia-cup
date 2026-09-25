@@ -31,3 +31,6 @@ deno run -A npm:storybook dev -p 6231 --host 0.0.0.0 --ci
 
 整卡入口的手动预览：`Agents / Identity review / Match Cards`。这个示例不自动跳转；点击我方卡片进入自己的主页，点击对手卡片进入资料页，复制
 id 按钮不会跳页。
+
+历史回归检查：翻到第二页，进入一场对局再点返回，应仍在第二页；勾选「仅自己对局」时按全部匹配记录筛选后分页，切换筛选回第一页。`History Restores Cursor`
+可检查带游标地址重新进入后的结果。
