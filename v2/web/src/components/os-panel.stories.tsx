@@ -51,17 +51,18 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-// Leave the preview on a selected NPC so the remaining practice flow is visible.
 export const NpcPracticeSelected: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
-    await userEvent.click(
-      await canvas.findByRole('combobox', { name: '选择预设对手' }),
-    )
-    await userEvent.click(
-      await canvas.findByRole('option', { name: '稳健守旧派' }),
-    )
-    await expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+    await expect(
+      await canvas.findByRole('button', { name: '与稳健守旧派对战' }),
+    ).toBeEnabled()
+    expect(canvas.queryByRole('combobox')).toBeNull()
+    expect(canvas.queryByRole('button', { name: '更换版本' })).toBeNull()
+    expect(canvas.queryByRole('button', { name: '开始对战' })).toBeNull()
+    expect(canvas.queryByRole('radio')).toBeNull()
+    await expect(canvas.getAllByRole('tab').map((tab) => tab.textContent))
+      .toEqual(['NPC 练习', '玩家约战', '左右手互搏'])
   },
 }
 
@@ -137,15 +138,11 @@ export const UnlockedDesktop: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
-    // 解锁态＝真约战 UI：双子模式切换 + 按侧达标徽章。
-    await expect(
-      await canvas.findByRole('button', { name: '对手玩家' }),
-    ).toBeVisible()
-    await expect(
-      canvas.getByRole('button', { name: '指定版本约战' }),
-    ).toBeVisible()
-    await expect(canvas.getByText('商鞅 1/1 ✓')).toBeVisible()
-    await expect(canvas.getByText('甘龙 1/1 ✓')).toBeVisible()
+    await expect(await canvas.findByRole('button', { name: '与老对手对战' }))
+      .toBeEnabled()
+    await expect(canvas.getByRole('button', { name: '指定版本 ID' }))
+      .toBeVisible()
+    expect(canvas.queryByText('商鞅 1/1 ✓')).toBeNull()
   },
 }
 
@@ -244,22 +241,14 @@ export const DispatchBalanceBoundary: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
-    const dispatch = await canvas.findByRole('button', { name: '发起对战' })
-    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
-    await userEvent.click(
-      canvas.getByRole('combobox', { name: '选择预设对手' }),
-    )
-    await userEvent.click(
-      await within(canvasElement.ownerDocument.body).findByRole('option', {
-        name: '稳健守旧派',
-      }),
-    )
-    await expect(dispatch).toBeEnabled()
-
+    const dispatch = await canvas.findByRole('button', {
+      name: '与稳健守旧派对战',
+    })
+    await waitFor(() => expect(dispatch).toBeEnabled())
     dispatchFundsWorld.balance = 99
     refreshRewards()
     await expect(
-      await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
+      await canvas.findByText('积分不足'),
     ).toBeVisible()
     await expect(dispatch).toBeDisabled()
     dispatch.click()
@@ -267,8 +256,7 @@ export const DispatchBalanceBoundary: Story = {
 
     dispatchFundsWorld.balance = 100
     refreshRewards()
-    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
-    await expect(dispatch).toBeEnabled()
+    await waitFor(() => expect(dispatch).toBeEnabled())
     await userEvent.click(dispatch)
     await waitFor(() => expect(dispatchFundsWorld.dispatches).toBe(1))
   },
@@ -337,19 +325,20 @@ function quotaRejectionStory(
     },
     play: async ({ canvasElement }) => {
       const canvas = within(canvasElement.ownerDocument.body)
-      await expect(await canvas.findByText('今日已用 4/10（PVP 4/5）'))
-        .toBeVisible()
+      await waitFor(() =>
+        expect(canvas.getByRole('tab', { name: '玩家约战' })).toBeEnabled()
+      )
       await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
       await userEvent.click(
-        await canvas.findByRole('button', { name: '指定版本约战' }),
+        await canvas.findByRole('button', { name: '指定版本 ID' }),
       )
       await userEvent.type(
-        canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
+        canvas.getByPlaceholderText('输入对方版本 ID'),
         '367',
       )
       await userEvent.click(canvas.getByRole('button', { name: '查询' }))
       const confirm = await canvas.findByRole('button', {
-        name: '发起约战',
+        name: '与老对手对战',
       })
       await expect(confirm).toBeEnabled()
       await userEvent.click(confirm)
@@ -366,14 +355,6 @@ function quotaRejectionStory(
         opponent: { pinnedVersionID: 367 },
       }])
       expect(canvas.queryByText('已发起约战 · 对局已入队')).toBeNull()
-      if (refreshedUsage?.battlesToday !== 4) {
-        expect(canvas.queryByText('今日已用 4/10（PVP 4/5）')).toBeNull()
-      }
-      if (refreshedUsage) {
-        await expect(canvas.getByText(
-          `今日已用 ${refreshedUsage.battlesToday}/10（PVP ${refreshedUsage.pvpBattlesToday}/5）`,
-        )).toBeVisible()
-      }
     },
   }
 }
@@ -465,22 +446,16 @@ function singleChallengeStory(side: 'a' | 'b'): Story {
       attempts.length = 0
       const canvas = within(canvasElement.ownerDocument.body)
       await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
-      await expect(
-        canvas.getByText(
-          side === 'a' ? '我方商鞅 vs 对方甘龙' : '我方甘龙 vs 对方商鞅',
-        ),
-      ).toBeVisible()
-      const dispatch = await canvas.findByRole('button', { name: '发起约战' })
+      const dispatch = await canvas.findByRole('button', { name: '与对手对战' })
       await waitFor(() => expect(dispatch).toBeEnabled())
-      await expect(canvas.getByText('100 积分', { selector: 'strong' }))
-        .toBeVisible()
+      expect(canvas.queryByText(/消耗|余额|返还/)).toBeNull()
       expect(
         quotes.some((query) =>
           query.get('kind') === 'pvp' && query.get('side') === side
         ),
       ).toBe(true)
       await userEvent.click(
-        await canvas.findByRole('button', { name: '发起约战' }),
+        await canvas.findByRole('button', { name: '与对手对战' }),
       )
       await waitFor(() =>
         expect(attempts).toEqual([{
@@ -525,15 +500,211 @@ export const RejectSameSidePinnedVersion: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
     await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
-    await userEvent.click(canvas.getByRole('button', { name: '指定版本约战' }))
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
     await userEvent.type(
-      canvas.getByPlaceholderText('输入对方对侧版本 id（战报页可复制）'),
+      canvas.getByPlaceholderText('输入对方版本 ID'),
       '367',
     )
     await userEvent.click(canvas.getByRole('button', { name: '查询' }))
     await expect(
       await canvas.findByText('请选择对方的甘龙版本，与当前商鞅对战'),
     ).toBeVisible()
-    expect(canvas.queryByRole('button', { name: '发起约战' })).toBeNull()
+    expect(canvas.queryByRole('button', { name: '与对手对战' })).toBeNull()
+  },
+}
+
+const rowAttempts: unknown[] = []
+export const DirectNpcRow: Story = {
+  args: {
+    preferVersionID: 1001,
+    agentName: '以理服人',
+    scenario: {
+      ...scenario,
+      presets: [...scenario.presets, {
+        key: 'ganlong-second',
+        side: 'b',
+        label: '第二个对手',
+        modelID: 'fixture-model',
+      }],
+    },
+  },
+  render: (args) => (
+    <>
+      <OsPanel {...args} />
+      <MatchLocation />
+    </>
+  ),
+  loaders: [() => {
+    rowAttempts.length = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      ...meta.parameters.msw,
+      http.post('/v1/matches/pve', async ({ request }) => {
+        rowAttempts.push(await request.json())
+        await delay(150)
+        return HttpResponse.json({ matchID: 901 })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    const row = await canvas.findByRole('button', { name: '与第二个对手对战' })
+    await expect(canvas.getByText('v1', { exact: true })).toBeVisible()
+    await waitFor(() => expect(row).toBeEnabled())
+    // Two same-turn native clicks cannot dispatch two matches.
+    row.click()
+    row.click()
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '与稳健守旧派对战' }))
+        .toBeDisabled()
+    )
+    await expect(canvas.getByRole('button', { name: '关闭' })).toBeDisabled()
+    await waitFor(() =>
+      expect(rowAttempts).toEqual([{
+        versionID: 1001,
+        presetKey: 'ganlong-second',
+      }])
+    )
+    await waitFor(() =>
+      expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+        '/matches/901',
+      )
+    )
+  },
+}
+
+export const DirectOwnAgentRow: Story = {
+  args: { preferVersionID: 1001 },
+  render: (args) => (
+    <>
+      <OsPanel {...args} />
+      <MatchLocation />
+    </>
+  ),
+  loaders: [() => {
+    rowAttempts.length = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get('/v1/scenarios/:id/opponents', () =>
+        HttpResponse.json({
+          opponents: [
+            {
+              agentID: 102,
+              displayName: '同一玩家',
+              name: '稳守',
+              isSelf: true,
+            },
+            {
+              agentID: 103,
+              displayName: '同一玩家',
+              name: '反击',
+              isSelf: true,
+            },
+          ],
+        })),
+      http.post('/v1/matches/pvp', async ({ request }) => {
+        rowAttempts.push(await request.json())
+        return HttpResponse.json({ matchID: 902 })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+    await userEvent.click(
+      await canvas.findByRole('button', { name: '与反击对战' }),
+    )
+    await waitFor(() =>
+      expect(rowAttempts).toEqual([{ versionID: 1001, opponentAgentID: 103 }])
+    )
+    await waitFor(() =>
+      expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+        '/matches/902',
+      )
+    )
+  },
+}
+
+let opponentReads = 0
+export const OpponentFailureRetry: Story = {
+  args: { scenario: unlockedScenario },
+  loaders: [() => {
+    opponentReads = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/scenarios/:id/opponents',
+        () =>
+          ++opponentReads === 1 ? HttpResponse.error() : HttpResponse.json({
+            opponents: [{
+              agentID: 301,
+              displayName: '重试对手',
+              isSelf: false,
+              ownerAccountID: 'retry',
+            }],
+          }),
+      ),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await waitFor(() =>
+      expect(canvas.getByRole('tabpanel', { name: '玩家约战' }))
+        .toHaveTextContent('对手暂时没有加载出来')
+    )
+    expect(canvas.queryByText('暂无可约战的对手玩家')).toBeNull()
+    await userEvent.click(canvas.getByRole('button', { name: '重新加载' }))
+    await expect(await canvas.findByRole('button', { name: '与重试对手对战' }))
+      .toBeEnabled()
+  },
+}
+
+let pinnedAttempts = 0
+export const PinnedResultInvalidated: Story = {
+  args: { scenario: unlockedScenario },
+  loaders: [() => {
+    pinnedAttempts = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      ...meta.parameters.msw,
+      http.get('/v1/versions/367/ref', () =>
+        HttpResponse.json({
+          versionID: 367,
+          agentID: 301,
+          scenarioID: scenario.summary.id,
+          side: 'b',
+          ownerAccountID: 'rival',
+          ownerDisplayName: '指定对手',
+          modelID: 'fixture-model',
+        })),
+      http.post('/v1/challenges', () => {
+        pinnedAttempts++
+        return HttpResponse.json({ challengeID: 1, matchIDs: [1] })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
+    const input = canvas.getByRole('textbox', { name: '对方版本 ID' })
+    await userEvent.type(input, '367')
+    await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+    await expect(await canvas.findByRole('button', { name: '与指定对手对战' }))
+      .toBeEnabled()
+    await userEvent.type(input, '8')
+    expect(canvas.queryByRole('button', { name: '与指定对手对战' })).toBeNull()
+    expect(pinnedAttempts).toBe(0)
   },
 }
