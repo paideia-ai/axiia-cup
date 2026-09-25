@@ -1,6 +1,6 @@
 import { PageLoading } from '../components/page-loading'
-import { ChevronRight } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 
 import type {
@@ -193,6 +193,7 @@ function ScenarioGroup({
   inventoryAvailable: boolean
   onlySide: Side | null
 }) {
+  const [expandedSides, setExpandedSides] = useState({ a: false, b: false })
   const sides = ([
     ['a', scenario.sideAName, scenario.sideALabel],
     ['b', scenario.sideBName, scenario.sideBLabel],
@@ -279,109 +280,171 @@ function ScenarioGroup({
           </span>
         </div>
 
-        {sides.map(([side, role, description]) => {
-          const agents = agentsOf(side).filter((agent) => !agent.isArchived)
-          const headingID = `my-agents-${scenario.id}-${side}`
-          return (
-            <section
-              key={side}
-              aria-labelledby={headingID}
-              className={side === 'a'
-                ? 'mt-3'
-                : 'mt-4 border-t border-(--border-soft) pt-2 md:mt-5 md:pt-3'}
-              {...(inventoryAvailable
-                ? tm('MA.side-section')
-                : tm('MA.fallback-row'))}
-            >
-              <div className='mb-2 flex flex-wrap items-center justify-between gap-3'>
-                <div className='min-w-0'>
-                  <h3
-                    id={headingID}
-                    className='text-sm font-semibold text-(--foreground)'
-                  >
-                    {role}智能体
-                  </h3>
-                  {description
-                    ? (
-                      <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
-                        {description}
-                      </p>
-                    )
-                    : null}
-                </div>
-                <CreateAgentAction
-                  marker={tm('MA.new-agent-button')['data-tm']}
-                  scenarioID={scenario.id}
-                  side={side}
-                  role={role}
-                  oppositeRole={side === 'a'
-                    ? scenario.sideBName
-                    : scenario.sideAName}
-                />
-              </div>
-
-              {agents.map((agent) => {
-                const isEntry = agent.entryVersionID != null
-                return (
-                  <Link
-                    key={agent.agentID}
-                    data-testid='agent-row'
-                    data-agent-id={agent.agentID}
-                    data-entry={isEntry ? 'true' : undefined}
-                    to={`/agents/${agent.agentID}`}
-                    title={isEntry ? '当前参赛智能体' : undefined}
-                    className={`group flex min-h-11 items-center gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:outline-2 focus-visible:outline-(--accent) [&+&]:mt-1 ${
-                      isEntry
-                        ? 'border-[rgba(224,74,47,0.5)] bg-[rgba(224,74,47,0.035)] hover:border-(--accent) hover:bg-[rgba(224,74,47,0.07)]'
-                        : 'border-transparent bg-white/2 hover:bg-white/5'
-                    }`}
-                    {...tm('MA.agent-row')}
-                  >
-                    <div className='min-w-0 flex-1'>
-                      <p
-                        className='text-sm font-medium text-(--foreground)'
-                        {...tm('MA.agent-name')}
-                      >
-                        {agent.name ?? `#${agent.agentID}`}
-                        {isEntry
-                          ? <span className='sr-only'>（当前参赛智能体）</span>
-                          : null}
-                      </p>
-                    </div>
-                    <ChevronRight
-                      aria-hidden='true'
-                      className='h-4 w-4 shrink-0 text-(--foreground-subtle) transition-transform group-hover:translate-x-0.5'
-                    />
-                  </Link>
-                )
-              })}
-
-              {agents.length === 0
-                ? (
-                  <p
-                    className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'
-                    {...tm('MA.empty-side')}
-                  >
-                    {!inventoryAvailable
-                      ? '清单不可用，当前状态未知'
-                      : agentsOf(side).length > 0
+        <div
+          className={`mt-3 grid grid-cols-1 ${
+            sides.length > 1 ? 'md:grid-cols-2 md:gap-x-6' : ''
+          }`}
+        >
+          {sides.map(([side, role, description], index) => {
+            const agents = agentsOf(side).filter((agent) => !agent.isArchived)
+            const oppositeCount = agentsOf(side === 'a' ? 'b' : 'a')
+              .filter((agent) => !agent.isArchived).length
+            const collapsible = onlySide == null && agents.length >= 6 &&
+              agents.length >= 2 * oppositeCount
+            const limit = Math.max(3, oppositeCount)
+            // Keep the entry agent visible even when it falls beyond the cutoff,
+            // while preserving the inventory order in both states.
+            const entryAgents = agents.filter((agent) =>
+              agent.entryVersionID != null
+            )
+            const previewIDs = new Set([
+              ...entryAgents,
+              ...agents.filter((agent) => agent.entryVersionID == null)
+                .slice(0, Math.max(0, limit - entryAgents.length)),
+            ].map((agent) => agent.agentID))
+            const expanded = expandedSides[side]
+            const visibleAgents = collapsible && !expanded
+              ? agents.filter((agent) => previewIDs.has(agent.agentID))
+              : agents
+            const headingID = `my-agents-${scenario.id}-${side}`
+            const listID = `${headingID}-list`
+            return (
+              <section
+                key={side}
+                aria-labelledby={headingID}
+                className={index === 0
+                  ? 'min-w-0'
+                  : 'mt-4 min-w-0 border-t border-(--border-soft) pt-2 md:mt-0 md:border-t-0 md:pt-0'}
+                {...(inventoryAvailable
+                  ? tm('MA.side-section')
+                  : tm('MA.fallback-row'))}
+              >
+                <div className='mb-2 flex flex-wrap items-center justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <h3
+                      id={headingID}
+                      className='text-sm font-semibold text-(--foreground)'
+                    >
+                      {role}智能体
+                    </h3>
+                    {description
                       ? (
-                        <>
-                          你的{role}智能体已全部归档。<Link
-                            to='/settings/archived-agents'
-                            className='underline underline-offset-4'
-                          >
-                            查看归档
-                          </Link>
-                        </>
+                        <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
+                          {description}
+                        </p>
                       )
-                      : <>还没有{role}智能体</>}
-                  </p>
-                )
-                : null}
-            </section>
-          )
-        })}
+                      : null}
+                  </div>
+                  <CreateAgentAction
+                    marker={tm('MA.new-agent-button')['data-tm']}
+                    scenarioID={scenario.id}
+                    side={side}
+                    role={role}
+                    oppositeRole={side === 'a'
+                      ? scenario.sideBName
+                      : scenario.sideAName}
+                  />
+                </div>
+
+                <div id={listID}>
+                  {visibleAgents.map((agent) => {
+                    const isEntry = agent.entryVersionID != null
+                    return (
+                      <Link
+                        key={agent.agentID}
+                        data-testid='agent-row'
+                        data-agent-id={agent.agentID}
+                        data-entry={isEntry ? 'true' : undefined}
+                        to={`/agents/${agent.agentID}`}
+                        title={isEntry ? '当前参赛智能体' : undefined}
+                        className={`group flex min-h-11 items-center gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:outline-2 focus-visible:outline-(--accent) [&+&]:mt-1 ${
+                          isEntry
+                            ? 'border-[rgba(224,74,47,0.5)] bg-[rgba(224,74,47,0.035)] hover:border-(--accent) hover:bg-[rgba(224,74,47,0.07)]'
+                            : 'border-transparent bg-white/2 hover:bg-white/5'
+                        }`}
+                        {...tm('MA.agent-row')}
+                      >
+                        <div className='min-w-0 flex-1'>
+                          <p
+                            className='text-sm font-medium wrap-anywhere text-(--foreground)'
+                            {...tm('MA.agent-name')}
+                          >
+                            {agent.name ?? `#${agent.agentID}`}
+                            {isEntry
+                              ? (
+                                <span className='sr-only'>
+                                  （当前参赛智能体）
+                                </span>
+                              )
+                              : null}
+                          </p>
+                        </div>
+                        <ChevronRight
+                          aria-hidden='true'
+                          className='h-4 w-4 shrink-0 text-(--foreground-subtle) transition-transform group-hover:translate-x-0.5'
+                        />
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                {collapsible && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='mt-1 min-h-11 w-full text-(--foreground-subtle)'
+                    aria-label={expanded
+                      ? '收起'
+                      : `展开全部 ${agents.length} 个（还有 ${
+                        agents.length - visibleAgents.length
+                      } 个）`}
+                    aria-expanded={expanded}
+                    aria-controls={listID}
+                    onClick={() =>
+                      setExpandedSides((previous) => ({
+                        ...previous,
+                        [side]: !previous[side],
+                      }))}
+                  >
+                    {expanded
+                      ? <ChevronUp aria-hidden='true' className='h-3.5 w-3.5' />
+                      : (
+                        <ChevronDown
+                          aria-hidden='true'
+                          className='h-3.5 w-3.5'
+                        />
+                      )}
+                  </Button>
+                )}
+
+                {agents.length === 0
+                  ? (
+                    <p
+                      className='rounded-md border border-dashed border-(--border-soft) px-3 py-3 text-sm text-(--foreground-subtle)'
+                      {...tm('MA.empty-side')}
+                    >
+                      {!inventoryAvailable
+                        ? '清单不可用，当前状态未知'
+                        : agentsOf(side).length > 0
+                        ? (
+                          <>
+                            你的{role}智能体已全部归档。<Link
+                              to='/settings/archived-agents'
+                              className='underline underline-offset-4'
+                            >
+                              查看归档
+                            </Link>
+                          </>
+                        )
+                        : <>还没有{role}智能体</>}
+                    </p>
+                  )
+                  : null}
+              </section>
+            )
+          })}
+        </div>
         {!inventoryAvailable && (
           <p className='sr-only' {...tm('MA.fallback-hint')}>
             完成度与参赛资格将在清单恢复后显示
