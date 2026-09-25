@@ -7,6 +7,8 @@ const examples = [
   { id: 101, count: 12, name: '十二版策略' },
   { id: 103, count: 40, name: '四十版策略' },
   { id: 104, count: 4, name: '四版策略' },
+  { id: 107, count: 1, name: '单版策略' },
+  { id: 108, count: 2, name: '两版策略' },
   { id: 105, count: 5, name: '五版策略' },
   { id: 106, count: 0, name: '空白策略' },
 ]
@@ -189,4 +191,4 @@ export async function productMeetingAPI(
 }
 
 export const productMeetingLanding =
-  `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>版本导航与构建入口预览</title><style>body{background:#0c0c0c;color:#e8e8e8;font:16px/1.8 system-ui;max-width:760px;margin:48px auto;padding:0 24px}h1{font-size:24px}a{color:#e8e8e8;display:block;padding:12px 16px;margin:8px 0;border:1px solid #303030;border-radius:8px;text-decoration:none}a:hover,a:focus{border-color:#e04a2f}p{color:#aaa}</style><h1>版本导航与构建入口</h1><p>本地交互预览 · 模拟数据。草稿、保存和参赛选择只保留在本次预览，不发起真实对战。</p><a href="/agents/101">12 个版本：长提示词、平滑数字目录</a><a href="/agents/103">40 个版本：无滚动条目录，可用滚轮浏览</a><a href="/agents/104">4 个版本：不显示目录</a><a href="/agents/105">5 个版本：长提示词展开 / 两行预览</a><a href="/agents/101/build">已有版本构建器：首次直接显示预设，使用后收进“…”</a><a href="/agents/106/build">空白构建器：确认填入预设后，同场景入口收进“…”</a><a href="/matches/9001?express=1">首战战报：保持 main 原有引导</a><a href="/agents/106/build?express=1">首次上手流程：直接展示预设选择</a></html>`
+  `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>版本导航与构建入口预览</title><style>body{background:#0c0c0c;color:#e8e8e8;font:16px/1.8 system-ui;max-width:760px;margin:48px auto;padding:0 24px}h1{font-size:24px}a{color:#e8e8e8;display:block;padding:12px 16px;margin:8px 0;border:1px solid #303030;border-radius:8px;text-decoration:none}a:hover,a:focus{border-color:#e04a2f}p{color:#aaa}</style><h1>版本导航与构建入口</h1><p>本地交互预览 · 模拟数据。草稿、保存和参赛选择只保留在本次预览，不发起真实对战。</p><a href="/agents/101">12 个版本：长提示词、平滑数字目录</a><a href="/agents/103">40 个版本：无滚动条目录，可用滚轮浏览</a><a href="/agents/107">1 个版本：不显示目录</a><a href="/agents/108">2 个版本：开始显示目录</a><a href="/agents/104">4 个版本：显示目录</a><a href="/agents/105">5 个版本：长提示词展开 / 两行预览</a><a href="/agents/101/build">已有版本构建器：首次直接显示预设，使用后收进“…”</a><a href="/agents/106/build">空白构建器：确认填入预设后，同场景入口收进“…”</a><a href="/matches/9001?express=1">首战战报：保持 main 原有引导</a><a href="/agents/106/build?express=1">首次上手流程：直接展示预设选择</a></html>`

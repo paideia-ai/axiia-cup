@@ -309,7 +309,7 @@ export function VersionList({
                         : version.prompt.replace(/\n\s*\n/g, '\n')}
                     </p>
 
-                    <div className='flex items-center gap-1.5'>
+                    <div className='relative flex items-center gap-1.5'>
                       <Button
                         type='button'
                         size='sm'
@@ -385,21 +385,24 @@ export function VersionList({
                           </Button>
                         )
                         : null}
+                      {copied === version.id
+                        ? (
+                          <span role='status' className='sr-only'>
+                            {tag} 已复制
+                          </span>
+                        )
+                        : null}
+                      {copyError === version.id
+                        ? (
+                          <p
+                            role='alert'
+                            className='absolute bottom-full left-0 z-10 mb-2 max-w-full rounded-md border border-(--border) bg-(--surface) px-3 py-2 text-xs text-(--warning) shadow-lg'
+                          >
+                            复制失败，请展开全文后手动复制。
+                          </p>
+                        )
+                        : null}
                     </div>
-                    {copied === version.id
-                      ? (
-                        <span role='status' className='sr-only'>
-                          {tag} 已复制
-                        </span>
-                      )
-                      : null}
-                    {copyError === version.id
-                      ? (
-                        <p role='alert' className='text-xs text-(--warning)'>
-                          复制失败，请展开全文后手动复制。
-                        </p>
-                      )
-                      : null}
                   </CardContent>
                 </Card>
               )

@@ -80,16 +80,16 @@ export const TwelveVersions: Story = {
 }
 
 export const BelowThreshold: Story = {
-  args: { count: 4 },
+  args: { count: 1 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(canvas.queryByRole('navigation', { name: '版本快速导航' }))
       .toBeNull()
-    await expect(canvas.getAllByTestId('version-card')).toHaveLength(4)
+    await expect(canvas.getAllByTestId('version-card')).toHaveLength(1)
   },
 }
 
-export const AtThreshold: Story = {
+export const FiveVersions: Story = {
   args: { count: 5 },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -208,5 +208,75 @@ export const CompactCards: Story = {
     )
     await expect(older.textContent).toBe(navigationVersions(5)[3].prompt)
     await expect(older).not.toHaveClass('line-clamp-2')
+  },
+}
+
+export const AtThreshold: Story = {
+  args: { count: 2 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const nav = within(canvas.getByRole('navigation', { name: '版本快速导航' }))
+    await expect(nav.getAllByRole('link')).toHaveLength(2)
+    for (const ordinal of [1, 2, 1]) {
+      const link = nav.getByRole('link', {
+        name: new RegExp(`跳转到 v${ordinal}(，|$)`),
+      })
+      await userEvent.click(link)
+      await waitFor(() =>
+        expect(link).toHaveAttribute('aria-current', 'location')
+      )
+    }
+  },
+}
+
+export const CopyFeedbackKeepsCardHeight: Story = {
+  args: { count: 2 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const card = canvasElement.querySelector<HTMLElement>('#version-10101')!
+    const copy = within(card).getByRole('button', { name: '复制 v1 提示词' })
+    await canvas.findByRole('button', { name: '展开 v1 全文' })
+    const height = card.getBoundingClientRect().height
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    try {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async () => {},
+        },
+      })
+      await userEvent.click(copy)
+      await expect(within(card).getByRole('status')).toHaveTextContent(
+        'v1 已复制',
+      )
+      await expect(card.getBoundingClientRect().height).toBe(height)
+      await waitFor(
+        () => expect(within(card).queryByRole('status')).toBeNull(),
+        { timeout: 2500 },
+      )
+      await expect(card.getBoundingClientRect().height).toBe(height)
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: () =>
+            Promise.reject(new Error('Clipboard permission denied')),
+        },
+      })
+      await userEvent.click(copy)
+      await expect(within(card).getByRole('alert')).toHaveTextContent(
+        '复制失败',
+      )
+      await expect(card.getBoundingClientRect().height).toBe(height)
+      await userEvent.click(
+        within(card).getByRole('button', { name: '用 v1 出战' }),
+      )
+      await expect(card.getBoundingClientRect().height).toBe(height)
+      await expect(card.querySelector('[data-version-prompt]')).toHaveClass(
+        'line-clamp-2',
+      )
+    } finally {
+      if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor)
+      else Reflect.deleteProperty(navigator, 'clipboard')
+    }
   },
 }

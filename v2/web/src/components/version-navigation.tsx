@@ -5,7 +5,7 @@ import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import type { AgentVersionDTO } from '../api/types'
 import { versionOrdinal, versionTag } from '../lib/version-label'
 
-export const VERSION_NAVIGATION_THRESHOLD = 5
+export const VERSION_NAVIGATION_THRESHOLD = 2
 export const versionAnchor = (id: number) => `version-${id}`
 
 // Fit card anchors into the actual page scroll range. Near the end of a short
