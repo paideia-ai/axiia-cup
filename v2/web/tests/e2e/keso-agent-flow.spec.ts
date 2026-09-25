@@ -79,13 +79,13 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
     await page.getByRole('link', { name: '新建版本' }).click()
   })
 
-  await test.step('那么 我进入构建器，「我的智能体」导航保持选中，并看到 AI 辅助与更多菜单', async () => {
+  await test.step('那么 我进入构建器，「我的智能体」导航保持选中，并立即看到两个辅助入口', async () => {
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
     await expect(
       page.getByRole('link', { name: '我的智能体', exact: true }),
     )
       .toHaveAttribute('aria-current', 'page')
-    await expect(page.getByRole('button', { name: '更多构建方式' }))
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible({ timeout: 30_000 })
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -198,8 +198,8 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   })
 
-  await test.step('那么 AI 辅助与更多菜单仍然可见，版本列表仍然不出现', async () => {
-    await expect(page.getByRole('button', { name: '更多构建方式' }))
+  await test.step('那么 两个辅助入口仍然可见，版本列表仍然不出现', async () => {
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()

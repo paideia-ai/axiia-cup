@@ -66,13 +66,13 @@ test.afterAll(async () => {
   await page?.close()
 })
 
-test('AI 辅助可见，预设策略从更多菜单打开', async () => {
+test('AI 辅助可见，预设策略首次使用后收进更多菜单', async () => {
   await test.step('假如 我创建一个甘龙智能体并从主页进入构建器', async () => {
     await expect(page).toHaveURL(new RegExp(`/agents/${agentID}/build$`))
   })
 
-  await test.step('那么 页面显示「更多构建方式」与「让 AI 帮你想策略」', async () => {
-    await expect(page.getByRole('button', { name: '更多构建方式' }))
+  await test.step('那么 首次使用前显示「选择预设策略」与「让 AI 帮你想策略」', async () => {
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
     await expect(page.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
@@ -100,8 +100,7 @@ test('AI 辅助可见，预设策略从更多菜单打开', async () => {
   })
 
   await test.step('当 我打开预设策略，逐题选择并填入工作区', async () => {
-    await page.getByRole('button', { name: '更多构建方式' }).click()
-    await page.getByRole('menuitem', { name: '选择预设策略' }).click()
+    await page.getByRole('button', { name: '选择预设策略' }).click()
     const dialog = page.getByRole('dialog', { name: '选择预设策略' })
     for (const label of MCQ_FIRST_OPTIONS) {
       await dialog.getByRole('button', { name: label, exact: true }).click()

@@ -32,6 +32,43 @@ function scrollTargets(root: HTMLElement | null) {
   }))
 }
 
+// Browser-native smooth scrolling slows down on long jumps. Keep version
+// navigation brief and let any new user input interrupt it immediately.
+function scrollToVersion(top: number): () => void {
+  const start = scrollY
+  const distance = top - start
+  if (
+    Math.abs(distance) < 1 ||
+    matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    globalThis.scrollTo({ top, behavior: 'instant' })
+    return () => {}
+  }
+  const duration = Math.min(260, Math.max(140, Math.abs(distance) * 0.18))
+  const started = performance.now()
+  const controller = new AbortController()
+  let frame = 0
+  const cancel = () => {
+    cancelAnimationFrame(frame)
+    controller.abort()
+  }
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+    globalThis.addEventListener(type, cancel, {
+      passive: true,
+      signal: controller.signal,
+    })
+  }
+  const step = (now: number) => {
+    const progress = Math.min(1, (now - started) / duration)
+    const eased = 1 - (1 - progress) ** 3
+    globalThis.scrollTo({ top: start + distance * eased, behavior: 'instant' })
+    if (progress < 1) frame = requestAnimationFrame(step)
+    else cancel()
+  }
+  frame = requestAnimationFrame(step)
+  return cancel
+}
+
 // The directory follows the same order as the cards, including a linked version
 // promoted to the top. It navigates the document; it never selects an entry.
 export function VersionNavigation({
@@ -42,6 +79,8 @@ export function VersionNavigation({
   const root = useRef<HTMLDivElement>(null)
   const navigation = useRef<HTMLElement>(null)
   const clickedID = useRef<number | null>(null)
+  const cancelScroll = useRef<() => void>(() => {})
+  useEffect(() => () => cancelScroll.current(), [])
   const [activeID, setActiveID] = useState<number | null>(null)
   const visible = versions.length >= VERSION_NAVIGATION_THRESHOLD
   const order = versions.map(({ id }) => id).join(',')
@@ -60,7 +99,7 @@ export function VersionNavigation({
         // vertically centered in the viewport, independent of list scrolling.
         nav.style.setProperty(
           '--version-directory-left',
-          `${bounds.left - 100}px`,
+          `${bounds.left - 116}px`,
         )
       }
       let current = targets[0]
@@ -142,21 +181,21 @@ export function VersionNavigation({
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
                     ) return
-                    const target = scrollTargets(root.current).find((
-                      { card },
-                    ) => Number(card.dataset.versionId) === version.id)
+                    const targets = scrollTargets(root.current)
+                    const target = targets.find(({ card }) =>
+                      Number(card.dataset.versionId) === version.id
+                    )
                     if (!target) return
                     event.preventDefault()
                     clickedID.current = version.id
-                    setActiveID(version.id)
+                    // Follow the actual reading position during smooth scroll.
+                    // Only a list with no scroll travel needs explicit selection.
+                    if (targets[0]?.top === targets.at(-1)?.top) {
+                      setActiveID(version.id)
+                    }
                     target.card.focus({ preventScroll: true })
-                    globalThis.scrollTo({
-                      top: target.top,
-                      behavior:
-                        matchMedia('(prefers-reduced-motion: reduce)').matches
-                          ? 'instant'
-                          : 'smooth',
-                    })
+                    cancelScroll.current()
+                    cancelScroll.current = scrollToVersion(target.top)
                   }}
                 >
                   <span aria-hidden='true' className='version-directory-number'>

@@ -874,7 +874,7 @@ main .text-\(--accent\) {
 
   .version-directory-nav {
     position: fixed;
-    width: 72px;
+    width: 88px;
     left: var(--version-directory-left);
     top: 50%;
     transform: translateY(-50%);
@@ -889,7 +889,7 @@ main .text-\(--accent\) {
   }
 
   .version-directory-link {
-    min-height: 24px;
+    min-height: 28px;
     padding: 0 2px;
     border-radius: 3px;
   }
@@ -900,26 +900,37 @@ main .text-\(--accent\) {
 
   .version-directory-number {
     display: block;
-    width: 24px;
+    width: 28px;
     flex-shrink: 0;
     text-align: right;
-    font-size: 11px;
+    font-size: 18px;
+    line-height: 26px;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--foreground-muted);
+    transform: scale(0.611111);
+    transform-origin: right center;
+    transition:
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 240ms ease-out;
   }
 
   .version-directory-link[aria-current='location'] .version-directory-number {
-    font-size: 15px;
-    font-weight: 700;
+    transform: scale(1);
     color: var(--foreground);
   }
 
   .version-directory-tick {
     display: block;
     flex-shrink: 0;
-    width: 18px;
-    height: 2px;
+    width: 44px;
+    height: 4px;
     background: var(--foreground-muted);
+    transform: scale(0.409091, 0.5);
+    transform-origin: left center;
+    transition:
+      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 240ms ease-out;
   }
 
   .version-directory-link:hover,
@@ -930,17 +941,23 @@ main .text-\(--accent\) {
 
   .version-directory-link:hover .version-directory-tick,
   .version-directory-link:focus-visible .version-directory-tick {
-    width: 28px;
+    transform: scale(0.636364, 0.75);
     background: var(--foreground);
   }
 
   .version-directory-link[aria-current='location'] .version-directory-tick {
-    width: 32px;
-    height: 3px;
+    transform: scale(1);
     background: var(--foreground);
   }
 
   .version-directory-card {
     scroll-margin-top: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-directory-number,
+  .version-directory-tick {
+    transition: none;
   }
 }
