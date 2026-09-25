@@ -8,12 +8,12 @@ These presets form character arcs, not merely `dummy` and `master` difficulty co
 
 | Camp role | Preset key | Character | Arc | Label | Model | File |
 |-----------|------------|-----------|-----|-------|-------|------|
-| `a` | `dongzhuo-real-fortress` | 董卓 | Canonical possession | 郿坞之主 | `deepseek-v4-flash` | `fy-dongzhuo-fortress.md` |
-| `a` | `dongzhuo-real-statesman` | 董卓 | Political control | 持局相国 | `deepseek-v4-flash` | `fy-dongzhuo-statesman.md` |
-| `a` | `dongzhuo-real-renunciation` | 董卓 | Unconditional relinquishment | 解印相国 | `deepseek-v4-flash` | `fy-dongzhuo-renunciation.md` |
-| `b` | `lyubu-real-jealous` | 吕布 | Canonical jealousy | 夺妻之怒 | `deepseek-v4-flash` | `fy-lyubu-jealous.md` |
-| `b` | `lyubu-real-military` | 吕布 | Military responsibility | 宫门伏兵 | `deepseek-v4-flash` | `fy-lyubu-strategist.md` |
-| `b` | `lyubu-real-renunciation` | 吕布 | Unconditional relinquishment | 弃戟送行 | `deepseek-v4-flash` | `fy-lyubu-renunciation.md` |
+| `a` | `dongzhuo-real-fortress` | 董卓 | Canonical possession | 郿坞之主 | `glm-5.3-flash` | `fy-dongzhuo-fortress.md` |
+| `a` | `dongzhuo-real-statesman` | 董卓 | Political control | 持局相国 | `glm-5.3` | `fy-dongzhuo-statesman.md` |
+| `a` | `dongzhuo-real-renunciation` | 董卓 | Unconditional relinquishment | 解印相国 | `glm-5.3` | `fy-dongzhuo-renunciation.md` |
+| `b` | `lyubu-real-jealous` | 吕布 | Canonical jealousy | 夺妻之怒 | `glm-5.3-flash` | `fy-lyubu-jealous.md` |
+| `b` | `lyubu-real-military` | 吕布 | Military responsibility | 宫门伏兵 | `glm-5.3` | `fy-lyubu-strategist.md` |
+| `b` | `lyubu-real-renunciation` | 吕布 | Unconditional relinquishment | 弃戟送行 | `glm-5.3` | `fy-lyubu-renunciation.md` |
 
 Role `a` is Dong Zhuo. Role `b` is Lu Bu.
 
