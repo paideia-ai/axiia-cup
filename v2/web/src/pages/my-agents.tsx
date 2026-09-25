@@ -16,6 +16,7 @@ import { subscribeAgentsChanged } from '../lib/agent-events'
 import { usePageQuery } from '../lib/use-page-query'
 import { catalogQuery, inventoryQuery } from '../lib/navigation-queries'
 import { tm } from '../testmode/mark'
+import { rolesForSide, scenarioModule } from '../scenarios'
 
 export function MyAgentsPage() {
   const location = useLocation()
@@ -286,6 +287,15 @@ function ScenarioGroup({
           }`}
         >
           {sides.map(([side, role, description], index) => {
+            const roleDescription = rolesForSide(
+              scenarioModule(scenario.id),
+              side,
+            )
+              .reduce(
+                (text, { name }) =>
+                  text.replaceAll(`。${name}：`, `。\n${name}：`),
+                description,
+              )
             const agents = agentsOf(side).filter((agent) => !agent.isArchived)
             const oppositeCount = agentsOf(side === 'a' ? 'b' : 'a')
               .filter((agent) => !agent.isArchived).length
@@ -329,8 +339,8 @@ function ScenarioGroup({
                     </h3>
                     {description
                       ? (
-                        <p className='mt-0.5 text-xs leading-5 text-(--foreground-subtle)'>
-                          {description}
+                        <p className='mt-0.5 whitespace-pre-line text-xs leading-5 text-(--foreground-subtle)'>
+                          {roleDescription}
                         </p>
                       )
                       : null}
