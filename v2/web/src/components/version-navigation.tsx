@@ -31,19 +31,14 @@ export function VersionNavigation({
         root.current?.querySelectorAll<HTMLElement>('[data-version-id]') ?? [],
       )
       const nav = navigation.current
-      const horizontal = !nav ||
-        getComputedStyle(nav).flexDirection !== 'column'
       const bounds = root.current?.getBoundingClientRect()
       if (nav && bounds) {
-        // Keep a long directory inside the visible portion of the list, even
-        // near its bottom where the sticky element meets its containing block.
-        nav.style.maxHeight = horizontal ? '' : `${
-          Math.max(
-            44,
-            Math.min(innerHeight - 24, bounds.bottom) -
-              Math.max(64, bounds.top),
-          )
-        }px`
+        // Anchor to the content's outer gutter while CSS keeps the rail
+        // vertically centered in the viewport, independent of list scrolling.
+        nav.style.setProperty(
+          '--version-directory-left',
+          `${bounds.left - 72}px`,
+        )
       }
       const top = cards[0]
         ? Number.parseFloat(getComputedStyle(cards[0]).scrollMarginTop) + 8

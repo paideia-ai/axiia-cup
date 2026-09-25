@@ -872,13 +872,15 @@ main .text-\(--accent\) {
   }
 
   .version-directory-nav {
+    position: fixed;
     width: 44px;
-    margin-left: -72px;
-    top: 64px;
+    left: var(--version-directory-left);
+    top: 50%;
+    transform: translateY(-50%);
     flex-direction: column;
     gap: 0;
     background: transparent;
-    max-height: calc(100dvh - 88px);
+    max-height: calc(100dvh - 128px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2px;
