@@ -13,6 +13,7 @@ import {
   versionTag,
 } from '../lib/version-label'
 import { tm } from '../testmode/mark'
+import { versionAnchor, VersionNavigation } from './version-navigation'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent } from './ui/card'
@@ -54,7 +55,7 @@ export function VersionList({
   const [copyError, setCopyError] = useState<number | null>(null)
   const promptNodes = useRef(new Map<number, HTMLParagraphElement>())
 
-  // Expand is only offered when the current three-line preview actually clips.
+  // Expand is only offered when the current two-line preview actually clips.
   // Re-measure on responsive layout and font changes, not just on first paint.
   useEffect(() => {
     let active = true
@@ -68,7 +69,7 @@ export function VersionList({
         const lineHeight = Number.isFinite(parsedLineHeight)
           ? parsedLineHeight
           : fontSize * 1.75
-        next[id] = node.scrollHeight > Math.ceil(lineHeight * 3) + 1
+        next[id] = node.scrollHeight > Math.ceil(lineHeight * 2) + 1
       }
       setOverflows((current) => {
         const currentKeys = Object.keys(current)
@@ -128,7 +129,7 @@ export function VersionList({
   const toggleExpanded = (versionID: number) => {
     setExpanded((current) => ({
       ...current,
-      [versionID]: !current[versionID],
+      [versionID]: !(current[versionID] ?? versionID === sorted[0]?.id),
     }))
   }
 
@@ -164,226 +165,250 @@ export function VersionList({
             </p>
           </div>
         )
-        : displayed.map((version) => {
-          const unavailable = detailsMissing?.(version.id) && !version.prompt
-          const tag = versionTag(version, sorted)
-          return (
-            <Card
-              key={version.id}
-              data-testid='version-card'
-              className={version.id === selectedVersionID || version.isEntry
-                ? 'border-[rgba(224,74,47,0.48)] shadow-none'
-                : 'shadow-none'}
-              {...tm('E.version-card')}
-            >
-              <CardContent className='space-y-3 pt-5'>
-                <div className='flex items-center gap-3'>
-                  <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1'>
-                    <span
-                      className='text-base font-bold text-(--foreground)'
-                      {...tm('E.version-tag')}
-                    >
-                      {tag}
-                    </span>
-                    {version.id === selectedVersionID && (
-                      <Badge tone='info'>正在查看</Badge>
-                    )}
-                    {!detailsMissing?.(version.id)
-                      ? (
-                        <>
-                          <span
-                            className='font-mono text-xs text-(--foreground-muted)'
-                            {...tm('E.version-id')}
-                          >
-                            #{version.id}
-                          </span>
-                          <Badge tone='info' {...tm('E.version-model-badge')}>
-                            {version.modelID}
-                          </Badge>
-                          <span className='inline-flex items-center gap-3 whitespace-nowrap text-xs text-(--foreground-muted)'>
-                            <Link
-                              to={`/matches?version=${version.id}`}
-                              aria-label={`${
-                                recordCopy(version)
-                              }，查看 ${tag} 的对局记录`}
-                              className='inline-flex min-h-6 items-center rounded-sm text-(--foreground-subtle) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
-                              data-testid='version-record'
-                              {...tm('E.version-record')}
-                            >
-                              {recordCopy(version)}
-                            </Link>
-                            {savedAtCopy(version)
-                              ? (
-                                <span
-                                  data-testid='version-time'
-                                  {...tm('E.version-time')}
+        : (
+          <VersionNavigation versions={displayed}>
+            {displayed.map((version) => {
+              const unavailable = detailsMissing?.(version.id) &&
+                !version.prompt
+              const tag = versionTag(version, sorted)
+              const isExpanded = expanded[version.id] ??
+                version.id === sorted[0]?.id
+              return (
+                <Card
+                  key={version.id}
+                  data-testid='version-card'
+                  id={versionAnchor(version.id)}
+                  data-version-id={version.id}
+                  tabIndex={-1}
+                  className={version.id === selectedVersionID || version.isEntry
+                    ? 'version-directory-card border-[rgba(224,74,47,0.48)] shadow-none'
+                    : 'version-directory-card shadow-none'}
+                  {...tm('E.version-card')}
+                >
+                  <CardContent className='space-y-2 px-4 py-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1'>
+                        <span
+                          className='text-sm font-bold text-(--foreground)'
+                          {...tm('E.version-tag')}
+                        >
+                          {tag}
+                        </span>
+                        {version.id === selectedVersionID && (
+                          <Badge tone='info'>正在查看</Badge>
+                        )}
+                        {!detailsMissing?.(version.id)
+                          ? (
+                            <>
+                              <span
+                                className='font-mono text-xs text-(--foreground-muted)'
+                                {...tm('E.version-id')}
+                              >
+                                #{version.id}
+                              </span>
+                              <Badge
+                                tone='info'
+                                {...tm('E.version-model-badge')}
+                              >
+                                {version.modelID}
+                              </Badge>
+                              <span className='inline-flex items-center gap-3 whitespace-nowrap text-xs text-(--foreground-muted)'>
+                                <Link
+                                  to={`/matches?version=${version.id}`}
+                                  aria-label={`${
+                                    recordCopy(version)
+                                  }，查看 ${tag} 的对局记录`}
+                                  className='inline-flex min-h-6 items-center rounded-sm text-(--foreground-subtle) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
+                                  data-testid='version-record'
+                                  {...tm('E.version-record')}
                                 >
-                                  {savedAtCopy(version)}
-                                </span>
-                              )
-                              : null}
-                          </span>
-                        </>
+                                  {recordCopy(version)}
+                                </Link>
+                                {savedAtCopy(version)
+                                  ? (
+                                    <span
+                                      data-testid='version-time'
+                                      {...tm('E.version-time')}
+                                    >
+                                      {savedAtCopy(version)}
+                                    </span>
+                                  )
+                                  : null}
+                              </span>
+                            </>
+                          )
+                          : null}
+                      </div>
+                      <span
+                        className='inline-flex shrink-0'
+                        {...(version.isEntry ? tm('E.entry-badge') : {})}
+                      >
+                        <Button
+                          type='button'
+                          size='sm'
+                          variant='ghost'
+                          className={`h-11 w-11 shrink-0 cursor-pointer rounded-full border p-0 md:h-8 md:w-8 ${
+                            version.isEntry
+                              ? 'border-(--accent) bg-(--accent) text-white hover:bg-(--accent-hover)'
+                              : 'border-(--border) text-(--foreground-subtle) hover:border-(--foreground-muted)'
+                          }`}
+                          aria-label={`将 ${tag} 设为${
+                            roleContext
+                              ? roleIdentity({
+                                ...roleContext,
+                                options: version.options,
+                                role: version.role,
+                                fallback: sideName,
+                              }).name
+                              : sideName ?? ''
+                          }参赛版本`}
+                          aria-pressed={version.isEntry}
+                          title={version.isEntry
+                            ? '已用此版本参赛'
+                            : pendingEntryID === version.id
+                            ? '正在设置参赛版本'
+                            : '用此版本参赛'}
+                          disabled={entryBusy}
+                          aria-busy={pendingEntryID === version.id || undefined}
+                          onClick={() => {
+                            if (!version.isEntry) onSetEntry(version.id)
+                          }}
+                          {...tm('E.set-entry-button')}
+                        >
+                          <Check aria-hidden='true' className='h-4 w-4' />
+                        </Button>
+                      </span>
+                    </div>
+
+                    {!detailsMissing?.(version.id) && version.note?.trim()
+                      ? (
+                        <p
+                          className='break-words text-xs text-(--foreground-subtle)'
+                          {...tm('E.version-note')}
+                        >
+                          备注：{version.note.trim()}
+                        </p>
                       )
                       : null}
-                  </div>
-                  <span
-                    className='inline-flex shrink-0'
-                    {...(version.isEntry ? tm('E.entry-badge') : {})}
-                  >
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='ghost'
-                      className={`h-11 w-11 shrink-0 cursor-pointer rounded-full border p-0 md:h-9 md:w-9 ${
-                        version.isEntry
-                          ? 'border-(--accent) bg-(--accent) text-white hover:bg-(--accent-hover)'
-                          : 'border-(--border) text-(--foreground-subtle) hover:border-(--foreground-muted)'
-                      }`}
-                      aria-label={`将 ${tag} 设为${
-                        roleContext
-                          ? roleIdentity({
-                            ...roleContext,
-                            options: version.options,
-                            role: version.role,
-                            fallback: sideName,
-                          }).name
-                          : sideName ?? ''
-                      }参赛版本`}
-                      aria-pressed={version.isEntry}
-                      title={version.isEntry
-                        ? '已用此版本参赛'
-                        : pendingEntryID === version.id
-                        ? '正在设置参赛版本'
-                        : '用此版本参赛'}
-                      disabled={entryBusy}
-                      aria-busy={pendingEntryID === version.id || undefined}
-                      onClick={() => {
-                        if (!version.isEntry) onSetEntry(version.id)
-                      }}
-                      {...tm('E.set-entry-button')}
-                    >
-                      <Check aria-hidden='true' className='h-4 w-4' />
-                    </Button>
-                  </span>
-                </div>
 
-                {!detailsMissing?.(version.id) && version.note?.trim()
-                  ? (
                     <p
-                      className='break-words text-xs text-(--foreground-subtle)'
-                      {...tm('E.version-note')}
-                    >
-                      备注：{version.note.trim()}
-                    </p>
-                  )
-                  : null}
-
-                <p
-                  data-version-prompt
-                  ref={(node) => {
-                    if (node) promptNodes.current.set(version.id, node)
-                    else promptNodes.current.delete(version.id)
-                  }}
-                  className={`whitespace-pre-wrap wrap-anywhere text-[15px] leading-[1.85] text-[#dedede] ${
-                    expanded[version.id] ? '' : 'line-clamp-3'
-                  }`}
-                  {...tm('E.version-prompt')}
-                >
-                  {unavailable ? '列表未提供此版本正文。' : version.prompt}
-                </p>
-
-                <div className='flex items-center gap-1.5'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    variant='ghost'
-                    className='h-11 w-11 shrink-0 cursor-pointer p-0 md:h-9 md:w-9'
-                    aria-label={`复制 ${tag} 提示词`}
-                    title={copied === version.id ? '已复制' : '复制提示词'}
-                    disabled={unavailable}
-                    onClick={() => void copyPrompt(version)}
-                    {...tm('E.copy-button')}
-                  >
-                    {copied === version.id
-                      ? (
-                        <Check
-                          aria-hidden='true'
-                          className='h-4 w-4 text-(--success)'
-                        />
-                      )
-                      : <Copy aria-hidden='true' className='h-4 w-4' />}
-                  </Button>
-                  <span
-                    className='inline-flex'
-                    {...(fieldMarker ? { 'data-tm': fieldMarker } : {})}
-                  >
-                    <Button
-                      type='button'
-                      size='sm'
-                      variant='secondary'
-                      className='h-11 cursor-pointer gap-1.5 px-3 md:h-9'
-                      aria-label={`用 ${tag} 出战`}
-                      disabled={unavailable}
-                      onPointerEnter={playButtonHover}
-                      onClick={() => {
-                        unlockAudio()
-                        playSound('click')
-                        onField(version)
+                      data-version-prompt
+                      ref={(node) => {
+                        if (node) promptNodes.current.set(version.id, node)
+                        else promptNodes.current.delete(version.id)
                       }}
-                      {...tm('E.field-button')}
+                      className={`whitespace-pre-wrap wrap-anywhere text-[13px] leading-[1.65] text-[#dedede] ${
+                        isExpanded ? '' : 'line-clamp-2'
+                      }`}
+                      {...tm('E.version-prompt')}
                     >
-                      <Sword aria-hidden='true' className='h-4 w-4' />
-                      出战
-                    </Button>
-                  </span>
-                  {overflows[version.id]
-                    ? (
+                      {unavailable
+                        ? '列表未提供此版本正文。'
+                        : isExpanded
+                        ? version.prompt
+                        : version.prompt.replace(/\n\s*\n/g, '\n')}
+                    </p>
+
+                    <div className='relative flex items-center gap-1.5'>
                       <Button
                         type='button'
                         size='sm'
                         variant='ghost'
-                        className='ml-auto h-11 w-11 shrink-0 cursor-pointer p-0 md:h-9 md:w-9'
-                        aria-expanded={!!expanded[version.id]}
-                        aria-label={expanded[version.id]
-                          ? `收起 ${tag} 全文`
-                          : `展开 ${tag} 全文`}
-                        title={expanded[version.id] ? '收起全文' : '展开全文'}
+                        className='h-11 w-11 shrink-0 cursor-pointer p-0 md:h-8 md:w-8'
+                        aria-label={`复制 ${tag} 提示词`}
+                        title={copied === version.id ? '已复制' : '复制提示词'}
                         disabled={unavailable}
-                        onClick={() => toggleExpanded(version.id)}
-                        {...tm('E.expand-button')}
+                        onClick={() => void copyPrompt(version)}
+                        {...tm('E.copy-button')}
                       >
-                        {expanded[version.id]
+                        {copied === version.id
                           ? (
-                            <ChevronUp
+                            <Check
                               aria-hidden='true'
-                              className='h-4 w-4'
+                              className='h-4 w-4 text-(--success)'
                             />
                           )
-                          : (
-                            <ChevronDown
-                              aria-hidden='true'
-                              className='h-4 w-4'
-                            />
-                          )}
+                          : <Copy aria-hidden='true' className='h-4 w-4' />}
                       </Button>
-                    )
-                    : null}
-                </div>
-                {copied === version.id
-                  ? <span role='status' className='sr-only'>{tag} 已复制</span>
-                  : null}
-                {copyError === version.id
-                  ? (
-                    <p role='alert' className='text-xs text-(--warning)'>
-                      复制失败，请展开全文后手动复制。
-                    </p>
-                  )
-                  : null}
-              </CardContent>
-            </Card>
-          )
-        })}
+                      <span
+                        className='inline-flex'
+                        {...(fieldMarker ? { 'data-tm': fieldMarker } : {})}
+                      >
+                        <Button
+                          type='button'
+                          size='sm'
+                          variant='secondary'
+                          className='h-11 cursor-pointer gap-1.5 px-3 md:h-8'
+                          aria-label={`用 ${tag} 出战`}
+                          disabled={unavailable}
+                          onPointerEnter={playButtonHover}
+                          onClick={() => {
+                            unlockAudio()
+                            playSound('click')
+                            onField(version)
+                          }}
+                          {...tm('E.field-button')}
+                        >
+                          <Sword aria-hidden='true' className='h-4 w-4' />
+                          出战
+                        </Button>
+                      </span>
+                      {overflows[version.id]
+                        ? (
+                          <Button
+                            type='button'
+                            size='sm'
+                            variant='ghost'
+                            className='ml-auto h-11 w-11 shrink-0 cursor-pointer p-0 md:h-8 md:w-8'
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded
+                              ? `收起 ${tag} 全文`
+                              : `展开 ${tag} 全文`}
+                            title={isExpanded ? '收起全文' : '展开全文'}
+                            disabled={unavailable}
+                            onClick={() => toggleExpanded(version.id)}
+                            {...tm('E.expand-button')}
+                          >
+                            {isExpanded
+                              ? (
+                                <ChevronUp
+                                  aria-hidden='true'
+                                  className='h-4 w-4'
+                                />
+                              )
+                              : (
+                                <ChevronDown
+                                  aria-hidden='true'
+                                  className='h-4 w-4'
+                                />
+                              )}
+                          </Button>
+                        )
+                        : null}
+                      {copied === version.id
+                        ? (
+                          <span role='status' className='sr-only'>
+                            {tag} 已复制
+                          </span>
+                        )
+                        : null}
+                      {copyError === version.id
+                        ? (
+                          <p
+                            role='alert'
+                            className='absolute bottom-full left-0 z-10 mb-2 max-w-full rounded-md border border-(--border) bg-(--surface) px-3 py-2 text-xs text-(--warning) shadow-lg'
+                          >
+                            复制失败，请展开全文后手动复制。
+                          </p>
+                        )
+                        : null}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </VersionNavigation>
+        )}
     </section>
   )
 }

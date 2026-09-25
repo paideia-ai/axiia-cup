@@ -1,5 +1,12 @@
 import { Check, Copy, X } from 'lucide-react'
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   assembleDeck,
@@ -7,12 +14,16 @@ import {
   deckComplete,
   type DeckSelections,
 } from '../lib/deck'
+import { usePresetUsage } from '../lib/preset-usage'
 import { promptLength } from '../lib/prompt-length'
 import type { CreationTool } from '../lib/first-battle'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
+import { StrategyMoreMenu } from './strategy-more-menu'
 
 interface InitModesProps {
+  accountID?: string
+  scenarioID: string
   deck: Deck | null
   presetRoleKey?: string | null
   presetRoles?: { key: string; name: string; deck: Deck }[]
@@ -25,10 +36,11 @@ interface InitModesProps {
   onDirect?: () => void
 }
 
-// Keso 2026-09-09: the builder stays visually quiet. These two optional
-// helpers are always discoverable, while their detailed workflows live in
-// dialogs instead of competing with the primary strategy textarea.
+// The first battle keeps its guided choices. In the regular workspace,
+// presets move into More after the first confirmed fill in this scenario.
 export function InitModes({
+  accountID,
+  scenarioID,
   deck,
   presetRoleKey = null,
   presetRoles = [],
@@ -40,9 +52,12 @@ export function InitModes({
   initialTool = null,
   onDirect,
 }: InitModesProps) {
+  const { used: presetsUsed, markUsed } = usePresetUsage(accountID, scenarioID)
   const [open, setOpen] = useState<'mcq' | 'meta' | null>(
     !express && initialTool !== 'raw' ? initialTool : null,
   )
+  const presetTrigger = useRef<HTMLButtonElement>(null)
+  const returnToPreset = useCallback(() => presetTrigger.current, [])
   const [tool, setTool] = useState<CreationTool>(initialTool ?? 'mcq')
 
   const [previewRoleKey, setPreviewRoleKey] = useState(presetRoleKey)
@@ -73,6 +88,7 @@ export function InitModes({
   const fillPreset = (text: string) => {
     if (previewRole) onFill(text, 'mcq', previewRole.key)
     else onFill(text, 'mcq')
+    markUsed()
   }
 
   useEffect(() => {
@@ -124,6 +140,7 @@ export function InitModes({
                     promptUnitLimit={promptUnitLimit}
                     onFill={(text) => {
                       onFill(text, 'mcq')
+                      markUsed()
                       setTool('raw')
                       onDirect?.()
                     }}
@@ -162,28 +179,45 @@ export function InitModes({
           size='sm'
           variant='ghost'
           className='h-11 md:h-8'
-          onClick={() => {
-            setPreviewRoleKey(presetRoleKey)
-            setOpen('mcq')
-          }}
-          {...tm('E.init-tab-mcq')}
-        >
-          选择预设策略
-        </Button>
-        <Button
-          size='sm'
-          variant='ghost'
-          className='h-11 md:h-8'
           onClick={() => setOpen('meta')}
           {...tm('E.init-tab-meta')}
         >
           让 AI 帮你想策略
         </Button>
+        {presetsUsed
+          ? (
+            <StrategyMoreMenu
+              triggerRef={presetTrigger}
+              onPresets={() => {
+                setPreviewRoleKey(presetRoleKey)
+                setOpen('mcq')
+              }}
+            />
+          )
+          : (
+            <Button
+              ref={presetTrigger}
+              size='sm'
+              variant='ghost'
+              className='h-11 md:h-8'
+              onClick={() => {
+                setPreviewRoleKey(presetRoleKey)
+                setOpen('mcq')
+              }}
+              {...tm('E.init-tab-mcq')}
+            >
+              选择预设策略
+            </Button>
+          )}
       </div>
 
       {open === 'mcq'
         ? (
-          <ToolDialog title='选择预设策略' onClose={() => setOpen(null)}>
+          <ToolDialog
+            title='选择预设策略'
+            onClose={() => setOpen(null)}
+            returnFocus={returnToPreset}
+          >
             {rolePicker}
             {previewDeck
               ? (
@@ -458,10 +492,12 @@ function ToolDialog({
   title,
   onClose,
   children,
+  returnFocus,
 }: {
   title: string
   onClose: () => void
   children: ReactNode
+  returnFocus?: () => HTMLElement | null
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleID = useId()
@@ -478,9 +514,10 @@ function ToolDialog({
     return () => {
       dialog.close()
       document.body.style.overflow = previousOverflow
-      if (opener?.isConnected) opener.focus()
+      const target = returnFocus?.() ?? opener
+      if (target?.isConnected) target.focus()
     }
-  }, [])
+  }, [returnFocus])
 
   return (
     <dialog

@@ -1167,6 +1167,8 @@ export function BuilderPage() {
               key={`${scenarioID}:${side}:${roleKey ?? ''}:${
                 requestedTool ?? (express ? 'express' : 'default')
               }`}
+              accountID={auth?.account?.id}
+              scenarioID={scenarioID}
               express={express}
               initialTool={requestedTool}
               onDirect={focusPrompt}

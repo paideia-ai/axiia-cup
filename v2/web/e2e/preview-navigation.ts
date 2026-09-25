@@ -1,3 +1,7 @@
+import {
+  productMeetingAPI,
+  productMeetingLanding,
+} from './product-meeting-preview.ts'
 import { extname, resolve, sep } from 'node:path'
 import {
   config,
@@ -15,12 +19,13 @@ import {
   previewAgent,
 } from '../src/testing/scenario-agent-fixtures.ts'
 
+const productMeeting = Deno.args.includes('--product-meeting')
 const agentCreation = Deno.args.includes('--agent-creation')
 const scenarioAgents = agentCreation || Deno.args.includes('--scenario-agents')
 const root = resolve('build/client')
 const html = (await Deno.readTextFile(`${root}/index.html`)).replace(
   '</body>',
-  '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">交互预览 · 模拟数据 · 无需登录 · 不影响真实账号</aside></body>',
+  '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">本地交互预览 · 模拟数据 · 不影响真实账号</aside></body>',
 )
 const mine = structuredClone(inventory)
 mine.scenarios[0].sides.b = []
@@ -29,6 +34,10 @@ const sessions = new Map<string, typeof agentPreviewInventory>()
 let nextAgentID = 2000
 
 async function api(request: Request, path: string): Promise<Response> {
+  if (productMeeting) {
+    const response = await productMeetingAPI(request, path)
+    if (response) return response
+  }
   if (agentCreation) {
     const cookie = /preview-session=([a-z0-9-]+)/.exec(
       request.headers.get('cookie') ?? '',
@@ -233,11 +242,22 @@ const contentTypes: Record<string, string> = {
 
 Deno.serve(
   {
-    hostname: '127.0.0.1',
-    port: agentCreation ? 5188 : scenarioAgents ? 5178 : 5177,
+    hostname: productMeeting ? '0.0.0.0' : '127.0.0.1',
+    port: productMeeting
+      ? 5237
+      : agentCreation
+      ? 5188
+      : scenarioAgents
+      ? 5178
+      : 5177,
   },
   async (request) => {
     const path = new URL(request.url).pathname
+    if (productMeeting && path === '/preview') {
+      return new Response(productMeetingLanding, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      })
+    }
     if (path.startsWith('/v1/')) return api(request, path.slice(3))
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return new Response('Method not allowed', { status: 405 })

@@ -117,6 +117,8 @@ export const BlankWorkspaceWithSecondaryHelpers: Story = {
       .toBeVisible()
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
+    await expect(canvas.queryByRole('button', { name: '更多构建方式' }))
+      .toBeNull()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
@@ -139,11 +141,22 @@ export const HelpersRemainAfterVersions: Story = {
     await expect(input).toHaveValue(v2.prompt)
     await expect(canvas.getByRole('button', { name: '选择预设策略' }))
       .toBeVisible()
+    await expect(canvas.queryByRole('button', { name: '更多构建方式' }))
+      .toBeNull()
     await expect(canvas.getByRole('button', { name: '让 AI 帮你想策略' }))
       .toBeVisible()
     await expect(canvas.queryByText('版本（2）')).toBeNull()
     await expect(canvas.queryByTestId('version-card')).toBeNull()
     await expect(canvas.getByRole('button', { name: '版本备注' })).toBeVisible()
+    const preset = canvas.getByRole('button', { name: '选择预设策略' })
+    await userEvent.click(preset)
+    const dialog = await canvas.findByRole('dialog', { name: '选择预设策略' })
+    await userEvent.click(
+      within(dialog).getByRole('button', { name: '关闭弹窗' }),
+    )
+    await waitFor(() => expect(preset).toHaveFocus())
+    await expect(preset).toBeVisible()
+    await expect(input).toHaveValue(v2.prompt)
   },
 }
 
