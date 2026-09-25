@@ -41,14 +41,17 @@ export function StrategyMoreMenu({ triggerRef, onPresets }: Props) {
           className='z-[60]'
         >
           <Menu.Popup
-            className={cn(dropdownPopupClassName, 'w-56')}
+            className={cn(dropdownPopupClassName, 'w-44 p-1')}
             finalFocus={() => openingDialog.current ? false : trigger.current}
           >
             <div className={dropdownScrollClassName}>
               <Menu.Item
                 render={<button type='button' />}
                 nativeButton
-                className={cn(dropdownItemClassName, 'w-full')}
+                className={cn(
+                  dropdownItemClassName,
+                  'w-full gap-2 px-2 py-1.5 text-[13px] md:min-h-8',
+                )}
                 onClick={() => {
                   openingDialog.current = true
                   onPresets()
