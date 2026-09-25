@@ -1,3 +1,4 @@
+import { roleIdentity } from '../lib/role-identity'
 import { navigationCache } from '../lib/navigation-cache'
 import { draftQuery, versionsQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
@@ -1108,11 +1109,14 @@ export function BuilderPage() {
   // Helpers remain available for every draft/version. Persona-specific decks
   // still key off the selected role, so changing role resets only the helper.
   const deck = deckFor(scenarioID, side, roleKey)
-  const sideDisplayName = scenario
-    ? (side === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName)
-    : side === 'a'
-    ? '甲方'
-    : '乙方'
+  const sideDisplayName = roleIdentity({
+    scenarioID,
+    side,
+    roleKey,
+    fallback: side === 'a'
+      ? scenario?.summary.sideAName
+      : scenario?.summary.sideBName,
+  }).name
   // #68 只读角色模板：内容由场景模块供稿（并行编写中），缺席走通用兜底。
   const roleTemplate = roleModule?.roleTemplates?.[side] ??
     '该场景的角色模板文案整理中——比赛时系统仍会自动为你合并官方角色模板，无需在提示词里重复编写。'

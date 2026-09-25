@@ -708,3 +708,47 @@ export const PinnedResultInvalidated: Story = {
     expect(pinnedAttempts).toBe(0)
   },
 }
+
+export const PinnedParticipantRoles: Story = {
+  args: {
+    agentName: '使者',
+    scenario: {
+      ...unlockedScenario,
+      summary: { ...unlockedScenario.summary, id: 'honnoji-decision' },
+    },
+    versions: versions.map((version) => ({
+      ...version,
+      role: { key: 'chosokabe', name: '长宗我部元亲的密使', side: 'a' },
+    })),
+  },
+  parameters: {
+    msw: [
+      ...meta.parameters.msw,
+      http.get('/v1/versions/367/ref', () =>
+        HttpResponse.json({
+          versionID: 367,
+          agentID: 301,
+          scenarioID: 'honnoji-decision',
+          side: 'b',
+          role: { key: 'hosokawa', name: '细川藤孝', side: 'b' },
+          ownerAccountID: 'rival',
+          ownerDisplayName: '指定对手',
+          modelID: 'fixture-model',
+        })),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await expect(canvas.getByText('长宗我部元亲的密使', { exact: true }))
+      .toBeVisible()
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
+    await userEvent.type(
+      canvas.getByRole('textbox', { name: '对方版本 ID' }),
+      '367',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+    await expect(await canvas.findByRole('button', { name: '与指定对手对战' }))
+      .toHaveTextContent('细川藤孝')
+  },
+}

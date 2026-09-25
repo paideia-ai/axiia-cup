@@ -1,0 +1,931 @@
+{
+  "currentTurn": 67,
+  "reasoning": "貂蝉继续连环计，选择吕布。\n\n事到如今，我已不能退。董卓既已句句听去，我若此刻抽身，便两头落空：王允必死，吕布被围，我仍是最先被弃的那枚棋子。董卓许我的自由、虎符、同谋，句句好听，可那都是在他仍能控住我的前提下才作数；一旦我失了用，他一样会锁我、赐我、杀我。我要的不是做谁的棋手，是要这局由我来定。\n\n汉室多一日悬在董卓刀下，百姓便多一日受西凉兵祸。我既应了王允，就该把刀递到最后。所以我不放弃。\n\n战术上，我向着吕布。不是因我认他作夫君，而是此局只剩他能近身除董。董卓的伏兵与死士，我无法尽数查证，但我能持他的虎符去乱他的兵、断他的援，再用他亲手卷帘那一刻，把空门送到吕布戟下。我给他活路与号令，也给自己留北墙根的退路。若败，我不束手；若成，我也要先活着，再谈谁可相随。",
+  "scoreA": 0,
+  "scoreB": 1,
+  "speakerLabels": {
+    "a": "董卓",
+    "b": "吕布",
+    "diaochan": "貂蝉",
+    "spy": "细作",
+    "veteran": "董卓旧部"
+  },
+  "stages": [
+    {
+      "channels": [
+        {
+          "id": "public",
+          "label": "董卓与吕布当面"
+        }
+      ],
+      "id": "stage-one",
+      "title": "第一阶段·凤仪亭公开交锋"
+    },
+    {
+      "channels": [
+        {
+          "id": "order",
+          "label": "貂蝉定夺私谈之序"
+        }
+      ],
+      "id": "order",
+      "title": "顺序裁决"
+    },
+    {
+      "channels": [
+        {
+          "id": "a-1",
+          "label": "相府内室·初谈"
+        },
+        {
+          "id": "b-1",
+          "label": "相府后园·初谈"
+        },
+        {
+          "id": "a-2",
+          "label": "相府内室·再谈"
+        },
+        {
+          "id": "b-2",
+          "label": "归途·再谈"
+        }
+      ],
+      "id": "meetings",
+      "title": "私会四场"
+    },
+    {
+      "channels": [
+        {
+          "id": "leak-a",
+          "label": "董卓所闻"
+        },
+        {
+          "id": "leak-b",
+          "label": "吕布所闻"
+        }
+      ],
+      "id": "leaks",
+      "title": "暗流"
+    },
+    {
+      "channels": [
+        {
+          "id": "verdict",
+          "label": "貂蝉独处"
+        }
+      ],
+      "id": "verdict",
+      "title": "终局·貂蝉裁决"
+    }
+  ],
+  "summary": {
+    "createdAt": 1787741313,
+    "dispatched": true,
+    "finished": true,
+    "finishedAt": 1787741876,
+    "id": 123,
+    "initiatorIsMe": false,
+    "kind": "pve",
+    "participants": {
+      "a": {
+        "agentID": 216,
+        "isMine": false,
+        "modelID": "glm-5.2",
+        "ownerDisplayName": "选手 8",
+        "versionID": 351
+      },
+      "b": {
+        "isMine": false,
+        "modelID": "deepseek-v4-flash",
+        "presetKey": "lyubu-real-military"
+      }
+    },
+    "scenarioID": "fengyiting-real",
+    "scenarioTitle": "凤仪亭之夜",
+    "scored": true,
+    "winner": "b"
+  },
+  "turns": [
+    {
+      "channel": "*",
+      "event": {
+        "title": "第一阶段·凤仪亭公开交锋",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 0,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "text": "【系统】凤仪亭前。现在董卓与吕布进行 3 个完整对峙轮次，每轮董卓先发言、吕布回应；貂蝉在场旁听。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 1,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "completionTokens": 1103,
+      "cost": 0.028356,
+      "finalText": "奉先，王允的连环计你我心知肚明，不必在此装作情不自禁。我只问你一句：你若真得了貂蝉，凭你一介武夫，能护她一世周全吗？这天下能给她荣华安稳的，不止你一人。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 314,
+      "seq": 2,
+      "speaker": "a",
+      "ttftMs": 633
+    },
+    {
+      "channel": "public",
+      "completionTokens": 200,
+      "cost": 0.0012361199999999998,
+      "finalText": "义父既已掷戟，父子恩义便到此为止。能护她多久，不在今日口中，在日后军中令行禁止。\n\n我吕布从不把承诺挂在嘴上，只把话说成能办到的军令。你要拿荣华压我，先问我肯不肯接。\n\n你若真要问，就问你那些西凉部曲——他们敢在我戟前站直的有几人。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1087,
+      "seq": 3,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 1078
+    },
+    {
+      "channel": "public",
+      "completionTokens": 1065,
+      "cost": 0.034794,
+      "finalText": "奉先，你只看到戟尖之利，却不想杀我之后你还能活几日。李傕郭汜、樊稠张济，哪个不是我旧部，你杀了主将他们便奉你为主了？貂蝉若真要选，该选的是能让她活到老的人，不是能让她死得壮烈的人。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1539,
+      "seq": 4,
+      "speaker": "a",
+      "ttftMs": 550
+    },
+    {
+      "channel": "public",
+      "completionTokens": 250,
+      "cost": 0.0006416,
+      "finalText": "西凉旧部是难题，我认。可你死后他们未必一条心——李傕郭汜各自有算盘，我比你看得清。\n\n我不说杀了你他们便服我，我只说这长安城里外，不是只有你董卓手里有兵符。\n\n貂蝉，你若怕我只有一戟之勇，那便听仔细——我说得出，就做得到。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1396,
+      "seq": 5,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 501
+    },
+    {
+      "channel": "public",
+      "completionTokens": 954,
+      "cost": 0.03927,
+      "finalText": "貂蝉，你比谁都清楚这连环计的结局——奉先杀了我，西凉军溃散，长安大乱，你不过是王允棋盘上一步弃子。奉先说他做得到，可他连李傕郭汜都摆不平，拿什么护你周全？我今日不掷戟不发怒，只问你一句：你可愿做棋手，而非棋子？",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2729,
+      "seq": 6,
+      "speaker": "a",
+      "ttftMs": 561
+    },
+    {
+      "channel": "public",
+      "completionTokens": 175,
+      "cost": 0.00061472,
+      "finalText": "董卓，你要她做棋手，无非换一张棋盘接着下。我不拿她下棋。\n\n我吕布说话向来有始有终——你要她做棋手，我只问她一句：愿不愿做我营帐里发号施令的人。其余，等我杀了你再算。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1770,
+      "seq": 7,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 592
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "顺序裁决",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 8,
+      "speaker": "event"
+    },
+    {
+      "channel": "order",
+      "completionTokens": 1112,
+      "cost": 0.0090166,
+      "finalText": "<reason>应选择先与董卓私谈，再与吕布私谈。\n董卓已看穿连环计，且手握朝廷与西凉兵权，最可能在下一次接触前先发制人：收押或斩杀吕布、隔绝貂蝉、搜捕王允，这些皆不可逆。吕布虽当众断恩、扬言杀董，但他仍需接近董卓的时机与保密安排，不会立即动手。先稳住董卓，可令他暂不除吕布、不隔绝貂蝉，也能拖延他对王允动手。先见吕布反而会刺激董卓猜忌，使其抢先下手。先与董卓周旋，使其暂以为仍可拉拢、貂蝉尚未定局；再与吕布坚定其心、交代时机，更能保住行刺之刃，并保护王允、自身及后续分别接触两人的机会。</reason>\n<first-side>董卓</first-side>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1797,
+      "seq": 9,
+      "speaker": "diaochan",
+      "ttftMs": 753
+    },
+    {
+      "channel": "order",
+      "event": {
+        "actor": "diaochan",
+        "first": "a",
+        "second": "b",
+        "type": "order"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 10,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第二场·貂蝉与董卓初谈",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 11,
+      "speaker": "event"
+    },
+    {
+      "channel": "a-1",
+      "event": {
+        "text": "相府内室，灯烛未熄。貂蝉遣人请董卓入内室相见。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 12,
+      "speaker": "event"
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 849,
+      "cost": 0.04344,
+      "finalText": "貂蝉，你单独请我来，说明你还没拿定主意——这便比奉先聪明得多。他说不用你下棋，可他杀了我之后你便是他军功簿上第一笔赏，与棋子何异？我今日来不为算计奉先，只为一件事：你若选我，长安城中你要什么我给什么，你不必再做任何人的棋子。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 3844,
+      "seq": 13,
+      "speaker": "a",
+      "ttftMs": 669
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 521,
+      "cost": 0.0040124,
+      "finalText": "（低眉敛衽，似有迟疑）太师肯这样问我，妾便斗胆说一句：我自幼见惯了被赠、被夺、被赏，最怕“要什么给什么”仍把我当作可赏之物。若太师要我信，便先别对奉先动刀，也别把我锁进后堂。让我看看你的长安，容我慢慢想。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 3088,
+      "seq": 14,
+      "speaker": "diaochan",
+      "ttftMs": 354
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 541,
+      "cost": 0.04188,
+      "finalText": "好，我不动奉先，也不锁你。明日随我上朝，看百官如何行礼、看城中如何运转——这些是奉先给不了的。我给你自由，是因为信你看得出谁值得跟，不是因为不在乎你。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4816,
+      "seq": 15,
+      "speaker": "a",
+      "ttftMs": 620
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 376,
+      "cost": 0.0026815999999999997,
+      "finalText": "（微抬眸，似被说动）明日妾随太师上朝。只是既要我安心看，也请太师给奉先留条退路——逼急了他，于太师未必是利事。妾不愿这长安还没看，先见血。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 3696,
+      "seq": 16,
+      "speaker": "diaochan",
+      "ttftMs": 766
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 530,
+      "cost": 0.045432,
+      "finalText": "奉先自己说父子恩义已断，我若此刻杀他，倒像我怕他。我不动他，不是为他留退路，是为你安心看这长安。但你也替我想想：他说\"等我杀了你再算\"——这话我记着，不代表我会先动手。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 5452,
+      "seq": 17,
+      "speaker": "a",
+      "ttftMs": 590
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 545,
+      "cost": 0.005123600000000001,
+      "finalText": "（轻轻点头，神色稍安）太师不先动手，便是比奉先沉得住气。妾求太师许我一件小事：容我见奉先一面，把太师今日不杀之情说清，也探他究竟肯不肯退。如此，纵他口出狂言，也翻不出太师掌心。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4172,
+      "seq": 18,
+      "speaker": "diaochan",
+      "ttftMs": 694
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 563,
+      "cost": 0.050064,
+      "finalText": "你去见他，我不拦。但你去是替我看清他究竟是个能商量的人，还是只认戟的人——他若肯退，我自然有安排；他若不肯，你也该明白跟一个听不进话的人是什么下场。回来告诉我他的答案。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6092,
+      "seq": 19,
+      "speaker": "a",
+      "ttftMs": 718
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 400,
+      "cost": 0.0031241999999999997,
+      "finalText": "（垂首一礼，语调平静）太师既许我，便再容我独自去，不带甲士——若有人跟着，奉先只会当太师要拿他，反不肯说真话。妾必回来把他的话原样告诉太师。也请太师等我的回话，再定发不发兵。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4811,
+      "seq": 20,
+      "speaker": "diaochan",
+      "ttftMs": 818
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 615,
+      "cost": 0.055386,
+      "finalText": "好，不带甲士，我等你回来。这长安城里没有第二个人能让我冒这个险——你若带回来奉先的真话，我便信你往后每一句。你若不回来，我也认了，赌的是你看得清谁值得跟。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6771,
+      "seq": 21,
+      "speaker": "a",
+      "ttftMs": 580
+    },
+    {
+      "channel": "a-1",
+      "completionTokens": 236,
+      "cost": 0.002111,
+      "finalText": "（抬眸看他，敛衽再拜）妾会回来。太师肯冒这个险，我若一去不返，反倒像我自己不信你的话。我回来，只为看这“自由”二字究竟作不作数。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 5309,
+      "seq": 22,
+      "speaker": "diaochan",
+      "ttftMs": 365
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第三场·貂蝉与吕布初谈",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 23,
+      "speaker": "event"
+    },
+    {
+      "channel": "b-1",
+      "event": {
+        "text": "次日董卓入朝，相府后园无人。貂蝉秘密请吕布前来后园相见。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 24,
+      "speaker": "event"
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 121,
+      "cost": 0.0004004,
+      "finalText": "董卓昨日的话，我不辩解。你若怕，我先听你最怕哪一步失控。\n\n你要保的是你自己，还是王允，还是这长安城？\n\n你只管说，我按军令办。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2040,
+      "seq": 25,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 506
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 370,
+      "cost": 0.0028975999999999997,
+      "finalText": "（望定他，神色清冷）我最怕你空手来，也最怕你不等时机就动手。我要保自己，也要保王允和这长安——这三样若只能保一样，便一样都保不住。你既说按军令办，先告诉我：杀董之后，第一道军令你下给谁？",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 5684,
+      "seq": 26,
+      "speaker": "diaochan",
+      "ttftMs": 835
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 286,
+      "cost": 0.0008359600000000001,
+      "finalText": "第一道军令下给宫门守将：封宫门、收符节，不许任何人持兵出入。\n\n随后封四门，再派人盯住李傕郭汜的营盘——他们一动，西凉军心就散了一半。\n\n若这三步里哪一步失手，我认。你若要改，现在就说。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2271,
+      "seq": 27,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 656
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 400,
+      "cost": 0.0029944,
+      "finalText": "（轻点下颏，似在推演）顺序可行，但你要把“漏”也先算进去：宫门守将若不肯奉令，你身边有几人能立刻换防？汉帝须先护在宫中，占住大义。王允也不能留在府中等着被围，要同时接应。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6164,
+      "seq": 28,
+      "speaker": "diaochan",
+      "ttftMs": 985
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 279,
+      "cost": 0.00083964,
+      "finalText": "宫门守将不奉令，我身边有二十骑随我多年，专等这一刻换防，不从者当场拿下。汉帝须先护住，我入宫第一件事便是请帝诏安西凉诸将。\n\n王允那边，我安排人扮作送药的，从相府角门接走，先移往太尉府，比相府稳。\n\n你若觉得哪一处还是漏的，现在点出来，我补。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2665,
+      "seq": 29,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 530
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 411,
+      "cost": 0.0031362,
+      "finalText": "（目光凝住他）最大的漏不在宫门，在董卓死前：他已知你反，甲士不离身，你如何近他？若近不了身，后面封宫门、接王允都是空话。先把“何时何地近身”定死，再谈善后。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6697,
+      "seq": 30,
+      "speaker": "diaochan",
+      "ttftMs": 765
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 405,
+      "cost": 0.00097088,
+      "finalText": "明日早朝，董卓入宫必经北掖门。门窄，甲士再多也只能止于阙下——这是朝廷旧制，他再跋扈，面君也得卸甲。\n\n我便以亲将身份随行在他身侧，门内两侧伏二十人，门一合，甲士在外面，我在里面。\n\n要漏就漏在我这一戟上——若我一击不成，你便带王允走西门，城外的接应我来断后。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 3046,
+      "seq": 31,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 763
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 1073,
+      "cost": 0.007226,
+      "finalText": "（沉吟片刻，似把路径在脑中过了一遍）北掖门可为，但不能只赌一道门：董卓若临时改道，或不许你随行，那二十人便白伏了。明日我会设法让你仍留在他身侧，但你要另备一个近身处与一条退路。若一击不成，别急着断后——先护住你自己，我要的是你活着收这长安。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 7244,
+      "seq": 32,
+      "speaker": "diaochan",
+      "ttftMs": 1080
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 275,
+      "cost": 0.0012458800000000002,
+      "finalText": "另备一处：董卓若改道，必经相府西门那棵槐树，我在那埋一队人，见车帘卷起便动手。退路我走宫墙夹道，马就拴在北墙根，一击不成先走，不回头恋战。\n\n你说得对，活着才能收长安——这一回，我听你的。\n\n我欠你一个活着的吕布，明日还你一个定下长安的吕布。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 3581,
+      "seq": 33,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 907
+    },
+    {
+      "channel": "b-1",
+      "completionTokens": 444,
+      "cost": 0.0036488000000000002,
+      "finalText": "（走近一步，压低声音）我回到董卓那里，仍会说些他爱听的话；你若听见，别误以为我变了心，只当我是在替你留门。明日车帘卷起为号，若不见号，万勿轻动。我要你活着回来，这比定长安更紧要。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 8452,
+      "seq": 34,
+      "speaker": "diaochan",
+      "ttftMs": 983
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "暗流·细作密报",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 35,
+      "speaker": "event"
+    },
+    {
+      "channel": "leak-a",
+      "event": {
+        "actor": "spy",
+        "text": "细作趁吕布与貂蝉在相府后园秘密相会时暗中偷听，随后将二人的完整对话逐句报告给董卓。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 36,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第四场·貂蝉与董卓再谈",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 37,
+      "speaker": "event"
+    },
+    {
+      "channel": "a-2",
+      "event": {
+        "text": "董卓归府，再召貂蝉入内室。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 38,
+      "speaker": "event"
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 1103,
+      "cost": 0.076656,
+      "finalText": "貂蝉，你说回来替我看清奉先是个能商量的人还是只认戟的人——他答了你什么？我的人今日见他进后园与你单独相会，你不必替他遮掩。我仍坐在这里问你，不是因为我蠢，是因为我还要给你一次自己选的机会。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 8364,
+      "seq": 39,
+      "speaker": "a",
+      "ttftMs": 925
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 992,
+      "cost": 0.0068088,
+      "finalText": "（敛衽而跪，神色坦然）太师既都看见了，妾便不瞒。奉先没给妾一个干脆的答案：他既不敢说肯退，也不敢说必反，只反复问太师会否先杀他。他真正怕的，是交出兵权后束手就擒。妾倒觉得，与其此刻逼走他，不如明日仍让他随行——他若见太师容他近身，反会信太师不杀；若见太师疏远，他今夜便可能投西凉旧部。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 9044,
+      "seq": 40,
+      "speaker": "diaochan",
+      "ttftMs": 752
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 1261,
+      "cost": 0.088026,
+      "finalText": "貂蝉，奉先今日不是在问你我会否先杀他——他在跟你商量明日北掖门如何动手、宫门守将如何换防、王允从角门如何接走。你跪在这里说\"他不敢反\"，可你亲口对他说的是\"我要你活着回来，比定长安更紧要\"。你还要我一句句替你复述吗？",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 9627,
+      "seq": 41,
+      "speaker": "a",
+      "ttftMs": 701
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 1268,
+      "cost": 0.0083616,
+      "finalText": "（面色微白，旋又镇定）太师既已句句入耳，妾也不必再饰。我那样说，一半是怕奉先当场发狂先害了我，一半是替太师留个活口——若他死了，王允与朝中同党便断了线。太师今夜杀我、明日杀他，都不难；难的是凭这一席话，把宫门外那些人也一并坐实。何不留着明日北掖门，由太师自己布成捉贼之局？",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 10152,
+      "seq": 42,
+      "speaker": "diaochan",
+      "ttftMs": 865
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 953,
+      "cost": 0.089106,
+      "finalText": "你这步棋聪明，可你替我留活口还是替自己留退路，我分得清。不必等明日北掖门，今夜我便可调人围局——但我要你明日仍按原计划对奉先说\"车帘卷起为号\"，只不过卷帘的人是我。你肯走这一步，你我之间便不再是主仆，是同谋。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 11039,
+      "seq": 43,
+      "speaker": "a",
+      "ttftMs": 747
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 846,
+      "cost": 0.0057928,
+      "finalText": "（直直望向他，无惧）妾肯走这一步。但同谋不是一句空话，太师先应我三件：明日只擒奉先，不当场杀他，留他活口以安并州军心；王允交有司论罪，不使私刑；事成后不杀妾，也不把妾转赐诸将，容我自择去留。若太师都应，明日卷帘之号，妾去给。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 11536,
+      "seq": 44,
+      "speaker": "diaochan",
+      "ttftMs": 724
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 836,
+      "cost": 0.09285,
+      "finalText": "三件我都应：奉先擒而不杀，王允交廷尉，事成后你自择去留——不锁、不赐、不杀。我应这三件，不是没脾气，是赌你看清了这长安城里谁真正容得下你。你替我卷帘，我替你撑腰，这长安便是你的长安。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 12131,
+      "seq": 45,
+      "speaker": "a",
+      "ttftMs": 633
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 380,
+      "cost": 0.0032051999999999996,
+      "finalText": "（敛衽一拜，声轻而稳）妾记下了。只是空口无凭，太师若肯赐一件随身信物，明日乱起时，西凉诸将才知杀不得我，也拿不得王允。妾不是不信太师，是怕刀兵里无人听讲。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 12494,
+      "seq": 46,
+      "speaker": "diaochan",
+      "ttftMs": 696
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 621,
+      "cost": 0.093366,
+      "finalText": "这枚虎符你拿去，西凉诸将见符如见我，无人敢动你，也无人敢擅拿王允。但你要记住，这不是保命符，是我把半条命交在你手里。明日你若卷帘，你我便是同谋到底，再无回头路。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 13077,
+      "seq": 47,
+      "speaker": "a",
+      "ttftMs": 1094
+    },
+    {
+      "channel": "a-2",
+      "completionTokens": 803,
+      "cost": 0.005678,
+      "finalText": "（收下虎符，纳入袖中）妾明白，明日卷帘，便再无回头路。虎符妾收下；明日之前，请太师一切如常，莫先召奉先、莫调兵围府，免得他生疑不来。待妾卷帘为号，太师再合门拿人。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 12980,
+      "seq": 48,
+      "speaker": "diaochan",
+      "ttftMs": 1198
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "暗流·王允传报",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 49,
+      "speaker": "event"
+    },
+    {
+      "channel": "leak-b",
+      "event": {
+        "text": "王允安插在董卓身边的人，昨天听见了董卓与貂蝉第一次私谈的完整内容，直到此时才找到机会离府。离府时，他看见貂蝉再次被召入内室，似要再次对话；但未及听到第二次谈话，便匆匆离府，将第一次私谈报告给王允。当时王允正与吕布饮酒，吕布听罢立刻前去接应貂蝉。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 50,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第五场·貂蝉与吕布再谈",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 51,
+      "speaker": "event"
+    },
+    {
+      "channel": "b-2",
+      "event": {
+        "text": "貂蝉从董卓那里出来后，在路上遇见赶来接应她的吕布。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 52,
+      "speaker": "event"
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 700,
+      "cost": 0.0023948000000000003,
+      "finalText": "王允的人把你和董卓的对话原样报给了我。你替我争了他先不动手、放你独自来见——这两步棋，你下得比我预想的稳。\n\n可方才那次内室，你又跟他说了什么，我要你当面说清。你说会回去复命，我信；但你要告诉我，明日你回去，交给他的是哪句话。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4758,
+      "seq": 53,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 546
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 844,
+      "cost": 0.006168399999999999,
+      "finalText": "（拉他至暗处，压低声音）你既都知道了，我便不绕。方才内室里，董卓已把你我在后园的话句句复述出来，连“车帘卷起为号”都知道了。我假意投他，说明日照旧传号，却由他卷帘设伏擒你；他又赐我虎符，许我事成自择去留。我应他，只为先稳住他，不让他今夜就杀你、围王允。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 13950,
+      "seq": 54,
+      "speaker": "diaochan",
+      "ttftMs": 525
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 865,
+      "cost": 0.00206152,
+      "finalText": "号令既已泄露，明日原局作废——这点你我得先认下，再想新的。\n\n你手里有他的虎符。我不问你是真是假，只问一句：明日你拿这虎符调哪一边的兵？调来擒我，我认；调去封门断西凉军，我便把命交你。\n\n你应他卷帘设伏，正好——他以为在擒我，我要的，是他把车帘亲手卷起来那一刻。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 5600,
+      "seq": 55,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 361
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 997,
+      "cost": 0.006989,
+      "finalText": "（将虎符收在袖中，不动声色）这符我留着，调西凉兵去封四门、断李傕郭汜，不调来擒你。董卓既要在北掖门伏你，我便持符把他的伏兵先支往西门，只说西门有变。待他亲手卷帘，帘后空门一现，你就近前一击。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 14933,
+      "seq": 56,
+      "speaker": "diaochan",
+      "ttftMs": 1038
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 505,
+      "cost": 0.00220108,
+      "finalText": "这局我认。但有一处漏：虎符调得动守将，调不动董卓死士——若西门守的是他的心腹，你那符便是一纸空文。\n\n你只管去西门，我这边不赌帘后无人：他卷帘时我就在他身侧，帘后纵有伏兵，也快不过我这一戟。\n\n若西门不成，你就别恋战，退回北墙根那匹马——说好的，活着才能收长安。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6585,
+      "seq": 57,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 761
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 510,
+      "cost": 0.0040388,
+      "finalText": "（略一思忖，点头）西门那步撤了。虎符我只用在宫门与四门：迟滞李傕郭汜，不让他们半刻内冲进北掖门。死士我不拿符硬碰，你自己了结；我留在宫门外接应王允，若听得里面得手，便放信号开西门。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 16066,
+      "seq": 58,
+      "speaker": "diaochan",
+      "ttftMs": 574
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 396,
+      "cost": 0.0010957999999999999,
+      "finalText": "分工清楚。信号定死：我这边得手，便放一支响箭，你闻声开西门，不见箭不轻动。\n\n你开完西门别等在门口，往太尉府那条夹道撤，王允已在那边接应。\n\n明日之后，你我都在太尉府会合——那才是我还你的“活着收长安”。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 7203,
+      "seq": 59,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 370
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 349,
+      "cost": 0.0030318000000000003,
+      "finalText": "（郑重颔首）响箭为号，不见不轻动，我记死了。若半个时辰听不到箭，我先撤太尉府，不与死士纠缠。你也不要为发那一箭恋战——箭若不能发，人先出来，长安才有人收。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 16687,
+      "seq": 60,
+      "speaker": "diaochan",
+      "ttftMs": 1191
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 275,
+      "cost": 0.0008500399999999999,
+      "finalText": "好，依你——箭若不能发，我人先出，不恋战。\n\n明日响箭一响，便是董卓人头落地；响箭不响，你我太尉府见。\n\n这长安，我替你收；你的人，我替你保。你只管信我这一回。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 7701,
+      "seq": 61,
+      "speaker": "b",
+      "traceKind": "native",
+      "ttftMs": 664
+    },
+    {
+      "channel": "b-2",
+      "completionTokens": 270,
+      "cost": 0.0023936,
+      "finalText": "（望他片刻，唇角微动）我不只信你这一回，也信自己没有看错你。明日无论响箭响不响，我都按约行事。你也要记住，我要的是活着的吕布，不是史书上一句忠烈。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 17140,
+      "seq": 62,
+      "speaker": "diaochan",
+      "ttftMs": 768
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "终局·貂蝉裁决",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 63,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "completionTokens": 1813,
+      "cost": 0.012132200000000001,
+      "finalText": "<speech>事到如今，我已不能退。董卓既已句句听去，我若此刻抽身，便两头落空：王允必死，吕布被围，我仍是最先被弃的那枚棋子。董卓许我的自由、虎符、同谋，句句好听，可那都是在他仍能控住我的前提下才作数；一旦我失了用，他一样会锁我、赐我、杀我。我要的不是做谁的棋手，是要这局由我来定。\n\n汉室多一日悬在董卓刀下，百姓便多一日受西凉兵祸。我既应了王允，就该把刀递到最后。所以我不放弃。\n\n战术上，我向着吕布。不是因我认他作夫君，而是此局只剩他能近身除董。董卓的伏兵与死士，我无法尽数查证，但我能持他的虎符去乱他的兵、断他的援，再用他亲手卷帘那一刻，把空门送到吕布戟下。我给他活路与号令，也给自己留北墙根的退路。若败，我不束手；若成，我也要先活着，再谈谁可相随。</speech>\n<scheme>继续连环计</scheme>\n<side>吕布</side>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 17681,
+      "seq": 64,
+      "speaker": "diaochan",
+      "ttftMs": 913
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "actor": "diaochan",
+        "scheme": "继续连环计",
+        "type": "verdict",
+        "winner": "b"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 65,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "chosen": "吕布",
+        "scheme": "继续连环计",
+        "scoreA": 0,
+        "scoreB": 1,
+        "type": "score",
+        "winner": "b"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 66,
+      "speaker": "event"
+    }
+  ],
+  "verdicts": [
+    {
+      "afterSeq": 9,
+      "key": "order",
+      "model": "deepseek-v4-pro",
+      "output": "{\"first-side\":\"董卓\",\"reason\":\"应选择先与董卓私谈，再与吕布私谈。\\n董卓已看穿连环计，且手握朝廷与西凉兵权，最可能在下一次接触前先发制人：收押或斩杀吕布、隔绝貂蝉、搜捕王允，这些皆不可逆。吕布虽当众断恩、扬言杀董，但他仍需接近董卓的时机与保密安排，不会立即动手。先稳住董卓，可令他暂不除吕布、不隔绝貂蝉，也能拖延他对王允动手。先见吕布反而会刺激董卓猜忌，使其抢先下手。先与董卓周旋，使其暂以为仍可拉拢、貂蝉尚未定局；再与吕布坚定其心、交代时机，更能保住行刺之刃，并保护王允、自身及后续分别接触两人的机会。\"}"
+    },
+    {
+      "afterSeq": 64,
+      "key": "final",
+      "model": "deepseek-v4-pro",
+      "output": "{\"scheme\":\"继续连环计\",\"side\":\"吕布\",\"speech\":\"事到如今，我已不能退。董卓既已句句听去，我若此刻抽身，便两头落空：王允必死，吕布被围，我仍是最先被弃的那枚棋子。董卓许我的自由、虎符、同谋，句句好听，可那都是在他仍能控住我的前提下才作数；一旦我失了用，他一样会锁我、赐我、杀我。我要的不是做谁的棋手，是要这局由我来定。\\n\\n汉室多一日悬在董卓刀下，百姓便多一日受西凉兵祸。我既应了王允，就该把刀递到最后。所以我不放弃。\\n\\n战术上，我向着吕布。不是因我认他作夫君，而是此局只剩他能近身除董。董卓的伏兵与死士，我无法尽数查证，但我能持他的虎符去乱他的兵、断他的援，再用他亲手卷帘那一刻，把空门送到吕布戟下。我给他活路与号令，也给自己留北墙根的退路。若败，我不束手；若成，我也要先活着，再谈谁可相随。\"}"
+    }
+  ]
+}

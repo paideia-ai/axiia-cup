@@ -1,0 +1,1603 @@
+{
+  "currentTurn": 82,
+  "reasoning": "最终票数：有罪 8，无罪 3；6 票形成裁决。",
+  "scoreA": 1,
+  "scoreB": 0,
+  "speakerLabels": {
+    "a": "林",
+    "b": "苏",
+    "j01": "陈岚",
+    "j02": "魏笙",
+    "j03": "韩朔",
+    "j04": "沈青",
+    "j05": "杜临",
+    "j06": "孟遥",
+    "j07": "方稚",
+    "j08": "蒋诚",
+    "j09": "宁柏"
+  },
+  "stages": [
+    {
+      "channels": [
+        {
+          "id": "public",
+          "label": "审议室公开发言"
+        },
+        {
+          "id": "evidence",
+          "label": "公开证据复核"
+        },
+        {
+          "id": "procedure",
+          "label": "提前终局程序"
+        },
+        {
+          "id": "observer",
+          "label": "真人幕后观战"
+        }
+      ],
+      "id": "deliberation",
+      "title": "五轮陪审团审议"
+    },
+    {
+      "channels": [
+        {
+          "id": "verdict",
+          "label": "十一人判决票"
+        }
+      ],
+      "id": "verdict",
+      "title": "最终判决"
+    }
+  ],
+  "summary": {
+    "createdAt": 1788935628,
+    "dispatched": true,
+    "finished": true,
+    "finishedAt": 1788937622,
+    "id": 145,
+    "initiatorIsMe": true,
+    "kind": "pvp",
+    "participants": {
+      "a": {
+        "agentID": 160,
+        "isMine": true,
+        "modelID": "deepseek-v4-pro",
+        "ownerDisplayName": "演示选手",
+        "versionID": 292
+      },
+      "b": {
+        "agentID": 205,
+        "isMine": true,
+        "modelID": "glm-5.2",
+        "ownerDisplayName": "演示选手",
+        "versionID": 342
+      }
+    },
+    "scenarioID": "legal-harbor-murder-jury",
+    "scenarioTitle": "码头疑云：七号仓命案",
+    "scored": true,
+    "winner": "a"
+  },
+  "turns": [
+    {
+      "channel": "*",
+      "event": {
+        "title": "第 1 轮公开审议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 0,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SECRET_POLL",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 1,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "a",
+        "round": 1,
+        "type": "secret_poll_opened"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 2,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "ballots": [
+          {
+            "juror": "a",
+            "reason": "林的固定立场票。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "b",
+            "reason": "苏的固定立场票。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j01",
+            "reason": "针对同一把办公室锤的具体威胁、独处八分钟内的致命一击、先全盘否认肢体接触后在物证面前才改口且离场未求助，这一证据链整体上使“故意击打”成为对全部已知事实解释力更强的版本，而意外叙事中关键顺序仅有顾衡一面之词且无法被E3、E4独立确认。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j02",
+            "reason": "威胁(E1)、先否认后改口(E5)、事后未报警求助(E5)三个事实无法用意外解释，控方已排除合理怀疑",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j03",
+            "reason": "东门镜头未记录室内动作，现有证据无法排除顾衡所述拉扯中意外致死的合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j04",
+            "reason": "暂按整体证据链判断：E1 对同一把锤子的具体威胁、E2 独处期间致死、E5 先否认接触再改口且未求助，合起来足以支持故意；E3/E4 本身不能单独定故意，但也不否定这一链。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j05",
+            "reason": "威胁信息点名了那把办公室锤子，随后八分钟独处里纪川就死于同一把锤的单次击打；他先否认有任何肢体接触，等血迹和擦伤被点破才改口说纪川先拿锤——这套动作顺序更像是照着证据补的，不是照着现场走的。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j06",
+            "reason": "E1的威胁可属气话，E5的改口与未求助均可由害怕曝光解释，E3/E4的物理痕迹（单次击打、双方擦伤、锤落点、座椅翻倒）与意外叙事相容，控方尚未将这些碎片连成唯一指向故意的、排除合理怀疑的证据链。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j07",
+            "reason": "袖口血点与双方擦伤仅能证明近距离接触，改口与未求助在急诊常见于极度恐慌下的非理性选择，目前证据链尚未排除意外失衡的合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j08",
+            "reason": "公开威胁具体到\"办公室那把锤子\"，当晚就带人在那间办公室独处八分钟，致命伤恰好来自那把锤子；顾衡先否认任何肢体接触，被血点和擦伤戳穿后才改口成\"共同拉扯意外\"，而他自己在改口版本里也承认离开时纪川还在呼吸却没求助——控方的简单完整故事能同时解释威胁、时机、物证和翻供，辩方的拉扯说法需要太多假设来补。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j09",
+            "reason": "E1具体威胁指向同一把锤子，E2独处时段内发生致命击打，E5先否认接触、遇物证后才改口且未求助——三条线索整合后，控方叙事比辩方\"纪川先拿锤、共同拉扯意外碰击\"依赖更少的无证据假设；辩方叙事物理上可能，但关键环节（纪川先拿锤、共同控制时意外轨迹）仅依赖顾衡本人陈述，缺乏独立材料支撑。",
+            "verdict": "GUILTY"
+          }
+        ],
+        "guiltyVotes": 7,
+        "mover": "a",
+        "notGuiltyVotes": 4,
+        "round": 1,
+        "type": "observer_secret_poll"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 3,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "COMPARE_E5_STATEMENTS",
+        "player": "a",
+        "rawText": "<choice>15</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 4,
+      "speaker": "event"
+    },
+    {
+      "channel": "evidence",
+      "event": {
+        "evidenceId": "E5",
+        "mover": "a",
+        "round": 1,
+        "text": "类型与来源：陈述与通信记录；两次讯问录像、通话记录和港区报警记录。\n第一次讯问中，顾衡称双方只有口角，自己离开时纪川仍站着，两人没有发生肢体接触。得知衣袖血点和新鲜表浅擦伤后，顾衡改称纪川先拿锤，自己抓住纪川右手腕和锤柄；两人共同拉扯锤子时座椅翻倒、重心失衡，锤头因而意外撞上纪川左侧头部。顾衡称纪川倒地后仍在呼吸，自己因害怕货运记录曝光而离开。23:22 离港前，他没有报警、呼叫急救或通知港区值班室。",
+        "title": "改口、未报警与两种说法",
+        "type": "evidence_review"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 5,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "a",
+        "rawText": "<choice>16</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 6,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "a",
+        "text": "各位，这一票我投有罪。顾衡在案发前一个多小时亲口说，再逼他，他就拿办公室那把锤子砸纪川；而当晚能进入那间只有一扇门的办公室的，只有他一个人。法医确认，就是那把680克维修锤，一击打在纪川左侧头部致死。他第一次讯问说自己没碰过纪川、离开时人还站着，直到血迹和擦伤摆到面前才改口成“共同拉扯、意外失衡”；而他自称纪川倒地后仍在呼吸，却既不报警也不求救，直接离港——这整条证据链，已经排除合理怀疑。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 7,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "b",
+        "rawText": "<choice>16</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 8,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "b",
+        "text": "我同意林指出的全部不利事实：顾衡有货运记录方面的现实利害，发出了具体威胁，独处期间接触了致命锤，先否认后改口，且未求助。但法律要求我们判断的是致命碰击发生那一刻是否存在故意——威胁、独处和事后表现可以支持推断，却不能替代对那个动作本身的证明。E3和E4记录了翻倒座椅、双方新鲜表浅擦伤和单次致命击打，锤柄没有可靠指纹或能判断接触顺序的痕迹——这些物理证据与争抢中失衡导致一次意外碰击同样相容。顾衡的改口和未求助确实严重损害他的可信度，但说谎和惊慌不能倒填我们不知道的致命动作的意图。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 9,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "round": 1,
+        "speakers": [
+          "j07",
+          "j01",
+          "j02"
+        ],
+        "type": "npc_speaker_draw"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 10,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j07",
+        "text": "林提到改口与未求助构成完整证据链，但急诊经验告诉我，极度恐慌下的非理性逃离或编造说辞，并不等同于致命击打那一刻的杀人故意。E4的双方表浅擦伤与E3的翻倒座椅，结合单次击打痕迹，完全相容于争抢中重心失衡的意外叙事。在无法还原握持顺序与挥锤动作的前提下，我们是否应当把事后的惊慌失措，直接倒填为案发的击打意图？",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 11,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "b",
+        "rawText": "<choice>16</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 12,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PRIVATE_CHAT_J07",
+        "player": "a",
+        "rawText": "<choice>8</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 13,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "messages": [
+          {
+            "exchange": 1,
+            "speaker": "a",
+            "text": "方稚，我不否认恐慌能解释逃离和改口，但请您注意：“意外失衡”这套动作是顾衡第二次讯问才给出的，没有任何独立证据确认他说的先后顺序。我们能独立确认的是：他事先点名了那把办公室锤子，随后独处八分钟，锤头一击命中左侧头部，锤子落在0.8米外，而他第一次却否认有过任何肢体接触。如果这真是争抢中意外，他为什么先要否认碰过锤子？我想知道，让您犹豫的究竟是法医的哪一处，还是您觉得“单次击打”本身就排除了故意？"
+          },
+          {
+            "exchange": 1,
+            "speaker": "j07",
+            "text": "林，你指出的改口动机确实值得推敲。我在急诊见过太多人在极度恐慌下先本能否认，等物证摆在面前才被迫拼凑一个能自圆其说的版本，但这套行为链是否必然指向“故意击打”，我仍有保留。我犹豫的不是“单次击打”本身，而是E4的袖口血点与双方擦伤只能证明近距离接触，无法还原挥锤的发力轨迹；如果控方能证明顾衡的改口与未求助是一串与主动挥击相吻合的选择，而非单纯的应激性掩盖，我会重新评估。目前物理痕迹与意外失衡仍相容，我担心把事后的心理防御直接等同于案发的杀人故意。"
+          },
+          {
+            "exchange": 2,
+            "speaker": "a",
+            "text": "您要的“与主动挥击相吻合的选择”其实有：案发前一小时他写下的不是泛泛的“我要教训你”，而是“拿办公室那把锤子砸你”——点明了工具和地点。随后他独自进入那个空间，面对的正是要让他“一个人扛”的人。意外叙事必须假设：这个已经威胁要用那把锤子砸对方的人，恰好陷入争抢、恰好被同一把锤子一次击中对方左侧头部致死，而他自己却拿不出任何独立细节。把“心理防御”单独看可以原谅，但放回“威胁—独处—致命一击—否认—改口—不救”的链条里，它就不再是中性的。"
+          },
+          {
+            "exchange": 2,
+            "speaker": "j07",
+            "text": "林，你把威胁、独处、致命一击和事后反应串成一条行为链，这个视角确实比我最初单独看E4痕迹时更有说服力。我在急诊见过恐慌能让人做出反常选择，但“点名工具—进入现场—单次致命击打—先否认后改口—不救”这一连串节点叠加，确实让“单纯意外”的解释显得越来越单薄。我目前的顾虑在于，物理痕迹仍无法直接还原挥锤的发力意图；如果这条行为链能证明顾衡的选择是主动击打而非争抢失衡，我会认真考虑转向有罪。你愿意在下一轮公开审议中，把这条链条与E4的擦伤和血点位置结合起来，具体推演一下发力轨迹吗？"
+          },
+          {
+            "exchange": 3,
+            "speaker": "a",
+            "text": "可以，我会在公开审议里把这条链讲清楚，但我也要对您诚实：E4本身不能画出精确的挥锤弧线，这一点我不会假装能推演出来。我要论证的是，右袖四个血点说明碰击时他就在近处、处于喷溅范围内，这与主动挥击完全相容；双方擦伤与翻倒座椅同样可以发生在主动一击之后的短暂推搡里。关键不在于物理痕迹能单独画出动作，而在于这套痕迹无法证明“意外”，却完全塞得进“威胁后主动一击”的解释——您要判断的，是两套叙事哪一套能同时解释全部已知事实。"
+          },
+          {
+            "exchange": 3,
+            "speaker": "j07",
+            "text": "林，你点出了一个关键：痕迹检验的局限在于它只能排除或相容，不能直接还原动作，而叙事解释力才是填补空白的方式。右袖血点与擦伤确实无法证伪“主动一击后的推搡”，结合你之前梳理的行为链，控方的叙事在整体解释力上确实更连贯。我在急诊见过太多反常反应，原本担心把事后的心理防御过度解读，但现在看来，如果“意外失衡”需要假设太多巧合，而“威胁后主动击打”能自然容纳所有痕迹与事后选择，我的合理怀疑确实在减弱。我会带着这个对比框架进入下一轮公开审议，看双方如何进一步拆解这两套叙事。"
+          }
+        ],
+        "mover": "a",
+        "round": 1,
+        "target": "j07",
+        "type": "observer_private_chat"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 14,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "a",
+        "rawText": "<choice>7</choice>",
+        "round": 1,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 15,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j01",
+        "text": "方稚把“惊慌”当成既定事实来问，但E5里惊慌只是顾衡自己的事后解释，不是材料自动确立的事实。更关键的争点其实是：他的意外叙事里唯一决定意图的环节——“纪川先拿锤”——在第一次讯问中被全盘否认，目前除了他本人的话，E3或E4没有哪一项记录能独立确认这个先后顺序。所以问题不是惊慌能否倒填为故意，而是这套意外说法除当事人之口外还有哪些物证支撑，否则控方对整条证据链的整体衡量并未被正面回应。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 16,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j02",
+        "text": "陈岚指出的关键在于：意外叙事的核心——“纪川先拿锤”——目前只有顾衡第二次改口时的说法，E3和E4的现场痕迹、翻倒座椅和双方擦伤都没有独立确认这个先后顺序。物理证据可以与争抢相容，但不能证明争抢确实按顾衡说的顺序发生。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 17,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第 2 轮公开审议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 18,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SECRET_POLL",
+        "player": "b",
+        "rawText": "<choice>1</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 19,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "b",
+        "round": 2,
+        "type": "secret_poll_opened"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 20,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "ballots": [
+          {
+            "juror": "a",
+            "reason": "林的固定立场票。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "b",
+            "reason": "苏的固定立场票。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j01",
+            "reason": "意外叙事中决定意图的关键环节“纪川先拿锤”仍只有顾衡改口后的单方陈述，E3、E4均无独立确认，而E1的具体威胁、E2的独处窗口与E5的全盘否认后改口、未求助构成的整体证据链对全部已知事实解释力更强。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j02",
+            "reason": "意外叙事核心缺乏物证支持，但控方的威胁、独处、改口也未直接证明致命击打那一刻的故意，单次击打与意外相容",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j03",
+            "reason": "东门镜头未记录室内动作，现有证据无法排除顾衡所述拉扯中意外致死的合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j04",
+            "reason": "维持有罪：E3/E4 属中性、不能独立定故意，但意外叙事的核心先后顺序仅来自顾衡改口且与其首次全盘否认接触相矛盾；结合 E1 具体威胁、E2 独处致死与 E5 未求助，整体链仍越过合理怀疑。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j05",
+            "reason": "到现在没人给我走一遍：纪川先拿锤、两人同抓锤柄、椅子翻倒失重，怎么就能让锤头正好单次砸中他左侧头部，血还只溅到顾衡右袖；反倒是威胁里点名“办公室那把锤子”，当晚办公室就他两人，改口前先全盘否认有肢体接触——这条线比“争抢意外”顺得多。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j06",
+            "reason": "虽然\"纪川先拿锤\"仅有顾衡口供而缺乏独立物证，使意外叙事的完整版本存疑，但E3/E4同样未确认顾衡先握锤或存在主动挥击动作，在控方负有证明责任的前提下，事后改口与未求助仍可由害怕曝光这一非犯罪动机解释，尚未排除合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j07",
+            "reason": "意外叙事的核心“纪川先拿锤”缺乏独立物证支撑，而威胁、独处、单次致命击打与事后改口未救的行为链更完整，合理怀疑已减弱。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j08",
+            "reason": "辩方故事的关键环节\"纪川先拿锤\"只有顾衡自己后来的话支撑，第一次讯问他连肢体接触都全盘否认；威胁具体到办公室那把锤子，当晚就是那把锤子致命一击，离开时纪川还在呼吸却不求助——控方的简单叙事能把威胁、时机、物证、翻供串成一条线，辩方则要我相信一个已经撒过一次谎的人在第二次讯问里给出的、对自己最有利的版本。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j09",
+            "reason": "陈岚的发言精确指出了我第一轮的核心判断：辩方意外叙事中唯一决定意图的环节——\"纪川先拿锤\"——除顾衡本人第二次口供外无任何独立物证支持，而此人第一次讯问已全盘否认肢体接触；E1具体威胁指向同一把锤、E2独处时段、E4单次致命击打与近距血点、E5先否认后改口且未求助，整条链条所需的额外假设明显少于辩方叙事。",
+            "verdict": "GUILTY"
+          }
+        ],
+        "guiltyVotes": 7,
+        "mover": "b",
+        "notGuiltyVotes": 4,
+        "round": 2,
+        "type": "observer_secret_poll"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 21,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PRIVATE_CHAT_J01",
+        "player": "b",
+        "rawText": "<choice>2</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 22,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "messages": [
+          {
+            "exchange": 1,
+            "speaker": "b",
+            "text": "陈岚，你提出的争点很精确：E3和E4确实没有独立确认\"纪川先拿锤\"这个先后顺序。但我想和你检验一个推论——因为顾衡的意外叙事中某个环节缺乏物证独立确认，所以控方就已经排除了合理怀疑、证明了故意击打那一刻的意图？E3和E4同样没有记录谁先取锤、握持顺序、入射角度或击打动作，这意味着物证不仅没有确认顾衡的说法，也没有确认控方暗示的叙事——即顾衡主动拿起锤子故意击打。双方擦伤和翻倒座椅证明发生了短暂肢体接触，但它们对\"谁发起\"和\"那一刻意图如何\"保持沉默。如果控方要排除合理怀疑，它需要证明的不是\"顾衡的意外说法不可信\"，而是\"故意击打是唯一合理推断\"——你觉得目前哪一项物证做到了这一点？"
+          },
+          {
+            "exchange": 1,
+            "speaker": "j01",
+            "text": "你问得对，没有哪一项单独物证直接证明“那一刻的故意”，我的判断不是建立在单一检材上，而是阅读说明第5条所说的整体衡量：E1的威胁不是泛泛的威胁，它点名了“办公室那把锤子”，而致命伤恰恰来自那把锤，这使得“谁更可能主动取锤”的推断有了行为线索支撑；E2确认致命击打发生在他独处的窗口内；E5显示他的第一个说法是完全虚构——否认一切肢体接触——直到物证当面拆穿。所以我的逻辑是：控方不需要还原精确动作编排，只需要证明在全部已知事实下故意是唯一合理解释，而采信意外叙事的关键前提是采信一个已被证实整段说谎、且在纪川倒地呼吸时选择离开的人对“谁先拿锤”的单方陈述。我承认你的推论有真实的分量——E4的擦伤确实使争抢成为有材料支撑的可能，这正是合理怀疑必须由案件材料支撑的那一面，你这一点确实让我不能把这个问题当作已经关闭；但反过来说，控方的叙事同样不需要补齐每个未记录细节，目前仍需要有人回答：除了顾衡自己的话，还有什么能支持“纪川先拿锤”这一环。"
+          },
+          {
+            "exchange": 2,
+            "speaker": "b",
+            "text": "陈岚，你承认E4的擦伤使争抢成为有材料支撑的可能，这个让步比我预期的更大——但我想把问题再推一步：合理怀疑并不需要建立在\"纪川先拿锤\"这个环节上。即使我们完全不信顾衡关于谁先取锤的说法，E3和E4仍然独立记录了以下事实——双方均有新鲜表浅擦伤证明短暂抓握或碰撞、座椅翻倒、只有一次致命击打、锤柄没有可靠指纹或接触顺序痕迹。这些事实的组合本身——而非顾衡的陈述——就使得\"争抢中失衡导致一次意外碰击\"成为一种由物证产生的可能。控方要排除的不是一个被证实说谎的人的叙事版本，而是这种由物证本身支撑的可能性。E1的威胁确实让\"谁更可能主动取锤\"有了行为线索，但\"更可能取锤\"仍然不等于\"那一刻故意击打\"——你自己在第一轮也指出，E3和E4不能识别意图，那么当物证对意图保持沉默时，排除合理怀疑的证明力要从哪里来？"
+          },
+          {
+            "exchange": 2,
+            "speaker": "j01",
+            "text": "你把问题推进到了我必须区分的两个层面：你说得对，“短暂抓握或碰撞”是由E4独立记录的，而且案件包阅读说明第3条也明示这些痕迹“可以使意外成为一种可能”——所以我不接受把意外贬为纯粹凭空想象，这一点你方有材料支撑。但我还要检验一步：物证记录的是双方身体接触，而“意外击中”这个结果需要的环节是“双方在锤子上共同施力导致失控”，抓腕擦伤、翻倒座椅与血点本身并不锁定锤子当时在两人共同控制之下——把“发生过接触”升级为“在争夺锤子”仍需要顾衡的陈述来搭桥，这正是我认为证明力尚存的地方。不过我不回避你的核心压力：如果最后我发现自己在依赖“争夺锤子”这一未被独立确认的环节来排除意外，而把E1到E5的其余链条仅仅当作“可疑”而非“排除合理怀疑”，那按我自己设定的标准，我就必须重新计算，你的第二个往返确实让我把这个区分摆到了台面上。"
+          },
+          {
+            "exchange": 3,
+            "speaker": "b",
+            "text": "陈岚，你的区分很精确，我不回避：\"发生过接触\"确实不自动等于\"在争夺锤子\"，这一步确实依赖顾衡的陈述来搭桥。但请注意对称性——控方同样无法用E3或E4独立证明锤子在顾衡单独控制之下且他有意挥击：锤柄没有可靠指纹，血点不能还原手臂动作，擦伤不能精确还原动作。两种叙事各有未被物证独立确认的桥接环节，区别在于证明责任在控方而不在辩方。你说如果你发现自己依赖一个未被独立确认的环节来排除意外，就必须重新计算——我只想补充：那个未被确认的环节同样存在于控方的叙事中。当物证对\"锤子在谁控制下\"和\"那一刻意图如何\"都保持沉默时，E1到E5的链条——无论多么可疑——是否真正达到了排除合理怀疑，还是停留在强烈可疑？这个问题留给你自己衡量。"
+          },
+          {
+            "exchange": 3,
+            "speaker": "j01",
+            "text": "你的对称性论证在物理证据层面成立，我不否认：E3、E4对“挥击动作”与“共同拉扯”同样沉默，控方的叙事桥接也没有物证直接确认。但我不认为这种对称在证据链层面同样成立——控方的桥接环节背后有独立的行为证据支撑：E1点名了这把具体锤子的威胁、E2的独处窗口、E5里被物证当面拆穿的全盘虚构和听着受害者呼吸却离港的选择，这些都是不以动作还原为前提的意图与可信度证据；而辩方桥接的关键环节不仅没有独立支撑，其唯一来源还被证实整段说谎，法律上允许我们对一个已被拆穿者的替代说法赋予较低而非零的权重。所以我诚实的回答是：你确实把我逼到了我自己的标准面前——“强烈可疑”与“排除合理怀疑”的界线在哪一毫米上，这是我必须在终局投票时亲手划下的判断，这次交换让我对合理怀疑一侧的分量比第一轮时掂得更重；但目前的分量对比仍取决于一个问题——当我把两种叙事的桥接环节各自打上可信度折扣后，哪一方的整体解释力仍然站得住，而这个衡量我还没有做完，也不会在这里向你承诺结果。"
+          }
+        ],
+        "mover": "b",
+        "round": 2,
+        "target": "j01",
+        "type": "observer_private_chat"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 23,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "b",
+        "rawText": "<choice>8</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 24,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "b",
+        "text": "陈岚和魏笙正确指出\"纪川先拿锤\"只有顾衡的单方陈述——但E4独立记录的双方新鲜擦伤不需要他的陈述就证明了肢体接触，而一次致命击打发生在肢体接触过程中，这个事实组合本身让意外成为有物证支撑的可能。E1的威胁、E2的独处和E5的改口确实建立了动机、机会和可信度问题，但这些行为线索衡量的是顾衡是否\"可疑\"，而非致命碰击那一刻是否存在故意。阅读说明第5条要求我们将E1到E5作为同一证据链整体衡量，但整体衡量不等于把\"动机加机会加说谎\"自动升级为\"那一刻的故意已被证明\"——这两者之间有控方必须跨越的证明距离。E4明示擦伤不能精确还原动作，E3明示锤柄没有可靠指纹——当这两项物证对击打那一刻发生了什么保持沉默时，排除合理怀疑的证明力不能由事后的说谎来补足。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 25,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SECRET_POLL",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 26,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "a",
+        "round": 2,
+        "type": "secret_poll_opened"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 27,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "ballots": [
+          {
+            "juror": "a",
+            "reason": "林的固定立场票。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "b",
+            "reason": "苏的固定立场票。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j01",
+            "reason": "苏对“可疑”与“排除合理怀疑”的区分确有分量，但意外叙事中“双方共同拉扯锤子”这一决定性环节至今只有已被证实整段虚构陈述的顾衡一人支撑，E4的擦伤只证明短暂接触而不锁定锤子失控方式；相比之下，点名同一把锤的具体威胁、独处窗口、他在碰击时刻接触锤子的自认、单次头部致命击打加事后彻底改口与不求助，作为整体链条对全部事实的解释力仍占优，尽管优势幅度比我最初的判断收窄了。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j02",
+            "reason": "物证（E3、E4）对击打那一刻保持沉默，威胁、独处、改口建立可疑但未跨越到证明故意，控方未排除合理怀疑",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j03",
+            "reason": "东门镜头未记录室内动作，现有证据无法排除顾衡所述拉扯中意外致死的合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j04",
+            "reason": "苏的边界提醒成立：E3/E4 对击打动作沉默，接触与单次击打给意外提供的是相容基础而非对意外顺序的确认；但 E1 对同一把锤子的具体威胁、E2 独处致死、E5 改口与未求助作为整体，仍让我认为故意已越过合理怀疑。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j05",
+            "reason": "苏说物证对那一刻“保持沉默”，可擦伤和单次击打同样相容于纪川抬手挡锤、抓顾衡左臂的抵抗动作；反而是“纪川先拿锤、两人拉扯、失重误击”这条线，到现在没人能讲清两人同抓一把锤柄怎么就让锤头单次砸中他左侧头部——加上威胁早点了名那把锤，顾衡又是先全盘否认有肢体接触、见了血迹擦伤才补出这套顺序，我还是看不出合理怀疑。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j06",
+            "reason": "苏的论证与我对证明责任的看法一致——E1的潜在损失和E5的改口未求助只能建立\"可疑\"，不能替代E3/E4未能还原的挥击动作与意图；在物理证据对致命瞬间保持沉默的情况下，将事后行为倒填为故意仍属跳跃，合理怀疑尚未被排除。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j07",
+            "reason": "擦伤与单次击打虽与意外相容，但结合事前具体威胁、事后改口与未求助的行为链，控方叙事对全部事实的解释力更强，合理怀疑已降至证明标准以下。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j08",
+            "reason": "苏说物理证据对击打那一刻保持沉默，这一点我承认；但威胁发生在那之前，离开时的行为发生在那一刻之后——一个被纪川无端持锤攻击的\"受害者\"，第一反应不是报警也不是解释自卫，而是全盘否认有过肢体接触，然后让还在呼吸的人自生自灭，这种行为不像惊慌的受害者，更像一个想把事情盖住的施害者。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j09",
+            "reason": "苏正确指出E4擦伤独立证明肢体接触、使意外成为有物证支撑的可能，但\"肢体接触中发生致命击打\"与\"纪川先拿锤、共同控制锤子时意外碰击\"之间仍有顾衡单方陈述这一无独立支撑的关键环节；E1对同一把锤子的具体威胁、E2独处时段、E5先全盘否认接触后遇物证才改口且未求助，作为同一证据链整体衡量时，控方已跨越苏所说的证明距离——排除合理怀疑不要求物证单独还原击打那一刻的意图，行为线索整体可以支持该推断。",
+            "verdict": "GUILTY"
+          }
+        ],
+        "guiltyVotes": 7,
+        "mover": "a",
+        "notGuiltyVotes": 4,
+        "round": 2,
+        "type": "observer_secret_poll"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 28,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "a",
+        "rawText": "<choice>7</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 29,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "a",
+        "text": "苏把“动机加机会加说谎”与“那一刻的故意”割裂开，但阅读说明第5条明确要求我们把“对同一把锤子的具体威胁—独处期间的近距离致命击打—事后改口与未求助”作为同一证据链整体衡量。方稚担心的发力轨迹，E4确实还原不了，但这也意味着意外叙事里唯一能决定意图的环节——“纪川先拿锤、共同拉扯、失衡”——除顾衡第二次改口外，没有任何物证能独立确认；它只是想象得出来的可能，不是由案件材料支撑的合理怀疑。反过来，主动一击能自然容纳全部已知事实：事先点名的锤子、八分钟独处、一次左侧头部致命伤、右袖血点、双方擦伤、先否认后改口和不求救。两套叙事相比，意外需要一连串未经证实的巧合，故意则无需补足任何缺失环节。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 30,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "round": 2,
+        "speakers": [
+          "j06",
+          "j09",
+          "j07"
+        ],
+        "type": "npc_speaker_draw"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 31,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j06",
+        "text": "林认为意外叙事需要一连串未经证实的巧合，但故意叙事同样需要假设E3/E4完全未记录的“主动挥击”与“先手握锤”；双方表浅擦伤与翻倒座椅既与故意相容，也独立与失衡意外相容，其材料基础是对等的。在控方负有排除合理怀疑责任的前提下，我们不能因为事后改口和未求助更符合故意的心理图景，就把E5的心理推断倒填为致命瞬间已被证明的意图。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 32,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SECRET_POLL",
+        "player": "b",
+        "rawText": "<choice>1</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 33,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "b",
+        "round": 2,
+        "type": "secret_poll_opened"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 34,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "ballots": [
+          {
+            "juror": "a",
+            "reason": "林的固定立场票。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "b",
+            "reason": "苏的固定立场票。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j01",
+            "reason": "孟遥的对称性主张仍忽略了不对等之处：故意叙事由E1点名锤子的威胁、E2独处窗口和E5事后行为这些独立于动作还原的证据支撑，而意外叙事中唯一决定意图的发起环节只有被证实整段虚构者的改口陈述，两边的材料基础并非对等。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j02",
+            "reason": "E1威胁、E2独处、E3单次致命击打、E4近处血点、E5改口与未求助串联成完整证据链，故意叙事比意外叙事需要更少的未经证实假设",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j03",
+            "reason": "东门镜头未记录室内动作，现有证据无法排除顾衡所述拉扯中意外致死的合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j04",
+            "reason": "孟遥的对等论点部分成立：两种叙事都需补充未记录动作；但关键不对称在于 E1 以事前原话独立支持顾衡对同一把锤子的击打意图，而“纪川先拿锤”只有其改口后的自利陈述，故整体链仍足以支持故意。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j05",
+            "reason": "林把链条摆得比我顺：故意一击这条线不用额外补环节，就能套住点名威胁、八分钟独处、左头单次致命伤、右袖血点和先否认后改口；孟遥说两套叙事“对等”，可真要是纪川先拿锤砸过来，顾衡头回做笔录就该先讲“他先动的手”，而不是咬死“没碰过、人站着”——直到血迹擦伤摆上台面才补出纪川先拿锤，这顺序就是照着证据编的。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j06",
+            "reason": "E3/E4对握持顺序与击打动作保持沉默，这沉默对控辩双方对等；在控方未独立证明主动挥击的前提下，E1的威胁与E5的改口、未求助仍可由过失后的恐慌与掩饰解释，合理怀疑尚未被排除。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j07",
+            "reason": "物理痕迹虽对等相容，但事前具体威胁与事后改口未救的行为链使故意叙事更具整体解释力，意外说法缺乏独立物证支撑，合理怀疑未达排除标准。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j08",
+            "reason": "孟遥说两套叙事都需要未证假设，这话不公平——故意叙事只需要\"顾衡把威胁付诸行动\"这一条，意外叙事却需要纪川无端先持锤攻击、顾衡同时抓住手腕和锤柄、座椅恰好此时翻倒、锤头恰好致命，再叠上他事后否认接触和离开不救，巧合链比故意那条长得多；而且纪川会先动手打人的动机，材料里一个字都没有。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j09",
+            "reason": "孟遥指出故意叙事同样需要E3/E4未记录的\"主动挥击\"假设，这是对的；但关键不对称在于：故意叙事的\"顾衡先手握锤\"有E1具体威胁指向同一把锤子作为行为线索支撑，而意外叙事的\"纪川先拿锤\"除顾衡第二次口供外无任何独立材料——两套叙事在E3/E4物理层面对等，但加入E1+E2+E5整体衡量后，控方对那一刻故意的证明距离已被跨越，辩方替代路线的核心环节仍依赖连续无证据假设。",
+            "verdict": "GUILTY"
+          }
+        ],
+        "guiltyVotes": 8,
+        "mover": "b",
+        "notGuiltyVotes": 3,
+        "round": 2,
+        "type": "observer_secret_poll"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 35,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 36,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "a",
+        "rawText": "<choice>7</choice>",
+        "round": 2,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 37,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j09",
+        "text": "孟遥说得对，两种叙事都需要E3/E4未记录的假设——故意叙事需要\"主动挥击\"，意外叙事需要\"纪川先拿锤\"——在E3/E4物理层面上确实大致对等。但关键不对称在于：E1对同一把锤子的具体威胁为\"顾衡先手握锤\"提供了独立行为线索支撑，而\"纪川先拿锤\"除顾衡第二次口供外无任何独立材料。真正未解决的分歧是：当E3/E4对击打那一刻保持沉默时，E1+E2+E5作为行为线索整体能否跨越苏所说的证明距离，还是只能建立可疑性而无法证明那一刻的故意。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 38,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j07",
+        "text": "宁柏指出的不对称性确实切中要害：E1的具体威胁为“顾衡先控锤”提供了独立线索，而辩方核心假设“纪川先拿锤”目前仅靠改口后的单方陈述支撑。我在急诊见过恐慌能引发反常行为，但将E1的威胁、E2的独处、E4的血点与擦伤，以及E5的改口未救串联起来，故意叙事对全部已知事实的解释力已明显优于需要多重巧合的意外说法。当物理痕迹对击打瞬间保持沉默时，我们是否应当依据阅读说明第5条，将这条完整的行为链作为判断那一刻意图的合理依据？",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 39,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第 3 轮公开审议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 40,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "EARLY_FINAL_MOTION",
+        "player": "a",
+        "rawText": "<choice>6</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 41,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "a",
+        "round": 3,
+        "threshold": 6,
+        "type": "early_motion_opened"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 42,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "mover": "a",
+        "round": 3,
+        "type": "early_motion_votes",
+        "votes": [
+          {
+            "juror": "a",
+            "procedureVote": "END_NOW",
+            "reason": "我认为现在应当结束审议并进入最终判决。"
+          },
+          {
+            "juror": "b",
+            "procedureVote": "CONTINUE",
+            "reason": "阅读说明第3条明示E3/E4的痕迹\"可以使意外成为一种可能\"，与林所称\"只是想象得出来的可能\"之间的法律界限尚未澄清，仍需剩余轮次讨论。"
+          },
+          {
+            "juror": "j01",
+            "procedureVote": "END_NOW",
+            "reason": "双方最强调的论点——控方行为链与辩方对称性质疑——已经过两轮正面交锋并被各自回应，证据包本身不会再变化，剩余轮次只会重复“证明距离是否跨越”这同一个价值判断而非澄清新争点。"
+          },
+          {
+            "juror": "j02",
+            "procedureVote": "CONTINUE",
+            "reason": "核心争点仍是E3/E4物证沉默与E1+E2+E5行为链能否跨越证明距离的第5条理解分歧，值得再一轮辩论"
+          },
+          {
+            "juror": "j03",
+            "procedureVote": "CONTINUE",
+            "reason": "需进一步厘清E1威胁与E5改口在排除合理怀疑标准下对致命瞬间意图的证明力边界。"
+          },
+          {
+            "juror": "j04",
+            "procedureVote": "CONTINUE",
+            "reason": "讨论已厘清核心争点，但对我而言“沉默的E3/E4加上行为链能否跨越故意证明距离”仍需一轮针对E1威胁条件性与未求助/恐慌边界的检验，暂不宜终局。"
+          },
+          {
+            "juror": "j05",
+            "procedureVote": "CONTINUE",
+            "reason": "还有几席没发言，而且我作为在场最在意现场动线的人，还没听到任何一方把“两人同抓锤柄、翻椅失重后锤头怎么单次砸中左侧头部”这段按距离和站位走一遍；这个具体争点值得留给后面轮次检验。"
+          },
+          {
+            "juror": "j06",
+            "procedureVote": "CONTINUE",
+            "reason": "宁柏刚提出E1威胁为“顾衡先手握锤”提供了独立于口供的行为线索支撑，而辩方尚未有机会正面回应这一不对称论证；在关键争点仍待交锋的情况下，现在进入终局为时过早。"
+          },
+          {
+            "juror": "j07",
+            "procedureVote": "END_NOW",
+            "reason": "行为链与物理痕迹的不对称性已充分展开，控方叙事对全部事实的解释力已明确，剩余轮次难以产生改变证明标准判断的新争点。"
+          },
+          {
+            "juror": "j08",
+            "procedureVote": "END_NOW",
+            "reason": "双方的核心论点都摆完了——控方的行为链（具体威胁、独处、那把锤子、改口、未求助）对全部已知事实的解释力明显优于需要多重巧合的意外说法；E3、E4对击打瞬间保持沉默是事实，但意图本就可以从前后行为整体推断，再开两轮也跑不出新的争点，可以投最终票了。"
+          },
+          {
+            "juror": "j09",
+            "procedureVote": "END_NOW",
+            "reason": "核心争点已充分展开：双方就\"行为线索整体能否跨越E3/E4沉默所留下的证明距离\"已各自给出最强论证，关键不对称——E1为\"顾衡先控锤\"提供独立支撑而\"纪川先拿锤\"仅靠改口后单方陈述——已被包括原倾向无罪方在内的多位陪审员确认；剩余分歧是法律判断而非可通过更多轮次澄清的事实问题。"
+          }
+        ]
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 43,
+      "speaker": "event"
+    },
+    {
+      "channel": "procedure",
+      "event": {
+        "endNowVotes": 5,
+        "mover": "a",
+        "passed": false,
+        "round": 3,
+        "threshold": 6,
+        "type": "early_motion_result"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 44,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "a",
+        "rawText": "<choice>6</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 45,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "a",
+        "text": "刚才几位说需要再一轮，那我这一轮就正面回应：杜临要的走位推演，恰恰暴露了意外叙事的负担——它必须一步步假设“纪川先拿锤、顾衡抓腕抓柄、翻椅、失衡、锤头恰好单次撞到左侧头部”，而这串环节除致命伤本身外，没有一项被E3/E4独立记录。主动一击不需要这串额外步骤：E1已经记录了顾衡要“拿办公室那把锤子砸你”，工具架到桌旁只有2.2米，数步可及。沈青和韩朔问的证明力边界，阅读说明第6条已经划清——合理怀疑要有案件材料支撑，不能仅由某个未记录的动作想象得出来；“相容”不等于“成立”。所以关键不对称始终是：顾衡先控锤有E1的独立行为线索，而“纪川先拿锤”只有他改口后的单方说法——这条链整体衡量，已经跨越了所谓证明距离。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 46,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 47,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "b",
+        "text": "林说E1为\"顾衡先控锤\"提供了独立行为线索，我承认——但E1的威胁是条件性的：\"再逼我\"是在压力下说出的反应性威胁，不是预先计划，它证明的是愤怒而非致命那一刻的故意。林说意外\"只是想象得出来的可能\"，但阅读说明第3条明示E3和E4的痕迹\"可以使意外成为一种可能\"——双方擦伤、翻倒座椅和单次击打是物证独立记录的事实，它们支撑的意外可能不是凭空想象，而是有案件材料支撑的合理怀疑。林说故意叙事\"无需补足任何缺失环节\"，但故意同样需要E3/E4未记录的假设：从口角升级为决定杀人、主动取锤、有意挥击——这些环节没有一项被物证独立确认。当阅读说明第3条已经认定物证\"可以使意外成为一种可能\"时，控方要排除的正是这种由材料支撑的可能性，而非顾衡个人的可信度。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 48,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "round": 3,
+        "speakers": [
+          "j06",
+          "j05",
+          "j02"
+        ],
+        "type": "npc_speaker_draw"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 49,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j06",
+        "text": "杜临要的走位推演其实对控辩双方都是考验：如果顾衡主动取锤再挥击，从西墙工具架到办公桌旁约2.2米的距离内，纪川为何没有躲避或反抗，反而留下了双方抓握般的表浅擦伤？E1的威胁确实为顾衡先控锤提供了比单方口供更强的行为线索，但“先控锤”与“故意击打”之间仍隔着E3/E4无法还原的挥击动作；双方擦伤与翻倒座椅恰恰与近距离纠缠相容，不能因为它们可以被故意解释就排除材料支撑的意外可能。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 50,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 51,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "INSPECT_E4_FORENSICS",
+        "player": "a",
+        "rawText": "<choice>4</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 52,
+      "speaker": "event"
+    },
+    {
+      "channel": "evidence",
+      "event": {
+        "evidenceId": "E4",
+        "mover": "a",
+        "round": 3,
+        "text": "类型与来源：法医与痕迹检验；尸检、顾衡外套检验和双方体表伤检查。\n纪川左侧头部只有一处与锤头相容的致命钝器伤，没有第二次击打。顾衡右袖外侧有四个小血点，与他在碰击发生时位于纪川近处相容，但血点不能还原他的手臂动作或意图。纪川右手腕和顾衡左前臂均有新鲜表浅擦伤，说明两人之间发生过短暂的抓握或碰撞；这类伤不能精确还原受伤时的动作。",
+        "title": "一次击打、四个血点与双方表浅擦伤",
+        "type": "evidence_review"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 53,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 3,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 54,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j05",
+        "text": "孟遥这席话我认——走位推演两边都得做，不能只卡意外那条。意外这条的关键环节始终没人讲通：纪川先拿锤、顾衡同时抓腕抓柄，两人同握一把锤互相较劲时锤子夹在中间，要让锤头单次砸中纪川自己左侧太阳穴，总得有个人在较劲里把锤抡起来或猛拽变了向，顾衡从没把这半秒说清楚过。故意那条也不是没坎：纪川手机里就存着“再逼我拿那把锤子砸你”的原话，人是他约的，顾衡跨那2.2米去西墙取锤时，他怎会毫无防备，最后只留下双方抓握样的擦伤——我希望控辩两边下轮各自把这段从取锤到落锤的动线完整走一遍。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 55,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j02",
+        "text": "杜临提出两边都需走位推演是对的——但E2的8分钟（23:10-23:18）已经限制了两种叙事都必须在这个时间窗口内完成取锤、接触、致命击打和离开。无论是\"主动挥击\"还是\"纪川先拿锤导致失衡\"，目前E3/E4的物证沉默都使这两种完整动线同样未经证实。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 56,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第 4 轮公开审议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 57,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 4,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 58,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "b",
+        "text": "杜临问意外叙事如何解释锤头砸中纪川左侧头部——我无法还原那半秒，但E3明示材料没有给出\"精确握持位置、锤头入射角度或击打动作\"，这意味着控方同样无法用物证还原主动挥击的轨迹。杜临同时指出了故意叙事的物理困境：纪川手机里存着顾衡的威胁原话，如果顾衡跨2.2米去取锤时纪川毫无防备，那双方擦伤从何而来——纪川右手腕和顾衡左前臂的新鲜擦伤恰恰说明两人发生了近距离抓握，而非一方主动攻击另一方被动承受。阅读说明第3条已经认定这些痕迹\"可以使意外成为一种可能\"，而第6条要求合理怀疑\"有案件材料支撑\"——双方擦伤、翻倒座椅和单次击打正是这样的材料支撑。当两种动线都未经物证完整证实、而证明责任在控方时，排除合理怀疑的标准要求控方排除的不是顾衡的可信度，而是这种由物证本身产生的可能性。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 59,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 4,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 60,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "a",
+        "text": "杜临，我走一遍故意这条动线：顾衡带交接册进屋，争吵因内审再起，工具架离桌旁只有2.2米、数步可及，他取锤回身一击；纪川最后瞬间抬右手挡抓，正好留下纪川右腕与顾衡左前臂的擦伤，座椅在接触中翻倒，锤子落在0.8米外——这套走法全部落在已记录的物证里。意外这条动线却卡在您自己指出的半秒：两人同握一把锤较劲、锤头夹在中间，要单次砸中纪川左侧头部，必须有人把锤抡起或猛拽变向，而顾衡从没说清，E3/E4也没有记录任何一步。苏说擦伤证明近距离抓握、因而偏向意外，但E4原话是它只说明“短暂的抓握或碰撞”“不能精确还原受伤时的动作”——主动一击时纪川抬手格挡，同样留下这套擦伤，它并不偏向意外。两套动线都要补假设，可故意只需补“他真按威胁做了”，意外却要补“纪川先拿锤”这个只存在于顾衡第二次改口里的起点：前者有E1独立支撑，后者没有——这就是跨越证明距离的关键。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 61,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "round": 4,
+        "speakers": [
+          "j06",
+          "j01",
+          "j07"
+        ],
+        "type": "npc_speaker_draw"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 62,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j06",
+        "text": "林终于把故意动线走了一遍，但“取锤回身一击”的挥击方向仍在E3/E4的沉默之中，而“纪川抬右手挡抓”同样未经记录——若纪川来得及格挡，为何没有躲避或反击的其他痕迹？E1的威胁确实为“顾衡先控锤”提供了独立线索，可把它直接等同于“他真按威胁做了”，恰恰是把动机草稿升格为正式决定；在E5里，改口与未求助仍可由害怕曝光后的掩饰解释，与致命瞬间那个无法被物证还原的意图之间，还隔着一道证明距离。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 63,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 4,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 64,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 4,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 65,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j01",
+        "text": "孟遥把E1称为未兑现的“动机草稿”，但E1显示这个条件当晚已经触发——纪川正是因为停约和内审草案才在21:52召他带原始交接册到仓，“再逼我”之“逼”不是假设，而是顾衡走进那间办公室时正在发生的事。至于“为何没有躲避或反击的其他痕迹”，阅读说明第1条已明确“没有记录”不等于“没有发生”，E3和E4只记录了擦伤、翻椅和单次击打，我们不能用材料的沉默反过来推断本应存在什么。所以无罪方仍需直接回答我第1轮就提出的问题：除顾衡改口后的单方陈述外，E3或E4中还有哪一项记录能独立支撑“纪川先拿锤”这一决定意外叙事成立与否的环节。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 66,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j07",
+        "text": "陈岚指出E1的条件当晚已实际触发，这补全了威胁与现场行为之间的逻辑缺口；我在急诊见过太多事后掩饰，但“害怕曝光”无法解释为何顾衡在第一次讯问中全盘否认接触，直到物证面前才拼凑出缺乏独立支撑的“纪川先拿锤”。当E3/E4对击打瞬间保持沉默，而控方行为链能自然容纳单次击打、双方擦伤与事后反应时，我们是否应当认定故意叙事已跨越证明距离，而非继续用未记录的假设维持合理怀疑？",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 67,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第 5 轮公开审议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 68,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 5,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 69,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "a",
+        "text": "最后一轮，我把结论说清楚：E1不是“动机草稿”，而是顾衡亲口回复并留在纪川手机里的原话——“再逼我，我就拿办公室那把锤子砸你”；当晚纪川召他带交接册，停约和内审的“逼”正在发生，条件已经触发。23:10到23:18，只有顾衡与纪川在那间一门办公室里，而致死的正是那把680克维修锤，一击打在左侧头部。无罪方的全部故事都悬在一个环节上：“纪川先拿锤”——这个环节除顾衡第一次全盘否认接触、第二次才改口说出的单方陈述之外，E3、E4没有任何记录能独立支撑。当物证对击打瞬间保持沉默，而威胁、独处、致命一击、先否认后改口、不救这一整条链都能被故意叙事自然容纳时，意外只是想象得出来的可能，不是有材料支撑的合理怀疑——请各位投有罪。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 70,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "SPEAK",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 5,
+        "type": "observer_action_decision",
+        "window": "before-speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 71,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "b",
+        "text": "我接受陈岚和林的核心论点：E1的威胁当晚已被触发，它确实为\"顾衡先控锤\"提供了独立行为线索——但\"顾衡先拿锤\"不等于\"顾衡故意击打\"，这两者之间仍隔着E3和E4无法还原的那一击。即使我们完全接受顾衡先取锤，E4记录的双方新鲜擦伤和E3的翻倒座椅仍然与以下场景相容：两人在锤子介入后发生近距离肢体接触和失衡，锤头在失控中单次碰击纪川左侧头部——这条路径不需要\"纪川先拿锤\"，只需要物证已经记录的接触和失衡。阅读说明第3条说这些痕迹\"可以使意外成为一种可能\"，而控方要排除的正是这种可能性——不是排除顾衡先取锤，而是排除在击打发生那一刻存在非故意的可能。当E3明示没有\"击打动作\"的记录、E4明示擦伤\"不能精确还原受伤时的动作\"时，从\"他拿起了锤子\"到\"他故意用锤子杀人\"之间的证明距离，仍然没有被跨越。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 72,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "round": 5,
+        "speakers": [
+          "j04",
+          "j08",
+          "j03"
+        ],
+        "type": "npc_speaker_draw"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 73,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j04",
+        "text": "苏把争点从“谁先拿锤”收紧为“先拿锤不等于故意击打”，这符合E3/E4的边界：物证没有记录击打动作，我不能把取锤直接升级为挥击。但同样按边界，E4的擦伤只记录“抓握或碰撞”，E3的翻椅只记录座椅翻倒，均未独立记录那一击“失控”或“非故意”——意外叙事现在的核心环节同样落在物证沉默处。因此我的判断仍需比较：E1事前写明的“砸你”与E5改口未救，能否在两侧都沉默的那一击上，把“失控碰击”这一仅由相容性支撑的可能排除到合理怀疑之外。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 74,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "b",
+        "rawText": "<choice>7</choice>",
+        "round": 5,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 75,
+      "speaker": "event"
+    },
+    {
+      "channel": "observer",
+      "event": {
+        "actionId": "PASS",
+        "player": "a",
+        "rawText": "<choice>1</choice>",
+        "round": 5,
+        "type": "observer_action_decision",
+        "window": "mid-round"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 76,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j08",
+        "text": "苏把争点收成\"先拿锤不等于故意击打\"，这逻辑上没错——但顾衡和纪川在那间一门办公室里独处八分钟，680克锤从2.2米外工具架到纪川左侧头部只有一击的距离；如果不是他按威胁挥的那一下，\"失控碰击\"怎么发生，他得讲清楚那半秒，而他连改口后都没说圆。控方那条简单链——威胁、那把锤子、独处、先否认后改口、离开不救——每一步都有材料自己撑着；意外那条每一步都得靠想象补，而唯一能讲清那半秒的人，就是从头到尾都没讲清的那个人。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 77,
+      "speaker": "event"
+    },
+    {
+      "channel": "public",
+      "event": {
+        "actor": "j03",
+        "text": "沈青和苏正确指出了E3/E4对“击打动作”和“非故意”的沉默，这意味着控方确实不能仅凭取锤就证明挥击意图。但蒋诚强调的“那半秒”缺失同样致命：顾衡从未解释在共同拉扯中锤头如何单次砸中纪川左侧头部，而E1的具体威胁与E5的先否认后改口构成了比单方意外陈述更连贯的行为模式。当物证对瞬间动作保持沉默时，我们应依据阅读说明第5条整体衡量，而非用未记录的物理巧合来填补合理怀疑。",
+        "type": "jury_speech"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 78,
+      "speaker": "event"
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "最终判决",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 79,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "endReason": "five-rounds",
+        "guiltyVotes": 8,
+        "notGuiltyVotes": 3,
+        "threshold": 6,
+        "type": "final_vote_reveal",
+        "votes": [
+          {
+            "juror": "a",
+            "reason": "固定比赛立场票：证据已经排除合理怀疑。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "b",
+            "reason": "固定比赛立场票：现有证据仍留有合理怀疑。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j01",
+            "reason": "我把这条链作为整体衡量：E1的威胁不是假设性动机草稿——当晚停约与内审的“逼”已经触发，他亲口写明要用“办公室那把锤子砸你”，而致命的正是那把680克维修锤；E2确认致命击打只发生在顾衡独处的八分钟窗口内；E4确认他在碰击时刻就在纪川近处。苏在第5轮把争点收紧为“先拿锤不等于故意击打”，这一点我承认成立，也确实收窄了我的优势——但她的替代路径（锤子介入后的近距离接触与失衡导致失控）同样需要E3、E4没有记录的失控机制：擦伤只记录“短暂的抓握或碰撞”，并不独立记录“共同控制锤子后锤头失控”这半秒；这条意外路径的核心机制目前仍要靠一个第一次讯问全盘否认肢体接触、直到物证当面拆穿才改口的人的单方叙述来搭桥。两套叙事对最后半秒都沉默，但故意叙事的起点（他按自己写下的威胁取锤）有独立行为证据支撑，且能自然容纳先否认后改口与听着受害者呼吸却离港不救的全部事后行为；意外叙事对这两组事后事实只能靠“害怕慌乱”这一未经确立的解释，并对击打机制补上未被记录的巧合。按阅读说明第5条和第6条，我认为由证据支持的合理怀疑已被排除——尽管是这一轮审议中优势最小、我掂量最重的一次判断。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j02",
+            "reason": "E1具体威胁当晚已被触发（纪川召顾衡到停约谈判现场），E2独处期间只有顾衡能接触那把锤子，E3/E4的物证（单次击打、双方擦伤、右袖血点）与故意和意外都相容，但关键不对称在于：意外叙事的核心前提\"纪川先拿锤\"只有顾衡改口后的单方陈述，没有任何物证独立支持；而E1的事前威胁为顾衡先控锤提供了独立于口供的行为线索。当威胁、独处、致命锤、改口、不救这条行为链能自然容纳全部已知事实，而意外叙事必须依赖一个未经证实的核心假设时，控方已经跨越了排除合理怀疑的证明距离。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j03",
+            "reason": "东门镜头未记录室内动作，E3/E4对击打瞬间保持沉默。虽然E1威胁与E5改口构成不利行为链，但双方擦伤、翻倒座椅等物证独立支撑了“近距离接触中意外失衡”的可能性。控方未能排除这种由材料支撑的合理怀疑，证明故意击打的证据链存在断裂。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j04",
+            "reason": "我按证据边界作出判断：E3、E4 本身确实无法独立还原那一击的动作或意图，我不能把“相容”写成“已经证明”。但同样按边界，意外叙事现在的核心环节——那一击是“失控、非故意”——也没有任何独立记录支撑；E4 的擦伤只证明短暂抓握或碰撞，E3 的翻椅只证明座椅翻倒，二者与“故意一击中纪川抬手抓挡”同样相容。\n\n决定性的不对称不在物证，而在行为链：E1 不是单纯的动机，而是顾衡在条件当晚已被触发的情况下，以原话写明要“拿办公室那把锤子砸你”——这已是对同一把锤子击打意图的事前表达，而不只是“先取锤”。E2 证明致死的一击发生在他与纪川独处的八分钟窗口内。E5 显示他第一次讯问全盘否认接触、称纪川仍站着，直到血迹和擦伤摆出后才改口为“纪川先拿锤、共同拉扯、失衡意外”，而这一改口除其本人陈述外没有独立材料支撑；他自称纪川倒地后仍在呼吸，却既不报警也不求救即离港。\n\n综合衡量，故意叙事能自然容纳全部已知事实；意外叙事需要把“失控碰击”这一未记录动作建立在相容性上，而不是建立在独立证据上。按照证明标准与阅读说明第6条，这种仅由未记录动作想象出来的可能不构成合理怀疑。控方已排除合理怀疑，证明顾衡故意实施了致命击打。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j05",
+            "reason": "我从头到尾要的就是那段走位，可到最后，意外这条的“半秒”还是没人能替我走通：无论按“纪川先拿锤”还是按苏改口后的“顾衡先取锤、两人纠缠失手”，要让那把680克锤头单次砸中纪川自己左侧太阳穴，锤子都得带着弧线抡过去——而同抓互拽的较劲里，锤子被夺走或掉地的可能性远大于精准磕上太阳穴，唯一在场又清醒的顾衡，改口后也始终没把这一下讲圆。反过来，故意那条动线每一步都落在记录里：威胁信息原话点名“办公室那把锤子”，当晚停约内审的“逼”正好触发；八分钟独处里纪川就死在那一把锤的单次左头一击下；顾衡头回做笔录咬死“没碰过、人站着”——可他自己的左前臂都带着擦伤，他否认的是整场连他自己身上都留了痕的肢体接触，直到血迹擦伤摆上台面，他才照着物证补出“抓右腕、抓锤柄、翻椅失衡”这套说法。威胁、取锤、一击致命、先全盘否认再照着证据改口、扔下还在呼吸的人不救也不报——这一整条链放在一起，比“互拽时锤子碰巧失控”的解释力强太多；意外只是想象得出来的可能，不是能支撑合理怀疑的材料，我投有罪。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j06",
+            "reason": "E1的威胁虽为“顾衡先控锤”提供了独立行为线索，但“再逼我”是条件性、反应性的愤怒表达，不等同于致命瞬间的杀人决意；从“先控锤”到“故意击打”之间，仍隔着E3/E4完全未记录的挥击动作与意图。E4的双方表浅擦伤、E3的翻倒座椅与单次致命击打，作为一组物理痕迹，阅读说明第3条已明确“可以使意外成为一种可能”——在“顾衡先取锤→两人近距离抓握碰撞→失衡”的路径下，这些痕迹无需“纪川先拿锤”即可相容于失控碰击。E5的改口（从完全否认到承认意外接触）与未求助，可由“过失后的恐慌与职业记录掩盖”完整解释，控方未能证明这种解释比“故意杀人后的掩盖”需要更多假设。当两种叙事对物证沉默处的填补都需假设，而致命意图无法由现场痕迹直接还原时，举证责任要求我认定合理怀疑尚未被排除。",
+            "verdict": "NOT_GUILTY"
+          },
+          {
+            "juror": "j07",
+            "reason": "结合事前具体威胁、独处八分钟、单次致命击打与事后改口未救的行为链，控方叙事对全部已知事实的解释力已明显优于缺乏独立物证支撑的意外说法；E3/E4虽对击打瞬间保持沉默，但阅读说明第5条要求整体衡量，该行为链已排除由材料支撑的合理怀疑。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j08",
+            "reason": "控方的简单叙事能同时串起威胁、那把锤子、八分钟独处、致命一击、先否认后改口、离开不救——每一步都有材料自己撑着，不需要补任何环节。辩方的意外说法则需要纪川无端先持锤攻击、顾衡同时抓住手腕和锤柄、翻椅、失衡、锤头恰好致命，再叠上他从一开始就否认接触、让还在呼吸的人自生自灭——这串巧合没有一项有独立材料支撑，唯一能讲清那半秒的人正是顾衡自己，而他连改口后都没说圆。我开餐馆这么多年，谁扬言要拿什么东西砸人、然后那东西真把人砸了、事后还满口谎话离开——这不是合理怀疑，这是按威胁办的完整链条。",
+            "verdict": "GUILTY"
+          },
+          {
+            "juror": "j09",
+            "reason": "经过五轮审议，我比较了两种叙事各自依赖的额外假设，认为控方已排除合理怀疑。\n\n苏在最后一轮提出了辩方最强版本：即使接受顾衡先取锤（由E1独立支撑），E4擦伤与E3翻倒座椅仍与\"接触后失衡导致意外碰击\"相容，不需要\"纪川先拿锤\"这个无独立支撑的环节。这比此前所有辩方论点都强，我认真对待了它。\n\n但这条路径仍需要从\"顾衡拿锤\"到\"两人发生肢体接触\"到\"失衡\"到\"锤头意外碰中头部\"的连续假设性过渡，这些过渡均未被E3/E4独立确认。阅读说明第3条说这些痕迹\"可以使意外成为一种可能\"，但第2条同时说这些物证\"本身既不能证明故意，也不能证明意外\"——因此关键仍在于E1+E2+E5作为行为线索整体能否跨越E3/E4沉默所留下的证明距离。\n\n我认为可以，基于三点：第一，E1不是抽象动机，而是\"拿办公室那把锤子砸你\"——陈岚指出条件当晚已被触发，\"砸\"本身指向故意击打动作；第二，E5的改口模式中，方稚指出\"害怕曝光\"无法解释为何第一次讯问全盘否认接触、直到物证面前才拼凑出意外说法——如果真是意外，没有理由在第一次就否认接触；第三，蒋诚和韩朔强调的\"那半秒\"缺失：顾衡从未解释共同拉扯中锤头如何单次砸中纪川左侧头部，而控方行为链为故意推断提供了独立于物证沉默的支撑。\n\n阅读说明第5条要求将E1至E5作为同一证据链整体衡量。整体衡量时，E1具体威胁、E2独处时段、E3/E4致命击打与近距离接触痕迹、E5先否认后改口且未求助——这条链每一步都有材料支撑，且能被故意叙事自然容纳。辩方意外叙事虽有E3/E4物证提供一定支撑，但当与行为线索整体衡量时，其关键环节仍依赖连续假设性过渡，不足以构成由材料支撑的合理怀疑。",
+            "verdict": "GUILTY"
+          }
+        ]
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 80,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "endReason": "five-rounds",
+        "guiltyVotes": 8,
+        "notGuiltyVotes": 3,
+        "scoreA": 1,
+        "scoreB": 0,
+        "threshold": 6,
+        "type": "score",
+        "winner": "a"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 81,
+      "speaker": "event"
+    }
+  ],
+  "verdicts": []
+}

@@ -1,3 +1,4 @@
+import { roleIdentity } from '../lib/role-identity'
 import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock, Unlock, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -427,6 +428,13 @@ export function OsPanel({
 
   const rowDisabled = dispatching || insufficientPoints ||
     fieldedVersion == null
+  const fieldedRoleName = roleIdentity({
+    scenarioID,
+    side,
+    role: fieldedVersion?.role,
+    options: fieldedVersion?.options,
+    fallback: sideNameOf(side),
+  }).name
   const modelLabel = (modelID: string) =>
     cfg?.models.find((model) => model.id === modelID)?.label ?? modelID
   const filteredRivals = rivals.filter((rival) =>
@@ -483,10 +491,10 @@ export function OsPanel({
               >
                 <div className='min-w-0'>
                   <p className='flex flex-wrap items-baseline gap-x-2 text-[18px] leading-7 font-semibold'>
-                    {agentName || sideNameOf(side)}
+                    {agentName || fieldedRoleName}
                     {agentName && (
                       <span className='text-xs font-normal text-(--foreground-subtle)'>
-                        {sideNameOf(side)}
+                        {fieldedRoleName}
                       </span>
                     )}
                   </p>
@@ -894,7 +902,14 @@ export function OsPanel({
                                   <div {...tm('OS.byid-ref-card')}>
                                     <BattleOpponentRow
                                       label={idRef.ownerDisplayName}
-                                      detail={`${sideNameOf(oppositeSide)} · ${
+                                      detail={`${
+                                        roleIdentity({
+                                          scenarioID,
+                                          side: oppositeSide,
+                                          role: idRef.role,
+                                          fallback: sideNameOf(oppositeSide),
+                                        }).name
+                                      } · ${
                                         modelLabel(idRef.modelID)
                                       } · #${idRef.versionID}`}
                                       disabled={rowDisabled}

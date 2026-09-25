@@ -389,3 +389,36 @@ export const EmptyHistory: Story = {
       .toBeDisabled()
   },
 }
+
+export const HonnojiRolesFromSummary: Story = {
+  parameters: {
+    msw: [
+      http.get('/v1/matches', () =>
+        HttpResponse.json({
+          matches: [{
+            ...summary,
+            scenarioID: 'honnoji-decision',
+            scenarioTitle: '本能寺之变·敌在何处',
+            winner: 'b',
+            participants: {
+              a: {
+                ...summary.participants.a,
+                role: { key: 'yoshiaki', name: '足利义昭的使者', side: 'a' },
+              },
+              b: {
+                ...summary.participants.b,
+                role: { key: 'hosokawa', name: '细川藤孝', side: 'b' },
+              },
+            },
+          }],
+          open: false,
+        })),
+      http.get('/v1/scenarios', () => HttpResponse.json({ scenarios: [] })),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByText('对方（细川藤孝）胜')).toBeVisible()
+    await expect(canvas.queryByText(/角色待确认/)).toBeNull()
+  },
+}

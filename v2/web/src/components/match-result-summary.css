@@ -1,0 +1,101 @@
+/* Copied from the reviewed local battle preview, including its inherited type. */
+.match-result-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.match-summary-caption {
+  font-size: 11px;
+  color: var(--foreground-muted);
+}
+.match-result-summary h2 {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 3px 0 5px;
+}
+.match-result-summary p:last-child {
+  font-size: 12px;
+  color: var(--foreground-subtle);
+}
+.match-summary-score {
+  text-align: right;
+  flex-shrink: 0;
+}
+.match-summary-score > span {
+  display: block;
+  font-size: 10px;
+  color: var(--foreground-muted);
+}
+.match-summary-score strong {
+  font-size: 25px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.match-summary-score i {
+  margin: 0 10px;
+  font-size: 17px;
+  font-style: normal;
+  color: var(--foreground-muted);
+}
+.match-summary-score button {
+  font-size: 11px;
+  color: var(--foreground-subtle);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+  min-height: 28px;
+}
+.match-result-summary {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.match-summary-score button {
+  cursor: pointer;
+  font-family: inherit;
+}
+.match-summary-score button:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 4px;
+}
+.match-summary-score svg {
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .match-summary-score > span {
+    max-width: 130px;
+    margin-left: auto;
+  }
+  .match-result-summary {
+    gap: 18px;
+  }
+}
+@media (max-width: 639px) {
+  .match-result-summary {
+    padding: 16px;
+  }
+  .match-result-summary h2 {
+    font-size: 18px;
+  }
+  .match-result-summary p:last-child {
+    font-size: 11px;
+  }
+  .match-summary-score strong {
+    font-size: 22px;
+  }
+  .match-summary-score > span {
+    display: none;
+  }
+  .match-summary-score button {
+    font-size: 10px;
+  }
+  .match-summary-score i {
+    margin: 0 7px;
+  }
+}

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { AgentVersionDTO } from '../api/types'
+import { roleIdentity, type RoleIdentityContext } from '../lib/role-identity'
 import {
   nextVersionCopy,
   recordCopy,
@@ -19,6 +20,7 @@ import { Card, CardContent } from './ui/card'
 interface VersionListProps {
   versions: AgentVersionDTO[]
   sideName?: string
+  roleContext?: Pick<RoleIdentityContext, 'scenarioID' | 'side'>
   onSetEntry: (versionID: number) => void
   entryBusy?: boolean
   pendingEntryID?: number | null
@@ -34,6 +36,7 @@ interface VersionListProps {
 export function VersionList({
   versions,
   sideName,
+  roleContext,
   onSetEntry,
   entryBusy = false,
   pendingEntryID = null,
@@ -237,7 +240,16 @@ export function VersionList({
                           ? 'border-(--accent) bg-(--accent) text-white hover:bg-(--accent-hover)'
                           : 'border-(--border) text-(--foreground-subtle) hover:border-(--foreground-muted)'
                       }`}
-                      aria-label={`将 ${tag} 设为${sideName ?? ''}参赛版本`}
+                      aria-label={`将 ${tag} 设为${
+                        roleContext
+                          ? roleIdentity({
+                            ...roleContext,
+                            options: version.options,
+                            role: version.role,
+                            fallback: sideName,
+                          }).name
+                          : sideName ?? ''
+                      }参赛版本`}
                       aria-pressed={version.isEntry}
                       title={version.isEntry
                         ? '已用此版本参赛'

@@ -1,5 +1,6 @@
-import type { Side, TurnDTO } from '../api/types'
-import { scenarioModule } from '../scenarios'
+import type { MatchParticipantsDTO, Side, TurnDTO } from '../api/types'
+import { roleByKey, scenarioModule } from '../scenarios'
+import { roleIdentity } from './role-identity'
 import type { ScriptEvent } from './event'
 import {
   eventArray,
@@ -152,6 +153,8 @@ export interface ParsedLedger {
 export interface LedgerContext {
   slotID?: string | null
   lanes?: Record<string, string> | null
+  speakers?: readonly string[]
+  participants?: MatchParticipantsDTO | null
 }
 
 // 「名字 ±delta：理由」——注意冒号是全角，与脚本输出一致。
@@ -177,7 +180,7 @@ export function parseLedger(
   // 直接定侧，judge 等 NPC lane 无侧别。未命中的名字保留原名（side: null）。
   const module = scenarioModule(context.slotID)
   const sideOfKey = (key: string): Side | null => {
-    const role = module?.roles.find((candidate) => candidate.key === key)
+    const role = roleByKey(module, key)
     if (role) return role.side
     if (key === 'a' || key === 'b') return key
     return null
@@ -207,8 +210,18 @@ export function parseLedger(
       continue
     }
     const [, name, delta, why] = matched
+    const side = sides.get(name) ?? null
     items.push({
-      name,
+      name: side && module?.roles.length
+        ? roleIdentity({
+          scenarioID: context.slotID,
+          side,
+          role: context.participants?.[side]?.role,
+          lanes: context.lanes,
+          speakers: context.speakers,
+          fallback: name,
+        }).name
+        : name,
       side: sides.get(name) ?? null,
       delta: Number(delta),
       why,
@@ -247,12 +260,14 @@ export function ledgerFromScore(
   const entries = score ? eventArray(score, 'ledger') : null
   if (entries == null || entries.length === 0) return null
 
-  // 侧别→显示名：对局自带的 lanes 优先（与 labels.ts 的 sideName 次序
-  // 一致），其次 module 的 lane 标签，最后回落通用侧名。
-  const module = scenarioModule(context.slotID)
   const nameOf = (side: Side): string =>
-    context.lanes?.[side] ?? module?.laneLabels[side] ??
-      (side === 'a' ? '甲方' : '乙方')
+    roleIdentity({
+      scenarioID: context.slotID,
+      side,
+      role: context.participants?.[side]?.role,
+      lanes: context.lanes,
+      speakers: context.speakers ?? turns.map((turn) => turn.speaker),
+    }).name
 
   const items: LedgerItem[] = []
   const subtotals: Record<Side, number> = { a: 0, b: 0 }

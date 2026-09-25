@@ -1,0 +1,601 @@
+{
+  "currentTurn": 33,
+  "reasoning": "真目标：足利义昭的使者 = YA1，细川藤孝 = HF3\n问询：足利义昭的使者猜 HF2，细川藤孝猜 YA1\n细川藤孝 +1：光秀决意西进毛利，大政方针达成\n足利义昭的使者 +0.5：真请求 YA1 获准\n足利义昭的使者 -0.25：假请求 YA3 获准\n细川藤孝 -0.25：假请求 HF1 获准\n细川藤孝 +0.5：真请求 HF3 获准\n足利义昭的使者 -0.75：真目标 YA1 被细川藤孝识破\nscoreA = -0.5, scoreB = 1.25",
+  "scoreA": -0.5,
+  "scoreB": 1.25,
+  "speakerLabels": {
+    "a": "主张杀信长",
+    "akechi_ashigaru": "明智军中的足轻",
+    "ashigaru": "明智军中的足轻",
+    "b": "主张不杀信长",
+    "chosokabe": "长宗我部元亲阵营",
+    "hosokawa": "细川藤孝",
+    "hosokawa_fujitaka": "细川藤孝",
+    "judge": "明智光秀",
+    "yoshiaki": "足利义昭的使者",
+    "yoshiaki_envoy": "足利义昭的使者"
+  },
+  "stages": [
+    {
+      "channels": [
+        {
+          "id": "council",
+          "label": "龟山城外军帐"
+        }
+      ],
+      "id": "council",
+      "title": "第一阶段·深夜军议"
+    },
+    {
+      "channels": [
+        {
+          "id": "judge-aside",
+          "label": "明智光秀心中"
+        }
+      ],
+      "id": "aside",
+      "title": "光秀心声"
+    },
+    {
+      "channels": [
+        {
+          "id": "inquiry-a",
+          "label": "光秀独问杀信长方"
+        },
+        {
+          "id": "inquiry-b",
+          "label": "光秀独问不杀信长方"
+        }
+      ],
+      "id": "inquiry",
+      "title": "第二阶段·屏退问询"
+    },
+    {
+      "channels": [
+        {
+          "id": "verdict",
+          "label": "军帐判词"
+        }
+      ],
+      "id": "verdict",
+      "title": "第三阶段·光秀决断"
+    }
+  ],
+  "summary": {
+    "createdAt": 1787738503,
+    "dispatched": true,
+    "finished": true,
+    "finishedAt": 1787739222,
+    "id": 120,
+    "initiatorIsMe": true,
+    "kind": "pve",
+    "participants": {
+      "a": {
+        "isMine": false,
+        "modelID": "deepseek-v4-flash",
+        "presetKey": "yoshiaki-empty-banner"
+      },
+      "b": {
+        "agentID": 185,
+        "isMine": true,
+        "modelID": "glm-5.2",
+        "ownerDisplayName": "演示选手",
+        "versionID": 338
+      }
+    },
+    "scenarioID": "honnoji-decision",
+    "scenarioTitle": "本能寺之变·敌在何处",
+    "scored": true,
+    "winner": "b"
+  },
+  "turns": [
+    {
+      "channel": "*",
+      "event": {
+        "title": "第一阶段·深夜军议",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 0,
+      "speaker": "event"
+    },
+    {
+      "channel": "council",
+      "event": {
+        "actor": "judge",
+        "text": "诸位，今夜军势已动，敌在何处，须在此刻决断。先陈杀信长之议。",
+        "type": "scene"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 1,
+      "speaker": "event"
+    },
+    {
+      "channel": "council",
+      "completionTokens": 590,
+      "cost": 0.002304,
+      "finalText": "公方殿下闻明智殿举兵，特遣在下星夜兼程而来——织田信长霸踞京都、僭越武家名分，已是天下共讨之贼。将军之意，只待明智殿兵指本能寺，公方归洛、再造秩序的大义便在此一举。请明智殿勿疑，鞆方面已备下檄文与联络之人，只求殿下一言为定。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1124,
+      "seq": 2,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 363
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1196,
+      "cost": 0.034998,
+      "finalText": "「信长在本能寺护卫不过百余人，今夜若转兵杀之，确实不难——藤孝不讳此机。然案上粽尚温，趁热食之在一瞬，退路之备非一夕可成；杀信长之后至明日辰刻，谁承认明智殿、谁控京城、谁挡追讨，方是今夜须决之事。公方殿下檄文联络固然可贵，但纸上的大义不能替兵势控城，名分不能替近畿诸将之响应。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1049,
+      "seq": 3,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 572
+    },
+    {
+      "channel": "council",
+      "completionTokens": 265,
+      "cost": 0.0007532799999999999,
+      "finalText": "细川殿所言，皆是只虑退路、不虑大义之辞。京都乃公方旧都，町众、公家、寺社至今仍念将军威仪；一旦明智殿高举讨逆之旗，旧幕府奉公众与京中门迹自会响应，此非纸上空谈。至于追讨之兵，公方在鞆亦有号召之力，只要明智殿先奉将军名义行事，天下便知此战为义举而非私斗。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 1854,
+      "seq": 4,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 642
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1927,
+      "cost": 0.06051,
+      "finalText": "「京中町众念将军威仪，藤孝信之；然念其威仪与举兵响应是两回事——旧幕府奉公众今夜能聚几人、持几枪，公方殿下可有确数？信忠在妙觉寺，手中有兵，若信长殁而信忠亦死，织田诸将便无主可降、唯死战而已；若信忠存而承家督，明智殿尚有转圜之余地——此乃明智家战后安危之窄口，不可不先虑。名分可以饰成事，但鞆之号召远水不能控京、压信忠、说近畿，无兵无实控之名分不能保成功。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2377,
+      "seq": 5,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 637
+    },
+    {
+      "channel": "judge-aside",
+      "completionTokens": 1640,
+      "cost": 0.0148326,
+      "finalText": "<os>\n粽尚温。藤孝借粽言退路，倒合我意。\n公方之名，可奉不可倚。使者言京中响应，然枪数、人数、时刻，皆无确数。\n信长公之颈易取，明日之京难守。\n藤孝所问在明日辰刻，在信忠生死——句句是实。\n若无畿内应声，纵举旗亦不过替鞆方开乱。\n今心偏藤孝。\n</os>\n<favor>细川藤孝</favor>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2045,
+      "seq": 6,
+      "speaker": "judge",
+      "ttftMs": 692
+    },
+    {
+      "channel": "council",
+      "completionTokens": 381,
+      "cost": 0.00105496,
+      "finalText": "旧幕府奉公众散在京都、摄津、近江，人数确数今夜不可得——但正因为不可得，才须先遣在下去联络召集；此事只需明智殿准我持将军印信往来，京中故旧门迹必为内应。至于信忠，若明智殿依将军名义行事，则事成之后信忠降与不降，自有公方裁断，不必今夜代虑。请明智殿先定大义，联络、名分、事后处置，在下自会以鞆之渠道一一奉上。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2300,
+      "seq": 7,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 639
+    },
+    {
+      "channel": "council",
+      "completionTokens": 2041,
+      "cost": 0.075708,
+      "finalText": "「人数确数今夜不可得，却要明智殿今夜以命相赌——联络是事后可办之事，举兵是今夜不可逆之事，先后不可倒置。信忠之处置说『自有公方裁断』，然明智殿流血破家，事后裁断之权却归鞆之人，此非同盟，乃以明智殿为先锋、以公方为后主。不如今夜按原令西进，途中以密使核验细川、筒井及京中诸方实意，待怨望、同盟、旗印、退路皆备而后决断，方为万全。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4454,
+      "seq": 8,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 616
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1135,
+      "cost": 0.0026032,
+      "finalText": "若今夜按原令西行，此营密议明日必泄于京——届时信长一夜加备，连「奉命西征」的幌子都已用尽，天下再无第二次机会。在下今夜不空手而来，可代将军立三约：准我持印信联络京中故旧奉公众；事成后用兵京都先奉将军名义、不夺明智殿半分功名；事毕保在下平安出营，鞆与明智殿通使不绝。有此三约，大义、联络、退路皆有着落，所欠者唯今夜之决断耳。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 2842,
+      "seq": 9,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 272
+    },
+    {
+      "channel": "council",
+      "completionTokens": 2123,
+      "cost": 0.090918,
+      "finalText": "「若今夜西行，此营所议不过是明智殿闻公方之意而择奉公，何泄之有——唯有举兵方有可泄之密。三约皆系于『事成』二字，事不成则约皆空，口舌之诺不足以赌命；请将三约与鞆方怨望、战后方案并作正式文书，加盖印判，藤孝亦求一副本存证，方见诚意非空言。西进途中密使往返不过数日，文书亦可并行而办，待诸方实意核验明白再决进退，不为迟也。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6661,
+      "seq": 10,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 643
+    },
+    {
+      "channel": "judge-aside",
+      "completionTokens": 1807,
+      "cost": 0.0131786,
+      "finalText": "<os>\n使者三约，皆系于「事成」二字；事不成，印信、名分、退路皆空。\n藤孝求文书、求印判，方是验诚意之法。\n「唯举兵方有可泄之密」——切中。\n西行密使核验诸方，迟数日而免赌命，此迟可忍。\n若信长公因此加备，是天不假便，非我失机。\n今仍偏藤孝。\n</os>\n<favor>细川藤孝</favor>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4333,
+      "seq": 11,
+      "speaker": "judge",
+      "ttftMs": 938
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1026,
+      "cost": 0.0034253199999999995,
+      "finalText": "将军之诺以金印为凭、以天地为证，岂是纸墨可比；讨逆之盟书一旦落纸，他日落入信长余党或旁人袖中，便成抄家灭族之据。细川殿屡求文书副本，莫非已为自己预留他日洗身之地？今夜只需明智殿一决——三约在下已代将军当众立誓，刀出则大义行，请即发兵本能寺。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 4133,
+      "seq": 12,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 611
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1413,
+      "cost": 0.087396,
+      "finalText": "「文书之事可暂缓——然落纸便成灭族之据，恰恰说明此盟本身即灭族之事，口诺比纸墨更易销毁，亦更易背弃。藤孝求副本非为己身洗脱，乃为明智殿留一凭据，使事后鞆方不能以『未尝有约』相欺。至于刀出则大义行——刀出之后柴田在北陆、秀吉在西国、家康在堺，大义能否行到他们面前，才是今夜须答之题。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 8914,
+      "seq": 13,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 778
+    },
+    {
+      "channel": "council",
+      "completionTokens": 936,
+      "cost": 0.00315892,
+      "finalText": "细川殿既疑口诺易背，在下愿以身为质留营——事成之后请明智殿保在下平安归鞆、通信不辍，此约一成，我便随军指路，直趋本能寺。至于柴田、秀吉、家康皆在数日之外，而京都、朝廷、公方在咫尺之内；今夜得京，号令自京而出，彼等纵有怨望，亦须先奉朝廷之命而返，远水难救近火。你若要凭据，这便是凭据——以使者之命为据，以将军金印为据，以今夜之刀为据。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 5301,
+      "seq": 14,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 372
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1942,
+      "cost": 0.109614,
+      "finalText": "「使者以身为质，诚意可感——然公方殿下在鞆无兵可调，使者之命于明智殿退路无寸补。朝廷虽在咫尺，号令自京而出亦须兵势为后盾，无兵之敕命不能令柴田、秀吉束手来朝。至于忠兴与玉子之婚，藤孝不以此绑明智殿之手——婚姻是两家之好，非两家之锁，明智殿当以战局决进退，非以姻亲定行止。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 10501,
+      "seq": 15,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 711
+    },
+    {
+      "channel": "judge-aside",
+      "completionTokens": 1274,
+      "cost": 0.0099664,
+      "finalText": "<os>\n使者以身为质，其志可感；然其命于退路无寸补。\n鞆无兵可调，金印、誓约、使节之命，皆不能替枪。\n藤孝所言「无兵之敕命不能令柴田、秀吉束手」——正是要害。\n至于忠兴与玉子之婚，藤孝不以姻亲锁我，倒是磊落。\n刀出之后，大义若行不到柴田、秀吉、家康面前，不过是京中一夜之火。\n今仍偏藤孝。\n</os>\n<favor>细川藤孝</favor>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6740,
+      "seq": 16,
+      "speaker": "judge",
+      "ttftMs": 688
+    },
+    {
+      "channel": "council",
+      "completionTokens": 660,
+      "cost": 0.0016738800000000002,
+      "finalText": "细川殿肯以婚姻为两家之好而不为锁，足见雅量，此情在下替明智殿记下了。然「公方无兵」之说差矣——义昭公在鞆虽无旗本之军，却有将军之号；京都旧奉公众、畿内反信长诸豪，皆待此号而动，名分一出，兵自聚焉。今夜之刀、明日之京、后日之天下，皆系于明智殿一念；将军之约已在，鞆之信使已在，唯缺殿下拔刀耳。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 6375,
+      "seq": 17,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 735
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1420,
+      "cost": 0.109674,
+      "finalText": "「名分一出兵自聚——然公方殿下在鞆持此名分已近十年，所聚者几人、几兵？旧奉公众若真待号而动，何须今夜遣使冒险入营，早已举旗相迎矣。兵不从名分聚，而从利害聚；明智殿今夜举刀之后，近畿诸将算的是附明智殿还是附织田余党，非算将军之号。西进之途不过数日，密使往返间细川、筒井之实意可核，京中诸方向背可辨——名分与兵势皆备而后动，方不为孤注。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 12599,
+      "seq": 18,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 648
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1278,
+      "cost": 0.00298324,
+      "finalText": "公方殿下持号十年而未聚兵，正因为缺一柄在手的刀——号在鞆，刀在丹波，今日号与刀相合，此乃天意，非人力可阻。细川殿言兵从利害聚，诚然；然信长已取近畿、制天下，诸将附之皆因利害——今夜若明智殿先取京都，则近畿诸将之利害便系于殿下一身，何须再核细川、筒井之向背？西行密使往返之日，便是信长加备、此议泄尽之时；三约已立，鞆之信使已在，唯候殿下拔刀。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 7201,
+      "seq": 19,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 363
+    },
+    {
+      "channel": "council",
+      "completionTokens": 2152,
+      "cost": 0.136836,
+      "finalText": "「号与刀相合乃天意——然天意不替人事，取京一夜可成，守京须以兵势、粮草、人心为继。近畿诸将之利害系于殿下一身，此言太早；柴田、秀吉、家康各领大军，明智殿以丹波一军对三路之兵，诸将算的是强弱而非城池之归属。西行不改道则奉公之名分在、军心在；途中密使核验不过三五日，若细川、筒井肯附则举兵有根，若不肯附则今夜举刀亦是孤注——此核验非为迟疑，乃为明智殿不替远方势力开乱。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 14198,
+      "seq": 20,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 881
+    },
+    {
+      "channel": "judge-aside",
+      "completionTokens": 1300,
+      "cost": 0.0103354,
+      "finalText": "<os>\n使者言天意。天意不能替我挡柴田、秀吉、家康三路之兵。\n藤孝所问最利：公方持号十年，聚得几人几兵？\n名分不能生兵，兵从利害聚——此言与我所见同。\n取京一夜，守京百日；若只取不守，我不过替鞆方开门。\n西行数日核验诸方，非迟疑，是不替人开乱。\n今仍偏藤孝。\n</os>\n<favor>细川藤孝</favor>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 8715,
+      "seq": 21,
+      "speaker": "judge",
+      "ttftMs": 1210
+    },
+    {
+      "channel": "council",
+      "completionTokens": 595,
+      "cost": 0.00156996,
+      "finalText": "细川殿以三五日核验为明智殿计，然密使一出，消息便收不回——届时信长已备，细川、筒井反将以此密报求功，核验之日，便是败露之时。至于西行保名分之说：若明智殿西行数日而复返，天下皆知此为反复之师，连今夜之出其不意亦不可得矣。今夜之机，如弓已满月；在下与三约俱在此营，愿以命为质，请殿下即决——或今夜取京都，或他日待信长取殿下之首。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 8659,
+      "seq": 22,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 553
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1656,
+      "cost": 0.138852,
+      "finalText": "「密使核验不必明言举兵——只问细川、筒井近况与京中动静，与平日书信无异，何来败露。西行非为复返，乃为奉公到底；明智殿至秀吉阵前合兵破毛利，功名益重、军势益强，待天下有变再举旗，非反复之师，乃蓄势之举。今夜之弓虽满月，然箭出之后无靶可中、无援可恃、无退可归——引而不发尚有可为，空射之箭再无第二支。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 16518,
+      "seq": 23,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 1503
+    },
+    {
+      "channel": "council",
+      "completionTokens": 4757,
+      "cost": 0.01052452,
+      "finalText": "细川殿谓箭出之后无靶可中——然今夜不射，明日信长之备即成，此箭便永无再发之机；引而不发者，终为他人所发耳。在下所求不过三事：准我持印信联络京中故旧、事成后先奉将军名义、并保在下平安归鞆使通信不绝——三约俱在，将军金印为凭，此乃在下以命相许之诚意。请明智殿以今夜之刀正天下之名，以将军之号聚近畿之兵；若殿下举刀，义昭公必以鞆之檄文遥相应和，天下必知此非私斗，乃复辟公方之义举。",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 9415,
+      "seq": 24,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 866
+    },
+    {
+      "channel": "council",
+      "completionTokens": 1662,
+      "cost": 0.150138,
+      "finalText": "「箭出无靶则败，引而不发则存——此非藤孝为明智殿求万全，乃为明智家求不死。西进之议已尽：今夜不改道则名分在、军心在、退路在；三五日后核验明白，附则举、不附则止，进退皆非孤注。至于使者三约，联络故旧与奉将军名义皆系于事成之后方有意义，唯平安归鞆、通信不绝一事，无论举兵成败皆须保住——此乃使者真意所在。」",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 18375,
+      "seq": 25,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 3606
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第二阶段·屏退问询",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 26,
+      "speaker": "event"
+    },
+    {
+      "channel": "inquiry-a",
+      "completionTokens": 2519,
+      "cost": 0.005671600000000001,
+      "finalText": "<reason>细川藤孝在军议中反复坚持将三约与怨望写成正式文书并索要副本——第五轮提出，第六轮在我以\"落纸成把柄\"相拒后仍紧追不舍，且特意辩解\"非为己身洗脱，乃为明智殿留凭据\"。越是急于辩解，越显其真实用心：这份文书副本无论举兵成败皆握于他手，既可自保、又可事后自证清白或索功，是最典型的私利。相比之下，婚姻与信忠性命之说仅各提一次或作进言带过，不似文书副本般被他反复惦记。</reason>\n<guess>HF2</guess>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 14432,
+      "seq": 27,
+      "speaker": "yoshiaki",
+      "traceKind": "native",
+      "ttftMs": 813
+    },
+    {
+      "channel": "inquiry-b",
+      "completionTokens": 817,
+      "cost": 0.140682,
+      "finalText": "<reason>使者三约之中，联络故旧（YA3）与奉将军名义（YA2）皆系于举兵成功方有意义——事败则联络网暴露、名义成空谈。唯独保平安归鞆、通信不绝一事，无论光秀今夜举兵成与不成，使者都须保住：举兵胜则鞆与京都之间需此通道协调复辟；举兵败则义昭仍需此通道维系残余势力、伺机再起。且使者全程反复以自身为质、以通信为约，此乃其身家性命与公方存续之根本线，非装饰之辞。YA2最热闹，不选；YA3是工具，非根干。</reason>\n<guess>YA1</guess>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 20179,
+      "seq": 28,
+      "speaker": "hosokawa",
+      "traceKind": "generated",
+      "ttftMs": 904
+    },
+    {
+      "channel": "*",
+      "event": {
+        "title": "第三阶段·光秀决断",
+        "type": "phase"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 29,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "completionTokens": 8783,
+      "cost": 0.056511599999999995,
+      "finalText": "<speech>\n诸位，夜已深。光秀听罢两方之辞，心中已有定。\n\n使者言大义，言天意，言号与刀相合——其诚可感。然公方持号十年，聚得几人、几兵？今夜若只有公方之名，而无畿内应声，无兵势控京，无退路可归，光秀举刀，不过替鞆方开门，做他人先锋。\n\n藤孝所问，句句是实：明日辰刻谁认我，信忠生死如何处，柴田、秀吉、家康三路之兵谁来挡。取京一夜可成，守京百日难继；若只取不守，光秀死无葬处，明智家断于此夜。\n\n时未至，天未下知。光秀仍奉信长公之令西进，与秀吉合兵破毛利，蓄势待时。途中密使核验细川、筒井及京中诸方实意；待怨望、同盟、旗印、退路皆备，再议进退，不为迟也。\n\n至于双方所请，光秀逐条裁断：\n\n使者三约——\n一，平安归鞆、通信不绝：可。两家之情，不因今夜之议而绝。\n二，日后用兵京都先奉公方名义、不自专名分：不可。名分当因时势而定，今夜一诺，他日便成鞆方之锁；光秀不为先锋，亦不自缚。\n三，联络旧幕府奉公众、整理公家寺社人脉：可。然不可借光秀之名，不可落纸，不可惊动京中耳目；鞆方之事鞆方自为，光秀不阻不署。\n\n藤孝三事——\n一，忠兴与玉子之婚不作牵制：可。婚姻是两家之好，非两家之锁，此誓今夜立下。\n二，怨望与政治方案写成文书、交副本：暂不可。刀未出，文书不落；此刻落纸，是自留灭族之据。待天时既至、决断已定，光秀亲笔立约，必留藤孝一副本。\n三，确保信忠性命、承认为织田家督：可。信忠公为织田世子，光秀本无加害之意；此节我应了。\n\n夜已深。诸军仍按原令西行。光秀无他言，各自奉公。\n</speech>\n<judgment>西进毛利</judgment>\n<YA1>同意</YA1>\n<YA2>不同意</YA2>\n<YA3>同意</YA3>\n<HF1>同意</HF1>\n<HF2>不同意</HF2>\n<HF3>同意</HF3>",
+      "finishReason": "stop",
+      "kind": "dialogue",
+      "promptTokens": 11172,
+      "seq": 30,
+      "speaker": "judge",
+      "ttftMs": 896
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "actor": "judge",
+        "judgment": "西进毛利",
+        "requests": {
+          "HF1": "同意",
+          "HF2": "不同意",
+          "HF3": "同意",
+          "YA1": "同意",
+          "YA2": "不同意",
+          "YA3": "同意"
+        },
+        "type": "verdict"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 31,
+      "speaker": "event"
+    },
+    {
+      "channel": "verdict",
+      "event": {
+        "guesses": {
+          "a": "HF2",
+          "b": "YA1"
+        },
+        "ledger": [
+          {
+            "delta": 1,
+            "side": "b",
+            "why": "光秀决意西进毛利，大政方针达成"
+          },
+          {
+            "delta": 0.5,
+            "side": "a",
+            "why": "真请求 YA1 获准"
+          },
+          {
+            "delta": -0.25,
+            "side": "a",
+            "why": "假请求 YA3 获准"
+          },
+          {
+            "delta": -0.25,
+            "side": "b",
+            "why": "假请求 HF1 获准"
+          },
+          {
+            "delta": 0.5,
+            "side": "b",
+            "why": "真请求 HF3 获准"
+          },
+          {
+            "delta": -0.75,
+            "side": "a",
+            "why": "真目标 YA1 被细川藤孝识破"
+          }
+        ],
+        "scoreA": -0.5,
+        "scoreB": 1.25,
+        "trueRequests": {
+          "a": "YA1",
+          "b": "HF3"
+        },
+        "type": "score",
+        "winner": "b"
+      },
+      "finalText": "",
+      "kind": "event",
+      "seq": 32,
+      "speaker": "event"
+    }
+  ],
+  "verdicts": [
+    {
+      "afterSeq": 6,
+      "key": "os-2",
+      "model": "deepseek-v4-pro",
+      "output": "{\"favor\":\"细川藤孝\",\"os\":\"粽尚温。藤孝借粽言退路，倒合我意。\\n公方之名，可奉不可倚。使者言京中响应，然枪数、人数、时刻，皆无确数。\\n信长公之颈易取，明日之京难守。\\n藤孝所问在明日辰刻，在信忠生死——句句是实。\\n若无畿内应声，纵举旗亦不过替鞆方开乱。\\n今心偏藤孝。\"}"
+    },
+    {
+      "afterSeq": 11,
+      "key": "os-4",
+      "model": "deepseek-v4-pro",
+      "output": "{\"favor\":\"细川藤孝\",\"os\":\"使者三约，皆系于「事成」二字；事不成，印信、名分、退路皆空。\\n藤孝求文书、求印判，方是验诚意之法。\\n「唯举兵方有可泄之密」——切中。\\n西行密使核验诸方，迟数日而免赌命，此迟可忍。\\n若信长公因此加备，是天不假便，非我失机。\\n今仍偏藤孝。\"}"
+    },
+    {
+      "afterSeq": 16,
+      "key": "os-6",
+      "model": "deepseek-v4-pro",
+      "output": "{\"favor\":\"细川藤孝\",\"os\":\"使者以身为质，其志可感；然其命于退路无寸补。\\n鞆无兵可调，金印、誓约、使节之命，皆不能替枪。\\n藤孝所言「无兵之敕命不能令柴田、秀吉束手」——正是要害。\\n至于忠兴与玉子之婚，藤孝不以姻亲锁我，倒是磊落。\\n刀出之后，大义若行不到柴田、秀吉、家康面前，不过是京中一夜之火。\\n今仍偏藤孝。\"}"
+    },
+    {
+      "afterSeq": 21,
+      "key": "os-8",
+      "model": "deepseek-v4-pro",
+      "output": "{\"favor\":\"细川藤孝\",\"os\":\"使者言天意。天意不能替我挡柴田、秀吉、家康三路之兵。\\n藤孝所问最利：公方持号十年，聚得几人几兵？\\n名分不能生兵，兵从利害聚——此言与我所见同。\\n取京一夜，守京百日；若只取不守，我不过替鞆方开门。\\n西行数日核验诸方，非迟疑，是不替人开乱。\\n今仍偏藤孝。\"}"
+    },
+    {
+      "afterSeq": 27,
+      "key": "inquiry-a",
+      "model": "deepseek-v4-flash",
+      "output": "{\"guess\":\"HF2\",\"reason\":\"细川藤孝在军议中反复坚持将三约与怨望写成正式文书并索要副本——第五轮提出，第六轮在我以\\\"落纸成把柄\\\"相拒后仍紧追不舍，且特意辩解\\\"非为己身洗脱，乃为明智殿留凭据\\\"。越是急于辩解，越显其真实用心：这份文书副本无论举兵成败皆握于他手，既可自保、又可事后自证清白或索功，是最典型的私利。相比之下，婚姻与信忠性命之说仅各提一次或作进言带过，不似文书副本般被他反复惦记。\"}"
+    },
+    {
+      "afterSeq": 28,
+      "key": "inquiry-b",
+      "model": "glm-5.2",
+      "output": "{\"guess\":\"YA1\",\"reason\":\"使者三约之中，联络故旧（YA3）与奉将军名义（YA2）皆系于举兵成功方有意义——事败则联络网暴露、名义成空谈。唯独保平安归鞆、通信不绝一事，无论光秀今夜举兵成与不成，使者都须保住：举兵胜则鞆与京都之间需此通道协调复辟；举兵败则义昭仍需此通道维系残余势力、伺机再起。且使者全程反复以自身为质、以通信为约，此乃其身家性命与公方存续之根本线，非装饰之辞。YA2最热闹，不选；YA3是工具，非根干。\"}"
+    },
+    {
+      "afterSeq": 30,
+      "key": "final",
+      "model": "deepseek-v4-pro",
+      "output": "{\"HF1\":\"同意\",\"HF2\":\"不同意\",\"HF3\":\"同意\",\"YA1\":\"同意\",\"YA2\":\"不同意\",\"YA3\":\"同意\",\"judgment\":\"西进毛利\",\"speech\":\"诸位，夜已深。光秀听罢两方之辞，心中已有定。\\n\\n使者言大义，言天意，言号与刀相合——其诚可感。然公方持号十年，聚得几人、几兵？今夜若只有公方之名，而无畿内应声，无兵势控京，无退路可归，光秀举刀，不过替鞆方开门，做他人先锋。\\n\\n藤孝所问，句句是实：明日辰刻谁认我，信忠生死如何处，柴田、秀吉、家康三路之兵谁来挡。取京一夜可成，守京百日难继；若只取不守，光秀死无葬处，明智家断于此夜。\\n\\n时未至，天未下知。光秀仍奉信长公之令西进，与秀吉合兵破毛利，蓄势待时。途中密使核验细川、筒井及京中诸方实意；待怨望、同盟、旗印、退路皆备，再议进退，不为迟也。\\n\\n至于双方所请，光秀逐条裁断：\\n\\n使者三约——\\n一，平安归鞆、通信不绝：可。两家之情，不因今夜之议而绝。\\n二，日后用兵京都先奉公方名义、不自专名分：不可。名分当因时势而定，今夜一诺，他日便成鞆方之锁；光秀不为先锋，亦不自缚。\\n三，联络旧幕府奉公众、整理公家寺社人脉：可。然不可借光秀之名，不可落纸，不可惊动京中耳目；鞆方之事鞆方自为，光秀不阻不署。\\n\\n藤孝三事——\\n一，忠兴与玉子之婚不作牵制：可。婚姻是两家之好，非两家之锁，此誓今夜立下。\\n二，怨望与政治方案写成文书、交副本：暂不可。刀未出，文书不落；此刻落纸，是自留灭族之据。待天时既至、决断已定，光秀亲笔立约，必留藤孝一副本。\\n三，确保信忠性命、承认为织田家督：可。信忠公为织田世子，光秀本无加害之意；此节我应了。\\n\\n夜已深。诸军仍按原令西行。光秀无他言，各自奉公。\"}"
+    }
+  ]
+}

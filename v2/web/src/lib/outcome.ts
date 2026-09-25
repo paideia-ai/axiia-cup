@@ -1,4 +1,5 @@
 import type { MatchParticipantsDTO, ScenarioSummary } from '../api/types'
+import { roleIdentity } from './role-identity'
 
 // F7（#69 一眼知胜负 / #71 我方与对手区分）：把 winner + participants 译成
 // 带视角的结果文案——我方（商鞅）胜 / 对方（甘龙）胜 / 平局；旁观、open
@@ -11,6 +12,7 @@ export interface RoleNames {
 }
 
 export interface OutcomeInput {
+  scenarioID?: string
   winner?: string | null
   participants?: MatchParticipantsDTO | null
 }
@@ -25,7 +27,14 @@ export function outcomeCopy(
   const winner = match.winner
   if (winner === 'draw') return '平局'
   if (winner !== 'a' && winner !== 'b') return null
-  const name = (winner === 'a' ? roles?.a : roles?.b) || FALLBACK_ROLES[winner]
+  const name = match.scenarioID || match.participants?.[winner]?.role
+    ? roleIdentity({
+      scenarioID: match.scenarioID,
+      side: winner,
+      role: match.participants?.[winner]?.role,
+      fallback: roles?.[winner],
+    }).name
+    : roles?.[winner] || FALLBACK_ROLES[winner]
   // 防御（round4 评审 #7）：participants 形态不全（{} 或缺一侧）时不抛错，
   // 按旁观处理——两处都全程可选链。
   const participants = match.participants ?? null
@@ -47,7 +56,18 @@ export function scenarioRoles(
 ): Record<string, RoleNames> {
   const map: Record<string, RoleNames> = {}
   for (const scenario of scenarios) {
-    map[scenario.id] = { a: scenario.sideAName, b: scenario.sideBName }
+    map[scenario.id] = {
+      a: roleIdentity({
+        scenarioID: scenario.id,
+        side: 'a',
+        fallback: scenario.sideAName,
+      }).name,
+      b: roleIdentity({
+        scenarioID: scenario.id,
+        side: 'b',
+        fallback: scenario.sideBName,
+      }).name,
+    }
   }
   return map
 }

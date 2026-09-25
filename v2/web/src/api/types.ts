@@ -168,6 +168,7 @@ export interface StageDTO {
 }
 
 export interface PresetOpponentDTO {
+  role?: RoleIdentityDTO | null
   key: string
   side: string
   label: string
@@ -208,6 +209,7 @@ export interface ModelListResponse {
 // A fieldable opponent agent for friendly PVP; `isSelf` marks your own
 // opposite-side agent, which makes the match a hotseat.
 export interface OpponentAgentDTO {
+  role?: RoleIdentityDTO | null
   agentID: number
   displayName: string
   isSelf: boolean
@@ -265,6 +267,7 @@ export interface GateProgressDTO {
 // One of the caller's agents in the GET /v1/my/agents inventory. Names arrive
 // in P6; until then an agent is identified by its scenario/side position.
 export interface MyAgentDTO {
+  role?: RoleIdentityDTO | null
   isArchived?: boolean
   agentID: number
   versionCount: number
@@ -318,6 +321,7 @@ export interface AgentRefResponse {
 // GET /v1/versions/:id/ref（P3 #25/#62）：任意可见版本 id 的公开身份——玩家/
 // 场景/侧/模型，够钉一次约战，永远不含提示词。
 export interface VersionRefResponse {
+  role?: RoleIdentityDTO | null
   versionID: number
   agentID: number
   side: string
@@ -352,6 +356,7 @@ export interface SaveVersionRequest {
 }
 
 export interface AgentVersionDTO {
+  role?: RoleIdentityDTO | null
   id: number
   agentID: number
   prompt: string
@@ -478,6 +483,7 @@ export interface TurnDTO {
 // 的所有权；提示词永不出现。预设侧带 presetKey（+模型）；版本侧带对手钉约战
 // （P3）所需的版本/agent/玩家名引用。
 export interface MatchParticipantDTO {
+  role?: RoleIdentityDTO | null
   agentID?: number | null
   versionID?: number | null
   presetKey?: string | null
@@ -706,6 +712,7 @@ export interface UpdateSlotRequest {
 // #35 公开视图：别人看你的智能体时能看到的一切——身份 + 逐版本战绩。
 // 没有 prompt 字段，也没有 diff：契约层面就不给（#20）。
 export interface PublicAgentVersionDTO {
+  role?: RoleIdentityDTO | null
   id: number
   ordinal: number
   isEntry: boolean
@@ -719,6 +726,7 @@ export interface PublicAgentVersionDTO {
 
 export interface NPCProfileResponse {
   sourceMatchID?: number
+  role?: RoleIdentityDTO | null
   scenarioID: string
   scenarioTitle: string
   key: string
@@ -783,4 +791,10 @@ export interface ArchivedAgentsResponse {
     scenarioTitle: string
     sideName: string
   }[]
+}
+
+export interface RoleIdentityDTO {
+  key: string
+  name: string
+  side: Side
 }

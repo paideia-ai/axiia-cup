@@ -1,0 +1,31 @@
+/* Underline tabs from the reviewed localhost:5224 battle preview. */
+.transcript-stage-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  gap: 24px;
+}
+.transcript-stage-tabs button {
+  padding: 10px 2px;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  color: var(--foreground-muted);
+  cursor: pointer;
+}
+.transcript-stage-tabs button[aria-selected=true] {
+  color: var(--foreground);
+  border-color: var(--foreground);
+}
+.transcript-stage-tabs button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+.transcript-stage-tabs button:focus-visible,
+.transcript-stage-panel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+@media (max-width: 767px) {
+  .transcript-stage-tabs {
+    gap: 22px;
+  }
+}

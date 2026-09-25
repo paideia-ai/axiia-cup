@@ -1,15 +1,16 @@
-import type { Side } from '../../api/types'
+import type { MatchParticipantsDTO, Side } from '../../api/types'
 import type { ScenarioModule } from '../../scenarios'
-import { scenarioModule } from '../../scenarios'
+import { roleByKey, scenarioModule } from '../../scenarios'
+import { roleIdentity } from '../../lib/role-identity'
 
 // Speaker keys are wire ids — a side ('a', 'b'), an NPC lane ('diaochan', 'judge'),
-// or, in a role-cast scenario, the role the player picked. Resolution is
-// module-first (authored here, always current), then whatever the match itself
-// carries (which is what a finished match rendered with), then a generic side
-// name, then the raw key.
+// or the role selected for this match. Side keys use the shared participant
+// resolver; role and NPC keys use the scenario registry and historical labels.
 export interface SpeakerLabels {
   readonly lanes: Record<string, string>
   readonly module: ScenarioModule | null
+  readonly speakers?: readonly string[]
+  readonly participants?: MatchParticipantsDTO | null
 }
 
 const SIDE_NAMES: Record<string, string> = { a: '甲方', b: '乙方' }
@@ -17,34 +18,56 @@ const SIDE_NAMES: Record<string, string> = { a: '甲方', b: '乙方' }
 export function speakerLabels(
   slotID: string | null | undefined,
   lanes: Record<string, string>,
+  speakers: readonly string[] = [],
+  participants?: MatchParticipantsDTO | null,
 ): SpeakerLabels {
-  return { lanes, module: scenarioModule(slotID) }
+  return { lanes, module: scenarioModule(slotID), speakers, participants }
 }
 
 export function speakerName(labels: SpeakerLabels, key: string): string {
+  if (key === 'a' || key === 'b') return sideName(labels, key)
+  for (const side of ['a', 'b'] as const) {
+    const identity = labels.participants?.[side]?.role
+    if (identity?.side === side && identity.key === key) return identity.name
+  }
+  const role = roleByKey(labels.module, key)
+  const snapshot = role ? labels.participants?.[role.side]?.role : null
+  if (
+    snapshot && snapshot.side === role?.side &&
+    roleByKey(labels.module, snapshot.key)?.key === role?.key
+  ) {
+    return snapshot.name
+  }
+  if (role) return role.name
   const fromModule: string | undefined = labels.module?.laneLabels[key]
   const fromMatch: string | undefined = labels.lanes[key]
   return fromModule ?? fromMatch ?? SIDE_NAMES[key] ?? key
 }
 
 export function speakerSide(labels: SpeakerLabels, key: string): Side | null {
-  const role = labels.module?.roles.find((role) => role.key === key)
+  for (const side of ['a', 'b'] as const) {
+    const identity = labels.participants?.[side]?.role
+    if (identity?.side === side && identity.key === key) return side
+  }
+  const role = roleByKey(labels.module, key)
   if (role) return role.side
   if (key === 'a' || key === 'b') return key
   return null
 }
 
-// The name to head a side with when nothing in the transcript has been spoken
-// under it yet.
+// Resolve from this match's speakers; a faction label is not a selected role.
 export function sideName(
   labels: SpeakerLabels,
   side: Side,
-  speakers: string[],
+  speakers: readonly string[] = labels.speakers ?? [],
 ): string {
-  const fromMatch: string | undefined = labels.lanes[side]
-  if (fromMatch) return fromMatch
-  const spoken = speakers.find((key) => speakerSide(labels, key) === side)
-  return spoken ? speakerName(labels, spoken) : SIDE_NAMES[side]
+  return roleIdentity({
+    scenarioID: labels.module?.slotID,
+    side,
+    role: labels.participants?.[side]?.role,
+    lanes: labels.lanes,
+    speakers,
+  }).name
 }
 
 export function speakerAccent(labels: SpeakerLabels, key: string): string {
