@@ -5,6 +5,7 @@ import type { Side } from '../api/types'
 // the speaker key of that persona's transcript rows.
 export interface ScenarioRole {
   key: string
+  aliases?: string[]
   name: string
   side: Side
   pitch: string

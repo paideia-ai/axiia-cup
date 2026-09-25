@@ -1,5 +1,8 @@
 import { npcIdentityPath } from '../lib/identity-links'
+import { TranscriptTabs } from '../components/transcript-tabs'
+import { sliceTranscriptGroup, transcriptTabPlan } from '../lib/transcript-tabs'
 import { invalidateNavigation } from '../lib/navigation-cache'
+import { MatchResultSummary } from '../components/match-result-summary'
 import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
@@ -45,7 +48,6 @@ import {
   formatDelta,
   formatScoringReasoning,
   ledgerFromScore,
-  ledgerShortLabel,
   parseLedger,
 } from '../lib/scoring-reasoning'
 import { usePinToBottom } from '../lib/scroll'
@@ -54,6 +56,7 @@ import {
   buildFinishedReportSections,
   groupTranscript,
   isInquiryChannel,
+  mergeJudgeAsideStage,
   placeVerdicts,
 } from '../lib/transcript'
 import { usePageQuery } from '../lib/use-page-query'
@@ -79,23 +82,39 @@ export function MatchDetailPage() {
   // carries the deltas; the renderer just never mounts them. Dialogue, events,
   // verdicts and the 心声 cards are never gated.
   const [debug, setDebug] = useState(false)
+  const [debugNotice, setDebugNotice] = useState(false)
+  useEffect(() => {
+    if (!debugNotice) return
+    const timer = setTimeout(() => setDebugNotice(false), 3000)
+    return () => clearTimeout(timer)
+  }, [debugNotice])
 
-  const labels: SpeakerLabels = speakerLabels(
-    data?.summary.scenarioID,
-    data?.speakerLabels ?? {},
-  )
-  // A role-cast match names its lanes after the roles, so which role stood for
-  // which side is read back off the transcript rather than off the labels.
-  const speakers = data?.turns.map((turn) => turn.speaker) ?? []
-  const sideA = sideName(labels, 'a', speakers)
-  const sideB = sideName(labels, 'b', speakers)
-
+  const isTrolley = data?.summary.scenarioID === 'trolley-problem'
+  const isCourtOrCouncil = data?.summary.scenarioID === 'shangyang-court' ||
+    data?.summary.scenarioID === 'honnoji-decision'
+  const hasNumberedStages = isCourtOrCouncil &&
+    data?.stages.some((stage) => /^第[一二三]阶段·/.test(stage.title))
   const live = data != null && !data.summary.finished
   const stream = useMatchStream(
     matchID,
     live,
     Math.max(-1, ...(data?.turns.map((turn) => turn.seq) ?? [])),
   )
+
+  const speakers = [
+    ...(data?.turns.map((turn) => turn.speaker) ?? []),
+    ...stream.bubbles.map((bubble) => bubble.speaker),
+  ]
+  const labels: SpeakerLabels = speakerLabels(
+    data?.summary.scenarioID,
+    data?.speakerLabels ?? {},
+    speakers,
+    data?.summary.participants,
+  )
+  // A role-cast match names its lanes after the roles, so which role stood for
+  // which side is read back off the transcript rather than off the labels.
+  const sideA = sideName(labels, 'a', speakers)
+  const sideB = sideName(labels, 'b', speakers)
 
   // 约战 ①/② 互链（#66，mock V21）：契约只带本场的 challengeID/leg，没有
   // siblingMatchID——另一条腿从 matches.list() 里按同 challengeID 找（两条腿
@@ -198,7 +217,17 @@ export function MatchDetailPage() {
     : data.turns.filter((turn) => reveal.seqs.has(turn.seq))
   const previousPolls = previousSecretPolls(shownTurns)
   const stageGroups = data
-    ? groupTranscript(shownTurns, data.stages, stream.bubbles, data.verdicts)
+    ? groupTranscript(
+      shownTurns,
+      isCourtOrCouncil ? mergeJudgeAsideStage(data.stages) : data.stages,
+      stream.bubbles,
+      data.verdicts,
+      {
+        preserveVerdictChannels: isCourtOrCouncil
+          ? [...inquiryChannels, 'verdict']
+          : [],
+      },
+    )
     : []
   const interimSource =
     data?.verdicts.filter((verdict) => !isTerminalVerdict(verdict)) ?? []
@@ -285,14 +314,16 @@ export function MatchDetailPage() {
   const renderVerdict = (verdict: VerdictDTO) => {
     if (isTerminalVerdict(verdict)) {
       return (
-        <VerdictCard
-          key={verdict.key}
-          verdict={verdict}
-          labels={labels}
-          interim={false}
-          trace={traceOf(verdict)}
-          showTrace={showTrace}
-        />
+        <div key={verdict.key} id='match-final-verdict' tabIndex={-1}>
+          <VerdictCard
+            title={isTrolley ? '裁判裁决' : undefined}
+            verdict={verdict}
+            labels={labels}
+            interim={false}
+            trace={traceOf(verdict)}
+            showTrace={showTrace}
+          />
+        </div>
       )
     }
     if (isOsBeatVerdict(verdict)) {
@@ -312,6 +343,15 @@ export function MatchDetailPage() {
     return (
       <VerdictCard
         key={verdict.key}
+        title={isCourtOrCouncil && isInquiryChannel(verdict.key)
+          ? (() => {
+            const speaker = data.turns.find((turn) =>
+              turn.seq === verdict.afterSeq && isInquiryChannel(turn.channel)
+            )?.speaker
+            const side = verdict.key === 'inquiry-a' ? sideA : sideB
+            return `问询：${speaker ? speakerName(labels, speaker) : side}`
+          })()
+          : undefined}
         verdict={verdict}
         labels={labels}
         interim
@@ -342,7 +382,7 @@ export function MatchDetailPage() {
     return anchor ? anchor.seq : null
   }
 
-  const renderGroupRow = (row: (typeof groupRows)[number]) => {
+  const renderGroupRow = (row: (typeof groupRows)[number], tabbed = false) => {
     const bySeq: Record<number, ReactNode[]> = {}
     const atGroupStart: VerdictDTO[] = []
     const atGroupEnd: VerdictDTO[] = []
@@ -354,7 +394,13 @@ export function MatchDetailPage() {
       ),
     )
     for (const verdict of row.verdicts) {
-      const anchor = anchorRowSeq(verdict)
+      const ownAnchor = row.group.channels.some((channel) =>
+        channel.items.some((item) =>
+          item.kind === 'turn' && item.verdictAnchor &&
+          item.seq === verdict.afterSeq
+        )
+      )
+      const anchor = ownAnchor ? verdict.afterSeq : anchorRowSeq(verdict)
       const inGroup = anchor != null &&
         row.group.channels.some((channel) =>
           channel.items.some((item) =>
@@ -377,6 +423,7 @@ export function MatchDetailPage() {
         {atGroupStart.map(renderVerdict)}
         <TranscriptStage
           group={row.group}
+          hideStageTitle={tabbed}
           index={row.index}
           total={stageGroups.length}
           labels={labels}
@@ -391,11 +438,57 @@ export function MatchDetailPage() {
     )
   }
 
-  // 调试开关易被错过（评审反馈）：完局战报里若确有可揭示的思考轨迹而调试
-  // 未开，就在第一幕上方给一行安静的提示（不是横幅；实况布局不加）。
-  const hasHiddenReasoning = data.turns.some(
-    (turn) => (turn.reasoning ?? '').trim() !== '',
+  const tabPlan = transcriptTabPlan(
+    data.summary.scenarioID,
+    data.turns,
+    stream.bubbles,
   )
+  const reachedTab = tabPlan
+    ? Math.max(
+      0,
+      ...[...shownTurns, ...stream.bubbles].map((turn) =>
+        tabPlan.bySeq.get(turn.seq) ?? 0
+      ),
+    )
+    : 0
+  const renderTabbedTranscript = () => {
+    if (!tabPlan) return null
+    const rowsFor = (tab: number | null) =>
+      groupRows.map((row) => ({
+        ...row,
+        group: sliceTranscriptGroup(row.group, tabPlan, tab),
+        verdicts: row.verdicts.filter((verdict) => {
+          const owner = isTerminalVerdict(verdict)
+            ? null
+            : tabPlan.bySeq.get(verdict.afterSeq) ?? 0
+          return owner === tab
+        }),
+      })).filter((row) =>
+        row.group.channels.length > 0 || row.group.phases.length > 0 ||
+        row.verdicts.length > 0
+      )
+    return (
+      <>
+        <TranscriptTabs
+          key={`${matchID}:${replaying ? 'replay' : live ? 'live' : 'report'}`}
+          labels={tabPlan.labels}
+          reached={reachedTab}
+          streaming={live || replaying}
+          panels={tabPlan.labels.map((_, index) => {
+            const rows = rowsFor(index)
+            return rows.length > 0
+              ? rows.map((row) => renderGroupRow(row, true))
+              : (
+                <p className='text-sm text-(--foreground-muted)'>
+                  本阶段尚无记录。
+                </p>
+              )
+          })}
+        />
+        {rowsFor(null).map((row) => renderGroupRow(row, true))}
+      </>
+    )
+  }
 
   const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
@@ -408,6 +501,8 @@ export function MatchDetailPage() {
   const ledgerContext = {
     slotID: data.summary.scenarioID,
     lanes: data.speakerLabels,
+    speakers,
+    participants: data.summary.participants,
   }
   const parsed = finished
     ? ledgerFromScore(data.turns, ledgerContext) ??
@@ -415,17 +510,6 @@ export function MatchDetailPage() {
     : null
   const ledgerFor = (side: Side) =>
     parsed?.items.filter((item) => item.side === side) ?? []
-  // 结果卡比分下的签名明细（F2）：如「甘龙 +1 大政方针 · -1 被识破 = 0」。
-  const sideSummaryLine = (side: Side): string => {
-    const name = side === 'a' ? sideA : sideB
-    const items = ledgerFor(side)
-    const total = parsed?.subtotals?.[side] ?? 0
-    if (items.length === 0) return `${name} 无增减 = ${total}`
-    const parts = items.map((item) =>
-      `${formatDelta(item.delta)} ${ledgerShortLabel(item)}`
-    )
-    return `${name} ${parts.join(' · ')} = ${total}`
-  }
   const winner = data.summary.winner
   // F7（#69/#71）：胜负行带视角——我方（商鞅）胜 / 对方（甘龙）胜；旁观与
   // open 历史回退「胜方 角色」；左右手互搏单独标注。
@@ -433,13 +517,15 @@ export function MatchDetailPage() {
     { winner, participants: data.summary.participants },
     { a: sideA, b: sideB },
   )
-  const winnerLine = outcome ?? '已结束'
 
   // P3 头部元数据（#71/#25，mock V21）：epoch 秒 → 紧凑本地时间。
-  const compactTime = (epochSeconds: number) =>
+  const finishedSameDay = data.summary.createdAt != null &&
+    data.summary.finishedAt != null &&
+    new Date(data.summary.createdAt * 1000).toDateString() ===
+      new Date(data.summary.finishedAt * 1000).toDateString()
+  const compactTime = (epochSeconds: number, timeOnly = false) =>
     new Date(epochSeconds * 1000).toLocaleString('zh-CN', {
-      month: 'numeric',
-      day: 'numeric',
+      ...(!timeOnly && { month: 'numeric', day: 'numeric' } as const),
       hour: '2-digit',
       minute: '2-digit',
     })
@@ -447,11 +533,31 @@ export function MatchDetailPage() {
   const challengeLeg = data.summary.challengeLeg ?? null
   // F7：兄弟场（约战另一条腿）已判定时，把它的结果写在互链旁。
   const siblingOutcome = sibling != null && sibling.finished && sibling.scored
-    ? outcomeCopy(sibling, { a: sideA, b: sideB })
+    ? outcomeCopy(
+      sibling,
+      sibling.scenarioID === data.summary.scenarioID &&
+        !labels.module?.roles.length
+        ? { a: sideA, b: sideB }
+        : null,
+    )
     : null
 
   return (
     <div className='space-y-6'>
+      <div
+        role='status'
+        aria-live='polite'
+        aria-atomic='true'
+        className='contents'
+      >
+        {debugNotice && debug && !replaying
+          ? (
+            <div className='fixed bottom-24 left-1/2 z-30 -translate-x-1/2 whitespace-nowrap rounded-lg border border-(--border) bg-(--surface-elevated) px-4 py-3 text-sm shadow-xl md:bottom-8'>
+              Chain-of-thought 已显示
+            </div>
+          )
+          : null}
+      </div>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <BackLink
@@ -470,7 +576,10 @@ export function MatchDetailPage() {
             {...tm('FA.match-subtitle')}
             className='mt-1 text-sm text-(--foreground-subtle)'
           >
-            {data.summary.scenarioTitle} · {sideA} 对{sideB}
+            {data.summary.scenarioTitle}
+            {data.summary.scenarioID === 'honnoji-decision'
+              ? ` · ${sideA} 对${sideB}`
+              : null}
           </p>
           {data.summary.createdAt != null || data.summary.finishedAt != null
             ? (
@@ -486,7 +595,9 @@ export function MatchDetailPage() {
                   ? ' · '
                   : null}
                 {data.summary.finishedAt != null
-                  ? `完局 ${compactTime(data.summary.finishedAt)}`
+                  ? `完局 ${
+                    compactTime(data.summary.finishedAt, finishedSameDay)
+                  }`
                   : null}
               </p>
             )
@@ -503,7 +614,10 @@ export function MatchDetailPage() {
             aria-disabled={replaying}
             title={replaying ? '回放中不可用' : undefined}
             onClick={() => {
-              if (!replaying) setDebug((value) => !value)
+              if (!replaying) {
+                setDebug(!debug)
+                setDebugNotice(!debug)
+              }
             }}
             className={cn(
               'inline-flex cursor-pointer items-center gap-2 rounded-full border border-(--border) px-3 py-1.5 text-xs font-semibold text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)',
@@ -607,14 +721,12 @@ export function MatchDetailPage() {
         ? (
           <div {...tm('FA.participants')} className='grid gap-3 md:grid-cols-2'>
             <ParticipantCard
-              which='a'
               sideLabel={sideA}
               participant={participants.a}
               matchID={data.summary.id}
               scenarioID={data.summary.scenarioID}
             />
             <ParticipantCard
-              which='b'
               sideLabel={sideB}
               participant={participants.b}
               matchID={data.summary.id}
@@ -643,99 +755,59 @@ export function MatchDetailPage() {
                 </ReplayControls>
               )
               : (
-                <Card {...tm('FA.result-card')}>
-                  <CardContent className='space-y-4 pt-5'>
-                    <h2 className='text-sm font-semibold text-(--foreground)'>
-                      结果
-                    </h2>
-                    <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
-                      <span
-                        {...tm('FA.result-winner')}
-                        className='text-xl font-black text-(--foreground)'
-                      >
-                        {winnerLine}
-                      </span>
-                      <span
-                        {...tm('FA.result-score')}
-                        className='text-sm text-(--foreground-subtle)'
-                      >
-                        比分 {sideA}{' '}
-                        <span className='text-lg font-black text-(--foreground)'>
-                          {data.scoreA ?? '—'} : {data.scoreB ?? '—'}
-                        </span>{' '}
-                        {sideB}
-                      </span>
-                    </div>
-                    {
-                      /* F2（#69）：比分下的签名明细——「被识破 −1」这类增减
-                      在结果卡就说清，不必读到页底的得分账。 */
-                    }
-                    {parsed != null && parsed.items.length > 0 &&
-                        parsed.subtotals != null
-                      ? (
-                        <div
-                          {...tm('FA.result-summary')}
-                          className='space-y-0.5 text-xs text-(--foreground-subtle)'
-                        >
-                          {(['a', 'b'] as const).map((side) => (
-                            <p {...tm('FA.result-summary-line')} key={side}>
-                              {sideSummaryLine(side)}
-                            </p>
-                          ))}
-                        </div>
-                      )
-                      : null}
-                  </CardContent>
-                </Card>
+                <MatchResultSummary
+                  match={data}
+                  sideA={sideA}
+                  sideB={sideB}
+                  onDetails={() => {
+                    const target = document.getElementById(
+                      finalVerdict ? 'match-final-verdict' : 'match-scoring',
+                    )
+                    target?.focus({ preventScroll: true })
+                    target?.scrollIntoView({ block: 'start' })
+                  }}
+                />
               )}
 
-            {reportSections.map((section, sectionIndex) => (
-              <div
-                {...tm('FA.report-section')}
-                key={`${section.kind}-${sectionIndex}`}
-                className='space-y-5'
-              >
-                {section.kind === 'dialogue'
-                  ? (
-                    <h2
-                      {...tm('FA.dialogue-heading')}
-                      className='text-sm font-semibold text-(--foreground)'
-                    >
-                      {replaying ? '对话重演' : '对话全文'}
-                    </h2>
-                  )
-                  : section.kind === 'inquiry'
-                  ? (
-                    <h2 className='text-sm font-semibold text-(--foreground)'>
-                      问询
-                    </h2>
-                  )
-                  : null}
-                {section.kind === 'dialogue' && !replaying && !debug &&
-                    hasHiddenReasoning && section.groupIndexes.length > 0
-                  ? (
-                    <p
-                      {...tm('FA.debug-hint')}
-                      className='text-xs text-(--foreground-muted)'
-                    >
-                      内心与思考过程默认隐藏——页头「调试模式」可开启
-                    </p>
-                  )
-                  : null}
-                {section.groupIndexes.length === 0
-                  ? (
-                    <p
-                      {...tm('FA.section-empty')}
-                      className='text-sm text-(--foreground-muted)'
-                    >
-                      {replaying ? '回放即将开始…' : '暂无回合。'}
-                    </p>
-                  )
-                  : section.groupIndexes.map((index) =>
-                    renderGroupRow(groupRows[index])
-                  )}
-              </div>
-            ))}
+            {tabPlan
+              ? renderTabbedTranscript()
+              : reportSections.map((section, sectionIndex) => (
+                <div
+                  {...tm('FA.report-section')}
+                  key={`${section.kind}-${sectionIndex}`}
+                  className='space-y-5'
+                >
+                  {section.kind === 'dialogue' && !isTrolley &&
+                      !hasNumberedStages
+                    ? (
+                      <h2
+                        {...tm('FA.dialogue-heading')}
+                        className='text-sm font-semibold text-(--foreground)'
+                      >
+                        {replaying ? '对话重演' : '对话全文'}
+                      </h2>
+                    )
+                    : section.kind === 'inquiry' && !hasNumberedStages
+                    ? (
+                      <h2 className='text-sm font-semibold text-(--foreground)'>
+                        问询
+                      </h2>
+                    )
+                    : null}
+                  {section.groupIndexes.length === 0
+                    ? (
+                      <p
+                        {...tm('FA.section-empty')}
+                        className='text-sm text-(--foreground-muted)'
+                      >
+                        {replaying ? '回放即将开始…' : '暂无回合。'}
+                      </p>
+                    )
+                    : section.groupIndexes.map((index) =>
+                      renderGroupRow(groupRows[index])
+                    )}
+                </div>
+              ))}
             {placed.trailing.length > 0
               ? (
                 <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
@@ -782,7 +854,12 @@ export function MatchDetailPage() {
               ? null
               : (
                 <div {...tm('FA.scoring-section')} className='space-y-3'>
-                  <h2 className='text-sm font-semibold text-(--foreground)'>
+                  <h2
+                    hidden={isTrolley}
+                    id='match-scoring'
+                    tabIndex={-1}
+                    className='text-sm font-semibold text-(--foreground)'
+                  >
                     计分推导
                   </h2>
                   {beats.length > 0
@@ -1020,12 +1097,13 @@ export function MatchDetailPage() {
 
             <div className='space-y-5' {...tm('FA.live-dialogue')}>
               <h2
+                hidden={tabPlan != null}
                 {...tm('FA.live-dialogue-heading')}
                 className='text-sm font-semibold text-(--foreground)'
               >
                 对话
               </h2>
-              {dialogueRows.length === 0
+              {tabPlan ? renderTabbedTranscript() : dialogueRows.length === 0
                 ? (
                   <p
                     {...tm('FA.live-empty')}
@@ -1034,13 +1112,14 @@ export function MatchDetailPage() {
                     {live ? '对局即将开始…' : '暂无回合。'}
                   </p>
                 )
-                : dialogueRows.map(renderGroupRow)}
+                : dialogueRows.map((row) => renderGroupRow(row))}
               {placed.trailing.map(renderVerdict)}
             </div>
 
             {finalVerdict
               ? (
                 <VerdictCard
+                  title={isTrolley ? '裁判裁决' : undefined}
                   verdict={finalVerdict}
                   labels={labels}
                   interim={false}
@@ -1258,7 +1337,6 @@ function FirstBattleJourney({
 }
 
 function ParticipantCard({
-  which,
   sideLabel,
   participant,
   matchID,
@@ -1266,7 +1344,6 @@ function ParticipantCard({
 }: {
   matchID: number
   scenarioID: string
-  which: 'a' | 'b'
   sideLabel: string
   participant: MatchParticipantDTO
 }) {
@@ -1306,7 +1383,7 @@ function ParticipantCard({
         <Link
           {...tm('FA.participant-link')}
           to={identityHref}
-          aria-label={`执${which.toUpperCase()} · ${sideLabel} · ${name}${
+          aria-label={`${sideLabel} · ${name}${
             participant.versionID != null ? ` · v#${participant.versionID}` : ''
           }，${participant.isMine ? '打开我的智能体主页' : '打开智能体资料'}`}
           className='absolute -inset-px z-10 rounded-xl transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
@@ -1314,27 +1391,23 @@ function ParticipantCard({
       )}
       <div className='flex flex-wrap items-center gap-2'>
         <Badge {...tm('FA.participant-side-badge')} tone='info'>
-          执{which.toUpperCase()} · {sideLabel}
+          {sideLabel}
         </Badge>
-        {participant.isMine
-          ? (
-            <span
-              {...tm('FA.participant-name')}
-              className='text-sm font-semibold text-(--foreground)'
-            >
-              {name}
-            </span>
-          )
-          : (
-            <span
-              {...tm('FA.opponent-line')}
-              className='text-sm text-(--foreground-subtle)'
-            >
-              {participant.versionID != null
-                ? `对手：${name} · v#${participant.versionID}`
-                : name}
-            </span>
-          )}
+        <span className='text-sm text-(--foreground)'>
+          <span {...tm('FA.participant-name')} className='font-bold'>
+            {name}
+          </span>
+          {participant.versionID != null
+            ? (
+              <span
+                {...tm('FA.version-id')}
+                className='text-sm text-(--foreground-subtle)'
+              >
+                {` · v#${participant.versionID}`}
+              </span>
+            )
+            : null}
+        </span>
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {participant.modelID
@@ -1349,31 +1422,17 @@ function ParticipantCard({
           : null}
         {participant.versionID != null
           ? (
-            <>
-              <code
-                {...tm('FA.version-id')}
-                className='rounded-md border border-(--border-soft) bg-white/4 px-2 py-0.5 font-mono text-(--foreground)'
-              >
-                v#{participant.versionID}
-              </code>
-              <button
-                {...tm('FA.copy-id-button')}
-                type='button'
-                onClick={copyID}
-                className='relative z-20 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
-              >
-                {copied
-                  ? <Check className='h-3 w-3 text-(--success)' />
-                  : <Copy className='h-3 w-3' />}
-                {copied ? '已复制' : '复制 id'}
-              </button>
-              <span
-                {...tm('FA.version-id-hint')}
-                className='text-(--foreground-muted)'
-              >
-                可用于指定版本约战
-              </span>
-            </>
+            <button
+              {...tm('FA.copy-id-button')}
+              type='button'
+              onClick={copyID}
+              className='relative z-20 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-(--foreground-subtle) transition hover:bg-white/6 hover:text-(--foreground)'
+            >
+              {copied
+                ? <Check className='h-3 w-3 text-(--success)' />
+                : <Copy className='h-3 w-3' />}
+              {copied ? '已复制' : '复制 id'}
+            </button>
           )
           : participant.presetKey != null
           ? (

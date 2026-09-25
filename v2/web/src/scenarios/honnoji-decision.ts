@@ -27,12 +27,14 @@ export const honnojiDecision: ScenarioModule = {
     },
     {
       key: 'yoshiaki',
+      aliases: ['yoshiaki_envoy'],
       name: '足利义昭的使者',
       side: 'a',
       pitch: '不带一兵一卒，只带名分：奉公方归洛，把兵变说成拨乱反正。',
     },
     {
       key: 'hosokawa',
+      aliases: ['hosokawa_fujitaka'],
       name: '细川藤孝',
       side: 'b',
       pitch:
@@ -40,6 +42,7 @@ export const honnojiDecision: ScenarioModule = {
     },
     {
       key: 'ashigaru',
+      aliases: ['akechi_ashigaru'],
       name: '明智军中的足轻',
       side: 'b',
       pitch: '身份低微，只说自己看得见的军令、夜行与军心，劝光秀不要夜袭。',

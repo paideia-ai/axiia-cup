@@ -7,9 +7,71 @@ import {
   buildFinishedReportSections,
   groupTranscript,
   isInquiryGroup,
+  mergeJudgeAsideStage,
   placeVerdicts,
   UNSTAGED_GROUP_ID,
 } from './transcript'
+import referenceMatch144 from '../testing/reference-match-144.json'
+import referenceMatch120 from '../testing/reference-match-120.json'
+import type { MatchDetail } from '../api/types'
+
+describe('three-stage court reports', () => {
+  for (const raw of [referenceMatch144, referenceMatch120]) {
+    const match = raw as unknown as MatchDetail
+    it(`keeps inquiry and final verdict anchors inside their stages for match ${match.summary.id}`, () => {
+      const groups = groupTranscript(
+        match.turns,
+        mergeJudgeAsideStage(match.stages),
+        [],
+        match.verdicts,
+        {
+          preserveVerdictChannels: ['inquiry-a', 'inquiry-b', 'verdict'],
+        },
+      )
+      expect(groups.map((group) => group.title)).toEqual(
+        match.stages.filter((stage) => stage.id !== 'aside').map((stage) =>
+          stage.title
+        ),
+      )
+      expect(buildFinishedReportSections(groups).map((section) => section.kind))
+        .toEqual(['dialogue', 'inquiry', 'resolution'])
+      const placed = placeVerdicts(groups, match.verdicts)
+      expect(placed.perGroup[1].map((verdict) => verdict.key)).toEqual([
+        'inquiry-a',
+        'inquiry-b',
+      ])
+      expect(placed.perGroup[2].map((verdict) => verdict.key)).toEqual([
+        'final',
+      ])
+      expect(
+        groups[1].channels.flatMap((channel) => channel.items).every((item) =>
+          item.kind === 'turn' && item.verdictAnchor &&
+          item.turn.finalText === ''
+        ),
+      ).toBe(true)
+    })
+    it(`keeps a live judge thought in the first stage for match ${match.summary.id}`, () => {
+      const firstAside = match.turns.find((turn) =>
+        turn.channel === 'judge-aside'
+      )!
+      const bubble: LiveBubble = {
+        seq: firstAside.seq,
+        channel: 'judge-aside',
+        speaker: 'judge',
+        text: '正在权衡两方意见',
+        reasoning: '',
+        call: 'act',
+      }
+      const groups = groupTranscript(
+        match.turns.filter((turn) => turn.seq < firstAside.seq),
+        mergeJudgeAsideStage(match.stages),
+        [bubble],
+      )
+      expect(groups).toHaveLength(1)
+      expect(groups[0].channels.at(-1)?.items[0].kind).toBe('live')
+    })
+  }
+})
 
 function dialogue(seq: number, channel: string, text?: string): TurnDTO {
   return {

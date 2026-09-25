@@ -109,20 +109,14 @@ export const TM_FA: TmRegistry = {
       '展示名 + 模型（#21 永远公开）+ 版本 id 与复制按钮（#25）；我方/对手两种形态',
   },
   'FA.participant-side-badge': {
-    label: '执方徽章',
+    label: '参战角色徽章',
     clauses: ['U07-C01'],
-    note: '「执A · 商鞅」——侧别 + 角色显示名',
+    note: '展示本场实际角色名',
   },
   'FA.participant-name': {
-    label: '我方展示名',
+    label: '参战方展示名',
     clauses: ['U07-C04'],
-    when: '参战方是我的智能体',
-  },
-  'FA.opponent-line': {
-    label: '对手一行',
-    clauses: ['U07-C04', 'U10-C11b'],
-    note: '展示对手身份；点击整张卡片进入该场使用版本的智能体资料',
-    when: '参战方不是我的',
+    note: '双方统一展示加粗用户名与版本号',
   },
   'FA.participant-link': {
     label: '参战方卡片链接',
@@ -148,10 +142,6 @@ export const TM_FA: TmRegistry = {
     journeys: ['j6s4'],
     note: '复制后 1.5s 显示「已复制」；非安全上下文静默不复制，id 仍可手抄',
   },
-  'FA.version-id-hint': {
-    label: '按id约战提示',
-    clauses: ['U07-C03', 'U05-C12'],
-  },
   'FA.preset-label': {
     label: 'PVE 预设标注',
     clauses: ['U07-C03', 'U07-C08'],
@@ -163,7 +153,7 @@ export const TM_FA: TmRegistry = {
   'FA.result-card': {
     label: '结果卡',
     clauses: ['U07-C02', 'U07-C02b'],
-    journeys: ['j7s1', 'jR9s1', 'jR9s3'],
+    journeys: ['j7s1', 'jR9s1', 'jR9s3', 'jR2s1', 'jR9s2'],
     note:
       '完局第一块：胜负 + 比分 + 签名明细；回放中整卡隐藏（换成回放控制条）',
     when: '完局且已计分、非回放中',
@@ -181,20 +171,6 @@ export const TM_FA: TmRegistry = {
     journeys: ['jR9s1'],
     note: '服务端 scoreA/scoreB——与账目表合计同一数据源（#26）',
   },
-  'FA.result-summary': {
-    label: '签名明细',
-    clauses: ['U07-C02', 'U07-C02b', 'U04-C11'],
-    journeys: ['jR2s1', 'jR9s2'],
-    note:
-      'F2：比分下每侧一行「甘龙 +1 大政方针 · −1 被识破 = 0」，不必翻到页底；平分时靠它解释「同分为何有胜方」',
-    when: '得分账能解析出条目时（商鞅类结构化计分场景）',
-  },
-  'FA.result-summary-line': {
-    label: '签名明细一行',
-    clauses: ['U07-C02b'],
-    journeys: ['jR2s1'],
-    when: '同签名明细',
-  },
 
   // ---------- 完局：对话全文 / 问询 ----------
   'FA.report-section': {
@@ -208,13 +184,6 @@ export const TM_FA: TmRegistry = {
     label: '对话全文标题',
     clauses: ['U07-C02', 'U07-C09'],
     note: '回放中改读「对话重演」',
-  },
-  'FA.debug-hint': {
-    label: '调试提示行',
-    clauses: ['U07-C07', 'U07-C06'],
-    note:
-      '「内心与思考过程默认隐藏——页头「调试模式」可开启」；只在完局、有可揭示轨迹、调试未开时出现',
-    when: '完局且对局里确有 reasoning、调试未开、非回放',
   },
   'FA.section-empty': {
     label: '区块空态',
@@ -860,7 +829,7 @@ export const STEPS_FA: StepHints = {
   j7s4: { route: '/matches/:id', marker: 'FA.replay-button' },
   j7s5: { route: '/matches/:id', marker: 'FA.debug-toggle' },
   // 第二轮
-  jR2s1: { route: '/matches/:id', marker: 'FA.result-summary' },
+  jR2s1: { route: '/matches/:id', marker: 'FA.result-card' },
   jR2s2: { route: '/matches/:id', marker: 'FA.hidden-goal-section' },
   jR2s3: { route: '/matches/:id', marker: 'FA.ledger-table' },
   jR2s4: { route: '/matches/:id', marker: 'FA.event-score' },
@@ -884,6 +853,6 @@ export const STEPS_FA: StepHints = {
   jR8s3: { route: '/matches/:id', marker: 'FA.aside-card' },
   jR8s4: { route: '/matches/:id', marker: 'FA.trend-plot' },
   jR9s1: { route: '/matches/:id', marker: 'FA.result-card' },
-  jR9s2: { route: '/matches/:id', marker: 'FA.result-summary' },
+  jR9s2: { route: '/matches/:id', marker: 'FA.result-card' },
   jR9s3: { route: '/matches/:id', marker: 'FA.result-card' },
 }

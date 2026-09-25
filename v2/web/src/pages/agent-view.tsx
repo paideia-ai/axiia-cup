@@ -1,4 +1,5 @@
 import { positiveID } from '../lib/identity-links'
+import { roleIdentity } from '../lib/role-identity'
 import { PageLoading } from '../components/page-loading'
 import { Menu } from '@base-ui-components/react/menu'
 import {
@@ -153,11 +154,19 @@ function AgentView({ agentID }: { agentID: number }) {
   const sorted: AgentVersionDTO[] = data
     ? [...data.versions].sort((a, b) => b.id - a.id)
     : []
-  const sideName = data == null
-    ? ''
-    : data.draft.side === 'a'
-    ? data.scenario.summary.sideAName
-    : data.scenario.summary.sideBName
+  const selectedIdentityVersion = sorted.find((version) =>
+    version.id ===
+      positiveID(new URLSearchParams(location.search).get('version'))
+  ) ?? sorted[0]
+  const sideName = data == null ? '' : roleIdentity({
+    scenarioID: data.draft.scenarioID,
+    side: data.draft.side,
+    options: selectedIdentityVersion?.options,
+    role: selectedIdentityVersion?.role,
+    fallback: data.draft.side === 'a'
+      ? data.scenario.summary.sideAName
+      : data.scenario.summary.sideBName,
+  }).name
   const currentName = localName === undefined
     ? data?.self?.name ?? null
     : localName
@@ -699,7 +708,18 @@ function AgentView({ agentID }: { agentID: number }) {
                       }`}
                       {...tm('EA.sibling-pill')}
                     >
-                      {displayName(sideName, sibling.agentID, siblingName)}
+                      {displayName(
+                        active ? sideName : roleIdentity({
+                          scenarioID: data.draft.scenarioID,
+                          side: data.draft.side,
+                          role: sibling.role,
+                          fallback: data.draft.side === 'a'
+                            ? data.scenario.summary.sideAName
+                            : data.scenario.summary.sideBName,
+                        }).name,
+                        sibling.agentID,
+                        siblingName,
+                      )}
                     </Link>
                   )
                 })}
@@ -711,7 +731,9 @@ function AgentView({ agentID }: { agentID: number }) {
                   siblings[0]?.agentID === agentID && !isArchived}
                 scenarioID={data.draft.scenarioID}
                 side={data.draft.side}
-                role={sideName}
+                role={data.draft.side === 'a'
+                  ? data.scenario.summary.sideAName
+                  : data.scenario.summary.sideBName}
                 oppositeRole={data.draft.side === 'a'
                   ? data.scenario.summary.sideBName
                   : data.scenario.summary.sideAName}
@@ -724,6 +746,10 @@ function AgentView({ agentID }: { agentID: number }) {
                 new URLSearchParams(location.search).get('version'),
               )}
               sideName={sideName}
+              roleContext={{
+                scenarioID: data.draft.scenarioID,
+                side: data.draft.side,
+              }}
               entryBusy={entryMutation != null}
               pendingEntryID={entryMutation?.agentID === agentID
                 ? entryMutation.versionID

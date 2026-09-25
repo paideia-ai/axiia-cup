@@ -1,3 +1,4 @@
+import { roleIdentity } from '../lib/role-identity'
 import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock, Unlock, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -727,8 +728,21 @@ export function OsPanel({
                                 {...tm('OS.lineup')}
                               >
                                 <p className='text-sm font-medium text-(--foreground)'>
-                                  我方{sideNameOf(side)}{' '}
-                                  vs 对方{sideNameOf(oppositeSide)}
+                                  我方{roleIdentity({
+                                    scenarioID,
+                                    side,
+                                    options: fieldedVersion?.options,
+                                    role: fieldedVersion?.role,
+                                    fallback: sideNameOf(side),
+                                  }).name} vs 对方{roleIdentity({
+                                    scenarioID,
+                                    side: oppositeSide,
+                                    role: pvpMode === 'byid' &&
+                                        idRef?.side === oppositeSide
+                                      ? idRef.role
+                                      : null,
+                                    fallback: sideNameOf(oppositeSide),
+                                  }).name}
                                 </p>
                                 <p className='mt-1 text-xs text-(--foreground-subtle)'>
                                   出战版本：{fieldedVersion
@@ -872,10 +886,22 @@ export function OsPanel({
                                           <p className='mt-1 text-xs text-(--foreground-muted)'>
                                             {scenario.summary.title} · 执
                                             {idRef.side === 'a'
-                                              ? `A（${sideNameOf('a')}）`
-                                              : `B（${sideNameOf('b')}）`} ·
-                                            {' '}
-                                            {idRef.modelID}{' '}
+                                              ? `A（${
+                                                roleIdentity({
+                                                  scenarioID,
+                                                  side: 'a',
+                                                  role: idRef.role,
+                                                  fallback: sideNameOf('a'),
+                                                }).name
+                                              }）`
+                                              : `B（${
+                                                roleIdentity({
+                                                  scenarioID,
+                                                  side: 'b',
+                                                  role: idRef.role,
+                                                  fallback: sideNameOf('b'),
+                                                }).name
+                                              }）`} · {idRef.modelID}{' '}
                                             · v#{idRef.versionID}
                                           </p>
                                           <p className='mt-1 text-[11px] text-(--foreground-muted)'>
