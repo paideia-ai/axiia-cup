@@ -690,6 +690,9 @@ test('保存返回主页后出战按钮保留悬停与点击反馈', async ({ pa
   await test.step('当 我悬停并点击 NPC 对手整栏，继承悬停、点击和出战音效', async () => {
     const row = page.getByRole('button', { name: '与稳健守旧派对战' })
     await expect(row).toBeEnabled()
+    // The original sound policy suppresses hover repeats within 250ms.
+    await page.mouse.move(0, 0)
+    await page.waitForTimeout(260)
     await row.hover()
     await expectCues(page, [110, 260, 45, 110, 45])
     await row.click()
