@@ -1,14 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import { delay, http, HttpResponse } from 'msw'
-import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom'
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 
 import { StandingsPage } from './standings'
 import { VersionAgentPage } from './version-agent'
 
 function Destination() {
   const { agentId } = useParams()
-  return <h1>智能体 {agentId}</h1>
+  const [params] = useSearchParams()
+  return (
+    <>
+      <h1>智能体 {agentId}</h1>
+      <p>所选版本 {params.get('version')} · 赛事 {params.get('tournament')}</p>
+    </>
+  )
 }
 
 function Surface({ path = '/tournaments/2' }: { path?: string }) {
@@ -17,7 +29,7 @@ function Surface({ path = '/tournaments/2' }: { path?: string }) {
       <Routes>
         <Route path='/tournaments/:tournamentId' element={<StandingsPage />} />
         <Route path='/versions/:versionId' element={<VersionAgentPage />} />
-        <Route path='/agents/:agentId' element={<Destination />} />
+        <Route path='/agents/:agentId/identity' element={<Destination />} />
       </Routes>
     </MemoryRouter>
   )
@@ -71,12 +83,13 @@ export const SubmittedVersionOpensOwningAgent: Story = {
       ]
     ) {
       const layout = canvasElement.querySelector(selector)!
-      await expect(layout.querySelector('a[href="/versions/360"]'))
+      await expect(layout.querySelector('a[href="/versions/360?tournament=2"]'))
         .not.toBeNull()
-      await expect(layout.querySelector('a[href="/versions/361"]'))
+      await expect(layout.querySelector('a[href="/versions/361?tournament=2"]'))
         .not.toBeNull()
     }
     await userEvent.click(link)
+    await expect(await canvas.findByText('所选版本 360 · 赛事 2')).toBeVisible()
     await expect(await canvas.findByRole('heading', { name: '智能体 224' }))
       .toBeVisible()
   },

@@ -1,32 +1,41 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { npcs } from '../api/client'
-import { AgentMatchHistory, ProfileRecord } from '../components/agent-profile'
+import { IdentityVersionCard } from '../components/agent-profile'
 import { BackLink } from '../components/back-link'
 import { PageLoading } from '../components/page-loading'
-import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Card, CardContent } from '../components/ui/card'
+import { positiveID } from '../lib/identity-links'
 import { usePageQuery } from '../lib/use-page-query'
 
 export function NPCViewPage() {
   const { scenarioId = '', presetKey = '' } = useParams()
+  const [params] = useSearchParams()
+  const matchID = positiveID(params.get('match'))
   const profile = usePageQuery({
-    queryKey: ['catalog', 'npc', scenarioId, presetKey],
-    queryFn: () => npcs.profile(scenarioId, presetKey),
+    queryKey: ['catalog', 'npc', scenarioId, presetKey, matchID],
+    queryFn: () => npcs.profile(scenarioId, presetKey, matchID),
+    enabled: matchID != null,
   })
   const npc = profile.data
+  const history = new URLSearchParams({
+    scenario: scenarioId,
+    npc: presetKey,
+    match: String(matchID),
+  })
   return (
-    <div className='space-y-6'>
+    <div className='mx-auto max-w-3xl space-y-6' data-testid='npc-identity'>
       <BackLink
-        to={`/scenarios/${encodeURIComponent(scenarioId)}`}
-        label='场景'
+        to={matchID ? `/matches/${matchID}` : '/matches'}
+        label={matchID ? '对战' : '历史'}
         className='text-sm text-(--foreground-subtle)'
       />
-      {profile.error
+      {!matchID
+        ? <p role='status'>请从对战中打开 NPC 资料。</p>
+        : profile.error
         ? (
           <div className='space-y-3'>
-            <p role='alert'>暂时无法加载这个 NPC。</p>
+            <p role='alert'>暂时无法加载该场对局的 NPC 配置。</p>
             <Button variant='secondary' onClick={profile.reload}>重试</Button>
           </div>
         )
@@ -34,48 +43,29 @@ export function NPCViewPage() {
         ? <PageLoading variant='detail' />
         : (
           <>
-            <header>
-              <div className='mb-2 flex items-center gap-2 text-xs text-(--foreground-subtle)'>
-                智能体主页 <Badge tone='info'>官方 NPC</Badge>
-              </div>
-              <h1 className='wrap-anywhere text-2xl font-black tracking-tight text-(--foreground)'>
+            <header className='space-y-2'>
+              <h1 className='wrap-anywhere text-2xl font-bold text-(--foreground)'>
                 {npc.sideName}「{npc.label}」
               </h1>
-              <p className='mt-2 text-sm text-(--foreground-subtle)'>
-                <Link
-                  to={`/scenarios/${encodeURIComponent(npc.scenarioID)}`}
-                  className='underline underline-offset-4'
-                >
-                  {npc.scenarioTitle}
-                </Link>{' '}
-                · {npc.sideName}
+              <p className='text-sm text-(--foreground-subtle)'>
+                {npc.scenarioTitle} · 官方 NPC
               </p>
             </header>
-            <ProfileRecord
-              record={npc}
-              label={`当前版本 · ${npc.versionTag}`}
+            <IdentityVersionCard
+              title='本场对局配置'
+              context={`对战 #${matchID}`}
+              href={`/matches?${history}`}
               modelID={npc.modelID}
-            >
-              <p className='text-xs text-(--foreground-subtle)'>
-                被挑战 {npc.challengeCount} 次（含未完赛）
-              </p>
-            </ProfileRecord>
-            <Card>
-              <CardContent className='space-y-3 pt-5'>
-                <h2 className='text-base font-semibold text-(--foreground)'>
-                  提示词
-                </h2>
-                <p className='text-xs text-(--foreground-subtle)'>
-                  NPC 的当前策略公开可读。
-                </p>
-                <pre className='whitespace-pre-wrap wrap-anywhere font-sans text-sm leading-7 text-(--foreground)'>{npc.prompt || '此 NPC 未配置提示词。'}</pre>
-              </CardContent>
-            </Card>
-            <AgentMatchHistory
-              key={`${scenarioId}:${presetKey}:${npc.versionTag}`}
-              target={{ kind: 'npc', scenarioID: scenarioId, presetKey }}
-              side={npc.side}
+              matchCount={npc.matchCount}
+              winCount={npc.winCount}
+              lossCount={npc.lossCount}
             />
+            <section className='space-y-3' aria-label='NPC 提示词'>
+              <h2 className='text-base font-semibold text-(--foreground)'>
+                提示词
+              </h2>
+              <pre className='whitespace-pre-wrap wrap-anywhere font-sans text-sm leading-7 text-(--foreground)'>{npc.prompt || '此 NPC 未配置提示词。'}</pre>
+            </section>
           </>
         )}
     </div>

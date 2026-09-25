@@ -435,8 +435,8 @@ const cases: {
   {
     name: 'tournament submitted version',
     path: '/tournaments/1',
-    selector: 'a[href="/versions/1002"]:visible',
-    destination: /\/agents\/101$/,
+    selector: 'a[href="/versions/1002?tournament=1"]:visible',
+    destination: /\/agents\/101\?version=1002$/,
   },
   {
     name: 'header rewards',

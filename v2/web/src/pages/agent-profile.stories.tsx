@@ -1,96 +1,137 @@
+import { AuthProvider } from '../context/auth'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { http, HttpResponse } from 'msw'
 import { expect, userEvent, within } from 'storybook/test'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-
-import type {
-  AgentVersionDTO,
-  MatchSummary,
-  NPCProfileResponse,
-} from '../api/types'
-import { inventory, scenario } from '../testing/v34-fixtures'
-import { ProfileRecord } from '../components/agent-profile'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
+import { NavigationMemoryProvider } from '../context/navigation-memory'
+import {
+  finishedMatch,
+  inventory,
+  scenario,
+  scenarioList,
+  versions,
+} from '../testing/v34-fixtures'
 import { AgentViewPage } from './agent-view'
+import { AgentIdentityPage } from './agent-identity'
 import { NPCViewPage } from './npc-view'
+import { MatchDetailPage } from './match-detail'
+import { MatchesPage } from './matches'
+import { StandingsPage } from './standings'
+import { VersionAgentPage } from './version-agent'
+import { ScenarioDetailPage } from './scenario-detail'
 
-const versions: AgentVersionDTO[] = [
+const publicVersions = [
   {
-    id: 1001,
-    agentID: 101,
+    id: 466,
     ordinal: 1,
-    snapshotSeq: 4,
-    isEntry: true,
-    modelID: 'fixture-model',
-    prompt: '历史策略：先提出反对理由。',
+    isEntry: false,
+    createdAt: 1789000000,
+    modelID: 'kimi-k2.6',
     matchCount: 10,
-    winCount: 2,
-    drawCount: 3,
+    winCount: 4,
+    drawCount: 1,
     lossCount: 5,
   },
   {
-    id: 1002,
-    agentID: 101,
+    id: 477,
     ordinal: 2,
-    snapshotSeq: 8,
-    isEntry: false,
-    modelID: 'fixture-model',
-    prompt: '当前策略：先澄清争点，再逐一回应。',
+    isEntry: true,
+    createdAt: 1789100000,
+    modelID: 'kimi-k2.6',
     matchCount: 20,
     winCount: 13,
     drawCount: 1,
     lossCount: 6,
   },
 ]
-const npc: NPCProfileResponse = {
+const publicAgent = {
+  agentID: 202,
+  scenarioID: scenario.summary.id,
+  scenarioTitle: scenario.summary.title,
+  side: 'b',
+  sideName: '甘龙',
+  name: '稳健派',
+  ownerName: '丞双双',
+  // Deliberately hostile response: the public view must never render leaked prompts.
+  versions: publicVersions.map((v) => ({
+    ...v,
+    prompt: 'PRIVATE_OTHER_MUST_NOT_RENDER',
+  })),
+}
+const npc = {
   scenarioID: scenario.summary.id,
   scenarioTitle: scenario.summary.title,
   key: 'ganlong-steady',
   side: 'b',
   sideName: '甘龙',
   label: '稳健守旧派',
-  modelID: 'fixture-model',
-  prompt: 'NPC 策略：先询问新制度的实施代价。',
-  versionTag: 'abc123def456',
+  modelID: 'kimi-k2.6',
+  prompt: '本场旧配置：先询问新制度的实施代价，再提出能检验成效的条件。',
+  versionTag: 'old-match-configuration',
   matchCount: 10,
   winCount: 4,
   drawCount: 2,
   lossCount: 4,
   challengeCount: 15,
 }
-function match(
-  id: number,
-  winner: string | null,
-  versionID = 1002,
-): MatchSummary {
-  return {
-    id,
-    scenarioID: scenario.summary.id,
-    scenarioTitle: scenario.summary.title,
-    kind: 'pve',
-    dispatched: true,
-    finished: true,
-    scored: true,
-    winner,
+const npcMatch = {
+  ...finishedMatch,
+  summary: {
+    ...finishedMatch.summary,
+    id: 9001,
     participants: {
       a: {
         agentID: 101,
-        versionID,
-        ownerDisplayName: '测试玩家',
+        versionID: 1002,
+        ownerDisplayName: '我',
         isMine: true,
       },
-      b: { presetKey: 'ganlong-steady', isMine: false },
+      b: { presetKey: npc.key, modelID: npc.modelID, isMine: false },
     },
-  }
+  },
+}
+const playerMatch = {
+  ...finishedMatch,
+  summary: {
+    ...finishedMatch.summary,
+    id: 9002,
+    participants: {
+      a: {
+        agentID: 101,
+        versionID: 1002,
+        ownerDisplayName: '我',
+        isMine: true,
+      },
+      b: {
+        agentID: 202,
+        versionID: 466,
+        ownerDisplayName: '丞双双',
+        modelID: 'kimi-k2.6',
+        isMine: false,
+      },
+    },
+  },
 }
 const handlers = [
+  http.get(
+    '/v1/auth/me',
+    () =>
+      HttpResponse.json({ error: 'unauthorized', message: '请登录' }, {
+        status: 401,
+      }),
+  ),
   http.get(
     '/v1/models',
     () =>
       HttpResponse.json({
-        models: [{ id: 'fixture-model', label: '测试模型' }],
+        models: [{ id: 'fixture-model', label: '策略模型' }, {
+          id: 'kimi-k2.6',
+          label: 'Kimi K2.6',
+        }],
       }),
   ),
   http.get('/v1/my/agents', () => HttpResponse.json(inventory)),
+  http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
   http.get('/v1/scenarios/:id', () => HttpResponse.json(scenario)),
   http.get(
     '/v1/agents/101/draft',
@@ -103,19 +144,13 @@ const handlers = [
   ),
   http.get(
     '/v1/agents/101/versions',
-    () => HttpResponse.json({ versions, entryVersionID: 1001 }),
+    () => HttpResponse.json({ versions, entryVersionID: 1002 }),
   ),
-  http.get('/v1/agents/101/matches', ({ request }) => {
-    const versionID = Number(new URL(request.url).searchParams.get('versionID'))
+  http.get('/v1/agents/101/diff', ({ request }) => {
+    const params = new URL(request.url).searchParams
     return HttpResponse.json({
-      matches: [
-        match(
-          versionID === 1001 ? 8999 : 9001,
-          versionID === 1001 ? 'b' : 'a',
-          versionID,
-        ),
-      ],
-      open: false,
+      base: versions.find((v) => v.id === Number(params.get('base'))),
+      head: versions.find((v) => v.id === Number(params.get('head'))),
     })
   }),
   http.get(
@@ -125,251 +160,373 @@ const handlers = [
         status: 403,
       }),
   ),
-  http.get('/v1/agents/202/public', () =>
-    HttpResponse.json({
-      agentID: 202,
-      scenarioID: scenario.summary.id,
-      scenarioTitle: scenario.summary.title,
-      side: 'a',
-      sideName: '商鞅',
-      name: '冷静派',
-      ownerName: '另一位玩家',
-      versions: versions.map((v) => ({
-        ...v,
-        agentID: 202,
-        prompt: 'PUBLIC_RESPONSE_SECRET_MUST_NOT_RENDER',
-      })),
-    })),
+  http.get('/v1/agents/202/public', () => HttpResponse.json(publicAgent)),
+  http.get('/v1/agents/202/matches', ({ request }) => {
+    const params = new URL(request.url).searchParams
+    const versionID = Number(params.get('versionID'))
+    return HttpResponse.json({
+      open: true,
+      matches: params.has('before')
+        ? [{ ...playerMatch.summary, id: 8900 }]
+        : Array.from(
+          { length: 20 },
+          (_, i) => ({
+            ...playerMatch.summary,
+            id: 9002 - i,
+            participants: {
+              ...playerMatch.summary.participants,
+              b: { ...playerMatch.summary.participants.b, versionID },
+            },
+          }),
+        ),
+    })
+  }),
   http.get(
-    '/v1/agents/202/matches',
-    () => HttpResponse.json({ matches: [], open: false }),
+    '/v1/scenarios/:id/npcs/:key',
+    ({ request }) =>
+      HttpResponse.json({
+        ...npc,
+        sourceMatchID: Number(new URL(request.url).searchParams.get('matchID')),
+      }),
   ),
-  http.get('/v1/scenarios/:id/npcs/:key', () => HttpResponse.json(npc)),
   http.get(
     '/v1/scenarios/:id/npcs/:key/matches',
+    () => HttpResponse.json({ matches: [npcMatch.summary], open: true }),
+  ),
+  http.get(
+    '/v1/matches',
     () =>
       HttpResponse.json({
-        matches: [
-          match(9002, 'b'),
-          match(9001, 'draw'),
-          match(9000, null),
-          { ...match(8999, null), dispatched: false, scored: false },
-        ],
+        matches: [npcMatch.summary, playerMatch.summary],
         open: true,
       }),
   ),
+  http.get(
+    '/v1/matches/:id',
+    ({ params }) =>
+      HttpResponse.json(params.id === '9001' ? npcMatch : playerMatch),
+  ),
+  http.get(
+    '/v1/tournaments/2/standings',
+    () =>
+      HttpResponse.json({
+        entries: [{
+          playerID: 'player',
+          playerName: '丞双双',
+          submissionIDs: [466],
+          wins: 4,
+          losses: 5,
+          buchholz: 12,
+          matchesPlayed: 10,
+          winRate: 40,
+          rank: 1,
+        }],
+      }),
+  ),
+  http.get(
+    '/v1/versions/466/ref',
+    () => HttpResponse.json({ versionID: 466, agentID: 202 }),
+  ),
 ]
+
 function Page({ entry }: { entry: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
-      <Routes>
-        <Route path='/agents/:agentId' element={<AgentViewPage />} />
-        <Route
-          path='/scenarios/:scenarioId/npcs/:presetKey'
-          element={<NPCViewPage />}
-        />
-        <Route path='/matches/:id' element={<p>战报详情</p>} />
-      </Routes>
+      <NavigationMemoryProvider scope='identity-preview'>
+        <div className='mb-8 flex flex-wrap items-center gap-4 border-b border-(--border-soft) pb-4 text-sm'>
+          <span className='text-(--foreground-muted)'>本地预览 · 示例数据</span>
+          <Link to='/agents/101'>我的主页</Link>
+          <Link to='/matches/9001'>NPC 对局</Link>
+          <Link to='/matches/9002'>玩家对局</Link>
+          <Link to='/tournaments/2'>赛事排名</Link>
+          <Link to='/scenarios/shangyang-court'>场景介绍</Link>
+        </div>
+        <Routes>
+          <Route path='/agents/:agentId' element={<AgentViewPage />} />
+          <Route
+            path='/agents/:agentId/identity'
+            element={<AgentIdentityPage />}
+          />
+          <Route
+            path='/scenarios/:scenarioId/npcs/:presetKey'
+            element={<NPCViewPage />}
+          />
+          <Route
+            path='/scenarios/:scenarioId'
+            element={
+              <AuthProvider>
+                <ScenarioDetailPage />
+              </AuthProvider>
+            }
+          />
+          <Route path='/matches/:matchId' element={<MatchDetailPage />} />
+          <Route path='/matches' element={<MatchesPage />} />
+          <Route
+            path='/tournaments/:tournamentId'
+            element={<StandingsPage />}
+          />
+          <Route path='/versions/:versionId' element={<VersionAgentPage />} />
+        </Routes>
+      </NavigationMemoryProvider>
     </MemoryRouter>
   )
 }
 const meta = {
-  title: 'Agents/Current version profile',
+  title: 'Agents/Identity review',
   component: Page,
-  parameters: { msw: handlers, a11y: { test: 'error' } },
+  parameters: { msw: handlers },
 } satisfies Meta<typeof Page>
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const WinRateColors: Story = {
-  args: { entry: '/agents/101' },
-  render: () => (
-    <div className='grid gap-6 lg:grid-cols-2'>
-      {[0, 25, 50, 75, 100, null].map((winRate) => (
-        <ProfileRecord
-          key={winRate ?? 'empty'}
-          label={winRate === null ? '暂无战绩示例' : `胜率 ${winRate}% 示例`}
-          record={{
-            matchCount: winRate === null ? 0 : 100,
-            winCount: winRate ?? 0,
-            lossCount: winRate === null ? 0 : 100 - winRate,
-          }}
-          modelID='fixture-model'
-        />
-      ))}
-    </div>
-  ),
+export const MatchCards: Story = {
+  args: { entry: '/matches/9001' },
 }
 
-export const OwnerCurrentVersion: Story = {
-  args: { entry: '/agents/101' },
+export const OwnerFromTranscript: Story = {
+  args: { entry: '/matches/9001' },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByTestId('profile-win-rate'))
-      .toHaveTextContent('65%')
-    await expect(canvas.getByRole('heading', { name: '当前版本 · v2' }))
-      .toBeVisible()
-    await expect(canvas.getByText(versions[1].prompt)).toBeVisible()
-    await expect(canvas.queryByRole('button', { name: '版本对比' })).toBeNull()
-    await expect(await canvas.findByRole('link', { name: /对战 #9001/ }))
-      .toBeVisible()
-    const history = canvas.getByTestId('profile-history')
-    const cards = canvas.getAllByTestId('version-card')
-    await expect(cards[0]).toHaveTextContent('正在查看')
-    await expect(cards[0]).toHaveTextContent(versions[1].prompt)
-    await expect(
-      cards.at(-1)!.compareDocumentPosition(history) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
-    await userEvent.click(canvas.getByRole('combobox', { name: '查看版本' }))
-    await userEvent.click(
-      await within(document.body).findByRole('option', {
-        name: 'v1 · 参赛版本',
-      }),
-    )
-    await expect(canvas.getByTestId('profile-win-rate')).toHaveTextContent(
-      '20%',
-    )
-    await expect(
-      canvas.getByRole('heading', { name: '历史版本 · v1 · 参赛版本' }),
-    ).toBeVisible()
-    await expect(canvas.getAllByTestId('version-card')[0]).toHaveTextContent(
-      versions[0].prompt,
-    )
-    await expect(await canvas.findByRole('link', { name: /对战 #8999/ }))
-      .toBeVisible()
-    await expect(canvas.queryByRole('link', { name: /对战 #9001/ })).toBeNull()
-  },
-}
-
-export const OtherPlayerPrivacy: Story = {
-  args: { entry: '/agents/202' },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByTestId('profile-win-rate'))
-      .toHaveTextContent('65%')
-    await expect(canvas.getByText('提示词只有智能体主人可见。')).toBeVisible()
-    await expect(canvasElement.textContent).not.toContain(
-      'PUBLIC_RESPONSE_SECRET_MUST_NOT_RENDER',
-    )
-    await expect(
-      canvas.queryByRole('button', { name: /复制|出战|参赛版本|版本对比/ }),
-    ).toBeNull()
-    await expect(canvas.queryByRole('link', { name: '新建版本' })).toBeNull()
-    await expect(await canvas.findByText('暂无可查看的对战记录')).toBeVisible()
-  },
-}
-
-export const NPCPublicPromptAndOwnResult: Story = {
-  args: { entry: '/scenarios/shangyang-court/npcs/ganlong-steady' },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByTestId('profile-win-rate'))
-      .toHaveTextContent('40%')
-    await expect(canvas.getByText(npc.prompt)).toBeVisible()
-    await expect(canvas.getByText('被挑战 15 次（含未完赛）')).toBeVisible()
-    await expect(canvas.getByRole('heading', { name: '甘龙「稳健守旧派」' }))
-      .toBeVisible()
-    const won = await canvas.findByRole('link', { name: /对战 #9002/ })
-    await expect(won).toHaveTextContent('胜')
-    await expect(canvas.getByRole('link', { name: /对战 #9001/ }))
-      .toHaveTextContent('平')
-    await expect(canvas.getByRole('link', { name: /对战 #9000/ }))
-      .toHaveTextContent('未计分')
-    const failedBeforeDispatch = canvas.getByRole('link', {
-      name: /对战 #8999/,
+    const c = within(canvasElement)
+    const entry = await c.findByRole('link', {
+      name: /执A · 商鞅.*打开我的智能体主页/,
     })
-    await expect(failedBeforeDispatch).toHaveTextContent('未计分')
-    await expect(failedBeforeDispatch).not.toHaveTextContent('排队中')
-    await userEvent.click(won)
-    await expect(await canvas.findByText('战报详情')).toBeVisible()
+    await expect(entry).toHaveAttribute('href', '/agents/101?version=1002')
+    await userEvent.click(c.getByRole('button', { name: '复制 id' }))
+    await expect(entry).toBeVisible()
+    await userEvent.click(entry)
+    await expect(await c.findByRole('button', { name: '版本对比' }))
+      .toBeVisible()
   },
 }
 
-export const ZeroGames: Story = {
-  args: { entry: '/scenarios/shangyang-court/npcs/ganlong-steady' },
+export const OwnerComparison: Story = {
+  args: { entry: '/agents/101' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await userEvent.click(await c.findByRole('button', { name: '版本对比' }))
+    await expect(await c.findByLabelText('v1 策略正文')).toBeVisible()
+    await expect(c.getByLabelText('v2 策略正文')).toBeVisible()
+    await expect(c.queryByTestId('identity-version')).toBeNull()
+    await expect(c.queryByTestId('profile-record')).toBeNull()
+    await expect(c.queryByRole('heading', { name: '对战记录' })).toBeNull()
+  },
+}
+export const PlayerFromTranscript: Story = {
+  args: { entry: '/matches/9002' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    const entry = await c.findByRole('link', {
+      name: /执B · 甘龙.*打开智能体资料/,
+    })
+    await expect(entry).toHaveAttribute(
+      'href',
+      '/agents/202/identity?version=466&match=9002',
+    )
+    await userEvent.click(entry)
+    const cards = await c.findAllByTestId('identity-version')
+    await expect(cards).toHaveLength(2)
+    await expect(cards[0]).toHaveTextContent('#466')
+    await expect(cards[0]).toHaveTextContent('本场对局版本')
+    await expect(cards[0]).toHaveTextContent('40%')
+    await expect(cards[1]).toHaveTextContent('65%')
+    await expect(c.queryByRole('combobox')).toBeNull()
+    await expect(canvasElement.textContent).not.toContain(
+      'PRIVATE_OTHER_MUST_NOT_RENDER',
+    )
+    await expect(c.queryByRole('button', { name: '版本对比' })).toBeNull()
+    await expect(c.queryByRole('heading', { name: '对战记录' })).toBeNull()
+    await userEvent.click(cards[0])
+    await c.findByRole('heading', { name: '历史' })
+    await c.findByRole('link', { name: /对战 #9002/ })
+    await userEvent.click(c.getByRole('button', { name: '下一页' }))
+    await expect(await c.findByRole('link', { name: /对战 #8900/ }))
+      .toBeVisible()
+    await userEvent.click(c.getByRole('button', { name: '上一页' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+  },
+}
+export const HistoryReturnKeepsPage: Story = {
+  args: { entry: '/matches?agent=202&version=466' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await userEvent.click(await c.findByRole('button', { name: '下一页' }))
+    await userEvent.click(await c.findByRole('link', { name: /对战 #8900/ }))
+    await userEvent.click(await c.findByRole('link', { name: '← 对战列表' }))
+    await expect(await c.findByRole('link', { name: /对战 #8900/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+    await expect(c.getByRole('button', { name: '上一页' })).toBeEnabled()
+  },
+}
+
+export const HistoryRestoresCursor: Story = {
+  args: { entry: '/matches?agent=202&version=466&cursor=8983' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('link', { name: /对战 #8900/ }))
+      .toBeVisible()
+    await userEvent.click(c.getByRole('button', { name: '上一页' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+  },
+}
+
+const mixedHistory = Array.from({ length: 25 }, (_, index) => ({
+  ...playerMatch.summary,
+  id: 9002 - index,
+  initiatorIsMe: false,
+  participants: {
+    a: { ...playerMatch.summary.participants.a, isMine: index >= 20 },
+    b: playerMatch.summary.participants.b,
+  },
+}))
+const filteredHistory = ({ request }: { request: Request }) => {
+  const params = new URL(request.url).searchParams
+  const before = Number(params.get('before') ?? Infinity)
+  return HttpResponse.json({
+    open: true,
+    matches: mixedHistory.filter((match) =>
+      match.id < before &&
+      (params.get('mine') !== '1' || match.participants.a.isMine)
+    ).slice(0, 20),
+  })
+}
+
+export const OnlyMineBeforePagination: Story = {
+  args: { entry: '/matches?agent=202&version=466&cursor=8983' },
+  parameters: {
+    msw: [http.get('/v1/agents/202/matches', filteredHistory), ...handlers],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await c.findByRole('link', { name: /对战 #8982/ })
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('button', { name: '上一页' })).toBeNull()
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+  },
+}
+
+export const NPCOnlyMineBeforePagination: Story = {
+  args: {
+    entry: '/matches?scenario=shangyang-court&npc=ganlong-steady&match=9001',
+  },
   parameters: {
     msw: [
-      http.get('/v1/scenarios/:id/npcs/:key', () =>
-        HttpResponse.json({
-          ...npc,
-          matchCount: 0,
-          winCount: 0,
-          drawCount: 0,
-          lossCount: 0,
-          challengeCount: 0,
-        })),
+      http.get('/v1/scenarios/:id/npcs/:key/matches', filteredHistory),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await c.findByRole('link', { name: /对战 #9002/ })
+    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #8982/ }))
+      .toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+  },
+}
+
+export const NPCFromTranscript: Story = {
+  args: { entry: '/matches/9001' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await userEvent.click(
+      await c.findByRole('link', { name: /执B · 甘龙.*打开智能体资料/ }),
+    )
+    await expect(await c.findByText(npc.prompt)).toBeVisible()
+    await expect(c.getAllByTestId('identity-version')).toHaveLength(1)
+    await expect(c.queryByRole('heading', { name: '对战记录' })).toBeNull()
+    await userEvent.click(c.getByTestId('identity-version'))
+    await expect(await c.findByRole('heading', { name: '历史' })).toBeVisible()
+    await expect(await c.findByRole('link', { name: /对战 #9001/ }))
+      .toBeVisible()
+  },
+}
+export const TournamentVersion: Story = {
+  args: { entry: '/tournaments/2' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await userEvent.click(
+      await c.findByRole('link', { name: '查看版本 #466 的智能体' }),
+    )
+    const cards = await c.findAllByTestId('identity-version')
+    await expect(cards[0]).toHaveTextContent('#466')
+    await expect(cards[0]).toHaveTextContent('赛事提交版本')
+  },
+}
+export const PlayerIdentity: Story = {
+  args: { entry: '/agents/202/identity?version=466&match=9002' },
+}
+export const NPCIdentity: Story = {
+  args: { entry: '/scenarios/shangyang-court/npcs/ganlong-steady?match=9001' },
+}
+export const UnknownHistoricalVersion: Story = {
+  args: { entry: '/agents/202/identity?version=999&match=9002' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByText('版本 #999 暂不可用。')).toBeVisible()
+    await expect(c.queryByText('本场对局版本')).toBeNull()
+  },
+}
+export const OldBackendCannotSubstituteCurrentNPC: Story = {
+  args: NPCIdentity.args,
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios/:id/npcs/:key', () => HttpResponse.json(npc)),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('alert')).toHaveTextContent(
+      '暂时无法加载该场对局的 NPC 配置。',
+    )
+    await expect(c.queryByText(npc.prompt)).toBeNull()
+    await expect(c.getByRole('button', { name: '重试' })).toBeVisible()
+  },
+}
+export const OwnerIdentityRedirect: Story = {
+  args: { entry: '/agents/101/identity?version=1001' },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('button', { name: '版本对比' }))
+      .toBeVisible()
+    await expect(c.queryByTestId('agent-identity')).toBeNull()
+  },
+}
+
+export const EmptyPlayerVersions: Story = {
+  args: PlayerIdentity.args,
+  parameters: {
+    msw: [
       http.get(
-        '/v1/scenarios/:id/npcs/:key/matches',
-        () => HttpResponse.json({ matches: [], open: true }),
+        '/v1/agents/202/public',
+        () => HttpResponse.json({ ...publicAgent, versions: [] }),
       ),
       ...handlers,
     ],
   },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByTestId('profile-win-rate'))
-      .toHaveTextContent('暂无战绩')
-    await expect(canvas.getByTestId('profile-win-rate')).not.toHaveTextContent(
-      '0%',
-    )
+    const c = within(canvasElement)
+    await expect(await c.findByText('尚未保存版本。')).toBeVisible()
+    await expect(c.queryByTestId('identity-version')).toBeNull()
   },
 }
-
-export const HistoryRetry: Story = {
-  args: { entry: '/agents/101' },
-  parameters: {
-    msw: [
-      http.get(
-        '/v1/agents/101/matches',
-        () =>
-          HttpResponse.json({ error: 'unavailable', message: '稍后重试' }, {
-            status: 503,
-          }),
-      ),
-      ...handlers,
-    ],
-  },
+export const NoNPCEntryOnScenario: Story = {
+  args: { entry: '/scenarios/shangyang-court' },
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByText('暂时无法加载对战记录。'))
-      .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '重试' })).toBeEnabled()
-    await expect(canvas.getByTestId('profile-win-rate')).toHaveTextContent(
-      '65%',
-    )
-  },
-}
-
-export const HistoryPagination: Story = {
-  args: { entry: '/agents/101' },
-  parameters: {
-    msw: [
-      http.get('/v1/agents/101/matches', ({ request }) => {
-        const before = new URL(request.url).searchParams.get('before')
-        return HttpResponse.json({
-          matches: before ? [match(8980, 'draw')] : Array.from(
-            { length: 20 },
-            (_, index) => match(9000 - index, 'a'),
-          ),
-          open: false,
-        })
-      }),
-      ...handlers,
-    ],
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await expect(await canvas.findByRole('link', { name: /对战 #9000/ }))
-      .toBeVisible()
-    await expect(canvas.getByRole('button', { name: '上一页' })).toBeDisabled()
-    await userEvent.click(canvas.getByRole('button', { name: '下一页' }))
-    await expect(await canvas.findByRole('link', { name: /对战 #8980/ }))
-      .toBeVisible()
-    await expect(canvas.queryByRole('link', { name: /对战 #9000/ })).toBeNull()
-    await expect(canvas.getByRole('button', { name: '下一页' })).toBeDisabled()
-    await userEvent.click(canvas.getByRole('button', { name: '上一页' }))
-    await expect(await canvas.findByRole('link', { name: /对战 #9000/ }))
-      .toBeVisible()
+    const c = within(canvasElement)
+    await c.findByRole('heading', { level: 1 })
+    await expect(c.queryByRole('region', { name: '官方 NPC' })).toBeNull()
+    await expect(canvasElement.querySelector('a[href*="/npcs/"]')).toBeNull()
   },
 }

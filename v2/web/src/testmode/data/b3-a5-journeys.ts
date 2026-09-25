@@ -265,16 +265,9 @@ export const B3_A5_JOURNEYS: Journey[] = [
         testUrl: '{{appBaseUrl}}/agents/{{b3OwnerAgentId}}',
         fixtureRefs: ['b3-owner-rich'],
         route: '/agents/:id',
-        marker: 'EA.page-header',
-        knownGap: {
-          title: '版本对比暂不提供，修订提案待审阅',
-          detail:
-            '2026-09-18 产品要求暂不做版本 diff；此处保留原条款与版本 pin，不代表当前实现仍提供对比。',
-          instruction:
-            '核对主页不显示版本对比，记录与历史规范的差异，不把旧条款标为通过。',
-        },
+        marker: 'EA.diff-section',
         action:
-          '打开主页，核对当前版本战绩与提示词；版本 diff 已按 2026-09-18 要求暂时移除，原验收预期保留待审阅。',
+          '展开「版本对比」，分别选择 v1 为基准版本、v2 为对比版本，等待差异自动刷新并展开两侧全文。',
         expected:
           '所有者能看到完整提示词和版本差异；基准、对比选择器都可用，结果对应所选两个版本。',
         clauseIds: ['U10-C04'],
@@ -395,7 +388,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
     title: '非所有者公开 EA 与 PVE NPC 聚合视图',
     prerequisites: [
       '按 fixture 卡登录「B3 人测·访客缺侧」；该账号与 b3PublicTargetAgentId 无所有权关系。提前保存目标智能体的逐版本预期战绩和一段可唯一识别的提示词片段。',
-      'NPC 预设详情页及入口已按产品要求移除，NPC 练习仍从出战面板发起。原 NPC 聚合视图条款保留为历史验收缺口，不用填写或拼造 npcAgentId。',
+      'NPC 身份页从真实对战参与方卡片进入，展示当场配置。场景介绍和出战面板没有资料入口；原双侧统计条款仍保留为历史验收缺口，不用填写或拼造 npcAgentId。',
       '记录环境 URL、build SHA、账号角色和所有预期值。',
     ],
     evidenceRequirements: [
@@ -427,7 +420,7 @@ export const B3_A5_JOURNEYS: Journey[] = [
         kind: 'known-gap',
         readiness: 'known-gap',
         description:
-          '从场景页逐 NPC 链接查看当前预设身份、执方、模型；此入口不代表历史对局配置。两侧胜率仍未交付，保留 U10-C14 的未完成状态，不填写或拼造 npcAgentId。',
+          '从真实对战参与方卡片查看 NPC 当场提示词、模型和单侧胜率，点击配置进入历史。保留 U10-C14 双侧统计的未完成状态，不填写或拼造 npcAgentId。',
         fields: [],
       },
     ],
@@ -457,16 +450,16 @@ export const B3_A5_JOURNEYS: Journey[] = [
         testUrl: '{{appBaseUrl}}/scenarios/shangyang-court',
         fixtureRefs: ['b3-public-viewer', 'b3-npc-gap'],
         knownGap: {
-          title: 'NPC 单侧主页已实现；原双侧统计条款待审阅',
+          title: 'NPC 对局身份页已实现；原双侧统计条款待审阅',
           detail:
-            '2026-09-18 要求恢复 NPC 单侧主页，展示当前配置胜率与公开提示词。当前实现与原双侧统计条款不一致，修订提案待审阅；原条款版本 pin 不自动改写。',
+            'NPC 身份页仅从对战进入，展示该场实际配置的胜率与公开提示词。当前实现与原双侧统计条款不一致，修订提案待审阅；原条款版本 pin 不自动改写。',
           instruction:
-            '从场景页实际 NPC 链接打开主页，核对单侧胜率、提示词与底部记录。记录与历史双侧条款的差异，不标原条款通过；不要拼造 ID。',
+            '从对战参与方卡片打开 NPC 身份页，核对该场配置的胜率与提示词；点击配置进入历史。记录与历史双侧条款的差异，不标原条款通过；不要拼造 ID。',
         },
         route: '/scenarios/:id',
         marker: 'DA.page',
         action:
-          '从场景详情页的官方 NPC 入口打开主页。确认只展示该 NPC 所属单侧的战绩；原双侧胜率预期保留为历史条款待审阅。',
+          '从真实对战中的 NPC 卡片打开身份页。确认只展示单个实际配置及其战绩，页面底部无对战列表；点击配置进入历史。',
         expected:
           '每个 PVE NPC 都有可查看的聚合视图；目标 NPC 在当前场景分别展示两个阵营胜率，数值与种子数据一致，不显示成玩家胜率。',
         clauseIds: ['U10-C14'],

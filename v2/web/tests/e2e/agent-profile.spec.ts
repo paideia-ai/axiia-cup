@@ -120,41 +120,16 @@ test(
         drawCount: 0,
       })
     await page.goto(`/agents/${agentID}`)
-    await expect(page.getByTestId('profile-record')).toContainText(
-      '当前版本 · v2',
-    )
-    await expect(page.getByTestId('profile-win-rate')).toHaveText('暂无战绩')
     await expect(page.getByTestId('version-card').first()).toContainText(
       latestPrompt,
     )
-    await expect(page.getByText('版本对比', { exact: true })).toHaveCount(0)
-
-    await page.getByRole('combobox', { name: '查看版本' }).click()
-    await page.getByRole('option', { name: /^v1/ }).click()
-    await expect(page.getByTestId('profile-record')).toContainText(
-      '历史版本 · v1',
-    )
-    await expect(page.getByTestId('profile-win-rate')).toHaveText('33.3%')
-    await expect(page.getByTestId('version-card').first()).toContainText(
-      privatePrompt,
-    )
-    const history = page.getByTestId('profile-history')
-    for (const id of matchIDs) {
-      await expect(history.locator(`a[href='/matches/${id}']`)).toBeVisible()
-    }
-    expect(
-      await history.evaluate((node) => {
-        const cards = Array.from(
-          document.querySelectorAll('[data-testid="version-card"]'),
-        )
-        return cards.every((card) =>
-          Boolean(
-            card.compareDocumentPosition(node) &
-              Node.DOCUMENT_POSITION_FOLLOWING,
-          )
-        )
-      }),
-    ).toBe(true)
+    await expect(page.getByTestId('profile-record')).toHaveCount(0)
+    await expect(page.getByTestId('profile-history')).toHaveCount(0)
+    await page.getByRole('button', { name: '版本对比' }).click()
+    await expect(page.getByLabel('v1 策略正文')).toContainText(privatePrompt)
+    await expect(page.getByLabel('v2 策略正文')).toContainText(latestPrompt)
+    await expect(page.getByRole('link', { name: /查看 v1 的对局记录/ }))
+      .toHaveAttribute('href', `/matches?version=${firstVersion}`)
     await page.screenshot({
       path: testInfo.outputPath('owner.png'),
       fullPage: true,
@@ -193,11 +168,25 @@ test(
           (await visitor.context.get(`/v1/agents/${agentID}/${path}`)).status(),
         ).toBe(403)
       }
-      await page.goto(`/agents/${agentID}`)
-      await expect(page.getByTestId('profile-win-rate')).toHaveText('暂无战绩')
-      await page.getByRole('combobox', { name: '查看版本' }).click()
-      await page.getByRole('option', { name: /^v1/ }).click()
-      await expect(page.getByTestId('profile-win-rate')).toHaveText('33.3%')
+      await page.goto(
+        `/agents/${agentID}/identity?version=${firstVersion}&match=${
+          matchIDs[0]
+        }`,
+      )
+      await expect(page.getByTestId('identity-version')).toHaveCount(2)
+      await expect(page.getByTestId('identity-version').first()).toContainText(
+        '33.3%',
+      )
+      await expect(page.getByTestId('identity-version').first()).toContainText(
+        '本场对局版本',
+      )
+      await expect(page.getByRole('combobox')).toHaveCount(0)
+      await expect(page.getByTestId('profile-history')).toHaveCount(0)
+      await expect(page.getByTestId('identity-version').first())
+        .toHaveAttribute(
+          'href',
+          `/matches?agent=${agentID}&version=${firstVersion}`,
+        )
       await expect(page.locator('body')).not.toContainText(privatePrompt)
       await expect(page.locator('body')).not.toContainText(latestPrompt)
       await page.screenshot({
@@ -217,7 +206,7 @@ test(
       (await owner.context.storageState()).cookies,
     )
     const profile = await owner.context.get(
-      `/v1/scenarios/${scenario}/npcs/loss`,
+      `/v1/scenarios/${scenario}/npcs/loss?matchID=${matchIDs[1]}`,
     )
     expect(profile.ok()).toBe(true)
     expect(await profile.json()).toMatchObject({
@@ -229,10 +218,10 @@ test(
       drawCount: 0,
       challengeCount: 1,
     })
-    await page.goto(`/scenarios/${scenario}/npcs/loss`)
-    await expect(page.getByTestId('profile-win-rate')).toHaveText('100%')
+    await page.goto(`/scenarios/${scenario}/npcs/loss?match=${matchIDs[1]}`)
+    await expect(page.getByTestId('identity-version')).toContainText('100%')
     await expect(page.locator('body')).toContainText('NPC_PUBLIC_LOSS')
-    await expect(page.getByTestId('profile-history')).toBeVisible()
+    await expect(page.getByTestId('profile-history')).toHaveCount(0)
     await page.setViewportSize({ width: 390, height: 844 })
     expect(
       await page.evaluate(() =>
@@ -244,8 +233,8 @@ test(
       fullPage: true,
     })
 
-    await page.goto(`/scenarios/${scenario}/npcs/error`)
-    await expect(page.getByTestId('profile-win-rate')).toHaveText('暂无战绩')
+    await page.goto(`/scenarios/${scenario}/npcs/error?match=${matchIDs[3]}`)
+    await expect(page.getByTestId('identity-version')).toContainText('暂无战绩')
     await expect(page.locator('body')).toContainText('NPC_PUBLIC_ERROR')
   },
 )
@@ -256,7 +245,7 @@ test('profile data requires login', async () => {
     for (
       const path of [
         `/v1/agents/${agentID}/matches?versionID=${firstVersion}`,
-        `/v1/scenarios/${scenario}/npcs/loss`,
+        `/v1/scenarios/${scenario}/npcs/loss?matchID=${matchIDs[1]}`,
         `/v1/scenarios/${scenario}/npcs/loss/matches`,
       ]
     ) expect((await anonymous.get(path)).status()).toBe(401)
