@@ -32,7 +32,7 @@ export function AgentIdentityPage() {
   )
   return (
     <div
-      className='mx-auto max-w-3xl space-y-6'
+      className='min-w-0 w-full space-y-6'
       data-testid='agent-identity'
       {...tm('EA.public-view')}
     >

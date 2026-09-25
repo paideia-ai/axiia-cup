@@ -1,3 +1,4 @@
+import { AppShell } from '../components/layout/app-shell'
 import { AuthProvider } from '../context/auth'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { http, HttpResponse } from 'msw'
@@ -232,49 +233,58 @@ const handlers = [
 function Page({ entry }: { entry: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
-      <NavigationMemoryProvider scope='identity-preview'>
-        <div className='mb-8 flex flex-wrap items-center gap-4 border-b border-(--border-soft) pb-4 text-sm'>
-          <span className='text-(--foreground-muted)'>本地预览 · 示例数据</span>
-          <Link to='/agents/101'>我的主页</Link>
-          <Link to='/matches/9001'>NPC 对局</Link>
-          <Link to='/matches/9002'>玩家对局</Link>
-          <Link to='/tournaments/2'>赛事排名</Link>
-          <Link to='/scenarios/shangyang-court'>场景介绍</Link>
-        </div>
-        <Routes>
-          <Route path='/agents/:agentId' element={<AgentViewPage />} />
-          <Route
-            path='/agents/:agentId/identity'
-            element={<AgentIdentityPage />}
-          />
-          <Route
-            path='/scenarios/:scenarioId/npcs/:presetKey'
-            element={<NPCViewPage />}
-          />
-          <Route
-            path='/scenarios/:scenarioId'
-            element={
-              <AuthProvider>
-                <ScenarioDetailPage />
-              </AuthProvider>
-            }
-          />
-          <Route path='/matches/:matchId' element={<MatchDetailPage />} />
-          <Route path='/matches' element={<MatchesPage />} />
-          <Route
-            path='/tournaments/:tournamentId'
-            element={<StandingsPage />}
-          />
-          <Route path='/versions/:versionId' element={<VersionAgentPage />} />
-        </Routes>
-      </NavigationMemoryProvider>
+      <AuthProvider>
+        <NavigationMemoryProvider scope='identity-preview'>
+          <AppShell>
+            <div className='mb-8 flex flex-wrap items-center gap-4 border-b border-(--border-soft) pb-4 text-sm'>
+              <span className='text-(--foreground-muted)'>
+                本地预览 · 示例数据
+              </span>
+              <Link to='/agents/101'>我的主页</Link>
+              <Link to='/matches/9001'>NPC 对局</Link>
+              <Link to='/matches/9002'>玩家对局</Link>
+              <Link to='/tournaments/2'>赛事排名</Link>
+              <Link to='/scenarios/shangyang-court'>场景介绍</Link>
+            </div>
+            <Routes>
+              <Route path='/agents/:agentId' element={<AgentViewPage />} />
+              <Route
+                path='/agents/:agentId/identity'
+                element={<AgentIdentityPage />}
+              />
+              <Route
+                path='/scenarios/:scenarioId/npcs/:presetKey'
+                element={<NPCViewPage />}
+              />
+              <Route
+                path='/scenarios/:scenarioId'
+                element={
+                  <AuthProvider>
+                    <ScenarioDetailPage />
+                  </AuthProvider>
+                }
+              />
+              <Route path='/matches/:matchId' element={<MatchDetailPage />} />
+              <Route path='/matches' element={<MatchesPage />} />
+              <Route
+                path='/tournaments/:tournamentId'
+                element={<StandingsPage />}
+              />
+              <Route
+                path='/versions/:versionId'
+                element={<VersionAgentPage />}
+              />
+            </Routes>
+          </AppShell>
+        </NavigationMemoryProvider>
+      </AuthProvider>
     </MemoryRouter>
   )
 }
 const meta = {
   title: 'Agents/Identity review',
   component: Page,
-  parameters: { msw: handlers },
+  parameters: { msw: handlers, fullApp: true },
 } satisfies Meta<typeof Page>
 export default meta
 type Story = StoryObj<typeof meta>
@@ -463,11 +473,33 @@ export const TournamentVersion: Story = {
     await expect(cards[0]).toHaveTextContent('赛事提交版本')
   },
 }
+async function expectShellWidth(canvasElement: HTMLElement, testID: string) {
+  const content = await within(canvasElement).findByTestId(testID)
+  const main = content.closest('main')!
+  const box = main.getBoundingClientRect()
+  const style = getComputedStyle(main)
+  const left = box.left + parseFloat(style.paddingLeft)
+  const width = box.width - parseFloat(style.paddingLeft) -
+    parseFloat(style.paddingRight)
+  await expect(Math.abs(content.getBoundingClientRect().left - left))
+    .toBeLessThan(1)
+  await expect(Math.abs(content.getBoundingClientRect().width - width))
+    .toBeLessThan(1)
+}
+
 export const PlayerIdentity: Story = {
   args: { entry: '/agents/202/identity?version=466&match=9002' },
+  play: async ({ canvasElement }) => {
+    await within(canvasElement).findAllByTestId('identity-version')
+    await expectShellWidth(canvasElement, 'agent-identity')
+  },
 }
 export const NPCIdentity: Story = {
   args: { entry: '/scenarios/shangyang-court/npcs/ganlong-steady?match=9001' },
+  play: async ({ canvasElement }) => {
+    await within(canvasElement).findByText(npc.prompt)
+    await expectShellWidth(canvasElement, 'npc-identity')
+  },
 }
 export const UnknownHistoricalVersion: Story = {
   args: { entry: '/agents/202/identity?version=999&match=9002' },
@@ -492,6 +524,7 @@ export const OldBackendCannotSubstituteCurrentNPC: Story = {
     )
     await expect(c.queryByText(npc.prompt)).toBeNull()
     await expect(c.getByRole('button', { name: '重试' })).toBeVisible()
+    await expectShellWidth(canvasElement, 'npc-identity')
   },
 }
 export const OwnerIdentityRedirect: Story = {
@@ -518,6 +551,7 @@ export const EmptyPlayerVersions: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await expect(await c.findByText('尚未保存版本。')).toBeVisible()
+    await expectShellWidth(canvasElement, 'agent-identity')
     await expect(c.queryByTestId('identity-version')).toBeNull()
   },
 }

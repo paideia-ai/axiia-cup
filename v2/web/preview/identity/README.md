@@ -34,3 +34,9 @@ id 按钮不会跳页。
 
 历史回归检查：翻到第二页，进入一场对局再点返回，应仍在第二页；勾选「仅自己对局」时按全部匹配记录筛选后分页，切换筛选回第一页。`History Restores Cursor`
 可检查带游标地址重新进入后的结果。
+
+桌面宽度回归：预览使用产品的 `AppShell`，不再用 Storybook 默认容器替代。
+`Player Identity`、`NPC Identity`、`Old Backend Cannot Substitute Current NPC`、
+`Empty Player Versions` 均检查内容左右边界与主布局对齐。 在 1440px / 2048px
+桌面及 390px 手机宽度下，检查正常、报错、空状态； 桌面沿用全站 1040px
+外层宽度，手机保留两侧 16px 内边距，无横向溢出。

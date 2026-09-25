@@ -24,7 +24,7 @@ export function NPCViewPage() {
     match: String(matchID),
   })
   return (
-    <div className='mx-auto max-w-3xl space-y-6' data-testid='npc-identity'>
+    <div className='min-w-0 w-full space-y-6' data-testid='npc-identity'>
       <BackLink
         to={matchID ? `/matches/${matchID}` : '/matches'}
         label={matchID ? '对战' : '历史'}
