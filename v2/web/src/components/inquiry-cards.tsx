@@ -1,3 +1,5 @@
+import type { SpeakerLabels } from './timeline/labels'
+import { RolePortrait } from './role-portrait'
 import type { InquiryAnswer } from '../lib/inquiry'
 import { tm } from '../testmode/mark'
 import { Card, CardContent } from './ui/card'
@@ -5,8 +7,9 @@ import { ReasoningFold } from './timeline/reasoning-fold'
 
 // Match main's VerdictCard / VerdictBody styles, with paired columns and the
 // dialogue side colors carried by a narrow left border.
-export function InquiryCards({ answers, showReasoning = false }: {
+export function InquiryCards({ answers, labels, showReasoning = false }: {
   answers: InquiryAnswer[]
+  labels?: SpeakerLabels
   showReasoning?: boolean
 }) {
   return (
@@ -25,8 +28,11 @@ export function InquiryCards({ answers, showReasoning = false }: {
           <CardContent className='space-y-3 pt-5'>
             <h3
               {...tm('FA.verdict-title')}
-              className='text-sm font-semibold text-(--foreground)'
+              className='flex items-center gap-2 text-sm font-semibold text-(--foreground)'
             >
+              {labels
+                ? <RolePortrait labels={labels} speaker={answer.side} />
+                : null}
               问询：{answer.name}
             </h3>
             <div className='space-y-1'>
@@ -65,8 +71,9 @@ export function InquiryCards({ answers, showReasoning = false }: {
   )
 }
 
-export function InquiryStage({ answers, showReasoning }: {
+export function InquiryStage({ answers, labels, showReasoning }: {
   answers: InquiryAnswer[]
+  labels?: SpeakerLabels
   showReasoning: boolean
 }) {
   return (
@@ -77,7 +84,11 @@ export function InquiryStage({ answers, showReasoning }: {
       >
         （阶段2/3）屏退问询
       </h2>
-      <InquiryCards answers={answers} showReasoning={showReasoning} />
+      <InquiryCards
+        labels={labels}
+        answers={answers}
+        showReasoning={showReasoning}
+      />
     </section>
   )
 }

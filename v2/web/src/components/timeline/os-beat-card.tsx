@@ -4,6 +4,7 @@ import { parseOsBeat } from '../../lib/verdict'
 import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { RolePortrait } from '../role-portrait'
 import { tm } from '../../testmode/mark'
 
 // 裁判心声卡（#22①）：the judge's generated aside beat, always visible — never
@@ -57,26 +58,34 @@ export function OsBeatCard({
           'border-solid border-(--accent) ring-2 ring-(--accent) bg-[rgba(224,74,47,0.06)]',
       )}
     >
-      <div className='flex flex-wrap items-center gap-2 text-xs'>
-        <span
-          {...tm('FA.aside-title')}
-          className='font-semibold text-(--warning)'
-        >
-          {title}
-        </span>
-        <span {...tm('FA.aside-model')} className='text-(--foreground-muted)'>
-          {verdict.model}
-        </span>
-        {highlight
-          ? (
-            <span
-              {...tm('FA.aside-anchor-badge')}
-              className='rounded-full bg-[rgba(224,74,47,0.14)] px-2 py-0.5 text-[11px] font-semibold text-(--accent)'
-            >
-              倾向变化
-            </span>
-          )
-          : null}
+      <div className='portrait-os-header flex items-center gap-2 text-xs'>
+        <RolePortrait
+          labels={labels}
+          speaker={labels.module?.laneLabels['judge-aside']
+            ? 'judge-aside'
+            : 'judge'}
+        />
+        <div className='flex flex-wrap items-center gap-2'>
+          <span
+            {...tm('FA.aside-title')}
+            className='font-semibold text-(--warning)'
+          >
+            {title}
+          </span>
+          <span {...tm('FA.aside-model')} className='text-(--foreground-muted)'>
+            {verdict.model}
+          </span>
+          {highlight
+            ? (
+              <span
+                {...tm('FA.aside-anchor-badge')}
+                className='rounded-full bg-[rgba(224,74,47,0.14)] px-2 py-0.5 text-[11px] font-semibold text-(--accent)'
+              >
+                倾向变化
+              </span>
+            )
+            : null}
+        </div>
       </div>
       {beat.os
         ? (

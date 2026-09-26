@@ -15,6 +15,7 @@ import type { SpeakerLabels } from './labels'
 import { speakerName } from './labels'
 import { ReasoningFold } from './reasoning-fold'
 import { Badge } from '../ui/badge'
+import { RolePortrait } from '../role-portrait'
 import { tm } from '../../testmode/mark'
 
 const ACTION_LABELS: Record<string, string> = {
@@ -44,9 +45,10 @@ function JurySpeech({
   return (
     <div
       {...tm('FA.jury-speech')}
-      className='rounded-xl border border-(--border) bg-white/2 px-4 py-3'
+      className='portrait-speech rounded-xl border border-(--border) bg-white/2 px-4 py-3'
     >
-      <p className='text-xs font-semibold text-(--foreground-subtle)'>
+      <p className='portrait-speaker mb-2 flex items-center gap-2 text-xs font-semibold text-(--foreground-subtle)'>
+        <RolePortrait labels={labels} speaker={actor} />
         {speakerName(labels, actor)}
       </p>
       <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-(--foreground)'>
@@ -324,13 +326,16 @@ function PrivateChat({
                 >
                   <div
                     {...tm('FA.jury-private-message')}
-                    className='max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'
+                    className='portrait-speech max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'
                   >
-                    <p className='text-[11px] font-semibold text-(--foreground-subtle)'>
-                      {speakerName(labels, message.speaker)}
-                      {message.exchange == null
-                        ? ''
-                        : ` · 第 ${message.exchange} 轮私聊`}
+                    <p className='portrait-speaker mb-2 flex items-center gap-2 text-[11px] font-semibold text-(--foreground-subtle)'>
+                      <RolePortrait labels={labels} speaker={message.speaker} />
+                      <span>
+                        {speakerName(labels, message.speaker)}
+                        {message.exchange == null
+                          ? ''
+                          : ` · 第 ${message.exchange} 轮私聊`}
+                      </span>
                     </p>
                     <p className='mt-1 whitespace-pre-wrap text-sm text-(--foreground)'>
                       {message.text}

@@ -1,0 +1,40 @@
+/* Wide dialogue cards give the portrait and name their own column. */
+@media (min-width: 900px) {
+  .portrait-speech:has(.role-portrait) {
+    position: relative;
+    padding-left: 120px;
+    min-height: 164px;
+  }
+  .portrait-speaker:has(.role-portrait) {
+    position: absolute;
+    left: 20px;
+    top: 16px;
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+}
+/* Keep the body full-width inside the narrower Judge OS column. */
+.portrait-os-header {
+  gap: 12px;
+}
+.portrait-os-header > div {
+  flex-direction: column;
+  align-items: flex-start;
+}
+@media (max-width: 899px) {
+  .portrait-dialogue-speaker:has(.role-portrait) {
+    position: relative;
+    min-height: 80px;
+    padding-left: 92px;
+    align-content: center;
+  }
+  .portrait-dialogue-speaker .role-portrait {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}

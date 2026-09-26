@@ -435,6 +435,7 @@ export function MatchDetailPage() {
         <InquiryStage
           key={row.group.id}
           answers={answers}
+          labels={labels}
           showReasoning={showTrace}
         />
       )

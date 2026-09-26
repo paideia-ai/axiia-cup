@@ -7,6 +7,7 @@ import type { SpeakerLabels } from './timeline/labels'
 import { speakerName } from './timeline/labels'
 import { tm } from '../testmode/mark'
 import { ReasoningFold } from './timeline/reasoning-fold'
+import { RolePortrait } from './role-portrait'
 import { Badge } from './ui/badge'
 import { Card, CardContent } from './ui/card'
 
@@ -107,6 +108,9 @@ export function VerdictCard({
     >
       <CardContent className='space-y-3 pt-5'>
         <div className='flex flex-wrap items-center gap-2'>
+          {isTerminalVerdict(verdict) || visitOrder
+            ? <RolePortrait labels={labels} speaker='judge' />
+            : null}
           <h2
             {...tm('FA.verdict-title')}
             className={isTerminalVerdict(verdict)

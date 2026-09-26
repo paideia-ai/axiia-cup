@@ -51,6 +51,7 @@
     "test:e2e:real": "bash e2e/run-playwright.sh",
     "seed-dev": "deno run -A e2e/seed-dev.ts",
     "fmt": "deno fmt --check .",
-    "lint": "deno lint src"
+    "lint": "deno lint src",
+    "preview:portraits": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6035 e2e/preview-portraits.ts"
   }
 }
