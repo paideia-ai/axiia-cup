@@ -10,6 +10,29 @@
   padding: 20px;
   margin-bottom: 28px;
 }
+.match-result-summary[data-winner='a'] {
+  --result-winner: var(--accent);
+}
+.match-result-summary[data-winner='b'] {
+  --result-winner: var(--info);
+}
+.match-result-summary[data-winner='a'],
+.match-result-summary[data-winner='b'] {
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--result-winner) 17%, var(--surface)),
+    color-mix(in srgb, var(--result-winner) 4%, var(--surface)) 58%,
+    var(--surface)
+  );
+  border-color: color-mix(in srgb, var(--result-winner) 18%,
+    var(--border-soft));
+}
+@media (forced-colors: active) {
+  .match-result-summary[data-winner] {
+    background: Canvas;
+    border-color: CanvasText;
+  }
+}
 .match-summary-caption {
   font-size: 11px;
   color: var(--foreground-muted);

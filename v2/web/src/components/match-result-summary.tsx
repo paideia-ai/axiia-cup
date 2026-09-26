@@ -71,6 +71,7 @@ export function MatchResultSummary({ match, sideA, sideB, onDetails }: {
     <section
       {...tm('FA.result-card')}
       className='match-result-summary'
+      data-winner={winner}
       aria-label='简要对局结果'
     >
       <div>

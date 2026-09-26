@@ -1,8 +1,13 @@
+import { scriptEvent } from '../lib/event'
+import { canConsolidateEnding } from '../lib/match-ending'
+import { MatchEnding } from '../components/match-ending'
 import { npcIdentityPath } from '../lib/identity-links'
 import { TranscriptTabs } from '../components/transcript-tabs'
 import { sliceTranscriptGroup, transcriptTabPlan } from '../lib/transcript-tabs'
 import { invalidateNavigation } from '../lib/navigation-cache'
 import { MatchResultSummary } from '../components/match-result-summary'
+import { InquiryStage } from '../components/inquiry-cards'
+import { inquiryAnswers } from '../lib/inquiry'
 import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
@@ -309,20 +314,33 @@ export function MatchDetailPage() {
       (turn) => turn.seq === verdict.afterSeq && turn.kind === 'dialogue',
     )?.reasoning ?? null
   const showTrace = debug && !replaying
+  const consolidatedEnding = canConsolidateEnding(data, finalVerdict, labels)
 
   // 教学锚点（#24 U9）：回放停在倾向变化的节拍上，心声卡就地高亮并给「继续」。
   const renderVerdict = (verdict: VerdictDTO) => {
     if (isTerminalVerdict(verdict)) {
       return (
         <div key={verdict.key} id='match-final-verdict' tabIndex={-1}>
-          <VerdictCard
-            title={isTrolley ? '裁判裁决' : undefined}
-            verdict={verdict}
-            labels={labels}
-            interim={false}
-            trace={traceOf(verdict)}
-            showTrace={showTrace}
-          />
+          {consolidatedEnding
+            ? (
+              <MatchEnding
+                match={data}
+                verdict={verdict}
+                labels={labels}
+                trace={traceOf(verdict)}
+                showTrace={showTrace}
+              />
+            )
+            : (
+              <VerdictCard
+                title={isTrolley ? '裁判裁决' : undefined}
+                verdict={verdict}
+                labels={labels}
+                interim={false}
+                trace={traceOf(verdict)}
+                showTrace={showTrace}
+              />
+            )}
         </div>
       )
     }
@@ -383,6 +401,18 @@ export function MatchDetailPage() {
   }
 
   const renderGroupRow = (row: (typeof groupRows)[number], tabbed = false) => {
+    const answers = !replaying
+      ? inquiryAnswers(row.group, row.verdicts, labels)
+      : null
+    if (answers) {
+      return (
+        <InquiryStage
+          key={row.group.id}
+          answers={answers}
+          showReasoning={showTrace}
+        />
+      )
+    }
     const bySeq: Record<number, ReactNode[]> = {}
     const atGroupStart: VerdictDTO[] = []
     const atGroupEnd: VerdictDTO[] = []
@@ -422,7 +452,23 @@ export function MatchDetailPage() {
       <div key={row.group.id} className='space-y-3'>
         {atGroupStart.map(renderVerdict)}
         <TranscriptStage
-          group={row.group}
+          group={isCourtOrCouncil && consolidatedEnding && !replaying
+            ? {
+              ...row.group,
+              channels: row.group.channels.map((channel) => ({
+                ...channel,
+                items: channel.items.filter((item) => {
+                  if (item.kind !== 'turn' || item.turn.kind !== 'event') {
+                    return true
+                  }
+                  const event = scriptEvent(item.turn)
+                  // The consolidated final section below the judge output owns
+                  // the verdict requests and score ledger; render them once.
+                  return event?.type !== 'verdict' && event?.type !== 'score'
+                }),
+              })),
+            }
+            : row.group}
           hideStageTitle={tabbed}
           index={row.index}
           total={stageGroups.length}
@@ -467,6 +513,7 @@ export function MatchDetailPage() {
         row.group.channels.length > 0 || row.group.phases.length > 0 ||
         row.verdicts.length > 0
       )
+    const finalRows = rowsFor(null)
     return (
       <>
         <TranscriptTabs
@@ -485,7 +532,25 @@ export function MatchDetailPage() {
               )
           })}
         />
-        {rowsFor(null).map((row) => renderGroupRow(row, true))}
+        {finalRows.length > 0 || placed.trailing.length > 0
+          ? (
+            <section
+              className='transcript-final-section space-y-5'
+              aria-label='整局裁决'
+              id={!finalVerdict && consolidatedEnding
+                ? 'match-scoring'
+                : undefined}
+              tabIndex={-1}
+            >
+              {finalRows.map((row) => renderGroupRow(row, true))}
+              {placed.trailing.length > 0 && (
+                <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
+                  {placed.trailing.map(renderVerdict)}
+                </div>
+              )}
+            </section>
+          )
+          : null}
       </>
     )
   }
@@ -808,7 +873,7 @@ export function MatchDetailPage() {
                     )}
                 </div>
               ))}
-            {placed.trailing.length > 0
+            {!tabPlan && placed.trailing.length > 0
               ? (
                 <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
                   {placed.trailing.map(renderVerdict)}
@@ -821,7 +886,8 @@ export function MatchDetailPage() {
               间——真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分
               变化。散文里那条「被识破 −1」在这里成为明确的一步。 */
             }
-            {!replaying && breakdown?.trueRequests != null &&
+            {!replaying && !consolidatedEnding &&
+                breakdown?.trueRequests != null &&
                 (breakdown.trueRequests.a != null ||
                   breakdown.trueRequests.b != null)
               ? (
@@ -850,7 +916,7 @@ export function MatchDetailPage() {
               )
               : null}
 
-            {replaying
+            {replaying || consolidatedEnding
               ? null
               : (
                 <div {...tm('FA.scoring-section')} className='space-y-3'>
@@ -862,19 +928,6 @@ export function MatchDetailPage() {
                   >
                     计分推导
                   </h2>
-                  {beats.length > 0
-                    ? (
-                      <Card {...tm('FA.trend-card')}>
-                        <CardContent className='pt-5'>
-                          <JudgeTrendChart
-                            beats={beats}
-                            labels={labels}
-                            speakers={speakers}
-                          />
-                        </CardContent>
-                      </Card>
-                    )
-                    : null}
                   {breakdown == null && !ledger
                     ? (
                       <div
@@ -1069,6 +1122,19 @@ export function MatchDetailPage() {
                     )}
                 </div>
               )}
+            {!replaying && beats.length > 0
+              ? (
+                <Card {...tm('FA.trend-card')} data-review-trend>
+                  <CardContent className='pt-5'>
+                    <JudgeTrendChart
+                      beats={beats}
+                      labels={labels}
+                      speakers={speakers}
+                    />
+                  </CardContent>
+                </Card>
+              )
+              : null}
           </>
         )
         : (
@@ -1113,7 +1179,7 @@ export function MatchDetailPage() {
                   </p>
                 )
                 : dialogueRows.map((row) => renderGroupRow(row))}
-              {placed.trailing.map(renderVerdict)}
+              {!tabPlan && placed.trailing.map(renderVerdict)}
             </div>
 
             {finalVerdict

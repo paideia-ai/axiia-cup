@@ -19,6 +19,8 @@ function Speaker({
   live: boolean
 }) {
   const isSide = speakerSide(labels, speaker) != null
+  const isDiaochan = labels.module?.slotID === 'fengyiting-real' &&
+    speaker === 'diaochan'
   return (
     <div
       {...tm('FA.speaker-line')}
@@ -27,7 +29,7 @@ function Speaker({
       <span className='font-semibold text-(--foreground-subtle)'>
         {speakerName(labels, speaker)}
       </span>
-      {isSide ? null : (
+      {isSide || isDiaochan ? null : (
         <span
           {...tm('FA.narrator-badge')}
           className='rounded-full bg-[rgba(251,191,36,0.14)] px-2 py-0.5 text-[10px] font-semibold text-(--warning)'
