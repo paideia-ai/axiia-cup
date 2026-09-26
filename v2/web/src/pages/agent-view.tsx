@@ -162,7 +162,7 @@ function AgentView({ agentID }: { agentID: number }) {
     scenarioID: data.draft.scenarioID,
     side: data.draft.side,
     options: selectedIdentityVersion?.options,
-    role: selectedIdentityVersion?.role,
+    role: data.draft.role ?? selectedIdentityVersion?.role,
     fallback: data.draft.side === 'a'
       ? data.scenario.summary.sideAName
       : data.scenario.summary.sideBName,

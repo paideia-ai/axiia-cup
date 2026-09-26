@@ -1,14 +1,23 @@
 import { expect, type Page, test } from '@playwright/test'
+import type { AgentVersionDTO, SaveVersionRequest } from '../../src/api/types'
 import {
   agentPreviewInventory,
   agentPreviewScenarios,
+  previewCharacters,
 } from '../../src/testing/scenario-agent-fixtures'
 import { config } from '../../src/testing/v34-fixtures'
 
 async function setup(page: Page, empty = false) {
   const inventory = structuredClone(agentPreviewInventory)
   if (empty) inventory.scenarios[0].sides.a = []
-  const created: { scenarioID: string; side: 'a' | 'b'; name?: string }[] = []
+  const created: {
+    scenarioID: string
+    side: 'a' | 'b'
+    name?: string
+    roleKey?: string
+  }[] = []
+  const saved: SaveVersionRequest[] = []
+  const versions = new Map<number, AgentVersionDTO[]>()
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/v1/**', async (route) => {
@@ -27,6 +36,9 @@ async function setup(page: Page, empty = false) {
       })
     }
     if (path === '/config') return json(config)
+    if (path === '/models') {
+      return json({ models: [{ id: 'fixture-model', label: 'Fixture Model' }] })
+    }
     if (path === '/my/agents') return json(inventory)
     if (path === '/scenarios') {
       return json({ scenarios: agentPreviewScenarios.map((s) => s.summary) })
@@ -43,9 +55,28 @@ async function setup(page: Page, empty = false) {
         .sides[input.side as 'a' | 'b'].push({
           agentID,
           name: null,
+          role: [...previewCharacters.a, ...previewCharacters.b].find((role) =>
+            role.key === input.roleKey
+          ),
           versionCount: 0,
         })
       return json({ agentID })
+    }
+    const save = /^\/agents\/(\d+)\/save$/.exec(path)
+    if (save && request.method() === 'POST') {
+      const input: SaveVersionRequest = request.postDataJSON()
+      saved.push(input)
+      const agentID = Number(save[1])
+      const version: AgentVersionDTO = {
+        ...input,
+        id: 9000 + saved.length,
+        agentID,
+        isEntry: true,
+        snapshotSeq: 0,
+        ordinal: saved.length,
+      }
+      versions.set(agentID, [...versions.get(agentID) ?? [], version])
+      return json(version)
     }
     const match = /^\/agents\/(\d+)(?:\/(draft|versions))?$/.exec(path)
     if (match) {
@@ -60,10 +91,18 @@ async function setup(page: Page, empty = false) {
             return json({ ok: true })
           }
           if (match[2] === 'draft') {
-            return json({ fields: {}, scenarioID: scenario.scenarioID, side })
+            return json({
+              fields: {},
+              scenarioID: scenario.scenarioID,
+              side,
+              role: agent.role,
+            })
           }
           if (match[2] === 'versions') {
-            return json({ versions: [], entryVersionID: null })
+            return json({
+              versions: versions.get(agent.agentID) ?? [],
+              entryVersionID: null,
+            })
           }
         }
       }
@@ -80,7 +119,7 @@ async function setup(page: Page, empty = false) {
     }
     return json({})
   })
-  return { created, errors }
+  return { created, errors, inventory, saved }
 }
 
 for (const width of [1440, 390]) {
@@ -266,9 +305,27 @@ for (const { summary } of agentPreviewScenarios) {
     ) {
       await page.goto(`/scenarios/${summary.id}`)
       await page.getByRole('button', { name: `再建一个${role}` }).click()
+      const choices = summary.id === 'honnoji-decision'
+        ? previewCharacters[side]
+        : []
+      if (choices.length > 1) {
+        await expect(
+          page.getByRole('button', { name: '创建智能体', exact: true }),
+        ).toBeDisabled()
+        await page.getByRole('radio', { name: new RegExp(choices[1].name) })
+          .check()
+        await page.getByRole('button', { name: '创建智能体', exact: true })
+          .click()
+      }
       await expect(page.getByRole('textbox', { name: '智能体名称' }))
         .toBeFocused()
-      expect(created.at(-1)).toEqual({ scenarioID: summary.id, side })
+      expect(created.at(-1)).toEqual({
+        scenarioID: summary.id,
+        side,
+        ...(choices.length
+          ? { roleKey: choices[1]?.key ?? choices[0].key }
+          : {}),
+      })
     }
   })
 }
@@ -340,4 +397,70 @@ test('first creation survives the empty-to-populated inventory update before its
   await expect(page).toHaveURL(/\/agents\/2001$/)
   await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
+})
+
+for (const width of [1440, 390]) {
+  test(`character selection precedes creation and survives refresh at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    const { created, errors, saved } = await setup(page)
+    await page.goto('/scenarios/honnoji-decision')
+    const trigger = page.getByRole('button', { name: '再建一个袭击本能寺' })
+    await trigger.click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByRole('radio')).toHaveCount(2)
+    await expect(
+      dialog.getByRole('button', { name: '创建智能体', exact: true }),
+    ).toBeDisabled()
+    expect(created).toHaveLength(0)
+    await dialog.getByRole('button', { name: '取消', exact: true }).click()
+    expect(created).toHaveLength(0)
+    await expect(trigger).toBeFocused()
+    await trigger.click()
+    await dialog.getByRole('radio', { name: /足利义昭的使者/ }).check()
+    await dialog.getByRole('button', { name: '创建智能体', exact: true })
+      .click()
+    await expect(page).toHaveURL(/\/agents\/2001$/)
+    await page.getByRole('textbox', { name: '智能体名称' }).press('Enter')
+    await expect(page.getByRole('heading', { name: '足利义昭的使者 #2001' }))
+      .toBeVisible()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: '足利义昭的使者 #2001' }))
+      .toBeVisible()
+    await page.goto('/agents/2001/build')
+    await expect(page.getByText('足利义昭的使者 · 角色已固定')).toBeVisible()
+    await expect(page.locator('[data-tm="E.role-select"] [role="combobox"]'))
+      .toHaveCount(0)
+    await page.locator('#prompt-input').fill('奉公方归洛，以名分劝说光秀。')
+    await page.getByTestId('save-version').click()
+    await expect(page).toHaveURL(/\/agents\/2001$/)
+    expect(saved).toHaveLength(1)
+    expect(JSON.parse(saved[0].options!)).toEqual({ role: 'yoshiaki' })
+    expect(created).toEqual([{
+      scenarioID: 'honnoji-decision',
+      side: 'a',
+      roleKey: 'yoshiaki',
+    }])
+    expect(errors).toEqual([])
+  })
+}
+
+test('empty direct entry asks for a character without creating an agent', async ({ page }) => {
+  const { created, inventory } = await setup(page)
+  inventory.scenarios.find((s) => s.scenarioID === 'honnoji-decision')!.sides
+    .b = []
+  const ensures: string[] = []
+  page.on('request', (r) => {
+    if (r.url().endsWith('/agents/ensure')) ensures.push(r.url())
+  })
+  await page.goto('/agents/entry?scenario=honnoji-decision&side=b')
+  await page.getByRole('button', { name: '选择角色', exact: true }).click()
+  await expect(page.getByRole('radio', { name: /细川藤孝/ })).toBeVisible()
+  await expect(page.getByRole('radio', { name: /明智军中的足轻/ }))
+    .toBeVisible()
+  expect(created).toHaveLength(0)
+  expect(ensures).toHaveLength(0)
+  await page.getByRole('radio', { name: /明智军中的足轻/ }).check()
+  await page.getByRole('button', { name: '创建智能体', exact: true }).click()
+  await expect(page).toHaveURL(/\/agents\/2001$/)
+  expect(created[0].roleKey).toBe('ashigaru')
 })

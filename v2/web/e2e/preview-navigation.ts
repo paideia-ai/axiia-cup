@@ -17,6 +17,7 @@ import {
   agentPreviewInventory,
   agentPreviewScenarios,
   previewAgent,
+  previewCharacters,
 } from '../src/testing/scenario-agent-fixtures.ts'
 
 const productMeeting = Deno.args.includes('--product-meeting')
@@ -57,7 +58,7 @@ async function api(request: Request, path: string): Promise<Response> {
       })
     if (path === '/my/agents') return respond(data)
     if (path === '/agents' && request.method === 'POST') {
-      const { scenarioID, side } = await request.json()
+      const { scenarioID, side, roleKey } = await request.json()
       const scenario = data.scenarios.find((item) =>
         item.scenarioID === scenarioID
       )
@@ -68,6 +69,9 @@ async function api(request: Request, path: string): Promise<Response> {
       scenario.sides[side].push({
         agentID,
         name: null,
+        role: [...previewCharacters.a, ...previewCharacters.b].find((role) =>
+          role.key === roleKey
+        ),
         versionCount: 0,
         entryVersionID: null,
       })
@@ -90,6 +94,7 @@ async function api(request: Request, path: string): Promise<Response> {
               fields: {},
               scenarioID: scenario.scenarioID,
               side,
+              role: agent.role,
             })
           }
           if (match[2] === 'versions') {

@@ -3,9 +3,11 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { builder, myAgents } from '../api/client'
 import type { Side } from '../api/types'
+import { CreateAgentAction } from '../components/create-agent-action'
 import { Button, ButtonLink } from '../components/ui/button'
 import { useAuth } from '../context/auth'
 import { useAsync } from '../lib/use-async'
+import { rolesForSide, scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 
 export function AgentEntryPage() {
@@ -41,7 +43,15 @@ function AgentEntry({ scenarioID, side, target, express }: {
 }) {
   // StrictMode replays effects; share the get-or-create request for this entry.
   const open = async () => {
-    const before = await myAgents.list().catch(() => null)
+    const before = await myAgents.list()
+    const existing = before.scenarios.find((scenario) =>
+      scenario.scenarioID === scenarioID
+    )
+      ?.sides[side].find((agent) => !agent.isArchived)
+    if (rolesForSide(scenarioModule(scenarioID), side).length > 1) {
+      if (existing) return { agentID: existing.agentID, created: false }
+      return { chooseRole: true as const }
+    }
     const result = await builder.ensure({ scenarioID, side })
     const existed = before?.scenarios.some((scenario) =>
       scenario.sides[side].some((agent) => agent.agentID === result.agentID)
@@ -78,6 +88,26 @@ function AgentEntry({ scenarioID, side, target, express }: {
             返回场景
           </ButtonLink>
         </div>
+      </div>
+    )
+  }
+
+  if ('chooseRole' in data) {
+    return (
+      <div className='space-y-4'>
+        <h1 className='text-2xl font-bold'>创建智能体</h1>
+        <p>先为{side === 'a' ? '甲方' : '乙方'}选择一个角色。</p>
+        <CreateAgentAction
+          scenarioID={scenarioID}
+          side={side}
+          role={side === 'a' ? '甲方' : '乙方'}
+          express={express}
+        >
+          选择角色
+        </CreateAgentAction>
+        <ButtonLink variant='secondary' to={`/scenarios/${scenarioID}`}>
+          返回场景
+        </ButtonLink>
       </div>
     )
   }

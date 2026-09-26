@@ -83,3 +83,14 @@ export function previewAgent(agentID: number) {
   }
   return null
 }
+
+export const previewCharacters = {
+  a: [
+    { key: 'chosokabe', name: '长宗我部元亲的密使', side: 'a' as const },
+    { key: 'yoshiaki', name: '足利义昭的使者', side: 'a' as const },
+  ],
+  b: [
+    { key: 'hosokawa', name: '细川藤孝', side: 'b' as const },
+    { key: 'ashigaru', name: '明智军中的足轻', side: 'b' as const },
+  ],
+}

@@ -91,6 +91,13 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+Creating a new agent in a camp with several playable characters now requires a
+character choice before the creation request. The chosen character is saved on
+the agent and remains fixed across strategy versions, including after refresh.
+Single-character camps retain direct creation. Existing unbound agents keep
+their historical version behavior. This requires the corresponding backend
+agent-character API and additive schema change in `axiia-cup-v2`.
+
 For the scenario-to-agent flow, run `deno task preview:scenario-agents` and open
 `http://127.0.0.1:5178/scenarios/fengyiting-real`. This preview includes all five
 scenarios: Dong Zhuo has 13 agents and the second holds the entry version; each
