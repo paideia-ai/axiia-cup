@@ -282,7 +282,7 @@ export function MatchDetailPage() {
       notes.length === 0 || sidebarGroups.includes(index)
     )
   const tabbedJudgeSidebar = shownInterim.some(isOsBeatVerdict) && isTrolley &&
-    finished && !replaying
+    finished && !replaying && osPlacement.trailing.length === 0
   const placed = placeVerdicts(
     stageGroups,
     judgeSidebar
@@ -571,6 +571,7 @@ export function MatchDetailPage() {
               {...{
                 panels,
                 tabLabels: tabPlan.labels,
+                anchorSeqOf: anchorRowSeq,
                 showTrace,
                 traceOf,
                 beats,
@@ -925,6 +926,7 @@ export function MatchDetailPage() {
                               stageGroups[index]
                             ),
                             beats,
+                            anchorSeqOf: anchorRowSeq,
                             labels,
                             showTrace,
                             traceOf,

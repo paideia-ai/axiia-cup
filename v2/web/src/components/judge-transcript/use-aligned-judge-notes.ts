@@ -26,9 +26,11 @@ export function useAlignedJudgeNotes(
         ? chart.getBoundingClientRect().bottom - top + 20
         : 0
       for (const note of notes) {
-        const speech = dialogue.querySelector<HTMLElement>(
-          `[data-dialogue-seq="${Number(note.dataset.osAfter) - 1}"]`,
-        )
+        const speech = note.dataset.osAnchor == null
+          ? null
+          : dialogue.querySelector<HTMLElement>(
+            `[data-dialogue-seq="${note.dataset.osAnchor}"]`,
+          )
         const card = note.querySelector<HTMLElement>(
           '[data-tm="FA.aside-card"]',
         )

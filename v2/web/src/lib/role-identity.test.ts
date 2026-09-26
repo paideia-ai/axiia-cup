@@ -3,6 +3,7 @@ import { roleIdentity } from './role-identity'
 import { outcomeCopy, scenarioRoles } from './outcome'
 import { ledgerFromScore, parseLedger } from './scoring-reasoning'
 import {
+  judgeFavorSide,
   sideName,
   speakerLabels,
   speakerName,
@@ -27,6 +28,7 @@ describe('participant role identity is separate from scenario faction', () => {
           expect(sideName(labels, side)).toBe(expected)
           expect(speakerName(labels, side)).toBe(expected)
           expect(speakerName(labels, key)).toBe(expected)
+          expect(judgeFavorSide(labels, expected)).toBe(side)
           expect(
             roleIdentity({
               scenarioID,
@@ -203,4 +205,30 @@ it('accepts future server roles without a new frontend registry entry', () => {
   expect(sideName(labels, 'a')).toBe('新使者')
   expect(speakerName(labels, 'future-envoy')).toBe('新使者')
   expect(speakerSide(labels, 'future-envoy')).toBe('a')
+})
+
+describe('judge favor identity shared by trend and OS bar', () => {
+  it('resolves historical lane names and keeps an unknown favor neutral', () => {
+    const labels = speakerLabels(null, { a: '旧版甲角', b: '旧版乙角' })
+    expect(judgeFavorSide(labels, '旧版甲角')).toBe('a')
+    expect(judgeFavorSide(labels, '旧版乙角')).toBe('b')
+    expect(judgeFavorSide(labels, '未定')).toBeNull()
+    expect(judgeFavorSide(labels, null)).toBeNull()
+  })
+  it('resolves concrete role names from match snapshots', () => {
+    const labels = speakerLabels(null, {}, [], {
+      a: { isMine: true, role: { key: 'cast-a', name: '本局甲角', side: 'a' } },
+      b: {
+        isMine: false,
+        role: { key: 'cast-b', name: '本局乙角', side: 'b' },
+      },
+    })
+    expect(judgeFavorSide(labels, '本局甲角')).toBe('a')
+    expect(judgeFavorSide(labels, '本局乙角')).toBe('b')
+  })
+  it('uses scenario-defined favor words for Trolley', () => {
+    const labels = speakerLabels('trolley-problem', {})
+    expect(judgeFavorSide(labels, '一人侧')).toBe('a')
+    expect(judgeFavorSide(labels, '五人侧')).toBe('b')
+  })
 })

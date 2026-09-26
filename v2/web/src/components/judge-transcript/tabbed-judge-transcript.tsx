@@ -15,6 +15,7 @@ export function TabbedJudgeTranscript({
   connectionGap = 4,
   showTrace,
   traceOf,
+  anchorSeqOf,
 }: TabbedJudgePresentation & { connectionGap?: number }) {
   const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
@@ -70,6 +71,7 @@ export function TabbedJudgeTranscript({
                   ? undefined
                   : 'judge-transcript-aligned-note'}
                 data-os-after={step.verdict.afterSeq}
+                data-os-anchor={anchorSeqOf(step.verdict)}
               >
                 <p className='mb-2 text-[11px] text-(--foreground-muted)'>
                   读至 #{step.verdict.afterSeq}{' '}
@@ -80,6 +82,7 @@ export function TabbedJudgeTranscript({
                   beats={beats}
                   labels={labels}
                   traceOf={traceOf}
+                  anchorSeqOf={anchorSeqOf}
                   showTrace={showTrace}
                 />
               </div>

@@ -107,6 +107,8 @@ export const InteractionChecks: Story = {
       await canvas.findByRole('heading', {
         name: `对战 #${scene.id}`,
       })
+      await expect(canvas.queryByRole('button', { name: /#\d+ 后的裁判心声/ }))
+        .toBeNull()
       if ([144, 120, 122].includes(scene.id)) {
         const sidebar = canvas.getByRole('complementary', {
           name: '裁判 OS 侧栏',

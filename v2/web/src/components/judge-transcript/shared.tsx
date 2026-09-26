@@ -4,12 +4,13 @@ import type { StageGroup } from '../../lib/transcript'
 import type { ReplayBeatStep } from '../../lib/replay'
 import type { VerdictDTO } from '../../api/types'
 import type { SpeakerLabels } from '../timeline/labels'
-import { sideName, speakerSide } from '../timeline/labels'
+import { judgeFavorSide } from '../timeline/labels'
 import { OsBeatCard } from '../timeline/os-beat-card'
 
 export interface JudgePresentation {
   beats: ReplayBeatStep[]
   labels: SpeakerLabels
+  anchorSeqOf: (verdict: VerdictDTO) => number | null
   showTrace: boolean
   traceOf: (verdict: VerdictDTO) => string | null
 }
@@ -23,16 +24,7 @@ export interface TabbedJudgePresentation extends JudgePresentation {
   beatTabs: Record<string, number>
 }
 export function colorOf(step: ReplayBeatStep, labels: SpeakerLabels) {
-  const favor = step.beat.favor
-  const side = favor
-    ? labels.module?.favorSides?.[favor] ?? speakerSide(labels, favor) ??
-      labels.module?.roles.find((role) => role.name === favor)?.side ??
-      (favor === sideName(labels, 'a')
-        ? 'a'
-        : favor === sideName(labels, 'b')
-        ? 'b'
-        : null)
-    : null
+  const side = judgeFavorSide(labels, step.beat.favor)
   return side === 'a'
     ? 'var(--accent)'
     : side === 'b'

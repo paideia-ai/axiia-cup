@@ -90,18 +90,6 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
         </h2>
       )}
       {renderGroup(chunk.group)}
-      {chunk.step && (
-        <div className='judge-transcript-anchor'>
-          <button
-            type='button'
-            onClick={() => {
-              focusJudgeBeat(chunk.step!.verdict.key)
-            }}
-          >
-            #{chunk.end} 后的裁判心声
-          </button>
-        </div>
-      )}
     </div>
   )
 
@@ -150,6 +138,7 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
                 <div
                   className='judge-transcript-aligned-note'
                   data-os-after={chunk.end}
+                  data-os-anchor={props.anchorSeqOf(chunk.step!.verdict)}
                   key={chunk.step!.verdict.key}
                 >
                   <p className='mb-2 text-[11px] text-(--foreground-muted)'>

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Side } from '../api/types'
 import type { ReplayBeatStep } from '../lib/replay'
 import type { SpeakerLabels } from './timeline/labels'
-import { sideName, speakerSide } from './timeline/labels'
+import { judgeFavorSide, sideName } from './timeline/labels'
 import { tm } from '../testmode/mark'
 import { judgeTrendGeometry } from '../lib/judge-trend-geometry'
 import './judge-trend.css'
@@ -31,28 +31,6 @@ const DEFAULT_MAGNITUDE = 0.5
 // favor 是场景脚本的显示名词汇（商鞅/甘龙、董卓/吕布、角色名……），先走场景
 // 模块的显式映射，再依次尝试：lane key 本身、模块角色名、对局 speakerLabels
 // 的显示名、模块 laneLabels 的显示名。
-function favorSide(labels: SpeakerLabels, favor: string | null): Side | null {
-  if (!favor) return null
-  const declared = labels.module?.favorSides?.[favor]
-  if (declared) return declared
-  const direct = speakerSide(labels, favor)
-  if (direct) return direct
-  const role = labels.module?.roles.find((entry) => entry.name === favor)
-  if (role) return role.side
-  for (const [key, label] of Object.entries(labels.lanes)) {
-    if (label !== favor) continue
-    const side = speakerSide(labels, key)
-    if (side) return side
-  }
-  for (
-    const [key, label] of Object.entries(labels.module?.laneLabels ?? {})
-  ) {
-    if (label !== favor) continue
-    const side = speakerSide(labels, key)
-    if (side) return side
-  }
-  return null
-}
 
 const SIDE_COLOR: Record<Side, string> = {
   a: 'var(--accent)',
@@ -106,7 +84,7 @@ export function JudgeTrendChart({
   }, [fitWidth, beats.length])
   const allPoints = beats
     .map((step) => {
-      const side = favorSide(labels, step.beat.favor)
+      const side = judgeFavorSide(labels, step.beat.favor)
       const magnitude = side == null
         ? 0
         : STRENGTH_MAGNITUDE[step.beat.strength ?? ''] ?? DEFAULT_MAGNITUDE
