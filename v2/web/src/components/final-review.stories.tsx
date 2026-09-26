@@ -94,20 +94,18 @@ export const Consolidated: Story = {}
 export const InteractionChecks: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByRole('heading', { name: '对战 #144', exact: true })
+    await canvas.findByRole('heading', { name: '对战 #144' })
     for (const scene of scenes) {
       await userEvent.click(
         within(canvas.getByRole('group', { name: '场景' })).getByRole(
           'button',
           {
             name: scene.name,
-            exact: true,
           },
         ),
       )
       await canvas.findByRole('heading', {
         name: `对战 #${scene.id}`,
-        exact: true,
       })
       if (scene.id === 144 || scene.id === 120) {
         const goals = canvas.getByRole('region', { name: '隐藏目标及计分' })
@@ -137,7 +135,7 @@ export const InteractionChecks: Story = {
         await expect(canvasElement.querySelector('[data-tm="FA.event-score"]'))
           .toBeNull()
         await userEvent.click(
-          canvas.getByRole('tab', { name: '私会', exact: true }),
+          canvas.getByRole('tab', { name: '私会' }),
         )
         const speakers = [
           ...canvasElement.querySelectorAll('[data-tm="FA.speaker-line"]'),
@@ -155,14 +153,14 @@ export const InteractionChecks: Story = {
         scene.id === 145 ? 'match-scoring' : 'match-final-verdict',
       )
       await userEvent.click(
-        canvas.getByRole('button', { name: '回放', exact: true }),
+        canvas.getByRole('button', { name: '回放' }),
       )
       await expect(canvasElement.querySelector('[data-review-ending]'))
         .toBeNull()
       await expect(canvas.queryByRole('region', { name: '隐藏目标及计分' }))
         .toBeNull()
       await userEvent.click(
-        canvas.getByRole('button', { name: '退出回放', exact: true }),
+        canvas.getByRole('button', { name: '退出回放' }),
       )
     }
   },
