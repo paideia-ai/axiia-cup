@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { useState } from 'react'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -200,6 +200,88 @@ export const InteractionChecks: Story = {
       await userEvent.click(
         canvas.getByRole('button', { name: '退出回放' }),
       )
+    }
+  },
+}
+
+export const MobileReportChecks: Story = {
+  play: async ({ canvasElement }) => {
+    if (!('__vitest_browser_runner__' in globalThis)) return
+    const { page } = await import('vitest/browser')
+    const canvas = within(canvasElement)
+    try {
+      await page.viewport(390, 844)
+      for (const scene of scenes) {
+        await userEvent.click(
+          within(canvas.getByRole('group', { name: '场景' })).getByRole(
+            'button',
+            { name: scene.name },
+          ),
+        )
+        await canvas.findByRole('heading', { name: `对战 #${scene.id}` })
+        const portraits = canvasElement.querySelectorAll('.role-portrait')
+        await expect(portraits.length).toBeGreaterThan(0)
+        for (const portrait of portraits) {
+          await expect(portrait.getBoundingClientRect().width).toBe(48)
+        }
+        if ([144, 120, 122].includes(scene.id)) {
+          await waitFor(() =>
+            expect(
+              canvasElement.querySelector(
+                '.judge-mobile-trend .judge-sidebar-trend',
+              ),
+            ).not.toBeNull()
+          )
+          const card = canvasElement.querySelector(
+            '.judge-mobile-trend .judge-sidebar-trend',
+          )!
+          await expect(canvasElement.querySelectorAll('.judge-sidebar-trend'))
+            .toHaveLength(1)
+          const ending = scene.id === 122
+            ? canvas.getByRole('region', { name: '整局裁决' })
+            : canvas.getByRole('region', { name: '隐藏目标及计分' })
+          await expect(
+            Boolean(
+              ending.compareDocumentPosition(card) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+            ),
+          ).toBe(true)
+          if (scene.id === 122) {
+            for (const tab of canvas.getAllByRole('tab')) {
+              await userEvent.click(tab)
+              await expect(card.isConnected).toBe(true)
+            }
+            const point = card.querySelector<HTMLElement>(
+              '[data-tm="FA.trend-beat"]',
+            )!
+            point.focus()
+            await userEvent.keyboard('{Enter}')
+            await expect(canvas.getByRole('tab', { selected: true }))
+              .toHaveTextContent('原始电车')
+            await expect(document.activeElement?.id).toBe('beat-os-2')
+          }
+          await page.viewport(1000, 844)
+          await waitFor(() =>
+            expect(
+              canvasElement.querySelector(
+                '.judge-transcript .judge-sidebar-trend',
+              ),
+            ).not.toBeNull()
+          )
+          await expect(
+            canvasElement.querySelector(
+              '.judge-mobile-trend .judge-sidebar-trend',
+            ),
+          ).toBeNull()
+          await page.viewport(390, 844)
+        }
+        await userEvent.click(canvas.getByRole('button', { name: '回放' }))
+        await expect(canvasElement.querySelector('.judge-mobile-trend'))
+          .toBeNull()
+        await userEvent.click(canvas.getByRole('button', { name: '退出回放' }))
+      }
+    } finally {
+      await page.viewport(1280, 720)
     }
   },
 }

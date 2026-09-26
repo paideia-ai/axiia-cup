@@ -70,6 +70,7 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
   const track = (
     <JudgeSidebarTrend
       beats={beats}
+      mobileTrendTarget={props.mobileTrendTarget}
       labels={labels}
       connectionGap={4}
       onSelect={(index) => focusJudgeBeat(beats[index].verdict.key)}

@@ -83,3 +83,10 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* The finished mobile report ends with the same interactive trend card. */
+@media (min-width: 900px) {
+  .judge-mobile-trend {
+    display: none;
+  }
+}

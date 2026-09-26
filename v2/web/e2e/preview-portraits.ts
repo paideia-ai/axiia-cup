@@ -41,7 +41,7 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (req) => {
   }
   if (url.pathname === '/') {
     return new Response(
-      `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>80px 角色头像 · 完整战报预览</title><style>body{background:#0c0c0c;color:#e8e8e8;font:16px/1.8 system-ui;max-width:720px;margin:64px auto;padding:24px}a{color:#9dc1ff}li{margin:16px 0}</style><h1>80px 角色头像</h1><p>桌面端使用独立角色栏，手机和裁判 OS 使用顶部身份区。</p><p>本地历史样本 · 只读。页面直接使用本分支生产构建，账号和数据不代表线上实时状态。</p><ul>${
+      `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>角色头像 · 完整战报预览</title><style>body{background:#0c0c0c;color:#e8e8e8;font:16px/1.8 system-ui;max-width:720px;margin:64px auto;padding:24px}a{color:#9dc1ff}li{margin:16px 0}</style><h1>角色头像 · 最终预览</h1><p>桌面端 80px，手机端 48px。桌面端使用独立角色栏，手机和裁判 OS 使用顶部身份区。</p><p>本地历史样本 · 只读。页面直接使用本分支生产构建，账号和数据不代表线上实时状态。</p><ul>${
         scenes.map(([id, name]) =>
           `<li><a href="/matches/${id}">${name} · #${id}</a></li>`
         ).join('')

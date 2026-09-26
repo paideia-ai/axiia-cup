@@ -8,6 +8,7 @@ import { judgeFavorSide } from '../timeline/labels'
 import { OsBeatCard } from '../timeline/os-beat-card'
 
 export interface JudgePresentation {
+  mobileTrendTarget?: HTMLElement | null
   beats: ReplayBeatStep[]
   labels: SpeakerLabels
   anchorSeqOf: (verdict: VerdictDTO) => number | null

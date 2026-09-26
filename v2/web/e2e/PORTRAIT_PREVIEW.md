@@ -1,11 +1,14 @@
 # Neutral portrait preview
 
-The selected design uses 80px square neutral portraits in all five scenarios. On
-desktop, dialogue uses a left identity column with the name below the image. On
-mobile and in the narrower Judge OS column, the identity appears above the
-full-width body. Inquiry and named judge verdict headers also show 80px
-portraits. Existing text, colors, accent bars, chart and tab interactions
-remain.
+The selected design uses square neutral portraits in all five scenarios: 80px at
+desktop widths (900px and above), and 48px below 900px. On desktop, dialogue
+uses a left identity column with the name below the image. On mobile and in the
+narrower Judge OS column, the identity appears above the full-width body.
+Inquiry and named judge verdict headers follow the same responsive sizes.
+Existing text, colors, accent bars and tab interactions remain. On mobile, the
+full-match trend appears at the very end, after hidden goals/scoring or the
+final verdict. Desktop keeps the trend at the top of the right column. Trend
+navigation still selects the matching Trolley case and focuses its Judge OS.
 
 From `v2/web`:
 

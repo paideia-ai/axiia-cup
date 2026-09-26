@@ -1,14 +1,16 @@
 /* Wide dialogue cards give the portrait and name their own column. */
 @media (min-width: 900px) {
   .portrait-speech:has(.role-portrait) {
-    position: relative;
+    display: flow-root;
     padding-left: 120px;
     min-height: 164px;
   }
   .portrait-speaker:has(.role-portrait) {
-    position: absolute;
-    left: 20px;
-    top: 16px;
+    /* A zero-width float keeps long names and the live indicator in the
+       card height while leaving the body aligned beside the portrait. */
+    float: left;
+    margin-left: -100px;
+    margin-right: 20px;
     width: 80px;
     display: flex;
     flex-direction: column;
@@ -26,10 +28,14 @@
   align-items: flex-start;
 }
 @media (max-width: 899px) {
+  .role-portrait {
+    width: 48px;
+    height: 48px;
+  }
   .portrait-dialogue-speaker:has(.role-portrait) {
     position: relative;
-    min-height: 80px;
-    padding-left: 92px;
+    min-height: 48px;
+    padding-left: 60px;
     align-content: center;
   }
   .portrait-dialogue-speaker .role-portrait {

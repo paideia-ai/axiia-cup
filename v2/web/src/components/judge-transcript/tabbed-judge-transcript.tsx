@@ -8,6 +8,7 @@ import './judge-transcript.css'
 
 export function TabbedJudgeTranscript({
   panels,
+  mobileTrendTarget,
   tabLabels,
   beats,
   labels,
@@ -53,6 +54,7 @@ export function TabbedJudgeTranscript({
           </h2>
           <JudgeSidebarTrend
             beats={beats}
+            mobileTrendTarget={mobileTrendTarget}
             labels={labels}
             connectionGap={connectionGap}
             onSelect={(index) => {
@@ -61,7 +63,7 @@ export function TabbedJudgeTranscript({
               setTarget(key)
             }}
           />
-          <div className={compact ? 'mt-5 space-y-5' : undefined}>
+          <div className={compact ? 'space-y-5' : undefined}>
             {beats.filter((step) => beatTabs[step.verdict.key] === active).map((
               step,
             ) => (
