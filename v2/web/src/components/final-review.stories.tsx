@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, userEvent, within } from 'storybook/test'
 import { useState } from 'react'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -75,7 +76,7 @@ const meta = {
           () => HttpResponse.json(scene.match),
         )
       ),
-      http.get('/v1/matches', () => HttpResponse.json({ items: [] })),
+      http.get('/v1/matches', () => HttpResponse.json({ matches: [] })),
       http.all(
         '/v1/*',
         ({ request }) =>
@@ -89,3 +90,80 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 export const Consolidated: Story = {}
+
+export const InteractionChecks: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await canvas.findByRole('heading', { name: '对战 #144', exact: true })
+    for (const scene of scenes) {
+      await userEvent.click(
+        within(canvas.getByRole('group', { name: '场景' })).getByRole(
+          'button',
+          {
+            name: scene.name,
+            exact: true,
+          },
+        ),
+      )
+      await canvas.findByRole('heading', {
+        name: `对战 #${scene.id}`,
+        exact: true,
+      })
+      if (scene.id === 144 || scene.id === 120) {
+        const goals = canvas.getByRole('region', { name: '隐藏目标及计分' })
+        await expect(goals.querySelectorAll('[data-review-goal]')).toHaveLength(
+          6,
+        )
+        await expect(goals.querySelectorAll('[data-review-truth="true"]'))
+          .toHaveLength(2)
+        await expect(canvas.queryByRole('heading', { name: '计分推导' }))
+          .toBeNull()
+      } else {
+        const ending = canvas.getByRole('region', { name: '整局裁决' })
+        const original = ending.textContent
+        for (const tab of canvas.getAllByRole('tab')) {
+          await userEvent.click(tab)
+          await expect(ending.textContent).toBe(original)
+        }
+      }
+      if (scene.id === 122) {
+        await expect(canvas.getByText('第一案·原始电车', { exact: true }))
+          .toBeVisible()
+        await expect(
+          canvasElement.querySelector('[data-tm="FA.event-verdict"]'),
+        ).toBeNull()
+      }
+      if (scene.id === 123) {
+        await expect(canvasElement.querySelector('[data-tm="FA.event-score"]'))
+          .toBeNull()
+        await userEvent.click(
+          canvas.getByRole('tab', { name: '私会', exact: true }),
+        )
+        const speakers = [
+          ...canvasElement.querySelectorAll('[data-tm="FA.speaker-line"]'),
+        ]
+          .filter((node) => node.textContent?.includes('貂蝉'))
+        await expect(speakers.length).toBeGreaterThan(0)
+        for (const speaker of speakers) {
+          await expect(speaker.textContent).not.toContain('旁白角色')
+        }
+      }
+      await userEvent.click(
+        canvas.getByRole('button', { name: '查看详细裁决' }),
+      )
+      await expect(document.activeElement?.id).toBe(
+        scene.id === 145 ? 'match-scoring' : 'match-final-verdict',
+      )
+      await userEvent.click(
+        canvas.getByRole('button', { name: '回放', exact: true }),
+      )
+      await expect(canvasElement.querySelector('[data-review-ending]'))
+        .toBeNull()
+      await expect(canvas.queryByRole('region', { name: '隐藏目标及计分' }))
+        .toBeNull()
+      await userEvent.click(
+        canvas.getByRole('button', { name: '退出回放', exact: true }),
+      )
+    }
+  },
+}

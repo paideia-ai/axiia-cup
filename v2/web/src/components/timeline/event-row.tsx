@@ -381,9 +381,13 @@ export function EventRow({
     case 'gesture':
       return <GestureRow event={event!} labels={labels} />
     case 'verdict':
-      return <VerdictEventRow event={event!} labels={labels} />
+      return scenarioID === 'trolley-problem'
+        ? null
+        : <VerdictEventRow event={event!} labels={labels} />
     case 'score':
-      return <ScoreRow event={event!} labels={labels} />
+      return scenarioID === 'fengyiting-real'
+        ? null
+        : <ScoreRow event={event!} labels={labels} />
     default:
       return <GenericRow event={event} turn={turn} labels={labels} />
   }
