@@ -67,6 +67,7 @@ export function DialogueRow({
   return (
     <Card
       {...tm('FA.dialogue-row')}
+      data-dialogue-seq={turn.seq}
       className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}
     >
       <CardContent className='space-y-1 py-4'>

@@ -1,3 +1,5 @@
+import { JudgeDialogue } from '../components/judge-transcript/judge-dialogue'
+import { TabbedJudgeTranscript } from '../components/judge-transcript/tabbed-judge-transcript'
 import { scriptEvent } from '../lib/event'
 import { canConsolidateEnding } from '../lib/match-ending'
 import { MatchEnding } from '../components/match-ending'
@@ -262,7 +264,31 @@ export function MatchDetailPage() {
   const shownVerdicts = finished && !replaying && finalVerdict != null
     ? [...shownInterim, finalVerdict]
     : shownInterim
-  const placed = placeVerdicts(stageGroups, shownVerdicts)
+  // Keep unusual/legacy transcripts on their chronological renderer if an OS
+  // belongs outside the single debate section; never remove an unplaced note.
+  const dialogueSections = buildFinishedReportSections(stageGroups).filter((
+    section,
+  ) => section.kind === 'dialogue')
+  const osPlacement = placeVerdicts(
+    stageGroups,
+    shownInterim.filter(isOsBeatVerdict),
+  )
+  const sidebarGroups = dialogueSections.length === 1
+    ? dialogueSections[0].groupIndexes
+    : []
+  const judgeSidebar = shownInterim.some(isOsBeatVerdict) && isCourtOrCouncil &&
+    finished && !replaying && osPlacement.trailing.length === 0 &&
+    osPlacement.perGroup.every((notes, index) =>
+      notes.length === 0 || sidebarGroups.includes(index)
+    )
+  const tabbedJudgeSidebar = shownInterim.some(isOsBeatVerdict) && isTrolley &&
+    finished && !replaying
+  const placed = placeVerdicts(
+    stageGroups,
+    judgeSidebar
+      ? shownVerdicts.filter((verdict) => !isOsBeatVerdict(verdict))
+      : shownVerdicts,
+  )
   // A private generation (an `act` with no channel, an affordance-only reply) has
   // no timeline row to grow into; it belongs to the status card, not the script.
   const offstage = stream.bubbles.filter((bubble) => bubble.seq < 0)
@@ -514,24 +540,59 @@ export function MatchDetailPage() {
         row.verdicts.length > 0
       )
     const finalRows = rowsFor(null)
+    const panels = tabPlan.labels.map((_, index) => {
+      const rows = rowsFor(index)
+      return rows.length > 0
+        ? rows.map((row) =>
+          renderGroupRow(
+            tabbedJudgeSidebar
+              ? {
+                ...row,
+                verdicts: row.verdicts.filter((verdict) =>
+                  !isOsBeatVerdict(verdict)
+                ),
+              }
+              : row,
+            true,
+          )
+        )
+        : (
+          <p key={index} className='text-sm text-(--foreground-muted)'>
+            本阶段尚无记录。
+          </p>
+        )
+    })
     return (
       <>
-        <TranscriptTabs
-          key={`${matchID}:${replaying ? 'replay' : live ? 'live' : 'report'}`}
-          labels={tabPlan.labels}
-          reached={reachedTab}
-          streaming={live || replaying}
-          panels={tabPlan.labels.map((_, index) => {
-            const rows = rowsFor(index)
-            return rows.length > 0
-              ? rows.map((row) => renderGroupRow(row, true))
-              : (
-                <p className='text-sm text-(--foreground-muted)'>
-                  本阶段尚无记录。
-                </p>
-              )
-          })}
-        />
+        {tabbedJudgeSidebar
+          ? (
+            <TabbedJudgeTranscript
+              key={matchID}
+              {...{
+                panels,
+                tabLabels: tabPlan.labels,
+                showTrace,
+                traceOf,
+                beats,
+                labels,
+                beatTabs: Object.fromEntries(beats.map((step) => [
+                  step.verdict.key,
+                  tabPlan.bySeq.get(step.verdict.afterSeq) ?? 0,
+                ])),
+              }}
+            />
+          )
+          : (
+            <TranscriptTabs
+              key={`${matchID}:${
+                replaying ? 'replay' : live ? 'live' : 'report'
+              }`}
+              labels={tabPlan.labels}
+              reached={reachedTab}
+              streaming={live || replaying}
+              panels={panels}
+            />
+          )}
         {finalRows.length > 0 || placed.trailing.length > 0
           ? (
             <section
@@ -608,7 +669,12 @@ export function MatchDetailPage() {
     : null
 
   return (
-    <div className='space-y-6'>
+    <div
+      className='space-y-6'
+      data-match-winner={data.summary.scored
+        ? data.summary.winner ?? undefined
+        : undefined}
+    >
       <div
         role='status'
         aria-live='polite'
@@ -836,43 +902,83 @@ export function MatchDetailPage() {
 
             {tabPlan
               ? renderTabbedTranscript()
-              : reportSections.map((section, sectionIndex) => (
-                <div
-                  {...tm('FA.report-section')}
-                  key={`${section.kind}-${sectionIndex}`}
-                  className='space-y-5'
-                >
-                  {section.kind === 'dialogue' && !isTrolley &&
-                      !hasNumberedStages
-                    ? (
-                      <h2
-                        {...tm('FA.dialogue-heading')}
-                        className='text-sm font-semibold text-(--foreground)'
-                      >
-                        {replaying ? '对话重演' : '对话全文'}
-                      </h2>
-                    )
-                    : section.kind === 'inquiry' && !hasNumberedStages
-                    ? (
-                      <h2 className='text-sm font-semibold text-(--foreground)'>
-                        问询
-                      </h2>
-                    )
-                    : null}
-                  {section.groupIndexes.length === 0
-                    ? (
-                      <p
-                        {...tm('FA.section-empty')}
-                        className='text-sm text-(--foreground-muted)'
-                      >
-                        {replaying ? '回放即将开始…' : '暂无回合。'}
-                      </p>
-                    )
-                    : section.groupIndexes.map((index) =>
-                      renderGroupRow(groupRows[index])
-                    )}
-                </div>
-              ))}
+              : reportSections.map((section, sectionIndex) =>
+                judgeSidebar && section.kind === 'dialogue'
+                  ? (
+                    <div
+                      {...tm('FA.report-section')}
+                      className='space-y-5'
+                      key={`judge-layout-${sectionIndex}`}
+                    >
+                      {!hasNumberedStages && (
+                        <h2
+                          {...tm('FA.dialogue-heading')}
+                          className='text-sm font-semibold text-(--foreground)'
+                        >
+                          对话全文
+                        </h2>
+                      )}
+                      {
+                        <JudgeDialogue
+                          {...{
+                            groups: section.groupIndexes.map((index) =>
+                              stageGroups[index]
+                            ),
+                            beats,
+                            labels,
+                            showTrace,
+                            traceOf,
+                            renderGroup: (group) => {
+                              const row = groupRows.find((entry) =>
+                                entry.group.id === group.id
+                              )
+                              return row
+                                ? renderGroupRow({ ...row, group }, true)
+                                : null
+                            },
+                          }}
+                        />
+                      }
+                    </div>
+                  )
+                  : (
+                    <div
+                      {...tm('FA.report-section')}
+                      key={`${section.kind}-${sectionIndex}`}
+                      className='space-y-5'
+                    >
+                      {section.kind === 'dialogue' && !isTrolley &&
+                          !hasNumberedStages
+                        ? (
+                          <h2
+                            {...tm('FA.dialogue-heading')}
+                            className='text-sm font-semibold text-(--foreground)'
+                          >
+                            {replaying ? '对话重演' : '对话全文'}
+                          </h2>
+                        )
+                        : section.kind === 'inquiry' && !hasNumberedStages
+                        ? (
+                          <h2 className='text-sm font-semibold text-(--foreground)'>
+                            问询
+                          </h2>
+                        )
+                        : null}
+                      {section.groupIndexes.length === 0
+                        ? (
+                          <p
+                            {...tm('FA.section-empty')}
+                            className='text-sm text-(--foreground-muted)'
+                          >
+                            {replaying ? '回放即将开始…' : '暂无回合。'}
+                          </p>
+                        )
+                        : section.groupIndexes.map((index) =>
+                          renderGroupRow(groupRows[index])
+                        )}
+                    </div>
+                  )
+              )}
             {!tabPlan && placed.trailing.length > 0
               ? (
                 <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
@@ -1122,7 +1228,8 @@ export function MatchDetailPage() {
                     )}
                 </div>
               )}
-            {!replaying && beats.length > 0
+            {!replaying && !judgeSidebar && !tabbedJudgeSidebar &&
+                beats.length > 0
               ? (
                 <Card {...tm('FA.trend-card')} data-review-trend>
                   <CardContent className='pt-5'>

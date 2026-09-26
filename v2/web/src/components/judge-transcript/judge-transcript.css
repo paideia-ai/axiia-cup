@@ -1,0 +1,91 @@
+.judge-transcript-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.judge-transcript-pair + .judge-transcript-pair {
+  margin-top: 20px;
+}
+.judge-transcript-paired-aside {
+  align-self: end;
+  padding-bottom: 28px;
+}
+.judge-transcript-os [data-tm='FA.aside-card'] {
+  margin-inline: 0;
+}
+.judge-transcript-chunk {
+  min-width: 0;
+  scroll-margin-top: 28px;
+  outline: none;
+}
+.judge-transcript-chunk:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 5px;
+  border-radius: 12px;
+}
+.judge-transcript-anchor {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--foreground-muted);
+}
+.judge-transcript button {
+  cursor: pointer;
+}
+.judge-transcript button:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.judge-transcript button:hover {
+  color: var(--foreground);
+}
+.judge-transcript button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.judge-transcript-aligned-aside {
+  position: relative;
+  align-self: stretch;
+}
+.judge-transcript-aligned-note {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+}
+.judge-transcript .judge-transcript-os [data-tm='FA.aside-card'] {
+  position: relative;
+  overflow: hidden;
+  border-left: 2px solid transparent;
+}
+.judge-transcript .judge-transcript-os [data-tm='FA.aside-card']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--warning) 0%, var(--warning) 30%,
+    var(--os-favor-color) 80%, var(--os-favor-color) 100%);
+  pointer-events: none;
+}
+.judge-transcript [data-tm='FA.aside-card']:focus {
+  outline: 1px solid var(--warning);
+  outline-offset: 3px;
+}
+@media (max-width: 899px) {
+  .judge-transcript-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .judge-transcript-paired-aside {
+    padding: 0 0 16px 18px;
+  }
+}
+
+.judge-transcript-os {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

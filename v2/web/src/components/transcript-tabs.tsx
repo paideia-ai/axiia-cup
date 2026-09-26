@@ -1,15 +1,23 @@
 import { type ReactNode, useId, useState } from 'react'
 import './transcript-tabs.css'
 
-export function TranscriptTabs({ labels, panels, streaming, reached }: {
-  labels: string[]
-  panels: ReactNode[]
-  streaming: boolean
-  reached: number
-}) {
+export function TranscriptTabs(
+  { labels, panels, streaming, reached, value, onValueChange }: {
+    labels: string[]
+    panels: ReactNode[]
+    streaming: boolean
+    reached: number
+    value?: number
+    onValueChange?: (value: number) => void
+  },
+) {
   const id = useId()
   const [selected, setSelected] = useState<number | null>(null)
-  const active = selected ?? (streaming ? reached : 0)
+  const active = value ?? selected ?? (streaming ? reached : 0)
+  const select = (next: number) => {
+    setSelected(next)
+    onValueChange?.(next)
+  }
   const count = streaming ? reached + 1 : labels.length
   return (
     <section
@@ -31,7 +39,7 @@ export function TranscriptTabs({ labels, panels, streaming, reached }: {
             aria-selected={active === index}
             tabIndex={active === index ? 0 : -1}
             disabled={streaming && index > reached}
-            onClick={() => setSelected(index)}
+            onClick={() => select(index)}
             onKeyDown={(event) => {
               if (
                 !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)
@@ -43,7 +51,7 @@ export function TranscriptTabs({ labels, panels, streaming, reached }: {
                 ? count - 1
                 : (index + (event.key === 'ArrowRight' ? 1 : -1) + count) %
                   count
-              setSelected(next)
+              select(next)
               document.getElementById(`${id}-tab-${next}`)?.focus()
             }}
           >

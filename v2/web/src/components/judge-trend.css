@@ -1,0 +1,8 @@
+/* Retain touch/trackpad scrolling and keyboard-reachable nodes without a bar. */
+.judge-trend-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.judge-trend-scroll::-webkit-scrollbar {
+  display: none;
+}

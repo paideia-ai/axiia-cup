@@ -486,13 +486,7 @@ export const TM_FA: TmRegistry = {
     clauses: ['U07-C05', 'U07-C09'],
     journeys: ['jR4s1', 'jR8s4'],
     note:
-      'x＝节拍序，y＝带号强度（A 上 B 下）；完局在计分推导里全画，回放中嵌在控制条里随揭示逐点生长',
-  },
-  'FA.trend-hint': {
-    label: '轨迹图提示文字',
-    clauses: ['U07-C05'],
-    journeys: ['jR4s1'],
-    note: 'F4/B8：「空心圈＝倾向变化 · 点选节拍查看心声」——不再写「悬停」',
+      'x＝节拍序，y＝带号强度（A 上 B 下）；完局在裁判侧栏全画（小屏随正文排列），回放中嵌在控制条里随揭示逐点生长',
   },
   'FA.trend-legend': {
     label: '轨迹图图例',
@@ -834,7 +828,7 @@ export const STEPS_FA: StepHints = {
   jR2s3: { route: '/matches/:id', marker: 'FA.ledger-table' },
   jR2s4: { route: '/matches/:id', marker: 'FA.event-score' },
   jR2s5: { route: '/matches/:id', marker: 'FA.scoring-section' },
-  jR4s1: { route: '/matches/:id', marker: 'FA.trend-hint' },
+  jR4s1: { route: '/matches/:id', marker: 'FA.trend-chart' },
   jR4s2: { route: '/matches/:id', marker: 'FA.trend-beat' },
   jR4s3: { route: '/matches/:id', marker: 'FA.trend-view-card-button' },
   jR4s4: { route: '/matches/:id', marker: 'FA.trend-beat' },

@@ -1,0 +1,23 @@
+/* Final decisions use the match's recorded outcome, never inferred prose. */
+.verdict-outcome-accent {
+  --verdict-accent-color: var(--warning);
+  position: relative;
+  overflow: hidden;
+  border-left: 2px solid transparent;
+}
+[data-match-winner='a'] .verdict-outcome-accent {
+  --verdict-accent-color: var(--accent);
+}
+[data-match-winner='b'] .verdict-outcome-accent {
+  --verdict-accent-color: var(--info);
+}
+.verdict-outcome-accent::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--warning) 0%, var(--warning) 30%,
+    var(--verdict-accent-color) 80%, var(--verdict-accent-color) 100%);
+  pointer-events: none;
+}
