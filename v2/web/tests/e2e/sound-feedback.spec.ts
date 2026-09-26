@@ -701,7 +701,7 @@ test('保存返回主页后出战按钮保留悬停与点击反馈', async ({ pa
   })
 })
 
-test('弹性短线保留编辑行为，工具栏只保留复制按钮', async ({ page }) => {
+test('弹性短线保留编辑行为，工具栏提供复制与裁判提示词入口', async ({ page }) => {
   await installWorld(page)
   await page.goto('/agents/101/build')
   const prompt = page.getByLabel('策略提示词')
@@ -716,7 +716,9 @@ test('弹性短线保留编辑行为，工具栏只保留复制按钮', async ({
     const toolbar = page.locator('[data-tm="E.copy-prompt-button"]').locator(
       '..',
     )
-    await expect(toolbar.getByRole('button')).toHaveCount(1)
+    await expect(toolbar.getByRole('button')).toHaveCount(2)
+    await expect(toolbar.getByRole('button', { name: '查看裁判系统提示词' }))
+      .toBeVisible()
     await expect(toolbar.getByRole('button', { name: '复制当前草稿' }))
       .toBeVisible()
     await expect(toolbar.getByRole('slider')).toHaveCount(0)

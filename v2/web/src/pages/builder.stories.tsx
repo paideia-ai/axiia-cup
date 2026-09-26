@@ -127,6 +127,34 @@ export const BlankWorkspaceWithSecondaryHelpers: Story = {
   },
 }
 
+export const JudgePromptOpensInBuilder: Story = {
+  parameters: {
+    msw: handlers('', () => HttpResponse.json({ versions: [] })),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(input).toBeEnabled())
+    const shortcut = canvas.getByRole('button', {
+      name: '查看裁判系统提示词',
+    })
+    expect(shortcut.querySelector('[data-glow="ripple"]')).not.toBeNull()
+
+    await userEvent.click(shortcut)
+    const disclosure = canvas.getByRole('button', {
+      name: '裁判系统提示词',
+    })
+    await waitFor(() =>
+      expect(disclosure).toHaveAttribute('aria-expanded', 'true')
+    )
+    expect(canvas.getByRole('region', { name: '裁判系统提示词' }))
+      .toHaveTextContent('秦孝公')
+    expect(shortcut.querySelector('[data-glow="ripple"]')).toBeNull()
+    expect(canvas.getByRole('button', { name: '复制当前草稿' }))
+      .toBeInTheDocument()
+  },
+}
+
 export const HelpersRemainAfterVersions: Story = {
   parameters: {
     msw: handlers(
