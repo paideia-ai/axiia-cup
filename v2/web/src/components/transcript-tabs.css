@@ -1,10 +1,17 @@
 /* Underline tabs from the reviewed localhost:5224 battle preview. */
+.transcript-final-section {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-soft);
+}
 .transcript-stage-tabs {
   display: flex;
   border-bottom: 1px solid var(--border);
   gap: 24px;
+  overflow-x: auto;
 }
 .transcript-stage-tabs button {
+  flex-shrink: 0;
   padding: 10px 2px;
   border-bottom: 2px solid transparent;
   font-size: 14px;
@@ -25,6 +32,10 @@
   outline-offset: 4px;
 }
 @media (max-width: 767px) {
+  .transcript-final-section {
+    margin-top: 36px;
+    padding-top: 24px;
+  }
   .transcript-stage-tabs {
     gap: 22px;
   }

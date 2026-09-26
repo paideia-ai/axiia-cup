@@ -621,7 +621,7 @@ function FinalVoteReveal({
   return (
     <div
       {...tm('FA.jury-final-vote-reveal')}
-      className='rounded-xl border border-(--border) bg-[rgba(224,74,47,0.05)] px-4 py-4'
+      className='rounded-xl border border-(--border) border-l-2 border-l-(--warning) bg-[rgba(224,74,47,0.05)] px-4 py-4'
     >
       <div className='flex flex-wrap items-end justify-between gap-2'>
         <div>

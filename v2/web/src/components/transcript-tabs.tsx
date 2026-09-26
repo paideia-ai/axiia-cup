@@ -12,7 +12,10 @@ export function TranscriptTabs({ labels, panels, streaming, reached }: {
   const active = selected ?? (streaming ? reached : 0)
   const count = streaming ? reached + 1 : labels.length
   return (
-    <div className='space-y-5'>
+    <section
+      className='transcript-tabs-region space-y-5'
+      aria-label='对局对话记录'
+    >
       <div
         className='transcript-stage-tabs'
         role='tablist'
@@ -68,6 +71,6 @@ export function TranscriptTabs({ labels, panels, streaming, reached }: {
       >
         {panels[active]}
       </div>
-    </div>
+    </section>
   )
 }

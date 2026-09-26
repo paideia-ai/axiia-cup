@@ -109,18 +109,41 @@ function GestureRow({
   )
 }
 
-function VerdictEventRow({
+export function VerdictEventRow({
   event,
   labels,
+  requestDetails,
+  requestGroups,
+  judgmentAside,
+  children,
 }: {
   event: ScriptEvent
   labels: SpeakerLabels
+  requestDetails?: Record<string, ReactNode>
+  requestGroups?: { label: string; ids: string[] }[]
+  judgmentAside?: ReactNode
+  children?: ReactNode
 }) {
   const actor = eventString(event, 'actor')
   const judgment = eventString(event, 'judgment') ??
     eventString(event, 'scheme')
   const winner = eventString(event, 'winner')
   const requests = eventRecord(event, 'requests')
+  const requestEntries = Object.entries(requests ?? {})
+  const groups = requestGroups
+    ? [
+      ...requestGroups.map((group) => ({
+        label: group.label,
+        entries: requestEntries.filter(([id]) => group.ids.includes(id)),
+      })),
+      {
+        label: '',
+        entries: requestEntries.filter(([id]) =>
+          !requestGroups.some((group) => group.ids.includes(id))
+        ),
+      },
+    ].filter((group) => group.entries.length > 0)
+    : [{ label: '', entries: requestEntries }]
   return (
     <div
       {...tm('FA.event-verdict')}
@@ -131,9 +154,12 @@ function VerdictEventRow({
       </p>
       {judgment
         ? (
-          <p className='mt-2 text-base font-semibold text-(--foreground)'>
-            {judgment}
-          </p>
+          <div className='mt-2 flex items-baseline justify-between gap-3'>
+            <p className='text-base font-semibold text-(--foreground)'>
+              {judgment}
+            </p>
+            {judgmentAside}
+          </div>
         )
         : null}
       {winner
@@ -145,26 +171,46 @@ function VerdictEventRow({
         : null}
       {requests
         ? (
-          <div
-            {...tm('FA.event-verdict-requests')}
-            className='mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3'
-          >
-            {Object.entries(requests).map(([id, decision]) => (
+          <div {...tm('FA.event-verdict-requests')} className='mt-3 space-y-4'>
+            {groups.map((group) => (
               <div
-                key={id}
-                className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs ${
-                  decision === '同意'
-                    ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
-                    : 'bg-white/4 text-(--foreground-muted)'
-                }`}
+                key={group.label}
+                role={group.label ? 'group' : undefined}
+                aria-label={group.label || undefined}
               >
-                <span className='font-mono'>{id}</span>
-                <span>{decision}</span>
+                {group.label && (
+                  <h3 className='mb-2 text-xs font-semibold text-(--foreground-subtle)'>
+                    {group.label}
+                  </h3>
+                )}
+                <div
+                  className={group.label
+                    ? 'grid gap-1.5 sm:grid-cols-3'
+                    : 'grid grid-cols-2 gap-1.5 sm:grid-cols-3'}
+                >
+                  {group.entries.map(([id, decision]) => (
+                    <div
+                      key={id}
+                      className={`rounded-md px-2.5 py-1.5 text-xs ${
+                        decision === '同意'
+                          ? 'bg-[rgba(52,211,153,0.12)] text-(--success)'
+                          : 'bg-white/4 text-(--foreground-muted)'
+                      }`}
+                    >
+                      <div className='flex items-center justify-between gap-2'>
+                        <span className='font-mono'>{id}</span>
+                        <span>{decision}</span>
+                      </div>
+                      {requestDetails?.[id]}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         )
         : null}
+      {children}
     </div>
   )
 }
@@ -335,9 +381,13 @@ export function EventRow({
     case 'gesture':
       return <GestureRow event={event!} labels={labels} />
     case 'verdict':
-      return <VerdictEventRow event={event!} labels={labels} />
+      return scenarioID === 'trolley-problem'
+        ? null
+        : <VerdictEventRow event={event!} labels={labels} />
     case 'score':
-      return <ScoreRow event={event!} labels={labels} />
+      return scenarioID === 'fengyiting-real'
+        ? null
+        : <ScoreRow event={event!} labels={labels} />
     default:
       return <GenericRow event={event} turn={turn} labels={labels} />
   }
