@@ -1,0 +1,147 @@
+{
+  "shangyang": {
+    "assertive": ["在朝堂抓住甘龙论证中的矛盾，主动提出可以检验的变法方案。", "Straight brows slant down with conviction, eyes lock forward, mouth opens in a crisp argument. Lean the upper torso forward, lift the chin, extend one open hand in a clear presenting gesture."],
+    "neutral": ["轮到甘龙陈述时，收住锋芒听取反驳。", "Level brows, attentive eyes and a closed relaxed mouth; upright balanced shoulders, chin level, hands lowered outside the crop."],
+    "defensive": ["君上追问变法风险与请求中的私心，商鞅短暂受挫后准备自辩。", "Inner brows lift while outer brows tighten, eyes glance sideways toward the ruler, lips press uneasily. Pull the head back, tuck the chin, draw one shoulder inward and hold one hand close to the chest."]
+  },
+  "ganlong": {
+    "assertive": ["强调宗室稳定与祖制经验，反问商鞅如何承担激进变法的代价。", "Heavy brows lower firmly, narrowed eyes fix on the opponent, mouth opens in a deliberate rebuttal. Lean forward from the shoulders with chin raised and one sleeve-covered forearm extended in admonition."],
+    "neutral": ["沉着听取商鞅的方案，衡量其中会影响旧制的部分。", "Heavy eyelids rest naturally, brows level, lips closed without a scowl; torso upright, shoulders low and even, hands out of view."],
+    "defensive": ["商鞅指出他援引的先例其实也包含变革，甘龙的论证被反将一军。", "One brow rises in discomfiture, eyes widen slightly under old lids, mouth corners tighten. Draw the head back and angle away, hunch one shoulder, clutch a robe fold near the chest with a compact hand."]
+  },
+  "qin-xiaogong": {
+    "assertive": ["听到切实可行的富国方案后，形成判断，准备以国君身份裁决。", "Resolute lowered brows, bright direct eyes and a firmly closed mouth with a slight confident upturn. Lift chin and open the chest, shoulders squared, one palm held low and forward in a restrained ruling gesture."],
+    "neutral": ["端坐听辩，尚未表露对任何一方的取舍。", "Even brows, observant eyes, closed neutral mouth; seated upright with level chin and symmetrical relaxed shoulders, hands below frame."],
+    "defensive": ["进言触及宗室反弹与君权风险，年轻国君短暂戒备。", "Brows pinch upward at the centre, eyes widen slightly, lips compress. Recoil the head a little with chin tucked, angle the torso away and draw one forearm protectively inward; retain royal composure, no cowering."]
+  },
+  "chosokabe-envoy": {
+    "assertive": ["把四国危机转化为明智家的自救理由，催促抓住今夜机会。", "Sharp lowered brows, intent narrowed eyes, mouth open in an urgent controlled appeal. Lean forward decisively, one shoulder advanced, an open palm reaches outward below the chin."],
+    "neutral": ["隐去焦急，听取军议中有关兵力与响应的质疑。", "Alert but unstrained eyes, horizontal brows, closed resting lips; straight neck, even lowered shoulders, arms at rest out of frame."],
+    "defensive": ["被追问长宗我部能立即提供什么帮助，担心被视为借刀自救。", "Brows lift unevenly, gaze flicks sideways, lips pull into a tight small line. Head withdraws and turns slightly away, shoulders rise, one hand draws back against the robe collar."]
+  },
+  "yoshiaki-envoy": {
+    "assertive": ["以奉公方之名起兵的政治名分，争取光秀的行动承诺。", "Arched brows become firm, eyes focus with diplomatic confidence, mouth opens in measured declaration. Chin lifted, torso forward, one elegant open hand extended as if laying out a proposition."],
+    "neutral": ["庄重听取诸方军议，保持流亡将军使者的礼仪。", "Smooth brow, calmly watchful eyes, closed neutral mouth; upright neck and settled symmetrical shoulders, hands below crop."],
+    "defensive": ["被指出义昭缺兵少粮，名分不能保证京都响应。", "Inner brows rise, eyelids widen a little, lips press thinly. Chin retracts, torso angles away, one sleeve-covered forearm folds close to the chest; dignity persists through a visible moment of unease."]
+  },
+  "hosokawa-fujitaka": {
+    "assertive": ["锋利追问杀死信长之后谁会承认光秀，要求具体善后方案。", "Brows angle down in a precise challenge, steady narrowed eyes, mouth slightly open mid-question. Lean in with head tilted forward, extend one low open palm in a firm checking gesture."],
+    "neutral": ["听取起兵理由，冷静估量近畿诸将和姻亲风险。", "Relaxed thoughtful brows, level gaze, closed resting mouth; erect torso with low even shoulders, arms resting outside the crop."],
+    "defensive": ["被质疑谨慎只是保全细川家，亲近重臣的立场受到攻击。", "One brow rises and the other knots, eyes turn aside, lips tighten. Pull chin back, rotate one shoulder away and gather a sleeve against the chest; guarded rather than frightened."]
+  },
+  "ashigaru": {
+    "assertive": ["鼓起勇气要求明确军令，把底层士卒对改道与名分的疑问说清楚。", "Earnest lowered brows, wide focused eyes, mouth open in a brave direct question. Lean forward with chest lifted, one compact fist held against the upper chest in sincere resolve, not a threat."],
+    "neutral": ["等待军议答复，认真听令而未表态。", "Natural brows, attentive eyes and relaxed closed lips; modest upright posture, level shoulders, hands lowered out of view."],
+    "defensive": ["仍听不到清楚军令，担忧士卒被带去做逆臣并遭到清算。", "Inner brows arch with worry, eyes open wider, mouth makes a small hesitant gap. Tuck chin, pull head back under the same jingasa, hunch shoulders and draw one forearm close to the body."]
+  },
+  "akechi-mitsuhide": {
+    "assertive": ["比较起兵与西进的代价后形成决断，准备下达清楚命令。", "Firm lowered brows, direct unwavering eyes, mouth set with resolve. Straighten and lean slightly forward, broaden the shoulders, lift chin and extend one low palm in a decisive command gesture."],
+    "neutral": ["深夜军议中听取各方意见，权衡机会与后果。", "Quiet thoughtful eyes, level brows, closed unstrained mouth; head upright, shoulders evenly settled, hands out of view."],
+    "defensive": ["被点明近畿诸将未必响应、士卒未必理解，意识到孤立风险。", "Brows pinch high at the centre, gaze slips sideways, lips flatten. Head pulls back and dips, one arm folds inward across the upper torso and shoulders narrow; contained shock, no panic."]
+  },
+  "yiren": {
+    "assertive": ["为一名无辜者不可被工具化的底线据理力争。", "Resolved brows angled down, compassionate focused eyes, mouth open in clear protest. Lean forward, chest open, one palm faces outward in a firm boundary-setting gesture."],
+    "neutral": ["认真听五人侧说明减少总伤害的理由。", "Soft level brows, attentive eyes, closed relaxed mouth; straight neck, evenly relaxed shoulders, hands outside frame."],
+    "defensive": ["被追问坚持不主动伤人是否是在回避五人死亡的责任，短暂迟疑。", "Inner brows lift with moral discomfort, eyes shift down and aside, lips pinch. Lean back slightly, tuck chin and fold one forearm close to the cardigan; thoughtful hesitation, not abandoning the stance."]
+  },
+  "wuren": {
+    "assertive": ["承认两边都是无辜者后，积极主张承担减少总伤害的责任。", "Firm straight brows draw inward, earnest eyes focus ahead, mouth opens in a persuasive explanation. Lean forward with squared shoulders and a broad open palm offered outward; humane conviction, no cruel grin."],
+    "neutral": ["听取一人侧关于尊严和边界的论述。", "Brows at rest, humane attentive gaze, closed neutral mouth; balanced upright torso, level shoulders, hands lowered."],
+    "defensive": ["对方质疑数字比较会牺牲个人尊严，武仁不得不重新措辞。", "Brow centre lifts, gaze turns aside, mouth corners draw down slightly. Pull head back, raise one shoulder and hold one hand close to the chest in a restrained defensive response."]
+  },
+  "minglizhe": {
+    "assertive": ["听懂具体案件中的选择标准，内心形成清晰判断。", "Brows firm with recognition, bright engaged eyes, small confident closed-mouth smile. Lean forward slightly, lift chin and open the shoulders; one hand rests lightly against the upper chest, silent conviction rather than speaking."],
+    "neutral": ["静坐听辩，尚未决定哪种标准更可信。", "Relaxed brows, quietly curious eyes, closed resting mouth; upright head and even loose shoulders, hands outside crop."],
+    "defensive": ["新的反例冲击刚形成的直觉，对自己要承担的选择感到不安。", "Brows arch unevenly, eyes widen, lips compress uncertainly. Draw head back and tip it to one side, shoulders narrow and one hand reaches lightly toward the collarbone; silent, no speech pose."]
+  },
+  "dongzhuo": {
+    "assertive": ["凤仪亭对峙中以权势和占有欲逼问吕布，试图重新掌控局面。", "Thick brows slash downward, eyes narrow fiercely, mouth opens in a forceful accusation. Thrust chest and head forward, lift chin and extend one commanding open hand; intimidating human authority, no weapon."],
+    "neutral": ["私谈时压住怒气，听貂蝉解释自己的处境与要求。", "Brows level but weighty, watchful eyes, closed resting mouth; torso upright, broad shoulders settled, arms down outside crop."],
+    "defensive": ["面对泄密或对自己承诺的质问，察觉控制力正在流失而生疑戒备。", "One thick brow lifts sharply, eyes widen sideways, lower lip tightens. Recoil head with chin tucked, pull a shoulder back and draw one forearm across the chest; startled pride and suspicion, not comic terror."]
+  },
+  "lvbu": {
+    "assertive": ["受到董卓压迫时昂然反击，声言自己有能力行动与保护貂蝉。", "Strong brows angle sharply down, eyes blaze with direct conviction, mouth opens in a bold challenge. Lean forward with chest expanded, chin up and a compact fist near the upper chest; no weapon or attack scene."],
+    "neutral": ["听貂蝉谈论时机、退路与选择权，暂时收住武人的冲动。", "Even brows, intent but unstrained eyes, closed relaxed lips; head upright, shoulders level, hands lowered out of frame."],
+    "defensive": ["貂蝉追问接近方式与杀后安置，他豪迈承诺中的漏洞暴露。", "Brows lift unevenly, eyes glance aside, lips press with embarrassed frustration. Pull head back, drop chin, angle an armoured shoulder inward and retract the hand near the collar; proud but visibly checked."]
+  },
+  "diaochan": {
+    "assertive": ["主动追问承诺能否兑现，坚定要求自己有拒绝和离开的权利。", "Brows draw into a clear determined angle, almond eyes meet the other person directly, mouth opens in a composed firm challenge. Lift chin and lean forward with open shoulders, one sleeve-covered palm extends outward to set a boundary; no flirtation."],
+    "neutral": ["审慎听取二人的解释，保留自己的判断。", "Relaxed level brows, perceptive steady eyes, closed neutral mouth; balanced upright neck and shoulders, hands below crop, no coy smile."],
+    "defensive": ["听出占有与威胁，担心报复和计划失败时自己会先被牺牲。", "Inner brows lift and tighten, eyes widen while glancing sideways, lips press anxiously. Head withdraws, chin tucks, torso turns slightly away, one raised forearm shields the upper chest within the sleeve; wary and self-protective, never helpless or coquettish."]
+  },
+  "spy": {
+    "assertive": ["屏退左右后准确密报偷听到的完整谈话，主动确认报告。", "Brows set with alert confidence, eyes focus on the listener, mouth opens narrowly as if giving a precise quiet report. Lean forward confidentially, one shoulder advances and one small open hand emphasizes the report low in frame; not shouting."],
+    "neutral": ["等候董卓询问，保持不引人注意的平常姿态。", "Brows relaxed, quietly watchful eyes, closed resting lips; upright modest posture with low even shoulders and hands out of view."],
+    "defensive": ["设想密报被追问来源、自己可能遭迁怒时的戒备反应；属于美术演绎。", "Brows rise unevenly, eyes dart sideways, lips clamp shut. Pull head back, turn one shoulder away and draw a hand close under the robe collar; subtle flinch, no masked assassin styling."]
+  },
+  "veteran": {
+    "assertive": ["犹豫许久后终于开口，把偷听到的内容完整报告董卓。", "Grey brows set firmly, eyes meet the listener with grave resolve, mouth opens in a difficult frank report. Lean forward from squared shoulders, one hand placed firmly against the chest; resolve coexists with wavering loyalty, no triumphant grin."],
+    "neutral": ["求见后尚未开口，在旧情与已动摇的忠心之间斟酌。", "Heavy but level brows, reflective steady eyes, closed resting mouth; upright weary shoulders held evenly, hands outside frame."],
+    "defensive": ["想到迟报会遭疑忌与追责，在董卓面前迟疑收身。", "Inner brows lift with strain, eyes turn aside, mouth corners tense. Draw chin back, hunch one shoulder and fold a forearm against the chest; shame and guardedness in an experienced soldier, no melodramatic panic."]
+  },
+  "lin": {
+    "assertive": ["把事前威胁、独处、改口与未求助串成支持故意击打的证据链。", "Brows lower in concentration, direct eyes, mouth open in a crisp argument. Lean forward with squared shoulders and one open hand extended as if connecting points; ordinary juror, no prosecutorial costume."],
+    "neutral": ["听取其他陪审员对证明责任和现场痕迹的意见。", "Level brows, focused resting eyes, closed relaxed lips; balanced upright torso and relaxed shoulders, hands below crop."],
+    "defensive": ["被追问从可疑行为到致命瞬间故意之间缺少的可靠桥梁。", "Brow centre lifts, eyes glance sideways, lips tighten. Head withdraws, chin tucks, shoulders narrow and one hand retracts toward the jacket collar; reconsidering an argument, not changing the fixed verdict stance."]
+  },
+  "su": {
+    "assertive": ["明确区分严重怀疑与排除合理怀疑，要求检验控方是否证明故意。", "One brow lifts critically while the other firms, direct clear eyes, mouth opens in a measured challenge. Lean forward and extend an open palm as a calm stop-and-examine gesture."],
+    "neutral": ["公平听取对己方不利的威胁、改口和未求助事实。", "Level thoughtful brows, attentive eyes, closed resting mouth; upright head, even relaxed shoulders and hands below frame."],
+    "defensive": ["被要求正面回应事前锤子威胁与累积证据，发现原有说法解释不足。", "Inner brows rise with discomfort, gaze drops aside, lips purse. Lean back with chin tucked and one shoulder raised, hold one hand near the sweater neckline; modest uncertainty, not a guilty expression."]
+  },
+  "chen-lan": {
+    "assertive": ["讨论跑偏或有人催票时，主动把全场拉回具体证据和证明责任。", "Brows firm behind round glasses, direct alert eyes, mouth opens in a concise intervention. Lean forward with open chest and one low outward palm restoring order; no judge authority or gavel."],
+    "neutral": ["平衡听取两边最强论点，整理尚未解决的争点。", "Relaxed brows, attentive eyes behind the same glasses, closed neutral mouth; upright symmetrical shoulders, arms resting below crop."],
+    "defensive": ["被指出争点归纳遗漏关键物证，短暂不自在后准备重新整理。", "Brows lift apologetically, eyes widen a little behind glasses, lips press. Head retracts and tilts down, shoulders draw inward, one hand rests against the cardigan near the chest."]
+  },
+  "wei-sheng": {
+    "assertive": ["抓住时间点错误或路线跳步，明确指出可能发生不等于已经发生。", "Brows angle down precisely, eyes focus through rectangular glasses, mouth opens in a clipped correction. Lean forward, chin slightly out, one index finger raised low beside the chest to mark a single point."],
+    "neutral": ["仔细听取八分钟内的动作顺序与两次陈述。", "Level brows, analytical attentive eyes, closed resting lips; straight head and level loose shoulders, hands below frame."],
+    "defensive": ["被指出自己把时间可行误当成动作已经发生，开始复核判断。", "One brow rises, gaze shifts down through glasses, mouth tightens uncertainly. Pull head back, tuck chin, narrow shoulders and draw the gesturing hand back toward the chest."]
+  },
+  "han-shuo": {
+    "assertive": ["纠正把门外镜头误说成拍到室内挥锤的技术断言。", "Brows lower sharply, eyes narrow in focused objection, mouth opens firmly. Lean forward with one shoulder advanced and one open palm facing outward in a clear correction."],
+    "neutral": ["核对记录证明了什么、没有证明什么，先听完整论证。", "Brows level, watchful eyes, closed relaxed mouth; upright neck and even settled shoulders, hands lowered."],
+    "defensive": ["被指出过分放大单项记录的局限而忽略多项证据组合。", "Brows lift unevenly, eyes turn aside, jaw and lips tighten. Recoil slightly, angle one shoulder away and draw a forearm across the jacket front; guarded recalibration, not fear of punishment."]
+  },
+  "shen-qing": {
+    "assertive": ["逐句纠正把鉴定中的相容或不能排除改写成已经证明。", "Brows firm delicately, focused eyes behind oval glasses, mouth opens in precise correction. Lean forward with chin level and one small open palm lifted to pause an overstatement."],
+    "neutral": ["听取 E3、E4 的来源与方法限制，分开观察和解释。", "Relaxed brows, attentive eyes, closed resting lips; upright head, low even shoulders, hands outside crop."],
+    "defensive": ["被指出把每项证据的有限性割裂看待，可能低估联合意义。", "Inner brows lift, gaze dips aside behind glasses, lips purse. Head draws back and tilts, one shoulder rises and one hand withdraws against the blouse near the chest."]
+  },
+  "du-lin": {
+    "assertive": ["要求把取锤、拉扯和碰击的动作顺序讲清楚，积极检验空间路线。", "Thick brows lower, eyes sharpen, mouth opens in a plainspoken challenge. Lean the stocky torso forward and extend one broad open hand as if tracing a short route; no tools."],
+    "neutral": ["听两边按先后顺序复述行动，衡量现实可行性。", "Brows at rest, alert eyes, closed neutral mouth; broad shoulders level and settled, head upright, hands below frame."],
+    "defensive": ["公开距离证明自己认定不自然的路线其实可行，经验判断受到挑战。", "One thick brow rises, eyes shift aside, mouth corners tighten. Pull chin back, lift one shoulder in a small checked shrug and retract the hand toward the work-shirt collar."]
+  },
+  "meng-yao": {
+    "assertive": ["指出不能把潜在损失等同杀人动机、不能把改口直接当作自白。", "Brows firm behind thin glasses, direct analytical eyes, mouth opens in a concise objection. Lean forward and lift one low open palm to separate competing explanations."],
+    "neutral": ["比较草稿、现实损失和事后掩饰的不同解释。", "Level brows, quietly evaluating eyes, closed resting lips; straight head, even loose shoulders, hands outside frame."],
+    "defensive": ["对方展示说谎动机与现场行为相互印证，自己拆分过碎的分析被挑战。", "Brows rise slightly at the centre, gaze slips sideways, lips press. Head withdraws with chin down, shoulder angles inward and one forearm folds close to the cardigan."]
+  },
+  "fang-zhi": {
+    "assertive": ["听到正常人一定会如何的武断说法，提醒行为差异并要求回到本案痕迹。", "Brows draw down with caring firmness, eyes engage directly, mouth opens in a clear intervention. Lean forward, chest open, one outward palm gently but firmly stops the generalization."],
+    "neutral": ["认真听取袖口血点、擦伤、未报警与改口的行为链。", "Soft level brows, compassionate attentive eyes, closed relaxed lips; upright head, evenly settled shoulders, hands lowered."],
+    "defensive": ["被指出自己因见过反常反应而给异常行为过多解释空间。", "Inner brows lift with concern, eyes lower aside, lips tighten. Head retreats, chin tucks, shoulders draw together and one hand presses lightly at the upper chest; reflective discomfort, no tears."]
+  },
+  "jiang-cheng": {
+    "assertive": ["发现多数叙事解释不了一项关键材料，鼓起勇气公开提出生活化的追问。", "Thick brows firm, eyes bright and direct, mouth opens in a candid question. Lean forward, lift chest, one open hand extends toward the listener in an earnest appeal."],
+    "neutral": ["努力听懂完整故事，尚未随房间气氛下结论。", "Relaxed brows, curious attentive eyes, closed resting mouth; balanced upright shoulders and head, hands out of frame."],
+    "defensive": ["被直接点名当作关键摇摆票催促，感到不自在并抗拒施压。", "Brows arch unevenly, eyes widen and glance aside, lips compress. Pull head back, hunch one shoulder and raise a small inward-facing hand close to the chest in guarded refusal."]
+  },
+  "ning-bai": {
+    "assertive": ["整合双方最强叙事，指出一条替代路线依赖连续无证据假设。", "Brows lower with patient certainty, eyes fix clearly through minimal glasses, mouth opens in a precise summary. Lean forward with chin slightly raised and one open hand extended to emphasize the decisive gap."],
+    "neutral": ["逐项比较两条原因链，暂不受人数与语气左右。", "Level thoughtful brows, steady eyes, closed neutral mouth; upright neck, low even shoulders, hands below crop."],
+    "defensive": ["被指出要求无罪方解释完整真相是在转移证明责任，开始修正标准。", "One brow rises in recognition, eyes glance down and aside, lips purse. Head withdraws, chin lowers, one shoulder folds inward and a hand retracts against the sweater front."]
+  },
+  "gu-heng": {
+    "assertive": ["在否认故意杀人的陈述中坚持自己的说法；表情不暗示有罪或无罪已定。", "Brows firm with self-assertion, eyes look directly ahead, mouth opens in an emphatic explanation. Lean forward with shoulders squared and one open palm held outward; dignified insistence, not a villainous grin."],
+    "neutral": ["案件人物的平常神态，等待询问而未作陈述。", "Level slightly tired brows, attentive eyes, relaxed closed lips; upright head and even shoulders, hands below frame; no visual verdict about guilt."],
+    "defensive": ["讯问中得知衣袖血点与新鲜擦伤，先前全盘否认受到质疑。", "Inner brows lift with strain, eyes widen and shift aside, lips clamp. Head pulls back with chin tucked, shoulders narrow, one forearm draws protectively across the shirt front; no blood, restraints or visual claim of guilt."]
+  },
+  "ji-chuan": {
+    "assertive": ["生前要求交出异常货箱原始交接记录、准备暂停合同并启动内审时的坚定态度。", "Brows lower with practical authority, direct serious eyes, mouth opens in a firm demand. Lean forward with squared shoulders, one low open palm extended as if requesting an explanation; no document or tool."],
+    "neutral": ["生前工作中的平常神态；仅用于案件人物展示。", "Level brows, matter-of-fact attentive eyes, closed relaxed mouth; upright balanced torso, even shoulders, hands below crop. Depict alive and unharmed."],
+    "defensive": ["设想生前面对对方言语威胁时的轻微退缩；不重现未被证实的致命动作。", "Brows lift and pinch, eyes widen slightly, lips tighten. Draw head back, tuck chin, angle one shoulder away and raise an open hand close to the chest in a restrained protective gesture. Alive and unharmed; do not depict who first took a hammer or any disputed physical sequence."]
+  }
+}
