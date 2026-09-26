@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import './verdict-accent.css'
 
 import type { VerdictDTO } from '../api/types'
 import { isTerminalVerdict, parseVerdict, verdictLabel } from '../lib/verdict'
@@ -98,7 +99,9 @@ export function VerdictCard({
   return (
     <Card
       {...tm('FA.verdict-card')}
-      className={isTerminalVerdict(verdict) || visitOrder
+      className={isTerminalVerdict(verdict)
+        ? 'verdict-outcome-accent'
+        : visitOrder
         ? 'border-l-2 border-l-(--warning)'
         : undefined}
     >
@@ -106,7 +109,9 @@ export function VerdictCard({
         <div className='flex flex-wrap items-center gap-2'>
           <h2
             {...tm('FA.verdict-title')}
-            className='text-sm font-semibold text-(--foreground)'
+            className={isTerminalVerdict(verdict)
+              ? 'text-base font-semibold text-(--foreground)'
+              : 'text-sm font-semibold text-(--foreground)'}
           >
             {visitOrder ? '貂蝉·裁定先后' : title ?? verdictLabel(verdict.key)}
           </h2>

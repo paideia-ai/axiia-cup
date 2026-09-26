@@ -107,6 +107,27 @@ export const InteractionChecks: Story = {
       await canvas.findByRole('heading', {
         name: `对战 #${scene.id}`,
       })
+      await expect(canvas.queryByRole('button', { name: /#\d+ 后的裁判心声/ }))
+        .toBeNull()
+      if ([144, 120, 122].includes(scene.id)) {
+        const sidebar = canvas.getByRole('complementary', {
+          name: '裁判 OS 侧栏',
+        })
+        await expect(sidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
+          .toHaveLength(scene.id === 120 ? 4 : 2)
+        await expect(
+          canvasElement.querySelectorAll(
+            '.judge-transcript-dialogue-column [data-tm="FA.aside-card"]',
+          ),
+        ).toHaveLength(0)
+        const chart = sidebar.querySelector('[data-tm="FA.trend-chart"]')!
+        await expect(chart.querySelectorAll('[data-tm="FA.trend-beat"]'))
+          .toHaveLength(scene.id === 120 ? 4 : scene.id === 122 ? 7 : 2)
+        for (const circle of chart.querySelectorAll('circle')) {
+          const rect = circle.getBoundingClientRect()
+          await expect(Math.abs(rect.width - rect.height)).toBeLessThan(0.01)
+        }
+      }
       if (scene.id === 144 || scene.id === 120) {
         const goals = canvas.getByRole('region', { name: '隐藏目标及计分' })
         await expect(goals.querySelectorAll('[data-review-goal]')).toHaveLength(
@@ -119,13 +140,29 @@ export const InteractionChecks: Story = {
       } else {
         const ending = canvas.getByRole('region', { name: '整局裁决' })
         const original = ending.textContent
+        const chart = canvasElement.querySelector('.judge-sidebar-trend')
+        const originalChart = chart?.innerHTML
         for (const tab of canvas.getAllByRole('tab')) {
           await userEvent.click(tab)
           await expect(ending.textContent).toBe(original)
+          if (chart) {
+            await expect(chart.isConnected).toBe(true)
+            await expect(chart.innerHTML).toBe(originalChart)
+          }
         }
       }
       if (scene.id === 122) {
-        await expect(canvas.getByText('第一案·原始电车', { exact: true }))
+        const point = canvasElement.querySelector<HTMLElement>(
+          '.judge-sidebar-trend [data-tm="FA.trend-beat"]',
+        )!
+        point.focus()
+        await userEvent.keyboard('{Enter}')
+        await expect(canvas.getByRole('tab', { selected: true }))
+          .toHaveTextContent('原始电车')
+        await expect(document.activeElement?.id).toBe('beat-os-2')
+        await expect(
+          canvas.getByRole('heading', { name: '第一案·原始电车' }),
+        )
           .toBeVisible()
         await expect(
           canvasElement.querySelector('[data-tm="FA.event-verdict"]'),
@@ -155,6 +192,7 @@ export const InteractionChecks: Story = {
       await userEvent.click(
         canvas.getByRole('button', { name: '回放' }),
       )
+      await expect(canvasElement.querySelector('.judge-transcript')).toBeNull()
       await expect(canvasElement.querySelector('[data-review-ending]'))
         .toBeNull()
       await expect(canvas.queryByRole('region', { name: '隐藏目标及计分' }))

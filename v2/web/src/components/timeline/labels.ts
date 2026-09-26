@@ -76,3 +76,34 @@ export function speakerAccent(labels: SpeakerLabels, key: string): string {
   if (side === 'b') return 'border-l-(--info)'
   return 'border-l-(--warning)'
 }
+
+// Resolve the same favor for the trend and its associated OS card.
+export function judgeFavorSide(
+  labels: SpeakerLabels,
+  favor: string | null,
+): Side | null {
+  if (!favor) return null
+  const declared = labels.module?.favorSides?.[favor]
+  if (declared) return declared
+  const direct = speakerSide(labels, favor)
+  if (direct) return direct
+  const role = labels.module?.roles.find((entry) => entry.name === favor)
+  if (role) return role.side
+  for (const [key, label] of Object.entries(labels.lanes)) {
+    if (label !== favor) continue
+    const side = speakerSide(labels, key)
+    if (side) return side
+  }
+  for (
+    const [key, label] of Object.entries(labels.module?.laneLabels ?? {})
+  ) {
+    if (label !== favor) continue
+    const side = speakerSide(labels, key)
+    if (side) return side
+  }
+  for (const side of ['a', 'b'] as const) {
+    const snapshot = labels.participants?.[side]?.role
+    if (snapshot?.side === side && snapshot.name === favor) return side
+  }
+  return null
+}

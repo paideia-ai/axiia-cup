@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { Side } from '../api/types'
 import type { ReplayBeatStep } from '../lib/replay'
 import type { SpeakerLabels } from './timeline/labels'
-import { sideName, speakerSide } from './timeline/labels'
+import { judgeFavorSide, sideName } from './timeline/labels'
 import { tm } from '../testmode/mark'
+import { judgeTrendGeometry } from '../lib/judge-trend-geometry'
+import './judge-trend.css'
 
 // 裁判倾向轨迹小图（#24，P4 前端）：x＝节拍序（os-N），y＝带号强度——倾向
 // A 侧向上、B 侧向下，幅度按强度档位离散取值。单序列折线：极性主要由位置
@@ -29,28 +31,6 @@ const DEFAULT_MAGNITUDE = 0.5
 // favor 是场景脚本的显示名词汇（商鞅/甘龙、董卓/吕布、角色名……），先走场景
 // 模块的显式映射，再依次尝试：lane key 本身、模块角色名、对局 speakerLabels
 // 的显示名、模块 laneLabels 的显示名。
-function favorSide(labels: SpeakerLabels, favor: string | null): Side | null {
-  if (!favor) return null
-  const declared = labels.module?.favorSides?.[favor]
-  if (declared) return declared
-  const direct = speakerSide(labels, favor)
-  if (direct) return direct
-  const role = labels.module?.roles.find((entry) => entry.name === favor)
-  if (role) return role.side
-  for (const [key, label] of Object.entries(labels.lanes)) {
-    if (label !== favor) continue
-    const side = speakerSide(labels, key)
-    if (side) return side
-  }
-  for (
-    const [key, label] of Object.entries(labels.module?.laneLabels ?? {})
-  ) {
-    if (label !== favor) continue
-    const side = speakerSide(labels, key)
-    if (side) return side
-  }
-  return null
-}
 
 const SIDE_COLOR: Record<Side, string> = {
   a: 'var(--accent)',
@@ -61,8 +41,6 @@ const NEUTRAL_COLOR = 'var(--foreground-subtle)'
 const HEIGHT = 120
 const MID_Y = HEIGHT / 2
 const AMPLITUDE = 42
-const PAD_X = 18
-const STEP_X = 44
 
 function excerpt(text: string | null, limit = 60): string {
   if (!text) return ''
@@ -74,22 +52,39 @@ export function JudgeTrendChart({
   labels,
   speakers,
   revealedKeys = null,
+  fitWidth = false,
+  onSelectBeat,
+  connectionGap = 4,
+  legendPosition = 'side',
 }: {
   beats: ReplayBeatStep[]
   labels: SpeakerLabels
   speakers: string[]
   // 回放揭示切片：null＝完整战报（全画）。
   revealedKeys?: ReadonlySet<string> | null
+  // Narrow sidebars retain the normal spacing until the full plot no longer fits.
+  fitWidth?: boolean
+  onSelectBeat?: (key: string) => void
+  // Optional pixel clearance from the visible marker edge, including its ring.
+  connectionGap?: number
+  legendPosition?: 'side' | 'stacked'
 }) {
   // F4：选中节拍的 key。hooks 一律声明在零节拍提前 return 之前。
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
-
-  const points = beats
-    .filter((step) =>
-      revealedKeys == null || revealedKeys.has(step.verdict.key)
-    )
+  const plotContainer = useRef<HTMLDivElement>(null)
+  const [availableWidth, setAvailableWidth] = useState<number | null>(null)
+  useLayoutEffect(() => {
+    const container = plotContainer.current
+    if (!fitWidth || !container) return
+    const measure = () => setAvailableWidth(container.clientWidth)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [fitWidth, beats.length])
+  const allPoints = beats
     .map((step) => {
-      const side = favorSide(labels, step.beat.favor)
+      const side = judgeFavorSide(labels, step.beat.favor)
       const magnitude = side == null
         ? 0
         : STRENGTH_MAGNITUDE[step.beat.strength ?? ''] ?? DEFAULT_MAGNITUDE
@@ -100,11 +95,26 @@ export function JudgeTrendChart({
         : MID_Y
       return {
         step,
-        x: PAD_X + step.index * STEP_X,
+        radius: selectedKey === step.verdict.key
+          ? 10.5 + 2.5 / 2
+          : step.changed
+          ? 8 + 1.5 / 2
+          : 4.5 + 2 / 2,
         y,
         color: side ? SIDE_COLOR[side] : NEUTRAL_COLOR,
       }
     })
+
+  const geometry = judgeTrendGeometry(allPoints, {
+    gap: connectionGap,
+    availableWidth: fitWidth ? availableWidth ?? undefined : undefined,
+  })
+  const points = allPoints.map((point, index) => ({
+    ...point,
+    x: geometry.xs[index],
+  })).filter((point) =>
+    revealedKeys == null || revealedKeys.has(point.step.verdict.key)
+  )
 
   // 回放收缩/退出会让节拍从图上消失（F4）：key 不在可见集合里就清掉选中，
   // 不把上一次的说明残留到下一轮回放。
@@ -123,14 +133,20 @@ export function JudgeTrendChart({
   const nameA = sideName(labels, 'a', speakers)
   const nameB = sideName(labels, 'b', speakers)
 
-  const width = PAD_X * 2 + (beats.length - 1) * STEP_X
-  const line = points
-    .map((point, at) => `${at === 0 ? 'M' : 'L'}${point.x} ${point.y}`)
-    .join(' ')
+  const width = geometry.width
+  const line = geometry.segments.filter((_, index) =>
+    revealedKeys == null ||
+    (revealedKeys.has(allPoints[index].step.verdict.key) &&
+      revealedKeys.has(allPoints[index + 1].step.verdict.key))
+  ).map((segment) =>
+    `M${segment.x1} ${segment.y1} L${segment.x2} ${segment.y2}`
+  ).join(' ')
   const selected =
     points.find((point) => point.step.verdict.key === selectedKey) ?? null
-  const toggleSelect = (key: string) =>
+  const toggleSelect = (key: string) => {
     setSelectedKey((current) => (current === key ? null : key))
+    onSelectBeat?.(key)
+  }
 
   return (
     <div {...tm('FA.trend-chart')} className='space-y-2'>
@@ -138,20 +154,24 @@ export function JudgeTrendChart({
         <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
           裁判倾向轨迹
         </p>
-        <p
-          {...tm('FA.trend-hint')}
-          className='text-[11px] text-(--foreground-muted)'
-        >
-          空心圈＝倾向变化 · 点选节拍查看心声
-        </p>
       </div>
-      <div className='flex items-stretch gap-3'>
+      <div
+        className={legendPosition === 'stacked'
+          ? 'grid grid-cols-1 gap-2'
+          : 'flex items-stretch gap-3'}
+      >
         <div
           {...tm('FA.trend-legend')}
-          className='flex shrink-0 flex-col justify-between text-[11px] text-(--foreground-subtle)'
-          style={{ height: HEIGHT }}
+          className={legendPosition === 'stacked'
+            ? 'contents text-[11px] text-(--foreground-subtle)'
+            : 'flex shrink-0 flex-col justify-between text-[11px] text-(--foreground-subtle)'}
+          style={legendPosition === 'side' ? { height: HEIGHT } : undefined}
         >
-          <span className='inline-flex items-center gap-1.5'>
+          <span
+            className={legendPosition === 'stacked'
+              ? 'col-start-1 row-start-1 inline-flex items-center gap-1.5'
+              : 'inline-flex items-center gap-1.5'}
+          >
             <span
               aria-hidden
               className='inline-block h-2 w-2 rounded-full'
@@ -159,7 +179,11 @@ export function JudgeTrendChart({
             />
             {nameA}
           </span>
-          <span className='inline-flex items-center gap-1.5'>
+          <span
+            className={legendPosition === 'stacked'
+              ? 'col-start-1 row-start-3 inline-flex items-center gap-1.5'
+              : 'inline-flex items-center gap-1.5'}
+          >
             <span
               aria-hidden
               className='inline-block h-2 w-2 rounded-full'
@@ -168,12 +192,17 @@ export function JudgeTrendChart({
             {nameB}
           </span>
         </div>
-        <div className='min-w-0 flex-1 overflow-x-auto'>
+        <div
+          ref={plotContainer}
+          className={legendPosition === 'stacked'
+            ? 'judge-trend-scroll col-start-1 row-start-2 min-w-0 overflow-x-auto'
+            : 'judge-trend-scroll min-w-0 flex-1 overflow-x-auto'}
+        >
           <svg
             {...tm('FA.trend-plot')}
             width={width}
             height={HEIGHT}
-            role='img'
+            role='group'
             aria-label={`裁判倾向轨迹：上为${nameA}，下为${nameB}，共 ${beats.length} 拍`}
             className='block'
           >
@@ -282,7 +311,7 @@ export function JudgeTrendChart({
           </svg>
         </div>
       </div>
-      {selected
+      {selected && !onSelectBeat
         ? (
           // F4：内联心声说明——完整 os / fallback（<title> 只截 60 字），
           // 「查看心声卡」滚到对话全文里那张始终可见的卡。
