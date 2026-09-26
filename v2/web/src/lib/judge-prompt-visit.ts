@@ -4,7 +4,9 @@ const CHANGED = 'axiia:judge-prompt-visit-changed'
 const fallback = new Set<string>()
 
 export function judgePromptVisitKey(accountID: string, scenarioID: string) {
-  return `axiia:judge-prompt-visited:v1:${JSON.stringify([accountID, scenarioID])}`
+  return `axiia:judge-prompt-visited:v1:${
+    JSON.stringify([accountID, scenarioID])
+  }`
 }
 
 function read(key: string | null) {
