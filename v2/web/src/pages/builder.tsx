@@ -1301,7 +1301,7 @@ export function BuilderPage() {
             aria-busy={draftLoading || saving}
             onChange={(e) => onPromptChange(e.target.value)}
             placeholder={promptPlaceholder}
-            className='min-h-[46dvh] resize-y bg-(--background) text-base leading-7'
+            className='min-h-[46dvh] resize-y bg-(--background) text-base leading-7 focus:border-(--border) focus:ring-0'
             {...tm('E.prompt-input')}
           />
         </div>
