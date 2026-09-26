@@ -1292,7 +1292,7 @@ export function BuilderPage() {
                         ? current
                         : [...current, 'judge-prompt']
                     )
-                    window.requestAnimationFrame(() => {
+                    globalThis.requestAnimationFrame(() => {
                       document.getElementById('builder-judge-prompt')
                         ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     })
