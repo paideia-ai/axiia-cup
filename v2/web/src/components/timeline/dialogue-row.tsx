@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/card'
 import type { SpeakerLabels } from './labels'
 import { speakerAccent, speakerName, speakerSide } from './labels'
 import { ReasoningFold } from './reasoning-fold'
+import { RolePortrait } from '../role-portrait'
 import { tm } from '../../testmode/mark'
 
 function Speaker({
@@ -24,8 +25,9 @@ function Speaker({
   return (
     <div
       {...tm('FA.speaker-line')}
-      className='flex items-center gap-2 text-xs text-(--foreground-muted)'
+      className='portrait-speaker portrait-dialogue-speaker mb-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-muted)'
     >
+      <RolePortrait labels={labels} speaker={speaker} />
       <span className='font-semibold text-(--foreground-subtle)'>
         {speakerName(labels, speaker)}
       </span>
@@ -70,7 +72,7 @@ export function DialogueRow({
       data-dialogue-seq={turn.seq}
       className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}
     >
-      <CardContent className='space-y-1 py-4'>
+      <CardContent className='portrait-speech space-y-1 py-4'>
         <Speaker
           speaker={turn.speaker}
           labels={labels}
@@ -117,7 +119,7 @@ export function LiveDialogueRow({
         speakerAccent(labels, bubble.speaker)
       } border-dashed bg-white/1`}
     >
-      <CardContent className='space-y-1 py-4'>
+      <CardContent className='portrait-speech space-y-1 py-4'>
         <Speaker
           speaker={bubble.speaker}
           labels={labels}

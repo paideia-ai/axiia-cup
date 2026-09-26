@@ -84,6 +84,10 @@ export function MatchDetailPage() {
     (location.state as { express?: boolean } | null)?.express === true ||
     new URLSearchParams(location.search).get('express') === '1'
   const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
+  // Move the interactive chart after settlement on compact finished reports.
+  const [mobileTrendTarget, setMobileTrendTarget] = useState<
+    HTMLDivElement | null
+  >(null)
   // 调试模式 (#22)：model reasoning traces (内心 folds, live thinking deltas) are
   // hidden until switched on. A UI mask only in this stage — the stream still
   // carries the deltas; the renderer just never mounts them. Dialogue, events,
@@ -435,6 +439,7 @@ export function MatchDetailPage() {
         <InquiryStage
           key={row.group.id}
           answers={answers}
+          labels={labels}
           showReasoning={showTrace}
         />
       )
@@ -570,6 +575,7 @@ export function MatchDetailPage() {
               key={matchID}
               {...{
                 panels,
+                mobileTrendTarget,
                 tabLabels: tabPlan.labels,
                 anchorSeqOf: anchorRowSeq,
                 showTrace,
@@ -921,6 +927,7 @@ export function MatchDetailPage() {
                       )}
                       {
                         <JudgeDialogue
+                          mobileTrendTarget={mobileTrendTarget}
                           {...{
                             groups: section.groupIndexes.map((index) =>
                               stageGroups[index]
@@ -1230,6 +1237,16 @@ export function MatchDetailPage() {
                     )}
                 </div>
               )}
+            {!replaying && (judgeSidebar || tabbedJudgeSidebar) &&
+                beats.length > 0
+              ? (
+                <div
+                  ref={setMobileTrendTarget}
+                  className='judge-mobile-trend'
+                  data-review-trend
+                />
+              )
+              : null}
             {!replaying && !judgeSidebar && !tabbedJudgeSidebar &&
                 beats.length > 0
               ? (

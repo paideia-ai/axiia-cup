@@ -1,15 +1,21 @@
+import { createPortal } from 'react-dom'
+import { useCompactJudgeLayout } from './shared'
 import type { ReplayBeatStep } from '../../lib/replay'
 import type { SpeakerLabels } from '../timeline/labels'
 import { JudgeTrendChart } from '../judge-trend'
 import { Card, CardContent } from '../ui/card'
 
-export function JudgeSidebarTrend({ beats, labels, onSelect, connectionGap }: {
-  beats: ReplayBeatStep[]
-  labels: SpeakerLabels
-  connectionGap: number
-  onSelect: (index: number) => void
-}) {
-  return (
+export function JudgeSidebarTrend(
+  { beats, labels, onSelect, connectionGap, mobileTrendTarget }: {
+    mobileTrendTarget?: HTMLElement | null
+    beats: ReplayBeatStep[]
+    labels: SpeakerLabels
+    connectionGap: number
+    onSelect: (index: number) => void
+  },
+) {
+  const compact = useCompactJudgeLayout()
+  const card = (
     <Card className='judge-sidebar-trend'>
       <CardContent className='pt-5'>
         <JudgeTrendChart
@@ -27,4 +33,7 @@ export function JudgeSidebarTrend({ beats, labels, onSelect, connectionGap }: {
       </CardContent>
     </Card>
   )
+  return compact && mobileTrendTarget
+    ? createPortal(card, mobileTrendTarget)
+    : card
 }
