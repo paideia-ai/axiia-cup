@@ -37,6 +37,7 @@ export function Accordion({
 interface AccordionItemProps {
   children: ReactNode
   className?: string
+  id?: string
   title: ReactNode
   triggerClassName?: string
   value: string
@@ -45,12 +46,13 @@ interface AccordionItemProps {
 export function AccordionItem({
   children,
   className,
+  id,
   title,
   triggerClassName,
   value,
 }: AccordionItemProps) {
   return (
-    <BaseAccordion.Item value={value} className={className}>
+    <BaseAccordion.Item id={id} value={value} className={className}>
       <BaseAccordion.Header>
         <BaseAccordion.Trigger
           className={cn(

@@ -1,7 +1,7 @@
 import { roleIdentity } from '../lib/role-identity'
 import { navigationCache } from '../lib/navigation-cache'
 import { draftQuery, versionsQuery } from '../lib/navigation-queries'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, Scale } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Link,
@@ -29,6 +29,7 @@ import type {
   Side,
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
+import { OnboardingGlow } from '../components/onboarding-glow'
 import { BattleCostNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
@@ -50,6 +51,7 @@ import {
 } from '../lib/builder-draft-storage'
 import { metaPromptFor } from '../lib/meta-prompt'
 import { promptLength } from '../lib/prompt-length'
+import { useJudgePromptVisit } from '../lib/judge-prompt-visit'
 import { rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
@@ -620,6 +622,12 @@ export function BuilderPage() {
   // choice rides along the saved version as the options blob the script parses.
   const roleModule = scenarioModule(scenarioID)
   const roles = rolesForSide(roleModule, side)
+  const judgePrompt = roleModule?.education?.judgePrompt
+  const { visited: judgePromptVisited, markVisited: markJudgePromptVisited } =
+    useJudgePromptVisit(auth?.account?.id, scenarioID)
+  const [referenceSections, setReferenceSections] = useState<string[]>([])
+
+  useEffect(() => setReferenceSections([]), [scenarioID])
 
   useEffect(() => {
     if (roles.length === 0) {
@@ -1270,26 +1278,55 @@ export function BuilderPage() {
           >
             策略提示词
           </label>
-          {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
-          <Button
-            type='button'
-            variant='ghost'
-            className='h-11 w-11 px-0 md:h-10 md:w-10'
-            onClick={() => void copyPrompt()}
-            disabled={saving || prompt.trim() === ''}
-            aria-label={copied ? '已复制当前草稿' : '复制当前草稿'}
-            title={copied ? '已复制' : '复制当前草稿'}
-            {...tm('E.copy-prompt-button')}
-          >
-            {copied
+          <div className='flex items-center gap-1'>
+            {judgePrompt
               ? (
-                <Check
-                  aria-hidden='true'
-                  className='h-4 w-4 text-(--success)'
-                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  className='h-11 w-11 px-0 md:h-10 md:w-10'
+                  onClick={() => {
+                    markJudgePromptVisited()
+                    setReferenceSections((current) =>
+                      current.includes('judge-prompt')
+                        ? current
+                        : [...current, 'judge-prompt']
+                    )
+                    window.requestAnimationFrame(() => {
+                      document.getElementById('builder-judge-prompt')
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    })
+                  }}
+                  aria-label='查看裁判系统提示词'
+                  title='查看裁判系统提示词'
+                >
+                  <OnboardingGlow active={!judgePromptVisited}>
+                    <Scale aria-hidden='true' className='h-5 w-5' />
+                  </OnboardingGlow>
+                </Button>
               )
-              : <Copy aria-hidden='true' className='h-4 w-4' />}
-          </Button>
+              : null}
+            {/* P14：E8 早已承诺、线上一直缺席的按钮 */}
+            <Button
+              type='button'
+              variant='ghost'
+              className='h-11 w-11 px-0 md:h-10 md:w-10'
+              onClick={() => void copyPrompt()}
+              disabled={saving || prompt.trim() === ''}
+              aria-label={copied ? '已复制当前草稿' : '复制当前草稿'}
+              title={copied ? '已复制' : '复制当前草稿'}
+              {...tm('E.copy-prompt-button')}
+            >
+              {copied
+                ? (
+                  <Check
+                    aria-hidden='true'
+                    className='h-4 w-4 text-(--success)'
+                  />
+                )
+                : <Copy aria-hidden='true' className='h-4 w-4' />}
+            </Button>
+          </div>
         </div>
         <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
           <Textarea
@@ -1499,7 +1536,12 @@ export function BuilderPage() {
         )
         : null}
 
-      <Accordion className='rounded-xl border border-(--border-soft) px-4'>
+      <Accordion
+        multiple
+        value={referenceSections}
+        onValueChange={setReferenceSections}
+        className='rounded-xl border border-(--border-soft) px-4'
+      >
         <AccordionItem
           value='role-template'
           title={
@@ -1515,6 +1557,19 @@ export function BuilderPage() {
             {roleTemplate}
           </p>
         </AccordionItem>
+        {judgePrompt
+          ? (
+            <AccordionItem
+              id='builder-judge-prompt'
+              value='judge-prompt'
+              title='裁判系统提示词'
+            >
+              <p className='whitespace-pre-wrap text-xs leading-relaxed text-(--foreground-subtle)'>
+                {judgePrompt}
+              </p>
+            </AccordionItem>
+          )
+          : null}
       </Accordion>
     </div>
   )
