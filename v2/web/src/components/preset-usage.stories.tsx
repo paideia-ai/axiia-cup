@@ -27,9 +27,9 @@ const deck = {
   }],
 }
 
-function Surface() {
+function Surface({ initialScenario = scenarios[0] }: { initialScenario?: string }) {
   const [account, setAccount] = useState(accounts[0])
-  const [scenario, setScenario] = useState(scenarios[0])
+  const [scenario, setScenario] = useState(initialScenario)
   const [agent, setAgent] = useState(1)
   const [prompt, setPrompt] = useState('原有草稿')
   return (
@@ -187,6 +187,30 @@ export const LegacyBrowserUseMigratesToServer: Story = {
       expect(canvas.getByRole('button', { name: '选择预设策略' }))
         .toBeVisible()
     )
+    await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
+    await expect(canvas.getByRole('button', { name: '更多构建方式' }))
+      .toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: '切换账号' }))
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '选择预设策略' }))
+        .toBeVisible()
+    )
+  },
+}
+
+export const OtherLegacyScenariosMigrateOnFirstVisit: Story = {
+  beforeEach: () => {
+    localStorage.setItem(presetUsageKey(accounts[0], scenarios[0]), '1')
+  },
+  render: () => <Surface initialScenario={scenarios[1]} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const legacyKey = presetUsageKey(accounts[0], scenarios[0])
+    await canvas.findByRole('button', { name: '选择预设策略' })
+    await waitFor(() =>
+      expect(serverUsage.get(accounts[0])?.has(scenarios[0])).toBe(true)
+    )
+    await waitFor(() => expect(localStorage.getItem(legacyKey)).toBeNull())
     await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
     await expect(canvas.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
