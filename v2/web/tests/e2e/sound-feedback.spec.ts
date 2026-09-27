@@ -382,6 +382,36 @@ test('音效偏好在刷新和同浏览器页签之间保持一致', async ({ pa
   })
 })
 
+test('预设策略每次选题播放现有点击音效', async ({ page }) => {
+  const world = await installWorld(page)
+  world.firstBattleDone = false
+  await page.goto('/agents/101/build?express=1')
+
+  const dialog = page.getByRole('dialog', { name: '选择预设策略' })
+  await expect(dialog).toBeVisible()
+  const progress = await dialog.locator('[aria-label^="第 1 题，共"]')
+    .getAttribute('aria-label')
+  const questionCount = Number(progress?.match(/共 (\d+) 题/)?.[1])
+  expect(questionCount).toBeGreaterThan(1)
+  await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  await expectCues(page, [110])
+
+  await expect(dialog.locator('[aria-label^="第 2 题，共"]')).toBeVisible()
+  await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  await expectCues(page, [110, 110])
+
+  for (let step = 3; step <= questionCount; step++) {
+    await expect(dialog.locator(`[aria-label^="第 ${step} 题，共"]`))
+      .toBeVisible()
+    await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  }
+  await expectCues(page, Array(questionCount).fill(110))
+  const replace = dialog.getByRole('button', { name: '替换当前草稿' })
+  await expect(replace).toBeVisible()
+  await replace.click()
+  await expectCues(page, Array(questionCount + 1).fill(110))
+})
+
 test('输入有轻点，自动暂存不重复发声，保存与首战派发按顺序确认', async ({ page }) => {
   let world: SoundWorld
   await test.step('假如 我打开首战构建器并允许同源保存和派发成功', async () => {
@@ -389,6 +419,7 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
     world.match = runningMatch()
     world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '关闭弹窗' }).click()
     await expect(page.getByRole('button', { name: '保存版本' }))
       .toBeEnabled()
   })
@@ -432,6 +463,7 @@ test('失败操作保留点击反馈，只有成功结果播放确认音', async
     world.saveFails = true
     world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '关闭弹窗' }).click()
   })
   await test.step('当 我点击保存版本', async () => {
     await pressSave(page)
