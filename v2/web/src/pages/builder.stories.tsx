@@ -164,6 +164,60 @@ export const ExpressWaitsForDraftRecovery: Story = {
   },
 }
 
+export const ExpressWaitsForExpiredDraftRecovery: Story = {
+  args: { express: true },
+  beforeEach: () => {
+    purgeBuilderDraftJournals(101)
+    const identity = 'anonymous:101'
+    const token = 'review-conflict'
+    localStorage.setItem(
+      `${builderDraftJournalStoragePrefix(identity)}${token}`,
+      JSON.stringify({
+        schema: 2,
+        identity,
+        agentID: 101,
+        writerID: 'review-test',
+        revision: 1,
+        token,
+        basePrompt: '旧服务器草稿',
+        prompt: '本机待恢复草稿',
+        promptPersisted: false,
+        roleKey: null,
+        modelID: null,
+        note: '',
+        method: null,
+        updatedAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
+      }),
+    )
+  },
+  parameters: {
+    msw: handlers(
+      '服务器新草稿',
+      () => HttpResponse.json({ versions: [] }),
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const recovery = await canvas.findByRole('region', {
+      name: '本机草稿恢复',
+    })
+    await expect(recovery).toBeVisible()
+    await expect(recovery).toHaveTextContent('超过 14 天')
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    await expect(canvas.queryByRole('dialog', { name: '选择预设策略' }))
+      .toBeNull()
+    await userEvent.click(
+      within(recovery).getByRole('button', { name: '使用服务器草稿' }),
+    )
+    const dialog = await canvas.findByRole('dialog', {
+      name: '选择预设策略',
+    })
+    await expect(
+      within(dialog).getByRole('button', { name: '关闭弹窗' }),
+    ).toBeEnabled()
+  },
+}
+
 export const BlankWorkspaceWithSecondaryHelpers: Story = {
   parameters: {
     msw: handlers('', () => HttpResponse.json({ versions: [] })),
