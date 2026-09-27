@@ -123,6 +123,9 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       ensures.push({ page: request.frame().page(), side })
       return json({ agentID: side === 'b' ? 102 : 101 })
     }
+    if (/^\/agents\/\d+\/preset-usage$/.test(path)) {
+      return json({ used: false })
+    }
     if (/^\/agents\/\d+\/draft$/.test(path)) {
       return json({
         fields: {},
@@ -398,6 +401,7 @@ const cases: {
         )
       )
       await page.reload()
+      await page.getByRole('button', { name: '关闭弹窗' }).click()
     },
   },
   {
