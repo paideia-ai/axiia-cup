@@ -27,7 +27,9 @@ const deck = {
   }],
 }
 
-function Surface({ initialScenario = scenarios[0] }: { initialScenario?: string }) {
+function Surface(
+  { initialScenario = scenarios[0] }: { initialScenario?: string },
+) {
   const [account, setAccount] = useState(accounts[0])
   const [scenario, setScenario] = useState(initialScenario)
   const [agent, setAgent] = useState(1)
