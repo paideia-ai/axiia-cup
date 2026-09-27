@@ -111,9 +111,7 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await userEvent.click(
       within(dialog).getByRole('button', { name: '依据事实' }),
     )
-    await userEvent.click(
-      within(dialog).getByRole('button', { name: '填入工作区' }),
-    )
+    await within(dialog).findByRole('button', { name: '取消' })
     await userEvent.click(
       within(dialog).getByRole('button', { name: '取消' }),
     )
@@ -129,13 +127,11 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await userEvent.click(
       within(dialog).getByRole('button', { name: '依据事实' }),
     )
-    await userEvent.click(
-      within(dialog).getByRole('button', { name: '填入工作区' }),
-    )
+    await within(dialog).findByRole('button', { name: '替换当前草稿' })
     await userEvent.click(
       within(dialog).getByRole('button', { name: '替换当前草稿' }),
     )
-    const more = canvas.getByRole('button', { name: '更多构建方式' })
+    const more = await canvas.findByRole('button', { name: '更多构建方式' })
     await waitFor(() => expect(more).toHaveFocus())
     await expect(canvas.getByRole('status')).toHaveTextContent(
       '用可核查的事实回应。',
