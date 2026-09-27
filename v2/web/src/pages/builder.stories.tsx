@@ -651,9 +651,11 @@ export const ExpressRoleFillOpensOnlyOnce: Story = {
     const canvas = within(canvasElement)
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
-    const dialog = within(await canvas.findByRole('dialog', {
-      name: '选择预设策略',
-    }))
+    const dialog = within(
+      await canvas.findByRole('dialog', {
+        name: '选择预设策略',
+      }),
+    )
     await userEvent.click(
       dialog.getByRole('button', { name: '足利义昭的使者' }),
     )
