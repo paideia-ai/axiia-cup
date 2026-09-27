@@ -376,6 +376,21 @@ test('音效偏好在刷新和同浏览器页签之间保持一致', async ({ pa
   })
 })
 
+test('预设策略每次选题播放现有点击音效', async ({ page }) => {
+  const world = await installWorld(page)
+  world.firstBattleDone = false
+  await page.goto('/agents/101/build?express=1')
+
+  const dialog = page.getByRole('dialog', { name: '选择预设策略' })
+  await expect(dialog).toBeVisible()
+  await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  await expectCues(page, [110])
+
+  await expect(dialog.locator('[aria-label^="第 2 题，共"]')).toBeVisible()
+  await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  await expectCues(page, [110, 110])
+})
+
 test('输入有轻点，自动暂存不重复发声，保存与首战派发按顺序确认', async ({ page }) => {
   let world: SoundWorld
   await test.step('假如 我打开首战构建器并允许同源保存和派发成功', async () => {
