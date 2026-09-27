@@ -32,8 +32,8 @@ const scenarioPath = `/scenarios/${scenario.summary.id}`
 
 async function fixtures(page: Page, options: FixtureOptions = {}) {
   const ensures: { page: Page; side: string }[] = []
-  const unexpected: string[] = []
   const usedPresets = new Set<string>()
+  const unexpected: string[] = []
   const errors: string[] = []
   const observeErrors = (tab: Page) =>
     tab.on('pageerror', (error) => errors.push(error.message))
@@ -407,6 +407,7 @@ const cases: {
         )
       )
       await page.reload()
+      await page.getByRole('button', { name: '关闭弹窗' }).click()
     },
   },
   {
