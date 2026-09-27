@@ -3,6 +3,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { useState } from 'react'
 import { http, HttpResponse } from 'msw'
 import { resetNavigationCache } from '../lib/navigation-cache'
+import { presetUsageKey } from '../lib/preset-usage'
 import { InitModes } from './builder-init'
 import { Button } from './ui/button'
 
@@ -94,6 +95,11 @@ const meta = {
   beforeEach: () => {
     activeAccount = accounts[0]
     serverUsage.clear()
+    for (const account of accounts) {
+      for (const scenario of scenarios) {
+        localStorage.removeItem(presetUsageKey(account, scenario))
+      }
+    }
     resetNavigationCache()
   },
 } satisfies Meta<typeof Surface>
@@ -154,5 +160,40 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
       .toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: '切换账号' }))
     await waitFor(() => expect(direct()).toBeVisible())
+  },
+}
+
+export const LegacyBrowserUseMigratesToServer: Story = {
+  beforeEach: () => {
+    localStorage.setItem(presetUsageKey(accounts[0], scenarios[0]), '1')
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const legacyKey = presetUsageKey(accounts[0], scenarios[0])
+    const more = await canvas.findByRole('button', {
+      name: '更多构建方式',
+    })
+    await expect(more).toBeVisible()
+    await waitFor(() =>
+      expect(serverUsage.get(accounts[0])?.has(scenarios[0])).toBe(true)
+    )
+    await waitFor(() => expect(localStorage.getItem(legacyKey)).toBeNull())
+
+    await userEvent.click(canvas.getByRole('button', { name: '切换智能体' }))
+    await expect(canvas.getByRole('button', { name: '更多构建方式' }))
+      .toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '选择预设策略' }))
+        .toBeVisible()
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
+    await expect(canvas.getByRole('button', { name: '更多构建方式' }))
+      .toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: '切换账号' }))
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '选择预设策略' }))
+        .toBeVisible()
+    )
   },
 }
