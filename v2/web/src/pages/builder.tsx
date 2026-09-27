@@ -1172,7 +1172,7 @@ export function BuilderPage() {
           >
             <legend className='sr-only'>策略辅助</legend>
             <InitModes
-              key={`${scenarioID}:${side}:${roleKey ?? ''}:${
+              key={`${scenarioID}:${side}:${
                 requestedTool ?? (express ? 'express' : 'default')
               }`}
               accountID={auth?.account?.id}
