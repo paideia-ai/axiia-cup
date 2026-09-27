@@ -1176,7 +1176,6 @@ export function BuilderPage() {
                 requestedTool ?? (express ? 'express' : 'default')
               }`}
               accountID={auth?.account?.id}
-              agentID={agentID}
               scenarioID={scenarioID}
               express={express}
               disabled={saving || starting || recovery != null}
