@@ -29,6 +29,7 @@ interface InitModesProps {
   onFill: (text: string, method: 'mcq' | 'builder', roleKey?: string) => void
   promptUnitLimit: number | null
   express?: boolean
+  disabled?: boolean
   initialTool?: CreationTool | null
   onDirect?: () => void
 }
@@ -47,6 +48,7 @@ export function InitModes({
   onFill,
   promptUnitLimit,
   express = false,
+  disabled = false,
   initialTool = null,
   onDirect,
 }: InitModesProps) {
@@ -66,7 +68,7 @@ export function InitModes({
   const previewDeck = previewRole?.deck ?? deck
   const rolePicker = presetRoles.length > 0
     ? (
-      <fieldset className='mb-5 space-y-2'>
+      <fieldset disabled={transferring} className='mb-5 space-y-2'>
         <legend className='mb-2 text-sm font-semibold'>选择角色</legend>
         <div className='flex flex-wrap gap-2'>
           {presetRoles.map((role) => (
@@ -107,6 +109,11 @@ export function InitModes({
   }, [initialTool, onDirect])
 
   useEffect(() => {
+    if (disabled) {
+      setOpen(null)
+      setTransferring(false)
+      return
+    }
     if (express && initialTool == null) {
       const timer = globalThis.setTimeout(() => setOpen('mcq'), 320)
       return () => globalThis.clearTimeout(timer)
@@ -117,7 +124,7 @@ export function InitModes({
       express ? 320 : 0,
     )
     return () => globalThis.clearTimeout(timer)
-  }, [express, initialTool])
+  }, [disabled, express, initialTool])
 
   return (
     <div
@@ -165,7 +172,7 @@ export function InitModes({
           )}
       </div>
 
-      {open === 'mcq'
+      {open === 'mcq' && !disabled
         ? (
           <ToolDialog
             title='选择预设策略'
@@ -208,7 +215,7 @@ export function InitModes({
         )
         : null}
 
-      {open === 'meta'
+      {open === 'meta' && !disabled
         ? (
           <ToolDialog
             title='让 AI 帮你想策略'
