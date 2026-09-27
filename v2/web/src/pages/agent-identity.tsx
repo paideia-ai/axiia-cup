@@ -35,7 +35,7 @@ export function AgentIdentityPage() {
     roleIdentity({
       scenarioID: agent?.scenarioID,
       side: agent?.side === 'a' ? 'a' : 'b',
-      role,
+      role: role ?? agent?.role,
       fallback: agent?.sideName,
     }).name
   const roleName = nameOf(versions[0]?.role)
