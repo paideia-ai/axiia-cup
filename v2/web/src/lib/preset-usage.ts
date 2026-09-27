@@ -1,4 +1,5 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
+import { builder } from '../api/client'
 
 const CHANGED = 'axiia:preset-usage-changed'
 const fallback = new Set<string>()
@@ -25,29 +26,44 @@ function subscribe(listener: () => void) {
   }
 }
 
-// Browser-local preference, isolated by account and scenario, shared across
-// agents/sides/tabs. A blocked storage API still works for the current session.
+function write(key: string) {
+  fallback.add(key)
+  try {
+    localStorage.setItem(key, '1')
+  } catch {
+    // Keep the in-memory state if storage is unavailable.
+  }
+  globalThis.dispatchEvent(new Event(CHANGED))
+}
+
 export function usePresetUsage(
   accountID: string | undefined,
   scenarioID: string,
+  agentID: number,
 ) {
   const key = accountID && scenarioID
     ? presetUsageKey(accountID, scenarioID)
     : null
   const [localUsed, setLocalUsed] = useState(false)
   const used = useSyncExternalStore(subscribe, () => read(key), () => false)
+  useEffect(() => {
+    let active = true
+    void builder.presetUsage(agentID).then((response) => {
+      if (!active) return
+      if (response.used) {
+        if (key) write(key)
+        else setLocalUsed(true)
+      } else if (key && read(key)) {
+        void builder.markPresetUsed(agentID).catch(() => {})
+      }
+    }).catch(() => {})
+    return () => { active = false }
+  }, [agentID, key])
+
   const markUsed = () => {
-    if (!key) {
-      setLocalUsed(true)
-      return
-    }
-    fallback.add(key)
-    try {
-      localStorage.setItem(key, '1')
-    } catch {
-      /* Retain this session's preference if storage is unavailable. */
-    }
-    globalThis.dispatchEvent(new Event(CHANGED))
+    if (key) write(key)
+    else setLocalUsed(true)
+    void builder.markPresetUsed(agentID).catch(() => {})
   }
   return { used: key ? used : localUsed, markUsed }
 }

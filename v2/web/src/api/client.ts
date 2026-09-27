@@ -329,6 +329,10 @@ export const npcs = {
 export const builder = {
   ensure: (input: EnsureAgentRequest) =>
     request<AgentRefResponse>('POST', '/agents/ensure', input),
+  presetUsage: (agentID: number) =>
+    request<{ used: boolean }>('GET', `/agents/${agentID}/preset-usage`),
+  markPresetUsed: (agentID: number) =>
+    request<{ used: boolean }>('PUT', `/agents/${agentID}/preset-usage`),
   mutate: (
     agentID: number,
     input: FieldMutationRequest,

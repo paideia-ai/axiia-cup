@@ -215,7 +215,7 @@ export const ExternalAiHelperLivesInDialog: Story = {
     const dialog = canvas.getByRole('dialog', {
       name: '让 AI 帮你想策略',
     })
-    await expect(dialog).toBeVisible()
+    await waitFor(() => expect(dialog).toBeVisible())
     await expect(
       within(dialog).getByRole('button', { name: '复制策略构建提示词' }),
     )
@@ -506,16 +506,16 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     for (const question of deck.questions) {
       selections[question.id] = question.options[0].id
       await userEvent.click(
-        dialog.getByRole('button', {
+        await dialog.findByRole('button', {
           name: question.options[0].label,
         }),
       )
     }
-    await userEvent.click(dialog.getByRole('button', { name: '填入工作区' }))
+    await dialog.findByRole('button', { name: '替换当前草稿' })
     await expect(input).toHaveValue('保留原有策略')
     await expect(role).toHaveTextContent('长宗我部元亲的密使')
     await userEvent.click(dialog.getByRole('button', { name: '替换当前草稿' }))
-    await expect(input).toHaveValue(assembleDeck(deck, selections))
+    await waitFor(() => expect(input).toHaveValue(assembleDeck(deck, selections)))
     await expect(role).toHaveTextContent('足利义昭的使者')
     await userEvent.click(
       canvas.getByRole('button', { name: '保存并返回主页' }),

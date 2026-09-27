@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { useState } from 'react'
+import { http, HttpResponse } from 'msw'
 import { presetUsageKey } from '../lib/preset-usage'
 import { InitModes } from './builder-init'
 import { Button } from './ui/button'
@@ -54,6 +55,7 @@ function Surface() {
       <InitModes
         key={`${account}:${scenario}:${agent}`}
         accountID={account}
+        agentID={agent}
         scenarioID={scenario}
         deck={deck}
         metaPrompt='请帮助我完善论证。'
@@ -69,7 +71,15 @@ function Surface() {
 const meta = {
   title: 'Agents/Preset first use',
   component: Surface,
-  parameters: { a11y: { test: 'error' } },
+  parameters: {
+    a11y: { test: 'error' },
+    msw: {
+      handlers: [
+        http.get('/v1/agents/:id/preset-usage', () => HttpResponse.json({ used: false })),
+        http.put('/v1/agents/:id/preset-usage', () => HttpResponse.json({ used: true })),
+      ],
+    },
+  },
   beforeEach: () => {
     for (const account of accounts) {
       for (const scenario of scenarios) {
@@ -91,9 +101,7 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await userEvent.click(
       within(dialog).getByRole('button', { name: '依据事实' }),
     )
-    await userEvent.click(
-      within(dialog).getByRole('button', { name: '填入工作区' }),
-    )
+    await within(dialog).findByRole('button', { name: '取消' })
     await userEvent.click(
       within(dialog).getByRole('button', { name: '取消' }),
     )
@@ -111,13 +119,11 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await userEvent.click(
       within(dialog).getByRole('button', { name: '依据事实' }),
     )
-    await userEvent.click(
-      within(dialog).getByRole('button', { name: '填入工作区' }),
-    )
+    await within(dialog).findByRole('button', { name: '替换当前草稿' })
     await userEvent.click(
       within(dialog).getByRole('button', { name: '替换当前草稿' }),
     )
-    const more = canvas.getByRole('button', { name: '更多构建方式' })
+    const more = await canvas.findByRole('button', { name: '更多构建方式' })
     await waitFor(() => expect(more).toHaveFocus())
     await expect(canvas.getByRole('status')).toHaveTextContent(
       '用可核查的事实回应。',
