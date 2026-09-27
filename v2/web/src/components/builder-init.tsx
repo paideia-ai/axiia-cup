@@ -240,7 +240,7 @@ function McqFlow({
   const [overLimit, setOverLimit] = useState(false)
   const [locked, setLocked] = useState(false)
   const [transferring, setTransferring] = useState(false)
-  const timer = useRef<number | null>(null)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const confirmRef = useRef<HTMLDivElement>(null)
   const question = deck.questions[step]
   const assembled = assembleDeck(deck, selections)
