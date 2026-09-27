@@ -177,6 +177,12 @@ export const SaveReloadAndExplicitStart: Story = {
     await userEvent.type(input, saved.prompt)
     await userEvent.click(canvas.getByRole('button', { name: '保存版本' }))
     expect(await canvas.findByText('已保存版本 v1（#9001）')).toBeVisible()
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '保存版本' })).toBeEnabled()
+    )
+    // The guided dialog is an entry animation, not a post-save prompt.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    expect(canvas.queryByRole('dialog', { name: '选择预设策略' })).toBeNull()
     expect(saves).toBe(1)
     expect(posts).toHaveLength(0)
     await userEvent.click(
