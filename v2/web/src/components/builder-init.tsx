@@ -374,7 +374,14 @@ function McqFlow({
               主输入框已有策略，是否用这份预设策略替换？
             </p>
             <div className='flex gap-2'>
-              <Button size='sm' onClick={() => commit(assembled)}>
+              <Button
+                size='sm'
+                onClick={() => {
+                  unlockAudio()
+                  playSound('click')
+                  commit(assembled)
+                }}
+              >
                 替换当前草稿
               </Button>
               <Button
