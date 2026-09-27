@@ -301,6 +301,7 @@ export interface MyAgentsResponse {
 // ── SubmissionDTOs (builder) ────────────────────────────────────────────────
 
 export interface EnsureAgentRequest {
+  roleKey?: string
   scenarioID: string
   side: string
 }
@@ -309,6 +310,7 @@ export interface EnsureAgentRequest {
 // 一个 agent（从 v1 开始），受 #59/#79 引导门约束——与 ensure 的 get-or-create
 // 语义不同。`name` 随 P6 命名批次启用，当前可省略。
 export interface CreateAgentRequest {
+  roleKey?: string
   scenarioID: string
   side: string
   name?: string | null
@@ -380,6 +382,7 @@ export interface AgentVersionDTO {
 }
 
 export interface DraftResponse {
+  role?: RoleIdentityDTO | null
   fields: Record<string, string>
   scenarioID: string
   side: Side
@@ -744,6 +747,7 @@ export interface NPCProfileResponse {
 }
 
 export interface PublicAgentResponse {
+  role?: RoleIdentityDTO | null
   agentID: number
   scenarioID: string
   scenarioTitle: string

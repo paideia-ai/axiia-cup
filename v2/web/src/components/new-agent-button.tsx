@@ -1,9 +1,10 @@
 import { Bot, Plus } from 'lucide-react'
+import type { AriaAttributes } from 'react'
 
 import { OnboardingGlow } from './onboarding-glow'
 import { Button } from './ui/button'
 
-interface NewAgentButtonProps {
+interface NewAgentButtonProps extends AriaAttributes {
   role: string
   disabled?: boolean
   attention?: boolean
@@ -17,11 +18,13 @@ export function NewAgentButton({
   attention = false,
   label,
   onClick,
+  ...accessibility
 }: NewAgentButtonProps) {
   const accessibleLabel = label ?? `新建${role}智能体`
 
   return (
     <Button
+      {...accessibility}
       type='button'
       size='sm'
       variant='ghost'
