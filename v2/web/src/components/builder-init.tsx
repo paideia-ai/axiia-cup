@@ -59,6 +59,7 @@ export function InitModes({
   const returnToPreset = useCallback(() => presetTrigger.current, [])
 
   const [previewRoleKey, setPreviewRoleKey] = useState(presetRoleKey)
+  useEffect(() => setPreviewRoleKey(presetRoleKey), [presetRoleKey])
   const previewRole = presetRoles.find((role) => role.key === previewRoleKey) ??
     presetRoles[0]
   const previewDeck = previewRole?.deck ?? deck
