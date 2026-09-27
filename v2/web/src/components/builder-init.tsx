@@ -1,4 +1,4 @@
-import { Check, Copy, X } from 'lucide-react'
+import { Check, ChevronLeft, Copy, X } from 'lucide-react'
 import {
   type ReactNode,
   useCallback,
@@ -8,14 +8,10 @@ import {
   useState,
 } from 'react'
 
-import {
-  assembleDeck,
-  type Deck,
-  deckComplete,
-  type DeckSelections,
-} from '../lib/deck'
+import { assembleDeck, type Deck, type DeckSelections } from '../lib/deck'
 import { usePresetUsage } from '../lib/preset-usage'
 import { promptLength } from '../lib/prompt-length'
+import { playSound, unlockAudio } from '../lib/sound'
 import type { CreationTool } from '../lib/first-battle'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
@@ -32,6 +28,7 @@ interface InitModesProps {
   onFill: (text: string, method: 'mcq' | 'builder', roleKey?: string) => void
   promptUnitLimit: number | null
   express?: boolean
+  disabled?: boolean
   initialTool?: CreationTool | null
   onDirect?: () => void
 }
@@ -49,17 +46,16 @@ export function InitModes({
   onFill,
   promptUnitLimit,
   express = false,
+  disabled = false,
   initialTool = null,
   onDirect,
 }: InitModesProps) {
   const { used: presetsUsed, loading: presetsLoading, writeError, markUsed } =
     usePresetUsage(accountID, scenarioID)
-  const [open, setOpen] = useState<'mcq' | 'meta' | null>(
-    !express && initialTool !== 'raw' ? initialTool : null,
-  )
+  const [open, setOpen] = useState<'mcq' | 'meta' | null>(null)
+  const [transferring, setTransferring] = useState(false)
   const presetTrigger = useRef<HTMLButtonElement>(null)
   const returnToPreset = useCallback(() => presetTrigger.current, [])
-  const [tool, setTool] = useState<CreationTool>(initialTool ?? 'mcq')
 
   const [previewRoleKey, setPreviewRoleKey] = useState(presetRoleKey)
   const previewRole = presetRoles.find((role) => role.key === previewRoleKey) ??
@@ -67,7 +63,7 @@ export function InitModes({
   const previewDeck = previewRole?.deck ?? deck
   const rolePicker = presetRoles.length > 0
     ? (
-      <fieldset className='mb-5 space-y-2'>
+      <fieldset disabled={transferring} className='mb-5 space-y-2'>
         <legend className='mb-2 text-sm font-semibold'>选择角色</legend>
         <div className='flex flex-wrap gap-2'>
           {presetRoles.map((role) => (
@@ -90,81 +86,40 @@ export function InitModes({
     if (previewRole) onFill(text, 'mcq', previewRole.key)
     else onFill(text, 'mcq')
     void markUsed()
+    setOpen(null)
+    setTransferring(false)
+    globalThis.requestAnimationFrame(() => {
+      const input = document.getElementById('prompt-input')
+      input?.focus()
+      input?.classList.add('mcq-prompt-arrived')
+      globalThis.setTimeout(
+        () => input?.classList.remove('mcq-prompt-arrived'),
+        900,
+      )
+    })
   }
 
   useEffect(() => {
     if (initialTool === 'raw') onDirect?.()
   }, [initialTool, onDirect])
 
-  if (express) {
-    return (
-      <section
-        className='space-y-4'
-        aria-label='新建方式'
-        {...tm('E.init-card')}
-      >
-        <div className='flex flex-wrap gap-2'>
-          {(['mcq', 'raw', 'meta'] as const).map((value) => (
-            <Button
-              key={value}
-              variant={tool === value ? 'primary' : 'secondary'}
-              aria-pressed={tool === value}
-              onClick={() => {
-                setTool(value)
-                if (value === 'raw') onDirect?.()
-              }}
-              {...(value === 'mcq'
-                ? tm('E.init-tab-mcq')
-                : value === 'meta'
-                ? tm('E.init-tab-meta')
-                : {})}
-            >
-              {value === 'mcq'
-                ? '选择预设策略'
-                : value === 'raw'
-                ? '直接编写'
-                : '让 AI 帮你想策略'}
-            </Button>
-          ))}
-        </div>
-        {tool === 'mcq'
-          ? (
-            <section
-              aria-label='选择预设策略'
-              className='rounded-lg border border-(--border-soft) p-4'
-            >
-              {deck
-                ? (
-                  <McqDraft
-                    deck={deck}
-                    currentPrompt={currentPrompt}
-                    promptUnitLimit={promptUnitLimit}
-                    onFill={(text) => {
-                      onFill(text, 'mcq')
-                      void markUsed()
-                      setTool('raw')
-                      onDirect?.()
-                    }}
-                  />
-                )
-                : (
-                  <p>
-                    这个角色暂时没有预设策略。你可以直接编写，或让 AI
-                    帮你想策略。
-                  </p>
-                )}
-            </section>
-          )
-          : tool === 'meta'
-          ? (
-            <section aria-label='让 AI 帮你想策略'>
-              <MetaDraft metaPrompt={metaPrompt} />
-            </section>
-          )
-          : <p>直接在下方策略提示词中编写；切换方式不会替换已有草稿。</p>}
-      </section>
+  useEffect(() => {
+    if (disabled) {
+      setOpen(null)
+      setTransferring(false)
+      return
+    }
+    if (express && initialTool == null) {
+      const timer = globalThis.setTimeout(() => setOpen('mcq'), 320)
+      return () => globalThis.clearTimeout(timer)
+    }
+    if (initialTool !== 'mcq' && initialTool !== 'meta') return
+    const timer = globalThis.setTimeout(
+      () => setOpen(initialTool),
+      express ? 320 : 0,
     )
-  }
+    return () => globalThis.clearTimeout(timer)
+  }, [disabled, express, initialTool])
 
   return (
     <div
@@ -222,25 +177,28 @@ export function InitModes({
         ? <p role='alert' className='text-xs text-(--accent)'>{writeError}</p>
         : null}
 
-      {open === 'mcq'
+      {open === 'mcq' && !disabled
         ? (
           <ToolDialog
             title='选择预设策略'
-            onClose={() => setOpen(null)}
+            entry={express}
+            leaving={transferring}
+            onClose={() => {
+              setOpen(null)
+              setTransferring(false)
+            }}
             returnFocus={returnToPreset}
           >
             {rolePicker}
             {previewDeck
               ? (
-                <McqDraft
+                <McqFlow
                   key={previewRole?.key}
                   deck={previewDeck}
                   currentPrompt={currentPrompt}
                   promptUnitLimit={promptUnitLimit}
-                  onFill={(text) => {
-                    fillPreset(text)
-                    setOpen(null)
-                  }}
+                  onFill={fillPreset}
+                  onTransferStart={() => setTransferring(true)}
                 />
               )
               : (
@@ -262,7 +220,7 @@ export function InitModes({
         )
         : null}
 
-      {open === 'meta'
+      {open === 'meta' && !disabled
         ? (
           <ToolDialog
             title='让 AI 帮你想策略'
@@ -276,174 +234,205 @@ export function InitModes({
   )
 }
 
-function McqDraft({
+function McqFlow({
   deck,
   currentPrompt,
   promptUnitLimit,
   onFill,
+  onTransferStart,
 }: {
   deck: Deck
   currentPrompt: string
   promptUnitLimit: number | null
   onFill: (text: string) => void
+  onTransferStart: () => void
 }) {
+  const [step, setStep] = useState(0)
   const [selections, setSelections] = useState<DeckSelections>({})
   const [confirmReplace, setConfirmReplace] = useState(false)
+  const [overLimit, setOverLimit] = useState(false)
+  const [locked, setLocked] = useState(false)
+  const [transferring, setTransferring] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confirmRef = useRef<HTMLDivElement>(null)
+  const question = deck.questions[step]
   const assembled = assembleDeck(deck, selections)
-  const complete = deckComplete(deck, selections)
-  const units = promptLength(assembled)
-  const overLimit = promptUnitLimit != null && units > promptUnitLimit
-  const unanswered = deck.questions.filter(
-    (question) =>
-      !question.options.some((option) => option.id === selections[question.id]),
-  ).length
-  const comboPending = deck.comboPrompts != null && !complete
 
-  const requestFill = () => {
-    if (
-      currentPrompt.trim() !== '' &&
-      currentPrompt.trim() !== assembled.trim()
-    ) {
-      setConfirmReplace(true)
-      return
-    }
-    onFill(assembled)
+  useEffect(() => () => {
+    if (timer.current != null) globalThis.clearTimeout(timer.current)
+  }, [])
+  useEffect(() => {
+    if (confirmReplace) confirmRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [confirmReplace])
+
+  const commit = (text: string) => {
+    setConfirmReplace(false)
+    setTransferring(true)
+    onTransferStart()
+    const reduced =
+      globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
+    timer.current = globalThis.setTimeout(() => onFill(text), reduced ? 0 : 420)
+  }
+
+  const choose = (optionID: string) => {
+    if (locked || transferring) return
+    unlockAudio()
+    playSound('click')
+    const next = { ...selections, [question.id]: optionID }
+    setSelections(next)
+    setConfirmReplace(false)
+    setOverLimit(false)
+    setLocked(true)
+    timer.current = globalThis.setTimeout(() => {
+      setLocked(false)
+      if (step < deck.questions.length - 1) {
+        setStep(step + 1)
+        return
+      }
+      const text = assembleDeck(deck, next)
+      const existing = (document.getElementById('prompt-input') as
+        | HTMLTextAreaElement
+        | null)?.value ?? currentPrompt
+      if (
+        !text ||
+        (promptUnitLimit != null && promptLength(text) > promptUnitLimit)
+      ) {
+        setOverLimit(true)
+      } else if (existing.trim()) {
+        setConfirmReplace(true)
+      } else {
+        commit(text)
+      }
+    }, 180)
   }
 
   return (
-    <div className='space-y-5'>
-      {deck.intro
+    <div className='relative space-y-5'>
+      <div
+        className='flex gap-2'
+        aria-label={`第 ${step + 1} 题，共 ${deck.questions.length} 题`}
+      >
+        {deck.questions.map((item, index) => (
+          <span
+            key={item.id}
+            className={`h-1.5 flex-1 rounded-full ${
+              index <= step ? 'bg-(--accent)' : 'bg-(--border)'
+            }`}
+          />
+        ))}
+      </div>
+      <fieldset
+        disabled={locked || transferring}
+        {...tm('E.mcq-question')}
+      >
+        <legend className='w-full'>
+          <span className='font-mono text-xs text-(--foreground-muted)'>
+            {String(step + 1).padStart(2, '0')} /{' '}
+            {String(deck.questions.length).padStart(2, '0')}
+          </span>
+          <span className='mt-2 block text-lg font-semibold leading-7'>
+            {question.prompt}
+          </span>
+        </legend>
+        <div className='mt-5 grid gap-3'>
+          {question.options.map((option, index) => {
+            const active = selections[question.id] === option.id
+            return (
+              <button
+                key={option.id}
+                type='button'
+                aria-pressed={active}
+                onClick={() => choose(option.id)}
+                className={`group flex min-h-14 w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium leading-6 transition ${
+                  active
+                    ? 'border-(--accent) bg-[rgba(224,74,47,0.1)] text-(--foreground)'
+                    : 'border-(--border) bg-white/2 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:bg-white/4 hover:text-(--foreground)'
+                }`}
+                {...tm('E.mcq-option')}
+              >
+                <span
+                  aria-hidden='true'
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] ${
+                    active
+                      ? 'border-(--accent) bg-(--accent) text-white'
+                      : 'border-(--border) text-(--foreground-muted)'
+                  }`}
+                >
+                  {active
+                    ? <Check aria-hidden='true' className='h-3.5 w-3.5' />
+                    : String.fromCharCode(65 + index)}
+                </span>
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </fieldset>
+      {overLimit
         ? (
-          <p className='text-sm text-(--foreground-subtle)'>
-            {deck.intro}
+          <p role='alert' className='text-sm text-(--accent)'>
+            生成结果超过字数上限，请返回修改选项。
           </p>
         )
         : null}
-      {deck.questions.map((question, index) => (
-        <fieldset
-          key={question.id}
-          className='space-y-2'
-          {...tm('E.mcq-question')}
-        >
-          <legend className='mb-2 text-sm text-(--foreground)'>
-            <span className='mr-1.5 font-mono text-xs text-(--foreground-muted)'>
-              {index + 1}/{deck.questions.length}
-            </span>
-            {question.prompt}
-          </legend>
-          <div className='flex flex-wrap gap-2'>
-            {question.options.map((option) => {
-              const active = selections[question.id] === option.id
-              return (
-                <button
-                  key={option.id}
-                  type='button'
-                  aria-pressed={active}
-                  onClick={() => {
-                    setConfirmReplace(false)
-                    setSelections((current) => ({
-                      ...current,
-                      [question.id]: option.id,
-                    }))
-                  }}
-                  className={active
-                    ? 'cursor-pointer rounded-full border border-(--accent) bg-[rgba(224,74,47,0.1)] px-3 py-1.5 text-left text-xs font-semibold text-(--accent)'
-                    : 'cursor-pointer rounded-full border border-(--border) px-3 py-1.5 text-left text-xs font-medium text-(--foreground-subtle) transition hover:border-(--foreground-muted) hover:text-(--foreground)'}
-                  {...tm('E.mcq-option')}
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
-        </fieldset>
-      ))}
-
-      <section
-        aria-label='拼装预览'
-        className='space-y-3 border-t border-(--border-soft) pt-4'
-        {...tm('E.mcq-preview')}
-      >
-        <div className='flex items-center justify-between gap-2'>
-          <h3 className='text-sm font-semibold text-(--foreground)'>
-            拼装预览
-          </h3>
-          <span
-            className={`font-mono text-xs ${
-              overLimit ? 'text-(--accent)' : 'text-(--foreground-muted)'
-            }`}
-            title='按汉字或英文词计数（非 token）'
-            {...tm('E.mcq-counter')}
+      {confirmReplace
+        ? (
+          <div
+            ref={confirmRef}
+            role='alert'
+            className='space-y-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] p-3'
           >
-            {units} / {promptUnitLimit ?? '—'}
-          </span>
-        </div>
-        {assembled
-          ? (
-            <pre className='max-h-56 overflow-y-auto whitespace-pre-wrap rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-xs leading-6 text-(--foreground-subtle)'>
-              {assembled}
-            </pre>
-          )
-          : (
-            <p className='rounded-md border border-dashed border-(--border-soft) p-3 text-xs text-(--foreground-muted)'>
-              {comboPending
-                ? `选完全部 ${deck.questions.length} 题后生成完整提示词`
-                : '选择上面的选项，提示词会在这里逐节拼出'}
+            <p className='text-sm text-(--warning)'>
+              主输入框已有策略，是否用这份预设策略替换？
             </p>
-          )}
-        {overLimit
-          ? (
-            <p role='alert' className='text-xs text-(--accent)'>
-              拼装结果超过上限，请调整选项。
-            </p>
-          )
-          : null}
-        <div className='flex flex-wrap items-center gap-3'>
-          <Button
-            size='sm'
-            disabled={!complete || assembled === '' || overLimit}
-            onClick={requestFill}
-            {...tm('E.mcq-fill-button')}
-          >
-            填入工作区
-          </Button>
-          {!complete
-            ? (
-              <span
-                role='status'
-                className='text-xs text-(--foreground-muted)'
-                {...tm('E.mcq-remaining')}
+            <div className='flex gap-2'>
+              <Button
+                size='sm'
+                onClick={() => {
+                  unlockAudio()
+                  playSound('click')
+                  commit(assembled)
+                }}
               >
-                还差 {unanswered} 题
-              </span>
-            )
-            : null}
-        </div>
-        {confirmReplace
-          ? (
-            <div
-              role='alert'
-              className='space-y-3 rounded-md border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.08)] p-3'
-            >
-              <p className='text-sm text-(--warning)'>
-                主输入框已有策略，是否用这份预设策略替换？
-              </p>
-              <div className='flex gap-2'>
-                <Button size='sm' onClick={() => onFill(assembled)}>
-                  替换当前草稿
-                </Button>
-                <Button
-                  size='sm'
-                  variant='secondary'
-                  onClick={() => setConfirmReplace(false)}
-                >
-                  取消
-                </Button>
-              </div>
+                替换当前草稿
+              </Button>
+              <Button
+                size='sm'
+                variant='secondary'
+                onClick={() => setConfirmReplace(false)}
+              >
+                取消
+              </Button>
             </div>
-          )
-          : null}
-      </section>
+          </div>
+        )
+        : null}
+      <div className='border-t border-(--border-soft) pt-4'>
+        <Button
+          size='sm'
+          variant='ghost'
+          disabled={step === 0 || locked || transferring}
+          onClick={() => {
+            setConfirmReplace(false)
+            setOverLimit(false)
+            setStep((value) => value - 1)
+          }}
+        >
+          <ChevronLeft aria-hidden='true' className='mr-1 h-4 w-4' />
+          上一题
+        </Button>
+      </div>
+      {transferring
+        ? (
+          <div
+            className='mcq-transfer absolute inset-0 z-10 flex items-center justify-center'
+            role='status'
+            aria-label='正在填入工作区'
+          >
+            <span aria-hidden='true' className='mcq-transfer-line' />
+          </div>
+        )
+        : null}
     </div>
   )
 }
@@ -504,11 +493,15 @@ function ToolDialog({
   onClose,
   children,
   returnFocus,
+  entry = false,
+  leaving = false,
 }: {
   title: string
   onClose: () => void
   children: ReactNode
   returnFocus?: () => HTMLElement | null
+  entry?: boolean
+  leaving?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleID = useId()
@@ -541,7 +534,9 @@ function ToolDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose()
       }}
-      className='fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-(--border) bg-(--surface-elevated) p-0 text-(--foreground) shadow-2xl outline-none backdrop:bg-black/55'
+      className={`mcq-dialog fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-(--border) bg-(--surface-elevated) p-0 text-(--foreground) shadow-2xl outline-none backdrop:bg-black/55 ${
+        entry ? 'mcq-dialog--entry' : ''
+      } ${leaving ? 'mcq-dialog--leaving' : ''}`}
     >
       <div className='sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-(--border-soft) bg-(--surface-elevated) px-5 py-4'>
         <h2 id={titleID} className='font-semibold'>{title}</h2>
