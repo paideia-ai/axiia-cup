@@ -54,6 +54,7 @@ export function InitModes({
     usePresetUsage(accountID, scenarioID)
   const [open, setOpen] = useState<'mcq' | 'meta' | null>(null)
   const [transferring, setTransferring] = useState(false)
+  const autoOpened = useRef(false)
   const presetTrigger = useRef<HTMLButtonElement>(null)
   const returnToPreset = useCallback(() => presetTrigger.current, [])
 
@@ -109,15 +110,15 @@ export function InitModes({
       setTransferring(false)
       return
     }
-    if (express && initialTool == null) {
-      const timer = globalThis.setTimeout(() => setOpen('mcq'), 320)
-      return () => globalThis.clearTimeout(timer)
-    }
-    if (initialTool !== 'mcq' && initialTool !== 'meta') return
-    const timer = globalThis.setTimeout(
-      () => setOpen(initialTool),
-      express ? 320 : 0,
-    )
+    // Recovery may delay the first opening. A later save/dispatch must not
+    // re-arm the guided dialog after the player has already seen or closed it.
+    if (autoOpened.current) return
+    const tool = express && initialTool == null ? 'mcq' : initialTool
+    if (tool !== 'mcq' && tool !== 'meta') return
+    const timer = globalThis.setTimeout(() => {
+      autoOpened.current = true
+      setOpen(tool)
+    }, express ? 320 : 0)
     return () => globalThis.clearTimeout(timer)
   }, [disabled, express, initialTool])
 
