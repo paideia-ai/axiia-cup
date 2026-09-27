@@ -5,13 +5,14 @@ import { auth } from '../api/client'
 import type { PresetUsageResponse } from '../api/types'
 import { navigationCache } from './navigation-cache'
 
+const LEGACY_PREFIX = 'axiia:preset-used:v1:'
 const migrations = new Map<string, Promise<PresetUsageResponse>>()
 
 // The previous release stored confirmed use in the browser. Keep its exact
 // account/scenario key so an existing player does not see the main button again
 // while that one-time record is being copied to the server.
 export function presetUsageKey(accountID: string, scenarioID: string) {
-  return `axiia:preset-used:v1:${JSON.stringify([accountID, scenarioID])}`
+  return `${LEGACY_PREFIX}${JSON.stringify([accountID, scenarioID])}`
 }
 
 function hasLegacyUsage(key: string | null): boolean {
@@ -21,6 +22,28 @@ function hasLegacyUsage(key: string | null): boolean {
   } catch {
     return false
   }
+}
+
+function legacyUsageRecords(accountID: string) {
+  const records: { key: string; scenarioID: string }[] = []
+  try {
+    for (let index = 0; index < localStorage.length; index++) {
+      const key = localStorage.key(index)
+      if (!key?.startsWith(LEGACY_PREFIX) || localStorage.getItem(key) !== '1') {
+        continue
+      }
+      const pair = JSON.parse(key.slice(LEGACY_PREFIX.length))
+      if (
+        Array.isArray(pair) && pair.length === 2 &&
+        pair[0] === accountID && typeof pair[1] === 'string' && pair[1]
+      ) {
+        records.push({ key, scenarioID: pair[1] })
+      }
+    }
+  } catch {
+    // Storage may be unavailable, or another page may have left a bad key.
+  }
+  return records
 }
 
 function clearLegacyUsage(key: string) {
@@ -64,37 +87,39 @@ export function usePresetUsage(
   }, navigationCache)
 
   useEffect(() => {
-    if (
-      !legacyKey || !legacyUsed || !query.isSuccess ||
-      query.data.scenarioIDs.includes(scenarioID)
-    ) return
+    if (!accountID || !query.isSuccess) return
 
     let mounted = true
-    void migrateLegacyUsage(legacyKey, scenarioID).then(
-      (response) => {
-        navigationCache.setQueryData<PresetUsageResponse>(key, (previous) => ({
-          scenarioIDs: [
-            ...new Set([
-              ...(previous?.scenarioIDs ?? []),
-              ...response.scenarioIDs,
-              scenarioID,
-            ]),
-          ],
-        }))
-        clearLegacyUsage(legacyKey)
-        void navigationCache.invalidateQueries({ queryKey: key })
-        if (mounted) setWriteError(null)
-      },
-      () => {
-        if (mounted) {
-          setWriteError('旧预设策略使用记录未同步，请稍后重试。')
-        }
-      },
-    )
+    // Migrate every old scenario for this account on its first builder visit,
+    // even when the player enters a different scenario after upgrading.
+    for (const record of legacyUsageRecords(accountID)) {
+      if (query.data.scenarioIDs.includes(record.scenarioID)) continue
+      void migrateLegacyUsage(record.key, record.scenarioID).then(
+        (response) => {
+          navigationCache.setQueryData<PresetUsageResponse>(key, (previous) => ({
+            scenarioIDs: [
+              ...new Set([
+                ...(previous?.scenarioIDs ?? []),
+                ...response.scenarioIDs,
+                record.scenarioID,
+              ]),
+            ],
+          }))
+          clearLegacyUsage(record.key)
+          void navigationCache.invalidateQueries({ queryKey: key })
+          if (mounted) setWriteError(null)
+        },
+        () => {
+          if (mounted) {
+            setWriteError('旧预设策略使用记录未同步，请稍后重试。')
+          }
+        },
+      )
+    }
     return () => {
       mounted = false
     }
-  }, [legacyKey, legacyUsed, query.isSuccess, query.data, scenarioID])
+  }, [accountID, query.isSuccess, query.data])
 
   const markUsed = async () => {
     if (!accountID || !scenarioID) return
