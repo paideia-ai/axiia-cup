@@ -383,6 +383,7 @@ test('输入有轻点，自动暂存不重复发声，保存与首战派发按�
     world.match = runningMatch()
     world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '关闭弹窗' }).click()
     await expect(page.getByRole('button', { name: '保存版本' }))
       .toBeEnabled()
   })
@@ -426,6 +427,7 @@ test('失败操作保留点击反馈，只有成功结果播放确认音', async
     world.saveFails = true
     world.firstBattleDone = false
     await page.goto('/agents/101/build?express=1')
+    await page.getByRole('button', { name: '关闭弹窗' }).click()
   })
   await test.step('当 我点击保存版本', async () => {
     await pressSave(page)
