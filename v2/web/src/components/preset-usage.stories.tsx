@@ -1,12 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { useState } from 'react'
-import { presetUsageKey } from '../lib/preset-usage'
+import { http, HttpResponse } from 'msw'
+import { resetNavigationCache } from '../lib/navigation-cache'
 import { InitModes } from './builder-init'
 import { Button } from './ui/button'
 
 const accounts = ['preset-test-a', 'preset-test-b']
 const scenarios = ['preset-scene-a', 'preset-scene-b']
+let activeAccount = accounts[0]
+const serverUsage = new Map<string, Set<string>>()
 const deck = {
   title: '策略选择',
   role: '辩手',
@@ -46,7 +49,10 @@ function Surface() {
         <Button
           variant='secondary'
           onClick={() =>
-            setAccount((v) => v === accounts[0] ? accounts[1] : accounts[0])}
+            setAccount((v) => {
+              activeAccount = v === accounts[0] ? accounts[1] : accounts[0]
+              return activeAccount
+            })}
         >
           切换账号
         </Button>
@@ -69,13 +75,26 @@ function Surface() {
 const meta = {
   title: 'Agents/Preset first use',
   component: Surface,
-  parameters: { a11y: { test: 'error' } },
+  parameters: {
+    a11y: { test: 'error' },
+    msw: [
+      http.get('*/v1/account/preset-usage', () =>
+        HttpResponse.json({
+          scenarioIDs: [...(serverUsage.get(activeAccount) ?? [])],
+        })),
+      http.post('*/v1/account/preset-usage', async ({ request }) => {
+        const { scenarioID } = await request.json() as { scenarioID: string }
+        const used = serverUsage.get(activeAccount) ?? new Set<string>()
+        used.add(scenarioID)
+        serverUsage.set(activeAccount, used)
+        return HttpResponse.json({ scenarioIDs: [...used] })
+      }),
+    ],
+  },
   beforeEach: () => {
-    for (const account of accounts) {
-      for (const scenario of scenarios) {
-        localStorage.removeItem(presetUsageKey(account, scenario))
-      }
-    }
+    activeAccount = accounts[0]
+    serverUsage.clear()
+    resetNavigationCache()
   },
 } satisfies Meta<typeof Surface>
 export default meta
@@ -86,6 +105,7 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     const canvas = within(canvasElement)
     const body = within(canvasElement.ownerDocument.body)
     const direct = () => canvas.getByRole('button', { name: '选择预设策略' })
+    await canvas.findByRole('button', { name: '选择预设策略' })
     await userEvent.click(direct())
     let dialog = canvas.getByRole('dialog')
     await userEvent.click(
@@ -102,9 +122,7 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     )
     await expect(canvas.getByRole('status')).toHaveTextContent('原有草稿')
     await expect(direct()).toBeVisible()
-    await expect(
-      localStorage.getItem(presetUsageKey(accounts[0], scenarios[0])),
-    ).toBeNull()
+    await expect(serverUsage.get(accounts[0])).toBeUndefined()
 
     await userEvent.click(direct())
     dialog = canvas.getByRole('dialog')
@@ -122,9 +140,7 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await expect(canvas.getByRole('status')).toHaveTextContent(
       '用可核查的事实回应。',
     )
-    await expect(
-      localStorage.getItem(presetUsageKey(accounts[0], scenarios[0])),
-    ).toBe('1')
+    await expect(serverUsage.get(accounts[0])?.has(scenarios[0])).toBe(true)
     more.focus()
     await userEvent.keyboard('{ArrowDown}')
     const item = await body.findByRole('menuitem', { name: '选择预设策略' })
@@ -136,11 +152,11 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await expect(canvas.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
-    await expect(direct()).toBeVisible()
+    await waitFor(() => expect(direct()).toBeVisible())
     await userEvent.click(canvas.getByRole('button', { name: '切换场景' }))
     await expect(canvas.getByRole('button', { name: '更多构建方式' }))
       .toBeVisible()
     await userEvent.click(canvas.getByRole('button', { name: '切换账号' }))
-    await expect(direct()).toBeVisible()
+    await waitFor(() => expect(direct()).toBeVisible())
   },
 }

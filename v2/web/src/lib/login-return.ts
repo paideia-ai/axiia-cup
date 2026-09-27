@@ -49,3 +49,29 @@ export function loginReturnPath(search: string): string {
 
   return candidate
 }
+
+/**
+ * A newly registered account starts its own first battle. Preserve only a
+ * deliberate scenario build entry; a generic "next" can refer to the previous
+ * account's catalog, agent, or match and must not override onboarding.
+ */
+export function registrationReturnPath(
+  search: string,
+  firstBattleDone: boolean,
+): string {
+  const next = new URLSearchParams(search).has('next')
+    ? loginReturnPath(search)
+    : null
+  if (firstBattleDone) return next ?? '/scenarios'
+  if (next) {
+    const parsed = new URL(next, RETURN_BASE)
+    if (/^\/scenarios\/[^/]+\/build$/.test(parsed.pathname)) return next
+    if (
+      parsed.pathname === '/agents/entry' &&
+      parsed.searchParams.get('target') === 'build' &&
+      parsed.searchParams.has('scenario') &&
+      ['a', 'b'].includes(parsed.searchParams.get('side') ?? '')
+    ) return next
+  }
+  return '/express'
+}

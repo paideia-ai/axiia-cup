@@ -52,7 +52,8 @@ export function InitModes({
   initialTool = null,
   onDirect,
 }: InitModesProps) {
-  const { used: presetsUsed, markUsed } = usePresetUsage(accountID, scenarioID)
+  const { used: presetsUsed, loading: presetsLoading, writeError, markUsed } =
+    usePresetUsage(accountID, scenarioID)
   const [open, setOpen] = useState<'mcq' | 'meta' | null>(
     !express && initialTool !== 'raw' ? initialTool : null,
   )
@@ -88,7 +89,7 @@ export function InitModes({
   const fillPreset = (text: string) => {
     if (previewRole) onFill(text, 'mcq', previewRole.key)
     else onFill(text, 'mcq')
-    markUsed()
+    void markUsed()
   }
 
   useEffect(() => {
@@ -140,7 +141,7 @@ export function InitModes({
                     promptUnitLimit={promptUnitLimit}
                     onFill={(text) => {
                       onFill(text, 'mcq')
-                      markUsed()
+                      void markUsed()
                       setTool('raw')
                       onDirect?.()
                     }}
@@ -184,7 +185,13 @@ export function InitModes({
         >
           让 AI 帮你想策略
         </Button>
-        {presetsUsed
+        {presetsLoading
+          ? (
+            <Button size='sm' variant='ghost' disabled>
+              正在加载预设策略…
+            </Button>
+          )
+          : presetsUsed
           ? (
             <StrategyMoreMenu
               triggerRef={presetTrigger}
@@ -210,6 +217,10 @@ export function InitModes({
             </Button>
           )}
       </div>
+
+      {writeError
+        ? <p role='alert' className='text-xs text-(--accent)'>{writeError}</p>
+        : null}
 
       {open === 'mcq'
         ? (

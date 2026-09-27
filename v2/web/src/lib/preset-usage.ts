@@ -1,53 +1,49 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
-const CHANGED = 'axiia:preset-usage-changed'
-const fallback = new Set<string>()
+import { auth } from '../api/client'
+import type { PresetUsageResponse } from '../api/types'
+import { navigationCache } from './navigation-cache'
 
-export function presetUsageKey(accountID: string, scenarioID: string) {
-  return `axiia:preset-used:v1:${JSON.stringify([accountID, scenarioID])}`
-}
-
-function read(key: string | null) {
-  if (!key) return false
-  try {
-    return localStorage.getItem(key) === '1'
-  } catch {
-    return fallback.has(key)
-  }
-}
-
-function subscribe(listener: () => void) {
-  globalThis.addEventListener('storage', listener)
-  globalThis.addEventListener(CHANGED, listener)
-  return () => {
-    globalThis.removeEventListener('storage', listener)
-    globalThis.removeEventListener(CHANGED, listener)
-  }
-}
-
-// Browser-local preference, isolated by account and scenario, shared across
-// agents/sides/tabs. A blocked storage API still works for the current session.
+// The server owns this account-and-scenario preference. Sharing one query per
+// account keeps different agents and sides in sync without browser storage.
 export function usePresetUsage(
   accountID: string | undefined,
   scenarioID: string,
 ) {
-  const key = accountID && scenarioID
-    ? presetUsageKey(accountID, scenarioID)
-    : null
-  const [localUsed, setLocalUsed] = useState(false)
-  const used = useSyncExternalStore(subscribe, () => read(key), () => false)
-  const markUsed = () => {
-    if (!key) {
-      setLocalUsed(true)
-      return
-    }
-    fallback.add(key)
+  const key = ['preset-usage', accountID] as const
+  const [writeError, setWriteError] = useState<string | null>(null)
+  const query = useQuery({
+    queryKey: key,
+    queryFn: ({ signal }) => auth.presetUsage(signal),
+    enabled: Boolean(accountID),
+  }, navigationCache)
+
+  const markUsed = async () => {
+    if (!accountID || !scenarioID) return
+    setWriteError(null)
+    void navigationCache.cancelQueries({ queryKey: key })
+    const previous = navigationCache.getQueryData<PresetUsageResponse>(key)
+    navigationCache.setQueryData<PresetUsageResponse>(key, {
+      scenarioIDs: [...new Set([...(previous?.scenarioIDs ?? []), scenarioID])],
+    })
     try {
-      localStorage.setItem(key, '1')
+      navigationCache.setQueryData(
+        key,
+        await auth.markPresetUsed({ scenarioID }),
+      )
+      void navigationCache.invalidateQueries({ queryKey: key })
     } catch {
-      /* Retain this session's preference if storage is unavailable. */
+      navigationCache.setQueryData(key, previous)
+      void navigationCache.invalidateQueries({ queryKey: key })
+      setWriteError('预设策略使用记录未保存，请稍后重试。')
     }
-    globalThis.dispatchEvent(new Event(CHANGED))
   }
-  return { used: key ? used : localUsed, markUsed }
+
+  return {
+    used: query.data?.scenarioIDs.includes(scenarioID) ?? false,
+    loading: Boolean(accountID) && query.isPending && query.isFetching,
+    writeError,
+    markUsed,
+  }
 }

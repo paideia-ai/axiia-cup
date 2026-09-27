@@ -10,7 +10,7 @@ import { PhoneAuthForm } from '../components/auth/phone-form'
 import type { MeResponse } from '../api/types'
 import { useAuth } from '../context/auth'
 import { tm } from '../testmode/mark'
-import { loginReturnPath } from '../lib/login-return'
+import { loginReturnPath, registrationReturnPath } from '../lib/login-return'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -29,7 +29,7 @@ export function RegisterPage() {
   // 已选择的构建入口保留阵营；普通注册继续按 A3 进入首战快速通道。
   const land = (me: MeResponse) => {
     navigate(
-      returnPath ?? (me.firstBattleDone === true ? '/scenarios' : '/express'),
+      registrationReturnPath(location.search, me.firstBattleDone === true),
       {
         replace: true,
       },
