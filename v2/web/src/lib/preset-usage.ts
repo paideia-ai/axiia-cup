@@ -32,16 +32,20 @@ function legacyUsageRecords(accountID: string) {
       if (!key?.startsWith(LEGACY_PREFIX) || localStorage.getItem(key) !== '1') {
         continue
       }
-      const pair = JSON.parse(key.slice(LEGACY_PREFIX.length))
-      if (
-        Array.isArray(pair) && pair.length === 2 &&
-        pair[0] === accountID && typeof pair[1] === 'string' && pair[1]
-      ) {
-        records.push({ key, scenarioID: pair[1] })
+      try {
+        const pair = JSON.parse(key.slice(LEGACY_PREFIX.length))
+        if (
+          Array.isArray(pair) && pair.length === 2 &&
+          pair[0] === accountID && typeof pair[1] === 'string' && pair[1]
+        ) {
+          records.push({ key, scenarioID: pair[1] })
+        }
+      } catch {
+        // Ignore malformed keys without skipping other legacy records.
       }
     }
   } catch {
-    // Storage may be unavailable, or another page may have left a bad key.
+    // Storage may be unavailable.
   }
   return records
 }
