@@ -383,12 +383,27 @@ test('预设策略每次选题播放现有点击音效', async ({ page }) => {
 
   const dialog = page.getByRole('dialog', { name: '选择预设策略' })
   await expect(dialog).toBeVisible()
+  const progress = await dialog.locator('[aria-label^="第 1 题，共"]')
+    .getAttribute('aria-label')
+  const questionCount = Number(progress?.match(/共 (\d+) 题/)?.[1])
+  expect(questionCount).toBeGreaterThan(1)
   await dialog.locator('[data-tm="E.mcq-option"]').first().click()
   await expectCues(page, [110])
 
   await expect(dialog.locator('[aria-label^="第 2 题，共"]')).toBeVisible()
   await dialog.locator('[data-tm="E.mcq-option"]').first().click()
   await expectCues(page, [110, 110])
+
+  for (let step = 3; step <= questionCount; step++) {
+    await expect(dialog.locator(`[aria-label^="第 ${step} 题，共"]`))
+      .toBeVisible()
+    await dialog.locator('[data-tm="E.mcq-option"]').first().click()
+  }
+  await expectCues(page, Array(questionCount).fill(110))
+  const replace = dialog.getByRole('button', { name: '替换当前草稿' })
+  await expect(replace).toBeVisible()
+  await replace.click()
+  await expectCues(page, Array(questionCount + 1).fill(110))
 })
 
 test('输入有轻点，自动暂存不重复发声，保存与首战派发按顺序确认', async ({ page }) => {
