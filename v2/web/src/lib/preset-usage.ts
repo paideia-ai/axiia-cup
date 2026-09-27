@@ -24,8 +24,11 @@ export function usePresetUsage(
     setWriteError(null)
     void navigationCache.cancelQueries({ queryKey: key })
     const previous = navigationCache.getQueryData<PresetUsageResponse>(key)
+    const priorIDs = Array.isArray(previous?.scenarioIDs)
+      ? previous.scenarioIDs
+      : []
     navigationCache.setQueryData<PresetUsageResponse>(key, {
-      scenarioIDs: [...new Set([...(previous?.scenarioIDs ?? []), scenarioID])],
+      scenarioIDs: [...new Set([...priorIDs, scenarioID])],
     })
     try {
       navigationCache.setQueryData(
@@ -41,7 +44,8 @@ export function usePresetUsage(
   }
 
   return {
-    used: query.data?.scenarioIDs.includes(scenarioID) ?? false,
+    used: Array.isArray(query.data?.scenarioIDs) &&
+      query.data.scenarioIDs.includes(scenarioID),
     loading: Boolean(accountID) && query.isPending && query.isFetching,
     writeError,
     markUsed,
