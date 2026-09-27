@@ -1179,6 +1179,7 @@ export function BuilderPage() {
               agentID={agentID}
               scenarioID={scenarioID}
               express={express}
+              disabled={saving || starting || recovery != null}
               initialTool={requestedTool}
               onDirect={focusPrompt}
               deck={deck}
