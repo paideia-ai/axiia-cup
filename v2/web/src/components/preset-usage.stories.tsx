@@ -75,8 +75,14 @@ const meta = {
     a11y: { test: 'error' },
     msw: {
       handlers: [
-        http.get('/v1/agents/:id/preset-usage', () => HttpResponse.json({ used: false })),
-        http.put('/v1/agents/:id/preset-usage', () => HttpResponse.json({ used: true })),
+        http.get(
+          '/v1/agents/:id/preset-usage',
+          () => HttpResponse.json({ used: false }),
+        ),
+        http.put(
+          '/v1/agents/:id/preset-usage',
+          () => HttpResponse.json({ used: true }),
+        ),
       ],
     },
   },

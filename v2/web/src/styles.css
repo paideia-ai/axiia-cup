@@ -963,48 +963,102 @@ main .text-\(--accent\) {
 }
 
 @keyframes mcq-rise {
-  from { opacity: 0; transform: translateY(18px) scale(.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes mcq-rise-entry {
-  from { opacity: .88; transform: translateY(70dvh) scale(.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: .88;
+    transform: translateY(70dvh) scale(.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes mcq-backdrop-in {
-  from { background-color: transparent; }
-  to { background-color: rgb(0 0 0 / .55); }
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: rgb(0 0 0 / .55);
+  }
 }
 
 @keyframes mcq-settle-into-workspace {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(26px) scale(.975); }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(26px) scale(.975);
+  }
 }
 
 @keyframes mcq-backdrop-out {
-  from { background-color: rgb(0 0 0 / .55); }
-  to { background-color: transparent; }
+  from {
+    background-color: rgb(0 0 0 / .55);
+  }
+  to {
+    background-color: transparent;
+  }
 }
 
 @keyframes mcq-transfer-line {
-  0% { opacity: 0; transform: scaleX(.15); }
-  35% { opacity: 1; transform: scaleX(1); }
-  100% { opacity: 0; transform: scaleX(.35); }
+  0% {
+    opacity: 0;
+    transform: scaleX(.15);
+  }
+  35% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(.35);
+  }
 }
 
 @keyframes mcq-prompt-arrived {
-  0% { box-shadow: 0 0 0 0 rgb(224 74 47 / 0); }
-  38% { box-shadow: 0 0 0 5px rgb(224 74 47 / .2); }
-  100% { box-shadow: 0 0 0 0 rgb(224 74 47 / 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgb(224 74 47 / 0);
+  }
+  38% {
+    box-shadow: 0 0 0 5px rgb(224 74 47 / .2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(224 74 47 / 0);
+  }
 }
 
-.mcq-dialog[open] { animation: mcq-rise 220ms cubic-bezier(.22, 1, .36, 1) both; }
-.mcq-dialog[open].mcq-dialog--entry { animation: mcq-rise-entry 560ms cubic-bezier(.18, .84, .28, 1) both; }
-.mcq-dialog--entry::backdrop { animation: mcq-backdrop-in 560ms ease-out both; }
-.mcq-dialog[open].mcq-dialog--leaving { animation: mcq-settle-into-workspace 420ms cubic-bezier(.4, 0, .6, 1) both; }
-.mcq-dialog--leaving::backdrop { animation: mcq-backdrop-out 420ms ease-in both; }
-.mcq-transfer { background: linear-gradient(90deg, transparent, rgb(224 74 47 / .055), transparent); }
+.mcq-dialog[open] {
+  animation: mcq-rise 220ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.mcq-dialog[open].mcq-dialog--entry {
+  animation: mcq-rise-entry 560ms cubic-bezier(.18, .84, .28, 1) both;
+}
+.mcq-dialog--entry::backdrop {
+  animation: mcq-backdrop-in 560ms ease-out both;
+}
+.mcq-dialog[open].mcq-dialog--leaving {
+  animation: mcq-settle-into-workspace 420ms cubic-bezier(.4, 0, .6, 1) both;
+}
+.mcq-dialog--leaving::backdrop {
+  animation: mcq-backdrop-out 420ms ease-in both;
+}
+.mcq-transfer {
+  background: linear-gradient(90deg, transparent, rgb(224 74 47 / .055),
+    transparent);
+}
 .mcq-transfer-line {
   width: min(50%, 220px);
   height: 2px;
@@ -1013,7 +1067,9 @@ main .text-\(--accent\) {
   box-shadow: 0 0 22px rgb(224 74 47 / .45);
   animation: mcq-transfer-line 420ms ease-in-out both;
 }
-#prompt-input.mcq-prompt-arrived { animation: mcq-prompt-arrived 900ms ease-out both; }
+#prompt-input.mcq-prompt-arrived {
+  animation: mcq-prompt-arrived 900ms ease-out both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .mcq-dialog[open],
@@ -1021,5 +1077,7 @@ main .text-\(--accent\) {
   .mcq-dialog[open].mcq-dialog--leaving,
   .mcq-dialog::backdrop,
   .mcq-transfer-line,
-  #prompt-input.mcq-prompt-arrived { animation: none; }
+  #prompt-input.mcq-prompt-arrived {
+    animation: none;
+  }
 }

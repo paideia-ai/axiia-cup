@@ -8,11 +8,7 @@ import {
   useState,
 } from 'react'
 
-import {
-  assembleDeck,
-  type Deck,
-  type DeckSelections,
-} from '../lib/deck'
+import { assembleDeck, type Deck, type DeckSelections } from '../lib/deck'
 import { usePresetUsage } from '../lib/preset-usage'
 import { promptLength } from '../lib/prompt-length'
 import type { CreationTool } from '../lib/first-battle'
@@ -53,7 +49,11 @@ export function InitModes({
   initialTool = null,
   onDirect,
 }: InitModesProps) {
-  const { used: presetsUsed, markUsed } = usePresetUsage(accountID, scenarioID, agentID)
+  const { used: presetsUsed, markUsed } = usePresetUsage(
+    accountID,
+    scenarioID,
+    agentID,
+  )
   const [open, setOpen] = useState<'mcq' | 'meta' | null>(null)
   const [transferring, setTransferring] = useState(false)
   const presetTrigger = useRef<HTMLButtonElement>(null)
@@ -90,11 +90,14 @@ export function InitModes({
     markUsed()
     setOpen(null)
     setTransferring(false)
-    window.requestAnimationFrame(() => {
+    globalThis.requestAnimationFrame(() => {
       const input = document.getElementById('prompt-input')
       input?.focus()
       input?.classList.add('mcq-prompt-arrived')
-      window.setTimeout(() => input?.classList.remove('mcq-prompt-arrived'), 900)
+      globalThis.setTimeout(
+        () => input?.classList.remove('mcq-prompt-arrived'),
+        900,
+      )
     })
   }
 
@@ -104,15 +107,15 @@ export function InitModes({
 
   useEffect(() => {
     if (express && initialTool == null) {
-      const timer = window.setTimeout(() => setOpen('mcq'), 320)
-      return () => window.clearTimeout(timer)
+      const timer = globalThis.setTimeout(() => setOpen('mcq'), 320)
+      return () => globalThis.clearTimeout(timer)
     }
     if (initialTool !== 'mcq' && initialTool !== 'meta') return
-    const timer = window.setTimeout(
+    const timer = globalThis.setTimeout(
       () => setOpen(initialTool),
       express ? 320 : 0,
     )
-    return () => window.clearTimeout(timer)
+    return () => globalThis.clearTimeout(timer)
   }, [express, initialTool])
 
   return (
@@ -243,7 +246,7 @@ function McqFlow({
   const assembled = assembleDeck(deck, selections)
 
   useEffect(() => () => {
-    if (timer.current != null) window.clearTimeout(timer.current)
+    if (timer.current != null) globalThis.clearTimeout(timer.current)
   }, [])
   useEffect(() => {
     if (confirmReplace) confirmRef.current?.scrollIntoView({ block: 'nearest' })
@@ -253,8 +256,9 @@ function McqFlow({
     setConfirmReplace(false)
     setTransferring(true)
     onTransferStart()
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    timer.current = window.setTimeout(() => onFill(text), reduced ? 0 : 420)
+    const reduced =
+      globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
+    timer.current = globalThis.setTimeout(() => onFill(text), reduced ? 0 : 420)
   }
 
   const choose = (optionID: string) => {
@@ -264,7 +268,7 @@ function McqFlow({
     setConfirmReplace(false)
     setOverLimit(false)
     setLocked(true)
-    timer.current = window.setTimeout(() => {
+    timer.current = globalThis.setTimeout(() => {
       setLocked(false)
       if (step < deck.questions.length - 1) {
         setStep(step + 1)
@@ -274,7 +278,10 @@ function McqFlow({
       const existing = (document.getElementById('prompt-input') as
         | HTMLTextAreaElement
         | null)?.value ?? currentPrompt
-      if (!text || (promptUnitLimit != null && promptLength(text) > promptUnitLimit)) {
+      if (
+        !text ||
+        (promptUnitLimit != null && promptLength(text) > promptUnitLimit)
+      ) {
         setOverLimit(true)
       } else if (existing.trim()) {
         setConfirmReplace(true)
@@ -293,7 +300,9 @@ function McqFlow({
         {deck.questions.map((item, index) => (
           <span
             key={item.id}
-            className={`h-1.5 flex-1 rounded-full ${index <= step ? 'bg-(--accent)' : 'bg-(--border)'}`}
+            className={`h-1.5 flex-1 rounded-full ${
+              index <= step ? 'bg-(--accent)' : 'bg-(--border)'
+            }`}
           />
         ))}
       </div>
@@ -303,7 +312,8 @@ function McqFlow({
       >
         <legend className='w-full'>
           <span className='font-mono text-xs text-(--foreground-muted)'>
-            {String(step + 1).padStart(2, '0')} / {String(deck.questions.length).padStart(2, '0')}
+            {String(step + 1).padStart(2, '0')} /{' '}
+            {String(deck.questions.length).padStart(2, '0')}
           </span>
           <span className='mt-2 block text-lg font-semibold leading-7'>
             {question.prompt}
@@ -318,14 +328,21 @@ function McqFlow({
                 type='button'
                 aria-pressed={active}
                 onClick={() => choose(option.id)}
-                className={`group flex min-h-14 w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium leading-6 transition ${active
-                  ? 'border-(--accent) bg-[rgba(224,74,47,0.1)] text-(--foreground)'
-                  : 'border-(--border) bg-white/2 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:bg-white/4 hover:text-(--foreground)'}`}
+                className={`group flex min-h-14 w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-medium leading-6 transition ${
+                  active
+                    ? 'border-(--accent) bg-[rgba(224,74,47,0.1)] text-(--foreground)'
+                    : 'border-(--border) bg-white/2 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:bg-white/4 hover:text-(--foreground)'
+                }`}
                 {...tm('E.mcq-option')}
               >
-                <span aria-hidden='true' className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] ${active
-                  ? 'border-(--accent) bg-(--accent) text-white'
-                  : 'border-(--border) text-(--foreground-muted)'}`}>
+                <span
+                  aria-hidden='true'
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] ${
+                    active
+                      ? 'border-(--accent) bg-(--accent) text-white'
+                      : 'border-(--border) text-(--foreground-muted)'
+                  }`}
+                >
                   {active
                     ? <Check aria-hidden='true' className='h-3.5 w-3.5' />
                     : String.fromCharCode(65 + index)}
@@ -495,7 +512,9 @@ function ToolDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose()
       }}
-      className={`mcq-dialog fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-(--border) bg-(--surface-elevated) p-0 text-(--foreground) shadow-2xl outline-none backdrop:bg-black/55 ${entry ? 'mcq-dialog--entry' : ''} ${leaving ? 'mcq-dialog--leaving' : ''}`}
+      className={`mcq-dialog fixed inset-0 m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-xl border border-(--border) bg-(--surface-elevated) p-0 text-(--foreground) shadow-2xl outline-none backdrop:bg-black/55 ${
+        entry ? 'mcq-dialog--entry' : ''
+      } ${leaving ? 'mcq-dialog--leaving' : ''}`}
     >
       <div className='sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-(--border-soft) bg-(--surface-elevated) px-5 py-4'>
         <h2 id={titleID} className='font-semibold'>{title}</h2>

@@ -57,7 +57,9 @@ export function usePresetUsage(
         void builder.markPresetUsed(agentID).catch(() => {})
       }
     }).catch(() => {})
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [agentID, key])
 
   const markUsed = () => {

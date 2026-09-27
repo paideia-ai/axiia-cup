@@ -26,8 +26,7 @@ export const TM_E: TmRegistry = {
     label: '策略辅助行',
     clauses: ['U02-C01', 'U02-C03', 'U01-C09', 'U02-C19'],
     journeys: ['j3s1'],
-    note:
-      '始终显示一句引导和 AI 辅助入口；预设正式填入后移入更多构建方式',
+    note: '始终显示一句引导和 AI 辅助入口；预设正式填入后移入更多构建方式',
   },
   'E.init-tab-mcq': {
     label: '预设策略入口',

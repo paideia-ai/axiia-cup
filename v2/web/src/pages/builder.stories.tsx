@@ -515,7 +515,9 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     await expect(input).toHaveValue('保留原有策略')
     await expect(role).toHaveTextContent('长宗我部元亲的密使')
     await userEvent.click(dialog.getByRole('button', { name: '替换当前草稿' }))
-    await waitFor(() => expect(input).toHaveValue(assembleDeck(deck, selections)))
+    await waitFor(() =>
+      expect(input).toHaveValue(assembleDeck(deck, selections))
+    )
     await expect(role).toHaveTextContent('足利义昭的使者')
     await userEvent.click(
       canvas.getByRole('button', { name: '保存并返回主页' }),
