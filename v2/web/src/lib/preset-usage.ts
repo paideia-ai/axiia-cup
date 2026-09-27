@@ -29,7 +29,9 @@ function legacyUsageRecords(accountID: string) {
   try {
     for (let index = 0; index < localStorage.length; index++) {
       const key = localStorage.key(index)
-      if (!key?.startsWith(LEGACY_PREFIX) || localStorage.getItem(key) !== '1') {
+      if (
+        !key?.startsWith(LEGACY_PREFIX) || localStorage.getItem(key) !== '1'
+      ) {
         continue
       }
       try {
@@ -100,15 +102,18 @@ export function usePresetUsage(
       if (query.data.scenarioIDs.includes(record.scenarioID)) continue
       void migrateLegacyUsage(record.key, record.scenarioID).then(
         (response) => {
-          navigationCache.setQueryData<PresetUsageResponse>(key, (previous) => ({
-            scenarioIDs: [
-              ...new Set([
-                ...(previous?.scenarioIDs ?? []),
-                ...response.scenarioIDs,
-                record.scenarioID,
-              ]),
-            ],
-          }))
+          navigationCache.setQueryData<PresetUsageResponse>(
+            key,
+            (previous) => ({
+              scenarioIDs: [
+                ...new Set([
+                  ...(previous?.scenarioIDs ?? []),
+                  ...response.scenarioIDs,
+                  record.scenarioID,
+                ]),
+              ],
+            }),
+          )
           clearLegacyUsage(record.key)
           void navigationCache.invalidateQueries({ queryKey: key })
           if (mounted) setWriteError(null)
