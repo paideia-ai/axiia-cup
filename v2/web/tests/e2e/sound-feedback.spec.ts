@@ -140,6 +140,9 @@ async function installWorld(page: Page): Promise<SoundWorld> {
     if (path === '/v1/scenarios') return json({ scenarios: [scenario.summary] })
     if (path === `/v1/scenarios/${scenario.summary.id}`) return json(scenario)
     if (path.endsWith('/opponents')) return json({ opponents: [] })
+    if (path === '/v1/agents/101/preset-usage' && method === 'GET') {
+      return json({ used: false })
+    }
     if (path === '/v1/agents/101/draft') {
       return json({
         fields: { prompt: world.prompt },
