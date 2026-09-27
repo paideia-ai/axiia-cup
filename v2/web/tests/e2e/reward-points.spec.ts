@@ -122,6 +122,9 @@ async function rewardWorld(page: Page, options: {
     if (path === '/v1/models') return json({ models: config.models })
     if (path === '/v1/my/agents') return json({ scenarios: [] })
     if (path === '/v1/scenarios/shangyang-court') return json(scenario)
+    if (/\/agents\/\d+\/preset-usage$/.test(path)) {
+      return json({ used: false })
+    }
     if (/\/agents\/\d+\/draft$/.test(path)) {
       return json({
         fields: { prompt: '用可验证的小承诺说服君上。' },
@@ -152,6 +155,11 @@ async function rewardWorld(page: Page, options: {
     return json({ error: 'not_found' }, 404)
   })
   return world
+}
+
+async function openExpressBuilder(page: Page, agentID: number) {
+  await page.goto(`/agents/${agentID}/build?express=1`)
+  await page.getByRole('button', { name: '关闭弹窗' }).click()
 }
 
 test('积分入口在桌面和移动端都可用', async ({ page }) => {
@@ -188,7 +196,7 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
     world.firstBattleDone = false
   })
   await test.step('当 我打开首战构建器并保存版本', async () => {
-    await page.goto('/agents/101/build?express=1')
+    await openExpressBuilder(page, 101)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 版本已保存但不能开始首战也没有派发请求', async () => {
@@ -282,7 +290,7 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
     world.firstBattleDone = false
   })
   await test.step('当 我打开商鞅首战构建器并保存版本', async () => {
-    await page.goto('/agents/101/build?express=1')
+    await openExpressBuilder(page, 101)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 我看到本次 200 积分和换角色提示且开始首战不可用', async () => {
@@ -296,7 +304,7 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
   })
   await test.step('当 首战配置指向商鞅对手，我切换到甘龙构建器', async () => {
     world.expressOpponentSide = 'a'
-    await page.goto('/agents/102/build?express=1')
+    await openExpressBuilder(page, 102)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 本次消耗变成 100 积分并能开始首战', async () => {
@@ -319,7 +327,7 @@ test('报价失败时先重试再允许出战', async ({ page }) => {
     world.firstBattleDone = false
   })
   await test.step('当 我打开首战构建器并保存版本', async () => {
-    await page.goto('/agents/101/build?express=1')
+    await openExpressBuilder(page, 101)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 我看到重试提示且不能开始首战', async () => {
