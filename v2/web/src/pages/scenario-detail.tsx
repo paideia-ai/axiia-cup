@@ -480,13 +480,17 @@ function OverviewFactCard({
 
 // Reuse the neutral artwork and identity mapping used in match reports. Names
 // without a portrait (a faction or the jury as a whole) keep their text layout.
-function CharacterHeading({ scenarioID, name, children }: {
+function CharacterHeading({ scenarioID, name, children, primary = false }: {
   scenarioID: string
   name: string
   children: ReactNode
+  primary?: boolean
 }) {
   return (
-    <div className='flex items-center gap-4'>
+    <div
+      className='flex items-center gap-4'
+      data-scenario-portrait={primary ? 'primary' : 'compact'}
+    >
       <RolePortrait labels={speakerLabels(scenarioID, {})} speaker={name} />
       <div className='min-w-0 flex-1'>{children}</div>
     </div>
@@ -571,7 +575,7 @@ function SideCard({
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>
-        <CharacterHeading scenarioID={scenarioID} name={name}>
+        <CharacterHeading scenarioID={scenarioID} name={name} primary>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
             {side === 'a' ? '02' : '03'} · {copy?.eyebrow ??
               (side === 'a' ? '甲方' : '乙方')}
@@ -842,6 +846,7 @@ function JudgeScoringCard({
                   <CharacterHeading
                     scenarioID={scenarioID}
                     name={participants.judge.name}
+                    primary
                   >
                     <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
                       裁判

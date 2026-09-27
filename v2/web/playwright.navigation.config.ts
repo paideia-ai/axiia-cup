@@ -5,7 +5,11 @@ import config from './playwright.config'
 // open and close. API fixtures never contact a live backend.
 export default defineConfig({
   ...config,
-  testMatch: ['navigation-links.spec.ts', 'direct-agent-creation.spec.ts'],
+  testMatch: [
+    'navigation-links.spec.ts',
+    'direct-agent-creation.spec.ts',
+    'scenario-portrait-layout.spec.ts',
+  ],
   use: {
     ...config.use,
     // Native tabs/windows need the full browser implementation used by users,
