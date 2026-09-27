@@ -111,6 +111,7 @@ async function installWorld(page: Page): Promise<SoundWorld> {
       })
     }
   })
+  const usedPresets = new Set<string>()
   await page.route('**/v1/**', (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
@@ -121,6 +122,14 @@ async function installWorld(page: Page): Promise<SoundWorld> {
         contentType: 'application/json',
         body: JSON.stringify(value),
       })
+    if (path === '/v1/account/preset-usage') {
+      if (method === 'POST') {
+        usedPresets.add(
+          (route.request().postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/v1/auth/me') {
       return json({
         account: {

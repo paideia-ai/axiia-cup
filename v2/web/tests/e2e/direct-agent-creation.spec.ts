@@ -8,13 +8,27 @@ import { config } from '../../src/testing/v34-fixtures'
 async function setup(page: Page, empty = false) {
   const inventory = structuredClone(agentPreviewInventory)
   if (empty) inventory.scenarios[0].sides.a = []
-  const created: { scenarioID: string; side: 'a' | 'b'; name?: string }[] = []
+  const created: {
+    scenarioID: string
+    side: 'a' | 'b'
+    name?: string
+    roleKey?: string
+  }[] = []
   const errors: string[] = []
+  const usedPresets = new Set<string>()
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/v1/**', async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname.slice(3)
     const json = (body: unknown) => route.fulfill({ json: body })
+    if (path === '/account/preset-usage') {
+      if (request.method() === 'POST') {
+        usedPresets.add(
+          (request.postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/auth/me') {
       return json({
         account: {
@@ -44,6 +58,18 @@ async function setup(page: Page, empty = false) {
           agentID,
           name: null,
           versionCount: 0,
+          role: input.scenarioID === 'honnoji-decision' && input.roleKey
+            ? {
+              key: input.roleKey,
+              name: ({
+                yoshiaki: '足利义昭的使者',
+                chosokabe: '长宗我部元亲的密使',
+                hosokawa: '细川藤孝',
+                ashigaru: '明智军中的足轻',
+              } as Record<string, string>)[input.roleKey],
+              side: input.side,
+            }
+            : null,
         })
       return json({ agentID })
     }
@@ -60,7 +86,12 @@ async function setup(page: Page, empty = false) {
             return json({ ok: true })
           }
           if (match[2] === 'draft') {
-            return json({ fields: {}, scenarioID: scenario.scenarioID, side })
+            return json({
+              fields: {},
+              scenarioID: scenario.scenarioID,
+              side,
+              role: agent.role,
+            })
           }
           if (match[2] === 'versions') {
             return json({ versions: [], entryVersionID: null })
@@ -266,9 +297,18 @@ for (const { summary } of agentPreviewScenarios) {
     ) {
       await page.goto(`/scenarios/${summary.id}`)
       await page.getByRole('button', { name: `再建一个${role}` }).click()
+      if (summary.id === 'honnoji-decision') {
+        await page.locator('.portrait-choice').first().click()
+      }
       await expect(page.getByRole('textbox', { name: '智能体名称' }))
         .toBeFocused()
-      expect(created.at(-1)).toEqual({ scenarioID: summary.id, side })
+      expect(created.at(-1)).toEqual({
+        scenarioID: summary.id,
+        side,
+        ...(summary.id === 'honnoji-decision'
+          ? { roleKey: side === 'a' ? 'yoshiaki' : 'hosokawa' }
+          : {}),
+      })
     }
   })
 }
@@ -340,4 +380,144 @@ test('first creation survives the empty-to-populated inventory update before its
   await expect(page).toHaveURL(/\/agents\/2001$/)
   await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
+})
+
+for (const width of [1440, 390]) {
+  for (const entry of ['scenario', 'inventory', 'home'] as const) {
+    test(`portrait choice ${width}px ${entry}: direction, cancellation, identity and refresh`, async ({ page, context }) => {
+      await page.setViewportSize({ width, height: 900 })
+      const { created, errors } = await setup(page)
+      await page.goto(
+        entry === 'scenario'
+          ? '/scenarios/honnoji-decision'
+          : entry === 'inventory'
+          ? '/my-agents'
+          : '/agents/1200',
+      )
+      const trigger = page.getByRole('button', {
+        name: entry === 'scenario'
+          ? '再建一个袭击本能寺'
+          : '新建袭击本能寺智能体',
+      })
+      await trigger.scrollIntoViewIfNeeded()
+      const cdp = await context.newCDPSession(page)
+      const mobile = width < 768
+      if (mobile) {
+        await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true })
+      }
+      async function hold() {
+        const rect = await trigger.boundingBox()
+        if (!rect) throw new Error('Missing creation button')
+        const x = rect.x + rect.width / 2
+        const y = rect.y + rect.height / 2
+        if (mobile) {
+          await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchStart',
+            touchPoints: [{ x, y }],
+          })
+        } else {
+          await page.mouse.move(x, y)
+          await page.mouse.down()
+        }
+        return { x, y }
+      }
+      async function move({ x, y }: { x: number; y: number }, delta: number) {
+        if (mobile) {
+          await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchMove',
+            touchPoints: [{ x, y: y + delta }],
+          })
+        } else await page.mouse.move(x + delta, y)
+      }
+      async function release() {
+        if (mobile) {
+          await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchEnd',
+            touchPoints: [],
+          })
+        } else await page.mouse.up()
+      }
+      const start = await hold()
+      await expect(page.locator('.portrait-choice')).toHaveCount(2)
+      // A queued event from scrolling the trigger into view must not dismiss it.
+      await page.evaluate(() => document.dispatchEvent(new Event('scroll')))
+      await expect(page.locator('.portrait-choice')).toHaveCount(2)
+      expect(
+        await page.locator('.portrait-choice-instruction').allTextContents(),
+      )
+        .toEqual(mobile ? ['↑', '↓'] : ['←', '→'])
+      for (const card of await page.locator('.portrait-choice').all()) {
+        const rect = await card.boundingBox()
+        expect(rect!.x).toBeGreaterThanOrEqual(0)
+        expect(rect!.x + rect!.width).toBeLessThanOrEqual(width)
+      }
+      await move(start, -70)
+      await expect(page.locator('[data-role-key="yoshiaki"]')).toHaveAttribute(
+        'data-selected',
+        'true',
+      )
+      await move(start, 0)
+      await release()
+      await expect(page.locator('.portrait-choice')).toHaveCount(0)
+      expect(created).toHaveLength(0)
+      const select = await hold()
+      await move(select, 70)
+      await expect(page.locator('[data-role-key="chosokabe"]')).toHaveAttribute(
+        'data-selected',
+        'true',
+      )
+      expect(
+        await page.locator('.portrait-choice-instruction').allTextContents(),
+      )
+        .toEqual(mobile ? ['↑', '↓'] : ['←', '→'])
+      await release()
+      await expect(page).toHaveURL(/\/agents\/2001$/)
+      await page.getByRole('textbox', { name: '智能体名称' }).press('Escape')
+      await page.reload()
+      await expect(
+        page.getByRole('heading', { name: '长宗我部元亲的密使 #2001' }),
+      ).toBeVisible()
+      expect(created).toEqual([{
+        scenarioID: 'honnoji-decision',
+        side: 'a',
+        roleKey: 'chosokabe',
+      }])
+      expect(errors).toEqual([])
+    })
+  }
+}
+
+test('portrait keyboard selection and a rejected creation remain recoverable', async ({ page }) => {
+  const { created, errors } = await setup(page)
+  let attempts = 0
+  await page.route('**/v1/agents', async (route) => {
+    if (++attempts === 1) {
+      return route.fulfill({ status: 409, json: { error: 'sibling_gate' } })
+    }
+    await route.fallback()
+  })
+  await page.goto('/scenarios/honnoji-decision')
+  const trigger = page.getByRole('button', { name: '再建一个暂不袭击信长' })
+  await trigger.scrollIntoViewIfNeeded()
+  await trigger.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('button', { name: '创建细川藤孝' })).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('button', { name: '创建明智军中的足轻' }))
+    .toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.portrait-choice')).toHaveCount(0)
+  expect(created).toHaveLength(0)
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('button', { name: '创建细川藤孝' })).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('button', { name: '创建明智军中的足轻' }))
+    .toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('alert')).toBeVisible()
+  await trigger.click()
+  await page.getByRole('button', { name: '创建明智军中的足轻' }).click()
+  await expect(page).toHaveURL(/\/agents\/2001$/)
+  expect(created[0].roleKey).toBe('ashigaru')
+  expect(errors).toEqual([])
 })

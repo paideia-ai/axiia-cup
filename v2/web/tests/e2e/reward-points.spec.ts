@@ -23,12 +23,21 @@ async function rewardWorld(page: Page, options: {
     walletUnavailable: options.failWallet === true,
   }
   const balance = options.balance ?? 1900
+  const usedPresets = new Set<string>()
   await page.route('**/v1/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
     const path = url.pathname
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/v1/account/preset-usage') {
+      if (request.method() === 'POST') {
+        usedPresets.add(
+          (request.postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/v1/auth/me') {
       return json({
         account: {

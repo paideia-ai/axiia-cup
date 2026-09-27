@@ -33,6 +33,7 @@ const scenarioPath = `/scenarios/${scenario.summary.id}`
 async function fixtures(page: Page, options: FixtureOptions = {}) {
   const ensures: { page: Page; side: string }[] = []
   const unexpected: string[] = []
+  const usedPresets = new Set<string>()
   const errors: string[] = []
   const observeErrors = (tab: Page) =>
     tab.on('pageerror', (error) => errors.push(error.message))
@@ -43,6 +44,14 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
     const path = new URL(request.url()).pathname.slice(3)
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/account/preset-usage') {
+      if (request.method() === 'POST') {
+        usedPresets.add(
+          (request.postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/auth/me') {
       return options.guest
         ? json({ error: 'unauthorized', message: '请登录' }, 401)

@@ -27,6 +27,7 @@ async function world(page: Page) {
   const holds: Record<string, Promise<void>> = {}
   let account = 'navigation-player'
   let failCatalog = false
+  const usedPresets = new Set<string>()
   await page.route('**/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     requests[path] = (requests[path] ?? 0) + 1
@@ -35,7 +36,14 @@ async function world(page: Page) {
     await holds[path]
     let payload: unknown = {}
     let status = 200
-    if (path === '/v1/auth/me' || path === '/v1/auth/login') {
+    if (path === '/v1/account/preset-usage') {
+      if (route.request().method() === 'POST') {
+        usedPresets.add(
+          (route.request().postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      payload = { scenarioIDs: [...usedPresets] }
+    } else if (path === '/v1/auth/me' || path === '/v1/auth/login') {
       payload = {
         account: { id: account, displayName: account, isAdmin: false },
         elevated: false,
