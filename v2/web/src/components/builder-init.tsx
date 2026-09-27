@@ -11,6 +11,7 @@ import {
 import { assembleDeck, type Deck, type DeckSelections } from '../lib/deck'
 import { usePresetUsage } from '../lib/preset-usage'
 import { promptLength } from '../lib/prompt-length'
+import { playSound, unlockAudio } from '../lib/sound'
 import type { CreationTool } from '../lib/first-battle'
 import { tm } from '../testmode/mark'
 import { Button } from './ui/button'
@@ -263,6 +264,8 @@ function McqFlow({
 
   const choose = (optionID: string) => {
     if (locked || transferring) return
+    unlockAudio()
+    playSound('click')
     const next = { ...selections, [question.id]: optionID }
     setSelections(next)
     setConfirmReplace(false)
