@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react'
+import { RolePortrait } from '../components/role-portrait'
+import { speakerLabels } from '../components/timeline/labels'
 import { CreateAgentAction } from '../components/create-agent-action'
 import { PageLoading } from '../components/page-loading'
 import { Clock, Hammer } from 'lucide-react'
@@ -172,6 +175,7 @@ export function ScenarioDetailPage() {
             </section>
 
             <JudgeScoringCard
+              scenarioID={scenarioId}
               intro={intro}
               education={education}
               scoring={data.scoring ?? null}
@@ -474,9 +478,25 @@ function OverviewFactCard({
   )
 }
 
+// Reuse the neutral artwork and identity mapping used in match reports. Names
+// without a portrait (a faction or the jury as a whole) keep their text layout.
+function CharacterHeading({ scenarioID, name, children }: {
+  scenarioID: string
+  name: string
+  children: ReactNode
+}) {
+  return (
+    <div className='flex items-center gap-4'>
+      <RolePortrait labels={speakerLabels(scenarioID, {})} speaker={name} />
+      <div className='min-w-0 flex-1'>{children}</div>
+    </div>
+  )
+}
+
 function CollectionBlock(
-  { collection, mark }: {
+  { collection, mark, scenarioID }: {
     collection: ScenarioIntroCollection
+    scenarioID?: string
     /** 测试模式标记：两处调用各自一个 id（见 testmode/registry/discovery.ts） */
     mark: ReturnType<typeof tm>
   },
@@ -504,12 +524,14 @@ function CollectionBlock(
             key={`${item.title}:${item.text}`}
             className='rounded-lg border border-(--border-soft) bg-white/2 p-4'
           >
-            <h4 className='text-sm font-semibold text-(--foreground)'>
-              {item.title}
-            </h4>
-            <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
-              {item.text}
-            </p>
+            <CharacterHeading scenarioID={scenarioID ?? ''} name={item.title}>
+              <h4 className='text-sm font-semibold text-(--foreground)'>
+                {item.title}
+              </h4>
+              <p className='mt-2 text-xs leading-6 text-(--foreground-subtle)'>
+                {item.text}
+              </p>
+            </CharacterHeading>
           </article>
         ))}
       </div>
@@ -549,7 +571,7 @@ function SideCard({
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>
-        <div>
+        <CharacterHeading scenarioID={scenarioID} name={name}>
           <p className='text-[11px] font-semibold tracking-[0.1em] text-(--foreground-muted)'>
             {side === 'a' ? '02' : '03'} · {copy?.eyebrow ??
               (side === 'a' ? '甲方' : '乙方')}
@@ -564,7 +586,7 @@ function SideCard({
               </p>
             )
             : null}
-        </div>
+        </CharacterHeading>
 
         <div className='space-y-4'>
           {copy?.paragraphs.map((paragraph) => (
@@ -599,9 +621,14 @@ function SideCard({
                 return (
                   <div key={choice.name} className='space-y-2'>
                     <section className='rounded-lg border border-(--border-soft) bg-white/2 p-3'>
-                      <h4 className='text-sm font-semibold text-(--foreground)'>
-                        {choice.name}
-                      </h4>
+                      <CharacterHeading
+                        scenarioID={scenarioID}
+                        name={choice.name}
+                      >
+                        <h4 className='text-sm font-semibold text-(--foreground)'>
+                          {choice.name}
+                        </h4>
+                      </CharacterHeading>
                       <p className='mt-1 text-xs leading-6 text-(--foreground-subtle)'>
                         {choice.text}
                       </p>
@@ -778,12 +805,14 @@ function HiddenGoalList({
 }
 
 function JudgeScoringCard({
+  scenarioID,
   intro,
   education,
   scoring,
   scoringLabel,
   scoringInitiallyCollapsed,
 }: {
+  scenarioID: string
   intro: ScenarioIntroCopy | null
   education: ScenarioEducation | null
   scoring: ScenarioScoringDTO | null
@@ -810,15 +839,20 @@ function JudgeScoringCard({
             {participants
               ? (
                 <div>
-                  <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
-                    裁判
-                  </p>
-                  <h3 className='mt-2 text-xl font-bold text-(--foreground)'>
-                    {participants.judge.name}
-                  </h3>
-                  <p className='mt-1 text-xs text-(--foreground-muted)'>
-                    {participants.judge.label}
-                  </p>
+                  <CharacterHeading
+                    scenarioID={scenarioID}
+                    name={participants.judge.name}
+                  >
+                    <p className='text-[11px] font-medium tracking-[0.06em] text-(--foreground-muted)'>
+                      裁判
+                    </p>
+                    <h3 className='mt-2 text-xl font-bold text-(--foreground)'>
+                      {participants.judge.name}
+                    </h3>
+                    <p className='mt-1 text-xs text-(--foreground-muted)'>
+                      {participants.judge.label}
+                    </p>
+                  </CharacterHeading>
                   {participants.judge.paragraphs.map((paragraph) => (
                     <p
                       key={paragraph}
@@ -855,6 +889,7 @@ function JudgeScoringCard({
           ? (
             <CollectionBlock
               collection={participants.supporting}
+              scenarioID={scenarioID}
               mark={tm('DA.supporting-list')}
             />
           )

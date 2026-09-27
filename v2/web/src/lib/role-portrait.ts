@@ -21,6 +21,7 @@ const characters: Record<string, Record<string, string>> = {
   },
   'honnoji-decision': {
     '长宗我部元亲的密使': 'chosokabe-envoy',
+    '长宗我部元亲阵营的密使': 'chosokabe-envoy',
     '足利义昭的使者': 'yoshiaki-envoy',
     '细川藤孝': 'hosokawa-fujitaka',
     '明智军中的足轻': 'ashigaru',
