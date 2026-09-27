@@ -12,13 +12,20 @@ import { RewardsProvider } from '../context/rewards'
 import { refreshRewards } from '../lib/reward-events'
 import { config, scenario } from '../testing/v34-fixtures'
 import { deckFor } from '../scenarios/decks'
-import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
+import {
+  builderDraftJournalStoragePrefix,
+  purgeBuilderDraftJournals,
+} from '../lib/builder-draft-storage'
 import { assembleDeck } from '../lib/deck'
 import { BuilderPage } from './builder'
 
-function Surface() {
+function Surface({ express = false }: { express?: boolean }) {
   return (
-    <MemoryRouter initialEntries={['/agents/101/build']}>
+    <MemoryRouter
+      initialEntries={[
+        express ? '/agents/101/build?express=1' : '/agents/101/build',
+      ]}
+    >
       <Routes>
         <Route path='/agents/:agentId/build' element={<BuilderPage />} />
         <Route
@@ -101,6 +108,59 @@ export const ModelDropdownPreview: Story = {
         label: `预览模型 ${index + 1}`,
       })),
     ),
+  },
+}
+
+export const ExpressWaitsForDraftRecovery: Story = {
+  args: { express: true },
+  beforeEach: () => {
+    purgeBuilderDraftJournals(101)
+    const identity = 'anonymous:101'
+    const token = 'review-conflict'
+    localStorage.setItem(
+      `${builderDraftJournalStoragePrefix(identity)}${token}`,
+      JSON.stringify({
+        schema: 2,
+        identity,
+        agentID: 101,
+        writerID: 'review-test',
+        revision: 1,
+        token,
+        basePrompt: '旧服务器草稿',
+        prompt: '本机待恢复草稿',
+        promptPersisted: false,
+        roleKey: null,
+        modelID: null,
+        note: '',
+        method: null,
+        updatedAt: Date.now(),
+      }),
+    )
+  },
+  parameters: {
+    msw: handlers(
+      '服务器新草稿',
+      () => HttpResponse.json({ versions: [] }),
+    ),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const recovery = await canvas.findByRole('region', {
+      name: '本机草稿恢复',
+    })
+    await expect(recovery).toBeVisible()
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    await expect(canvas.queryByRole('dialog', { name: '选择预设策略' }))
+      .toBeNull()
+    await userEvent.click(
+      within(recovery).getByRole('button', { name: '使用服务器草稿' }),
+    )
+    const dialog = await canvas.findByRole('dialog', {
+      name: '选择预设策略',
+    })
+    await expect(
+      within(dialog).getByRole('button', { name: '关闭弹窗' }),
+    ).toBeEnabled()
   },
 }
 
@@ -515,6 +575,9 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     await expect(input).toHaveValue('保留原有策略')
     await expect(role).toHaveTextContent('长宗我部元亲的密使')
     await userEvent.click(dialog.getByRole('button', { name: '替换当前草稿' }))
+    await expect(dialog.getByRole('button', {
+      name: '长宗我部元亲的密使',
+    })).toBeDisabled()
     await waitFor(() =>
       expect(input).toHaveValue(assembleDeck(deck, selections))
     )
