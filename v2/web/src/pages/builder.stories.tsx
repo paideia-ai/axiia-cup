@@ -643,3 +643,37 @@ export const RolePickerCommitsOnlyWhenFilled: Story = {
     await expect(JSON.parse(savedRoleOptions!)).toEqual({ role: 'yoshiaki' })
   },
 }
+
+export const ExpressRoleFillOpensOnlyOnce: Story = {
+  ...RolePickerCommitsOnlyWhenFilled,
+  args: { express: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const input = await canvas.findByLabelText('策略提示词')
+    await waitFor(() => expect(input).toBeEnabled())
+    const dialog = within(await canvas.findByRole('dialog', {
+      name: '选择预设策略',
+    }))
+    await userEvent.click(
+      dialog.getByRole('button', { name: '足利义昭的使者' }),
+    )
+    const deck = deckFor('honnoji-decision', 'a', 'yoshiaki')!
+    const selections: Record<string, string> = {}
+    for (const question of deck.questions) {
+      selections[question.id] = question.options[0].id
+      await userEvent.click(
+        await dialog.findByRole('button', {
+          name: question.options[0].label,
+        }),
+      )
+    }
+    await userEvent.click(
+      await dialog.findByRole('button', { name: '替换当前草稿' }),
+    )
+    await waitFor(() =>
+      expect(input).toHaveValue(assembleDeck(deck, selections))
+    )
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    expect(canvas.queryByRole('dialog', { name: '选择预设策略' })).toBeNull()
+  },
+}
