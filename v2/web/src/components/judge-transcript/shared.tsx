@@ -11,6 +11,7 @@ export interface JudgePresentation {
   mobileTrendTarget?: HTMLElement | null
   beats: ReplayBeatStep[]
   labels: SpeakerLabels
+  speechNumberOf: (verdict: VerdictDTO) => number | undefined
   anchorSeqOf: (verdict: VerdictDTO) => number | null
   showTrace: boolean
   traceOf: (verdict: VerdictDTO) => string | null
@@ -70,4 +71,8 @@ export function JudgeNote(
       />
     </div>
   )
+}
+
+export function speechProgressLabel(number: number | undefined): string {
+  return number == null ? '发言前' : `读至 #${number} 后`
 }

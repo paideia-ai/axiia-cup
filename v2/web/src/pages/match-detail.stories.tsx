@@ -77,12 +77,24 @@ export const CrossDayTimestamps: Story = {
   },
 }
 
+async function checkSpeechNumbers(
+  root: HTMLElement,
+  start: number,
+  count: number,
+) {
+  const labels = [...root.querySelectorAll('[data-speech-number]')]
+  await expect(labels.map((label) => label.textContent)).toEqual(
+    Array.from({ length: count }, (_, index) => `#${start + index}`),
+  )
+}
+
 // Historical snapshot used by the approved local preview at localhost:5235.
 async function checkThreeStageReport(
   canvasElement: HTMLElement,
   first: string,
   third: string,
   names: string[],
+  speechCount: number,
 ) {
   const canvas = within(canvasElement)
   const second = await canvas.findByRole('heading', {
@@ -99,12 +111,15 @@ async function checkThreeStageReport(
   }
   await expect(thirdHeading.compareDocumentPosition(final) & 4).toBeTruthy()
   await expect(canvas.queryByText(/inquiry-[ab]|第 \d\/\d 阶段/)).toBeNull()
+  await checkSpeechNumbers(canvasElement, 1, speechCount)
+  await expect(canvas.getByText('读至 #4 后', { exact: true })).toBeVisible()
   await userEvent.click(canvas.getByRole('button', { name: '回放' }))
   await expect(canvas.queryByRole('heading', { name: '（阶段2/3）屏退问询' }))
     .toBeNull()
   await expect(canvas.queryByRole('heading', { name: '终局裁决' })).toBeNull()
   await userEvent.click(canvas.getByRole('button', { name: '退出回放' }))
   await canvas.findByRole('heading', { name: '（阶段2/3）屏退问询' })
+  await checkSpeechNumbers(canvasElement, 1, speechCount)
 }
 
 export const ReferenceMatch144: Story = {
@@ -127,6 +142,7 @@ export const ReferenceMatch144: Story = {
       '（阶段1/3）朝堂辩论',
       '（阶段3/3）秦孝公裁决',
       ['商鞅', '甘龙'],
+      10,
     ),
 }
 
@@ -144,6 +160,7 @@ export const ReferenceMatch120: Story = {
       '（阶段1/3）深夜军议',
       '（阶段3/3）光秀决断',
       ['足利义昭的使者', '细川藤孝'],
+      20,
     )
     const canvas = within(canvasElement)
     const result = within(canvas.getByRole('region', { name: '简要对局结果' }))
@@ -176,7 +193,22 @@ export const ReferenceMatch145: Story = {
       .toBeVisible()
     for (let round = 1; round <= 5; round++) {
       await userEvent.click(canvas.getByRole('tab', { name: `第${round}轮` }))
-      const panel = within(canvas.getByRole('tabpanel'))
+      const panelElement = canvas.getByRole('tabpanel')
+      const panel = within(panelElement)
+      await checkSpeechNumbers(panelElement, (round - 1) * 5 + 1, 5)
+      for (
+        const chat of panelElement.querySelectorAll<HTMLElement>(
+          '[data-tm="FA.jury-private-chat"]',
+        )
+      ) {
+        await expect(
+          [...chat.querySelectorAll('[data-private-speech-number]')].map((
+            label,
+          ) => label.textContent?.trim()),
+        ).toEqual(
+          Array.from({ length: 6 }, (_, index) => `私聊 #${index + 1}`),
+        )
+      }
       await expect(panel.getByText(`第 ${round} 轮公开审议`, { exact: true }))
         .toBeVisible()
       await expect(canvas.getByText('十一人最终判决')).toBeVisible()
@@ -207,7 +239,9 @@ export const ReferenceMatch122: Story = {
     const labels = ['原始电车', '自动驾驶车', '缸中之脑']
     for (const [index, label] of labels.entries()) {
       await userEvent.click(canvas.getByRole('tab', { name: label }))
-      const panel = within(canvas.getByRole('tabpanel', { name: label }))
+      const panelElement = canvas.getByRole('tabpanel', { name: label })
+      const panel = within(panelElement)
+      await checkSpeechNumbers(panelElement, index * 10 + 1, 10)
       await expect(
         panel.getByRole('heading', { name: `第${'一二三'[index]}案·${label}` }),
       ).toBeVisible()
@@ -251,12 +285,18 @@ export const ReferenceMatch123: Story = {
       canvas.getByText('第一场·凤仪亭公开交锋', { exact: true }),
     ).toBeVisible()
     const segments = [
-      { label: '交锋', channels: ['public', 'order'] },
-      { label: '私会', channels: ['a-1', 'b-1'] },
-      { label: '暗流', channels: ['leak-a', 'leak-b', 'a-2', 'b-2'] },
+      { label: '交锋', channels: ['public', 'order'], start: 1, count: 6 },
+      { label: '私会', channels: ['a-1', 'b-1'], start: 7, count: 20 },
+      {
+        label: '暗流',
+        channels: ['leak-a', 'leak-b', 'a-2', 'b-2'],
+        start: 27,
+        count: 20,
+      },
     ]
-    for (const { label, channels } of segments) {
+    for (const { label, channels, start, count } of segments) {
       await userEvent.click(canvas.getByRole('tab', { name: label }))
+      await checkSpeechNumbers(canvas.getByRole('tabpanel'), start, count)
       for (const turn of referenceMatch123.turns) {
         if (
           turn.kind === 'dialogue' && channels.includes(turn.channel) &&

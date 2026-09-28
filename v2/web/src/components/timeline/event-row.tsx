@@ -361,7 +361,9 @@ export function EventRow({
   scenarioID,
   showReasoning,
   previousSecretPoll,
+  speechNumber,
 }: {
+  speechNumber?: number
   previousSecretPoll?: ScriptEvent
   turn: TurnDTO
   labels: SpeakerLabels
@@ -370,7 +372,13 @@ export function EventRow({
 }) {
   const event = scriptEvent(turn)
   const juryRow = event && scenarioID === 'legal-harbor-murder-jury'
-    ? renderJuryEvent(event, labels, showReasoning, previousSecretPoll)
+    ? renderJuryEvent(
+      event,
+      labels,
+      showReasoning,
+      previousSecretPoll,
+      speechNumber,
+    )
     : null
   if (juryRow) return juryRow
   switch (event ? eventType(event) : null) {

@@ -23,10 +23,12 @@ export function TranscriptStage({
   showReasoning,
   verdictsBySeq,
   previousPolls,
+  speechNumbers,
   hideStageTitle = false,
 }: {
   hideStageTitle?: boolean
   previousPolls?: ReadonlyMap<number, ScriptEvent>
+  speechNumbers: ReadonlyMap<number, number>
   group: StageGroup
   index: number
   total: number
@@ -118,6 +120,7 @@ export function TranscriptStage({
                   {phaseRows(item.seq)}
                   <LiveDialogueRow
                     bubble={item.bubble}
+                    speechNumber={speechNumbers.get(item.seq)}
                     labels={labels}
                     showReasoning={showReasoning}
                   />
@@ -130,6 +133,7 @@ export function TranscriptStage({
                     ? (
                       <EventRow
                         turn={item.turn}
+                        speechNumber={speechNumbers.get(item.seq)}
                         previousSecretPoll={previousPolls?.get(item.seq)}
                         labels={labels}
                         scenarioID={scenarioID}
@@ -139,6 +143,7 @@ export function TranscriptStage({
                     : (
                       <DialogueRow
                         turn={item.turn}
+                        speechNumber={speechNumbers.get(item.seq)}
                         labels={labels}
                         showReasoning={showReasoning}
                       />

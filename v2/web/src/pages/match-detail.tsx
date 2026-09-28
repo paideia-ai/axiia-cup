@@ -1,3 +1,4 @@
+import { buildSpeechNumbers, speechNumberBefore } from '../lib/speech-numbering'
 import { JudgeDialogue } from '../components/judge-transcript/judge-dialogue'
 import { TabbedJudgeTranscript } from '../components/judge-transcript/tabbed-judge-transcript'
 import { scriptEvent } from '../lib/event'
@@ -430,6 +431,14 @@ export function MatchDetailPage() {
     return anchor ? anchor.seq : null
   }
 
+  const speechNumbers = buildSpeechNumbers(
+    data.summary.scenarioID,
+    data.turns,
+    replaying ? [] : stream.bubbles,
+  )
+  const speechNumberOf = (verdict: VerdictDTO) =>
+    speechNumberBefore(speechNumbers, verdict.afterSeq)
+
   const renderGroupRow = (row: (typeof groupRows)[number], tabbed = false) => {
     const answers = !replaying
       ? inquiryAnswers(row.group, row.verdicts, labels)
@@ -509,6 +518,7 @@ export function MatchDetailPage() {
           showReasoning={debug && !replaying}
           verdictsBySeq={bySeq}
           previousPolls={previousPolls}
+          speechNumbers={speechNumbers}
         />
         {atGroupEnd.map(renderVerdict)}
       </div>
@@ -578,6 +588,7 @@ export function MatchDetailPage() {
                 mobileTrendTarget,
                 tabLabels: tabPlan.labels,
                 anchorSeqOf: anchorRowSeq,
+                speechNumberOf,
                 showTrace,
                 traceOf,
                 beats,
@@ -934,6 +945,7 @@ export function MatchDetailPage() {
                             ),
                             beats,
                             anchorSeqOf: anchorRowSeq,
+                            speechNumberOf,
                             labels,
                             showTrace,
                             traceOf,

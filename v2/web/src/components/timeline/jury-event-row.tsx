@@ -34,10 +34,12 @@ function JurySpeech({
   event,
   labels,
   showReasoning,
+  speechNumber,
 }: {
   event: ScriptEvent
   labels: SpeakerLabels
   showReasoning: boolean
+  speechNumber?: number
 }) {
   const actor = eventString(event, 'actor') ?? ''
   const speech = eventString(event, 'text') ?? ''
@@ -50,6 +52,9 @@ function JurySpeech({
       <p className='portrait-speaker mb-2 flex items-center gap-2 text-xs font-semibold text-(--foreground-subtle)'>
         <RolePortrait labels={labels} speaker={actor} />
         {speakerName(labels, actor)}
+        {speechNumber != null && (
+          <span data-speech-number={speechNumber}>#{speechNumber}</span>
+        )}
       </p>
       <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-(--foreground)'>
         {speech || '暂无公开发言'}
@@ -335,6 +340,9 @@ function PrivateChat({
                         {message.exchange == null
                           ? ''
                           : ` · 第 ${message.exchange} 轮私聊`}
+                      </span>
+                      <span data-private-speech-number={index + 1}>
+                        私聊 #{index + 1}
                       </span>
                     </p>
                     <p className='mt-1 whitespace-pre-wrap text-sm text-(--foreground)'>
@@ -687,11 +695,13 @@ export function renderJuryEvent(
   labels: SpeakerLabels,
   showReasoning: boolean,
   previousSecretPoll?: ScriptEvent,
+  speechNumber?: number,
 ) {
   switch (eventType(event)) {
     case 'jury_speech':
       return (
         <JurySpeech
+          speechNumber={speechNumber}
           event={event}
           labels={labels}
           showReasoning={showReasoning}

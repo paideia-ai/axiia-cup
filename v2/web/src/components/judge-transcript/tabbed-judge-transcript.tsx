@@ -4,6 +4,7 @@ import { useAlignedJudgeNotes } from './use-aligned-judge-notes'
 import type { TabbedJudgePresentation } from './shared'
 import { TranscriptTabs } from '../transcript-tabs'
 import { JudgeSidebarTrend } from './judge-sidebar-trend'
+import { speechProgressLabel } from './shared'
 import './judge-transcript.css'
 
 export function TabbedJudgeTranscript({
@@ -17,6 +18,7 @@ export function TabbedJudgeTranscript({
   showTrace,
   traceOf,
   anchorSeqOf,
+  speechNumberOf,
 }: TabbedJudgePresentation & { connectionGap?: number }) {
   const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
@@ -76,8 +78,8 @@ export function TabbedJudgeTranscript({
                 data-os-anchor={anchorSeqOf(step.verdict)}
               >
                 <p className='mb-2 text-[11px] text-(--foreground-muted)'>
-                  读至 #{step.verdict.afterSeq}{' '}
-                  后{step.changed ? ' · 倾向变化' : ''}
+                  {speechProgressLabel(speechNumberOf(step.verdict))}
+                  {step.changed ? ' · 倾向变化' : ''}
                 </p>
                 <JudgeNote
                   step={step}
@@ -85,6 +87,7 @@ export function TabbedJudgeTranscript({
                   labels={labels}
                   traceOf={traceOf}
                   anchorSeqOf={anchorSeqOf}
+                  speechNumberOf={speechNumberOf}
                   showTrace={showTrace}
                 />
               </div>
