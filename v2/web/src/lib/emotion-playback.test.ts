@@ -128,12 +128,12 @@ describe('emotion playback deadlines', () => {
     store.prepare('one', 'E06', 40)
     expect(store.get('one')?.category).toBe('E06')
   })
-  it('does not restart the deadline when an SSE result precedes a delayed transcript refresh', () => {
+  it('keeps a bounded image gate for a valid result published after classification', () => {
     const store = new EmotionPlayback()
     store.ingest(match([]), 0)
     store.update([output('one', 'ready')], 20)
     store.ingest(match([{ ...output(), waitMs: 0, updateMs: 200 }]), 820)
-    store.prepare('one', 'E06', 1030)
+    store.prepare('one', 'E06', 1821)
     expect(store.get('one')?.category).toBe('E01')
   })
   it('holds subsequent events and reports behind unfinished text', () => {
@@ -153,16 +153,35 @@ describe('emotion playback deadlines', () => {
     const snapshot = match([output(), output('two')])
     snapshot.turns = [{
       seq: 0,
+      channel: 'verdict',
+      kind: 'event',
+      speaker: 'event',
+      finalText: '',
       event: {
         type: 'final_vote_reveal',
         votes: [{ outputRef: 'one' }, { outputRef: 'two' }],
       },
-    }] as MatchDetail['turns']
+    }]
     store.ingest(snapshot, 0)
     store.tick(200)
     expect(store.get('one')?.waiting).toBe(false)
     expect(store.get('two')?.waiting).toBe(false)
     store.tick(600)
     expect(store.busy).toBe(false)
+  })
+  it('uses an on-time result even when a private conversation is only published later', () => {
+    const store = new EmotionPlayback()
+    store.ingest(match([]), 0)
+    store.ingest(
+      match([{ ...output('one', 'ready'), waitMs: 0, updateMs: 0 }]),
+      5000,
+    )
+    expect(store.get('one')?.waiting).toBe(true)
+    store.prepare('one', 'E06', 5020)
+    expect(store.get('one')).toMatchObject({
+      category: 'E06',
+      end: 3,
+      waiting: false,
+    })
   })
 })

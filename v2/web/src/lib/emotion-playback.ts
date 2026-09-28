@@ -143,8 +143,16 @@ export class EmotionPlayback {
         this.entries.set(output.outputRef, {
           output,
           historical,
-          waitUntil: now + Math.min(200, Math.max(0, output.waitMs)),
-          updateUntil: now + Math.min(1000, Math.max(0, output.updateMs)),
+          // An already-settled private reply can be published much later than it
+          // was classified. Its valid result gets an image gate on first display.
+          waitUntil: now +
+            (output.status === 'ready'
+              ? 200
+              : Math.min(200, Math.max(0, output.waitMs))),
+          updateUntil: now +
+            (output.status === 'ready'
+              ? 1000
+              : Math.min(1000, Math.max(0, output.updateMs))),
           locked: output.status === 'unavailable',
           prepared: null,
           start: historical ? now : null,

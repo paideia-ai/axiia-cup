@@ -74,6 +74,11 @@ not speed up text to hide that queue.
 - `AXIIA_JEV_API_KEY` enables the feature. No credential reaches the browser.
   Without configuration, existing live streaming stays enabled.
 
+A private reply may be classified before its containing conversation is published.
+A durable ready result present on the first display remains valid; it receives a
+local 200 ms image gate and at most 1 second for decoding. This does not reopen
+an expired pending classification or a previously neutral-locked output.
+
 ## Frontend
 
 A match-scoped playback store survives row remounts and transcript refreshes. It
