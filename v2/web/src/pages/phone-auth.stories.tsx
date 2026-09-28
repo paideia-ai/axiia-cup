@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 
 import type { MeResponse, PhoneVerifyRequest } from '../api/types'
 import { AuthProvider } from '../context/auth'
@@ -46,11 +46,21 @@ const anonymous = http.get(
     ),
 )
 
-function surface(Page: () => React.ReactNode) {
+function RouteDestination() {
+  const location = useLocation()
+  return (
+    <output data-testid='current-route'>
+      {location.pathname}{location.search}{location.hash}
+    </output>
+  )
+}
+
+function surface(Page: () => React.ReactNode, initialEntry = '/') {
   return () => (
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <AuthProvider>
         <Page />
+        <RouteDestination />
       </AuthProvider>
     </MemoryRouter>
   )
@@ -118,7 +128,7 @@ export const LoginKnownPhone: StoryObj = {
 // 未注册号码：发码答 registered=false → 追加昵称输入，按钮写「创建账户」，
 // 注册码随发码请求上行（服务端先验后扣）。
 export const RegisterNewPhone: StoryObj = {
-  render: surface(RegisterPage),
+  render: surface(RegisterPage, '/register?next=%2Fagents%2F12%2Fbuild'),
   parameters: {
     msw: [
       anonymous,
@@ -160,6 +170,48 @@ export const RegisterNewPhone: StoryObj = {
         code: CODE,
         displayName: '新玩家',
       })
+    )
+    await waitFor(() =>
+      expect(canvas.getByTestId('current-route')).toHaveTextContent('/express')
+    )
+  },
+}
+
+// 已有手机号即使首战尚未完成，也应回到来时的智能体构建页。
+export const RegisterKnownPhoneKeepsDeepLink: StoryObj = {
+  render: surface(RegisterPage, '/register?next=%2Fagents%2F12%2Fbuild'),
+  parameters: {
+    msw: [
+      anonymous,
+      http.post('/v1/auth/sms/code', () =>
+        HttpResponse.json({ registered: true })),
+      http.post('/v1/auth/sms/verify', async ({ request }) => {
+        verified = (await request.json()) as PhoneVerifyRequest
+        return HttpResponse.json(me)
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    verified = null
+    const canvas = within(canvasElement)
+    await userEvent.click(await canvas.findByRole('tab', { name: '手机号' }))
+    const phone = within(canvas.getByRole('tabpanel'))
+    await userEvent.type(phoneInput(phone), PHONE)
+    await userEvent.click(phone.getByRole('button', { name: '发送验证码' }))
+    await expect(phone.queryByLabelText('昵称')).toBeNull()
+    await userEvent.type(await phone.findByLabelText('验证码'), CODE)
+    await userEvent.click(phone.getByRole('button', { name: '登录' }))
+    await waitFor(() =>
+      expect(verified).toEqual({
+        phone: PHONE,
+        code: CODE,
+        displayName: null,
+      })
+    )
+    await waitFor(() =>
+      expect(canvas.getByTestId('current-route')).toHaveTextContent(
+        '/agents/12/build',
+      )
     )
   },
 }
