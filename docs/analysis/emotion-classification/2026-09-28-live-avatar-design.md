@@ -10,7 +10,7 @@ earlier global-neutral proposal.
 2. The accepted complete **human-visible output** is classified once. Reasoning
    traces, rejected attempts, tool instructions and private control decisions
    are excluded.
-3. At completion, allow up to 200 ms for JEV and the selected original portrait
+3. At completion, allow up to 350 ms for JEV and the selected original portrait
    to become ready. When both are ready, switch portrait and start text playback
    together.
 4. Otherwise start playback with neutral at the deadline. Accept a late portrait
@@ -38,7 +38,7 @@ together can replay concurrently, and private chat messages retain their
 sequence.
 
 Whole-output classification necessarily delays the first visible text until
-generation completes. The 200 ms budget is additional classification waiting,
+generation completes. The 350 ms budget is additional classification waiting,
 not a bound on this initial delay. Playback can overlap later generation, so
 ordinary serial turns usually produce a relatively stable viewing lag. This does
 not guarantee that every match is only a few seconds slower: parallel
@@ -76,7 +76,7 @@ not speed up text to hide that queue.
 
 A private reply may be classified before its containing conversation is published.
 A durable ready result present on the first display remains valid; it receives a
-local 200 ms image gate and at most 1 second for decoding. This does not reopen
+local 350 ms image gate and at most 1 second for decoding. This does not reopen
 an expired pending classification or a previously neutral-locked output.
 
 ## Frontend
@@ -110,7 +110,7 @@ historical match replay controls are separate from new live chunk playback.
 
 ## Verification and preview
 
-The deterministic playback tests cover the 200 ms gate, early synchronized
+The deterministic playback tests cover the 350 ms gate, early synchronized
 start, late update, 1 second cutoff, slow image decoding, replay cadence, serial
 ordering, stale snapshots, provider failure isolation and historical reloads.
 Backend tests cover provider request/response shape, visible-field projection,

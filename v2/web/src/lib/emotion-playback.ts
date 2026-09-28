@@ -155,8 +155,8 @@ export class EmotionPlayback {
           // was classified. Its valid result gets an image gate on first display.
           waitUntil: now +
             (output.status === 'ready'
-              ? 200
-              : Math.min(200, Math.max(0, output.waitMs))),
+              ? 350
+              : Math.min(350, Math.max(0, output.waitMs))),
           updateUntil: now +
             (output.status === 'ready'
               ? 1000
@@ -235,7 +235,7 @@ export class EmotionPlayback {
           entry.displayAt = now
           entry.imageUntil = now + 1000
           if (output.status === 'ready' && !entry.locked) {
-            entry.waitUntil = Math.max(entry.waitUntil, now + 200)
+            entry.waitUntil = Math.max(entry.waitUntil, now + 350)
           }
         }
         if (

@@ -25,7 +25,7 @@ const turn: TurnDTO = {
 const pending: EmotionOutput = {
   outputRef: 'preview',
   status: 'pending',
-  waitMs: 200,
+  waitMs: 350,
   updateMs: 1000,
   playback: {
     text,
@@ -66,7 +66,7 @@ function Run({ delay }: { delay: number }) {
             ...pending,
             status: 'ready',
             categoryId: 'E05',
-            waitMs: Math.max(0, 200 - delay),
+            waitMs: Math.max(0, 350 - delay),
             updateMs: Math.max(0, 1000 - delay),
           }),
         700 + delay,

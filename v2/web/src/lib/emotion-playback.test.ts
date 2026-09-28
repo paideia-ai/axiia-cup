@@ -13,7 +13,7 @@ const output = (
   outputRef: ref,
   status,
   categoryId: status === 'ready' ? 'E06' : null,
-  waitMs: 200,
+  waitMs: 350,
   updateMs: 1000,
   playback: {
     text: '先说。再说。',
@@ -33,26 +33,26 @@ function live() {
 }
 
 describe('emotion playback deadlines', () => {
-  it('starts with neutral by 200 ms even if the provider never responds, using original chunk intervals', () => {
+  it('starts with neutral by 350 ms even if the provider never responds, using original chunk intervals', () => {
     const store = live()
-    store.tick(209)
+    store.tick(359)
     expect(store.get('one')?.waiting).toBe(true)
-    store.tick(210)
+    store.tick(360)
     expect(store.get('one')).toMatchObject({
       category: 'E01',
       end: 3,
       waiting: false,
     })
-    store.tick(609)
+    store.tick(759)
     expect(presentedText(store.get('one'), '先说。再说。')).toBe('先说。')
-    store.tick(610)
+    store.tick(760)
     expect(store.get('one')?.complete).toBe(true)
   })
-  it('starts text and the decoded portrait together when classification is fast', () => {
+  it('starts text and the decoded portrait together for a result inside the 350 ms gate', () => {
     const store = live()
-    store.update([output('one', 'ready')], 80)
+    store.update([output('one', 'ready')], 300)
     expect(store.get('one')?.waiting).toBe(true)
-    store.prepare('one', 'E06', 90)
+    store.prepare('one', 'E06', 310)
     expect(store.get('one')).toMatchObject({
       category: 'E06',
       end: 3,
@@ -61,11 +61,11 @@ describe('emotion playback deadlines', () => {
   })
   it('allows a late portrait under 1 second without restarting or accelerating text', () => {
     const store = live()
-    store.tick(210)
+    store.tick(360)
     store.update([output('one', 'ready')], 500)
     store.prepare('one', 'E06', 501)
     expect(store.get('one')).toMatchObject({ category: 'E06', end: 3 })
-    store.tick(610)
+    store.tick(760)
     expect(store.get('one')?.complete).toBe(true)
   })
   it('locks only the missing result after 1 second, including late image decoding', () => {
@@ -83,10 +83,10 @@ describe('emotion playback deadlines', () => {
   it('does not extend deadlines or regress a successful result on reconnect', () => {
     const store = live()
     store.update([output()], 199)
-    store.tick(210)
+    store.tick(360)
     expect(store.get('one')?.waiting).toBe(false)
-    store.update([output('one', 'ready')], 300)
-    store.prepare('one', 'E06', 301)
+    store.update([output('one', 'ready')], 380)
+    store.prepare('one', 'E06', 381)
     store.update([output('one', 'unavailable')], 400)
     expect(store.get('one')?.category).toBe('E06')
   })
@@ -104,13 +104,13 @@ describe('emotion playback deadlines', () => {
   })
   it('queues serial replies without delaying model generation or changing playback speed', () => {
     const store = live()
-    store.tick(210)
-    store.ingest(match([output(), output('two')]), 250)
+    store.tick(360)
+    store.ingest(match([output(), output('two')]), 400)
     store.tick(450)
     expect(store.get('two')?.waiting).toBe(true)
-    store.tick(610)
+    store.tick(760)
     expect(store.get('two')).toMatchObject({ end: 3, waiting: false })
-    store.tick(1010)
+    store.tick(1160)
     expect(store.busy).toBe(false)
   })
   it('opens historical text immediately and does not replay it on refetch', () => {
@@ -143,10 +143,10 @@ describe('emotion playback deadlines', () => {
     const snapshot = match([output(), output('two')])
     store.ingest(snapshot, 10)
     expect(store.cutoff(snapshot)).toBe(0)
-    store.tick(210)
-    store.tick(610)
+    store.tick(360)
+    store.tick(760)
     expect(store.cutoff(snapshot)).toBe(1)
-    store.tick(1010)
+    store.tick(1160)
     expect(store.cutoff(snapshot)).toBe(Infinity)
   })
   it('plays a parallel ballot reveal concurrently', () => {
@@ -165,10 +165,10 @@ describe('emotion playback deadlines', () => {
       },
     }]
     store.ingest(snapshot, 0)
-    store.tick(200)
+    store.tick(350)
     expect(store.get('one')?.waiting).toBe(false)
     expect(store.get('two')?.waiting).toBe(false)
-    store.tick(600)
+    store.tick(750)
     expect(store.busy).toBe(false)
   })
   it('uses an on-time result even when a private conversation is only published later', () => {
@@ -198,12 +198,12 @@ describe('emotion playback deadlines', () => {
     }
     const snapshot = match([first, output('two')])
     store.ingest(snapshot, 0)
-    store.tick(200)
+    store.tick(350)
     store.update([{ ...output('two', 'ready'), waitMs: 0, updateMs: 500 }], 500)
     store.tick(1500)
-    store.tick(3200)
+    store.tick(3350)
     expect(store.get('two')?.waiting).toBe(true)
-    store.prepare('two', 'E06', 3210)
+    store.prepare('two', 'E06', 3360)
     expect(store.get('two')).toMatchObject({
       category: 'E06',
       waiting: false,
