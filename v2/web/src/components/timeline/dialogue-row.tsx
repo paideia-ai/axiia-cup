@@ -11,12 +11,12 @@ import { tm } from '../../testmode/mark'
 function Speaker({
   speaker,
   labels,
-  seq,
+  speechNumber,
   live,
 }: {
   speaker: string
   labels: SpeakerLabels
-  seq: number
+  speechNumber?: number
   live: boolean
 }) {
   const isSide = speakerSide(labels, speaker) != null
@@ -39,7 +39,9 @@ function Speaker({
           旁白角色
         </span>
       )}
-      <span>#{seq + 1}</span>
+      {speechNumber != null && (
+        <span data-speech-number={speechNumber}>#{speechNumber}</span>
+      )}
       {live
         ? (
           <span
@@ -61,10 +63,12 @@ export function DialogueRow({
   turn,
   labels,
   showReasoning,
+  speechNumber,
 }: {
   turn: TurnDTO
   labels: SpeakerLabels
   showReasoning: boolean
+  speechNumber?: number
 }) {
   return (
     <Card
@@ -76,7 +80,7 @@ export function DialogueRow({
         <Speaker
           speaker={turn.speaker}
           labels={labels}
-          seq={turn.seq}
+          speechNumber={speechNumber}
           live={false}
         />
         <p
@@ -104,10 +108,12 @@ export function LiveDialogueRow({
   bubble,
   labels,
   showReasoning,
+  speechNumber,
 }: {
   bubble: LiveBubble
   labels: SpeakerLabels
   showReasoning: boolean
+  speechNumber?: number
 }) {
   const text = bubble.call === 'say'
     ? bubble.text
@@ -123,7 +129,7 @@ export function LiveDialogueRow({
         <Speaker
           speaker={bubble.speaker}
           labels={labels}
-          seq={bubble.seq}
+          speechNumber={speechNumber}
           live
         />
         {text

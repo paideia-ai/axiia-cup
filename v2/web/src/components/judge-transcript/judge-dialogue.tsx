@@ -3,13 +3,11 @@ import { JudgeSidebarTrend } from './judge-sidebar-trend'
 import { useAlignedJudgeNotes } from './use-aligned-judge-notes'
 import { focusJudgeBeat, JudgeNote, useCompactJudgeLayout } from './shared'
 import type { JudgeDialoguePresentation } from './shared'
+import { speechProgressLabel } from './shared'
 import type { ReplayBeatStep } from '../../lib/replay'
 import { placeVerdicts } from '../../lib/transcript'
 import './judge-transcript.css'
 
-function beatLabel(step: ReplayBeatStep) {
-  return `读至 #${step.verdict.afterSeq}`
-}
 export function JudgeDialogue(props: JudgeDialoguePresentation) {
   const { groups, beats, labels, renderGroup, showTrace } = props
   const compact = useCompactJudgeLayout()
@@ -113,7 +111,9 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
                   {chunk.step && (
                     <>
                       <p className='mb-2 text-[11px] text-(--foreground-muted)'>
-                        {beatLabel(chunk.step)} 后
+                        {speechProgressLabel(
+                          props.speechNumberOf(chunk.step.verdict),
+                        )}
                       </p>
                       {osCard(chunk.step)}
                     </>
@@ -143,8 +143,10 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
                   key={chunk.step!.verdict.key}
                 >
                   <p className='mb-2 text-[11px] text-(--foreground-muted)'>
-                    {beatLabel(chunk.step!)}{' '}
-                    后{chunk.step!.changed ? ' · 倾向变化' : ''}
+                    {speechProgressLabel(
+                      props.speechNumberOf(chunk.step!.verdict),
+                    )}
+                    {chunk.step!.changed ? ' · 倾向变化' : ''}
                   </p>
                   {osCard(chunk.step!)}
                 </div>
