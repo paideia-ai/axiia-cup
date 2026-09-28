@@ -144,7 +144,9 @@ export const ConfirmedUseIsScopedToAccountAndScenario: Story = {
     await expect(canvas.getByRole('status')).toHaveTextContent(
       '用可核查的事实回应。',
     )
-    await expect(serverUsage.get(accounts[0])?.has(scenarios[0])).toBe(true)
+    await waitFor(() =>
+      expect(serverUsage.get(accounts[0])?.has(scenarios[0])).toBe(true)
+    )
     more.focus()
     await userEvent.keyboard('{ArrowDown}')
     const item = await body.findByRole('menuitem', { name: '选择预设策略' })
