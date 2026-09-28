@@ -50,7 +50,9 @@ function RouteDestination() {
   const location = useLocation()
   return (
     <output data-testid='current-route'>
-      {location.pathname}{location.search}{location.hash}
+      {location.pathname}
+      {location.search}
+      {location.hash}
     </output>
   )
 }
@@ -183,8 +185,10 @@ export const RegisterKnownPhoneKeepsDeepLink: StoryObj = {
   parameters: {
     msw: [
       anonymous,
-      http.post('/v1/auth/sms/code', () =>
-        HttpResponse.json({ registered: true })),
+      http.post(
+        '/v1/auth/sms/code',
+        () => HttpResponse.json({ registered: true }),
+      ),
       http.post('/v1/auth/sms/verify', async ({ request }) => {
         verified = (await request.json()) as PhoneVerifyRequest
         return HttpResponse.json(me)
