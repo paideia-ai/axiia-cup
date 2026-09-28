@@ -80,6 +80,10 @@ export function usePresetUsage(
   accountID: string | undefined,
   scenarioID: string,
 ) {
+  useEffect(() => {
+    navigationCache.mount()
+    return () => navigationCache.unmount()
+  }, [])
   const key = ['preset-usage', accountID] as const
   const legacyKey = accountID && scenarioID
     ? presetUsageKey(accountID, scenarioID)
