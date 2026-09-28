@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "annotation_run": "20260927_a66847a8",
+  "dataset_version": "dataset-outputs-v2",
+  "annotation_unit": "one complete human-visible LLM output",
+  "records": 642,
+  "id_range": [
+    "U0001",
+    "U0642"
+  ],
+  "categories": 10,
+  "source_corpus_sha256": "17927ba39134218d1c239c54cc3c75d0aaaabca899ed2a559d08d026bc76eee3",
+  "prompt_version": "astra-emotion10-en-v1",
+  "source_frozen_multimodel_prompts_sha256": "415c9146138bdceecdac01ce3f2afa503abb7bbb0bcc665abf89abf6105c49f8",
+  "jev_model": "jev-1.13.0",
+  "jev_endpoint": "https://api.typesafe.ai/v1/systemone",
+  "prompt_extraction": "instructions and label_descriptions copied exactly from the frozen Jev section; label_descriptions maps to questions.emotion.criteria; state.text is a placeholder",
+  "original_annotation_files": [
+    "summary_20260927_a66847a8.md",
+    "categories_20260927_a66847a8.json",
+    "labels_20260927_a66847a8.jsonl"
+  ],
+  "files": {
+    "summary_20260927_a66847a8.md": {
+      "bytes": 10061,
+      "sha256": "24137f5ad11bd5d0f4b8ca814771d4d840d6ae6146a02f6985af622d7288bdff"
+    },
+    "categories_20260927_a66847a8.json": {
+      "bytes": 5555,
+      "sha256": "2f2b6a64c60e627431d6184c61dec859728fa5a76b3efb371d7bcdfc9573f932"
+    },
+    "labels_20260927_a66847a8.jsonl": {
+      "bytes": 426660,
+      "sha256": "e1560de19645df497501c100bed0f49263096b2afcc50b461e5a881818d38fa7"
+    },
+    "jev-prompt.md": {
+      "bytes": 4526,
+      "sha256": "24332936734ecb3f1bb07b9a3ff8376baf7d29a2a2b653c98680c197e68d2440"
+    },
+    "jev-request-template.json": {
+      "bytes": 4333,
+      "sha256": "e4183859e2a2c353e2b6365eb182849062450588ca38b4f5e4e142db55f03cda"
+    }
+  }
+}
