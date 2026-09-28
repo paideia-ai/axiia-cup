@@ -635,7 +635,7 @@ async function main() {
     pending.push({ round: round, a: lineA, b: lineB })
     if (round % osInterval === 0 && round < rounds) {
       hearBatch()
-      await judge.act({ fields: osFields }, { key: `os-${round}`, channel: 'judge-aside' })
+      await judge.act({ fields: osFields, emotionFields: Object.keys(osFields) }, { key: `os-${round}`, channel: 'judge-aside' })
     }
   }
   // The final rounds get no aside beat: they reach him unmarked, right before the verdict.
@@ -647,13 +647,13 @@ async function main() {
 
   a.push(examinationQuestion(NAME_B, idsB.join('/')))
   const inquiryA = await a.act(
-    { fields: { reason: { hint: '简要说明理由', long: true }, guess: { enum: idsB } } },
+    { emotionFields: ['reason', 'guess'], fields: { reason: { hint: '简要说明理由', long: true }, guess: { enum: idsB } } },
     { key: 'inquiry-a', channel: 'inquiry-a' },
   )
 
   b.push(examinationQuestion(NAME_A, idsA.join('/')))
   const inquiryB = await b.act(
-    { fields: { reason: { hint: '简要说明理由', long: true }, guess: { enum: idsA } } },
+    { emotionFields: ['reason', 'guess'], fields: { reason: { hint: '简要说明理由', long: true }, guess: { enum: idsA } } },
     { key: 'inquiry-b', channel: 'inquiry-b' },
   )
 
@@ -666,7 +666,7 @@ async function main() {
   for (const request of [...REQUESTS_A, ...REQUESTS_B]) {
     verdictFields[request.id] = { enum: ['同意', '不同意'], hint: request.content }
   }
-  const verdict = await judge.act({ fields: verdictFields }, { key: 'final', channel: 'verdict' })
+  const verdict = await judge.act({ fields: verdictFields, emotionFields: Object.keys(verdictFields) }, { key: 'final', channel: 'verdict' })
   const decided = verdict.fields
 
   game.emit('verdict', {

@@ -1,5 +1,10 @@
+import {
+  decodePortrait,
+  useEmotionBuffering,
+  useOutputPresentation,
+} from './emotion-playback'
 import './role-portrait.css'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { SpeakerLabels } from './timeline/labels'
 import { rolePortrait } from '../lib/role-portrait'
 
@@ -10,7 +15,29 @@ export function RolePortrait({ labels, speaker, size = 'default' }: {
   speaker: string
   size?: 'default' | 'sm'
 }) {
-  const src = rolePortrait(labels, speaker)
+  const buffering = useEmotionBuffering()
+  const view = useOutputPresentation()
+  const neutral = rolePortrait(labels, speaker)
+  useEffect(() => {
+    if (!buffering) return
+    const categories = [
+      'E01',
+      'E02',
+      'E03',
+      'E04',
+      'E05',
+      'E06',
+      'E07',
+      'E08',
+      'E09',
+      'E10',
+    ] as const
+    for (const category of categories) {
+      const image = rolePortrait(labels, speaker, category)
+      if (image) void decodePortrait(image).catch(() => {})
+    }
+  }, [buffering, neutral, labels, speaker])
+  const src = rolePortrait(labels, speaker, view?.category)
   const [failed, setFailed] = useState<string | null>(null)
   if (!src || src === failed) return null
   return (

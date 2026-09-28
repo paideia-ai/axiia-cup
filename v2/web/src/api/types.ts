@@ -1,3 +1,4 @@
+import type { EmotionSnapshot } from '../lib/emotion-playback'
 // Hand-written mirror of the Swift AxiiaContract target (packages/axiia/Targets/
 // AxiiaContract). Wire keys are the verbatim Swift property names — no snake_case,
 // no CodingKeys renames. Swift Optionals encode as absent keys, so every optional
@@ -476,6 +477,7 @@ export type JSONValue =
 // model trace in `reasoning`; `event` carries the script's `game.emit` payload in
 // `event` and leaves `finalText` empty.
 export interface TurnDTO {
+  outputRef?: string | null
   seq: number
   channel: string
   kind: TurnKind
@@ -532,6 +534,7 @@ export interface MatchSummary {
 // `afterSeq` is the transcript position it settled at: it was decided on the
 // first `afterSeq` committed rows, so it belongs after them in the timeline.
 export interface VerdictDTO {
+  outputRef?: string | null
   key: string
   afterSeq: number
   output: string
@@ -539,6 +542,7 @@ export interface VerdictDTO {
 }
 
 export interface MatchDetail {
+  emotions?: EmotionSnapshot | null
   summary: MatchSummary
   currentTurn: number
   turns: TurnDTO[]

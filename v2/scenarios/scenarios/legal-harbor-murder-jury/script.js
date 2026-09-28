@@ -700,6 +700,7 @@ ${menu}
       ? '这是本局最后一轮，请把本次发言作为最后陈词。'
       : ''
     const speech = await player.agent.act({
+      emotionFields: ['speech'],
       fields: {
         speech: {
           long: true,
@@ -714,6 +715,7 @@ ${menu}
       type: 'jury_speech',
       actor: player.id,
       text,
+      outputRef: speech.outputRef ?? null,
       reasoning: speech.reasoning,
     })
     hearAllOthers(player.id, player.name, text)
@@ -784,6 +786,7 @@ ${menu}
       return {
         agent: juror.agent,
         spec: {
+          emotionFields: ['verdict', 'reason'],
           fields: {
             verdict: { enum: ['GUILTY', 'NOT_GUILTY'] },
             reason: { hint: '一句内部判断理由' },
@@ -798,6 +801,7 @@ ${menu}
         juror: juror.id,
         verdict: ballot.fields.verdict,
         reason: ballot.fields.reason,
+        outputRef: ballot.outputRef ?? null,
         reasoning: ballot.reasoning,
       })
       if (ballot.fields.verdict === 'GUILTY') guilty += 1
@@ -826,6 +830,7 @@ ${menu}
         `【私密交谈】你正与 ${target.name} 在审议室外进行不公开的一对一交谈，这是${roundLabel(round)}中的第 ${exchange}/${RULES.privateChatExchanges} 个往返的你的发言。说服对方重新检查一个具体证据组合，也可以追问其真实疑虑。不得许诺利益、威胁、编造证据或要求对方保证投票。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。`,
       )
       const playerLine = await mover.agent.act({
+        emotionFields: ['speech'],
         fields: {
           speech: { long: true, hint: '本次私下发言' },
         },
@@ -835,6 +840,7 @@ ${menu}
         exchange,
         speaker: mover.id,
         text: playerText,
+        outputRef: playerLine.outputRef ?? null,
         reasoning: playerLine.reasoning,
       })
       target.agent.hear(mover.name, playerText)
@@ -843,6 +849,7 @@ ${menu}
         `【私密交谈】你正与 ${mover.name} 进行不公开的一对一交谈，这是${roundLabel(round)}中的第 ${exchange}/${RULES.privateChatExchanges} 个往返。诚实回应其论点：可以提出疑问、指出未被解决的顾虑或承认某点推动了你。不要为取悦对方承诺最终票，也不要添加公开材料之外的事实。你和对方之外的场内 Agent 不知道这次私聊发生，也不知道对象或内容；不要在之后的场内公开发言中泄露这些信息。`,
       )
       const jurorLine = await target.agent.act({
+        emotionFields: ['speech'],
         fields: {
           speech: { long: true, hint: '本次私下发言' },
         },
@@ -852,6 +859,7 @@ ${menu}
         exchange,
         speaker: target.id,
         text: jurorText,
+        outputRef: jurorLine.outputRef ?? null,
         reasoning: jurorLine.reasoning,
       })
       mover.agent.hear(target.name, jurorText)
@@ -887,6 +895,7 @@ ${menu}
       `【提前终局程序票】${roundLabel(round)}，${mover.name} 公开动议立即结束审议并进入最终判决。请只回答是否认为讨论已经充分到可以现在投最终判决票。END_NOW 不等于有罪，CONTINUE 不等于无罪。考虑是否仍有具体、可通过剩余轮次澄清的争点。你的程序票和理由收齐后将记名公开。`,
     )
     const ballot = await juror.agent.act({
+      emotionFields: ['procedureVote', 'reason'],
       fields: {
         procedureVote: { enum: ['END_NOW', 'CONTINUE'] },
         reason: { hint: '一句公开程序理由' },
@@ -896,6 +905,7 @@ ${menu}
       juror: juror.id,
       vote: ballot.fields.procedureVote,
       reason: ballot.fields.reason,
+      outputRef: ballot.outputRef ?? null,
       reasoning: ballot.reasoning,
     }
   }
@@ -933,6 +943,7 @@ ${menu}
         juror: ballot.juror,
         procedureVote: ballot.vote,
         reason: ballot.reason,
+        outputRef: ballot.outputRef ?? null,
         reasoning: ballot.reasoning,
       })),
     })
@@ -1048,6 +1059,7 @@ ${menu}
     for (let index = 0; index < selected.length; index++) {
       const juror = selected[index]
       const speech = await juror.agent.act({
+        emotionFields: ['speech'],
         fields: {
           speech: {
             long: true,
@@ -1063,6 +1075,7 @@ ${menu}
         type: 'jury_speech',
         actor: juror.id,
         text,
+        outputRef: speech.outputRef ?? null,
         reasoning: speech.reasoning,
       })
       hearAllOthers(juror.id, juror.name, text)
@@ -1104,6 +1117,7 @@ NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡�
     return {
       agent: juror.agent,
       spec: {
+        emotionFields: ['verdict', 'reason'],
         fields: {
           reason: {
             hint: '说明你的判决理由',
@@ -1121,6 +1135,7 @@ NOT_GUILTY：你认为控方没有达到该标准；这不要求你证明顾衡�
       juror: juror.id,
       verdict: vote.fields.verdict,
       reason: vote.fields.reason,
+      outputRef: vote.outputRef ?? null,
       reasoning: vote.reasoning,
     })
   }

@@ -4,6 +4,7 @@ import { sideName, speakerSide } from '../components/timeline/labels'
 import type { StageGroup } from './transcript'
 
 export interface InquiryAnswer {
+  outputRef?: string | null
   side: Side
   name: string
   otherName: string
@@ -78,6 +79,7 @@ export function inquiryAnswers(
         option.id === payload.guess
       )
     answers.push({
+      outputRef: matches[0].outputRef,
       side,
       name: sideName(labels, side),
       otherName: sideName(labels, other),

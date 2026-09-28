@@ -312,7 +312,7 @@ async function main() {
       if (osRound % osInterval === 0 && !finalStretch) {
         hearBatch()
         await judge.act(
-          { fields: osFields },
+          { fields: osFields, emotionFields: Object.keys(osFields) },
           { key: `os-${osRound}`, channel: 'judge-aside' },
         )
       }
@@ -336,7 +336,7 @@ async function main() {
       hint: `案件 ${cases[caseIndex].id}. ${cases[caseIndex].title} 的裁决`,
     }
   }
-  const verdict = await judge.act({ fields: verdictFields }, { key: 'final', channel: 'verdict' })
+  const verdict = await judge.act({ fields: verdictFields, emotionFields: Object.keys(verdictFields) }, { key: 'final', channel: 'verdict' })
 
   let scoreA = 0
   let scoreB = 0

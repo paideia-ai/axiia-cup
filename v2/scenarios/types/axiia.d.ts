@@ -93,12 +93,14 @@ interface SideBinding {
 }
 
 interface SayReply {
+  readonly outputRef?: string | null
   readonly text: string
   readonly reasoning: string
   readonly affordance: string | null
 }
 
 interface ActReply {
+  readonly outputRef?: string | null
   readonly text: string
   readonly reasoning: string
   readonly fields: Readonly<Record<string, string>>
@@ -111,6 +113,7 @@ interface ActField {
 }
 
 interface ActSpec {
+  emotionFields?: readonly string[]
   prompt?: string
   key?: string
   channel?: string

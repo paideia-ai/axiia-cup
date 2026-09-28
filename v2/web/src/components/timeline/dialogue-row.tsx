@@ -1,3 +1,9 @@
+import {
+  OutputBody,
+  OutputBoundary,
+  OutputText,
+  useEmotionBuffering,
+} from '../emotion-playback'
 import type { LiveBubble } from '../../api/sse'
 import type { TurnDTO } from '../../api/types'
 import { stripStreamingActTags } from '../../lib/act-markup'
@@ -71,29 +77,37 @@ export function DialogueRow({
   speechNumber?: number
 }) {
   return (
-    <Card
-      {...tm('FA.dialogue-row')}
-      data-dialogue-seq={turn.seq}
-      className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}
+    <OutputBoundary
+      outputRef={turn.outputRef}
+      labels={labels}
+      speaker={turn.speaker}
     >
-      <CardContent className='portrait-speech space-y-1 py-4'>
-        <Speaker
-          speaker={turn.speaker}
-          labels={labels}
-          speechNumber={speechNumber}
-          live={false}
-        />
-        <p
-          {...tm('FA.dialogue-text')}
-          className='whitespace-pre-wrap text-sm text-(--foreground)'
-        >
-          {turn.finalText}
-        </p>
-        {showReasoning && turn.reasoning
-          ? <ReasoningFold text={turn.reasoning} />
-          : null}
-      </CardContent>
-    </Card>
+      <Card
+        {...tm('FA.dialogue-row')}
+        data-dialogue-seq={turn.seq}
+        className={`border-l-2 ${speakerAccent(labels, turn.speaker)}`}
+      >
+        <CardContent className='portrait-speech space-y-1 py-4'>
+          <Speaker
+            speaker={turn.speaker}
+            labels={labels}
+            speechNumber={speechNumber}
+            live={false}
+          />
+          <OutputBody>
+            <p
+              {...tm('FA.dialogue-text')}
+              className='whitespace-pre-wrap text-sm text-(--foreground)'
+            >
+              <OutputText text={turn.finalText} />
+            </p>
+          </OutputBody>
+          {showReasoning && turn.reasoning
+            ? <ReasoningFold text={turn.reasoning} />
+            : null}
+        </CardContent>
+      </Card>
+    </OutputBoundary>
   )
 }
 
@@ -115,7 +129,10 @@ export function LiveDialogueRow({
   showReasoning: boolean
   speechNumber?: number
 }) {
-  const text = bubble.call === 'say'
+  const buffering = useEmotionBuffering()
+  const text = buffering
+    ? ''
+    : bubble.call === 'say'
     ? bubble.text
     : stripStreamingActTags(bubble.text)
   return (

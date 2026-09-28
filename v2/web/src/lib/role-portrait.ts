@@ -1,13 +1,12 @@
+import type { EmotionCategory } from './emotion-playback'
 import type { SpeakerLabels } from '../components/timeline/labels'
 import { speakerName } from '../components/timeline/labels'
 import { roleByKey } from '../scenarios'
 import { roleIdentity } from './role-identity'
 
-// 256px neutral artwork, losslessly encoded after Lanczos downsampling.
-// Vite copies these to hashed build assets;
-// no expressions or scene outcomes are inferred from an image.
+// Vite fingerprints the 256px WebP artwork from PR #272.
 const images = import.meta.glob<string>(
-  '../assets/portraits/*/*-neutral.webp',
+  '../assets/portraits/*/*.webp',
   { eager: true, query: '?url', import: 'default' },
 )
 
@@ -83,9 +82,23 @@ const characters: Record<string, Record<string, string>> = {
   },
 }
 
+const emotionNames: Record<EmotionCategory, string> = {
+  E01: 'neutral',
+  E02: 'conviction',
+  E03: 'doubt',
+  E04: 'confusion',
+  E05: 'fear',
+  E06: 'anger',
+  E07: 'contempt',
+  E08: 'sadness',
+  E09: 'affection',
+  E10: 'relief',
+}
+
 export function rolePortrait(
   labels: SpeakerLabels,
   speaker: string,
+  category: EmotionCategory = 'E01',
 ): string | null {
   const scenario = labels.module?.slotID
   const roster = scenario ? characters[scenario] : null
@@ -107,6 +120,10 @@ export function rolePortrait(
   const character = roster[key] ?? roster[speakerName(labels, speaker)]
   return character
     ? images[
+      `../assets/portraits/${scenario}/${character}-${
+        emotionNames[category]
+      }.webp`
+    ] ?? images[
       `../assets/portraits/${scenario}/${character}-neutral.webp`
     ] ?? null
     : null
