@@ -47,14 +47,15 @@ export function EmotionPlaybackProvider(
   useLayoutEffect(() => {
     if (data) store.ingest(data, performance.now())
   }, [data, store])
+  const ticking = useSyncExternalStore(store.subscribe, () => store.needsTick)
   const enabled = data?.emotions?.enabled === true
   const settled = data?.emotions?.settled === true
   const matchID = data?.summary.id
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || !ticking) return
     const timer = setInterval(() => store.tick(performance.now()), 16)
     return () => clearInterval(timer)
-  }, [enabled, store])
+  }, [enabled, ticking, store])
   useEffect(() => {
     if (!enabled || settled || matchID == null) return
     const source = new EventSource(sseUrl(`/matches/${matchID}/emotions`), {
@@ -171,5 +172,19 @@ export function OutputBody({ children }: { children: ReactNode }) {
 export function OutputText(
   { text, source }: { text: string; source?: string },
 ) {
-  return <>{presentedText(useOutputPresentation(), text, source)}</>
+  const view = useOutputPresentation()
+  const shown = presentedText(view, text, source)
+  const typing = view != null && !view.waiting && !view.complete &&
+    shown.length > 0 && shown.length < text.length
+  return (
+    <>
+      {shown}
+      {typing && (
+        <span
+          aria-hidden='true'
+          className='ml-0.5 inline-block h-3.5 w-[2px] translate-y-0.5 animate-pulse bg-(--accent)'
+        />
+      )}
+    </>
+  )
 }

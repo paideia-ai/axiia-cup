@@ -74,8 +74,10 @@ describe('emotion playback deadlines', () => {
     store.tick(1011)
     store.prepare('one', 'E06', 1100)
     expect(store.get('one')?.category).toBe('E01')
-    store.ingest(match([output('one', 'ready')]), 1200)
-    store.prepare('one', 'E06', 1201)
+    store.tick(1600)
+    expect(store.needsTick).toBe(false)
+    store.ingest(match([output('one', 'ready')]), 1700)
+    store.prepare('one', 'E06', 1701)
     expect(store.get('one')?.category).toBe('E01')
   })
   it('does not extend deadlines or regress a successful result on reconnect', () => {

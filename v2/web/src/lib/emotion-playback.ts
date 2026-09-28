@@ -99,6 +99,12 @@ export class EmotionPlayback {
   get busy() {
     return [...this.entries.values()].some((entry) => !entry.view.complete)
   }
+  get needsTick() {
+    return [...this.entries.values()].some((entry) =>
+      !entry.view.complete ||
+      (!entry.historical && !entry.locked && entry.prepared == null)
+    )
+  }
   cutoff(data: MatchDetail | null): number {
     if (!data || !this.enabled) return Infinity
     let cutoff = Infinity
@@ -201,6 +207,7 @@ export class EmotionPlayback {
     ) return
     if (!entry.historical && now > entry.updateUntil) {
       entry.locked = true
+      this.emit()
       return
     }
     entry.prepared = category
@@ -216,8 +223,12 @@ export class EmotionPlayback {
         const entry = this.entries.get(ref)
         if (!entry) continue
         const { output, historical } = entry
-        if (!historical && now > entry.updateUntil && !entry.prepared) {
+        if (
+          !historical && !entry.locked && now > entry.updateUntil &&
+          !entry.prepared
+        ) {
           entry.locked = true
+          changed = true
         }
         const canStart = output.status === 'unavailable' ||
           entry.prepared != null || now >= entry.waitUntil
