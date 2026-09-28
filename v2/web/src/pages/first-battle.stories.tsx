@@ -154,19 +154,35 @@ export const SaveReloadAndExplicitStart: Story = {
     const canvas = within(canvasElement)
     const input = await canvas.findByLabelText('策略提示词')
     await waitFor(() => expect(input).toBeEnabled())
-    expect(canvas.getByRole('button', { name: '选择预设策略' }))
-      .toHaveAttribute(
-        'aria-pressed',
-        'true',
-      )
+    const presetDialog = await canvas.findByRole('dialog', {
+      name: '选择预设策略',
+    })
+    await waitFor(() => expect(presetDialog).toBeVisible())
+    await userEvent.click(
+      within(presetDialog).getByRole('button', { name: '关闭弹窗' }),
+    )
     await userEvent.click(
       canvas.getByRole('button', { name: '让 AI 帮你想策略' }),
     )
-    expect(canvas.getByLabelText('策略构建提示词内容')).toBeVisible()
-    await userEvent.click(canvas.getByRole('button', { name: '直接编写' }))
+    const aiDialog = await canvas.findByRole('dialog', {
+      name: '让 AI 帮你想策略',
+    })
+    await waitFor(() =>
+      expect(within(aiDialog).getByLabelText('策略构建提示词内容'))
+        .toBeVisible()
+    )
+    await userEvent.click(
+      within(aiDialog).getByRole('button', { name: '关闭弹窗' }),
+    )
     await userEvent.type(input, saved.prompt)
     await userEvent.click(canvas.getByRole('button', { name: '保存版本' }))
     expect(await canvas.findByText('已保存版本 v1（#9001）')).toBeVisible()
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '保存版本' })).toBeEnabled()
+    )
+    // The guided dialog is an entry animation, not a post-save prompt.
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    expect(canvas.queryByRole('dialog', { name: '选择预设策略' })).toBeNull()
     expect(saves).toBe(1)
     expect(posts).toHaveLength(0)
     await userEvent.click(
@@ -467,12 +483,14 @@ export const CompletedJourneyOpensEachActualTool: Story = {
         const dialog = await canvas.findByRole('dialog', {
           name: tool === 'mcq' ? '选择预设策略' : '让 AI 帮你想策略',
         })
-        expect(dialog).toBeVisible()
+        await waitFor(() => expect(dialog).toBeVisible())
         if (tool === 'meta') {
           expect(within(dialog).getByLabelText('策略构建提示词内容'))
             .toBeVisible()
-        } else {expect(within(dialog).getByRole('region', { name: '拼装预览' }))
-            .toBeVisible()}
+        } else {
+          expect(within(dialog).getByText(/01 \/ /))
+            .toBeVisible()
+        }
         await userEvent.click(
           within(dialog).getByRole('button', { name: '关闭弹窗' }),
         )

@@ -15,11 +15,20 @@ async function setup(page: Page, empty = false) {
     roleKey?: string
   }[] = []
   const errors: string[] = []
+  const usedPresets = new Set<string>()
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/v1/**', async (route) => {
     const request = route.request()
     const path = new URL(request.url()).pathname.slice(3)
     const json = (body: unknown) => route.fulfill({ json: body })
+    if (path === '/account/preset-usage') {
+      if (request.method() === 'POST') {
+        usedPresets.add(
+          (request.postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/auth/me') {
       return json({
         account: {
