@@ -16,6 +16,7 @@ import {
   agentPreviewScenarios,
   previewAgent,
 } from '../../src/testing/scenario-agent-fixtures'
+import { deckFor } from '../../src/scenarios/decks'
 
 interface FixtureOptions {
   guest?: boolean
@@ -32,6 +33,7 @@ const scenarioPath = `/scenarios/${scenario.summary.id}`
 
 async function fixtures(page: Page, options: FixtureOptions = {}) {
   const ensures: { page: Page; side: string }[] = []
+  const usedPresets = new Set<string>()
   const unexpected: string[] = []
   const errors: string[] = []
   const observeErrors = (tab: Page) =>
@@ -43,6 +45,14 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
     const path = new URL(request.url()).pathname.slice(3)
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/account/preset-usage') {
+      if (request.method() === 'POST') {
+        usedPresets.add(
+          (request.postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/auth/me') {
       return options.guest
         ? json({ error: 'unauthorized', message: '请登录' }, 401)
@@ -179,6 +189,52 @@ async function openPanel(page: Page, tab: 'pvp' | 'hotseat') {
   await page.getByRole('tab', {
     name: tab === 'pvp' ? /玩家约战/ : /左右手互搏/,
   }).click()
+}
+
+for (const event of ['visibilitychange', 'online'] as const) {
+  test(`preset usage refreshes across builder tabs on ${event}`, async ({ page, context }) => {
+    const { unexpected, errors } = await fixtures(page)
+    await context.route(
+      '**/v1/agents/101/mutate',
+      (route) => route.fulfill({ json: { ok: true } }),
+    )
+    await page.goto('/agents/101/build')
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+    const other = await context.newPage()
+    await other.goto('/agents/101/build')
+    await other.getByRole('button', { name: '选择预设策略' }).click()
+    const dialog = other.getByRole('dialog', { name: '选择预设策略' })
+    const deck = deckFor(scenario.summary.id, 'a')!
+    for (const question of deck.questions) {
+      await dialog.getByRole('button', {
+        name: question.options[0].label,
+        exact: true,
+      }).click()
+    }
+    await expect(other.getByRole('button', { name: '更多构建方式' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toBeVisible()
+
+    // Keep both builders mounted; expire the 10s cache without reloading.
+    await page.clock.setFixedTime(new Date(Date.now() + 11_000))
+    if (event === 'online') {
+      await page.evaluate(() => globalThis.dispatchEvent(new Event('offline')))
+      await page.evaluate(() => globalThis.dispatchEvent(new Event('online')))
+    } else {
+      await page.bringToFront()
+      await page.evaluate(() =>
+        globalThis.dispatchEvent(new Event('visibilitychange'))
+      )
+    }
+    await expect(page.getByRole('button', { name: '更多构建方式' }))
+      .toBeVisible()
+    await expect(page.getByRole('button', { name: '选择预设策略' }))
+      .toHaveCount(0)
+    expect(unexpected).toEqual([])
+    expect(errors).toEqual([])
+  })
 }
 
 for (const width of [1440, 390]) {
@@ -398,6 +454,7 @@ const cases: {
         )
       )
       await page.reload()
+      await page.getByRole('button', { name: '关闭弹窗' }).click()
     },
   },
   {

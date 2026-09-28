@@ -19,9 +19,18 @@ async function installWorld(page: Page, walletGate = Promise.resolve()) {
     authenticated: true,
     unhandled: [] as string[],
   }
+  const usedPresets = new Set<string>()
   await page.route('**/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     const json = (body: unknown) => route.fulfill({ json: body })
+    if (path === '/v1/account/preset-usage') {
+      if (route.request().method() === 'POST') {
+        usedPresets.add(
+          (route.request().postDataJSON() as { scenarioID: string }).scenarioID,
+        )
+      }
+      return json({ scenarioIDs: [...usedPresets] })
+    }
     if (path === '/v1/auth/logout') {
       world.authenticated = false
       return json({ ok: true })

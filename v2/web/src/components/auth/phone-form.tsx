@@ -10,7 +10,7 @@ import { messageOf } from '../../lib/use-async'
 import { tm } from '../../testmode/mark'
 
 type Props = {
-  onDone: (me: MeResponse) => void
+  onDone: (me: MeResponse, wasRegistered: boolean) => void
   // 注册页要注册码与昵称；登录页只要号码与验证码。
   withInvite: boolean
 }
@@ -24,6 +24,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
   const [code, setCode] = useState('')
   const [sent, setSent] = useState(false)
   const [needsName, setNeedsName] = useState(withInvite)
+  const [wasRegistered, setWasRegistered] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
 
@@ -40,6 +41,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
         inviteCode: inviteCode || null,
       })
       setNeedsName(!outcome.registered)
+      setWasRegistered(outcome.registered)
       setSent(true)
       cooldown.start()
     } catch (cause) {
@@ -69,6 +71,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
           code,
           displayName: needsName ? displayName : null,
         }),
+        wasRegistered,
       )
     } catch (cause) {
       setError(messageOf(cause, '验证失败'))

@@ -21,6 +21,7 @@ import type {
   FieldMutationRequest,
   LandingResponse,
   LoginRequest,
+  MarkPresetUsageRequest,
   MatchDetail,
   MatchListResponse,
   MatchRewardResponse,
@@ -33,6 +34,7 @@ import type {
   OpponentListResponse,
   PhoneCodeSentResponse,
   PhoneVerifyRequest,
+  PresetUsageResponse,
   PublicAgentResponse,
   RenameAgentRequest,
   RewardQuoteResponse,
@@ -214,6 +216,12 @@ export const auth = {
     request<MeResponse>('PATCH', '/account/profile', input),
   changePassword: (input: ChangePasswordRequest) =>
     request<OKResponse>('POST', '/account/password', input),
+  presetUsage: (signal?: AbortSignal) =>
+    request<PresetUsageResponse>('GET', '/account/preset-usage', undefined, {
+      signal,
+    }),
+  markPresetUsed: (input: MarkPresetUsageRequest) =>
+    request<PresetUsageResponse>('POST', '/account/preset-usage', input),
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────

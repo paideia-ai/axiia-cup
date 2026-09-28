@@ -51,6 +51,14 @@ export interface SignupRequest {
   displayName: string
 }
 
+export interface PresetUsageResponse {
+  scenarioIDs: string[]
+}
+
+export interface MarkPresetUsageRequest {
+  scenarioID: string
+}
+
 export interface LoginRequest {
   email: string
   password: string

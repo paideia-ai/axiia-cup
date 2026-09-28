@@ -26,8 +26,7 @@ export const TM_E: TmRegistry = {
     label: '策略辅助行',
     clauses: ['U02-C01', 'U02-C03', 'U01-C09', 'U02-C19'],
     journeys: ['j3s1'],
-    note:
-      '始终显示一句引导 + 两个轻量按钮；详细 MCQ/元提示词流程在弹窗中，不与主输入框争抢层级',
+    note: '始终显示一句引导和 AI 辅助入口；预设正式填入后移入更多构建方式',
   },
   'E.init-tab-mcq': {
     label: '预设策略入口',
@@ -51,31 +50,6 @@ export const TM_E: TmRegistry = {
     journeys: ['j3s2'],
     note: '选择只活在内存里，不随版本存储（U01-C08 缺口）',
     when: '打开预设策略弹窗且场景有 deck',
-  },
-  'E.mcq-preview': {
-    label: '拼装预览',
-    clauses: ['U02-C02', 'U02-C14'],
-    journeys: ['j3s2'],
-    note: '是选项拼文预览，不是对局预览（不属 U02-C14 禁区）',
-    when: '打开预设策略弹窗且场景有 deck',
-  },
-  'E.mcq-counter': {
-    label: '拼装字数计数',
-    clauses: ['U02-C08'],
-    when: '打开预设策略弹窗且场景有 deck',
-  },
-  'E.mcq-fill-button': {
-    label: '选题填入按钮',
-    clauses: ['U02-C02', 'U02-C05', 'U01-C08'],
-    journeys: ['j3s2'],
-    note:
-      '填入主输入框并关闭弹窗；已有不同草稿时先确认替换；本次保存 method=mcq',
-    when: '预设策略弹窗内选完全部题目后可点',
-  },
-  'E.mcq-remaining': {
-    label: '还差 n 题',
-    clauses: ['U02-C02'],
-    when: '预设策略弹窗内还有题目未选时',
   },
   'E.meta-prompt-text': {
     label: '元提示词正文',
@@ -297,7 +271,7 @@ export const STEPS_E: StepHints = {
   // 第一轮旅程 1（首战快速通道的构建一步；X 组若也登记此步以其为准）
   j1s4: { route: '/agents/:id/build', marker: 'E.save-button' },
   // 第一轮旅程 3 构建器（j3s1 从场景页「去构建」起步，落点登记在 discovery）
-  j3s2: { route: '/agents/:id/build', marker: 'E.mcq-fill-button' },
+  j3s2: { route: '/agents/:id/build', marker: 'E.mcq-option' },
   j3s3: { route: '/agents/:id/build', marker: 'E.length-counter' },
   j3s4: { route: '/agents/:id/build', marker: 'E.model-select' },
   j3s5: { route: '/agents/:id/build', marker: 'E.save-button' },

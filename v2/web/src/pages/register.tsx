@@ -10,7 +10,7 @@ import { PhoneAuthForm } from '../components/auth/phone-form'
 import type { MeResponse } from '../api/types'
 import { useAuth } from '../context/auth'
 import { tm } from '../testmode/mark'
-import { loginReturnPath } from '../lib/login-return'
+import { loginReturnPath, registrationReturnPath } from '../lib/login-return'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -26,14 +26,20 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // 已选择的构建入口保留阵营；普通注册继续按 A3 进入首战快速通道。
-  const land = (me: MeResponse) => {
+  // Only newly created accounts use first-battle onboarding. An existing
+  // phone account may arrive here via a deep link and must keep its safe next.
+  const landNewAccount = (me: MeResponse) => {
     navigate(
-      returnPath ?? (me.firstBattleDone === true ? '/scenarios' : '/express'),
-      {
-        replace: true,
-      },
+      registrationReturnPath(location.search, me.firstBattleDone === true),
+      { replace: true },
     )
+  }
+  const landPhone = (me: MeResponse, wasRegistered: boolean) => {
+    if (wasRegistered) {
+      navigate(loginReturnPath(location.search), { replace: true })
+    } else {
+      landNewAccount(me)
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +47,7 @@ export function RegisterPage() {
     setError(null)
     setIsSubmitting(true)
     try {
-      land(
+      landNewAccount(
         await signup({
           code,
           displayName,
@@ -77,7 +83,7 @@ export function RegisterPage() {
                   <TabsTrigger value='email'>邮箱</TabsTrigger>
                 </TabsList>
                 <TabsContent value='phone'>
-                  <PhoneAuthForm onDone={land} withInvite />
+                  <PhoneAuthForm onDone={landPhone} withInvite />
                 </TabsContent>
                 <TabsContent value='email'>
                   <form
