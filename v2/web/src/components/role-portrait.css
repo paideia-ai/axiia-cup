@@ -32,6 +32,12 @@
     width: 48px;
     height: 48px;
   }
+  /* Main scenario identities align with their three-line name block.
+     Selectable speakers and the juror directory keep compact portraits. */
+  [data-scenario-portrait='primary'] > .role-portrait {
+    width: 72px;
+    height: 72px;
+  }
   .portrait-dialogue-speaker:has(.role-portrait) {
     position: relative;
     min-height: 48px;

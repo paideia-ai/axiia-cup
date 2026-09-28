@@ -325,7 +325,9 @@ export function BuilderPage() {
   const requestedTool = creationTool(params.get('init'))
 
   const [prompt, setPrompt] = useState('')
-  const [roleKey, setRoleKey] = useState<string | null>(null)
+  const [editableRoleKey, setRoleKey] = useState<string | null>(null)
+  const [boundRoleKey, setBoundRoleKey] = useState<string | null>(null)
+  const roleKey = boundRoleKey ?? editableRoleKey
   const [models, setModels] = useState<ModelDTO[]>([])
   const [modelID, setModelID] = useState<string | null>(null)
   const [versions, setVersions] = useState<AgentVersionDTO[]>([])
@@ -469,6 +471,7 @@ export function BuilderPage() {
     setSide((params.get('side') as Side | null) ?? 'a')
     setPrompt('')
     setRoleKey(null)
+    setBoundRoleKey(null)
     setModelID(null)
     setVersions([])
     setRestoredTag(null)
@@ -495,6 +498,10 @@ export function BuilderPage() {
         if (!live) return
         setScenarioID(draft.scenarioID)
         setSide(draft.side)
+        setBoundRoleKey(
+          roleByKey(scenarioModule(draft.scenarioID), draft.role?.key)?.key ??
+            null,
+        )
         setVersions(list.versions)
         // P5：模型属于版本、随版本快照（#13）——进入工作区默认沿用**最新
         // 版本**的模型，而不是模型清单的第一项。草稿层还不持久化模型，所以
@@ -618,8 +625,6 @@ export function BuilderPage() {
     }
   }, [agentID, draftSync, enqueueDraftMutation, journalScope, writerID])
 
-  // A scenario the SPA carries a module for lets the player cast his own side; the
-  // choice rides along the saved version as the options blob the script parses.
   const roleModule = scenarioModule(scenarioID)
   const roles = rolesForSide(roleModule, side)
   const judgePrompt = roleModule?.education?.judgePrompt
@@ -789,7 +794,8 @@ export function BuilderPage() {
     presetRoleKey?: string,
   ) => {
     const presetRole = roleByKey(roleModule, presetRoleKey)
-    const nextRoleKey = presetRole?.side === side ? presetRole.key : roleKey
+    const nextRoleKey = boundRoleKey ??
+      (presetRole?.side === side ? presetRole.key : roleKey)
     setRoleKey(nextRoleKey)
     if (mutateTimer.current) {
       clearTimeout(mutateTimer.current)
@@ -1183,7 +1189,7 @@ export function BuilderPage() {
               onDirect={focusPrompt}
               deck={deck}
               presetRoleKey={roleKey}
-              presetRoles={deckFor(scenarioID, side)
+              presetRoles={boundRoleKey || deckFor(scenarioID, side)
                 ? []
                 : roles.flatMap((role) => {
                   const roleDeck = deckFor(scenarioID, side, role.key)
@@ -1375,25 +1381,34 @@ export function BuilderPage() {
                   className='w-[min(14rem,calc(100vw-3rem))]'
                   {...tm('E.role-select')}
                 >
-                  <Select
-                    key={`role:${saving}`}
-                    placeholder='选择角色'
-                    value={roleKey}
-                    className='h-11 md:h-10'
-                    disabled={!workspaceReady || saving}
-                    renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
-                    onValueChange={(v) => {
-                      if (!v) return
-                      setRoleKey(v)
-                      journalWorkspace({ roleKey: v })
-                    }}
-                  >
-                    {roles.map((role) => (
-                      <SelectItem key={role.key} value={role.key}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </Select>
+                  {boundRoleKey
+                    ? (
+                      <p className='py-2 font-medium text-(--foreground)'>
+                        {roleByKey(roleModule, boundRoleKey)?.name ??
+                          boundRoleKey} · 角色已固定
+                      </p>
+                    )
+                    : (
+                      <Select
+                        key={`role:${saving}`}
+                        placeholder='选择角色'
+                        value={roleKey}
+                        className='h-11 md:h-10'
+                        disabled={!workspaceReady || saving}
+                        renderValue={(v) => roleByKey(roleModule, v)?.name ?? v}
+                        onValueChange={(v) => {
+                          if (!v) return
+                          setRoleKey(v)
+                          journalWorkspace({ roleKey: v })
+                        }}
+                      >
+                        {roles.map((role) => (
+                          <SelectItem key={role.key} value={role.key}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    )}
                 </div>
               </label>
             )

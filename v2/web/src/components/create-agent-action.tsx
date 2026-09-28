@@ -8,14 +8,26 @@ import { navigationCache, navigationEpoch } from '../lib/navigation-cache'
 import { agentQuery } from '../lib/navigation-queries'
 import { rejectCopy } from '../lib/reject-copy'
 import { tm } from '../testmode/mark'
+import { rolesForSide, scenarioModule } from '../scenarios'
+import { PortraitRoleChoice } from './portrait-role-choice/portrait-role-choice'
+import { Modal } from './modal'
 import { NewAgentButton } from './new-agent-button'
 import { Button, ButtonLink } from './ui/button'
 
 // Coalesce rapid clicks even if the source control unmounts and mounts again.
 const pending = new Map<string, Promise<number>>()
 
-async function create(scenarioID: string, side: Side, epoch: number) {
-  const { agentID } = await agents.create({ scenarioID, side })
+async function create(
+  scenarioID: string,
+  side: Side,
+  epoch: number,
+  roleKey?: string,
+) {
+  const { agentID } = await agents.create({
+    scenarioID,
+    side,
+    ...(roleKey ? { roleKey } : {}),
+  })
   // Keep the source page stable until the destination can paint its real content.
   // A failed read must never turn a successful creation into another POST.
   if (epoch === navigationEpoch()) {
@@ -33,6 +45,7 @@ export function CreateAgentAction({
   marker,
   testID,
   attention,
+  express = false,
 }: {
   scenarioID: string
   side: Side
@@ -42,11 +55,20 @@ export function CreateAgentAction({
   marker?: string
   testID?: string
   attention?: boolean
+  express?: boolean
 }) {
   const navigate = useNavigate()
   const location = useLocation()
   const currentLocation = useRef(location.key)
   currentLocation.current = location.key
+  const roles = rolesForSide(scenarioModule(scenarioID), side).slice().sort(
+    (a, b) => {
+      if (scenarioID !== 'honnoji-decision' || side !== 'a') return 0
+      return Number(b.key === 'yoshiaki') - Number(a.key === 'yoshiaki')
+    },
+  )
+  const [choosing, setChoosing] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [gate, setGate] = useState(false)
@@ -59,7 +81,7 @@ export function CreateAgentAction({
     }
   }, [])
 
-  const submit = async () => {
+  const submit = async (roleKey?: string) => {
     if (locked.current) return
     locked.current = true
     setBusy(true)
@@ -70,17 +92,19 @@ export function CreateAgentAction({
     const isCurrent = () =>
       live.current && epoch === navigationEpoch() &&
       source === currentLocation.current
-    const key = JSON.stringify([epoch, scenarioID, side])
+    const key = JSON.stringify([epoch, scenarioID, side, roleKey])
     let request = pending.get(key)
     if (!request) {
-      request = create(scenarioID, side, epoch)
+      request = create(scenarioID, side, epoch, roleKey)
       pending.set(key, request)
       void request.finally(() => pending.delete(key)).catch(() => {})
     }
     try {
       const agentID = await request
       if (isCurrent()) {
-        navigate(`/agents/${agentID}`, { state: { renameNewAgent: true } })
+        navigate(`/agents/${agentID}${express ? '?express=1' : ''}`, {
+          state: { renameNewAgent: true },
+        })
       }
     } catch (cause) {
       if (!isCurrent()) return
@@ -96,30 +120,108 @@ export function CreateAgentAction({
     }
   }
 
+  const begin = () => {
+    if (roles.length > 1) {
+      setSelectedRole(null)
+      setError(null)
+      setGate(false)
+      setChoosing(true)
+    } else {
+      void submit()
+    }
+  }
+
+  const control = children
+    ? (
+      <Button
+        size='sm'
+        disabled={busy}
+        data-testid={testID}
+        onClick={begin}
+      >
+        {children}
+      </Button>
+    )
+    : (
+      <NewAgentButton
+        role={role}
+        attention={attention}
+        disabled={busy}
+        onClick={begin}
+      />
+    )
+
   return (
     <div className='contents'>
       <span className='inline-flex' aria-busy={busy} data-tm={marker}>
-        {children
+        {scenarioID === 'honnoji-decision' && roles.length === 2
           ? (
-            <Button
-              size='sm'
+            <PortraitRoleChoice
+              roles={roles}
               disabled={busy}
-              data-testid={testID}
-              onClick={() => void submit()}
+              onSelect={(key) => void submit(key)}
             >
-              {children}
-            </Button>
+              {control}
+            </PortraitRoleChoice>
           )
-          : (
-            <NewAgentButton
-              role={role}
-              attention={attention}
-              disabled={busy}
-              onClick={() => void submit()}
-            />
-          )}
+          : control}
       </span>
-      {error && (
+      {choosing && (
+        <Modal
+          title={`选择${role}的角色`}
+          onClose={() => {
+            if (!busy) setChoosing(false)
+          }}
+        >
+          <p className='text-sm text-(--foreground-subtle)'>
+            先选择角色，再创建智能体。角色创建后固定，所有策略版本都将使用这个角色。
+          </p>
+          <fieldset disabled={busy} className='space-y-3'>
+            <legend className='sr-only'>出场角色</legend>
+            {roles.map((option) => (
+              <label
+                key={option.key}
+                className='flex cursor-pointer gap-3 rounded-lg border border-(--border) p-4'
+              >
+                <input
+                  type='radio'
+                  name='agent-role'
+                  value={option.key}
+                  checked={selectedRole === option.key}
+                  onChange={() => setSelectedRole(option.key)}
+                />
+                <span>
+                  <span className='block font-medium'>{option.name}</span>
+                  <span className='mt-1 block text-sm text-(--foreground-subtle)'>
+                    {option.pitch}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {error && (
+            <p role='alert' className='text-sm text-(--accent)'>{error}</p>
+          )}
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='secondary'
+              disabled={busy}
+              onClick={() => setChoosing(false)}
+            >
+              取消
+            </Button>
+            <Button
+              disabled={busy || selectedRole == null}
+              onClick={() => {
+                if (selectedRole) void submit(selectedRole)
+              }}
+            >
+              {busy ? '创建中…' : '创建智能体'}
+            </Button>
+          </div>
+        </Modal>
+      )}
+      {error && !choosing && (
         <div className='w-full space-y-2 text-sm' {...tm('E.new-agent-error')}>
           <p role='alert' className='text-(--accent)'>{error}</p>
           {gate && (

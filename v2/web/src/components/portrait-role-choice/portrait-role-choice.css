@@ -1,0 +1,132 @@
+.portrait-choice-anchor {
+  display: inline-flex;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.portrait-choice-anchor > button {
+  transition: box-shadow 160ms, background 160ms;
+}
+.portrait-choice-anchor[data-open='true'] > button {
+  box-shadow: 0 0 0 1px var(--foreground-muted);
+}
+.portrait-choice-anchor[data-selected='true'] > button {
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.portrait-choices {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+.portrait-choice {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--border-soft);
+  border-bottom: 2px solid var(--foreground-muted);
+  border-radius: 9px 9px 3px 3px;
+  color: var(--foreground);
+  background: var(--surface-elevated);
+  box-shadow: 0 8px 22px #0006;
+  text-align: center;
+  touch-action: none;
+  animation: portrait-choice-enter 180ms cubic-bezier(.2,.8,.2,1) both;
+  transition: border-color 140ms, background 140ms;
+}
+.portrait-choice-image {
+  display: block;
+  width: 60px;
+  height: 70px;
+  flex-shrink: 0;
+  border-radius: 28px 28px 3px 3px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.portrait-choice-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  /* Crop out the printed frame in the source artwork inside the existing mask. */
+  transform: scale(1.1);
+  transform-origin: center;
+  filter: grayscale(1);
+  opacity: .75;
+  transition: filter 160ms, opacity 160ms;
+}
+.portrait-choice-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.portrait-choice-copy strong {
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.portrait-choice-instruction {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--foreground-subtle);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.portrait-choice[data-selected='true'] {
+  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-elevated));
+}
+.portrait-choice[data-selected='true'] img {
+  filter: grayscale(0);
+  opacity: 1;
+}
+.portrait-choice[data-selected='true'] .portrait-choice-instruction {
+  color: #ffb5a7;
+}
+.portrait-choice:focus-visible {
+  outline: 2px solid #ffb5a7;
+  outline-offset: 3px;
+}
+.portrait-choices[data-vertical='true'] .portrait-choice {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.portrait-choices[data-vertical='true'] .portrait-choice-image {
+  height: 100%;
+  width: 48px;
+  border-radius: 23px 23px 2px 2px;
+}
+.portrait-choices[data-vertical='true'] .portrait-choice-copy {
+  flex: 1;
+}
+@keyframes portrait-choice-enter {
+  from {
+    opacity: 0;
+    transform: translate(var(--portrait-enter-x), var(--portrait-enter-y));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portrait-choice,
+  .portrait-choice-image img,
+  .portrait-choice-anchor > button {
+    animation: none;
+    transition: none;
+  }
+}
