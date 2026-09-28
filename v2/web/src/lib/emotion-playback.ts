@@ -39,6 +39,8 @@ interface Entry {
   locked: boolean
   prepared: EmotionCategory | null
   start: number | null
+  displayAt: number | null
+  imageUntil: number | null
   view: Presentation
 }
 
@@ -162,6 +164,8 @@ export class EmotionPlayback {
           locked: output.status === 'unavailable',
           prepared: null,
           start: historical ? now : null,
+          displayAt: null,
+          imageUntil: null,
           view: {
             category: 'E01',
             text: output.playback?.text ?? '',
@@ -193,6 +197,7 @@ export class EmotionPlayback {
         entry.updateUntil,
         now + Math.max(0, output.updateMs),
       )
+      if (!entry.historical && now > entry.updateUntil) entry.locked = true
       if (output.status !== 'pending') entry.output = output
       if (output.status === 'unavailable') entry.locked = true
     }
@@ -203,9 +208,12 @@ export class EmotionPlayback {
   prepare(ref: string, category: EmotionCategory, now: number) {
     const entry = this.entries.get(ref)
     if (
-      !entry || entry.locked || (entry.output.categoryId ?? 'E01') !== category
+      !entry || entry.locked || entry.output.status !== 'ready' ||
+      (entry.output.categoryId ?? 'E01') !== category
     ) return
-    if (!entry.historical && now > entry.updateUntil) {
+    if (
+      !entry.historical && entry.imageUntil != null && now > entry.imageUntil
+    ) {
       entry.locked = true
       this.emit()
       return
@@ -223,9 +231,17 @@ export class EmotionPlayback {
         const entry = this.entries.get(ref)
         if (!entry) continue
         const { output, historical } = entry
+        if (!historical && entry.displayAt == null && now >= previousEnd) {
+          entry.displayAt = now
+          entry.imageUntil = now + 1000
+          if (output.status === 'ready' && !entry.locked) {
+            entry.waitUntil = Math.max(entry.waitUntil, now + 200)
+          }
+        }
         if (
-          !historical && !entry.locked && now > entry.updateUntil &&
-          !entry.prepared
+          !historical && !entry.locked && !entry.prepared &&
+          ((output.status === 'pending' && now > entry.updateUntil) ||
+            (entry.imageUntil != null && now > entry.imageUntil))
         ) {
           entry.locked = true
           changed = true

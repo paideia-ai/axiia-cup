@@ -186,4 +186,28 @@ describe('emotion playback deadlines', () => {
       waiting: false,
     })
   })
+  it('retains an accepted classification while its row waits behind a longer replay', () => {
+    const store = new EmotionPlayback()
+    store.ingest(match([]), 0)
+    const first = {
+      ...output(),
+      playback: {
+        text: '先说。再说。',
+        frames: [{ atMs: 0, end: 3 }, { atMs: 3000, end: 6 }],
+      },
+    }
+    const snapshot = match([first, output('two')])
+    store.ingest(snapshot, 0)
+    store.tick(200)
+    store.update([{ ...output('two', 'ready'), waitMs: 0, updateMs: 500 }], 500)
+    store.tick(1500)
+    store.tick(3200)
+    expect(store.get('two')?.waiting).toBe(true)
+    store.prepare('two', 'E06', 3210)
+    expect(store.get('two')).toMatchObject({
+      category: 'E06',
+      waiting: false,
+      end: 3,
+    })
+  })
 })
