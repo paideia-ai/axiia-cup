@@ -16,9 +16,11 @@ import {
   agentPreviewScenarios,
   previewAgent,
 } from '../../src/testing/scenario-agent-fixtures'
+import type { MyAgentDTO } from '../../src/api/types'
 import { deckFor } from '../../src/scenarios/decks'
 
 interface FixtureOptions {
+  oppositeAgents?: MyAgentDTO[]
   guest?: boolean
   empty?: boolean
   inventoryFailed?: boolean
@@ -121,6 +123,9 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       if (options.multiple) {
         data.scenarios[0].sides.a.unshift({ agentID: 103, versionCount: 0 })
       }
+      if (options.oppositeAgents) {
+        data.scenarios[0].sides.b = options.oppositeAgents
+      }
       if (options.noEntry) {
         data.scenarios[0].sides.a.forEach((agent) =>
           agent.entryVersionID = null
@@ -137,7 +142,11 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       return json({
         fields: {},
         scenarioID: scenario.summary.id,
-        side: path.includes('/102/') ? 'b' : 'a',
+        side: path.includes('/102/') || options.oppositeAgents?.some((agent) =>
+            path.includes(`/${agent.agentID}/`)
+          )
+          ? 'b'
+          : 'a',
       })
     }
     if (/^\/agents\/\d+\/matches$/.test(path) && request.method() === 'GET') {
@@ -418,7 +427,7 @@ const cases: {
     name: 'battle panel practice opposite',
     path: '/agents/101',
     marker: 'OS.gate-practice-opposite',
-    destination: /\/my-agents$/,
+    destination: /\/agents\/102$/,
     options: { opponents: true },
     prepare: (page) => openPanel(page, 'pvp'),
   },
@@ -427,6 +436,7 @@ const cases: {
     path: '/agents/101',
     marker: 'OS.gate-create-opposite',
     destination: /\/agents\/102$/,
+    options: { oppositeAgents: [] },
     prepare: (page) => openPanel(page, 'pvp'),
   },
   {
@@ -759,6 +769,66 @@ for (const detail of agentPreviewScenarios) {
       expect(ensures).toHaveLength(0)
       expect(unexpected).toEqual([])
       expect(errors).toEqual([])
+    })
+  }
+}
+
+for (const mobile of [false, true]) {
+  for (
+    const choice of ['single', 'draft', 'entry', 'recent', 'missing'] as const
+  ) {
+    test(`opposite practice ${choice} on ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
+      if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+      const oppositeAgents: MyAgentDTO[] = choice === 'missing' ? [] : [
+        {
+          agentID: 102,
+          versionCount: choice === 'draft' ? 0 : 2,
+          lastEditedAt: 100,
+        },
+        ...(choice === 'single' || choice === 'draft' ? [] : [
+          { agentID: 103, versionCount: 2, lastEditedAt: 300 },
+          {
+            agentID: 104,
+            versionCount: 2,
+            lastEditedAt: 200,
+            entryVersionID: choice === 'entry' ? 1002 : null,
+          },
+          {
+            agentID: 105,
+            versionCount: 2,
+            lastEditedAt: 400,
+            entryVersionID: 1002,
+            isArchived: true,
+          },
+        ]),
+      ]
+      const { ensures, errors, unexpected } = await fixtures(page, {
+        opponents: choice !== 'missing' && choice !== 'draft',
+        oppositeAgents,
+      })
+      await page.goto('/agents/101')
+      await openPanel(page, 'pvp')
+      const marker = choice === 'missing'
+        ? 'OS.gate-create-opposite'
+        : 'OS.gate-practice-opposite'
+      await page.locator(`[data-tm="${marker}"]`).click()
+      const selected = choice === 'entry'
+        ? 104
+        : choice === 'recent'
+        ? 103
+        : 102
+      await expect(page).toHaveURL(new RegExp(`/agents/${selected}$`))
+      if (choice === 'missing') {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toBeFocused()
+        expect(ensures.map((request) => request.side)).toEqual(['b'])
+      } else {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toHaveCount(0)
+        expect(ensures).toHaveLength(0)
+      }
+      expect(errors).toEqual([])
+      expect(unexpected).toEqual([])
     })
   }
 }

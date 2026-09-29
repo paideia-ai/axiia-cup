@@ -3,6 +3,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 
 import { builder, myAgents } from '../api/client'
 import type { Side } from '../api/types'
+import { preferredAgent } from '../lib/agent-entry'
 import { CreateAgentAction } from '../components/create-agent-action'
 import { Button, ButtonLink } from '../components/ui/button'
 import { useAuth } from '../context/auth'
@@ -44,12 +45,12 @@ function AgentEntry({ scenarioID, side, target, express }: {
   // StrictMode replays effects; share the get-or-create request for this entry.
   const open = async () => {
     const before = await myAgents.list()
-    const existing = before.scenarios.find((scenario) =>
-      scenario.scenarioID === scenarioID
+    const existing = preferredAgent(
+      before.scenarios.find((scenario) => scenario.scenarioID === scenarioID)
+        ?.sides[side] ?? [],
     )
-      ?.sides[side].find((agent) => !agent.isArchived)
+    if (existing) return { agentID: existing.agentID, created: false }
     if (rolesForSide(scenarioModule(scenarioID), side).length > 1) {
-      if (existing) return { agentID: existing.agentID, created: false }
       return { chooseRole: true as const }
     }
     const result = await builder.ensure({ scenarioID, side })
