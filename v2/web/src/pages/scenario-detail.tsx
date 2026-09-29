@@ -25,6 +25,7 @@ import {
   scenarioModule,
 } from '../scenarios'
 import { tm } from '../testmode/mark'
+import { preferredAgent } from '../lib/agent-entry'
 import { useAuth } from '../context/auth'
 import type {
   ScenarioEducation,
@@ -570,8 +571,7 @@ function SideCard({
 }) {
   const { account } = useAuth()
   const name = copy?.name ?? fallbackName
-  const homeAgent = agents?.find((agent) => agent.entryVersionID != null) ??
-    agents?.[0]
+  const homeAgent = preferredAgent(agents ?? [])
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
       <CardContent className='flex flex-col gap-4 pt-5'>

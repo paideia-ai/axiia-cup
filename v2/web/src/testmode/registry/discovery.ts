@@ -527,14 +527,14 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '去练习对侧按钮',
     clauses: ['U05-C04'],
     anchors: ['spec-change-62', 'spec-change-64'],
-    note: '「切侧」的现行替代：去我的智能体换执侧',
+    note: '直达对侧智能体主页；优先参赛版本，其次最近编辑',
     when: '对侧未达标且已有对侧 agent 时',
   },
   'OS.gate-create-opposite': {
     label: '去创建对侧按钮',
     clauses: ['U05-C04'],
     anchors: ['spec-change-64'],
-    note: '懒 ensure 后进构建器',
+    note: '创建对侧草稿后进入主页，自动聚焦名称输入',
     when: '对侧未达标且没有对侧 agent 时',
   },
   'OS.gate-locked-legacy': {
