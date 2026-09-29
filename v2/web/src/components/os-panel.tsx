@@ -10,6 +10,7 @@ import {
   challenges,
   config as configApi,
   matches,
+  myAgents,
   versions as versionsApi,
 } from '../api/client'
 import type {
@@ -74,6 +75,10 @@ export function OsPanel({
 
   // null = 未加载：hotseat 区在拿到对手列表前显示加载态，而非误报空态。
   const [opponents, setOpponents] = useState<OpponentAgentDTO[] | null>(null)
+  const [archivedAgentIDs, setArchivedAgentIDs] = useState<Set<number> | null>(
+    null,
+  )
+  const [archiveError, setArchiveError] = useState(false)
   const [dispatching, setDispatching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // 受控 tab：锁定态的「去练习该侧」要能把玩家切回 NPC 练习页签。
@@ -125,7 +130,7 @@ export function OsPanel({
     let live = true
     setOpponents(null)
     setOpponentError(false)
-    // 左右手互搏的候选：对侧的可对战 agent 中 isSelf 的那些。
+    // 公共对手清单保留约战资格；所有者的归档偏好单独用于左右手互搏。
     void catalog
       .opponents(scenarioID, side === 'a' ? 'b' : 'a')
       .then((list) => {
@@ -134,6 +139,25 @@ export function OsPanel({
       .catch(() => {
         if (live) setOpponentError(true)
       })
+    return () => {
+      live = false
+    }
+  }, [open, scenarioID, side, opponentRetry])
+
+  useEffect(() => {
+    if (!open) return
+    let live = true
+    setArchivedAgentIDs(null)
+    setArchiveError(false)
+    void myAgents.archived().then((list) => {
+      if (live) {
+        setArchivedAgentIDs(
+          new Set(list.agents.map(({ agent }) => agent.agentID)),
+        )
+      }
+    }).catch(() => {
+      if (live) setArchiveError(true)
+    })
     return () => {
       live = false
     }
@@ -176,7 +200,9 @@ export function OsPanel({
   }
 
   const selfOpponents = (opponents ?? []).filter(
-    (opponent) => opponent.isSelf,
+    (opponent) =>
+      opponent.isSelf && archivedAgentIDs !== null &&
+      !archivedAgentIDs.has(opponent.agentID),
   )
 
   // 出战版本 = ★参赛版本，否则最新版（与服务器选对手版本的规则一致）。
@@ -649,7 +675,7 @@ export function OsPanel({
                     ))}
                 </TabsContent>
                 <TabsContent value='hotseat' className='space-y-2.5'>
-                  {opponentError
+                  {opponentError || archiveError
                     ? (
                       <div role='alert' className='space-y-3'>
                         <p className='text-sm text-(--foreground-subtle)'>
@@ -664,7 +690,7 @@ export function OsPanel({
                         </Button>
                       </div>
                     )
-                    : opponents === null
+                    : opponents === null || archivedAgentIDs === null
                     ? (
                       <p
                         className='text-sm text-(--foreground-subtle)'
@@ -973,6 +999,7 @@ export function OsPanel({
                           )}
                           {!sideMet(gateProgress[oppositeSide]) &&
                             (opponents === null || opponentError ||
+                                archivedAgentIDs === null || archiveError ||
                                 selfOpponents.length > 0
                               ? (
                                 <ButtonLink

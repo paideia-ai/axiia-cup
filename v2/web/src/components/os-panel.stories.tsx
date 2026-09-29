@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { delay, http, HttpResponse, type RequestHandler } from 'msw'
@@ -35,6 +36,10 @@ const meta = {
   },
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get('/v1/scenarios/:id/opponents', () =>
         HttpResponse.json({
@@ -88,6 +93,10 @@ export const UnlockedDesktop: Story = {
   args: { scenario: unlockedScenario },
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get('/v1/scenarios/:id/opponents', () =>
         HttpResponse.json({
@@ -149,6 +158,10 @@ export const UnlockedDesktop: Story = {
 export const OpponentLoading: Story = {
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get('/v1/scenarios/:id/opponents', async () => {
         await delay('infinite')
@@ -166,6 +179,10 @@ export const OpponentLoading: Story = {
 export const TrialsBlocked: Story = {
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get(
         '/v1/config',
         () => HttpResponse.json({ ...config, trialsBlocked: true }),
@@ -213,6 +230,10 @@ export const DispatchBalanceBoundary: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get(
         '/v1/rewards/quote',
         () =>
@@ -280,6 +301,10 @@ function quotaRejectionStory(
     }],
     parameters: {
       msw: [
+        http.get(
+          '/v1/my/archived-agents',
+          () => HttpResponse.json({ agents: [] }),
+        ),
         http.get('/v1/config', async () => {
           if (rejected) readsAfterRejection += 1
           if (rejected && refreshHangs) await delay('infinite')
@@ -414,6 +439,10 @@ function singleChallengeStory(side: 'a' | 'b'): Story {
     parameters: {
       msw: [
         http.get(
+          '/v1/my/archived-agents',
+          () => HttpResponse.json({ agents: [] }),
+        ),
+        http.get(
           '/v1/rewards',
           () => HttpResponse.json({ ...dispatchWallet, balance: 150 }),
         ),
@@ -480,6 +509,10 @@ export const RejectSameSidePinnedVersion: Story = {
   args: { scenario: unlockedScenario },
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get(
         '/v1/scenarios/:id/opponents',
@@ -540,6 +573,10 @@ export const DirectNpcRow: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       ...meta.parameters.msw,
       http.post('/v1/matches/pve', async ({ request }) => {
         rowAttempts.push(await request.json())
@@ -589,6 +626,10 @@ export const DirectOwnAgentRow: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get('/v1/scenarios/:id/opponents', () =>
         HttpResponse.json({
@@ -639,6 +680,10 @@ export const OpponentFailureRetry: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       http.get('/v1/config', () => HttpResponse.json(config)),
       http.get(
         '/v1/scenarios/:id/opponents',
@@ -677,6 +722,10 @@ export const PinnedResultInvalidated: Story = {
   }],
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       ...meta.parameters.msw,
       http.get('/v1/versions/367/ref', () =>
         HttpResponse.json({
@@ -723,6 +772,10 @@ export const PinnedParticipantRoles: Story = {
   },
   parameters: {
     msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
       ...meta.parameters.msw,
       http.get('/v1/versions/367/ref', () =>
         HttpResponse.json({
@@ -752,3 +805,160 @@ export const PinnedParticipantRoles: Story = {
       .toHaveTextContent('细川藤孝')
   },
 }
+
+// The public opponent projection intentionally carries no archive preference.
+// Exercise the real owner-only archive response instead of inventing a flag.
+function archivedHotseatStory(
+  side: 'a' | 'b',
+  mode: 'mixed' | 'all' | 'loading' | 'retry' | 'restore',
+): Story {
+  let restored = false
+  let archiveReads = 0
+  const attempts: unknown[] = []
+  const ownOpponents = [
+    { agentID: 102, displayName: '我', name: '已归档策略', isSelf: true },
+    { agentID: 103, displayName: '我', name: '现役策略', isSelf: true },
+  ]
+  function ReopenPanel(args: React.ComponentProps<typeof OsPanel>) {
+    const [open, setOpen] = useState(true)
+    return (
+      <>
+        <button
+          type='button'
+          onClick={() => {
+            restored = true
+            setOpen(true)
+          }}
+        >
+          恢复后重新打开
+        </button>
+        <OsPanel {...args} open={open} onClose={() => setOpen(false)} />
+      </>
+    )
+  }
+  return {
+    args: { side, scenario: unlockedScenario, preferVersionID: 1001 },
+    render: (args) => <ReopenPanel {...args} />,
+    loaders: [() => {
+      restored = false
+      archiveReads = 0
+      attempts.length = 0
+      return {}
+    }],
+    parameters: {
+      msw: [
+        http.get('/v1/config', () => HttpResponse.json(config)),
+        http.get('/v1/scenarios/:id/opponents', ({ request }) => {
+          expect(new URL(request.url).searchParams.get('side')).toBe(
+            side === 'a' ? 'b' : 'a',
+          )
+          return HttpResponse.json({
+            opponents: [
+              ...ownOpponents,
+              {
+                agentID: 301,
+                displayName: '其他玩家',
+                isSelf: false,
+                ownerAccountID: 'rival',
+              },
+            ],
+          })
+        }),
+        http.get('/v1/my/archived-agents', async () => {
+          archiveReads++
+          if (mode === 'loading') await delay('infinite')
+          if (mode === 'retry' && archiveReads === 1) {
+            return HttpResponse.error()
+          }
+          return HttpResponse.json({
+            agents: restored
+              ? []
+              : ownOpponents.slice(0, mode === 'all' ? 2 : 1).map((
+                opponent,
+              ) => ({
+                agent: { agentID: opponent.agentID, isArchived: true },
+                scenarioID: unlockedScenario.summary.id,
+                scenarioTitle: unlockedScenario.summary.title,
+                sideName: side === 'a' ? '甘龙' : '商鞅',
+              })),
+          })
+        }),
+        http.post('/v1/matches/pvp', async ({ request }) => {
+          attempts.push(await request.json())
+          return HttpResponse.json({ matchID: 902 })
+        }),
+      ],
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement.ownerDocument.body)
+      await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+      if (mode === 'loading') {
+        await expect(
+          within(canvas.getByRole('tabpanel', { name: '左右手互搏' }))
+            .getByText('加载中…'),
+        ).toBeVisible()
+        expect(canvas.queryByRole('button', { name: '与已归档策略对战' }))
+          .toBeNull()
+        expect(canvas.queryByText('你还没有对侧智能体')).toBeNull()
+        return
+      }
+      if (mode === 'retry') {
+        await expect(await canvas.findByText('对手暂时没有加载出来'))
+          .toBeVisible()
+        expect(canvas.queryByRole('button', { name: '与已归档策略对战' }))
+          .toBeNull()
+        expect(canvas.queryByText('你还没有对侧智能体')).toBeNull()
+        // Archive lookup failure must not disable ordinary player challenges.
+        await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+        await expect(
+          await canvas.findByRole('button', { name: '与其他玩家对战' }),
+        ).toBeEnabled()
+        await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+        await userEvent.click(canvas.getByRole('button', { name: '重新加载' }))
+      }
+      if (mode === 'all') {
+        await expect(await canvas.findByText('你还没有对侧智能体'))
+          .toBeVisible()
+        expect(canvas.queryByRole('button', { name: '与现役策略对战' }))
+          .toBeNull()
+      } else {
+        await expect(
+          await canvas.findByRole('button', { name: '与现役策略对战' }),
+        ).toBeEnabled()
+      }
+      expect(canvas.queryByRole('button', { name: '与已归档策略对战' }))
+        .toBeNull()
+      expect(canvas.queryByRole('button', { name: '与其他玩家对战' }))
+        .toBeNull()
+      if (mode === 'restore') {
+        await userEvent.click(canvas.getByRole('button', { name: '关闭' }))
+        await userEvent.click(
+          await canvas.findByRole('button', { name: '恢复后重新打开' }),
+        )
+        await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+        await expect(
+          await canvas.findByRole('button', { name: '与已归档策略对战' }),
+        ).toBeEnabled()
+        expect(archiveReads).toBe(2)
+      }
+      if (mode === 'mixed') {
+        await userEvent.click(
+          canvas.getByRole('button', { name: '与现役策略对战' }),
+        )
+        await waitFor(() =>
+          expect(attempts).toEqual([{ versionID: 1001, opponentAgentID: 103 }])
+        )
+      }
+    },
+  }
+}
+
+export const ArchivedHotseatFromA: Story = archivedHotseatStory('a', 'mixed')
+export const ArchivedHotseatFromB: Story = archivedHotseatStory('b', 'mixed')
+export const AllOwnOpponentsArchived: Story = archivedHotseatStory('a', 'all')
+export const ArchiveLookupLoading: Story = archivedHotseatStory('a', 'loading')
+export const ArchiveLookupRetry: Story = archivedHotseatStory('a', 'retry')
+export const RestoredOpponentOnReopen: Story = archivedHotseatStory(
+  'a',
+  'restore',
+)
