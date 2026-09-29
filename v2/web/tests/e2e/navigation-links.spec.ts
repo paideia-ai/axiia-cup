@@ -114,6 +114,7 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
           : [],
       })
     }
+    if (path === '/my/archived-agents') return json({ agents: [] })
     if (path === '/my/agents') {
       if (options.inventoryFailed) return json({ error: 'unavailable' }, 503)
       if (options.empty) return json({ scenarios: [] })
