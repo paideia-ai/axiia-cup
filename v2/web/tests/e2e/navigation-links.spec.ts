@@ -20,6 +20,7 @@ import type { MyAgentDTO } from '../../src/api/types'
 import { deckFor } from '../../src/scenarios/decks'
 
 interface FixtureOptions {
+  sideAAgents?: MyAgentDTO[]
   oppositeAgents?: MyAgentDTO[]
   guest?: boolean
   empty?: boolean
@@ -123,6 +124,7 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       if (options.multiple) {
         data.scenarios[0].sides.a.unshift({ agentID: 103, versionCount: 0 })
       }
+      if (options.sideAAgents) data.scenarios[0].sides.a = options.sideAAgents
       if (options.oppositeAgents) {
         data.scenarios[0].sides.b = options.oppositeAgents
       }
@@ -827,6 +829,85 @@ for (const mobile of [false, true]) {
           .toHaveCount(0)
         expect(ensures).toHaveLength(0)
       }
+      expect(errors).toEqual([])
+      expect(unexpected).toEqual([])
+    })
+  }
+}
+
+// Every side shortcut must use the same selection policy, including callers
+// whose destination is a builder rather than an agent home.
+for (const hasEntry of [true, false]) {
+  for (
+    const entry of [
+      'scenario',
+      'express',
+      'guest-return',
+      'journey',
+      'sibling-gate',
+    ] as const
+  ) {
+    test(`shared agent selection ${entry}: ${hasEntry ? 'entry version' : 'last edit'}`, async ({ page }) => {
+      const candidates: MyAgentDTO[] = [
+        { agentID: 103, versionCount: 1, lastEditedAt: 100 },
+        { agentID: 104, versionCount: 1, lastEditedAt: 300 },
+        {
+          agentID: 105,
+          versionCount: 1,
+          lastEditedAt: 200,
+          entryVersionID: hasEntry ? 1002 : null,
+        },
+        {
+          agentID: 106,
+          versionCount: 1,
+          lastEditedAt: 400,
+          entryVersionID: 1002,
+          isArchived: true,
+        },
+      ]
+      const opposite = entry === 'journey' || entry === 'sibling-gate'
+      const { ensures, errors, unexpected } = await fixtures(
+        page,
+        opposite ? { oppositeAgents: candidates } : { sideAAgents: candidates },
+      )
+      const selected = hasEntry ? 105 : 104
+      if (entry === 'scenario') {
+        await page.goto(scenarioPath)
+        await page.locator('[data-tm="DA.view-mine-button"]').first().click()
+      } else if (entry === 'express') {
+        await page.goto('/express')
+        await page.locator('[data-tm="X.build-button"]').click()
+      } else if (entry === 'guest-return') {
+        // This is the destination restored by login for the public scene CTA.
+        await page.goto(`${scenarioPath}/build?side=a`)
+      } else if (entry === 'journey') {
+        await page.goto('/matches/9001')
+        await showJourney(page)
+        await page.locator('[data-tm="FA.journey-opposite-button"]').click()
+      } else {
+        await page.context().route('**/v1/agents', (route) =>
+          route.fulfill({
+            status: 409,
+            json: { error: 'sibling_gate', message: '先为对侧保存一个策略' },
+          }))
+        await page.goto('/agents/101')
+        await page.getByRole('button', { name: '新建商鞅智能体' }).click()
+        await page.locator('[data-tm="E.new-agent-gate-switch"]').click()
+      }
+      await expect(page).toHaveURL(
+        entry === 'express'
+          ? new RegExp(
+            `/agents/${selected}/build\\?scenario=shangyang-court&side=a&express=1$`,
+          )
+          : new RegExp(`/agents/${selected}$`),
+      )
+      await expect(
+        entry === 'express'
+          ? page.locator('[data-tm="E.prompt-input"]')
+          : page.getByRole('link', { name: '新建版本', exact: true }),
+      )
+        .toBeVisible()
+      expect(ensures).toHaveLength(0)
       expect(errors).toEqual([])
       expect(unexpected).toEqual([])
     })
