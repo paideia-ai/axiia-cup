@@ -202,10 +202,11 @@ export function OsPanel({
     return fresh
   }
 
-  const selfOpponents = (opponents ?? []).filter(
-    (opponent) =>
-      opponent.isSelf && archivedAgentIDs !== null &&
-      !archivedAgentIDs.has(opponent.agentID),
+  const ownOpponents = (opponents ?? []).filter((opponent) => opponent.isSelf)
+  // 归档名单只用来剔除自己的对侧 agent；没有这类 agent 时不等它，也不因它报错。
+  const archiveNeeded = ownOpponents.length > 0
+  const selfOpponents = archivedAgentIDs === null ? [] : ownOpponents.filter(
+    (opponent) => !archivedAgentIDs.has(opponent.agentID),
   )
 
   // 出战版本 = ★参赛版本，否则最新版（与服务器选对手版本的规则一致）。
@@ -678,7 +679,7 @@ export function OsPanel({
                     ))}
                 </TabsContent>
                 <TabsContent value='hotseat' className='space-y-2.5'>
-                  {opponentError || archiveError
+                  {opponentError || (archiveNeeded && archiveError)
                     ? (
                       <div role='alert' className='space-y-3'>
                         <p className='text-sm text-(--foreground-subtle)'>
@@ -693,7 +694,8 @@ export function OsPanel({
                         </Button>
                       </div>
                     )
-                    : opponents === null || archivedAgentIDs === null
+                    : opponents === null ||
+                        (archiveNeeded && archivedAgentIDs === null)
                     ? (
                       <p
                         className='text-sm text-(--foreground-subtle)'

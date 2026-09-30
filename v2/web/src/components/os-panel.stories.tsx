@@ -962,3 +962,39 @@ export const RestoredOpponentOnReopen: Story = archivedHotseatStory(
   'a',
   'restore',
 )
+
+// With no own opposite agent there is nothing to hide, so a failed archive
+// lookup must leave the ordinary empty state in place.
+export const ArchiveLookupFailureWithoutOwnOpponents: Story = {
+  parameters: {
+    msw: [
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get('/v1/scenarios/:id/opponents', async () => {
+        // Let the archive failure land first; the empty state must still win.
+        await delay(100)
+        return HttpResponse.json({
+          opponents: [{
+            agentID: 301,
+            displayName: '其他玩家',
+            isSelf: false,
+            ownerAccountID: 'rival',
+          }],
+        })
+      }),
+      http.get(
+        '/v1/my/archived-agents',
+        () =>
+          HttpResponse.json(
+            { error: 'unavailable', message: '暂时不可用' },
+            { status: 503 },
+          ),
+      ),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+    await expect(await canvas.findByText('你还没有对侧智能体')).toBeVisible()
+    expect(canvas.queryByText('对手暂时没有加载出来')).toBeNull()
+  },
+}
