@@ -145,6 +145,7 @@ async function installWorld(page: Page): Promise<SoundWorld> {
     }
     if (path === '/v1/config') return json(config)
     if (path === '/v1/models') return json({ models: config.models })
+    if (path === '/v1/my/archived-agents') return json({ agents: [] })
     if (path === '/v1/my/agents') return json(inventory)
     if (path === '/v1/scenarios') return json({ scenarios: [scenario.summary] })
     if (path === `/v1/scenarios/${scenario.summary.id}`) return json(scenario)
