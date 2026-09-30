@@ -16,9 +16,12 @@ import {
   agentPreviewScenarios,
   previewAgent,
 } from '../../src/testing/scenario-agent-fixtures'
+import type { MyAgentDTO } from '../../src/api/types'
 import { deckFor } from '../../src/scenarios/decks'
 
 interface FixtureOptions {
+  sideAAgents?: MyAgentDTO[]
+  oppositeAgents?: MyAgentDTO[]
   guest?: boolean
   empty?: boolean
   inventoryFailed?: boolean
@@ -122,6 +125,10 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       if (options.multiple) {
         data.scenarios[0].sides.a.unshift({ agentID: 103, versionCount: 0 })
       }
+      if (options.sideAAgents) data.scenarios[0].sides.a = options.sideAAgents
+      if (options.oppositeAgents) {
+        data.scenarios[0].sides.b = options.oppositeAgents
+      }
       if (options.noEntry) {
         data.scenarios[0].sides.a.forEach((agent) =>
           agent.entryVersionID = null
@@ -138,7 +145,11 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       return json({
         fields: {},
         scenarioID: scenario.summary.id,
-        side: path.includes('/102/') ? 'b' : 'a',
+        side: path.includes('/102/') || options.oppositeAgents?.some((agent) =>
+            path.includes(`/${agent.agentID}/`)
+          )
+          ? 'b'
+          : 'a',
       })
     }
     if (/^\/agents\/\d+\/matches$/.test(path) && request.method() === 'GET') {
@@ -419,7 +430,7 @@ const cases: {
     name: 'battle panel practice opposite',
     path: '/agents/101',
     marker: 'OS.gate-practice-opposite',
-    destination: /\/my-agents$/,
+    destination: /\/agents\/102$/,
     options: { opponents: true },
     prepare: (page) => openPanel(page, 'pvp'),
   },
@@ -428,6 +439,7 @@ const cases: {
     path: '/agents/101',
     marker: 'OS.gate-create-opposite',
     destination: /\/agents\/102$/,
+    options: { oppositeAgents: [] },
     prepare: (page) => openPanel(page, 'pvp'),
   },
   {
@@ -760,6 +772,145 @@ for (const detail of agentPreviewScenarios) {
       expect(ensures).toHaveLength(0)
       expect(unexpected).toEqual([])
       expect(errors).toEqual([])
+    })
+  }
+}
+
+for (const mobile of [false, true]) {
+  for (
+    const choice of ['single', 'draft', 'entry', 'recent', 'missing'] as const
+  ) {
+    test(`opposite practice ${choice} on ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
+      if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+      const oppositeAgents: MyAgentDTO[] = choice === 'missing' ? [] : [
+        {
+          agentID: 102,
+          versionCount: choice === 'draft' ? 0 : 2,
+          lastEditedAt: 100,
+        },
+        ...(choice === 'single' || choice === 'draft' ? [] : [
+          { agentID: 103, versionCount: 2, lastEditedAt: 300 },
+          {
+            agentID: 104,
+            versionCount: 2,
+            lastEditedAt: 200,
+            entryVersionID: choice === 'entry' ? 1002 : null,
+          },
+          {
+            agentID: 105,
+            versionCount: 2,
+            lastEditedAt: 400,
+            entryVersionID: 1002,
+            isArchived: true,
+          },
+        ]),
+      ]
+      const { ensures, errors, unexpected } = await fixtures(page, {
+        opponents: choice !== 'missing' && choice !== 'draft',
+        oppositeAgents,
+      })
+      await page.goto('/agents/101')
+      await openPanel(page, 'pvp')
+      const marker = choice === 'missing'
+        ? 'OS.gate-create-opposite'
+        : 'OS.gate-practice-opposite'
+      await page.locator(`[data-tm="${marker}"]`).click()
+      const selected = choice === 'entry'
+        ? 104
+        : choice === 'recent'
+        ? 103
+        : 102
+      await expect(page).toHaveURL(new RegExp(`/agents/${selected}$`))
+      if (choice === 'missing') {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toBeFocused()
+        expect(ensures.map((request) => request.side)).toEqual(['b'])
+      } else {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toHaveCount(0)
+        expect(ensures).toHaveLength(0)
+      }
+      expect(errors).toEqual([])
+      expect(unexpected).toEqual([])
+    })
+  }
+}
+
+// Every side shortcut must use the same selection policy, including callers
+// whose destination is a builder rather than an agent home.
+for (const hasEntry of [true, false]) {
+  for (
+    const entry of [
+      'scenario',
+      'express',
+      'guest-return',
+      'journey',
+      'sibling-gate',
+    ] as const
+  ) {
+    test(`shared agent selection ${entry}: ${hasEntry ? 'entry version' : 'last edit'}`, async ({ page }) => {
+      const candidates: MyAgentDTO[] = [
+        { agentID: 103, versionCount: 1, lastEditedAt: 100 },
+        { agentID: 104, versionCount: 1, lastEditedAt: 300 },
+        {
+          agentID: 105,
+          versionCount: 1,
+          lastEditedAt: 200,
+          entryVersionID: hasEntry ? 1002 : null,
+        },
+        {
+          agentID: 106,
+          versionCount: 1,
+          lastEditedAt: 400,
+          entryVersionID: 1002,
+          isArchived: true,
+        },
+      ]
+      const opposite = entry === 'journey' || entry === 'sibling-gate'
+      const { ensures, errors, unexpected } = await fixtures(
+        page,
+        opposite ? { oppositeAgents: candidates } : { sideAAgents: candidates },
+      )
+      const selected = hasEntry ? 105 : 104
+      if (entry === 'scenario') {
+        await page.goto(scenarioPath)
+        await page.locator('[data-tm="DA.view-mine-button"]').first().click()
+      } else if (entry === 'express') {
+        await page.goto('/express')
+        await page.locator('[data-tm="X.build-button"]').click()
+      } else if (entry === 'guest-return') {
+        // This is the destination restored by login for the public scene CTA.
+        await page.goto(`${scenarioPath}/build?side=a`)
+      } else if (entry === 'journey') {
+        await page.goto('/matches/9001')
+        await showJourney(page)
+        await page.locator('[data-tm="FA.journey-opposite-button"]').click()
+      } else {
+        await page.context().route('**/v1/agents', (route) =>
+          route.fulfill({
+            status: 409,
+            json: { error: 'sibling_gate', message: '先为对侧保存一个策略' },
+          }))
+        await page.goto('/agents/101')
+        await page.getByRole('button', { name: '新建商鞅智能体' }).click()
+        await page.locator('[data-tm="E.new-agent-gate-switch"]').click()
+      }
+      await expect(page).toHaveURL(
+        entry === 'express'
+          ? new RegExp(
+            `/agents/${selected}/build\\?scenario=shangyang-court&side=a&express=1$`,
+          )
+          : new RegExp(`/agents/${selected}$`),
+      )
+      await expect(
+        entry === 'express'
+          ? page.locator('[data-tm="E.prompt-input"]')
+          : page.getByRole('link', { name: '新建版本', exact: true }),
+      )
+        .toBeVisible()
+      expect(ensures).toHaveLength(0)
+      expect(errors).toEqual([])
+      expect(unexpected).toEqual([])
     })
   }
 }

@@ -48,6 +48,8 @@ interface OsPanelProps {
   versions: AgentVersionDTO[]
   agentName?: string | null
   entryVersionID: number | null
+  // Inventory includes drafts that are absent from the fieldable opponent list.
+  hasOppositeAgent?: boolean
   // #88：从版本卡「出战」呼出时，钉住玩家点的那一版（否则回落 ★ / 最新版）。
   preferVersionID?: number | null
 }
@@ -60,6 +62,7 @@ export function OsPanel({
   versions,
   entryVersionID,
   agentName,
+  hasOppositeAgent,
   preferVersionID = null,
 }: OsPanelProps) {
   const navigate = useNavigate()
@@ -998,14 +1001,12 @@ export function OsPanel({
                             </Button>
                           )}
                           {!sideMet(gateProgress[oppositeSide]) &&
-                            (opponents === null || opponentError ||
-                                archivedAgentIDs === null || archiveError ||
-                                selfOpponents.length > 0
+                            (hasOppositeAgent !== false
                               ? (
                                 <ButtonLink
                                   size='sm'
                                   variant='secondary'
-                                  to='/my-agents'
+                                  to={agentEntryUrl(scenarioID, oppositeSide)}
                                   {...tm('OS.gate-practice-opposite')}
                                 >
                                   去练习对侧（{sideNameOf(oppositeSide)}）
@@ -1018,7 +1019,7 @@ export function OsPanel({
                                   to={agentEntryUrl(scenarioID, oppositeSide)}
                                   {...tm('OS.gate-create-opposite')}
                                 >
-                                  去创建对侧（{sideNameOf(oppositeSide)}）
+                                  创建对侧智能体（{sideNameOf(oppositeSide)}）
                                 </ButtonLink>
                               ))}
                         </div>

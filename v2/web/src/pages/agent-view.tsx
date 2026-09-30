@@ -877,6 +877,14 @@ function AgentView({ agentID }: { agentID: number }) {
               : null}
 
             <OsPanel
+              hasOppositeAgent={inventory.data == null
+                ? undefined
+                : inventory.data.scenarios.find((item) =>
+                  item.scenarioID === data.draft.scenarioID
+                )
+                  ?.sides[data.draft.side === 'a' ? 'b' : 'a'].some((agent) =>
+                    !agent.isArchived
+                  ) ?? false}
               open={osOpen}
               onClose={() => setOsOpen(false)}
               scenario={data.scenario}
