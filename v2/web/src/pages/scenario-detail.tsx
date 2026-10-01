@@ -1,3 +1,4 @@
+import { sideDisplayName } from '../lib/side-display-name'
 import type { ReactNode } from 'react'
 import { RolePortrait } from '../components/role-portrait'
 import { speakerLabels } from '../components/timeline/labels'
@@ -684,7 +685,12 @@ function SideCard({
                   className='flex flex-wrap items-center gap-2 text-xs text-(--foreground-muted)'
                   role='alert'
                 >
-                  <span>我的{name}清单加载失败：{inventoryError}</span>
+                  <span>
+                    我的{name}
+                    {scenarioID === 'honnoji-decision' && side === 'b'
+                      ? '智能体'
+                      : ''}清单加载失败：{inventoryError}
+                  </span>
                   <Button
                     size='sm'
                     variant='secondary'
@@ -731,7 +737,9 @@ function SideCard({
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   {agents.length === 0
                     ? (copy?.actionLabel ?? `去构建${name}`)
-                    : `再建一个${name}`}
+                    : `再建一个${name}${
+                      scenarioID === 'honnoji-decision' ? '智能体' : ''
+                    }`}
                 </CreateAgentAction>
                 {homeAgent && (
                   <Link
@@ -1111,8 +1119,11 @@ function GateStatus({ summary }: { summary: ScenarioSummary }) {
           tone={sideMet(progress[which]) ? 'success' : 'info'}
           {...tm('DA.gate-side-badge')}
         >
-          {which === 'a' ? summary.sideAName : summary.sideBName}{' '}
-          {sideProgressText(progress[which])}
+          {sideDisplayName(
+            summary.id,
+            which,
+            which === 'a' ? summary.sideAName : summary.sideBName,
+          )} {sideProgressText(progress[which])}
           {sideMet(progress[which]) ? ' ✓' : ''}
         </Badge>
       ))}

@@ -1,3 +1,4 @@
+import { sideDisplayName } from '../lib/side-display-name'
 import { PageLoading } from '../components/page-loading'
 import { catalogQuery } from '../lib/navigation-queries'
 import { Lock, Sparkles, Unlock } from 'lucide-react'
@@ -55,9 +56,11 @@ function statsLine(summary: ScenarioSummary): string | null {
   const stats = summary.stats
   if (!stats) return null
   const pct = (rate: number) => `${Math.round(rate * 100)}%`
-  return `${stats.battleCount} 场 · ${summary.sideAName} ${
-    pct(stats.sideWinRate.a)
-  } / ${summary.sideBName} ${pct(stats.sideWinRate.b)}`
+  return `${stats.battleCount} 场 · ${
+    sideDisplayName(summary.id, 'a', summary.sideAName)
+  } ${pct(stats.sideWinRate.a)} / ${
+    sideDisplayName(summary.id, 'b', summary.sideBName)
+  } ${pct(stats.sideWinRate.b)}`
 }
 
 export function CatalogPage() {
@@ -225,20 +228,44 @@ export function CatalogPage() {
                         className='space-y-1 text-xs text-(--foreground-muted)'
                         {...tm('D.card-sides')}
                       >
-                        <p>
+                        <p
+                          className={scenario.id === 'honnoji-decision'
+                            ? 'whitespace-pre-line'
+                            : undefined}
+                        >
                           <span className='text-(--foreground-subtle)'>
-                            {scenario.sideAName}
+                            {scenario.id === 'honnoji-decision'
+                              ? '袭击本能寺·刺杀信长'
+                              : scenario.sideAName}
                           </span>
                           {scenario.sideALabel
-                            ? ` · ${scenario.sideALabel}`
+                            ? scenario.id === 'honnoji-decision'
+                              ? '\n' +
+                                scenario.sideALabel.replace(
+                                  '。足利义昭的使者：',
+                                  '。\n足利义昭的使者：',
+                                )
+                              : ` · ${scenario.sideALabel}`
                             : ''}
                         </p>
-                        <p>
+                        <p
+                          className={scenario.id === 'honnoji-decision'
+                            ? 'whitespace-pre-line'
+                            : undefined}
+                        >
                           <span className='text-(--foreground-subtle)'>
-                            {scenario.sideBName}
+                            {scenario.id === 'honnoji-decision'
+                              ? '西进毛利·放弃刺杀'
+                              : scenario.sideBName}
                           </span>
                           {scenario.sideBLabel
-                            ? ` · ${scenario.sideBLabel}`
+                            ? scenario.id === 'honnoji-decision'
+                              ? '\n' +
+                                scenario.sideBLabel.replace(
+                                  '。明智军中的足轻：',
+                                  '。\n明智军中的足轻：',
+                                )
+                              : ` · ${scenario.sideBLabel}`
                             : ''}
                         </p>
                         <p>

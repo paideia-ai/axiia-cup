@@ -1,3 +1,4 @@
+import { sideDisplayName } from '../lib/side-display-name'
 import { PageLoading } from '../components/page-loading'
 import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -69,8 +70,8 @@ export function MyAgentsPage() {
   const focusedRole = focusedScenario == null || requestedFocusSide == null
     ? null
     : requestedFocusSide === 'a'
-    ? focusedScenario.sideAName
-    : focusedScenario.sideBName
+    ? sideDisplayName(focusedScenario.id, 'a', focusedScenario.sideAName)
+    : sideDisplayName(focusedScenario.id, 'b', focusedScenario.sideBName)
   const visibleScenarios = focusedScenario == null
     ? data?.scenarios ?? []
     : [focusedScenario]
@@ -102,7 +103,9 @@ export function MyAgentsPage() {
             {...tm('MA.page-intro')}
           >
             {focusedScenario != null && focusedRole != null
-              ? `只看《${focusedScenario.title}》的${focusedRole}智能体。`
+              ? `只看《${focusedScenario.title}》的${focusedRole}${
+                focusedScenario.id === 'honnoji-decision' ? '阵营' : '智能体'
+              }。`
               : '选择一个智能体，继续你的策略。'}
           </p>
         </div>
@@ -196,8 +199,16 @@ function ScenarioGroup({
 }) {
   const [expandedSides, setExpandedSides] = useState({ a: false, b: false })
   const sides = ([
-    ['a', scenario.sideAName, scenario.sideALabel],
-    ['b', scenario.sideBName, scenario.sideBLabel],
+    [
+      'a',
+      sideDisplayName(scenario.id, 'a', scenario.sideAName),
+      scenario.sideALabel,
+    ],
+    [
+      'b',
+      sideDisplayName(scenario.id, 'b', scenario.sideBName),
+      scenario.sideBLabel,
+    ],
   ] as const).filter(([side]) => onlySide == null || side === onlySide)
   const agentsOf = (side: Side): MyAgentDTO[] => inventory?.sides[side] ?? []
   const sideStatus = sides.map(([side, name]) => {
@@ -335,7 +346,9 @@ function ScenarioGroup({
                       id={headingID}
                       className='text-sm font-semibold text-(--foreground)'
                     >
-                      {role}智能体
+                      {scenario.id === 'honnoji-decision'
+                        ? `主张${role}阵营`
+                        : `${role}智能体`}
                     </h3>
                     {description
                       ? (
@@ -447,7 +460,11 @@ function ScenarioGroup({
                             </Link>
                           </>
                         )
-                        : <>还没有{role}智能体</>}
+                        : (
+                          <>
+                            还没有{role}智能体
+                          </>
+                        )}
                     </p>
                   )
                   : null}

@@ -1,3 +1,5 @@
+import { sideDisplayName } from '../lib/side-display-name'
+import { opponentRoleLabel } from '../lib/opponent-role-label'
 import { roleIdentity } from '../lib/role-identity'
 import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock, Unlock, X } from 'lucide-react'
@@ -312,7 +314,11 @@ export function OsPanel({
   // ── 门槛态（A5/#65，mock V16/V7）────────────────────────────────────────
   const oppositeSide: Side = side === 'a' ? 'b' : 'a'
   const sideNameOf = (which: Side) =>
-    which === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName
+    sideDisplayName(
+      scenarioID,
+      which,
+      which === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName,
+    )
   const gateProgress = scenario.summary.gateProgress ?? null
   // 有按侧进度就按它判定（A6 双侧过线）；老服务器没有 → 沿用 gateUnlocked。
   const pvpUnlocked = gateProgress
@@ -500,9 +506,13 @@ export function OsPanel({
         )
       } else if (ref.side !== oppositeSide) {
         setIdError(
-          `请选择对方的${sideNameOf(oppositeSide)}版本，与当前${
-            sideNameOf(side)
-          }对战`,
+          scenarioID === 'honnoji-decision'
+            ? `该版本与当前智能体同属${sideNameOf(side)}阵营，请选择${
+              sideNameOf(oppositeSide)
+            }阵营的版本。`
+            : `请选择对方的${sideNameOf(oppositeSide)}版本，与当前${
+              sideNameOf(side)
+            }对战`,
         )
       } else {
         setIdRef(ref)
@@ -753,9 +763,14 @@ export function OsPanel({
                       <BattleOpponentRow
                         key={preset.key}
                         label={presetLabel(preset)}
-                        detail={`${sideNameOf(oppositeSide)} · ${
-                          modelLabel(preset.modelID)
-                        }`}
+                        detail={`${
+                          scenarioID === 'honnoji-decision'
+                            ? opponentRoleLabel(scenarioID, oppositeSide, [
+                              preset.role ??
+                                roleOfOptions(roleModule, preset.options),
+                            ], sideNameOf(oppositeSide))
+                            : sideNameOf(oppositeSide)
+                        } · ${modelLabel(preset.modelID)}`}
                         disabled={rowDisabled}
                         pending={pendingOpponent === `pve:${preset.key}`}
                         onClick={() => void dispatchPVE(preset.key)}
@@ -814,7 +829,13 @@ export function OsPanel({
                         key={opponent.agentID}
                         label={opponent.name ||
                           `${sideNameOf(oppositeSide)} #${opponent.agentID}`}
-                        detail={`${sideNameOf(oppositeSide)} · 我的智能体`}
+                        detail={`${
+                          scenarioID === 'honnoji-decision'
+                            ? opponentRoleLabel(scenarioID, oppositeSide, [
+                              opponent.role,
+                            ], sideNameOf(oppositeSide))
+                            : sideNameOf(oppositeSide)
+                        } · 我的智能体`}
                         disabled={rowDisabled}
                         pending={pendingOpponent === `self:${opponent.agentID}`}
                         onClick={() => void dispatchHotseat(opponent.agentID)}
@@ -941,7 +962,18 @@ export function OsPanel({
                                       <BattleOpponentRow
                                         label={rival.displayName}
                                         detail={`对方执${
-                                          sideNameOf(oppositeSide)
+                                          scenarioID === 'honnoji-decision'
+                                            ? opponentRoleLabel(
+                                              scenarioID,
+                                              oppositeSide,
+                                              (opponents ?? []).filter((item) =>
+                                                !item.isSelf &&
+                                                item.ownerAccountID ===
+                                                  rival.accountID
+                                              ).map((item) => item.role),
+                                              sideNameOf(oppositeSide),
+                                            )
+                                            : sideNameOf(oppositeSide)
                                         }`}
                                         disabled={rowDisabled}
                                         pending={pendingOpponent ===

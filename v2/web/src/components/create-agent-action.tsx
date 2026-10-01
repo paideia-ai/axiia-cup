@@ -1,3 +1,4 @@
+import { sideDisplayName } from '../lib/side-display-name'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -149,6 +150,9 @@ export function CreateAgentAction({
     : (
       <NewAgentButton
         role={role}
+        label={scenarioID === 'honnoji-decision'
+          ? `新建 ${sideDisplayName(scenarioID, side, role)}`
+          : undefined}
         attention={attention}
         disabled={busy}
         onClick={begin}
@@ -236,7 +240,11 @@ export function CreateAgentAction({
                 to={agentEntryUrl(scenarioID, side === 'a' ? 'b' : 'a')}
                 {...tm('E.new-agent-gate-switch')}
               >
-                去完善{oppositeRole ?? '对侧'}智能体
+                去完善{scenarioID === 'honnoji-decision'
+                  ? `主张${
+                    sideDisplayName(scenarioID, side === 'a' ? 'b' : 'a', '')
+                  }`
+                  : oppositeRole ?? '对侧'}智能体
               </ButtonLink>
             </div>
           )}

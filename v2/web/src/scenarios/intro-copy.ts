@@ -64,7 +64,7 @@ export const honnojiDecisionIntro: ScenarioIntroCopy = {
     title: '本能寺之变 · 敌在何处',
     overview: {
       label: '背景故事',
-      title: '西进四国，还是袭击本能寺？',
+      title: '西进毛利，还是袭击本能寺',
       paragraphs: [
         '公元 1582 年，织田信长已经控制京都周边，明智光秀是他手下的重要将领。今夜，光秀率军从丹波龟山城出发，奉命西进。',
         '信长此时住在京都本能寺，身边护卫很少。光秀手中正有一支已经出发的军队。继续西进，他仍是奉命行军的家臣；中途改道，他就会突然袭击自己的主君。',
@@ -117,7 +117,7 @@ export const honnojiDecisionIntro: ScenarioIntroCopy = {
         },
         b: {
           eyebrow: '主张继续西进',
-          name: '暂不袭击信长',
+          name: '西进毛利',
           subtitle: '可选择一名说客',
           paragraphs: [],
           choices: [
