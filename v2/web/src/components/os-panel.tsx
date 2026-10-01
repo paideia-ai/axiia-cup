@@ -41,6 +41,10 @@ import { agentEntryUrl } from '../lib/agent-entry'
 import { Input } from './ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
+// 人物签（PortraitRoleChoice）渲染在面板之外的独立层里，只能从页面上看它是否开着。
+const roleChoicesOpen = () =>
+  document.querySelector('.portrait-choices') != null
+
 interface OsPanelProps {
   open: boolean
   onClose: () => void
@@ -128,6 +132,21 @@ export function OsPanel({
     if (!open) setCreatingOpposite(false)
     else if (hasOppositeAgent === false) setCreatingOpposite(true)
   }, [open, hasOppositeAgent])
+
+  // 人物签在按下时就收起并移出页面，面板却要到这次按压结束的 click 才处理“点击外部”，
+  // 那时页面上已查不到人物签。所以在按下的捕获阶段先记下它是否开着，click 时按这份
+  // 记录判断。
+  const pressBeganWithRoleChoices = useRef(false)
+  useEffect(() => {
+    if (!open) return
+    pressBeganWithRoleChoices.current = false
+    const onPointerDown = () => {
+      pressBeganWithRoleChoices.current = roleChoicesOpen()
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [open])
 
   // 与原构建器派发区同一语义：对手侧的预设就是本侧的 PVE 对手。
   const opponentPresets: PresetOpponentDTO[] = scenario.presets.filter(
@@ -540,7 +559,12 @@ export function OsPanel({
           ['outside-press', 'escape-key', 'focus-out'].includes(
             details.reason,
           ) &&
-          document.querySelector('.portrait-choices')
+          roleChoicesOpen()
+        ) return
+        // 外部按压按“按下那一刻”算：人物签已被这次按压收起。
+        if (
+          !nextOpen && details.reason === 'outside-press' &&
+          pressBeganWithRoleChoices.current
         ) return
         if (!nextOpen && !dismissLocked) onClose()
       }}

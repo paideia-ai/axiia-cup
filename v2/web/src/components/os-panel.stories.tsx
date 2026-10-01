@@ -105,16 +105,24 @@ const honnojiScenario = {
   presets: [],
 }
 
+// 关闭回调真的会关面板，并把开合状态写在页面上：面板被误关时断言立刻失败，
+// 不必等它卸载。
+function ClosablePanel(args: React.ComponentProps<typeof OsPanel>) {
+  const [open, setOpen] = useState(true)
+  return (
+    <>
+      <OsPanel {...args} open={open} onClose={() => setOpen(false)} />
+      <MatchLocation />
+      <output aria-label='面板状态'>{open ? '打开' : '已关闭'}</output>
+    </>
+  )
+}
+
 // 门槛态和互搏空态共用同一个对侧入口，两处都就地选角色。
 function createOppositeRoleStory(tab: RegExp): Story {
   return {
     args: { scenario: honnojiScenario, hasOppositeAgent: false },
-    render: (args) => (
-      <>
-        <OsPanel {...args} />
-        <MatchLocation />
-      </>
-    ),
+    render: (args) => <ClosablePanel {...args} />,
     loaders: [() => {
       createdAgents.length = 0
       return {}
@@ -150,6 +158,7 @@ function createOppositeRoleStory(tab: RegExp): Story {
         expect(canvas.queryByRole('group', { name: '选择新智能体的角色' }))
           .toBeNull()
       )
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent('打开')
       await expect(canvas.getByRole('dialog')).toBeVisible()
       expect(createdAgents).toEqual([])
 
@@ -179,6 +188,56 @@ export const CreateOppositeRoleInPlace: Story = createOppositeRoleStory(
 export const HotseatCreateOppositeRoleInPlace: Story = createOppositeRoleStory(
   /左右手互搏/,
 )
+
+// 人物签和面板逐层关闭：第一次点遮罩或按 Esc 只收起人物签，第二次才关闭面板。
+function layeredDismissStory(by: 'backdrop' | 'escape'): Story {
+  return {
+    args: CreateOppositeRoleInPlace.args,
+    render: CreateOppositeRoleInPlace.render,
+    parameters: CreateOppositeRoleInPlace.parameters,
+    play: async ({ canvasElement }) => {
+      const page = canvasElement.ownerDocument
+      const canvas = within(page.body)
+      const picker = () =>
+        canvas.queryByRole('group', { name: '选择新智能体的角色' })
+      await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
+      await userEvent.click(
+        await canvas.findByRole('button', {
+          name: '创建对侧智能体（主张不杀信长）',
+        }),
+      )
+      await waitFor(() => expect(picker()).not.toBeNull())
+      // 遮罩：面板之外、屏幕角上实际会点到的那个元素。
+      const backdrop = page.elementFromPoint(4, 4) as HTMLElement
+      expect(canvas.getByRole('dialog')).not.toContainElement(backdrop)
+      const dismiss = () =>
+        by === 'escape'
+          ? userEvent.keyboard('{Escape}')
+          : userEvent.click(backdrop)
+
+      await dismiss()
+      await waitFor(() => expect(picker()).toBeNull())
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent('打开')
+      await expect(canvas.getByRole('dialog')).toBeVisible()
+
+      await dismiss()
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent(
+        '已关闭',
+      )
+      await waitFor(() => expect(canvas.queryByRole('dialog')).toBeNull())
+    },
+  }
+}
+
+export const BackdropClosesRolePickerFirst = layeredDismissStory('backdrop')
+export const BackdropClosesRolePickerFirstMobile: Story = {
+  ...BackdropClosesRolePickerFirst,
+  parameters: {
+    ...BackdropClosesRolePickerFirst.parameters,
+    viewport: { defaultViewport: 'mobile1' },
+  },
+}
+export const EscapeClosesRolePickerFirst = layeredDismissStory('escape')
 
 // 互搏空态不再链接到完整清单：没有对侧智能体就创建，已有未保存版本的草稿就直达。
 function hotseatOppositeEntryStory(hasOppositeAgent: boolean): Story {

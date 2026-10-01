@@ -167,6 +167,9 @@ export function PortraitRoleChoice({ children, roles, disabled, onSelect }: {
     return Math.abs(delta) < 32 ? null : delta < 0 ? 0 : 1
   }
   function onKeyDown(event: KeyboardEvent) {
+    // Closed: leave every key, Escape included, to the surrounding page or
+    // dialog (the battle panel must still close on Escape).
+    if (!liveLayout.current) return
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
@@ -174,7 +177,6 @@ export function PortraitRoleChoice({ children, roles, disabled, onSelect }: {
       anchor.current?.querySelector('button')?.focus({ preventScroll: true })
       return
     }
-    if (!liveLayout.current) return
     const before = liveLayout.current.vertical ? 'ArrowUp' : 'ArrowLeft'
     const after = liveLayout.current.vertical ? 'ArrowDown' : 'ArrowRight'
     if (event.key === before || event.key === after) {
