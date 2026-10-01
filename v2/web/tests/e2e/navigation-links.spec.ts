@@ -420,10 +420,18 @@ const cases: {
     options: { scenarioFailed: true },
   },
   {
-    name: 'battle panel inventory',
+    name: 'battle panel hotseat open opposite',
     path: '/agents/101',
-    marker: 'OS.hotseat-go-my-agents',
-    destination: /\/my-agents$/,
+    marker: 'OS.hotseat-open-opposite',
+    destination: /\/agents\/102$/,
+    prepare: (page) => openPanel(page, 'hotseat'),
+  },
+  {
+    name: 'battle panel hotseat create opposite',
+    path: '/agents/101',
+    marker: 'OS.hotseat-create-opposite',
+    destination: /\/agents\/102$/,
+    options: { oppositeAgents: [] },
     prepare: (page) => openPanel(page, 'hotseat'),
   },
   {
@@ -821,6 +829,58 @@ for (const mobile of [false, true]) {
         ? 103
         : 102
       await expect(page).toHaveURL(new RegExp(`/agents/${selected}$`))
+      if (choice === 'missing') {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toBeFocused()
+        expect(ensures.map((request) => request.side)).toEqual(['b'])
+      } else {
+        await expect(page.getByRole('textbox', { name: '智能体名称' }))
+          .toHaveCount(0)
+        expect(ensures).toHaveLength(0)
+      }
+      expect(errors).toEqual([])
+      expect(unexpected).toEqual([])
+    })
+  }
+}
+
+// The hotseat empty state shares the gate's opposite entry. Drafts never reach
+// the fieldable opponent list, so an existing draft opens instead of creating.
+for (const mobile of [false, true]) {
+  for (const choice of ['draft', 'recent', 'missing'] as const) {
+    test(`hotseat opposite entry ${choice} on ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
+      if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+      const oppositeAgents: MyAgentDTO[] = choice === 'missing' ? [] : [
+        { agentID: 102, versionCount: 0, lastEditedAt: 100 },
+        ...(choice === 'draft' ? [] : [
+          { agentID: 103, versionCount: 0, lastEditedAt: 300 },
+          {
+            agentID: 105,
+            versionCount: 2,
+            lastEditedAt: 400,
+            entryVersionID: 1002,
+            isArchived: true,
+          },
+        ]),
+      ]
+      const { ensures, errors, unexpected } = await fixtures(page, {
+        oppositeAgents,
+      })
+      await page.goto('/agents/101')
+      await openPanel(page, 'hotseat')
+      await expect(page.locator('[data-tm="OS.hotseat-empty"]')).toContainText(
+        choice === 'missing'
+          ? '你还没有对侧智能体'
+          : '你还没有可出战的对侧智能体',
+      )
+      await page.locator(
+        `[data-tm="OS.hotseat-${
+          choice === 'missing' ? 'create' : 'open'
+        }-opposite"]`,
+      ).click()
+      await expect(page).toHaveURL(
+        new RegExp(`/agents/${choice === 'recent' ? 103 : 102}$`),
+      )
       if (choice === 'missing') {
         await expect(page.getByRole('textbox', { name: '智能体名称' }))
           .toBeFocused()

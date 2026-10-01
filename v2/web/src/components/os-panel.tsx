@@ -300,6 +300,49 @@ export function OsPanel({
     ? gateMet(gateProgress)
     : scenario.summary.gateUnlocked
 
+  // 对侧入口（门槛态与互搏空态共用，统一侧入口规则）：已有未归档的对侧智能体
+  // 就直达它的主页；没有才创建。
+  const oppositeEntry = (
+    openLabel: string,
+    openMarker: { 'data-tm': string },
+    createMarker: { 'data-tm': string },
+  ) =>
+    !showCreateOpposite
+      ? (
+        <ButtonLink
+          size='sm'
+          variant='secondary'
+          to={agentEntryUrl(scenarioID, oppositeSide)}
+          {...openMarker}
+        >
+          {openLabel}（{sideNameOf(oppositeSide)}）
+        </ButtonLink>
+      )
+      : rolesForSide(roleModule, oppositeSide).length > 1
+      ? (
+        // 多角色侧就地选角色：人物签在本按钮两侧弹出，不跳中间页。
+        <CreateAgentAction
+          scenarioID={scenarioID}
+          side={oppositeSide}
+          role={sideNameOf(oppositeSide)}
+          oppositeRole={sideNameOf(side)}
+          marker={createMarker['data-tm']}
+          variant='secondary'
+        >
+          创建对侧智能体（{sideNameOf(oppositeSide)}）
+        </CreateAgentAction>
+      )
+      : (
+        <ButtonLink
+          size='sm'
+          variant='secondary'
+          to={agentEntryUrl(scenarioID, oppositeSide)}
+          {...createMarker}
+        >
+          创建对侧智能体（{sideNameOf(oppositeSide)}）
+        </ButtonLink>
+      )
+
   // ── P3 约战（#66，mock V20） ──────────────────────────────────────────
 
   // 面板每次打开重置约战流的一次性状态。
@@ -731,16 +774,15 @@ export function OsPanel({
                         {...tm('OS.hotseat-empty')}
                       >
                         <p className='mb-4 text-sm font-medium'>
-                          你还没有对侧智能体
+                          {showCreateOpposite
+                            ? '你还没有对侧智能体'
+                            : '你还没有可出战的对侧智能体'}
                         </p>
-                        <ButtonLink
-                          to='/my-agents'
-                          size='sm'
-                          variant='secondary'
-                          {...tm('OS.hotseat-go-my-agents')}
-                        >
-                          去我的智能体
-                        </ButtonLink>
+                        {oppositeEntry(
+                          '去完善对侧智能体',
+                          tm('OS.hotseat-open-opposite'),
+                          tm('OS.hotseat-create-opposite'),
+                        )}
                       </div>
                     )
                     : selfOpponents.map((opponent) => (
@@ -1023,44 +1065,11 @@ export function OsPanel({
                             </Button>
                           )}
                           {!sideMet(gateProgress[oppositeSide]) &&
-                            (!showCreateOpposite
-                              ? (
-                                <ButtonLink
-                                  size='sm'
-                                  variant='secondary'
-                                  to={agentEntryUrl(scenarioID, oppositeSide)}
-                                  {...tm('OS.gate-practice-opposite')}
-                                >
-                                  去练习对侧（{sideNameOf(oppositeSide)}）
-                                </ButtonLink>
-                              )
-                              : rolesForSide(roleModule, oppositeSide).length >
-                                  1
-                              ? (
-                                // 多角色侧就地选角色：人物签在本按钮两侧弹出，不跳中间页。
-                                <CreateAgentAction
-                                  scenarioID={scenarioID}
-                                  side={oppositeSide}
-                                  role={sideNameOf(oppositeSide)}
-                                  oppositeRole={sideNameOf(side)}
-                                  marker={tm(
-                                    'OS.gate-create-opposite',
-                                  )['data-tm']}
-                                  variant='secondary'
-                                >
-                                  创建对侧智能体（{sideNameOf(oppositeSide)}）
-                                </CreateAgentAction>
-                              )
-                              : (
-                                <ButtonLink
-                                  size='sm'
-                                  variant='secondary'
-                                  to={agentEntryUrl(scenarioID, oppositeSide)}
-                                  {...tm('OS.gate-create-opposite')}
-                                >
-                                  创建对侧智能体（{sideNameOf(oppositeSide)}）
-                                </ButtonLink>
-                              ))}
+                            oppositeEntry(
+                              '去练习对侧',
+                              tm('OS.gate-practice-opposite'),
+                              tm('OS.gate-create-opposite'),
+                            )}
                         </div>
                       </div>
                     )
