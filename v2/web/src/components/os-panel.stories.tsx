@@ -89,6 +89,87 @@ export const LockedMobile: Story = {
   },
 }
 
+const createdAgents: unknown[] = []
+// 本能寺每侧两名人物：对侧还没有智能体时，人物签直接在出战面板里弹出。
+const honnojiScenario = {
+  ...scenario,
+  summary: {
+    ...scenario.summary,
+    id: 'honnoji-decision',
+    title: '本能寺之变·敌在何处',
+    sideAName: '主张杀信长',
+    sideBName: '主张不杀信长',
+    sideALabel: '主张杀信长',
+    sideBLabel: '主张不杀信长',
+  },
+  presets: [],
+}
+
+export const CreateOppositeRoleInPlace: Story = {
+  args: { scenario: honnojiScenario, hasOppositeAgent: false },
+  render: (args) => (
+    <>
+      <OsPanel {...args} />
+      <MatchLocation />
+    </>
+  ),
+  loaders: [() => {
+    createdAgents.length = 0
+    return {}
+  }],
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/my/archived-agents',
+        () => HttpResponse.json({ agents: [] }),
+      ),
+      http.get('/v1/config', () => HttpResponse.json(config)),
+      http.get(
+        '/v1/scenarios/:id/opponents',
+        () => HttpResponse.json({ opponents: [] }),
+      ),
+      http.post('/v1/agents', async ({ request }) => {
+        createdAgents.push(await request.json())
+        return HttpResponse.json({ agentID: 2001 })
+      }),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
+    const create = canvas.getByRole('button', {
+      name: '创建对侧智能体（主张不杀信长）',
+    })
+    await userEvent.click(create)
+    await canvas.findByRole('group', { name: '选择新智能体的角色' })
+    // Esc 只收起人物签，出战面板保持打开。
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() =>
+      expect(canvas.queryByRole('group', { name: '选择新智能体的角色' }))
+        .toBeNull()
+    )
+    await expect(canvas.getByRole('dialog')).toBeVisible()
+    expect(createdAgents).toEqual([])
+
+    await userEvent.click(create)
+    await userEvent.click(
+      await canvas.findByRole('button', { name: '创建细川藤孝' }),
+    )
+    await waitFor(() =>
+      expect(createdAgents).toEqual([{
+        scenarioID: 'honnoji-decision',
+        side: 'b',
+        roleKey: 'hosokawa',
+      }])
+    )
+    await waitFor(() =>
+      expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+        '/agents/2001',
+      )
+    )
+  },
+}
+
 export const UnlockedDesktop: Story = {
   args: { scenario: unlockedScenario },
   parameters: {

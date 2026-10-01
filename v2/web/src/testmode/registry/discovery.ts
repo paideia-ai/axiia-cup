@@ -534,7 +534,8 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '去创建对侧按钮',
     clauses: ['U05-C04'],
     anchors: ['spec-change-64'],
-    note: '创建对侧草稿后进入主页，自动聚焦名称输入',
+    note:
+      '多角色侧在面板内就地弹出人物签，选中即创建；单角色侧创建草稿。之后进入主页并聚焦名称输入',
     when: '对侧未达标且没有对侧 agent 时',
   },
   'OS.gate-locked-legacy': {
