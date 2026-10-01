@@ -25,7 +25,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-function lifecycleStory(match: MatchDetail): Story {
+function lifecycleStory(match: MatchDetail, viewportWidth = 1280): Story {
   let snapshot = liveJudgeMatch(match, 0)
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null
   const send = (event: MatchEventDTO) => {
@@ -66,89 +66,171 @@ function lifecycleStory(match: MatchDetail): Story {
       ],
     },
     play: async ({ canvasElement }) => {
+      const browserPage = '__vitest_browser_runner__' in globalThis
+        ? (await import('vitest/browser')).page
+        : null
+      if (browserPage) await browserPage.viewport(viewportWidth, 900)
+      const compact = viewportWidth < 900
       const canvas = within(canvasElement)
-      const sidebar = await canvas.findByRole('complementary', {
-        name: '裁判 OS 侧栏',
-      })
-      await expect(within(sidebar).getByText('等待裁判点评…')).toBeVisible()
-      const column = canvasElement.querySelector(
-        '.judge-transcript-dialogue-column',
-      )!
-      const width = column.getBoundingClientRect().width
-      const sidebarLeft = sidebar.getBoundingClientRect().left
-      const sameColumns = () => {
-        const current = canvas.getByRole('complementary', {
-          name: '裁判 OS 侧栏',
+      const region = () => canvas.getByRole('region', { name: '对话与裁判 OS' })
+      const cards = () => [
+        ...region().querySelectorAll<HTMLElement>(
+          '[data-tm="FA.aside-card"]',
+        ),
+      ]
+      const column = () =>
+        region().querySelector<HTMLElement>(
+          compact
+            ? '.judge-transcript-columns'
+            : '.judge-transcript-dialogue-column',
+        )!
+      const expectedNotes = match.verdicts.filter((verdict) =>
+        verdict.key.startsWith('os-')
+      )
+      try {
+        await canvas.findByRole('region', { name: '对话与裁判 OS' })
+        await expect(within(region()).getByText('等待裁判点评…')).toBeVisible()
+        const initial = column().getBoundingClientRect()
+        const sameLayout = () => {
+          const current = column().getBoundingClientRect()
+          expect(Math.abs(current.width - initial.width)).toBeLessThan(1)
+          expect(Math.abs(current.left - initial.left)).toBeLessThan(1)
+          expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
+            innerWidth,
+          )
+        }
+        const checkNotes = async (count: number) => {
+          await waitFor(() => expect(cards()).toHaveLength(count))
+          expect(cards().map((card) => card.id)).toEqual(
+            expectedNotes.slice(0, count).map((note) => `beat-${note.key}`),
+          )
+          for (const [index, card] of cards().entries()) {
+            expect(card.textContent).toContain(
+              JSON.parse(expectedNotes[index].output).os,
+            )
+          }
+          const charts = canvasElement.querySelectorAll('.judge-sidebar-trend')
+          await expect(charts).toHaveLength(count ? 1 : 0)
+          if (count && compact) {
+            await waitFor(() =>
+              expect(
+                canvasElement.querySelector(
+                  '.judge-mobile-trend .judge-sidebar-trend',
+                ),
+              ).not.toBeNull()
+            )
+          }
+          sameLayout()
+        }
+        const clickTrend = async () => {
+          const point = canvasElement.querySelector<HTMLElement>(
+            '.judge-sidebar-trend [data-tm="FA.trend-beat"]',
+          )!
+          await userEvent.click(point)
+          await expect(document.activeElement?.id).toBe(
+            `beat-${expectedNotes[0].key}`,
+          )
+        }
+        await waitFor(() => expect(controller).not.toBeNull())
+        advance(6)
+        await checkNotes(1)
+        // Live tokens appear once on both layouts; committed turns replace them.
+        const next = match.turns[7]
+        send({
+          chunk: {
+            matchID: 9001,
+            seq: next.seq,
+            channel: next.channel,
+            speaker: next.speaker,
+            phase: 'text',
+            delta: '本地流式发言验证',
+            call: 'say',
+          },
         })
-        expect(
-          Math.abs(
-            current.getBoundingClientRect().left -
-              sidebarLeft,
-          ),
-        ).toBeLessThan(1)
-        expect(
-          Math.abs(
-            canvasElement.querySelector('.judge-transcript-dialogue-column')!
-              .getBoundingClientRect().width - width,
-          ),
-        ).toBeLessThan(1)
+        await expect(await within(region()).findByText('本地流式发言验证'))
+          .toBeVisible()
+        await expect(canvas.getAllByText('本地流式发言验证')).toHaveLength(1)
+        advance(12)
+        await checkNotes(2)
+        await expect(canvas.queryByText('本地流式发言验证')).toBeNull()
+        await clickTrend()
+
+        snapshot = match
+        send({
+          matchFinished: { matchID: 9001, winner: match.summary.winner! },
+        })
+        await canvas.findByRole('region', { name: '简要对局结果' })
+        await checkNotes(expectedNotes.length)
+        await clickTrend()
+        // Resizing an existing report must preserve every speech and judge note.
+        if (browserPage) {
+          const notes = cards().map((card) => card.textContent)
+          const speeches = [
+            ...region().querySelectorAll('[data-speech-number]'),
+          ].map((node) => node.textContent)
+          await browserPage.viewport(compact ? 1280 : 390, 900)
+          await waitFor(() =>
+            expect(!!region().querySelector('.judge-transcript-aligned-aside'))
+              .toBe(compact)
+          )
+          expect(cards().map((card) => card.textContent)).toEqual(notes)
+          expect(
+            [...region().querySelectorAll('[data-speech-number]')].map((node) =>
+              node.textContent
+            ),
+          ).toEqual(speeches)
+          await browserPage.viewport(viewportWidth, 900)
+          await waitFor(() =>
+            expect(!!region().querySelector('.judge-transcript-aligned-aside'))
+              .toBe(!compact)
+          )
+        }
+
+        await userEvent.click(canvas.getByRole('button', { name: '回放' }))
+        await userEvent.click(canvas.getByRole('button', { name: '暂停' }))
+        await checkNotes(0)
+        await expect(canvas.queryByRole('region', { name: '简要对局结果' }))
+          .toBeNull()
+        await expect(canvas.queryByRole('heading', { name: '终局裁决' }))
+          .toBeNull()
+        await expect(
+          canvas.queryByRole('heading', { name: '（阶段2/3）屏退问询' }),
+        ).toBeNull()
+        await expect(canvas.getByRole('switch', { name: '调试模式' }))
+          .toHaveAttribute('aria-disabled', 'true')
+        await userEvent.click(canvas.getByRole('button', { name: '2×' }))
+        await expect(canvas.getByRole('button', { name: '2×' }))
+          .toHaveAttribute('aria-pressed', 'true')
+        // Stop on the second OS beat, which changes favour in the Shangyang fixture.
+        for (
+          let step = 0;
+          step < match.turns.length + 5 && cards().length < 2;
+          step++
+        ) {
+          await userEvent.click(canvas.getByRole('button', { name: '步进' }))
+        }
+        await checkNotes(2)
+        await clickTrend()
+        if (match.summary.scenarioID === 'shangyang-court') {
+          const resume = within(region()).getByRole('button', { name: '继续' })
+          await expect(resume).toBeVisible()
+          await expect(within(region()).getAllByText('倾向变化').length)
+            .toBeGreaterThan(0)
+          await userEvent.click(resume)
+          await userEvent.click(canvas.getByRole('button', { name: '暂停' }))
+        }
+        await userEvent.click(canvas.getByRole('button', { name: '上一步' }))
+        await checkNotes(1)
+        await userEvent.click(canvas.getByRole('button', { name: '步进' }))
+        await checkNotes(2)
+        await userEvent.click(canvas.getByRole('button', { name: '退出回放' }))
+        await canvas.findByRole('region', { name: '简要对局结果' })
+        await checkNotes(expectedNotes.length)
+        await expect(canvas.getByRole('switch', { name: '调试模式' }))
+          .toHaveAttribute('aria-disabled', 'false')
+      } finally {
+        if (browserPage) await browserPage.viewport(1280, 720)
       }
-      await waitFor(() => expect(controller).not.toBeNull())
-      advance(6)
-      await waitFor(() =>
-        expect(sidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
-          .toHaveLength(1)
-      )
-      sameColumns()
-      // A token in the next public speech must remain visible inside the dialogue column.
-      const next = match.turns[7]
-      send({
-        chunk: {
-          matchID: 9001,
-          seq: next.seq,
-          channel: next.channel,
-          speaker: next.speaker,
-          phase: 'text',
-          delta: '本地流式发言验证',
-          call: 'say',
-        },
-      })
-      await expect(
-        await within(column as HTMLElement).findByText('本地流式发言验证'),
-      ).toBeVisible()
-      advance(12)
-      await waitFor(() =>
-        expect(sidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
-          .toHaveLength(2)
-      )
-      sameColumns()
-      snapshot = match
-      send({ matchFinished: { matchID: 9001, winner: match.summary.winner! } })
-      await canvas.findByRole('region', { name: '简要对局结果' })
-      sameColumns()
-      const completedSidebar = canvas.getByRole('complementary', {
-        name: '裁判 OS 侧栏',
-      })
-      await expect(
-        completedSidebar.querySelectorAll('[data-tm="FA.aside-card"]'),
-      ).toHaveLength(
-        match.verdicts.filter((verdict) => verdict.key.startsWith('os-'))
-          .length,
-      )
-      await userEvent.click(canvas.getByRole('button', { name: '回放' }))
-      const replaySidebar = canvas.getByRole('complementary', {
-        name: '裁判 OS 侧栏',
-      })
-      await expect(replaySidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
-        .toHaveLength(0)
-      await expect(canvas.queryByRole('region', { name: '简要对局结果' }))
-        .toBeNull()
-      await expect(canvas.queryByRole('heading', { name: '终局裁决' }))
-        .toBeNull()
-      sameColumns()
-      await userEvent.click(canvas.getByRole('button', { name: '退出回放' }))
-      await canvas.findByRole('region', { name: '简要对局结果' })
-      sameColumns()
     },
   }
 }
@@ -157,3 +239,12 @@ export const ShangyangLifecycle = lifecycleStory(
   referenceMatch144 as MatchDetail,
 )
 export const HonnojiLifecycle = lifecycleStory(referenceMatch120 as MatchDetail)
+
+export const ShangyangMobileLifecycle = lifecycleStory(
+  referenceMatch144 as MatchDetail,
+  390,
+)
+export const HonnojiMobileLifecycle = lifecycleStory(
+  referenceMatch120 as MatchDetail,
+  390,
+)

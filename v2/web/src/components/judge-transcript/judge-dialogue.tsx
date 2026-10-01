@@ -128,6 +128,7 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
                         {speechProgressLabel(
                           props.speechNumberOf(chunk.step.verdict),
                         )}
+                        {chunk.step.changed ? ' · 倾向变化' : ''}
                       </p>
                       {osCard(chunk.step)}
                     </>
