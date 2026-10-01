@@ -8,6 +8,8 @@ import { judgeFavorSide } from '../timeline/labels'
 import { OsBeatCard } from '../timeline/os-beat-card'
 
 export interface JudgePresentation {
+  activeBeatKey?: string | null
+  onResume?: () => void
   mobileTrendTarget?: HTMLElement | null
   beats: ReplayBeatStep[]
   labels: SpeakerLabels
@@ -17,6 +19,7 @@ export interface JudgePresentation {
   traceOf: (verdict: VerdictDTO) => string | null
 }
 export interface JudgeDialoguePresentation extends JudgePresentation {
+  emptyMessage?: string
   groups: StageGroup[]
   renderGroup: (group: StageGroup) => ReactNode
 }
@@ -54,9 +57,11 @@ export function focusJudgeBeat(key: string) {
   card?.scrollIntoView({ block: 'center', behavior: 'instant' })
 }
 export function JudgeNote(
-  { step, labels, traceOf, showTrace }: JudgePresentation & {
-    step: ReplayBeatStep
-  },
+  { step, labels, traceOf, showTrace, activeBeatKey, onResume }:
+    & JudgePresentation
+    & {
+      step: ReplayBeatStep
+    },
 ) {
   return (
     <div
@@ -65,6 +70,8 @@ export function JudgeNote(
     >
       <OsBeatCard
         verdict={step.verdict}
+        highlight={activeBeatKey === step.verdict.key}
+        onResume={activeBeatKey === step.verdict.key ? onResume : undefined}
         labels={labels}
         trace={traceOf(step.verdict)}
         showTrace={showTrace}

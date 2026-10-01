@@ -192,7 +192,17 @@ export const InteractionChecks: Story = {
       await userEvent.click(
         canvas.getByRole('button', { name: '回放' }),
       )
-      await expect(canvasElement.querySelector('.judge-transcript')).toBeNull()
+      if (scene.id === 144 || scene.id === 120) {
+        const sidebar = canvas.getByRole('complementary', {
+          name: '裁判 OS 侧栏',
+        })
+        await expect(sidebar).toBeVisible()
+        await expect(sidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
+          .toHaveLength(0)
+      } else {
+        await expect(canvasElement.querySelector('.judge-transcript'))
+          .toBeNull()
+      }
       await expect(canvasElement.querySelector('[data-review-ending]'))
         .toBeNull()
       await expect(canvas.queryByRole('region', { name: '隐藏目标及计分' }))

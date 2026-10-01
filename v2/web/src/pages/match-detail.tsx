@@ -85,7 +85,7 @@ export function MatchDetailPage() {
     (location.state as { express?: boolean } | null)?.express === true ||
     new URLSearchParams(location.search).get('express') === '1'
   const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
-  // Move the interactive chart after settlement on compact finished reports.
+  // Keep the compact trend after the transcript in live and finished views.
   const [mobileTrendTarget, setMobileTrendTarget] = useState<
     HTMLDivElement | null
   >(null)
@@ -172,9 +172,9 @@ export function MatchDetailPage() {
   }, [landmark, reload])
 
   // 完局战报 (#69): a finished, scored match starts with a spoiler summary,
-  // then keeps every transcript stage and verdict in script order. Anything short
-  // of that (queued, live, finished-but-unscored)
-  // keeps the live layout untouched.
+  // then keeps every transcript stage and verdict in script order. Results and
+  // settlement require scoring; court/council transcripts share their sidebar
+  // with queued, live, and finished-but-unscored matches.
   const finished = data != null && data.summary.finished &&
     data.summary.scored
 
@@ -281,8 +281,9 @@ export function MatchDetailPage() {
   const sidebarGroups = dialogueSections.length === 1
     ? dialogueSections[0].groupIndexes
     : []
-  const judgeSidebar = shownInterim.some(isOsBeatVerdict) && isCourtOrCouncil &&
-    finished && !replaying && osPlacement.trailing.length === 0 &&
+  // Reserve the same columns before the first note, while live, and in replay.
+  const judgeSidebar = isCourtOrCouncil &&
+    osPlacement.trailing.length === 0 &&
     osPlacement.perGroup.every((notes, index) =>
       notes.length === 0 || sidebarGroups.includes(index)
     )
@@ -418,9 +419,7 @@ export function MatchDetailPage() {
   // Sections are presentation labels over the ordered groups, not filters. The
   // latter used to hoist every non-inquiry group ahead of inquiry, which made the
   // UI contradict the actual match sequence.
-  const reportSections = finished
-    ? buildFinishedReportSections(stageGroups)
-    : []
+  const reportSections = buildFinishedReportSections(stageGroups)
   const dialogueRows = groupRows
 
   // afterSeq 是「已提交行数」：第 afterSeq 行（turns[afterSeq-1]）之后就是
@@ -634,9 +633,99 @@ export function MatchDetailPage() {
     )
   }
 
+  const renderReportSections = () =>
+    reportSections.map((section, sectionIndex) =>
+      judgeSidebar && section.kind === 'dialogue'
+        ? (
+          <div
+            {...tm('FA.report-section')}
+            className='space-y-5'
+            key={`judge-layout-${sectionIndex}`}
+          >
+            {!hasNumberedStages && (
+              <h2
+                {...tm('FA.dialogue-heading')}
+                className='text-sm font-semibold text-(--foreground)'
+              >
+                {replaying ? '对话重演' : '对话全文'}
+              </h2>
+            )}
+            {
+              <JudgeDialogue
+                mobileTrendTarget={mobileTrendTarget}
+                activeBeatKey={replaying ? replay.state.anchorKey : null}
+                onResume={replay.togglePlay}
+                emptyMessage={replaying
+                  ? '回放即将开始…'
+                  : live
+                  ? '对局即将开始…'
+                  : '暂无回合。'}
+                {...{
+                  groups: section.groupIndexes.map((index) =>
+                    stageGroups[index]
+                  ),
+                  beats: sidebarBeats,
+                  anchorSeqOf: anchorRowSeq,
+                  speechNumberOf,
+                  labels,
+                  showTrace,
+                  traceOf,
+                  renderGroup: (group) => {
+                    const row = groupRows.find((entry) =>
+                      entry.group.id === group.id
+                    )
+                    return row ? renderGroupRow({ ...row, group }, true) : null
+                  },
+                }}
+              />
+            }
+          </div>
+        )
+        : (
+          <div
+            {...tm('FA.report-section')}
+            key={`${section.kind}-${sectionIndex}`}
+            className='space-y-5'
+          >
+            {section.kind === 'dialogue' && !isTrolley &&
+                !hasNumberedStages
+              ? (
+                <h2
+                  {...tm('FA.dialogue-heading')}
+                  className='text-sm font-semibold text-(--foreground)'
+                >
+                  {replaying ? '对话重演' : '对话全文'}
+                </h2>
+              )
+              : section.kind === 'inquiry' && !hasNumberedStages
+              ? (
+                <h2 className='text-sm font-semibold text-(--foreground)'>
+                  问询
+                </h2>
+              )
+              : null}
+            {section.groupIndexes.length === 0
+              ? (
+                <p
+                  {...tm('FA.section-empty')}
+                  className='text-sm text-(--foreground-muted)'
+                >
+                  {replaying ? '回放即将开始…' : '暂无回合。'}
+                </p>
+              )
+              : section.groupIndexes.map((index) =>
+                renderGroupRow(groupRows[index])
+              )}
+          </div>
+        )
+    )
+
   const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
   const beats = replayBeats(replaySteps)
+  const sidebarBeats = reveal == null
+    ? beats
+    : beats.filter((step) => reveal.beatKeys.has(step.verdict.key))
   const ledger = formatScoringReasoning(data.reasoning)
   // F2（#69/#26）：把得分账解析成结构化条目——正负号、归侧、识破标记。
   // 解析不产出数字：合计与得分变化的兜底一律用服务端 scoreA/scoreB。
@@ -895,12 +984,14 @@ export function MatchDetailPage() {
             {replaying
               ? (
                 <ReplayControls handle={replay} total={replaySteps.length}>
-                  <JudgeTrendChart
-                    beats={beats}
-                    labels={labels}
-                    speakers={speakers}
-                    revealedKeys={reveal?.beatKeys ?? null}
-                  />
+                  {!judgeSidebar && (
+                    <JudgeTrendChart
+                      beats={beats}
+                      labels={labels}
+                      speakers={speakers}
+                      revealedKeys={reveal?.beatKeys ?? null}
+                    />
+                  )}
                 </ReplayControls>
               )
               : (
@@ -918,88 +1009,7 @@ export function MatchDetailPage() {
                 />
               )}
 
-            {tabPlan
-              ? renderTabbedTranscript()
-              : reportSections.map((section, sectionIndex) =>
-                judgeSidebar && section.kind === 'dialogue'
-                  ? (
-                    <div
-                      {...tm('FA.report-section')}
-                      className='space-y-5'
-                      key={`judge-layout-${sectionIndex}`}
-                    >
-                      {!hasNumberedStages && (
-                        <h2
-                          {...tm('FA.dialogue-heading')}
-                          className='text-sm font-semibold text-(--foreground)'
-                        >
-                          对话全文
-                        </h2>
-                      )}
-                      {
-                        <JudgeDialogue
-                          mobileTrendTarget={mobileTrendTarget}
-                          {...{
-                            groups: section.groupIndexes.map((index) =>
-                              stageGroups[index]
-                            ),
-                            beats,
-                            anchorSeqOf: anchorRowSeq,
-                            speechNumberOf,
-                            labels,
-                            showTrace,
-                            traceOf,
-                            renderGroup: (group) => {
-                              const row = groupRows.find((entry) =>
-                                entry.group.id === group.id
-                              )
-                              return row
-                                ? renderGroupRow({ ...row, group }, true)
-                                : null
-                            },
-                          }}
-                        />
-                      }
-                    </div>
-                  )
-                  : (
-                    <div
-                      {...tm('FA.report-section')}
-                      key={`${section.kind}-${sectionIndex}`}
-                      className='space-y-5'
-                    >
-                      {section.kind === 'dialogue' && !isTrolley &&
-                          !hasNumberedStages
-                        ? (
-                          <h2
-                            {...tm('FA.dialogue-heading')}
-                            className='text-sm font-semibold text-(--foreground)'
-                          >
-                            {replaying ? '对话重演' : '对话全文'}
-                          </h2>
-                        )
-                        : section.kind === 'inquiry' && !hasNumberedStages
-                        ? (
-                          <h2 className='text-sm font-semibold text-(--foreground)'>
-                            问询
-                          </h2>
-                        )
-                        : null}
-                      {section.groupIndexes.length === 0
-                        ? (
-                          <p
-                            {...tm('FA.section-empty')}
-                            className='text-sm text-(--foreground-muted)'
-                          >
-                            {replaying ? '回放即将开始…' : '暂无回合。'}
-                          </p>
-                        )
-                        : section.groupIndexes.map((index) =>
-                          renderGroupRow(groupRows[index])
-                        )}
-                    </div>
-                  )
-              )}
+            {tabPlan ? renderTabbedTranscript() : renderReportSections()}
             {!tabPlan && placed.trailing.length > 0
               ? (
                 <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
@@ -1249,7 +1259,7 @@ export function MatchDetailPage() {
                     )}
                 </div>
               )}
-            {!replaying && (judgeSidebar || tabbedJudgeSidebar) &&
+            {!replaying && tabbedJudgeSidebar &&
                 beats.length > 0
               ? (
                 <div
@@ -1301,13 +1311,17 @@ export function MatchDetailPage() {
 
             <div className='space-y-5' {...tm('FA.live-dialogue')}>
               <h2
-                hidden={tabPlan != null}
+                hidden={tabPlan != null || judgeSidebar}
                 {...tm('FA.live-dialogue-heading')}
                 className='text-sm font-semibold text-(--foreground)'
               >
                 对话
               </h2>
-              {tabPlan ? renderTabbedTranscript() : dialogueRows.length === 0
+              {tabPlan
+                ? renderTabbedTranscript()
+                : judgeSidebar
+                ? renderReportSections()
+                : dialogueRows.length === 0
                 ? (
                   <p
                     {...tm('FA.live-empty')}
@@ -1355,6 +1369,16 @@ export function MatchDetailPage() {
               : null}
           </>
         )}
+
+      {judgeSidebar && sidebarBeats.length > 0
+        ? (
+          <div
+            ref={setMobileTrendTarget}
+            className='judge-mobile-trend'
+            data-review-trend
+          />
+        )
+        : null}
 
       {data.error
         ? (

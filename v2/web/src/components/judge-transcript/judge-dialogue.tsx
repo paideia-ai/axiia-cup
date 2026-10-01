@@ -65,14 +65,21 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
   const heading = (
     <h2 className='text-xs font-semibold text-(--foreground-muted)'>裁判 OS</h2>
   )
-  const track = (
-    <JudgeSidebarTrend
-      beats={beats}
-      mobileTrendTarget={props.mobileTrendTarget}
-      labels={labels}
-      connectionGap={4}
-      onSelect={(index) => focusJudgeBeat(beats[index].verdict.key)}
-    />
+  const track = beats.length > 0
+    ? (
+      <JudgeSidebarTrend
+        beats={beats}
+        mobileTrendTarget={props.mobileTrendTarget}
+        labels={labels}
+        connectionGap={4}
+        onSelect={(index) => focusJudgeBeat(beats[index].verdict.key)}
+      />
+    )
+    : <p className='text-xs text-(--foreground-muted)'>等待裁判点评…</p>
+  const empty = (
+    <p className='text-sm text-(--foreground-muted)'>
+      {props.emptyMessage ?? '暂无回合。'}
+    </p>
   )
   const content = (chunk: typeof chunks[number], index: number) => (
     <div
@@ -92,12 +99,19 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
     </div>
   )
 
-  if (!beats.length) return <>{groups.map(renderGroup)}</>
   return (
     <section ref={root} className='judge-transcript' aria-label='对话与裁判 OS'>
       {compact
         ? (
           <>
+            {chunks.length === 0 && (
+              <div className='judge-transcript-columns judge-transcript-pair'>
+                {empty}
+                <aside className='judge-transcript-paired-aside'>
+                  <div className='space-y-3'>{heading}{track}</div>
+                </aside>
+              </div>
+            )}
             {chunks.map((chunk, index) => (
               <div
                 className='judge-transcript-columns judge-transcript-pair'
@@ -126,7 +140,7 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
         : (
           <div className='judge-transcript-columns judge-transcript-aligned-grid'>
             <div className='judge-transcript-dialogue-column space-y-5'>
-              {chunks.map(content)}
+              {chunks.length > 0 ? chunks.map(content) : empty}
             </div>
             <aside
               className='judge-transcript-aligned-aside'
