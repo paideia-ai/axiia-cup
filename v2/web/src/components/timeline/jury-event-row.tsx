@@ -274,6 +274,7 @@ function SecretPollResult({
       </div>
       <BallotDetails secret>
         <BallotGrid
+          showPortraits
           ballots={ballots}
           previousBallots={previousSecretPoll
             ? ballotsOf(previousSecretPoll, 'ballots')
@@ -515,12 +516,14 @@ function BallotGrid({
   labels,
   kind,
   showReasoning,
+  showPortraits = false,
 }: {
   previousBallots?: Ballot[]
   ballots: Ballot[]
   labels: SpeakerLabels
   kind: 'procedure' | 'verdict'
   showReasoning: boolean
+  showPortraits?: boolean
 }) {
   if (ballots.length === 0) {
     return (
@@ -556,7 +559,14 @@ function BallotGrid({
             className='rounded-md bg-black/10 px-3 py-2'
           >
             <div className='flex flex-wrap items-center justify-between gap-2'>
-              <p className='text-xs font-semibold text-(--foreground)'>
+              <p className='flex items-center gap-2 text-xs font-semibold text-(--foreground)'>
+                {showPortraits && (
+                  <RolePortrait
+                    labels={labels}
+                    speaker={ballot.juror}
+                    size='sm'
+                  />
+                )}
                 {speakerName(labels, ballot.juror)}
               </p>
               <div className='flex shrink-0 items-center gap-1.5'>
@@ -652,6 +662,7 @@ function FinalVoteReveal({
       </div>
       <BallotDetails>
         <BallotGrid
+          showPortraits
           ballots={ballotsOf(event, 'votes')}
           labels={labels}
           kind='verdict'
