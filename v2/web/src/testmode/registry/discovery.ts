@@ -395,13 +395,22 @@ export const TM_DISCOVERY: TmRegistry = {
     label: '没有对侧智能体',
     clauses: ['U05-C04', 'U05-C07', 'LACK-10'],
     anchors: ['spec-change-64'],
-    when: '本场景没有自己的对侧 agent 时',
+    when: '本场景没有自己可出战的对侧 agent 时',
   },
-  'OS.hotseat-go-my-agents': {
-    label: '去我的智能体按钮',
+  'OS.hotseat-open-opposite': {
+    label: '去完善对侧按钮',
     clauses: ['U05-C04'],
     anchors: ['spec-change-64'],
-    when: '互搏空态里',
+    note: '直达对侧智能体主页；优先参赛版本，其次最近编辑',
+    when: '互搏空态里，已有对侧 agent 但都还没保存版本时',
+  },
+  'OS.hotseat-create-opposite': {
+    label: '互搏创建对侧按钮',
+    clauses: ['U05-C04'],
+    anchors: ['spec-change-64'],
+    note:
+      '与门槛态「创建对侧智能体」同一入口：多角色侧在面板内就地弹出人物签，选中即创建；单角色侧创建草稿。之后进入主页并聚焦名称输入',
+    when: '互搏空态里，没有对侧 agent 时',
   },
   'OS.hotseat-dispatch-button': {
     label: '自有对手栏',
