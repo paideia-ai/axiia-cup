@@ -40,34 +40,37 @@ const clamp = (n: number, min: number, max: number) =>
 function place(rect: DOMRect): Layout {
   const vw = document.documentElement.clientWidth
   const vh = globalThis.innerHeight
-  const vertical = vw < 768
+  const narrow = vw < 768
   const pad = 12
   const gap = 10
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 2
-  if (vertical) {
+  if (narrow) {
     const width = Math.min(252, vw - pad * 2)
     const height = vh < 500 ? 68 : 82
-    const x = clamp(cx - width / 2, pad, vw - pad - width)
-    return {
-      vertical,
-      shelf: false,
-      width,
-      height,
-      positions: [
-        { x, y: Math.max(60, rect.top - gap - height) },
-        { x, y: Math.min(vh - 76 - height, rect.bottom + gap) },
-      ],
+    const above = rect.top - gap - height
+    const below = rect.bottom + gap
+    // A bottom-anchored sheet (the battle panel) leaves no room under the
+    // action. Rather than stacking portraits over it, use the paired shelf.
+    if (above >= 60 && below + height <= vh - 76) {
+      const x = clamp(cx - width / 2, pad, vw - pad - width)
+      return {
+        vertical: true,
+        shelf: false,
+        width,
+        height,
+        positions: [{ x, y: above }, { x, y: below }],
+      }
     }
   }
-  const width = 172
+  const width = Math.min(172, (vw - pad * 2 - gap) / 2)
   const height = 140
-  const shelf = rect.left < width + gap + pad ||
+  const shelf = narrow || rect.left < width + gap + pad ||
     vw - rect.right < width + gap + pad
   if (!shelf) {
     const y = clamp(cy - height / 2, 60, vh - height - pad)
     return {
-      vertical,
+      vertical: false,
       shelf,
       width,
       height,
@@ -84,7 +87,7 @@ function place(rect: DOMRect): Layout {
     ? rect.top - height - gap
     : Math.min(vh - height - pad, rect.bottom + gap)
   return {
-    vertical,
+    vertical: false,
     shelf,
     width,
     height,
@@ -300,7 +303,7 @@ export function PortraitRoleChoice({ children, roles, disabled, onSelect }: {
         'aria-describedby': `${id}-hint`,
       })}
       <span id={`${id}-hint`} className='sr-only'>
-        按住选择角色，电脑左右滑，手机上下滑，松手创建。回到按钮取消。也可点击后选择人物签。
+        按住选择角色，向人物签所在方向滑动，松手创建。回到按钮取消。也可点击后选择人物签。
       </span>
       {layout && createPortal(
         <div

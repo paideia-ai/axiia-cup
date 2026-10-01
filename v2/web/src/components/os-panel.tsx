@@ -26,13 +26,14 @@ import type {
 } from '../api/types'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { BattleOpponentRow } from './battle-opponent-row'
+import { CreateAgentAction } from './create-agent-action'
 import { useBattleQuote } from '../context/rewards'
 import { playSound, unlockAudio } from '../lib/sound'
 import { trackSoundMatch } from '../lib/match-sound'
 import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
-import { roleOfOptions, scenarioModule } from '../scenarios'
+import { roleOfOptions, rolesForSide, scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 import { Badge } from './ui/badge'
 import { Button, ButtonLink } from './ui/button'
@@ -110,6 +111,11 @@ export function OsPanel({
   // POST /v1/challenges 在老服务器上 404/405：降级为功能提示，不摆假表单。
   const [challengeUnavailable, setChallengeUnavailable] = useState(false)
   const dismissLocked = dispatching
+  // 打开时对侧为空，就保持「创建对侧智能体」直到面板关闭：就地新建会刷新库存，
+  // 若按钮随之换成「去练习对侧」，创建流程被卸载，跳转新智能体主页就丢了。
+  const [creatingOpposite, setCreatingOpposite] = useState(false)
+  const showCreateOpposite = hasOppositeAgent === false ||
+    (open && creatingOpposite)
 
   useEffect(() => {
     liveRef.current = true
@@ -117,6 +123,11 @@ export function OsPanel({
       liveRef.current = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!open) setCreatingOpposite(false)
+    else if (hasOppositeAgent === false) setCreatingOpposite(true)
+  }, [open, hasOppositeAgent])
 
   // 与原构建器派发区同一语义：对手侧的预设就是本侧的 PVE 对手。
   const opponentPresets: PresetOpponentDTO[] = scenario.presets.filter(
@@ -478,7 +489,16 @@ export function OsPanel({
       open={open}
       modal
       disablePointerDismissal={dismissLocked}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={(nextOpen, details) => {
+        // 人物签浮在面板之上的独立层里：它打开时，外部按压、Esc 和焦点移动
+        // 只收起人物签，不关闭面板。
+        if (
+          !nextOpen &&
+          ['outside-press', 'escape-key', 'focus-out'].includes(
+            details.reason,
+          ) &&
+          document.querySelector('.portrait-choices')
+        ) return
         if (!nextOpen && !dismissLocked) onClose()
       }}
     >
@@ -1003,7 +1023,7 @@ export function OsPanel({
                             </Button>
                           )}
                           {!sideMet(gateProgress[oppositeSide]) &&
-                            (hasOppositeAgent !== false
+                            (!showCreateOpposite
                               ? (
                                 <ButtonLink
                                   size='sm'
@@ -1013,6 +1033,23 @@ export function OsPanel({
                                 >
                                   去练习对侧（{sideNameOf(oppositeSide)}）
                                 </ButtonLink>
+                              )
+                              : rolesForSide(roleModule, oppositeSide).length >
+                                  1
+                              ? (
+                                // 多角色侧就地选角色：人物签在本按钮两侧弹出，不跳中间页。
+                                <CreateAgentAction
+                                  scenarioID={scenarioID}
+                                  side={oppositeSide}
+                                  role={sideNameOf(oppositeSide)}
+                                  oppositeRole={sideNameOf(side)}
+                                  marker={tm(
+                                    'OS.gate-create-opposite',
+                                  )['data-tm']}
+                                  variant='secondary'
+                                >
+                                  创建对侧智能体（{sideNameOf(oppositeSide)}）
+                                </CreateAgentAction>
                               )
                               : (
                                 <ButtonLink

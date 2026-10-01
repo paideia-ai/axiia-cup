@@ -46,6 +46,7 @@ export function CreateAgentAction({
   testID,
   attention,
   express = false,
+  variant,
 }: {
   scenarioID: string
   side: Side
@@ -56,6 +57,8 @@ export function CreateAgentAction({
   testID?: string
   attention?: boolean
   express?: boolean
+  // 宿主面板沿用自己的按钮层级（出战面板里是次要按钮）。
+  variant?: 'primary' | 'secondary'
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -135,6 +138,7 @@ export function CreateAgentAction({
     ? (
       <Button
         size='sm'
+        variant={variant}
         disabled={busy}
         data-testid={testID}
         onClick={begin}
