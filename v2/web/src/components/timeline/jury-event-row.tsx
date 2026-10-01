@@ -662,6 +662,7 @@ function FinalVoteReveal({
       </div>
       <BallotDetails>
         <BallotGrid
+          showPortraits
           ballots={ballotsOf(event, 'votes')}
           labels={labels}
           kind='verdict'
