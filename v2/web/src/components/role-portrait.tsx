@@ -5,9 +5,10 @@ import { rolePortrait } from '../lib/role-portrait'
 
 // Decorative beside an existing name: screen readers already have that name.
 // Fixed dimensions reserve space before load; a missing asset hides quietly.
-export function RolePortrait({ labels, speaker }: {
+export function RolePortrait({ labels, speaker, size = 'default' }: {
   labels: SpeakerLabels
   speaker: string
+  size?: 'default' | 'sm'
 }) {
   const src = rolePortrait(labels, speaker)
   const [failed, setFailed] = useState<string | null>(null)
@@ -15,10 +16,11 @@ export function RolePortrait({ labels, speaker }: {
   return (
     <img
       data-role-portrait={speaker}
+      data-portrait-size={size}
       src={src}
       alt=''
-      width={80}
-      height={80}
+      width={size === 'sm' ? 32 : 80}
+      height={size === 'sm' ? 32 : 80}
       loading='lazy'
       decoding='async'
       onError={() => setFailed(src)}
