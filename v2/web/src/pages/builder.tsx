@@ -37,7 +37,6 @@ import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { useScrollPending } from '../context/navigation-memory'
-import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Select, SelectItem } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
@@ -1146,14 +1145,8 @@ export function BuilderPage() {
     <div className='space-y-6'>
       <TypingFeedback />
       <div>
-        <BackLink
-          to={`/agents/${agentID}`}
-          className='text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
-          {...tm('E.back-link')}
-          label='智能体主页'
-        />
         <h1
-          className='mt-2 text-2xl font-black tracking-tight text-(--foreground)'
+          className='text-2xl font-black tracking-tight text-(--foreground)'
           {...tm('E.page-title')}
         >
           智能体构建器

@@ -3,7 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom'
 
 import { npcs } from '../api/client'
 import { IdentityVersionCard } from '../components/agent-profile'
-import { BackLink } from '../components/back-link'
 import { PageLoading } from '../components/page-loading'
 import { Button } from '../components/ui/button'
 import { positiveID } from '../lib/identity-links'
@@ -34,11 +33,6 @@ export function NPCViewPage() {
   })
   return (
     <div className='min-w-0 w-full space-y-6' data-testid='npc-identity'>
-      <BackLink
-        to={matchID ? `/matches/${matchID}` : '/matches'}
-        label={matchID ? '对战' : '历史'}
-        className='text-sm text-(--foreground-subtle)'
-      />
       {!matchID
         ? <p role='status'>请从对战中打开 NPC 资料。</p>
         : profile.error

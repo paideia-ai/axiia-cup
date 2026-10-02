@@ -3,7 +3,6 @@ import { tm } from '../testmode/mark'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { IdentityVersionCard } from '../components/agent-profile'
-import { BackLink } from '../components/back-link'
 import { PageLoading } from '../components/page-loading'
 import { Button } from '../components/ui/button'
 import { positiveID } from '../lib/identity-links'
@@ -45,16 +44,6 @@ export function AgentIdentityPage() {
       data-testid='agent-identity'
       {...tm('EA.public-view')}
     >
-      <BackLink
-        {...tm('EA.public-back-link')}
-        to={matchID
-          ? `/matches/${matchID}`
-          : tournamentID
-          ? `/tournaments/${tournamentID}`
-          : '/matches'}
-        label={matchID ? '对战' : tournamentID ? '赛事排名' : '历史'}
-        className='text-sm text-(--foreground-subtle)'
-      />
       {profile.error || !id
         ? (
           <div className='space-y-3'>

@@ -130,8 +130,9 @@ async function openFromList(page: Page) {
   const y = await page.evaluate(() => window.scrollY)
   await card(page).getByRole('link', { name: /对战 #1040/ }).click()
   await expect(page).toHaveURL(/\/matches\/1040$/)
-  await expect(page.getByRole('link', { name: '← 对战列表', exact: true }))
+  await expect(page.getByRole('heading', { name: '对战 #1040', exact: true }))
     .toBeVisible()
+  await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
   return y
 }
@@ -143,15 +144,18 @@ async function expectRestored(page: Page, y: number) {
   ).toBeLessThan(3)
 }
 
-test('browser back and page back restore cached content without another request', async ({ page }) => {
+test('browser back and forward restore cached content without another request', async ({ page }) => {
   const world = await installWorld(page)
   const y = await openFromList(page)
   world.delay = 1400
   const requests = world.listRequests
   await page.goBack()
   await expectRestored(page, y)
-  await card(page).getByRole('link', { name: /对战 #1040/ }).click()
-  await page.getByRole('link', { name: '← 对战列表', exact: true }).click()
+  await page.goForward()
+  await expect(page.getByRole('heading', { name: '对战 #1040', exact: true }))
+    .toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await page.goBack()
   await expectRestored(page, y)
   expect(world.listRequests).toBe(requests)
 })
@@ -220,28 +224,19 @@ test('new rows above the saved card preserve the card position', async ({ page }
   ).toBeCloseTo(130, 0)
 })
 
-test('direct entry has a safe fallback and normal link semantics', async ({ page }) => {
+test('direct entry keeps global navigation usable without a page back link', async ({ page }) => {
   await installWorld(page)
   await page.goto('/matches/1040')
-  const back = page.getByRole('link', { name: '← 我的智能体', exact: true })
-    .first()
-  await expect(back).toHaveAttribute('href', '/my-agents')
-  await back.click()
-  await expect(page).toHaveURL(/\/my-agents$/)
-  await openFromList(page)
-  const source = page.getByRole('link', { name: '← 对战列表', exact: true })
-  await expect(source).toHaveAttribute(
-    'href',
-    '/matches?mine=1&scenario=shangyang-court',
-  )
-  if (test.info().project.name === 'desktop') {
-    await source.click({ modifiers: ['Control'] })
-    await expect(page).toHaveURL(/\/matches\/1040$/)
-    await page.bringToFront()
-    await source.focus()
-    await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(/\/matches\?mine=1&scenario=shangyang-court$/)
-  }
+  await expect(page.getByRole('heading', { name: '对战 #1040', exact: true }))
+    .toBeVisible()
+  await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
+  await page.getByRole('link', { name: '历史', exact: true }).click()
+  await expect(page).toHaveURL(/\/matches$/)
+  await expect(card(page)).toBeVisible()
+  await page.goBack()
+  await expect(page).toHaveURL(/\/matches\/1040$/)
+  await expect(page.getByRole('heading', { name: '对战 #1040', exact: true }))
+    .toBeVisible()
 })
 
 test('user scrolling cancels delayed restoration and a shorter list settles safely', async ({ page }) => {
@@ -315,7 +310,7 @@ test('returning to a live transcript restores reading position without following
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(1800)
 })
 
-test('archive page back restores the settings reading position', async ({ page }) => {
+test('browser back from archive restores the settings reading position', async ({ page }) => {
   await installWorld(page)
   await page.goto('/settings')
   const archive = page.getByRole('link', { name: /已归档的智能体/ })
@@ -333,7 +328,8 @@ test('archive page back restores the settings reading position', async ({ page }
   await archive.click()
   await expect(page.getByRole('heading', { name: '暂无已归档的智能体' }))
     .toBeVisible()
-  await page.getByRole('link', { name: '← 账户设置', exact: true }).click()
+  await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
+  await page.goBack()
   await expect(page).toHaveURL(/\/settings$/)
   await expect.poll(async () =>
     Math.abs(await page.evaluate(() => window.scrollY) - y)

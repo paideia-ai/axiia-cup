@@ -141,6 +141,71 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
       ensures.push({ page: request.frame().page(), side })
       return json({ agentID: side === 'b' ? 102 : 101 })
     }
+    if (path === '/agents/202/draft') {
+      return json({ error: 'forbidden', message: '不是你的智能体' }, 403)
+    }
+    if (path === '/agents/202/public') {
+      return json({
+        agentID: 202,
+        scenarioID: scenario.summary.id,
+        scenarioTitle: scenario.summary.title,
+        side: 'b',
+        sideName: '甘龙',
+        name: '公开导航测试',
+        ownerName: '另一位玩家',
+        versions: [{
+          id: 466,
+          ordinal: 1,
+          isEntry: true,
+          createdAt: 1,
+          modelID: config.models[0].id,
+          matchCount: 2,
+          winCount: 1,
+          drawCount: 0,
+          lossCount: 1,
+        }],
+      })
+    }
+    if (path === `/scenarios/${scenario.summary.id}/npcs/ganlong-steady`) {
+      return json({
+        scenarioID: scenario.summary.id,
+        scenarioTitle: scenario.summary.title,
+        key: 'ganlong-steady',
+        side: 'b',
+        sideName: '甘龙',
+        label: '稳健守旧派',
+        modelID: config.models[0].id,
+        prompt: '先询问新制度的实施代价。',
+        sourceMatchID: 9001,
+        versionTag: 'fixture',
+        matchCount: 2,
+        winCount: 1,
+        drawCount: 0,
+        lossCount: 1,
+        challengeCount: 2,
+      })
+    }
+    if (path === '/admin/slots') {
+      return json({
+        slots: [{
+          id: scenario.summary.id,
+          title: scenario.summary.title,
+          scriptSHA: 'navigation-fixture',
+          params: {},
+          status: 'live',
+        }],
+      })
+    }
+    if (path === '/admin/scripts/navigation-fixture') {
+      return json({
+        sha: 'navigation-fixture',
+        source: '// Navigation fixture',
+        createdAt: 1,
+      })
+    }
+    if (path === '/matches/9998' || path === '/versions/9998/ref') {
+      return json({ error: 'not_found', message: '未找到' }, 404)
+    }
     if (/^\/agents\/\d+\/draft$/.test(path)) {
       return json({
         fields: {},
@@ -330,6 +395,152 @@ for (const width of [1440, 390]) {
   })
 }
 
+// Each of the nine former page-return placements is checked on a real touch
+// viewport and desktop, including pages opened directly without app history.
+const pagesWithoutBackLinks = [
+  { path: '/agents/101', ready: '[data-tm="EA.scenario-link"]' },
+  { path: '/agents/101/build', ready: '[data-tm="E.prompt-input"]' },
+  { path: '/agents/202/identity', ready: '[data-tm="EA.public-title"]' },
+  {
+    path: `${scenarioPath}/npcs/ganlong-steady?match=9001`,
+    ready: '[data-testid="npc-identity"] h1',
+  },
+  { path: '/settings/archived-agents', ready: 'h2' },
+  { path: '/versions/9998?tournament=1', ready: '[role="alert"]' },
+  {
+    path: `/admin/slots/${scenario.summary.id}`,
+    ready: '[data-tm="ADM.slot-editor"]',
+  },
+  { path: '/matches/9001', ready: '[data-tm="FA.page-title"]' },
+  { path: '/matches/9998', ready: '[data-tm="FA.not-found"]' },
+]
+
+for (const mobile of [false, true]) {
+  test.describe(
+    mobile ? 'mobile return navigation' : 'desktop return navigation',
+    () => {
+      test.use({
+        viewport: { width: mobile ? 390 : 1440, height: 900 },
+        isMobile: mobile,
+        hasTouch: mobile,
+      })
+
+      test('all former back-link surfaces support direct entry without return arrows', async ({ page }) => {
+        const { unexpected, errors } = await fixtures(page)
+        for (const surface of pagesWithoutBackLinks) {
+          await test.step(surface.path, async () => {
+            await page.goto(surface.path)
+            await expect(page.locator(surface.ready).first()).toBeVisible()
+            await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
+            await expect(page.getByRole('button', { name: /^←/ })).toHaveCount(
+              0,
+            )
+            await expect(page.locator('[data-tm$="back-link"]')).toHaveCount(0)
+            await expect(
+              page.getByRole('link', { name: '我的智能体', exact: true })
+                .first(),
+            )
+              .toBeVisible()
+            expect(
+              await page.evaluate(() =>
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth
+              ),
+            ).toBeLessThanOrEqual(1)
+          })
+        }
+        expect(unexpected).toEqual([])
+        expect(errors).toEqual([])
+      })
+
+      test('browser Back immediately after typing preserves the builder draft', async ({ page, context }) => {
+        const { unexpected, errors } = await fixtures(page)
+        let savedPrompt = ''
+        let mutations = 0
+        await context.route('**/v1/agents/101/draft', (route) =>
+          route.fulfill({
+            json: {
+              fields: { prompt: savedPrompt },
+              scenarioID: scenario.summary.id,
+              side: 'a',
+            },
+          }))
+        await context.route('**/v1/agents/101/mutate', async (route) => {
+          const { field, value } = route.request().postDataJSON() as {
+            field: string
+            value: string
+          }
+          if (field === 'prompt') {
+            mutations++
+            savedPrompt = value
+          }
+          await route.fulfill({ json: { ok: true } })
+        })
+        await page.goto('/agents/101')
+        await page.getByRole('link', { name: '新建版本', exact: true }).click()
+        const prompt = '浏览器后退前刚输入的草稿，重新进入仍应完整保留。'
+        await page.getByLabel('策略提示词').fill(prompt)
+        // Do not wait for the debounce or a network response before leaving.
+        await page.goBack()
+        await expect(page).toHaveURL(/\/agents\/101$/)
+        await page.getByRole('link', { name: '新建版本', exact: true }).click()
+        await expect(page.getByLabel('策略提示词')).toHaveValue(prompt)
+        await expect.poll(() => savedPrompt).toBe(prompt)
+        expect(mutations).toBeGreaterThan(0)
+        await page.reload()
+        await expect(page.getByLabel('策略提示词')).toHaveValue(prompt)
+        expect(unexpected).toEqual([])
+        expect(errors).toEqual([])
+      })
+
+      test('scenario title and browser back/forward preserve the agent and builder route', async ({ page }) => {
+        const { unexpected, errors } = await fixtures(page)
+        await page.goto('/my-agents')
+        const inventoryScenario = page.locator('[data-tm="MA.scenario-link"]')
+          .first()
+        await expect(inventoryScenario).toHaveAttribute('href', scenarioPath)
+        await page.locator('a[data-agent-id="101"]').click()
+        await expect(page).toHaveURL(/\/agents\/101$/)
+        const scenarioLink = page.locator('[data-tm="EA.scenario-link"]')
+        await expect(scenarioLink).toHaveText(scenario.summary.title)
+        await expect(scenarioLink).toHaveAttribute('href', scenarioPath)
+        if (mobile) {
+          await scenarioLink.tap()
+        } else {
+          await scenarioLink.focus()
+          await expect(scenarioLink).toBeFocused()
+          await page.keyboard.press('Enter')
+        }
+        await expect(page).toHaveURL(new RegExp(`${scenarioPath}$`))
+        await expect(
+          page.getByRole('heading', {
+            name: '商鞅变法 · 朝堂辩法',
+            exact: true,
+          }),
+        ).toBeVisible()
+        await page.goBack()
+        await expect(page).toHaveURL(/\/agents\/101$/)
+        await expect(scenarioLink).toBeVisible()
+        await page.goForward()
+        await expect(page).toHaveURL(new RegExp(`${scenarioPath}$`))
+        await page.goBack()
+        await page.getByRole('link', { name: '新建版本', exact: true }).click()
+        await expect(page).toHaveURL(/\/agents\/101\/build$/)
+        await expect(page.getByLabel('策略提示词')).toBeEnabled()
+        await page.goBack()
+        await expect(page).toHaveURL(/\/agents\/101$/)
+        await expect(scenarioLink).toBeVisible()
+        await page.goForward()
+        await expect(page).toHaveURL(/\/agents\/101\/build$/)
+        await expect(page.getByLabel('策略提示词')).toBeEnabled()
+        await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
+        expect(unexpected).toEqual([])
+        expect(errors).toEqual([])
+      })
+    },
+  )
+}
+
 async function showJourney(page: Page) {
   await page.evaluate(() => {
     history.replaceState({ ...history.state, usr: { express: true } }, '')
@@ -378,6 +589,18 @@ const cases: {
     path: '/',
     marker: 'A.header-enter-button',
     destination: /\/scenarios$/,
+  },
+  {
+    name: 'agent home scenario title',
+    path: '/agents/101',
+    marker: 'EA.scenario-link',
+    destination: /\/scenarios\/shangyang-court$/,
+  },
+  {
+    name: 'inventory scenario title',
+    path: '/my-agents',
+    marker: 'MA.scenario-link',
+    destination: /\/scenarios\/shangyang-court$/,
   },
   {
     name: 'new version',
@@ -766,13 +989,13 @@ for (const detail of agentPreviewScenarios) {
           `[data-tm="EA.sibling-pill"][href="/agents/${other.agentID}"]`,
         ),
       ).toHaveAttribute('aria-current', 'page')
-      await page.locator('[data-tm="EA.back-link"]').click()
+      await page.goBack()
       await expect(page).toHaveURL(new RegExp(`/agents/${selected.agentID}$`))
-      await page.locator('[data-tm="EA.back-link"]').click()
+      await page.goBack()
       await expect(page).toHaveURL(
         new RegExp(`/scenarios/${detail.summary.id}$`),
       )
-      // The page back link follows the actual source; main navigation still
+      // Browser history follows the actual source; main navigation still
       // opens the complete inventory regardless of the current scenario.
       await page.getByRole('link', { name: '我的智能体', exact: true }).click()
       await expect(page).toHaveURL(/\/my-agents$/)
