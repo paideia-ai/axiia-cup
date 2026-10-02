@@ -154,8 +154,8 @@ test.describe('U12 设置 · 历史 · 边界', () => {
   )
 
   test('U12-C09/C10：历史页的行结构与「行点开→战报」', async () => {
-    await test.step('当 我打开 /matches；那么 页面标题为「历史」', async () => {
-      await page.goto('/matches')
+    await test.step('当 我打开 /matches?mine=0（查看所有对局）；那么 页面标题为「历史」', async () => {
+      await page.goto('/matches?mine=0')
       await expect(page.getByRole('heading', { name: '历史' })).toBeVisible()
       // 行或空态其一渲染完成后再数行数
       await expect(page.getByText(/对战 #\d+|还没有.*对战/).first())
@@ -163,7 +163,7 @@ test.describe('U12 设置 · 历史 · 边界', () => {
     })
     const rows = page.getByText(/^对战 #\d+$/)
     if (await rows.count() === 0) {
-      await test.step('并且 若历史为空（新账号、非公开模式）→ 显示空态文案与引导语', async () => {
+      await test.step('并且 若历史为空（全站无对局，或非公开模式下新账号无对局）→ 显示空态文案与引导语', async () => {
         await expect(page.getByText(/还没有.*对战/)).toBeVisible()
         // U12-C10（行点开→战报）在空历史下无从验证：blocked，兄弟单元覆盖。
       })
