@@ -365,6 +365,7 @@ function ScenarioGroup({
                     oppositeRole={side === 'a'
                       ? scenario.sideBName
                       : scenario.sideAName}
+                    oppositeOnPage={onlySide == null}
                   />
                 </div>
 

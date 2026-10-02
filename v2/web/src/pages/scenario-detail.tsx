@@ -726,6 +726,7 @@ function SideCard({
                   scenarioID={scenarioID}
                   side={side}
                   role={name}
+                  oppositeOnPage
                   testID={agents.length === 0
                     ? (side === 'a' ? 'build-agent' : 'build-agent-b')
                     : undefined}
