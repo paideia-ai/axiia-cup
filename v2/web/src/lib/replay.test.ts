@@ -121,6 +121,32 @@ describe('v3.4 #20/#22/#24 deterministic replay', () => {
     expect([...replayReveal(withoutAbsorbed, 4).beatKeys]).toEqual(['os-1'])
   })
 
+  // 被滤掉的行不能把后面的节拍往后推：os-2 的 afterSeq 数的是全部行（含前面
+  // 被吸收的 act 行），它必须紧跟在自己的锚点行之后出现。
+  it('keeps later beats in place after earlier absorbed act rows', () => {
+    const act = (seq: number): TurnDTO => ({
+      seq,
+      channel: 'judge-aside',
+      kind: 'dialogue',
+      speaker: 'judge',
+      finalText: `<os>第 ${seq} 行</os>\n<favor>A</favor>`,
+    })
+    const turns = [turn(0), turn(1), act(2), turn(3), turn(4), act(5), turn(6)]
+    const verdicts = [beat('os-1', 2, 'A'), beat('os-2', 5, 'B')]
+    const absorbed = absorbedActSeqs(turns, verdicts)
+    const replay = buildReplaySteps(
+      turns.filter((row) => !absorbed.has(row.seq)),
+      verdicts,
+    )
+
+    expect([...absorbed]).toEqual([2, 5])
+    expect(
+      replay.map((step) =>
+        step.kind === 'row' ? `row-${step.seq}` : step.verdict.key
+      ),
+    ).toEqual(['row-0', 'row-1', 'os-1', 'row-3', 'row-4', 'os-2', 'row-6'])
+  })
+
   it('supports manual pause and a stable 1x/2x speed toggle', () => {
     const started = startReplay()
     const manual = advanceReplay(started, steps, true)

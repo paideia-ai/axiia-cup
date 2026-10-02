@@ -1,10 +1,14 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { focusJudgeBeat, JudgeNote, useCompactJudgeLayout } from './shared'
+import {
+  focusJudgeBeat,
+  JudgeNote,
+  JudgeNoteCaption,
+  useCompactJudgeLayout,
+} from './shared'
 import { useAlignedJudgeNotes } from './use-aligned-judge-notes'
 import type { TabbedJudgePresentation } from './shared'
 import { TranscriptTabs } from '../transcript-tabs'
 import { JudgeSidebarTrend } from './judge-sidebar-trend'
-import { speechProgressLabel } from './shared'
 import './judge-transcript.css'
 
 export function TabbedJudgeTranscript({
@@ -77,10 +81,10 @@ export function TabbedJudgeTranscript({
                 data-os-after={step.verdict.afterSeq}
                 data-os-anchor={anchorSeqOf(step.verdict)}
               >
-                <p className='mb-2 text-[11px] text-(--foreground-muted)'>
-                  {speechProgressLabel(speechNumberOf(step.verdict))}
-                  {step.changed ? ' · 倾向变化' : ''}
-                </p>
+                <JudgeNoteCaption
+                  step={step}
+                  speechNumberOf={speechNumberOf}
+                />
                 <JudgeNote
                   step={step}
                   beats={beats}

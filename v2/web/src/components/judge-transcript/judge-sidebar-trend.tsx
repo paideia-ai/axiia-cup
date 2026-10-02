@@ -6,9 +6,18 @@ import { JudgeTrendChart } from '../judge-trend'
 import { Card, CardContent } from '../ui/card'
 
 export function JudgeSidebarTrend(
-  { beats, labels, onSelect, connectionGap, mobileTrendTarget }: {
+  {
+    beats,
+    revealedKeys = null,
+    labels,
+    onSelect,
+    connectionGap,
+    mobileTrendTarget,
+  }: {
     mobileTrendTarget?: HTMLElement | null
     beats: ReplayBeatStep[]
+    // Replay: the axis spans every beat and fills in as they are revealed.
+    revealedKeys?: ReadonlySet<string> | null
     labels: SpeakerLabels
     connectionGap: number
     onSelect: (index: number) => void
@@ -20,6 +29,7 @@ export function JudgeSidebarTrend(
       <CardContent className='pt-5'>
         <JudgeTrendChart
           beats={beats}
+          revealedKeys={revealedKeys}
           labels={labels}
           speakers={[...(labels.speakers ?? [])]}
           connectionGap={connectionGap}

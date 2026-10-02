@@ -286,6 +286,31 @@ export function buildFinishedReportSections(
   return sections
 }
 
+// Replay leaves the inquiry leg out, so a revealed prefix on its own would file
+// the resolution stage under dialogue. Sections are therefore classified on the
+// whole transcript; the prefix only decides which of their groups are shown.
+export function revealedReportSections(
+  match: StageGroup[],
+  shown: StageGroup[],
+): FinishedReportSection[] {
+  const kindOf = new Map<string, FinishedReportSectionKind>()
+  for (const section of buildFinishedReportSections(match)) {
+    for (const index of section.groupIndexes) {
+      kindOf.set(match[index].id, section.kind)
+    }
+  }
+  const sections: FinishedReportSection[] = []
+  shown.forEach((group, index) => {
+    const previous = sections.at(-1)
+    const kind = kindOf.get(group.id) ?? previous?.kind ?? 'dialogue'
+    if (previous?.kind === kind) previous.groupIndexes.push(index)
+    else sections.push({ kind, groupIndexes: [index] })
+  })
+  return sections.length > 0
+    ? sections
+    : [{ kind: 'dialogue', groupIndexes: [] }]
+}
+
 // A verdict settled on the first `afterSeq` rows, so it renders after the first
 // stage that reaches that far; anything anchored past the whole transcript
 // trails it.

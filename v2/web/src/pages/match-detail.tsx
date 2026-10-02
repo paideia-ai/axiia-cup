@@ -65,6 +65,7 @@ import {
   isInquiryChannel,
   mergeJudgeAsideStage,
   placeVerdicts,
+  revealedReportSections,
 } from '../lib/transcript'
 import { usePageQuery } from '../lib/use-page-query'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
@@ -84,7 +85,7 @@ export function MatchDetailPage() {
     (location.state as { express?: boolean } | null)?.express === true ||
     new URLSearchParams(location.search).get('express') === '1'
   const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
-  // Move the interactive chart after settlement on compact finished reports.
+  // Keep the compact trend after the transcript in live and finished views.
   const [mobileTrendTarget, setMobileTrendTarget] = useState<
     HTMLDivElement | null
   >(null)
@@ -171,9 +172,9 @@ export function MatchDetailPage() {
   }, [landmark, reload])
 
   // 完局战报 (#69): a finished, scored match starts with a spoiler summary,
-  // then keeps every transcript stage and verdict in script order. Anything short
-  // of that (queued, live, finished-but-unscored)
-  // keeps the live layout untouched.
+  // then keeps every transcript stage and verdict in script order. Results and
+  // settlement require scoring; court/council transcripts share their sidebar
+  // with queued, live, and finished-but-unscored matches.
   const finished = data != null && data.summary.finished &&
     data.summary.scored
 
@@ -227,19 +228,44 @@ export function MatchDetailPage() {
     ? data.turns
     : data.turns.filter((turn) => reveal.seqs.has(turn.seq))
   const previousPolls = previousSecretPolls(shownTurns)
+  const groupingStages = data == null
+    ? []
+    : isCourtOrCouncil
+    ? mergeJudgeAsideStage(data.stages)
+    : data.stages
+  const groupingOptions = {
+    preserveVerdictChannels: isCourtOrCouncil
+      ? [...inquiryChannels, 'verdict']
+      : [],
+  }
   const stageGroups = data
     ? groupTranscript(
       shownTurns,
-      isCourtOrCouncil ? mergeJudgeAsideStage(data.stages) : data.stages,
+      groupingStages,
       stream.bubbles,
       data.verdicts,
-      {
-        preserveVerdictChannels: isCourtOrCouncil
-          ? [...inquiryChannels, 'verdict']
-          : [],
-      },
+      groupingOptions,
     )
     : []
+  // Sections are presentation labels over the ordered groups, not filters. The
+  // latter used to hoist every non-inquiry group ahead of inquiry, which made the
+  // UI contradict the actual match sequence. Replay leaves the inquiry leg out,
+  // so its revealed prefix alone would file the resolution stage under dialogue:
+  // sections and the sidebar decision come from the whole match, and the prefix
+  // only decides what they show.
+  const matchGroups = reveal == null || data == null
+    ? stageGroups
+    : groupTranscript(
+      data.turns,
+      groupingStages,
+      [],
+      data.verdicts,
+      groupingOptions,
+    )
+  const matchSections = buildFinishedReportSections(matchGroups)
+  const reportSections = reveal == null
+    ? matchSections
+    : revealedReportSections(matchGroups, stageGroups)
   const interimSource =
     data?.verdicts.filter((verdict) => !isTerminalVerdict(verdict)) ?? []
   // 回放揭示切片：节拍按其步骤揭示，其余过程裁决按 afterSeq 跟上已揭示行数。
@@ -264,24 +290,28 @@ export function MatchDetailPage() {
   // The result card above the report is summary-only. In a finished report the
   // full terminal verdict joins the same chronological placement path as every
   // process verdict, so inquiry can never be pushed below it. Replay still hides
-  // the terminal verdict as a spoiler; live/unscored keeps its existing layout.
+  // the terminal verdict as a spoiler; live/unscored shows it after the transcript.
   const shownVerdicts = finished && !replaying && finalVerdict != null
     ? [...shownInterim, finalVerdict]
     : shownInterim
   // Keep unusual/legacy transcripts on their chronological renderer if an OS
   // belongs outside the single debate section; never remove an unplaced note.
-  const dialogueSections = buildFinishedReportSections(stageGroups).filter((
-    section,
-  ) => section.kind === 'dialogue')
+  const dialogueSections = matchSections.filter((section) =>
+    section.kind === 'dialogue'
+  )
   const osPlacement = placeVerdicts(
-    stageGroups,
-    shownInterim.filter(isOsBeatVerdict),
+    matchGroups,
+    interimSource.filter(isOsBeatVerdict),
   )
   const sidebarGroups = dialogueSections.length === 1
     ? dialogueSections[0].groupIndexes
     : []
-  const judgeSidebar = shownInterim.some(isOsBeatVerdict) && isCourtOrCouncil &&
-    finished && !replaying && osPlacement.trailing.length === 0 &&
+  // Court/council keep the same columns for the whole match — while a note can
+  // still arrive, and in the report and replay of a match that has notes. A
+  // match that ended without any keeps the single-column transcript.
+  const judgeSidebar = isCourtOrCouncil &&
+    (live || interimSource.some(isOsBeatVerdict)) &&
+    osPlacement.trailing.length === 0 &&
     osPlacement.perGroup.every((notes, index) =>
       notes.length === 0 || sidebarGroups.includes(index)
     )
@@ -301,8 +331,13 @@ export function MatchDetailPage() {
     (total, bubble) => total + bubble.text.length + bubble.reasoning.length,
     data?.turns.length ?? 0,
   )
-  // 回放推进时同样跟底——读者向上滚动即解除，与实况一致。
-  usePinToBottom(live || replaying, replaying ? replay.state.cursor : grown)
+  // 回放推进时同样跟底——读者向上滚动即解除，与实况一致。回放由读者亲手开始，
+  // 从底部跟起；实况只在读者已经在底部时才跟。
+  usePinToBottom(
+    live || replaying,
+    replaying ? replay.state.cursor : grown,
+    replaying,
+  )
 
   if (loading && data == null) {
     return (
@@ -406,12 +441,6 @@ export function MatchDetailPage() {
     index,
     verdicts: placed.perGroup[index],
   }))
-  // Sections are presentation labels over the ordered groups, not filters. The
-  // latter used to hoist every non-inquiry group ahead of inquiry, which made the
-  // UI contradict the actual match sequence.
-  const reportSections = finished
-    ? buildFinishedReportSections(stageGroups)
-    : []
   const dialogueRows = groupRows
 
   // afterSeq 是「已提交行数」：第 afterSeq 行（turns[afterSeq-1]）之后就是
@@ -625,9 +654,141 @@ export function MatchDetailPage() {
     )
   }
 
-  const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   // 裁判倾向轨迹（#24）：节拍序列（含 changed 元数据）；零节拍不出图。
   const beats = replayBeats(replaySteps)
+  // The empty transcript keeps the mark of the view it sits in.
+  const emptyTranscript = finished
+    ? (
+      <p
+        {...tm('FA.section-empty')}
+        className='text-sm text-(--foreground-muted)'
+      >
+        {replaying ? '回放即将开始…' : '暂无回合。'}
+      </p>
+    )
+    : (
+      <p {...tm('FA.live-empty')} className='text-sm text-(--foreground-muted)'>
+        {live ? '对局即将开始…' : '暂无回合。'}
+      </p>
+    )
+
+  const renderReportSections = () =>
+    reportSections.map((section, sectionIndex) =>
+      judgeSidebar && section.kind === 'dialogue'
+        ? (
+          <div
+            {...tm('FA.report-section')}
+            className='space-y-5'
+            key={`judge-layout-${sectionIndex}`}
+          >
+            {finished && !hasNumberedStages && (
+              <h2
+                {...tm('FA.dialogue-heading')}
+                className='text-sm font-semibold text-(--foreground)'
+              >
+                {replaying ? '对话重演' : '对话全文'}
+              </h2>
+            )}
+            <JudgeDialogue
+              mobileTrendTarget={mobileTrendTarget}
+              groups={section.groupIndexes.map((index) => stageGroups[index])}
+              beats={beats}
+              revealedKeys={reveal?.beatKeys ?? null}
+              renderNote={renderVerdict}
+              anchorSeqOf={anchorRowSeq}
+              speechNumberOf={speechNumberOf}
+              labels={labels}
+              showTrace={showTrace}
+              traceOf={traceOf}
+              empty={emptyTranscript}
+              renderGroup={(group, range) => {
+                const row = groupRows.find((entry) =>
+                  entry.group.id === group.id
+                )
+                if (!row) return null
+                // A split stage keeps each card in the slice holding its anchor.
+                const anchorOf = (verdict: VerdictDTO) =>
+                  row.group.channels.some((channel) =>
+                      channel.items.some((item) =>
+                        item.kind === 'turn' && item.verdictAnchor &&
+                        item.seq === verdict.afterSeq
+                      )
+                    )
+                    ? verdict.afterSeq
+                    : verdict.afterSeq - 1
+                return renderGroupRow({
+                  ...row,
+                  group,
+                  verdicts: row.verdicts.filter((verdict) => {
+                    const anchor = anchorOf(verdict)
+                    return anchor >= range.start && anchor < range.end
+                  }),
+                }, true)
+              }}
+            />
+          </div>
+        )
+        : (
+          <div
+            {...tm('FA.report-section')}
+            key={`${section.kind}-${sectionIndex}`}
+            className='space-y-5'
+          >
+            {section.kind === 'dialogue' && !isTrolley &&
+                !hasNumberedStages
+              ? (
+                <h2
+                  {...tm('FA.dialogue-heading')}
+                  className='text-sm font-semibold text-(--foreground)'
+                >
+                  {replaying ? '对话重演' : '对话全文'}
+                </h2>
+              )
+              : section.kind === 'inquiry' && !hasNumberedStages
+              ? (
+                <h2 className='text-sm font-semibold text-(--foreground)'>
+                  问询
+                </h2>
+              )
+              : null}
+            {section.groupIndexes.length === 0
+              ? emptyTranscript
+              : section.groupIndexes.map((index) =>
+                renderGroupRow(groupRows[index])
+              )}
+          </div>
+        )
+    )
+
+  // Court/council render their transcript as one block in the same slot while
+  // live and once finished, so the judge sidebar keeps its notes, focus and
+  // selection when the match ends instead of being rebuilt.
+  const renderJudgeTranscript = () => (
+    <div
+      className='space-y-6'
+      {...(finished ? {} : tm('FA.live-dialogue'))}
+    >
+      {finished ? null : (
+        <h2
+          hidden={hasNumberedStages}
+          {...tm('FA.live-dialogue-heading')}
+          className='text-sm font-semibold text-(--foreground)'
+        >
+          对话
+        </h2>
+      )}
+      {renderReportSections()}
+      {placed.trailing.length > 0
+        ? (
+          <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
+            {placed.trailing.map(renderVerdict)}
+          </div>
+        )
+        : null}
+    </div>
+  )
+
+  const breakdown = finished ? deriveScoreBreakdown(data.turns) : null
   const ledger = formatScoringReasoning(data.reasoning)
   // F2（#69/#26）：把得分账解析成结构化条目——正负号、归侧、识破标记。
   // 解析不产出数字：合计与得分变化的兜底一律用服务端 scoreA/scoreB。
@@ -880,12 +1041,14 @@ export function MatchDetailPage() {
             {replaying
               ? (
                 <ReplayControls handle={replay} total={replaySteps.length}>
-                  <JudgeTrendChart
-                    beats={beats}
-                    labels={labels}
-                    speakers={speakers}
-                    revealedKeys={reveal?.beatKeys ?? null}
-                  />
+                  {!judgeSidebar && (
+                    <JudgeTrendChart
+                      beats={beats}
+                      labels={labels}
+                      speakers={speakers}
+                      revealedKeys={reveal?.beatKeys ?? null}
+                    />
+                  )}
                 </ReplayControls>
               )
               : (
@@ -903,89 +1066,12 @@ export function MatchDetailPage() {
                 />
               )}
 
-            {tabPlan
+            {judgeSidebar
+              ? renderJudgeTranscript()
+              : tabPlan
               ? renderTabbedTranscript()
-              : reportSections.map((section, sectionIndex) =>
-                judgeSidebar && section.kind === 'dialogue'
-                  ? (
-                    <div
-                      {...tm('FA.report-section')}
-                      className='space-y-5'
-                      key={`judge-layout-${sectionIndex}`}
-                    >
-                      {!hasNumberedStages && (
-                        <h2
-                          {...tm('FA.dialogue-heading')}
-                          className='text-sm font-semibold text-(--foreground)'
-                        >
-                          对话全文
-                        </h2>
-                      )}
-                      {
-                        <JudgeDialogue
-                          mobileTrendTarget={mobileTrendTarget}
-                          {...{
-                            groups: section.groupIndexes.map((index) =>
-                              stageGroups[index]
-                            ),
-                            beats,
-                            anchorSeqOf: anchorRowSeq,
-                            speechNumberOf,
-                            labels,
-                            showTrace,
-                            traceOf,
-                            renderGroup: (group) => {
-                              const row = groupRows.find((entry) =>
-                                entry.group.id === group.id
-                              )
-                              return row
-                                ? renderGroupRow({ ...row, group }, true)
-                                : null
-                            },
-                          }}
-                        />
-                      }
-                    </div>
-                  )
-                  : (
-                    <div
-                      {...tm('FA.report-section')}
-                      key={`${section.kind}-${sectionIndex}`}
-                      className='space-y-5'
-                    >
-                      {section.kind === 'dialogue' && !isTrolley &&
-                          !hasNumberedStages
-                        ? (
-                          <h2
-                            {...tm('FA.dialogue-heading')}
-                            className='text-sm font-semibold text-(--foreground)'
-                          >
-                            {replaying ? '对话重演' : '对话全文'}
-                          </h2>
-                        )
-                        : section.kind === 'inquiry' && !hasNumberedStages
-                        ? (
-                          <h2 className='text-sm font-semibold text-(--foreground)'>
-                            问询
-                          </h2>
-                        )
-                        : null}
-                      {section.groupIndexes.length === 0
-                        ? (
-                          <p
-                            {...tm('FA.section-empty')}
-                            className='text-sm text-(--foreground-muted)'
-                          >
-                            {replaying ? '回放即将开始…' : '暂无回合。'}
-                          </p>
-                        )
-                        : section.groupIndexes.map((index) =>
-                          renderGroupRow(groupRows[index])
-                        )}
-                    </div>
-                  )
-              )}
-            {!tabPlan && placed.trailing.length > 0
+              : renderReportSections()}
+            {!tabPlan && !judgeSidebar && placed.trailing.length > 0
               ? (
                 <div {...tm('FA.trailing-verdicts')} className='space-y-3'>
                   {placed.trailing.map(renderVerdict)}
@@ -1234,16 +1320,6 @@ export function MatchDetailPage() {
                     )}
                 </div>
               )}
-            {!replaying && (judgeSidebar || tabbedJudgeSidebar) &&
-                beats.length > 0
-              ? (
-                <div
-                  ref={setMobileTrendTarget}
-                  className='judge-mobile-trend'
-                  data-review-trend
-                />
-              )
-              : null}
             {!replaying && !judgeSidebar && !tabbedJudgeSidebar &&
                 beats.length > 0
               ? (
@@ -1284,26 +1360,25 @@ export function MatchDetailPage() {
               )
               : null}
 
-            <div className='space-y-5' {...tm('FA.live-dialogue')}>
-              <h2
-                hidden={tabPlan != null}
-                {...tm('FA.live-dialogue-heading')}
-                className='text-sm font-semibold text-(--foreground)'
-              >
-                对话
-              </h2>
-              {tabPlan ? renderTabbedTranscript() : dialogueRows.length === 0
-                ? (
-                  <p
-                    {...tm('FA.live-empty')}
-                    className='text-sm text-(--foreground-muted)'
+            {judgeSidebar
+              ? renderJudgeTranscript()
+              : (
+                <div className='space-y-5' {...tm('FA.live-dialogue')}>
+                  <h2
+                    hidden={tabPlan != null}
+                    {...tm('FA.live-dialogue-heading')}
+                    className='text-sm font-semibold text-(--foreground)'
                   >
-                    {live ? '对局即将开始…' : '暂无回合。'}
-                  </p>
-                )
-                : dialogueRows.map((row) => renderGroupRow(row))}
-              {!tabPlan && placed.trailing.map(renderVerdict)}
-            </div>
+                    对话
+                  </h2>
+                  {tabPlan
+                    ? renderTabbedTranscript()
+                    : dialogueRows.length === 0
+                    ? emptyTranscript
+                    : dialogueRows.map((row) => renderGroupRow(row))}
+                  {!tabPlan && placed.trailing.map(renderVerdict)}
+                </div>
+              )}
 
             {finalVerdict
               ? (
@@ -1340,6 +1415,16 @@ export function MatchDetailPage() {
               : null}
           </>
         )}
+
+      {(judgeSidebar || tabbedJudgeSidebar) && beats.length > 0
+        ? (
+          <div
+            ref={setMobileTrendTarget}
+            className='judge-mobile-trend'
+            data-review-trend
+          />
+        )
+        : null}
 
       {data.error
         ? (
