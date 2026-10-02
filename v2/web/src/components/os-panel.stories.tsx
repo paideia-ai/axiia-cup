@@ -89,6 +89,201 @@ export const LockedMobile: Story = {
   },
 }
 
+const createdAgents: unknown[] = []
+// 本能寺每侧两名人物：对侧还没有智能体时，人物签直接在出战面板里弹出。
+const honnojiScenario = {
+  ...scenario,
+  summary: {
+    ...scenario.summary,
+    id: 'honnoji-decision',
+    title: '本能寺之变·敌在何处',
+    sideAName: '主张杀信长',
+    sideBName: '主张不杀信长',
+    sideALabel: '主张杀信长',
+    sideBLabel: '主张不杀信长',
+  },
+  presets: [],
+}
+
+// 关闭回调真的会关面板，并把开合状态写在页面上：面板被误关时断言立刻失败，
+// 不必等它卸载。
+function ClosablePanel(args: React.ComponentProps<typeof OsPanel>) {
+  const [open, setOpen] = useState(true)
+  return (
+    <>
+      <OsPanel {...args} open={open} onClose={() => setOpen(false)} />
+      <MatchLocation />
+      <output aria-label='面板状态'>{open ? '打开' : '已关闭'}</output>
+    </>
+  )
+}
+
+// 门槛态和互搏空态共用同一个对侧入口，两处都就地选角色。
+function createOppositeRoleStory(tab: RegExp): Story {
+  return {
+    args: { scenario: honnojiScenario, hasOppositeAgent: false },
+    render: (args) => <ClosablePanel {...args} />,
+    loaders: [() => {
+      createdAgents.length = 0
+      return {}
+    }],
+    parameters: {
+      msw: [
+        http.get(
+          '/v1/my/archived-agents',
+          () => HttpResponse.json({ agents: [] }),
+        ),
+        http.get('/v1/config', () => HttpResponse.json(config)),
+        http.get(
+          '/v1/scenarios/:id/opponents',
+          () => HttpResponse.json({ opponents: [] }),
+        ),
+        http.post('/v1/agents', async ({ request }) => {
+          createdAgents.push(await request.json())
+          return HttpResponse.json({ agentID: 2001 })
+        }),
+      ],
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement.ownerDocument.body)
+      await userEvent.click(canvas.getByRole('tab', { name: tab }))
+      const create = await canvas.findByRole('button', {
+        name: '创建对侧智能体（主张不杀信长）',
+      })
+      await userEvent.click(create)
+      await canvas.findByRole('group', { name: '选择新智能体的角色' })
+      // Esc 只收起人物签，出战面板保持打开。
+      await userEvent.keyboard('{Escape}')
+      await waitFor(() =>
+        expect(canvas.queryByRole('group', { name: '选择新智能体的角色' }))
+          .toBeNull()
+      )
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent('打开')
+      await expect(canvas.getByRole('dialog')).toBeVisible()
+      expect(createdAgents).toEqual([])
+
+      await userEvent.click(create)
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '创建细川藤孝' }),
+      )
+      await waitFor(() =>
+        expect(createdAgents).toEqual([{
+          scenarioID: 'honnoji-decision',
+          side: 'b',
+          roleKey: 'hosokawa',
+        }])
+      )
+      await waitFor(() =>
+        expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+          '/agents/2001',
+        )
+      )
+    },
+  }
+}
+
+export const CreateOppositeRoleInPlace: Story = createOppositeRoleStory(
+  /玩家约战/,
+)
+export const HotseatCreateOppositeRoleInPlace: Story = createOppositeRoleStory(
+  /左右手互搏/,
+)
+
+// 人物签和面板逐层关闭：第一次点遮罩或按 Esc 只收起人物签，第二次才关闭面板。
+function layeredDismissStory(by: 'backdrop' | 'escape'): Story {
+  return {
+    args: CreateOppositeRoleInPlace.args,
+    render: CreateOppositeRoleInPlace.render,
+    parameters: CreateOppositeRoleInPlace.parameters,
+    play: async ({ canvasElement }) => {
+      const page = canvasElement.ownerDocument
+      const canvas = within(page.body)
+      const picker = () =>
+        canvas.queryByRole('group', { name: '选择新智能体的角色' })
+      await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
+      await userEvent.click(
+        await canvas.findByRole('button', {
+          name: '创建对侧智能体（主张不杀信长）',
+        }),
+      )
+      await waitFor(() => expect(picker()).not.toBeNull())
+      // 遮罩：面板之外、屏幕角上实际会点到的那个元素。
+      const backdrop = page.elementFromPoint(4, 4) as HTMLElement
+      expect(canvas.getByRole('dialog')).not.toContainElement(backdrop)
+      const dismiss = () =>
+        by === 'escape'
+          ? userEvent.keyboard('{Escape}')
+          : userEvent.click(backdrop)
+
+      await dismiss()
+      await waitFor(() => expect(picker()).toBeNull())
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent('打开')
+      await expect(canvas.getByRole('dialog')).toBeVisible()
+
+      await dismiss()
+      await expect(canvas.getByLabelText('面板状态')).toHaveTextContent(
+        '已关闭',
+      )
+      await waitFor(() => expect(canvas.queryByRole('dialog')).toBeNull())
+    },
+  }
+}
+
+export const BackdropClosesRolePickerFirst = layeredDismissStory('backdrop')
+export const BackdropClosesRolePickerFirstMobile: Story = {
+  ...BackdropClosesRolePickerFirst,
+  parameters: {
+    ...BackdropClosesRolePickerFirst.parameters,
+    viewport: { defaultViewport: 'mobile1' },
+  },
+}
+export const EscapeClosesRolePickerFirst = layeredDismissStory('escape')
+
+// 互搏空态不再链接到完整清单：没有对侧智能体就创建，已有未保存版本的草稿就直达。
+function hotseatOppositeEntryStory(hasOppositeAgent: boolean): Story {
+  return {
+    args: { hasOppositeAgent },
+    parameters: {
+      msw: [
+        http.get(
+          '/v1/my/archived-agents',
+          () => HttpResponse.json({ agents: [] }),
+        ),
+        http.get('/v1/config', () => HttpResponse.json(config)),
+        http.get(
+          '/v1/scenarios/:id/opponents',
+          () => HttpResponse.json({ opponents: [] }),
+        ),
+      ],
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement.ownerDocument.body)
+      await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+      await expect(
+        await canvas.findByText(
+          hasOppositeAgent
+            ? '你还没有可出战的对侧智能体'
+            : '你还没有对侧智能体',
+        ),
+      ).toBeVisible()
+      await expect(
+        canvas.getByRole('link', {
+          name: hasOppositeAgent
+            ? '去完善对侧智能体（甘龙）'
+            : '创建对侧智能体（甘龙）',
+        }),
+      ).toHaveAttribute(
+        'href',
+        '/agents/entry?scenario=shangyang-court&side=b&target=view',
+      )
+      expect(canvas.queryByRole('link', { name: '去我的智能体' })).toBeNull()
+    },
+  }
+}
+
+export const HotseatCreateOpposite: Story = hotseatOppositeEntryStory(false)
+export const HotseatOpenOppositeDraft: Story = hotseatOppositeEntryStory(true)
+
 export const UnlockedDesktop: Story = {
   args: { scenario: unlockedScenario },
   parameters: {
@@ -837,7 +1032,13 @@ function archivedHotseatStory(
     )
   }
   return {
-    args: { side, scenario: unlockedScenario, preferVersionID: 1001 },
+    args: {
+      side,
+      scenario: unlockedScenario,
+      preferVersionID: 1001,
+      // The inventory counts only unarchived agents.
+      hasOppositeAgent: mode !== 'all',
+    },
     render: (args) => <ReopenPanel {...args} />,
     loaders: [() => {
       restored = false
@@ -919,6 +1120,9 @@ function archivedHotseatStory(
       if (mode === 'all') {
         await expect(await canvas.findByText('你还没有对侧智能体'))
           .toBeVisible()
+        await expect(
+          canvas.getByRole('link', { name: '创建对侧智能体（甘龙）' }),
+        ).toBeVisible()
         expect(canvas.queryByRole('button', { name: '与现役策略对战' }))
           .toBeNull()
       } else {
@@ -966,6 +1170,7 @@ export const RestoredOpponentOnReopen: Story = archivedHotseatStory(
 // With no own opposite agent there is nothing to hide, so a failed archive
 // lookup must leave the ordinary empty state in place.
 export const ArchiveLookupFailureWithoutOwnOpponents: Story = {
+  args: { hasOppositeAgent: false },
   parameters: {
     msw: [
       http.get('/v1/config', () => HttpResponse.json(config)),

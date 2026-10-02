@@ -219,7 +219,9 @@ export const MobileReportChecks: Story = {
           ),
         )
         await canvas.findByRole('heading', { name: `对战 #${scene.id}` })
-        const portraits = canvasElement.querySelectorAll('.role-portrait')
+        const portraits = canvasElement.querySelectorAll(
+          '.role-portrait:not([data-portrait-size="sm"])',
+        )
         await expect(portraits.length).toBeGreaterThan(0)
         for (const portrait of portraits) {
           await expect(portrait.getBoundingClientRect().width).toBe(48)

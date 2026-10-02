@@ -1,22 +1,29 @@
+.role-portrait[data-portrait-size='sm'] {
+  width: 32px;
+  height: 32px;
+}
 /* Wide dialogue cards give the portrait and name their own column. */
 @media (min-width: 900px) {
   .portrait-speech:has(.role-portrait) {
     display: flow-root;
-    padding-left: 120px;
+    padding-left: 136px;
     min-height: 164px;
   }
   .portrait-speaker:has(.role-portrait) {
     /* A zero-width float keeps long names and the live indicator in the
        card height while leaving the body aligned beside the portrait. */
     float: left;
-    margin-left: -100px;
+    margin-left: -116px;
     margin-right: 20px;
-    width: 80px;
+    width: 96px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
     overflow-wrap: anywhere;
+    /* Fit seven-character identities without shrinking the type or portrait.
+       Balance longer names so a final character is not stranded on its own. */
+    text-wrap: balance;
   }
 }
 /* Keep the body full-width inside the narrower Judge OS column. */
