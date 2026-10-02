@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { roleIdentity } from './role-identity'
+import { currentRoleIdentity, roleIdentity } from './role-identity'
 import { outcomeCopy, scenarioRoles } from './outcome'
 import { ledgerFromScore, parseLedger } from './scoring-reasoning'
 import {
@@ -230,5 +230,45 @@ describe('judge favor identity shared by trend and OS bar', () => {
     const labels = speakerLabels('trolley-problem', {})
     expect(judgeFavorSide(labels, '一人侧')).toBe('a')
     expect(judgeFavorSide(labels, '五人侧')).toBe('b')
+  })
+})
+
+describe('current role names', () => {
+  const serverChosokabe = {
+    key: 'chosokabe',
+    name: '长宗我部元亲阵营',
+    side: 'a' as const,
+  }
+  it('names a live participant the way the role picker does', () => {
+    expect(
+      roleIdentity({ scenarioID, side: 'a', role: serverChosokabe }).name,
+    ).toBe('长宗我部元亲阵营')
+    expect(
+      currentRoleIdentity({ scenarioID, side: 'a', role: serverChosokabe }),
+    ).toEqual({
+      name: '长宗我部元亲的密使',
+      roleKey: 'chosokabe',
+      resolved: true,
+    })
+    expect(
+      currentRoleIdentity({
+        scenarioID,
+        side: 'a',
+        role: { key: 'yoshiaki_envoy', name: '足利义昭的使者', side: 'a' },
+      }).name,
+    ).toBe('足利义昭的使者')
+  })
+  it('leaves unresolved roles and role-less scenarios alone', () => {
+    expect(
+      currentRoleIdentity({ scenarioID, side: 'b', role: serverChosokabe }),
+    ).toEqual(roleIdentity({ scenarioID, side: 'b', role: serverChosokabe }))
+    const shangyang = { key: 'a', name: '商鞅', side: 'a' as const }
+    expect(
+      currentRoleIdentity({
+        scenarioID: 'shangyang-court',
+        side: 'a',
+        role: shangyang,
+      }).name,
+    ).toBe('商鞅')
   })
 })

@@ -148,7 +148,7 @@ function createOppositeRoleStory(tab: RegExp): Story {
       const canvas = within(canvasElement.ownerDocument.body)
       await userEvent.click(canvas.getByRole('tab', { name: tab }))
       const create = await canvas.findByRole('button', {
-        name: '创建对侧智能体（主张不杀信长）',
+        name: '创建对侧智能体（西进毛利）',
       })
       await userEvent.click(create)
       await canvas.findByRole('group', { name: '选择新智能体的角色' })
@@ -203,7 +203,7 @@ function layeredDismissStory(by: 'backdrop' | 'escape'): Story {
       await userEvent.click(canvas.getByRole('tab', { name: /玩家约战/ }))
       await userEvent.click(
         await canvas.findByRole('button', {
-          name: '创建对侧智能体（主张不杀信长）',
+          name: '创建对侧智能体（西进毛利）',
         }),
       )
       await waitFor(() => expect(picker()).not.toBeNull())
@@ -1203,3 +1203,200 @@ export const ArchiveLookupFailureWithoutOwnOpponents: Story = {
     expect(canvas.queryByText('对手暂时没有加载出来')).toBeNull()
   },
 }
+
+// 已解锁约战的本能寺：下面几个对手文案用例共用。
+const unlockedHonnojiScenario = {
+  ...honnojiScenario,
+  summary: {
+    ...honnojiScenario.summary,
+    gateUnlocked: true,
+    gateProgress: unlockedScenario.summary.gateProgress,
+  },
+}
+
+export const HonnojiOpponentRoleCopy: Story = {
+  args: {
+    scenario: {
+      ...unlockedHonnojiScenario,
+      presets: [{
+        key: 'hosokawa',
+        label: '幽斋残局',
+        side: 'b',
+        modelID: 'fixture-model',
+        role: { key: 'hosokawa', name: '细川藤孝', side: 'b' },
+      }],
+    },
+  },
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/scenarios/:id/opponents',
+        () =>
+          HttpResponse.json({
+            opponents: [
+              {
+                agentID: 102,
+                displayName: '我',
+                name: '我的幽斋',
+                isSelf: true,
+                role: { key: 'hosokawa', name: '细川藤孝', side: 'b' },
+              },
+              {
+                agentID: 103,
+                displayName: '多角色玩家',
+                ownerAccountID: 'rival',
+                isSelf: false,
+                role: { key: 'hosokawa', name: '细川藤孝', side: 'b' },
+              },
+              {
+                agentID: 104,
+                displayName: '多角色玩家',
+                ownerAccountID: 'rival',
+                isSelf: false,
+                role: { key: 'ashigaru', name: '明智军中的足轻', side: 'b' },
+              },
+            ],
+          }),
+      ),
+      ...meta.parameters.msw,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    const npc = await canvas.findByRole('button', { name: '与幽斋残局对战' })
+    await expect(npc).toHaveTextContent('细川藤孝')
+    await expect(npc).toHaveAccessibleDescription(/^细川藤孝 · /)
+    await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
+    await expect(await canvas.findByRole('button', { name: '与我的幽斋对战' }))
+      .toHaveAccessibleDescription('细川藤孝 · 我的智能体')
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await expect(
+      await canvas.findByRole('button', { name: '与多角色玩家对战' }),
+    ).toHaveAccessibleDescription('对方执细川藤孝 / 明智军中的足轻')
+    expect(canvas.getAllByRole('button', { name: '与多角色玩家对战' }))
+      .toHaveLength(1)
+  },
+}
+
+// 服务端把长宗我部的角色名记作「长宗我部元亲阵营」；出战面板的 NPC、玩家和
+// 指定版本都按人物签上的名字显示，缺角色的对手保留阵营名。
+const serverChosokabe = {
+  key: 'chosokabe',
+  name: '长宗我部元亲阵营',
+  side: 'a',
+} as const
+
+export const HonnojiChosokabeNames: Story = {
+  args: {
+    side: 'b',
+    scenario: {
+      ...unlockedHonnojiScenario,
+      presets: [{
+        key: 'chosokabe-shikoku-eye',
+        label: '四国棋眼',
+        side: 'a',
+        modelID: 'fixture-model',
+        role: serverChosokabe,
+      }],
+    },
+  },
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios/:id/opponents', () =>
+        HttpResponse.json({
+          opponents: [
+            {
+              agentID: 201,
+              displayName: '四国玩家',
+              ownerAccountID: 'shikoku',
+              isSelf: false,
+              role: serverChosokabe,
+            },
+            {
+              agentID: 202,
+              displayName: '旧档玩家',
+              ownerAccountID: 'legacy',
+              isSelf: false,
+              role: null,
+            },
+          ],
+        })),
+      http.get('/v1/versions/367/ref', () =>
+        HttpResponse.json({
+          versionID: 367,
+          agentID: 201,
+          scenarioID: 'honnoji-decision',
+          side: 'a',
+          role: serverChosokabe,
+          ownerAccountID: 'shikoku',
+          ownerDisplayName: '四国玩家',
+          modelID: 'fixture-model',
+        })),
+      ...meta.parameters.msw,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await expect(await canvas.findByRole('button', { name: '与四国棋眼对战' }))
+      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · /)
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await expect(await canvas.findByRole('button', { name: '与四国玩家对战' }))
+      .toHaveAccessibleDescription('对方执长宗我部元亲的密使')
+    await expect(canvas.getByRole('button', { name: '与旧档玩家对战' }))
+      .toHaveAccessibleDescription('对方执袭击本能寺（角色待确认）')
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
+    await userEvent.type(
+      canvas.getByRole('textbox', { name: '对方版本 ID' }),
+      '367',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+    await expect(await canvas.findByRole('button', { name: '与四国玩家对战' }))
+      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · .+ · #367$/)
+    expect(canvas.queryByText(/长宗我部元亲阵营/)).toBeNull()
+  },
+}
+
+function honnojiSameSideVersion(side: 'a' | 'b'): Story {
+  return {
+    args: { side, scenario: unlockedHonnojiScenario },
+    parameters: {
+      msw: [
+        http.get(
+          '/v1/versions/367/ref',
+          () =>
+            HttpResponse.json({
+              versionID: 367,
+              agentID: 301,
+              scenarioID: 'honnoji-decision',
+              side,
+              modelID: 'fixture-model',
+              ownerDisplayName: '同侧玩家',
+            }),
+        ),
+        ...meta.parameters.msw,
+      ],
+    },
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement.ownerDocument.body)
+      await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+      await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
+      await userEvent.type(
+        canvas.getByRole('textbox', { name: '对方版本 ID' }),
+        '367',
+      )
+      await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+      await expect(
+        await canvas.findByText(
+          side === 'a'
+            ? '该版本与当前智能体同属袭击本能寺阵营，请选择西进毛利阵营的版本。'
+            : '该版本与当前智能体同属西进毛利阵营，请选择袭击本能寺阵营的版本。',
+        ),
+      ).toBeVisible()
+      expect(canvas.queryByRole('button', { name: '与同侧玩家对战' }))
+        .toBeNull()
+    },
+  }
+}
+
+export const HonnojiSameSideVersionA = honnojiSameSideVersion('a')
+export const HonnojiSameSideVersionB = honnojiSameSideVersion('b')

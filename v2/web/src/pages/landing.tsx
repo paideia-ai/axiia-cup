@@ -157,7 +157,7 @@ export function LandingPage() {
               <div
                 key={step.n}
                 {...tm('A.how-it-works-card')}
-                className='px-8 py-6 first:pl-0 last:pr-0'
+                className='px-0 py-6 lg:px-8 lg:first:pl-0 lg:last:pr-0'
               >
                 <p className='text-[2.5rem] font-black leading-none tracking-[-0.05em] text-[rgba(224,74,47,0.22)]'>
                   {step.n}
