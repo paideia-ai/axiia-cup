@@ -450,10 +450,6 @@ export const TM_ENTRY: TmRegistry = {
   },
 
   // ======================= ADM 槽位详情（/admin/slots/:id） =======================
-  'ADM.slot-back-link': {
-    label: '返回管理面板',
-    note: '规格无条文',
-  },
   'ADM.slot-page-title': {
     label: '槽位页标题',
     clauses: ['LACK-11', 'U11-C09'],

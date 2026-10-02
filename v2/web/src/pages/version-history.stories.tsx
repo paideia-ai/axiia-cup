@@ -1,15 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import { NavigationMemoryProvider } from '../context/navigation-memory'
 import { versionHistoryHandlers } from '../testing/version-history-fixtures'
 import { AgentViewPage } from './agent-view'
 import { MatchDetailPage } from './match-detail'
 import { MatchesPage } from './matches'
 
+// MemoryRouter has no browser toolbar; this control exercises history POP.
+function HistoryBack() {
+  const navigate = useNavigate()
+  return (
+    <button type='button' onClick={() => navigate(-1)}>模拟浏览器后退</button>
+  )
+}
+
 function Surface({ entry = '/agents/101' }: { entry?: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
+      <HistoryBack />
       <NavigationMemoryProvider scope='version-history-story'>
         <Routes>
           <Route path='/agents/:agentId' element={<AgentViewPage />} />
@@ -49,9 +58,10 @@ export const FromVersionToReportAndBack: Story = {
       .toBeVisible()
     await userEvent.click(canvas.getByRole('link', { name: /对战 #9001/ }))
     await canvas.findByRole('heading', { name: '对战 #9001' })
-    const back = canvas.getByRole('link', { name: '← 对战列表' })
-    await expect(back).toHaveAttribute('href', '/matches?version=1001')
-    await userEvent.click(back)
+    await expect(canvas.queryByRole('link', { name: /^←/ })).toBeNull()
+    await userEvent.click(
+      canvas.getByRole('button', { name: '模拟浏览器后退' }),
+    )
     await canvas.findByRole('link', { name: /对战 #9001/ })
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       1,

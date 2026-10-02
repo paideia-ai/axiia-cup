@@ -2,7 +2,6 @@ import { positiveID } from '../lib/identity-links'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { versions } from '../api/client'
-import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { useAsync } from '../lib/use-async'
 
@@ -28,14 +27,7 @@ export function VersionAgentPage() {
     return (
       <div className='space-y-4'>
         <p role='alert'>暂时无法打开该版本所属的智能体。</p>
-        <div className='flex items-center gap-4'>
-          {valid && <Button onClick={reload}>重试</Button>}
-          <BackLink
-            to='/tournaments'
-            className='text-sm underline'
-            label='锦标赛'
-          />
-        </div>
+        {valid && <Button onClick={reload}>重试</Button>}
       </div>
     )
   }

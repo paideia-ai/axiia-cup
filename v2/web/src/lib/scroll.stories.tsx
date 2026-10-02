@@ -6,13 +6,13 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
 } from 'react-router-dom'
 import { expect, userEvent, waitFor, within } from 'storybook/test'
 import {
   NavigationMemoryProvider,
   useScrollPending,
 } from '../context/navigation-memory'
-import { BackLink } from '../components/back-link'
 import { NAVIGATION_STORAGE_KEY } from './navigation-memory'
 
 function Inventory() {
@@ -30,12 +30,17 @@ function Inventory() {
 }
 function Pages() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   return (
     <>
       <nav className='fixed top-2 left-2 z-50 bg-(--background) p-3'>
         {pathname === '/my-agents'
           ? <Link to='/agents/1'>进入智能体</Link>
-          : <BackLink to='/my-agents' label='我的智能体' />}
+          : (
+            <button type='button' onClick={() => navigate(-1)}>
+              模拟浏览器后退
+            </button>
+          )}
       </nav>
       <Routes>
         <Route path='/my-agents' element={<Inventory />} />
@@ -67,7 +72,7 @@ const meta = {
 } satisfies Meta
 export default meta
 
-export const ExplicitReturnAfterAsyncLoad: StoryObj = {
+export const BrowserHistoryAfterAsyncLoad: StoryObj = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await waitFor(() =>
@@ -86,7 +91,9 @@ export const ExplicitReturnAfterAsyncLoad: StoryObj = {
     )
     await expect(globalThis.scrollY).toBe(1500)
     await userEvent.click(canvas.getByRole('link', { name: '进入智能体' }))
-    await userEvent.click(canvas.getByRole('link', { name: /我的智能体/ }))
+    await userEvent.click(
+      canvas.getByRole('button', { name: '模拟浏览器后退' }),
+    )
     await waitFor(() => expect(globalThis.scrollY).toBe(1500))
   },
 }

@@ -20,17 +20,8 @@ export const TM_FA: TmRegistry = {
       '404 / 接口错误落这里；未登录访问接口 401 会先落登录页——谁能看战报未定义（LACK-03）',
     when: '打开一个不存在或无权访问的 /matches/:id',
   },
-  'FA.not-found-back-link': {
-    label: '返回对战列表',
-    when: '同「对局不存在」',
-  },
 
   // ---------- 页头 ----------
-  'FA.back-link': {
-    label: '页头返回链',
-    clauses: ['U07-C04'],
-    note: '全局「← 我的智能体」回 /my-agents；我方参战卡整卡直达对应智能体主页',
-  },
   'FA.page-title': {
     label: '页面标题',
     clauses: ['U07-C01'],

@@ -5,11 +5,6 @@ import type { StepHints, TmRegistry } from '../types'
 
 export const TM_E: TmRegistry = {
   // ---------- 页头 ----------
-  'E.back-link': {
-    label: '返回智能体主页',
-    clauses: ['U01-C14'],
-    note: '回 EA（/agents/:id）；EA 版本标题旁的铅笔加号是反向入口',
-  },
   'E.page-title': {
     label: '页面标题',
     clauses: ['U01-C11'],
