@@ -10,6 +10,8 @@ import type {
   ScenarioSummary,
   Side,
 } from '../api/types'
+import { RolePortrait } from '../components/role-portrait'
+import { agentRoleGroups, inventoryPreviewIDs } from '../lib/agent-role-groups'
 import { CreateAgentAction } from '../components/create-agent-action'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -307,6 +309,9 @@ function ScenarioGroup({
               description,
             )
             const agents = agentsOf(side).filter((agent) => !agent.isArchived)
+            const groups = inventoryAvailable && agents.length > 0
+              ? agentRoleGroups(module, side, agents)
+              : []
             const oppositeCount = agentsOf(side === 'a' ? 'b' : 'a')
               .filter((agent) => !agent.isArchived).length
             const collapsible = onlySide == null && agents.length >= 6 &&
@@ -314,14 +319,7 @@ function ScenarioGroup({
             const limit = Math.max(3, oppositeCount)
             // Keep the entry agent visible even when it falls beyond the cutoff,
             // while preserving the inventory order in both states.
-            const entryAgents = agents.filter((agent) =>
-              agent.entryVersionID != null
-            )
-            const previewIDs = new Set([
-              ...entryAgents,
-              ...agents.filter((agent) => agent.entryVersionID == null)
-                .slice(0, Math.max(0, limit - entryAgents.length)),
-            ].map((agent) => agent.agentID))
+            const previewIDs = inventoryPreviewIDs(agents, limit, groups)
             const expanded = expandedSides[side]
             const visibleAgents = collapsible && !expanded
               ? agents.filter((agent) => previewIDs.has(agent.agentID))
@@ -343,8 +341,15 @@ function ScenarioGroup({
                   <div className='min-w-0'>
                     <h3
                       id={headingID}
-                      className='text-sm font-semibold text-(--foreground)'
+                      className='flex items-center gap-3 text-sm font-semibold text-(--foreground)'
                     >
+                      {!module?.roles.length && (
+                        <RolePortrait
+                          labels={{ module, lanes: {} }}
+                          speaker={side}
+                          size='sm'
+                        />
+                      )}
                       {module?.factionCopy
                         ? `${module.factionCopy.stances[side]}阵营`
                         : `${role}智能体`}
@@ -370,45 +375,58 @@ function ScenarioGroup({
                 </div>
 
                 <div id={listID}>
-                  {visibleAgents.map((agent) => {
-                    const isEntry = agent.entryVersionID != null
-                    return (
-                      <Link
-                        key={agent.agentID}
-                        data-testid='agent-row'
-                        data-agent-id={agent.agentID}
-                        data-entry={isEntry ? 'true' : undefined}
-                        to={`/agents/${agent.agentID}`}
-                        title={isEntry ? '当前参赛智能体' : undefined}
-                        className={`group flex min-h-11 items-center gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:outline-2 focus-visible:outline-(--accent) [&+&]:mt-1 ${
-                          isEntry
-                            ? 'border-[rgba(224,74,47,0.5)] bg-[rgba(224,74,47,0.035)] hover:border-(--accent) hover:bg-[rgba(224,74,47,0.07)]'
-                            : 'border-transparent bg-white/2 hover:bg-white/5'
-                        }`}
-                        {...tm('MA.agent-row')}
-                      >
-                        <div className='min-w-0 flex-1'>
-                          <p
-                            className='text-sm font-medium wrap-anywhere text-(--foreground)'
-                            {...tm('MA.agent-name')}
+                  {groups.length > 0
+                    ? (
+                      <div className='mt-4 space-y-4'>
+                        {groups.map((group) => (
+                          <section
+                            key={group.key}
+                            aria-labelledby={`${headingID} ${headingID}-${group.key}`}
+                            data-agent-role-group={group.key}
+                            className='overflow-hidden rounded-md border border-(--border-soft)'
                           >
-                            {agent.name ?? `#${agent.agentID}`}
-                            {isEntry
-                              ? (
-                                <span className='sr-only'>
-                                  （当前参赛智能体）
+                            <div className='flex items-center gap-3 border-b border-(--border-soft) bg-white/2 px-3 py-2'>
+                              {group.role && (
+                                <RolePortrait
+                                  labels={{ module, lanes: {} }}
+                                  speaker={group.role.key}
+                                  size='sm'
+                                />
+                              )}
+                              <h4
+                                id={`${headingID}-${group.key}`}
+                                className='flex min-w-0 flex-1 items-center gap-2'
+                              >
+                                <span className='min-w-0 flex-1 text-sm font-medium leading-6'>
+                                  {group.name}
                                 </span>
-                              )
-                              : null}
-                          </p>
-                        </div>
-                        <ChevronRight
-                          aria-hidden='true'
-                          className='h-4 w-4 shrink-0 text-(--foreground-subtle) transition-transform group-hover:translate-x-0.5'
-                        />
-                      </Link>
+                              </h4>
+                            </div>
+                            <div className='p-2'>
+                              {group.agents.length === 0
+                                ? (
+                                  <p className='px-3 py-3 text-xs text-(--foreground-muted)'>
+                                    还没有这个角色的智能体
+                                  </p>
+                                )
+                                : group.agents.filter((agent) =>
+                                  !collapsible || expanded ||
+                                  previewIDs.has(agent.agentID)
+                                ).map((agent) => (
+                                  <AgentRow
+                                    key={agent.agentID}
+                                    agent={agent}
+                                    role={group.name}
+                                  />
+                                ))}
+                            </div>
+                          </section>
+                        ))}
+                      </div>
                     )
-                  })}
+                    : visibleAgents.map((agent) => (
+                      <AgentRow key={agent.agentID} agent={agent} />
+                    ))}
                 </div>
 
                 {collapsible && (
@@ -475,5 +493,49 @@ function ScenarioGroup({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function AgentRow({ agent, role }: { agent: MyAgentDTO; role?: string }) {
+  const isEntry = agent.entryVersionID != null
+  return (
+    <Link
+      data-testid='agent-row'
+      data-agent-id={agent.agentID}
+      data-entry={isEntry ? 'true' : undefined}
+      to={`/agents/${agent.agentID}`}
+      aria-label={role
+        ? `${role} · ${agent.name ?? `#${agent.agentID}`}${
+          isEntry ? '（当前参赛智能体）' : ''
+        }`
+        : undefined}
+      title={isEntry ? '当前参赛智能体' : undefined}
+      className={`group flex min-h-11 items-center gap-3 rounded-md border px-3 py-2.5 transition-colors focus-visible:outline-2 focus-visible:outline-(--accent) [&+&]:mt-1 ${
+        isEntry
+          ? 'border-[rgba(224,74,47,0.5)] bg-[rgba(224,74,47,0.035)] hover:border-(--accent) hover:bg-[rgba(224,74,47,0.07)]'
+          : 'border-transparent bg-white/2 hover:bg-white/5'
+      }`}
+      {...tm('MA.agent-row')}
+    >
+      <div className='min-w-0 flex-1'>
+        <p
+          className='text-sm font-medium wrap-anywhere text-(--foreground)'
+          {...tm('MA.agent-name')}
+        >
+          {agent.name ?? `#${agent.agentID}`}
+          {isEntry
+            ? (
+              <span className='sr-only'>
+                （当前参赛智能体）
+              </span>
+            )
+            : null}
+        </p>
+      </div>
+      <ChevronRight
+        aria-hidden='true'
+        className='h-4 w-4 shrink-0 text-(--foreground-subtle) transition-transform group-hover:translate-x-0.5'
+      />
+    </Link>
   )
 }
