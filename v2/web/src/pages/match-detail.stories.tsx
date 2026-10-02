@@ -424,6 +424,9 @@ export const ReplayHidesSpoilers: Story = {
     await userEvent.click(canvas.getByRole('button', { name: '步进' }))
     await expect(canvas.queryByText(RAW_ACT_MARKUP)).toBeNull()
     await expect(canvas.getByText('甘龙补上了改革成本。')).toBeVisible()
+    const sidebar = canvas.getByRole('complementary', { name: '裁判 OS 侧栏' })
+    await expect(within(sidebar).getByRole('button', { name: '继续' }))
+      .toBeVisible()
   },
 }
 

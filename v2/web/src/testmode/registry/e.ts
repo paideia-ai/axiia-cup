@@ -5,11 +5,6 @@ import type { StepHints, TmRegistry } from '../types'
 
 export const TM_E: TmRegistry = {
   // ---------- 页头 ----------
-  'E.back-link': {
-    label: '返回智能体主页',
-    clauses: ['U01-C14'],
-    note: '回 EA（/agents/:id）；EA 版本标题旁的铅笔加号是反向入口',
-  },
   'E.page-title': {
     label: '页面标题',
     clauses: ['U01-C11'],
@@ -250,13 +245,14 @@ export const TM_E: TmRegistry = {
     label: '引导门提示',
     clauses: ['U01-C25', 'U01-C26', 'U01-C17'],
     note:
-      '#59/#79：无「对侧且 ≥1 版本」时挡下；文案无条文号 + 角色名切侧 CTA（主句仍是通称版，U01-C25 半符合）',
+      '#59/#79：无「对侧且 ≥1 版本」时挡下；文案无条文号 + 角色名切侧 CTA（主句仍是通称版，U01-C25 半符合）。我的智能体、场景页同时显示两侧，对侧为空时不另给 CTA，用对侧自己的新建入口',
     when: '同侧再建被引导门拦下时',
   },
   'E.new-agent-gate-switch': {
     label: '先创建对侧',
     clauses: ['U01-C25', 'U01-C17'],
-    note: '打开对侧智能体，补齐策略后可再建同侧',
+    note:
+      '对侧已有智能体时直达其主页，补齐策略后可再建同侧。对侧为空时：智能体主页（及只看一侧的清单）里可选多名人物（本能寺）改为「创建对侧」，就地弹出人物签，选中即创建；我的智能体、场景页不显示',
     when: '引导门出现时',
   },
   'E.new-agent-error': {

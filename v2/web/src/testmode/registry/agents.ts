@@ -15,10 +15,6 @@ export const TM_AGENTS: TmRegistry = {
       '打开别人的智能体：主人路径 403 后退到 /public 投影——只有身份 + 逐版本战绩，没有提示词也没有对比',
     when: '打开不属于自己的 /agents/:id',
   },
-  'EA.public-back-link': {
-    label: '返回来源页面',
-    when: '公开视图',
-  },
   'EA.public-title': {
     label: '公开视图标题',
     clauses: ['U10-C12', 'U10-C01'],
@@ -79,11 +75,6 @@ export const TM_AGENTS: TmRegistry = {
   },
 
   // ======================= EA 智能体视图 · 主人视图 =======================
-  'EA.back-link': {
-    label: '返回我的智能体',
-    clauses: ['U10-C11'],
-    note: 'EA ⇄ 我的智能体整行入口互通',
-  },
   'EA.error': {
     label: '页面错误',
     clauses: ['LACK-10'],
@@ -117,6 +108,10 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-p1'],
     note:
       '「场景 · 甲方/乙方 · N 个版本 · #id」；正文不得出现「策略」「版本线」内部词',
+  },
+  'EA.scenario-link': {
+    label: '场景标题链接',
+    note: '打开该智能体所属的场景介绍页；支持新标签页与键盘导航',
   },
   'EA.agent-id': {
     label: '内部 id 小字',
@@ -475,7 +470,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-a3', 'spec-change-57'],
     journeys: ['j1s3', 'j1s4'],
     note:
-      '懒 ensure 单侧 agent → /agents/:id/build?express=1（构建器里保存即自动开战，U03-C05）',
+      '懒 ensure 单侧 agent → /agents/:id/build?express=1（构建器里保存即自动开战，U03-C05）；首战场景可选多名人物（本能寺）且该侧为空时，就地弹出人物签，选中即创建',
   },
   'X.escape-link': {
     label: '逃生链接',

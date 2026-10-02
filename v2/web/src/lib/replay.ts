@@ -37,7 +37,9 @@ function osIndex(key: string): number {
 }
 
 // afterSeq 是「已提交行数」：afterSeq === k 的节拍在第 k 行之后、第 k+1 行
-// 之前揭示；同锚点多拍按 os-N 序各占一步。
+// 之前揭示；同锚点多拍按 os-N 序各占一步。调用方会滤掉不渲染的行（被吸收的
+// act 行、问询行），所以按行自己的 seq 比较，而不是按它在过滤后列表里的下标
+// ——否则每少一行，后面的节拍就晚一拍出现。
 export function buildReplaySteps(
   turns: TurnDTO[],
   verdicts: VerdictDTO[],
@@ -53,8 +55,9 @@ export function buildReplaySteps(
   let beatAt = 0
   let beatIndex = 0
   let prevFavor: string | null = null
-  const flushBeats = (revealedRows: number) => {
-    while (beatAt < beats.length && beats[beatAt].afterSeq <= revealedRows) {
+  // 揭示 seq 为 nextSeq 的行之前：前 nextSeq 行已经在台上。
+  const flushBeats = (nextSeq: number) => {
+    while (beatAt < beats.length && beats[beatAt].afterSeq <= nextSeq) {
       const verdict = beats[beatAt]
       beatAt += 1
       const beat = parseOsBeat(verdict.output)
@@ -66,10 +69,10 @@ export function buildReplaySteps(
     }
   }
 
-  rows.forEach((row, revealed) => {
-    flushBeats(revealed)
+  for (const row of rows) {
+    flushBeats(row.seq)
     steps.push({ kind: 'row', seq: row.seq, chars: row.finalText.length })
-  })
+  }
   flushBeats(Number.MAX_SAFE_INTEGER)
   return steps
 }

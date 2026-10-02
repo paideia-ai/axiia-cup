@@ -311,19 +311,19 @@ test.describe('U07 · 战报（§A7）', () => {
     })
   })
 
-  test('我方侧有显眼的「← 我的智能体」入口（#71）', async ({ page }) => {
+  test('我方参战卡链接到智能体主页（#71）', async ({ page }) => {
     test.setTimeout(300_000)
     await test.step('假如 我以对局所有者身份登录并打开固定局 PVE 完局战报（真服）', async () => {
       const real = await ensureRealFixture()
       await uiLogin(page, real.ownerEmail)
       await openFinishedReport(page, real.pveMatchID)
     })
-    await test.step('那么 我方参战卡上有醒目的「← 我的智能体」按钮', async () => {
-      // 页头也有同名返回链接——按参战卡（执A 徽记所在的 rounded-xl 卡）取。
-      const myCard = page.locator('div.rounded-xl').filter({ hasText: '执A' })
+    await test.step('那么 我方参战卡提供指向智能体主页的整卡链接', async () => {
+      const link = page.getByRole('link', { name: /打开我的智能体主页/ })
         .first()
-      await expect(myCard.getByRole('link', { name: '← 我的智能体' }))
-        .toBeVisible()
+      await expect(link).toBeVisible()
+      await expect(link).toHaveAttribute('href', /^\/agents\/\d+\?version=\d+$/)
+      await expect(page.getByRole('link', { name: /^←/ })).toHaveCount(0)
     })
   })
 

@@ -31,13 +31,14 @@ export function useAlignedJudgeNotes(
           : dialogue.querySelector<HTMLElement>(
             `[data-dialogue-seq="${note.dataset.osAnchor}"]`,
           )
+        // A pending note has no card yet; its top is the note's own top.
         const card = note.querySelector<HTMLElement>(
           '[data-tm="FA.aside-card"]',
         )
-        if (!card) continue
         const rect = speech?.getBoundingClientRect()
-        const captionHeight = card.getBoundingClientRect().top -
-          note.getBoundingClientRect().top
+        const captionHeight = card
+          ? card.getBoundingClientRect().top - note.getBoundingClientRect().top
+          : 0
         // Preserve midpoint alignment whenever it fits. Long/debug text and
         // legacy missing anchors must never obscure the chart or another note.
         const midpoint = rect
@@ -58,8 +59,26 @@ export function useAlignedJudgeNotes(
     return () => {
       active = false
       observer.disconnect()
-      grid.style.minHeight = ''
-      for (const note of notes) note.style.top = ''
     }
   }, [root, enabled, revision])
+
+  // Every run rewrites each position, so they are only cleared once alignment
+  // stops (a narrow screen, unmount). Clearing them between runs would shorten
+  // the page for a moment, and the browser would clamp a reader who follows the
+  // live transcript away from its bottom.
+  useLayoutEffect(() => {
+    if (!enabled) return
+    const grid = root.current?.querySelector<HTMLElement>(
+      '.judge-transcript-aligned-grid',
+    )
+    return () => {
+      if (!grid) return
+      grid.style.minHeight = ''
+      for (
+        const note of grid.querySelectorAll<HTMLElement>('[data-os-after]')
+      ) {
+        note.style.top = ''
+      }
+    }
+  }, [root, enabled])
 }

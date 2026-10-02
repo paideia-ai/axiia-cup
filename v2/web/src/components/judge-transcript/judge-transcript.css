@@ -28,12 +28,13 @@
 .judge-transcript button {
   cursor: pointer;
 }
-.judge-transcript button:focus-visible {
+/* The OS card's replay 继续 pill keeps its own shape and colours here. */
+.judge-transcript button:not([data-tm='FA.aside-resume-button']):focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 4px;
   border-radius: 4px;
 }
-.judge-transcript button:hover {
+.judge-transcript button:not([data-tm='FA.aside-resume-button']):hover {
   color: var(--foreground);
 }
 .judge-transcript button:disabled {

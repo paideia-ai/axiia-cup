@@ -40,7 +40,6 @@ import type {
 import { Modal } from '../components/modal'
 import { CreateAgentAction } from '../components/create-agent-action'
 import { OsPanel } from '../components/os-panel'
-import { BackLink } from '../components/back-link'
 import { Button, ButtonLink } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { OnboardingGlow } from '../components/onboarding-glow'
@@ -416,13 +415,6 @@ function AgentView({ agentID }: { agentID: number }) {
 
   return (
     <div className='space-y-6'>
-      <BackLink
-        to='/my-agents'
-        className='block text-sm text-(--foreground-subtle) transition hover:text-(--foreground)'
-        {...tm('EA.back-link')}
-        label='我的智能体'
-      />
-
       {error
         ? <p className='text-sm text-(--accent)' {...tm('EA.error')}>{error}</p>
         : !data
@@ -622,8 +614,14 @@ function AgentView({ agentID }: { agentID: number }) {
                 className='mt-1 text-sm text-(--foreground-subtle)'
                 {...tm('EA.subtitle')}
               >
-                {data.scenario.summary.title} ·{' '}
-                {data.draft.side === 'a' ? '甲方' : '乙方'} ·{' '}
+                <Link
+                  to={`/scenarios/${data.scenario.summary.id}`}
+                  className='text-(--foreground) hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-(--accent)'
+                  {...tm('EA.scenario-link')}
+                >
+                  {data.scenario.summary.title}
+                </Link>{' '}
+                · {data.draft.side === 'a' ? '甲方' : '乙方'} ·{' '}
                 {data.versions.length} 个版本 ·{' '}
                 <span
                   className='font-mono text-xs text-(--foreground-muted)'

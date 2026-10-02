@@ -20,17 +20,8 @@ export const TM_FA: TmRegistry = {
       '404 / 接口错误落这里；未登录访问接口 401 会先落登录页——谁能看战报未定义（LACK-03）',
     when: '打开一个不存在或无权访问的 /matches/:id',
   },
-  'FA.not-found-back-link': {
-    label: '返回对战列表',
-    when: '同「对局不存在」',
-  },
 
   // ---------- 页头 ----------
-  'FA.back-link': {
-    label: '页头返回链',
-    clauses: ['U07-C04'],
-    note: '全局「← 我的智能体」回 /my-agents；我方参战卡整卡直达对应智能体主页',
-  },
   'FA.page-title': {
     label: '页面标题',
     clauses: ['U07-C01'],
@@ -370,7 +361,7 @@ export const TM_FA: TmRegistry = {
     label: '去创建对侧按钮',
     clauses: ['U03-C08'],
     note:
-      '#59/#64 ensure（get-or-create）后先进入智能体主页；participants 缺席时降级为「去场景页选侧」',
+      '#59/#64 ensure（get-or-create）后先进入智能体主页；对侧为空且可选多名人物（本能寺）时就地弹出人物签，选中即创建；participants 缺席时降级为「去场景页选侧」',
   },
   'FA.journey-pvp': {
     label: '通往 PVP 格',
@@ -479,6 +470,13 @@ export const TM_FA: TmRegistry = {
     note: '教学锚点：倾向变化处回放自动停，按「继续」接着重演',
     when: '回放锚点停留时',
   },
+  'FA.aside-pending': {
+    label: '心声生成中',
+    clauses: ['U07-C05', 'U07-C01'],
+    note:
+      '商鞅/本能寺实况：裁判心声 act 仍在流式生成时，侧栏在它将落下的位置先占位（调试开时带流式内心），落笔后由心声卡接替；不在对话栏里另起一条旁白发言',
+    when: '实况中裁判心声正在生成',
+  },
 
   // ---------- 倾向轨迹图（judge-trend.tsx，#24 / F4） ----------
   'FA.trend-chart': {
@@ -486,7 +484,7 @@ export const TM_FA: TmRegistry = {
     clauses: ['U07-C05', 'U07-C09'],
     journeys: ['jR4s1', 'jR8s4'],
     note:
-      'x＝节拍序，y＝带号强度（A 上 B 下）；完局在裁判侧栏全画（小屏随正文排列），回放中嵌在控制条里随揭示逐点生长',
+      'x＝节拍序，y＝带号强度（A 上 B 下）；完局在裁判侧栏全画（小屏随正文排列），回放中嵌在控制条里随揭示逐点生长；商鞅/本能寺实况与回放都留在裁判侧栏，回放同样按全部节拍定 x 轴、逐点生长',
   },
   'FA.trend-legend': {
     label: '轨迹图图例',
