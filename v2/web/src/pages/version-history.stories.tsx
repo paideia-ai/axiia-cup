@@ -78,10 +78,12 @@ export const BothSidesAndCombinedFilters: Story = {
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       4,
     )
-    await expect(canvas.getByRole('checkbox', { name: '仅自己对局' }))
-      .toBeChecked()
+    await expect(canvas.getByRole('checkbox', { name: '查看所有对局' }))
+      .not.toBeChecked()
     await expect(canvas.getByRole('combobox')).toHaveTextContent('商鞅庭辩')
-    await userEvent.click(canvas.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(
+      canvas.getByRole('checkbox', { name: '查看所有对局' }),
+    )
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       5,
     )
@@ -96,13 +98,15 @@ export const VersionWithoutGames: Story = {
         name: '暂无战绩，查看 v3 的对局记录',
       }),
     )
-    await canvas.findByText('该版本还没有对战记录。')
+    await canvas.findByText(
+      '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。',
+    )
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await userEvent.click(
       canvas.getByRole('button', { name: '清除版本 #1003 筛选' }),
     )
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
-      5,
+      4,
     )
   },
 }
@@ -112,7 +116,7 @@ export const VersionWithNoMatchingScenario: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await canvas.findByText(
-      '该版本没有符合当前筛选条件的对战。试试切换场景或取消「仅自己对局」。',
+      '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。',
     )
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
   },

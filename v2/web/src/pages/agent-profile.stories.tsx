@@ -422,21 +422,21 @@ const filteredHistory = ({ request }: { request: Request }) => {
 }
 
 export const OnlyMineBeforePagination: Story = {
-  args: { entry: '/matches?agent=202&version=466&cursor=8983' },
+  args: { entry: '/matches?agent=202&version=466&cursor=8983&mine=0' },
   parameters: {
     msw: [http.get('/v1/agents/202/matches', filteredHistory), ...handlers],
   },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await c.findByRole('link', { name: /对战 #8982/ })
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('button', { name: '上一页' })).toBeNull()
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #9002/ }))
       .toBeVisible()
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
@@ -455,8 +455,8 @@ export const NPCOnlyMineBeforePagination: Story = {
   },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
-    await c.findByRole('link', { name: /对战 #9002/ })
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('checkbox', { name: '查看所有对局' })).not
+      .toBeChecked()
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()

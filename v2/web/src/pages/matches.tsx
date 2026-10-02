@@ -67,7 +67,8 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 
 export function MatchesPage() {
   const [params, setParams] = useSearchParams()
-  const onlyMine = params.get('mine') === '1'
+  // Missing filter defaults to own games; keep existing mine=1 links valid.
+  const onlyMine = params.get('mine') !== '0'
   const scenarioID = params.get('scenario') ?? ''
   const versionID = params.get('version') ?? ''
   const agentID = positiveID(params.get('agent'))
@@ -94,7 +95,7 @@ export function MatchesPage() {
       return next
     }, { replace: true })
   }
-  const setOnlyMine = (value: boolean) => updateFilter('mine', value ? '1' : '')
+  const setOnlyMine = (value: boolean) => updateFilter('mine', value ? '' : '0')
   const setScenarioID = (value: string) => updateFilter('scenario', value)
   const list = usePageQuery({
     ...(scoped
@@ -288,8 +289,8 @@ export function MatchesPage() {
             <span className='relative flex size-4 shrink-0'>
               <input
                 type='checkbox'
-                checked={onlyMine}
-                onChange={(event) => setOnlyMine(event.target.checked)}
+                checked={!onlyMine}
+                onChange={(event) => setOnlyMine(!event.target.checked)}
                 className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
               />
               <Check
@@ -298,7 +299,7 @@ export function MatchesPage() {
                 className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
               />
             </span>
-            仅自己对局
+            查看所有对局
           </label>
         </div>
       </div>
@@ -377,12 +378,12 @@ export function MatchesPage() {
               ? '该 NPC 配置暂无可查看的对战记录。'
               : versionID
               ? (scenarioID || onlyMine
-                ? '该版本没有符合当前筛选条件的对战。试试切换场景或取消「仅自己对局」。'
+                ? '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
                 : '该版本还没有对战记录。')
               : scenarioID
-              ? '没有符合筛选条件的对战。试试切换场景或取消「仅自己对局」。'
+              ? '没有符合筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
               : onlyMine && data?.list.open
-              ? '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。'
+              ? '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。'
               : data?.list.open
               ? '还没有任何对战。到场景页构建智能体并发起对战。'
               : '还没有对战。到场景页构建智能体并发起对战。'}

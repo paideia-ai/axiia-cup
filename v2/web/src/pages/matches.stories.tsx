@@ -12,9 +12,9 @@ function Destination() {
   return <h1>{agentId ? `智能体 ${agentId}` : `战报 ${matchId}`}</h1>
 }
 
-function Surface() {
+function Surface({ entry = '/matches' }: { entry?: string }) {
   return (
-    <MemoryRouter initialEntries={['/matches']}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path='/matches' element={<MatchesPage />} />
         <Route path='/matches/:matchId' element={<Destination />} />
@@ -144,7 +144,9 @@ export const CompactHistorySurface: Story = {
     await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
       .toBeVisible()
     await expect(canvasElement.querySelector('a a')).toBeNull()
-    await userEvent.click(canvas.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(
+      canvas.getByRole('checkbox', { name: '查看所有对局' }),
+    )
     // Closed history already belongs to the viewer, even without metadata.
     await expect(canvas.getAllByRole('link', { name: /对战 #900[12]/ }))
       .toHaveLength(2)
@@ -154,6 +156,7 @@ export const CompactHistorySurface: Story = {
 const otherMatch: MatchSummary = {
   ...summary,
   id: 9003,
+  initiatorIsMe: false,
   participants: {
     a: { ...summary.participants.a, isMine: false },
     b: { ...summary.participants.b, isMine: false },
@@ -172,10 +175,18 @@ const openHistory = (rows: MatchSummary[]) => ({
 
 export const OnlyOwnGames: Story = {
   parameters: openHistory([
-    { ...summary, challengeID: 81, challengeLeg: 1 },
+    {
+      ...summary,
+      kind: 'pvp',
+      initiatorIsMe: false,
+      challengeID: 81,
+      challengeLeg: 1,
+    },
     {
       ...summary,
       id: 9002,
+      kind: 'pvp',
+      initiatorIsMe: false,
       challengeID: 81,
       challengeLeg: 2,
       participants: {
@@ -189,15 +200,9 @@ export const OnlyOwnGames: Story = {
   ]),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByRole('link', { name: /对战 #9005/ })
-    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
+    await canvas.findByRole('link', { name: /对战 #9001/ })
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
     await expect(checkbox).not.toBeChecked()
-    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
-      5,
-    )
-    // Clicking the caption toggles the native checkbox as well.
-    await userEvent.click(canvas.getByText('仅自己对局'))
-    await expect(checkbox).toBeChecked()
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       3,
     )
@@ -211,13 +216,19 @@ export const OnlyOwnGames: Story = {
     await expect(canvas.queryByRole('link', { name: /对战 #9005/ })).toBeNull()
     await expect(canvas.getByText(/^约战 #81：/)).toBeVisible()
     await expect(canvas.getByText('你的全部对战记录。')).toBeVisible()
-    checkbox.focus()
-    await userEvent.keyboard('[Space]')
-    await expect(checkbox).not.toBeChecked()
+    // Clicking the caption and keyboard activation both toggle the filter.
+    await userEvent.click(canvas.getByText('查看所有对局'))
+    await expect(checkbox).toBeChecked()
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       5,
     )
     await expect(canvas.getByText('全部对战记录。')).toBeVisible()
+    checkbox.focus()
+    await userEvent.keyboard('[Space]')
+    await expect(checkbox).not.toBeChecked()
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      3,
+    )
   },
 }
 
@@ -225,13 +236,15 @@ export const NoOwnGames: Story = {
   parameters: openHistory([otherMatch]),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByRole('link', { name: /对战 #9003/ })
-    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
-    await userEvent.click(checkbox)
+    await canvas.findByText(
+      '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
+    )
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).not.toBeChecked()
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await expect(
       canvas.getByText(
-        '还没有你的对战记录。取消勾选「仅自己对局」可查看全部对战。',
+        '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
       ),
     ).toBeVisible()
     await userEvent.click(checkbox)
@@ -307,13 +320,14 @@ export const RetiredScenarioHistoryRemainsVisible: Story = {
 }
 
 export const ScenarioAndOwnershipFilters: Story = {
+  args: { entry: '/matches?mine=0' },
   parameters: openHistory(scenarioHistory),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const body = within(canvasElement.ownerDocument.body)
     await canvas.findByRole('link', { name: /对战 #9005/ })
     const filter = canvas.getByRole('combobox', { name: '全部场景' })
-    const checkbox = canvas.getByRole('checkbox', { name: '仅自己对局' })
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
     const choose = async (name: string) => {
       await userEvent.click(filter)
       await userEvent.click(
@@ -341,7 +355,7 @@ export const ScenarioAndOwnershipFilters: Story = {
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await expect(
       canvas.getByText(
-        '没有符合筛选条件的对战。试试切换场景或取消「仅自己对局」。',
+        '没有符合筛选条件的对战。试试切换场景或勾选「查看所有对局」。',
       ),
     )
       .toBeVisible()
@@ -355,7 +369,7 @@ export const ScenarioAndOwnershipFilters: Story = {
     await expect(canvas.getByRole('link', { name: /对战 #9004/ })).toBeVisible()
     await userEvent.click(checkbox)
     await choose('全部场景')
-    await expect(checkbox).toBeChecked()
+    await expect(checkbox).not.toBeChecked()
     await expect(filter).toHaveTextContent('全部场景')
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       3,
@@ -384,7 +398,9 @@ export const EmptyHistory: Story = {
   parameters: openHistory([]),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByText('还没有任何对战。到场景页构建智能体并发起对战。')
+    await canvas.findByText(
+      '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
+    )
     await expect(canvas.getByRole('combobox', { name: '全部场景' }))
       .toBeDisabled()
   },
@@ -421,4 +437,13 @@ export const HonnojiRolesFromSummary: Story = {
     await expect(await canvas.findByText('对方（细川藤孝）胜')).toBeVisible()
     await expect(canvas.queryByText(/角色待确认/)).toBeNull()
   },
+}
+
+export const OwnGamesPreview: Story = {
+  parameters: OnlyOwnGames.parameters,
+}
+
+export const LegacyOwnGamesLink: Story = {
+  ...OnlyOwnGames,
+  args: { entry: '/matches?mine=1' },
 }
