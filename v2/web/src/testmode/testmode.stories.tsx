@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import type { AgentVersionDTO, MeResponse } from '../api/types'
 import { AuthProvider, useAuth } from '../context/auth'
+import { purgeBuilderDraftJournals } from '../lib/builder-draft-storage'
 import { BuilderPage } from '../pages/builder'
 import { config, scenario } from '../testing/v34-fixtures'
 import { JOURNEYS, REVIEWED_MANUAL_URL, STEPS } from './data'
@@ -184,6 +185,8 @@ const meta = {
   parameters: { msw: handlers },
   loaders: [
     () => {
+      // Other builder stories share this agent's local recovery journal.
+      purgeBuilderDraftJournals(101)
       calls.length = 0
       localStorage.setItem('axiia:tm', '1')
       localStorage.setItem('axiia:tm:badges', '1')
