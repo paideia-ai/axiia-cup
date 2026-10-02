@@ -74,3 +74,17 @@ export function roleIdentity(context: RoleIdentityContext): {
     resolved: true,
   }
 }
+
+// Pages about agents as they are now (the battle panel, agent pages, version
+// lists) name a resolved role the way the role picker does, so a participant
+// keeps one name from creation to dispatch. Match history keeps roleIdentity's
+// server snapshot names.
+export function currentRoleIdentity(
+  context: RoleIdentityContext,
+): ReturnType<typeof roleIdentity> {
+  const identity = roleIdentity(context)
+  const role = roleByKey(scenarioModule(context.scenarioID), identity.roleKey)
+  return role?.side === context.side
+    ? { ...identity, name: role.name }
+    : identity
+}

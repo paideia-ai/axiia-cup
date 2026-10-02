@@ -44,13 +44,14 @@ const details: Record<string, ScenarioDetail> = {
       id: 'honnoji-decision',
       title: '本能寺之变·敌在何处',
       subject: '历史',
-      sideAName: '袭击本能寺',
-      sideBName: '暂不袭击信长',
+      sideAName: '主张杀信长',
+      sideBName: '主张不杀信长',
       sideALabel: '主张立即起兵',
       sideBLabel: '主张继续西进',
       turnCount: 5,
       gateUnlocked: false,
       gateProgress,
+      stats: { battleCount: 20, sideWinRate: { a: 0.7, b: 0.3 } },
     },
     stages: [],
     presets: [],
@@ -235,8 +236,11 @@ export const HonnojiFourCards: Story = {
     await expect(formatLabels).toHaveLength(2)
     for (const label of formatLabels) await expect(label).toBeVisible()
     await expect(
-      canvas.queryByText(/袭击本能寺\s*对\s*暂不袭击信长/),
+      canvas.queryByText(/袭击本能寺\s*对\s*西进毛利/),
     ).toBeNull()
+    await expect(
+      canvasElement.querySelector('[data-tm="DA.stats-line"]'),
+    ).toHaveTextContent('20 场 · 袭击本能寺 70% / 西进毛利 30%')
     await expect(canvas.getAllByTestId('scenario-intro-card')).toHaveLength(4)
     await expect(
       canvas.getByRole('heading', {

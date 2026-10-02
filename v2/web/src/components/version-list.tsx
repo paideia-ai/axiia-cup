@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { AgentVersionDTO } from '../api/types'
-import { roleIdentity, type RoleIdentityContext } from '../lib/role-identity'
+import {
+  currentRoleIdentity,
+  type RoleIdentityContext,
+} from '../lib/role-identity'
 import {
   nextVersionCopy,
   recordCopy,
@@ -254,7 +257,7 @@ export function VersionList({
                           }`}
                           aria-label={`将 ${tag} 设为${
                             roleContext
-                              ? roleIdentity({
+                              ? currentRoleIdentity({
                                 ...roleContext,
                                 options: version.options,
                                 role: version.role,

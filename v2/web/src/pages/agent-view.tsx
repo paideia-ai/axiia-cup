@@ -1,5 +1,5 @@
 import { positiveID } from '../lib/identity-links'
-import { roleIdentity } from '../lib/role-identity'
+import { currentRoleIdentity } from '../lib/role-identity'
 import { PageLoading } from '../components/page-loading'
 import { Menu } from '@base-ui-components/react/menu'
 import {
@@ -157,7 +157,7 @@ function AgentView({ agentID }: { agentID: number }) {
     version.id ===
       positiveID(new URLSearchParams(location.search).get('version'))
   ) ?? sorted[0]
-  const sideName = data == null ? '' : roleIdentity({
+  const sideName = data == null ? '' : currentRoleIdentity({
     scenarioID: data.draft.scenarioID,
     side: data.draft.side,
     options: selectedIdentityVersion?.options,
@@ -707,7 +707,7 @@ function AgentView({ agentID }: { agentID: number }) {
                       {...tm('EA.sibling-pill')}
                     >
                       {displayName(
-                        active ? sideName : roleIdentity({
+                        active ? sideName : currentRoleIdentity({
                           scenarioID: data.draft.scenarioID,
                           side: data.draft.side,
                           role: sibling.role,

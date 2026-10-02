@@ -1,3 +1,4 @@
+import { sideDisplayName } from '../lib/side-display-name'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -64,7 +65,15 @@ export function CreateAgentAction({
   const location = useLocation()
   const currentLocation = useRef(location.key)
   currentLocation.current = location.key
-  const roles = rolesForSide(scenarioModule(scenarioID), side).slice().sort(
+  const module = scenarioModule(scenarioID)
+  // Callers pass the script's side names or their own display names; faction
+  // scenarios replace both with the same faction copy.
+  const factions = module?.factionCopy
+  const oppositeSide: Side = side === 'a' ? 'b' : 'a'
+  const roleName = sideDisplayName(scenarioID, side, role)
+  const oppositeName = factions?.stances[oppositeSide] ??
+    oppositeRole ?? '对侧'
+  const roles = rolesForSide(module, side).slice().sort(
     (a, b) => {
       if (scenarioID !== 'honnoji-decision' || side !== 'a') return 0
       return Number(b.key === 'yoshiaki') - Number(a.key === 'yoshiaki')
@@ -148,7 +157,8 @@ export function CreateAgentAction({
     )
     : (
       <NewAgentButton
-        role={role}
+        role={roleName}
+        label={factions ? `新建 ${roleName}` : undefined}
         attention={attention}
         disabled={busy}
         onClick={begin}
@@ -172,7 +182,7 @@ export function CreateAgentAction({
       </span>
       {choosing && (
         <Modal
-          title={`选择${role}的角色`}
+          title={`选择${roleName}的角色`}
           onClose={() => {
             if (!busy) setChoosing(false)
           }}
@@ -233,10 +243,10 @@ export function CreateAgentAction({
               <ButtonLink
                 size='sm'
                 variant='secondary'
-                to={agentEntryUrl(scenarioID, side === 'a' ? 'b' : 'a')}
+                to={agentEntryUrl(scenarioID, oppositeSide)}
                 {...tm('E.new-agent-gate-switch')}
               >
-                去完善{oppositeRole ?? '对侧'}智能体
+                去完善{oppositeName}智能体
               </ButtonLink>
             </div>
           )}

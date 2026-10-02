@@ -296,7 +296,10 @@ for (const { summary } of agentPreviewScenarios) {
       ]] as const
     ) {
       await page.goto(`/scenarios/${summary.id}`)
-      await page.getByRole('button', { name: `再建一个${role}` }).click()
+      const createLabel = summary.id === 'honnoji-decision'
+        ? `再建一个${side === 'a' ? '袭击本能寺' : '西进毛利'}智能体`
+        : `再建一个${role}`
+      await page.getByRole('button', { name: createLabel, exact: true }).click()
       if (summary.id === 'honnoji-decision') {
         await page.locator('.portrait-choice').first().click()
       }
@@ -396,8 +399,8 @@ for (const width of [1440, 390]) {
       )
       const trigger = page.getByRole('button', {
         name: entry === 'scenario'
-          ? '再建一个袭击本能寺'
-          : '新建袭击本能寺智能体',
+          ? '再建一个袭击本能寺智能体'
+          : '新建 袭击本能寺',
       })
       await trigger.scrollIntoViewIfNeeded()
       const cdp = await context.newCDPSession(page)
@@ -497,7 +500,7 @@ test('portrait keyboard selection and a rejected creation remain recoverable', a
     await route.fallback()
   })
   await page.goto('/scenarios/honnoji-decision')
-  const trigger = page.getByRole('button', { name: '再建一个暂不袭击信长' })
+  const trigger = page.getByRole('button', { name: '再建一个西进毛利智能体' })
   await trigger.scrollIntoViewIfNeeded()
   await trigger.focus()
   await page.keyboard.press('Enter')

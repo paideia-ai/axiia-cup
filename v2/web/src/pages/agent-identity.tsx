@@ -1,4 +1,4 @@
-import { hasSelectableRoles, roleIdentity } from '../lib/role-identity'
+import { currentRoleIdentity, hasSelectableRoles } from '../lib/role-identity'
 import { tm } from '../testmode/mark'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -31,7 +31,7 @@ export function AgentIdentityPage() {
     Number(b.id === versionID) - Number(a.id === versionID) || b.id - a.id
   )
   const nameOf = (role?: typeof versions[number]['role']) =>
-    roleIdentity({
+    currentRoleIdentity({
       scenarioID: agent?.scenarioID,
       side: agent?.side === 'a' ? 'a' : 'b',
       role: role ?? agent?.role,
