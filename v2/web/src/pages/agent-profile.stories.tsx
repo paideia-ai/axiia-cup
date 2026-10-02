@@ -1,3 +1,4 @@
+import type { MatchSummary } from '../api/types'
 import { AppShell } from '../components/layout/app-shell'
 import { AuthProvider, useAuth } from '../context/auth'
 import type { PropsWithChildren } from 'react'
@@ -445,14 +446,16 @@ export const OnlyMineBeforePagination: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await c.findByRole('link', { name: /对战 #8982/ })
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(c.getByRole('checkbox', { name: '查看所有对局' }))
+      .toBeChecked()
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('button', { name: '上一页' })).toBeNull()
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #9002/ }))
       .toBeVisible()
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await userEvent.click(c.getByRole('checkbox', { name: '查看所有对局' }))
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
@@ -471,11 +474,93 @@ export const NPCOnlyMineBeforePagination: Story = {
   },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
-    await c.findByRole('link', { name: /对战 #9002/ })
-    await userEvent.click(c.getByRole('checkbox', { name: '仅自己对局' }))
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+    const checkbox = c.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).toBeChecked()
+    await userEvent.click(checkbox)
+    await expect(checkbox).not.toBeChecked()
     await expect(await c.findByRole('link', { name: /对战 #8982/ }))
       .toBeVisible()
     await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()
+  },
+}
+
+const visitorHistory =
+  (summary: MatchSummary) => ({ request }: { request: Request }) =>
+    HttpResponse.json({
+      open: true,
+      matches: new URL(request.url).searchParams.get('mine') === '1' ? [] : [{
+        ...summary,
+        initiatorIsMe: false,
+        participants: {
+          a: { ...summary.participants?.a, isMine: false },
+          b: { ...summary.participants?.b, isMine: false },
+        },
+      }],
+    })
+
+export const AgentVisitorWithoutOwnGames: Story = {
+  args: { entry: '/matches?agent=202&version=466' },
+  parameters: {
+    msw: [
+      http.get('/v1/agents/202/matches', visitorHistory(playerMatch.summary)),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+    const checkbox = c.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).toBeChecked()
+    await userEvent.click(checkbox)
+    await expect(checkbox).not.toBeChecked()
+    await expect(
+      await c.findByText(
+        '该版本没有你参与的对战。勾选「查看所有对局」可查看全部对战。',
+      ),
+    ).toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #/ })).toBeNull()
+    await expect(c.getByText('该版本中你参与的对战记录，包含进行中的对局。'))
+      .toBeVisible()
+    await userEvent.click(checkbox)
+    await expect(await c.findByRole('link', { name: /对战 #9002/ }))
+      .toBeVisible()
+  },
+}
+
+export const NPCVisitorWithoutOwnGames: Story = {
+  args: {
+    entry: '/matches?scenario=shangyang-court&npc=ganlong-steady&match=9001',
+  },
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/scenarios/:id/npcs/:key/matches',
+        visitorHistory(npcMatch.summary),
+      ),
+      ...handlers,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(await c.findByRole('link', { name: /对战 #9001/ }))
+      .toBeVisible()
+    const checkbox = c.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).toBeChecked()
+    await userEvent.click(checkbox)
+    await expect(checkbox).not.toBeChecked()
+    await expect(
+      await c.findByText(
+        '该 NPC 配置还没有你参与的对战。勾选「查看所有对局」可查看全部对战。',
+      ),
+    ).toBeVisible()
+    await expect(c.queryByRole('link', { name: /对战 #/ })).toBeNull()
+    await expect(c.getByText('该 NPC 配置中你参与的对战记录。')).toBeVisible()
+    await userEvent.click(checkbox)
+    await expect(await c.findByRole('link', { name: /对战 #9001/ }))
+      .toBeVisible()
   },
 }
 

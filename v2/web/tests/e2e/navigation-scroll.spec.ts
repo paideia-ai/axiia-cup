@@ -1,7 +1,10 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 import { config, finishedMatch, scenario } from '../../src/testing/v34-fixtures'
 
-async function installWorld(page: Page) {
+async function installWorld(
+  page: Page,
+  { leadingNonOwnedRows = 0 }: { leadingNonOwnedRows?: number } = {},
+) {
   const world = {
     live: false,
     holdStream: false,
@@ -54,8 +57,13 @@ async function installWorld(page: Page) {
             id: 1000 + index - world.extraRows,
             challengeID: null,
             challengeLeg: null,
+            initiatorIsMe: false,
             participants: {
-              a: { isMine: index % 2 === 0, agentID: 101, versionID: 1001 },
+              a: {
+                isMine: index >= leadingNonOwnedRows && index % 2 === 0,
+                agentID: 101,
+                versionID: 1001,
+              },
               b: { isMine: false },
             },
           })),
@@ -116,7 +124,7 @@ async function installWorld(page: Page) {
 
 const card = (page: Page) => page.locator('[data-scroll-anchor="match-1040"]')
 async function openFromList(page: Page) {
-  await page.goto('/matches?mine=1&scenario=shangyang-court')
+  await page.goto('/matches?mine=0&scenario=shangyang-court')
   await expect(card(page)).toBeVisible()
   await card(page).evaluate((element) => {
     window.scrollTo({
@@ -137,12 +145,39 @@ async function openFromList(page: Page) {
   return y
 }
 async function expectRestored(page: Page, y: number) {
-  await expect(page).toHaveURL(/\/matches\?mine=1&scenario=shangyang-court$/)
+  await expect(page).toHaveURL(/\/matches\?mine=0&scenario=shangyang-court$/)
   await expect(page.getByRole('checkbox')).toBeChecked()
   await expect.poll(async () =>
     Math.abs(await page.evaluate(() => window.scrollY) - y)
   ).toBeLessThan(3)
 }
+
+test('changing ownership filters keeps the new results at the top', async ({ page }) => {
+  await installWorld(page, { leadingNonOwnedRows: 30 })
+  await page.goto('/matches')
+  const rows = page.locator('[data-scroll-anchor]')
+  const showAll = page.getByRole('checkbox', { name: '查看所有对局' })
+  await expect(rows).toHaveCount(25)
+  await expect(rows.first()).toHaveAttribute('data-scroll-anchor', 'match-1030')
+  await expect(showAll).not.toBeChecked()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+
+  await showAll.click()
+  await expect(showAll).toBeChecked()
+  await expect(page).toHaveURL(/\/matches\?mine=0$/)
+  await expect(rows).toHaveCount(80)
+  await expect(rows.first()).toHaveAttribute('data-scroll-anchor', 'match-1000')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await expect(showAll).toBeInViewport()
+
+  await showAll.click()
+  await expect(showAll).not.toBeChecked()
+  await expect(page).toHaveURL(/\/matches$/)
+  await expect(rows).toHaveCount(25)
+  await expect(rows.first()).toHaveAttribute('data-scroll-anchor', 'match-1030')
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+  await expect(showAll).toBeInViewport()
+})
 
 test('browser back and forward restore cached content without another request', async ({ page }) => {
   const world = await installWorld(page)
@@ -219,9 +254,12 @@ test('new rows above the saved card preserve the card position', async ({ page }
   await page.reload()
   await expect(page.getByText(/^第 60 段/)).toBeAttached()
   await page.goBack()
+  // CSS layout and browser scroll offsets can round to different subpixels.
   await expect.poll(() =>
-    card(page).evaluate((element) => element.getBoundingClientRect().top)
-  ).toBeCloseTo(130, 0)
+    card(page).evaluate((element) =>
+      Math.abs(element.getBoundingClientRect().top - 130)
+    )
+  ).toBeLessThan(1)
 })
 
 test('direct entry keeps global navigation usable without a page back link', async ({ page }) => {
