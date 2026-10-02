@@ -11,6 +11,8 @@ import {
 
 import type { MyAgentDTO } from '../api/types'
 import { AuthProvider } from '../context/auth'
+import { navigationCache } from '../lib/navigation-cache'
+import { inventoryQuery } from '../lib/navigation-queries'
 import { ExpressPage } from '../pages/express'
 import { MatchDetailPage } from '../pages/match-detail'
 import { MyAgentsPage } from '../pages/my-agents'
@@ -38,6 +40,17 @@ let sides: { a: MyAgentDTO[]; b: MyAgentDTO[] } = { a: [], b: [] }
 let inventoryFails = false
 let inventoryReads = 0
 let created: unknown[] = []
+let draftReads = 0
+let creationResponse = Promise.resolve()
+let draftResponse = Promise.resolve()
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>((done) => {
+    resolve = done
+  })
+  return { promise, resolve }
+}
 
 function CurrentPath() {
   const location = useLocation()
@@ -112,6 +125,7 @@ const handlers = [
   http.post('/v1/agents', async ({ request }) => {
     const input = await request.json() as { side: 'a' | 'b' }
     created.push(input)
+    await creationResponse
     // 同侧第二个被引导门拦下；对侧的第一个放行。
     if (sides[input.side].length > 0) {
       return HttpResponse.json(
@@ -123,6 +137,19 @@ const handlers = [
     sides = { ...sides, [input.side]: [{ agentID: 2001, versionCount: 0 }] }
     return HttpResponse.json({ agentID: 2001 })
   }),
+  http.get('/v1/agents/2001/draft', async () => {
+    draftReads++
+    await draftResponse
+    return HttpResponse.json({
+      fields: {},
+      scenarioID: 'honnoji-decision',
+      side: sides.a.some((agent) => agent.agentID === 2001) ? 'a' : 'b',
+    })
+  }),
+  http.get(
+    '/v1/agents/2001/versions',
+    () => HttpResponse.json({ versions: [], entryVersionID: null }),
+  ),
 ]
 
 const meta = {
@@ -134,6 +161,9 @@ const meta = {
     inventoryFails = false
     inventoryReads = 0
     created = []
+    draftReads = 0
+    creationResponse = Promise.resolve()
+    draftResponse = Promise.resolve()
   },
   parameters: { msw: handlers },
 } satisfies Meta<typeof Surface>
@@ -365,6 +395,123 @@ export const ExpressOpensExistingAgent: Story = {
         '/agents/entry?scenario=honnoji-decision&side=a&target=build&express=1',
       )
     expect(canvas.queryByRole('button', { name: '去构建 →' })).toBeNull()
+  },
+}
+
+// 打开再取消人物签不算创建；其他标签页新增草稿后，刷新清单就恢复已有智能体入口。
+export const ExpressRefreshOpensNewlyAvailableAgent: Story = {
+  args: { entry: '/express' },
+  beforeEach: () => {
+    sides = { a: [], b: [] }
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await userEvent.click(
+      await canvas.findByRole('button', { name: '去构建 →' }),
+    )
+    await canvas.findByRole('group', picker)
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(canvas.queryByRole('group', picker)).toBeNull())
+
+    sides = { a: [draft], b: [] }
+    await navigationCache.invalidateQueries({
+      queryKey: inventoryQuery().queryKey,
+    })
+
+    await expect(await canvas.findByRole('link', { name: '去构建 →' }))
+      .toHaveAttribute(
+        'href',
+        '/agents/entry?scenario=honnoji-decision&side=a&target=build&express=1',
+      )
+    expect(canvas.queryByRole('button', { name: '去构建 →' })).toBeNull()
+    expect(canvas.getByLabelText('当前路径')).toHaveTextContent('/express')
+    expect(created).toHaveLength(0)
+  },
+}
+
+// POST 已成功、清单也已更新，但主页内容还未就绪：保留发起创建的按钮直到跳转完成。
+export const ExpressPendingCreationSurvivesInventoryRefresh: Story = {
+  args: { entry: '/express' },
+  beforeEach: () => {
+    sides = { a: [], b: [] }
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    const response = deferred()
+    draftResponse = response.promise
+    try {
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '去构建 →' }),
+      )
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '创建足利义昭的使者' }),
+      )
+      await waitFor(() => expect(draftReads).toBe(1))
+      await waitFor(() =>
+        expect(
+          navigationCache.getQueryData(inventoryQuery().queryKey)
+            ?.scenarios[0].sides.a[0]?.agentID,
+        ).toBe(2001)
+      )
+      expect(inventoryReads).toBeGreaterThan(1)
+      await expect(canvas.getByRole('button', { name: '去构建 →' }))
+        .toBeDisabled()
+      expect(canvas.queryByRole('link', { name: '去构建 →' })).toBeNull()
+      expect(canvas.getByLabelText('当前路径')).toHaveTextContent('/express')
+
+      response.resolve()
+      await waitFor(() =>
+        expect(canvas.getByLabelText('当前路径')).toHaveTextContent(
+          '/agents/2001?express=1',
+        )
+      )
+      expect(created).toEqual([
+        { scenarioID: 'honnoji-decision', side: 'a', roleKey: 'yoshiaki' },
+      ])
+    } finally {
+      response.resolve()
+    }
+  },
+}
+
+// 创建请求尚未返回时保留按钮；请求被拒后，立即按刷新的清单打开已有草稿。
+export const ExpressRejectedCreationUsesRefreshedInventory: Story = {
+  args: { entry: '/express' },
+  beforeEach: () => {
+    sides = { a: [], b: [] }
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    const response = deferred()
+    creationResponse = response.promise
+    try {
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '去构建 →' }),
+      )
+      await userEvent.click(
+        await canvas.findByRole('button', { name: '创建足利义昭的使者' }),
+      )
+      await waitFor(() => expect(created).toHaveLength(1))
+      sides = { a: [draft], b: [] }
+      await navigationCache.invalidateQueries({
+        queryKey: inventoryQuery().queryKey,
+      })
+      await expect(canvas.getByRole('button', { name: '去构建 →' }))
+        .toBeDisabled()
+      expect(canvas.queryByRole('link', { name: '去构建 →' })).toBeNull()
+
+      response.resolve()
+      await expect(await canvas.findByRole('link', { name: '去构建 →' }))
+        .toHaveAttribute(
+          'href',
+          '/agents/entry?scenario=honnoji-decision&side=a&target=build&express=1',
+        )
+      expect(canvas.queryByRole('button', { name: '去构建 →' })).toBeNull()
+      expect(canvas.getByLabelText('当前路径')).toHaveTextContent('/express')
+      expect(created).toHaveLength(1)
+    } finally {
+      response.resolve()
+    }
   },
 }
 

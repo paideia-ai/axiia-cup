@@ -51,6 +51,7 @@ export function CreateAgentAction({
   variant,
   size = 'sm',
   oppositeOnPage = false,
+  onPendingChange,
 }: {
   scenarioID: string
   side: Side
@@ -67,6 +68,7 @@ export function CreateAgentAction({
   // 对侧的新建入口也在本页（我的智能体、场景页）：被引导门拦下时，对侧为空就不再
   // 另给创建按钮，用那一侧自己的入口。
   oppositeOnPage?: boolean
+  onPendingChange?: (pending: boolean) => void
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -104,6 +106,7 @@ export function CreateAgentAction({
     if (locked.current) return
     locked.current = true
     setBusy(true)
+    onPendingChange?.(true)
     setError(null)
     setGate(false)
     const epoch = navigationEpoch()
@@ -135,7 +138,10 @@ export function CreateAgentAction({
       )
     } finally {
       locked.current = false
-      if (live.current) setBusy(false)
+      if (live.current) {
+        setBusy(false)
+        onPendingChange?.(false)
+      }
     }
   }
 
@@ -273,21 +279,7 @@ export function CreateAgentAction({
 // /agents/entry 直达它；确认该侧为空、且有多名人物可选（目前是本能寺）时，人物签在
 // 本按钮两侧就地弹出，不经中间选角色页。本页已有该侧自己的新建入口时（ifEmpty
 // 'hide'），该侧为空就什么都不显示。
-export function SideEntryAction({
-  scenarioID,
-  side,
-  role,
-  oppositeRole,
-  children,
-  createLabel,
-  target,
-  express = false,
-  marker,
-  testID,
-  variant,
-  size = 'sm',
-  ifEmpty = 'create',
-}: {
+type SideEntryActionProps = {
   scenarioID: string
   side: Side
   role: string
@@ -302,7 +294,32 @@ export function SideEntryAction({
   testID?: string
   variant?: 'primary' | 'secondary'
   size?: 'sm' | 'default'
-}) {
+}
+
+export function SideEntryAction(props: SideEntryActionProps) {
+  return (
+    <SideEntry
+      key={JSON.stringify([props.scenarioID, props.side])}
+      {...props}
+    />
+  )
+}
+
+function SideEntry({
+  scenarioID,
+  side,
+  role,
+  oppositeRole,
+  children,
+  createLabel,
+  target,
+  express = false,
+  marker,
+  testID,
+  variant,
+  size = 'sm',
+  ifEmpty = 'create',
+}: SideEntryActionProps) {
   const createHere = ifEmpty === 'create' &&
     rolesForSide(scenarioModule(scenarioID), side).length > 1
   // 单角色侧就地新建时不必读清单：有没有智能体，都由 /agents/entry 打开或创建草稿。
@@ -313,12 +330,9 @@ export function SideEntryAction({
   const empty = inventory.data != null &&
     !inventory.data.scenarios.find((item) => item.scenarioID === scenarioID)
       ?.sides[side].some((agent) => !agent.isArchived)
-  // 就地新建会刷新清单。显示过「创建」就保持到卸载：按钮若随之换回链接，创建流程被
-  // 卸载，跳转新智能体主页就丢了。
+  // 只在实际创建到跳转期间保留组件，避免写入后的清单刷新中断跳转。空闲时（包括
+  // 打开人物签或创建失败后）仍按最新清单打开已有智能体。
   const [creating, setCreating] = useState(false)
-  useEffect(() => {
-    if (createHere && empty) setCreating(true)
-  }, [createHere, empty])
 
   if (ifEmpty === 'hide' && empty) return null
   return createHere && (empty || creating)
@@ -333,6 +347,7 @@ export function SideEntryAction({
         testID={testID}
         variant={variant}
         size={size}
+        onPendingChange={setCreating}
       >
         {createLabel ?? children}
       </CreateAgentAction>
