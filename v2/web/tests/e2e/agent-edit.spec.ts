@@ -128,12 +128,12 @@ test('草稿自动暂存，保存回主页，版本严格线性', async ({ page 
       .toBeVisible()
   })
 
-  await test.step('当 我在低信息构建器写入独特草稿并立刻点击「← 智能体主页」（不等待 debounce）', async () => {
+  await test.step('当 我在低信息构建器写入独特草稿并立刻用浏览器后退回主页（不等待 debounce）', async () => {
     await page.getByRole('link', { name: '新建版本' }).click()
     const input = page.getByLabel('策略提示词')
     await expect(input).toBeEnabled()
     await input.fill(draft)
-    await page.getByRole('link', { name: '← 智能体主页' }).click()
+    await page.goBack()
   })
 
   await test.step('并且 我立刻重新打开构建器', async () => {
@@ -379,7 +379,7 @@ test('同一智能体卸载重挂后仍共用自动暂存队列', async ({ page 
   })
 
   await test.step('当 我经 SPA 返回主页并重新挂载同一智能体构建器', async () => {
-    await page.getByRole('link', { name: '← 智能体主页' }).click()
+    await page.goBack()
     await page.getByRole('link', { name: '新建版本' }).click()
     await expect(page.getByLabel('策略提示词')).toHaveValue(oldPrompt)
   })
@@ -829,7 +829,7 @@ test('同侧新增门槛；空智能体在主页重命名与删除', async ({ pa
       )
     }, agentB)
     expect(await localDraftJournals(page, agentB)).toHaveLength(2)
-    await page.getByRole('link', { name: '← 智能体主页' }).click()
+    await page.goBack()
   })
 
   await test.step('当 我从主页更多菜单重命名', async () => {

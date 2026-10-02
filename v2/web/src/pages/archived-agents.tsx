@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { agents, myAgents } from '../api/client'
-import { BackLink } from '../components/back-link'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import {
@@ -47,11 +46,6 @@ export function ArchivedAgentsPage() {
 
   return (
     <div className='max-w-xl space-y-6'>
-      <BackLink
-        to='/settings'
-        className='inline-flex min-h-11 items-center gap-2 text-sm text-(--foreground-muted) hover:text-(--foreground)'
-        label='账户设置'
-      />
       <div>
         <h1 className='text-2xl font-black tracking-tight'>已归档的智能体</h1>
         <p className='mt-2 text-sm text-(--foreground-subtle)'>

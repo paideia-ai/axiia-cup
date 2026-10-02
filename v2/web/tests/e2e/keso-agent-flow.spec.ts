@@ -151,7 +151,7 @@ test('咳嗦三页主路径：清单创建 → 主页 → 构建器保存 → �
   })
 
   await test.step('当 我从主页返回「我的智能体」', async () => {
-    await page.getByRole('link', { name: '← 我的智能体' }).click()
+    await page.getByRole('link', { name: '我的智能体', exact: true }).click()
     await expect(page).toHaveURL(/\/my-agents$/)
   })
 

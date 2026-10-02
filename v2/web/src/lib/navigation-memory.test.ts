@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { NavigationType } from 'react-router-dom'
-import { recordVisit, returnDestination } from './navigation-memory'
+import { recordVisit } from './navigation-memory'
 
 const empty = () => ({ visits: [], index: -1 })
 
@@ -67,11 +67,10 @@ describe('navigation history boundaries', () => {
       NavigationType.Pop,
     )
     expect(memory.visits).toEqual([{ key: 'default', url: '/matches' }])
-    expect(returnDestination(memory, '/my-agents', '我的智能体').delta)
-      .toBeNull()
+    expect(memory.index).toBe(0)
   })
 
-  it('preserves a source across resolver redirects and query replacements', () => {
+  it('preserves a source across resolver redirects', () => {
     let memory = recordVisit(
       empty(),
       { key: 'a', url: '/tournaments/42' },
@@ -87,28 +86,10 @@ describe('navigation history boundaries', () => {
       { key: 'c', url: '/agents/9' },
       NavigationType.Replace,
     )
-    expect(returnDestination(memory, '/my-agents', '我的智能体')).toEqual({
-      to: '/tournaments/42',
-      label: '积分榜',
-      delta: -1,
-    })
-  })
-
-  it('uses a safe destination when the only predecessor is a login page', () => {
-    let memory = recordVisit(
-      empty(),
-      { key: 'a', url: '/login' },
-      NavigationType.Pop,
-    )
-    memory = recordVisit(
-      memory,
-      { key: 'b', url: '/agents/9' },
-      NavigationType.Push,
-    )
-    expect(returnDestination(memory, '/my-agents', '我的智能体')).toEqual({
-      to: '/my-agents',
-      label: '我的智能体',
-      delta: null,
-    })
+    expect(memory.index).toBe(1)
+    expect(memory.visits).toEqual([
+      { key: 'a', url: '/tournaments/42' },
+      { key: 'c', url: '/agents/9' },
+    ])
   })
 })

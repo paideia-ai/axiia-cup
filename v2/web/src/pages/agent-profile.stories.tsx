@@ -5,7 +5,13 @@ import type { PropsWithChildren } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { http, HttpResponse } from 'msw'
 import { expect, userEvent, within } from 'storybook/test'
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
+import {
+  Link,
+  MemoryRouter,
+  Route,
+  Routes,
+  useNavigate,
+} from 'react-router-dom'
 import { NavigationMemoryProvider } from '../context/navigation-memory'
 import {
   finishedMatch,
@@ -249,9 +255,18 @@ function AuthenticatedPreview({ children }: PropsWithChildren) {
   return isLoading ? <p>正在加载预览…</p> : <AppShell>{children}</AppShell>
 }
 
+// MemoryRouter has no browser toolbar; this control exercises history POP.
+function HistoryBack() {
+  const navigate = useNavigate()
+  return (
+    <button type='button' onClick={() => navigate(-1)}>模拟浏览器后退</button>
+  )
+}
+
 function Page({ entry }: { entry: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
+      <HistoryBack />
       <AuthProvider>
         <NavigationMemoryProvider scope='identity-preview'>
           <AuthenticatedPreview>
@@ -381,7 +396,8 @@ export const HistoryReturnKeepsPage: Story = {
     const c = within(canvasElement)
     await userEvent.click(await c.findByRole('button', { name: '下一页' }))
     await userEvent.click(await c.findByRole('link', { name: /对战 #8900/ }))
-    await userEvent.click(await c.findByRole('link', { name: '← 对战列表' }))
+    await expect(c.queryByRole('link', { name: /^←/ })).toBeNull()
+    await userEvent.click(c.getByRole('button', { name: '模拟浏览器后退' }))
     await expect(await c.findByRole('link', { name: /对战 #8900/ }))
       .toBeVisible()
     await expect(c.queryByRole('link', { name: /对战 #9002/ })).toBeNull()

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
 
 import { AuthProvider } from '../context/auth'
 import {
@@ -16,9 +16,18 @@ import { ArchivedAgentsPage } from './archived-agents'
 import { MyAgentsPage } from './my-agents'
 import { SettingsPage } from './settings'
 
+// MemoryRouter has no browser toolbar; this control exercises history POP.
+function HistoryBack() {
+  const navigate = useNavigate()
+  return (
+    <button type='button' onClick={() => navigate(-1)}>模拟浏览器后退</button>
+  )
+}
+
 function Surface({ entry = '/agents/101' }: { entry?: string }) {
   return (
     <MemoryRouter initialEntries={[entry]}>
+      <HistoryBack />
       <AuthProvider>
         <Routes>
           <Route path='/agents/:agentId' element={<AgentViewPage />} />
@@ -140,7 +149,10 @@ export const ArchiveAndRestore: Story = {
     await expect(
       await canvas.findByRole('heading', { name: '商鞅「以民为本」' }),
     ).toBeVisible()
-    await userEvent.click(canvas.getByRole('link', { name: '← 账户设置' }))
+    await expect(canvas.queryByRole('link', { name: /^←/ })).toBeNull()
+    await userEvent.click(
+      canvas.getByRole('button', { name: '模拟浏览器后退' }),
+    )
     await userEvent.click(
       await canvas.findByRole('link', { name: /已归档的智能体/ }),
     )
