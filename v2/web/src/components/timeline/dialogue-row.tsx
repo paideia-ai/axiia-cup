@@ -33,7 +33,7 @@ function Speaker({
       {...tm('FA.speaker-line')}
       className='portrait-speaker portrait-dialogue-speaker mb-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-muted)'
     >
-      <RolePortrait labels={labels} speaker={speaker} />
+      <RolePortrait labels={labels} speaker={speaker} generating={live} />
       <span className='font-semibold text-(--foreground-subtle)'>
         {speakerName(labels, speaker)}
       </span>

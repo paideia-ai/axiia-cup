@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
 import { expect, userEvent, waitFor } from 'storybook/test'
 import type { MatchDetail, TurnDTO } from '../api/types'
-import type { EmotionCategory, EmotionOutput } from '../lib/emotion-playback'
+import type { EmotionCategory, EmotionOutput } from '../api/types'
 import {
   EmotionPlaybackProvider,
   OutputBoundary,
@@ -281,5 +281,99 @@ export const ImageFailure: Story = {
       )
         .toContain('ashigaru-neutral')
     })
+  },
+}
+
+const historicalLabels = speakerLabels('legal-harbor-murder-jury', {})
+let requestedPortraits: string[] = []
+function observePortraitRequests() {
+  requestedPortraits = []
+  const descriptor = Object.getOwnPropertyDescriptor(
+    HTMLImageElement.prototype,
+    'src',
+  )!
+  Object.defineProperty(HTMLImageElement.prototype, 'src', {
+    ...descriptor,
+    set(value: string) {
+      requestedPortraits.push(value)
+      descriptor.set!.call(this, value)
+    },
+  })
+  return () =>
+    Object.defineProperty(HTMLImageElement.prototype, 'src', descriptor)
+}
+function History({ classified = false }: { classified?: boolean }) {
+  const historical = data(
+    classified ? { ...pending, status: 'ready', categoryId: 'E09' } : null,
+  )
+  return (
+    <EmotionPlaybackProvider data={historical}>
+      <DialogueRow
+        turn={{ ...turn, speaker: '纪川' }}
+        labels={historicalLabels}
+        showReasoning={false}
+      />
+    </EmotionPlaybackProvider>
+  )
+}
+export const HistoricalWithoutEmotion: Story = {
+  beforeEach: observePortraitRequests,
+  render: () => <History />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector<HTMLImageElement>('.role-portrait')!
+          .naturalWidth,
+      ).toBe(256)
+    )
+    expect(
+      requestedPortraits.filter((url) =>
+        url.includes('ji-chuan-') && !url.includes('-neutral')
+      ),
+    ).toEqual([])
+  },
+}
+export const HistoricalWithEmotion: Story = {
+  beforeEach: observePortraitRequests,
+  render: () => <History classified />,
+  play: async ({ canvasElement }) => {
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+      ).toContain('ji-chuan-caring')
+    )
+    expect(
+      requestedPortraits.filter((url) =>
+        url.includes('ji-chuan-') && !url.includes('-neutral') &&
+        !url.includes('-caring')
+      ),
+    ).toEqual([])
+  },
+}
+export const LivePlaceholderPreloads: Story = {
+  beforeEach: observePortraitRequests,
+  render: () => (
+    <EmotionPlaybackProvider data={data(null)}>
+      <LiveDialogueRow
+        bubble={{
+          seq: 0,
+          channel: 'main',
+          speaker: '顾衡',
+          text: '',
+          reasoning: '',
+          call: 'say',
+        }}
+        labels={historicalLabels}
+        showReasoning={false}
+      />
+    </EmotionPlaybackProvider>
+  ),
+  play: async () => {
+    await waitFor(() =>
+      expect(
+        new Set(requestedPortraits.filter((url) => url.includes('gu-heng-')))
+          .size,
+      ).toBe(10)
+    )
   },
 }

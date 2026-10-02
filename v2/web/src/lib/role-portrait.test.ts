@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { speakerLabels } from '../components/timeline/labels'
-import type { EmotionCategory } from './emotion-playback'
+import type { EmotionCategory } from '../api/types'
 import { rolePortrait } from './role-portrait'
 
 describe('neutral portrait identity', () => {

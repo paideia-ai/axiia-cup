@@ -62,7 +62,8 @@ not speed up text to hide that queue.
 - Each job has a 1 second deadline measured from the accepted-output
   transaction, including queue time. Store settlement is conditional and
   terminal: late or invalid results become unavailable. A short provider
-  cooldown limits repeated failures without modifying previous results.
+  cooldown limits repeated provider failures without modifying previous results.
+  An individual output deadline never activates that cooldown.
 - Match detail includes an emotion snapshot and playback metadata. An
   authenticated `/v1/matches/:id/emotions` SSE stream sends snapshots
   independently of the ordinary match stream, so final classification can arrive
@@ -91,7 +92,9 @@ not prematurely replace ongoing playback with the finished report.
 It wraps ordinary dialogue, judge asides, verdicts, inquiries, public jury
 speech, private messages and individual ballots. Structured values reveal
 according to their position in the visible projection; translated labels wait
-for their source value.
+for their source value. If a short value occurs more than once and the API
+provides no field offsets, that field waits for completion instead of borrowing
+the first occurrence's timing. Full speech text still uses its original cadence.
 
 Portrait assets are decoded ahead of use for generating characters. Naming
 convention:
@@ -108,7 +111,12 @@ This adopts its Lanczos downsampling and lossless encoding, superseding the
 earlier original-resolution requirement. Runtime assets are byte-for-byte copies
 of the optimized artwork; the frontend does not resize or re-encode them.
 
-Historical rows open with complete text. Existing terminal classifications
+Historical rows open with complete text. On navigation, cached snapshots remain
+historical until the first successful fresh match response establishes the live
+baseline. Replies completed while the viewer was away are not replayed.
+Only explicit live-generation placeholders prefetch the ten-expression set;
+a historical row without emotion metadata loads neutral only.
+Existing terminal classifications
 remain usable. No retrospective classification of old matches occurs. Existing
 historical match replay controls are separate from new live chunk playback.
 

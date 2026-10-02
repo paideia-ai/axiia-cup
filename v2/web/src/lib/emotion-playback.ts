@@ -1,29 +1,5 @@
-import type { MatchDetail } from '../api/types'
+import type { EmotionCategory, EmotionOutput, MatchDetail } from '../api/types'
 
-export type EmotionCategory =
-  | 'E01'
-  | 'E02'
-  | 'E03'
-  | 'E04'
-  | 'E05'
-  | 'E06'
-  | 'E07'
-  | 'E08'
-  | 'E09'
-  | 'E10'
-export interface EmotionOutput {
-  outputRef: string
-  status: 'pending' | 'ready' | 'unavailable'
-  categoryId?: EmotionCategory | null
-  playback?: { text: string; frames: { atMs: number; end: number }[] } | null
-  waitMs: number
-  updateMs: number
-}
-export interface EmotionSnapshot {
-  enabled: boolean
-  settled: boolean
-  outputs: EmotionOutput[]
-}
 export interface Presentation {
   category: EmotionCategory
   text: string
@@ -127,10 +103,10 @@ export class EmotionPlayback {
     this.listeners.forEach((listener) => listener())
   }
 
-  ingest(data: MatchDetail, now: number) {
+  ingest(data: MatchDetail, now: number, fresh = true) {
     this.enabled = data.emotions?.enabled === true
     const historical = !this.initialized
-    this.initialized = true
+    if (fresh) this.initialized = true
     this.groups = outputGroups(data)
     for (const received of data.emotions?.outputs ?? []) {
       const cached = this.latest.get(received.outputRef)
@@ -294,7 +270,8 @@ export function presentedText(
   if (!view || view.complete) return text
   if (view.waiting) return ''
   const offset = view.text.indexOf(source)
-  if (offset < 0) return ''
+  // Without field offsets, an ambiguous value must not borrow an earlier field's time.
+  if (offset < 0 || view.text.indexOf(source, offset + 1) >= 0) return ''
   const length = Math.max(0, view.end - offset)
   if (text !== source) return length >= source.length ? text : ''
   let end = Math.min(text.length, length)

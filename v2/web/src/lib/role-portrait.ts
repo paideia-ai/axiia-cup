@@ -1,4 +1,4 @@
-import type { EmotionCategory } from './emotion-playback'
+import type { EmotionCategory } from '../api/types'
 import type { SpeakerLabels } from '../components/timeline/labels'
 import { speakerName } from '../components/timeline/labels'
 import { roleByKey } from '../scenarios'

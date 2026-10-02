@@ -9,10 +9,9 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { sseUrl } from '../api/client'
-import type { MatchDetail } from '../api/types'
+import type { EmotionSnapshot, MatchDetail } from '../api/types'
 import {
   EmotionPlayback,
-  type EmotionSnapshot,
   type Presentation,
   presentedText,
 } from '../lib/emotion-playback'
@@ -55,12 +54,16 @@ export function decodePortrait(
 }
 
 export function EmotionPlaybackProvider(
-  { data, children }: { data: MatchDetail | null; children: ReactNode },
+  { data, fresh = true, children }: {
+    data: MatchDetail | null
+    fresh?: boolean
+    children: ReactNode
+  },
 ) {
   const [store] = useState(() => new EmotionPlayback())
   useLayoutEffect(() => {
-    if (data) store.ingest(data, performance.now())
-  }, [data, store])
+    if (data) store.ingest(data, performance.now(), fresh)
+  }, [data, fresh, store])
   const ticking = useSyncExternalStore(store.subscribe, () => store.needsTick)
   const enabled = data?.emotions?.enabled === true
   const settled = data?.emotions?.settled === true

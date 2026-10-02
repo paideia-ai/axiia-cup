@@ -10,16 +10,19 @@ import { rolePortrait } from '../lib/role-portrait'
 
 // Decorative beside an existing name: screen readers already have that name.
 // Fixed dimensions reserve space before load; a missing asset hides quietly.
-export function RolePortrait({ labels, speaker, size = 'default' }: {
-  labels: SpeakerLabels
-  speaker: string
-  size?: 'default' | 'sm'
-}) {
+export function RolePortrait(
+  { labels, speaker, size = 'default', generating = false }: {
+    labels: SpeakerLabels
+    speaker: string
+    size?: 'default' | 'sm'
+    generating?: boolean
+  },
+) {
   const buffering = useEmotionBuffering()
   const view = useOutputPresentation()
   const neutral = rolePortrait(labels, speaker)
   useEffect(() => {
-    if (!buffering || (view && !view.waiting)) return
+    if (!buffering || !generating) return
     const categories = [
       'E01',
       'E02',
@@ -36,7 +39,7 @@ export function RolePortrait({ labels, speaker, size = 'default' }: {
       const image = rolePortrait(labels, speaker, category)
       if (image) void decodePortrait(image).catch(() => {})
     }
-  }, [buffering, neutral, labels, speaker, view?.waiting])
+  }, [buffering, neutral, labels, speaker, generating])
   const selected = rolePortrait(labels, speaker, view?.category)
   const [failed, setFailed] = useState<string | null>(null)
   const src = selected === failed ? neutral : selected

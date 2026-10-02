@@ -52,7 +52,11 @@ export function OsPendingCard({
       className='mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6'
     >
       <div className='portrait-os-header flex items-center gap-2 text-xs'>
-        <RolePortrait labels={labels} speaker={osPortraitSpeaker(labels)} />
+        <RolePortrait
+          labels={labels}
+          speaker={osPortraitSpeaker(labels)}
+          generating
+        />
         <div className='flex flex-wrap items-center gap-2'>
           <span className='font-semibold text-(--warning)'>
             {osTitle(labels)}

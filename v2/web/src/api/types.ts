@@ -1,4 +1,3 @@
-import type { EmotionSnapshot } from '../lib/emotion-playback'
 // Hand-written mirror of the Swift AxiiaContract target (packages/axiia/Targets/
 // AxiiaContract). Wire keys are the verbatim Swift property names — no snake_case,
 // no CodingKeys renames. Swift Optionals encode as absent keys, so every optional
@@ -813,4 +812,29 @@ export interface RoleIdentityDTO {
   key: string
   name: string
   side: Side
+}
+
+export type EmotionCategory =
+  | 'E01'
+  | 'E02'
+  | 'E03'
+  | 'E04'
+  | 'E05'
+  | 'E06'
+  | 'E07'
+  | 'E08'
+  | 'E09'
+  | 'E10'
+export interface EmotionOutput {
+  outputRef: string
+  status: 'pending' | 'ready' | 'unavailable'
+  categoryId?: EmotionCategory | null
+  playback?: { text: string; frames: { atMs: number; end: number }[] } | null
+  waitMs: number
+  updateMs: number
+}
+export interface EmotionSnapshot {
+  enabled: boolean
+  settled: boolean
+  outputs: EmotionOutput[]
 }

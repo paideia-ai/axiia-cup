@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { MatchDetail } from '../api/types'
-import {
-  type EmotionOutput,
-  EmotionPlayback,
-  presentedText,
-} from './emotion-playback'
+import type { EmotionOutput, MatchDetail } from '../api/types'
+import { EmotionPlayback, presentedText } from './emotion-playback'
 
 const output = (
   ref = 'one',
@@ -209,5 +205,47 @@ describe('emotion playback deadlines', () => {
       waiting: false,
       end: 3,
     })
+  })
+})
+
+describe('returning to a cached match', () => {
+  it('uses the first fresh snapshot as history, then replays only subsequent outputs', () => {
+    const store = new EmotionPlayback()
+    store.ingest(match([output('old', 'ready')]), 0, false)
+    store.ingest(match([output('old', 'ready')]), 20, false)
+    const refreshed = match([output('old', 'ready'), output('away', 'ready')])
+    store.ingest(refreshed, 100, true)
+    expect(store.get('away')?.complete).toBe(true)
+    expect(store.busy).toBe(false)
+    expect(store.cutoff(refreshed)).toBe(Infinity)
+    store.ingest(
+      match([...refreshed.emotions!.outputs, output('new')]),
+      110,
+      true,
+    )
+    expect(store.get('new')?.waiting).toBe(true)
+    store.tick(460)
+    expect(store.get('new')).toMatchObject({ waiting: false, end: 3 })
+  })
+})
+
+describe('structured playback text', () => {
+  const view = {
+    category: 'E01' as const,
+    text: '同意\n同意',
+    end: 2,
+    waiting: false,
+    complete: false,
+  }
+  it('does not reveal repeated fields using their first occurrence', () => {
+    expect(presentedText(view, '同意')).toBe('')
+    expect(presentedText(view, '赞成', '同意')).toBe('')
+    expect(presentedText({ ...view, complete: true }, '同意')).toBe('同意')
+  })
+  it('still streams the full speech and uniquely located fields', () => {
+    expect(presentedText(view, view.text)).toBe('同意')
+    expect(presentedText({ ...view, text: '反对\n同意', end: 4 }, '同意')).toBe(
+      '同',
+    )
   })
 })

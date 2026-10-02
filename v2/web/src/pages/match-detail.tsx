@@ -79,13 +79,20 @@ import { tm } from '../testmode/mark'
 
 function useMatchDetailQuery() {
   const { matchId = '' } = useParams()
-  return usePageQuery(matchQuery(Number(matchId)))
+  return usePageQuery({
+    ...matchQuery(Number(matchId)),
+    refetchOnMount: 'always',
+  })
 }
 export function MatchDetailPage() {
   const query = useMatchDetailQuery()
   const { matchId } = useParams()
   return (
-    <EmotionPlaybackProvider key={matchId} data={query.data}>
+    <EmotionPlaybackProvider
+      key={matchId}
+      data={query.data}
+      fresh={query.hasFreshData}
+    >
       <MatchDetailContent query={query} />
     </EmotionPlaybackProvider>
   )
@@ -203,9 +210,9 @@ function MatchDetailContent(
   }, [landmark, reload])
 
   // 完局战报 (#69): a finished, scored match starts with a spoiler summary,
-  // then keeps every transcript stage and verdict in script order. Anything short
-  // of that (queued, live, finished-but-unscored)
-  // keeps the live layout untouched.
+  // then keeps every transcript stage and verdict in script order. Results and
+  // settlement require scoring; court/council transcripts share their sidebar
+  // with queued, live, and finished-but-unscored matches.
   const finished = !playbackPending && data != null && data.summary.finished &&
     data.summary.scored
 

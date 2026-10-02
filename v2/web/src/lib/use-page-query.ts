@@ -36,6 +36,7 @@ export function usePageQuery<T, K extends QueryKey>(
     refreshError: retainData && query.data !== undefined && query.error
       ? messageOf(query.error)
       : null,
+    hasFreshData: query.isFetchedAfterMount && query.isSuccess,
     refreshing: query.isFetching && query.data !== undefined,
     reload,
   }

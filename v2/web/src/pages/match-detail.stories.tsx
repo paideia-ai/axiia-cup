@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
+import { navigationCache } from '../lib/navigation-cache'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { finishedMatch, finishedNoInquiryMatch } from '../testing/v34-fixtures'
@@ -573,5 +574,68 @@ export const HarborMissingHistory: Story = {
     await expect(within(poll).queryByLabelText(/^上次票型：/)).toBeNull()
     await expect(within(poll).getAllByText('有罪')).toHaveLength(6)
     await expect(within(poll).getAllByText('无罪')).toHaveLength(5)
+  },
+}
+
+const awayText = '离开期间完成的完整发言。'
+export const ReturnToCachedLiveMatch: Story = {
+  beforeEach: () => {
+    navigationCache.setQueryData(['match', 9001], {
+      ...finishedMatch,
+      summary: {
+        ...finishedMatch.summary,
+        finished: false,
+        scored: false,
+        winner: null,
+      },
+      currentTurn: 0,
+      turns: [],
+      verdicts: [],
+      scoreA: null,
+      scoreB: null,
+      emotions: { enabled: true, settled: true, outputs: [] },
+    })
+  },
+  parameters: {
+    msw: [
+      http.get(
+        '/v1/matches/9001/stream',
+        () => new HttpResponse(null, { status: 204 }),
+      ),
+      http.get('/v1/matches/9001', async () => {
+        await delay(300)
+        return HttpResponse.json({
+          ...finishedMatch,
+          turns: finishedMatch.turns.map((turn) =>
+            turn.seq === 0
+              ? { ...turn, finalText: awayText, outputRef: 'away' }
+              : turn
+          ),
+          emotions: {
+            enabled: true,
+            settled: true,
+            outputs: [{
+              outputRef: 'away',
+              status: 'ready',
+              categoryId: 'E02',
+              waitMs: 0,
+              updateMs: 0,
+              playback: {
+                text: awayText,
+                frames: [{ atMs: 0, end: 1 }, {
+                  atMs: 60_000,
+                  end: awayText.length,
+                }],
+              },
+            }],
+          },
+        })
+      }),
+    ],
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText(awayText)).toBeVisible()
+    await expect(await canvas.findByRole('heading', { name: '终局裁决' }))
+      .toBeVisible()
   },
 }
