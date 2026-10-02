@@ -4,12 +4,12 @@ import { Link, Navigate } from 'react-router-dom'
 
 import { catalog, config as configApi } from '../api/client'
 import type { Side } from '../api/types'
+import { SideEntryAction } from '../components/create-agent-action'
 import { Badge } from '../components/ui/badge'
 import { ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { useAuth } from '../context/auth'
 import { useAsync } from '../lib/use-async'
-import { agentEntryUrl } from '../lib/agent-entry'
 import { scenarioModule } from '../scenarios'
 import { tm } from '../testmode/mark'
 
@@ -130,13 +130,18 @@ export function ExpressPage() {
       </Card>
 
       <div className='flex flex-wrap items-center gap-4' {...tm('X.actions')}>
-        <ButtonLink
-          data-testid='express-build'
-          to={agentEntryUrl(data.scenarioID, mySide, 'build', true)}
-          {...tm('X.build-button')}
+        <SideEntryAction
+          scenarioID={data.scenarioID}
+          side={mySide}
+          role={mySideName}
+          target='build'
+          express
+          testID='express-build'
+          marker={tm('X.build-button')['data-tm']}
+          size='default'
         >
           去构建 →
-        </ButtonLink>
+        </SideEntryAction>
         <Link
           to='/scenarios'
           className='text-xs text-(--foreground-muted) transition hover:text-(--foreground)'

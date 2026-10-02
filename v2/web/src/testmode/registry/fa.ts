@@ -361,7 +361,7 @@ export const TM_FA: TmRegistry = {
     label: '去创建对侧按钮',
     clauses: ['U03-C08'],
     note:
-      '#59/#64 ensure（get-or-create）后先进入智能体主页；participants 缺席时降级为「去场景页选侧」',
+      '#59/#64 ensure（get-or-create）后先进入智能体主页；对侧为空且可选多名人物（本能寺）时就地弹出人物签，选中即创建；participants 缺席时降级为「去场景页选侧」',
   },
   'FA.journey-pvp': {
     label: '通往 PVP 格',
