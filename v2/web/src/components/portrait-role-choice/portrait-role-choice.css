@@ -1,5 +1,7 @@
 .portrait-choice-anchor {
   display: inline-flex;
+  /* Fills a host that stretches the entry; content-sized hosts are unaffected. */
+  flex-grow: 1;
   flex-shrink: 0;
   touch-action: none;
   user-select: none;

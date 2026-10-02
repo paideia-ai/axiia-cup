@@ -41,7 +41,7 @@ import { ReasoningFold } from '../components/timeline/reasoning-fold'
 import { TranscriptStage } from '../components/timeline/stage'
 import { Badge } from '../components/ui/badge'
 import { BackLink } from '../components/back-link'
-import { agentEntryUrl } from '../lib/agent-entry'
+import { SideEntryAction } from '../components/create-agent-action'
 import { ButtonLink } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { VerdictCard } from '../components/verdict-card'
@@ -1525,14 +1525,15 @@ function FirstBattleJourney({
           </p>
           {oppositeSide != null
             ? (
-              <ButtonLink
-                {...tm('FA.journey-opposite-button')}
-                size='sm'
+              <SideEntryAction
+                scenarioID={scenarioID}
+                side={oppositeSide}
+                role='对侧'
+                marker={tm('FA.journey-opposite-button')['data-tm']}
                 variant='secondary'
-                to={agentEntryUrl(scenarioID, oppositeSide)}
               >
                 去创建对侧
-              </ButtonLink>
+              </SideEntryAction>
             )
             : (
               <ButtonLink

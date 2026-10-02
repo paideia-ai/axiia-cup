@@ -73,12 +73,18 @@ export const ExplicitReturnAfterAsyncLoad: StoryObj = {
     await waitFor(() =>
       expect(document.documentElement.scrollHeight).toBeGreaterThan(3000)
     )
+    // Async content becoming tall releases restoration for the next frame.
+    // Let that initial top restoration finish before simulating reader scrolling.
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    )
     globalThis.scrollTo({ top: 1500, behavior: 'instant' })
     await waitFor(() => expect(globalThis.scrollY).toBe(1500))
     // Let the browser deliver the scroll event before navigating.
     await new Promise((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     )
+    await expect(globalThis.scrollY).toBe(1500)
     await userEvent.click(canvas.getByRole('link', { name: '进入智能体' }))
     await userEvent.click(canvas.getByRole('link', { name: /我的智能体/ }))
     await waitFor(() => expect(globalThis.scrollY).toBe(1500))

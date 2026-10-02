@@ -85,8 +85,12 @@ export function NavigationMemoryProvider({
       previousURL.current = null
     }
     const last = memoryRef.current.visits[memoryRef.current.index]
-    // Query changes and clearing one-shot route state must not jump the reader.
-    const samePage = action !== 'POP' && previousURL.current != null &&
+    // 筛选变更要从顶部看新的结果集。
+    const resetScroll =
+      (location.state as { resetScroll?: unknown } | null)?.resetScroll === true
+    // Other query changes and clearing one-shot route state preserve the reader's position.
+    const samePage = !resetScroll && action !== 'POP' &&
+      previousURL.current != null &&
       previousURL.current.split(/[?#]/)[0] === location.pathname
     const next = recordVisit(memoryRef.current, {
       key: location.key,
@@ -196,6 +200,7 @@ export function NavigationMemoryProvider({
     url,
     location.pathname,
     location.hash,
+    location.state,
     action,
     scope,
     enabled,

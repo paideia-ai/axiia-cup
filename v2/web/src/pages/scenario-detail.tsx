@@ -1,3 +1,4 @@
+import { sideDisplayName, sideStatsLine } from '../lib/side-display-name'
 import type { ReactNode } from 'react'
 import { RolePortrait } from '../components/role-portrait'
 import { speakerLabels } from '../components/timeline/labels'
@@ -363,7 +364,7 @@ function OverviewCard({
           )
           : null}
 
-        {statsLine(summary)
+        {sideStatsLine(summary)
           ? (
             <p
               className='rounded-md border border-(--border-soft) bg-white/2 px-3 py-2 text-xs text-(--foreground-subtle)'
@@ -372,7 +373,7 @@ function OverviewCard({
               <span className='mr-2 font-semibold tracking-[0.06em] text-(--foreground-muted)'>
                 侧方胜率
               </span>
-              {statsLine(summary)}
+              {sideStatsLine(summary)}
             </p>
           )
           : (
@@ -571,6 +572,10 @@ function SideCard({
 }) {
   const { account } = useAuth()
   const name = copy?.name ?? fallbackName
+  // A faction is not a character, so its agents are 「…智能体」.
+  const agentNoun = scenarioModule(scenarioID)?.factionCopy
+    ? `${name}智能体`
+    : name
   const homeAgent = preferredAgent(agents ?? [])
   return (
     <Card data-testid='scenario-intro-card' {...tm('DA.side-card')}>
@@ -665,7 +670,7 @@ function SideCard({
               className='text-xs text-(--foreground-muted)'
               {...tm('DA.side-owned-note')}
             >
-              你已有 {agents.length} 个{name}：{' '}
+              你已有 {agents.length} 个{agentNoun}：{' '}
               {agents.map((agent) => agent.name ?? `#${agent.agentID}`).join(
                 ' · ',
               )}
@@ -684,7 +689,7 @@ function SideCard({
                   className='flex flex-wrap items-center gap-2 text-xs text-(--foreground-muted)'
                   role='alert'
                 >
-                  <span>我的{name}清单加载失败：{inventoryError}</span>
+                  <span>我的{agentNoun}清单加载失败：{inventoryError}</span>
                   <Button
                     size='sm'
                     variant='secondary'
@@ -697,8 +702,8 @@ function SideCard({
               : (
                 <Button size='sm' variant='secondary' disabled>
                   {inventoryLoading
-                    ? `正在确认我的${name}…`
-                    : `暂时无法确认我的${name}`}
+                    ? `正在确认我的${agentNoun}…`
+                    : `暂时无法确认我的${agentNoun}`}
                 </Button>
               )
             : !account
@@ -721,6 +726,7 @@ function SideCard({
                   scenarioID={scenarioID}
                   side={side}
                   role={name}
+                  oppositeOnPage
                   testID={agents.length === 0
                     ? (side === 'a' ? 'build-agent' : 'build-agent-b')
                     : undefined}
@@ -731,7 +737,7 @@ function SideCard({
                   <Hammer className='mr-1.5 h-3.5 w-3.5' />
                   {agents.length === 0
                     ? (copy?.actionLabel ?? `去构建${name}`)
-                    : `再建一个${name}`}
+                    : `再建一个${agentNoun}`}
                 </CreateAgentAction>
                 {homeAgent && (
                   <Link
@@ -739,7 +745,7 @@ function SideCard({
                     className='ml-auto inline-flex min-h-11 cursor-pointer items-center rounded-md px-2 text-xs text-(--foreground-muted) transition hover:text-(--foreground-subtle) hover:underline focus-visible:outline-2 focus-visible:outline-(--accent) md:min-h-8'
                     {...tm('DA.view-mine-button')}
                   >
-                    查看我的{name}（{agents.length}）
+                    查看我的{agentNoun}（{agents.length}）
                   </Link>
                 )}
               </>
@@ -1069,15 +1075,6 @@ function JudgePromptDisclosure({
   )
 }
 
-function statsLine(summary: ScenarioSummary): string | null {
-  const stats = summary.stats
-  if (!stats) return null
-  const pct = (rate: number) => `${Math.round(rate * 100)}%`
-  return `${stats.battleCount} 场 · ${summary.sideAName} ${
-    pct(stats.sideWinRate.a)
-  } / ${summary.sideBName} ${pct(stats.sideWinRate.b)}`
-}
-
 function GateStatus({ summary }: { summary: ScenarioSummary }) {
   const progress = summary.gateProgress ?? null
   if (!progress) {
@@ -1111,8 +1108,11 @@ function GateStatus({ summary }: { summary: ScenarioSummary }) {
           tone={sideMet(progress[which]) ? 'success' : 'info'}
           {...tm('DA.gate-side-badge')}
         >
-          {which === 'a' ? summary.sideAName : summary.sideBName}{' '}
-          {sideProgressText(progress[which])}
+          {sideDisplayName(
+            summary.id,
+            which,
+            which === 'a' ? summary.sideAName : summary.sideBName,
+          )} {sideProgressText(progress[which])}
           {sideMet(progress[which]) ? ' ✓' : ''}
         </Badge>
       ))}

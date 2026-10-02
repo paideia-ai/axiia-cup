@@ -5,9 +5,14 @@ import {
 } from '../../src/testing/scenario-agent-fixtures'
 import { config } from '../../src/testing/v34-fixtures'
 
-async function setup(page: Page, empty = false) {
+async function setup(
+  page: Page,
+  empty = false,
+  prepare?: (inventory: typeof agentPreviewInventory) => void,
+) {
   const inventory = structuredClone(agentPreviewInventory)
   if (empty) inventory.scenarios[0].sides.a = []
+  prepare?.(inventory)
   const created: {
     scenarioID: string
     side: 'a' | 'b'
@@ -296,7 +301,10 @@ for (const { summary } of agentPreviewScenarios) {
       ]] as const
     ) {
       await page.goto(`/scenarios/${summary.id}`)
-      await page.getByRole('button', { name: `再建一个${role}` }).click()
+      const createLabel = summary.id === 'honnoji-decision'
+        ? `再建一个${side === 'a' ? '袭击本能寺' : '西进毛利'}智能体`
+        : `再建一个${role}`
+      await page.getByRole('button', { name: createLabel, exact: true }).click()
       if (summary.id === 'honnoji-decision') {
         await page.locator('.portrait-choice').first().click()
       }
@@ -396,8 +404,8 @@ for (const width of [1440, 390]) {
       )
       const trigger = page.getByRole('button', {
         name: entry === 'scenario'
-          ? '再建一个袭击本能寺'
-          : '新建袭击本能寺智能体',
+          ? '再建一个袭击本能寺智能体'
+          : '新建 袭击本能寺',
       })
       await trigger.scrollIntoViewIfNeeded()
       const cdp = await context.newCDPSession(page)
@@ -497,7 +505,7 @@ test('portrait keyboard selection and a rejected creation remain recoverable', a
     await route.fallback()
   })
   await page.goto('/scenarios/honnoji-decision')
-  const trigger = page.getByRole('button', { name: '再建一个暂不袭击信长' })
+  const trigger = page.getByRole('button', { name: '再建一个西进毛利智能体' })
   await trigger.scrollIntoViewIfNeeded()
   await trigger.focus()
   await page.keyboard.press('Enter')
@@ -519,5 +527,99 @@ test('portrait keyboard selection and a rejected creation remain recoverable', a
   await page.getByRole('button', { name: '创建明智军中的足轻' }).click()
   await expect(page).toHaveURL(/\/agents\/2001$/)
   expect(created[0].roleKey).toBe('ashigaru')
+  expect(errors).toEqual([])
+})
+
+// A blocked same-side creation offers the opposite side where that side is not
+// on the page (the agent home): with no opposite agent yet, the action chooses
+// the character in place instead of opening the role page.
+for (const width of [1440, 390]) {
+  test(`${width}px blocked sibling on the agent home chooses the opposite character in place`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    const { created, errors } = await setup(page, false, (inventory) => {
+      inventory.scenarios.find((item) =>
+        item.scenarioID === 'honnoji-decision'
+      )!.sides.b = []
+    })
+    await page.route('**/v1/agents', async (route) => {
+      if (route.request().postDataJSON().side === 'a') {
+        return route.fulfill({
+          status: 409,
+          json: { error: 'sibling_gate', message: '先为对侧保存一个策略' },
+        })
+      }
+      await route.fallback()
+    })
+    await page.goto('/agents/1200')
+    await page.getByRole('button', { name: '新建 袭击本能寺' }).click()
+    await page.locator('.portrait-choice').first().click()
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page.getByRole('link', { name: /去完善/ })).toHaveCount(0)
+    await page.getByRole('button', { name: '创建主张西进毛利智能体' }).click()
+    await expect(page.locator('.portrait-choice')).toHaveCount(2)
+    await page.getByRole('button', { name: '创建明智军中的足轻' }).click()
+    // The inventory now lists the new agent; the pending navigation must survive.
+    await expect(page).toHaveURL(/\/agents\/2001$/)
+    await expect(page.getByRole('textbox', { name: '智能体名称' }))
+      .toBeFocused()
+    expect(created).toEqual([{
+      scenarioID: 'honnoji-decision',
+      side: 'b',
+      roleKey: 'ashigaru',
+    }])
+    expect(errors).toEqual([])
+  })
+}
+
+// My agents shows both sides: the rejection adds no action of its own, and the
+// opposite column's own button chooses the character in place.
+test('blocked sibling on my agents leaves an empty opposite side to its column', async ({ page }) => {
+  const { created, errors } = await setup(page, false, (inventory) => {
+    inventory.scenarios.find((item) => item.scenarioID === 'honnoji-decision')!
+      .sides.b = []
+  })
+  await page.route('**/v1/agents', async (route) => {
+    if (route.request().postDataJSON().side === 'a') {
+      return route.fulfill({
+        status: 409,
+        json: { error: 'sibling_gate', message: '先为对侧保存一个策略' },
+      })
+    }
+    await route.fallback()
+  })
+  await page.goto('/my-agents')
+  await page.getByRole('button', { name: '新建 袭击本能寺' }).click()
+  await page.locator('.portrait-choice').first().click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page.getByRole('button', { name: /^创建主张西进毛利/ }))
+    .toHaveCount(0)
+  await expect(page.getByRole('link', { name: /去完善/ })).toHaveCount(0)
+  await page.getByRole('button', { name: '新建 西进毛利' }).click()
+  await page.getByRole('button', { name: '创建细川藤孝' }).click()
+  await expect(page).toHaveURL(/\/agents\/2001$/)
+  expect(created).toEqual([{
+    scenarioID: 'honnoji-decision',
+    side: 'b',
+    roleKey: 'hosokawa',
+  }])
+  expect(errors).toEqual([])
+})
+
+test('a blocked sibling opens an existing opposite draft instead of creating', async ({ page }) => {
+  const { created, errors } = await setup(page)
+  await page.route('**/v1/agents', (route) =>
+    route.fulfill({
+      status: 409,
+      json: { error: 'sibling_gate', message: '先为对侧保存一个策略' },
+    }))
+  await page.goto('/my-agents')
+  await page.getByRole('button', { name: '新建 袭击本能寺' }).click()
+  await page.locator('.portrait-choice').first().click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await expect(page.getByRole('button', { name: /^创建主张西进毛利/ }))
+    .toHaveCount(0)
+  await page.getByRole('link', { name: '去完善主张西进毛利智能体' }).click()
+  await expect(page).toHaveURL(/\/agents\/1250$/)
+  expect(created).toHaveLength(0)
   expect(errors).toEqual([])
 })

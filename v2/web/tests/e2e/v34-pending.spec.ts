@@ -547,8 +547,12 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       'sibling_gate',
     )
 
-    // 引导 CTA 打开对侧智能体主页。
-    await page.getByRole('link', { name: `去完善${sideBName}智能体` }).click()
+    // 对侧的新建入口就在同一页：引导门不另给按钮，直接用对侧那一栏的加号。
+    await expect(page.getByRole('link', { name: `去完善${sideBName}智能体` }))
+      .toHaveCount(0)
+    await scenarioGroup()
+      .getByRole('button', { name: `新建${sideBName}智能体` })
+      .click()
     await expect(page).toHaveURL(/\/agents\/\d+$/)
     const oppositeAgentID = Number(
       /\/agents\/(\d+)$/.exec(page.url())?.[1],

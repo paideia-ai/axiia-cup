@@ -6,7 +6,7 @@ import { shangyangCourt } from './shangyang-court'
 import { trolleyProblem } from './trolley-problem'
 import type { ScenarioEducation, ScenarioModule, ScenarioRole } from './types'
 
-export type { ScenarioModule, ScenarioRole } from './types'
+export type { ScenarioFactionCopy, ScenarioModule, ScenarioRole } from './types'
 
 export const DIFFICULTY_LABEL = { 1: '简单', 2: '中等', 3: '困难' } as const
 const SERVER_DIFFICULTY = { easy: 1, medium: 2, hard: 3 } as const
@@ -48,6 +48,19 @@ export function rolesForSide(
   side: Side,
 ): ScenarioRole[] {
   return module?.roles.filter((role) => role.side === side) ?? []
+}
+
+// A side label describes each selectable role in one run of text
+// (「甲：…。乙：…」). Start every role after the first on its own line.
+export function roleDescriptionLines(
+  module: ScenarioModule | null,
+  side: Side,
+  text: string,
+): string {
+  return rolesForSide(module, side).reduce(
+    (lines, { name }) => lines.replaceAll(`。${name}：`, `。\n${name}：`),
+    text,
+  )
 }
 
 export function roleByKey(

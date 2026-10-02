@@ -475,7 +475,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-a3', 'spec-change-57'],
     journeys: ['j1s3', 'j1s4'],
     note:
-      '懒 ensure 单侧 agent → /agents/:id/build?express=1（构建器里保存即自动开战，U03-C05）',
+      '懒 ensure 单侧 agent → /agents/:id/build?express=1（构建器里保存即自动开战，U03-C05）；首战场景可选多名人物（本能寺）且该侧为空时，就地弹出人物签，选中即创建',
   },
   'X.escape-link': {
     label: '逃生链接',
