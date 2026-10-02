@@ -329,7 +329,7 @@ export const finishedMatch: MatchDetail = {
   scoreA: 0.5,
   scoreB: 0,
   // F2：reasoning 用商鞅脚本的真实形态（名字 ±delta：理由 + 重复的真目标/
-  // 问询前置行 + 开发者收尾行），让得分账解析与隐藏目标五步走真路径。
+  // 问询前置行 + 开发者收尾行），让得分账解析与随机目标五步走真路径。
   reasoning: [
     '程序化计分明细：',
     '真目标：商鞅 = SR2，甘龙 = GR2',

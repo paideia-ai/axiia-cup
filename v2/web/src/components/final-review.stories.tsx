@@ -129,7 +129,7 @@ export const InteractionChecks: Story = {
         }
       }
       if (scene.id === 144 || scene.id === 120) {
-        const goals = canvas.getByRole('region', { name: '隐藏目标及计分' })
+        const goals = canvas.getByRole('region', { name: '随机目标及计分' })
         await expect(goals.querySelectorAll('[data-review-goal]')).toHaveLength(
           6,
         )
@@ -195,7 +195,7 @@ export const InteractionChecks: Story = {
       await expect(canvasElement.querySelector('.judge-transcript')).toBeNull()
       await expect(canvasElement.querySelector('[data-review-ending]'))
         .toBeNull()
-      await expect(canvas.queryByRole('region', { name: '隐藏目标及计分' }))
+      await expect(canvas.queryByRole('region', { name: '随机目标及计分' }))
         .toBeNull()
       await userEvent.click(
         canvas.getByRole('button', { name: '退出回放' }),
@@ -241,7 +241,7 @@ export const MobileReportChecks: Story = {
             .toHaveLength(1)
           const ending = scene.id === 122
             ? canvas.getByRole('region', { name: '整局裁决' })
-            : canvas.getByRole('region', { name: '隐藏目标及计分' })
+            : canvas.getByRole('region', { name: '随机目标及计分' })
           await expect(
             Boolean(
               ending.compareDocumentPosition(card) &

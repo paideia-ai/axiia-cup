@@ -18,7 +18,8 @@ export const shangyangCourt: ScenarioModule = {
   ],
   hiddenGoals: {
     a: {
-      note: '每局随机一项为真目标，其余两项为假目标。',
+      note:
+        '每局从三项请求中随机指定一项为真目标，其余两项为假目标。真假标记仅己方 AI 可见，对手只知道候选列表。',
       groups: [
         {
           options: [
@@ -33,7 +34,8 @@ export const shangyangCourt: ScenarioModule = {
       ],
     },
     b: {
-      note: '每局随机一项为真目标，其余两项为假目标。',
+      note:
+        '每局从三项请求中随机指定一项为真目标，其余两项为假目标。真假标记仅己方 AI 可见，对手只知道候选列表。',
       groups: [
         {
           options: [

@@ -266,7 +266,7 @@ test('U04-C07：DA 页内没有编辑框（#42 与 E 分开）', async () => {
   })
 })
 
-test('U04-C08：四张顶层卡依序呈现，隐藏目标渐进披露（#142 结构）', async () => {
+test('U04-C08：四张顶层卡依序呈现，随机目标渐进披露（#142 结构）', async () => {
   test.setTimeout(120_000)
   await test.step('假如 我打开商鞅场景的 DA 页', async () => {
     await gotoDA()
@@ -286,13 +286,13 @@ test('U04-C08：四张顶层卡依序呈现，隐藏目标渐进披露（#142 �
       last = at
     }
   })
-  await test.step('并且 「隐藏目标列表」默认收起——SR 编号此刻不可见', async () => {
-    await expect(page.getByRole('button', { name: '隐藏目标列表' }))
+  await test.step('并且 「随机目标候选列表」默认收起——SR 编号此刻不可见', async () => {
+    await expect(page.getByRole('button', { name: '随机目标候选列表' }))
       .toHaveCount(2)
     await expect(page.getByText('SR1')).toHaveCount(0)
   })
-  await test.step('当 我点开甲方的「隐藏目标列表」；那么 SR1—SR3 候选清单出现', async () => {
-    await page.getByRole('button', { name: '隐藏目标列表' }).first().click()
+  await test.step('当 我点开甲方的「随机目标候选列表」；那么 SR1—SR3 候选清单出现', async () => {
+    await page.getByRole('button', { name: '随机目标候选列表' }).first().click()
     for (const id of ['SR1', 'SR2', 'SR3']) {
       await expect(page.getByText(id, { exact: true })).toBeVisible()
     }
@@ -336,13 +336,13 @@ test('U04-C10：内容基线八项齐备，裁判 prompt 原文可查（同源�
     await gotoDA()
     combined = await page.locator('body').innerText()
     await expandJudgePrompt()
-    const hiddenLists = page.getByRole('button', { name: '隐藏目标列表' })
+    const hiddenLists = page.getByRole('button', { name: '随机目标候选列表' })
     await hiddenLists.first().click()
     await hiddenLists.nth(1).click()
     await expect(page.getByText('GR1', { exact: true })).toBeVisible()
     combined += '\n' + await page.locator('body').innerText()
   })
-  await test.step('那么 页面包含：背景故事、双方胜利条件、双方是谁（商鞅/甘龙）、裁判摘要、评判什么、隐藏目标玩法、计分规则、预计时长', () => {
+  await test.step('那么 页面包含：背景故事、双方胜利条件、双方是谁（商鞅/甘龙）、裁判摘要、评判什么、随机目标玩法、计分规则、预计时长', () => {
     expect(combined).toContain('背景故事')
     expect(combined).toContain('最重要的目标')
     expect(combined).toContain('说服秦孝公立即推行变法。')
@@ -352,7 +352,7 @@ test('U04-C10：内容基线八项齐备，裁判 prompt 原文可查（同源�
     expect(combined).toContain('秦孝公')
     // 评判什么：裁判摘要与提示词原文交代评判尺度（实据、利害、可行性）。
     expect(combined).toMatch(/实据、利害、可行性|必须判断/)
-    expect(combined).toContain('国策之外，还有隐藏目标')
+    expect(combined).toContain('国策之外，还有随机目标')
     expect(combined).toContain('计分规则')
     expect(combined).toMatch(/一场约 \d+ 分钟/)
   })
@@ -399,13 +399,13 @@ test('U04-C11：计分来自场景数据、精确权重公开（#42/#26）', asy
   })
 })
 
-test('U04-C12：隐藏目标机制对人公开', async () => {
+test('U04-C12：随机目标机制对人公开', async () => {
   test.setTimeout(120_000)
   await test.step('假如 我打开商鞅场景的 DA 页', async () => {
     await gotoDA()
   })
-  await test.step('那么 双方卡的「隐藏目标列表」点开即公开候选清单与真假机制说明', async () => {
-    const hiddenLists = page.getByRole('button', { name: '隐藏目标列表' })
+  await test.step('那么 双方卡的「随机目标候选列表」点开即公开候选清单与真假机制说明', async () => {
+    const hiddenLists = page.getByRole('button', { name: '随机目标候选列表' })
     await expect(hiddenLists).toHaveCount(2)
     await hiddenLists.first().click()
     await expect(page.getByText('SR1', { exact: true })).toBeVisible()
@@ -423,7 +423,7 @@ test('U04-C13：EXPAND-1 请求项；场景页不展示开场白', async () => {
     await gotoDA()
   })
   await test.step('那么 双方层给出请求项候选（SR/GR 编号）', async () => {
-    const hiddenLists = page.getByRole('button', { name: '隐藏目标列表' })
+    const hiddenLists = page.getByRole('button', { name: '随机目标候选列表' })
     await hiddenLists.first().click()
     await expect(page.getByText('SR1', { exact: true })).toBeVisible()
     await hiddenLists.nth(1).click()

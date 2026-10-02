@@ -328,8 +328,8 @@ export const FinishedScored: Story = {
       name: '终局裁决',
       level: 2,
     })
-    // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间。
-    const hiddenGoal = canvas.getByRole('heading', { name: '隐藏目标' })
+    // F2 · #69：随机目标五步区块独立成段，位于问询与计分推导之间。
+    const hiddenGoal = canvas.getByRole('heading', { name: '随机目标' })
     const scoring = canvas.getByRole('heading', { name: '计分推导' })
 
     await expect(result.compareDocumentPosition(dialogue) & 4).toBeTruthy()
@@ -410,7 +410,7 @@ export const ReplayHidesSpoilers: Story = {
     await expect(canvas.queryByRole('region', { name: '简要对局结果' }))
       .toBeNull()
     await expect(canvas.queryByRole('heading', { name: '问询' })).toBeNull()
-    await expect(canvas.queryByRole('heading', { name: '隐藏目标' })).toBeNull()
+    await expect(canvas.queryByRole('heading', { name: '随机目标' })).toBeNull()
     await expect(canvas.queryByRole('heading', { name: '计分推导' })).toBeNull()
     await expect(canvas.getByRole('heading', { name: '对话重演' }))
       .toBeVisible()

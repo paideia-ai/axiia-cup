@@ -765,7 +765,7 @@ function HiddenGoalList({
       <Accordion className='divide-y-0'>
         <AccordionItem
           value='hidden-goals'
-          title='隐藏目标列表'
+          title='随机目标候选列表'
           triggerClassName='text-xs font-medium tracking-[0.04em] text-(--foreground-muted)'
         >
           <div className='space-y-3 border-t border-(--border-soft) pt-3'>

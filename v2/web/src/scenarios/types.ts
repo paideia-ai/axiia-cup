@@ -133,7 +133,7 @@ export interface ScenarioEducation {
   // 裁判/裁决者模型默认值（#51 W2 DEEP「裁判/计分模型」），同源机制同上。
   judgeModel?: string
   scoring: string
-  // 第 4 层 DEEP：背景故事全文 + 隐藏目标机制怎么玩。
+  // 第 4 层 DEEP：背景故事全文 + 随机目标机制怎么玩。
   background: string
   hiddenGoalHowTo: string
 }

@@ -98,10 +98,10 @@ function GoalsAndScoring(
     }
   }
   return (
-    <section className='space-y-3' aria-label='隐藏目标及计分'>
+    <section className='space-y-3' aria-label='随机目标及计分'>
       <div className='flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2'>
         <h2 className='text-sm font-semibold text-(--foreground)'>
-          隐藏目标及计分
+          随机目标及计分
         </h2>
         <div
           aria-label='本局总分'

@@ -1009,7 +1009,7 @@ export function MatchDetailPage() {
               : null}
 
             {
-              /* F2 · #69：独立的「隐藏目标」五步区块，排在问询与计分推导之
+              /* F2 · #69：独立的「随机目标」五步区块，排在问询与计分推导之
               间——真目标 → 是否达成 → 对手猜了什么 → 是否被识破 → 得分
               变化。散文里那条「被识破 −1」在这里成为明确的一步。 */
             }
@@ -1020,7 +1020,7 @@ export function MatchDetailPage() {
               ? (
                 <div {...tm('FA.hidden-goal-section')} className='space-y-3'>
                   <h2 className='text-sm font-semibold text-(--foreground)'>
-                    隐藏目标
+                    随机目标
                   </h2>
                   <div className='grid gap-3 md:grid-cols-2'>
                     {(['a', 'b'] as const)
@@ -1673,7 +1673,7 @@ function LedgerLine({
   )
 }
 
-// F2 · #69 隐藏目标五步卡：一侧的 真目标 → 是否达成 → 对手猜了什么 →
+// F2 · #69 随机目标五步卡：一侧的 真目标 → 是否达成 → 对手猜了什么 →
 // 是否被识破 → 得分变化。事件证据（achieved/identified）优先，缺席时由解析
 // 出的得分账条目回补；两者都没有的步骤以「—」示不知，不瞎猜。
 function HiddenGoalCard({

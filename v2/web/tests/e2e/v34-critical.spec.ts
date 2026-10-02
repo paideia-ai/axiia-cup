@@ -104,7 +104,7 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
     name: '终局裁决',
     exact: true,
   })
-  const hiddenGoal = page.getByRole('heading', { name: '隐藏目标' })
+  const hiddenGoal = page.getByRole('heading', { name: '随机目标' })
   const scoring = page.getByRole('heading', { name: '计分推导' })
   await expect(result).toBeVisible()
   await expect(dialogue).toBeVisible()
@@ -115,7 +115,7 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   expect((await result.boundingBox())!.y).toBeLessThan(
     (await dialogue.boundingBox())!.y,
   )
-  // F2 · #69：隐藏目标五步区块独立成段，位于问询与计分推导之间；「被识破」
+  // F2 · #69：随机目标五步区块独立成段，位于问询与计分推导之间；「被识破」
   // 的扣分是得分账里明确的一行，不再只是页底散文。
   expect((await inquiry.boundingBox())!.y).toBeLessThan(
     (await verdict.boundingBox())!.y,
@@ -142,7 +142,7 @@ test('v3.4 #20/#22/#24/#69/#80 report journey uses a deterministic API fixture o
   await expect(page.getByRole('heading', { name: '结果' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '问询', exact: true }))
     .toHaveCount(0)
-  await expect(page.getByRole('heading', { name: '隐藏目标' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: '随机目标' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '计分推导' })).toHaveCount(0)
   await expect(page.getByRole('switch', { name: /调试模式/ }))
     .toHaveAttribute('aria-disabled', 'true')

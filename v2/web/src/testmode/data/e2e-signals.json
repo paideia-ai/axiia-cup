@@ -237,10 +237,10 @@
     },
     "U04-C08": {
       "tests": [
-        "compare/u04-discovery.spec.ts :: U04-C08：四张顶层卡依序呈现，隐藏目标渐进披露（#142 结构）"
+        "compare/u04-discovery.spec.ts :: U04-C08：四张顶层卡依序呈现，随机目标渐进披露（#142 结构）"
       ],
       "selectors": [
-        "role:button:隐藏目标列表",
+        "role:button:随机目标候选列表",
         "text:SR1"
       ]
     },
@@ -257,7 +257,7 @@
         "compare/u04-discovery.spec.ts :: U04-C10：内容基线八项齐备，裁判 prompt 原文可查（同源）"
       ],
       "selectors": [
-        "role:button:隐藏目标列表",
+        "role:button:随机目标候选列表",
         "text:GR1"
       ]
     },
@@ -271,10 +271,10 @@
     },
     "U04-C12": {
       "tests": [
-        "compare/u04-discovery.spec.ts :: U04-C12：隐藏目标机制对人公开"
+        "compare/u04-discovery.spec.ts :: U04-C12：随机目标机制对人公开"
       ],
       "selectors": [
-        "role:button:隐藏目标列表",
+        "role:button:随机目标候选列表",
         "text:SR1",
         "text:每局随机一项为真目标，其余两项为假目标。",
         "text:GR1"
@@ -286,7 +286,7 @@
       ],
       "selectors": [
         "testid:opening-line",
-        "role:button:隐藏目标列表",
+        "role:button:随机目标候选列表",
         "text:SR1",
         "text:GR1"
       ]

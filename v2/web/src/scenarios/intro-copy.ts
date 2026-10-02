@@ -50,7 +50,7 @@ export const shangyangCourtIntro: ScenarioIntroCopy = {
         },
       },
       note: {
-        title: '国策之外，还有隐藏目标',
+        title: '国策之外，还有随机目标',
         text:
           '每方另有三个请求，一个是真目标，两个是假目标。争取真目标被国君批准，同时避免被对手看穿。',
       },

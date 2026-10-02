@@ -3,7 +3,7 @@
 // 叙述以 feature 为准。
 //
 // 2026-08-25 移植注（PR #124 → main，含 #137/#138 后的行为）：
-// · 原红「#69 隐藏目标五步」随 F2 落地转绿：断言独立「隐藏目标」区块、
+// · 原红「#69 随机目标五步」随 F2 落地转绿：断言独立「随机目标」区块、
 //   逐项账目表（小计/合计/被识破扣分）、ScoreRow（被识破）/（猜中）与
 //   结果卡签名明细；F7 胜负行带视角；F5 回放新控件（上一步 / 0.5×1×2×
 //   分段倍速 / 常驻终局），不写死任何时长。
@@ -166,7 +166,7 @@ test.describe('U07 · 战报（§A7）', () => {
       await expect(page.getByText(final!.model).first()).toBeVisible()
     })
     await test.step(
-      '并且 区块自上而下依次为 结果、对话全文、问询、终局裁决、隐藏目标、计分推导',
+      '并且 区块自上而下依次为 结果、对话全文、问询、终局裁决、随机目标、计分推导',
       async () => {
         const titles = await sectionTitles(page)
         const order = [
@@ -174,7 +174,7 @@ test.describe('U07 · 战报（§A7）', () => {
           '对话全文',
           '问询',
           '终局裁决',
-          '隐藏目标',
+          '随机目标',
           '计分推导',
         ]
           .map((title) => titles.findIndex((t) => t === title))
@@ -202,18 +202,18 @@ test.describe('U07 · 战报（§A7）', () => {
     })
   })
 
-  test('隐藏目标的五步披露区块（#69——F2 已落地，转绿）', async ({ page }) => {
+  test('随机目标的五步披露区块（#69——F2 已落地，转绿）', async ({ page }) => {
     await test.step('假如 我以对局所有者视角登录并打开完局战报（响应夹具）', async () => {
       await signup(page, 'u07-b')
       await mockMatch(page, RICH_MATCH_ID, richMatch('owner'))
       await openFinishedReport(page, RICH_MATCH_ID)
     })
     await test.step(
-      '那么 终局裁决之后、计分推导之前存在独立的「隐藏目标」区块',
+      '那么 终局裁决之后、计分推导之前存在独立的「随机目标」区块',
       async () => {
         const titles = await sectionTitles(page)
-        const hidden = titles.findIndex((t) => t.includes('隐藏目标'))
-        expect(hidden, `h2＝${titles}——无「隐藏目标」区块`).toBeGreaterThan(-1)
+        const hidden = titles.findIndex((t) => t.includes('随机目标'))
+        expect(hidden, `h2＝${titles}——无「随机目标」区块`).toBeGreaterThan(-1)
         expect(hidden).toBeGreaterThan(
           titles.findIndex((t) => t === '终局裁决'),
         )
@@ -535,10 +535,10 @@ test.describe('U07 · 战报（§A7）', () => {
       ).toBe('0.5')
     })
     await test.step(
-      '并且 结果、问询、隐藏目标、计分推导区块整段隐藏（不剧透终局）',
+      '并且 结果、问询、随机目标、计分推导区块整段隐藏（不剧透终局）',
       async () => {
         const titles = await sectionTitles(page)
-        for (const title of ['结果', '问询', '隐藏目标', '计分推导']) {
+        for (const title of ['结果', '问询', '随机目标', '计分推导']) {
           expect(titles, `回放中不该出现「${title}」`).not.toContain(title)
         }
       },

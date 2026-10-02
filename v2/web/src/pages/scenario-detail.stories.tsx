@@ -179,9 +179,9 @@ export const ShangyangFourCards: Story = {
     await expect(
       await canvas.findByText('每侧各赢 ≥1 场 PVE 练习解锁 PVP'),
     ).toBeVisible()
-    await expect(canvas.getByText('国策之外，还有隐藏目标')).toBeVisible()
+    await expect(canvas.getByText('国策之外，还有随机目标')).toBeVisible()
     const hiddenGoalButtons = canvas.getAllByRole('button', {
-      name: '隐藏目标列表',
+      name: '随机目标候选列表',
     })
     await expect(hiddenGoalButtons).toHaveLength(2)
     for (const button of hiddenGoalButtons) {
@@ -248,7 +248,7 @@ export const HonnojiFourCards: Story = {
       canvas.getByRole('heading', { level: 4, name: '明智军中的足轻' }),
     ).toBeVisible()
     const hiddenGoalButtons = canvas.getAllByRole('button', {
-      name: '隐藏目标列表',
+      name: '随机目标候选列表',
     })
     await expect(hiddenGoalButtons).toHaveLength(4)
     for (const button of hiddenGoalButtons) {
@@ -308,7 +308,7 @@ export const TrolleyFourCards: Story = {
       }),
     ).toBeVisible()
     await expect(
-      canvas.queryByRole('button', { name: '隐藏目标列表' }),
+      canvas.queryByRole('button', { name: '随机目标候选列表' }),
     ).toBeNull()
     await expect(canvas.queryByTestId('opening-line')).toBeNull()
     await expect(
@@ -359,7 +359,7 @@ export const FengyitingFourCards: Story = {
       canvas.queryByText(/正史未记载其姓名/),
     ).toBeNull()
     await expect(
-      canvas.queryByRole('button', { name: '隐藏目标列表' }),
+      canvas.queryByRole('button', { name: '随机目标候选列表' }),
     ).toBeNull()
     await expect(await canvas.findByRole('button', { name: '去构建董卓' }))
       .toBeVisible()
@@ -398,7 +398,7 @@ export const HarborFourCards: Story = {
       canvas.queryByText(/不会给案件增加新事实/),
     ).toBeNull()
     await expect(
-      canvas.queryByRole('button', { name: '隐藏目标列表' }),
+      canvas.queryByRole('button', { name: '随机目标候选列表' }),
     ).toBeNull()
     await expect(await canvas.findByRole('button', { name: '去构建苏' }))
       .toBeVisible()

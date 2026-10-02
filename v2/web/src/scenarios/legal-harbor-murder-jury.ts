@@ -37,6 +37,6 @@ export const legalHarborMurderJury: ScenarioModule = {
     // 该场景在 runtime-quotes.json 显式缺席（见 v2/scenarios/tools/web-quotes.ts）。
     scoring: '11名陪审员各投一票，有罪票达到6票即定罪。',
     background: source.overview.paragraphs.join('\n\n'),
-    hiddenGoalHowTo: '本场景没有真假请求式的隐藏目标机制。',
+    hiddenGoalHowTo: '本场景没有真假请求式的随机目标机制。',
   },
 }

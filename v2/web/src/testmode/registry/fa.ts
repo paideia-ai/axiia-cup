@@ -1,5 +1,5 @@
 /* FA 战报（/matches/:id）——排队 / 进行中·实况 / 完局三态共用一个视图（U07-C01）。
-   完局区块次序＝结果卡 → 对话全文 → 问询 → 隐藏目标 → 计分推导（#69）；
+   完局区块次序＝结果卡 → 对话全文 → 问询 → 随机目标 → 计分推导（#69）；
    回放（#24）把终局层整段藏起来；调试模式（#22）只管「内心」折叠。
    本文件还登记战报里复用的时间线部件（timeline/*、verdict-card、judge-trend、
    replay-controls）以及 components/script-view（只在管理面用，故 id 以 ADM. 开头）。
@@ -59,7 +59,7 @@ export const TM_FA: TmRegistry = {
     clauses: ['U07-C09'],
     journeys: ['j7s4', 'jR5s1', 'jR5s5'],
     note:
-      '纯前端重演，无新 LLM 调用；点下后结果/问询/隐藏目标/计分推导整段隐藏',
+      '纯前端重演，无新 LLM 调用；点下后结果/问询/随机目标/计分推导整段隐藏',
     when: '完局且已计分、且有可回放步骤时出现；回放中隐藏',
   },
   'FA.challenge-leg-badge': {
@@ -198,9 +198,9 @@ export const TM_FA: TmRegistry = {
     when: '有裁决锚点落在全部阶段之外时',
   },
 
-  // ---------- 完局：隐藏目标（#69 五步） ----------
+  // ---------- 完局：随机目标（#69 五步） ----------
   'FA.hidden-goal-section': {
-    label: '隐藏目标区块',
+    label: '随机目标区块',
     clauses: ['U07-C02b', 'U07-C02'],
     journeys: ['j7s3', 'jR2s2'],
     note:
@@ -208,7 +208,7 @@ export const TM_FA: TmRegistry = {
     when: '完局、非回放、计分事件带 trueRequests 时',
   },
   'FA.hidden-goal-card': {
-    label: '隐藏目标五步卡',
+    label: '随机目标五步卡',
     clauses: ['U07-C02b'],
     journeys: ['j7s3', 'jR2s2'],
     note:
@@ -588,7 +588,7 @@ export const TM_FA: TmRegistry = {
     label: '退出回放按钮',
     clauses: ['U07-C09'],
     journeys: ['jR5s4', 'jR5s5'],
-    note: '退出后结果 / 问询 / 隐藏目标 / 计分推导恢复，调试开关恢复原值',
+    note: '退出后结果 / 问询 / 随机目标 / 计分推导恢复，调试开关恢复原值',
   },
   'FA.replay-anchor-note': {
     label: '锚点停留提示',

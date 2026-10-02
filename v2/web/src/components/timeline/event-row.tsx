@@ -236,7 +236,7 @@ function ScoreRow({
     ]),
   ]
   // F2（#69）：原本要两行对读才知道的「猜中/被识破」就地标注，与结果卡、
-  // 隐藏目标区块同一口径——派生统一收进 crossIdentified（round4 评审 #9），
+  // 随机目标区块同一口径——派生统一收进 crossIdentified（round4 评审 #9），
   // 只在恰好两侧对猜时有定义。
   const cross = crossIdentified(trueRequests, guesses)
   return (

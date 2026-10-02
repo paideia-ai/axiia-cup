@@ -27,7 +27,7 @@ function clone<T>(value: T): T {
 
 // 富战报（商鞅庭辩响应夹具）+ 准驳 verdict 事件：score 事件只带 trueRequests/
 // guesses/ledger，rulings 按契约坐在 verdict 事件上——补上它，「准驳结果」
-// 行与隐藏目标「是否达成」才走真路径。
+// 行与随机目标「是否达成」才走真路径。
 //
 // viewer 'probe'＝#20 服务端契约的响应形状：非所有者拿到的 payload 里，
 // 他人己方（a 侧玩家）的 reasoning 已被服务端剥离；b 是 NPC（#80 公开），

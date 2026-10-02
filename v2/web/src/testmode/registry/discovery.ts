@@ -220,7 +220,7 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-p13'],
     journeys: ['j2s3'],
     note:
-      '02 甲方 / 03 乙方：是谁 · 胜利条件 · 立场/请求项 · 隐藏目标 · 构建入口',
+      '02 甲方 / 03 乙方：是谁 · 胜利条件 · 立场/请求项 · 随机目标 · 构建入口',
   },
   'DA.side-goal': {
     label: '胜利条件',
@@ -234,7 +234,7 @@ export const TM_DISCOVERY: TmRegistry = {
     when: '场景为该侧配置了 choices 时（角色卡）',
   },
   'DA.hidden-goals': {
-    label: '隐藏目标列表',
+    label: '随机目标候选列表',
     clauses: ['U04-C12', 'U04-C14', 'U04-C10'],
     journeys: ['j2s3'],
     note:
