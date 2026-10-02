@@ -84,15 +84,15 @@ const characters: Record<string, Record<string, string>> = {
 
 const emotionNames: Record<EmotionCategory, string> = {
   E01: 'neutral',
-  E02: 'conviction',
-  E03: 'doubt',
-  E04: 'confusion',
-  E05: 'fear',
-  E06: 'anger',
-  E07: 'contempt',
-  E08: 'sadness',
-  E09: 'affection',
-  E10: 'relief',
+  E02: 'resolute',
+  E03: 'wary',
+  E04: 'hesitant',
+  E05: 'anxious',
+  E06: 'angry',
+  E07: 'scornful',
+  E08: 'sad',
+  E09: 'caring',
+  E10: 'moved',
 }
 
 export function rolePortrait(

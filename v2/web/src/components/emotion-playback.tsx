@@ -23,20 +23,34 @@ const PlaybackContext = createContext<EmotionPlayback | null>(null)
 const OutputContext = createContext<Presentation | null>(null)
 const noop = () => () => {}
 const pictures = new Map<string, Promise<void>>()
-export function decodePortrait(src: string): Promise<void> {
+const loadingPictures = new Map<string, HTMLImageElement>()
+export function decodePortrait(
+  src: string,
+  priority: 'low' | 'high' = 'low',
+): Promise<void> {
   let loading = pictures.get(src)
   if (!loading) {
     loading = new Promise<void>((resolve, reject) => {
       const image = new Image()
+      loadingPictures.set(src, image)
       image.onload = () => {
         void image.decode().then(resolve, reject)
       }
       image.onerror = reject
-      image.fetchPriority = 'low'
+      image.fetchPriority = priority
       image.src = src
     })
     pictures.set(src, loading)
+    void loading.then(
+      () => loadingPictures.delete(src),
+      () => {
+        loadingPictures.delete(src)
+        pictures.delete(src)
+      },
+    )
   }
+  const pending = loadingPictures.get(src)
+  if (pending && priority === 'high') pending.fetchPriority = 'high'
   return loading
 }
 
@@ -152,7 +166,7 @@ export function OutputBoundary({ outputRef, labels, speaker, children }: {
     const prepared = () => {
       if (active) store.prepare(outputRef, category, performance.now())
     }
-    if (src) void decodePortrait(src).then(prepared, () => {})
+    if (src) void decodePortrait(src, 'high').then(prepared, () => {})
     else prepared()
     return () => {
       active = false

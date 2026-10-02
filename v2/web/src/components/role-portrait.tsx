@@ -19,7 +19,7 @@ export function RolePortrait({ labels, speaker, size = 'default' }: {
   const view = useOutputPresentation()
   const neutral = rolePortrait(labels, speaker)
   useEffect(() => {
-    if (!buffering) return
+    if (!buffering || (view && !view.waiting)) return
     const categories = [
       'E01',
       'E02',
@@ -36,9 +36,10 @@ export function RolePortrait({ labels, speaker, size = 'default' }: {
       const image = rolePortrait(labels, speaker, category)
       if (image) void decodePortrait(image).catch(() => {})
     }
-  }, [buffering, neutral, labels, speaker])
-  const src = rolePortrait(labels, speaker, view?.category)
+  }, [buffering, neutral, labels, speaker, view?.waiting])
+  const selected = rolePortrait(labels, speaker, view?.category)
   const [failed, setFailed] = useState<string | null>(null)
+  const src = selected === failed ? neutral : selected
   if (!src || src === failed) return null
   return (
     <img

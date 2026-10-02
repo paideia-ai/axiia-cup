@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect, useState } from 'react'
-import { expect, waitFor } from 'storybook/test'
+import { expect, userEvent, waitFor } from 'storybook/test'
 import type { MatchDetail, TurnDTO } from '../api/types'
-import type { EmotionOutput } from '../lib/emotion-playback'
+import type { EmotionCategory, EmotionOutput } from '../lib/emotion-playback'
 import {
   EmotionPlaybackProvider,
   OutputBoundary,
@@ -55,7 +55,9 @@ function Diagnostic() {
     </p>
   )
 }
-function Run({ delay }: { delay: number }) {
+function Run(
+  { delay, category }: { delay: number; category: EmotionCategory },
+) {
   const [output, setOutput] = useState<EmotionOutput | null>(null)
   useEffect(() => {
     const committed = setTimeout(() => setOutput(pending), 700)
@@ -65,7 +67,7 @@ function Run({ delay }: { delay: number }) {
           setOutput({
             ...pending,
             status: 'ready',
-            categoryId: 'E05',
+            categoryId: category,
             waitMs: Math.max(0, 350 - delay),
             updateMs: Math.max(0, 1000 - delay),
           }),
@@ -76,7 +78,7 @@ function Run({ delay }: { delay: number }) {
       clearTimeout(committed)
       clearTimeout(result)
     }
-  }, [delay])
+  }, [delay, category])
   return (
     <EmotionPlaybackProvider data={data(output)}>
       {output
@@ -103,13 +105,14 @@ function Run({ delay }: { delay: number }) {
 }
 function Demo({ initialDelay = 80 }: { initialDelay?: number }) {
   const [delay, setDelay] = useState(initialDelay)
+  const [category, setCategory] = useState<EmotionCategory>('E05')
   const [run, setRun] = useState(0)
   return (
     <main className='mx-auto max-w-2xl space-y-5 p-6'>
       <h1 className='text-xl font-semibold'>情感头像与正文播放预览</h1>
       <p className='text-sm text-(--foreground-subtle)'>
-        使用正式对话组件及原图。完整表情素材尚未到齐，因此图片保持
-        neutral；下方状态显示已选类别。示例按固定的模型片段时间重放。
+        使用正式对话组件及完整十类表情素材。先显示中性头像与斟酌提示，
+        再根据模拟 JEV 结果切换头像，按记录的模型片段时间重放正文。
       </p>
       <div className='flex flex-wrap gap-3'>
         <label>
@@ -129,6 +132,32 @@ function Demo({ initialDelay = 80 }: { initialDelay?: number }) {
             <option value={-1}>无响应：保持 neutral</option>
           </select>
         </label>
+        <label>
+          判定情绪{' '}
+          <select
+            aria-label='判定情绪'
+            className='rounded border p-1'
+            value={category}
+            onChange={(event) => {
+              setCategory(event.target.value as EmotionCategory)
+              setRun((value) => value + 1)
+            }}
+          >
+            {[
+              ['E01', '中性'],
+              ['E02', '笃定'],
+              ['E03', '疑虑'],
+              ['E04', '困惑'],
+              ['E05', '忧惧'],
+              ['E06', '愤怒'],
+              ['E07', '轻蔑'],
+              ['E08', '悲伤'],
+              ['E09', '关爱'],
+              ['E10', '欣慰'],
+            ].map(([id, label]) => <option key={id} value={id}>{label}
+            </option>)}
+          </select>
+        </label>
         <button
           type='button'
           className='rounded border px-3'
@@ -137,7 +166,7 @@ function Demo({ initialDelay = 80 }: { initialDelay?: number }) {
           重新演示
         </button>
       </div>
-      <Run key={run} delay={delay} />
+      <Run key={run} delay={delay} category={category} />
     </main>
   )
 }
@@ -147,36 +176,110 @@ const meta = {
 } satisfies Meta<typeof Demo>
 export default meta
 type Story = StoryObj<typeof meta>
-export const Interactive: Story = {}
+export const Interactive: Story = {
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      const image = canvasElement.querySelector<HTMLImageElement>(
+        '.role-portrait',
+      )!
+      expect(image.src).toContain('ashigaru-anxious')
+      expect(image.naturalWidth).toBeGreaterThan(0)
+    }, { timeout: 5000 })
+  },
+}
 export const Unresponsive: Story = {
   args: { initialDelay: -1 },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(canvas.queryByText('这段正文尚未公开')).toBeNull()
     await waitFor(() => expect(canvas.getByText(text)).toBeVisible(), {
       timeout: 5000,
     })
     await expect(canvas.getByTestId('emotion-status')).toHaveTextContent('E01')
+    await expect(
+      canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+    ).toContain('ashigaru-neutral')
   },
 }
 export const LateIgnored: Story = {
   args: { initialDelay: 1400 },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await waitFor(() => expect(canvas.getByText(text)).toBeVisible(), {
       timeout: 5000,
     })
     await expect(canvas.getByTestId('emotion-status')).toHaveTextContent('E01')
+    await expect(
+      canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+    ).toContain('ashigaru-neutral')
   },
 }
 export const LateAccepted: Story = {
   args: { initialDelay: 650 },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await waitFor(
       () =>
         expect(canvas.getByTestId('emotion-status')).toHaveTextContent('E05'),
       { timeout: 4000 },
     )
+    await expect(
+      canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+    ).toContain('ashigaru-anxious')
     await waitFor(() => expect(canvas.getByText(text)).toBeVisible(), {
       timeout: 5000,
+    })
+  },
+}
+
+export const EveryExpression: Story = {
+  play: async ({ canvas, canvasElement }) => {
+    for (
+      const [id, slug] of [
+        ['E01', 'neutral'],
+        ['E02', 'resolute'],
+        ['E03', 'wary'],
+        ['E04', 'hesitant'],
+        ['E05', 'anxious'],
+        ['E06', 'angry'],
+        ['E07', 'scornful'],
+        ['E08', 'sad'],
+        ['E09', 'caring'],
+        ['E10', 'moved'],
+      ]
+    ) {
+      await userEvent.selectOptions(
+        canvas.getByRole('combobox', { name: '判定情绪' }),
+        id,
+      )
+      await waitFor(() => {
+        expect(canvas.getByTestId('emotion-status')).toHaveTextContent(
+          `${id} · 播放中`,
+        )
+        const image = canvasElement.querySelector<HTMLImageElement>(
+          '.role-portrait',
+        )!
+        expect(image.src).toContain(`ashigaru-${slug}`)
+        expect(image.naturalWidth).toBe(1254)
+        expect(image.naturalHeight).toBe(1254)
+      }, { timeout: 4000 })
+    }
+  },
+}
+
+export const ImageFailure: Story = {
+  play: async ({ canvasElement }) => {
+    await waitFor(() => {
+      expect(
+        canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+      )
+        .toContain('ashigaru-anxious')
+    }, { timeout: 5000 })
+    canvasElement.querySelector('.role-portrait')!.dispatchEvent(
+      new Event('error'),
+    )
+    await waitFor(() => {
+      expect(
+        canvasElement.querySelector<HTMLImageElement>('.role-portrait')!.src,
+      )
+        .toContain('ashigaru-neutral')
     })
   },
 }

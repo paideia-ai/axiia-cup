@@ -26,8 +26,8 @@ earlier global-neutral proposal.
    that snapshot after the gate; there is no measured streaming cadence to
    replay.
 7. Keep all portrait files at their original resolution. Missing expressions
-   fall back to the character's neutral asset. Current assets contain neutral
-   portraits only.
+   fall back to the character's neutral asset. All 29 characters now have the
+   complete ten-category set from PR #272.
 
 ## Timing and perceived latency
 
@@ -100,9 +100,12 @@ convention:
 src/assets/portraits/<scenario>/<character>-<emotion>.webp
 ```
 
-Emotion suffixes: `neutral`, `conviction`, `doubt`, `confusion`, `fear`,
-`anger`, `contempt`, `sadness`, `affection`, `relief`, corresponding to E01–E10.
-Vite fingerprints the original files. No derivative thumbnails are generated.
+Emotion suffixes: `neutral`, `resolute`, `wary`, `hesitant`, `anxious`,
+`angry`, `scornful`, `sad`, `caring`, `moved`, corresponding to E01–E10.
+These are PR #272's semantic filenames, mapped explicitly from the frozen
+category IDs. Vite fingerprints lossless WebP encodings of the 1254×1254
+originals. No resizing is performed. The art PR's later 256×256 optimization
+is not used here, preserving the original-resolution requirement for this flow.
 
 Historical rows open with complete text. Existing terminal classifications
 remain usable. No retrospective classification of old matches occurs. Existing
@@ -119,15 +122,15 @@ idempotent enqueue, durable expiry and authorization.
 Build the isolated product-component preview with
 `deno task preview:emotion:build` in `v2/web`. It offers 80 ms, 650 ms, 1400 ms
 and unavailable provider cases. It uses the actual playback components and
-neutral original art; the category readout belongs only to the preview, not the
-product UI.
+actual ten-emotion art with a category selector; the category readout belongs
+only to the preview, not the product UI.
 
 ## Rollout
 
 Backend, scenario and frontend changes are coordinated across two repositories.
 Deploy backend support and configure the key, then upload the new
 content-addressed scenarios and deploy the frontend. Existing matches stay
-pinned to their original scripts. Add the finished expression originals under
-the naming convention above when available. Production deployment and live
+pinned to their original scripts. All expression assets are included in the
+frontend build. Production deployment and live
 provider credentials are outside this code-only delivery; the cloud preview uses
 simulated classifications.
