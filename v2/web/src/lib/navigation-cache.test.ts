@@ -8,6 +8,7 @@ import {
   setNavigationIdentity,
 } from './navigation-cache'
 import { catalogQuery, inventoryQuery } from './navigation-queries'
+import { finishedMatch } from '../testing/v34-fixtures'
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -146,5 +147,81 @@ describe('navigation data lifetime', () => {
     expect(navigationCache.getQueryData(inventoryQuery().queryKey)).toEqual({
       scenarios: ['completed'],
     })
+  })
+})
+
+describe('match view receipts', () => {
+  const summary = { ...finishedMatch.summary, viewed: false }
+  const lists = [['matches'], ['matches', 'identity', '101']] as const
+  function seed() {
+    for (const key of lists) {
+      navigationCache.setQueryData(key, {
+        matches: [summary, { ...summary, id: 9002 }],
+        open: true,
+      })
+    }
+    navigationCache.setQueryData(['match', summary.id], {
+      ...finishedMatch,
+      summary,
+    })
+    navigationCache.setQueryData(['inventory'], { scenarios: [] })
+  }
+  it('updates the viewed match in every cached history without invalidating unrelated data', async () => {
+    seed()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json({ ok: true }))),
+    )
+    await matches.markViewed(summary.id)
+    for (const key of lists) {
+      expect(navigationCache.getQueryData(key)).toEqual({
+        matches: [{ ...summary, viewed: true }, { ...summary, id: 9002 }],
+        open: true,
+      })
+      expect(navigationCache.getQueryState(key)?.isInvalidated).toBe(true)
+    }
+    expect(navigationCache.getQueryData(['match', summary.id])).toEqual({
+      ...finishedMatch,
+      summary: { ...summary, viewed: true },
+    })
+    expect(navigationCache.getQueryState(['inventory'])?.isInvalidated).toBe(
+      false,
+    )
+  })
+  it('keeps unread state when saving the view fails', async () => {
+    seed()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({ error: 'failed', message: 'failed' }, {
+            status: 503,
+          }),
+        )
+      ),
+    )
+    await expect(matches.markViewed(summary.id)).rejects.toThrow()
+    expect(navigationCache.getQueryData(['match', summary.id])).toEqual({
+      ...finishedMatch,
+      summary,
+    })
+  })
+  it('ignores a previous account receipt arriving after an account switch', async () => {
+    setNavigationIdentity('alice:views')
+    seed()
+    const response = deferred<Response>()
+    vi.stubGlobal('fetch', vi.fn(() => response.promise))
+    const write = matches.markViewed(summary.id)
+    setNavigationIdentity('bob:views')
+    seed()
+    response.resolve(Response.json({ ok: true }))
+    await write
+    expect(navigationCache.getQueryData(['match', summary.id])).toEqual({
+      ...finishedMatch,
+      summary,
+    })
+    expect(navigationCache.getQueryState(['matches'])?.isInvalidated).toBe(
+      false,
+    )
   })
 })

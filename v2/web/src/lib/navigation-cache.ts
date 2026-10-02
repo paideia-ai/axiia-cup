@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import type { MatchDetail, MatchListResponse } from '../api/types'
 
 // Memory only: session changes discard both completed and in-flight queries.
 // Mutable resources stay fresh for 10s; writes invalidate immediately.
@@ -37,6 +38,31 @@ export function invalidateNavigation(path: string) {
   // SSE completion can invalidate while a pre-completion HTTP read is pending.
   // A replacement query must not coalesce onto that obsolete request.
   readEpoch++
+  const viewedMatch = /^\/matches\/(\d+)\/view$/.exec(path)
+  if (viewedMatch) {
+    const id = Number(viewedMatch[1])
+    const lists = { queryKey: ['matches'] }
+    const detail = { queryKey: ['match', id], exact: true }
+    void navigationCache.cancelQueries(lists)
+    void navigationCache.cancelQueries(detail)
+    navigationCache.setQueriesData<MatchListResponse>(
+      lists,
+      (data) =>
+        data && ({
+          ...data,
+          matches: data.matches.map((match) =>
+            match.id === id ? { ...match, viewed: true } : match
+          ),
+        }),
+    )
+    navigationCache.setQueriesData<MatchDetail>(
+      detail,
+      (data) =>
+        data && ({ ...data, summary: { ...data.summary, viewed: true } }),
+    )
+    void navigationCache.invalidateQueries(lists)
+    return
+  }
   const groups = path.startsWith('/agents')
     ? path.endsWith('/mutate')
       ? ['agent']

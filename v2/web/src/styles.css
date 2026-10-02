@@ -389,6 +389,18 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   isolation: isolate;
 }
 
+.history-unread-marker {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f5c542;
+  pointer-events: none;
+}
+
 .history-card > a::after {
   position: absolute;
   inset: -1px;

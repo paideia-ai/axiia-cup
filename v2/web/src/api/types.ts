@@ -527,6 +527,7 @@ export interface MatchSummary {
   challengeID?: number | null
   challengeLeg?: number | null
   initiatorIsMe?: boolean
+  viewed?: boolean
 }
 
 // `output` is the program validator's normalized JSON, carried as a string.

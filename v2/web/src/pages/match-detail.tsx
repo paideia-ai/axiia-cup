@@ -74,6 +74,7 @@ import {
   revealedReportSections,
 } from '../lib/transcript'
 import { usePageQuery } from '../lib/use-page-query'
+import { useMatchView } from '../lib/use-match-view'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
 
@@ -116,6 +117,7 @@ function MatchDetailContent(
   const data = usePresentedMatch(query.data)
   const playbackCutoff = usePlaybackCutoff(query.data)
   const playbackPending = usePlaybackPending()
+  useMatchView(matchID, data?.summary, !loading && !error)
   // Keep the compact trend after the transcript in live and finished views.
   const [mobileTrendTarget, setMobileTrendTarget] = useState<
     HTMLDivElement | null

@@ -102,6 +102,7 @@ export function MatchesPage() {
     updateFilter('mine', value === scoped ? '' : value ? '0' : '1')
   const setScenarioID = (value: string) => updateFilter('scenario', value)
   const list = usePageQuery({
+    staleTime: 0,
     ...(scoped
       ? {
         queryKey: [
@@ -187,6 +188,14 @@ export function MatchesPage() {
         className='block'
         {...tm('L.match-card')}
       >
+        {summary.viewed === false && (
+          <span
+            className='history-unread-marker'
+            role='img'
+            aria-label='没有看过此对局'
+            title='没有看过此对局'
+          />
+        )}
         <CardContent className='history-card-content flex items-center justify-between gap-3'>
           <div>
             <span

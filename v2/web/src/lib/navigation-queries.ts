@@ -43,6 +43,7 @@ export const matchesQuery = () =>
   queryOptions({
     queryKey: ['matches'],
     queryFn: () => matches.list(),
+    staleTime: 0,
   })
 export const matchQuery = (id: number) =>
   queryOptions({
