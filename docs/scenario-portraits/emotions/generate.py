@@ -126,7 +126,11 @@ def main():
     parser.add_argument("--force", action="store_true", help="regenerate generated assets too")
     args = parser.parse_args()
 
-    assets = json.loads(MANIFEST.read_text())["assets"]
+    manifest = json.loads(MANIFEST.read_text())
+    if "optimization" in manifest:
+        parser.error("This set is optimized WebP. Use optimize.py to reproduce it; "
+                     "image generation requires a separate original-source manifest.")
+    assets = manifest["assets"]
     todo = [a for a in assets
             if (args.force or a["status"] != "generated")
             and (not args.only or a["character_id"] in args.only or a["scenario"] in args.only)

@@ -38,7 +38,7 @@ AVOID = """
 Constraints: retain the recognizable identity and costume of the reference. Only expression, gaze, head angle, shoulders and arm/hand gesture change. No extra people, props, weapons, scenery, text, lettering, watermark, speech bubble, emoji, sweat drops, anger marks, tear streams, hearts, sparkles or motion lines: the face and body alone carry the emotion. No collage, sprite sheet or multi-panel layout: output exactly ONE square portrait. No photographic rendering, smooth painting, gradients, antialiasing or fine noisy detail. Keep the character's dignity: no comic exaggeration or chibi distortion. 1024x1024 PNG preferred.
 """
 KEEP = ("status", "width", "height", "sha256", "generation_source", "generated_at",
-        "attempts", "error", "visual_review")
+        "attempts", "error", "visual_review", "file", "original")
 
 
 def build_prompt(character, emotion, context):
@@ -105,6 +105,8 @@ manifest = {
     "context_note": "场景动机为美术演绎，不新增剧本事实；神情不编码有罪、无罪或固定投票。纪川为生前形象。",
     "assets": assets,
 }
+if "optimization" in previous:
+    manifest["optimization"] = previous["optimization"]
 # Only rewrite when something changed, so a gallery refresh during a
 # generate.py run cannot clobber records it has just written.
 if manifest != previous:
@@ -121,6 +123,12 @@ readme = ["# 十类情绪角色头像", "",
           f"新生成 {done}/{len(assets)} 张。", "",
           "情绪类别来自 Astra 标注批次 `" + design["annotation_batch"] + "`；`category_id` 只对该批次有效，文件名使用语义 slug。", "",
           "[浏览器画廊](index.html) · [完整提示词](PROMPTS.md) · [生成记录](manifest.json) · [情绪与角色设计](emotion-design.json)", ""]
+if "optimization" in manifest:
+    readme += ["**平台尺寸优化：**九类表情图已用 Pillow / Lanczos 缩小为 256×256，再以无损 WebP 编码。"
+               "缩小会减少细节；无损指编码精确保留缩小后的像素。未重新生成美术。"
+               "中性列仍引用原始参考图；平台中性素材也已缩小。", "",
+               "运行 `python3 docs/scenario-portraits/emotions/optimize.py` 可从固定 Git 版本重建，"
+               "再运行 `prepare.py` 更新画廊。[逐图尺寸、哈希与体积](optimization.json)。", ""]
 for r in design.get("revisions", []):
     readme += [f"**{r['date']} 修订：**{r['change']}", ""]
 readme += ["| slug | ID | 类别 |", "| --- | --- | --- |"]
@@ -163,7 +171,7 @@ for scene in dict.fromkeys(c["scene"] for c in characters):
             # Every cell points at its target file; missing files fall back to a
             # placeholder in the browser, so a reload shows progress mid-run.
             cells.append(f'<td title="{esc(tip)}"><a href="{a["file"]}"><img src="{a["file"]}" alt="{esc(c["name"])} · {esc(e["zh"])}" '
-                         f'loading="lazy" width="1254" height="1254" onerror="missing(this)"></a></td>')
+                         f'loading="lazy" width="{a.get("width", 1254)}" height="{a.get("height", 1254)}" onerror="missing(this)"></a></td>')
         rows.append(f'<tr data-name="{esc(c["name"] + " " + c["scene"] + " " + c["id"])}"><th scope="row">{esc(c["name"])}</th>{"".join(cells)}</tr>')
     rows.append("</tbody>")
 
@@ -214,10 +222,11 @@ function missing(img){{var s=document.createElement('span');s.className='pending
 <p>{len(characters)} 个角色 × 10 种情绪。第一列「中性」沿用已定稿的 neutral 头像；其余九列为本轮新生成（<span id="done">{done}</span>/{len(assets)} 张已生成{'' if done == len(assets) else '；生成过程中刷新页面即可看到新图'}）。每行同一角色，列为同一情绪。点击任意头像打开原图；鼠标停留可看场景动机。</p>
 <p>类别定义来自 Astra 标注批次 <code>{design['annotation_batch']}</code>。场景动机是美术演绎，不新增剧情事实，也不暗示投票或案件真相；纪川为生前形象。</p>
 <p>跳转：{' · '.join(toc)} · <a href="#legend">类别定义</a> · <a href="PROMPTS.md">提示词</a> · <a href="manifest.json">生成记录</a></p>
+{'<p>表情图已程序化缩小为 256×256 无损 WebP（Lanczos）；没有重新生成美术。<a href="optimization.json">压缩记录</a>。中性列沿用原始参考图。</p>' if 'optimization' in manifest else ''}
 <div class="controls">
 <label>显示尺寸
 <select id="size">
-<option value="48">48 px</option><option value="64">64 px（实际头像）</option><option value="96" selected>96 px</option><option value="128">128 px</option><option value="192">192 px</option>
+<option value="32">32 px</option><option value="48">48 px</option><option value="72">72 px</option><option value="80" selected>80 px（平台最大）</option><option value="96">96 px</option><option value="128">128 px</option><option value="256">256 px</option>
 </select></label>
 <label>场景
 <select id="scene"><option value="">全部</option>{''.join(f'<option value="{c}">{esc(s)}</option>' for s, c in dict.fromkeys((c["scene"], c["scenario"]) for c in characters))}</select></label>

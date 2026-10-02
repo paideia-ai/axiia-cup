@@ -3,7 +3,8 @@ import { speakerName } from '../components/timeline/labels'
 import { roleByKey } from '../scenarios'
 import { roleIdentity } from './role-identity'
 
-// Losslessly encoded neutral artwork. Vite copies these to hashed build assets;
+// 256px neutral artwork, losslessly encoded after Lanczos downsampling.
+// Vite copies these to hashed build assets;
 // no expressions or scene outcomes are inferred from an image.
 const images = import.meta.glob<string>(
   '../assets/portraits/*/*-neutral.webp',
