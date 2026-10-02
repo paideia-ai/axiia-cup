@@ -1,5 +1,28 @@
 # 五场景像素头像 / Scenario pixel portraits
 
+## 十类情绪版本
+
+按 [Astra 十类情绪定义](../analysis/emotion-classification/2026-09-27-astra-a66847a8/categories_20260927_a66847a8.json)
+为全部 29 个角色各准备 10 张头像：E01 中性直接沿用下方三状态版本中已定稿的
+`neutral`，E02—E10 九类（笃定、疑虑、困惑、忧惧、愤怒、轻蔑、悲伤、关爱、欣慰）
+以该 neutral 为身份、风格与构图参考新生成，共 261 张新图，保存在 `emotions/`。
+
+平台使用尺寸优化：261 张表情已由原始 PNG 程序化缩小为 256×256 无损 WebP，
+体积从 331.78 MB 降至 15.29 MB；平台现用 29 张中性 WebP 也缩小至 256×256。
+采用 Pillow / Lanczos，未重新生成美术。[逐图压缩记录](emotions/optimization.json) ·
+[可复现脚本](emotions/optimize.py) · [对比预览构建脚本](emotions/preview.py)。
+九类共用一套眉眼、嘴形、头部与手势指令，保证不同角色的同一情绪一眼可辨。
+
+- [十列图片总览](emotions/README.md)
+- [浏览器画廊](emotions/index.html)（连同 `expressions/` 一起下载后在浏览器打开；支持按场景、角色筛选和切换显示尺寸）
+- [全部提示词](emotions/PROMPTS.md)
+- [情绪指令与逐角色场景动机](emotions/emotion-design.json)
+- [生成记录](emotions/manifest.json)；[提示词构建](emotions/prepare.py) · [批量生成脚本](emotions/generate.py)
+
+场景动机为美术演绎，不新增剧情，不以表情编码投票、案件真相或结局。纪川均为生前形象。
+
+2026-10-02 按反馈重写了 E09 关爱、E10 欣慰两类的提示词并重新生成（改为睁眼、面向对方的真心笑容；E09 不再使用伸手手势）。
+
 ## 三状态版本
 
 本轮根据 main `7ae333b` 版本的五个场景脚本，为下列全部 29 个角色设计了
