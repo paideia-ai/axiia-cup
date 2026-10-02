@@ -54,6 +54,7 @@
     "seed-dev": "deno run -A e2e/seed-dev.ts",
     "fmt": "deno fmt --check .",
     "lint": "deno lint src",
+    "preview:agent-portraits": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6043 e2e/preview-agent-portraits.ts",
     "preview:portraits": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6035 e2e/preview-portraits.ts"
   }
 }
