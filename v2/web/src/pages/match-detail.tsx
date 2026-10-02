@@ -1,4 +1,10 @@
 import { buildSpeechNumbers, speechNumberBefore } from '../lib/speech-numbering'
+import {
+  EmotionPlaybackProvider,
+  usePlaybackCutoff,
+  usePlaybackPending,
+  usePresentedMatch,
+} from '../components/emotion-playback'
 import { JudgeDialogue } from '../components/judge-transcript/judge-dialogue'
 import { TabbedJudgeTranscript } from '../components/judge-transcript/tabbed-judge-transcript'
 import { scriptEvent } from '../lib/event'
@@ -71,7 +77,29 @@ import { usePageQuery } from '../lib/use-page-query'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
 
+function useMatchDetailQuery() {
+  const { matchId = '' } = useParams()
+  return usePageQuery({
+    ...matchQuery(Number(matchId)),
+    refetchOnMount: 'always',
+  })
+}
 export function MatchDetailPage() {
+  const query = useMatchDetailQuery()
+  const { matchId } = useParams()
+  return (
+    <EmotionPlaybackProvider
+      key={matchId}
+      data={query.data}
+      fresh={query.hasFreshData}
+    >
+      <MatchDetailContent query={query} />
+    </EmotionPlaybackProvider>
+  )
+}
+function MatchDetailContent(
+  { query }: { query: ReturnType<typeof useMatchDetailQuery> },
+) {
   const { matchId = '' } = useParams()
   const matchID = Number(matchId)
   const location = useLocation()
@@ -84,7 +112,10 @@ export function MatchDetailPage() {
   const expressArrival =
     (location.state as { express?: boolean } | null)?.express === true ||
     new URLSearchParams(location.search).get('express') === '1'
-  const { data, error, loading, reload } = usePageQuery(matchQuery(matchID))
+  const { error, loading, reload } = query
+  const data = usePresentedMatch(query.data)
+  const playbackCutoff = usePlaybackCutoff(query.data)
+  const playbackPending = usePlaybackPending()
   // Keep the compact trend after the transcript in live and finished views.
   const [mobileTrendTarget, setMobileTrendTarget] = useState<
     HTMLDivElement | null
@@ -106,12 +137,19 @@ export function MatchDetailPage() {
     data?.summary.scenarioID === 'honnoji-decision'
   const hasNumberedStages = isCourtOrCouncil &&
     data?.stages.some((stage) => /^第[一二三]阶段·/.test(stage.title))
-  const live = data != null && !data.summary.finished
-  const stream = useMatchStream(
+  const live = query.data != null && !query.data.summary.finished
+  const backendStream = useMatchStream(
     matchID,
     live,
-    Math.max(-1, ...(data?.turns.map((turn) => turn.seq) ?? [])),
+    Math.max(-1, ...(query.data?.turns.map((turn) => turn.seq) ?? [])),
   )
+
+  const stream = {
+    ...backendStream,
+    bubbles: backendStream.bubbles.filter((bubble) =>
+      bubble.seq <= playbackCutoff
+    ),
+  }
 
   const speakers = [
     ...(data?.turns.map((turn) => turn.speaker) ?? []),
@@ -175,7 +213,7 @@ export function MatchDetailPage() {
   // then keeps every transcript stage and verdict in script order. Results and
   // settlement require scoring; court/council transcripts share their sidebar
   // with queued, live, and finished-but-unscored matches.
-  const finished = data != null && data.summary.finished &&
+  const finished = !playbackPending && data != null && data.summary.finished &&
     data.summary.scored
 
   // 首战完局把 me.firstBattleDone 翻真（服务端推导）：就地刷新 auth 上下文，

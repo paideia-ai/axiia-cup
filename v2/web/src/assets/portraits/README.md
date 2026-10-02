@@ -1,4 +1,4 @@
-# Neutral role portraits
+# Ten-emotion role portraits
 
 These 29 portraits are 256 × 256 WebP files, downsampled with Pillow's Lanczos
 filter from the approved 1254 × 1254 PNGs in
@@ -23,3 +23,14 @@ dimensions, byte counts and encoder versions are recorded in
 
 Vite imports these files from `role-portrait.ts`, so hashed portrait URLs work
 with the existing Docker build without copying the docs tree.
+
+The additional 261 expression portraits are copied byte-for-byte from
+`docs/scenario-portraits/emotions/*/*.webp`, also at 256×256. Run
+`python3 v2/web/scripts/import-emotion-portraits.py` after updating that set; it
+validates each manifest hash and copies the optimized files without resizing or
+re-encoding. All 290 frontend assets now match PR #272's optimized outputs.
+
+E01–E10 map to `neutral`, `resolute`, `wary`, `hesitant`, `anxious`, `angry`,
+`scornful`, `sad`, `caring`, and `moved`. Only their URLs enter JavaScript; the
+currently generating speaker's set is warmed at low priority and the selected
+expression receives high fetch priority.

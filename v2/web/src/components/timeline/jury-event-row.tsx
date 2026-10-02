@@ -1,3 +1,4 @@
+import { OutputBody, OutputBoundary, OutputText } from '../emotion-playback'
 import { ArrowRight } from 'lucide-react'
 import '../verdict-accent.css'
 import type { ReactNode } from 'react'
@@ -45,26 +46,35 @@ function JurySpeech({
   const speech = eventString(event, 'text') ?? ''
   const reasoning = eventString(event, 'reasoning') ?? ''
   return (
-    <div
-      {...tm('FA.jury-speech')}
-      className='portrait-speech rounded-xl border border-(--border) bg-white/2 px-4 py-3'
+    <OutputBoundary
+      outputRef={eventString(event, 'outputRef')}
+      labels={labels}
+      speaker={actor}
     >
-      <p className='portrait-speaker mb-2 flex items-center gap-2 text-xs font-semibold text-(--foreground-subtle)'>
-        <RolePortrait labels={labels} speaker={actor} />
-        {speakerName(labels, actor)}
-        {speechNumber != null && (
-          <span data-speech-number={speechNumber}>#{speechNumber}</span>
-        )}
-      </p>
-      <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-(--foreground)'>
-        {speech || '暂无公开发言'}
-      </p>
-      {showReasoning ? <ReasoningFold text={reasoning} /> : null}
-    </div>
+      <div
+        {...tm('FA.jury-speech')}
+        className='portrait-speech rounded-xl border border-(--border) bg-white/2 px-4 py-3'
+      >
+        <p className='portrait-speaker mb-2 flex items-center gap-2 text-xs font-semibold text-(--foreground-subtle)'>
+          <RolePortrait labels={labels} speaker={actor} />
+          {speakerName(labels, actor)}
+          {speechNumber != null && (
+            <span data-speech-number={speechNumber}>#{speechNumber}</span>
+          )}
+        </p>
+        <OutputBody>
+          <p className='mt-1 whitespace-pre-wrap text-sm leading-6 text-(--foreground)'>
+            <OutputText text={speech || '暂无公开发言'} />
+          </p>
+        </OutputBody>
+        {showReasoning ? <ReasoningFold text={reasoning} /> : null}
+      </div>
+    </OutputBoundary>
   )
 }
 
 interface Ballot {
+  outputRef?: string
   juror: string
   vote: string
   reason: string
@@ -73,6 +83,7 @@ interface Ballot {
 }
 
 interface PrivateMessage {
+  outputRef?: string
   exchange: number | null
   speaker: string
   text: string
@@ -90,6 +101,9 @@ function ballotsOf(event: ScriptEvent, key: string): Ballot[] {
     const object = objectOf(value)
     if (!object || typeof object.juror !== 'string') return []
     return [{
+      outputRef: typeof object.outputRef === 'string'
+        ? object.outputRef
+        : undefined,
       juror: object.juror,
       vote: typeof object.vote === 'string'
         ? object.vote
@@ -117,6 +131,9 @@ function messagesOf(event: ScriptEvent): PrivateMessage[] {
       typeof object.text !== 'string'
     ) return []
     return [{
+      outputRef: typeof object.outputRef === 'string'
+        ? object.outputRef
+        : undefined,
       exchange: typeof object.exchange === 'number' ? object.exchange : null,
       speaker: object.speaker,
       text: object.text,
@@ -322,38 +339,50 @@ function PrivateChat({
             {messages.map((message, index) => {
               const fromMover = message.speaker === mover
               return (
-                <div
-                  key={`${
-                    message.exchange ?? 'message'
-                  }-${message.speaker}-${index}`}
-                  className={`flex ${
-                    fromMover ? 'justify-start' : 'justify-end'
-                  }`}
+                <OutputBoundary
+                  key={index}
+                  outputRef={message.outputRef}
+                  labels={labels}
+                  speaker={message.speaker}
                 >
                   <div
-                    {...tm('FA.jury-private-message')}
-                    className='portrait-speech max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'
+                    key={`${
+                      message.exchange ?? 'message'
+                    }-${message.speaker}-${index}`}
+                    className={`flex ${
+                      fromMover ? 'justify-start' : 'justify-end'
+                    }`}
                   >
-                    <p className='portrait-speaker mb-2 flex items-center gap-2 text-[11px] font-semibold text-(--foreground-subtle)'>
-                      <RolePortrait labels={labels} speaker={message.speaker} />
-                      <span>
-                        {speakerName(labels, message.speaker)}
-                        {message.exchange == null
-                          ? ''
-                          : ` · 第 ${message.exchange} 轮私聊`}
-                      </span>
-                      <span data-private-speech-number={index + 1}>
-                        私聊 #{index + 1}
-                      </span>
-                    </p>
-                    <p className='mt-1 whitespace-pre-wrap text-sm text-(--foreground)'>
-                      {message.text}
-                    </p>
-                    {showReasoning
-                      ? <ReasoningFold text={message.reasoning} />
-                      : null}
+                    <div
+                      {...tm('FA.jury-private-message')}
+                      className='portrait-speech max-w-[92%] rounded-lg bg-black/15 px-3 py-2 sm:max-w-[82%]'
+                    >
+                      <p className='portrait-speaker mb-2 flex items-center gap-2 text-[11px] font-semibold text-(--foreground-subtle)'>
+                        <RolePortrait
+                          labels={labels}
+                          speaker={message.speaker}
+                        />
+                        <span>
+                          {speakerName(labels, message.speaker)}
+                          {message.exchange == null
+                            ? ''
+                            : ` · 第 ${message.exchange} 轮私聊`}
+                        </span>
+                        <span data-private-speech-number={index + 1}>
+                          私聊 #{index + 1}
+                        </span>
+                      </p>
+                      <OutputBody>
+                        <p className='mt-1 whitespace-pre-wrap text-sm text-(--foreground)'>
+                          <OutputText text={message.text} />
+                        </p>
+                      </OutputBody>
+                      {showReasoning
+                        ? <ReasoningFold text={message.reasoning} />
+                        : null}
+                    </div>
                   </div>
-                </div>
+                </OutputBoundary>
               )
             })}
           </div>
@@ -553,71 +582,80 @@ function BallotGrid({
           ? '继续审议'
           : '票型未知'
         return (
-          <div
-            {...tm('FA.jury-ballot')}
+          <OutputBoundary
             key={ballot.juror}
-            className='rounded-md bg-black/10 px-3 py-2'
+            outputRef={ballot.outputRef}
+            labels={labels}
+            speaker={ballot.juror}
           >
-            <div className='flex flex-wrap items-center justify-between gap-2'>
-              <p className='flex items-center gap-2 text-xs font-semibold text-(--foreground)'>
-                {showPortraits && (
-                  <RolePortrait
-                    labels={labels}
-                    speaker={ballot.juror}
-                    size='sm'
-                  />
-                )}
-                {speakerName(labels, ballot.juror)}
-              </p>
-              <div className='flex shrink-0 items-center gap-1.5'>
-                {changed && (
-                  <>
-                    <Badge
-                      aria-label={`上次票型：${
-                        previous === 'GUILTY' ? '有罪' : '无罪'
-                      }`}
-                      tone={previous === 'GUILTY' ? 'accent' : 'info'}
-                      className='bg-transparent px-2 py-0.5 font-normal ring-1 ring-inset ring-(--border)'
-                    >
-                      {previous === 'GUILTY' ? '有罪' : '无罪'}
-                    </Badge>
-                    <ArrowRight
-                      aria-hidden='true'
-                      size={12}
-                      strokeWidth={1.5}
-                      className='text-(--foreground-subtle)'
+            <div
+              {...tm('FA.jury-ballot')}
+              key={ballot.juror}
+              className='rounded-md bg-black/10 px-3 py-2'
+            >
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <p className='flex items-center gap-2 text-xs font-semibold text-(--foreground)'>
+                  {showPortraits && (
+                    <RolePortrait
+                      labels={labels}
+                      speaker={ballot.juror}
+                      size='sm'
                     />
-                  </>
-                )}
-                <Badge
-                  aria-label={kind === 'verdict'
-                    ? `当前票型：${voteLabel}`
-                    : undefined}
-                  tone={guilty || endNow ? 'accent' : 'info'}
-                  className={`px-2 py-0.5 ${
-                    kind === 'procedure' ? 'text-[10px]' : ''
-                  }`}
-                >
-                  {voteLabel}
-                </Badge>
+                  )}
+                  {speakerName(labels, ballot.juror)}
+                </p>
+                <div className='flex shrink-0 items-center gap-1.5'>
+                  {changed && (
+                    <>
+                      <Badge
+                        aria-label={`上次票型：${
+                          previous === 'GUILTY' ? '有罪' : '无罪'
+                        }`}
+                        tone={previous === 'GUILTY' ? 'accent' : 'info'}
+                        className='bg-transparent px-2 py-0.5 font-normal ring-1 ring-inset ring-(--border)'
+                      >
+                        {previous === 'GUILTY' ? '有罪' : '无罪'}
+                      </Badge>
+                      <ArrowRight
+                        aria-hidden='true'
+                        size={12}
+                        strokeWidth={1.5}
+                        className='text-(--foreground-subtle)'
+                      />
+                    </>
+                  )}
+                  <Badge
+                    aria-label={kind === 'verdict'
+                      ? `当前票型：${voteLabel}`
+                      : undefined}
+                    tone={guilty || endNow ? 'accent' : 'info'}
+                    className={`px-2 py-0.5 ${
+                      kind === 'procedure' ? 'text-[10px]' : ''
+                    }`}
+                  >
+                    <OutputText text={voteLabel} source={ballot.vote} />
+                  </Badge>
+                </div>
               </div>
+              {ballot.keyEvidence.length > 0
+                ? (
+                  <p className='mt-1 font-mono text-[10px] text-(--foreground-muted)'>
+                    {ballot.keyEvidence.join(' + ')}
+                  </p>
+                )
+                : null}
+              <OutputBody>
+                {ballot.reason
+                  ? (
+                    <p className='mt-1 whitespace-pre-wrap text-xs text-(--foreground-subtle)'>
+                      <OutputText text={ballot.reason} />
+                    </p>
+                  )
+                  : null}
+              </OutputBody>
+              {showReasoning ? <ReasoningFold text={ballot.reasoning} /> : null}
             </div>
-            {ballot.keyEvidence.length > 0
-              ? (
-                <p className='mt-1 font-mono text-[10px] text-(--foreground-muted)'>
-                  {ballot.keyEvidence.join(' + ')}
-                </p>
-              )
-              : null}
-            {ballot.reason
-              ? (
-                <p className='mt-1 whitespace-pre-wrap text-xs text-(--foreground-subtle)'>
-                  {ballot.reason}
-                </p>
-              )
-              : null}
-            {showReasoning ? <ReasoningFold text={ballot.reasoning} /> : null}
-          </div>
+          </OutputBoundary>
         )
       })}
     </div>

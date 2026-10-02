@@ -1,3 +1,4 @@
+import { OutputBody, OutputBoundary, OutputText } from './emotion-playback'
 import type { ReactNode } from 'react'
 import './verdict-accent.css'
 
@@ -34,7 +35,7 @@ export function VerdictBody({
     )
     : parsed.fields
   return (
-    <>
+    <OutputBody>
       {fields.map((field) => (
         <div {...tm('FA.verdict-field')} key={field.key} className='space-y-1'>
           <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
@@ -54,8 +55,13 @@ export function VerdictBody({
               >
                 {field.key === 'winner' || field.key === 'selectedSide' ||
                     (visitOrder && field.key === 'first-side')
-                  ? speakerName(labels, line)
-                  : line}
+                  ? (
+                    <OutputText
+                      text={speakerName(labels, line)}
+                      source={line}
+                    />
+                  )
+                  : <OutputText text={line} />}
               </p>
             ))}
         </div>
@@ -67,11 +73,11 @@ export function VerdictBody({
             {...tm('FA.verdict-field')}
             className='whitespace-pre-wrap text-sm text-(--foreground)'
           >
-            {parsed.fallbackText}
+            <OutputText text={parsed.fallbackText} />
           </p>
         )
         : null}
-    </>
+    </OutputBody>
   )
 }
 
@@ -98,52 +104,60 @@ export function VerdictCard({
 }) {
   const visitOrder = isVisitOrder(verdict, labels)
   return (
-    <Card
-      {...tm('FA.verdict-card')}
-      className={isTerminalVerdict(verdict)
-        ? 'verdict-outcome-accent'
-        : visitOrder
-        ? 'border-l-2 border-l-(--warning)'
-        : undefined}
+    <OutputBoundary
+      outputRef={verdict.outputRef}
+      labels={labels}
+      speaker='judge'
     >
-      <CardContent className='space-y-3 pt-5'>
-        <div className='flex flex-wrap items-center gap-2'>
-          {isTerminalVerdict(verdict) || visitOrder
-            ? <RolePortrait labels={labels} speaker='judge' />
-            : null}
-          <h2
-            {...tm('FA.verdict-title')}
-            className={isTerminalVerdict(verdict)
-              ? 'text-base font-semibold text-(--foreground)'
-              : 'text-sm font-semibold text-(--foreground)'}
-          >
-            {visitOrder ? '貂蝉·裁定先后' : title ?? verdictLabel(verdict.key)}
-          </h2>
-          {interim && !visitOrder
-            ? (
-              <Badge {...tm('FA.verdict-interim-badge')} tone='warning'>
-                仅观众可见 · 未注入角色
-              </Badge>
-            )
-            : null}
-          <span
-            {...tm('FA.verdict-model')}
-            className='text-xs text-(--foreground-muted)'
-          >
-            {verdict.model}
-          </span>
-        </div>
+      <Card
+        {...tm('FA.verdict-card')}
+        className={isTerminalVerdict(verdict)
+          ? 'verdict-outcome-accent'
+          : visitOrder
+          ? 'border-l-2 border-l-(--warning)'
+          : undefined}
+      >
+        <CardContent className='space-y-3 pt-5'>
+          <div className='flex flex-wrap items-center gap-2'>
+            {isTerminalVerdict(verdict) || visitOrder
+              ? <RolePortrait labels={labels} speaker='judge' />
+              : null}
+            <h2
+              {...tm('FA.verdict-title')}
+              className={isTerminalVerdict(verdict)
+                ? 'text-base font-semibold text-(--foreground)'
+                : 'text-sm font-semibold text-(--foreground)'}
+            >
+              {visitOrder
+                ? '貂蝉·裁定先后'
+                : title ?? verdictLabel(verdict.key)}
+            </h2>
+            {interim && !visitOrder
+              ? (
+                <Badge {...tm('FA.verdict-interim-badge')} tone='warning'>
+                  仅观众可见 · 未注入角色
+                </Badge>
+              )
+              : null}
+            <span
+              {...tm('FA.verdict-model')}
+              className='text-xs text-(--foreground-muted)'
+            >
+              {verdict.model}
+            </span>
+          </div>
 
-        <VerdictBody
-          verdict={verdict}
-          labels={labels}
-          judgmentContent={judgmentContent}
-        />
+          <VerdictBody
+            verdict={verdict}
+            labels={labels}
+            judgmentContent={judgmentContent}
+          />
 
-        {showTrace && trace?.trim() ? <ReasoningFold text={trace} /> : null}
+          {showTrace && trace?.trim() ? <ReasoningFold text={trace} /> : null}
 
-        {children}
-      </CardContent>
-    </Card>
+          {children}
+        </CardContent>
+      </Card>
+    </OutputBoundary>
   )
 }

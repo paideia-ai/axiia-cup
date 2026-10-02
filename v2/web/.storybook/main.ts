@@ -2,7 +2,9 @@ import tailwindcss from '@tailwindcss/vite'
 import type { StorybookConfig } from '@storybook/react-vite'
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.tsx'],
+  stories: process.env.STORYBOOK_JEV_PREVIEW === '1'
+    ? ['../src/components/emotion-playback.stories.tsx']
+    : ['../src/**/*.stories.tsx'],
   addons: [
     '@storybook/addon-a11y',
     '@storybook/addon-vitest',

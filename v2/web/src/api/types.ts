@@ -476,6 +476,7 @@ export type JSONValue =
 // model trace in `reasoning`; `event` carries the script's `game.emit` payload in
 // `event` and leaves `finalText` empty.
 export interface TurnDTO {
+  outputRef?: string | null
   seq: number
   channel: string
   kind: TurnKind
@@ -532,6 +533,7 @@ export interface MatchSummary {
 // `afterSeq` is the transcript position it settled at: it was decided on the
 // first `afterSeq` committed rows, so it belongs after them in the timeline.
 export interface VerdictDTO {
+  outputRef?: string | null
   key: string
   afterSeq: number
   output: string
@@ -539,6 +541,7 @@ export interface VerdictDTO {
 }
 
 export interface MatchDetail {
+  emotions?: EmotionSnapshot | null
   summary: MatchSummary
   currentTurn: number
   turns: TurnDTO[]
@@ -809,4 +812,29 @@ export interface RoleIdentityDTO {
   key: string
   name: string
   side: Side
+}
+
+export type EmotionCategory =
+  | 'E01'
+  | 'E02'
+  | 'E03'
+  | 'E04'
+  | 'E05'
+  | 'E06'
+  | 'E07'
+  | 'E08'
+  | 'E09'
+  | 'E10'
+export interface EmotionOutput {
+  outputRef: string
+  status: 'pending' | 'ready' | 'unavailable'
+  categoryId?: EmotionCategory | null
+  playback?: { text: string; frames: { atMs: number; end: number }[] } | null
+  waitMs: number
+  updateMs: number
+}
+export interface EmotionSnapshot {
+  enabled: boolean
+  settled: boolean
+  outputs: EmotionOutput[]
 }

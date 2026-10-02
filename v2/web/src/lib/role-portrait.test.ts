@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { speakerLabels } from '../components/timeline/labels'
+import type { EmotionCategory } from '../api/types'
 import { rolePortrait } from './role-portrait'
 
 describe('neutral portrait identity', () => {
@@ -49,5 +50,50 @@ describe('neutral portrait identity', () => {
     expect(rolePortrait(speakerLabels(scenario, {}), speaker)).toContain(
       `${file}-neutral.webp`,
     )
+  })
+})
+
+describe('ten-emotion portrait assets', () => {
+  const categories: [EmotionCategory, string][] = [
+    ['E01', 'neutral'],
+    ['E02', 'resolute'],
+    ['E03', 'wary'],
+    ['E04', 'hesitant'],
+    ['E05', 'anxious'],
+    ['E06', 'angry'],
+    ['E07', 'scornful'],
+    ['E08', 'sad'],
+    ['E09', 'caring'],
+    ['E10', 'moved'],
+  ]
+  it.each(categories)(
+    'selects %s without falling back to neutral',
+    (category, slug) => {
+      for (
+        const [scenario, speaker, character] of [
+          ['shangyang-court', 'a', 'shangyang'],
+          ['honnoji-decision', 'judge', 'akechi-mitsuhide'],
+          ['trolley-problem', 'b', 'wuren'],
+          ['fengyiting-real', 'judge-aside', 'diaochan'],
+          ['legal-harbor-murder-jury', 'j07', 'fang-zhi'],
+        ]
+      ) {
+        expect(rolePortrait(speakerLabels(scenario, {}), speaker, category))
+          .toContain(`${character}-${slug}.webp`)
+      }
+    },
+  )
+  it('includes all ten files for every neutral character', () => {
+    const assets = Object.keys(import.meta.glob('../assets/portraits/*/*.webp'))
+    const neutrals = assets.filter((path) => path.endsWith('-neutral.webp'))
+    expect(neutrals).toHaveLength(29)
+    expect(assets).toHaveLength(290)
+    for (const neutral of neutrals) {
+      for (const [, slug] of categories) {
+        expect(assets).toContain(
+          neutral.replace('-neutral.webp', `-${slug}.webp`),
+        )
+      }
+    }
   })
 })

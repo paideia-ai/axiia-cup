@@ -299,6 +299,7 @@ async function main() {
   diaochan.push(srOrder)
   const order = await diaochan.act(
     {
+      emotionFields: ['reason', 'first-side'],
       fields: {
         reason: { hint: '你的判断（说明你选择的理由）', long: true },
         'first-side': { enum: [NAMES.a, NAMES.b] },
@@ -443,6 +444,7 @@ async function main() {
   diaochan.push(srVerdict)
   const verdict = await diaochan.act(
     {
+      emotionFields: ['speech', 'scheme', 'side'],
       fields: {
         speech: {
           hint: '以貂蝉口吻完整说出你的思量与两项决定，这是你落定决心的过程，不受三句限制',
