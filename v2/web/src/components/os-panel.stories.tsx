@@ -1204,15 +1204,20 @@ export const ArchiveLookupFailureWithoutOwnOpponents: Story = {
   },
 }
 
+// 已解锁约战的本能寺：下面几个对手文案用例共用。
+const unlockedHonnojiScenario = {
+  ...honnojiScenario,
+  summary: {
+    ...honnojiScenario.summary,
+    gateUnlocked: true,
+    gateProgress: unlockedScenario.summary.gateProgress,
+  },
+}
+
 export const HonnojiOpponentRoleCopy: Story = {
   args: {
     scenario: {
-      ...honnojiScenario,
-      summary: {
-        ...honnojiScenario.summary,
-        gateUnlocked: true,
-        gateProgress: unlockedScenario.summary.gateProgress,
-      },
+      ...unlockedHonnojiScenario,
       presets: [{
         key: 'hosokawa',
         label: '幽斋残局',
@@ -1258,33 +1263,102 @@ export const HonnojiOpponentRoleCopy: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body)
-    await expect(await canvas.findByRole('button', { name: '与幽斋残局对战' }))
-      .toHaveTextContent('细川藤孝')
+    const npc = await canvas.findByRole('button', { name: '与幽斋残局对战' })
+    await expect(npc).toHaveTextContent('细川藤孝')
+    await expect(npc).toHaveAccessibleDescription(/^细川藤孝 · /)
     await userEvent.click(canvas.getByRole('tab', { name: '左右手互搏' }))
     await expect(await canvas.findByRole('button', { name: '与我的幽斋对战' }))
-      .toHaveTextContent('细川藤孝 · 我的智能体')
+      .toHaveAccessibleDescription('细川藤孝 · 我的智能体')
     await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
     await expect(
       await canvas.findByRole('button', { name: '与多角色玩家对战' }),
-    ).toHaveTextContent('对方执细川藤孝 / 明智军中的足轻')
+    ).toHaveAccessibleDescription('对方执细川藤孝 / 明智军中的足轻')
     expect(canvas.getAllByRole('button', { name: '与多角色玩家对战' }))
       .toHaveLength(1)
   },
 }
 
+// 服务端把长宗我部的角色名记作「长宗我部元亲阵营」；出战面板的 NPC、玩家和
+// 指定版本都按人物签上的名字显示，缺角色的对手保留阵营名。
+const serverChosokabe = {
+  key: 'chosokabe',
+  name: '长宗我部元亲阵营',
+  side: 'a',
+} as const
+
+export const HonnojiChosokabeNames: Story = {
+  args: {
+    side: 'b',
+    scenario: {
+      ...unlockedHonnojiScenario,
+      presets: [{
+        key: 'chosokabe-shikoku-eye',
+        label: '四国棋眼',
+        side: 'a',
+        modelID: 'fixture-model',
+        role: serverChosokabe,
+      }],
+    },
+  },
+  parameters: {
+    msw: [
+      http.get('/v1/scenarios/:id/opponents', () =>
+        HttpResponse.json({
+          opponents: [
+            {
+              agentID: 201,
+              displayName: '四国玩家',
+              ownerAccountID: 'shikoku',
+              isSelf: false,
+              role: serverChosokabe,
+            },
+            {
+              agentID: 202,
+              displayName: '旧档玩家',
+              ownerAccountID: 'legacy',
+              isSelf: false,
+              role: null,
+            },
+          ],
+        })),
+      http.get('/v1/versions/367/ref', () =>
+        HttpResponse.json({
+          versionID: 367,
+          agentID: 201,
+          scenarioID: 'honnoji-decision',
+          side: 'a',
+          role: serverChosokabe,
+          ownerAccountID: 'shikoku',
+          ownerDisplayName: '四国玩家',
+          modelID: 'fixture-model',
+        })),
+      ...meta.parameters.msw,
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement.ownerDocument.body)
+    await expect(await canvas.findByRole('button', { name: '与四国棋眼对战' }))
+      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · /)
+    await userEvent.click(canvas.getByRole('tab', { name: '玩家约战' }))
+    await expect(await canvas.findByRole('button', { name: '与四国玩家对战' }))
+      .toHaveAccessibleDescription('对方执长宗我部元亲的密使')
+    await expect(canvas.getByRole('button', { name: '与旧档玩家对战' }))
+      .toHaveAccessibleDescription('对方执袭击本能寺（角色待确认）')
+    await userEvent.click(canvas.getByRole('button', { name: '指定版本 ID' }))
+    await userEvent.type(
+      canvas.getByRole('textbox', { name: '对方版本 ID' }),
+      '367',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '查询' }))
+    await expect(await canvas.findByRole('button', { name: '与四国玩家对战' }))
+      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · .+ · #367$/)
+    expect(canvas.queryByText(/长宗我部元亲阵营/)).toBeNull()
+  },
+}
+
 function honnojiSameSideVersion(side: 'a' | 'b'): Story {
   return {
-    args: {
-      side,
-      scenario: {
-        ...honnojiScenario,
-        summary: {
-          ...honnojiScenario.summary,
-          gateUnlocked: true,
-          gateProgress: unlockedScenario.summary.gateProgress,
-        },
-      },
-    },
+    args: { side, scenario: unlockedHonnojiScenario },
     parameters: {
       msw: [
         http.get(

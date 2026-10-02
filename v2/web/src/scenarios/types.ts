@@ -138,6 +138,18 @@ export interface ScenarioEducation {
   hiddenGoalHowTo: string
 }
 
+// UI names for a scenario whose sides are stances with several selectable roles.
+// The script's side names stay as they are for prompts and match reports; the
+// SPA's own pages use these instead (DESIGN_SPEC 2026-10-01).
+export interface ScenarioFactionCopy {
+  // Win rates, eligibility, unlock progress and the battle panel.
+  names: Record<Side, string>
+  // My Agents column headings and the sibling-gate link.
+  stances: Record<Side, string>
+  // Catalog card titles.
+  catalogTitles: Record<Side, string>
+}
+
 // Scenario display knowledge, bundled with the SPA rather than fetched: the server
 // is deliberately ignorant of what a scenario's options blob means, so the picker
 // that writes one and the transcript that reads it are authored here.
@@ -166,4 +178,5 @@ export interface ScenarioModule {
   education?: ScenarioEducation
   // 只读系统角色模板展示文案（#68）：按侧给出，占位符用〔…〕样式实填示意。
   roleTemplates?: Partial<Record<Side, string>>
+  factionCopy?: ScenarioFactionCopy
 }

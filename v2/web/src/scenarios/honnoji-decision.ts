@@ -2,10 +2,17 @@ import type { ScenarioModule } from './types'
 import { honnojiDecisionIntro } from './intro-copy'
 import runtimeQuotes from './runtime-quotes.json'
 
+const factions = honnojiDecisionIntro.source.participants.sides
+
 export const honnojiDecision: ScenarioModule = {
   slotID: 'honnoji-decision',
   intro: honnojiDecisionIntro,
   hideHeaderMatchup: true,
+  factionCopy: {
+    names: { a: factions.a.name, b: factions.b.name },
+    stances: { a: `主张${factions.a.name}`, b: `主张${factions.b.name}` },
+    catalogTitles: { a: '袭击本能寺·刺杀信长', b: '西进毛利·放弃刺杀' },
+  },
   overviewImages: [
     {
       src: '/scenario-assets/honnoji-decision/banquet-duty-removal.png',

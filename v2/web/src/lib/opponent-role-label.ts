@@ -1,6 +1,14 @@
 import type { RoleIdentityDTO, Side } from '../api/types'
-import { roleIdentity } from './role-identity'
-import { roleByKey, scenarioModule } from '../scenarios'
+import { currentRoleIdentity, type RoleIdentityContext } from './role-identity'
+
+// The battle panel names a participant by role. When the role is unknown it
+// keeps the faction name, so the row still says which side it is on.
+export function roleOrFactionName(
+  context: RoleIdentityContext & { fallback: string },
+): string {
+  const identity = currentRoleIdentity(context)
+  return identity.resolved ? identity.name : `${context.fallback}（角色待确认）`
+}
 
 // A player row may represent several agents. List their distinct roles instead
 // of pretending the first agent is the one the server will select for a match.
@@ -11,15 +19,10 @@ export function opponentRoleLabel(
   fallback: string,
 ): string {
   return [
-    ...new Set(roles.map((role) => {
-      const identity = roleIdentity({
-        scenarioID,
-        side,
-        role,
-        fallback,
-      })
-      return roleByKey(scenarioModule(scenarioID), identity.roleKey)?.name ??
-        identity.name
-    })),
-  ].join(' / ') || roleIdentity({ scenarioID, side, fallback }).name
+    ...new Set(
+      roles.map((role) =>
+        roleOrFactionName({ scenarioID, side, role, fallback })
+      ),
+    ),
+  ].join(' / ') || fallback
 }

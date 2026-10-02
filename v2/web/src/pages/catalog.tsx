@@ -1,4 +1,4 @@
-import { sideDisplayName } from '../lib/side-display-name'
+import { sideStatsLine } from '../lib/side-display-name'
 import { PageLoading } from '../components/page-loading'
 import { catalogQuery } from '../lib/navigation-queries'
 import { Lock, Sparkles, Unlock } from 'lucide-react'
@@ -11,6 +11,7 @@ import { gateMet, sideProgressText } from '../lib/gate'
 import { usePageQuery } from '../lib/use-page-query'
 import {
   DIFFICULTY_LABEL,
+  roleDescriptionLines,
   scenarioGuidance,
   scenarioModule,
 } from '../scenarios'
@@ -48,19 +49,6 @@ function pinSecond(
 ): ScenarioSummary[] {
   const rest = list.filter((item) => item.id !== fresh.id)
   return [...rest.slice(0, 1), fresh, ...rest.slice(1)]
-}
-
-// #38/#39 统计一行：N 场 · 甲侧 x% / 乙侧 y%（胜率是 0..1 分数；平局等
-// 未分胜负的场次让两侧合计可小于 100%，因此各自独立取整，不做 100-x）。
-function statsLine(summary: ScenarioSummary): string | null {
-  const stats = summary.stats
-  if (!stats) return null
-  const pct = (rate: number) => `${Math.round(rate * 100)}%`
-  return `${stats.battleCount} 场 · ${
-    sideDisplayName(summary.id, 'a', summary.sideAName)
-  } ${pct(stats.sideWinRate.a)} / ${
-    sideDisplayName(summary.id, 'b', summary.sideBName)
-  } ${pct(stats.sideWinRate.b)}`
 }
 
 export function CatalogPage() {
@@ -104,7 +92,8 @@ export function CatalogPage() {
               const module = scenarioModule(scenario.id)
               const education = module?.education ?? null
               const guidance = scenarioGuidance(scenario, education)
-              const stats = statsLine(scenario)
+              const stats = sideStatsLine(scenario)
+              const factions = module?.factionCopy
               return (
                 <Link
                   key={scenario.id}
@@ -228,46 +217,33 @@ export function CatalogPage() {
                         className='space-y-1 text-xs text-(--foreground-muted)'
                         {...tm('D.card-sides')}
                       >
-                        <p
-                          className={scenario.id === 'honnoji-decision'
-                            ? 'whitespace-pre-line'
-                            : undefined}
-                        >
-                          <span className='text-(--foreground-subtle)'>
-                            {scenario.id === 'honnoji-decision'
-                              ? '袭击本能寺·刺杀信长'
-                              : scenario.sideAName}
-                          </span>
-                          {scenario.sideALabel
-                            ? scenario.id === 'honnoji-decision'
-                              ? '\n' +
-                                scenario.sideALabel.replace(
-                                  '。足利义昭的使者：',
-                                  '。\n足利义昭的使者：',
-                                )
-                              : ` · ${scenario.sideALabel}`
-                            : ''}
-                        </p>
-                        <p
-                          className={scenario.id === 'honnoji-decision'
-                            ? 'whitespace-pre-line'
-                            : undefined}
-                        >
-                          <span className='text-(--foreground-subtle)'>
-                            {scenario.id === 'honnoji-decision'
-                              ? '西进毛利·放弃刺杀'
-                              : scenario.sideBName}
-                          </span>
-                          {scenario.sideBLabel
-                            ? scenario.id === 'honnoji-decision'
-                              ? '\n' +
-                                scenario.sideBLabel.replace(
-                                  '。明智军中的足轻：',
-                                  '。\n明智军中的足轻：',
-                                )
-                              : ` · ${scenario.sideBLabel}`
-                            : ''}
-                        </p>
+                        {(['a', 'b'] as const).map((side) => {
+                          const label = side === 'a'
+                            ? scenario.sideALabel
+                            : scenario.sideBLabel
+                          return (
+                            <p
+                              key={side}
+                              className={factions
+                                ? 'whitespace-pre-line'
+                                : undefined}
+                            >
+                              <span className='text-(--foreground-subtle)'>
+                                {factions?.catalogTitles[side] ??
+                                  (side === 'a'
+                                    ? scenario.sideAName
+                                    : scenario.sideBName)}
+                              </span>
+                              {label
+                                ? factions
+                                  ? `\n${
+                                    roleDescriptionLines(module, side, label)
+                                  }`
+                                  : ` · ${label}`
+                                : ''}
+                            </p>
+                          )
+                        })}
                         <p>
                           {education?.formatLabel ?? `${scenario.turnCount} 轮`}
                         </p>

@@ -17,7 +17,7 @@ import { subscribeAgentsChanged } from '../lib/agent-events'
 import { usePageQuery } from '../lib/use-page-query'
 import { catalogQuery, inventoryQuery } from '../lib/navigation-queries'
 import { tm } from '../testmode/mark'
-import { rolesForSide, scenarioModule } from '../scenarios'
+import { roleDescriptionLines, scenarioModule } from '../scenarios'
 
 export function MyAgentsPage() {
   const location = useLocation()
@@ -104,7 +104,9 @@ export function MyAgentsPage() {
           >
             {focusedScenario != null && focusedRole != null
               ? `只看《${focusedScenario.title}》的${focusedRole}${
-                focusedScenario.id === 'honnoji-decision' ? '阵营' : '智能体'
+                scenarioModule(focusedScenario.id)?.factionCopy
+                  ? '阵营'
+                  : '智能体'
               }。`
               : '选择一个智能体，继续你的策略。'}
           </p>
@@ -198,6 +200,7 @@ function ScenarioGroup({
   onlySide: Side | null
 }) {
   const [expandedSides, setExpandedSides] = useState({ a: false, b: false })
+  const module = scenarioModule(scenario.id)
   const sides = ([
     [
       'a',
@@ -298,15 +301,11 @@ function ScenarioGroup({
           }`}
         >
           {sides.map(([side, role, description], index) => {
-            const roleDescription = rolesForSide(
-              scenarioModule(scenario.id),
+            const roleDescription = roleDescriptionLines(
+              module,
               side,
+              description,
             )
-              .reduce(
-                (text, { name }) =>
-                  text.replaceAll(`。${name}：`, `。\n${name}：`),
-                description,
-              )
             const agents = agentsOf(side).filter((agent) => !agent.isArchived)
             const oppositeCount = agentsOf(side === 'a' ? 'b' : 'a')
               .filter((agent) => !agent.isArchived).length
@@ -346,8 +345,8 @@ function ScenarioGroup({
                       id={headingID}
                       className='text-sm font-semibold text-(--foreground)'
                     >
-                      {scenario.id === 'honnoji-decision'
-                        ? `主张${role}阵营`
+                      {module?.factionCopy
+                        ? `${module.factionCopy.stances[side]}阵营`
                         : `${role}智能体`}
                     </h3>
                     {description
@@ -460,11 +459,7 @@ function ScenarioGroup({
                             </Link>
                           </>
                         )
-                        : (
-                          <>
-                            还没有{role}智能体
-                          </>
-                        )}
+                        : <>还没有{role}智能体</>}
                     </p>
                   )
                   : null}
