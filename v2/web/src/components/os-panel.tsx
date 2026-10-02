@@ -1,4 +1,8 @@
-import { roleIdentity } from '../lib/role-identity'
+import { sideDisplayName } from '../lib/side-display-name'
+import {
+  opponentRoleLabel,
+  roleOrFactionName,
+} from '../lib/opponent-role-label'
 import { Dialog } from '@base-ui-components/react/dialog'
 import { Lock, Unlock, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -20,6 +24,7 @@ import type {
   ConfigResponse,
   OpponentAgentDTO,
   PresetOpponentDTO,
+  RoleIdentityDTO,
   ScenarioDetail,
   Side,
   VersionRefResponse,
@@ -312,7 +317,11 @@ export function OsPanel({
   // ── 门槛态（A5/#65，mock V16/V7）────────────────────────────────────────
   const oppositeSide: Side = side === 'a' ? 'b' : 'a'
   const sideNameOf = (which: Side) =>
-    which === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName
+    sideDisplayName(
+      scenarioID,
+      which,
+      which === 'a' ? scenario.summary.sideAName : scenario.summary.sideBName,
+    )
   const gateProgress = scenario.summary.gateProgress ?? null
   // 有按侧进度就按它判定（A6 双侧过线）；老服务器没有 → 沿用 gateUnlocked。
   const pvpUnlocked = gateProgress
@@ -387,26 +396,30 @@ export function OsPanel({
   }, [open])
 
   // 对手玩家（#66①）：对侧可对战 agent 中非 isSelf 的，按 ownerAccountID
-  // 去重成「玩家」行；老服务器条目无 ownerAccountID → 过滤掉（不给假按钮）。
+  // 合并成「玩家」行，并收齐该玩家各 agent 的角色；老服务器条目无
+  // ownerAccountID → 过滤掉（不给假按钮）。
   const rivals = useMemo(() => {
-    const seen = new Set<string>()
-    const list: {
+    const byAccount = new Map<string, {
       accountID: string
       displayName: string
-    }[] = []
+      roles: (RoleIdentityDTO | null | undefined)[]
+    }>()
     for (const opponent of opponents ?? []) {
       if (opponent.isSelf) continue
       const accountID = opponent.ownerAccountID
-      if (accountID == null || accountID === '' || seen.has(accountID)) {
-        continue
+      if (accountID == null || accountID === '') continue
+      const rival = byAccount.get(accountID)
+      if (rival) {
+        rival.roles.push(opponent.role)
+      } else {
+        byAccount.set(accountID, {
+          accountID,
+          displayName: opponent.displayName,
+          roles: [opponent.role],
+        })
       }
-      seen.add(accountID)
-      list.push({
-        accountID,
-        displayName: opponent.displayName,
-      })
     }
-    return list
+    return [...byAccount.values()]
   }, [opponents])
   // 有对手却全都缺 ownerAccountID＝老服务器：提示改走按 id。
   const rivalsUnattributed = rivals.length === 0 &&
@@ -500,9 +513,13 @@ export function OsPanel({
         )
       } else if (ref.side !== oppositeSide) {
         setIdError(
-          `请选择对方的${sideNameOf(oppositeSide)}版本，与当前${
-            sideNameOf(side)
-          }对战`,
+          roleModule?.factionCopy
+            ? `该版本与当前智能体同属${sideNameOf(side)}阵营，请选择${
+              sideNameOf(oppositeSide)
+            }阵营的版本。`
+            : `请选择对方的${sideNameOf(oppositeSide)}版本，与当前${
+              sideNameOf(side)
+            }对战`,
         )
       } else {
         setIdRef(ref)
@@ -531,13 +548,19 @@ export function OsPanel({
 
   const rowDisabled = dispatching || insufficientPoints ||
     fieldedVersion == null
-  const fieldedRoleName = roleIdentity({
+  const fieldedRoleName = roleOrFactionName({
     scenarioID,
     side,
     role: fieldedVersion?.role,
     options: fieldedVersion?.options,
     fallback: sideNameOf(side),
-  }).name
+  })
+  // Every opponent row (NPC, own agent, player, pinned version) names roles
+  // the same way.
+  const opponentRoles = (
+    roles: readonly (RoleIdentityDTO | null | undefined)[],
+  ) =>
+    opponentRoleLabel(scenarioID, oppositeSide, roles, sideNameOf(oppositeSide))
   const modelLabel = (modelID: string) =>
     cfg?.models.find((model) => model.id === modelID)?.label ?? modelID
   const filteredRivals = rivals.filter((rival) =>
@@ -753,7 +776,7 @@ export function OsPanel({
                       <BattleOpponentRow
                         key={preset.key}
                         label={presetLabel(preset)}
-                        detail={`${sideNameOf(oppositeSide)} · ${
+                        detail={`${opponentRoles([preset.role])} · ${
                           modelLabel(preset.modelID)
                         }`}
                         disabled={rowDisabled}
@@ -814,7 +837,9 @@ export function OsPanel({
                         key={opponent.agentID}
                         label={opponent.name ||
                           `${sideNameOf(oppositeSide)} #${opponent.agentID}`}
-                        detail={`${sideNameOf(oppositeSide)} · 我的智能体`}
+                        detail={`${
+                          opponentRoles([opponent.role])
+                        } · 我的智能体`}
                         disabled={rowDisabled}
                         pending={pendingOpponent === `self:${opponent.agentID}`}
                         onClick={() => void dispatchHotseat(opponent.agentID)}
@@ -941,7 +966,7 @@ export function OsPanel({
                                       <BattleOpponentRow
                                         label={rival.displayName}
                                         detail={`对方执${
-                                          sideNameOf(oppositeSide)
+                                          opponentRoles(rival.roles)
                                         }`}
                                         disabled={rowDisabled}
                                         pending={pendingOpponent ===
@@ -1020,12 +1045,7 @@ export function OsPanel({
                                     <BattleOpponentRow
                                       label={idRef.ownerDisplayName}
                                       detail={`${
-                                        roleIdentity({
-                                          scenarioID,
-                                          side: oppositeSide,
-                                          role: idRef.role,
-                                          fallback: sideNameOf(oppositeSide),
-                                        }).name
+                                        opponentRoles([idRef.role])
                                       } · ${
                                         modelLabel(idRef.modelID)
                                       } · #${idRef.versionID}`}

@@ -1,5 +1,5 @@
 import { Swords } from 'lucide-react'
-import type { ButtonHTMLAttributes } from 'react'
+import { type ButtonHTMLAttributes, useId } from 'react'
 import { playButtonHover } from '../lib/sound'
 import { cn } from '../lib/cn'
 
@@ -13,10 +13,14 @@ export function BattleOpponentRow(
   { label, detail, pending = false, className, ...props }:
     BattleOpponentRowProps,
 ) {
+  // The accessible name replaces the button's text, so expose the opponent's
+  // role and model as its description.
+  const detailID = useId()
   return (
     <button
       type='button'
       aria-label={`与${label}对战`}
+      aria-describedby={detailID}
       onPointerEnter={playButtonHover}
       className={cn(
         'group flex min-h-20 w-full items-center gap-4 rounded-lg border border-(--border) bg-white/2 px-4 py-4 text-left transition-colors duration-150 hover:border-(--accent) hover:bg-(--surface-elevated) focus-visible:border-(--accent) focus-visible:bg-(--surface-elevated) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent) disabled:pointer-events-none motion-reduce:transition-none',
@@ -31,7 +35,10 @@ export function BattleOpponentRow(
         <span className='block text-[15px] leading-6 font-semibold text-(--foreground)'>
           {label}
         </span>
-        <span className='mt-1 block text-xs leading-5 text-(--foreground-muted)'>
+        <span
+          id={detailID}
+          className='mt-1 block text-xs leading-5 text-(--foreground-muted)'
+        >
           {detail}
         </span>
       </span>
