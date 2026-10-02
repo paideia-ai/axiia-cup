@@ -119,6 +119,10 @@ export const CompactHistorySurface: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const links = await canvas.findAllByRole('link', { name: /对战 #900[12]/ })
+    // Closed history already belongs to the viewer, even without metadata.
+    await expect(links).toHaveLength(2)
+    await expect(canvas.queryByRole('checkbox', { name: '查看所有对局' }))
+      .toBeNull()
     const mobile = canvasElement.ownerDocument.defaultView!.innerWidth <= 767
     for (const link of links) {
       const surface = link.parentElement!
@@ -144,12 +148,6 @@ export const CompactHistorySurface: Story = {
     await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
       .toBeVisible()
     await expect(canvasElement.querySelector('a a')).toBeNull()
-    await userEvent.click(
-      canvas.getByRole('checkbox', { name: '查看所有对局' }),
-    )
-    // Closed history already belongs to the viewer, even without metadata.
-    await expect(canvas.getAllByRole('link', { name: /对战 #900[12]/ }))
-      .toHaveLength(2)
   },
 }
 
@@ -232,21 +230,68 @@ export const OnlyOwnGames: Story = {
   },
 }
 
+export const PartialParticipantMetadata: Story = {
+  parameters: {
+    msw: [
+      http.get('/v1/matches', () =>
+        HttpResponse.json({
+          open: true,
+          matches: [
+            { ...otherMatch, id: 9010, participants: {} },
+            {
+              ...otherMatch,
+              id: 9011,
+              participants: { a: summary.participants.a },
+            },
+            {
+              ...otherMatch,
+              id: 9012,
+              participants: { b: { ...summary.participants.b, isMine: true } },
+            },
+            {
+              ...otherMatch,
+              id: 9013,
+              participants: { a: otherMatch.participants!.a },
+            },
+            {
+              ...otherMatch,
+              id: 9014,
+              participants: { b: otherMatch.participants!.b },
+            },
+          ],
+        })),
+      http.get('/v1/scenarios', () => HttpResponse.json(scenarioList)),
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    await expect(await canvas.findByRole('link', { name: /对战 #9011/ }))
+      .toBeVisible()
+    await expect(canvas.getByRole('link', { name: /对战 #9012/ })).toBeVisible()
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      2,
+    )
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).not.toBeChecked()
+    await userEvent.click(checkbox)
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      5,
+    )
+  },
+}
+
 export const NoOwnGames: Story = {
   parameters: openHistory([otherMatch]),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await canvas.findByText(
-      '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
-    )
-    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
-    await expect(checkbox).not.toBeChecked()
-    await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await expect(
-      canvas.getByText(
+      await canvas.findByText(
         '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
       ),
     ).toBeVisible()
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).not.toBeChecked()
+    await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await userEvent.click(checkbox)
     await expect(canvas.getByRole('link', { name: /对战 #9003/ })).toBeVisible()
   },
@@ -399,7 +444,7 @@ export const EmptyHistory: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await canvas.findByText(
-      '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。',
+      '还没有任何对战。到场景页构建智能体并发起对战。',
     )
     await expect(canvas.getByRole('combobox', { name: '全部场景' }))
       .toBeDisabled()

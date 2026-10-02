@@ -67,14 +67,17 @@ function groupHistory(list: MatchSummary[]): HistoryRow[] {
 
 export function MatchesPage() {
   const [params, setParams] = useSearchParams()
-  // Missing filter defaults to own games; keep existing mine=1 links valid.
-  const onlyMine = params.get('mine') !== '0'
   const scenarioID = params.get('scenario') ?? ''
   const versionID = params.get('version') ?? ''
   const agentID = positiveID(params.get('agent'))
   const npcKey = params.get('npc') ?? ''
   const sourceMatchID = positiveID(params.get('match'))
   const scoped = !!agentID || !!npcKey
+  // 历史页默认只看自己的对局；智能体/NPC 资料卡下钻展示全站战绩，默认看全部。
+  // mine=0 / mine=1 显式覆盖默认值，旧的 mine=1 链接继续有效。
+  const mine = params.get('mine')
+  const showAll = mine === '0' || (mine !== '1' && scoped)
+  const onlyMine = !showAll
   const cursors = params.getAll('cursor').map(positiveID)
     .filter((id): id is number => id != null)
   const setCursors = (nextCursors: number[]) => {
@@ -93,9 +96,10 @@ export function MatchesPage() {
       if (value) next.set(key, value)
       else next.delete(key)
       return next
-    }, { replace: true })
+    }, { replace: true, state: { resetScroll: true } })
   }
-  const setOnlyMine = (value: boolean) => updateFilter('mine', value ? '' : '0')
+  const setShowAll = (value: boolean) =>
+    updateFilter('mine', value === scoped ? '' : value ? '0' : '1')
   const setScenarioID = (value: string) => updateFilter('scenario', value)
   const list = usePageQuery({
     ...(scoped
@@ -148,15 +152,23 @@ export function MatchesPage() {
   }
   // Closed history is already scoped by the server, including older responses
   // without participant metadata. Open history uses viewer-relative ownership.
-  const visibleMatches = (data?.list.matches ?? []).filter((summary) =>
+  const inScope = (data?.list.matches ?? []).filter((summary) =>
     (!versionID || (['a', 'b'] as const).some((side) => {
       const id = summary.participants?.[side]?.versionID
       return id != null && String(id) === versionID
     })) &&
-    (!scenarioID || summary.scenarioID === scenarioID) &&
-    (!onlyMine || !data?.list.open || summary.initiatorIsMe ||
-      summary.participants?.a.isMine || summary.participants?.b.isMine)
+    (!scenarioID || summary.scenarioID === scenarioID)
   )
+  const visibleMatches = !onlyMine || !data?.list.open
+    ? inScope
+    : inScope.filter((summary) =>
+      summary.initiatorIsMe || summary.participants?.a?.isMine ||
+      summary.participants?.b?.isMine
+    )
+  // scoped 列表由服务器按 mine 过滤，客户端无法看到被所有权筛选隐藏的行。
+  const hiddenByOwnership = scoped
+    ? onlyMine
+    : visibleMatches.length < inScope.length
 
   // 角色名映射走 lib/outcome 的共用构建（round4 评审 #10）。
   const roles: Record<string, RoleNames> = scenarioRoles(
@@ -258,9 +270,13 @@ export function MatchesPage() {
           {...tm('L.page-intro')}
         >
           {npcKey
-            ? '该 NPC 配置参与的对战记录。'
+            ? (onlyMine
+              ? '该 NPC 配置中你参与的对战记录。'
+              : '该 NPC 配置参与的对战记录。')
             : versionID
-            ? '该版本参与的对战记录，包含进行中的对局。'
+            ? (scoped && onlyMine
+              ? '该版本中你参与的对战记录，包含进行中的对局。'
+              : '该版本参与的对战记录，包含进行中的对局。')
             : scenarioID
             ? (onlyMine || !data?.list.open
               ? '你在该场景的对战记录。'
@@ -285,22 +301,24 @@ export function MatchesPage() {
               <SelectItem key={id} value={id}>{title}</SelectItem>
             ))}
           </Select>
-          <label className='group inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle) hover:text-(--foreground)'>
-            <span className='relative flex size-4 shrink-0'>
-              <input
-                type='checkbox'
-                checked={!onlyMine}
-                onChange={(event) => setOnlyMine(!event.target.checked)}
-                className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
-              />
-              <Check
-                aria-hidden='true'
-                strokeWidth={2.5}
-                className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
-              />
-            </span>
-            查看所有对局
-          </label>
+          {(scoped || data?.list.open !== false) && (
+            <label className='group inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-(--foreground-subtle) hover:text-(--foreground)'>
+              <span className='relative flex size-4 shrink-0'>
+                <input
+                  type='checkbox'
+                  checked={showAll}
+                  onChange={(event) => setShowAll(event.target.checked)}
+                  className='peer m-0 size-4 appearance-none rounded-[5px] border border-(--foreground-muted)/70 bg-white/3 checked:border-(--foreground-subtle) checked:bg-(--foreground-subtle) group-hover:border-(--foreground-subtle) focus-visible:outline focus-visible:outline-offset-3 focus-visible:outline-(--foreground-subtle) motion-safe:transition-colors'
+                />
+                <Check
+                  aria-hidden='true'
+                  strokeWidth={2.5}
+                  className='pointer-events-none absolute inset-0 m-auto size-3 text-(--background) opacity-0 peer-checked:opacity-100 motion-safe:transition-opacity'
+                />
+              </span>
+              查看所有对局
+            </label>
+          )}
         </div>
       </div>
 
@@ -320,7 +338,7 @@ export function MatchesPage() {
                 next.delete('agent')
                 next.delete('cursor')
                 return next
-              }, { replace: true })}
+              }, { replace: true, state: { resetScroll: true } })}
             aria-label={`清除版本 #${versionID} 筛选`}
             className='inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border border-(--border-soft) px-3 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
           >
@@ -375,14 +393,22 @@ export function MatchesPage() {
         : (
           <p className='text-sm text-(--foreground-subtle)' {...tm('L.empty')}>
             {npcKey
-              ? '该 NPC 配置暂无可查看的对战记录。'
+              ? (hiddenByOwnership
+                ? '该 NPC 配置还没有你参与的对战。勾选「查看所有对局」可查看全部对战。'
+                : '该 NPC 配置暂无可查看的对战记录。')
               : versionID
-              ? (scenarioID || onlyMine
-                ? '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
+              ? (hiddenByOwnership
+                ? (scenarioID
+                  ? '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
+                  : '该版本没有你参与的对战。勾选「查看所有对局」可查看全部对战。')
+                : scenarioID
+                ? '该版本没有符合当前筛选条件的对战。试试切换场景。'
                 : '该版本还没有对战记录。')
               : scenarioID
-              ? '没有符合筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
-              : onlyMine && data?.list.open
+              ? (hiddenByOwnership
+                ? '没有符合筛选条件的对战。试试切换场景或勾选「查看所有对局」。'
+                : '没有符合筛选条件的对战。试试切换场景。')
+              : hiddenByOwnership
               ? '还没有你的对战记录。勾选「查看所有对局」可查看全部对战。'
               : data?.list.open
               ? '还没有任何对战。到场景页构建智能体并发起对战。'

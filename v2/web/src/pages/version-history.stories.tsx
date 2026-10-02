@@ -60,7 +60,7 @@ export const FromVersionToReportAndBack: Story = {
 }
 
 export const BothSidesAndCombinedFilters: Story = {
-  args: { entry: '/matches?version=1002&mine=1&scenario=shangyang-court' },
+  args: { entry: '/matches?version=1002&mine=0&scenario=shangyang-court' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await canvas.findByRole('link', { name: /对战 #9002/ })
@@ -76,17 +76,16 @@ export const BothSidesAndCombinedFilters: Story = {
       canvas.getByRole('button', { name: '清除版本 #1002 筛选' }),
     )
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
-      4,
-    )
-    await expect(canvas.getByRole('checkbox', { name: '查看所有对局' }))
-      .not.toBeChecked()
-    await expect(canvas.getByRole('combobox')).toHaveTextContent('商鞅庭辩')
-    await userEvent.click(
-      canvas.getByRole('checkbox', { name: '查看所有对局' }),
-    )
-    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       5,
     )
+    const checkbox = canvas.getByRole('checkbox', { name: '查看所有对局' })
+    await expect(checkbox).toBeChecked()
+    await expect(canvas.getByRole('combobox')).toHaveTextContent('商鞅庭辩')
+    await userEvent.click(checkbox)
+    await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
+      4,
+    )
+    await expect(checkbox).not.toBeChecked()
   },
 }
 
@@ -99,7 +98,7 @@ export const VersionWithoutGames: Story = {
       }),
     )
     await canvas.findByText(
-      '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。',
+      '该版本还没有对战记录。',
     )
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await userEvent.click(
@@ -116,7 +115,7 @@ export const VersionWithNoMatchingScenario: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await canvas.findByText(
-      '该版本没有符合当前筛选条件的对战。试试切换场景或勾选「查看所有对局」。',
+      '该版本没有符合当前筛选条件的对战。试试切换场景。',
     )
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
   },
