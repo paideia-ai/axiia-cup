@@ -14,6 +14,17 @@ explicitly labelled; account state, new match data and release metadata will
 differ online. The report components, CSS and interactions are the production
 implementation.
 
+For the live states of the two court/council scenarios, run:
+
+```sh
+deno task preview:live-judge
+```
+
+Open <http://localhost:6036/>. Each scenario is listed as queued (no rows yet),
+in progress (its first 12 rows, with the recorded next speaker streaming a short
+simulated speech) and finished. The data comes from the same historical fixtures
+and nothing is sent to the live backend.
+
 ## Delivered behavior
 
 - Completed Shangyang, Honnoji and Trolley reports use a wider dialogue column
@@ -25,8 +36,15 @@ implementation.
   mounted; selecting a beat opens its case and focuses its OS card.
 - Small screens use one column. Court/council OS follows its dialogue segment;
   Trolley OS follows the selected case. Final decisions remain outside the tabs.
-- Existing live streaming and replay retain their chronological renderer and
-  reveal gates. Empty or incompatible legacy records retain the original layout.
+- Shangyang and Honnoji keep the same dialogue and Judge OS columns from the
+  first row: queued and live matches show a waiting state until the first note,
+  a note still being generated waits in the sidebar, and the transcript is not
+  rebuilt when the match finishes. Replay reveals notes with their rows and
+  fills in a trend sized for every beat; inquiry and the final verdict stay
+  outside the sidebar layout, as in the report. Trolley keeps its chronological
+  live and replay views.
+- A match that ends without any OS note, and incompatible legacy records, retain
+  the original single-column layout.
 - Trend markers have fixed circular radii, equal visible connector lengths and
   4px clearance from the visible dot/ring. Overflow scrollbars are hidden while
   scrolling and keyboard navigation remain available.

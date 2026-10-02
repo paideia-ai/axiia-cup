@@ -9,6 +9,7 @@ import {
   isInquiryGroup,
   mergeJudgeAsideStage,
   placeVerdicts,
+  revealedReportSections,
   UNSTAGED_GROUP_ID,
 } from './transcript'
 import referenceMatch144 from '../testing/reference-match-144.json'
@@ -69,6 +70,30 @@ describe('three-stage court reports', () => {
       )
       expect(groups).toHaveLength(1)
       expect(groups[0].channels.at(-1)?.items[0].kind).toBe('live')
+    })
+    it(`keeps the verdict stage out of the dialogue section in replay for match ${match.summary.id}`, () => {
+      const group = (turns: TurnDTO[]) =>
+        groupTranscript(
+          turns,
+          mergeJudgeAsideStage(match.stages),
+          [],
+          match.verdicts,
+          { preserveVerdictChannels: ['inquiry-a', 'inquiry-b', 'verdict'] },
+        )
+      const whole = group(match.turns)
+      // Replay reveals every row except the inquiry leg.
+      const replayed = group(
+        match.turns.filter((turn) => !turn.channel.startsWith('inquiry')),
+      )
+      expect(buildFinishedReportSections(replayed).map(({ kind }) => kind))
+        .toEqual(['dialogue'])
+      expect(revealedReportSections(whole, replayed)).toEqual([
+        { kind: 'dialogue', groupIndexes: [0] },
+        { kind: 'resolution', groupIndexes: [1] },
+      ])
+      expect(revealedReportSections(whole, [])).toEqual([
+        { kind: 'dialogue', groupIndexes: [] },
+      ])
     })
   }
 })

@@ -193,11 +193,17 @@ export const InteractionChecks: Story = {
         canvas.getByRole('button', { name: '回放' }),
       )
       if (scene.id === 144 || scene.id === 120) {
+        // Court/council replay keeps the sidebar: no note yet, and the trend
+        // spans every beat with none of them drawn.
         const sidebar = canvas.getByRole('complementary', {
           name: '裁判 OS 侧栏',
         })
         await expect(sidebar).toBeVisible()
         await expect(sidebar.querySelectorAll('[data-tm="FA.aside-card"]'))
+          .toHaveLength(0)
+        await expect(sidebar.querySelector('[data-tm="FA.trend-chart"]'))
+          .not.toBeNull()
+        await expect(sidebar.querySelectorAll('[data-tm="FA.trend-beat"]'))
           .toHaveLength(0)
       } else {
         await expect(canvasElement.querySelector('.judge-transcript'))
@@ -288,8 +294,25 @@ export const MobileReportChecks: Story = {
           await page.viewport(390, 844)
         }
         await userEvent.click(canvas.getByRole('button', { name: '回放' }))
-        await expect(canvasElement.querySelector('.judge-mobile-trend'))
-          .toBeNull()
+        if (scene.id === 144 || scene.id === 120) {
+          // Court/council replay keeps the trend after the transcript, with no
+          // beat drawn before the first note is revealed.
+          await waitFor(() =>
+            expect(
+              canvasElement.querySelector(
+                '.judge-mobile-trend .judge-sidebar-trend',
+              ),
+            ).not.toBeNull()
+          )
+          await expect(
+            canvasElement.querySelectorAll(
+              '.judge-mobile-trend [data-tm="FA.trend-beat"]',
+            ),
+          ).toHaveLength(0)
+        } else {
+          await expect(canvasElement.querySelector('.judge-mobile-trend'))
+            .toBeNull()
+        }
         await userEvent.click(canvas.getByRole('button', { name: '退出回放' }))
       }
     } finally {

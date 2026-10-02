@@ -18,6 +18,55 @@ import { tm } from '../../testmode/mark'
 // 按通道 id、再按 judge lane 解析显示名（feishu 审计 #10）。
 const OS_VOICE_LANES = ['judge-aside', 'judge'] as const
 
+// 心声的「说话人」未必是 judge lane（feishu 审计 #10）：凤仪亭的 os 节拍由
+// 场上人物貂蝉在 'judge-aside' 通道亲声，judge lane 无标签，旧逻辑只会落到
+// 通用「裁判心声」。按 OS_VOICE_LANES 依次解析显示名——module laneLabels
+// 优先（作者随时可修），其次对局自带的 speakerLabels（'秦孝公' → 秦孝公
+// 心声的旧路径原样保留在 'judge' 键上）；都解析不出才用通名。
+function osTitle(labels: SpeakerLabels): string {
+  const voice = OS_VOICE_LANES
+    .map((lane) => labels.module?.laneLabels[lane] ?? labels.lanes[lane])
+    .find((name) => name != null)
+  return voice ? `${voice}心声` : '裁判心声'
+}
+
+function osPortraitSpeaker(labels: SpeakerLabels): string {
+  return labels.module?.laneLabels['judge-aside'] ? 'judge-aside' : 'judge'
+}
+
+// 心声还在生成（act 流式中）：先在侧栏占住它将落下的位置，落笔后由 OsBeatCard
+// 接替——不在对话栏里冒出一条旁白发言，再跳进侧栏。调试开时带流式内心。
+export function OsPendingCard({
+  labels,
+  reasoning,
+  showTrace = false,
+}: {
+  labels: SpeakerLabels
+  reasoning: string
+  showTrace?: boolean
+}) {
+  return (
+    <div
+      {...tm('FA.aside-pending')}
+      className='mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6'
+    >
+      <div className='portrait-os-header flex items-center gap-2 text-xs'>
+        <RolePortrait labels={labels} speaker={osPortraitSpeaker(labels)} />
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='font-semibold text-(--warning)'>
+            {osTitle(labels)}
+          </span>
+          <span className='inline-flex items-center gap-1 text-(--foreground-muted)'>
+            <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-(--accent)' />
+            {reasoning ? '正在斟酌措辞…' : '正在思考…'}
+          </span>
+        </div>
+      </div>
+      {showTrace ? <ReasoningFold text={reasoning} streaming /> : null}
+    </div>
+  )
+}
+
 export function OsBeatCard({
   verdict,
   labels,
@@ -37,15 +86,7 @@ export function OsBeatCard({
   showTrace?: boolean
 }) {
   const beat = parseOsBeat(verdict.output)
-  // 心声的「说话人」未必是 judge lane（feishu 审计 #10）：凤仪亭的 os 节拍由
-  // 场上人物貂蝉在 'judge-aside' 通道亲声，judge lane 无标签，旧逻辑只会落到
-  // 通用「裁判心声」。按 OS_VOICE_LANES 依次解析显示名——module laneLabels
-  // 优先（作者随时可修），其次对局自带的 speakerLabels（'秦孝公' → 秦孝公
-  // 心声的旧路径原样保留在 'judge' 键上）；都解析不出才用通名。
-  const voice = OS_VOICE_LANES
-    .map((lane) => labels.module?.laneLabels[lane] ?? labels.lanes[lane])
-    .find((name) => name != null)
-  const title = voice ? `${voice}心声` : '裁判心声'
+  const title = osTitle(labels)
 
   return (
     // F4：倾向轨迹图内联说明的「查看心声卡」按此 id scrollIntoView 直达。
@@ -59,12 +100,7 @@ export function OsBeatCard({
       )}
     >
       <div className='portrait-os-header flex items-center gap-2 text-xs'>
-        <RolePortrait
-          labels={labels}
-          speaker={labels.module?.laneLabels['judge-aside']
-            ? 'judge-aside'
-            : 'judge'}
-        />
+        <RolePortrait labels={labels} speaker={osPortraitSpeaker(labels)} />
         <div className='flex flex-wrap items-center gap-2'>
           <span
             {...tm('FA.aside-title')}
