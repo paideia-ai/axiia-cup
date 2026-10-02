@@ -6,8 +6,9 @@ import { agents, ApiError } from '../api/client'
 import type { Side } from '../api/types'
 import { agentEntryUrl } from '../lib/agent-entry'
 import { navigationCache, navigationEpoch } from '../lib/navigation-cache'
-import { agentQuery } from '../lib/navigation-queries'
+import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
 import { rejectCopy } from '../lib/reject-copy'
+import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
 import { rolesForSide, scenarioModule } from '../scenarios'
 import { PortraitRoleChoice } from './portrait-role-choice/portrait-role-choice'
@@ -48,6 +49,8 @@ export function CreateAgentAction({
   attention,
   express = false,
   variant,
+  size = 'sm',
+  oppositeOnPage = false,
 }: {
   scenarioID: string
   side: Side
@@ -60,6 +63,10 @@ export function CreateAgentAction({
   express?: boolean
   // 宿主面板沿用自己的按钮层级（出战面板里是次要按钮）。
   variant?: 'primary' | 'secondary'
+  size?: 'sm' | 'default'
+  // 对侧的新建入口也在本页（我的智能体、场景页）：被引导门拦下时，对侧为空就不再
+  // 另给创建按钮，用那一侧自己的入口。
+  oppositeOnPage?: boolean
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -145,9 +152,11 @@ export function CreateAgentAction({
 
   const control = children
     ? (
+      // grow：宿主把入口拉满整行时（首战旅程卡），按钮随之铺满。
       <Button
-        size='sm'
+        size={size}
         variant={variant}
+        className='grow'
         disabled={busy}
         data-testid={testID}
         onClick={begin}
@@ -240,18 +249,103 @@ export function CreateAgentAction({
           <p role='alert' className='text-(--accent)'>{error}</p>
           {gate && (
             <div {...tm('E.new-agent-gate')}>
-              <ButtonLink
-                size='sm'
+              <SideEntryAction
+                scenarioID={scenarioID}
+                side={oppositeSide}
+                role={oppositeName}
+                oppositeRole={roleName}
+                marker={tm('E.new-agent-gate-switch')['data-tm']}
                 variant='secondary'
-                to={agentEntryUrl(scenarioID, oppositeSide)}
-                {...tm('E.new-agent-gate-switch')}
+                ifEmpty={oppositeOnPage ? 'hide' : 'create'}
+                createLabel={`创建${oppositeName}智能体`}
               >
                 去完善{oppositeName}智能体
-              </ButtonLink>
+              </SideEntryAction>
             </div>
           )}
         </div>
       )}
     </div>
   )
+}
+
+// 统一侧入口的就地版本：该侧已有未归档智能体（或清单还读不到）时，链接到
+// /agents/entry 直达它；确认该侧为空、且有多名人物可选（目前是本能寺）时，人物签在
+// 本按钮两侧就地弹出，不经中间选角色页。本页已有该侧自己的新建入口时（ifEmpty
+// 'hide'），该侧为空就什么都不显示。
+export function SideEntryAction({
+  scenarioID,
+  side,
+  role,
+  oppositeRole,
+  children,
+  createLabel,
+  target,
+  express = false,
+  marker,
+  testID,
+  variant,
+  size = 'sm',
+  ifEmpty = 'create',
+}: {
+  scenarioID: string
+  side: Side
+  role: string
+  oppositeRole?: string
+  children: ReactNode
+  // 该侧为空时换用的文案；缺省沿用 children。
+  createLabel?: ReactNode
+  ifEmpty?: 'create' | 'hide'
+  target?: 'view' | 'build'
+  express?: boolean
+  marker?: string
+  testID?: string
+  variant?: 'primary' | 'secondary'
+  size?: 'sm' | 'default'
+}) {
+  const createHere = ifEmpty === 'create' &&
+    rolesForSide(scenarioModule(scenarioID), side).length > 1
+  // 单角色侧就地新建时不必读清单：有没有智能体，都由 /agents/entry 打开或创建草稿。
+  const inventory = usePageQuery({
+    ...inventoryQuery(),
+    enabled: createHere || ifEmpty === 'hide',
+  })
+  const empty = inventory.data != null &&
+    !inventory.data.scenarios.find((item) => item.scenarioID === scenarioID)
+      ?.sides[side].some((agent) => !agent.isArchived)
+  // 就地新建会刷新清单。显示过「创建」就保持到卸载：按钮若随之换回链接，创建流程被
+  // 卸载，跳转新智能体主页就丢了。
+  const [creating, setCreating] = useState(false)
+  useEffect(() => {
+    if (createHere && empty) setCreating(true)
+  }, [createHere, empty])
+
+  if (ifEmpty === 'hide' && empty) return null
+  return createHere && (empty || creating)
+    ? (
+      <CreateAgentAction
+        scenarioID={scenarioID}
+        side={side}
+        role={role}
+        oppositeRole={oppositeRole}
+        express={express}
+        marker={marker}
+        testID={testID}
+        variant={variant}
+        size={size}
+      >
+        {createLabel ?? children}
+      </CreateAgentAction>
+    )
+    : (
+      <ButtonLink
+        size={size}
+        variant={variant}
+        to={agentEntryUrl(scenarioID, side, target, express)}
+        data-tm={marker}
+        data-testid={testID}
+      >
+        {children}
+      </ButtonLink>
+    )
 }
