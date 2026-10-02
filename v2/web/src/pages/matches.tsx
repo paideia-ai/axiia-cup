@@ -102,7 +102,6 @@ export function MatchesPage() {
     updateFilter('mine', value === scoped ? '' : value ? '0' : '1')
   const setScenarioID = (value: string) => updateFilter('scenario', value)
   const list = usePageQuery({
-    staleTime: 0,
     ...(scoped
       ? {
         queryKey: [
