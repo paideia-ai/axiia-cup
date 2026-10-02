@@ -50,8 +50,7 @@ export const honnojiDecision: ScenarioModule = {
   ],
   hiddenGoals: {
     a: {
-      note:
-        '选定角色后，每局从该角色的三项请求中随机指定一项为真目标，其余两项为假目标。真假标记仅己方 AI 可见，对手只知道候选列表。',
+      note: '每局随机一项为真目标，其余两项为假目标。',
       groups: [
         {
           role: '长宗我部元亲阵营的密使',
@@ -88,8 +87,7 @@ export const honnojiDecision: ScenarioModule = {
       ],
     },
     b: {
-      note:
-        '选定角色后，每局从该角色的三项请求中随机指定一项为真目标，其余两项为假目标。真假标记仅己方 AI 可见，对手只知道候选列表。',
+      note: '每局随机一项为真目标，其余两项为假目标。',
       groups: [
         {
           role: '细川藤孝',
