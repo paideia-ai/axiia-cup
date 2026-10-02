@@ -257,8 +257,8 @@ export const EveryExpression: Story = {
           '.role-portrait',
         )!
         expect(image.src).toContain(`ashigaru-${slug}`)
-        expect(image.naturalWidth).toBe(1254)
-        expect(image.naturalHeight).toBe(1254)
+        expect(image.naturalWidth).toBe(256)
+        expect(image.naturalHeight).toBe(256)
       }, { timeout: 4000 })
     }
   },

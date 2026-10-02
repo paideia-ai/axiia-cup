@@ -10,7 +10,7 @@ earlier global-neutral proposal.
 2. The accepted complete **human-visible output** is classified once. Reasoning
    traces, rejected attempts, tool instructions and private control decisions
    are excluded.
-3. At completion, allow up to 350 ms for JEV and the selected original portrait
+3. At completion, allow up to 350 ms for JEV and the selected portrait
    to become ready. When both are ready, switch portrait and start text playback
    together.
 4. Otherwise start playback with neutral at the deadline. Accept a late portrait
@@ -25,7 +25,7 @@ earlier global-neutral proposal.
    acceleration. When a provider supplies only a complete text snapshot, show
    that snapshot after the gate; there is no measured streaming cadence to
    replay.
-7. Keep all portrait files at their original resolution. Missing expressions
+7. Use PR #272's 256×256 WebP files for every portrait. Missing expressions
    fall back to the character's neutral asset. All 29 characters now have the
    complete ten-category set from PR #272.
 
@@ -93,7 +93,7 @@ speech, private messages and individual ballots. Structured values reveal
 according to their position in the visible projection; translated labels wait
 for their source value.
 
-Original assets are decoded ahead of use for visible characters. Naming
+Portrait assets are decoded ahead of use for generating characters. Naming
 convention:
 
 ```
@@ -103,9 +103,10 @@ src/assets/portraits/<scenario>/<character>-<emotion>.webp
 Emotion suffixes: `neutral`, `resolute`, `wary`, `hesitant`, `anxious`,
 `angry`, `scornful`, `sad`, `caring`, `moved`, corresponding to E01–E10.
 These are PR #272's semantic filenames, mapped explicitly from the frozen
-category IDs. Vite fingerprints lossless WebP encodings of the 1254×1254
-originals. No resizing is performed. The art PR's later 256×256 optimization
-is not used here, preserving the original-resolution requirement for this flow.
+category IDs. Vite fingerprints the 256×256 WebP files merged in PR #272.
+This adopts its Lanczos downsampling and lossless encoding, superseding the
+earlier original-resolution requirement. Runtime assets are byte-for-byte copies
+of the optimized artwork; the frontend does not resize or re-encode them.
 
 Historical rows open with complete text. Existing terminal classifications
 remain usable. No retrospective classification of old matches occurs. Existing
