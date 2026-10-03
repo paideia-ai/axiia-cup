@@ -240,19 +240,6 @@ export function VersionNavigation({
         nav.dataset.inView = String(
           focused || (bounds.bottom > 96 && bounds.top < innerHeight - 96),
         )
-        if (!driving) {
-          // The first tick belongs beside the cards, not over their heading.
-          // Keep this position fixed under the finger throughout a gesture.
-          nav.style.setProperty(
-            '--version-directory-top',
-            `${
-              Math.min(
-                innerHeight - 118,
-                Math.max(innerHeight / 2, bounds.top + 22),
-              )
-            }px`,
-          )
-        }
       }
       // Only one surface leads at a time. A rail gesture must not be pulled
       // back by the page scroll it produces (or by native scroll snapping).
@@ -489,7 +476,6 @@ export function VersionNavigation({
       globalThis.removeEventListener('scroll', onPageScroll)
       globalThis.removeEventListener('scrollend', onPageScrollEnd)
       globalThis.removeEventListener('resize', schedule)
-      nav.style.removeProperty('--version-directory-top')
       delete nav.dataset.inView
     }
   }, [visible, order, mobile])

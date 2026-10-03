@@ -40,8 +40,8 @@ function VersionRailPreview() {
           <div>
             <p className='text-sm font-semibold'>手机版版本目录 · 交互预览</p>
             <p className='mt-1 text-xs text-(--foreground-subtle)'>
-              手机目录平时显示 10%，滑动正文时 20%，滑动目录时
-              100%。卡片保持原宽，电脑版保持原样。
+              手机目录全屏高度、边缘不渐隐；平时显示 5%，滑动正文时
+              20%，滑动目录时 100%。卡片保持原宽，电脑版保持原样。
             </p>
           </div>
           <nav aria-label='选择版本数量' className='flex gap-1'>

@@ -322,7 +322,7 @@ export const MobileOpacityChangesAtScrollEnd: Story = {
   play: phonePlay(async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const nav = canvas.getByRole('navigation', { name: '版本快速导航' })
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     const transitions = getComputedStyle(nav).transitionProperty.split(',')
       .map((property) => property.trim())
     await expect(transitions).not.toContain('opacity')
@@ -335,7 +335,7 @@ export const MobileOpacityChangesAtScrollEnd: Story = {
     )
     await expectMobileActivity(nav, 'page', 0.2, 100)
     globalThis.dispatchEvent(new Event('scrollend'))
-    await expectMobileActivity(nav, 'idle', 0.1, 100)
+    await expectMobileActivity(nav, 'idle', 0.05, 100)
     nav.dispatchEvent(
       new WheelEvent('wheel', {
         bubbles: true,
@@ -344,7 +344,7 @@ export const MobileOpacityChangesAtScrollEnd: Story = {
     )
     await expectMobileActivity(nav, 'rail', 1, 100)
     nav.dispatchEvent(new Event('scrollend'))
-    await expectMobileActivity(nav, 'idle', 0.1, 100)
+    await expectMobileActivity(nav, 'idle', 0.05, 100)
   }),
 }
 
@@ -361,7 +361,7 @@ export const MobileScrollingTheRailNavigates: Story = {
     await waitFor(() =>
       expect(newest).toHaveAttribute('aria-current', 'location')
     )
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     const pageBefore = scrollY
     const entryBefore = canvas.getAllByRole('button', { pressed: true })
       .map((button) => button.getAttribute('aria-label'))
@@ -374,7 +374,7 @@ export const MobileScrollingTheRailNavigates: Story = {
       expect(oldest).toHaveAttribute('aria-current', 'location')
       expect(scrollY).toBeGreaterThan(pageBefore)
     }, { timeout: 3000 })
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     await expect(
       canvas.getAllByRole('button', { pressed: true })
         .map((button) => button.getAttribute('aria-label')),
@@ -385,14 +385,14 @@ export const MobileScrollingTheRailNavigates: Story = {
     await waitFor(() =>
       expect(newest).toHaveAttribute('aria-current', 'location')
     )
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     // A tap's animated document scroll still belongs to the rail gesture.
     await userEvent.click(oldest)
     await expectMobileActivity(nav, 'rail', 1, 100)
     await waitFor(() =>
       expect(oldest).toHaveAttribute('aria-current', 'location')
     )
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -445,12 +445,12 @@ export const MobilePausedTouchPanKeepsFollowing: Story = {
     nav.dispatchEvent(new Event('scroll'))
     await expectMobileActivity(nav, 'rail', 1, 100)
     nav.dispatchEvent(new Event('scrollend'))
-    await expectMobileActivity(nav, 'idle', 0.1, 100)
+    await expectMobileActivity(nav, 'idle', 0.05, 100)
     await expect(
       canvas.getAllByRole('button', { pressed: true })
         .map((button) => button.getAttribute('aria-label')),
     ).toEqual(entryBefore)
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -484,12 +484,12 @@ export const MobilePageScrollingKeepsRailInSync: Story = {
       )
     })
     // Page-driven rail synchronization must not masquerade as rail input.
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     const bottom = scrollY
     // Programmatic rail synchronization must never start another page scroll.
     await new Promise<void>((resolve) => setTimeout(resolve, 500))
     await expect(scrollY).toBe(bottom)
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     canvasElement.dispatchEvent(
       new WheelEvent('wheel', {
         bubbles: true,
@@ -504,7 +504,7 @@ export const MobilePageScrollingKeepsRailInSync: Story = {
         nav.getBoundingClientRect().top,
       )
     })
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -519,7 +519,7 @@ export const MobileIdleRailKeepsKeyboardFocusVisible: Story = {
     const keyboard = '__vitest_browser_runner__' in globalThis
       ? (await import('vitest/browser')).userEvent
       : userEvent
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
     await keyboard.keyboard('{Tab}')
     link.focus()
     await expect(link.matches(':focus-visible')).toBe(true)
@@ -528,7 +528,7 @@ export const MobileIdleRailKeepsKeyboardFocusVisible: Story = {
     await expectMobileActivity(nav, 'rail', 1)
     const outside = canvas.getByRole('button', { name: '复制 v12 提示词' })
     outside.focus()
-    await expectMobileActivity(nav, 'idle', 0.1, 100)
+    await expectMobileActivity(nav, 'idle', 0.05, 100)
     // Keyboard users can rediscover the dimmed directory without a pointer.
     link.focus()
     await expectMobileActivity(nav, 'rail', 1)
@@ -543,7 +543,7 @@ export const MobileIdleRailKeepsKeyboardFocusVisible: Story = {
     await expectMobileActivity(nav, 'page', 0.2, 100)
     globalThis.scrollBy({ top: 300, behavior: 'instant' })
     await expect(link).toHaveFocus()
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -595,7 +595,7 @@ export const MobileTouchFocusAndHoverDoNotKeepRailBright: Story = {
     globalThis.dispatchEvent(new Event('touchend'))
     nav.dispatchEvent(new Event('scrollend'))
     // Deliberately leave focus and the pointer inside the rail after release.
-    await expectMobileActivity(nav, 'idle', 0.1, 100)
+    await expectMobileActivity(nav, 'idle', 0.05, 100)
     await expect(link).toHaveFocus()
     canvasElement.dispatchEvent(
       new WheelEvent('wheel', {
@@ -605,7 +605,7 @@ export const MobileTouchFocusAndHoverDoNotKeepRailBright: Story = {
     )
     await expectMobileActivity(nav, 'page', 0.2, 100)
     globalThis.scrollBy({ top: 300, behavior: 'instant' })
-    await expectMobileActivity(nav, 'idle', 0.1)
+    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -635,6 +635,42 @@ export const MobileKeyboardDirectory: Story = {
     }
     await userEvent.keyboard('{Enter}')
     await expect(canvasElement.querySelector('#version-10140')).toHaveFocus()
+  }),
+}
+
+export const MobileDirectoryFillsScreenWithoutFading: Story = {
+  args: { count: 40 },
+  play: phonePlay(async ({ canvasElement }) => {
+    const nav = within(canvasElement).getByRole('navigation', {
+      name: '版本快速导航',
+    })
+    const middle = within(nav).getByRole('link', { name: '跳转到 v20' })
+    nav.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 800 }))
+    nav.scrollTo({
+      top: middle.offsetTop - (nav.clientHeight - middle.offsetHeight) / 2,
+      behavior: 'instant',
+    })
+    await waitFor(() =>
+      expect(middle).toHaveAttribute('aria-current', 'location')
+    )
+    const checkScreenEdges = async () => {
+      await waitFor(() => {
+        const bounds = nav.getBoundingClientRect()
+        expect(bounds.top).toBe(0)
+        expect(bounds.bottom).toBe(innerHeight)
+        expect(getComputedStyle(nav).maskImage).toBe('none')
+        const visible = within(nav).getAllByRole('link')
+          .map((link) => link.getBoundingClientRect())
+          .filter((row) => row.bottom > 0 && row.top < innerHeight)
+        expect(visible[0].top).toBeLessThanOrEqual(0)
+        expect(visible.at(-1)!.bottom).toBeGreaterThanOrEqual(innerHeight)
+      })
+    }
+    await checkScreenEdges()
+    if ('__vitest_browser_runner__' in globalThis) {
+      await (await import('vitest/browser')).page.viewport(390, 640)
+      await checkScreenEdges()
+    }
   }),
 }
 
