@@ -30,7 +30,6 @@ import {
 import { Panel } from './panel'
 import { STEP_HINTS, TM } from './registry/index'
 import { TM_CSS } from './styles'
-import { getIdentity, type Identity, setIdentity } from './supabase'
 import {
   AnchorChips,
   type Box,
@@ -38,7 +37,6 @@ import {
   CopyButton,
   copyText,
   HighlightBox,
-  IdentityDialog,
   Toast,
   type ToastMessage,
 } from './ui'
@@ -366,8 +364,6 @@ export default function Surface(
     () => target,
   )
   const [toast, setToast] = useState<ToastMessage | null>(null)
-  const [identity, setIdentityState] = useState<Identity | null>(getIdentity)
-  const [pendingLabel, setPendingLabel] = useState<string | null>(null)
   const [spotKey, setSpotKey] = useState<string | null>(null)
   const guidedRef = useRef<GuidedHandle>(null)
   const targetJourneyId = target?.journeyId ?? null
@@ -453,21 +449,8 @@ export default function Surface(
   }, [setUi])
 
   const closeToast = useCallback(() => setToast(null), [])
-  const closeIdentity = useCallback(() => {
-    setPendingLabel(null)
-    setUi({ identity: false })
-  }, [setUi])
-  const requestIdentity = useCallback((label: string) => {
-    setPendingLabel(label)
-    setUi({ identity: true })
-  }, [setUi])
-
   // 返回 true = 测试模式确实关掉了什么；false = 什么都没开，Esc 放行给产品
   const onEscape = useCallback((): boolean => {
-    if (ui.identity) {
-      closeIdentity()
-      return true
-    }
     if (popover) {
       closePopover()
       return true
@@ -489,7 +472,6 @@ export default function Surface(
     popover,
     setUi,
     closePopover,
-    closeIdentity,
   ])
   useEscape(true, onEscape)
 
@@ -548,28 +530,9 @@ export default function Surface(
             accountDisplayName={accountDisplayName}
             accountEmail={accountEmail}
             hints={STEP_HINTS}
-            identity={identity}
-            identityOpen={ui.identity}
             panelOpen={ui.panel}
-            onRequestIdentity={requestIdentity}
             onSpotlight={setSpotKey}
-            onToast={setToast}
             onClose={() => setUi({ guided: false })}
-          />
-        )
-        : null}
-      {ui.identity
-        ? (
-          <IdentityDialog
-            initial={identity}
-            pending={pendingLabel}
-            onSave={(id) => {
-              setIdentity(id)
-              setIdentityState(id)
-              setPendingLabel(null)
-              setUi({ identity: false })
-            }}
-            onClose={closeIdentity}
           />
         )
         : null}
