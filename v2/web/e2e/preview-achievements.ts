@@ -43,6 +43,20 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (request) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method not allowed', { status: 405 })
   }
+  // Design choices live only in this local preview server, outside the shipped SPA.
+  if (url.pathname === '/_preview/achievement-toasts') {
+    return new Response(
+      request.method === 'HEAD' ? null : await Deno.readTextFile(
+        new URL('./previews/achievement-toast-options.html', import.meta.url),
+      ),
+      {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store',
+        },
+      },
+    )
+  }
   let pathname: string
   try {
     pathname = decodeURIComponent(url.pathname)
