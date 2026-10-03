@@ -337,13 +337,12 @@ export const MobileOpacityChangesAtScrollEnd: Story = {
     globalThis.dispatchEvent(new Event('scrollend'))
     await expectMobileActivity(nav, 'idle', 0.05, 100)
     nav.dispatchEvent(
-      new WheelEvent('wheel', {
-        bubbles: true,
-        deltaY: 100,
-      }),
+      new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }),
     )
     await expectMobileActivity(nav, 'rail', 1, 100)
-    nav.dispatchEvent(new Event('scrollend'))
+    globalThis.dispatchEvent(
+      new PointerEvent('pointerup', { pointerType: 'touch' }),
+    )
     await expectMobileActivity(nav, 'idle', 0.05, 100)
   }),
 }
@@ -365,11 +364,9 @@ export const MobileScrollingTheRailNavigates: Story = {
     const pageBefore = scrollY
     const entryBefore = canvas.getAllByRole('button', { pressed: true })
       .map((button) => button.getAttribute('aria-label'))
-    // Native scrolling emits wheel intent followed by scroll events. Set the
-    // browser scroll position directly so the assertion is deterministic.
+    // Gesture distance drives the document independently of the list offset.
     nav.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 2000 }))
     await expectMobileActivity(nav, 'rail', 1, 100)
-    nav.scrollTo({ top: nav.scrollHeight, behavior: 'instant' })
     await waitFor(() => {
       expect(oldest).toHaveAttribute('aria-current', 'location')
       expect(scrollY).toBeGreaterThan(pageBefore)
@@ -381,7 +378,6 @@ export const MobileScrollingTheRailNavigates: Story = {
     ).toEqual(entryBefore)
     nav.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: -2000 }))
     await expectMobileActivity(nav, 'rail', 1, 100)
-    nav.scrollTo({ top: 0, behavior: 'instant' })
     await waitFor(() =>
       expect(newest).toHaveAttribute('aria-current', 'location')
     )
@@ -403,54 +399,47 @@ export const MobilePausedTouchPanKeepsFollowing: Story = {
     const nav = canvas.getByRole('navigation', { name: '版本快速导航' })
     const entryBefore = canvas.getAllByRole('button', { pressed: true })
       .map((button) => button.getAttribute('aria-label'))
-    const center = (link: HTMLElement) =>
-      link.offsetTop - (nav.clientHeight - link.offsetHeight) / 2
-    const firstStop = within(nav).getByRole('link', { name: '跳转到 v30' })
-    const secondStop = within(nav).getByRole('link', { name: '跳转到 v20' })
     nav.dispatchEvent(
       new PointerEvent('pointerdown', {
         bubbles: true,
         pointerType: 'touch',
-        pointerId: 1,
-        isPrimary: true,
+        clientY: 600,
       }),
     )
-    // A browser cancels the pointer once native touch panning takes over. This
-    // is not a finger lift: a pause must retain ownership until touchend.
-    nav.dispatchEvent(
-      new PointerEvent('pointercancel', {
-        bubbles: true,
+    globalThis.dispatchEvent(
+      new PointerEvent('pointermove', {
         pointerType: 'touch',
-        pointerId: 1,
-        isPrimary: true,
+        clientY: 160,
       }),
     )
-    nav.scrollTo({ top: center(firstStop), behavior: 'instant' })
     await waitFor(() =>
-      expect(firstStop).toHaveAttribute('aria-current', 'location')
+      expect(within(nav).getByRole('link', { name: '跳转到 v30' }))
+        .toHaveAttribute('aria-current', 'location')
     )
     const pageAtPause = scrollY
     await new Promise<void>((resolve) => setTimeout(resolve, 350))
     await expectMobileActivity(nav, 'rail', 1)
-    nav.scrollTo({ top: center(secondStop), behavior: 'instant' })
+    globalThis.dispatchEvent(
+      new PointerEvent('pointermove', {
+        pointerType: 'touch',
+        clientY: -280,
+      }),
+    )
     await waitFor(() => {
-      expect(secondStop).toHaveAttribute('aria-current', 'location')
+      expect(within(nav).getByRole('link', { name: '跳转到 v20' }))
+        .toHaveAttribute('aria-current', 'location')
       expect(scrollY).toBeGreaterThan(pageAtPause)
     })
-    // Resume movement before lifting the finger so release has momentum.
-    nav.dispatchEvent(new Event('scroll'))
-    globalThis.dispatchEvent(new Event('touchend'))
-    // Momentum is still rail input after the finger lifts; only scrollend
-    // marks its completion and restores the idle appearance.
-    nav.dispatchEvent(new Event('scroll'))
-    await expectMobileActivity(nav, 'rail', 1, 100)
-    nav.dispatchEvent(new Event('scrollend'))
-    await expectMobileActivity(nav, 'idle', 0.05, 100)
+    const pageAtRelease = scrollY
+    globalThis.dispatchEvent(
+      new PointerEvent('pointerup', { pointerType: 'touch' }),
+    )
+    await waitFor(() => expect(scrollY).toBeGreaterThan(pageAtRelease))
+    await expectMobileActivity(nav, 'idle', 0.05)
     await expect(
       canvas.getAllByRole('button', { pressed: true })
         .map((button) => button.getAttribute('aria-label')),
     ).toEqual(entryBefore)
-    await expectMobileActivity(nav, 'idle', 0.05)
   }),
 }
 
@@ -638,66 +627,105 @@ export const MobileKeyboardDirectory: Story = {
   }),
 }
 
-export const MobileMarksMatchDesktop: Story = {
+export const MobileCompactMarks: Story = {
   args: { count: 12 },
-  play: async ({ canvasElement }) => {
-    if (!('__vitest_browser_runner__' in globalThis)) return
-    const { page } = await import('vitest/browser')
-    const initial = { width: innerWidth, height: innerHeight }
+  play: phonePlay(async ({ canvasElement }) => {
     const nav = within(canvasElement).getByRole('navigation', {
       name: '版本快速导航',
     })
-    const [current, other] = within(nav).getAllByRole('link')
-    const readMark = (link: HTMLElement) => ({
-      gap: getComputedStyle(link).gap,
-      marks: ['.version-directory-number', '.version-directory-tick'].map(
-        (selector) => {
-          const mark = link.querySelector<HTMLElement>(selector)!
-          const style = getComputedStyle(mark)
-          return Object.fromEntries([
-            'width',
-            'height',
-            'font-size',
-            'line-height',
-            'font-weight',
-            'color',
-            'background-color',
-            'border-radius',
-            'transform',
-            'transform-origin',
-            'transition-property',
-            'transition-duration',
-            'transition-timing-function',
-          ].map((property) => [property, style.getPropertyValue(property)]))
-        },
-      ),
+    await waitFor(() => {
+      const link = nav.querySelector('[aria-current]')!
+      const tick = link.querySelector('.version-directory-tick')!
+        .getBoundingClientRect()
+      expect(
+        getComputedStyle(link.querySelector('.version-directory-number')!)
+          .fontSize,
+      ).toBe('13px')
+      expect(tick.width).toBe(12)
+      expect(tick.height).toBe(3)
+      expect(nav.getBoundingClientRect().width).toBe(44)
     })
-    try {
-      await page.viewport(1440, 844)
-      globalThis.scrollTo({ top: 0, behavior: 'instant' })
-      await waitFor(() => {
-        expect(current).toHaveAttribute('aria-current', 'location')
-        expect(
-          other.querySelector('.version-directory-tick')!
-            .getBoundingClientRect().width,
-        ).toBeCloseTo(18, 3)
-      })
-      const desktop = [readMark(current), readMark(other)]
-      await page.viewport(390, 844)
-      globalThis.scrollTo({ top: 0, behavior: 'instant' })
-      await waitFor(() => {
-        expect([readMark(current), readMark(other)]).toEqual(desktop)
-        const tick = current.querySelector('.version-directory-tick')!
-          .getBoundingClientRect()
-        expect(tick.width).toBe(44)
-        expect(tick.height).toBe(4)
-        expect(current.getBoundingClientRect().width).toBe(44)
-        expect(current.getBoundingClientRect().height).toBe(44)
-      })
-    } finally {
-      await page.viewport(initial.width, initial.height)
-    }
-  },
+  }),
+}
+
+export const MobileBottomVersionsKeepDirectoryStill: Story = {
+  args: { count: 40 },
+  play: phonePlay(async ({ canvasElement }) => {
+    const nav = within(canvasElement).getByRole('navigation', {
+      name: '版本快速导航',
+    })
+    const version = (n: number) =>
+      within(nav).getByRole('link', { name: `跳转到 v${n}` })
+    await userEvent.click(version(3))
+    await waitFor(() =>
+      expect(version(3)).toHaveAttribute('aria-current', 'location')
+    )
+    await expectMobileActivity(nav, 'idle', 0.05)
+    const offset = nav.scrollTop
+    const pageAtThree = scrollY
+    const topAtThree = version(3).getBoundingClientRect().top
+    await expect(offset).toBe(nav.scrollHeight - nav.clientHeight)
+    globalThis.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'instant',
+    })
+    await waitFor(() =>
+      expect(version(1)).toHaveAttribute('aria-current', 'location')
+    )
+    await expect(nav.scrollTop).toBe(offset)
+    await expect(version(3).getBoundingClientRect().top).toBe(topAtThree)
+    await expect(version(1).getBoundingClientRect().bottom).toBe(
+      innerHeight - 68,
+    )
+    globalThis.scrollTo({ top: pageAtThree, behavior: 'instant' })
+    await waitFor(() =>
+      expect(version(3)).toHaveAttribute('aria-current', 'location')
+    )
+    await userEvent.click(version(2))
+    await waitFor(() =>
+      expect(version(2)).toHaveAttribute('aria-current', 'location')
+    )
+    await expect(nav.scrollTop).toBe(offset)
+  }),
+}
+
+export const MobileShortDirectoryStaysStillDuringSwipes: Story = {
+  args: { count: 12 },
+  play: phonePlay(async ({ canvasElement }) => {
+    const nav = within(canvasElement).getByRole('navigation', {
+      name: '版本快速导航',
+    })
+    await waitFor(() => expect(nav.scrollHeight).toBe(nav.clientHeight))
+    const before = within(nav).getAllByRole('link').map((link) =>
+      link.getBoundingClientRect().top
+    )
+    nav.dispatchEvent(
+      new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 44 }),
+    )
+    await waitFor(() =>
+      expect(within(nav).getByRole('link', { name: '跳转到 v11' }))
+        .toHaveAttribute('aria-current', 'location')
+    )
+    await expectMobileActivity(nav, 'idle', 0.05)
+    nav.dispatchEvent(
+      new WheelEvent('wheel', {
+        bubbles: true,
+        cancelable: true,
+        deltaY: 1000,
+      }),
+    )
+    await waitFor(() =>
+      expect(within(nav).getByRole('link', { name: '跳转到 v1' }))
+        .toHaveAttribute('aria-current', 'location')
+    )
+    await expectMobileActivity(nav, 'idle', 0.05)
+    await expect(nav.scrollTop).toBe(0)
+    await expect(
+      within(nav).getAllByRole('link').map((link) =>
+        link.getBoundingClientRect().top
+      ),
+    ).toEqual(before)
+  }),
 }
 
 export const MobileDirectoryFillsScreenWithoutFading: Story = {
@@ -707,11 +735,7 @@ export const MobileDirectoryFillsScreenWithoutFading: Story = {
       name: '版本快速导航',
     })
     const middle = within(nav).getByRole('link', { name: '跳转到 v20' })
-    nav.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 800 }))
-    nav.scrollTo({
-      top: middle.offsetTop - (nav.clientHeight - middle.offsetHeight) / 2,
-      behavior: 'instant',
-    })
+    await userEvent.click(middle)
     await waitFor(() =>
       expect(middle).toHaveAttribute('aria-current', 'location')
     )

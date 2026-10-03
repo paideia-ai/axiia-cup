@@ -987,18 +987,19 @@ main .text-\(--accent\) {
     display: flex;
     flex-direction: column;
     gap: 0;
-    width: 88px;
+    width: 44px;
     height: var(--rail-height);
-    padding-block: calc((var(--rail-height) - 44px) / 2);
-    padding-inline: 2px;
+    --rail-short-padding: max(0px, calc((var(--rail-height) - 116px - var(--version-count) * 44px) / 2));
+    padding-top: calc(48px + var(--rail-short-padding));
+    padding-bottom: calc(68px + var(--rail-short-padding));
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
-    touch-action: pan-y;
-    /* Empty centering space must not steal taps from headers or agent links.
+    touch-action: none;
+    /* Blank space around a short list must not steal taps from page controls.
        The contiguous 44px rows remain the native touch/scroll surface. */
     pointer-events: none;
-    scroll-snap-type: y mandatory;
+    scroll-snap-type: none;
     scrollbar-width: none;
     background: transparent;
     border-bottom: 0;
@@ -1028,16 +1029,13 @@ main .text-\(--accent\) {
     display: flex;
     align-items: center;
     flex: 0 0 44px;
-    gap: 8px;
-    /* Keep a 44px swipe strip. The desktop-sized tick can extend beyond it;
-       empty space between ticks must still pass taps to the prompt controls. */
-    width: 44px;
+    gap: 3px;
     min-height: 44px;
     padding: 0 2px;
-    border-radius: 3px;
-    scroll-snap-align: center;
+    border-radius: 4px;
+    scroll-snap-align: none;
     pointer-events: auto;
-    color: var(--foreground-subtle);
+    color: var(--foreground);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1048,32 +1046,31 @@ main .text-\(--accent\) {
 
   .version-directory-number {
     display: block;
-    width: 28px;
+    width: 18px;
     flex-shrink: 0;
     text-align: right;
-    font-size: 18px;
-    line-height: 26px;
+    font-size: 13px;
+    line-height: 24px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: var(--foreground-muted);
-    transform: scale(0.611111);
+    color: var(--foreground-subtle);
+    transform: scale(0.72);
     transform-origin: right center;
-    transition:
-      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-      color 240ms ease-out;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms
+      ease;
   }
 
   .version-directory-tick {
     display: block;
-    width: 44px;
-    height: 4px;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
     flex-shrink: 0;
     background: var(--foreground-muted);
-    transform: scale(0.409091, 0.5);
+    transform: scaleX(0.45);
     transform-origin: left center;
-    transition:
-      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 240ms ease-out;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), background-color
+      180ms ease;
   }
 
   .version-directory-link[aria-current='location'] .version-directory-number {
@@ -1081,21 +1078,15 @@ main .text-\(--accent\) {
     color: var(--foreground);
   }
 
+  .version-directory-link[aria-current='location'] .version-directory-tick {
+    transform: scaleX(1);
+    background: var(--foreground);
+  }
+
   @media (hover: hover) {
     .version-directory-link:hover .version-directory-tick {
-      transform: scale(0.636364, 0.75);
-      background: var(--foreground);
+      transform: scaleX(1);
     }
-  }
-
-  .version-directory-link:focus-visible .version-directory-tick {
-    transform: scale(0.636364, 0.75);
-    background: var(--foreground);
-  }
-
-  .version-directory-link[aria-current='location'] .version-directory-tick {
-    transform: scale(1);
-    background: var(--foreground);
   }
 
   .version-directory-link:focus-visible {

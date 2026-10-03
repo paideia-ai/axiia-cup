@@ -38,10 +38,8 @@ function VersionRailPreview() {
       <aside className='border-b border-(--border-soft) bg-(--surface) px-4 py-3 text-(--foreground)'>
         <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3'>
           <div>
-            <p className='text-sm font-semibold'>手机版版本目录 · 交互预览</p>
-            <p className='mt-1 text-xs text-(--foreground-subtle)'>
-              手机目录全屏高度、边缘不渐隐；平时显示 5%，滑动正文时
-              20%，滑动目录时 100%。卡片保持原宽，电脑版保持原样。
+            <p className='text-sm font-semibold'>
+              手机版版本目录 · 稳定列表预览
             </p>
           </div>
           <nav aria-label='选择版本数量' className='flex gap-1'>

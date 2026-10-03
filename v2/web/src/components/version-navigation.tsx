@@ -108,6 +108,7 @@ export function VersionNavigation({
   useEffect(() => () => cancelScroll.current(), [])
   const releaseRail = useRef<() => void>(() => {})
   const wakeRail = useRef<() => void>(() => {})
+  const suppressRailClick = useRef(false)
   const finishRail = useRef<() => void>(() => {})
   const [activity, setActivity] = useState<'idle' | 'page' | 'rail'>('idle')
   const [activeID, setActiveID] = useState<number | null>(null)
@@ -192,13 +193,50 @@ export function VersionNavigation({
     let held = false
     let focused = false
     let navigating = false
-    let railMoving = false
+    let momentumFrame = 0
+    let position = 0
+    let pointerY = 0
+    let pointerTime = 0
+    let velocity = 0
+    let moved = false
     let scrollSource: 'page' | 'rail' = 'page'
     let targets = scrollTargets(root.current)
     const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a'))
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
-    const centerOf = (link: HTMLElement) =>
-      link.offsetTop - (nav.clientHeight - link.offsetHeight) / 2
+    nav.style.setProperty('--version-count', String(links.length))
+    const reveal = (link: HTMLAnchorElement) => {
+      const index = links.indexOf(link)
+      // Pin the end groups before advancing through them. In particular,
+      // v3, v2 and v1 share exactly the same directory position.
+      if (index >= links.length - 3) {
+        nav.scrollTo({
+          top: nav.scrollHeight - nav.clientHeight,
+          behavior: 'instant',
+        })
+        return
+      }
+      if (index < 3) {
+        nav.scrollTo({ top: 0, behavior: 'instant' })
+        return
+      }
+      const top = link.offsetTop - nav.scrollTop
+      const bottom = top + link.offsetHeight
+      const lookAhead = link.offsetHeight * 2
+      // Keep the list still while its current row is visible. Reveal a small
+      // neighboring group only at an edge; the final group stays bottom-aligned.
+      if (top < 48) {
+        nav.scrollTo({
+          top: link.offsetTop - 48 - lookAhead,
+          behavior: 'instant',
+        })
+      } else if (bottom > nav.clientHeight - 68) {
+        nav.scrollTo({
+          top: link.offsetTop + link.offsetHeight - nav.clientHeight + 68 +
+            lookAhead,
+          behavior: 'instant',
+        })
+      }
+    }
     const idle = () => {
       clearTimeout(idleTimer)
       if (held || focused || driving || navigating) return
@@ -242,7 +280,7 @@ export function VersionNavigation({
         )
       }
       // Only one surface leads at a time. A rail gesture must not be pulled
-      // back by the page scroll it produces (or by native scroll snapping).
+      // back by the page scroll it produces.
       if (driving) return
       let current = targets[0]
       for (const target of targets) {
@@ -257,11 +295,7 @@ export function VersionNavigation({
       const id = current ? Number(current.card.dataset.versionId) : null
       setActiveID(id)
       const link = links.find((item) => item.hash === `#version-${id}`)
-      if (link && Math.abs(nav.scrollTop - centerOf(link)) > 1) {
-        // Page-driven positioning is immediate; animating it would introduce
-        // a second scroll clock and fight an incoming touch gesture.
-        nav.scrollTo({ top: centerOf(link), behavior: 'instant' })
-      }
+      if (link) reveal(link)
     }
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure)
@@ -269,93 +303,121 @@ export function VersionNavigation({
     const release = () => {
       driving = false
       held = false
-      railMoving = false
+      cancelAnimationFrame(momentumFrame)
       clearTimeout(settleTimer)
     }
     releaseRail.current = release
+    const drive = (next: number) => {
+      position = Math.max(0, Math.min(links.length - 1, next))
+      const index = Math.floor(position)
+      const after = Math.min(index + 1, links.length - 1)
+      const selected = Math.round(position)
+      const target = targets[selected]
+      if (!target) return
+      clickedID.current = Number(target.card.dataset.versionId)
+      setActiveID(clickedID.current)
+      reveal(links[selected])
+      globalThis.scrollTo({
+        top: targets[index].top +
+          (targets[after].top - targets[index].top) * (position - index),
+        behavior: 'instant',
+      })
+      wake('rail')
+    }
     const settle = () => {
       if (!driving || held) return
-      const nearest = links.reduce((best, link) =>
-        Math.abs(centerOf(link) - nav.scrollTop) <
-            Math.abs(centerOf(best) - nav.scrollTop)
-          ? link
-          : best
-      )
-      if (Math.abs(nav.scrollTop - centerOf(nearest)) > 1) {
-        nav.scrollTo({
-          top: centerOf(nearest),
-          behavior: reduced.matches ? 'instant' : 'smooth',
-        })
-        settleTimer = setTimeout(settle, 180)
-        return
-      }
+      const target = targets[Math.round(position)]
       release()
-      idle()
+      if (!target) return idle()
+      navigating = true
+      wake('rail')
+      cancelScroll.current = scrollToVersion(target.top, finishNavigation)
       schedule()
-    }
-    const scheduleSettle = () => {
-      clearTimeout(settleTimer)
-      settleTimer = setTimeout(settle, 180)
     }
     const begin = () => {
       cancelScroll.current()
+      cancelAnimationFrame(momentumFrame)
+      clearTimeout(settleTimer)
       targets = scrollTargets(root.current)
-      driving = true
-      wake('rail')
-      scheduleSettle()
-    }
-    const onPointerDown = () => {
-      focused = false
-      held = true
-      begin()
-    }
-    const onPointerUp = () => {
-      if (!held && !driving) return
-      held = false
-      if (railMoving) scheduleSettle()
-      else settle()
-    }
-    const onPointerCancel = (event: PointerEvent) => {
-      // Native touch panning cancels the pointer while the finger is still
-      // down. Only touchend/touchcancel may end that gesture, even if the
-      // reader pauses mid-swipe longer than our scroll-settle debounce.
-      if (event.pointerType !== 'touch') onPointerUp()
-    }
-    const onWheel = (event: WheelEvent) => {
-      if (!event.ctrlKey && Math.abs(event.deltaY) > 0) begin()
-    }
-    const onRailScroll = () => {
-      if (!driving) return
-      railMoving = true
-      wake('rail')
-      const offset = nav.scrollTop
       let index = 0
-      while (index < links.length - 1 && centerOf(links[index + 1]) <= offset) {
+      while (index < targets.length - 1 && targets[index + 1].top <= scrollY) {
         index++
       }
-      const next = Math.min(index + 1, links.length - 1)
-      const span = centerOf(links[next]) - centerOf(links[index])
-      const progress = span > 0
-        ? Math.max(0, Math.min(1, (offset - centerOf(links[index])) / span))
-        : 0
-      const selected = progress < 0.5 ? index : next
-      const target = targets[selected]
-      if (!target || !targets[index] || !targets[next]) return
-      clickedID.current = Number(target.card.dataset.versionId)
-      setActiveID(clickedID.current)
-      // Direct manipulation: interpolate with native touch momentum instead
-      // of restarting a smooth page animation at every crossed version.
-      globalThis.scrollTo({
-        top: targets[index].top +
-          (targets[next].top - targets[index].top) * progress,
-        behavior: 'instant',
-      })
-      scheduleSettle()
+      const after = Math.min(index + 1, targets.length - 1)
+      const span = targets[after].top - targets[index].top
+      position = index +
+        (span > 0 ? Math.max(0, (scrollY - targets[index].top) / span) : 0)
+      driving = true
+      wake('rail')
     }
-    const onRailScrollEnd = () => {
-      railMoving = false
-      settle()
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return
+      focused = false
+      held = true
+      moved = false
+      suppressRailClick.current = false
+      velocity = 0
+      pointerY = event.clientY
+      pointerTime = performance.now()
+      begin()
     }
+    const onPointerMove = (event: PointerEvent) => {
+      if (!held) return
+      const delta = (pointerY - event.clientY) / 44
+      if (!delta) return
+      if (!moved && Math.abs(delta * 44) < 4) return
+      const now = performance.now()
+      velocity = delta / Math.max(16, now - pointerTime)
+      pointerY = event.clientY
+      pointerTime = now
+      moved = true
+      suppressRailClick.current = true
+      if (event.cancelable) event.preventDefault()
+      drive(position + delta)
+    }
+    const onPointerUp = () => {
+      if (!held) return
+      held = false
+      if (!moved) {
+        release()
+        idle()
+        return
+      }
+      if (reduced.matches || performance.now() - pointerTime > 100) velocity = 0
+      velocity = Math.max(-0.035, Math.min(0.035, velocity))
+      let previous = performance.now()
+      const coast = (now: number) => {
+        const elapsed = Math.min(32, now - previous)
+        previous = now
+        const before = position
+        if (Math.abs(velocity) < 0.0006) return settle()
+        drive(position + velocity * elapsed)
+        velocity *= Math.exp(-elapsed / 160)
+        if (position === before) return settle()
+        momentumFrame = requestAnimationFrame(coast)
+      }
+      if (Math.abs(velocity) < 0.0006) settle()
+      else momentumFrame = requestAnimationFrame(coast)
+    }
+    const onPointerCancel = () => {
+      velocity = 0
+      onPointerUp()
+    }
+    const onWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || !event.deltaY) return
+      event.preventDefault()
+      cancelAnimationFrame(momentumFrame)
+      if (!driving) begin()
+      const units = event.deltaMode === 1
+        ? 16
+        : event.deltaMode === 2
+        ? nav.clientHeight
+        : 1
+      drive(position + event.deltaY * units / 44)
+      clearTimeout(settleTimer)
+      settleTimer = setTimeout(settle, 100)
+    }
+    const preventDrag = (event: Event) => event.preventDefault()
     const onPageScroll = () => {
       // Window scrolling can come from a rail tap or its final snap. Keep
       // that gesture's brightness until outside input takes over or it idles.
@@ -390,7 +452,10 @@ export function VersionNavigation({
     const onFocus = () => {
       // Touch focus and a parked mouse must not keep the overlay opaque.
       focused = Boolean(nav.querySelector(':focus-visible'))
-      if (focused) wake('rail')
+      if (focused) {
+        suppressRailClick.current = false
+        wake('rail')
+      }
     }
     const onBlur = (event: FocusEvent) => {
       if (nav.contains(event.relatedTarget as Node)) return
@@ -432,9 +497,11 @@ export function VersionNavigation({
     const observer = new ResizeObserver(schedule)
     if (root.current) observer.observe(root.current)
     observer.observe(nav)
-    nav.addEventListener('scroll', onRailScroll, { passive: true })
-    nav.addEventListener('scrollend', onRailScrollEnd)
-    nav.addEventListener('wheel', onWheel, { passive: true })
+    nav.addEventListener('wheel', onWheel, { passive: false })
+    nav.addEventListener('dragstart', preventDrag)
+    globalThis.addEventListener('pointermove', onPointerMove, {
+      passive: false,
+    })
     nav.addEventListener('pointerdown', onPointerDown)
     nav.addEventListener('focusin', onFocus)
     nav.addEventListener('focusout', onBlur)
@@ -455,12 +522,13 @@ export function VersionNavigation({
     globalThis.addEventListener('resize', schedule)
     return () => {
       cancelAnimationFrame(frame)
+      cancelAnimationFrame(momentumFrame)
       clearTimeout(idleTimer)
       clearTimeout(settleTimer)
       cancelScroll.current()
       observer.disconnect()
-      nav.removeEventListener('scroll', onRailScroll)
-      nav.removeEventListener('scrollend', onRailScrollEnd)
+      nav.removeEventListener('dragstart', preventDrag)
+      globalThis.removeEventListener('pointermove', onPointerMove)
       nav.removeEventListener('wheel', onWheel)
       nav.removeEventListener('pointerdown', onPointerDown)
       nav.removeEventListener('focusin', onFocus)
@@ -476,6 +544,7 @@ export function VersionNavigation({
       globalThis.removeEventListener('scroll', onPageScroll)
       globalThis.removeEventListener('scrollend', onPageScrollEnd)
       globalThis.removeEventListener('resize', schedule)
+      nav.style.removeProperty('--version-count')
       delete nav.dataset.inView
     }
   }, [visible, order, mobile])
@@ -509,6 +578,11 @@ export function VersionNavigation({
                   aria-describedby={`${previewID}-${version.id}`}
                   className='version-directory-link'
                   onClick={(event) => {
+                    if (mobile && suppressRailClick.current) {
+                      suppressRailClick.current = false
+                      event.preventDefault()
+                      return
+                    }
                     if (
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
