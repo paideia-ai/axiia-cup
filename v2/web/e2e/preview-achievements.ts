@@ -43,6 +43,44 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (request) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method not allowed', { status: 405 })
   }
+  // This separate build imports the product component for repeatable auditions.
+  const toastPrefix = '/_preview/achievement-toast/'
+  if (url.pathname === toastPrefix.slice(0, -1)) {
+    return new Response(null, {
+      status: 308,
+      headers: { Location: toastPrefix },
+    })
+  }
+  if (url.pathname.startsWith(toastPrefix)) {
+    const toastRoot = resolve('build/achievement-toast-preview')
+    let suffix: string
+    try {
+      suffix = decodeURIComponent(url.pathname.slice(toastPrefix.length))
+    } catch {
+      return new Response('Invalid path', { status: 400 })
+    }
+    const file = resolve(toastRoot, suffix || 'index.html')
+    if (!file.startsWith(toastRoot + sep)) {
+      return new Response('Not found', { status: 404 })
+    }
+    try {
+      return new Response(await Deno.readFile(file), {
+        headers: {
+          'Content-Type': contentTypes[extname(file)] ??
+            'application/octet-stream',
+          'Cache-Control': 'no-store',
+        },
+      })
+    } catch (error) {
+      if (
+        error instanceof Deno.errors.NotFound ||
+        error instanceof Deno.errors.IsADirectory
+      ) {
+        return new Response('Not found', { status: 404 })
+      }
+      throw error
+    }
+  }
   // Design choices live only in this local preview server, outside the shipped SPA.
   if (url.pathname === '/_preview/achievement-toasts') {
     return new Response(

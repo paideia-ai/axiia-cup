@@ -1430,6 +1430,8 @@
           <h1 id="page-title">值得被记住的一刻。</h1>
           <p
             class="intro-copy">十款视觉，十一种声音，自由搭配这一刻。<br />让这份小小的肯定，有恰到好处的分量。</p>
+          <p
+            class="intro-copy">已采用 02「全幅封面」与 11「原版三音」。<a href="/_preview/achievement-toast/">查看正式弹窗效果 →</a></p>
         </div>
         <div class="intro-count" aria-hidden="true">10<span>VISUALS</span></div>
       </section>
@@ -1782,6 +1784,7 @@
         ) throw new Error('Invalid sound catalog')
         soundOptions = entries.sort((a, b) => a.id.localeCompare(b.id))
         buildSounds()
+        chooseSound(soundOptions.find((sound) => sound.id === '11'))
         soundStatus.textContent = '已准备好 11 个音效，点击试听。'
       } catch {
         soundStatus.textContent = '音效暂时无法加载。'
@@ -2008,6 +2011,7 @@
       document.documentElement.classList.toggle('reduce-motion', event.matches)
     })
     buildGallery()
+    chooseOption(options.find((option) => option.id === '02'))
     void loadSounds()
     </script>
   </body>

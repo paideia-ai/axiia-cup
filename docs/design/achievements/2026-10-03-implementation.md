@@ -8,7 +8,8 @@
 - 赏金指发起方获胜后领取的积分返还；首笔与单日 30 笔均从实际领取记录判断。单日规则使用 Asia/Shanghai；30 笔要求对局和领取都在同一天。
 - 历史只补算证据完整且资格可确认的记录，记录原始获得时间，静默保存，不批量弹窗或播放音效。
 - 所有未解锁成就显示统一方形问号；不透露名称、描述、进度或真实图标。已解锁按金、银、铜展示完整描述。
-- 账户新增成就中心卡片，行为同归档智能体入口。全局弹窗仅显示标题与趣味文案，点击用新标签页打开成就中心。
+- 账户新增成就中心卡片，行为同归档智能体入口。全局弹窗采用确认的 02「全幅封面」：左侧完整方形成就图，右侧标题与带中文引号的趣味文案；不显示达成条件，空文案不显示空引号。点击用新标签页打开成就中心。
+- 成就音效选用 11「原版三音」，继续使用最初的 0.58 秒产品合成音及现有静音、音量和去重策略。
 - 通知清空、已读、弹窗已展示、成就已获得是独立状态。
 
 ## 实施顺序
@@ -47,7 +48,7 @@
 3. 服务启动后，使用 `axiia admin mint` 创建本地管理员，再用管理员凭据依次运行 `v2/web/e2e/seed-achievement-scenarios.ts` 和现有 `seed-dev.ts`。前者装入本仓库当前五个场景脚本，后者通过真实 API 创建账号和智能体。
 4. 正常停止本地服务，运行 `python3 v2/web/e2e/seed-achievement-history.py <独立数据库路径>`，导入参考战报与明确标记的本地测试对局。脚本拒绝非空对局数据库，不直接写入成就。
 5. 对该数据库运行 `axiia achievements backfill` 检查预期授予，再运行 `axiia achievements backfill --apply`。重复执行应为零新增。重新启动服务。
-6. 在 `v2/web` 运行 `deno task build`，再运行 `deno task preview:achievements`。预览直接提供生产构建，将所有 `/v1` 请求转发到实际 Swift 服务。
+6. 在 `v2/web` 运行 `deno task build` 和 `deno task preview:achievement-toast:build`，再运行 `deno task preview:achievements`。预览直接提供生产构建，将所有 `/v1` 请求转发到实际 Swift 服务。`/_preview/achievement-toast/` 导入同一正式弹窗组件和音效，可反复试听选定方案，不写入账号成就或对局数据；`/_preview/achievement-toasts` 保留所有设计候选。
 7. 运行 `AXIIA_ACHIEVEMENT_PREVIEW=1 AXIIA_BASE_URL=http://127.0.0.1:5184 deno run -A npm:playwright test tests/e2e/achievements.real.spec.ts`。测试使用 `tieyan@axiia.test`；留给人工体验的 `jiangpan@axiia.test` 仍保留待领取胜局，两者密码均为 `seedpw-123456`。
 
 两个仓库需要配套发布：先提供服务端新接口、结算与补算，再发布成就前端。历史补算在规则版本首次启动时静默执行；日常结算和积分领取使用相同持久化规则，重复执行不重复授予。

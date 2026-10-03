@@ -46,6 +46,27 @@ const hundredLosses: EarnedAchievementDTO = {
   iconURL: '/achievements/hundred-losses.webp',
   matchID: null,
 }
+const sideDeal: EarnedAchievementDTO = {
+  ...earned,
+  id: 'side-deal',
+  tier: 'silver',
+  title: '输了大局，赢了这局',
+  flavor: '正事没谈成，别的都谈成了。',
+  description: '在商鞅或本能寺 PvP 中，大政方针落败，却赢得整场对局。',
+  iconURL: '/achievements/side-deal.webp',
+}
+const diplomat: EarnedAchievementDTO = {
+  ...earned,
+  id: 'diplomat',
+  tier: 'gold',
+  title: '纵横说客',
+  flavor: '要的拿到，不要的没拿到；你的算盘，我也看到了。',
+  description:
+    '在商鞅或本能寺 PvP 中，真请求全获准、假请求全被拒，识破对手真目标，并赢下大政与整局。',
+  iconURL: '/achievements/diplomat.webp',
+}
+const defaultToastAchievements = [earned, allRoles, hundredLosses]
+
 const collection: AchievementDTO[] = [
   earned,
   { id: 'opaque-gold-1', tier: 'gold', unlocked: false },
@@ -127,9 +148,11 @@ export const EmptyFlavorAndNativeDateLinks: Story = {
   },
 }
 
-function ToastQueue() {
+function ToastQueue({ achievements = defaultToastAchievements }: {
+  achievements?: EarnedAchievementDTO[]
+}) {
   const [next, setNext] = useState(0)
-  const rows: AchievementEventDTO[] = [earned, allRoles, hundredLosses].map((
+  const rows: AchievementEventDTO[] = achievements.map((
     achievement,
     index,
   ) => ({
@@ -167,6 +190,11 @@ export const ToastOnlyTitleAndFlavor: Story = {
       'href',
       '/settings/achievements#first-word',
     )
+    const art = link.querySelector('img')!
+    await expect(art).toHaveAttribute('src', earned.iconURL)
+    await expect(art).toHaveAttribute('alt', '')
+    await waitFor(() => expect(art.complete && art.naturalWidth > 0).toBe(true))
+    await expect(getComputedStyle(art).objectFit).toBe('contain')
     await expect(canvas.queryByText('赢得你的第一场对局。')).toBeNull()
     await waitFor(() =>
       expect(canvas.getByText('“有人听进去了。”')).toBeVisible()
@@ -188,6 +216,86 @@ export const ToastOnlyTitleAndFlavor: Story = {
       .toHaveLength(1)
     await userEvent.click(canvas.getByRole('button', { name: '关闭成就提示' }))
     await expect(canvas.queryByRole('complementary')).toBeNull()
+  },
+}
+
+export const MobileCoverAndLongCopy: Story = {
+  render: () => (
+    <ToastQueue achievements={[sideDeal, diplomat, hundredLosses]} />
+  ),
+  play: async ({ canvasElement }) => {
+    if (!('__vitest_browser_runner__' in globalThis)) return
+    const { page } = await import('vitest/browser')
+    const canvas = within(canvasElement)
+    try {
+      await page.viewport(320, 568)
+      for (const achievement of [sideDeal, diplomat, hundredLosses]) {
+        const toast = await canvas.findByRole('complementary', {
+          name: '成就达成',
+        })
+        await userEvent.hover(toast)
+        await Promise.all(
+          toast.getAnimations().map((animation) => animation.finished),
+        )
+        const link = canvas.getByRole('link', {
+          name: new RegExp(achievement.title),
+        })
+        const close = canvas.getByRole('button', { name: '关闭成就提示' })
+        const art = link.querySelector('img')!
+        await waitFor(() => {
+          expect(art.complete && art.naturalWidth > 0).toBe(true)
+          // Wait for the entrance before checking the final safe viewport bounds.
+          expect(toast.getBoundingClientRect().right).toBeLessThanOrEqual(305)
+        })
+        await expect(art).toHaveAttribute('src', achievement.iconURL)
+        await expect(art).toHaveAttribute('alt', '')
+        await expect(art.getBoundingClientRect().width).toBe(99)
+        await expect(art.getBoundingClientRect().height).toBe(99)
+        await expect(getComputedStyle(art).objectFit).toBe('contain')
+        await expect(toast.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+          15,
+        )
+        await expect(toast.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+          0,
+        )
+        await expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
+          320,
+        )
+        await expect(close.getBoundingClientRect().width)
+          .toBeGreaterThanOrEqual(44)
+        await expect(close.getBoundingClientRect().height)
+          .toBeGreaterThanOrEqual(44)
+        const title = within(link).getByText(achievement.title)
+        const titleText = document.createRange()
+        titleText.selectNodeContents(title)
+        for (const line of titleText.getClientRects()) {
+          await expect(line.right).toBeLessThanOrEqual(
+            close.getBoundingClientRect().left,
+          )
+        }
+        if (achievement.flavor) {
+          const flavor = within(link).getByText(`“${achievement.flavor}”`)
+          await expect(flavor).toBeVisible()
+          await expect(flavor.scrollWidth).toBeLessThanOrEqual(
+            flavor.clientWidth,
+          )
+        } else {
+          await expect(link.querySelector('[aria-live]')?.children)
+            .toHaveLength(1)
+          await expect(within(link).queryByText('“”')).toBeNull()
+        }
+        await expect(canvas.queryByText(achievement.description)).toBeNull()
+        link.focus()
+        await expect(link).toHaveFocus()
+        await expect(getComputedStyle(link).outlineStyle).toBe('solid')
+        await userEvent.tab()
+        await expect(close).toHaveFocus()
+        await userEvent.keyboard('{Enter}')
+      }
+      await expect(canvas.queryByRole('complementary')).toBeNull()
+    } finally {
+      await page.viewport(1280, 720)
+    }
   },
 }
 

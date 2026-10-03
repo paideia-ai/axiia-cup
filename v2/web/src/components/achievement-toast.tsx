@@ -60,13 +60,20 @@ export function AchievementToast({ event, accountID, onDismiss }: {
           flavor ? `，“${flavor}”` : ''
         }，在新标签页打开成就中心`}
       >
-        <span aria-live='polite' aria-atomic='true' className='block'>
-          <span className='block text-sm font-semibold text-(--foreground)'>
+        <span className='achievement-toast-art'>
+          <img src={achievement.iconURL} alt='' width={124} height={124} />
+        </span>
+        <span
+          aria-live='polite'
+          aria-atomic='true'
+          className='achievement-toast-copy'
+        >
+          <span className='achievement-toast-title'>
             {achievement.title}
           </span>
           {flavor
             ? (
-              <span className='mt-1 block text-sm text-(--foreground-subtle)'>
+              <span className='achievement-toast-flavor'>
                 “{flavor}”
               </span>
             )
