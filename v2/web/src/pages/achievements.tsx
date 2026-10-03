@@ -162,7 +162,7 @@ function AchievementDate(
     ? (
       <Link
         to={`/matches/${achievement.matchID}`}
-        className='inline-block rounded text-xs text-(--accent) underline underline-offset-4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
+        className='inline-block rounded text-xs text-(--foreground-subtle) underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
       >
         {dateText}
       </Link>
