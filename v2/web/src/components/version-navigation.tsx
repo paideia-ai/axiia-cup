@@ -87,10 +87,13 @@ export function VersionNavigation({
   const latestID = Math.max(...versions.map(({ id }) => id))
 
   const [mobile, setMobile] = useState(() =>
-    matchMedia('(max-width: 767px)').matches
+    matchMedia('(max-width: 767px) and (hover: none) and (pointer: coarse)')
+      .matches
   )
   useEffect(() => {
-    const media = matchMedia('(max-width: 767px)')
+    const media = matchMedia(
+      '(max-width: 767px) and (hover: none) and (pointer: coarse)',
+    )
     const update = () => {
       cancelScroll.current()
       const nav = navigation.current

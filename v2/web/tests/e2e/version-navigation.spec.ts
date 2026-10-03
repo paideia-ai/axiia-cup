@@ -127,16 +127,16 @@ test('desktop retains the original rail and independent directory scrolling', as
   await rail.getByRole('link', { name: '跳转到 v1', exact: true }).click()
   await expect(currentOf(page)).toHaveAttribute('aria-label', '跳转到 v1')
   await expect(page.getByTestId('version-card').last()).toBeFocused()
-  // Resizing through phone mode must remove the phone-only listeners again.
-  await page.setViewportSize({ width: 390, height: 844 })
-  await expect(rail).toHaveCSS('width', '44px')
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await expect(rail).toHaveCSS('width', '88px')
-  await expect(rail).toHaveCSS('opacity', '1')
-  await page.setViewportSize({ width: 1024, height: 900 })
-  await expect(rail).toHaveCSS('flex-direction', 'row')
-  await expect(rail).toHaveCSS('position', 'sticky')
-  await expect(rail).toHaveCSS('opacity', '1')
+  // Narrowing a desktop window must never activate either phone layout.
+  for (const width of [1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await expect(rail).toHaveCSS('width', '88px')
+    await expect(rail).toHaveCSS('flex-direction', 'column')
+    await expect(rail).toHaveCSS('position', 'fixed')
+    await expect(rail).toHaveCSS('opacity', '1')
+    await expect(rail.locator('.version-directory-label').first()).toBeHidden()
+    expect((await rail.boundingBox())!.x).toBeGreaterThanOrEqual(0)
+  }
 })
 
 test('phone overlay preserves card width and uses 10/20/100 percent opacity', async ({ page, isMobile }) => {

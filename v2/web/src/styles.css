@@ -875,96 +875,95 @@ main .text-\(--accent\) {
   scroll-margin-top: 128px;
 }
 
-/* The 1040px page keeps its original width. Only use a side directory when
-   the outer gutter can hold it; smaller viewports keep the horizontal rail. */
-@media (min-width: 1320px) {
-  .version-directory-nav,
-  .version-directory-content {
-    grid-column: 1;
-    grid-row: 1;
-  }
+/* The original desktop directory stays vertical, including narrow desktop
+   windows. Clamp it into view when the outer gutter is smaller than the rail. */
 
-  .version-directory-nav {
-    position: fixed;
-    width: 88px;
-    left: var(--version-directory-left);
-    top: 50%;
-    transform: translateY(-50%);
-    flex-direction: column;
-    gap: 0;
-    background: transparent;
-    max-height: calc(100dvh - 128px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 2px;
-    border-bottom: 0;
-  }
+.version-directory-nav,
+.version-directory-content {
+  grid-column: 1;
+  grid-row: 1;
+}
 
-  .version-directory-link {
-    min-height: 28px;
-    padding: 0 2px;
-    border-radius: 3px;
-  }
+.version-directory-nav {
+  position: fixed;
+  width: 88px;
+  left: max(4px, var(--version-directory-left));
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: column;
+  gap: 0;
+  background: transparent;
+  max-height: calc(100dvh - 128px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px;
+  border-bottom: 0;
+}
 
-  .version-directory-label {
-    display: none;
-  }
+.version-directory-link {
+  min-height: 28px;
+  padding: 0 2px;
+  border-radius: 3px;
+}
 
-  .version-directory-number {
-    display: block;
-    width: 28px;
-    flex-shrink: 0;
-    text-align: right;
-    font-size: 18px;
-    line-height: 26px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: var(--foreground-muted);
-    transform: scale(0.611111);
-    transform-origin: right center;
-    transition:
-      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-      color 240ms ease-out;
-  }
+.version-directory-label {
+  display: none;
+}
 
-  .version-directory-link[aria-current='location'] .version-directory-number {
-    transform: scale(1);
-    color: var(--foreground);
-  }
+.version-directory-number {
+  display: block;
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground-muted);
+  transform: scale(0.611111);
+  transform-origin: right center;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 240ms ease-out;
+}
 
-  .version-directory-tick {
-    display: block;
-    flex-shrink: 0;
-    width: 44px;
-    height: 4px;
-    background: var(--foreground-muted);
-    transform: scale(0.409091, 0.5);
-    transform-origin: left center;
-    transition:
-      transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-      background-color 240ms ease-out;
-  }
+.version-directory-link[aria-current='location'] .version-directory-number {
+  transform: scale(1);
+  color: var(--foreground);
+}
 
-  .version-directory-link:hover,
-  .version-directory-link[aria-current='location'] {
-    background: transparent;
-    box-shadow: none;
-  }
+.version-directory-tick {
+  display: block;
+  flex-shrink: 0;
+  width: 44px;
+  height: 4px;
+  background: var(--foreground-muted);
+  transform: scale(0.409091, 0.5);
+  transform-origin: left center;
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 240ms ease-out;
+}
 
-  .version-directory-link:hover .version-directory-tick,
-  .version-directory-link:focus-visible .version-directory-tick {
-    transform: scale(0.636364, 0.75);
-    background: var(--foreground);
-  }
+.version-directory-link:hover,
+.version-directory-link[aria-current='location'] {
+  background: transparent;
+  box-shadow: none;
+}
 
-  .version-directory-link[aria-current='location'] .version-directory-tick {
-    transform: scale(1);
-    background: var(--foreground);
-  }
+.version-directory-link:hover .version-directory-tick,
+.version-directory-link:focus-visible .version-directory-tick {
+  transform: scale(0.636364, 0.75);
+  background: var(--foreground);
+}
 
-  .version-directory-card {
-    scroll-margin-top: 72px;
-  }
+.version-directory-link[aria-current='location'] .version-directory-tick {
+  transform: scale(1);
+  background: var(--foreground);
+}
+
+.version-directory-card {
+  scroll-margin-top: 72px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -974,8 +973,8 @@ main .text-\(--accent\) {
   }
 }
 
-/* Phone-only wheel; desktop and tablet retain their existing directory. */
-@media (max-width: 767px) {
+/* Only narrow touch devices use the overlay wheel and adaptive opacity. */
+@media (max-width: 767px) and (hover: none) and (pointer: coarse) {
   /* Version anchors preserve the document layout and its direct action controls. */
   .version-directory {
     position: relative;
@@ -1117,7 +1116,8 @@ main .text-\(--accent\) {
   }
 }
 
-@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 767px) and (hover: none) and (pointer: coarse) and
+  (prefers-reduced-motion: reduce) {
   .version-directory-nav,
   .version-directory-number,
   .version-directory-tick {
