@@ -48,6 +48,12 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
     const path = new URL(request.url()).pathname.slice(3)
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/achievements' && request.method() === 'GET') {
+      return json({ achievements: [], eventCursor: 0 })
+    }
+    if (path === '/achievements/events' && request.method() === 'GET') {
+      return json({ events: [], cursor: 0 })
+    }
     if (path === '/account/preset-usage') {
       if (request.method() === 'POST') {
         usedPresets.add(

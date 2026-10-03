@@ -23,6 +23,14 @@ async function installWorld(page: Page, walletGate = Promise.resolve()) {
   await page.route('**/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname
     const json = (body: unknown) => route.fulfill({ json: body })
+    if (path === '/v1/achievements' && route.request().method() === 'GET') {
+      return json({ achievements: [], eventCursor: 0 })
+    }
+    if (
+      path === '/v1/achievements/events' && route.request().method() === 'GET'
+    ) {
+      return json({ events: [], cursor: 0 })
+    }
     if (path === '/v1/account/preset-usage') {
       if (route.request().method() === 'POST') {
         usedPresets.add(

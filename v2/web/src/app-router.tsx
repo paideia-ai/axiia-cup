@@ -17,6 +17,8 @@ import {
   useScrollPending,
 } from './context/navigation-memory'
 import { protectedLoginUrl } from './lib/login-return'
+import { AchievementsProvider } from './context/achievements'
+import { AchievementsPage } from './pages/achievements'
 import { RewardsProvider } from './context/rewards'
 import { RewardsPage } from './pages/rewards'
 import { AdminPage } from './pages/admin'
@@ -71,7 +73,7 @@ function RequireAccount() {
 
 // One layout survives navigation between public scenarios and account pages.
 function ApplicationShell() {
-  const { isLoading, account } = useAuth()
+  const { isLoading, account, elevated } = useAuth()
   if (isLoading) return <Loading />
   const content = (
     <AppShell>
@@ -79,7 +81,16 @@ function ApplicationShell() {
     </AppShell>
   )
   return account
-    ? <RewardsProvider key={account.id}>{content}</RewardsProvider>
+    ? (
+      <RewardsProvider key={account.id}>
+        <AchievementsProvider
+          key={`${account.id}:${elevated}`}
+          accountID={account.id}
+        >
+          {content}
+        </AchievementsProvider>
+      </RewardsProvider>
+    )
     : content
 }
 
@@ -174,6 +185,10 @@ export function AppRoutes() {
             <Route
               path='/settings/archived-agents'
               element={<ArchivedAgentsPage />}
+            />
+            <Route
+              path='/settings/achievements'
+              element={<AchievementsPage />}
             />
             <Route path='/settings' element={<SettingsPage />} />
             <Route path='/rewards' element={<RewardsPage />} />

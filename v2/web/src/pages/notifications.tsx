@@ -12,6 +12,10 @@ import { Card, CardContent } from '../components/ui/card'
 import { messageOf } from '../lib/use-async'
 import { usePageQuery } from '../lib/use-page-query'
 import { tm } from '../testmode/mark'
+import {
+  applyNotificationMutations,
+  type NotificationMutations,
+} from '../lib/notification-mutations'
 
 // 通知页（B5/G25，mock 通知页样式）：按 kind 分组（PVP/锦标赛 优先于
 // PVE/系统）、渲染服务端 title/body（缺席回落本地 kind 文案）、link 深链、
@@ -28,6 +32,7 @@ const KIND_LABEL: Record<string, string> = {
   gate_unlocked: '门槛达成',
   entry_version_reminder: '参赛版本提醒',
   announcement: '系统公告',
+  achievement_unlocked: '成就达成',
 }
 
 // #53 优先级分组：PVP/锦标赛 > PVE/系统；未知 kind 归 PVE/系统。
@@ -56,21 +61,11 @@ function isMissingEndpoint(cause: unknown): boolean {
     cause.code === 'unknown'
 }
 
-// round4 评审 #5：本地不再镜像服务端列表——只记录三种乐观「变更」（逐条
-// 已读 / 全部已读 / 已清空），rows 与未读数从 data + 变更派生，没有双份
-// 状态可分叉，也没有同步 effect 造成的「暂无通知」闪帧。变更对新数据幂等
-// （重取后命中的行本就已读），失败路径在 reload() 前撤销对应变更即可与
-// 服务端对齐。
-interface NotificationMutations {
-  readIDs: ReadonlySet<number>
-  allRead: boolean
-  cleared: boolean
-}
-
+// Only the rows present when an action begins are optimistic. Later arrivals
+// must stay visible and unread even after “read all” or “clear all”.
 const NO_MUTATIONS: NotificationMutations = {
   readIDs: new Set(),
-  allRead: false,
-  cleared: false,
+  clearedIDs: new Set(),
 }
 
 export function NotificationsPage() {
@@ -84,14 +79,10 @@ export function NotificationsPage() {
   // F3：行内操作走乐观更新——成功路径不再重取整页，列表不卸载，滚动位置
   // 即不丢（scroll.ts 的原则：refetch 不是导航，不该移动页面）。铃铛角标
   // 仍由 SSE /notifications/bell 独立对齐。
-  const rows = useMemo<NotificationDTO[]>(() => {
-    if (data == null || mutations.cleared) return []
-    return data.notifications.map((row) =>
-      !row.read && (mutations.allRead || mutations.readIDs.has(row.id))
-        ? { ...row, read: true }
-        : row
-    )
-  }, [data, mutations])
+  const rows = useMemo<NotificationDTO[]>(
+    () => applyNotificationMutations(data?.notifications ?? [], mutations),
+    [data, mutations],
+  )
   const unread = rows.filter((row) => !row.read).length
 
   const markRead = async (id: number) => {
@@ -126,11 +117,18 @@ export function NotificationsPage() {
     setActing(true)
     setActionError(null)
     // 乐观全读：失败撤销变更、保留端点缺席回退文案并 reload() 对齐。
-    setMutations((current) => ({ ...current, allRead: true }))
+    const ids = new Set(rows.filter((row) => !row.read).map((row) => row.id))
+    setMutations((current) => ({
+      ...current,
+      readIDs: new Set([...current.readIDs, ...ids]),
+    }))
     try {
       await notifications.readAll()
     } catch (cause) {
-      setMutations((current) => ({ ...current, allRead: false }))
+      setMutations((current) => ({
+        ...current,
+        readIDs: new Set([...current.readIDs].filter((id) => !ids.has(id))),
+      }))
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「全部已读」——可逐条标为已读'
@@ -148,11 +146,20 @@ export function NotificationsPage() {
     setActing(true)
     setActionError(null)
     // 乐观清空：失败撤销变更并 reload() 找回列表。
-    setMutations((current) => ({ ...current, cleared: true }))
+    const ids = new Set(rows.map((row) => row.id))
+    setMutations((current) => ({
+      ...current,
+      clearedIDs: new Set([...current.clearedIDs, ...ids]),
+    }))
     try {
       await notifications.clear()
     } catch (cause) {
-      setMutations((current) => ({ ...current, cleared: false }))
+      setMutations((current) => ({
+        ...current,
+        clearedIDs: new Set(
+          [...current.clearedIDs].filter((id) => !ids.has(id)),
+        ),
+      }))
       setActionError(
         isMissingEndpoint(cause)
           ? '服务器版本暂不支持「清除」——稍后再试'
@@ -339,7 +346,9 @@ function NotificationRow({
                   className='mt-1 inline-block text-xs text-(--accent)'
                   {...tm('I.detail-link')}
                 >
-                  {notification.link
+                  {notification.kind === 'achievement_unlocked'
+                    ? '查看成就 →'
+                    : notification.link
                     ? '查看详情 →'
                     : `查看对战 #${notification.matchID}`}
                 </Link>
