@@ -638,6 +638,68 @@ export const MobileKeyboardDirectory: Story = {
   }),
 }
 
+export const MobileMarksMatchDesktop: Story = {
+  args: { count: 12 },
+  play: async ({ canvasElement }) => {
+    if (!('__vitest_browser_runner__' in globalThis)) return
+    const { page } = await import('vitest/browser')
+    const initial = { width: innerWidth, height: innerHeight }
+    const nav = within(canvasElement).getByRole('navigation', {
+      name: '版本快速导航',
+    })
+    const [current, other] = within(nav).getAllByRole('link')
+    const readMark = (link: HTMLElement) => ({
+      gap: getComputedStyle(link).gap,
+      marks: ['.version-directory-number', '.version-directory-tick'].map(
+        (selector) => {
+          const mark = link.querySelector<HTMLElement>(selector)!
+          const style = getComputedStyle(mark)
+          return Object.fromEntries([
+            'width',
+            'height',
+            'font-size',
+            'line-height',
+            'font-weight',
+            'color',
+            'background-color',
+            'border-radius',
+            'transform',
+            'transform-origin',
+            'transition-property',
+            'transition-duration',
+            'transition-timing-function',
+          ].map((property) => [property, style.getPropertyValue(property)]))
+        },
+      ),
+    })
+    try {
+      await page.viewport(1440, 844)
+      globalThis.scrollTo({ top: 0, behavior: 'instant' })
+      await waitFor(() => {
+        expect(current).toHaveAttribute('aria-current', 'location')
+        expect(
+          other.querySelector('.version-directory-tick')!
+            .getBoundingClientRect().width,
+        ).toBeCloseTo(18, 3)
+      })
+      const desktop = [readMark(current), readMark(other)]
+      await page.viewport(390, 844)
+      globalThis.scrollTo({ top: 0, behavior: 'instant' })
+      await waitFor(() => {
+        expect([readMark(current), readMark(other)]).toEqual(desktop)
+        const tick = current.querySelector('.version-directory-tick')!
+          .getBoundingClientRect()
+        expect(tick.width).toBe(44)
+        expect(tick.height).toBe(4)
+        expect(current.getBoundingClientRect().width).toBe(44)
+        expect(current.getBoundingClientRect().height).toBe(44)
+      })
+    } finally {
+      await page.viewport(initial.width, initial.height)
+    }
+  },
+}
+
 export const MobileDirectoryFillsScreenWithoutFading: Story = {
   args: { count: 40 },
   play: phonePlay(async ({ canvasElement }) => {
