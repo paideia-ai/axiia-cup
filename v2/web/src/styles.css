@@ -979,7 +979,6 @@ main .text-\(--accent\) {
   /* Version anchors preserve the document layout and its direct action controls. */
   .version-directory {
     position: relative;
-    padding-left: 32px;
   }
 
   .version-directory-nav {
@@ -1003,7 +1002,7 @@ main .text-\(--accent\) {
     overscroll-behavior: contain;
     touch-action: pan-y;
     scrollbar-width: none;
-    opacity: 0.2;
+    opacity: 0.1;
     transition: opacity 500ms ease;
     mask-image: linear-gradient(to bottom, transparent, black 22%, black 78%,
       transparent);
@@ -1014,8 +1013,12 @@ main .text-\(--accent\) {
     pointer-events: none;
   }
 
-  .version-directory-nav[data-active='true'],
-  .version-directory-nav:focus-within {
+  .version-directory-nav[data-activity='page'] {
+    opacity: 0.2;
+    transition-duration: 160ms;
+  }
+
+  .version-directory-nav[data-activity='rail'] {
     opacity: 1;
     transition-duration: 160ms;
   }

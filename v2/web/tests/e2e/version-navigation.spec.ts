@@ -5,9 +5,11 @@ const railOf = (page: Page) =>
 const currentOf = (page: Page) =>
   railOf(page).locator('[aria-current="location"]')
 
-async function swipeRail(page: Page) {
+async function swipeRail(page: Page, outside = false) {
   const bounds = (await railOf(page).boundingBox())!
-  const x = bounds.x + bounds.width / 2
+  const x = outside
+    ? page.viewportSize()!.width * 0.7
+    : bounds.x + bounds.width / 2
   const y = bounds.y + bounds.height * 0.75
   const session = await page.context().newCDPSession(page)
   await session.send('Input.dispatchTouchEvent', {
@@ -20,6 +22,9 @@ async function swipeRail(page: Page) {
       touchPoints: [{ x, y: y - step * 10 }],
     })
     await page.waitForTimeout(25)
+    if (step === 10) {
+      await expect(railOf(page)).toHaveCSS('opacity', outside ? '0.2' : '1')
+    }
   }
   await session.send('Input.dispatchTouchEvent', {
     type: 'touchEnd',
@@ -37,7 +42,7 @@ for (const [id, count] of [[108, 2], [103, 40]]) {
     const rail = railOf(page)
     await expect(rail).toBeVisible()
     await expect(rail).toHaveCSS('flex-direction', 'column')
-    await expect(rail).toHaveCSS('opacity', '0.2')
+    await expect(rail).toHaveCSS('opacity', '0.1')
     const before = await page.evaluate(() => scrollY)
     const selected = await currentOf(page).getAttribute('href')
     if (isMobile) await swipeRail(page)
@@ -53,11 +58,10 @@ for (const [id, count] of [[108, 2], [103, 40]]) {
       before + 20,
     )
     await expect(currentOf(page)).not.toHaveAttribute('href', selected!)
-    await expect(rail).toHaveCSS('opacity', '1')
     // Native momentum/snap may outlive pointerup; only fade after it settles.
     await expect(rail).toHaveAttribute('data-driving', 'false')
     if (!isMobile) await page.mouse.move(300, 100)
-    await expect(rail).toHaveCSS('opacity', '0.2')
+    await expect(rail).toHaveCSS('opacity', '0.1')
     await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }))
     await expect(currentOf(page)).toHaveAttribute(
       'aria-label',
@@ -78,7 +82,7 @@ test('click, keyboard, reduced motion and single-version behavior', async ({ pag
   const rail = railOf(page)
   const first = rail.getByRole('link', { name: /v2，最新版本/ })
   await first.focus()
-  await expect(rail).toHaveCSS('opacity', '1')
+  await expect(rail).toHaveCSS('opacity', '0.1')
   await page.keyboard.press('End')
   await expect(currentOf(page)).toHaveAttribute('aria-label', '跳转到 v1')
   await expect(rail.getByRole('link', { name: '跳转到 v1', exact: true }))
@@ -133,4 +137,32 @@ test('desktop retains the original rail and independent directory scrolling', as
   await expect(rail).toHaveCSS('flex-direction', 'row')
   await expect(rail).toHaveCSS('position', 'sticky')
   await expect(rail).toHaveCSS('opacity', '1')
+})
+
+test('phone overlay preserves card width and uses 10/20/100 percent opacity', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'Phone overlay')
+  await page.goto('/agents/103')
+  const card = page.getByTestId('version-card').first()
+  await card.scrollIntoViewIfNeeded()
+  const rail = railOf(page)
+  const directory = page.locator('.version-directory')
+  await expect(directory).toHaveCSS('padding-left', '0px')
+  const cardBox = (await card.boundingBox())!
+  const directoryBox = (await directory.boundingBox())!
+  expect(cardBox.x).toBe(directoryBox.x)
+  expect(cardBox.width).toBe(directoryBox.width)
+  await expect(rail).toHaveCSS('opacity', '0.1')
+  // Hover/focus must not brighten the overlay to 100%.
+  await rail.locator('a').first().hover()
+  await expect(rail).toHaveCSS('opacity', '0.1')
+  await page.mouse.move(page.viewportSize()!.width - 10, 40)
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  const before = await page.evaluate(() => scrollY)
+  await swipeRail(page, true)
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before)
+  await expect(rail).toHaveCSS('opacity', '0.1')
+  await swipeRail(page)
+  // Switch straight from rail momentum to a gesture on the page.
+  await swipeRail(page, true)
+  await expect(rail).toHaveCSS('opacity', '0.1')
 })

@@ -97,7 +97,7 @@ export function VersionNavigation({
       if (nav) {
         nav.scrollTop = 0
         nav.scrollLeft = 0
-        delete nav.dataset.active
+        delete nav.dataset.activity
         delete nav.dataset.driving
       }
       setMobile(media.matches)
@@ -192,19 +192,19 @@ export function VersionNavigation({
       )
     const wake = () => {
       clearTimeout(idleTimer)
-      nav.dataset.active = 'true'
+      nav.dataset.activity = 'rail'
     }
     const rest = () => {
       clearTimeout(idleTimer)
       idleTimer = globalThis.setTimeout(() => {
-        if (!held && !nav.matches(':focus-within')) nav.dataset.active = 'false'
-      }, 1200)
+        if (!held && !driving) nav.dataset.activity = 'idle'
+      }, 180)
     }
     const finish = () => {
       if (held) return
       driving = false
       nav.dataset.driving = 'false'
-      rest()
+      nav.dataset.activity = 'idle'
     }
     const settle = () => {
       clearTimeout(settleTimer)
@@ -289,7 +289,10 @@ export function VersionNavigation({
       held = true
       begin()
     }
-    const up = () => {
+    const up = (event: Event) => {
+      // Native touch scrolling cancels pointer events before the finger lifts.
+      // Track touchend separately so the rail stays bright at its scroll limits.
+      if (event instanceof PointerEvent && event.pointerType === 'touch') return
       held = false
       settle()
     }
@@ -297,17 +300,21 @@ export function VersionNavigation({
       begin()
       settle()
     }
-    const enter = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse') wake()
+    const onPageScroll = () => {
+      if (!driving) {
+        nav.dataset.activity = 'page'
+        rest()
+      }
+      schedule()
     }
-    const leave = () => {
-      if (!held) rest()
-    }
-    const focus = () => {
-      wake()
-    }
-    const blur = () => {
-      rest()
+    // A new gesture outside the overlay immediately returns control to the page,
+    // including when the previous rail gesture still has momentum.
+    const outsideDown = (event: PointerEvent) => {
+      if (nav.contains(event.target as Node)) return
+      held = false
+      clearTimeout(settleTimer)
+      clearTimeout(idleTimer)
+      finish()
     }
     const click = () => {
       held = false
@@ -333,19 +340,19 @@ export function VersionNavigation({
       link?.focus({ preventScroll: true })
     }
     schedule()
-    nav.dataset.active = 'false'
+    nav.dataset.activity = 'idle'
     nav.addEventListener('scroll', onRailScroll, { passive: true })
     nav.addEventListener('pointerdown', down, { passive: true })
-    nav.addEventListener('pointerenter', enter)
-    nav.addEventListener('pointerleave', leave)
+    nav.addEventListener('touchstart', down, { passive: true })
     nav.addEventListener('wheel', wheel, { passive: true })
-    nav.addEventListener('focusin', focus)
-    nav.addEventListener('focusout', blur)
     nav.addEventListener('click', click)
     nav.addEventListener('keydown', keyboard)
+    globalThis.addEventListener('pointerdown', outsideDown, { passive: true })
+    globalThis.addEventListener('touchend', up, { passive: true })
+    globalThis.addEventListener('touchcancel', up, { passive: true })
     globalThis.addEventListener('pointerup', up, { passive: true })
     globalThis.addEventListener('pointercancel', up, { passive: true })
-    globalThis.addEventListener('scroll', schedule, { passive: true })
+    globalThis.addEventListener('scroll', onPageScroll, { passive: true })
     globalThis.addEventListener('resize', schedule)
     const observer = new ResizeObserver(schedule)
     if (root.current) observer.observe(root.current)
@@ -358,16 +365,16 @@ export function VersionNavigation({
       observer.disconnect()
       nav.removeEventListener('scroll', onRailScroll)
       nav.removeEventListener('pointerdown', down)
-      nav.removeEventListener('pointerenter', enter)
-      nav.removeEventListener('pointerleave', leave)
+      nav.removeEventListener('touchstart', down)
       nav.removeEventListener('wheel', wheel)
-      nav.removeEventListener('focusin', focus)
-      nav.removeEventListener('focusout', blur)
       nav.removeEventListener('click', click)
       nav.removeEventListener('keydown', keyboard)
+      globalThis.removeEventListener('pointerdown', outsideDown)
+      globalThis.removeEventListener('touchend', up)
+      globalThis.removeEventListener('touchcancel', up)
       globalThis.removeEventListener('pointerup', up)
       globalThis.removeEventListener('pointercancel', up)
-      globalThis.removeEventListener('scroll', schedule)
+      globalThis.removeEventListener('scroll', onPageScroll)
       globalThis.removeEventListener('resize', schedule)
     }
   }, [visible, order, mobile])
