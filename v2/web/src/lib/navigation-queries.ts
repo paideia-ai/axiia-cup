@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import {
+  achievements,
   ApiError,
   builder,
   catalog,
@@ -59,6 +60,11 @@ export const standingsQuery = (id: number) =>
   queryOptions({
     queryKey: ['standings', id],
     queryFn: () => tournaments.standings(id),
+  })
+export const achievementsQuery = (accountID: string) =>
+  queryOptions({
+    queryKey: ['achievements', accountID],
+    queryFn: ({ signal }) => achievements.get(signal),
   })
 export const notificationsQuery = () =>
   queryOptions({

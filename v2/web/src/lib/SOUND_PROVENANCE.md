@@ -29,3 +29,9 @@ only the copy button; typing audio follows the global mute and volume settings.
 The Gherkin browser tests check actual audio starts, reward channels/gain,
 background completion, mute, IME, caret and button interactions. Human listening
 and Safari/iOS verification remain separate from these automated checks.
+
+The achievement cue is new original synthesis in `sound.ts`: a restrained 580 ms
+rising C–G–C chime, with a rounded attack and short airy tail. Steam's compact
+achievement feedback informs its purpose, but no Steam recording or melody is
+sampled. It follows the master mute/volume setting and only plays when a fresh
+achievement toast is first presented in the focused tab.

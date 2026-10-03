@@ -39,6 +39,7 @@ describe('original sound buffers', () => {
           'dispatch',
           'output',
           'finish',
+          'achievement',
           'type',
           'delete',
           'hover',
@@ -172,6 +173,25 @@ describe('playback lifecycle', () => {
     engine.unlock()
     expect(engine.play('save', 'before-gesture')).toBe(false)
     expect(engine.play('save', 'new-save')).toBe(true)
+  })
+
+  it('plays achievements once at master gain, honoring mute and foreground policy', () => {
+    const engine = new SoundEngine()
+    expect(engine.play('achievement', 'before-gesture')).toBe(false)
+    engine.unlock()
+    engine.configure({ ...DEFAULT_SOUND_PREFERENCES, enabled: false })
+    expect(engine.play('achievement', 'muted')).toBe(false)
+    engine.configure(DEFAULT_SOUND_PREFERENCES)
+    expect(engine.play('achievement', 'muted')).toBe(false)
+    hidden = true
+    expect(engine.play('achievement', 'background')).toBe(false)
+    hidden = false
+    expect(engine.play('achievement', 'fresh')).toBe(true)
+    expect(sources[0].start).toHaveBeenCalledOnce()
+    expect(engine.play('achievement', 'fresh')).toBe(false)
+    const secondTab = new SoundEngine()
+    secondTab.unlock()
+    expect(secondTab.play('achievement', 'fresh')).toBe(false)
   })
 
   it('hover never unlocks audio, and a click stops the quieter hover cue', () => {

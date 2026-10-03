@@ -1,0 +1,10 @@
+.env*
+.vercel/
+originals/
+verification/
+__pycache__/
+*.py
+*.md
+catalog.json
+prompts.json
+!public/**

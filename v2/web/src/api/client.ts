@@ -1,4 +1,6 @@
 import type {
+  AchievementEventsResponse,
+  AchievementsResponse,
   AgentRefResponse,
   AgentVersionDTO,
   ArchivedAgentsResponse,
@@ -412,6 +414,20 @@ export const versions = {
     request<VersionRefResponse>('GET', `/versions/${id}/ref`, undefined, {
       signal,
     }),
+}
+
+export const achievements = {
+  get: (signal?: AbortSignal) =>
+    request<AchievementsResponse>('GET', '/achievements', undefined, {
+      signal,
+    }),
+  events: (after: number, signal?: AbortSignal) =>
+    request<AchievementEventsResponse>(
+      'GET',
+      `/achievements/events?after=${after}`,
+      undefined,
+      { signal },
+    ),
 }
 
 // ── Notifications ───────────────────────────────────────────────────────────

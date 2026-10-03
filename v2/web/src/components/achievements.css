@@ -1,0 +1,118 @@
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem 1rem;
+}
+.achievement-item {
+  min-width: 0;
+  scroll-margin-top: 5rem;
+}
+.achievement-item:target .achievement-art {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.achievement-art,
+.achievement-locked {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: .5rem;
+  border: 1px solid var(--border-soft);
+}
+.achievement-art {
+  display: block;
+  object-fit: cover;
+}
+.achievement-locked {
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--foreground-subtle);
+  font-size: 2.75rem;
+  font-weight: 400;
+  user-select: none;
+}
+.achievement-tier {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.achievement-tier-gold {
+  color: #d8bf82;
+}
+.achievement-tier-silver {
+  color: #c5cbd4;
+}
+.achievement-tier-bronze {
+  color: #d3a68b;
+}
+.achievement-toast {
+  position: fixed;
+  z-index: 45;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-start;
+  width: min(22rem, calc(100vw - 2rem));
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--background);
+  box-shadow: 0 6px 24px #0003;
+  animation: achievement-arrive 180ms ease-out;
+}
+.achievement-toast-link {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  padding: 1rem .5rem 1rem 1rem;
+  border-radius: .75rem;
+  overflow-wrap: anywhere;
+}
+.achievement-toast-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: .5rem;
+  color: var(--foreground-subtle);
+  cursor: pointer;
+}
+.achievement-toast-link:hover,
+.achievement-toast-close:hover {
+  background: #ffffff08;
+}
+.achievement-toast-link:focus-visible,
+.achievement-toast-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@keyframes achievement-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 640px) {
+  .achievement-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+  }
+}
+@media (min-width: 768px) {
+  .achievement-toast {
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 1024px) {
+  .achievement-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .achievement-toast {
+    animation: none;
+  }
+}
