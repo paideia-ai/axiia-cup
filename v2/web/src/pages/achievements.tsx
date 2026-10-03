@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
-import type { AchievementDTO, AchievementTier } from '../api/types'
+import type {
+  AchievementDTO,
+  AchievementTier,
+  EarnedAchievementDTO,
+} from '../api/types'
 import { Button } from '../components/ui/button'
 import { PageLoading } from '../components/page-loading'
 import { useAuth } from '../context/auth'
@@ -37,9 +41,6 @@ export function AchievementsPage() {
         <h1 className='text-2xl font-black tracking-tight text-(--foreground)'>
           成就中心
         </h1>
-        <p className='mt-2 text-sm text-(--foreground-subtle)'>
-          每一次突破，都在这里留下印记。
-        </p>
         {data
           ? (
             <p className='mt-3 text-sm text-(--foreground-muted)'>
@@ -115,20 +116,17 @@ export function AchievementCollection(
                           <h3 className='text-sm font-semibold text-(--foreground)'>
                             {item.title}
                           </h3>
-                          <p className='text-sm text-(--foreground-subtle)'>
-                            {item.flavor}
-                          </p>
+                          {item.flavor.trim()
+                            ? (
+                              <p className='text-sm text-(--foreground-subtle)'>
+                                “{item.flavor.trim()}”
+                              </p>
+                            )
+                            : null}
                           <p className='text-sm leading-relaxed text-(--foreground-muted)'>
                             {item.description}
                           </p>
-                          <time
-                            dateTime={new Date(item.unlockedAt * 1000)
-                              .toISOString()}
-                            className='block text-xs text-(--foreground-subtle)'
-                          >
-                            {new Date(item.unlockedAt * 1000)
-                              .toLocaleDateString('zh-CN')} 获得
-                          </time>
+                          <AchievementDate achievement={item} />
                         </div>
                       </>
                     )
@@ -149,4 +147,29 @@ export function AchievementCollection(
       })}
     </div>
   )
+}
+
+function AchievementDate(
+  { achievement }: { achievement: EarnedAchievementDTO },
+) {
+  const date = new Date(achievement.unlockedAt * 1000)
+  const dateText = (
+    <time dateTime={date.toISOString()}>
+      {date.toLocaleDateString('zh-CN')} 获得
+    </time>
+  )
+  return achievement.matchID != null
+    ? (
+      <Link
+        to={`/matches/${achievement.matchID}`}
+        className='inline-block rounded text-xs text-(--accent) underline underline-offset-4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
+      >
+        {dateText}
+      </Link>
+    )
+    : (
+      <span className='block text-xs text-(--foreground-subtle)'>
+        {dateText}
+      </span>
+    )
 }

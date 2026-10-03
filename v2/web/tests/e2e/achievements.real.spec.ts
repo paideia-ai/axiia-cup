@@ -79,7 +79,7 @@ test('real server persists an earned collection and a claimed bounty with one ne
   const toast = page.getByRole('complementary', { name: '成就达成' })
   await expect(toast).toBeVisible({ timeout: 10_000 })
   await expect(toast).toContainText('凭本事领的')
-  await expect(toast).toContainText('把胜利带回家。')
+  await expect(toast).toContainText('“把胜利带回家。”')
   await expect(toast).not.toContainText('积分返还')
   await expect(observer.getByRole('complementary', { name: '成就达成' }))
     .toHaveCount(0)

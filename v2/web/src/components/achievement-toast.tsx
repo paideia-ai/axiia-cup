@@ -12,6 +12,7 @@ export function AchievementToast({ event, accountID, onDismiss }: {
   onDismiss: () => void
 }) {
   const { achievement } = event
+  const flavor = achievement.flavor.trim()
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
   const [visible, setVisible] = useState(!document.hidden)
@@ -55,15 +56,21 @@ export function AchievementToast({ event, accountID, onDismiss }: {
         target='_blank'
         rel='noopener noreferrer'
         className='achievement-toast-link'
-        aria-label={`${achievement.title}，${achievement.flavor}，在新标签页打开成就中心`}
+        aria-label={`${achievement.title}${
+          flavor ? `，“${flavor}”` : ''
+        }，在新标签页打开成就中心`}
       >
         <span aria-live='polite' aria-atomic='true' className='block'>
           <span className='block text-sm font-semibold text-(--foreground)'>
             {achievement.title}
           </span>
-          <span className='mt-1 block text-sm text-(--foreground-subtle)'>
-            {achievement.flavor}
-          </span>
+          {flavor
+            ? (
+              <span className='mt-1 block text-sm text-(--foreground-subtle)'>
+                “{flavor}”
+              </span>
+            )
+            : null}
         </span>
       </Link>
       <button

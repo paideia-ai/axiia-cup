@@ -295,6 +295,8 @@ function NotificationRow({
   onMarkRead: () => void
 }) {
   const link = linkOf(notification)
+  const isAchievement = notification.kind === 'achievement_unlocked'
+  const body = isAchievement ? notification.body?.trim() : notification.body
   return (
     <Card {...tm('I.notification-row')}>
       <CardContent className='flex items-start justify-between gap-3 py-4'>
@@ -328,13 +330,13 @@ function NotificationRow({
                 )
                 : null}
             </div>
-            {notification.body
+            {body
               ? (
                 <p
                   className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'
                   {...tm('I.notification-body')}
                 >
-                  {notification.body}
+                  {isAchievement ? `“${body}”` : body}
                 </p>
               )
               : null}

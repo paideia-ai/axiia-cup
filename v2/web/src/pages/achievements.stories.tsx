@@ -21,12 +21,30 @@ const earned: EarnedAchievementDTO = {
   id: 'first-word',
   tier: 'bronze',
   unlocked: true,
-  title: '初出茅庐',
+  title: '初试锋芒',
   flavor: '有人听进去了。',
   description: '赢得你的第一场对局。',
   iconURL: '/achievements/first-word.webp',
   unlockedAt: 1791028800,
   matchID: 101,
+}
+const allRoles: EarnedAchievementDTO = {
+  ...earned,
+  id: 'all-roles',
+  tier: 'gold',
+  title: '众生皆我',
+  flavor: '随便给我一边。',
+  description: '用首发五个场景的全部 12 个角色，各赢得一场 PvP 对局。',
+  iconURL: '/achievements/all-roles.webp',
+}
+const hundredLosses: EarnedAchievementDTO = {
+  ...earned,
+  id: 'hundred-losses',
+  title: '百折，尚未不挠',
+  flavor: '',
+  description: '累计输掉 100 场对局。',
+  iconURL: '/achievements/hundred-losses.webp',
+  matchID: null,
 }
 const collection: AchievementDTO[] = [
   earned,
@@ -40,6 +58,11 @@ const meta = {
   title: 'Achievements/Collection and delivery',
   component: AchievementCollection,
   args: { achievements: collection },
+  render: (args) => (
+    <MemoryRouter>
+      <AchievementCollection {...args} />
+    </MemoryRouter>
+  ),
   parameters: { a11y: { test: 'error' } },
 } satisfies Meta<typeof AchievementCollection>
 export default meta
@@ -57,20 +80,59 @@ export const EarnedDetailsAndPrivateLockedSlots: Story = {
     await expect(canvas.getAllByRole('img', { name: '未解锁成就' }))
       .toHaveLength(4)
     await expect(canvas.getByText('赢得你的第一场对局。')).toBeVisible()
-    await expect(canvas.getByText('有人听进去了。')).toBeVisible()
+    await expect(canvas.getByText('“有人听进去了。”')).toBeVisible()
     await expect(canvasElement.querySelectorAll('img')).toHaveLength(1)
     await expect(canvasElement.querySelector('[id^="opaque-"]')).toBeNull()
   },
 }
 
+export const EmptyFlavorAndNativeDateLinks: Story = {
+  render: () => (
+    <MemoryRouter>
+      <Routes>
+        <Route
+          path='/'
+          element={
+            <AchievementCollection achievements={[earned, hundredLosses]} />
+          }
+        />
+        <Route path='/matches/101' element={<h1>对战 #101</h1>} />
+      </Routes>
+    </MemoryRouter>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const noMatch = canvas.getByRole('heading', { name: '百折，尚未不挠' })
+      .closest('li')!
+    await expect(within(noMatch).getByText('累计输掉 100 场对局。'))
+      .toBeVisible()
+    await expect(within(noMatch).getByText(/获得$/)).toBeVisible()
+    await expect(within(noMatch).queryByRole('link')).toBeNull()
+    await expect(
+      [...noMatch.querySelectorAll('p')].every((paragraph) =>
+        paragraph.textContent?.trim()
+      ),
+    ).toBe(true)
+    await expect(canvas.queryByText('“”')).toBeNull()
+    const dateLink = canvas.getByRole('link', { name: /获得$/ })
+    await expect(dateLink).toHaveAttribute('href', '/matches/101')
+    await expect(dateLink).not.toHaveAttribute('target')
+    await expect(dateLink.querySelector('time')).toHaveAttribute(
+      'datetime',
+      new Date(earned.unlockedAt * 1000).toISOString(),
+    )
+    await userEvent.click(dateLink)
+    await expect(canvas.getByRole('heading', { name: '对战 #101' }))
+      .toBeVisible()
+  },
+}
+
 function ToastQueue() {
   const [next, setNext] = useState(0)
-  const rows: AchievementEventDTO[] = [earned, {
-    ...earned,
-    id: 'all-roles',
-    title: '千人千面',
-    flavor: '换一副面孔，再说一次。',
-  }].map((achievement, index) => ({
+  const rows: AchievementEventDTO[] = [earned, allRoles, hundredLosses].map((
+    achievement,
+    index,
+  ) => ({
     id: 9100 + index,
     achievement,
     source: 'live',
@@ -98,7 +160,7 @@ export const ToastOnlyTitleAndFlavor: Story = {
   render: () => <ToastQueue />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const link = await canvas.findByRole('link', { name: /初出茅庐/ })
+    const link = await canvas.findByRole('link', { name: /初试锋芒/ })
     await expect(link).toHaveAttribute('target', '_blank')
     await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     await expect(link).toHaveAttribute(
@@ -107,14 +169,23 @@ export const ToastOnlyTitleAndFlavor: Story = {
     )
     await expect(canvas.queryByText('赢得你的第一场对局。')).toBeNull()
     await waitFor(() =>
-      expect(canvas.getByText('有人听进去了。')).toBeVisible()
+      expect(canvas.getByText('“有人听进去了。”')).toBeVisible()
     )
     await userEvent.click(canvas.getByRole('button', { name: '关闭成就提示' }))
     await waitFor(() =>
-      expect(canvas.getByRole('link', { name: /千人千面/ })).toBeVisible()
+      expect(canvas.getByRole('link', { name: /众生皆我/ })).toBeVisible()
     )
     await expect(canvas.getByRole('heading', { name: '进行中的对局' }))
       .toBeVisible()
+    await expect(canvas.getByText('“随便给我一边。”')).toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: '关闭成就提示' }))
+    const emptyFlavor = canvas.getByRole('link', {
+      name: '百折，尚未不挠，在新标签页打开成就中心',
+    })
+    await waitFor(() => expect(emptyFlavor).toBeVisible())
+    await expect(emptyFlavor).toHaveTextContent('百折，尚未不挠')
+    await expect(emptyFlavor.querySelector('[aria-live]')?.children)
+      .toHaveLength(1)
     await userEvent.click(canvas.getByRole('button', { name: '关闭成就提示' }))
     await expect(canvas.queryByRole('complementary')).toBeNull()
   },
@@ -170,17 +241,20 @@ export const AccountCardOpensCollection: Story = {
       .toBeVisible()
     await expect(await canvas.findByText('已获得 1 / 5')).toBeVisible()
     await expect(canvas.getByText('赢得你的第一场对局。')).toBeVisible()
+    await expect(canvas.queryByText('每一次突破，都在这里留下印记。'))
+      .toBeNull()
   },
 }
 
 function notification(id: number): NotificationDTO {
+  const achievement = [earned, allRoles, hundredLosses][(id - 1) % 3]
   return {
     id,
     kind: 'achievement_unlocked',
     read: false,
-    title: `成就 ${id}`,
-    body: '有人听进去了。',
-    link: '/settings/achievements#first-word',
+    title: achievement.title,
+    body: achievement.flavor,
+    link: `/settings/achievements#${achievement.id}`,
   }
 }
 const notificationWorld = {
@@ -241,13 +315,14 @@ export const ArrivalAfterReadAllAndClear: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     await expect(await canvas.findByText('成就达成')).toBeVisible()
+    await expect(canvas.getByText('“有人听进去了。”')).toBeVisible()
     await expect(canvas.getByRole('link', { name: '查看成就 →' }))
       .toHaveAttribute('href', '/settings/achievements#first-word')
     await userEvent.click(canvas.getByRole('button', { name: '全部已读' }))
     await expect(canvas.getByRole('button', { name: '全部已读' }))
       .toBeDisabled()
     await userEvent.click(canvas.getByRole('button', { name: '收到新的成就' }))
-    await expect(await canvas.findByText('成就 2')).toBeVisible()
+    await expect(await canvas.findByText('众生皆我')).toBeVisible()
     await expect(await canvas.findByText('1 条未读')).toBeVisible()
     const confirm = globalThis.confirm
     globalThis.confirm = () => true
@@ -259,7 +334,14 @@ export const ArrivalAfterReadAllAndClear: Story = {
       globalThis.confirm = confirm
     }
     await userEvent.click(canvas.getByRole('button', { name: '收到新的成就' }))
-    await expect(await canvas.findByText('成就 3')).toBeVisible()
+    await expect(await canvas.findByText('百折，尚未不挠')).toBeVisible()
+    await expect(canvas.queryByText('“”')).toBeNull()
+    await expect(canvas.queryByText('“有人听进去了。”')).toBeNull()
+    await expect(
+      [...canvasElement.querySelectorAll('p')].every((paragraph) =>
+        paragraph.textContent?.trim()
+      ),
+    ).toBe(true)
     await expect(canvas.getByText('1 条未读')).toBeVisible()
   },
 }
