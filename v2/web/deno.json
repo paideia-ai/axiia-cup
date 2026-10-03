@@ -20,6 +20,7 @@
   "nodeModulesLinker": "hoisted",
   "tasks": {
     "preview:live-judge": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6036 e2e/preview-judge-report.ts --live-sidebar",
+    "preview:version-rail:build": "STORYBOOK_VERSION_RAIL_PREVIEW=1 deno task storybook:build",
     "preview:emotion:build": "STORYBOOK_JEV_PREVIEW=1 deno task storybook:build",
     "preview:judge-report": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6034 e2e/preview-judge-report.ts",
     "preview:product-meeting": "deno task build && deno run --allow-read=build/client --allow-net=0.0.0.0:5237 e2e/preview-navigation.ts --product-meeting",

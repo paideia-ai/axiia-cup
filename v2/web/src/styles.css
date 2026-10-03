@@ -974,6 +974,159 @@ main .text-\(--accent\) {
   }
 }
 
+/* Phone-only overlay: keep the original full-width cards and left edge.
+   The desktop rules above remain unchanged. */
+@media (max-width: 767px) {
+  .version-directory-nav {
+    --rail-height: 100dvh;
+    position: fixed;
+    left: max(2px, env(safe-area-inset-left));
+    top: 0;
+    transform: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 44px;
+    height: var(--rail-height);
+    --rail-short-padding: max(0px, calc((var(--rail-height) - 116px - var(--version-count) * 44px) / 2));
+    padding-top: calc(48px + var(--rail-short-padding));
+    padding-bottom: calc(68px + var(--rail-short-padding));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    touch-action: none;
+    /* Blank space around a short list must not steal taps from page controls.
+       The contiguous 44px rows remain the native touch/scroll surface. */
+    pointer-events: none;
+    scroll-snap-type: none;
+    scrollbar-width: none;
+    background: transparent;
+    border-bottom: 0;
+    opacity: 0.05;
+    transition: none;
+    mask-image: none;
+  }
+
+  .version-directory-nav[data-activity='page'] {
+    opacity: 0.2;
+  }
+
+  .version-directory-nav[data-activity='rail'] {
+    opacity: 1;
+  }
+
+  .version-directory-nav[data-in-view='false'] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .version-directory-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .version-directory-link {
+    display: flex;
+    align-items: center;
+    flex: 0 0 44px;
+    gap: 3px;
+    min-height: 44px;
+    padding: 0 2px;
+    border-radius: 4px;
+    scroll-snap-align: none;
+    pointer-events: auto;
+    color: var(--foreground);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .version-directory-label {
+    display: none;
+  }
+
+  .version-directory-number {
+    display: block;
+    width: 18px;
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 13px;
+    line-height: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground-subtle);
+    transform: scale(0.72);
+    transform-origin: right center;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms
+      ease;
+  }
+
+  .version-directory-tick {
+    display: block;
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    background: var(--foreground-muted);
+    transform: scaleX(0.45);
+    transform-origin: left center;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), background-color
+      180ms ease;
+  }
+
+  .version-directory-link[aria-current='location'] .version-directory-number {
+    transform: scale(1);
+    color: var(--foreground);
+  }
+
+  .version-directory-link[aria-current='location'] .version-directory-tick {
+    transform: scaleX(1);
+    background: var(--foreground);
+  }
+
+  @media (hover: hover) {
+    .version-directory-link:hover .version-directory-tick {
+      transform: scaleX(1);
+    }
+  }
+
+  .version-directory-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .version-directory-card:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .version-directory-card {
+    scroll-margin-top: 72px;
+  }
+
+  .version-directory-preview {
+    width: min(360px, calc(100vw - 32px));
+    padding: 14px 16px;
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    background: var(--surface-elevated);
+    box-shadow: 0 8px 28px #0005;
+    overflow-wrap: anywhere;
+  }
+
+  .version-directory-link:hover,
+  .version-directory-link[aria-current='location'] {
+    background: transparent;
+    box-shadow: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .version-directory-nav,
+    .version-directory-number,
+    .version-directory-tick {
+      transition: none;
+    }
+  }
+}
+
 @keyframes mcq-rise {
   from {
     opacity: 0;
