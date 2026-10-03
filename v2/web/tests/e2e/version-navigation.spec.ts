@@ -30,6 +30,7 @@ async function swipeRail(page: Page) {
 
 for (const [id, count] of [[108, 2], [103, 40]]) {
   test(`${count} versions: directory scroll moves the page, then yields to normal scrolling`, async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'The scroll-linked wheel is phone-only')
     await page.goto(`/agents/${id}`)
     await expect(page.getByTestId('version-card')).toHaveCount(count)
     await page.getByTestId('version-card').first().scrollIntoViewIfNeeded()
@@ -69,7 +70,8 @@ for (const [id, count] of [[108, 2], [103, 40]]) {
   })
 }
 
-test('click, keyboard, reduced motion and single-version behavior', async ({ page }) => {
+test('click, keyboard, reduced motion and single-version behavior', async ({ page, isMobile }) => {
+  test.skip(!isMobile, 'The added arrow navigation is phone-only')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/agents/108')
   await page.getByTestId('version-card').first().scrollIntoViewIfNeeded()
@@ -79,11 +81,13 @@ test('click, keyboard, reduced motion and single-version behavior', async ({ pag
   await expect(rail).toHaveCSS('opacity', '1')
   await page.keyboard.press('End')
   await expect(currentOf(page)).toHaveAttribute('aria-label', '跳转到 v1')
-  await expect(rail.getByRole('link', { name: '跳转到 v1' })).toBeFocused()
+  await expect(rail.getByRole('link', { name: '跳转到 v1', exact: true }))
+    .toBeFocused()
   await page.keyboard.press('Home')
   await expect(first).toBeFocused()
   await page.keyboard.press('ArrowDown')
-  await expect(rail.getByRole('link', { name: '跳转到 v1' })).toBeFocused()
+  await expect(rail.getByRole('link', { name: '跳转到 v1', exact: true }))
+    .toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.getByTestId('version-card').last()).toBeFocused()
   await first.click()
@@ -92,4 +96,41 @@ test('click, keyboard, reduced motion and single-version behavior', async ({ pag
   await page.goto('/agents/107')
   await expect(page.getByTestId('version-card')).toHaveCount(1)
   await expect(railOf(page)).toHaveCount(0)
+})
+
+test('desktop retains the original rail and independent directory scrolling', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'Desktop regression')
+  await page.goto('/agents/103')
+  await expect(page.getByTestId('version-card')).toHaveCount(40)
+  await page.getByTestId('version-card').first().scrollIntoViewIfNeeded()
+  const rail = railOf(page)
+  await expect(rail).toHaveCSS('opacity', '1')
+  await expect(rail).toHaveCSS('width', '88px')
+  await expect(rail).toHaveCSS('padding-top', '2px')
+  await expect(rail).toHaveCSS('mask-image', 'none')
+  await expect(rail.locator('a').first()).toHaveCSS('min-height', '28px')
+  const selected = await currentOf(page).getAttribute('href')
+  const before = await page.evaluate(() => scrollY)
+  const box = (await rail.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.wheel(0, 180)
+  await expect.poll(() => rail.evaluate((n) => n.scrollTop)).toBeGreaterThan(20)
+  expect(await page.evaluate(() => scrollY)).toBe(before)
+  await expect(currentOf(page)).toHaveAttribute('href', selected!)
+  await page.mouse.move(300, 100)
+  await page.waitForTimeout(1800)
+  await expect(rail).toHaveCSS('opacity', '1')
+  await rail.getByRole('link', { name: '跳转到 v1', exact: true }).click()
+  await expect(currentOf(page)).toHaveAttribute('aria-label', '跳转到 v1')
+  await expect(page.getByTestId('version-card').last()).toBeFocused()
+  // Resizing through phone mode must remove the phone-only listeners again.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(rail).toHaveCSS('width', '44px')
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expect(rail).toHaveCSS('width', '88px')
+  await expect(rail).toHaveCSS('opacity', '1')
+  await page.setViewportSize({ width: 1024, height: 900 })
+  await expect(rail).toHaveCSS('flex-direction', 'row')
+  await expect(rail).toHaveCSS('position', 'sticky')
+  await expect(rail).toHaveCSS('opacity', '1')
 })

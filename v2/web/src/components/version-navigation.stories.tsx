@@ -294,7 +294,7 @@ function RailPreview() {
       <header className='mb-8 space-y-3'>
         <h1 className='text-xl font-bold'>版本目录</h1>
         <p className='text-sm text-(--foreground-subtle)'>
-          在左侧上下滑动，浏览不同版本。
+          手机：上下滑动左侧目录浏览版本。电脑：保持原有目录与点击跳转。
         </p>
         <div className='flex gap-2'>
           {[2, 12, 40].map((size) => (
