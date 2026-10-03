@@ -4,6 +4,7 @@ import { renderTypingSound } from './typing/audio'
 
 export const REWARD_SOUND_URL = '/sounds/reward-cashout-b.wav'
 export type SoundCue =
+  | 'achievement'
   | 'save'
   | 'dispatch'
   | 'output'
@@ -51,6 +52,7 @@ export function renderSound(
     return renderTypingSound(cue, sampleRate, variant)
   }
   const duration = {
+    achievement: 0.9,
     save: 0.26,
     dispatch: 0.34,
     output: 0.065,
@@ -71,6 +73,11 @@ export function renderSound(
     const t = i / sampleRate
     let value: number
     switch (cue) {
+      case 'achievement':
+        value = 0.24 * pluck(t, 523.25, 0.16) +
+          0.2 * pluck(t - 0.075, 783.99, 0.19) +
+          0.17 * pluck(t - 0.15, 1046.5, 0.22)
+        break
       case 'hover':
         value = 0.065 * pluck(t, 610, 0.012)
         break
@@ -104,6 +111,7 @@ export function renderSound(
       Math.max(0, Math.min(1, t / 0.001, (duration - t) / 0.018))
   }
   const target = {
+    achievement: 0.075,
     save: 0.075,
     dispatch: 0.09,
     output: 0.032,
@@ -157,7 +165,8 @@ export class SoundPolicy {
 // Persist milestone identities across tabs and SSE/poll sources. Completion
 // callers use a Web Lock so simultaneous background tabs cannot both claim it.
 function isMilestone(cue: SoundCue): boolean {
-  return cue === 'save' || cue === 'dispatch' || cue === 'finish' ||
+  return cue === 'achievement' || cue === 'save' || cue === 'dispatch' ||
+    cue === 'finish' ||
     cue === 'reward'
 }
 
@@ -246,7 +255,9 @@ export class SoundEngine {
     if (!audition && !claimMilestone(cue, key)) return false
     try {
       if (cue === 'click') this.stop('hover')
-      if (cue === 'finish' || cue === 'reward') this.stop('output')
+      if (cue === 'achievement' || cue === 'finish' || cue === 'reward') {
+        this.stop('output')
+      }
       // Output ticks must never obscure a milestone already playing/queued.
       if (cue === 'output' && ctx.currentTime < this.nextMilestone) return false
       const variant = cue === 'output' ? this.variant++ % 3 : 0

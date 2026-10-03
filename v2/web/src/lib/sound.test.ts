@@ -35,6 +35,7 @@ describe('original sound buffers', () => {
     for (const rate of [44100, 48000]) {
       for (
         const cue of [
+          'achievement',
           'save',
           'dispatch',
           'output',
@@ -46,7 +47,7 @@ describe('original sound buffers', () => {
         ] as Exclude<SoundCue, 'reward'>[]
       ) {
         const data = renderSound(cue, rate)
-        expect(data.length / rate).toBeLessThanOrEqual(0.73)
+        expect(data.length / rate).toBeLessThanOrEqual(0.91)
         expect(data[0]).toBe(0)
         expect(Math.abs(data[data.length - 1])).toBeLessThan(0.001)
         let energy = 0
