@@ -839,3 +839,20 @@ export interface EmotionSnapshot {
   settled: boolean
   outputs: EmotionOutput[]
 }
+
+export interface AchievementDTO {
+  slot: number
+  tier: '金' | '银' | '铜'
+  id?: string | null
+  title?: string | null
+  description?: string | null
+  flavor?: string | null
+  earnedAt?: number | null
+  matchID?: number | null
+  eventID?: number | null
+}
+
+export interface AchievementsResponse {
+  achievements: AchievementDTO[]
+  cursor: number
+}

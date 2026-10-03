@@ -1,3 +1,5 @@
+import { AchievementsProvider } from './context/achievements'
+import { AchievementsPage } from './pages/achievements'
 import type { ReactNode } from 'react'
 import { useRef } from 'react'
 import {
@@ -79,7 +81,13 @@ function ApplicationShell() {
     </AppShell>
   )
   return account
-    ? <RewardsProvider key={account.id}>{content}</RewardsProvider>
+    ? (
+      <RewardsProvider key={account.id}>
+        <AchievementsProvider accountID={account.id}>
+          {content}
+        </AchievementsProvider>
+      </RewardsProvider>
+    )
     : content
 }
 
@@ -176,6 +184,7 @@ export function AppRoutes() {
               element={<ArchivedAgentsPage />}
             />
             <Route path='/settings' element={<SettingsPage />} />
+            <Route path='/achievements' element={<AchievementsPage />} />
             <Route path='/rewards' element={<RewardsPage />} />
             <Route
               path='/admin'
