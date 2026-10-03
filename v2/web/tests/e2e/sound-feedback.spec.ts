@@ -122,6 +122,12 @@ async function installWorld(page: Page): Promise<SoundWorld> {
         contentType: 'application/json',
         body: JSON.stringify(value),
       })
+    if (path === '/v1/achievements' && method === 'GET') {
+      return json({ achievements: [], eventCursor: 0 })
+    }
+    if (path === '/v1/achievements/events' && method === 'GET') {
+      return json({ events: [], cursor: 0 })
+    }
     if (path === '/v1/account/preset-usage') {
       if (method === 'POST') {
         usedPresets.add(

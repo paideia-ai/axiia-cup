@@ -36,7 +36,13 @@ async function world(page: Page) {
     await holds[path]
     let payload: unknown = {}
     let status = 200
-    if (path === '/v1/account/preset-usage') {
+    if (path === '/v1/achievements' && route.request().method() === 'GET') {
+      payload = { achievements: [], eventCursor: 0 }
+    } else if (
+      path === '/v1/achievements/events' && route.request().method() === 'GET'
+    ) {
+      payload = { events: [], cursor: 0 }
+    } else if (path === '/v1/account/preset-usage') {
       if (route.request().method() === 'POST') {
         usedPresets.add(
           (route.request().postDataJSON() as { scenarioID: string }).scenarioID,
