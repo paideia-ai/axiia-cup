@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>成就提示 · 十种设计方案 — Axiia Cup</title>
+    <title>成就提示 · 视觉与音效方案 — Axiia Cup</title>
     <style>
     :root {
       font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui,
@@ -371,6 +371,153 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    .sound-section {
+      margin: 28px 0 32px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #141311;
+      scroll-margin-top: 20px;
+    }
+    .sound-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px 24px;
+      flex-wrap: wrap;
+    }
+    .sound-heading h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 550;
+      letter-spacing: -.02em;
+    }
+    .sound-selection {
+      margin: 0;
+      color: var(--copper);
+      font-size: 12px;
+    }
+    .sound-intro,
+    .pairing-hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 12px 0 0;
+    }
+    .sound-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin: 18px 0;
+    }
+    .volume-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #c0b7af;
+    }
+    .volume-control input {
+      width: 120px;
+      accent-color: var(--copper);
+    }
+    .volume-control output {
+      min-width: 3em;
+      font-variant-numeric: tabular-nums;
+    }
+    .sound-stop,
+    .sound-retry,
+    .sound-pair {
+      color: #d4c7b8;
+      background: #24211e;
+      border: 1px solid #494139;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+    .sound-status {
+      color: #b8ada3;
+      font-size: 12px;
+      margin: 0;
+    }
+    .sound-error {
+      color: #ffc3ac;
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 12px 0;
+    }
+    .sound-grid {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .sound-card {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid #322d28;
+      border-radius: 8px;
+      background: #191714;
+    }
+    .sound-card.is-selected {
+      border-color: #c59a72;
+    }
+    .sound-card.is-playing {
+      background: #272018;
+    }
+    .sound-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .sound-number {
+      color: #c29a76;
+      font: 12px ui-monospace, monospace;
+    }
+    .sound-title h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 550;
+    }
+    .sound-character {
+      margin-left: auto;
+      color: #b2a397;
+      font-size: 11px;
+      text-align: right;
+    }
+    .sound-description {
+      margin: 9px 0 12px;
+      color: #b5aaa0;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .sound-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sound-actions .pick-button {
+      margin-left: auto;
+    }
+    .pairing-hint {
+      color: #c6ad94;
+    }
+    @media (max-width: 700px) {
+      .sound-section {
+        padding: 18px 14px;
+      }
+      .sound-grid {
+        grid-template-columns: 1fr;
+      }
+      .sound-status {
+        flex-basis: 100%;
+      }
     }
 
     /* Every toast uses the same unaltered artwork and approved copy. */
@@ -1279,10 +1426,10 @@
     <main class="shell">
       <section class="intro" aria-labelledby="page-title">
         <div>
-          <p class="eyebrow">成就提示 · 视觉方案</p>
+          <p class="eyebrow">成就提示 · 视觉与音效</p>
           <h1 id="page-title">值得被记住的一刻。</h1>
           <p
-            class="intro-copy">同一幅成就画，十种登场方式。保留标题与一句趣味文案，<br />让这份小小的肯定，有恰到好处的分量。</p>
+            class="intro-copy">十款视觉，十种声音，自由搭配这一刻。<br />让这份小小的肯定，有恰到好处的分量。</p>
         </div>
         <div class="intro-count" aria-hidden="true">10<span>OPTIONS</span></div>
       </section>
@@ -1303,6 +1450,32 @@
         <p class="selection-status" id="selection-status"
           role="status">尚未选择方案</p>
       </section>
+      <section class="sound-section" id="sounds"
+        aria-labelledby="sound-heading">
+        <div class="sound-heading">
+          <h2 id="sound-heading">十种声音，试听这一刻。</h2>
+          <p class="sound-selection" id="sound-selection"
+            role="status">尚未选择音效</p>
+        </div>
+        <p
+          class="sound-intro">「试听」只播放声音；「搭配提示」让声音与右下角提示一起出现。音效与视觉分别选择，偏好仅标记在本页，请在聊天里告诉我两个编号。</p>
+        <p class="pairing-hint"
+          id="pairing-hint">尚未选择视觉，搭配试播将使用 01 · 铜边信笺。下方视觉方案的单独试播保持静音。</p>
+        <div class="sound-controls">
+          <label class="volume-control" for="sound-volume">试听音量
+            <input id="sound-volume" type="range" min="0" max="100" step="1" value="50" />
+            <output id="sound-volume-value" for="sound-volume">50%</output>
+          </label>
+          <button class="sound-stop" id="sound-stop" type="button"
+            disabled>停止声音</button>
+          <p class="sound-status" id="sound-status" role="status"
+            aria-live="polite">正在加载音效…</p>
+          <button class="sound-retry" id="sound-retry" type="button"
+            hidden>重新加载</button>
+        </div>
+        <p class="sound-error" id="sound-error" role="alert" hidden></p>
+        <ul class="sound-grid" id="sound-grid" aria-label="十种成就音效"></ul>
+      </section>
       <div class="guide">
         <p>点击「试播」查看真实位置；约 7 秒收起，悬停或键盘聚焦时暂停。点击提示可在新标签页打开成就中心。</p>
         <button type="button" id="dismiss-current"
@@ -1311,14 +1484,14 @@
       <section class="gallery" id="gallery"
         aria-label="十种成就提示设计"></section>
       <footer class="selection-note">
-        <p>偏好会标记在当前页面。<strong>选好后，直接告诉我方案编号即可。</strong></p>
+        <p>偏好仅标记在本页，不会自动发送。<strong>选好后，请在聊天里回复视觉与音效编号。</strong></p>
         <p>所有方案均使用现有成就原图，保留完整画面。</p>
       </footer>
     </main>
     <div class="live-region" id="live-region" aria-label="成就提示试播"></div>
     <div id="announcer" class="sr-only" role="status" aria-live="polite"
       aria-atomic="true"></div>
-    <noscript><p class="shell">请启用 JavaScript，以查看十款方案并试播成就提示。</p></noscript>
+    <noscript><p class="shell">请启用 JavaScript，以查看十款方案并试听成就音效。</p></noscript>
     <script>
     const samples = {
       philosopher: {
@@ -1436,6 +1609,200 @@
     let live = null
     let serial = 0
 
+    const soundGrid = document.querySelector('#sound-grid')
+    const soundSelection = document.querySelector('#sound-selection')
+    const soundStatus = document.querySelector('#sound-status')
+    const soundError = document.querySelector('#sound-error')
+    const soundStop = document.querySelector('#sound-stop')
+    const soundRetry = document.querySelector('#sound-retry')
+    const soundVolume = document.querySelector('#sound-volume')
+    const soundVolumeValue = document.querySelector('#sound-volume-value')
+    const pairingHint = document.querySelector('#pairing-hint')
+    let soundOptions = []
+    let selectedSound = null
+    let activeAudio = null
+    let audioGeneration = 0
+
+    function stopAudio(message = '试听已停止。') {
+      audioGeneration++
+      const previous = activeAudio
+      activeAudio = null
+      if (previous) {
+        previous.pause()
+        previous.removeAttribute('src')
+        previous.load()
+      }
+      soundStop.disabled = true
+      soundGrid.querySelectorAll('.is-playing').forEach((card) => {
+        card.classList.remove('is-playing')
+      })
+      if (message) soundStatus.textContent = message
+    }
+
+    function playSoundOption(sound, trigger, paired = false) {
+      stopAudio(null)
+      soundError.hidden = true
+      soundError.textContent = ''
+      if (document.hidden) {
+        soundStatus.textContent = '请返回此页面后再点击试听。'
+        return
+      }
+      const generation = audioGeneration
+      const audio = new Audio(
+        `/_preview/achievement-sounds/${encodeURIComponent(sound.file)}`,
+      )
+      activeAudio = audio
+      audio.volume = Number(soundVolume.value) / 100
+      soundStop.disabled = false
+      const card = document.querySelector(`#sound-${sound.id}`)
+      card.classList.add('is-playing')
+      soundStatus.textContent = `正在准备 ${sound.id} · ${sound.name}…`
+      const isCurrent = () =>
+        generation === audioGeneration && activeAudio === audio
+      const failed = () => {
+        if (!isCurrent()) return
+        stopAudio(null)
+        soundStatus.textContent = '此次试听未能播放。'
+        soundError.textContent =
+          `音效 ${sound.id}「${sound.name}」播放失败，请再次点击试听。`
+        soundError.hidden = false
+      }
+      audio.addEventListener('playing', () => {
+        if (!isCurrent()) return
+        if (document.hidden) {
+          stopAudio('页面已切到后台，试听已停止。')
+          return
+        }
+        soundStatus.textContent = `正在播放 ${sound.id} · ${sound.name}`
+      })
+      audio.addEventListener('ended', () => {
+        if (isCurrent()) {
+          stopAudio(`${sound.id} · ${sound.name} 播放完毕，可再次试听。`)
+        }
+      })
+      audio.addEventListener('error', failed)
+      try {
+        // Start from the actual button gesture; never from a fetch or timer.
+        const playback = audio.play()
+        if (paired) {
+          const visual = options.find((option) => option.id === selectedOption) ??
+            options[0]
+          showToast(visual, trigger)
+        }
+        playback.catch(failed)
+      } catch {
+        failed()
+      }
+    }
+
+    function chooseSound(sound) {
+      selectedSound = sound.id
+      for (const item of soundOptions) {
+        const card = document.querySelector(`#sound-${item.id}`)
+        const selected = item.id === selectedSound
+        card.classList.toggle('is-selected', selected)
+        const button = card.querySelector('.pick-button')
+        button.setAttribute('aria-pressed', String(selected))
+        button.textContent = selected ? '已选声音 ✓' : '选择声音'
+      }
+      soundSelection.textContent = `已选音效 ${sound.id} · ${sound.name}`
+    }
+
+    function buildSounds() {
+      soundGrid.replaceChildren()
+      for (const sound of soundOptions) {
+        const card = document.createElement('li')
+        card.className = 'sound-card'
+        card.id = `sound-${sound.id}`
+        const heading = document.createElement('div')
+        heading.className = 'sound-title'
+        const number = document.createElement('span')
+        number.className = 'sound-number'
+        number.textContent = sound.id
+        const title = document.createElement('h3')
+        title.textContent = sound.name
+        const character = document.createElement('span')
+        character.className = 'sound-character'
+        character.textContent = `${sound.character} · ${
+          sound.duration.toFixed(2)
+        } 秒`
+        heading.append(number, title, character)
+        const description = document.createElement('p')
+        description.className = 'sound-description'
+        description.textContent = sound.description
+        const actions = document.createElement('div')
+        actions.className = 'sound-actions'
+        for (const [paired, text] of [[false, '试听'], [true, '搭配提示']]) {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = paired ? 'sound-pair' : 'play-button'
+          button.textContent = text
+          button.setAttribute(
+            'aria-label',
+            `${paired ? '搭配提示试听' : '试听'}音效 ${sound.id}，${sound.name}`,
+          )
+          button.addEventListener(
+            'click',
+            () => playSoundOption(sound, button, paired),
+          )
+          actions.append(button)
+        }
+        const pick = document.createElement('button')
+        pick.type = 'button'
+        pick.className = 'pick-button'
+        pick.textContent = '选择声音'
+        pick.setAttribute('aria-pressed', 'false')
+        pick.setAttribute('aria-label', `选择音效 ${sound.id}，${sound.name}`)
+        pick.addEventListener('click', () => chooseSound(sound))
+        actions.append(pick)
+        card.append(heading, description, actions)
+        soundGrid.append(card)
+      }
+    }
+
+    async function loadSounds() {
+      soundRetry.hidden = true
+      soundError.hidden = true
+      soundStatus.textContent = '正在加载音效…'
+      try {
+        const response = await fetch('/_preview/achievement-sounds/manifest.json')
+        if (!response.ok) throw new Error('Sound catalog unavailable')
+        const entries = await response.json()
+        if (
+          !Array.isArray(entries) || entries.length !== 10 ||
+          new Set(entries.map((item) => item?.id)).size !== 10 ||
+          entries.some((item) =>
+            !item || typeof item.id !== 'string' ||
+            !/^(0[1-9]|10)$/.test(item.id) ||
+            !/^\d{2}-[a-z0-9-]+\.wav$/.test(item.file) ||
+            typeof item.name !== 'string' || typeof item.description !== 'string' ||
+            typeof item.character !== 'string' ||
+            !Number.isFinite(item.duration) || item.duration <= 0
+          )
+        ) throw new Error('Invalid sound catalog')
+        soundOptions = entries.sort((a, b) => a.id.localeCompare(b.id))
+        buildSounds()
+        soundStatus.textContent = '已准备好 10 个音效，点击试听。'
+      } catch {
+        soundStatus.textContent = '音效暂时无法加载。'
+        soundError.textContent =
+          '无法读取音效列表，请点击重新加载。视觉方案仍可正常试播。'
+        soundError.hidden = false
+        soundRetry.hidden = false
+      }
+    }
+
+    soundVolume.addEventListener('input', () => {
+      soundVolumeValue.value = `${soundVolume.value}%`
+      if (activeAudio) activeAudio.volume = Number(soundVolume.value) / 100
+    })
+    soundStop.addEventListener('click', () => stopAudio())
+    soundRetry.addEventListener('click', () => void loadSounds())
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopAudio('页面已切到后台，试听已停止。')
+    })
+    globalThis.addEventListener('pagehide', () => stopAudio(null))
+
     function createToast(option, sample, isLive = false) {
       const toast = document.createElement('div')
       toast.className = `toast s${option.id}${isLive ? ' is-live' : ''}`
@@ -1506,6 +1873,8 @@
         pick.textContent = selected ? '已选此方案 ✓' : '选择此方案'
       }
       selectionStatus.textContent = `已选方案 ${option.id} · ${option.name}`
+      pairingHint.textContent =
+        `搭配试播使用视觉 ${option.id} · ${option.name}。下方视觉方案的单独试播保持静音。`
     }
 
     function buildGallery() {
@@ -1518,7 +1887,10 @@
           `<header class="option-heading"><span class="option-number" aria-hidden="true">${option.id}</span><div><h2 id="heading-${option.id}">${option.name}</h2><p class="option-subtitle">${option.subtitle}</p></div></header><div class="stage"></div><p class="option-description">${option.description}</p><div class="option-actions"><button class="play-button" type="button" aria-label="试播方案 ${option.id}，${option.name}"><span class="play-icon" aria-hidden="true"></span>在右下角试播</button><button class="pick-button" type="button" aria-pressed="false" aria-label="选择方案 ${option.id}，${option.name}">选择此方案</button></div>`
         card.querySelector('.play-button').addEventListener(
           'click',
-          (event) => showToast(option, event.currentTarget),
+          (event) => {
+            if (activeAudio) stopAudio('声音已停止，当前只试播视觉。')
+            showToast(option, event.currentTarget)
+          },
         )
         card.querySelector('.pick-button').addEventListener(
           'click',
@@ -1636,6 +2008,7 @@
       document.documentElement.classList.toggle('reduce-motion', event.matches)
     })
     buildGallery()
+    void loadSounds()
     </script>
   </body>
 </html>

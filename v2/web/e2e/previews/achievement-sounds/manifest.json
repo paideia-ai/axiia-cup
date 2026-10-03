@@ -1,0 +1,82 @@
+[
+  {
+    "id": "01",
+    "name": "温润玻璃",
+    "description": "两声玻璃轻响，尾音温和展开。",
+    "duration": 1.35,
+    "file": "01-warm-glass.wav",
+    "character": "清透 · 温暖 · 双音"
+  },
+  {
+    "id": "02",
+    "name": "磁扣解锁",
+    "description": "一缕电流聚拢，轻轻扣上确认。",
+    "duration": 0.9,
+    "file": "02-magnetic-unlock.wav",
+    "character": "电子 · 克制 · 收束"
+  },
+  {
+    "id": "03",
+    "name": "铜币轻落",
+    "description": "小小铜币落上木面，弹跳两下归于安静。",
+    "duration": 1.08,
+    "file": "03-copper-token.wav",
+    "character": "实物感 · 铜木 · 轻巧"
+  },
+  {
+    "id": "04",
+    "name": "星尘微光",
+    "description": "细碎光点缓缓散开，留下轻柔的空气感。",
+    "duration": 1.7,
+    "file": "04-stardust.wav",
+    "character": "空灵 · 散点 · 绵长"
+  },
+  {
+    "id": "05",
+    "name": "毛毡木槌",
+    "description": "三颗圆润木音，像轻轻点头。",
+    "duration": 1.28,
+    "file": "05-felt-mallet.wav",
+    "character": "柔软 · 木质 · 亲近"
+  },
+  {
+    "id": "06",
+    "name": "像素跃迁",
+    "description": "三步轻快向上，留一点复古游戏的机灵。",
+    "duration": 0.78,
+    "file": "06-pixel-rise.wav",
+    "character": "数字 · 轻快 · 复古"
+  },
+  {
+    "id": "07",
+    "name": "微型凯旋",
+    "description": "低声铺开，再以一束温暖和声落定。",
+    "duration": 1.75,
+    "file": "07-small-resolve.wav",
+    "character": "温厚 · 和声 · 仪式感"
+  },
+  {
+    "id": "08",
+    "name": "弦上回声",
+    "description": "三根轻拨的弦，依次留下细小回响。",
+    "duration": 1.55,
+    "file": "08-plucked-strings.wav",
+    "character": "拨弦 · 自然 · 叙事"
+  },
+  {
+    "id": "09",
+    "name": "金色和弦",
+    "description": "一个紧凑、明亮的和弦，干净地亮起。",
+    "duration": 1.1,
+    "file": "09-golden-chord.wav",
+    "character": "明亮 · 齐奏 · 笃定"
+  },
+  {
+    "id": "10",
+    "name": "一粒确认",
+    "description": "只留一颗很轻的提示，转瞬就收住。",
+    "duration": 0.65,
+    "file": "10-minimal-dot.wav",
+    "character": "极简 · 单音 · 短促"
+  }
+]

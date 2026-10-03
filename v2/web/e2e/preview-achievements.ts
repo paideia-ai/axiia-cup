@@ -57,6 +57,34 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (request) => {
       },
     )
   }
+  const soundFile = url.pathname.match(
+    /^\/_preview\/achievement-sounds\/(manifest\.json|(?:0[1-9]|10)-[a-z0-9-]+\.wav)$/,
+  )?.[1]
+  if (soundFile) {
+    const source = new URL(
+      `./previews/achievement-sounds/${soundFile}`,
+      import.meta.url,
+    )
+    try {
+      const bytes = await Deno.readFile(source)
+      // Deno strips the body for HEAD; supplying bytes preserves its GET length.
+      return new Response(
+        bytes,
+        {
+          headers: {
+            'Content-Type': contentTypes[extname(soundFile)],
+            'Content-Length': String(bytes.byteLength),
+            'Cache-Control': 'no-store',
+          },
+        },
+      )
+    } catch (error) {
+      if (error instanceof Deno.errors.NotFound) {
+        return new Response('Not found', { status: 404 })
+      }
+      throw error
+    }
+  }
   let pathname: string
   try {
     pathname = decodeURIComponent(url.pathname)

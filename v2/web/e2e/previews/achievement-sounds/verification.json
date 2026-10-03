@@ -1,0 +1,69 @@
+{
+  "repeated_render_byte_identical": true,
+  "verified_file_count": 10,
+  "renderer": "Python 3 standard library only",
+  "independent_analysis": "FFmpeg ebur128=peak=true",
+  "checks": [
+    "PCM16 stereo 44100 Hz headers",
+    "duration equals manifest",
+    "no clipped samples",
+    "bounded active RMS",
+    "soft tail below -60 dBFS in last 50 ms",
+    "zero final frame",
+    "low DC offset",
+    "repeat-render SHA-256 identical",
+    "FFmpeg true peak below -5.9 dBFS"
+  ],
+  "ffmpeg_measurements": [
+    {
+      "id": "01",
+      "integrated_lufs_short_cue_reference_only": -19.6,
+      "true_peak_dbfs": -9.8
+    },
+    {
+      "id": "02",
+      "integrated_lufs_short_cue_reference_only": -22.9,
+      "true_peak_dbfs": -9.0
+    },
+    {
+      "id": "03",
+      "integrated_lufs_short_cue_reference_only": -22.1,
+      "true_peak_dbfs": -7.9
+    },
+    {
+      "id": "04",
+      "integrated_lufs_short_cue_reference_only": -18.5,
+      "true_peak_dbfs": -9.7
+    },
+    {
+      "id": "05",
+      "integrated_lufs_short_cue_reference_only": -20.3,
+      "true_peak_dbfs": -10.9
+    },
+    {
+      "id": "06",
+      "integrated_lufs_short_cue_reference_only": -22.1,
+      "true_peak_dbfs": -13.2
+    },
+    {
+      "id": "07",
+      "integrated_lufs_short_cue_reference_only": -20.0,
+      "true_peak_dbfs": -6.5
+    },
+    {
+      "id": "08",
+      "integrated_lufs_short_cue_reference_only": -19.1,
+      "true_peak_dbfs": -6.0
+    },
+    {
+      "id": "09",
+      "integrated_lufs_short_cue_reference_only": -22.2,
+      "true_peak_dbfs": -8.2
+    },
+    {
+      "id": "10",
+      "integrated_lufs_short_cue_reference_only": -23.9,
+      "true_peak_dbfs": -11.1
+    }
+  ]
+}
