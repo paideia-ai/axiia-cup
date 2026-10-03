@@ -105,7 +105,7 @@ export function VersionNavigation({
   useEffect(() => () => cancelScroll.current(), [])
   const releaseRail = useRef<() => void>(() => {})
   const wakeRail = useRef<() => void>(() => {})
-  const [active, setActive] = useState(false)
+  const [activity, setActivity] = useState<'idle' | 'page' | 'rail'>('idle')
   const [activeID, setActiveID] = useState<number | null>(null)
   const visible = versions.length >= VERSION_NAVIGATION_THRESHOLD
   const order = versions.map(({ id }) => id).join(',')
@@ -186,21 +186,29 @@ export function VersionNavigation({
     let settleTimer: ReturnType<typeof setTimeout>
     let driving = false
     let held = false
-    let hovered = false
     let focused = false
+    let scrollSource: 'page' | 'rail' = 'page'
     let targets = scrollTargets(root.current)
     const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a'))
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const centerOf = (link: HTMLElement) =>
       link.offsetTop - (nav.clientHeight - link.offsetHeight) / 2
-    const wake = () => {
+    const scheduleIdle = () => {
       clearTimeout(idleTimer)
-      setActive(true)
-      if (!held && !hovered && !focused) {
-        idleTimer = setTimeout(() => setActive(false), 1100)
+      if (!held && !focused) {
+        idleTimer = setTimeout(() => {
+          scrollSource = 'page'
+          setActivity('idle')
+        }, 1100)
       }
     }
-    wakeRail.current = wake
+    const wake = (source: 'page' | 'rail') => {
+      scrollSource = source
+      setActivity(focused ? 'rail' : source)
+      scheduleIdle()
+    }
+    wakeRail.current = () => wake('rail')
+    setActivity('idle')
     const measure = () => {
       frame = 0
       targets = scrollTargets(root.current)
@@ -256,7 +264,6 @@ export function VersionNavigation({
       driving = false
       held = false
       clearTimeout(settleTimer)
-      wake()
     }
     releaseRail.current = release
     const settle = () => {
@@ -276,6 +283,7 @@ export function VersionNavigation({
         return
       }
       release()
+      wake('rail')
       schedule()
     }
     const scheduleSettle = () => {
@@ -286,17 +294,18 @@ export function VersionNavigation({
       cancelScroll.current()
       targets = scrollTargets(root.current)
       driving = true
-      wake()
+      wake('rail')
       scheduleSettle()
     }
     const onPointerDown = () => {
+      focused = false
       held = true
       begin()
     }
     const onPointerUp = () => {
       if (!held && !driving) return
       held = false
-      wake()
+      wake('rail')
       scheduleSettle()
     }
     const onPointerCancel = (event: PointerEvent) => {
@@ -310,7 +319,7 @@ export function VersionNavigation({
     }
     const onRailScroll = () => {
       if (!driving) return
-      wake()
+      wake('rail')
       const offset = nav.scrollTop
       let index = 0
       while (index < links.length - 1 && centerOf(links[index + 1]) <= offset) {
@@ -336,38 +345,46 @@ export function VersionNavigation({
       scheduleSettle()
     }
     const onPageScroll = () => {
-      if (!driving) wake()
+      // Window scrolling can come from a rail tap or its final snap. Keep
+      // that gesture's brightness until outside input takes over or it idles.
+      if (!driving) wake(scrollSource)
       schedule()
     }
-    const onOutsidePointer = (event: PointerEvent) => {
-      if (!nav.contains(event.target as Node)) release()
+    const onOutsideInput = (event: Event) => {
+      if (nav.contains(event.target as Node)) return
+      release()
+      focused = false
+      scrollSource = 'page'
+      clearTimeout(idleTimer)
+      setActivity('idle')
     }
     const onOutsideWheel = (event: WheelEvent) => {
-      if (driving && !nav.contains(event.target as Node)) release()
-    }
-    const onEnter = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') return
-      hovered = true
-      wake()
-    }
-    const onLeave = () => {
-      hovered = false
-      wake()
+      if (
+        nav.contains(event.target as Node) || event.ctrlKey || !event.deltaY
+      ) {
+        return
+      }
+      release()
+      focused = false
+      wake('page')
     }
     const onFocus = () => {
-      focused = true
-      wake()
+      // Touch focus and a parked mouse must not keep the overlay opaque.
+      focused = Boolean(nav.querySelector(':focus-visible'))
+      if (focused) wake('rail')
     }
     const onBlur = (event: FocusEvent) => {
       if (nav.contains(event.relatedTarget as Node)) return
       focused = false
-      wake()
+      scheduleIdle()
     }
     const onKey = (event: KeyboardEvent) => {
       if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
       event.preventDefault()
       event.stopPropagation()
       release()
+      focused = true
+      wake('rail')
       const index = Math.max(
         0,
         links.indexOf(document.activeElement as HTMLAnchorElement),
@@ -399,14 +416,13 @@ export function VersionNavigation({
     nav.addEventListener('scrollend', settle)
     nav.addEventListener('wheel', onWheel, { passive: true })
     nav.addEventListener('pointerdown', onPointerDown)
-    nav.addEventListener('pointerenter', onEnter)
-    nav.addEventListener('pointerleave', onLeave)
     nav.addEventListener('focusin', onFocus)
     nav.addEventListener('focusout', onBlur)
     nav.addEventListener('keydown', onKey)
-    globalThis.addEventListener('pointerdown', onOutsidePointer, {
+    globalThis.addEventListener('pointerdown', onOutsideInput, {
       passive: true,
     })
+    globalThis.addEventListener('keydown', onOutsideInput)
     globalThis.addEventListener('wheel', onOutsideWheel, { passive: true })
     globalThis.addEventListener('pointerup', onPointerUp, { passive: true })
     globalThis.addEventListener('pointercancel', onPointerCancel, {
@@ -426,12 +442,11 @@ export function VersionNavigation({
       nav.removeEventListener('scrollend', settle)
       nav.removeEventListener('wheel', onWheel)
       nav.removeEventListener('pointerdown', onPointerDown)
-      nav.removeEventListener('pointerenter', onEnter)
-      nav.removeEventListener('pointerleave', onLeave)
       nav.removeEventListener('focusin', onFocus)
       nav.removeEventListener('focusout', onBlur)
       nav.removeEventListener('keydown', onKey)
-      globalThis.removeEventListener('pointerdown', onOutsidePointer)
+      globalThis.removeEventListener('pointerdown', onOutsideInput)
+      globalThis.removeEventListener('keydown', onOutsideInput)
       globalThis.removeEventListener('wheel', onOutsideWheel)
       globalThis.removeEventListener('pointerup', onPointerUp)
       globalThis.removeEventListener('pointercancel', onPointerCancel)
@@ -451,7 +466,7 @@ export function VersionNavigation({
           ref={navigation}
           aria-label='版本快速导航'
           className='version-directory-nav'
-          data-active={mobile ? active : undefined}
+          data-activity={mobile ? activity : undefined}
           aria-description={mobile
             ? '上下滑动目录浏览版本，也可点击版本或使用上下方向键。'
             : undefined}

@@ -302,6 +302,20 @@ function phonePlay(
   }
 }
 
+async function expectMobileActivity(
+  nav: HTMLElement,
+  activity: 'idle' | 'page' | 'rail',
+  opacity: number,
+) {
+  await waitFor(() => {
+    expect(nav).toHaveAttribute('data-activity', activity)
+    expect(Number.parseFloat(getComputedStyle(nav).opacity)).toBeCloseTo(
+      opacity,
+      3,
+    )
+  }, { timeout: 3000 })
+}
+
 export const MobileScrollingTheRailNavigates: Story = {
   args: { count: 40 },
   play: phonePlay(async ({ canvasElement }) => {
@@ -315,6 +329,7 @@ export const MobileScrollingTheRailNavigates: Story = {
     await waitFor(() =>
       expect(newest).toHaveAttribute('aria-current', 'location')
     )
+    await expectMobileActivity(nav, 'idle', 0.1)
     const pageBefore = scrollY
     const entryBefore = canvas.getAllByRole('button', { pressed: true })
       .map((button) => button.getAttribute('aria-label'))
@@ -326,6 +341,7 @@ export const MobileScrollingTheRailNavigates: Story = {
       expect(oldest).toHaveAttribute('aria-current', 'location')
       expect(scrollY).toBeGreaterThan(pageBefore)
     }, { timeout: 3000 })
+    await expectMobileActivity(nav, 'rail', 1)
     await expect(
       canvas.getAllByRole('button', { pressed: true })
         .map((button) => button.getAttribute('aria-label')),
@@ -335,6 +351,15 @@ export const MobileScrollingTheRailNavigates: Story = {
     await waitFor(() =>
       expect(newest).toHaveAttribute('aria-current', 'location')
     )
+    await expectMobileActivity(nav, 'rail', 1)
+    await expectMobileActivity(nav, 'idle', 0.1)
+    // A tap's animated document scroll still belongs to the rail gesture.
+    await userEvent.click(oldest)
+    await waitFor(() =>
+      expect(oldest).toHaveAttribute('aria-current', 'location')
+    )
+    await expectMobileActivity(nav, 'rail', 1)
+    await expectMobileActivity(nav, 'idle', 0.1)
   }),
 }
 
@@ -373,6 +398,7 @@ export const MobilePausedTouchPanKeepsFollowing: Story = {
     )
     const pageAtPause = scrollY
     await new Promise<void>((resolve) => setTimeout(resolve, 350))
+    await expectMobileActivity(nav, 'rail', 1)
     nav.scrollTo({ top: center(secondStop), behavior: 'instant' })
     await waitFor(() => {
       expect(secondStop).toHaveAttribute('aria-current', 'location')
@@ -383,9 +409,7 @@ export const MobilePausedTouchPanKeepsFollowing: Story = {
       canvas.getAllByRole('button', { pressed: true })
         .map((button) => button.getAttribute('aria-label')),
     ).toEqual(entryBefore)
-    await waitFor(() => expect(nav).toHaveAttribute('data-active', 'false'), {
-      timeout: 2500,
-    })
+    await expectMobileActivity(nav, 'idle', 0.1)
   }),
 }
 
@@ -411,10 +435,13 @@ export const MobilePageScrollingKeepsRailInSync: Story = {
         nav.getBoundingClientRect().bottom,
       )
     })
+    // Page-driven rail synchronization must not masquerade as rail input.
+    await expectMobileActivity(nav, 'page', 0.2)
     const bottom = scrollY
     // Programmatic rail synchronization must never start another page scroll.
     await new Promise<void>((resolve) => setTimeout(resolve, 500))
     await expect(scrollY).toBe(bottom)
+    await expectMobileActivity(nav, 'idle', 0.1)
     globalThis.scrollTo({ top: 0, behavior: 'instant' })
     await waitFor(() => {
       expect(newest).toHaveAttribute('aria-current', 'location')
@@ -422,6 +449,7 @@ export const MobilePageScrollingKeepsRailInSync: Story = {
         nav.getBoundingClientRect().top,
       )
     })
+    await expectMobileActivity(nav, 'page', 0.2)
   }),
 }
 
@@ -433,26 +461,89 @@ export const MobileIdleRailKeepsKeyboardFocusVisible: Story = {
     const link = within(nav).getByRole('link', {
       name: '跳转到 v12，最新版本',
     })
-    await userEvent.hover(link)
-    await expect(nav).toHaveAttribute('data-active', 'true')
+    const keyboard = '__vitest_browser_runner__' in globalThis
+      ? (await import('vitest/browser')).userEvent
+      : userEvent
+    await expectMobileActivity(nav, 'idle', 0.1)
+    await keyboard.keyboard('{Tab}')
     link.focus()
-    await userEvent.unhover(link)
+    await expect(link.matches(':focus-visible')).toBe(true)
     await new Promise<void>((resolve) => setTimeout(resolve, 1500))
     await expect(link).toHaveFocus()
-    await expect(nav).toHaveAttribute('data-active', 'true')
-    await expect(Number.parseFloat(getComputedStyle(nav).opacity)).toBe(1)
+    await expectMobileActivity(nav, 'rail', 1)
     const outside = canvas.getByRole('button', { name: '复制 v12 提示词' })
     outside.focus()
-    await waitFor(() => {
-      expect(nav).toHaveAttribute('data-active', 'false')
-      expect(Number.parseFloat(getComputedStyle(nav).opacity)).toBeCloseTo(0.2)
-    }, { timeout: 3000 })
+    await expectMobileActivity(nav, 'idle', 0.1)
     // Keyboard users can rediscover the dimmed directory without a pointer.
     link.focus()
-    await waitFor(() =>
-      expect(Number.parseFloat(getComputedStyle(nav).opacity)).toBe(1)
+    await expectMobileActivity(nav, 'rail', 1)
+    // A new gesture on the page takes over even if browser focus-visible still
+    // points to the directory's old keyboard selection.
+    outside.dispatchEvent(
+      new WheelEvent('wheel', {
+        bubbles: true,
+        deltaY: 300,
+      }),
     )
-    await expect(nav).toHaveAttribute('data-active', 'true')
+    globalThis.scrollBy({ top: 300, behavior: 'instant' })
+    await expect(link).toHaveFocus()
+    await expectMobileActivity(nav, 'page', 0.2)
+    await expectMobileActivity(nav, 'idle', 0.1)
+  }),
+}
+
+export const MobileTouchFocusAndHoverDoNotKeepRailBright: Story = {
+  args: { count: 12 },
+  play: phonePlay(async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const nav = canvas.getByRole('navigation', { name: '版本快速导航' })
+    const link = within(nav).getByRole('link', {
+      name: '跳转到 v12，最新版本',
+    })
+    const browser = '__vitest_browser_runner__' in globalThis
+      ? await import('vitest/browser')
+      : null
+    // A trusted pointer click establishes browser pointer modality, allowing
+    // this regression to distinguish touch focus from keyboard focus-visible.
+    if (browser) {
+      await browser.page.getByRole('link', { name: '跳转到 v12，最新版本' })
+        .click()
+    } else {
+      await userEvent.click(link)
+    }
+    link.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        pointerType: 'touch',
+        pointerId: 1,
+        isPrimary: true,
+      }),
+    )
+    link.focus()
+    if (browser) await expect(link.matches(':focus-visible')).toBe(false)
+    link.dispatchEvent(
+      new PointerEvent('pointerenter', {
+        pointerType: 'touch',
+        pointerId: 1,
+        isPrimary: true,
+      }),
+    )
+    await expectMobileActivity(nav, 'rail', 1)
+    link.dispatchEvent(
+      new PointerEvent('pointercancel', {
+        bubbles: true,
+        pointerType: 'touch',
+        pointerId: 1,
+        isPrimary: true,
+      }),
+    )
+    globalThis.dispatchEvent(new Event('touchend'))
+    // Deliberately leave focus and the pointer inside the rail after release.
+    await expectMobileActivity(nav, 'idle', 0.1)
+    await expect(link).toHaveFocus()
+    globalThis.scrollBy({ top: 300, behavior: 'instant' })
+    await expectMobileActivity(nav, 'page', 0.2)
+    await expectMobileActivity(nav, 'idle', 0.1)
   }),
 }
 
