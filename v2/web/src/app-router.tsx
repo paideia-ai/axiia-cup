@@ -38,6 +38,8 @@ import { NotificationsPage } from './pages/notifications'
 import { RegisterPage } from './pages/register'
 import { ScenarioDetailPage } from './pages/scenario-detail'
 import { ScenarioBuildEntry } from './pages/scenario-build-entry'
+import { AchievementsProvider } from './context/achievements'
+import { AchievementsPage } from './pages/achievements'
 import { SettingsPage } from './pages/settings'
 import { StandingsPage } from './pages/standings'
 import { TournamentsPage } from './pages/tournaments'
@@ -83,6 +85,13 @@ function ApplicationShell() {
     : content
 }
 
+function AccountAchievements() {
+  const { account } = useAuth()
+  return account
+    ? <AchievementsProvider key={account.id} accountID={account.id} />
+    : null
+}
+
 function AdminGate({ children }: { children: ReactNode }) {
   const { account } = useAuth()
   return account?.isAdmin ? children : <Navigate replace to='/scenarios' />
@@ -120,6 +129,7 @@ export function AppRoutes() {
       scope={account?.id ?? 'guest'}
       enabled={!isLoading}
     >
+      <AccountAchievements />
       <Routes>
         <Route path='/' element={<LandingPage />} />
         <Route
@@ -169,11 +179,18 @@ export function AppRoutes() {
               path='/tournaments/:tournamentId'
               element={<StandingsPage />}
             />
-            <Route path='/versions/:versionId' element={<VersionAgentPage />} />
+            <Route
+              path='/versions/:versionId'
+              element={<VersionAgentPage />}
+            />
             <Route path='/notifications' element={<NotificationsPage />} />
             <Route
               path='/settings/archived-agents'
               element={<ArchivedAgentsPage />}
+            />
+            <Route
+              path='/settings/achievements'
+              element={<AchievementsPage />}
             />
             <Route path='/settings' element={<SettingsPage />} />
             <Route path='/rewards' element={<RewardsPage />} />

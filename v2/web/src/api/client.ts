@@ -1,4 +1,5 @@
 import type {
+  AchievementsResponse,
   AgentRefResponse,
   AgentVersionDTO,
   ArchivedAgentsResponse,
@@ -463,4 +464,8 @@ export const admin = {
 
 export function sseUrl(path: string): string {
   return `${API_ROOT}/v1${path}`
+}
+
+export const achievements = {
+  list: () => request<AchievementsResponse>('GET', '/achievements'),
 }

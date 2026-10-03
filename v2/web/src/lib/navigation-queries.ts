@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import {
+  achievements,
   ApiError,
   builder,
   catalog,
@@ -108,4 +109,11 @@ export const agentQuery = (id: number) =>
         entryVersionID: list.entryVersionID ?? null,
       }
     },
+  })
+
+export const achievementsQuery = (accountID: string) =>
+  queryOptions({
+    queryKey: ['achievements', accountID],
+    queryFn: () => achievements.list(),
+    staleTime: 0,
   })

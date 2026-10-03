@@ -21,6 +21,7 @@ import { tm } from '../testmode/mark'
 // #53 通知 kind 的中文标签（服务端 title 缺席时的回落）。
 const KIND_LABEL: Record<string, string> = {
   battle_finished: '对战结束',
+  achievement_unlocked: '成就解锁',
   challenged: '被约战',
   automatch_result: '自动匹配结果',
   tournament_round: '锦标赛进程',
@@ -166,12 +167,21 @@ export function NotificationsPage() {
 
   const groups = [
     {
+      title: '成就',
+      items: rows.filter((notification) =>
+        notification.kind === 'achievement_unlocked'
+      ),
+    },
+    {
       title: 'PVP / 锦标赛',
       items: rows.filter((notification) => PVP_KINDS.has(notification.kind)),
     },
     {
       title: 'PVE / 系统',
-      items: rows.filter((notification) => !PVP_KINDS.has(notification.kind)),
+      items: rows.filter((notification) =>
+        !PVP_KINDS.has(notification.kind) &&
+        notification.kind !== 'achievement_unlocked'
+      ),
     },
   ].filter((group) => group.items.length > 0)
 
