@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import { navigationVersions } from '../testing/version-navigation-fixtures'
 import { VersionList } from './version-list'
+import { Button } from './ui/button'
 
 function Surface(
   { count = 12, selectedVersionID }: {
@@ -279,4 +280,40 @@ export const CopyFeedbackKeepsCardHeight: Story = {
       else Reflect.deleteProperty(navigator, 'clipboard')
     }
   },
+}
+
+// A manual preview uses the production component without automatic test actions.
+export const Interactive: Story = {
+  render: () => <RailPreview />,
+}
+
+function RailPreview() {
+  const [count, setCount] = useState(12)
+  return (
+    <>
+      <header className='mb-8 space-y-3'>
+        <h1 className='text-xl font-bold'>版本目录</h1>
+        <p className='text-sm text-(--foreground-subtle)'>
+          手机：上下滑动左侧目录浏览版本。电脑：保持原有目录与点击跳转。
+        </p>
+        <div className='flex gap-2'>
+          {[2, 12, 40].map((size) => (
+            <Button
+              key={size}
+              size='sm'
+              variant='secondary'
+              aria-pressed={count === size}
+              onClick={() => {
+                globalThis.scrollTo(0, 0)
+                setCount(size)
+              }}
+            >
+              {size} 个版本
+            </Button>
+          ))}
+        </div>
+      </header>
+      <Surface key={count} count={count} />
+    </>
+  )
 }
