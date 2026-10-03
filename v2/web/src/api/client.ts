@@ -377,6 +377,10 @@ export const matches = {
     ),
   list: () => request<MatchListResponse>('GET', '/matches'),
   detail: (id: number) => request<MatchDetail>('GET', `/matches/${id}`),
+  markViewed: (id: number) =>
+    request<OKResponse>('POST', `/matches/${id}/view`, undefined, {
+      keepalive: true,
+    }),
 }
 
 // ── Challenges（P3 #66） ────────────────────────────────────────────────────

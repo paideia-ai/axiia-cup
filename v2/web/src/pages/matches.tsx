@@ -187,6 +187,14 @@ export function MatchesPage() {
         className='block'
         {...tm('L.match-card')}
       >
+        {summary.viewed === false && (
+          <span
+            className='history-unread-marker'
+            role='img'
+            aria-label='没有看过此对局'
+            title='没有看过此对局'
+          />
+        )}
         <CardContent className='history-card-content flex items-center justify-between gap-3'>
           <div>
             <span
