@@ -1002,18 +1002,16 @@ main .text-\(--accent\) {
     background: transparent;
     border-bottom: 0;
     opacity: 0.1;
-    transition: opacity 650ms ease, top 200ms ease-out;
+    transition: top 200ms ease-out;
     mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
   }
 
   .version-directory-nav[data-activity='page'] {
     opacity: 0.2;
-    transition-duration: 180ms, 200ms;
   }
 
   .version-directory-nav[data-activity='rail'] {
     opacity: 1;
-    transition-duration: 140ms, 200ms;
   }
 
   .version-directory-nav[data-in-view='false'] {

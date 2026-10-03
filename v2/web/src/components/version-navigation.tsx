@@ -41,7 +41,7 @@ function scrollTargets(root: HTMLElement | null) {
 
 // Browser-native smooth scrolling slows down on long jumps. Keep version
 // navigation brief and let any new user input interrupt it immediately.
-function scrollToVersion(top: number): () => void {
+function scrollToVersion(top: number, onComplete?: () => void): () => void {
   const start = scrollY
   const distance = top - start
   if (
@@ -49,6 +49,7 @@ function scrollToVersion(top: number): () => void {
     matchMedia('(prefers-reduced-motion: reduce)').matches
   ) {
     globalThis.scrollTo({ top, behavior: 'instant' })
+    onComplete?.()
     return () => {}
   }
   const duration = Math.min(260, Math.max(140, Math.abs(distance) * 0.18))
@@ -56,8 +57,10 @@ function scrollToVersion(top: number): () => void {
   const controller = new AbortController()
   let frame = 0
   const cancel = () => {
+    if (controller.signal.aborted) return
     cancelAnimationFrame(frame)
     controller.abort()
+    onComplete?.()
   }
   for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
     globalThis.addEventListener(type, cancel, {
@@ -105,6 +108,7 @@ export function VersionNavigation({
   useEffect(() => () => cancelScroll.current(), [])
   const releaseRail = useRef<() => void>(() => {})
   const wakeRail = useRef<() => void>(() => {})
+  const finishRail = useRef<() => void>(() => {})
   const [activity, setActivity] = useState<'idle' | 'page' | 'rail'>('idle')
   const [activeID, setActiveID] = useState<number | null>(null)
   const visible = versions.length >= VERSION_NAVIGATION_THRESHOLD
@@ -187,19 +191,26 @@ export function VersionNavigation({
     let driving = false
     let held = false
     let focused = false
+    let navigating = false
+    let railMoving = false
     let scrollSource: 'page' | 'rail' = 'page'
     let targets = scrollTargets(root.current)
     const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a'))
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const centerOf = (link: HTMLElement) =>
       link.offsetTop - (nav.clientHeight - link.offsetHeight) / 2
+    const idle = () => {
+      clearTimeout(idleTimer)
+      if (held || focused || driving || navigating) return
+      scrollSource = 'page'
+      setActivity('idle')
+    }
     const scheduleIdle = () => {
       clearTimeout(idleTimer)
-      if (!held && !focused) {
-        idleTimer = setTimeout(() => {
-          scrollSource = 'page'
-          setActivity('idle')
-        }, 1100)
+      if (!held && !focused && !navigating) {
+        // Native scrollend idles immediately. This only covers browsers or
+        // blocked wheel gestures that never deliver that event.
+        idleTimer = setTimeout(idle, 100)
       }
     }
     const wake = (source: 'page' | 'rail') => {
@@ -207,7 +218,15 @@ export function VersionNavigation({
       setActivity(focused ? 'rail' : source)
       scheduleIdle()
     }
-    wakeRail.current = () => wake('rail')
+    wakeRail.current = () => {
+      navigating = true
+      wake('rail')
+    }
+    const finishNavigation = () => {
+      navigating = false
+      if (scrollSource === 'rail') idle()
+    }
+    finishRail.current = finishNavigation
     setActivity('idle')
     const measure = () => {
       frame = 0
@@ -263,6 +282,7 @@ export function VersionNavigation({
     const release = () => {
       driving = false
       held = false
+      railMoving = false
       clearTimeout(settleTimer)
     }
     releaseRail.current = release
@@ -283,7 +303,7 @@ export function VersionNavigation({
         return
       }
       release()
-      wake('rail')
+      idle()
       schedule()
     }
     const scheduleSettle = () => {
@@ -305,8 +325,8 @@ export function VersionNavigation({
     const onPointerUp = () => {
       if (!held && !driving) return
       held = false
-      wake('rail')
-      scheduleSettle()
+      if (railMoving) scheduleSettle()
+      else settle()
     }
     const onPointerCancel = (event: PointerEvent) => {
       // Native touch panning cancels the pointer while the finger is still
@@ -319,6 +339,7 @@ export function VersionNavigation({
     }
     const onRailScroll = () => {
       if (!driving) return
+      railMoving = true
       wake('rail')
       const offset = nav.scrollTop
       let index = 0
@@ -344,16 +365,26 @@ export function VersionNavigation({
       })
       scheduleSettle()
     }
+    const onRailScrollEnd = () => {
+      railMoving = false
+      settle()
+    }
     const onPageScroll = () => {
       // Window scrolling can come from a rail tap or its final snap. Keep
       // that gesture's brightness until outside input takes over or it idles.
       if (!driving) wake(scrollSource)
       schedule()
     }
+    const onPageScrollEnd = (event: Event) => {
+      // A page-synchronized directory can emit its own bubbling scrollend
+      // while the document is still moving.
+      if (event.target === document || event.target === globalThis) idle()
+    }
     const onOutsideInput = (event: Event) => {
       if (nav.contains(event.target as Node)) return
       release()
       focused = false
+      navigating = false
       scrollSource = 'page'
       clearTimeout(idleTimer)
       setActivity('idle')
@@ -366,6 +397,7 @@ export function VersionNavigation({
       }
       release()
       focused = false
+      navigating = false
       wake('page')
     }
     const onFocus = () => {
@@ -376,14 +408,16 @@ export function VersionNavigation({
     const onBlur = (event: FocusEvent) => {
       if (nav.contains(event.relatedTarget as Node)) return
       focused = false
-      scheduleIdle()
+      idle()
     }
     const onKey = (event: KeyboardEvent) => {
       if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
       event.preventDefault()
       event.stopPropagation()
+      cancelScroll.current()
       release()
       focused = true
+      navigating = true
       wake('rail')
       const index = Math.max(
         0,
@@ -404,8 +438,7 @@ export function VersionNavigation({
       if (!target) return
       clickedID.current = Number(target.card.dataset.versionId)
       links[next].focus({ preventScroll: true })
-      cancelScroll.current()
-      cancelScroll.current = scrollToVersion(target.top)
+      cancelScroll.current = scrollToVersion(target.top, finishNavigation)
       schedule()
     }
     schedule()
@@ -413,7 +446,7 @@ export function VersionNavigation({
     if (root.current) observer.observe(root.current)
     observer.observe(nav)
     nav.addEventListener('scroll', onRailScroll, { passive: true })
-    nav.addEventListener('scrollend', settle)
+    nav.addEventListener('scrollend', onRailScrollEnd)
     nav.addEventListener('wheel', onWheel, { passive: true })
     nav.addEventListener('pointerdown', onPointerDown)
     nav.addEventListener('focusin', onFocus)
@@ -431,6 +464,7 @@ export function VersionNavigation({
     globalThis.addEventListener('touchend', onPointerUp, { passive: true })
     globalThis.addEventListener('touchcancel', onPointerUp, { passive: true })
     globalThis.addEventListener('scroll', onPageScroll, { passive: true })
+    globalThis.addEventListener('scrollend', onPageScrollEnd)
     globalThis.addEventListener('resize', schedule)
     return () => {
       cancelAnimationFrame(frame)
@@ -439,7 +473,7 @@ export function VersionNavigation({
       cancelScroll.current()
       observer.disconnect()
       nav.removeEventListener('scroll', onRailScroll)
-      nav.removeEventListener('scrollend', settle)
+      nav.removeEventListener('scrollend', onRailScrollEnd)
       nav.removeEventListener('wheel', onWheel)
       nav.removeEventListener('pointerdown', onPointerDown)
       nav.removeEventListener('focusin', onFocus)
@@ -453,6 +487,7 @@ export function VersionNavigation({
       globalThis.removeEventListener('touchend', onPointerUp)
       globalThis.removeEventListener('touchcancel', onPointerUp)
       globalThis.removeEventListener('scroll', onPageScroll)
+      globalThis.removeEventListener('scrollend', onPageScrollEnd)
       globalThis.removeEventListener('resize', schedule)
       nav.style.removeProperty('--version-directory-top')
       delete nav.dataset.inView
@@ -492,10 +527,6 @@ export function VersionNavigation({
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
                     ) return
-                    if (mobile) {
-                      releaseRail.current()
-                      wakeRail.current()
-                    }
                     const targets = scrollTargets(root.current)
                     const target = targets.find(({ card }) =>
                       Number(card.dataset.versionId) === version.id
@@ -510,7 +541,14 @@ export function VersionNavigation({
                     }
                     target.card.focus({ preventScroll: true })
                     cancelScroll.current()
-                    cancelScroll.current = scrollToVersion(target.top)
+                    if (mobile) {
+                      releaseRail.current()
+                      wakeRail.current()
+                    }
+                    cancelScroll.current = scrollToVersion(
+                      target.top,
+                      mobile ? finishRail.current : undefined,
+                    )
                   }}
                 >
                   <span aria-hidden='true' className='version-directory-number'>
