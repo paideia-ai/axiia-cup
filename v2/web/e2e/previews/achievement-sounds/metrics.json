@@ -178,5 +178,36 @@
     "clipped_samples": 0,
     "dc_offset": 3.9e-08,
     "sha256": "420161186b3f7fd3ba03f06bc3b2751642699fcafa9283d3baaffe5413e66f9e"
+  },
+  {
+    "id": "11",
+    "file": "11-original-chime.wav",
+    "duration_seconds": 0.58,
+    "sample_rate_hz": 44100,
+    "channels": 2,
+    "encoding": "PCM16 little-endian WAV",
+    "peak_dbfs": -12.654,
+    "rms_dbfs": -25.193,
+    "active_rms_dbfs": -23.996,
+    "leading_below_minus60_db_ms": 0.39,
+    "trailing_below_minus60_db_ms": 8.5,
+    "last_50ms_rms_dbfs": -56.55,
+    "last_frame_is_zero": true,
+    "clipped_samples": 0,
+    "dc_offset": -3.585e-06,
+    "sha256": "f4691031d9e2ddba1789a85e2c05ea2c33949b13c5a1b647e40f4c6ba8ab4f05",
+    "original_sample_parity": {
+      "source": "v2/web/src/lib/sound.ts",
+      "invocation": "renderSound('achievement', 44100)",
+      "rendered_float32_sha256": "120a8e1b2d8f5d9f9105ca2dfeba2551663b7748fcb2db53ec0543a49f40ce67",
+      "sample_count_per_channel": 25578,
+      "duration_seconds": 0.58,
+      "dual_mono_exact": true,
+      "original_pcm16_bytes_exact": true,
+      "maximum_float32_quantization_error": 1.525881549549815e-05,
+      "maximum_standard_pcm_decode_error": 2.136826515197754e-05,
+      "permitted_quantization_error": 3.051850947599719e-05,
+      "additional_normalization_or_envelope": false
+    }
   }
 ]

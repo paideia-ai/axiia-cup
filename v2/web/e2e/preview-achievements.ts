@@ -58,7 +58,7 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (request) => {
     )
   }
   const soundFile = url.pathname.match(
-    /^\/_preview\/achievement-sounds\/(manifest\.json|(?:0[1-9]|10)-[a-z0-9-]+\.wav)$/,
+    /^\/_preview\/achievement-sounds\/(manifest\.json|(?:0[1-9]|1[01])-[a-z0-9-]+\.wav)$/,
   )?.[1]
   if (soundFile) {
     const source = new URL(

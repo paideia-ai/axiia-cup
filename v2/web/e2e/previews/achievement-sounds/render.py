@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Render ten original achievement cues using only Python's standard library.
+"""Render ten original proposals plus a direct export of the original cue.
 
 Run `python3 render.py` to reproduce the WAVs, manifest, and measurements.
 Run `python3 render.py --check` to validate the generated files without writing.
-All oscillators, excitation noise, reflections, and envelopes are synthesized.
+Options 01–10 use Python standard-library synthesis. Option 11 calls the
+existing TypeScript renderer through Deno without additional audio processing.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import math
 from pathlib import Path
 import random
 import struct
+import subprocess
 import wave
 
 RATE = 44_100
@@ -104,6 +106,14 @@ SPECS = [
         "duration": 0.65,
         "file": "10-minimal-dot.wav",
         "character": "极简 · 单音 · 短促",
+    },
+    {
+        "id": "11",
+        "name": "原版三音",
+        "description": "最初预览使用的三声上行轻铃，短而柔和。",
+        "duration": 0.58,
+        "file": "11-original-chime.wav",
+        "character": "最初版本 · 轻铃 · 上行",
     },
 ]
 
@@ -390,7 +400,21 @@ def write_wave(path, buffer):
         output.writeframes(encoded)
 
 
-def measure(spec):
+def export_original(check=False):
+    command = [
+        'deno', 'run', '--no-config', '--no-prompt', '--unstable-sloppy-imports',
+        f'--allow-read={ROOT}',
+    ]
+    if not check:
+        command.append(f'--allow-write={ROOT / "11-original-chime.wav"}')
+    command.append(str(ROOT / 'export-original.ts'))
+    if check:
+        command.append('--check')
+    result = subprocess.run(command, check=True, capture_output=True, text=True)
+    return json.loads(result.stdout)
+
+
+def measure(spec, original_report=None):
     path = ROOT / spec["file"]
     with wave.open(str(path), 'rb') as source:
         assert source.getnchannels() == CHANNELS, path.name
@@ -434,12 +458,19 @@ def measure(spec):
         "dc_offset": round(dc, 9),
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
     }
-    assert peak < .502 and clipped == 0, record
-    assert -.5 < db(active_rms(channels)) + 23 < .5, record
-    assert 0 < record["leading_below_minus60_db_ms"] < 90, record
-    assert record["trailing_below_minus60_db_ms"] >= 18, record
-    assert tail_rms < 10 ** (-60 / 20) and last_sample == 0, record
+    assert peak < 1 and clipped == 0, record
     assert abs(dc) < .001, record
+    if spec["id"] == "11":
+        assert original_report is not None
+        assert original_report["original_pcm16_bytes_exact"]
+        assert original_report["maximum_float32_quantization_error"] <= 1 / 32767
+        record["original_sample_parity"] = original_report
+    else:
+        assert peak < .502, record
+        assert -.5 < db(active_rms(channels)) + 23 < .5, record
+        assert 0 < record["leading_below_minus60_db_ms"] < 90, record
+        assert record["trailing_below_minus60_db_ms"] >= 18, record
+        assert tail_rms < 10 ** (-60 / 20) and last_sample == 0, record
     return record
 
 
@@ -453,13 +484,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true', help='Validate only; do not write files.')
     args = parser.parse_args()
+    original_report = export_original(check=args.check)
     if args.check:
         assert json.loads((ROOT / 'manifest.json').read_text()) == SPECS
     else:
         for spec in SPECS:
-            write_wave(ROOT / spec["file"], synthesize(spec))
+            if spec["id"] != "11":
+                write_wave(ROOT / spec["file"], synthesize(spec))
         write_json('manifest.json', SPECS)
-    metrics = [measure(spec) for spec in SPECS]
+    metrics = [measure(spec, original_report if spec["id"] == "11" else None)
+               for spec in SPECS]
     if args.check:
         assert json.loads((ROOT / 'metrics.json').read_text()) == metrics
     else:
@@ -470,7 +504,7 @@ def main():
               f'active RMS {item["active_rms_dbfs"]:.2f} dBFS '
               f'tail {item["last_50ms_rms_dbfs"]} dBFS '
               f'clipped {item["clipped_samples"]}')
-    print('PASS: 10 PCM16 stereo WAVs, headers, levels, silence, tails, and hashes.')
+    print('PASS: 11 WAVs; proposals 01–10 levels/tails; original 11 exact-sample parity.')
 
 
 if __name__ == '__main__':

@@ -1429,9 +1429,9 @@
           <p class="eyebrow">成就提示 · 视觉与音效</p>
           <h1 id="page-title">值得被记住的一刻。</h1>
           <p
-            class="intro-copy">十款视觉，十种声音，自由搭配这一刻。<br />让这份小小的肯定，有恰到好处的分量。</p>
+            class="intro-copy">十款视觉，十一种声音，自由搭配这一刻。<br />让这份小小的肯定，有恰到好处的分量。</p>
         </div>
-        <div class="intro-count" aria-hidden="true">10<span>OPTIONS</span></div>
+        <div class="intro-count" aria-hidden="true">10<span>VISUALS</span></div>
       </section>
       <section class="toolbar" aria-label="预览设置">
         <div class="sample-control">
@@ -1453,12 +1453,12 @@
       <section class="sound-section" id="sounds"
         aria-labelledby="sound-heading">
         <div class="sound-heading">
-          <h2 id="sound-heading">十种声音，试听这一刻。</h2>
+          <h2 id="sound-heading">十一种声音，试听这一刻。</h2>
           <p class="sound-selection" id="sound-selection"
             role="status">尚未选择音效</p>
         </div>
         <p
-          class="sound-intro">「试听」只播放声音；「搭配提示」让声音与右下角提示一起出现。音效与视觉分别选择，偏好仅标记在本页，请在聊天里告诉我两个编号。</p>
+          class="sound-intro">「试听」只播放声音；「搭配提示」让声音与右下角提示一起出现。11 号「原版三音」保留最初预览的声音。音效与视觉分别选择，偏好仅标记在本页，请在聊天里告诉我两个编号。</p>
         <p class="pairing-hint"
           id="pairing-hint">尚未选择视觉，搭配试播将使用 01 · 铜边信笺。下方视觉方案的单独试播保持静音。</p>
         <div class="sound-controls">
@@ -1474,7 +1474,7 @@
             hidden>重新加载</button>
         </div>
         <p class="sound-error" id="sound-error" role="alert" hidden></p>
-        <ul class="sound-grid" id="sound-grid" aria-label="十种成就音效"></ul>
+        <ul class="sound-grid" id="sound-grid" aria-label="十一种成就音效"></ul>
       </section>
       <div class="guide">
         <p>点击「试播」查看真实位置；约 7 秒收起，悬停或键盘聚焦时暂停。点击提示可在新标签页打开成就中心。</p>
@@ -1769,11 +1769,11 @@
         if (!response.ok) throw new Error('Sound catalog unavailable')
         const entries = await response.json()
         if (
-          !Array.isArray(entries) || entries.length !== 10 ||
-          new Set(entries.map((item) => item?.id)).size !== 10 ||
+          !Array.isArray(entries) || entries.length !== 11 ||
+          new Set(entries.map((item) => item?.id)).size !== 11 ||
           entries.some((item) =>
             !item || typeof item.id !== 'string' ||
-            !/^(0[1-9]|10)$/.test(item.id) ||
+            !/^(0[1-9]|1[01])$/.test(item.id) ||
             !/^\d{2}-[a-z0-9-]+\.wav$/.test(item.file) ||
             typeof item.name !== 'string' || typeof item.description !== 'string' ||
             typeof item.character !== 'string' ||
@@ -1782,7 +1782,7 @@
         ) throw new Error('Invalid sound catalog')
         soundOptions = entries.sort((a, b) => a.id.localeCompare(b.id))
         buildSounds()
-        soundStatus.textContent = '已准备好 10 个音效，点击试听。'
+        soundStatus.textContent = '已准备好 11 个音效，点击试听。'
       } catch {
         soundStatus.textContent = '音效暂时无法加载。'
         soundError.textContent =

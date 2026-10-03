@@ -78,5 +78,13 @@
     "duration": 0.65,
     "file": "10-minimal-dot.wav",
     "character": "极简 · 单音 · 短促"
+  },
+  {
+    "id": "11",
+    "name": "原版三音",
+    "description": "最初预览使用的三声上行轻铃，短而柔和。",
+    "duration": 0.58,
+    "file": "11-original-chime.wav",
+    "character": "最初版本 · 轻铃 · 上行"
   }
 ]
