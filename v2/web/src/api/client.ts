@@ -464,3 +464,13 @@ export const admin = {
 export function sseUrl(path: string): string {
   return `${API_ROOT}/v1${path}`
 }
+
+export const achievements = {
+  list: () =>
+    request<import('./types').AchievementsResponse>('GET', '/achievements'),
+  events: (after: number) =>
+    request<import('./types').AchievementsResponse>(
+      'GET',
+      `/achievements/events?after=${after}`,
+    ),
+}

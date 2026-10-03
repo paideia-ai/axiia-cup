@@ -21,6 +21,7 @@ import { tm } from '../testmode/mark'
 // #53 通知 kind 的中文标签（服务端 title 缺席时的回落）。
 const KIND_LABEL: Record<string, string> = {
   battle_finished: '对战结束',
+  achievement_unlocked: '获得成就',
   challenged: '被约战',
   automatch_result: '自动匹配结果',
   tournament_round: '锦标赛进程',

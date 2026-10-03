@@ -9,6 +9,7 @@ export type SoundCue =
   | 'output'
   | 'finish'
   | 'reward'
+  | 'achievement'
   | 'type'
   | 'delete'
   | 'hover'
@@ -55,6 +56,7 @@ export function renderSound(
     dispatch: 0.34,
     output: 0.065,
     finish: 0.72,
+    achievement: 0.85,
     hover: 0.045,
     click: 0.11,
   }[cue]
@@ -71,6 +73,11 @@ export function renderSound(
     const t = i / sampleRate
     let value: number
     switch (cue) {
+      case 'achievement':
+        value = 0.2 * pluck(t, 523.25, 0.12) +
+          0.17 * pluck(t - 0.12, 783.99, 0.17) +
+          0.13 * pluck(t - 0.22, 1046.5, 0.21)
+        break
       case 'hover':
         value = 0.065 * pluck(t, 610, 0.012)
         break
@@ -108,6 +115,7 @@ export function renderSound(
     dispatch: 0.09,
     output: 0.032,
     finish: 0.075,
+    achievement: 0.075,
     hover: 0.017,
     click: 0.079,
   }[cue]
@@ -158,7 +166,7 @@ export class SoundPolicy {
 // callers use a Web Lock so simultaneous background tabs cannot both claim it.
 function isMilestone(cue: SoundCue): boolean {
   return cue === 'save' || cue === 'dispatch' || cue === 'finish' ||
-    cue === 'reward'
+    cue === 'reward' || cue === 'achievement'
 }
 
 function claimMilestone(cue: SoundCue, key: string): boolean {
@@ -246,7 +254,9 @@ export class SoundEngine {
     if (!audition && !claimMilestone(cue, key)) return false
     try {
       if (cue === 'click') this.stop('hover')
-      if (cue === 'finish' || cue === 'reward') this.stop('output')
+      if (cue === 'finish' || cue === 'reward' || cue === 'achievement') {
+        this.stop('output')
+      }
       // Output ticks must never obscure a milestone already playing/queued.
       if (cue === 'output' && ctx.currentTime < this.nextMilestone) return false
       const variant = cue === 'output' ? this.variant++ % 3 : 0
