@@ -1,6 +1,13 @@
 import { Tooltip } from '@base-ui-components/react/tooltip'
 import { Check } from 'lucide-react'
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 
 import type { AgentVersionDTO } from '../api/types'
 import { versionOrdinal, versionTag } from '../lib/version-label'
@@ -69,12 +76,27 @@ function scrollToVersion(top: number): () => void {
   return cancel
 }
 
+// Match the application's phone layout. Desktop keeps its original directory,
+// including the horizontal layout below 1320px.
+const MOBILE_RAIL_QUERY = '(max-width: 767px)'
+function subscribeToMobileRail(notify: () => void) {
+  const media = matchMedia(MOBILE_RAIL_QUERY)
+  media.addEventListener('change', notify)
+  return () => media.removeEventListener('change', notify)
+}
+const isMobileRail = () => matchMedia(MOBILE_RAIL_QUERY).matches
+
 // The directory follows the same order as the cards, including a linked version
 // promoted to the top. It navigates the document; it never selects an entry.
 export function VersionNavigation({
   versions,
   children,
 }: { versions: AgentVersionDTO[]; children: ReactNode }) {
+  const mobile = useSyncExternalStore(
+    subscribeToMobileRail,
+    isMobileRail,
+    () => false,
+  )
   const previewID = useId()
   const root = useRef<HTMLDivElement>(null)
   const navigation = useRef<HTMLElement>(null)
@@ -90,8 +112,75 @@ export function VersionNavigation({
   const latestID = Math.max(...versions.map(({ id }) => id))
 
   useEffect(() => {
+    if (!visible || mobile) return
+    let frame = 0
+    const measure = () => {
+      frame = 0
+      const targets = scrollTargets(root.current)
+      const nav = navigation.current
+      const bounds = root.current?.getBoundingClientRect()
+      if (nav && bounds) {
+        // Anchor to the content's outer gutter while CSS keeps the rail
+        // vertically centered in the viewport, independent of list scrolling.
+        nav.style.setProperty(
+          '--version-directory-left',
+          `${bounds.left - 116}px`,
+        )
+      }
+      let current = targets[0]
+      for (const target of targets) {
+        if (target.top <= scrollY + 1) current = target
+        else break
+      }
+      // When the whole list fits without scrolling, an explicit click still
+      // identifies the chosen version instead of always selecting the last one.
+      if (targets.at(-1)?.top === targets[0]?.top) {
+        current = targets.find(({ card }) =>
+          Number(card.dataset.versionId) === clickedID.current
+        ) ?? targets[0]
+      }
+      setActiveID(current ? Number(current.card.dataset.versionId) : null)
+    }
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure)
+    }
+    schedule()
+    globalThis.addEventListener('scroll', schedule, { passive: true })
+    globalThis.addEventListener('resize', schedule)
+    const observer = new ResizeObserver(schedule)
+    if (root.current) observer.observe(root.current)
+    return () => {
+      cancelAnimationFrame(frame)
+      globalThis.removeEventListener('scroll', schedule)
+      globalThis.removeEventListener('resize', schedule)
+      observer.disconnect()
+    }
+  }, [visible, order, mobile])
+
+  // Reveal the current item by scrolling only the directory, never the page.
+  useEffect(() => {
+    if (mobile) return
     const nav = navigation.current
-    if (!visible || !nav) return
+    const link = nav?.querySelector<HTMLElement>('[aria-current="location"]')
+    if (!nav || !link) return
+    const bounds = nav.getBoundingClientRect()
+    const item = link.getBoundingClientRect()
+    if (getComputedStyle(nav).flexDirection === 'column') {
+      if (item.top < bounds.top) nav.scrollTop -= bounds.top - item.top
+      else if (item.bottom > bounds.bottom) {
+        nav.scrollTop += item.bottom - bounds.bottom
+      }
+    } else {
+      if (item.left < bounds.left) nav.scrollLeft -= bounds.left - item.left
+      else if (item.right > bounds.right) {
+        nav.scrollLeft += item.right - bounds.right
+      }
+    }
+  }, [activeID, mobile])
+
+  useEffect(() => {
+    const nav = navigation.current
+    if (!visible || !nav || !mobile) return
     let frame = 0
     let idleTimer: ReturnType<typeof setTimeout>
     let settleTimer: ReturnType<typeof setTimeout>
@@ -350,8 +439,10 @@ export function VersionNavigation({
       globalThis.removeEventListener('touchcancel', onPointerUp)
       globalThis.removeEventListener('scroll', onPageScroll)
       globalThis.removeEventListener('resize', schedule)
+      nav.style.removeProperty('--version-directory-top')
+      delete nav.dataset.inView
     }
-  }, [visible, order])
+  }, [visible, order, mobile])
 
   return (
     <div ref={root} className={visible ? 'version-directory' : undefined}>
@@ -360,8 +451,10 @@ export function VersionNavigation({
           ref={navigation}
           aria-label='版本快速导航'
           className='version-directory-nav'
-          data-active={active}
-          aria-description='上下滑动目录浏览版本，也可点击版本或使用上下方向键。'
+          data-active={mobile ? active : undefined}
+          aria-description={mobile
+            ? '上下滑动目录浏览版本，也可点击版本或使用上下方向键。'
+            : undefined}
         >
           {versions.map((version) => {
             const tag = versionTag(version, versions)
@@ -384,8 +477,10 @@ export function VersionNavigation({
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
                     ) return
-                    releaseRail.current()
-                    wakeRail.current()
+                    if (mobile) {
+                      releaseRail.current()
+                      wakeRail.current()
+                    }
                     const targets = scrollTargets(root.current)
                     const target = targets.find(({ card }) =>
                       Number(card.dataset.versionId) === version.id

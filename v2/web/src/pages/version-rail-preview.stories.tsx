@@ -38,9 +38,9 @@ function VersionRailPreview() {
       <aside className='border-b border-(--border-soft) bg-(--surface) px-4 py-3 text-(--foreground)'>
         <div className='mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3'>
           <div>
-            <p className='text-sm font-semibold'>版本目录 · 交互预览</p>
+            <p className='text-sm font-semibold'>手机版版本目录 · 交互预览</p>
             <p className='mt-1 text-xs text-(--foreground-subtle)'>
-              上下滑动左侧刻度，浏览不同版本。停下后，目录轻轻淡出。
+              手机上滑动左侧刻度浏览版本，停下后轻轻淡出。卡片保持原宽，电脑版保持原样。
             </p>
           </div>
           <nav aria-label='选择版本数量' className='flex gap-1'>
@@ -177,22 +177,38 @@ type Story = StoryObj<typeof meta>
 
 export const Interactive: Story = {
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-    await canvas.findByRole('heading', { name: '版本（12）' })
-    const directory = canvas.getByRole('navigation', { name: '版本快速导航' })
-    await expect(within(directory).getAllByRole('link')).toHaveLength(12)
-    // The empty space centering the first tick must not cover sibling-agent
-    // links or headings. Only the visible version rows should receive taps.
-    const first = within(directory).getAllByRole('link')[0]
-    await waitFor(() => {
-      const rail = directory.getBoundingClientRect()
-      const row = first.getBoundingClientRect()
-      expect(row.top - rail.top).toBeGreaterThan(10)
-      const x = rail.left + rail.width / 2
-      const blank = document.elementFromPoint(x, row.top - 10)
-      expect(directory.contains(blank)).toBe(false)
-      const tick = document.elementFromPoint(x, row.top + row.height / 2)
-      expect(first.contains(tick)).toBe(true)
-    })
+    const browserPage = '__vitest_browser_runner__' in globalThis
+      ? (await import('vitest/browser')).page
+      : null
+    const initial = { width: innerWidth, height: innerHeight }
+    try {
+      if (browserPage) await browserPage.viewport(390, 844)
+      const canvas = within(canvasElement)
+      await canvas.findByRole('heading', { name: '版本（12）' })
+      const directory = canvas.getByRole('navigation', { name: '版本快速导航' })
+      await expect(within(directory).getAllByRole('link')).toHaveLength(12)
+      if (!matchMedia('(max-width: 767px)').matches) return
+      const pageBounds = document.body.getBoundingClientRect()
+      for (const card of canvas.getAllByTestId('version-card')) {
+        const bounds = card.getBoundingClientRect()
+        await expect(bounds.left - pageBounds.left).toBe(16)
+        await expect(pageBounds.right - bounds.right).toBe(16)
+      }
+      // The empty space centering the first tick must not cover sibling-agent
+      // links or headings. Only the visible version rows should receive taps.
+      const first = within(directory).getAllByRole('link')[0]
+      await waitFor(() => {
+        const rail = directory.getBoundingClientRect()
+        const row = first.getBoundingClientRect()
+        expect(row.top - rail.top).toBeGreaterThan(10)
+        const x = rail.left + rail.width / 2
+        const blank = document.elementFromPoint(x, row.top - 10)
+        expect(directory.contains(blank)).toBe(false)
+        const tick = document.elementFromPoint(x, row.top + row.height / 2)
+        expect(first.contains(tick)).toBe(true)
+      })
+    } finally {
+      if (browserPage) await browserPage.viewport(initial.width, initial.height)
+    }
   },
 }
