@@ -81,76 +81,277 @@ export function VersionNavigation({
   const clickedID = useRef<number | null>(null)
   const cancelScroll = useRef<() => void>(() => {})
   useEffect(() => () => cancelScroll.current(), [])
+  const releaseRail = useRef<() => void>(() => {})
+  const wakeRail = useRef<() => void>(() => {})
+  const [active, setActive] = useState(false)
   const [activeID, setActiveID] = useState<number | null>(null)
   const visible = versions.length >= VERSION_NAVIGATION_THRESHOLD
   const order = versions.map(({ id }) => id).join(',')
   const latestID = Math.max(...versions.map(({ id }) => id))
 
   useEffect(() => {
-    if (!visible) return
+    const nav = navigation.current
+    if (!visible || !nav) return
     let frame = 0
+    let idleTimer: ReturnType<typeof setTimeout>
+    let settleTimer: ReturnType<typeof setTimeout>
+    let driving = false
+    let held = false
+    let hovered = false
+    let focused = false
+    let targets = scrollTargets(root.current)
+    const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a'))
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)')
+    const centerOf = (link: HTMLElement) =>
+      link.offsetTop - (nav.clientHeight - link.offsetHeight) / 2
+    const wake = () => {
+      clearTimeout(idleTimer)
+      setActive(true)
+      if (!held && !hovered && !focused) {
+        idleTimer = setTimeout(() => setActive(false), 1100)
+      }
+    }
+    wakeRail.current = wake
     const measure = () => {
       frame = 0
-      const targets = scrollTargets(root.current)
-      const nav = navigation.current
+      targets = scrollTargets(root.current)
       const bounds = root.current?.getBoundingClientRect()
-      if (nav && bounds) {
-        // Anchor to the content's outer gutter while CSS keeps the rail
-        // vertically centered in the viewport, independent of list scrolling.
+      if (bounds) {
         nav.style.setProperty(
           '--version-directory-left',
-          `${bounds.left - 116}px`,
+          `${Math.max(4, bounds.left - 112)}px`,
         )
+        nav.dataset.inView = String(
+          focused || (bounds.bottom > 96 && bounds.top < innerHeight - 96),
+        )
+        if (!driving) {
+          // The first tick belongs beside the cards, not over their heading.
+          // Keep this position fixed under the finger throughout a gesture.
+          nav.style.setProperty(
+            '--version-directory-top',
+            `${
+              Math.min(
+                innerHeight - 118,
+                Math.max(innerHeight / 2, bounds.top + 22),
+              )
+            }px`,
+          )
+        }
       }
+      // Only one surface leads at a time. A rail gesture must not be pulled
+      // back by the page scroll it produces (or by native scroll snapping).
+      if (driving) return
       let current = targets[0]
       for (const target of targets) {
         if (target.top <= scrollY + 1) current = target
         else break
       }
-      // When the whole list fits without scrolling, an explicit click still
-      // identifies the chosen version instead of always selecting the last one.
       if (targets.at(-1)?.top === targets[0]?.top) {
         current = targets.find(({ card }) =>
           Number(card.dataset.versionId) === clickedID.current
         ) ?? targets[0]
       }
-      setActiveID(current ? Number(current.card.dataset.versionId) : null)
+      const id = current ? Number(current.card.dataset.versionId) : null
+      setActiveID(id)
+      const link = links.find((item) => item.hash === `#version-${id}`)
+      if (link && Math.abs(nav.scrollTop - centerOf(link)) > 1) {
+        // Page-driven positioning is immediate; animating it would introduce
+        // a second scroll clock and fight an incoming touch gesture.
+        nav.scrollTo({ top: centerOf(link), behavior: 'instant' })
+      }
     }
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure)
     }
+    const release = () => {
+      driving = false
+      held = false
+      clearTimeout(settleTimer)
+      wake()
+    }
+    releaseRail.current = release
+    const settle = () => {
+      if (!driving || held) return
+      const nearest = links.reduce((best, link) =>
+        Math.abs(centerOf(link) - nav.scrollTop) <
+            Math.abs(centerOf(best) - nav.scrollTop)
+          ? link
+          : best
+      )
+      if (Math.abs(nav.scrollTop - centerOf(nearest)) > 1) {
+        nav.scrollTo({
+          top: centerOf(nearest),
+          behavior: reduced.matches ? 'instant' : 'smooth',
+        })
+        settleTimer = setTimeout(settle, 180)
+        return
+      }
+      release()
+      schedule()
+    }
+    const scheduleSettle = () => {
+      clearTimeout(settleTimer)
+      settleTimer = setTimeout(settle, 180)
+    }
+    const begin = () => {
+      cancelScroll.current()
+      targets = scrollTargets(root.current)
+      driving = true
+      wake()
+      scheduleSettle()
+    }
+    const onPointerDown = () => {
+      held = true
+      begin()
+    }
+    const onPointerUp = () => {
+      if (!held && !driving) return
+      held = false
+      wake()
+      scheduleSettle()
+    }
+    const onPointerCancel = (event: PointerEvent) => {
+      // Native touch panning cancels the pointer while the finger is still
+      // down. Only touchend/touchcancel may end that gesture, even if the
+      // reader pauses mid-swipe longer than our scroll-settle debounce.
+      if (event.pointerType !== 'touch') onPointerUp()
+    }
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && Math.abs(event.deltaY) > 0) begin()
+    }
+    const onRailScroll = () => {
+      if (!driving) return
+      wake()
+      const offset = nav.scrollTop
+      let index = 0
+      while (index < links.length - 1 && centerOf(links[index + 1]) <= offset) {
+        index++
+      }
+      const next = Math.min(index + 1, links.length - 1)
+      const span = centerOf(links[next]) - centerOf(links[index])
+      const progress = span > 0
+        ? Math.max(0, Math.min(1, (offset - centerOf(links[index])) / span))
+        : 0
+      const selected = progress < 0.5 ? index : next
+      const target = targets[selected]
+      if (!target || !targets[index] || !targets[next]) return
+      clickedID.current = Number(target.card.dataset.versionId)
+      setActiveID(clickedID.current)
+      // Direct manipulation: interpolate with native touch momentum instead
+      // of restarting a smooth page animation at every crossed version.
+      globalThis.scrollTo({
+        top: targets[index].top +
+          (targets[next].top - targets[index].top) * progress,
+        behavior: 'instant',
+      })
+      scheduleSettle()
+    }
+    const onPageScroll = () => {
+      if (!driving) wake()
+      schedule()
+    }
+    const onOutsidePointer = (event: PointerEvent) => {
+      if (!nav.contains(event.target as Node)) release()
+    }
+    const onOutsideWheel = (event: WheelEvent) => {
+      if (driving && !nav.contains(event.target as Node)) release()
+    }
+    const onEnter = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return
+      hovered = true
+      wake()
+    }
+    const onLeave = () => {
+      hovered = false
+      wake()
+    }
+    const onFocus = () => {
+      focused = true
+      wake()
+    }
+    const onBlur = (event: FocusEvent) => {
+      if (nav.contains(event.relatedTarget as Node)) return
+      focused = false
+      wake()
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      event.preventDefault()
+      event.stopPropagation()
+      release()
+      const index = Math.max(
+        0,
+        links.indexOf(document.activeElement as HTMLAnchorElement),
+      )
+      const next = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+        ? links.length - 1
+        : Math.max(
+          0,
+          Math.min(
+            links.length - 1,
+            index + (event.key === 'ArrowDown' ? 1 : -1),
+          ),
+        )
+      const target = targets[next]
+      if (!target) return
+      clickedID.current = Number(target.card.dataset.versionId)
+      links[next].focus({ preventScroll: true })
+      cancelScroll.current()
+      cancelScroll.current = scrollToVersion(target.top)
+      schedule()
+    }
     schedule()
-    globalThis.addEventListener('scroll', schedule, { passive: true })
-    globalThis.addEventListener('resize', schedule)
     const observer = new ResizeObserver(schedule)
     if (root.current) observer.observe(root.current)
+    observer.observe(nav)
+    nav.addEventListener('scroll', onRailScroll, { passive: true })
+    nav.addEventListener('scrollend', settle)
+    nav.addEventListener('wheel', onWheel, { passive: true })
+    nav.addEventListener('pointerdown', onPointerDown)
+    nav.addEventListener('pointerenter', onEnter)
+    nav.addEventListener('pointerleave', onLeave)
+    nav.addEventListener('focusin', onFocus)
+    nav.addEventListener('focusout', onBlur)
+    nav.addEventListener('keydown', onKey)
+    globalThis.addEventListener('pointerdown', onOutsidePointer, {
+      passive: true,
+    })
+    globalThis.addEventListener('wheel', onOutsideWheel, { passive: true })
+    globalThis.addEventListener('pointerup', onPointerUp, { passive: true })
+    globalThis.addEventListener('pointercancel', onPointerCancel, {
+      passive: true,
+    })
+    globalThis.addEventListener('touchend', onPointerUp, { passive: true })
+    globalThis.addEventListener('touchcancel', onPointerUp, { passive: true })
+    globalThis.addEventListener('scroll', onPageScroll, { passive: true })
+    globalThis.addEventListener('resize', schedule)
     return () => {
       cancelAnimationFrame(frame)
-      globalThis.removeEventListener('scroll', schedule)
-      globalThis.removeEventListener('resize', schedule)
+      clearTimeout(idleTimer)
+      clearTimeout(settleTimer)
+      cancelScroll.current()
       observer.disconnect()
+      nav.removeEventListener('scroll', onRailScroll)
+      nav.removeEventListener('scrollend', settle)
+      nav.removeEventListener('wheel', onWheel)
+      nav.removeEventListener('pointerdown', onPointerDown)
+      nav.removeEventListener('pointerenter', onEnter)
+      nav.removeEventListener('pointerleave', onLeave)
+      nav.removeEventListener('focusin', onFocus)
+      nav.removeEventListener('focusout', onBlur)
+      nav.removeEventListener('keydown', onKey)
+      globalThis.removeEventListener('pointerdown', onOutsidePointer)
+      globalThis.removeEventListener('wheel', onOutsideWheel)
+      globalThis.removeEventListener('pointerup', onPointerUp)
+      globalThis.removeEventListener('pointercancel', onPointerCancel)
+      globalThis.removeEventListener('touchend', onPointerUp)
+      globalThis.removeEventListener('touchcancel', onPointerUp)
+      globalThis.removeEventListener('scroll', onPageScroll)
+      globalThis.removeEventListener('resize', schedule)
     }
   }, [visible, order])
-
-  // Reveal the current item by scrolling only the directory, never the page.
-  useEffect(() => {
-    const nav = navigation.current
-    const link = nav?.querySelector<HTMLElement>('[aria-current="location"]')
-    if (!nav || !link) return
-    const bounds = nav.getBoundingClientRect()
-    const item = link.getBoundingClientRect()
-    if (getComputedStyle(nav).flexDirection === 'column') {
-      if (item.top < bounds.top) nav.scrollTop -= bounds.top - item.top
-      else if (item.bottom > bounds.bottom) {
-        nav.scrollTop += item.bottom - bounds.bottom
-      }
-    } else {
-      if (item.left < bounds.left) nav.scrollLeft -= bounds.left - item.left
-      else if (item.right > bounds.right) {
-        nav.scrollLeft += item.right - bounds.right
-      }
-    }
-  }, [activeID])
 
   return (
     <div ref={root} className={visible ? 'version-directory' : undefined}>
@@ -159,6 +360,8 @@ export function VersionNavigation({
           ref={navigation}
           aria-label='版本快速导航'
           className='version-directory-nav'
+          data-active={active}
+          aria-description='上下滑动目录浏览版本，也可点击版本或使用上下方向键。'
         >
           {versions.map((version) => {
             const tag = versionTag(version, versions)
@@ -181,6 +384,8 @@ export function VersionNavigation({
                       event.metaKey || event.ctrlKey || event.shiftKey ||
                       event.altKey
                     ) return
+                    releaseRail.current()
+                    wakeRail.current()
                     const targets = scrollTargets(root.current)
                     const target = targets.find(({ card }) =>
                       Number(card.dataset.versionId) === version.id
