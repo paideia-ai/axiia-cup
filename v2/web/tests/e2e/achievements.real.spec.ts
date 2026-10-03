@@ -13,7 +13,9 @@ test('real server persists an earned collection and a claimed bounty with one ne
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/login')
-  await page.getByLabel('邮箱').fill('tieyan@axiia.test')
+  await page.getByRole('textbox', { name: '邮箱', exact: true }).fill(
+    'tieyan@axiia.test',
+  )
   await page.getByLabel('密码', { exact: true }).fill('seedpw-123456')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(page).toHaveURL(/\/scenarios/)
@@ -58,18 +60,29 @@ test('real server persists an earned collection and a claimed bounty with one ne
   const observer = await context.newPage()
   await observer.goto('/settings/achievements')
   await expect(observer.locator('.achievement-item')).toHaveCount(31)
+  // Playwright emulates every page as focused by default. Disable that browser
+  // emulation so bringToFront exercises the real foreground-tab delivery rule.
+  for (const tab of [page, observer]) {
+    const session = await context.newCDPSession(tab)
+    await session.send('Emulation.setFocusEmulationEnabled', { enabled: false })
+  }
   await page.bringToFront()
 
   await page.goto('/rewards')
   await page.getByRole('link', { name: '查看战报并领取' }).first().click()
   await expect(page.getByRole('button', { name: '领取奖励', exact: true }))
     .toBeVisible()
+  await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(true)
+  await expect.poll(() => observer.evaluate(() => document.hasFocus()))
+    .toBe(false)
   await page.getByRole('button', { name: '领取奖励', exact: true }).click()
   const toast = page.getByRole('complementary', { name: '成就达成' })
   await expect(toast).toBeVisible({ timeout: 10_000 })
   await expect(toast).toContainText('凭本事领的')
   await expect(toast).toContainText('把胜利带回家。')
   await expect(toast).not.toContainText('积分返还')
+  await expect(observer.getByRole('complementary', { name: '成就达成' }))
+    .toHaveCount(0)
   const popupReady = context.waitForEvent('page')
   await toast.getByRole('link').click()
   const popup = await popupReady

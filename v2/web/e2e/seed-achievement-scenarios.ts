@@ -26,3 +26,8 @@ for await (const entry of Deno.readDir(root)) {
   })
   console.log(`Installed current scenario: ${entry.name}`)
 }
+
+// The binary also seeds a retired fallback scenario outside the current catalog.
+await session.call('PATCH', '/v1/admin/slots/sanguo-chain-stratagem-advanced', {
+  status: 'retired',
+})
