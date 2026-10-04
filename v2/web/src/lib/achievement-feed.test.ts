@@ -161,27 +161,87 @@ describe('account-scoped cursors and toast receipts', () => {
 
   it('serializes claims, isolates accounts, and does not claim an inactive tab', async () => {
     let tail: Promise<unknown> = Promise.resolve()
-    const request = vi.fn((_key: string, claim: () => boolean) => {
+    const request = vi.fn((_key: string, claim: () => unknown) => {
       const result = tail.then(claim)
       tail = result
       return result
     })
     vi.stubGlobal('navigator', { locks: { request } })
-    expect(await claimAchievementToast('inactive', 20, () => false)).toBe(false)
-    expect(await claimAchievementToast('inactive', 20, () => true)).toBe(true)
+    const present = vi.fn()
+    expect(await claimAchievementToast('inactive', 20, () => false, present))
+      .toBe('deferred')
+    expect(present).not.toHaveBeenCalled()
+    expect(await claimAchievementToast('inactive', 20, () => true, present))
+      .toBe('presented')
     const results = await Promise.all([
-      claimAchievementToast('race', 20, () => true),
-      claimAchievementToast('race', 20, () => true),
+      claimAchievementToast('race', 20, () => true, present),
+      claimAchievementToast('race', 20, () => true, present),
     ])
-    expect(results).toEqual([true, false])
-    expect(await claimAchievementToast('another-account', 20, () => true)).toBe(
-      true,
-    )
+    expect(results).toEqual(['presented', 'duplicate'])
+    expect(
+      await claimAchievementToast('another-account', 20, () => true, present),
+    ).toBe('presented')
+    expect(present).toHaveBeenCalledTimes(3)
     expect(request).toHaveBeenCalled()
   })
 
   it('honors receipts from another tab or reload without inspecting notification read status', async () => {
     localStorage.setItem('axiia-achievement-toasts-v1:stored', '[31]')
-    expect(await claimAchievementToast('stored', 31, () => true)).toBe(false)
+    const present = vi.fn()
+    expect(await claimAchievementToast('stored', 31, () => true, present)).toBe(
+      'duplicate',
+    )
+    expect(present).not.toHaveBeenCalled()
+  })
+
+  it('records a receipt only after the presentation commits inside the lock', async () => {
+    let locked = false
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: (_key: string, claim: () => unknown) => {
+          locked = true
+          try {
+            return Promise.resolve(claim())
+          } finally {
+            locked = false
+          }
+        },
+      },
+    })
+    const key = 'axiia-achievement-toasts-v1:committed'
+    const present = vi.fn(() => {
+      expect(locked).toBe(true)
+      expect(localStorage.getItem(key)).toBeNull()
+    })
+    expect(await claimAchievementToast('committed', 41, () => true, present))
+      .toBe('presented')
+    expect(present).toHaveBeenCalledOnce()
+    expect(localStorage.getItem(key)).toBe('[41]')
+  })
+
+  it('does not acknowledge a failed presentation and can retry it', async () => {
+    vi.stubGlobal('navigator', {
+      locks: {
+        request: (_key: string, claim: () => unknown) =>
+          Promise.resolve().then(claim),
+      },
+    })
+    await expect(
+      claimAchievementToast('failed-presentation', 42, () => true, () => {
+        throw new Error('presentation interrupted')
+      }),
+    ).rejects.toThrow('presentation interrupted')
+    expect(
+      localStorage.getItem('axiia-achievement-toasts-v1:failed-presentation'),
+    )
+      .toBeNull()
+    expect(
+      await claimAchievementToast(
+        'failed-presentation',
+        42,
+        () => true,
+        vi.fn(),
+      ),
+    ).toBe('presented')
   })
 })

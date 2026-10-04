@@ -109,6 +109,15 @@ contacts the backend. Stop it with Ctrl+C.
 Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
 Playwright `fixme` contracts. They are not counted as passing functionality.
 
+For achievement toast recovery, run `deno task preview:achievement-delivery`
+and open `http://127.0.0.1:5186`. The preview uses the actual achievement
+provider and toast with browser-local fixture events. Unlock a batch, refresh
+while its first toast is visible, and check that only the unseen toasts resume.
+The delayed-unlock control also supports testing background-tab recovery.
+It requires no account or backend and stores only demo events in the browser.
+`deno task test:e2e:achievement-delivery` verifies recovery and delivery policy
+in Chromium.
+
 ## Why the API is same-origin
 
 The server refuses cross-origin mutations that carry a session cookie: it

@@ -102,6 +102,7 @@ export function saveAchievementCursor(accountID: string, cursor: number) {
 }
 
 const memoryReceipts = new Set<string>()
+type ToastClaim = 'presented' | 'duplicate' | 'deferred'
 
 // The receipt belongs to the account and immutable event, independently of its
 // notification's read/deleted state. A Web Lock serializes simultaneous tabs.
@@ -109,19 +110,26 @@ export async function claimAchievementToast(
   accountID: string,
   eventID: number,
   eligible: () => boolean,
-): Promise<boolean> {
+  present: () => void,
+): Promise<ToastClaim> {
   const identity = `${accountID}:${eventID}`
   const storageKey = `axiia-achievement-toasts-v1:${accountID}`
-  const claim = () => {
-    if (!eligible() || memoryReceipts.has(identity)) return false
+  const claim = (): ToastClaim => {
+    if (!eligible()) return 'deferred'
+    if (memoryReceipts.has(identity)) return 'duplicate'
+    let seen: number[] = []
     try {
       const stored: unknown = JSON.parse(
         localStorage.getItem(storageKey) ?? '[]',
       )
-      const seen = Array.isArray(stored)
+      seen = Array.isArray(stored)
         ? stored.filter((id): id is number => Number.isSafeInteger(id))
         : []
-      if (seen.includes(eventID)) return false
+      if (seen.includes(eventID)) return 'duplicate'
+    } catch { /* Session-only fallback when browser storage is disabled. */ }
+    // Commit the visible toast while holding the lock, before acknowledging it.
+    present()
+    try {
       localStorage.setItem(
         storageKey,
         JSON.stringify([...seen.slice(-511), eventID]),
@@ -131,14 +139,10 @@ export async function claimAchievementToast(
     if (memoryReceipts.size > 2048) {
       memoryReceipts.delete(memoryReceipts.values().next().value!)
     }
-    return true
+    return 'presented'
   }
   if (globalThis.navigator?.locks) {
-    try {
-      return await navigator.locks.request('axiia-achievement-toast', claim)
-    } catch {
-      return false
-    }
+    return await navigator.locks.request('axiia-achievement-toast', claim)
   }
   // Older browsers retain focus gating and persisted best-effort deduplication.
   return claim()

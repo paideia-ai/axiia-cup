@@ -66,6 +66,9 @@
     "preview:agent-portraits": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6043 e2e/preview-agent-portraits.ts",
     "preview:portraits": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6035 e2e/preview-portraits.ts",
     "preview:achievement-toast:build": "deno run -A npm:vite build --config preview/achievement-toast/vite.config.ts",
+    "preview:achievement-delivery:build": "deno run -A npm:vite build --config preview/achievement-delivery/vite.config.ts",
+    "preview:achievement-delivery": "deno task preview:achievement-delivery:build && deno run -A npm:vite preview --config preview/achievement-delivery/vite.config.ts --host 127.0.0.1 --port 5186",
+    "test:e2e:achievement-delivery": "deno run -A npm:playwright test --config playwright.achievement-delivery.config.ts",
     "preview:achievements": "deno run --allow-read=build/client,build/achievement-toast-preview,e2e/previews --allow-net e2e/preview-achievements.ts"
   }
 }
