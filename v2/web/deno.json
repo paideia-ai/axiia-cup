@@ -47,8 +47,6 @@
     "storybook:build": "deno run -A npm:storybook build",
     "test:e2e": "deno run -A npm:playwright test",
     "test:e2e:scroll": "deno run -A npm:playwright test --config playwright.scroll.config.ts",
-    "test:e2e:version-navigation": "deno run -A npm:playwright test --config playwright.version-navigation.config.ts",
-    "preview:version-navigation:build": "STORYBOOK_VERSION_NAVIGATION_PREVIEW=1 deno task storybook:build",
     "test:e2e:navigation": "deno run -A npm:playwright test --config playwright.navigation.config.ts",
     "test:e2e:rewards": "deno run -A npm:playwright test --config playwright.rewards.config.ts",
     "test:e2e:handoff": "AXIIA_HANDOFF_E2E=1 deno run -A npm:playwright test tests/e2e/b3-a5-testmode.real.spec.ts",
