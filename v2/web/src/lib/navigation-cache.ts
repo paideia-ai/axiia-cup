@@ -69,6 +69,8 @@ export function invalidateNavigation(path: string) {
       : ['agent', 'inventory', 'catalog', 'standings']
     : /^\/(matches|challenges|rewards)/.test(path)
     ? ['matches', 'match', 'inventory', 'catalog', 'standings', 'tournaments']
+    : path.startsWith('/achievements')
+    ? ['achievements', 'notifications']
     : path.startsWith('/notifications')
     ? ['notifications']
     : path.startsWith('/admin')

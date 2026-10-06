@@ -659,6 +659,47 @@ export interface BellEventDTO {
   unreadCount: number
 }
 
+// Locked achievements deliberately contain no catalog metadata or artwork.
+export type AchievementTier = 'gold' | 'silver' | 'bronze'
+
+export interface LockedAchievementDTO {
+  id: string
+  tier: AchievementTier
+  unlocked: false
+}
+
+export interface EarnedAchievementDTO {
+  id: string
+  tier: AchievementTier
+  unlocked: true
+  title: string
+  flavor: string
+  description: string
+  iconURL: string
+  unlockedAt: number
+  matchID: number | null
+}
+
+export type AchievementDTO = LockedAchievementDTO | EarnedAchievementDTO
+
+export interface AchievementsResponse {
+  achievements: AchievementDTO[]
+  eventCursor: number
+}
+
+export interface AchievementEventDTO {
+  id: number
+  achievement: EarnedAchievementDTO
+  notificationID: number | null
+  occurredAt: number
+  source: 'live' | 'backfill'
+}
+
+export interface AchievementEventsResponse {
+  events: AchievementEventDTO[]
+  cursor: number
+}
+
 // ── AdminDTOs ───────────────────────────────────────────────────────────────
 
 export interface CreateRegistrationCodeRequest {

@@ -7,7 +7,12 @@ import {
   resetNavigationCache,
   setNavigationIdentity,
 } from './navigation-cache'
-import { catalogQuery, inventoryQuery } from './navigation-queries'
+import {
+  achievementsQuery,
+  catalogQuery,
+  inventoryQuery,
+  notificationsQuery,
+} from './navigation-queries'
 import { finishedMatch } from '../testing/v34-fixtures'
 
 function deferred<T>() {
@@ -128,6 +133,40 @@ describe('navigation data lifetime', () => {
       scenarios: ['new'],
     })
     expect(fetch).toHaveBeenCalledTimes(3)
+  })
+
+  it('refreshes achievement and notification views without reusing an obsolete notification read', async () => {
+    const old = deferred<Response>()
+    const fetch = vi.fn().mockImplementationOnce(() => old.promise)
+      .mockImplementation(() =>
+        Promise.resolve(Response.json({
+          notifications: [{ id: 2, kind: 'achievement_unlocked', read: false }],
+          unreadCount: 1,
+        }))
+      )
+    vi.stubGlobal('fetch', fetch)
+    navigationCache.setQueryData(achievementsQuery('reader').queryKey, {
+      achievements: [],
+      eventCursor: 0,
+    })
+    const first = navigationCache.fetchQuery(notificationsQuery()).catch(() =>
+      null
+    )
+    invalidateNavigation('/achievements')
+    expect(
+      navigationCache.getQueryState(achievementsQuery('reader').queryKey)
+        ?.isInvalidated,
+    ).toBe(true)
+    await navigationCache.fetchQuery(notificationsQuery())
+    old.resolve(Response.json({ notifications: [], unreadCount: 0 }))
+    await first
+    expect(navigationCache.getQueryData(notificationsQuery().queryKey)).toEqual(
+      {
+        notifications: [{ id: 2, kind: 'achievement_unlocked', read: false }],
+        unreadCount: 1,
+      },
+    )
+    expect(fetch).toHaveBeenCalledTimes(2)
   })
 
   it('refreshes after an SSE completion without joining an obsolete read', async () => {

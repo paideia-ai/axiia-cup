@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>成就提示 · 视觉与音效方案 — Axiia Cup</title>
+    <style>
+    :root {
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui,
+        sans-serif;
+      color: #e8e8e8;
+      background: #0c0c0c;
+      font-synthesis: none;
+      --accent: #e04a2f;
+      --copper: #c8a079;
+      --muted: #aaa39b;
+      --line: #30302e;
+      --stage: #111111;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+    }
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+    button,
+    select {
+      color: inherit;
+    }
+    button,
+    a,
+    select,
+    input {
+      -webkit-tap-highlight-color: transparent;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:disabled {
+      cursor: default;
+      opacity: .45;
+    }
+    button,
+    a,
+    select,
+    input {
+      outline-offset: 5px;
+    }
+    :focus-visible {
+      outline: 2px solid #f9bc8a;
+    }
+    a {
+      color: inherit;
+    }
+    button {
+      border: 0;
+    }
+    .shell {
+      max-width: 1280px;
+      padding: 0 36px;
+      margin: 0 auto;
+    }
+    .masthead {
+      border-bottom: 1px solid #282724;
+    }
+    .masthead-inner {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .wordmark {
+      font-size: 15px;
+      font-weight: 750;
+      letter-spacing: .2em;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .mark {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--accent);
+      transform: rotate(45deg);
+      position: relative;
+    }
+    .mark::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      background: var(--accent);
+    }
+    .edition {
+      font-size: 11px;
+      letter-spacing: .16em;
+      color: #99918a;
+    }
+    .intro {
+      padding: 53px 0 33px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 32px;
+    }
+    .eyebrow {
+      color: var(--copper);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .18em;
+      margin: 0 0 15px;
+    }
+    h1 {
+      font-size: clamp(29px, 3.2vw, 42px);
+      line-height: 1.25;
+      letter-spacing: -.04em;
+      font-weight: 550;
+      margin: 0;
+    }
+    .intro-copy {
+      margin: 17px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.9;
+      max-width: 630px;
+    }
+    .intro-count {
+      font-size: 64px;
+      line-height: 1;
+      letter-spacing: -.08em;
+      color: #594839;
+      font-weight: 300;
+      white-space: nowrap;
+    }
+    .intro-count span {
+      color: #a79a8b;
+      font-size: 11px;
+      letter-spacing: .12em;
+      margin-left: 12px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px 26px;
+      padding: 19px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .sample-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .control-label {
+      font-size: 12px;
+      color: #c0b7af;
+      white-space: nowrap;
+    }
+    select {
+      background: #1d1c1a;
+      border: 1px solid #45403b;
+      border-radius: 6px;
+      padding: 9px 30px 9px 12px;
+      font-size: 12px;
+      max-width: 100%;
+    }
+    .motion-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #b2aba5;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .motion-control input {
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+    }
+    .selection-status {
+      margin: 0 0 0 auto;
+      font-size: 12px;
+      color: var(--copper);
+    }
+    .guide {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 20px 0 24px;
+      color: #a59d95;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .guide p {
+      margin: 0;
+    }
+    .guide button {
+      background: none;
+      padding: 0;
+      color: #c2a286;
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      white-space: nowrap;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 26px;
+      padding-bottom: 45px;
+    }
+    .option {
+      border: 1px solid #34312d;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #161514;
+      transition: border-color 180ms, box-shadow 180ms;
+    }
+    .option.is-selected {
+      border-color: #c59a72;
+      box-shadow: 0 0 0 1px #c59a723d;
+    }
+    .option-heading {
+      padding: 22px 24px 19px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .option-number {
+      width: 31px;
+      color: #b99573;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      font-weight: 400;
+    }
+    .option h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 550;
+      letter-spacing: .035em;
+    }
+    .option-subtitle {
+      margin: 5px 0 0;
+      color: #aaa097;
+      font-size: 11px;
+      letter-spacing: .045em;
+    }
+    .stage {
+      min-height: 256px;
+      padding: 30px 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      isolation: isolate;
+      background: radial-gradient(ellipse at 50% 65%, #25201a55, transparent 72%),
+        var(--stage);
+      border-top: 1px solid #262522;
+      border-bottom: 1px solid #262522;
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 17px;
+      border: 1px solid #ffffff06;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .stage::after {
+      content: "";
+      position: absolute;
+      width: 50%;
+      height: 1px;
+      left: 25%;
+      bottom: 28px;
+      background: linear-gradient(90deg, transparent, #8f6a4340, transparent);
+      z-index: -1;
+    }
+    .option:nth-child(2) .stage {
+      background: radial-gradient(ellipse at 20% 40%, #463a2536, transparent 65%),
+        #11100f;
+    }
+    .option:nth-child(6) .stage {
+      background: radial-gradient(ellipse at 75% 25%, #9f56324a, transparent 62%),
+        radial-gradient(ellipse at 20% 80%, #34505740, transparent 65%), #141414;
+    }
+    .option:nth-child(9) .stage {
+      background: linear-gradient(120deg, #181713, #0d0d0d);
+    }
+    .option-description {
+      margin: 0;
+      padding: 18px 24px 0;
+      font-size: 12px;
+      line-height: 1.85;
+      color: #b4aaa0;
+      min-height: 63px;
+    }
+    .option-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      padding: 16px 24px 22px;
+    }
+    .play-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #2a211c;
+      border: 1px solid #775039;
+      color: #efceb1;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 12px;
+      transition: background 160ms;
+    }
+    .play-button:hover {
+      background: #3c2c21;
+    }
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 6px solid currentColor;
+    }
+    .pick-button {
+      padding: 9px 0 9px 12px;
+      color: #bcb2a8;
+      font-size: 12px;
+      background: none;
+      white-space: nowrap;
+    }
+    .pick-button:hover,
+    .pick-button[aria-pressed="true"] {
+      color: #ffd5af;
+    }
+    .selection-note {
+      padding: 23px 0 45px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      font-size: 12px;
+      color: #a49b92;
+      line-height: 1.8;
+    }
+    .selection-note p {
+      margin: 0;
+    }
+    .selection-note strong {
+      font-weight: 500;
+      color: #d9b18d;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .sound-section {
+      margin: 28px 0 32px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #141311;
+      scroll-margin-top: 20px;
+    }
+    .sound-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px 24px;
+      flex-wrap: wrap;
+    }
+    .sound-heading h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 550;
+      letter-spacing: -.02em;
+    }
+    .sound-selection {
+      margin: 0;
+      color: var(--copper);
+      font-size: 12px;
+    }
+    .sound-intro,
+    .pairing-hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 12px 0 0;
+    }
+    .sound-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin: 18px 0;
+    }
+    .volume-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #c0b7af;
+    }
+    .volume-control input {
+      width: 120px;
+      accent-color: var(--copper);
+    }
+    .volume-control output {
+      min-width: 3em;
+      font-variant-numeric: tabular-nums;
+    }
+    .sound-stop,
+    .sound-retry,
+    .sound-pair {
+      color: #d4c7b8;
+      background: #24211e;
+      border: 1px solid #494139;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+    .sound-status {
+      color: #b8ada3;
+      font-size: 12px;
+      margin: 0;
+    }
+    .sound-error {
+      color: #ffc3ac;
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 12px 0;
+    }
+    .sound-grid {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .sound-card {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid #322d28;
+      border-radius: 8px;
+      background: #191714;
+    }
+    .sound-card.is-selected {
+      border-color: #c59a72;
+    }
+    .sound-card.is-playing {
+      background: #272018;
+    }
+    .sound-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .sound-number {
+      color: #c29a76;
+      font: 12px ui-monospace, monospace;
+    }
+    .sound-title h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 550;
+    }
+    .sound-character {
+      margin-left: auto;
+      color: #b2a397;
+      font-size: 11px;
+      text-align: right;
+    }
+    .sound-description {
+      margin: 9px 0 12px;
+      color: #b5aaa0;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    .sound-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .sound-actions .pick-button {
+      margin-left: auto;
+    }
+    .pairing-hint {
+      color: #c6ad94;
+    }
+    @media (max-width: 700px) {
+      .sound-section {
+        padding: 18px 14px;
+      }
+      .sound-grid {
+        grid-template-columns: 1fr;
+      }
+      .sound-status {
+        flex-basis: 100%;
+      }
+    }
+
+    /* Every toast uses the same unaltered artwork and approved copy. */
+    .toast {
+      width: min(360px, 100%);
+      flex: 0 1 auto;
+      position: relative;
+      color: #f0e9df;
+      filter: drop-shadow(0 12px 20px #0005);
+    }
+    .toast-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 17px;
+      color: inherit;
+      text-decoration: none;
+      min-width: 0;
+      outline-offset: 4px;
+    }
+    .toast-art {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      width: 76px;
+      height: 76px;
+    }
+    .toast-art img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .toast-copy {
+      min-width: 0;
+    }
+    .toast-title {
+      display: block;
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 600;
+      letter-spacing: .015em;
+      overflow-wrap: anywhere;
+    }
+    .toast-flavor {
+      display: block;
+      margin: 7px 0 0;
+      color: #c7bdb0;
+      font-size: 12px;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+    .toast-close {
+      position: absolute;
+      z-index: 3;
+      right: 5px;
+      top: 5px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      background: #0c0c0c55;
+      color: #d4c7b8;
+      border-radius: 50%;
+      padding: 0;
+    }
+    .toast-close:hover {
+      color: #fff;
+      background: #29241fcc;
+    }
+    .toast-close svg {
+      width: 13px;
+      height: 13px;
+    }
+    .live-region {
+      position: fixed;
+      z-index: 100;
+      right: max(24px, env(safe-area-inset-right));
+      bottom: max(24px, env(safe-area-inset-bottom));
+      width: min(430px, calc(100vw - 48px));
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      pointer-events: none;
+    }
+    .live-region .toast {
+      pointer-events: auto;
+      filter: drop-shadow(0 18px 34px #000b);
+    }
+    .live-region .toast-copy {
+      padding-right: 12px;
+    }
+    .toast.is-leaving {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 180ms, transform 180ms;
+    }
+
+    /* 01 · A thin copper perimeter and a contained image tile. */
+    .s01 .toast-link {
+      padding: 15px 22px 15px 15px;
+      border: 1px solid #866446;
+      border-left: 3px solid #d79961;
+      border-radius: 8px;
+      background: linear-gradient(115deg, #24211c, #181716 75%);
+    }
+    .s01 .toast-art {
+      width: 73px;
+      height: 73px;
+      border: 1px solid #61503c;
+      padding: 3px;
+      background: #0c0b09;
+      border-radius: 5px;
+    }
+    .s01 .toast-link::after {
+      content: "";
+      position: absolute;
+      height: 1px;
+      top: -1px;
+      left: 22%;
+      right: 22%;
+      background: linear-gradient(90deg, transparent, #f3c087, transparent);
+    }
+    .s01.is-live {
+      animation: glide-in 480ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    /* 02 · Full-height artwork gets an entire square of its own. */
+    .s02 {
+      width: min(375px, 100%);
+    }
+    .s02 .toast-link {
+      gap: 0;
+      background: #211d18;
+      border: 1px solid #594b3b;
+      border-radius: 3px;
+      overflow: hidden;
+      min-height: 124px;
+    }
+    .s02 .toast-art {
+      width: 124px;
+      height: 124px;
+      align-self: center;
+      background: #090907;
+    }
+    .s02 .toast-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      box-shadow: inset -1px 0 #b7915766;
+      pointer-events: none;
+    }
+    .s02 .toast-copy {
+      padding: 20px 20px 20px 19px;
+    }
+    .s02 .toast-title {
+      font-size: 17px;
+    }
+    .s02 .toast-flavor {
+      color: #ceb899;
+    }
+    .s02.is-live {
+      animation: cover-in 520ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    /* 03 · Engraved metal, reversed composition, inset frame. */
+    .s03 {
+      width: min(362px, 100%);
+      padding: 6px;
+      background: linear-gradient(135deg, #b58f63, #58412e 32%, #8e6d47 68%,
+        #c8a476);
+      border: 1px solid #c0a47a;
+      border-radius: 3px;
+    }
+    .s03 .toast-link {
+      flex-direction: row-reverse;
+      gap: 16px;
+      padding: 16px 15px 16px 20px;
+      border: 1px solid #493826;
+      background: linear-gradient(135deg, #30281f, #201d18);
+      box-shadow: inset 0 0 0 1px #c49b6c25, inset 0 2px 8px #0008;
+    }
+    .s03 .toast-copy {
+      flex: 1;
+    }
+    .s03 .toast-title {
+      color: #f1d8b3;
+      font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+      font-size: 18px;
+      letter-spacing: .08em;
+      text-shadow: 0 1px #000;
+    }
+    .s03 .toast-art {
+      width: 67px;
+      height: 67px;
+      border: 1px solid #ae8b59;
+      padding: 3px;
+      box-shadow: 0 0 0 3px #17140e, 0 0 0 4px #706044;
+    }
+    .s03 .toast-flavor {
+      color: #c9b495;
+    }
+    .s03 .toast-close {
+      right: 7px;
+      top: 7px;
+    }
+    .s03.is-live {
+      animation: plaque-in 560ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    /* 04 · The artwork lifts out from the left edge of a low slab. */
+    .s04 {
+      width: min(350px, calc(100% - 26px));
+      margin-left: 26px;
+    }
+    .s04 .toast-link {
+      min-height: 101px;
+      padding: 19px 23px 19px 84px;
+      border: 1px solid #776049;
+      border-radius: 11px;
+      background: linear-gradient(110deg, #2d241b, #191817 82%);
+      box-shadow: inset 0 1px #e4b07725;
+    }
+    .s04 .toast-art {
+      position: absolute;
+      left: -27px;
+      top: 50%;
+      margin-top: -49px;
+      width: 98px;
+      height: 98px;
+      padding: 5px;
+      background: #17130e;
+      border: 1px solid #cba26a;
+      border-radius: 9px;
+      transform: rotate(-5deg);
+      box-shadow: 4px 8px 16px #0008, inset 0 0 0 2px #665238;
+    }
+    .s04 .toast-art img {
+      transform: rotate(5deg);
+      width: 83px;
+      height: 83px;
+    }
+    .s04 .toast-title {
+      font-size: 17px;
+    }
+    .s04.is-live {
+      animation: glide-in 460ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .s04.is-live .toast-art {
+      animation: badge-in 700ms cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    /* 05 · A cut-corner ticket with a perforated image stub. */
+    .s05 {
+      width: min(370px, 100%);
+      background: #967346;
+      padding: 1px;
+      clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% -
+        10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+    }
+    .s05 .toast-link {
+      background: #24211b;
+      gap: 0;
+      min-height: 111px;
+      clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% -
+        10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+    }
+    .s05 .toast-art {
+      width: 100px;
+      height: 100px;
+      padding: 12px;
+      margin: 5px 0;
+      border-right: 1px dashed #ad8a597d;
+    }
+    .s05 .toast-copy {
+      padding: 19px 24px 19px 20px;
+    }
+    .s05 .toast-title {
+      font-size: 16px;
+      letter-spacing: .055em;
+    }
+    .s05 .toast-flavor {
+      color: #c8bfae;
+    }
+    .s05:focus-within {
+      background: #f9bc8a;
+    }
+    .s05 .toast-link:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 3px #f9bc8a;
+    }
+    .s05.is-live {
+      animation: ticket-in 450ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    /* 06 · Warm translucent glass with an illuminated image well. */
+    .s06 .toast-link {
+      padding: 18px 24px 18px 18px;
+      border: 1px solid #e5c9a744;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #77716a33, #322a2555);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      box-shadow: inset 0 1px #ffffff14, 0 0 35px #c3955a0c;
+    }
+    .s06 .toast-art {
+      width: 78px;
+      height: 78px;
+      background: #c8a06d15;
+      padding: 6px;
+      border-radius: 15px;
+      border: 1px solid #dfbd9340;
+      box-shadow: 0 0 25px #b9854426;
+    }
+    .s06 .toast-title {
+      font-weight: 500;
+      letter-spacing: .04em;
+    }
+    .s06 .toast-flavor {
+      color: #d2c8be;
+    }
+    .s06.is-live {
+      animation: glass-in 700ms ease-out both;
+    }
+
+    /* 07 · A narrow bookmark extends below a paper-like slip. */
+    .s07 .toast-link {
+      min-height: 111px;
+      padding: 22px 24px 22px 111px;
+      background: #25221e;
+      border-top: 2px solid #b5936c;
+      border-bottom: 1px solid #5b4c3c;
+      border-radius: 1px;
+      box-shadow: 0 4px #191715, 0 5px #675440;
+    }
+    .s07 .toast-art {
+      position: absolute;
+      left: 18px;
+      top: -9px;
+      width: 76px;
+      height: 111px;
+      padding: 7px 5px 29px;
+      background: linear-gradient(#a88053, #5d442c);
+      border-top: 1px solid #dab481;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
+    }
+    .s07 .toast-art img {
+      width: 66px;
+      height: 66px;
+      align-self: flex-start;
+    }
+    .s07 .toast-title {
+      font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+      font-weight: 500;
+      font-size: 18px;
+      letter-spacing: .08em;
+    }
+    .s07 .toast-flavor {
+      color: #c9bbab;
+    }
+    .s07.is-live {
+      animation: bookmark-in 580ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    /* 08 · Two contrasting horizontal registers separate title and line. */
+    .s08 {
+      width: min(372px, 100%);
+    }
+    .s08 .toast-link {
+      display: grid;
+      grid-template-columns: 1fr 82px;
+      gap: 0 20px;
+      padding: 16px 19px 0;
+      background: #1b1a18;
+      border: 1px solid #67543f;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .s08 .toast-art {
+      grid-column: 2;
+      grid-row: 1;
+      width: 72px;
+      height: 72px;
+      margin-bottom: 15px;
+      border: 1px solid #594935;
+      padding: 3px;
+      justify-self: end;
+    }
+    .s08 .toast-copy {
+      display: contents;
+    }
+    .s08 .toast-title {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 18px;
+      padding: 3px 0 18px 2px;
+    }
+    .s08 .toast-flavor {
+      grid-column: 1 / -1;
+      margin: 0 -19px;
+      padding: 11px 21px 12px;
+      border-top: 1px solid #776047;
+      background: linear-gradient(100deg, #493627, #34291f);
+      color: #e8c9a7;
+      font-size: 12px;
+    }
+    .s08 .toast-link.has-no-flavor {
+      padding-bottom: 0;
+    }
+    .s08.is-live {
+      animation: double-in 520ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .s08.is-live .toast-flavor {
+      animation: band-in 640ms ease-out both;
+    }
+
+    /* 09 · A compact pill; the whole square illustration remains visible. */
+    .s09 {
+      width: min(344px, 100%);
+    }
+    .s09 .toast-link {
+      gap: 12px;
+      padding: 10px 27px 10px 10px;
+      border-radius: 50px;
+      border: 1px solid #786043;
+      background: #23211e;
+      box-shadow: inset 0 1px #cba3761c;
+      min-height: 79px;
+    }
+    .s09 .toast-art {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: #100f0c;
+      border: 1px solid #655135;
+      padding: 8px;
+    }
+    .s09 .toast-title {
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 550;
+    }
+    .s09 .toast-flavor {
+      font-size: 11px;
+      line-height: 1.6;
+      margin-top: 4px;
+      color: #c1b7a8;
+    }
+    .s09 .toast-close {
+      top: -6px;
+      right: 1px;
+      background: #302a22;
+      border: 1px solid #816441;
+      width: 24px;
+      height: 24px;
+    }
+    .s09.is-live {
+      animation: capsule-in 530ms cubic-bezier(.18, .85, .25, 1.1) both;
+    }
+
+    /* 10 · An upright frame for the most ceremonial interpretation. */
+    .s10 {
+      width: min(260px, 100%);
+      padding: 7px;
+      background: #352d23;
+      border: 1px solid #b58c5d;
+      box-shadow: inset 0 0 0 3px #17140f, inset 0 0 0 4px #65513a;
+      border-radius: 2px;
+    }
+    .s10 .toast-link {
+      flex-direction: column;
+      gap: 10px;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 15%, #3c302050, transparent 65%),
+        #141310;
+      padding: 15px 18px 18px;
+      border: 1px solid #796344;
+    }
+    .s10 .toast-art {
+      width: 109px;
+      height: 109px;
+    }
+    .s10 .toast-copy {
+      width: 100%;
+      padding-top: 10px;
+      border-top: 1px solid #79603c88;
+    }
+    .s10 .toast-title {
+      font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+      font-size: 18px;
+      letter-spacing: .07em;
+      font-weight: 500;
+    }
+    .s10 .toast-flavor {
+      font-size: 11px;
+      color: #cbb89b;
+      margin-top: 5px;
+    }
+    .s10 .toast-close {
+      right: 9px;
+      top: 9px;
+    }
+    .live-region .s10 .toast-copy {
+      padding-right: 0;
+    }
+    .s10.is-live {
+      animation: frame-in 750ms cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .option:nth-child(10) .stage {
+      padding-top: 23px;
+      padding-bottom: 23px;
+    }
+
+    @keyframes glide-in {
+      from {
+        opacity: 0;
+        transform: translateX(28px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    @keyframes cover-in {
+      from {
+        opacity: 0;
+        transform: translateX(35px);
+        clip-path: inset(0 0 0 30%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+        clip-path: inset(0);
+      }
+    }
+    @keyframes plaque-in {
+      from {
+        opacity: 0;
+        transform: translateY(15px) scale(.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes badge-in {
+      0% {
+        transform: translateY(10px) rotate(-15deg) scale(.85);
+      }
+      65% {
+        transform: translateY(-2px) rotate(-3deg) scale(1.02);
+      }
+      100% {
+        transform: translateY(0) rotate(-5deg) scale(1);
+      }
+    }
+    @keyframes ticket-in {
+      from {
+        opacity: 0;
+        transform: translateX(23px) rotate(1.5deg);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) rotate(0);
+      }
+    }
+    @keyframes glass-in {
+      from {
+        opacity: 0;
+        transform: translateY(9px);
+        filter: drop-shadow(0 0 18px #c7975133);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes bookmark-in {
+      from {
+        opacity: 0;
+        transform: translateY(-15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes double-in {
+      from {
+        opacity: 0;
+        transform: translateY(22px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes band-in {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes capsule-in {
+      from {
+        opacity: 0;
+        transform: translateX(20px) scale(.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+    @keyframes frame-in {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .reduce-motion *,
+    .reduce-motion *::before,
+    .reduce-motion *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+    @media (max-width: 1000px) {
+      .shell {
+        padding: 0 24px;
+      }
+      .gallery {
+        gap: 20px;
+      }
+      .stage {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+      .s02 .toast-art {
+        width: 103px;
+        height: 103px;
+      }
+      .s02 .toast-copy {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      .s02 .toast-title {
+        font-size: 16px;
+      }
+      .s03 .toast-link {
+        padding-left: 15px;
+        gap: 12px;
+      }
+      .s03 .toast-art {
+        width: 59px;
+        height: 59px;
+      }
+      .s05 .toast-art {
+        width: 86px;
+        height: 86px;
+        padding: 9px;
+      }
+      .s05 .toast-copy {
+        padding-left: 15px;
+        padding-right: 18px;
+      }
+      .selection-status {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+    @media (max-width: 800px) {
+      .gallery {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .intro {
+        padding-top: 36px;
+      }
+      .intro-count {
+        display: none;
+      }
+      .stage {
+        padding-left: 30px;
+        padding-right: 30px;
+        min-height: 250px;
+      }
+      .s02 .toast-art {
+        width: 124px;
+        height: 124px;
+      }
+      .s03 .toast-art {
+        width: 67px;
+        height: 67px;
+      }
+      .s05 .toast-art {
+        width: 100px;
+        height: 100px;
+      }
+      .selection-status {
+        width: auto;
+        margin-left: auto;
+      }
+      .selection-note {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+    @media (max-width: 480px) {
+      .shell {
+        padding: 0 16px;
+      }
+      .masthead-inner {
+        height: 65px;
+      }
+      .wordmark {
+        font-size: 12px;
+        letter-spacing: .16em;
+      }
+      .edition {
+        font-size: 9px;
+        letter-spacing: .1em;
+      }
+      .intro {
+        padding: 32px 0 27px;
+      }
+      h1 {
+        font-size: 28px;
+      }
+      .intro-copy {
+        font-size: 12px;
+      }
+      .toolbar {
+        align-items: flex-start;
+        gap: 15px;
+      }
+      .sample-control {
+        width: 100%;
+      }
+      select {
+        min-width: 0;
+        flex: 1;
+        width: 100%;
+      }
+      .selection-status {
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .guide {
+        font-size: 11px;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .option-heading {
+        padding: 19px 18px 17px;
+      }
+      .option-description {
+        padding: 16px 18px 0;
+      }
+      .option-actions {
+        padding: 14px 18px 19px;
+        gap: 8px;
+      }
+      .stage {
+        padding: 26px 15px;
+        min-height: 246px;
+      }
+      .toast-link {
+        gap: 12px;
+      }
+      .toast-title {
+        font-size: 15px;
+      }
+      .toast-flavor {
+        font-size: 11px;
+      }
+      .s01 .toast-link {
+        padding: 12px 15px 12px 12px;
+      }
+      .s01 .toast-art {
+        width: 64px;
+        height: 64px;
+      }
+      .s02 .toast-art {
+        width: 99px;
+        height: 99px;
+      }
+      .s02 .toast-copy {
+        padding: 17px 15px;
+      }
+      .s02 .toast-title {
+        font-size: 16px;
+      }
+      .s03 .toast-link {
+        padding: 16px 12px;
+        gap: 12px;
+      }
+      .s03 .toast-art {
+        width: 58px;
+        height: 58px;
+      }
+      .s03 .toast-title {
+        font-size: 16px;
+      }
+      .s04 .toast-link {
+        padding: 18px 15px 18px 65px;
+      }
+      .s04 .toast-art {
+        width: 82px;
+        height: 82px;
+        margin-top: -41px;
+      }
+      .s04 .toast-art img {
+        width: 68px;
+        height: 68px;
+      }
+      .s04 .toast-title {
+        font-size: 15px;
+      }
+      .s05 .toast-art {
+        width: 84px;
+        height: 84px;
+        padding: 10px;
+      }
+      .s05 .toast-copy {
+        padding: 18px 15px;
+      }
+      .s06 .toast-link {
+        padding: 15px;
+        gap: 12px;
+      }
+      .s06 .toast-art {
+        width: 68px;
+        height: 68px;
+      }
+      .s07 .toast-link {
+        padding: 20px 17px 20px 98px;
+      }
+      .s07 .toast-art {
+        left: 13px;
+        width: 71px;
+      }
+      .s07 .toast-art img {
+        width: 61px;
+        height: 61px;
+      }
+      .s07 .toast-title {
+        font-size: 16px;
+      }
+      .s08 .toast-link {
+        grid-template-columns: 1fr 70px;
+        gap: 0 14px;
+      }
+      .s08 .toast-art {
+        width: 65px;
+        height: 65px;
+      }
+      .s08 .toast-title {
+        font-size: 16px;
+      }
+      .s09 .toast-link {
+        padding-right: 20px;
+      }
+      .s09 .toast-title {
+        font-size: 13px;
+      }
+      .s09 .toast-art {
+        width: 52px;
+        height: 52px;
+        padding: 7px;
+      }
+      .live-region {
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(16px, env(safe-area-inset-bottom));
+        width: calc(100vw - 32px);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="shell masthead-inner">
+        <div
+          class="wordmark"><span class="mark" aria-hidden="true"></span>AXIIA CUP</div>
+        <span class="edition">ACHIEVEMENT / DESIGN STUDY</span>
+      </div>
+    </header>
+    <main class="shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">成就提示 · 视觉与音效</p>
+          <h1 id="page-title">值得被记住的一刻。</h1>
+          <p
+            class="intro-copy">十款视觉，十一种声音，自由搭配这一刻。<br />让这份小小的肯定，有恰到好处的分量。</p>
+          <p
+            class="intro-copy">已采用 02「全幅封面」与 11「原版三音」。<a href="/_preview/achievement-toast/">查看正式弹窗效果 →</a></p>
+        </div>
+        <div class="intro-count" aria-hidden="true">10<span>VISUALS</span></div>
+      </section>
+      <section class="toolbar" aria-label="预览设置">
+        <div class="sample-control">
+          <label class="control-label" for="sample">切换成就</label>
+          <select id="sample">
+            <option value="philosopher">大哲学家 · 主样例</option>
+            <option value="first-word">初试锋芒 · 短文案</option>
+            <option value="first-bounty">凭本事领的 · 赏金</option>
+            <option value="four-endings">戏里戏外 · 长文案</option>
+            <option value="devils-advocate">我也可以反过来说 · 长标题</option>
+            <option value="hundred-losses">百折，尚未不挠 · 无趣味文案</option>
+          </select>
+        </div>
+        <label
+          class="motion-control"><input id="reduce-motion" type="checkbox" />减少动效</label>
+        <p class="selection-status" id="selection-status"
+          role="status">尚未选择方案</p>
+      </section>
+      <section class="sound-section" id="sounds"
+        aria-labelledby="sound-heading">
+        <div class="sound-heading">
+          <h2 id="sound-heading">十一种声音，试听这一刻。</h2>
+          <p class="sound-selection" id="sound-selection"
+            role="status">尚未选择音效</p>
+        </div>
+        <p
+          class="sound-intro">「试听」只播放声音；「搭配提示」让声音与右下角提示一起出现。11 号「原版三音」保留最初预览的声音。音效与视觉分别选择，偏好仅标记在本页，请在聊天里告诉我两个编号。</p>
+        <p class="pairing-hint"
+          id="pairing-hint">尚未选择视觉，搭配试播将使用 01 · 铜边信笺。下方视觉方案的单独试播保持静音。</p>
+        <div class="sound-controls">
+          <label class="volume-control" for="sound-volume">试听音量
+            <input id="sound-volume" type="range" min="0" max="100" step="1" value="50" />
+            <output id="sound-volume-value" for="sound-volume">50%</output>
+          </label>
+          <button class="sound-stop" id="sound-stop" type="button"
+            disabled>停止声音</button>
+          <p class="sound-status" id="sound-status" role="status"
+            aria-live="polite">正在加载音效…</p>
+          <button class="sound-retry" id="sound-retry" type="button"
+            hidden>重新加载</button>
+        </div>
+        <p class="sound-error" id="sound-error" role="alert" hidden></p>
+        <ul class="sound-grid" id="sound-grid" aria-label="十一种成就音效"></ul>
+      </section>
+      <div class="guide">
+        <p>点击「试播」查看真实位置；约 7 秒收起，悬停或键盘聚焦时暂停。点击提示可在新标签页打开成就中心。</p>
+        <button type="button" id="dismiss-current"
+          disabled>关闭当前试播</button>
+      </div>
+      <section class="gallery" id="gallery"
+        aria-label="十种成就提示设计"></section>
+      <footer class="selection-note">
+        <p>偏好仅标记在本页，不会自动发送。<strong>选好后，请在聊天里回复视觉与音效编号。</strong></p>
+        <p>所有方案均使用现有成就原图，保留完整画面。</p>
+      </footer>
+    </main>
+    <div class="live-region" id="live-region" aria-label="成就提示试播"></div>
+    <div id="announcer" class="sr-only" role="status" aria-live="polite"
+      aria-atomic="true"></div>
+    <noscript><p class="shell">请启用 JavaScript，以查看十款方案并试听成就音效。</p></noscript>
+    <script>
+    const samples = {
+      philosopher: {
+        id: 'philosopher',
+        title: '大哲学家',
+        flavor: '还有下一题吗？',
+      },
+      'first-word': {
+        id: 'first-word',
+        title: '初试锋芒',
+        flavor: '有人听进去了。',
+      },
+      'first-bounty': {
+        id: 'first-bounty',
+        title: '凭本事领的',
+        flavor: '把胜利带回家。',
+      },
+      'four-endings': {
+        id: 'four-endings',
+        title: '戏里戏外',
+        flavor: '同一句愿意，可以有四种故事。',
+      },
+      'devils-advocate': {
+        id: 'devils-advocate',
+        title: '我也可以反过来说',
+        flavor: '反方，请开始你的表演。',
+      },
+      'hundred-losses': {
+        id: 'hundred-losses',
+        title: '百折，尚未不挠',
+        flavor: '',
+      },
+    }
+    const options = [
+      {
+        id: '01',
+        name: '铜边信笺',
+        subtitle: '细铜边 · 标准横向',
+        description:
+          '图片与文字各有余地，薄铜边轻轻收住画面。最接近日常产品的一款，克制，也有质感。',
+      },
+      {
+        id: '02',
+        name: '全幅封面',
+        subtitle: '大画幅 · 左图右文',
+        description:
+          '将整幅成就画放到第一眼的位置。方形原图像一册小书的封面，适合想让画作更醒目的方向。',
+      },
+      {
+        id: '03',
+        name: '收藏铭牌',
+        subtitle: '金属嵌框 · 右侧印记',
+        description:
+          '文字在左、原图在右，双层金属框像一块刻好的铭牌。分量稍重，收藏感更鲜明。',
+      },
+      {
+        id: '04',
+        name: '浮出徽章',
+        subtitle: '图像越界 · 轻盈层次',
+        description:
+          '原图从卡片边缘微微浮出，带一点到手的惊喜。主体仍然简洁，适合让成就更有性格。',
+      },
+      {
+        id: '05',
+        name: '旅程票券',
+        subtitle: '切角轮廓 · 撕线分栏',
+        description:
+          '切角与虚线把小图变成一张旅程凭证。轮廓明确，和常见系统通知拉开视觉距离。',
+      },
+      {
+        id: '06',
+        name: '柔光玻璃',
+        subtitle: '半透明层 · 温暖微光',
+        description:
+          '磨砂底托住文字，画作周围留一圈柔光。背景会轻轻透进来，整体最轻，也更现代。',
+      },
+      {
+        id: '07',
+        name: '故事书签',
+        subtitle: '垂落书签 · 细衬线字',
+        description:
+          '画作悬在一枚垂落的书签上，像替这一页做个记号。更呼应辩论、故事与判词的气质。',
+      },
+      {
+        id: '08',
+        name: '双层回响',
+        subtitle: '上下分层 · 文案落款',
+        description:
+          '上层是标题与原图，下层单独留给那句话。阅读顺序明确，长文案也能自然展开。',
+      },
+      {
+        id: '09',
+        name: '口袋胶囊',
+        subtitle: '紧凑长条 · 最少占位',
+        description:
+          '把完整原图收进一枚小圆座，再接上两行文字。存在感适中，适合不打断正在进行的对局。',
+      },
+      {
+        id: '10',
+        name: '典藏画框',
+        subtitle: '竖向居中 · 庄重呈现',
+        description:
+          '让原图成为一幅真正的小画，标题与那句话在下方落定。仪式感最强，也占用更多垂直空间。',
+      },
+    ]
+    const gallery = document.querySelector('#gallery')
+    const sampleSelect = document.querySelector('#sample')
+    const liveRegion = document.querySelector('#live-region')
+    const selectionStatus = document.querySelector('#selection-status')
+    const announcer = document.querySelector('#announcer')
+    const dismissCurrent = document.querySelector('#dismiss-current')
+    const reducedMotion = document.querySelector('#reduce-motion')
+    const systemMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let selectedOption = null
+    let live = null
+    let serial = 0
+
+    const soundGrid = document.querySelector('#sound-grid')
+    const soundSelection = document.querySelector('#sound-selection')
+    const soundStatus = document.querySelector('#sound-status')
+    const soundError = document.querySelector('#sound-error')
+    const soundStop = document.querySelector('#sound-stop')
+    const soundRetry = document.querySelector('#sound-retry')
+    const soundVolume = document.querySelector('#sound-volume')
+    const soundVolumeValue = document.querySelector('#sound-volume-value')
+    const pairingHint = document.querySelector('#pairing-hint')
+    let soundOptions = []
+    let selectedSound = null
+    let activeAudio = null
+    let audioGeneration = 0
+
+    function stopAudio(message = '试听已停止。') {
+      audioGeneration++
+      const previous = activeAudio
+      activeAudio = null
+      if (previous) {
+        previous.pause()
+        previous.removeAttribute('src')
+        previous.load()
+      }
+      soundStop.disabled = true
+      soundGrid.querySelectorAll('.is-playing').forEach((card) => {
+        card.classList.remove('is-playing')
+      })
+      if (message) soundStatus.textContent = message
+    }
+
+    function playSoundOption(sound, trigger, paired = false) {
+      stopAudio(null)
+      soundError.hidden = true
+      soundError.textContent = ''
+      if (document.hidden) {
+        soundStatus.textContent = '请返回此页面后再点击试听。'
+        return
+      }
+      const generation = audioGeneration
+      const audio = new Audio(
+        `/_preview/achievement-sounds/${encodeURIComponent(sound.file)}`,
+      )
+      activeAudio = audio
+      audio.volume = Number(soundVolume.value) / 100
+      soundStop.disabled = false
+      const card = document.querySelector(`#sound-${sound.id}`)
+      card.classList.add('is-playing')
+      soundStatus.textContent = `正在准备 ${sound.id} · ${sound.name}…`
+      const isCurrent = () =>
+        generation === audioGeneration && activeAudio === audio
+      const failed = () => {
+        if (!isCurrent()) return
+        stopAudio(null)
+        soundStatus.textContent = '此次试听未能播放。'
+        soundError.textContent =
+          `音效 ${sound.id}「${sound.name}」播放失败，请再次点击试听。`
+        soundError.hidden = false
+      }
+      audio.addEventListener('playing', () => {
+        if (!isCurrent()) return
+        if (document.hidden) {
+          stopAudio('页面已切到后台，试听已停止。')
+          return
+        }
+        soundStatus.textContent = `正在播放 ${sound.id} · ${sound.name}`
+      })
+      audio.addEventListener('ended', () => {
+        if (isCurrent()) {
+          stopAudio(`${sound.id} · ${sound.name} 播放完毕，可再次试听。`)
+        }
+      })
+      audio.addEventListener('error', failed)
+      try {
+        // Start from the actual button gesture; never from a fetch or timer.
+        const playback = audio.play()
+        if (paired) {
+          const visual = options.find((option) => option.id === selectedOption) ??
+            options[0]
+          showToast(visual, trigger)
+        }
+        playback.catch(failed)
+      } catch {
+        failed()
+      }
+    }
+
+    function chooseSound(sound) {
+      selectedSound = sound.id
+      for (const item of soundOptions) {
+        const card = document.querySelector(`#sound-${item.id}`)
+        const selected = item.id === selectedSound
+        card.classList.toggle('is-selected', selected)
+        const button = card.querySelector('.pick-button')
+        button.setAttribute('aria-pressed', String(selected))
+        button.textContent = selected ? '已选声音 ✓' : '选择声音'
+      }
+      soundSelection.textContent = `已选音效 ${sound.id} · ${sound.name}`
+    }
+
+    function buildSounds() {
+      soundGrid.replaceChildren()
+      for (const sound of soundOptions) {
+        const card = document.createElement('li')
+        card.className = 'sound-card'
+        card.id = `sound-${sound.id}`
+        const heading = document.createElement('div')
+        heading.className = 'sound-title'
+        const number = document.createElement('span')
+        number.className = 'sound-number'
+        number.textContent = sound.id
+        const title = document.createElement('h3')
+        title.textContent = sound.name
+        const character = document.createElement('span')
+        character.className = 'sound-character'
+        character.textContent = `${sound.character} · ${
+          sound.duration.toFixed(2)
+        } 秒`
+        heading.append(number, title, character)
+        const description = document.createElement('p')
+        description.className = 'sound-description'
+        description.textContent = sound.description
+        const actions = document.createElement('div')
+        actions.className = 'sound-actions'
+        for (const [paired, text] of [[false, '试听'], [true, '搭配提示']]) {
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = paired ? 'sound-pair' : 'play-button'
+          button.textContent = text
+          button.setAttribute(
+            'aria-label',
+            `${paired ? '搭配提示试听' : '试听'}音效 ${sound.id}，${sound.name}`,
+          )
+          button.addEventListener(
+            'click',
+            () => playSoundOption(sound, button, paired),
+          )
+          actions.append(button)
+        }
+        const pick = document.createElement('button')
+        pick.type = 'button'
+        pick.className = 'pick-button'
+        pick.textContent = '选择声音'
+        pick.setAttribute('aria-pressed', 'false')
+        pick.setAttribute('aria-label', `选择音效 ${sound.id}，${sound.name}`)
+        pick.addEventListener('click', () => chooseSound(sound))
+        actions.append(pick)
+        card.append(heading, description, actions)
+        soundGrid.append(card)
+      }
+    }
+
+    async function loadSounds() {
+      soundRetry.hidden = true
+      soundError.hidden = true
+      soundStatus.textContent = '正在加载音效…'
+      try {
+        const response = await fetch('/_preview/achievement-sounds/manifest.json')
+        if (!response.ok) throw new Error('Sound catalog unavailable')
+        const entries = await response.json()
+        if (
+          !Array.isArray(entries) || entries.length !== 11 ||
+          new Set(entries.map((item) => item?.id)).size !== 11 ||
+          entries.some((item) =>
+            !item || typeof item.id !== 'string' ||
+            !/^(0[1-9]|1[01])$/.test(item.id) ||
+            !/^\d{2}-[a-z0-9-]+\.wav$/.test(item.file) ||
+            typeof item.name !== 'string' || typeof item.description !== 'string' ||
+            typeof item.character !== 'string' ||
+            !Number.isFinite(item.duration) || item.duration <= 0
+          )
+        ) throw new Error('Invalid sound catalog')
+        soundOptions = entries.sort((a, b) => a.id.localeCompare(b.id))
+        buildSounds()
+        chooseSound(soundOptions.find((sound) => sound.id === '11'))
+        soundStatus.textContent = '已准备好 11 个音效，点击试听。'
+      } catch {
+        soundStatus.textContent = '音效暂时无法加载。'
+        soundError.textContent =
+          '无法读取音效列表，请点击重新加载。视觉方案仍可正常试播。'
+        soundError.hidden = false
+        soundRetry.hidden = false
+      }
+    }
+
+    soundVolume.addEventListener('input', () => {
+      soundVolumeValue.value = `${soundVolume.value}%`
+      if (activeAudio) activeAudio.volume = Number(soundVolume.value) / 100
+    })
+    soundStop.addEventListener('click', () => stopAudio())
+    soundRetry.addEventListener('click', () => void loadSounds())
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopAudio('页面已切到后台，试听已停止。')
+    })
+    globalThis.addEventListener('pagehide', () => stopAudio(null))
+
+    function createToast(option, sample, isLive = false) {
+      const toast = document.createElement('div')
+      toast.className = `toast s${option.id}${isLive ? ' is-live' : ''}`
+      toast.dataset.option = option.id
+      const link = document.createElement('a')
+      link.className = `toast-link${sample.flavor ? '' : ' has-no-flavor'}`
+      link.href = `/settings/achievements#${encodeURIComponent(sample.id)}`
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      link.setAttribute(
+        'aria-label',
+        `${sample.title}${
+          sample.flavor ? `，“${sample.flavor}”` : ''
+        }，在新标签页打开成就中心`,
+      )
+      const art = document.createElement('span')
+      art.className = 'toast-art'
+      const image = document.createElement('img')
+      image.src = `/achievements/${sample.id}.webp`
+      image.alt = ''
+      image.width = 512
+      image.height = 512
+      image.decoding = 'async'
+      art.append(image)
+      const copy = document.createElement('span')
+      copy.className = 'toast-copy'
+      const title = document.createElement('span')
+      title.className = 'toast-title'
+      title.textContent = sample.title
+      copy.append(title)
+      if (sample.flavor) {
+        const flavor = document.createElement('span')
+        flavor.className = 'toast-flavor'
+        flavor.textContent = `“${sample.flavor}”`
+        copy.append(flavor)
+      }
+      link.append(art, copy)
+      toast.append(link)
+      if (isLive) {
+        const close = document.createElement('button')
+        close.type = 'button'
+        close.className = 'toast-close'
+        close.setAttribute('aria-label', '关闭成就提示')
+        close.innerHTML =
+          '<svg viewBox="0 0 16 16" aria-hidden="true" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
+        close.addEventListener('click', () => dismissToast())
+        toast.append(close)
+      }
+      return toast
+    }
+
+    function renderGallery() {
+      const sample = samples[sampleSelect.value]
+      for (const option of options) {
+        const stage = document.querySelector(`#option-${option.id} .stage`)
+        stage.replaceChildren(createToast(option, sample))
+      }
+    }
+
+    function chooseOption(option) {
+      selectedOption = option.id
+      for (const item of options) {
+        const card = document.querySelector(`#option-${item.id}`)
+        const selected = item.id === selectedOption
+        card.classList.toggle('is-selected', selected)
+        const pick = card.querySelector('.pick-button')
+        pick.setAttribute('aria-pressed', String(selected))
+        pick.textContent = selected ? '已选此方案 ✓' : '选择此方案'
+      }
+      selectionStatus.textContent = `已选方案 ${option.id} · ${option.name}`
+      pairingHint.textContent =
+        `搭配试播使用视觉 ${option.id} · ${option.name}。下方视觉方案的单独试播保持静音。`
+    }
+
+    function buildGallery() {
+      for (const option of options) {
+        const card = document.createElement('article')
+        card.className = 'option'
+        card.id = `option-${option.id}`
+        card.setAttribute('aria-labelledby', `heading-${option.id}`)
+        card.innerHTML =
+          `<header class="option-heading"><span class="option-number" aria-hidden="true">${option.id}</span><div><h2 id="heading-${option.id}">${option.name}</h2><p class="option-subtitle">${option.subtitle}</p></div></header><div class="stage"></div><p class="option-description">${option.description}</p><div class="option-actions"><button class="play-button" type="button" aria-label="试播方案 ${option.id}，${option.name}"><span class="play-icon" aria-hidden="true"></span>在右下角试播</button><button class="pick-button" type="button" aria-pressed="false" aria-label="选择方案 ${option.id}，${option.name}">选择此方案</button></div>`
+        card.querySelector('.play-button').addEventListener(
+          'click',
+          (event) => {
+            if (activeAudio) stopAudio('声音已停止，当前只试播视觉。')
+            showToast(option, event.currentTarget)
+          },
+        )
+        card.querySelector('.pick-button').addEventListener(
+          'click',
+          () => chooseOption(option),
+        )
+        gallery.append(card)
+      }
+      renderGallery()
+    }
+
+    function clearLiveTimer() {
+      if (!live || live.timer === null) return
+      window.clearTimeout(live.timer)
+      live.remaining = Math.max(
+        0,
+        live.remaining - (performance.now() - live.startedAt),
+      )
+      live.timer = null
+    }
+
+    function scheduleLiveTimer() {
+      if (!live || live.leaving || live.pauses.size || live.timer !== null) return
+      live.startedAt = performance.now()
+      const id = live.serial
+      live.timer = window.setTimeout(() => {
+        if (live?.serial === id) dismissToast()
+      }, live.remaining)
+    }
+
+    function setPaused(reason, paused) {
+      if (!live || live.leaving) return
+      clearLiveTimer()
+      if (paused) live.pauses.add(reason)
+      else live.pauses.delete(reason)
+      scheduleLiveTimer()
+    }
+
+    function dismissToast(immediate = false) {
+      if (!live) return
+      const previous = live
+      clearLiveTimer()
+      previous.leaving = true
+      if (previous.toast.contains(document.activeElement)) {
+        previous.trigger?.focus({ preventScroll: true })
+      }
+      previous.toast.classList.remove('is-live')
+      previous.toast.classList.add('is-leaving')
+      live = null
+      dismissCurrent.disabled = true
+      const remove = () => previous.toast.remove()
+      if (immediate || reducedMotion.checked || systemMotion.matches) remove()
+      else window.setTimeout(remove, 190)
+    }
+
+    function showToast(option, trigger) {
+      dismissToast(true)
+      liveRegion.replaceChildren()
+      const sample = samples[sampleSelect.value]
+      const toast = createToast(option, sample, true)
+      live = {
+        serial: ++serial,
+        option,
+        trigger,
+        toast,
+        remaining: 7000,
+        startedAt: 0,
+        timer: null,
+        pauses: new Set(),
+        leaving: false,
+      }
+      if (document.hidden) live.pauses.add('hidden')
+      toast.addEventListener('pointerenter', () => setPaused('hover', true))
+      toast.addEventListener('pointerleave', () => setPaused('hover', false))
+      toast.addEventListener('focusin', () => setPaused('focus', true))
+      toast.addEventListener('focusout', (event) => {
+        if (!toast.contains(event.relatedTarget)) setPaused('focus', false)
+      })
+      liveRegion.append(toast)
+      dismissCurrent.disabled = false
+      announcer.textContent =
+        `试播方案 ${option.id}，${option.name}。${sample.title}${
+          sample.flavor ? `。“${sample.flavor}”` : ''
+        }`
+      scheduleLiveTimer()
+    }
+
+    sampleSelect.addEventListener('change', () => {
+      renderGallery()
+      if (live) showToast(live.option, live.trigger)
+      else {announcer.textContent = `所有方案已切换为${
+          samples[sampleSelect.value].title
+        }。`}
+    })
+    dismissCurrent.addEventListener('click', () => dismissToast())
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && live) dismissToast()
+    })
+    document.addEventListener(
+      'visibilitychange',
+      () => setPaused('hidden', document.hidden),
+    )
+    reducedMotion.checked = systemMotion.matches
+    document.documentElement.classList.toggle(
+      'reduce-motion',
+      reducedMotion.checked,
+    )
+    reducedMotion.addEventListener('change', () => {
+      document.documentElement.classList.toggle(
+        'reduce-motion',
+        reducedMotion.checked,
+      )
+    })
+    systemMotion.addEventListener('change', (event) => {
+      reducedMotion.checked = event.matches
+      document.documentElement.classList.toggle('reduce-motion', event.matches)
+    })
+    buildGallery()
+    chooseOption(options.find((option) => option.id === '02'))
+    void loadSounds()
+    </script>
+  </body>
+</html>

@@ -22,6 +22,14 @@ async function installWorld(
     const path = new URL(route.request().url()).pathname
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/v1/achievements' && route.request().method() === 'GET') {
+      return json({ achievements: [], eventCursor: 0 })
+    }
+    if (
+      path === '/v1/achievements/events' && route.request().method() === 'GET'
+    ) {
+      return json({ events: [], cursor: 0 })
+    }
     if (path === '/v1/auth/me') {
       return world.authenticated
         ? json({

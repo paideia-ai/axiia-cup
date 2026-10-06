@@ -9,7 +9,7 @@
 //   deno run -A packages/axiia-web/e2e/seed-dev.ts \
 //     http://127.0.0.1:8080 admin@axiia.test 'adminpw-123456' <TOTP-SECRET>
 //
-// Re-running is safe: signup falls back to login, agents are ensured rather than
+// Re-run with a fresh registration code: signup falls back to login, agents are ensured rather than
 // created, and a saved version is simply appended. Every seeded player uses the
 // password below, so you can log in as one from the SPA.
 
@@ -72,6 +72,7 @@ interface ScenarioSummary {
 
 interface ScenarioDetail {
   summary: ScenarioSummary
+  presets: { side: 'a' | 'b'; role?: { key: string } | null }[]
 }
 
 type Side = 'a' | 'b'
@@ -157,7 +158,12 @@ for (const player of PLAYERS) {
       const { agentID } = await session.call<{ agentID: number }>(
         'POST',
         '/v1/agents/ensure',
-        { scenarioID: scenario.id, side },
+        {
+          scenarioID: scenario.id,
+          side,
+          roleKey: detail.presets.find((preset) => preset.side === side)?.role
+            ?.key,
+        },
       )
       agents += 1
 

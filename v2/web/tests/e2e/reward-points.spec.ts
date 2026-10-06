@@ -30,6 +30,12 @@ async function rewardWorld(page: Page, options: {
     const path = url.pathname
     const json = (body: unknown, status = 200) =>
       route.fulfill({ json: body, status })
+    if (path === '/v1/achievements' && request.method() === 'GET') {
+      return json({ achievements: [], eventCursor: 0 })
+    }
+    if (path === '/v1/achievements/events' && request.method() === 'GET') {
+      return json({ events: [], cursor: 0 })
+    }
     if (path === '/v1/account/preset-usage') {
       if (request.method() === 'POST') {
         usedPresets.add(

@@ -1,0 +1,198 @@
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.75rem 1rem;
+}
+.achievement-item {
+  min-width: 0;
+  scroll-margin-top: 5rem;
+}
+.achievement-item:target .achievement-art {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.achievement-art,
+.achievement-locked {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: .5rem;
+  border: 1px solid var(--border-soft);
+}
+.achievement-art {
+  display: block;
+  object-fit: cover;
+}
+.achievement-locked {
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--foreground-subtle);
+  font-size: 2.75rem;
+  font-weight: 400;
+  user-select: none;
+}
+.achievement-tier {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.achievement-tier-gold {
+  color: #d8bf82;
+}
+.achievement-tier-silver {
+  color: #c5cbd4;
+}
+.achievement-tier-bronze {
+  color: #d3a68b;
+}
+.achievement-toast {
+  position: fixed;
+  z-index: 45;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+  width: min(375px, calc(100% - 2rem));
+  color: #f0e9df;
+  filter: drop-shadow(0 12px 20px #0005);
+  animation: achievement-cover-in 520ms cubic-bezier(.16, 1, .3, 1);
+}
+.achievement-toast-link {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 124px;
+  border: 1px solid #594b3b;
+  border-radius: 3px;
+  background: #211d18;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+}
+.achievement-toast-art {
+  position: relative;
+  flex: 0 0 auto;
+  width: 124px;
+  height: 124px;
+  background: #090907;
+}
+.achievement-toast-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -1px 0 #b7915766;
+  pointer-events: none;
+}
+.achievement-toast-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.achievement-toast-copy {
+  flex: 1;
+  min-width: 0;
+  padding: 20px 20px 20px 19px;
+  overflow-wrap: anywhere;
+}
+.achievement-toast-title {
+  display: block;
+  padding-right: 28px;
+  font-size: 17px;
+  line-height: 1.55;
+  font-weight: 600;
+  letter-spacing: .015em;
+}
+.achievement-toast-flavor {
+  display: block;
+  margin-top: 7px;
+  color: #ceb899;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.achievement-toast-close {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  color: #d4c7b8;
+  cursor: pointer;
+}
+.achievement-toast-close::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: #0c0c0c55;
+}
+.achievement-toast-close svg {
+  position: relative;
+  width: 13px;
+  height: 13px;
+}
+.achievement-toast-link:hover {
+  background: #29231c;
+}
+.achievement-toast-close:hover {
+  color: #fff;
+}
+.achievement-toast-close:hover::before {
+  background: #29241fcc;
+}
+.achievement-toast-link:focus-visible,
+.achievement-toast-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@keyframes achievement-cover-in {
+  from {
+    opacity: 0;
+    transform: translateX(35px);
+    clip-path: inset(0 0 0 30%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+    clip-path: inset(0);
+  }
+}
+@media (max-width: 480px) {
+  .achievement-toast-art {
+    width: 99px;
+    height: 99px;
+  }
+  .achievement-toast-copy {
+    padding: 17px 15px;
+  }
+  .achievement-toast-title {
+    padding-right: 33px;
+    font-size: 16px;
+  }
+  .achievement-toast-flavor {
+    font-size: 11px;
+  }
+}
+@media (min-width: 640px) {
+  .achievement-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+  }
+}
+@media (min-width: 768px) {
+  .achievement-toast {
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 1024px) {
+  .achievement-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .achievement-toast {
+    animation: none;
+  }
+}
