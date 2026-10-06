@@ -184,19 +184,19 @@ test('U04-C01/C02/C04：D 页每张产品卡一句话介绍 + 统计槽位（点
   })
 })
 
-test('U04-C03：最近上线的场景固定第 2 位 + 「新上线」徽章', async () => {
+test('U04-C03：场景使用统一顺序，最新上线场景保留徽章', async () => {
   test.setTimeout(180_000)
   await test.step('假如 我打开场景列表页', async () => {
     await gotoCatalog()
   })
   let newest: CatalogScenario | null = null
-  await test.step('那么 目录接口里 onlineAt 最新的那个场景的卡位于列表第 2 位', async () => {
+  await test.step('那么 场景按产品指定顺序展示', async () => {
     const response = await page.request.get('/v1/scenarios')
     expect(response.ok()).toBe(true)
     const { scenarios } = await response.json() as {
       scenarios: CatalogScenario[]
     }
-    expect(scenarios.length, '#54 需要 ≥2 个场景才有「第 2 位」可言')
+    expect(scenarios.length, '新上线徽章沿用多场景条件')
       .toBeGreaterThan(1)
     for (const item of scenarios) {
       if (
@@ -208,15 +208,31 @@ test('U04-C03：最近上线的场景固定第 2 位 + 「新上线」徽章', a
     }
     expect(newest, '目录里没有任何 onlineAt——新场景曝光（#54）无从谈起')
       .not.toBeNull()
-    const second = page.locator('[data-testid^="scenario-"]').nth(1)
-    await expect(second).toHaveAttribute(
-      'data-testid',
-      `scenario-${newest!.id}`,
+    const ids = [
+      'shangyang-court',
+      'honnoji-decision',
+      'trolley-problem',
+      'fengyiting-real',
+      'legal-harbor-murder-jury',
+    ]
+    const expected = [
+      ...ids.filter((id) => scenarios.some((item) => item.id === id)),
+      ...scenarios.filter((item) => !ids.includes(item.id)).map((item) =>
+        item.id
+      ),
+    ]
+    await expect(page.locator('[data-testid^="scenario-"]')).toHaveCount(
+      expected.length,
     )
+    expect(
+      await page.locator('[data-testid^="scenario-"]').evaluateAll((cards) =>
+        cards.map((card) => card.getAttribute('data-testid'))
+      ),
+    ).toEqual(expected.map((id) => `scenario-${id}`))
   })
-  await test.step('并且 那张卡带「新上线」徽章', async () => {
-    const second = page.locator('[data-testid^="scenario-"]').nth(1)
-    await expect(second.getByText('新上线')).toBeVisible()
+  await test.step('并且 最新上线的卡带「新上线」徽章', async () => {
+    await expect(page.getByTestId(`scenario-${newest!.id}`).getByText('新上线'))
+      .toBeVisible()
   })
   await test.step('并且 其它卡都没有「新上线」徽章', async () => {
     await expect(page.getByText('新上线')).toHaveCount(1)

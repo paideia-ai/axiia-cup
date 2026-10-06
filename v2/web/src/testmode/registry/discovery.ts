@@ -27,7 +27,7 @@ export const TM_DISCOVERY: TmRegistry = {
     anchors: ['spec-change-54', 'spec-change-37'],
     journeys: ['j2s1'],
     note:
-      'onlineAt 最新的场景固定插在第 2 位（#54）；「最热门」精选是 Future（#37），列表里不该出现',
+      '场景与我的智能体均按商鞅、本能寺、电车难题、凤仪亭、码头排序；onlineAt 最新的场景仅显示「新上线」徽章；「最热门」精选是 Future（#37），列表里不该出现',
   },
   'D.scenario-card': {
     label: '场景卡',

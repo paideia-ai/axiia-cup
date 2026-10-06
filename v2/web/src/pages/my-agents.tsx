@@ -1,3 +1,4 @@
+import { orderScenarios } from '../lib/scenario-order'
 import { sideDisplayName } from '../lib/side-display-name'
 import { PageLoading } from '../components/page-loading'
 import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
@@ -75,7 +76,7 @@ export function MyAgentsPage() {
     ? sideDisplayName(focusedScenario.id, 'a', focusedScenario.sideAName)
     : sideDisplayName(focusedScenario.id, 'b', focusedScenario.sideBName)
   const visibleScenarios = focusedScenario == null
-    ? data?.scenarios ?? []
+    ? orderScenarios(data?.scenarios ?? [])
     : [focusedScenario]
 
   const clearFocus = () => {
