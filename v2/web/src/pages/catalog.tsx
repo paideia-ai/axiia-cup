@@ -1,3 +1,4 @@
+import { orderScenarios } from '../lib/scenario-order'
 import { sideStatsLine } from '../lib/side-display-name'
 import { PageLoading } from '../components/page-loading'
 import { catalogQuery } from '../lib/navigation-queries'
@@ -25,8 +26,8 @@ import { useAuth } from '../context/auth'
 // 由服务端把关——stats 到手即显示对局数+侧方胜率，缺席（未过门槛/老服务器）
 // 时按 #54 显示「数据积累中」，不摆零或假数字。
 // 新上线（#54，W8 选 A）：
-// onlineAt 最新的场景固定插在第 2 位 + 「新上线」徽章；字段缺席（老服务器）
-// 时保持服务端原序、无徽章。
+// onlineAt 最新的场景显示「新上线」徽章；字段缺席时无徽章。
+// 场景顺序与「我的智能体」共用，不受上线时间影响。
 
 // onlineAt 最新的场景；全部缺席（老服务器）→ null。
 function newestOnline(list: ScenarioSummary[]): ScenarioSummary | null {
@@ -41,16 +42,6 @@ function newestOnline(list: ScenarioSummary[]): ScenarioSummary | null {
   return newest
 }
 
-// #54 固定第 2 位（mock V-ref scenarios.tsx 的口径）：抽出新上线的那张，
-// 插回 index 1；其余保持服务端原序。
-function pinSecond(
-  list: ScenarioSummary[],
-  fresh: ScenarioSummary,
-): ScenarioSummary[] {
-  const rest = list.filter((item) => item.id !== fresh.id)
-  return [...rest.slice(0, 1), fresh, ...rest.slice(1)]
-}
-
 export function CatalogPage() {
   const { account, isLoading: authLoading } = useAuth()
   const { data, error, loading: queryLoading } = usePageQuery(
@@ -59,10 +50,10 @@ export function CatalogPage() {
 
   const loading = authLoading || queryLoading
 
-  // 新上线置顶第 2 位只在列表 >1 且 onlineAt 存在时生效；否则保持原序。
+  // 沿用新上线徽章的判定，展示顺序使用共用规则。
   const scenarios = data?.scenarios ?? []
   const fresh = scenarios.length > 1 ? newestOnline(scenarios) : null
-  const ordered = fresh ? pinSecond(scenarios, fresh) : scenarios
+  const ordered = orderScenarios(scenarios)
 
   return (
     <div className={loading ? 'space-y-6' : 'space-y-6 page-content-ready'}>
