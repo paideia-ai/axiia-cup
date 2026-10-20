@@ -21,6 +21,8 @@ import type {
   EnsureAgentRequest,
   ErrorResponse,
   FieldMutationRequest,
+  LadderOverviewResponse,
+  LadderPairingResponse,
   LandingResponse,
   LoginRequest,
   MarkPresetUsageRequest,
@@ -479,4 +481,20 @@ export const admin = {
 
 export function sseUrl(path: string): string {
   return `${API_ROOT}/v1${path}`
+}
+
+export const ladder = {
+  overview: (scenarioID: string) =>
+    request<LadderOverviewResponse>(
+      'GET',
+      `/ladder?${new URLSearchParams({ scenarioID })}`,
+    ),
+  pair: (versionID: number) =>
+    request<LadderPairingResponse>('POST', '/ladder/pairings', { versionID }),
+  start: (pairingID: string) =>
+    request<DispatchResponse>(
+      'POST',
+      `/ladder/pairings/${encodeURIComponent(pairingID)}/start`,
+      {},
+    ).finally(refreshRewards),
 }

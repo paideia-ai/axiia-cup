@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>出战 · 手机端 Demo</title>
+    <style>
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      background: #202020;
+      color: #e8e8e8;
+      font: 13px/1.5 system-ui, sans-serif;
+    }
+    header {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 16px;
+      background: #111;
+      border-bottom: 1px solid #333;
+    }
+    h1 {
+      margin: 0 12px 0 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    select,
+    button,
+    a {
+      font: inherit;
+      color: #ddd;
+      background: #252525;
+      border: 1px solid #454545;
+      border-radius: 4px;
+      padding: 4px 9px;
+    }
+    a {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    button,
+    select {
+      cursor: pointer;
+    }
+    :focus-visible {
+      outline: 2px solid #eebc69;
+      outline-offset: 3px;
+    }
+    main {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      min-height: 0;
+      flex: 1;
+      padding: 12px;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+    .viewport {
+      flex: none;
+      position: relative;
+    }
+    iframe {
+      display: block;
+      border: 0;
+      background: #0c0c0c;
+      transform-origin: top left;
+      outline: 1px solid #555;
+    }
+    @media (max-width: 520px) {
+      header {
+        gap: 8px;
+        padding: 8px;
+      }
+      h1 {
+        width: 100%;
+        text-align: center;
+        margin: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>出战 · 手机端 Demo</h1>
+      <label>尺寸
+      <select id="size" aria-label="手机尺寸">
+        <option value="390,844">390 × 844</option>
+        <option value="360,800">360 × 800</option>
+        <option value="430,932">430 × 932</option>
+      </select>
+    </label>
+      <button id="restart" type="button">重新开始</button>
+      <a href="/sortie">完整网页</a>
+    </header>
+    <main>
+      <div class="viewport">
+        <iframe title="可交互的手机版出战页" src="/sortie" width="390"
+          height="844"></iframe>
+      </div>
+    </main>
+    <script>
+    const main = document.querySelector('main')
+    const frame = document.querySelector('iframe')
+    const viewport = document.querySelector('.viewport')
+    const sizes = document.querySelector('#size')
+    function fit() {
+      const [width, height] = sizes.value.split(',').map(Number)
+      const scale = Math.min(
+        1,
+        (main.clientWidth - 24) / width,
+        (main.clientHeight - 24) / height,
+      )
+      frame.width = width
+      frame.height = height
+      frame.style.transform = `scale(${scale})`
+      viewport.style.width = `${width * scale}px`
+      viewport.style.height = `${height * scale}px`
+    }
+    new ResizeObserver(fit).observe(main)
+    sizes.addEventListener('change', fit)
+    document.querySelector('#restart').addEventListener('click', () => {
+      frame.src = '/sortie'
+    })
+    fit()
+    </script>
+  </body>
+</html>

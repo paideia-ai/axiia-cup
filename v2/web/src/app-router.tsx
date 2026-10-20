@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useRef } from 'react'
+import { lazy, Suspense, useRef } from 'react'
 import {
   BrowserRouter,
   Navigate,
@@ -45,6 +45,12 @@ import { StandingsPage } from './pages/standings'
 import { TournamentsPage } from './pages/tournaments'
 import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
+
+const SortiePage = lazy(() =>
+  import.meta.env.VITE_SORTIE_DEMO === 'true'
+    ? import('./features/sortie/sortie-page')
+    : import('./features/sortie/ladder-page')
+)
 
 function Loading() {
   useScrollPending(true)
@@ -162,6 +168,14 @@ export function AppRoutes() {
               element={<ScenarioBuildEntry />}
             />
             <Route path='/my-agents' element={<MyAgentsPage />} />
+            <Route
+              path='/sortie'
+              element={
+                <Suspense fallback={<Loading />}>
+                  <SortiePage />
+                </Suspense>
+              }
+            />
             <Route
               path='/scenarios/:scenarioId/npcs/:presetKey'
               element={<NPCViewPage />}
