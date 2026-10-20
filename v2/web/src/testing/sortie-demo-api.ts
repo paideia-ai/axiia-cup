@@ -1,10 +1,11 @@
 import { portraitInventory, portraitScenarios } from './agent-portrait-fixtures'
-import { sortieEntries } from '../features/sortie/fixtures'
-import { sortieMatchAPI } from './sortie-demo-matches'
+import { demoOpponents, sortieEntries } from '../features/sortie/fixtures'
+import { sortieLadderAPI } from './sortie-ladder-api'
 import { config } from './v34-fixtures'
+import { gamesPlayed } from '../features/sortie/matchmaking'
 
 export async function sortieDemoAPI(request: Request, path: string) {
-  const matchResponse = await sortieMatchAPI(request, path)
+  const matchResponse = await sortieLadderAPI.handle(request, path)
   if (matchResponse) return matchResponse
   const json = Response.json
   if (request.method !== 'GET') {
@@ -34,7 +35,6 @@ export async function sortieDemoAPI(request: Request, path: string) {
     return json({ achievements: [], eventCursor: 0 })
   }
   if (path === '/achievements/events') return json({ events: [], cursor: 0 })
-  if (path === '/config') return json(config)
   if (path === '/models') return json({ models: config.models })
   if (/^\/rewards\/matches\/\d+$/.test(path)) {
     return json({
@@ -43,7 +43,6 @@ export async function sortieDemoAPI(request: Request, path: string) {
       status: 'ineligible',
     })
   }
-  if (path === '/matches') return json({ matches: [], open: true })
   if (path === '/tournaments') return json({ tournaments: [] })
   if (path === '/notifications') {
     return json({ notifications: [], unreadCount: 0 })
@@ -56,19 +55,6 @@ export async function sortieDemoAPI(request: Request, path: string) {
       perBattleCost: 100,
       repeatRoleSurcharge: false,
       battleCosts: [100],
-    })
-  }
-  if (path === '/rewards') {
-    return json({
-      balance: 24200,
-      dailyAllowance: 1000,
-      battleCost: 100,
-      dailyRuns: 10,
-      pveWinRefundPercent: 50,
-      pvpWinRefundPercent: 80,
-      pointsPerYuan: 100,
-      nextGrantAt: 0,
-      claimableRewards: [],
     })
   }
   if (path === '/notifications/bell' || /^\/agents\/\d+\/stream$/.test(path)) {
@@ -96,6 +82,41 @@ export async function sortieDemoAPI(request: Request, path: string) {
   if (/^\/scenarios\/[^/]+\/opponents$/.test(path)) {
     return json({ opponents: [] })
   }
+  const rivalPath = /^\/agents\/(\d+)\/(draft|public)$/.exec(path)
+  const rival = rivalPath &&
+    demoOpponents.find((e) => e.agentID === Number(rivalPath[1]))
+  if (rival && rivalPath) {
+    if (rivalPath[2] === 'draft') {
+      return json({ error: 'forbidden' }, { status: 403 })
+    }
+    const scene = portraitScenarios.find((s) =>
+      s.summary.id === rival.scenarioID
+    )!.summary
+    const base = sortieEntries.find((e) =>
+      e.scenarioID === rival.scenarioID && e.side === rival.side
+    )!
+    const role = { key: base.roleKey, name: base.roleName, side: rival.side }
+    return json({
+      agentID: rival.agentID,
+      scenarioID: rival.scenarioID,
+      scenarioTitle: scene.title,
+      side: rival.side,
+      sideName: rival.side === 'a' ? scene.sideAName : scene.sideBName,
+      ownerName: rival.name,
+      role,
+      versions: [{
+        id: rival.versionID,
+        ordinal: 1,
+        isEntry: true,
+        createdAt: 1700000000,
+        role,
+        matchCount: gamesPlayed(sortieLadderAPI.record(rival)),
+        winCount: sortieLadderAPI.record(rival).wins,
+        lossCount: sortieLadderAPI.record(rival).losses,
+        drawCount: sortieLadderAPI.record(rival).draws,
+      }],
+    })
+  }
   const match = /^\/agents\/(\d+)\/(draft|versions)$/.exec(path)
   if (match) {
     for (const scene of portraitInventory.scenarios) {
@@ -112,7 +133,8 @@ export async function sortieDemoAPI(request: Request, path: string) {
             role: agent.role,
           })
         }
-        const entry = sortieEntries.find((e) => e.agentID === agent.agentID)
+        const base = sortieEntries.find((e) => e.agentID === agent.agentID)
+        const entry = base ? sortieLadderAPI.record(base) : undefined
         return json({
           entryVersionID: agent.entryVersionID,
           versions: Array.from({ length: agent.versionCount }, (_, i) => ({

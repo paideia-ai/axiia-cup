@@ -70,8 +70,8 @@
     "preview:achievement-delivery": "deno task preview:achievement-delivery:build && deno run -A npm:vite preview --config preview/achievement-delivery/vite.config.ts --host 127.0.0.1 --port 5186",
     "test:e2e:achievement-delivery": "deno run -A npm:playwright test --config playwright.achievement-delivery.config.ts",
     "preview:achievements": "deno run --allow-read=build/client,build/achievement-toast-preview,e2e/previews --allow-net e2e/preview-achievements.ts",
-    "preview:sortie": "VITE_SORTIE_DEMO=true deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6055 e2e/preview-sortie.ts",
-    "build:sortie-demo": "VITE_SORTIE_DEMO=true VITE_SORTIE_BROWSER_DEMO=true deno task build --outDir build/vercel-demo && deno eval \"await Deno.copyFile('preview/sortie/vercel.json', 'build/vercel-demo/vercel.json')\"",
+    "preview:sortie": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6055 e2e/preview-sortie.ts",
+    "build:sortie-demo": "VITE_SORTIE_BROWSER_DEMO=true deno task build --outDir build/vercel-demo && deno eval \"await Deno.copyFile('preview/sortie/vercel.json', 'build/vercel-demo/vercel.json')\"",
     "test:e2e:ladder": "deno run -A npm:playwright test --config playwright.ladder.config.ts"
   }
 }

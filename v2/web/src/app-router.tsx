@@ -46,11 +46,7 @@ import { TournamentsPage } from './pages/tournaments'
 import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
 
-const SortiePage = lazy(() =>
-  import.meta.env.VITE_SORTIE_DEMO === 'true'
-    ? import('./features/sortie/sortie-page')
-    : import('./features/sortie/ladder-page')
-)
+const SortiePage = lazy(() => import('./features/sortie/ladder-page'))
 
 function Loading() {
   useScrollPending(true)

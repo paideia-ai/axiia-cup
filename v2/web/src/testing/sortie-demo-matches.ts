@@ -1,11 +1,10 @@
-// Local preview only. Produces the existing match-page contract without models,
-// accounts, billing, or changes to production endpoints.
 import type { MatchDetail, MatchParticipantDTO, TurnDTO } from '../api/types'
+import { sortieEntries, type SortieEntry } from '../features/sortie/fixtures'
 import {
-  demoOpponents,
-  sortieEntries,
-  sortieVersionEntries,
-} from '../features/sortie/fixtures'
+  type Entry,
+  type RecordStats,
+  settle,
+} from '../features/sortie/matchmaking'
 import { portraitScenarios } from './agent-portrait-fixtures'
 
 interface Run {
@@ -13,16 +12,16 @@ interface Run {
   startedAt: number
   detail: MatchDetail
   turns: TurnDTO[]
+  own: SortieEntry
+  opponent: Entry & { name: string }
+  outcome: 'win' | 'loss' | 'draw'
+  settled: boolean
 }
-const runs = new Map<number, Run>()
-const requests = new Map<string, Run>()
-let nextID = 9100
-const duration = 4500
-
+const duration = 45000
 function detail(run: Run): MatchDetail {
   const elapsed = Date.now() - run.startedAt
   const finished = elapsed >= duration
-  const count = Math.min(run.turns.length, Math.floor(elapsed / 1500))
+  const count = Math.min(run.turns.length, Math.floor(elapsed / (duration / 3)))
   return {
     ...run.detail,
     summary: {
@@ -40,43 +39,44 @@ function detail(run: Run): MatchDetail {
   }
 }
 
-export async function sortieMatchAPI(
-  request: Request,
-  path: string,
-): Promise<Response | null> {
-  if (request.method === 'POST' && path === '/demo/ladder/matches') {
-    let input
-    try {
-      input = await request.json()
-    } catch {
-      return Response.json({ error: 'invalid_json' }, { status: 400 })
+export function createSortieMatches() {
+  const runs = new Map<number, Run>()
+  const records = new Map<number, RecordStats>()
+  let nextID = 9100
+  function settleFinished() {
+    for (const run of runs.values()) {
+      if (run.settled || !detail(run).summary.finished) continue
+      run.settled = true
+      records.set(
+        run.own.agentID,
+        settle(records.get(run.own.agentID) ?? run.own, run.outcome),
+      )
+      records.set(
+        run.opponent.agentID,
+        settle(
+          records.get(run.opponent.agentID) ?? run.opponent,
+          run.outcome === 'win'
+            ? 'loss'
+            : run.outcome === 'loss'
+            ? 'win'
+            : 'draw',
+        ),
+      )
     }
-    if (
-      !input || typeof input.requestID !== 'string' ||
-      input.requestID.length > 100 ||
-      !['win', 'loss', 'draw'].includes(input.outcome)
-    ) {
-      return Response.json({ error: 'invalid_request' }, { status: 400 })
-    }
-    const previous = requests.get(input.requestID)
-    if (previous) {
-      return Response.json({
-        matchID: previous.matchID,
-        startedAt: previous.startedAt,
-      })
-    }
-    const own = sortieVersionEntries.find((e) =>
-      e.versionID === input.versionID
-    )
-    const opponent = demoOpponents.find((e) =>
-      e.versionID === input.opponentVersionID
-    )
-    if (
-      !own || !opponent || own.scenarioID !== opponent.scenarioID ||
-      own.side === opponent.side
-    ) {
-      return Response.json({ error: 'invalid_opponent' }, { status: 400 })
-    }
+  }
+  function record(entry: Entry): RecordStats {
+    settleFinished()
+    return records.get(entry.agentID) ?? entry
+  }
+  function summaries() {
+    settleFinished()
+    return [...runs.values()].map((run) => detail(run).summary).reverse()
+  }
+  function create(
+    own: SortieEntry,
+    opponent: Entry & { name: string },
+    outcome: 'win' | 'loss' | 'draw',
+  ) {
     const other = sortieEntries.find((e) =>
       e.scenarioID === own.scenarioID && e.side === opponent.side
     )!
@@ -92,13 +92,17 @@ export async function sortieMatchAPI(
       ownerDisplayName: mine ? '你' : opponent.name,
       isMine: mine,
     })
-    const winner = input.outcome === 'draw'
+    const winner = outcome === 'draw'
       ? null
-      : input.outcome === 'win'
+      : outcome === 'win'
       ? own.side
       : other.side
     const channel = 'demo-dialogue'
     const run: Run = {
+      own,
+      opponent,
+      outcome,
+      settled: false,
       matchID: nextID++,
       startedAt: Date.now(),
       detail: {
@@ -156,75 +160,81 @@ export async function sortieMatchAPI(
       ],
     }
     runs.set(run.matchID, run)
-    requests.set(input.requestID, run)
-    return Response.json({ matchID: run.matchID, startedAt: run.startedAt })
+    return { matchID: run.matchID }
   }
-  // Keep the other fixture screens unchanged; only explicitly opened demo runs
-  // are exposed. This is not a fake history feed for the rest of the application.
-  const found = /^\/matches\/(\d+)(?:\/(stream|view))?$/.exec(path)
-  if (!found) return null
-  const run = runs.get(Number(found[1]))
-  if (!run) return null
-  if (found[2] === 'view' && request.method === 'POST') {
-    return Response.json({ ok: true })
+  function handle(
+    request: Request,
+    path: string,
+  ): Response | null {
+    if (path === '/matches' && request.method === 'GET') {
+      return Response.json({ matches: summaries(), open: true })
+    }
+    const found = /^\/matches\/(\d+)(?:\/(stream|view))?$/.exec(path)
+    if (!found) return null
+    const run = runs.get(Number(found[1]))
+    if (!run) return null
+    if (found[2] === 'view' && request.method === 'POST') {
+      return Response.json({ ok: true })
+    }
+    if (request.method !== 'GET') return null
+    if (!found[2]) return Response.json(detail(run))
+    if (found[2] !== 'stream') return null
+    let timer: ReturnType<typeof setInterval> | undefined
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder()
+        let after = Number(
+          new URL(request.url).searchParams.get('afterTurn') ?? -1,
+        )
+        const tick = () => {
+          const current = detail(run)
+          for (const turn of current.turns.filter((t) => t.seq > after)) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${
+                  JSON.stringify({
+                    turnCompleted: {
+                      matchID: run.matchID,
+                      seq: turn.seq,
+                      channel: turn.channel,
+                      kind: turn.kind,
+                    },
+                  })
+                }\n\n`,
+              ),
+            )
+            after = turn.seq
+          }
+          if (current.summary.finished) {
+            controller.enqueue(
+              encoder.encode(
+                `data: ${
+                  JSON.stringify({
+                    matchFinished: {
+                      matchID: run.matchID,
+                      winner: current.summary.winner ?? '',
+                    },
+                  })
+                }\n\n`,
+              ),
+            )
+            clearInterval(timer)
+            controller.close()
+          }
+        }
+        timer = setInterval(tick, 250)
+        tick()
+      },
+      cancel() {
+        clearInterval(timer)
+      },
+    })
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-store',
+      },
+    })
   }
-  if (request.method !== 'GET') return null
-  if (!found[2]) return Response.json(detail(run))
-  if (found[2] !== 'stream') return null
-  let timer: ReturnType<typeof setInterval> | undefined
-  const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      const encoder = new TextEncoder()
-      let after = Number(
-        new URL(request.url).searchParams.get('afterTurn') ?? -1,
-      )
-      const tick = () => {
-        const current = detail(run)
-        for (const turn of current.turns.filter((t) => t.seq > after)) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${
-                JSON.stringify({
-                  turnCompleted: {
-                    matchID: run.matchID,
-                    seq: turn.seq,
-                    channel: turn.channel,
-                    kind: turn.kind,
-                  },
-                })
-              }\n\n`,
-            ),
-          )
-          after = turn.seq
-        }
-        if (current.summary.finished) {
-          controller.enqueue(
-            encoder.encode(
-              `data: ${
-                JSON.stringify({
-                  matchFinished: {
-                    matchID: run.matchID,
-                    winner: current.summary.winner ?? '',
-                  },
-                })
-              }\n\n`,
-            ),
-          )
-          clearInterval(timer)
-          controller.close()
-        }
-      }
-      timer = setInterval(tick, 250)
-      tick()
-    },
-    cancel() {
-      clearInterval(timer)
-    },
-  })
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-store',
-    },
-  })
+  return { create, handle, record, summaries }
 }

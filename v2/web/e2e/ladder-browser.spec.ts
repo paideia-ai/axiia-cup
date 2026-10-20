@@ -2,6 +2,62 @@ import { expect, type Page, test } from '@playwright/test'
 import { sortieDemoAPI } from '../src/testing/sortie-demo-api'
 import { sortieEntries } from '../src/features/sortie/fixtures'
 import type { LadderEntryDTO } from '../src/api/types'
+import { createSortieLadderAPI } from '../src/testing/sortie-ladder-api'
+
+for (const width of [390, 1440]) {
+  test(`shared demo page can return, switch scenarios, and start three battles at ${width}px`, async ({ page }) => {
+    const api = createSortieLadderAPI()
+    await page.setViewportSize({ width, height: 900 })
+    await page.route('**/v1/**', async (route) => {
+      const req = route.request()
+      const path = new URL(req.url()).pathname.slice(3)
+      if (path.endsWith('/stream') || path === '/notifications/bell') {
+        return route.fulfill({
+          contentType: 'text/event-stream',
+          body: 'retry: 60000\n\n',
+        })
+      }
+      const request = new Request(req.url(), {
+        method: req.method(),
+        ...(req.postData() ? { body: req.postData()! } : {}),
+      })
+      const response = await api.handle(request, path) ??
+        await sortieDemoAPI(request, path)
+      await route.fulfill({
+        status: response.status,
+        json: await response.json(),
+      })
+    })
+    await page.goto('/sortie')
+    await expect(page.getByText('演示选项', { exact: true })).toHaveCount(0)
+    const ids = new Set<string>()
+    for (const scene of ['商鞅变法', '码头疑云', '商鞅变法']) {
+      const button = page.getByRole('button', { name: scene, exact: true })
+      await expect(button).toBeEnabled()
+      await button.click()
+      await page.getByRole('button', { name: '随机匹配', exact: true }).click()
+      await page.getByRole('button', { name: '开始对局', exact: true }).click()
+      await page.waitForURL(/\/matches\/\d+$/)
+      ids.add(page.url())
+      await page.getByRole('link', { name: '天梯', exact: true }).click()
+    }
+    expect(ids.size).toBe(3)
+    await page.getByRole('button', { name: '随机匹配', exact: true }).click()
+    await page.getByRole('button', { name: '开始对局', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText(
+      '同时进行的对局已达上限',
+    )
+    const response = await api.handle(
+      new Request('http://demo/v1/matches'),
+      '/matches',
+    )
+    expect(
+      (await response!.json()).matches.filter((m: { finished: boolean }) =>
+        !m.finished
+      ),
+    ).toHaveLength(3)
+  })
+}
 
 async function fixtures(
   page: Page,
@@ -32,6 +88,7 @@ async function fixtures(
             e.scenarioID === url.searchParams.get('scenarioID')
           ).map(entryDTO),
           highestWinRate: .8,
+          highestWinRateAgentID: 8000,
         },
       })
     }
@@ -93,7 +150,9 @@ test('production ladder uses server pairing, no demo controls or rules, and expl
   const api = await fixtures(page)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/sortie')
-  await expect(page.getByRole('heading', { name: '天梯', exact: true }))
+  await expect(
+    page.getByRole('link', { name: '商鞅变法场景介绍', exact: true }),
+  )
     .toBeVisible()
   await expect(page.getByText('匹配规则', { exact: true })).toHaveCount(0)
   await expect(page.getByText('演示选项', { exact: true })).toHaveCount(0)
@@ -126,6 +185,7 @@ test('role without entry retains its identity, links to its agent, and cannot ma
   await expect(page.getByRole('button', { name: '随机匹配', exact: true }))
     .toHaveCount(0)
   await expect(page.locator('[data-sortie-side=a]')).toContainText('足利义昭')
+  await expect(page.getByRole('link', { name: /^智能体胜率/ })).toHaveCount(0)
 })
 
 test('expired pairing is not retried as a new battle; loading failures do not expose match controls', async ({ page }) => {
@@ -157,4 +217,46 @@ test('practice opens the existing NPC picker at the exact entry version', async 
     .toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('dialog')).toContainText('★参赛版本')
   await expect(page).toHaveURL(/agents\/1300\?version=13000$/)
+})
+
+test('highest win rate opens its agent identity independently of the scenario card', async ({ page }) => {
+  await fixtures(page)
+  await page.goto('/sortie')
+  const record = page.getByRole('link', {
+    name: '全服最高胜率 80.0%，查看智能体',
+    exact: true,
+  })
+  await expect(record).toHaveAttribute('href', '/agents/8000/identity')
+  await record.hover()
+  await expect(record).not.toHaveCSS('box-shadow', 'none')
+  await expect(page.locator('a a')).toHaveCount(0)
+  await record.click()
+  await expect(page).toHaveURL(/\/agents\/8000\/identity$/)
+  await expect(page.locator('[data-tm="EA.public-owner-line"]')).toContainText(
+    '山月',
+  )
+  await page.goBack()
+  await page.getByRole('link', { name: '商鞅变法场景介绍', exact: true })
+    .click()
+  await expect(page).toHaveURL(/\/scenarios\/shangyang-court$/)
+})
+
+test('agent win rate follows the selected entry and opens its home', async ({ page }) => {
+  await fixtures(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/sortie')
+  const ownRate = page.getByRole('link', { name: /^智能体胜率/ })
+  await expect(ownRate).toHaveAttribute('href', '/agents/1300')
+  await expect(page.locator('.sortie-entry-line a')).toHaveCount(0)
+  await page.locator('[data-sortie-side=b]').click()
+  const other = sortieEntries.find((e) =>
+    e.scenarioID === 'shangyang-court' && e.side === 'b'
+  )!
+  await expect(ownRate).toHaveAttribute('href', `/agents/${other.agentID}`)
+  await ownRate.hover()
+  await expect(ownRate).not.toHaveCSS('box-shadow', 'none')
+  await expect(page.locator('a a')).toHaveCount(0)
+  await ownRate.click()
+  await expect(page).toHaveURL(new RegExp(`/agents/${other.agentID}$`))
+  await expect(page.locator('[data-tm="EA.scenario-link"]')).toBeVisible()
 })

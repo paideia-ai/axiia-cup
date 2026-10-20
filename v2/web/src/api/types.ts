@@ -902,6 +902,7 @@ export interface LadderEntryDTO {
 export interface LadderOverviewResponse {
   entries: LadderEntryDTO[]
   highestWinRate?: number | null
+  highestWinRateAgentID?: number | null
 }
 export interface LadderPairingResponse {
   id: string

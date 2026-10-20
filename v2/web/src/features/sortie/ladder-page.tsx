@@ -1,6 +1,6 @@
+import { HighestWinRate } from './highest-win-rate'
 import {
   ChevronRight,
-  Crown,
   Flame,
   LoaderCircle,
   ShieldCheck,
@@ -254,16 +254,12 @@ function LadderScene(
         '--sortie-backdrop': background,
       } as CSSProperties}
     >
-      <div className='sortie-heading'>
-        <h1>
-          <Swords size={20} />天梯
-        </h1>
-      </div>
-      <Link
-        className='sortie-stage'
-        to={`/scenarios/${scene.id}`}
-        aria-label={`${title}场景介绍`}
-      >
+      <div className='sortie-stage'>
+        <Link
+          className='sortie-stage-target'
+          to={`/scenarios/${scene.id}`}
+          aria-label={`${title}场景介绍`}
+        />
         <div className='sortie-art'>
           {artwork && <img src={artwork.src} alt={artwork.alt} />}
         </div>
@@ -275,7 +271,7 @@ function LadderScene(
           <p>{hook}</p>
         </div>
         <div className='sortie-records'>
-          <div>
+          <div className='sortie-linked-record'>
             <span>智能体胜率</span>
             <strong>{rate(count ? stats.wins / count : null)}</strong>
             <small>
@@ -283,6 +279,16 @@ function LadderScene(
                 ? `${stats.wins} 胜 ${stats.losses} 负 ${stats.draws} 平`
                 : '还没有天梯对局'}
             </small>
+            {entry && (
+              <Link
+                className='sortie-record-link'
+                to={`/agents/${entry.agentID}`}
+                aria-label={`智能体胜率 ${
+                  rate(count ? stats.wins / count : null)
+                }，查看智能体主页`}
+                title='查看智能体主页'
+              />
+            )}
           </div>
           <div>
             <span>
@@ -296,14 +302,12 @@ function LadderScene(
               {entry ? `个人最高 ${stats.bestStreak} 场` : '先选择参赛智能体'}
             </small>
           </div>
-          <div>
-            <span>
-              <Crown size={14} />全服最高胜率
-            </span>
-            <strong>{rate(query.data?.highestWinRate)}</strong>
-          </div>
+          <HighestWinRate
+            value={rate(query.data?.highestWinRate)}
+            agentID={query.data?.highestWinRateAgentID}
+          />
         </div>
-      </Link>
+      </div>
       <div className='sortie-scenarios' role='group' aria-label='选择出战场景'>
         {scenes.map((s) => {
           const image = sortieArtwork(s.id)
@@ -331,10 +335,9 @@ function LadderScene(
       <section
         ref={loadout}
         className='sortie-loadout'
-        aria-labelledby='sortie-entry-title'
+        aria-label='参赛角色'
       >
         <div className='sortie-loadout-top'>
-          <h3 id='sortie-entry-title'>本次出战</h3>
           <span>
             <ShieldCheck size={14} />自动使用参赛版本
           </span>
@@ -483,11 +486,6 @@ function LadderScene(
                     )
                     : '尚未设置参赛版本'}
                 </span>
-                {entry && (
-                  <Link to={`/agents/${entry.agentID}`}>
-                    查看智能体 <ChevronRight size={13} />
-                  </Link>
-                )}
               </div>
               <div className='sortie-deploy'>
                 <div className='sortie-match-note'>

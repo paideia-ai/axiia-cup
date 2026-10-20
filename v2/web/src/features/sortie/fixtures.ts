@@ -58,27 +58,3 @@ export const demoOpponents: (Entry & { name: string })[] = sortieEntries
   )
 
 export type SortieEntry = typeof sortieEntries[number]
-
-// Mirrors the saved-version IDs served by preview-sortie.ts. Alternate agents
-// start with no fictional ladder history; changing versions retains agentID.
-export const sortieVersionEntries: SortieEntry[] = sortieEntries.flatMap(
-  (base) => {
-    const inventory = portraitInventory.scenarios.find((s) =>
-      s.scenarioID === base.scenarioID
-    )!
-    return inventory.sides[base.side].filter((agent) => !agent.isArchived)
-      .flatMap((agent) =>
-        Array.from({ length: agent.versionCount }, (_, index) => ({
-          ...base,
-          ...(agent.agentID === base.agentID
-            ? {}
-            : { wins: 0, losses: 0, draws: 0, streak: 0, bestStreak: 0 }),
-          agentID: agent.agentID,
-          versionID: agent.agentID * 10 + index,
-          ordinal: index + 1,
-          roleKey: agent.role?.key ?? base.side,
-          roleName: agent.role?.name ?? base.roleName,
-        }))
-      )
-  },
-)
