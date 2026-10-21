@@ -32,6 +32,21 @@ afterEach(() => {
 })
 
 describe('navigation data lifetime', () => {
+  it('invalidates ladder statistics on entry changes, starts and match completion', () => {
+    for (
+      const path of [
+        '/agents/101/entry',
+        '/ladder/pairings/ticket/start',
+        '/matches/123',
+      ]
+    ) {
+      const key = ['ladder', 'owner', 'scenario']
+      navigationCache.setQueryData(key, { entries: [], highestWinRate: null })
+      invalidateNavigation(path)
+      expect(navigationCache.getQueryState(key)?.isInvalidated).toBe(true)
+    }
+  })
+
   it('coalesces simultaneous catalog reads but separates guest credentials', async () => {
     const response = deferred<Response>()
     const fetch = vi.fn(() => response.promise.then((value) => value.clone()))

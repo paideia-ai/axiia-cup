@@ -5,6 +5,7 @@ import {
   History,
   LayoutDashboard,
   Shield,
+  Swords,
   Trophy,
   UserRound,
 } from 'lucide-react'
@@ -32,6 +33,7 @@ import { tm } from '../../testmode/mark'
 const navigation = [
   { to: '/scenarios', label: '场景', icon: LayoutDashboard },
   { to: '/my-agents', label: '我的智能体', icon: Bot },
+  { to: '/sortie', label: '天梯', icon: Swords },
   { to: '/tournaments', label: '排名', icon: Trophy },
   { to: '/matches', label: '历史', icon: History },
 ]
@@ -205,10 +207,26 @@ export function AppShell({ children }: PropsWithChildren) {
               className={cn(
                 'shell-mobile-link flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium text-(--foreground-muted)',
                 active && 'text-(--accent)',
+                item.to === '/sortie' && active && 'font-bold',
               )}
             >
-              <span className='shell-mobile-icon inline-flex h-7 w-12 items-center justify-center rounded-full'>
-                <item.icon className='h-5 w-5' />
+              <span
+                className={cn(
+                  'shell-mobile-icon inline-flex h-7 w-12 items-center justify-center rounded-full',
+                  item.to === '/sortie' &&
+                    '!h-11 !w-11 -mt-4 shadow-[0_0_0_4px_var(--background)]',
+                  item.to === '/sortie' && !active &&
+                    '!bg-[#303030] text-[#ddd]',
+                  item.to === '/sortie' && active &&
+                    '!bg-(--accent) text-white',
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    'h-5 w-5',
+                    item.to === '/sortie' && 'h-[23px] w-[23px]',
+                  )}
+                />
               </span>
               {item.label}
             </Link>

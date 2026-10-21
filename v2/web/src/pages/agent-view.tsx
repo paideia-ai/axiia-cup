@@ -107,6 +107,7 @@ function AgentView({ agentID }: { agentID: number }) {
     : null
 
   const [osOpen, setOsOpen] = useState(false)
+  const [npcPanelKey, setNpcPanelKey] = useState(0)
   const [preferVersionID, setPreferVersionID] = useState<number | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [savedVersionID, setSavedVersionID] = useState<number | null>(null)
@@ -224,6 +225,33 @@ function AgentView({ agentID }: { agentID: number }) {
       })
     }
   }, [agentID])
+
+  // A practice link opens the existing opponent picker for this exact owned version.
+  // Consume the action so closing the panel or reloading does not reopen it.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('battle') !== 'npc' || currentView?.kind !== 'owner') return
+    const versionID = positiveID(params.get('version'))
+    if (
+      versionID != null &&
+      currentView.versions.some((version) => version.id === versionID)
+    ) {
+      setPreferVersionID(versionID)
+      setNpcPanelKey((key) => key + 1)
+      setOsOpen(true)
+    }
+    params.delete('battle')
+    navigate(`${location.pathname}?${params}`, {
+      replace: true,
+      state: location.state,
+    })
+  }, [
+    currentView,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ])
 
   useLayoutEffect(() => {
     if (renaming) {
@@ -875,6 +903,7 @@ function AgentView({ agentID }: { agentID: number }) {
               : null}
 
             <OsPanel
+              key={npcPanelKey}
               hasOppositeAgent={inventory.data == null
                 ? undefined
                 : inventory.data.scenarios.find((item) =>

@@ -800,6 +800,7 @@ export interface NPCProfileResponse {
 }
 
 export interface PublicAgentResponse {
+  ladderRecord?: LadderRecord | null
   role?: RoleIdentityDTO | null
   agentID: number
   scenarioID: string
@@ -879,4 +880,34 @@ export interface EmotionSnapshot {
   enabled: boolean
   settled: boolean
   outputs: EmotionOutput[]
+}
+
+export interface LadderRecord {
+  wins: number
+  losses: number
+  draws: number
+  streak: number
+  bestStreak: number
+}
+export interface LadderEntryDTO {
+  agentID: number
+  versionID: number
+  ordinal: number
+  ownerID: string
+  ownerName: string
+  scenarioID: string
+  side: Side
+  role?: RoleIdentityDTO | null
+  record: LadderRecord
+}
+export interface LadderOverviewResponse {
+  entries: LadderEntryDTO[]
+  highestWinRate?: number | null
+  highestWinRateAgentID?: number | null
+}
+export interface LadderPairingResponse {
+  id: string
+  expiresAt: number
+  entry: LadderEntryDTO
+  opponent: LadderEntryDTO
 }

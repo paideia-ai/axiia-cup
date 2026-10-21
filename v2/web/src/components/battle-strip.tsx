@@ -20,6 +20,7 @@ import { tm } from '../testmode/mark'
 
 // #72 路由白名单：DA 场景介绍 / EA·构建器（/agents/*）/ 我的智能体。
 const DISPATCH_ROUTES = [
+  /^\/sortie$/,
   /^\/scenarios\/[^/]+$/,
   /^\/agents\/.+$/,
   /^\/my-agents$/,

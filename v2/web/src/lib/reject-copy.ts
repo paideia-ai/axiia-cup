@@ -21,6 +21,11 @@ export function rejectCopy(
 ): string {
   if (!(error instanceof ApiError)) return messageOf(error, fallback)
   switch (error.code) {
+    case 'entry_changed':
+    case 'pairing_expired':
+      return '参赛版本已变化或匹配已过期，请重新匹配。'
+    case 'no_opponent':
+      return '该场景对侧暂无可用对手。'
     case 'insufficient_points':
       return '积分不足，未发起对战。可先领取胜利奖励，或等待北京时间次日 00:00 的每日积分。'
     // #52 触顶行为已定：按钮可点 → 点击后给这句 → 不入队。
@@ -99,6 +104,11 @@ export function accountRejectCopy(
 ): string {
   if (error instanceof ApiError) {
     switch (error.code) {
+      case 'entry_changed':
+      case 'pairing_expired':
+        return '参赛版本已变化或匹配已过期，请重新匹配。'
+      case 'no_opponent':
+        return '该场景对侧暂无可用对手。'
       case 'invalid_credentials':
         return '当前密码不正确'
       case 'weak_password':
