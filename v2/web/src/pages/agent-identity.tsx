@@ -27,6 +27,8 @@ export function AgentIdentityPage() {
     )
   }
   const agent = view?.kind === 'public' ? view.publicView : null
+  const ladder = agent?.ladderRecord
+  const ladderGames = ladder ? ladder.wins + ladder.losses + ladder.draws : 0
   const versions = [...agent?.versions ?? []].sort((a, b) =>
     Number(b.id === versionID) - Number(a.id === versionID) || b.id - a.id
   )
@@ -77,6 +79,31 @@ export function AgentIdentityPage() {
                 提示词仅主人可见。
               </p>
             </header>
+            {ladder && (
+              <section
+                aria-label='天梯战绩'
+                className='flex flex-wrap items-center justify-between gap-4 rounded-xl border border-(--border-soft) bg-(--surface) px-5 py-5'
+              >
+                <div className='space-y-2'>
+                  <h2 className='text-base font-semibold text-(--foreground)'>
+                    天梯胜率
+                  </h2>
+                  <p className='text-xs text-(--foreground-subtle)'>
+                    该智能体跨版本累计
+                  </p>
+                  <p className='text-xs text-(--foreground-subtle)'>
+                    {ladderGames} 场 · {ladder.wins} 胜 · {ladder.losses} 负 ·
+                    {' '}
+                    {ladder.draws} 平
+                  </p>
+                </div>
+                <p className='text-3xl font-semibold tabular-nums text-(--foreground)'>
+                  {ladderGames
+                    ? `${(ladder.wins / ladderGames * 100).toFixed(1)}%`
+                    : '—'}
+                </p>
+              </section>
+            )}
             {versionID && !versions.some((v) => v.id === versionID) && (
               <p role='status' className='text-sm text-(--foreground-subtle)'>
                 版本 #{versionID} 暂不可用。

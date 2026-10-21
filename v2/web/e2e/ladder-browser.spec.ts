@@ -260,3 +260,93 @@ test('agent win rate follows the selected entry and opens its home', async ({ pa
   await expect(page).toHaveURL(new RegExp(`/agents/${other.agentID}$`))
   await expect(page.locator('[data-tm="EA.scenario-link"]')).toBeVisible()
 })
+
+for (const width of [390, 1440]) {
+  test(`identity shows cumulative ladder separately from version records at ${width}px`, async ({ page }) => {
+    await fixtures(page)
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/agents/8000/identity')
+    const record = page.getByRole('region', { name: '天梯战绩', exact: true })
+    await expect(record).toContainText('58.6%')
+    await expect(record).toContainText('29 场 · 17 胜 · 10 负 · 2 平')
+    await expect(page.getByTestId('identity-version')).toContainText('69.2%')
+    await expect(page.getByTestId('identity-version')).toHaveAttribute(
+      'href',
+      '/matches?agent=8000&version=80000',
+    )
+    expect(
+      await page.evaluate(() =>
+        document.documentElement.scrollWidth > innerWidth
+      ),
+    ).toBe(false)
+    await page.goto('/agents/8040/identity')
+    await expect(record).toContainText('0 场 · 0 胜 · 0 负 · 0 平')
+    await expect(record).toContainText('—')
+  })
+}
+
+test('identity remains readable when an older server omits ladder records', async ({ page }) => {
+  await fixtures(page)
+  await page.route(
+    '**/v1/agents/8000/public',
+    (route) =>
+      route.fulfill({
+        json: {
+          agentID: 8000,
+          scenarioID: 'shangyang-court',
+          scenarioTitle: '商鞅变法',
+          side: 'a',
+          sideName: '商鞅',
+          ownerName: '山月',
+          versions: [{
+            id: 80000,
+            ordinal: 1,
+            isEntry: true,
+            createdAt: 1700000000,
+            matchCount: 20,
+            winCount: 10,
+            lossCount: 10,
+            drawCount: 0,
+          }],
+        },
+      }),
+  )
+  await page.goto('/agents/8000/identity')
+  await expect(page.getByTestId('identity-version')).toContainText('50%')
+  await expect(page.getByRole('region', { name: '天梯战绩', exact: true }))
+    .toHaveCount(0)
+})
+
+test('ladder shows a recently finished loss with a battle report link', async ({ page }) => {
+  await fixtures(page)
+  await page.route('**/v1/matches', (route) =>
+    route.fulfill({
+      json: {
+        open: true,
+        matches: [{
+          id: 9876,
+          scenarioID: 'shangyang-court',
+          scenarioTitle: '商鞅变法',
+          kind: 'pvp',
+          dispatched: true,
+          finished: true,
+          scored: true,
+          winner: 'b',
+          createdAt: Date.now() / 1000 - 60,
+          finishedAt: Date.now() / 1000,
+          initiatorIsMe: true,
+          participants: {
+            a: { versionID: 13000, ownerDisplayName: '你', isMine: true },
+            b: { versionID: 13500, ownerDisplayName: '对手', isMine: false },
+          },
+        }],
+      },
+    }))
+  await page.goto('/sortie')
+  const report = page.getByRole('link').filter({ hasText: '刚完成' })
+  await expect(report).toContainText('对方')
+  await expect(report).toContainText('胜')
+  await expect(report).toHaveAttribute('href', '/matches/9876')
+  await expect(page.getByRole('button', { name: '随机匹配', exact: true }))
+    .toBeEnabled()
+})

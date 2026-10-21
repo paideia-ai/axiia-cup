@@ -108,6 +108,9 @@ export function createSortieLadderAPI() {
         entry: dto(own),
         opponent: dto(opponent),
       }
+      for (const [id, previous] of pairings) {
+        if (previous.matchID == null) pairings.delete(id)
+      }
       pairings.set(ticket.id, { ticket, own, opponent })
       return Response.json(ticket)
     }

@@ -96,6 +96,7 @@ export async function sortieDemoAPI(request: Request, path: string) {
       e.scenarioID === rival.scenarioID && e.side === rival.side
     )!
     const role = { key: base.roleKey, name: base.roleName, side: rival.side }
+    const ladderRecord = sortieLadderAPI.record(rival)
     return json({
       agentID: rival.agentID,
       scenarioID: rival.scenarioID,
@@ -104,16 +105,17 @@ export async function sortieDemoAPI(request: Request, path: string) {
       sideName: rival.side === 'a' ? scene.sideAName : scene.sideBName,
       ownerName: rival.name,
       role,
+      ladderRecord,
       versions: [{
         id: rival.versionID,
         ordinal: 1,
         isEntry: true,
         createdAt: 1700000000,
         role,
-        matchCount: gamesPlayed(sortieLadderAPI.record(rival)),
-        winCount: sortieLadderAPI.record(rival).wins,
-        lossCount: sortieLadderAPI.record(rival).losses,
-        drawCount: sortieLadderAPI.record(rival).draws,
+        matchCount: gamesPlayed(ladderRecord) + 10,
+        winCount: ladderRecord.wins + 10,
+        lossCount: ladderRecord.losses,
+        drawCount: ladderRecord.draws,
       }],
     })
   }

@@ -800,6 +800,7 @@ export interface NPCProfileResponse {
 }
 
 export interface PublicAgentResponse {
+  ladderRecord?: LadderRecord | null
   role?: RoleIdentityDTO | null
   agentID: number
   scenarioID: string

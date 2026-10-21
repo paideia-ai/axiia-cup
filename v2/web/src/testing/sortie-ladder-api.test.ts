@@ -33,13 +33,12 @@ it('allows three concurrent battles across scenarios, starts each ticket once, a
     expect(response.body.opponent.side).not.toBe(entry.side)
     expect(response.body.opponent.scenarioID).toBe(entry.scenarioID)
     tickets.push(response.body.id)
-  }
-  expect((await send('/matches')).body.matches).toHaveLength(0)
-  for (const ticket of tickets.slice(0, 3)) {
-    const path = `/ladder/pairings/${ticket}/start`
-    const started = await send(path, {})
-    expect(started.status).toBe(200)
-    expect(await send(path, {})).toEqual(started)
+    if (tickets.length <= 3) {
+      const path = `/ladder/pairings/${response.body.id}/start`
+      const started = await send(path, {})
+      expect(started.status).toBe(200)
+      expect(await send(path, {})).toEqual(started)
+    }
   }
   expect(
     (await send('/matches')).body.matches.filter((m: { finished: boolean }) =>
@@ -111,4 +110,19 @@ it('excludes ten or fewer games from the highest rate while retaining own record
       .toBe(200)
     vi.advanceTimersByTime(45001)
   }
+})
+
+it('a new pairing replaces only unstarted tickets', async () => {
+  const send = client()
+  const old = await send('/ladder/pairings', {
+    versionID: sortieEntries[0].versionID,
+  })
+  const current = await send('/ladder/pairings', {
+    versionID: sortieEntries[2].versionID,
+  })
+  expect((await send(`/ladder/pairings/${old.body.id}/start`, {})).status).toBe(
+    404,
+  )
+  expect((await send(`/ladder/pairings/${current.body.id}/start`, {})).status)
+    .toBe(200)
 })

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>智能体身份页：前后对比</title>
+    <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 24px auto;
+      padding: 0 20px;
+      max-width: 1280px;
+      color: #222;
+      background: #fff;
+      font: 14px/1.6 Arial, sans-serif;
+    }
+    h1 {
+      font-size: 23px;
+      margin: 0 0 8px;
+    }
+    h2 {
+      font-size: 17px;
+      margin: 0 0 4px;
+    }
+    p {
+      margin: 0 0 14px;
+    }
+    a {
+      color: #184e9b;
+      text-decoration: underline;
+    }
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid #184e9b;
+      outline-offset: 4px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid #ccc;
+    }
+    button {
+      font: inherit;
+      padding: 4px 14px;
+      cursor: pointer;
+    }
+    button[aria-pressed="true"] {
+      font-weight: bold;
+      border: 2px solid #222;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+    figcaption {
+      min-height: 84px;
+    }
+    figcaption p {
+      color: #555;
+    }
+    .shot {
+      display: block;
+      text-align: center;
+      background: #f5f5f5;
+      border: 1px solid #ccc;
+    }
+    img {
+      display: block;
+      width: 100%;
+      max-width: 390px;
+      height: auto;
+      margin: 0 auto;
+    }
+    body[data-size="desktop"] img {
+      max-width: none;
+    }
+    footer {
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 14px;
+    }
+    @media (max-width: 680px) {
+      body {
+        padding: 0 12px;
+      }
+      .comparison {
+        gap: 12px;
+      }
+      figcaption {
+        min-height: 118px;
+      }
+      h2 {
+        font-size: 15px;
+      }
+    }
+    </style>
+  </head>
+  <body data-size="mobile">
+    <h1>智能体身份页：前后对比</h1>
+    <p>同一个智能体、同一份模拟战绩。新增卡片展示跨版本累计的天梯胜率，原有版本战绩保留。</p>
+    <nav aria-label="预览尺寸">
+      <button type="button" data-size="mobile" aria-pressed="true">手机</button>
+      <button type="button" data-size="desktop"
+        aria-pressed="false">电脑</button>
+      <span>点击截图可查看原图。</span>
+    </nav>
+    <main class="comparison">
+      <figure>
+        <figcaption>
+          <h2>改动前 · 原身份页</h2>
+          <p>仅显示逐版本战绩，版本综合胜率为 69.2%。</p>
+        </figcaption>
+        <a class="shot" href="/demo/identity-compare/before-mobile.png"
+          target="_blank" rel="noopener">
+          <img src="/demo/identity-compare/before-mobile.png"
+            alt="改动前：智能体身份页只有 v1 的战绩与 69.2% 胜率。">
+        </a>
+      </figure>
+      <figure>
+        <figcaption>
+          <h2>改动后 · 新增卡片 demo</h2>
+          <p>新增天梯胜率 58.6%，原版本胜率仍为 69.2%。已纳入本次 PR。</p>
+        </figcaption>
+        <a class="shot" href="/demo/identity-compare/after-mobile.png"
+          target="_blank" rel="noopener">
+          <img src="/demo/identity-compare/after-mobile.png"
+            alt="改动后：上方新增天梯胜率 58.6%，29 场、17 胜、10 负、2 平；下方版本胜率保留 69.2%。">
+        </a>
+      </figure>
+    </main>
+    <footer>
+      <p><a href="/agents/8000/identity">打开改动后的可交互 demo</a> · <a href="/sortie">返回天梯</a></p>
+      <p>截图使用相同模拟数据展示页面差异，并非生产账户战绩。正式后端已提供同口径的天梯统计；此链接使用模拟数据。</p>
+    </footer>
+    <script>
+    document.querySelectorAll('button[data-size]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const size = button.dataset.size
+        document.body.dataset.size = size
+        document.querySelectorAll('button[data-size]').forEach((other) => {
+          other.setAttribute('aria-pressed', String(other === button))
+        })
+        document.querySelectorAll('.shot').forEach((link, index) => {
+          const src = `/demo/identity-compare/${
+            index === 0 ? 'before' : 'after'
+          }-${size}.png`
+          link.href = src
+          link.querySelector('img').src = src
+        })
+      })
+    })
+    </script>
+  </body>
+</html>

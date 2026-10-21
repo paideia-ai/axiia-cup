@@ -93,7 +93,7 @@ export function createSortieMatches() {
       isMine: mine,
     })
     const winner = outcome === 'draw'
-      ? null
+      ? 'draw'
       : outcome === 'win'
       ? own.side
       : other.side
