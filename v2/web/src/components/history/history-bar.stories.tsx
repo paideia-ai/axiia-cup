@@ -79,3 +79,50 @@ export const MixedHistory: Story = {
     ).not.toBeNull()
   },
 }
+
+export const AgentNamesAtMatchStart: Story = {
+  render: () => (
+    <MemoryRouter>
+      <div className='space-y-2'>
+        {['旧名称', '新名称', null].map((name, i) => {
+          const match = historyFixtures()[0]
+          return (
+            <HistoryBar
+              key={i}
+              match={{
+                ...match,
+                id: 800 + i,
+                participants: {
+                  a: {
+                    agentID: 400,
+                    versionID: 4000 + i,
+                    agentName: name,
+                    isMine: true,
+                  },
+                  b: {
+                    agentID: 401,
+                    versionID: 4005,
+                    agentName: '对手策略',
+                    ownerDisplayName: '另一位玩家',
+                    isMine: false,
+                  },
+                },
+              }}
+              roles={{ a: '董卓', b: '吕布' }}
+            />
+          )
+        })}
+      </div>
+    </MemoryRouter>
+  ),
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement)
+    await expect(c.getByText('旧名称')).toBeVisible()
+    await expect(c.getByText('新名称')).toBeVisible()
+    await expect(c.getByText('#400')).toBeVisible()
+    await expect(c.getAllByText('另一位玩家 · 对手策略')).toHaveLength(3)
+    await expect(c.getByRole('link', { name: /我的智能体 · 旧名称/ }))
+      .toHaveAttribute('href', '/agents/400?version=4000&match=800')
+    await expect(c.queryByText('#401')).toBeNull()
+  },
+}

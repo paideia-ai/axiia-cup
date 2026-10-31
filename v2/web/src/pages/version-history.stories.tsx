@@ -54,7 +54,7 @@ export const FromVersionToReportAndBack: Story = {
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       1,
     )
-    await expect(canvas.getByRole('button', { name: '清除版本 #1001 筛选' }))
+    await expect(canvas.getByRole('button', { name: '清除版本 V·1001 筛选' }))
       .toBeVisible()
     await userEvent.click(canvas.getByRole('link', { name: /对战 #9001/ }))
     await canvas.findByRole('heading', { name: '对战 #9001' })
@@ -83,7 +83,7 @@ export const BothSidesAndCombinedFilters: Story = {
     await expect(canvas.queryByRole('link', { name: /对战 #9001/ })).toBeNull()
     await expect(canvas.queryByRole('link', { name: /对战 #9004/ })).toBeNull()
     await userEvent.click(
-      canvas.getByRole('button', { name: '清除版本 #1002 筛选' }),
+      canvas.getByRole('button', { name: '清除版本 V·1002 筛选' }),
     )
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       5,
@@ -112,7 +112,7 @@ export const VersionWithoutGames: Story = {
     )
     await expect(canvas.queryByRole('link', { name: /对战 #/ })).toBeNull()
     await userEvent.click(
-      canvas.getByRole('button', { name: '清除版本 #1003 筛选' }),
+      canvas.getByRole('button', { name: '清除版本 V·1003 筛选' }),
     )
     await expect(canvas.getAllByRole('link', { name: /对战 #/ })).toHaveLength(
       4,

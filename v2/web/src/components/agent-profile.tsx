@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 export function IdentityVersionCard({
   title,
+  versionID,
   href,
   modelID,
   matchCount,
@@ -11,6 +12,7 @@ export function IdentityVersionCard({
   context,
 }: {
   title: string
+  versionID?: number
   href: string
   modelID?: string
   matchCount: number
@@ -30,6 +32,7 @@ export function IdentityVersionCard({
     <Link
       to={href}
       data-testid='identity-version'
+      data-version-id={versionID}
       {...tm('EA.public-version-item')}
       aria-label={`${title}，查看对战记录`}
       className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4 transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-4 ${
