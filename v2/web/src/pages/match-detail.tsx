@@ -1700,7 +1700,7 @@ function ParticipantCard({
         <Badge {...tm('FA.participant-side-badge')} tone='info'>
           {sideLabel}
         </Badge>
-        <span className='text-sm text-(--foreground)'>
+        <span className='min-w-0 max-w-full wrap-anywhere text-sm text-(--foreground)'>
           <span {...tm('FA.participant-name')} className='font-bold'>
             {name}
           </span>

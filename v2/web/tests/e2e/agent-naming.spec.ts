@@ -62,3 +62,20 @@ for (const width of [390, 1440]) {
     })
   })
 }
+
+test('long custom names fit the participant card on a narrow phone', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 })
+  await page.route('**/v1/matches/8101', async (route) => {
+    const response = await route.fetch()
+    const body = await response.json()
+    body.summary.participants.a.agentName = 'W'.repeat(30)
+    await route.fulfill({ json: body })
+  })
+  await page.goto('/matches/8101')
+  const name = page.locator('[data-tm="FA.participant-name"]').first()
+  await expect(name).toHaveText('W'.repeat(30))
+  const overflow = await name.evaluate((node) =>
+    node.getBoundingClientRect().right > innerWidth
+  )
+  expect(overflow).toBe(false)
+})
