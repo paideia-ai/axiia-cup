@@ -495,6 +495,9 @@ export interface TurnDTO {
 // 的所有权；提示词永不出现。预设侧带 presetKey（+模型）；版本侧带对手钉约战
 // （P3）所需的版本/agent/玩家名引用。
 export interface MatchParticipantDTO {
+  // Match-start snapshot; queued matches carry the current name.
+  agentName?: string | null
+  presetLabel?: string | null
   role?: RoleIdentityDTO | null
   agentID?: number | null
   versionID?: number | null

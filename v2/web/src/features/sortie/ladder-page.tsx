@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../../lib/version-label'
 import { HighestWinRate } from './highest-win-rate'
 import {
   ChevronRight,
@@ -480,7 +481,7 @@ function LadderScene(
                       <>
                         参赛 v{entry.ordinal}
                         <span className='sortie-entry-id'>
-                          · #{entry.versionID}
+                          · {versionIDLabel(entry.versionID)}
                         </span>
                       </>
                     )

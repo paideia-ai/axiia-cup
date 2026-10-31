@@ -10,7 +10,10 @@ import { TabbedJudgeTranscript } from '../components/judge-transcript/tabbed-jud
 import { scriptEvent } from '../lib/event'
 import { canConsolidateEnding } from '../lib/match-ending'
 import { MatchEnding } from '../components/match-ending'
-import { npcIdentityPath } from '../lib/identity-links'
+import {
+  participantIdentityPath,
+  participantName,
+} from '../lib/participant-identity'
 import { TranscriptTabs } from '../components/transcript-tabs'
 import { sliceTranscriptGroup, transcriptTabPlan } from '../lib/transcript-tabs'
 import { invalidateNavigation } from '../lib/navigation-cache'
@@ -1663,32 +1666,21 @@ function ParticipantCard({
   participant: MatchParticipantDTO
 }) {
   const [copied, setCopied] = useState(false)
-  const copyID = () => {
+  const [copyError, setCopyError] = useState(false)
+  const copyID = async () => {
     const id = participant.versionID
     if (id == null) return
-    // 非安全上下文没有 clipboard——静默不复制，id 仍然可见可手抄。
+    setCopyError(false)
     try {
-      void navigator.clipboard.writeText(String(id)).then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1500)
-      }).catch(() => {})
+      await navigator.clipboard.writeText(String(id))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
     } catch {
-      // 忽略
+      setCopyError(true)
     }
   }
-  const identityHref = participant.isMine
-    ? participant.agentID != null
-      ? `/agents/${participant.agentID}${
-        participant.versionID != null ? `?version=${participant.versionID}` : ''
-      }`
-      : null
-    : participant.presetKey != null
-    ? npcIdentityPath(scenarioID, participant.presetKey, matchID)
-    : participant.agentID != null && participant.versionID != null
-    ? `/agents/${participant.agentID}/identity?version=${participant.versionID}&match=${matchID}`
-    : null
-  const name = participant.ownerDisplayName ??
-    (participant.presetKey != null ? `预设 · ${participant.presetKey}` : '—')
+  const identityHref = participantIdentityPath(scenarioID, matchID, participant)
+  const name = participantName(participant)
   return (
     <div
       {...tm('FA.participant-card')}
@@ -1698,9 +1690,9 @@ function ParticipantCard({
         <Link
           {...tm('FA.participant-link')}
           to={identityHref}
-          aria-label={`${sideLabel} · ${name}${
-            participant.versionID != null ? ` · v#${participant.versionID}` : ''
-          }，${participant.isMine ? '打开我的智能体主页' : '打开智能体资料'}`}
+          aria-label={`${sideLabel} · ${name}，${
+            participant.isMine ? '打开我的智能体主页' : '打开智能体资料'
+          }`}
           className='absolute -inset-px z-10 rounded-xl transition hover:bg-white/3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--accent)'
         />
       )}
@@ -1712,19 +1704,16 @@ function ParticipantCard({
           <span {...tm('FA.participant-name')} className='font-bold'>
             {name}
           </span>
-          {participant.versionID != null
-            ? (
-              <span
-                {...tm('FA.version-id')}
-                className='text-sm text-(--foreground-subtle)'
-              >
-                {` · v#${participant.versionID}`}
-              </span>
-            )
-            : null}
         </span>
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
+        {participant.agentID != null && (
+          <span>
+            {participant.isMine
+              ? '我的智能体'
+              : participant.ownerDisplayName || '其他玩家'}
+          </span>
+        )}
         {participant.modelID
           ? (
             <span
@@ -1746,7 +1735,7 @@ function ParticipantCard({
               {copied
                 ? <Check className='h-3 w-3 text-(--success)' />
                 : <Copy className='h-3 w-3' />}
-              {copied ? '已复制' : '复制 id'}
+              {copied ? '已复制' : '复制约战 ID'}
             </button>
           )
           : participant.presetKey != null
@@ -1755,11 +1744,16 @@ function ParticipantCard({
               {...tm('FA.preset-label')}
               className='text-(--foreground-muted)'
             >
-              PVE 预设 · {participant.presetKey}
+              平台 NPC
             </span>
           )
           : null}
       </div>
+      {copyError && (
+        <p role='status' className='mt-2 text-xs text-(--foreground-subtle)'>
+          复制失败，请进入智能体版本页查看约战 ID。
+        </p>
+      )}
     </div>
   )
 }

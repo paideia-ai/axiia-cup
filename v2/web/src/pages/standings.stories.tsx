@@ -73,7 +73,7 @@ export const SubmittedVersionOpensOwningAgent: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const link = await canvas.findByRole('link', {
-      name: '查看版本 #360 的智能体',
+      name: '查看版本 V·360 的智能体',
     })
     // Both responsive layouts must keep each submitted version navigable.
     for (
@@ -100,7 +100,7 @@ export const OtherSubmittedVersionOpensItsOwnAgent: Story = {
     const canvas = within(canvasElement)
     await userEvent.click(
       await canvas.findByRole('link', {
-        name: '查看版本 #361 的智能体',
+        name: '查看版本 V·361 的智能体',
       }),
     )
     await expect(await canvas.findByRole('heading', { name: '智能体 225' }))

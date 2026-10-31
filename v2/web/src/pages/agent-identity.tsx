@@ -1,3 +1,5 @@
+import { useMatchVersionFocus } from '../lib/use-match-version-focus'
+import { versionIDLabel } from '../lib/version-label'
 import { currentRoleIdentity, hasSelectableRoles } from '../lib/role-identity'
 import { tm } from '../testmode/mark'
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
@@ -18,11 +20,12 @@ export function AgentIdentityPage() {
   const tournamentID = positiveID(params.get('tournament'))
   const profile = usePageQuery({ ...agentQuery(id ?? 0), enabled: id != null })
   const view = profile.data?.requestedAgentID === id ? profile.data : null
+  useMatchVersionFocus(view?.kind === 'public')
   if (view?.kind === 'owner') {
     return (
       <Navigate
         replace
-        to={`/agents/${id}${versionID ? `?version=${versionID}` : ''}`}
+        to={`/agents/${id}?${params}`}
       />
     )
   }
@@ -106,7 +109,7 @@ export function AgentIdentityPage() {
             )}
             {versionID && !versions.some((v) => v.id === versionID) && (
               <p role='status' className='text-sm text-(--foreground-subtle)'>
-                版本 #{versionID} 暂不可用。
+                版本 {versionIDLabel(versionID)} 暂不可用。
               </p>
             )}
             <section aria-label='逐版本战绩' {...tm('EA.public-record-card')}>
@@ -122,7 +125,10 @@ export function AgentIdentityPage() {
                 {versions.map((version) => (
                   <IdentityVersionCard
                     key={version.id}
-                    title={`v${version.ordinal} · #${version.id}${
+                    versionID={version.id}
+                    title={`v${version.ordinal} · ${
+                      versionIDLabel(version.id)
+                    }${
                       hasSelectableRoles(agent.scenarioID)
                         ? ` · ${nameOf(version.role)}`
                         : ''

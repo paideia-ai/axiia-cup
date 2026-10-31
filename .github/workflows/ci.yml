@@ -79,6 +79,9 @@ jobs:
       - name: Native navigation browser journeys
         run: deno task test:e2e:navigation
 
+      - name: Agent naming and history snapshots browser journeys
+        run: deno task test:e2e:agent-naming
+
       - name: Navigation and scroll browser journeys
         run: deno task test:e2e:scroll
 

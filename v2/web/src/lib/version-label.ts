@@ -70,3 +70,7 @@ export function editedCopy(at?: number, now = Date.now()): string {
   if (hours < 24) return `${hours} 小时前编辑`
   return `${Math.floor(hours / 24)} 天前编辑`
 }
+
+export function versionIDLabel(id: number): string {
+  return `V·${id}`
+}
