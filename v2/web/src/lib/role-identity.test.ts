@@ -109,7 +109,7 @@ describe('participant role identity is separate from scenario faction', () => {
         'a',
       ),
     ).toBe('商鞅')
-    expect(speakerName(speakerLabels(null, {}), 'a')).toBe('甲方')
+    expect(speakerName(speakerLabels(null, {}), 'a')).toBe('角色待确认')
   })
   it('keeps known concrete names in legacy prose and resolves faction-named rows from the actual match', () => {
     expect(
@@ -271,4 +271,45 @@ describe('current role names', () => {
       }).name,
     ).toBe('商鞅')
   })
+})
+
+it('distinguishes unresolved match participants by agent ID across history and speakers', () => {
+  const participants = {
+    a: { isMine: true, agentID: 101 },
+    b: { isMine: false, agentID: 102 },
+  }
+  const labels = speakerLabels(scenarioID, {}, [], participants)
+  for (const side of ['a', 'b'] as const) {
+    const identity = roleIdentity({
+      scenarioID,
+      side,
+      agentID: participants[side].agentID,
+    })
+    expect(identity.resolved).toBe(false)
+    expect(identity.name).toBe(
+      `智能体 #${participants[side].agentID}（角色待确认）`,
+    )
+    expect(sideName(labels, side)).toBe(identity.name)
+  }
+})
+
+it('ignores generic metadata placeholders but keeps known scenario role names', () => {
+  expect(
+    roleIdentity({
+      scenarioID: 'shangyang-court',
+      side: 'a',
+      lanes: { a: '甲方' },
+      fallback: '甲方',
+    }).name,
+  ).toBe('商鞅')
+  for (
+    const fallback of ['甲方', '乙方', '角色待确认', '乙方（角色待确认）', ' ']
+  ) {
+    expect(roleIdentity({ scenarioID: 'unknown', side: 'b', fallback }))
+      .toEqual({
+        name: '角色待确认',
+        roleKey: null,
+        resolved: false,
+      })
+  }
 })

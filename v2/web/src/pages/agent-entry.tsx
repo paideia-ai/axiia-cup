@@ -97,11 +97,11 @@ function AgentEntry({ scenarioID, side, target, express }: {
     return (
       <div className='space-y-4'>
         <h1 className='text-2xl font-bold'>创建智能体</h1>
-        <p>先为{side === 'a' ? '甲方' : '乙方'}选择一个角色。</p>
+        <p>请选择一个角色。</p>
         <CreateAgentAction
           scenarioID={scenarioID}
           side={side}
-          role={side === 'a' ? '甲方' : '乙方'}
+          role='角色'
           express={express}
         >
           选择角色
