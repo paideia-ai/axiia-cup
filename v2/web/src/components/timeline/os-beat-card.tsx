@@ -183,8 +183,13 @@ export function OsBeatCard({
                 {beat.favor
                   ? (
                     <span>
-                      当前倾向：<OutputText
-                        text={speakerName(labels, beat.favor)}
+                      {beat.dimension === 'stance'
+                        ? '倾向立场：'
+                        : '当前倾向（旧版）：'}
+                      <OutputText
+                        text={beat.dimension === 'stance'
+                          ? beat.favor
+                          : speakerName(labels, beat.favor)}
                         source={beat.favor}
                       />
                       {beat.strength

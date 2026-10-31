@@ -13,8 +13,6 @@ export interface SpeakerLabels {
   readonly participants?: MatchParticipantsDTO | null
 }
 
-const SIDE_NAMES: Record<string, string> = { a: '甲方', b: '乙方' }
-
 export function speakerLabels(
   slotID: string | null | undefined,
   lanes: Record<string, string>,
@@ -41,7 +39,7 @@ export function speakerName(labels: SpeakerLabels, key: string): string {
   if (role) return role.name
   const fromModule: string | undefined = labels.module?.laneLabels[key]
   const fromMatch: string | undefined = labels.lanes[key]
-  return fromModule ?? fromMatch ?? SIDE_NAMES[key] ?? key
+  return fromModule ?? fromMatch ?? key
 }
 
 export function speakerSide(labels: SpeakerLabels, key: string): Side | null {
@@ -65,6 +63,7 @@ export function sideName(
     scenarioID: labels.module?.slotID,
     side,
     role: labels.participants?.[side]?.role,
+    agentID: labels.participants?.[side]?.agentID,
     lanes: labels.lanes,
     speakers,
   }).name
@@ -81,8 +80,13 @@ export function speakerAccent(labels: SpeakerLabels, key: string): string {
 export function judgeFavorSide(
   labels: SpeakerLabels,
   favor: string | null,
+  dimension: 'stance' | 'legacy' = 'legacy',
 ): Side | null {
   if (!favor) return null
+  if (dimension === 'stance') {
+    const stances = labels.module?.judgeStances
+    return stances?.a === favor ? 'a' : stances?.b === favor ? 'b' : null
+  }
   const declared = labels.module?.favorSides?.[favor]
   if (declared) return declared
   const direct = speakerSide(labels, favor)

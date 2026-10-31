@@ -23,6 +23,7 @@ export function HistoryBar({ match: m, roles }: {
       scenarioID: m.scenarioID,
       side,
       role: m.participants?.[side]?.role,
+      agentID: m.participants?.[side]?.agentID,
       fallback: roles?.[side],
     }).name
   const names = { a: nameOf('a'), b: nameOf('b') }

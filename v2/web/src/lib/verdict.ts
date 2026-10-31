@@ -58,6 +58,7 @@ export function isOsBeatVerdict(verdict: VerdictDTO): boolean {
 }
 
 export interface OsBeat {
+  dimension: 'stance' | 'legacy'
   os: string | null
   // W7 对齐后的词汇（P4-S）：attention＝最挂心，favor＝当前倾向，strength＝
   // 倾向强度（离散档位文本）。老对局钉死旧脚本 sha，仍会送来 focus/tendency，
@@ -68,9 +69,8 @@ export interface OsBeat {
   fallbackText: string | null
 }
 
-// os/attention/favor/strength is the W7-aligned vocabulary (focus/tendency the
-// legacy one); another scenario's beat payload may carry none of it, in which
-// case the raw output is still worth a card.
+// New scripts emit one stance. Normalize it to favor for replay consumers,
+// retaining its dimension so historical role preferences are never relabeled.
 export function parseOsBeat(output: string): OsBeat {
   let payload: unknown = null
   try {
@@ -82,6 +82,7 @@ export function parseOsBeat(output: string): OsBeat {
     payload == null || typeof payload !== 'object' || Array.isArray(payload)
   ) {
     return {
+      dimension: 'legacy',
       os: null,
       attention: null,
       favor: null,
@@ -96,9 +97,11 @@ export function parseOsBeat(output: string): OsBeat {
   }
   const os = text('os')
   const attention = text('attention') ?? text('focus')
-  const favor = text('favor') ?? text('tendency')
+  const stance = text('stance')
+  const favor = stance ?? text('favor') ?? text('tendency')
   const strength = text('strength')
   return {
+    dimension: stance ? 'stance' : 'legacy',
     os,
     attention,
     favor,

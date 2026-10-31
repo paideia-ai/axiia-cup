@@ -217,6 +217,7 @@ export function parseLedger(
           scenarioID: context.slotID,
           side,
           role: context.participants?.[side]?.role,
+          agentID: context.participants?.[side]?.agentID,
           lanes: context.lanes,
           speakers: context.speakers,
           fallback: name,
@@ -265,6 +266,7 @@ export function ledgerFromScore(
       scenarioID: context.slotID,
       side,
       role: context.participants?.[side]?.role,
+      agentID: context.participants?.[side]?.agentID,
       lanes: context.lanes,
       speakers: context.speakers ?? turns.map((turn) => turn.speaker),
     }).name

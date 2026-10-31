@@ -147,12 +147,13 @@ test('身份和同角色栏集中在主页', async ({ page }) => {
     await page.goto(`/agents/${agentA}`)
   })
 
-  await test.step('那么 标题显示名称，副行显示场景、侧、版本数和真实 agent id', async () => {
+  await test.step('那么 标题显示名称，副行显示场景、版本数和真实 agent id', async () => {
     await expect(page.getByRole('heading', { name: '商鞅「贪婪」' }))
       .toBeVisible()
     const subtitle = page.locator('[data-tm="EA.subtitle"]')
     await expect(subtitle).toContainText(SCENARIO_TITLE)
-    await expect(subtitle).toContainText('甲方')
+    await expect(subtitle).not.toContainText('甲方')
+    await expect(subtitle).not.toContainText('乙方')
     await expect(subtitle).toContainText('2 个版本')
     await expect(subtitle).toContainText(`#${agentA}`)
   })

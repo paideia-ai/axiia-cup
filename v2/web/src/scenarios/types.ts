@@ -174,6 +174,8 @@ export interface ScenarioModule {
   // lane/角色的显示名，可自动解析；词汇不经由任何 lane 的场景（如电车的
   // 一人侧/五人侧）在此显式声明。
   favorSides?: Record<string, Side>
+  // Main-decision vocabulary; never inferred from the selected speaker.
+  judgeStances?: Record<Side, string>
   // DA 四层教育内容；缺席的场景走通用空态轮廓（#54）。
   education?: ScenarioEducation
   // 只读系统角色模板展示文案（#68）：按侧给出，占位符用〔…〕样式实填示意。
