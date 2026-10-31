@@ -81,7 +81,7 @@ export function HistoryBar({ match: m, roles }: {
           const info = p?.agentID != null && !p.isMine
             ? `${p.ownerDisplayName || '其他玩家'} · ${name}`
             : p?.presetKey
-            ? `平台 NPC · ${name}`
+            ? `NPC · ${name}`
             : name
           const title = `${names[side]} · ${
             p?.isMine ? '我的智能体 · ' : ''

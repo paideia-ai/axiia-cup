@@ -62,7 +62,7 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (req) => {
     const title = liveSidebar ? '对战布局本地预览' : '五场景完整战报预览'
     const intro = liveSidebar
       ? '历史样本的开局、进行中与完局状态；进行中页面会显示一段模拟流式发言。使用本分支的正式页面组件，不连接线上服务。'
-      : '本地历史样本 · 只读。以下页面使用本分支未经修改的生产构建，包含正式页面布局与交互。样本数据和本地预览账号不代表平台实时数据。'
+      : '本地历史样本 · 只读。以下页面使用本分支未经修改的生产构建，包含正式页面布局与交互。样本数据和本地预览账号不代表线上实时数据。'
     return new Response(
       `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${title}</title><style>body{background:white;color:#222;font:16px/1.8 Arial,sans-serif;max-width:720px;margin:40px auto;padding:20px}a{color:#0645ad;text-decoration:underline}a:focus-visible{outline:2px solid #0645ad}li{margin:12px 0}</style><h1>${title}</h1><p>${intro}</p><ul>${
         scenes.map(([id, name]) =>
