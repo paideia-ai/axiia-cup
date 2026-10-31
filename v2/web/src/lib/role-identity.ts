@@ -4,6 +4,7 @@ import { roleByKey, roleOfOptions, scenarioModule } from '../scenarios'
 export interface RoleIdentityContext {
   scenarioID?: string | null
   side: Side
+  agentID?: number | null
   role?: RoleIdentityDTO | null
   roleKey?: string | null
   options?: JSONValue | string | null
@@ -15,6 +16,23 @@ export interface RoleIdentityContext {
 
 export function hasSelectableRoles(scenarioID?: string | null): boolean {
   return (scenarioModule(scenarioID)?.roles.length ?? 0) > 0
+}
+
+// Generic side placeholders are not evidence of a participant's role.
+function concreteLabel(value?: string | null): string | undefined {
+  const name = value?.trim()
+  return name && !/^[甲乙]方(?:（角色待确认）)?$/.test(name) &&
+      name !== '角色待确认' && !/^智能体 #\d+（角色待确认）$/.test(name)
+    ? name
+    : undefined
+}
+
+function unresolvedRole(agentID?: number | null) {
+  return {
+    name: agentID != null ? `智能体 #${agentID}（角色待确认）` : '角色待确认',
+    roleKey: null,
+    resolved: false,
+  }
 }
 
 // Factions describe the scenario; roles identify a particular participant.
@@ -60,19 +78,15 @@ export function roleIdentity(context: RoleIdentityContext): {
     if (named) {
       return { name: named.name, roleKey: named.key, resolved: true }
     }
-    return {
-      name: `${context.side === 'a' ? '甲方' : '乙方'}（角色待确认）`,
-      roleKey: null,
-      resolved: false,
-    }
+    return unresolvedRole(context.agentID)
   }
-  return {
-    name: context.lanes?.[context.side] ?? context.fallback ??
-      module?.laneLabels[context.side] ??
-      (context.side === 'a' ? '甲方' : '乙方'),
-    roleKey: null,
-    resolved: true,
-  }
+  const name = concreteLabel(context.lanes?.[context.side]) ??
+    concreteLabel(context.fallback) ??
+    concreteLabel(module?.laneLabels[context.side]) ??
+    concreteLabel(module?.intro?.source.participants.sides[context.side].name)
+  return name
+    ? { name, roleKey: null, resolved: true }
+    : unresolvedRole(context.agentID)
 }
 
 // Pages about agents as they are now (the battle panel, agent pages, version

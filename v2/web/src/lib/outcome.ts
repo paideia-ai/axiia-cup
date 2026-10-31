@@ -17,9 +17,6 @@ export interface OutcomeInput {
   participants?: MatchParticipantsDTO | null
 }
 
-// 场景角色名缺席（catalog 未加载/未知场景）时的兜底叫法。
-const FALLBACK_ROLES: RoleNames = { a: '甲方', b: '乙方' }
-
 export function outcomeCopy(
   match: OutcomeInput,
   roles?: RoleNames | null,
@@ -27,19 +24,28 @@ export function outcomeCopy(
   const winner = match.winner
   if (winner === 'draw') return '平局'
   if (winner !== 'a' && winner !== 'b') return null
-  const name = match.scenarioID || match.participants?.[winner]?.role
-    ? roleIdentity({
-      scenarioID: match.scenarioID,
-      side: winner,
-      role: match.participants?.[winner]?.role,
-      fallback: roles?.[winner],
-    }).name
-    : roles?.[winner] || FALLBACK_ROLES[winner]
+  const identity = roleIdentity({
+    scenarioID: match.scenarioID,
+    side: winner,
+    role: match.participants?.[winner]?.role,
+    agentID: match.participants?.[winner]?.agentID,
+    fallback: roles?.[winner],
+  })
+  const name = identity.name
   // 防御（round4 评审 #7）：participants 形态不全（{} 或缺一侧）时不抛错，
   // 按旁观处理——两处都全程可选链。
   const participants = match.participants ?? null
   const mineA = participants?.a?.isMine === true
   const mineB = participants?.b?.isMine === true
+  if (!identity.resolved) {
+    if (mineA !== mineB) {
+      return (winner === 'a' ? mineA : mineB) ? '我方获胜' : '对手获胜'
+    }
+    const result = match.participants?.[winner]?.agentID != null
+      ? `${name}胜`
+      : '胜方角色待确认'
+    return mineA && mineB ? `左右手互搏 · ${result}` : result
+  }
   // 左右手互搏（#65）：两侧都是我，「我方/对方」失义——标互搏、报胜侧角色。
   if (mineA && mineB) return `左右手互搏 · ${name}胜`
   // 旁观 / open 历史 / 老服务器：只报胜侧角色。
@@ -49,8 +55,7 @@ export function outcomeCopy(
 }
 
 // 角色名映射（round4 评审 #10）：catalog 场景清单 → {场景 id: 双侧角色名}，
-// battle-strip 与历史页共用同一构建；缺席场景由 outcomeCopy 自行回退
-// 甲方/乙方。
+// battle-strip 与历史页共用同一构建；缺席场景由 outcomeCopy 按归属显示结果。
 export function scenarioRoles(
   scenarios: ScenarioSummary[],
 ): Record<string, RoleNames> {
