@@ -6,6 +6,7 @@ import config from './playwright.config'
 export default defineConfig({
   ...config,
   testMatch: [
+    'battle-strip-layout.spec.ts',
     'navigation-links.spec.ts',
     'direct-agent-creation.spec.ts',
     'scenario-portrait-layout.spec.ts',

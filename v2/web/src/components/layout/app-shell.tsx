@@ -46,6 +46,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const navigate = useNavigate()
   const location = useLocation()
   const { pathname } = location
+  const showBattleStrip = account &&
+    !/^\/(?:admin|express)(?:\/|$)/.test(pathname)
   const navigationItems = !account
     ? navigation.filter((item) => item.to === '/scenarios')
     : account.isAdmin
@@ -170,10 +172,9 @@ export function AppShell({ children }: PropsWithChildren) {
         <NavigationActivity />
       </header>
       <main
-        className={`mx-auto flex w-full ${contentWidth} flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8`}
+        className={`app-main mx-auto flex w-full ${contentWidth} flex-1 flex-col gap-6 px-4 py-8 pb-24 sm:px-6 md:pb-8`}
       >
-        {/* #72 对战条：只在派发处路由出现，空态自动隐藏（组件内自守）。 */}
-        {account ? <BattleStrip /> : null}
+        {showBattleStrip ? <BattleStrip key={account.id} /> : null}
         {children}
       </main>
       <footer
