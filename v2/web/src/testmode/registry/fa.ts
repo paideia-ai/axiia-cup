@@ -130,7 +130,7 @@ export const TM_FA: TmRegistry = {
   'FA.preset-label': {
     label: 'PVE 预设标注',
     clauses: ['U07-C03', 'U07-C08'],
-    note: 'NPC 使用比赛固定的预设名称，副行标「平台 NPC」',
+    note: 'NPC 使用比赛固定的预设名称，副行标「NPC」',
     when: 'PVE 对局的 NPC 侧',
   },
 

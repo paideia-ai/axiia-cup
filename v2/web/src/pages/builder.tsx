@@ -1084,7 +1084,7 @@ export function BuilderPage() {
     }
   }
 
-  // P14：E8 承诺过的「复制当前文本」——平台不做 AI 改写，就得给复制手段。
+  // P14：E8 承诺过的「复制当前文本」——不做 AI 改写，就得给复制手段。
   const copyPrompt = async () => {
     const value = prompt
     try {

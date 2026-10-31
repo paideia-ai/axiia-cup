@@ -1744,7 +1744,7 @@ function ParticipantCard({
               {...tm('FA.preset-label')}
               className='text-(--foreground-muted)'
             >
-              平台 NPC
+              NPC
             </span>
           )
           : null}

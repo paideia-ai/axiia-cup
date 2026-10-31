@@ -121,9 +121,8 @@ function Preview() {
           </div>
           <p className='achievement-preview-note'>
             {preferences.enabled && preferences.volume > 0
-              ? '声音沿用你当前的平台音量。'
-              : '当前平台声音已关闭，回放会保持静音。'}{' '}
-            这里的样例不会记入你的成就。
+              ? '声音沿用你当前的音量。'
+              : '当前声音已关闭，回放会保持静音。'} 这里的样例不会记入你的成就。
           </p>
         </section>
         <ul className='achievement-preview-guide'>
