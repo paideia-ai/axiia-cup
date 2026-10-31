@@ -81,8 +81,13 @@ export function speakerAccent(labels: SpeakerLabels, key: string): string {
 export function judgeFavorSide(
   labels: SpeakerLabels,
   favor: string | null,
+  dimension: 'stance' | 'legacy' = 'legacy',
 ): Side | null {
   if (!favor) return null
+  if (dimension === 'stance') {
+    const stances = labels.module?.judgeStances
+    return stances?.a === favor ? 'a' : stances?.b === favor ? 'b' : null
+  }
   const declared = labels.module?.favorSides?.[favor]
   if (declared) return declared
   const direct = speakerSide(labels, favor)

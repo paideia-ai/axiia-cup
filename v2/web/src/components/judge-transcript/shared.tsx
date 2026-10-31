@@ -37,7 +37,7 @@ export interface TabbedJudgePresentation extends JudgePresentation {
   beatTabs: Record<string, number>
 }
 export function colorOf(step: ReplayBeatStep, labels: SpeakerLabels) {
-  const side = judgeFavorSide(labels, step.beat.favor)
+  const side = judgeFavorSide(labels, step.beat.favor, step.beat.dimension)
   return side === 'a'
     ? 'var(--accent)'
     : side === 'b'

@@ -28,9 +28,8 @@ const STRENGTH_MAGNITUDE: Record<string, number> = {
 // 词汇外的强度文本按中档处理；favor 解析不出侧别时落在 0 线上。
 const DEFAULT_MAGNITUDE = 0.5
 
-// favor 是场景脚本的显示名词汇（商鞅/甘龙、董卓/吕布、角色名……），先走场景
-// 模块的显式映射，再依次尝试：lane key 本身、模块角色名、对局 speakerLabels
-// 的显示名、模块 laneLabels 的显示名。
+// New stance values use the scenario decision vocabulary only. Historical
+// favor values retain their original role/lane mapping and legacy axis labels.
 
 const SIDE_COLOR: Record<Side, string> = {
   a: 'var(--accent)',
@@ -84,7 +83,7 @@ export function JudgeTrendChart({
   }, [fitWidth, beats.length])
   const allPoints = beats
     .map((step) => {
-      const side = judgeFavorSide(labels, step.beat.favor)
+      const side = judgeFavorSide(labels, step.beat.favor, step.beat.dimension)
       const magnitude = side == null
         ? 0
         : STRENGTH_MAGNITUDE[step.beat.strength ?? ''] ?? DEFAULT_MAGNITUDE
@@ -130,8 +129,14 @@ export function JudgeTrendChart({
   }, [revealedSignature])
 
   if (beats.length === 0) return null
-  const nameA = sideName(labels, 'a', speakers)
-  const nameB = sideName(labels, 'b', speakers)
+  const isStance = beats.every((step) => step.beat.dimension === 'stance')
+  const title = isStance ? '裁判立场倾向' : '裁判倾向轨迹（旧版）'
+  const nameA = isStance
+    ? labels.module?.judgeStances?.a ?? '立场甲'
+    : sideName(labels, 'a', speakers)
+  const nameB = isStance
+    ? labels.module?.judgeStances?.b ?? '立场乙'
+    : sideName(labels, 'b', speakers)
 
   const width = geometry.width
   const line = geometry.segments.filter((_, index) =>
@@ -152,7 +157,7 @@ export function JudgeTrendChart({
     <div {...tm('FA.trend-chart')} className='space-y-2'>
       <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
         <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
-          裁判倾向轨迹
+          {title}
         </p>
       </div>
       <div
@@ -203,7 +208,7 @@ export function JudgeTrendChart({
             width={width}
             height={HEIGHT}
             role='group'
-            aria-label={`裁判倾向轨迹：上为${nameA}，下为${nameB}，共 ${beats.length} 拍`}
+            aria-label={`${title}：上为${nameA}，下为${nameB}，共 ${beats.length} 拍`}
             className='block'
           >
             <line

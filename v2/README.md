@@ -91,6 +91,13 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+For the stance-only Judge OS preview, run `deno task preview:judge-stance` in
+`v2/web` and open http://localhost:6038. It includes Honnoji, Shangyang and trolley
+examples plus an unchanged historical report. New OS examples are handwritten
+fixtures over historical dialogue, not model evaluations or a rerun of match 481.
+New scripts emit `os` and `stance`; historical `favor` / `tendency` values remain
+role preferences and are never converted into policy decisions.
+
 For the responsive match activity rail, run `deno task preview:battle-strip`
 and open `http://localhost:6056/preview`. It serves the production build with
 read-only local fixtures for active/recent matches, a long list and an empty
