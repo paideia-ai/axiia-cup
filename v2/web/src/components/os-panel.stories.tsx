@@ -1351,7 +1351,7 @@ export const HonnojiChosokabeNames: Story = {
     )
     await userEvent.click(canvas.getByRole('button', { name: '查询' }))
     await expect(await canvas.findByRole('button', { name: '与四国玩家对战' }))
-      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · .+ · #367$/)
+      .toHaveAccessibleDescription(/^长宗我部元亲的密使 · .+ · V·367$/)
     expect(canvas.queryByText(/长宗我部元亲阵营/)).toBeNull()
   },
 }

@@ -1,5 +1,57 @@
 import { expect, test } from '@playwright/test'
 
+for (const entry of ['match', 'deep link']) {
+  test(`browser Back preserves mobile version browsing after ${entry} entry`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 700 })
+    const agentURL = '/agents/400?version=9001&match=8101'
+    if (entry === 'match') {
+      await page.goto('/matches/8101')
+      await page.locator('[data-tm="FA.participant-card"]').first()
+        .getByRole('link').click()
+    } else {
+      await page.goto(agentURL)
+    }
+    await expect(page).toHaveURL(agentURL)
+    await expect(page.locator('[data-version-id="9001"]')).toBeInViewport()
+    const focusedY = await page.evaluate(() => scrollY)
+    const history = page.locator('[data-version-id="9002"]')
+      .getByTestId('version-record')
+    await history.evaluate((node) => {
+      scrollTo({
+        top: scrollY + node.getBoundingClientRect().top - 200,
+        behavior: 'instant',
+      })
+    })
+    await expect(history).toBeInViewport()
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(
+      focusedY + 150,
+    )
+    // Let the browser emit the scroll event before leaving the page.
+    await page.evaluate(() =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+    )
+    const browsedY = await page.evaluate(() => scrollY)
+    await history.click()
+    await expect(page).toHaveURL('/matches?version=9002')
+    await page.goBack()
+    await expect(page).toHaveURL(agentURL)
+    await expect.poll(async () =>
+      Math.abs(await page.evaluate(() => scrollY) - browsedY)
+    ).toBeLessThan(3)
+    await expect(history).toBeInViewport()
+    // Forward and another Back must keep the same saved browsing position.
+    await page.goForward()
+    await expect(page).toHaveURL('/matches?version=9002')
+    await page.goBack()
+    await expect(page).toHaveURL(agentURL)
+    await expect.poll(async () =>
+      Math.abs(await page.evaluate(() => scrollY) - browsedY)
+    ).toBeLessThan(3)
+  })
+}
+
 for (const width of [390, 1440]) {
   test(`names survive rename, links locate the actual version at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })

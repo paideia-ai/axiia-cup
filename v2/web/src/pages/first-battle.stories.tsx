@@ -176,7 +176,7 @@ export const SaveReloadAndExplicitStart: Story = {
     )
     await userEvent.type(input, saved.prompt)
     await userEvent.click(canvas.getByRole('button', { name: '保存版本' }))
-    expect(await canvas.findByText('已保存版本 v1（#9001）')).toBeVisible()
+    expect(await canvas.findByText('已保存版本 v1（V·9001）')).toBeVisible()
     await waitFor(() =>
       expect(canvas.getByRole('button', { name: '保存版本' })).toBeEnabled()
     )
@@ -188,7 +188,7 @@ export const SaveReloadAndExplicitStart: Story = {
     await userEvent.click(
       canvas.getByRole('button', { name: '重新打开构建器' }),
     )
-    await canvas.findByText('已保存版本 v1（#9001）')
+    await canvas.findByText('已保存版本 v1（V·9001）')
     await waitFor(() =>
       expect(canvas.getByTestId('start-first-battle')).toBeEnabled()
     )
@@ -407,7 +407,7 @@ export const SameAgentNavigationReconcilesCompletedRequests: Story = {
     await waitFor(() => expect(releaseSave).not.toBeNull())
     await userEvent.click(canvas.getByRole('link', { name: '切换构建器位置' }))
     releaseSave?.()
-    await canvas.findByText('已保存版本 v2（#9002）')
+    await canvas.findByText('已保存版本 v2（V·9002）')
     await waitFor(() => expect(save).toBeEnabled())
     expect(canvas.queryByTestId('destination')).toBeNull()
     expect(saves).toBe(1)
