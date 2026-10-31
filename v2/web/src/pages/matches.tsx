@@ -1,13 +1,12 @@
 import { PageLoading } from '../components/page-loading'
 import { Check, X } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { agents, npcs } from '../api/client'
 import { Button } from '../components/ui/button'
 import { positiveID } from '../lib/identity-links'
 
 import type { MatchSummary } from '../api/types'
-import { Badge } from '../components/ui/badge'
-import { Card, CardContent } from '../components/ui/card'
+import { HistoryBar } from '../components/history/history-bar'
 import { Select, SelectItem } from '../components/ui/select'
 import type { RoleNames } from '../lib/outcome'
 import { outcomeCopy, scenarioRoles } from '../lib/outcome'
@@ -16,24 +15,6 @@ import { catalogQuery, matchesQuery } from '../lib/navigation-queries'
 import { tm } from '../testmode/mark'
 
 const ALL_SCENARIOS = '__all_scenarios__'
-
-function statusTone(summary: MatchSummary) {
-  if (summary.finished) return 'success' as const
-  if (!summary.dispatched) return 'info' as const
-  if (!summary.finished) return 'warning' as const
-  return 'success' as const
-}
-
-// F7（#69 一眼知胜负）：完局行不再是裸「胜方 A/B」——用带视角的
-// outcomeCopy（我方（商鞅）胜 / 对方（甘龙）胜 / 胜方 商鞅）。catalog 拉不
-// 到角色名时 outcomeCopy 自己回退 甲方/乙方；open 历史（双方都非我）自然落
-// 在「胜方 角色」。
-function statusLabel(summary: MatchSummary, roles: RoleNames | null) {
-  if (!summary.finished) return summary.dispatched ? '进行中' : '排队中'
-  if (!summary.scored) return '未计分'
-  return outcomeCopy(summary, roles) ??
-    (summary.winner ? `胜方 ${summary.winner.toUpperCase()}` : '平局')
-}
 
 // F7（#66 历史双场约战）：相邻且同 challengeID 的行并成一组，挂在成对表头下；
 // 落单的腿（另一条不相邻或被过滤）仍按单行渲染，只带 约战①/② 小标。
@@ -177,81 +158,7 @@ export function MatchesPage() {
   const rolesOf = (summary: MatchSummary) => roles[summary.scenarioID] ?? null
 
   const matchCard = (summary: MatchSummary) => (
-    <Card
-      key={summary.id}
-      data-scroll-anchor={`match-${summary.id}`}
-      className='history-card'
-    >
-      <Link
-        to={`/matches/${summary.id}`}
-        className='block'
-        {...tm('L.match-card')}
-      >
-        {summary.viewed === false && (
-          <span
-            className='history-unread-marker'
-            role='img'
-            aria-label='没有看过此对局'
-            title='没有看过此对局'
-          />
-        )}
-        <CardContent className='history-card-content flex items-center justify-between gap-3'>
-          <div>
-            <span
-              className='font-mono text-sm text-(--foreground)'
-              {...tm('L.match-id')}
-            >
-              对战 #{summary.id}
-            </span>
-            <span
-              className='ml-3 text-xs text-(--foreground-muted)'
-              {...tm('L.match-meta')}
-            >
-              {summary.scenarioTitle} · {summary.kind.toUpperCase()}
-            </span>
-            {/* F7 · #66：约战腿标出这是一对中的第几场。 */}
-            {summary.challengeLeg != null
-              ? (
-                <span
-                  className='ml-2 text-xs font-semibold text-(--accent)'
-                  {...tm('L.challenge-leg')}
-                >
-                  约战{summary.challengeLeg === 1 ? '①' : '②'}
-                </span>
-              )
-              : null}
-          </div>
-          <Badge tone={statusTone(summary)} {...tm('L.status-badge')}>
-            {statusLabel(summary, rolesOf(summary))}
-          </Badge>
-        </CardContent>
-      </Link>
-      {(['a', 'b'] as const).some((side) =>
-        summary.participants?.[side]?.isMine &&
-        summary.participants[side].agentID != null
-      ) && (
-        <div className='history-card-agents flex flex-wrap gap-x-4 gap-y-2 px-4 pb-4 text-xs md:px-6'>
-          {(['a', 'b'] as const).map((side) => {
-            const participant = summary.participants?.[side]
-            if (!participant?.isMine || participant.agentID == null) {
-              return null
-            }
-            return (
-              <Link
-                key={side}
-                to={`/agents/${participant.agentID}`}
-                className='text-(--foreground-subtle) underline underline-offset-4 hover:text-(--foreground)'
-                {...tm('L.owned-agent')}
-              >
-                {rolesOf(summary)?.[side] ?? (side === 'a' ? '甲方' : '乙方')}
-                {' · 我的智能体 #'}
-                {participant.agentID}
-              </Link>
-            )
-          })}
-        </div>
-      )}
-    </Card>
+    <HistoryBar key={summary.id} match={summary} roles={rolesOf(summary)} />
   )
 
   // 成对表头：两条腿都判完时把两场结果并排写清（测试者的字面诉求）。

@@ -123,28 +123,21 @@ export const CompactHistorySurface: Story = {
     await expect(links).toHaveLength(2)
     await expect(canvas.queryByRole('checkbox', { name: '查看所有对局' }))
       .toBeNull()
-    const mobile = canvasElement.ownerDocument.defaultView!.innerWidth <= 767
     for (const link of links) {
       const surface = link.parentElement!
-      const content = link.firstElementChild!
-      const description = content.firstElementChild!
-      // Check the outer card and inner row independently: checking only the
-      // marked link missed the old CSS styling the wrong nesting level.
       await expect(getComputedStyle(surface).boxShadow).toBe('none')
       await expect(getComputedStyle(surface).borderRadius).toBe('10px')
-      await expect(getComputedStyle(surface).borderTopWidth).toBe('1px')
-      await expect(getComputedStyle(content).borderTopWidth).toBe('0px')
-      await expect(getComputedStyle(content).paddingTop).toBe(
-        mobile ? '18px' : '20px',
+      await expect(getComputedStyle(link).display).toBe('flex')
+      if (canvasElement.ownerDocument.defaultView!.innerWidth > 600) {
+        await expect(surface.getBoundingClientRect().height)
+          .toBeLessThanOrEqual(64)
+      }
+      await expect(surface.querySelectorAll('.hbr-person')).toHaveLength(2)
+      await expect(surface.querySelector('.hbr-result')?.children).toHaveLength(
+        1,
       )
-      await expect(getComputedStyle(description).padding).toBe('0px')
     }
-    const plainContent = links[0].firstElementChild!
-    await expect(getComputedStyle(plainContent).paddingBottom).toBe(
-      mobile ? '18px' : '20px',
-    )
-    await expect(getComputedStyle(links[1].firstElementChild!).paddingBottom)
-      .toBe('8px')
+    await expect(canvas.getAllByText('身份信息缺失')).toHaveLength(2)
     await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
       .toBeVisible()
     await expect(canvasElement.querySelector('a a')).toBeNull()
@@ -479,7 +472,8 @@ export const HonnojiRolesFromSummary: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByText('对方（细川藤孝）胜')).toBeVisible()
+    await expect(await canvas.findByTitle('你（足利义昭的使者） 负'))
+      .toBeVisible()
     await expect(canvas.queryByText(/角色待确认/)).toBeNull()
   },
 }
