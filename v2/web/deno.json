@@ -73,6 +73,8 @@
     "preview:achievements": "deno run --allow-read=build/client,build/achievement-toast-preview,e2e/previews --allow-net e2e/preview-achievements.ts",
     "preview:sortie": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6055 e2e/preview-sortie.ts",
     "build:sortie-demo": "VITE_SORTIE_BROWSER_DEMO=true deno task build --outDir build/vercel-demo && deno eval \"await Deno.copyFile('preview/sortie/vercel.json', 'build/vercel-demo/vercel.json')\"",
-    "test:e2e:ladder": "deno run -A npm:playwright test --config playwright.ladder.config.ts"
+    "test:e2e:ladder": "deno run -A npm:playwright test --config playwright.ladder.config.ts",
+    "preview:history": "deno task build && deno run --allow-read=build/client --allow-net=0.0.0.0:5187 e2e/preview-history.ts",
+    "preview:history:live": "deno task build && deno run --allow-read=build/client --allow-net=0.0.0.0:5189,axiia-cup-2.isofucius.cn e2e/preview-history.ts --live"
   }
 }

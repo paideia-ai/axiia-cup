@@ -1,3 +1,7 @@
+import {
+  historyFixtures,
+  historyScenarios,
+} from '../../src/testing/history-fixtures'
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 import {
@@ -353,7 +357,7 @@ for (const width of [1440, 390]) {
         return [
           [rect.left + 4, rect.top + 4],
           [rect.right - 4, rect.bottom - 4],
-          [rect.left + rect.width / 2, rect.bottom - 4],
+          [rect.right - 30, rect.top + rect.height / 2],
         ].map(([x, y]) =>
           element.ownerDocument.elementFromPoint(x, y)?.closest('a')
             ?.getAttribute('href')
@@ -1203,3 +1207,63 @@ for (const hasEntry of [true, false]) {
     })
   }
 }
+
+test('compact history keeps all outcomes readable across desktop and mobile', async ({ page }) => {
+  const { errors } = await fixtures(page)
+  await page.context().route(
+    '**/v1/matches',
+    (route) =>
+      route.fulfill({ json: { matches: historyFixtures(), open: true } }),
+  )
+  await page.context().route(
+    '**/v1/scenarios',
+    (route) => route.fulfill({ json: { scenarios: historyScenarios } }),
+  )
+  await page.goto('/matches?mine=0')
+  await expect(page.locator('.history-bar')).toHaveCount(20)
+  for (const width of [1440, 1024, 768, 600, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 })
+    const geometry = await page.evaluate(() => ({
+      // The shared admin header has its own responsive layout. Verify that
+      // every history bar and its contents fit, independently of that header.
+      rows: [...document.querySelectorAll<HTMLElement>('.history-bar')].map(
+        (row) => {
+          const bounds = row.getBoundingClientRect()
+          const people = row.querySelector('.hbr-participants')!
+            .getBoundingClientRect()
+          const result = row.querySelector('.hbr-result')!
+            .getBoundingClientRect()
+          const text = row.querySelector('.hbr-result > strong')!
+            .getBoundingClientRect()
+          return {
+            height: bounds.height,
+            // The native report-link overlay extends across the 1px border.
+            overflow: row.scrollWidth > row.clientWidth + 1,
+            outsideViewport: bounds.left < 0 || bounds.right > innerWidth,
+            overlaps: people.right > result.left + 1,
+            clipped: text.left < result.left - 1,
+          }
+        },
+      ),
+    }))
+    for (const row of geometry.rows) {
+      expect(row.overflow, `bar content at ${width}px`).toBe(false)
+      expect(row.outsideViewport, `bar bounds at ${width}px`).toBe(false)
+      expect(row.overlaps).toBe(false)
+      expect(row.clipped).toBe(false)
+      if (width > 600) expect(row.height).toBeLessThanOrEqual(64)
+    }
+  }
+  await expect(page.locator('.hbr-result').filter({ hasText: '对局异常' }))
+    .toHaveCount(2)
+  await expect(
+    page.locator(
+      '.hbr-result > span, .hbr-person .lucide-check, .hbr-person .lucide-x',
+    ),
+  ).toHaveCount(0)
+  await expect(page.locator('.hbr-person:not(a)').first()).toHaveCSS(
+    'pointer-events',
+    'none',
+  )
+  expect(errors).toEqual([])
+})
