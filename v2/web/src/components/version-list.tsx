@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../lib/version-label'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { Check, ChevronDown, ChevronUp, Copy, Sword } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -207,7 +208,7 @@ export function VersionList({
                                 className='font-mono text-xs text-(--foreground-muted)'
                                 {...tm('E.version-id')}
                               >
-                                #{version.id}
+                                {versionIDLabel(version.id)}
                               </span>
                               <Badge
                                 tone='info'

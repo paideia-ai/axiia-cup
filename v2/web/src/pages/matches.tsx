@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../lib/version-label'
 import { PageLoading } from '../components/page-loading'
 import { Check, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
@@ -254,10 +255,10 @@ export function MatchesPage() {
                 next.delete('cursor')
                 return next
               }, { replace: true, state: { resetScroll: true } })}
-            aria-label={`清除版本 #${versionID} 筛选`}
+            aria-label={`清除版本 ${versionIDLabel(Number(versionID))} 筛选`}
             className='inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-lg border border-(--border-soft) px-3 text-(--foreground-subtle) hover:border-(--foreground-muted) hover:text-(--foreground) focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-(--foreground-subtle)'
           >
-            版本 #{versionID}
+            版本 {versionIDLabel(Number(versionID))}
             <X aria-hidden='true' className='size-3.5' />
           </button>
         </div>

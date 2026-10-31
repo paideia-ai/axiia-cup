@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../lib/version-label'
 import { roleIdentity } from '../lib/role-identity'
 import { navigationCache } from '../lib/navigation-cache'
 import { draftQuery, versionsQuery } from '../lib/navigation-queries'
@@ -1482,7 +1483,9 @@ export function BuilderPage() {
             data-testid='first-battle-start'
           >
             <p className='font-semibold'>
-              已保存版本 v{latestVersion.ordinal}（#{latestVersion.id}）
+              已保存版本 v{latestVersion.ordinal}（{versionIDLabel(
+                latestVersion.id,
+              )}）
             </p>
             <p className='text-sm text-(--foreground-subtle)'>
               保存不会发起对局或消耗积分。点击「开始首战」后使用此版本和新手预设对手。

@@ -52,10 +52,13 @@ export const OwnedAgentOpensDirectly: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const link = await canvas.findByRole('link', {
-      name: /我的智能体 #224/,
+      name: /我的智能体 · #224/,
     })
-    await expect(link).toHaveAttribute('href', '/agents/224')
-    await expect(canvas.queryByRole('link', { name: /我的智能体 #225/ }))
+    await expect(link).toHaveAttribute(
+      'href',
+      '/agents/224?version=359&match=9001',
+    )
+    await expect(canvas.queryByRole('link', { name: /我的智能体 · #225/ }))
       .toBeNull()
     await expect(canvasElement.querySelector('a a')).toBeNull()
     await userEvent.click(link)
@@ -93,9 +96,9 @@ export const BothOwnedSidesRemainReachable: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByRole('link', { name: /我的智能体 #224/ }))
+    await expect(await canvas.findByRole('link', { name: /我的智能体 · #224/ }))
       .toBeVisible()
-    const other = canvas.getByRole('link', { name: /我的智能体 #225/ })
+    const other = canvas.getByRole('link', { name: /我的智能体 · #225/ })
     await userEvent.click(other)
     await expect(await canvas.findByRole('heading', { name: '智能体 225' }))
       .toBeVisible()
@@ -138,7 +141,7 @@ export const CompactHistorySurface: Story = {
       )
     }
     await expect(canvas.getAllByText('身份信息缺失')).toHaveLength(2)
-    await expect(canvas.getByRole('link', { name: /我的智能体 #224/ }))
+    await expect(canvas.getByRole('link', { name: /我的智能体 · #224/ }))
       .toBeVisible()
     await expect(canvasElement.querySelector('a a')).toBeNull()
   },

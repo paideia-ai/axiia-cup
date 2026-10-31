@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../lib/version-label'
 import { sideDisplayName } from '../lib/side-display-name'
 import {
   opponentRoleLabel,
@@ -1046,9 +1047,9 @@ export function OsPanel({
                                       label={idRef.ownerDisplayName}
                                       detail={`${
                                         opponentRoles([idRef.role])
-                                      } · ${
-                                        modelLabel(idRef.modelID)
-                                      } · #${idRef.versionID}`}
+                                      } · ${modelLabel(idRef.modelID)} · ${
+                                        versionIDLabel(idRef.versionID)
+                                      }`}
                                       disabled={rowDisabled}
                                       pending={pendingOpponent ===
                                         `version:${idRef.versionID}`}

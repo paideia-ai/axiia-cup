@@ -97,7 +97,7 @@ export const TM_FA: TmRegistry = {
     label: '参战方卡',
     clauses: ['U07-C03', 'U07-C04', 'U07-C10'],
     note:
-      '展示名 + 模型（#21 永远公开）+ 版本 id 与复制按钮（#25）；我方/对手两种形态',
+      '比赛开始时的智能体名称、模型与约战 ID 复制按钮；未命名回退智能体编号',
   },
   'FA.participant-side-badge': {
     label: '参战角色徽章',
@@ -107,7 +107,7 @@ export const TM_FA: TmRegistry = {
   'FA.participant-name': {
     label: '参战方展示名',
     clauses: ['U07-C04'],
-    note: '双方统一展示加粗用户名与版本号',
+    note: '双方展示比赛开始时的智能体名称，不显示版本号',
   },
   'FA.participant-link': {
     label: '参战方卡片链接',
@@ -121,22 +121,16 @@ export const TM_FA: TmRegistry = {
     clauses: ['U07-C10', 'U02-C07'],
     note: '#21 模型永远公开——旁观者也看得到双方模型 id',
   },
-  'FA.version-id': {
-    label: '版本 id',
-    clauses: ['U07-C03', 'U05-C12'],
-    journeys: ['j6s4'],
-    note: '「v#252」——指定版本约战的发现路径（#25）',
-  },
   'FA.copy-id-button': {
     label: '复制 id 按钮',
     clauses: ['U07-C03'],
     journeys: ['j6s4'],
-    note: '复制后 1.5s 显示「已复制」；非安全上下文静默不复制，id 仍可手抄',
+    note: '复制本场参赛版本的约战 ID；失败时提示进入版本页查看',
   },
   'FA.preset-label': {
     label: 'PVE 预设标注',
     clauses: ['U07-C03', 'U07-C08'],
-    note: 'NPC 侧没有版本 id，标「PVE 预设 · key」（官方运行，#80）',
+    note: 'NPC 使用比赛固定的预设名称，副行标「平台 NPC」',
     when: 'PVE 对局的 NPC 侧',
   },
 

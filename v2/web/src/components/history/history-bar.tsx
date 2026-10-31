@@ -1,23 +1,17 @@
 import { Clock3, Minus, UserRound } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import type { MatchParticipantDTO, MatchSummary } from '../../api/types'
+import type { MatchSummary } from '../../api/types'
 import { historyResult } from '../../lib/history-result'
-import { npcIdentityPath } from '../../lib/identity-links'
+import {
+  participantIdentityPath,
+  participantName,
+} from '../../lib/participant-identity'
 import type { RoleNames } from '../../lib/outcome'
 import { roleIdentity } from '../../lib/role-identity'
 import { rolePortrait } from '../../lib/role-portrait'
 import { tm } from '../../testmode/mark'
 import { speakerLabels } from '../timeline/labels'
 import './history-bar.css'
-
-function identityPath(m: MatchSummary, p?: MatchParticipantDTO) {
-  if (p?.isMine && p.agentID != null) return `/agents/${p.agentID}`
-  if (p?.presetKey) return npcIdentityPath(m.scenarioID, p.presetKey, m.id)
-  if (p?.agentID != null && p.versionID != null) {
-    return `/agents/${p.agentID}/identity?version=${p.versionID}&match=${m.id}`
-  }
-  return null
-}
 
 export function HistoryBar({ match: m, roles }: {
   match: MatchSummary
@@ -79,20 +73,19 @@ export function HistoryBar({ match: m, roles }: {
       <div className='hbr-participants'>
         {sides.map((side) => {
           const p = m.participants?.[side]
-          const href = identityPath(m, p)
+          const href = participantIdentityPath(m.scenarioID, m.id, p)
           const outcome = result.winner
             ? result.winner === side ? 'win' : 'loss'
             : undefined
-          const info = p?.agentID != null
-            ? `${
-              p.isMine ? '智能体' : p.ownerDisplayName || '其他玩家'
-            } #${p.agentID}`
+          const name = participantName(p)
+          const info = p?.agentID != null && !p.isMine
+            ? `${p.ownerDisplayName || '其他玩家'} · ${name}`
             : p?.presetKey
-            ? '平台 NPC · 预设'
-            : '身份信息缺失'
-          const title = `${names[side]} · ${p?.isMine ? `我的${info}` : info}${
-            outcome ? outcome === 'win' ? ' · 胜' : ' · 负' : ''
-          }`
+            ? `平台 NPC · ${name}`
+            : name
+          const title = `${names[side]} · ${
+            p?.isMine ? '我的智能体 · ' : ''
+          }${info}${outcome ? outcome === 'win' ? ' · 胜' : ' · 负' : ''}`
           const portrait = rolePortrait(labels, side)
           const content = (
             <>

@@ -1,3 +1,4 @@
+import { useMatchVersionFocus } from '../lib/use-match-version-focus'
 import { positiveID } from '../lib/identity-links'
 import { currentRoleIdentity } from '../lib/role-identity'
 import { PageLoading } from '../components/page-loading'
@@ -102,6 +103,7 @@ function AgentView({ agentID }: { agentID: number }) {
       self: siblings.find((agent) => agent.agentID === agentID) ?? null,
     }
     : null
+  useMatchVersionFocus(data != null)
   const publicView = currentView?.kind === 'public'
     ? currentView.publicView
     : null

@@ -1,3 +1,4 @@
+import { versionIDLabel } from '../lib/version-label'
 import { PageLoading } from '../components/page-loading'
 import { standingsQuery } from '../lib/navigation-queries'
 import { Link, useParams } from 'react-router-dom'
@@ -19,9 +20,9 @@ function SubmittedVersions(
           key={id}
           to={`/versions/${id}?tournament=${tournamentID}`}
           className='underline decoration-(--border) underline-offset-4 hover:text-(--foreground) focus-visible:outline-2 focus-visible:outline-offset-2'
-          aria-label={`查看版本 #${id} 的智能体`}
+          aria-label={`查看版本 ${versionIDLabel(id)} 的智能体`}
         >
-          #{id}
+          {versionIDLabel(id)}
         </Link>
       ))}
     </span>
