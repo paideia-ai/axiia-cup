@@ -27,6 +27,7 @@
   "nodeModulesDir": "manual",
   "nodeModulesLinker": "hoisted",
   "tasks": {
+    "preview:story-context": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client,../scenarios/scenarios/fengyiting-real/script.js --allow-net=0.0.0.0:6061 e2e/preview-history.ts --story-context",
     "preview:battle-strip": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6056 e2e/preview-battle-strip.ts",
     "preview:live-judge": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6036 e2e/preview-judge-report.ts --live-sidebar",
     "preview:version-rail:build": "STORYBOOK_VERSION_RAIL_PREVIEW=1 deno task storybook:build",
