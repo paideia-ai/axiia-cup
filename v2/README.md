@@ -91,6 +91,19 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+For the responsive match activity rail, run `deno task preview:battle-strip`
+and open `http://localhost:6056/preview`. It serves the production build with
+read-only local fixtures for active/recent matches, a long list and an empty
+list. The preview address opens a directory linking to each page and sample;
+`http://localhost:6056/preview/help` also opens that directory. Special samples
+apply only to the current URL and do not persist in cookies. Resize the window
+to compare the left rail at 960px with the horizontal strip below that width.
+Rail widths are 112px below 1120px, 144px below 1360px, and 176px above that.
+Every device uses the same thresholds. Links and the collapse control are at
+least 44px high. Resizing preserves the page, match feed and collapse state.
+The page reserves space for the rail while keeping its 1040px maximum width;
+version tabs stay in the page until 1680px allows two separate side rails.
+
 For the scenario-to-agent flow, run `deno task preview:scenario-agents` and open
 `http://127.0.0.1:5178/scenarios/fengyiting-real`. This preview includes all five
 scenarios: Dong Zhuo has 13 agents and the second holds the entry version; each

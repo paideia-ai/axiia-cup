@@ -793,6 +793,151 @@ main .text-\(--accent\) {
   }
 }
 
+/* The horizontal strip stays in document flow on every narrow device. */
+.battle-strip-toggle,
+.battle-strip-card {
+  min-height: 44px;
+}
+
+.battle-strip-cards {
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-y: hidden;
+}
+
+.battle-strip-card {
+  white-space: nowrap;
+}
+
+/* Reserve a left column instead of relying on a large, empty outer gutter.
+   The original 1040px page stays centered whenever both columns fit there. */
+@media (min-width: 960px) {
+  .app-main {
+    --battle-rail-width: 112px;
+    --battle-version-space: 0px;
+  }
+
+  .app-main:has(.battle-strip) {
+    width: min(1040px, calc(100% - var(--battle-rail-width) - 48px -
+      var(--battle-version-space)));
+    margin-left: max(calc(var(--battle-rail-width) + 32px +
+      var(--battle-version-space)), calc((100% - 1040px) / 2));
+    margin-right: 16px;
+  }
+
+  .battle-strip {
+    position: fixed;
+    top: 80px;
+    left: max(16px, calc((100% - 1040px) / 2 - var(--battle-rail-width) - 16px -
+      var(--battle-version-space)));
+    z-index: 10;
+    display: flex;
+    width: var(--battle-rail-width);
+    max-height: calc(100dvh - 112px);
+    flex-direction: column;
+  }
+
+  .battle-strip-toggle {
+    position: relative;
+    flex-shrink: 0;
+    align-items: flex-start;
+    width: 100%;
+    gap: 0;
+    text-align: left;
+    letter-spacing: normal;
+  }
+
+  .battle-strip-toggle > svg {
+    position: absolute;
+    top: 1px;
+    left: 0;
+    flex-shrink: 0;
+    margin-top: 0;
+  }
+
+  .battle-strip-heading {
+    display: flex;
+    min-width: 0;
+    width: 100%;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .battle-strip-heading > span:first-child {
+    padding-left: 20px;
+  }
+
+  .battle-strip-cards {
+    min-height: 0;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 4px;
+    margin-inline: -4px;
+  }
+
+  .battle-strip-card {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+    border-radius: 10px;
+    padding: 8px;
+    white-space: normal;
+  }
+
+  .battle-strip-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .battle-strip-meta {
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 8px;
+  }
+
+  .battle-strip-id {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .battle-strip-status {
+    min-width: 0;
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .battle-strip-card[aria-current='page'] {
+    border-color: var(--foreground-muted);
+    background: var(--surface-elevated);
+  }
+}
+
+@media (min-width: 1120px) {
+  .app-main {
+    --battle-rail-width: 144px;
+  }
+}
+
+@media (min-width: 1360px) {
+  .app-main {
+    --battle-rail-width: 176px;
+  }
+}
+
+@media (min-width: 1680px) {
+  .app-main:has(.battle-strip):has(.version-directory-nav) {
+    --battle-version-space: 116px;
+  }
+}
+
 /* Version anchors preserve the document layout and its direct action controls. */
 .version-directory {
   display: grid;
@@ -964,6 +1109,62 @@ main .text-\(--accent\) {
 
   .version-directory-card {
     scroll-margin-top: 72px;
+  }
+}
+
+/* Prioritize the global battle rail on narrower desktops. Keep the existing
+   in-page version tabs until the two side directories fit next to the page. */
+@media (960px <= width < 1680px) {
+  .app-main:has(.battle-strip) {
+    .version-directory-nav,
+    .version-directory-content {
+      grid-column: auto;
+      grid-row: auto;
+    }
+
+    .version-directory-nav {
+      position: sticky;
+      top: 48px;
+      left: auto;
+      transform: none;
+      width: auto;
+      max-height: none;
+      flex-direction: row;
+      gap: 4px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 8px 0;
+      background: var(--background);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .version-directory-link {
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .version-directory-label {
+      display: flex;
+    }
+
+    .version-directory-number,
+    .version-directory-tick {
+      display: none;
+    }
+
+    .version-directory-link:hover {
+      background: var(--surface);
+    }
+
+    .version-directory-link[aria-current='location'] {
+      background: var(--surface-elevated);
+      box-shadow: inset 0 -2px var(--accent);
+    }
+
+    .version-directory-card {
+      scroll-margin-top: 128px;
+    }
   }
 }
 
