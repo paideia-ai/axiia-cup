@@ -6,14 +6,8 @@ import { liveJudgeMatch } from '../src/testing/live-judge-fixtures.ts'
 // deno task preview:live-judge (queued, live and finished 商鞅/本能寺).
 const root = new URL('../', import.meta.url)
 const liveSidebar = Deno.args.includes('--live-sidebar')
-const stancePreview = Deno.args.includes('--judge-stance')
-const port = stancePreview ? 6038 : liveSidebar ? 6036 : 6034
-const scenes = stancePreview
-  ? [[30120, '本能寺 · 新立场示例'], [30144, '商鞅 · 新立场示例'], [
-    30122,
-    '电车 · 新立场示例',
-  ], [120, '本能寺 · 旧战报原样']] as const
-  : liveSidebar
+const port = liveSidebar ? 6036 : 6034
+const scenes = liveSidebar
   ? [
     [20120, '本能寺 · 开局等待'],
     [10120, '本能寺 · 进行中'],
@@ -38,52 +32,7 @@ const fixtures = new Map(
     )
     // 2xxxx: queued, no rows yet; 1xxxx: the first 12 rows, the next speech
     // streaming; otherwise the finished report.
-    if (stancePreview && id >= 30000) {
-      const samples: Record<number, { stance: string; os: string }[]> = {
-        120: [
-          {
-            stance: '袭击本能寺',
-            os: '足轻要一道明白军令，这话不错。军令便是转向京中，袭击本能寺。',
-          },
-          {
-            stance: '西进毛利',
-            os: '若京中无人应声，今夜动兵便无退路。此刻还是西行稳妥。',
-          },
-        ],
-        144: [
-          {
-            stance: '推行变法',
-            os: '甘龙所言安定宗室，寡人记下了；然秦国积弱，仍须变法。',
-          },
-          { stance: '维持现状', os: '新法的推行尚无稳妥之计，此刻宜守旧制。' },
-        ],
-        122: [
-          {
-            stance: '保护一人',
-            os: '本案中，尚不能以多数人的获益要求这一人承担伤害。',
-          },
-          {
-            stance: '保护五人',
-            os: '就正在讨论的案件而言，我此刻更愿避免五人承受伤害。',
-          },
-        ],
-      }
-      let index = 0
-      for (const verdict of match.verdicts) {
-        if (!/^os-\d+$/.test(verdict.key)) continue
-        const choices = samples[id % 10000]
-        const sample = choices[index++ % choices.length]
-        verdict.output = JSON.stringify(sample)
-        delete verdict.outputRef
-        const turn = match.turns.find((row) => row.seq === verdict.afterSeq)
-        if (turn?.channel === 'judge-aside') {
-          turn.finalText =
-            `<os>${sample.os}</os><stance>${sample.stance}</stance>`
-          delete turn.outputRef
-        }
-      }
-    }
-    const cut = stancePreview ? null : id >= 20000 ? 0 : id >= 10000 ? 12 : null
+    const cut = id >= 20000 ? 0 : id >= 10000 ? 12 : null
     const snapshot = cut == null ? match : liveJudgeMatch(match, cut)
     snapshot.summary.id = id
     // The streamed speech takes the recorded next row's seq, channel and speaker.
@@ -110,14 +59,8 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (req) => {
     return new Response('Local read-only preview', { status: 405 })
   }
   if (url.pathname === '/') {
-    const title = stancePreview
-      ? '裁判立场倾向 · 本地预览'
-      : liveSidebar
-      ? '对战布局本地预览'
-      : '五场景完整战报预览'
-    const intro = stancePreview
-      ? '新立场页面使用历史对话搭配人工编写的 OS 示例，仅检查界面，不是模型重跑，也不是 #481 的新裁判结果。旧战报入口保留原始数据。'
-      : liveSidebar
+    const title = liveSidebar ? '对战布局本地预览' : '五场景完整战报预览'
+    const intro = liveSidebar
       ? '历史样本的开局、进行中与完局状态；进行中页面会显示一段模拟流式发言。使用本分支的正式页面组件，不连接线上服务。'
       : '本地历史样本 · 只读。以下页面使用本分支未经修改的生产构建，包含正式页面布局与交互。样本数据和本地预览账号不代表平台实时数据。'
     return new Response(
@@ -222,7 +165,7 @@ Deno.serve({ hostname: '0.0.0.0', port }, async (req) => {
     path = '/index.html'
     bytes = await Deno.readFile(new URL('build/client/index.html', root))
   }
-  return new Response(req.method === 'HEAD' ? null : bytes.slice().buffer, {
+  return new Response(req.method === 'HEAD' ? null : bytes, {
     headers: {
       'Content-Type': mime[path.split('.').at(-1)!] ??
         'application/octet-stream',
