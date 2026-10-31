@@ -34,7 +34,7 @@ export function HistoryBar({ match: m, roles }: {
   const names = { a: nameOf('a'), b: nameOf('b') }
   const labels = speakerLabels(m.scenarioID, names, [], m.participants)
   const result = historyResult(m, names)
-  const Icon = result.tone === 'pending'
+  const Icon = result.tone === 'pending' || result.tone === 'running'
     ? Clock3
     : result.tone === 'neutral'
     ? Minus

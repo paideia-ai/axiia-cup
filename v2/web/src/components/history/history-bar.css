@@ -199,6 +199,9 @@ a.hbr-person:focus-visible {
 .hbr-result[data-tone='error'] {
   color: var(--hbr-loss-ink);
 }
+.hbr-result[data-tone='running'] {
+  color: var(--info);
+}
 .hbr-result[data-tone='pending'] {
   color: var(--warning);
 }

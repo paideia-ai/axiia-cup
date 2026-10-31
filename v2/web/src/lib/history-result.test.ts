@@ -49,13 +49,13 @@ describe('history result', () => {
   )
   it.each(
     [
-      [false, false, false, '排队中'],
-      [true, false, false, '进行中'],
-      [true, true, false, '未计分'],
+      [false, false, false, '排队中', 'pending'],
+      [true, false, false, '进行中', 'running'],
+      [true, true, false, '未计分', 'pending'],
     ] as const,
   )(
     'does not interpret unfinished/unscored results',
-    (dispatched, finished, scored, label) => {
+    (dispatched, finished, scored, label, tone) => {
       for (const winner of [null, 'a', 'unknown']) {
         expect(
           historyResult(
@@ -63,7 +63,7 @@ describe('history result', () => {
             names,
           ),
         )
-          .toEqual({ label, tone: 'pending' })
+          .toEqual({ label, tone })
       }
     },
   )

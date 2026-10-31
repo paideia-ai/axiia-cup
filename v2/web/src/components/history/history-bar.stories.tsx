@@ -38,7 +38,20 @@ export const MixedHistory: Story = {
     await expect(canvas.getAllByText('对局异常')).toHaveLength(2)
     await expect(canvas.getAllByText('左右互搏')).toHaveLength(2)
     await expect(canvas.getAllByText('平局')).toHaveLength(2)
-    await expect(canvas.getByText('未计分')).toBeVisible()
+    for (
+      const [label, color] of [
+        ['进行中', 'rgb(96, 165, 250)'],
+        ['排队中', 'rgb(251, 191, 36)'],
+        ['未计分', 'rgb(251, 191, 36)'],
+      ]
+    ) {
+      const status = canvas.getByText(label)
+      await expect(status).toBeVisible()
+      await expect(getComputedStyle(status).color).toBe(color)
+      const clock = status.querySelector('svg')!
+      await expect(clock).not.toBeNull()
+      await expect(getComputedStyle(clock).color).toBe(color)
+    }
     await expect(canvas.getAllByRole('img', { name: '没有看过此对局' }))
       .toHaveLength(3)
     await expect(canvasElement.querySelectorAll('.hbr-result > span'))

@@ -3,7 +3,7 @@ import type { RoleNames } from './outcome'
 
 export interface HistoryResult {
   label: string
-  tone: 'pending' | 'neutral' | 'win' | 'loss' | 'error'
+  tone: 'pending' | 'running' | 'neutral' | 'win' | 'loss' | 'error'
   winner?: Side
   role?: string
   personal?: boolean
@@ -14,7 +14,9 @@ export function historyResult(
   names: RoleNames,
 ): HistoryResult {
   if (!m.finished) {
-    return { label: m.dispatched ? '进行中' : '排队中', tone: 'pending' }
+    return m.dispatched
+      ? { label: '进行中', tone: 'running' }
+      : { label: '排队中', tone: 'pending' }
   }
   if (!m.scored) return { label: '未计分', tone: 'pending' }
   if (m.winner !== 'a' && m.winner !== 'b' && m.winner !== 'draw') {
