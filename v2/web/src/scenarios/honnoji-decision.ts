@@ -6,6 +6,7 @@ const factions = honnojiDecisionIntro.source.participants.sides
 
 export const honnojiDecision: ScenarioModule = {
   slotID: 'honnoji-decision',
+  judgeStances: { a: '袭击本能寺', b: '西进毛利' },
   intro: honnojiDecisionIntro,
   hideHeaderMatchup: true,
   factionCopy: {

@@ -7,6 +7,7 @@ import runtimeQuotes from './runtime-quotes.json'
 // trolley-problem/script.js 核对：三案案情原文照录。
 export const trolleyProblem: ScenarioModule = {
   slotID: 'trolley-problem',
+  judgeStances: { a: '保护一人', b: '保护五人' },
   roles: [],
   intro: trolleyProblemIntro,
   overviewFactImages: {
