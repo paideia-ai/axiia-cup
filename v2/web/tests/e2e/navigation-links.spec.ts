@@ -1224,22 +1224,31 @@ test('compact history keeps all outcomes readable across desktop and mobile', as
   for (const width of [1440, 1024, 768, 600, 390, 320]) {
     await page.setViewportSize({ width, height: 900 })
     const geometry = await page.evaluate(() => ({
-      overflow: document.documentElement.scrollWidth > innerWidth,
-      rows: [...document.querySelectorAll('.history-bar')].map((row) => {
-        const people = row.querySelector('.hbr-participants')!
-          .getBoundingClientRect()
-        const result = row.querySelector('.hbr-result')!.getBoundingClientRect()
-        const text = row.querySelector('.hbr-result > strong')!
-          .getBoundingClientRect()
-        return {
-          height: row.getBoundingClientRect().height,
-          overlaps: people.right > result.left + 1,
-          clipped: text.left < result.left - 1,
-        }
-      }),
+      // The shared admin header has its own responsive layout. Verify that
+      // every history bar and its contents fit, independently of that header.
+      rows: [...document.querySelectorAll<HTMLElement>('.history-bar')].map(
+        (row) => {
+          const bounds = row.getBoundingClientRect()
+          const people = row.querySelector('.hbr-participants')!
+            .getBoundingClientRect()
+          const result = row.querySelector('.hbr-result')!
+            .getBoundingClientRect()
+          const text = row.querySelector('.hbr-result > strong')!
+            .getBoundingClientRect()
+          return {
+            height: bounds.height,
+            // The native report-link overlay extends across the 1px border.
+            overflow: row.scrollWidth > row.clientWidth + 1,
+            outsideViewport: bounds.left < 0 || bounds.right > innerWidth,
+            overlaps: people.right > result.left + 1,
+            clipped: text.left < result.left - 1,
+          }
+        },
+      ),
     }))
-    expect(geometry.overflow).toBe(false)
     for (const row of geometry.rows) {
+      expect(row.overflow, `bar content at ${width}px`).toBe(false)
+      expect(row.outsideViewport, `bar bounds at ${width}px`).toBe(false)
       expect(row.overlaps).toBe(false)
       expect(row.clipped).toBe(false)
       if (width > 600) expect(row.height).toBeLessThanOrEqual(64)
