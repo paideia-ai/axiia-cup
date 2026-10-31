@@ -94,13 +94,13 @@ describe('F7 带视角的结果文案（outcomeCopy）', () => {
     expect(outcomeCopy({ winner: 'draw' }, null)).toBe('平局')
   })
 
-  it('falls back to 甲方/乙方 without catalog role names', () => {
+  it('reports my win without an unresolved role in parentheses', () => {
     expect(
       outcomeCopy(
         { winner: 'b', participants: participants(false, true) },
         null,
       ),
-    ).toBe('我方（乙方）胜')
+    ).toBe('我方获胜')
   })
 
   it('returns null when there is no readable winner', () => {
@@ -108,4 +108,35 @@ describe('F7 带视角的结果文案（outcomeCopy）', () => {
     expect(outcomeCopy({}, roles)).toBeNull()
     expect(outcomeCopy({ winner: 'judge' }, roles)).toBeNull()
   })
+})
+
+it('keeps unknown-role wins correct for both sides and each viewing perspective', () => {
+  for (const winner of ['a', 'b'] as const) {
+    const isA = winner === 'a'
+    const input = { scenarioID: 'honnoji-decision', winner }
+    expect(outcomeCopy({ ...input, participants: participants(isA, !isA) }))
+      .toBe('我方获胜')
+    expect(outcomeCopy({ ...input, participants: participants(!isA, isA) }))
+      .toBe('对手获胜')
+    expect(outcomeCopy({ ...input, participants: participants(false, false) }))
+      .toBe('胜方角色待确认')
+    expect(outcomeCopy({ ...input, participants: participants(true, true) }))
+      .toBe('左右手互搏 · 胜方角色待确认')
+    const withIDs = {
+      a: { isMine: false, agentID: 101 },
+      b: { isMine: false, agentID: 102 },
+    }
+    expect(outcomeCopy({ ...input, participants: withIDs })).toBe(
+      `智能体 #${isA ? 101 : 102}（角色待确认）胜`,
+    )
+  }
+})
+
+it('does not reintroduce generic names supplied by old catalog metadata', () => {
+  expect(
+    outcomeCopy({ winner: 'b', participants: participants(false, true) }, {
+      a: '甲方',
+      b: '乙方',
+    }),
+  ).toBe('我方获胜')
 })

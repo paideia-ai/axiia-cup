@@ -649,8 +649,7 @@ function AgentView({ agentID }: { agentID: number }) {
                 >
                   {data.scenario.summary.title}
                 </Link>{' '}
-                · {data.draft.side === 'a' ? '甲方' : '乙方'} ·{' '}
-                {data.versions.length} 个版本 ·{' '}
+                · {data.versions.length} 个版本 ·{' '}
                 <span
                   className='font-mono text-xs text-(--foreground-muted)'
                   {...tm('EA.agent-id')}

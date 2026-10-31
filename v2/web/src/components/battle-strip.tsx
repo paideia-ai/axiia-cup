@@ -40,7 +40,7 @@ export function BattleStrip() {
   const rows = sharedRows === undefined ? fallbackRows : sharedRows
   const [collapsed, setCollapsed] = useState(loadCollapsed)
   // F7（可选面）：完局卡带同口径的结果文案；角色名一次性取自 catalog，
-  // 失败只回退 甲方/乙方，不影响横条本体。
+  // 名称缺失时只报我方/对手的胜负，不影响横条本体。
   const [roles, setRoles] = useState<Record<string, RoleNames> | null>(null)
   useEffect(() => {
     if (roles != null) return
