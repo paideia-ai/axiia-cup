@@ -119,6 +119,12 @@ simulated in memory per browser session; battles and other writes are rejected.
 It binds port 5237 on all interfaces for WSL/Windows preview access and never
 contacts the backend. Stop it with Ctrl+C.
 
+For the Fengyiting scene timeline, run `deno task preview:story-context` in
+`v2/web`. Open `http://localhost:6061/matches/502` for the delayed-report route,
+or `/matches/501` for the other meeting order. It runs the current script with
+authored demo dialogue, not model output, and serves the report locally without
+contacting the backend or saving changes.
+
 Confirmed P3/P5/P6 behaviors that do not exist yet remain visible as named
 Playwright `fixme` contracts. They are not counted as passing functionality.
 

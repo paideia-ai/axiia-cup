@@ -5,6 +5,7 @@ import {
   historyScenarios,
 } from '../src/testing/history-fixtures.ts'
 import { config } from '../src/testing/v34-fixtures.ts'
+import { fengyitingContextFixture } from '../src/testing/fengyiting-context-fixture.ts'
 
 import {
   agentNamingFixtures,
@@ -14,9 +15,16 @@ import {
 
 const naming = Deno.args.includes('--naming')
 const live = Deno.args.includes('--live')
-const port = naming ? 6063 : live ? 5189 : 5187
+const storyContext = Deno.args.includes('--story-context')
+const port = storyContext ? 6061 : naming ? 6063 : live ? 5189 : 5187
 const root = resolve('build/client')
 const rows = naming ? agentNamingFixtures() : historyFixtures()
+const contextMatches = storyContext
+  ? await Promise.all(
+    (['a', 'b'] as const).map((side) => fengyitingContextFixture(side)),
+  )
+  : []
+rows.unshift(...contextMatches.map(({ match }) => match.summary))
 const names = new Map<string, string | null>()
 const sessions = new Map<string, Set<number>>()
 const mime: Record<string, string> = {
@@ -187,6 +195,12 @@ async function api(request: Request, url: URL): Promise<Response> {
   const match = /^\/matches\/(\d+)$/.exec(path)
   if (match) {
     const summary = history.find((m) => m.id === Number(match[1]))
+    const contextMatch = contextMatches.find(({ match: m }) =>
+      m.summary.id === Number(match[1])
+    )
+    if (summary && contextMatch) {
+      return json({ ...contextMatch.match, summary })
+    }
     if (summary) {
       return json({
         summary,
