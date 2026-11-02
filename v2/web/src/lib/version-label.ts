@@ -72,5 +72,5 @@ export function editedCopy(at?: number, now = Date.now()): string {
 }
 
 export function versionIDLabel(id: number): string {
-  return `V·${id}`
+  return `#${id}`
 }
