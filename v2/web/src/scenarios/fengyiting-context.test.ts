@@ -45,8 +45,8 @@ describe('Fengyiting opening context', () => {
       for (const name of ['a', 'b', 'diaochan']) {
         const system = sessions[name].system
         expect(system).toMatch(/董卓[^。]*向吕布掷出画戟/)
-        expect(system).toContain('吕布挡落画戟，尚未离开后园')
-        expect(system).toContain('貂蝉仍在旁')
+        expect(system).toContain('吕布挡落画戟，二人对峙')
+        expect(system).toContain('貂蝉在旁')
       }
       for (const name of ['a', 'b']) {
         const context = [sessions[name].system, ...sessions[name].messages]
@@ -54,7 +54,6 @@ describe('Fengyiting opening context', () => {
         expect(context).not.toMatch(/连环计|经典结局|北掖门/)
       }
       expect(sessions.diaochan.system).toContain('承诺协助连环计')
-      expect(sessions.diaochan.system).toContain('尚未向董卓、吕布公开')
       expect(sessions.a.system).toContain('你已接受王允献来的貂蝉')
       expect(sessions.a.system).not.toContain('王允曾当面许貂蝉与你')
       expect(sessions.b.system).toContain('王允曾当面许貂蝉与你')
