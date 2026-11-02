@@ -5,11 +5,6 @@ import {
 } from '../../src/testing/scenario-agent-fixtures'
 import { config } from '../../src/testing/v34-fixtures'
 
-async function openRename(page: Page) {
-  await page.getByRole('button', { name: '智能体更多操作' }).click()
-  await page.getByRole('menuitem', { name: '重命名', exact: true }).click()
-}
-
 async function setup(
   page: Page,
   empty = false,
@@ -99,7 +94,7 @@ async function setup(
           )
           if (!agent) continue
           if (request.method() === 'PATCH') {
-            agent.name = request.postDataJSON().name?.trim() || '听雨的云雀'
+            agent.name = request.postDataJSON().name
             return json({ ok: true })
           }
           if (match[2] === 'draft') {
@@ -142,7 +137,7 @@ for (const width of [1440, 390]) {
         'home',
       ] as const
     ) {
-      test(`${entry}: opens a named agent without requiring rename; name survives refresh`, async ({ page }) => {
+      test(`${entry}: directly opens empty focused rename; random default survives refresh`, async ({ page }) => {
         const { created, errors } = await setup(
           page,
           entry === 'empty-scenario',
@@ -168,10 +163,12 @@ for (const width of [1440, 390]) {
         await button.click()
         await expect(page).toHaveURL(/\/agents\/2001$/)
         const input = page.getByRole('textbox', { name: '智能体名称' })
-        await expect(input).toHaveCount(0)
+        await expect(input).toBeFocused()
+        await expect(input).toHaveValue('')
         await expect(page.getByRole('dialog')).toHaveCount(0)
         expect(urls.every((url) => url === '/agents/2001')).toBe(true)
         expect(created).toEqual([{ scenarioID: 'fengyiting-real', side: 'a' }])
+        await input.press('Escape')
         await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
           .toBeVisible()
         await page.reload()
@@ -188,10 +185,8 @@ for (const width of [1440, 390]) {
       await setup(page)
       await page.goto('/my-agents')
       await page.getByRole('button', { name: '新建董卓智能体' }).click()
-      await openRename(page)
       const input = page.getByRole('textbox', { name: '智能体名称' })
       await expect(input).toBeFocused()
-      await input.fill('')
       await input.click()
       await expect(input).toBeVisible()
       await input.dispatchEvent('compositionstart')
@@ -200,7 +195,7 @@ for (const width of [1440, 390]) {
       await input.dispatchEvent('compositionend')
       await page.getByText('智能体主页', { exact: true }).click()
       await expect(input).toHaveCount(0)
-      await expect(page.getByRole('heading', { name: '董卓「听雨的云雀」' }))
+      await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
         .toBeVisible()
 
       await page.getByRole('button', { name: '智能体更多操作' }).click()
@@ -214,11 +209,11 @@ for (const width of [1440, 390]) {
       await expect(page.getByRole('heading', { name: '我的智能体' }))
         .toBeVisible()
       await page.goBack()
-      await expect(page.getByRole('heading', { name: '董卓「听雨的云雀」' }))
+      await expect(page.getByRole('heading', { name: '董卓 #2001' }))
         .toBeVisible()
     })
 
-    test('clearing an existing name and clicking outside assigns a random name', async ({ page }) => {
+    test('clearing an existing name and clicking outside restores the default identifier', async ({ page }) => {
       await setup(page)
       await page.goto('/agents/1000')
       await page.getByRole('button', { name: '智能体更多操作' }).click()
@@ -227,10 +222,10 @@ for (const width of [1440, 390]) {
       await input.fill('')
       await page.getByText('智能体主页', { exact: true }).click()
       await expect(input).toHaveCount(0)
-      await expect(page.getByRole('heading', { name: '董卓「听雨的云雀」' }))
+      await expect(page.getByRole('heading', { name: '董卓 #1000' }))
         .toBeVisible()
       await page.reload()
-      await expect(page.getByRole('heading', { name: '董卓「听雨的云雀」' }))
+      await expect(page.getByRole('heading', { name: '董卓 #1000' }))
         .toBeVisible()
     })
 
@@ -238,7 +233,6 @@ for (const width of [1440, 390]) {
       const { created } = await setup(page)
       await page.goto('/my-agents')
       await page.getByRole('button', { name: '新建吕布智能体' }).click()
-      await openRename(page)
       const input = page.getByRole('textbox', { name: '智能体名称' })
       await input.fill('赤兔')
       await input.press('Enter')
@@ -246,7 +240,9 @@ for (const width of [1440, 390]) {
         .toBeVisible()
       await page.getByRole('button', { name: '新建吕布智能体' }).click()
       await expect(page).toHaveURL(/\/agents\/2002$/)
-      await expect(input).toHaveCount(0)
+      await expect(input).toHaveValue('')
+      await expect(input).toBeFocused()
+      await input.press('Enter')
       await expect(page.getByRole('heading', { name: '吕布「打盹的海豹」' }))
         .toBeVisible()
       expect(created).toHaveLength(2)
@@ -273,27 +269,10 @@ test('slow creation prevents double-clicks and cannot redirect after leaving', a
   await expect(page).toHaveURL(/\/scenarios\/fengyiting-real$/)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('link', { name: '我的智能体', exact: true }).click()
-  await expect(page).toHaveURL(/\/my-agents$/)
-  await expect(page.getByRole('heading', { name: '我的智能体' })).toBeVisible()
   release()
   await expect.poll(() => created.length).toBe(1)
   await expect(page.getByRole('heading', { name: '我的智能体' })).toBeVisible()
   await expect(page).toHaveURL(/\/my-agents$/)
-})
-
-test('a duplicate name warns without blocking a manual rename', async ({ page }) => {
-  await setup(page, false, (inventory) => {
-    inventory.scenarios[0].sides.b[0].name = '已有名字'
-  })
-  await page.goto('/agents/1000')
-  await openRename(page)
-  const input = page.getByRole('textbox', { name: '智能体名称' })
-  await input.fill('已有名字')
-  await expect(page.getByText('你已有同名智能体，仍可保存。')).toBeVisible()
-  await expect(page.getByRole('button', { name: '保存名称' })).toBeEnabled()
-  await input.press('Enter')
-  await expect(page.getByRole('heading', { name: '董卓「已有名字」' }))
-    .toBeVisible()
 })
 
 test('rejection stays inline and retry creates only once', async ({ page }) => {
@@ -315,8 +294,7 @@ test('rejection stays inline and retry creates only once', async ({ page }) => {
   await expect(page).toHaveURL(/\/scenarios\/fengyiting-real$/)
   await expect(page.getByRole('link', { name: /去完善/ })).toBeVisible()
   await page.getByRole('button', { name: '再建一个董卓' }).click()
-  await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
-    .toBeVisible()
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
 })
 
@@ -338,10 +316,7 @@ for (const { summary } of agentPreviewScenarios) {
         await page.locator('.portrait-choice').first().click()
       }
       await expect(page.getByRole('textbox', { name: '智能体名称' }))
-        .toHaveCount(0)
-      await expect(page.locator('[data-tm="EA.page-title"]')).toContainText(
-        created.length === 1 ? '漫游的水獭' : '打盹的海豹',
-      )
+        .toBeFocused()
       expect(created.at(-1)).toEqual({
         scenarioID: summary.id,
         side,
@@ -357,7 +332,6 @@ test('Chinese composition does not submit a name, and overlong names remain edit
   await setup(page)
   await page.goto('/my-agents')
   await page.getByRole('button', { name: '新建董卓智能体' }).click()
-  await openRename(page)
   const input = page.getByRole('textbox', { name: '智能体名称' })
   await input.fill('董卓')
   await input.dispatchEvent('keydown', {
@@ -386,8 +360,7 @@ test('a failed destination read never repeats the successful creation', async ({
   await page.goto('/my-agents')
   await page.getByRole('button', { name: '新建董卓智能体' }).click()
   await expect(page).toHaveURL(/\/agents\/2001$/)
-  await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
-    .toBeVisible()
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
 })
 
@@ -402,9 +375,7 @@ test('inventory recovery during creation keeps the pending navigation alive', as
   await page.goto('/my-agents')
   await page.getByRole('button', { name: '新建董卓智能体' }).click()
   await expect(page).toHaveURL(/\/agents\/2001$/)
-  await expect(page.locator('[data-tm="EA.page-title"]')).toContainText(
-    '漫游的水獭',
-  )
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
 })
 
@@ -422,9 +393,7 @@ test('first creation survives the empty-to-populated inventory update before its
     .toBeDisabled()
   release()
   await expect(page).toHaveURL(/\/agents\/2001$/)
-  await expect(page.locator('[data-tm="EA.page-title"]')).toContainText(
-    '漫游的水獭',
-  )
+  await expect(page.getByRole('textbox', { name: '智能体名称' })).toBeFocused()
   expect(created).toHaveLength(1)
 })
 
@@ -518,8 +487,7 @@ for (const width of [1440, 390]) {
         .toEqual(mobile ? ['↑', '↓'] : ['←', '→'])
       await release()
       await expect(page).toHaveURL(/\/agents\/2001$/)
-      await expect(page.getByRole('textbox', { name: '智能体名称' }))
-        .toHaveCount(0)
+      await page.getByRole('textbox', { name: '智能体名称' }).press('Escape')
       await page.reload()
       await expect(
         page.getByRole('heading', { name: '长宗我部元亲的密使「漫游的水獭」' }),
@@ -599,9 +567,8 @@ for (const width of [1440, 390]) {
     await page.getByRole('button', { name: '创建明智军中的足轻' }).click()
     // The inventory now lists the new agent; the pending navigation must survive.
     await expect(page).toHaveURL(/\/agents\/2001$/)
-    await expect(page.locator('[data-tm="EA.page-title"]')).toContainText(
-      '漫游的水獭',
-    )
+    await expect(page.getByRole('textbox', { name: '智能体名称' }))
+      .toBeFocused()
     expect(created).toEqual([{
       scenarioID: 'honnoji-decision',
       side: 'b',

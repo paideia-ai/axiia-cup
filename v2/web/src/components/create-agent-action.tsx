@@ -124,7 +124,9 @@ export function CreateAgentAction({
     try {
       const agentID = await request
       if (isCurrent()) {
-        navigate(`/agents/${agentID}${express ? '?express=1' : ''}`)
+        navigate(`/agents/${agentID}${express ? '?express=1' : ''}`, {
+          state: { renameNewAgent: true },
+        })
       }
     } catch (cause) {
       if (!isCurrent()) return
