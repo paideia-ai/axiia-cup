@@ -69,7 +69,7 @@ for (const width of [390, 1440]) {
     const selected = page.locator('[data-version-id="9001"]')
     await expect(selected).toContainText('正在查看')
     await expect(selected).toBeInViewport()
-    await expect(selected).toContainText('V·9001')
+    await expect(selected).toContainText('#9001')
     await expect(page.locator('[data-tm="EA.agent-id"]')).toHaveText('#400')
     await page.getByRole('button', { name: '智能体更多操作' }).click()
     await page.getByRole('menuitem', { name: '重命名', exact: true }).click()

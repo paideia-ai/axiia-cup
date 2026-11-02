@@ -372,7 +372,7 @@ export const PlayerFromTranscript: Story = {
     await userEvent.click(entry)
     const cards = await c.findAllByTestId('identity-version')
     await expect(cards).toHaveLength(2)
-    await expect(cards[0]).toHaveTextContent('V·466')
+    await expect(cards[0]).toHaveTextContent('#466')
     await expect(cards[0]).toHaveTextContent('本场对局版本')
     await expect(cards[0]).toHaveTextContent('40%')
     await expect(cards[1]).toHaveTextContent('65%')
@@ -588,10 +588,10 @@ export const TournamentVersion: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
     await userEvent.click(
-      await c.findByRole('link', { name: '查看版本 V·466 的智能体' }),
+      await c.findByRole('link', { name: '查看版本 #466 的智能体' }),
     )
     const cards = await c.findAllByTestId('identity-version')
-    await expect(cards[0]).toHaveTextContent('V·466')
+    await expect(cards[0]).toHaveTextContent('#466')
     await expect(cards[0]).toHaveTextContent('赛事提交版本')
   },
 }
@@ -627,7 +627,7 @@ export const UnknownHistoricalVersion: Story = {
   args: { entry: '/agents/202/identity?version=999&match=9002' },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement)
-    await expect(await c.findByText('版本 V·999 暂不可用。')).toBeVisible()
+    await expect(await c.findByText('版本 #999 暂不可用。')).toBeVisible()
     await expect(c.queryByText('本场对局版本')).toBeNull()
   },
 }

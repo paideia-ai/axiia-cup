@@ -131,6 +131,7 @@ function AgentView({ agentID }: { agentID: number }) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const menuTriggerRef = useRef<HTMLElement>(null)
   const wasRenaming = useRef(false)
+  const initialNamePrompt = useRef(location.state?.renameNewAgent === true)
   const currentAgentIDRef = useRef(agentID)
   const mountedRef = useRef(true)
   const renameRequestRef = useRef(0)
@@ -322,6 +323,7 @@ function AgentView({ agentID }: { agentID: number }) {
   }
 
   const beginRename = () => {
+    initialNamePrompt.current = false
     renameComposingRef.current = false
     setNameDraft(currentName ?? '')
     setRenameError(null)
@@ -335,6 +337,10 @@ function AgentView({ agentID }: { agentID: number }) {
       mountedRef.current && renameRequestRef.current === requestID &&
       currentAgentIDRef.current === agentID
     const name = nameDraft.trim()
+    if (name === '' && initialNamePrompt.current) {
+      setRenaming(false)
+      return
+    }
     setRenameBusy(true)
     setRenameError(null)
     try {
@@ -365,7 +371,7 @@ function AgentView({ agentID }: { agentID: number }) {
       ) return
       // Do not pull focus away from the control the user just clicked.
       wasRenaming.current = false
-      if (currentName == null) setRenaming(false)
+      if (currentName == null || initialNamePrompt.current) setRenaming(false)
       else void saveName()
     }
     document.addEventListener('click', dismissEmptyName, true)

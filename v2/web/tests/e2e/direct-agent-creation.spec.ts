@@ -67,7 +67,8 @@ async function setup(
       inventory.scenarios.find((s) => s.scenarioID === input.scenarioID)!
         .sides[input.side as 'a' | 'b'].push({
           agentID,
-          name: null,
+          name: ['漫游的水獭', '打盹的海豹'][created.length - 1] ??
+            '看云的白鹿',
           versionCount: 0,
           role: input.scenarioID === 'honnoji-decision' && input.roleKey
             ? {
@@ -136,7 +137,7 @@ for (const width of [1440, 390]) {
         'home',
       ] as const
     ) {
-      test(`${entry}: directly opens empty focused rename; default ID survives refresh`, async ({ page }) => {
+      test(`${entry}: directly opens empty focused rename; random default survives refresh`, async ({ page }) => {
         const { created, errors } = await setup(
           page,
           entry === 'empty-scenario',
@@ -168,12 +169,12 @@ for (const width of [1440, 390]) {
         expect(urls.every((url) => url === '/agents/2001')).toBe(true)
         expect(created).toEqual([{ scenarioID: 'fengyiting-real', side: 'a' }])
         await input.press('Escape')
-        await expect(page.getByRole('heading', { name: '董卓 #2001' }))
+        await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
           .toBeVisible()
         await page.reload()
         await expect(page.getByRole('textbox', { name: '智能体名称' }))
           .toHaveCount(0)
-        await expect(page.getByRole('heading', { name: '董卓 #2001' }))
+        await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
           .toBeVisible()
         expect(await page.evaluate(() => document.documentElement.scrollWidth))
           .toBeLessThanOrEqual(width)
@@ -194,7 +195,7 @@ for (const width of [1440, 390]) {
       await input.dispatchEvent('compositionend')
       await page.getByText('智能体主页', { exact: true }).click()
       await expect(input).toHaveCount(0)
-      await expect(page.getByRole('heading', { name: '董卓 #2001' }))
+      await expect(page.getByRole('heading', { name: '董卓「漫游的水獭」' }))
         .toBeVisible()
 
       await page.getByRole('button', { name: '智能体更多操作' }).click()
@@ -242,7 +243,7 @@ for (const width of [1440, 390]) {
       await expect(input).toHaveValue('')
       await expect(input).toBeFocused()
       await input.press('Enter')
-      await expect(page.getByRole('heading', { name: '吕布 #2002' }))
+      await expect(page.getByRole('heading', { name: '吕布「打盹的海豹」' }))
         .toBeVisible()
       expect(created).toHaveLength(2)
     })
@@ -489,7 +490,7 @@ for (const width of [1440, 390]) {
       await page.getByRole('textbox', { name: '智能体名称' }).press('Escape')
       await page.reload()
       await expect(
-        page.getByRole('heading', { name: '长宗我部元亲的密使 #2001' }),
+        page.getByRole('heading', { name: '长宗我部元亲的密使「漫游的水獭」' }),
       ).toBeVisible()
       expect(created).toEqual([{
         scenarioID: 'honnoji-decision',

@@ -85,7 +85,7 @@ export const TM_E: TmRegistry = {
   'E.copy-prompt-button': {
     label: '复制当前文本',
     clauses: ['U01-C10'],
-    note: 'E8/P14：平台不做 AI 改写，只给复制手段',
+    note: 'E8/P14：不做 AI 改写，只给复制手段',
   },
   'E.prompt-input': {
     label: '策略提示词编辑框',
