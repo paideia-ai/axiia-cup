@@ -118,7 +118,6 @@ function AgentEntry({ scenarioID, side, target, express }: {
   return (
     <Navigate
       replace
-      state={data.created ? { renameNewAgent: true } : null}
       to={target === 'build' && !data.created
         ? `/agents/${data.agentID}/build?${params}`
         : `/agents/${data.agentID}${express ? '?express=1' : ''}`}

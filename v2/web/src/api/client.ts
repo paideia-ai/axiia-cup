@@ -291,7 +291,6 @@ export const agents = {
     request<OKResponse>('PUT', `/agents/${agentID}/archive`),
   restore: (agentID: number) =>
     request<OKResponse>('DELETE', `/agents/${agentID}/archive`),
-  // P2 改名：空名＝清除，展示名回落「侧名 #id」。老服务器无此端点 → 404/405。
   rename: (agentID: number, input: RenameAgentRequest) =>
     request<OKResponse>('PATCH', `/agents/${agentID}`, input),
   // P8b 删除：仅 0 版本策略；有版本的服务端答 agent_not_empty。

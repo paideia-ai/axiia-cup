@@ -32,6 +32,7 @@ const publicScenario: ScenarioDetail = {
   summary: { ...scenario.summary, gateProgress: undefined },
 }
 let authenticated = false
+let agentCreated = false
 const personalRequests: string[] = []
 const ensures: unknown[] = []
 
@@ -93,7 +94,23 @@ const handlers = [
   }),
   http.get('/v1/my/agents', () => {
     personalRequests.push('inventory')
-    return HttpResponse.json({ scenarios: [] })
+    return HttpResponse.json({
+      scenarios: agentCreated
+        ? [{
+          scenarioID: scenario.summary.id,
+          title: scenario.summary.title,
+          sides: {
+            a: [],
+            b: [{ agentID: 902, name: '看云的白鹿', versionCount: 0 }],
+          },
+          gateProgress: {
+            a: { beaten: 0, needed: 1 },
+            b: { beaten: 0, needed: 1 },
+          },
+          entryReady: false,
+        }]
+        : [],
+    })
   }),
   http.get('/v1/matches', () => {
     personalRequests.push('matches')
@@ -108,6 +125,7 @@ const handlers = [
   http.post('/v1/agents/ensure', async ({ request }) => {
     expect(authenticated).toBe(true)
     ensures.push(await request.json())
+    agentCreated = true
     return HttpResponse.json({ agentID: 902 })
   }),
   http.get('/v1/agents/902/draft', () =>
@@ -134,6 +152,7 @@ const meta = {
   parameters: { msw: handlers },
   loaders: [() => {
     authenticated = false
+    agentCreated = false
     personalRequests.length = 0
     ensures.length = 0
     localStorage.removeItem('axiia:tm')
@@ -524,7 +543,10 @@ export const BuildAfterLoginKeepsChosenSide: Story = {
     await userEvent.click(
       canvas.getByRole('button', { name: '登录' }),
     )
-    await expect(await canvas.findByLabelText('智能体名称')).toHaveValue('')
+    await expect(
+      await canvas.findByRole('heading', { name: '甘龙「看云的白鹿」' }),
+    )
+      .toBeVisible()
     expect(canvas.getByTestId('route-address')).toHaveTextContent(
       '/agents/902',
     )
@@ -553,7 +575,10 @@ export const BuildAfterRegistrationKeepsChosenSide: Story = {
     )
     await userEvent.type(form.getByLabelText('密码'), 'fixture-password')
     await userEvent.click(canvas.getByRole('button', { name: '创建账户' }))
-    await expect(await canvas.findByLabelText('智能体名称')).toHaveValue('')
+    await expect(
+      await canvas.findByRole('heading', { name: '甘龙「看云的白鹿」' }),
+    )
+      .toBeVisible()
     expect(canvas.getByTestId('route-address')).toHaveTextContent(
       '/agents/902',
     )

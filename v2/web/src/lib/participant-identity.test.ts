@@ -54,6 +54,6 @@ describe('match participant identity', () => {
       }),
     ).toBe('/agents/125/identity?version=928&match=44')
     expect(participantIdentityPath('s', 44)).toBeNull()
-    expect(versionIDLabel(928)).toBe('V·928')
+    expect(versionIDLabel(928)).toBe('#928')
   })
 })

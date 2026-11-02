@@ -114,9 +114,7 @@ function AgentView({ agentID }: { agentID: number }) {
   const [actionError, setActionError] = useState<string | null>(null)
   const [savedVersionID, setSavedVersionID] = useState<number | null>(null)
   const [expressError, setExpressError] = useState<string | null>(null)
-  const [renaming, setRenaming] = useState(
-    location.state?.renameNewAgent === true,
-  )
+  const [renaming, setRenaming] = useState(false)
   const [nameDraft, setNameDraft] = useState('')
   const [localName, setLocalName] = useState<string | null | undefined>()
   const [renameBusy, setRenameBusy] = useState(false)
@@ -196,6 +194,12 @@ function AgentView({ agentID }: { agentID: number }) {
   const [archiveBusy, setArchiveBusy] = useState(false)
   const nameLength = [...nameDraft].length
   const nameTooLong = nameLength > AGENT_NAME_LIMIT
+  const duplicateName = nameDraft.trim() !== '' &&
+    inventory.data?.scenarios.some((scenario) =>
+      [...scenario.sides.a, ...scenario.sides.b].some((agent) =>
+        agent.agentID !== agentID && agent.name?.trim() === nameDraft.trim()
+      )
+    )
 
   // Consume Builder's one-shot navigation notice and clear it from history.
   // agentID is the intended trigger: replace(state=null) must not consume it twice.
@@ -211,15 +215,13 @@ function AgentView({ agentID }: { agentID: number }) {
     setDeleteError(null)
     setEntryNotice(null)
     const state = location.state as {
-      renameNewAgent?: boolean
       savedVersionID?: number
       expressDispatchError?: string
     } | null
     setSavedVersionID(state?.savedVersionID ?? null)
     setExpressError(state?.expressDispatchError ?? null)
     if (
-      state?.renameNewAgent || state?.savedVersionID != null ||
-      state?.expressDispatchError != null
+      state?.savedVersionID != null || state?.expressDispatchError != null
     ) {
       navigate(location.pathname + location.search, {
         replace: true,
@@ -341,7 +343,7 @@ function AgentView({ agentID }: { agentID: number }) {
       await agentAPI.rename(agentID, { name: name === '' ? null : name })
       notifyAgentsChanged()
       if (!requestIsCurrent()) return
-      setLocalName(name === '' ? null : name)
+      setLocalName(name === '' ? undefined : name)
       setRenaming(false)
     } catch (cause) {
       if (!requestIsCurrent()) return
@@ -538,6 +540,10 @@ function AgentView({ agentID }: { agentID: number }) {
                         {renameError ??
                           (nameTooLong
                             ? `名字最多 ${AGENT_NAME_LIMIT} 字`
+                            : duplicateName
+                            ? '你已有同名智能体，仍可保存。'
+                            : nameDraft.trim() === ''
+                            ? '留空将重新分配一个随机名字。'
                             : `${nameLength}/${AGENT_NAME_LIMIT}`)}
                       </span>
                     </form>
