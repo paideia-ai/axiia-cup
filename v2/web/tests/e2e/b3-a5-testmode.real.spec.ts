@@ -279,31 +279,6 @@ test.describe('B3/A5 Test Mode with real handoff accounts', () => {
       .toHaveCount(0)
   })
 
-  test('B3 U10-C11b: standings agent entry opens the exact owner agent', async ({ context, page }) => {
-    const guide = await beginAsFreshTester(page, context, b3Owner)
-    await assertOwnsAgent(page, b3Owner.agentID)
-    await guide.getByRole('button', { name: '关闭导测' }).click()
-
-    const row = page.getByRole('table').getByRole('row').filter({
-      hasText: b3Owner.displayName,
-    })
-    await expect(row).toBeVisible()
-
-    // Keep setup above as ordinary assertions. Only the confirmed-clause probe
-    // is an expected failure, so broken login/fixtures cannot masquerade as the
-    // known product gap. Once the entry ships, this becomes an unexpected pass.
-    test.fail(
-      true,
-      'U10-C11b current behavior gap: the standings row has no clickable /agents/:id entry',
-    )
-    const agentEntry = row.locator(`a[href="/agents/${b3Owner.agentID}"]`)
-    await expect(agentEntry).toBeVisible()
-    await agentEntry.click()
-    await expect(page).toHaveURL((url) =>
-      url.pathname === `/agents/${b3Owner.agentID}`
-    )
-  })
-
   test('A5 owner: deep link restores the correct journey and owner battle UI', async ({ context, page }) => {
     const guide = await beginAsFreshTester(page, context, a5Owner)
     await assertOwnsAgent(page, a5Owner.agentID)

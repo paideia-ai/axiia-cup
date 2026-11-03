@@ -73,12 +73,12 @@ describe('navigation history boundaries', () => {
   it('preserves a source across resolver redirects', () => {
     let memory = recordVisit(
       empty(),
-      { key: 'a', url: '/tournaments/42' },
+      { key: 'a', url: '/matches/42' },
       NavigationType.Pop,
     )
     memory = recordVisit(
       memory,
-      { key: 'b', url: '/versions/12' },
+      { key: 'b', url: '/agents/9/identity' },
       NavigationType.Push,
     )
     memory = recordVisit(
@@ -88,7 +88,7 @@ describe('navigation history boundaries', () => {
     )
     expect(memory.index).toBe(1)
     expect(memory.visits).toEqual([
-      { key: 'a', url: '/tournaments/42' },
+      { key: 'a', url: '/matches/42' },
       { key: 'c', url: '/agents/9' },
     ])
   })

@@ -153,6 +153,13 @@ function capture(input: Omit<StepCapture, 'extract'>): StepCapture {
   }
 }
 
+// Reviewed snapshots keep markers of retired UI. Route each historical step to
+// the current surface, or to none once its page is gone.
+const RETIRED_MARKERS: Record<string, string | null> = {
+  'OS.quota-footer': 'OS.panel',
+  'G.page-intro': null,
+}
+
 function journey(input: SourceJourney): Journey {
   const fixtures = fixtureProfiles(input.id)
   const n = JOURNEY_NUMBERS[input.id]
@@ -190,9 +197,9 @@ function journey(input: SourceJourney): Journey {
       humanOnly: SCREENSHOT_HANDOFF,
       manualUrl: `${REVIEWED_MANUAL_PATH}#${step.id}`,
       route: step.route,
-      // The current dialog removed the quota footer; preserve the reviewed
-      // snapshot while routing its historical step to the current panel.
-      marker: step.marker === 'OS.quota-footer' ? 'OS.panel' : step.marker,
+      marker: step.marker && step.marker in RETIRED_MARKERS
+        ? RETIRED_MARKERS[step.marker]
+        : step.marker,
       versionPins: step.versionPins,
       testUrl: step.url,
       links: step.links,

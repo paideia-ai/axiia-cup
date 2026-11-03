@@ -8,7 +8,6 @@ import {
   matches,
   myAgents,
   notifications,
-  tournaments,
 } from '../api/client'
 import type { Side } from '../api/types'
 import { navigationCache } from './navigation-cache'
@@ -50,16 +49,6 @@ export const matchQuery = (id: number) =>
     queryKey: ['match', id],
     queryFn: () => matches.detail(id),
     staleTime: 0,
-  })
-export const tournamentsQuery = () =>
-  queryOptions({
-    queryKey: ['tournaments'],
-    queryFn: () => tournaments.list(),
-  })
-export const standingsQuery = (id: number) =>
-  queryOptions({
-    queryKey: ['standings', id],
-    queryFn: () => tournaments.standings(id),
   })
 export const achievementsQuery = (accountID: string) =>
   queryOptions({

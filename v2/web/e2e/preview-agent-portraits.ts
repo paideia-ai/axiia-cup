@@ -110,7 +110,6 @@ async function api(request: Request, url: URL) {
     if (path === '/config') return json(config)
     if (path === '/models') return json({ models: config.models })
     if (path === '/matches') return json({ matches: [], open: true })
-    if (path === '/tournaments') return json({ tournaments: [] })
     if (path === '/notifications') {
       return json({ notifications: [], unreadCount: 0 })
     }

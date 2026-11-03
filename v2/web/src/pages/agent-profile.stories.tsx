@@ -25,8 +25,6 @@ import { AgentIdentityPage } from './agent-identity'
 import { NPCViewPage } from './npc-view'
 import { MatchDetailPage } from './match-detail'
 import { MatchesPage } from './matches'
-import { StandingsPage } from './standings'
-import { VersionAgentPage } from './version-agent'
 import { ScenarioDetailPage } from './scenario-detail'
 
 const publicVersions = [
@@ -227,27 +225,6 @@ const handlers = [
     ({ params }) =>
       HttpResponse.json(params.id === '9001' ? npcMatch : playerMatch),
   ),
-  http.get(
-    '/v1/tournaments/2/standings',
-    () =>
-      HttpResponse.json({
-        entries: [{
-          playerID: 'player',
-          playerName: '丞双双',
-          submissionIDs: [466],
-          wins: 4,
-          losses: 5,
-          buchholz: 12,
-          matchesPlayed: 10,
-          winRate: 40,
-          rank: 1,
-        }],
-      }),
-  ),
-  http.get(
-    '/v1/versions/466/ref',
-    () => HttpResponse.json({ versionID: 466, agentID: 202 }),
-  ),
 ]
 
 function AuthenticatedPreview({ children }: PropsWithChildren) {
@@ -277,7 +254,6 @@ function Page({ entry }: { entry: string }) {
               <Link to='/agents/101'>我的主页</Link>
               <Link to='/matches/9001'>NPC 对局</Link>
               <Link to='/matches/9002'>玩家对局</Link>
-              <Link to='/tournaments/2'>赛事排名</Link>
               <Link to='/scenarios/shangyang-court'>场景介绍</Link>
             </div>
             <Routes>
@@ -300,14 +276,6 @@ function Page({ entry }: { entry: string }) {
               />
               <Route path='/matches/:matchId' element={<MatchDetailPage />} />
               <Route path='/matches' element={<MatchesPage />} />
-              <Route
-                path='/tournaments/:tournamentId'
-                element={<StandingsPage />}
-              />
-              <Route
-                path='/versions/:versionId'
-                element={<VersionAgentPage />}
-              />
             </Routes>
           </AuthenticatedPreview>
         </NavigationMemoryProvider>
@@ -581,18 +549,6 @@ export const NPCFromTranscript: Story = {
     await expect(await c.findByRole('heading', { name: '历史' })).toBeVisible()
     await expect(await c.findByRole('link', { name: /对战 #9001/ }))
       .toBeVisible()
-  },
-}
-export const TournamentVersion: Story = {
-  args: { entry: '/tournaments/2' },
-  play: async ({ canvasElement }) => {
-    const c = within(canvasElement)
-    await userEvent.click(
-      await c.findByRole('link', { name: '查看版本 #466 的智能体' }),
-    )
-    const cards = await c.findAllByTestId('identity-version')
-    await expect(cards[0]).toHaveTextContent('#466')
-    await expect(cards[0]).toHaveTextContent('赛事提交版本')
   },
 }
 async function expectShellWidth(canvasElement: HTMLElement, testID: string) {
