@@ -20,7 +20,6 @@ is backed up on the host at
 | --- | --- | --- | --- |
 | v2 web | `v2/web`, `v2/deploy` | `build_v2_web` | `deploy_v2_web` → webhook `target: web2` |
 | v2 scenarios | `v2/scenarios` | — | `deploy_v2_scenarios` → admin API push |
-| tournament ops | `v2/tournament-ops` | — | `workflow_dispatch` only |
 
 The Swift server binary is **not** built here. It lives in the private
 `axiia-cup-v2` repository and is deployed separately.
@@ -109,15 +108,7 @@ the exact workflow subject, so only `main` can publish scenarios.
 
 Concurrency group `axiia-scenarios-deploy`, **not** cancel-in-progress.
 
-## 5. Tournament ops — `.github/workflows/tournament-ops.yml`
-
-`workflow_dispatch` only. One operator verb per dispatch (or `auto` for the
-whole lifecycle) against the axiia server, again authenticated by OIDC
-assertion — `v2/tournament-ops/run.ts` exchanges and re-exchanges the token
-itself because a round can outlive the ten-minute token. Concurrency group
-`axiia-tournament-ops`, never cancelled. See `v2/tournament-ops/README.md`.
-
-## 6. Branch protection
+## 5. Branch protection
 
 - required status check: `Check`
 - strict status checks: enabled
@@ -127,7 +118,7 @@ itself because a round can outlive the ten-minute token. Concurrency group
 
 Land changes via PR with squash merge.
 
-## 7. Secret and config inventory
+## 6. Secret and config inventory
 
 Where secrets live, not their values.
 
@@ -135,14 +126,14 @@ Where secrets live, not their values.
 | --- | --- | --- |
 | `DEPLOY_WEBHOOK_SECRET` | GitHub Actions secret | signs the `target: web2` deploy JWT |
 | `WEBHOOK_SECRET` | `cup-worker:/srv/axiia-cup/shared/config/deploy-webhook.env` | must match the GitHub secret |
-| `AXIIA_BASE_URL` | GitHub Actions repository variable | audience and target for both OIDC exchanges |
+| `AXIIA_BASE_URL` | GitHub Actions repository variable | audience and target for the scenario OIDC exchange |
 | Aliyun OIDC trust | RAM role `githubactions-axiiacup` | keyless Actions auth to ACR |
 | Aliyun CLI auth on server | `cup-worker:~/.aliyun/config.json` | lets the webhook fetch temporary ACR auth |
 
 Nothing in `v2/web` holds a secret: the SPA is static and every credential lives
 server-side.
 
-## 8. Retired: the US LLM gateway
+## 7. Retired: the US LLM gateway
 
 The US LLM gateway proxy and its SSH tunnel (host port `33100`) were removed
 from this repository on 2026-09-06, together with the v1 stack that was their
@@ -150,7 +141,7 @@ only client. The tunnel may still be running on `cup-worker` and needs manual
 retirement; nothing in the Swift server can reach it, since the server resolves
 models from provider keys alone and exposes no base-URL override.
 
-## 9. Troubleshooting
+## 8. Troubleshooting
 
 Deploy webhook:
 
@@ -172,14 +163,14 @@ Scenario push refused — the federated exchange returns no `accessToken` when t
 server's federation policy does not name this workflow subject. Check the policy
 on the server, not the workflow.
 
-## 10. Related docs
+## 9. Related docs
 
 - [`../../v2/README.md`](../../v2/README.md) — the v2 lanes, dev loop, and what
   deploys where
 - [DEPLOYMENT_SERVER.md](DEPLOYMENT_SERVER.md) and [CLI.md](CLI.md) —
   **historical**; they describe the retired v1 bun stack
 
-## 11. Live Test Mode handoff verification
+## 10. Live Test Mode handoff verification
 
 Deployment webhook success proves the server switch. Before reporting a Test
 Mode guide handoff as browser-verified, run the separate read-only workflow:

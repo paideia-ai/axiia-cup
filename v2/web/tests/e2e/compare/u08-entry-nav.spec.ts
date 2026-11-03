@@ -31,7 +31,7 @@ const SHOTS = process.env.U08_SHOTS_DIR ?? 'test-results/u08-shots'
 
 // 桌面顶栏文字导航（#73/#74）：恰四项、顺序固定、历史居最右；
 // 铃铛与设置在其右侧（B8 的第 5、6 项）。
-const NAV_LABELS = ['场景', '我的智能体', '排名', '历史']
+const NAV_LABELS = ['场景', '我的智能体', '天梯', '历史']
 
 let u08Email = ''
 // 注册当刻观察到的落点路径（仅注册模式下有值；登录复用模式为 null）。
@@ -315,7 +315,7 @@ test('U08-C08 桌面顶栏恰为六项，历史居最右（B8 #73/#74）', async
     await test.step('假如 我已登录并打开 /scenarios（桌面视口）', async () => {
       await expect(page).toHaveURL(/\/scenarios$/)
     })
-    await test.step('那么 顶栏文字导航恰为 场景、我的智能体、排名、历史 四项且顺序如此', async () => {
+    await test.step('那么 顶栏文字导航恰为 场景、我的智能体、天梯、历史 四项且顺序如此', async () => {
       await expect(page.locator('header nav a')).toHaveText(NAV_LABELS)
     })
     await test.step('并且 历史在文字导航中居最右', async () => {
@@ -347,7 +347,7 @@ test('U08-C09 移动底栏与桌面顶栏一致（B8 #74）', async ({ browser }
       await expect(page).toHaveURL(/\/scenarios$/)
     })
     const bottomNav = page.locator('nav').last()
-    await test.step('那么 底栏导航项与桌面顶栏文字导航一致：场景、我的智能体、排名、历史', async () => {
+    await test.step('那么 底栏导航项与桌面顶栏文字导航一致：场景、我的智能体、天梯、历史', async () => {
       await expect(bottomNav).toBeVisible()
       await expect(bottomNav.locator('a')).toHaveText(NAV_LABELS)
     })
@@ -374,11 +374,11 @@ test('U08-C10 通知铃处处可见（#43）', async ({ browser }) => {
     const routes = [
       '/scenarios',
       '/my-agents',
-      '/tournaments',
+      '/sortie',
       '/matches',
       '/settings',
     ]
-    await test.step('当 我依次访问 场景、我的智能体、排名、历史、设置 五个页面；那么 每个页面的头部都能看到通知铃铛', async () => {
+    await test.step('当 我依次访问 场景、我的智能体、天梯、历史、设置 五个页面；那么 每个页面的头部都能看到通知铃铛', async () => {
       for (const route of routes) {
         await page.goto(route)
         await expect(

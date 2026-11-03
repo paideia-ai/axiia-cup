@@ -132,7 +132,6 @@ test('stays available across everyday pages, including reports, history and sett
       '/sortie',
       '/matches',
       '/matches/9400',
-      '/tournaments',
       '/notifications',
       '/settings',
       '/settings/archived-agents',

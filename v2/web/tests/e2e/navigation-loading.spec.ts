@@ -74,8 +74,7 @@ async function world(page: Page) {
       }
     } else if (path === '/v1/agents/101/versions') {
       payload = { versions, entryVersionID: 1002 }
-    } else if (path === '/v1/tournaments') payload = { tournaments: [] }
-    else if (path === '/v1/notifications') {
+    } else if (path === '/v1/notifications') {
       payload = { notifications: [], unreadCount: 0 }
     } else if (path.includes('/rewards')) {
       status = 404
@@ -179,14 +178,14 @@ test('keyboard focus prefetches a destination without navigating or writing', as
   await page.goto('/scenarios')
   await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
   const response = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === '/v1/tournaments'
+    new URL(response.url()).pathname === '/v1/matches'
   )
-  await nav(page, '/tournaments').focus()
+  await nav(page, '/matches').focus()
   await response
   await expect(page).toHaveURL(/\/scenarios$/)
-  await nav(page, '/tournaments').click()
-  await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
-  await expect(page.locator('[data-tm="G.loading"]')).toHaveCount(0)
+  await nav(page, '/matches').click()
+  await expect(page.locator('[data-tm="L.match-card"]')).toBeVisible()
+  await expect(page.locator('[data-tm="L.loading"]')).toHaveCount(0)
   expect(writes).toEqual([])
 })
 
@@ -195,8 +194,8 @@ test('a failed background refresh keeps cached content and offers retry', async 
   await page.clock.install()
   await page.goto('/scenarios')
   await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
-  await nav(page, '/tournaments').click()
-  await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
+  await nav(page, '/matches').click()
+  await expect(page.locator('[data-tm="L.match-card"]')).toBeVisible()
   state.failCatalog()
   await page.clock.fastForward(31_000)
   await nav(page, '/scenarios').click()
@@ -290,7 +289,7 @@ test('a late response from the previous agent cannot replace the current detail'
 for (const latency of [50, 200, 300]) {
   test(`a ${latency}ms destination never reveals loading feedback`, async ({ page }) => {
     const state = await world(page)
-    state.delays['/v1/tournaments'] = latency
+    state.delays['/v1/matches'] = latency
     await page.goto('/scenarios')
     await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
     await page.evaluate(() => {
@@ -312,8 +311,8 @@ for (const latency of [50, 200, 300]) {
         childList: true,
       })
     })
-    await nav(page, '/tournaments').click()
-    await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
+    await nav(page, '/matches').click()
+    await expect(page.locator('[data-tm="L.match-card"]')).toBeVisible()
     expect(
       await page.evaluate(() =>
         (globalThis as typeof globalThis & { revealedLoading: boolean })
@@ -329,8 +328,8 @@ test('a slow background refresh keeps content while feedback appears and clears'
   await page.goto('/scenarios')
   const card = page.locator('[data-tm="D.scenario-card"]')
   await expect(card).toBeVisible()
-  await nav(page, '/tournaments').click()
-  await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
+  await nav(page, '/matches').click()
+  await expect(page.locator('[data-tm="L.match-card"]')).toBeVisible()
   const refresh = gate()
   state.holds['/v1/scenarios'] = refresh.promise
   await page.clock.fastForward(31_000)
@@ -349,8 +348,8 @@ test('a server denial removes a cached page instead of retaining its actions', a
   await page.clock.install()
   await page.goto('/scenarios')
   await expect(page.locator('[data-tm="D.scenario-card"]')).toBeVisible()
-  await nav(page, '/tournaments').click()
-  await expect(page.locator('[data-tm="G.empty"]')).toBeVisible()
+  await nav(page, '/matches').click()
+  await expect(page.locator('[data-tm="L.match-card"]')).toBeVisible()
   await page.route(
     '**/v1/scenarios',
     (route) =>

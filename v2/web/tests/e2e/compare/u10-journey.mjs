@@ -371,17 +371,6 @@ try {
   await shot('owner-C11-os')
   await page.keyboard.press('Escape')
 
-  // C11 入口 ⑤ 排行榜/锦标赛：玩家对局列表 → EA？
-  await page.goto(`${BASE}/tournaments`)
-  await page.waitForTimeout(800)
-  const gLinks = await page.locator('a[href*="/agents/"]').count()
-  check(
-    'U10-C11-g',
-    true,
-    `锦标赛/排名页 agent 链接数=${gLinks}（无赛事数据，仅记录）`,
-  )
-  await shot('owner-C11-g')
-
   // ── Public 视角（探针，只读；本地栈无预置探针则注册码自建）──────────
   const ppage = await pub.newPage()
   let probeLogin = await apiJSON(pub, 'POST', '/auth/login', PROBE)

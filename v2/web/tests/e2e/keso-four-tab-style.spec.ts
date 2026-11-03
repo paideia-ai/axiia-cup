@@ -1,6 +1,6 @@
 // 2026-09-09 咳嗽四页签 minimal stylistic change 的可执行 BDD。
 // test.step 文案逐条镜像 keso-four-tab-style.feature。注册和会话走真实服务；
-// 排名/历史只用只读响应夹具，避免为视觉验收创建赛事或派发对局。
+// 历史只用只读响应夹具，避免为视觉验收派发对局。
 import { expect, type Page, test } from '@playwright/test'
 
 import { requireServerFixtures, signup } from './helpers'
@@ -17,12 +17,6 @@ const tabs = [
     ready: '[data-tm="MA.scenario-list"]',
   },
   {
-    path: '/tournaments',
-    ready: '[data-tm="G.tournament-card"]',
-    card: '[data-tm="G.tournament-card"]',
-    cardTitle: '[data-tm="G.tournament-name"]',
-  },
-  {
     path: '/matches',
     ready: '[data-tm="L.match-card"]',
     card: '[data-tm="L.match-card"]',
@@ -32,7 +26,6 @@ const tabs = [
 
 const cardTitleSizes: Readonly<Record<string, string>> = {
   '/scenarios': '20px',
-  '/tournaments': '15px',
   '/matches': '15px',
 }
 
@@ -150,27 +143,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     expect(me.ok(), 'registration establishes a real server session').toBe(true)
   })
 
-  await test.step('并且 排名与历史的只读接口使用确定性展示夹具', async () => {
-    await page.route('**/v1/tournaments', (route) =>
-      route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({
-          tournaments: [{
-            id: 9101,
-            scenarioID: 'style-fixture',
-            status: 'registration',
-            currentRound: 1,
-            totalRounds: 3,
-            phase: 'qualifier',
-            rounds: [{
-              id: 91011,
-              roundNumber: 1,
-              status: 'running',
-              phase: 'qualifier',
-            }],
-          }],
-        }),
-      }))
+  await test.step('并且 历史的只读接口使用确定性展示夹具', async () => {
     await page.route('**/v1/matches', (route) =>
       route.fulfill({
         contentType: 'application/json',
@@ -194,7 +167,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
       }))
   })
 
-  await test.step('当 我在桌面依次打开「场景」「我的智能体」「排名」「历史」', async () => {
+  await test.step('当 我在桌面依次打开「场景」「我的智能体」「历史」', async () => {
     await page.setViewportSize({ width: 1280, height: 900 })
     for (const tab of tabs) {
       await waitForTab(page, tab)
@@ -215,14 +188,14 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     }
   })
 
-  await test.step('那么 四页的顶栏、正文、页脚内容宽度相同且不超过 1040px', () => {
+  await test.step('那么 各页的顶栏、正文、页脚内容宽度相同且不超过 1040px', () => {
     expect(desktopWidths).not.toBeNull()
     const widths = Object.values(desktopWidths!)
     expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(0.5)
     expect(Math.max(...widths)).toBeLessThanOrEqual(1040)
   })
 
-  await test.step('并且 四页没有水平溢出，当前桌面页签只有轻量中性选中态', async () => {
+  await test.step('并且 各页没有水平溢出，当前桌面页签只有轻量中性选中态', async () => {
     for (const tab of tabs) {
       await waitForTab(page, tab)
       await expectNoHorizontalOverflow(page)
@@ -305,10 +278,9 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     expect(focus.shadow.split(',').length).toBeGreaterThan(1)
   })
 
-  await test.step('并且 场景、排名、历史卡片及其标题遵守中性计算样式', async () => {
+  await test.step('并且 场景、历史卡片及其标题遵守中性计算样式', async () => {
     expect([...computedCards.keys()]).toEqual([
       '/scenarios',
-      '/tournaments',
       '/matches',
     ])
     for (const [path, computed] of computedCards) {
@@ -326,9 +298,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     const scenarioTitle = computedCards.get('/scenarios')!.title
     expect(scenarioTitle.lineHeight).toBe('29px')
     expect(scenarioTitle.letterSpacing).toBe('-0.5px')
-    for (const path of ['/tournaments', '/matches']) {
-      expect(computedCards.get(path)!.title.numeric).toBe('tabular-nums')
-    }
+    expect(computedCards.get('/matches')!.title.numeric).toBe('tabular-nums')
 
     // Storybook's synthetic hover cannot engage a browser CSS pseudo-class;
     // Playwright moves the real pointer and owns this part of the contract.
@@ -345,7 +315,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     }
   })
 
-  await test.step('当 我在 390 × 844 移动视口重复访问四页', async () => {
+  await test.step('当 我在 390 × 844 移动视口重复访问各页', async () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.emulateMedia({ reducedMotion: 'reduce' })
     for (const tab of tabs) {
@@ -353,7 +323,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
     }
   })
 
-  await test.step('那么 四页仍无水平溢出、只选中当前页签，标题保持移动字号', async () => {
+  await test.step('那么 各页仍无水平溢出、只选中当前页签，标题保持移动字号', async () => {
     for (const tab of tabs) {
       await waitForTab(page, tab)
       await expectNoHorizontalOverflow(page)
@@ -386,11 +356,7 @@ test('咳嗽四页签：统一内容宽度、中性选中态与克制卡片', as
       } else {
         await expect(content).toHaveCSS('flex-wrap', 'wrap')
         await expect(content).toHaveCSS('padding', '18px 16px')
-        const meta = card.locator(
-          tab.path === '/tournaments'
-            ? '[data-tm="G.tournament-meta"]'
-            : '[data-tm="L.match-meta"]',
-        )
+        const meta = card.locator('[data-tm="L.match-meta"]')
         await expect(meta).toHaveCSS('display', 'inline-block')
         await expect(meta).toHaveCSS('overflow-wrap', 'anywhere')
       }

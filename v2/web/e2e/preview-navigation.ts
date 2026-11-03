@@ -196,10 +196,6 @@ async function api(request: Request, path: string): Promise<Response> {
       return json(finishedMatch)
     case '/notifications':
       return json(notificationsFixture)
-    case '/tournaments':
-      return json({ tournaments: [{ id: 1, phase: 'qualifier', round: 1 }] })
-    case '/tournaments/1/standings':
-      return json({ entries: [] })
   }
   const agent = /^\/agents\/(101|102)\/(draft|versions|stream)$/.exec(path)
   if (agent?.[2] === 'draft') {

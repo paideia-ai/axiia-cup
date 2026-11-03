@@ -41,9 +41,6 @@ import { RegisterPage } from './pages/register'
 import { ScenarioDetailPage } from './pages/scenario-detail'
 import { ScenarioBuildEntry } from './pages/scenario-build-entry'
 import { SettingsPage } from './pages/settings'
-import { StandingsPage } from './pages/standings'
-import { TournamentsPage } from './pages/tournaments'
-import { VersionAgentPage } from './pages/version-agent'
 import { TestModeRoot } from './testmode/index'
 
 const SortiePage = lazy(() => import('./features/sortie/ladder-page'))
@@ -185,12 +182,6 @@ export function AppRoutes() {
             <Route path='/agents/:agentId/build' element={<BuilderRoute />} />
             <Route path='/matches' element={<MatchesPage />} />
             <Route path='/matches/:matchId' element={<MatchDetailPage />} />
-            <Route path='/tournaments' element={<TournamentsPage />} />
-            <Route
-              path='/tournaments/:tournamentId'
-              element={<StandingsPage />}
-            />
-            <Route path='/versions/:versionId' element={<VersionAgentPage />} />
             <Route path='/notifications' element={<NotificationsPage />} />
             <Route
               path='/settings/archived-agents'

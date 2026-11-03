@@ -18,7 +18,6 @@ describe the bun API, its CLI, or its deploy path are historical.
 | --- | --- | --- | --- |
 | Frontend | `v2/web` | deno 2.9.1 + vite | ACR image `apps/axiia-web2:<sha>` → `axiia-cup-2-web.isofucius.cn` |
 | Scenarios | `v2/scenarios` | deno 2.9.1 | admin API upload |
-| Tournament ops | `v2/tournament-ops` | deno 2.9.1 | `.github/workflows/tournament-ops.yml` |
 
 Start with [`v2/README.md`](v2/README.md). It is the authoritative guide for
 both v2 lanes.

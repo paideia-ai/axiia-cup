@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Shield,
   Swords,
-  Trophy,
   UserRound,
 } from 'lucide-react'
 import type { PropsWithChildren, SyntheticEvent } from 'react'
@@ -34,7 +33,6 @@ const navigation = [
   { to: '/scenarios', label: '场景', icon: LayoutDashboard },
   { to: '/my-agents', label: '我的智能体', icon: Bot },
   { to: '/sortie', label: '天梯', icon: Swords },
-  { to: '/tournaments', label: '排名', icon: Trophy },
   { to: '/matches', label: '历史', icon: History },
 ]
 
