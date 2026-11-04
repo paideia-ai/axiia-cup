@@ -18,9 +18,11 @@ describe the bun API, its CLI, or its deploy path are historical.
 | --- | --- | --- | --- |
 | Frontend | `v2/web` | deno 2.9.1 + vite | ACR image `apps/axiia-web2:<sha>` → `axiia-cup-2-web.isofucius.cn` |
 | Scenarios | `v2/scenarios` | deno 2.9.1 | admin API upload |
+| Tournament | `v2/tournament` | deno 2.9.1 | nothing — operator scripts for the three-stage cup |
 
 Start with [`v2/README.md`](v2/README.md). It is the authoritative guide for
-both v2 lanes.
+the web and scenario lanes; `v2/tournament/README.md` covers the tournament
+scripts.
 
 ## Commands
 
@@ -46,6 +48,11 @@ cd v2/scenarios
 deno task validate         # typecheck + meta extraction over every scenario
 deno task fmt
 deno task lint
+
+# Tournament scripts
+cd v2/tournament
+deno task demo             # full mock cup → demo/report.html
+deno task fmt && deno task lint && deno task check && deno task test
 ```
 
 `deno task test:e2e:real` builds and boots the sibling Swift server; it needs a
@@ -54,7 +61,7 @@ Swift 6.3 toolchain and is not part of CI.
 ## CI
 
 `.github/classify-changes.sh` decides which lane a commit touches and emits
-`docs_only`, `v2_web_changed`, `v2_scenarios_changed`. Jobs in `ci.yml` and
+`docs_only`, `v2_web_changed`, `v2_scenarios_changed`, `v2_tournament_changed`. Jobs in `ci.yml` and
 `build.yml` gate on those flags rather than on `paths-ignore`, because the
 branch ruleset requires the `Check` context and a path-skipped workflow never
 reports it. A non-docs change outside `v2/` sets no lane flag and `Check`

@@ -20,6 +20,7 @@ is backed up on the host at
 | --- | --- | --- | --- |
 | v2 web | `v2/web`, `v2/deploy` | `build_v2_web` | `deploy_v2_web` → webhook `target: web2` |
 | v2 scenarios | `v2/scenarios` | — | `deploy_v2_scenarios` → admin API push |
+| v2 tournament | `v2/tournament` | — | nothing; operator scripts, CI-checked only |
 
 The Swift server binary is **not** built here. It lives in the private
 `axiia-cup-v2` repository and is deployed separately.
@@ -27,11 +28,12 @@ The Swift server binary is **not** built here. It lives in the private
 ## 2. Change classification
 
 `.github/classify-changes.sh` runs first in both `ci.yml` and `build.yml` and
-emits three GitHub Actions outputs:
+emits four GitHub Actions outputs:
 
 - `docs_only` — every changed file is under `docs/` or is a root-level Markdown
   file (`README.md`, `AGENTS.md`, `CLAUDE.md`)
 - `v2_scenarios_changed` — something under `v2/scenarios/`
+- `v2_tournament_changed` — something under `v2/tournament/`
 - `v2_web_changed` — something else under `v2/`
 
 A non-docs change outside `v2/` — `scripts/`, the workflows themselves — sets
@@ -57,6 +59,8 @@ Jobs:
   then Chromium install and `test:storybook`, then `build`
 - `v2 scenarios` — runs when `v2_scenarios_changed`; `deno task validate`,
   `fmt`, `lint`
+- `v2 tournament` — runs when `v2_tournament_changed`; `deno task fmt`,
+  `lint`, `check`, `test`
 - `Check` — `if: always()`, the single required status context
 
 `Check` fails if a lane flag is set and that lane's job did not succeed. It
