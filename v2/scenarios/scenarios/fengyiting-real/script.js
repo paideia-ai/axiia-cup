@@ -484,5 +484,6 @@ async function main() {
     scoreA: scoreA,
     scoreB: scoreB,
     reasoning: `貂蝉${verdict.fields.scheme}，选择${NAMES[chosen]}。\n\n${verdict.fields.speech}`,
+    facts: { scheme: verdict.fields.scheme },
   }
 }
