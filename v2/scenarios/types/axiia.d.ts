@@ -66,6 +66,10 @@ interface ScenarioResult {
   scoreA: number
   scoreB: number
   reasoning?: string
+  // Scenario-specific outcome facts, stored per match and returned verbatim
+  // by the federation match query. Tournament scripts read them (fengyiting:
+  // `scheme`, the primary metric of a 1:1 pair).
+  facts?: Record<string, unknown>
 }
 
 type ScenarioMain = () => Promise<ScenarioResult>

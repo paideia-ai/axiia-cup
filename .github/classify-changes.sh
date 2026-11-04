@@ -10,6 +10,7 @@ Outputs the following GitHub Actions outputs when GITHUB_OUTPUT is set:
   - docs_only=true|false
   - v2_web_changed=true|false
   - v2_scenarios_changed=true|false
+  - v2_tournament_changed=true|false
 
 Docs-only means every changed file is either:
   - under docs/
@@ -17,8 +18,10 @@ Docs-only means every changed file is either:
 
 The lanes are independent. v2_scenarios_changed covers v2/scenarios (the scenario
 scripts prompt engineers author, checked with deno and shipped through the admin
-API). v2_web_changed covers the rest of v2/ (the Swift-server frontend, built with
-deno and deployed to axiia-cup-2-web, plus its deploy assets and README).
+API). v2_tournament_changed covers v2/tournament (the tournament operator
+scripts; checked and tested, never deployed). v2_web_changed covers the rest of
+v2/ (the Swift-server frontend, built with deno and deployed to axiia-cup-2-web,
+plus its deploy assets and README).
 
 A non-docs change outside v2/ — deploy host-ops, scripts, workflows — belongs to
 no build lane and sets neither flag. The Check job passes on that, since there is
@@ -105,6 +108,10 @@ is_v2_scenarios_path() {
   [[ "$1" == v2/scenarios/* ]]
 }
 
+is_v2_tournament_path() {
+  [[ "$1" == v2/tournament/* ]]
+}
+
 is_v2_path() {
   [[ "$1" == v2/* ]]
 }
@@ -113,11 +120,13 @@ if [[ ${#files[@]} -eq 0 ]]; then
   docs_only=false
   v2_web_changed=true
   v2_scenarios_changed=false
+  v2_tournament_changed=false
   echo "No changed files detected; building v2 web to stay safe." >&2
 else
   docs_only=true
   v2_web_changed=false
   v2_scenarios_changed=false
+  v2_tournament_changed=false
   echo "Changed files:" >&2
   for file in "${files[@]}"; do
     echo " - ${file}" >&2
@@ -127,6 +136,8 @@ else
     docs_only=false
     if is_v2_scenarios_path "$file"; then
       v2_scenarios_changed=true
+    elif is_v2_tournament_path "$file"; then
+      v2_tournament_changed=true
     elif is_v2_path "$file"; then
       v2_web_changed=true
     fi
@@ -150,3 +161,4 @@ emit() {
 emit docs_only "$docs_only"
 emit v2_web_changed "$v2_web_changed"
 emit v2_scenarios_changed "$v2_scenarios_changed"
+emit v2_tournament_changed "$v2_tournament_changed"

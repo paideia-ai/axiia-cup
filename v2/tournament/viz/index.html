@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Axiia Cup 赛事报告</title>
+<style>
+:root {
+  --bg: #f6f5f1; --card: #fff; --fg: #1d1d1b; --muted: #6b6a64; --line: #e3e1da;
+  --accent: #b5452b; --accent-soft: #f6e3dc;
+  --games: #3b6ea8; --primary: #d08a1f; --secondary: #6a9a4a; --ruling: #b5452b;
+  --draw: #9a8fb8; --walkover: #888; --bye: #c9c6bc;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Segoe UI", sans-serif;
+  font-size: 14px; color: var(--fg); background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+header h1 { font-size: 17px; margin: 0 12px 0 0; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs button, .chip { border: 1px solid var(--line); background: var(--card); padding: 5px 11px; border-radius: 999px; cursor: pointer; font: inherit; color: inherit; }
+.tabs button.on { background: var(--fg); color: #fff; border-color: var(--fg); }
+header nav a { color: var(--muted); text-decoration: none; margin-right: 10px; }
+header nav a:hover { color: var(--accent); }
+input[type=search] { font: inherit; padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; min-width: 200px; }
+main { max-width: 1320px; margin: 0 auto; padding: 18px 20px 80px; }
+section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 18px; scroll-margin-top: 70px; }
+section h2 { font-size: 16px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+section h2 small { font-weight: normal; color: var(--muted); font-size: 12.5px; }
+.badge { display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.muted { color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.funnel { display: flex; flex-direction: column; gap: 6px; }
+.funnel .row { display: grid; grid-template-columns: 70px 1fr 200px; gap: 10px; align-items: center; }
+.funnel .bar { height: 26px; border-radius: 4px; background: linear-gradient(90deg, var(--fg), #4a4944); color: #fff; font-size: 12.5px; display: flex; align-items: center; padding-left: 8px; min-width: 38px; }
+.funnel .note { font-size: 12px; color: var(--muted); }
+.stack { display: flex; height: 22px; border-radius: 4px; overflow: hidden; background: var(--line); }
+.stack div { height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin: 6px 0 12px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.decided-row { display: grid; grid-template-columns: 56px 1fr; gap: 4px 10px; align-items: center; margin-bottom: 10px; }
+.decided-row .counts { grid-column: 2; font-size: 12px; color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.stat b { display: block; font-size: 22px; }
+.stat span { font-size: 12px; color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; position: sticky; top: 0; background: var(--card); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.cut td { border-bottom: 2px solid var(--accent); }
+tr.out td { color: #aaa; }
+.p { color: inherit; text-decoration: none; border-bottom: 1px dotted #aaa; cursor: pointer; }
+.p:hover { color: var(--accent); border-color: var(--accent); }
+.groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; }
+.group { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+.group.hit { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.group h3 { font-size: 12.5px; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 6px; }
+.group .rounds { display: flex; gap: 6px; }
+.group .rcol { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.slot { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2px 0; min-width: 0; }
+.m { border: 1px solid var(--line); border-radius: 5px; padding: 2px 5px; background: #fcfbf8; cursor: pointer; }
+.m:hover { border-color: var(--accent); }
+.m .l { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.m .l.w { font-weight: 650; }
+.m .l.x { color: #aaa; }
+.tag { font-size: 10px; padding: 0 4px; border-radius: 3px; color: #fff; align-self: center; white-space: nowrap; }
+.slider { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.slider input[type=range] { width: 260px; }
+.scroll { max-height: 620px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+.bracket { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.bcol { display: flex; flex-direction: column; min-width: 160px; }
+.bcol .body { flex: 1; display: flex; flex-direction: column; }
+.bcol h4 { margin: 0 0 4px; font-size: 12px; color: var(--muted); text-align: center; }
+.bcol .m { font-size: 11.5px; }
+.seed { color: var(--muted); font-size: 10.5px; margin-right: 3px; }
+.champ { align-self: center; text-align: center; padding: 10px 14px; border: 2px solid var(--accent); border-radius: 8px; font-weight: 700; }
+#drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 100vw); background: var(--card); border-left: 1px solid var(--line); box-shadow: -8px 0 30px rgba(0,0,0,.08); transform: translateX(105%); transition: transform .18s; z-index: 10; overflow-y: auto; padding: 16px 20px 40px; }
+#drawer.open { transform: none; }
+#drawer .close { float: right; }
+#drawer h2 { margin: 0 0 4px; font-size: 18px; }
+.kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px 14px; margin: 10px 0 14px; font-size: 13px; }
+.kv div span { display: block; color: var(--muted); font-size: 11.5px; }
+.pair { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; }
+.pair.focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.pair .head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.pair .res { font-weight: 700; margin-right: 4px; }
+.pair .res.W { color: #2d7a3a; } .pair .res.L { color: var(--accent); } .pair .res.D { color: #6b5fa0; }
+.pair .games { font-size: 12.5px; color: #3c3b37; margin-top: 4px; }
+.pair .games div { padding: 1px 0; }
+.why { font-size: 12px; color: var(--muted); margin-top: 3px; }
+svg text { font-size: 10.5px; fill: var(--muted); }
+.empty { color: var(--muted); padding: 14px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Axiia Cup 赛事报告</h1>
+  <div class="tabs" id="tabs"></div>
+  <nav><a href="#overview">概览</a><a href="#prelim">海选</a><a href="#swiss">瑞士轮</a><a href="#ko">64 强</a></nav>
+  <input type="search" id="find" placeholder="找选手：编号或姓名，回车打开" list="players">
+  <datalist id="players"></datalist>
+  <span id="status" class="muted"></span>
+</header>
+<main id="main"></main>
+<aside id="drawer"></aside>
+<script id="report-data" type="application/json">/*REPORT_DATA*/null</script>
+<script>
+'use strict'
+const DATA = JSON.parse(document.getElementById('report-data').textContent) || []
+const SCN = {
+  'shangyang-court': { name: '商鞅变法', a: '商鞅', b: '甘龙', primary: '两局原始分之和' },
+  'honnoji-decision': { name: '本能寺之变', a: '袭击本能寺', b: '西进毛利', primary: '两局原始分之和' },
+  'trolley-problem': { name: '电车难题', a: '一人侧', b: '五人侧', primary: '两局赢下的案件数' },
+  'fengyiting-real': { name: '凤仪亭之夜', a: '董卓', b: '吕布', primary: '获胜局貂蝉是否放弃连环计' },
+}
+const BY = {
+  games: ['2-0 胜场', 'var(--games)', '2-0'],
+  primary: ['primary 场景指标', 'var(--primary)', 'P'],
+  secondary: ['secondary token 数', 'var(--secondary)', 'S'],
+  ruling: ['组委会裁定', 'var(--ruling)', '裁'],
+  draw: ['平局（primary 相同）', 'var(--draw)', '平'],
+  walkover: ['弃权 / 退赛', 'var(--walkover)', '弃'],
+  bye: ['轮空', 'var(--bye)', '空'],
+}
+const STAGE = { prelim: '海选', swiss: '瑞士轮', ko: '64 强' }
+const STAGE_N = { prelim: 0, swiss: 1, ko: 2 }
+const KO_ROUND = (n, k) => { const left = 2 ** (n - k + 1); return left === 2 ? '决赛' : left === 4 ? '半决赛' : left === 8 ? '四分之一决赛' : `${left} 强赛` }
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+const $ = (sel) => document.querySelector(sel)
+
+let R = null // the scenario report on screen
+let IDX = null
+
+function index(r) {
+  const players = new Map(r.players.map((p) => [p.id, p]))
+  const pairs = new Map(r.pairs.map((p) => [p.id, p]))
+  const byPlayer = new Map()
+  for (const p of r.pairs) for (const id of [p.p, p.q]) { if (!byPlayer.has(id)) byPlayer.set(id, []); byPlayer.get(id).push(p) }
+  const byes = new Map()
+  for (const rd of r.swiss.rounds) if (rd.bye && rd.standings.length) { if (!byes.has(rd.bye)) byes.set(rd.bye, []); byes.get(rd.bye).push(rd.round) }
+  return { players, pairs, byPlayer, byes }
+}
+
+const pname = (id) => IDX.players.get(id)?.name ?? ''
+const plink = (id, seed) => id ? `<a class="p" data-p="${esc(id)}">${seed ? `<span class="seed">${seed}</span>` : ''}${esc(id)} ${esc(pname(id))}</a>` : '<span class="muted">轮空</span>'
+const settledRounds = () => R.swiss.rounds.filter((x) => x.standings.length).length
+
+function render() {
+  const s = SCN[R.scenarioID] ?? { name: R.scenarioID }
+  const st = R.done ? `已完赛 · 冠军 ${R.ko.champion} ${pname(R.ko.champion)}` : `进行中：${STAGE[R.frontier?.stage] ?? ''} 第 ${R.frontier?.round} 轮`
+  $('#status').innerHTML = `${esc(R.tournament)} · <span class="badge">${R.mode === 'mock' ? 'mock' : 'live'}</span> · ${esc(st)}`
+  $('#players').innerHTML = R.players.map((p) => `<option value="${esc(p.id)}">${esc(p.name ?? '')}</option>`).join('')
+  const k = Math.max(1, settledRounds())
+  $('#main').innerHTML = `
+    <section id="overview"><h2>${esc(s.name)} <small>${esc(R.scenarioID)} · seed <code>${esc(R.seed)}</code> · K ${R.config.K} · E ${R.config.E} · R ${R.config.R}${R.blocked ? ` · <b style="color:var(--accent)">${esc(R.blocked)}</b>` : ''}</small></h2>
+      <div class="grid2"><div><b>阶段漏斗</b>${funnel()}</div><div>${decided()}</div></div>
+    </section>
+    ${R.truth ? `<section id="truth"><h2>Mock 真值对照 <small>按潜在实力 (a+b)/2 排名，对照赛制给出的最终名次</small></h2>${truth()}</section>` : ''}
+    <section id="prelim"><h2>海选分组 <small>${R.prelim.skipped ? '报名人数不超过 E，全部晋级' : `${R.prelim.groups.length} 组 · 天梯蛇形分组，无排名者抽签 · 组内固定签表，高种子优先轮空`}</small></h2>
+      ${R.prelim.skipped ? '' : `<div class="slider"><input type="search" id="gfind" placeholder="搜索选手或组号（g017）"><span class="muted" id="gcount"></span></div><div class="groups" id="groups"></div><div style="margin-top:10px"><button class="chip" id="gmore">显示更多</button></div>`}
+    </section>
+    <section id="swiss"><h2>瑞士轮积分榜 <small>3/1/0 · 积分 → Buchholz → 加权对手分 → 实际胜场 → token 少者 → 组委会；轮空/弃权按虚拟对手计</small></h2>
+      <div class="slider"><span>第 <b id="rlabel"></b> 轮后</span><input type="range" id="round" min="1" max="${k}" value="${k}">
+      <input type="search" id="sfind" placeholder="筛选选手"><label><input type="checkbox" id="sall"> 显示全部</label></div>
+      <div class="scroll"><table id="standings"></table></div>
+    </section>
+    <section id="ko"><h2>64 强淘汰赛 <small>瑞士轮第 1–64 名依次为 1–64 号种子 · 固定签表 1–64、32–33… · 点击对阵看两局</small></h2>${bracket()}</section>`
+  if (!R.prelim.skipped) setupGroups()
+  setupStandings()
+}
+
+function gamesIn(stage) {
+  return R.pairs.filter((p) => !stage || p.stage === stage).reduce((s, p) => s + p.games.reduce((a, g) => a + g[7], 0), 0)
+}
+
+function funnel() {
+  const c = R.counts
+  const pairs = (st) => R.pairs.filter((p) => p.stage === st && p.by !== 'walkover').length
+  const rows = [
+    ['报名', c.entrants, `海选 ${c.Q} · 天梯直通 ${c.K}`],
+    ['海选晋级', c.E, `${pairs('prelim')} pair · ${gamesIn('prelim')} 局`],
+    ['瑞士轮', c.N, `直通 ${c.K} + 晋级 ${c.E} · ${R.config.R} 轮 · ${pairs('swiss')} pair`],
+    ['64 强', c.ko, `${pairs('ko')} pair · ${gamesIn('ko')} 局`],
+    ['冠军', R.ko.champion ? 1 : 0, R.ko.champion ? `${R.ko.champion} ${pname(R.ko.champion)}` : '—'],
+  ]
+  const max = Math.max(...rows.map((r) => r[1]), 1)
+  return `<div class="funnel" style="margin-top:8px">${rows.map(([k, n, note]) => `<div class="row"><span>${k}</span><div><div class="bar" style="width:${Math.max(3, 100 * Math.sqrt(n / max))}%">${n}</div></div><span class="note">${esc(note)}</span></div>`).join('')}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">条宽按人数平方根缩放。共 ${R.pairs.length} pair、${gamesIn()} 次提交（含失败重跑）。</p>`
+}
+
+function decided() {
+  const keys = Object.keys(BY)
+  const legend = `<div class="legend">${keys.map((k) => `<span><i style="background:${BY[k][1]}"></i>${BY[k][0]}</span>`).join('')}</div>`
+  const rows = ['prelim', 'swiss', 'ko'].map((st) => {
+    const d = R.decided[st] || {}
+    const total = keys.reduce((s, k) => s + (d[k] || 0), 0) || 1
+    const open = ['unsubmitted', 'pending', 'failed', 'awaiting-ruling'].filter((k) => d[k]).map((k) => `${k} ${d[k]}`).join(' · ')
+    return `<div class="decided-row"><b>${STAGE[st]}</b><div class="stack">${keys.filter((k) => d[k]).map((k) => `<div title="${BY[k][0]} ${d[k]}" style="width:${100 * d[k] / total}%;background:${BY[k][1]}"></div>`).join('')}</div>
+      <div class="counts">${keys.filter((k) => d[k]).map((k) => `${BY[k][0]} <b>${d[k]}</b>`).join(' · ') || '—'}${open ? ` · <b>${esc(open)}</b>` : ''}</div></div>`
+  }).join('')
+  const ru = R.rulings
+  return `<b>pair 如何决出</b>${legend}${rows}<p class="muted" style="font-size:12px;margin:4px 0 0">rulings.json：pair 裁定 ${ru.pairs} · 弃权 ${ru.forfeits} · 总榜同分 ${ru.standings}</p>`
+}
+
+function truth() {
+  const t = R.truth
+  const cards = `<div class="cards">
+    <div class="stat"><b>${t.trueTopInKO} / ${t.koSize}</b><span>真实前 ${t.koSize} 进入 64 强</span></div>
+    <div class="stat"><b>${t.trueTopInSwiss} / ${t.koSize}</b><span>真实前 ${t.koSize} 进入瑞士轮</span></div>
+    <div class="stat"><b>${esc(t.trueNo1.finish)}</b><span>真实第 1：${plink(t.trueNo1.id)}</span></div>
+    <div class="stat"><b>#${t.champion?.trueRank ?? '—'}</b><span>冠军的真实排名</span></div>
+    <div class="stat"><b>${t.spearman}</b><span>真实排名 vs 最终名次 Spearman ρ</span></div></div>`
+  const W = 560, H = 310, P = 36
+  const n = R.players.length
+  const lx = (v) => P + (W - P - 24) * Math.log(v) / Math.log(n)
+  const ly = (v) => 8 + (H - P - 8) * Math.log(v) / Math.log(n)
+  const color = (p) => p.koSeed ? 'var(--accent)' : p.swissSeed ? 'var(--games)' : '#bbb'
+  const dots = R.players.filter((p) => p.placement && p.trueRank).map((p) => `<circle data-p="${esc(p.id)}" cx="${lx(p.trueRank).toFixed(1)}" cy="${ly(p.placement).toFixed(1)}" r="${p.koSeed ? 2.8 : 1.7}" fill="${color(p)}" opacity="${p.koSeed ? .9 : .4}" style="cursor:pointer"><title>${esc(p.id)} 真实 #${p.trueRank} · ${esc(p.finish)}</title></circle>`).join('')
+  const ticks = [1, 4, 16, 64, 356, n].filter((v, i, a) => v <= n && a.indexOf(v) === i)
+  const axes = ticks.map((v) => `<line x1="${lx(v)}" x2="${lx(v)}" y1="8" y2="${H - P}" stroke="#eee"/><text x="${lx(v)}" y="${H - P + 13}" text-anchor="middle">${v}</text><line x1="${P}" x2="${W - 24}" y1="${ly(v)}" y2="${ly(v)}" stroke="#eee"/><text x="${P - 4}" y="${ly(v) + 3}" text-anchor="end">${v}</text>`).join('')
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">${axes}<line x1="${lx(1)}" y1="${ly(1)}" x2="${lx(n)}" y2="${ly(n)}" stroke="#ddd" stroke-dasharray="3 3"/>${dots}<text x="${W / 2}" y="${H - 4}" text-anchor="middle">真实实力排名（对数）</text><text x="11" y="${H / 2}" transform="rotate(-90 11 ${H / 2})" text-anchor="middle">最终名次（对数）</text></svg>`
+  const top = `<div class="scroll" style="max-height:330px"><table><tr><th class="num">真实</th><th>选手</th><th>天梯</th><th>止步</th><th class="num">名次</th></tr>${t.trueTop.map((x) => { const p = IDX.players.get(x.id); return `<tr><td class="num">${x.trueRank}</td><td>${plink(x.id)}</td><td class="muted">${p.ladderRank ? `#${p.ladderRank}${p.direct ? ' 直通' : ''}` : '—'}</td><td>${esc(x.finish)}</td><td class="num">${x.placement ?? ''}</td></tr>` }).join('')}</table></div>`
+  return `${cards}<div class="grid2"><div>${svg}<div class="legend"><span><i style="background:var(--accent)"></i>进入 64 强</span><span><i style="background:var(--games)"></i>止步瑞士轮</span><span><i style="background:#bbb"></i>海选出局（同轮出局并列）</span></div></div><div>${top}</div></div>`
+}
+
+function matchBox(cell, seeds) {
+  const [p, q, pairID, w] = cell
+  const pair = pairID ? IDX.pairs.get(pairID) : null
+  const by = pair?.by ? BY[pair.by] : (!pairID && (p || q) ? BY.bye : null)
+  const line = (id) => {
+    const cls = w === undefined || w === null ? '' : w === id ? 'w' : 'x'
+    const seed = seeds?.get(id)
+    return `<div class="l ${cls}">${id ? `${seed ? `<span class="seed">${seed}</span>` : ''}${esc(id)} ${esc(pname(id))}` : '<span class="muted">—</span>'}</div>`
+  }
+  const tag = by ? `<span class="tag" style="background:${by[1]}" title="${by[0]}">${by[2]}</span>` : (pair ? `<span class="tag" style="background:#999">${esc(pair.status)}</span>` : '')
+  const target = pairID ? `data-pair="${esc(pairID)}"` : (p || q) ? `data-p="${esc(p || q)}"` : ''
+  return `<div class="m" ${target}><div style="display:flex;justify-content:space-between;gap:4px"><div style="min-width:0;flex:1">${line(p)}${line(q)}</div>${tag}</div></div>`
+}
+
+function setupGroups() {
+  let limit = 24
+  const draw = () => {
+    const q = $('#gfind').value.trim().toLowerCase()
+    const hit = (g) => !q || g.id.includes(q) || g.players.some((id) => id.toLowerCase().includes(q) || pname(id).includes(q))
+    const groups = R.prelim.groups.filter(hit)
+    $('#gcount').textContent = `${groups.length} 组${groups.length > limit ? `，显示前 ${limit}` : ''}`
+    $('#groups').innerHTML = groups.slice(0, limit).map((g) => {
+      const seeds = new Map(g.players.map((id, i) => [id, i + 1]))
+      const cols = g.rounds.map((rd) => `<div class="rcol">${rd.map((c) => `<div class="slot">${matchBox(c, seeds)}</div>`).join('')}</div>`).join('')
+      return `<div class="group ${q ? 'hit' : ''}"><h3><span>${g.id} · ${g.players.length} 人</span><span class="muted">晋级 ${g.winner ? plink(g.winner) : g.winner === null ? '无' : '…'}</span></h3><div class="rounds">${cols || g.players.map((id) => plink(id)).join('')}</div></div>`
+    }).join('') || '<div class="empty">没有匹配的组</div>'
+    $('#gmore').style.display = groups.length > limit ? '' : 'none'
+  }
+  $('#gfind').addEventListener('input', () => { limit = 24; draw() })
+  $('#gmore').addEventListener('click', () => { limit += 48; draw() })
+  draw()
+}
+
+function setupStandings() {
+  const draw = () => {
+    const k = Number($('#round').value)
+    $('#rlabel').textContent = k
+    const rd = R.swiss.rounds[k - 1]
+    if (!rd || !rd.standings.length) { $('#standings').innerHTML = '<tr><td class="empty">瑞士轮尚未结算任何一轮</td></tr>'; return }
+    const final = k === R.config.R
+    const q = $('#sfind').value.trim().toLowerCase()
+    const ko = new Set(R.ko.seeds)
+    let rows = rd.standings
+    if (q) rows = rows.filter((s) => s[0].toLowerCase().includes(q) || pname(s[0]).includes(q))
+    else if (!$('#sall').checked) rows = rows.slice(0, 100)
+    const lastKO = final ? R.ko.seeds[R.ko.seeds.length - 1] : null
+    $('#standings').innerHTML = `<tr><th class="num">名次</th><th>选手</th><th class="num">积分</th><th class="num">Buchholz</th><th class="num">加权</th><th class="num">实际胜</th><th class="num">token</th><th>胜-平-负</th><th>初始种子</th><th></th></tr>` +
+      rows.map(([id, score, bh, sb, wins, rank, tie, rec]) => {
+        const p = IDX.players.get(id)
+        const mark = final ? (ko.has(id) ? `<span class="badge">KO ${p.koSeed} 号</span>` : p.withdrawn ? '<span class="muted">退赛</span>' : '') : ''
+        const byes = IDX.byes.get(id)?.filter((r) => r <= k)
+        const tieMark = tie === 'ruled' ? ' <span title="完全同分，组委会裁定">⚖︎</span>' : tie ? ' <span title="完全同分，待组委会裁定">＝</span>' : ''
+        return `<tr class="${id === lastKO && !q ? 'cut' : ''} ${p.withdrawn ? 'out' : ''}"><td class="num">${rank}${tieMark}</td><td>${plink(id)}${p.direct ? ' <span class="muted" title="天梯直通">直通</span>' : ''}</td><td class="num"><b>${score}</b></td><td class="num">${bh}</td><td class="num">${sb}</td><td class="num">${wins}</td><td class="num">${p.tokensA + p.tokensB}</td><td>${rec}${byes?.length ? ` <span class="muted">轮空 r${byes.join(',')}</span>` : ''}</td><td class="muted">${p.swissSeed}${p.ladderRank ? ` · 天梯 #${p.ladderRank}` : ''}</td><td>${mark}</td></tr>`
+      }).join('')
+  }
+  for (const id of ['#round', '#sfind', '#sall']) $(id).addEventListener('input', draw)
+  draw()
+}
+
+function bracket() {
+  if (!R.ko.rounds.length) return `<div class="empty">${R.blocked ? esc(R.blocked) : '淘汰赛尚未开始'}</div>`
+  const seeds = new Map(R.ko.seeds.map((id, i) => [id, i + 1]))
+  const n = Math.log2(R.ko.rounds[0].length * 2)
+  const cols = R.ko.rounds.map((rd, i) => `<div class="bcol"><h4>${KO_ROUND(n, i + 1)}</h4><div class="body">${rd.map((c) => `<div class="slot">${matchBox(c, seeds)}</div>`).join('')}</div></div>`).join('')
+  const champ = R.ko.champion ? `<div class="bcol"><h4>冠军</h4><div class="body"><div class="slot"><div class="champ">${plink(R.ko.champion, seeds.get(R.ko.champion))}</div></div></div></div>` : ''
+  return `<div class="legend">${Object.values(BY).map((b) => `<span><i style="background:${b[1]}"></i>${b[2]} = ${b[0]}</span>`).join('')}</div><div class="bracket" style="min-height:${R.ko.rounds[0].length * 42}px">${cols}${champ}</div>`
+}
+
+function describeDecision(pair, me) {
+  const s = SCN[R.scenarioID] ?? {}
+  const meP = pair.p === me
+  const [wMe, wOp] = meP ? [pair.winsP, pair.winsQ] : [pair.winsQ, pair.winsP]
+  const [pm, po] = meP ? [pair.primaryP, pair.primaryQ] : [pair.primaryQ, pair.primaryP]
+  const [tm, to] = meP ? [pair.tokensP, pair.tokensQ] : [pair.tokensQ, pair.tokensP]
+  const f = (v) => R.scenarioID === 'fengyiting-real' ? (v === 1 ? '放弃' : v === 0 ? '继续' : '—') : v
+  switch (pair.by) {
+    case 'games': return `两局胜场 ${wMe}:${wOp}，直接决出`
+    case 'primary': return `胜场 1:1 → primary（${s.primary}）${f(pm)} : ${f(po)}`
+    case 'draw': return `胜场 1:1，primary（${s.primary}）${f(pm)} : ${f(po)} 相同 → 瑞士轮平局，各得 1 分`
+    case 'secondary': return `胜场 1:1，primary ${f(pm)} : ${f(po)} 相同 → secondary：prompt token ${tm} : ${to}，少者晋级`
+    case 'ruling': return `胜场 1:1，primary ${f(pm)} : ${f(po)}，token ${tm} : ${to} → 组委会裁定：${esc(pair.note ?? '')}`
+    case 'walkover': return `未比赛：${esc(pair.note ?? '弃权')}`
+    default: return `状态：${esc(pair.status)}${pair.note ? ` · ${esc(pair.note)}` : ''}`
+  }
+}
+
+function gameLine(pair, g) {
+  const [slot, matchID, status, winner, a, b, scheme, attempts] = g
+  const s = SCN[R.scenarioID] ?? { a: 'A', b: 'B' }
+  const [ap, bp] = slot === 'g1' ? [pair.p, pair.q] : [pair.q, pair.p]
+  const who = winner === 'a' ? ap : winner === 'b' ? bp : null
+  const score = a !== null && R.scenarioID !== 'fengyiting-real' ? ` · ${a} : ${b}` : ''
+  const outcome = status === 'finished' ? `<b>${esc(who ?? winner)}</b> 胜${score}${scheme ? ` · 貂蝉${esc(scheme)}` : ''}` : esc(status)
+  return `<div>${slot === 'g1' ? '第 1 局' : '第 2 局'}：${esc(ap)}（${esc(s.a)}） vs ${esc(bp)}（${esc(s.b)}） → ${outcome} <span class="muted">match #${matchID}${attempts > 1 ? ` · 共提交 ${attempts} 次` : ''}</span></div>`
+}
+
+function openPlayer(id, focusPair) {
+  const p = IDX.players.get(id)
+  if (!p) return
+  const pairs = (IDX.byPlayer.get(id) || []).slice().sort((x, y) => STAGE_N[x.stage] - STAGE_N[y.stage] || x.round - y.round)
+  const koN = Math.log2((R.ko.rounds[0]?.length || 32) * 2)
+  const kv = [
+    ['最终', p.finish + (p.placement ? `（第 ${p.placement} 名）` : '')],
+    ['天梯', p.ladderRank ? `#${p.ladderRank}${p.direct ? ' · 直通瑞士轮' : ''}` : '无排名'],
+    ['prompt token A + B', `${p.tokensA} + ${p.tokensB} = ${p.tokensA + p.tokensB}`],
+    ['海选组', p.group ?? '—'],
+    ['瑞士轮种子 / 名次', p.swissSeed ? `${p.swissSeed} / ${p.swissPosition ?? '—'}` : '—'],
+    ['64 强种子', p.koSeed ?? '—'],
+    ...(p.trueRank ? [['mock 真实实力', `#${p.trueRank}（${p.strength}）`]] : []),
+    ...(p.withdrawn ? [['退赛', p.withdrawn]] : []),
+  ]
+  const items = pairs.map((pair) => {
+    const opp = pair.p === id ? pair.q : pair.p
+    const res = pair.status !== 'decided' ? '' : pair.winner === 'draw' ? 'D' : (pair.winner === 'p' && pair.p === id) || (pair.winner === 'q' && pair.q === id) ? 'W' : 'L'
+    const by = pair.by ? BY[pair.by] : null
+    const roundLabel = pair.stage === 'ko' ? KO_ROUND(koN, pair.round) : `第 ${pair.round} 轮`
+    return { key: [STAGE_N[pair.stage], pair.round], html: `<div class="pair ${pair.id === focusPair ? 'focus' : ''}" id="pp-${esc(pair.id)}"><div class="head"><span><b>${STAGE[pair.stage]} ${roundLabel}</b> vs ${plink(opp)}</span>
+      <span><span class="res ${res}">${{ W: '胜', L: '负', D: '平', '': esc(pair.status) }[res]}</span>${by ? `<span class="tag" style="background:${by[1]}">${by[0]}</span>` : ''}</span></div>
+      <div class="games">${pair.games.map((g) => gameLine(pair, g)).join('')}</div>
+      <div class="why">${describeDecision(pair, id)} <span class="muted">· ${esc(pair.id)}</span></div></div>` }
+  })
+  for (const r of IDX.byes.get(id) || []) items.push({ key: [1, r], html: `<div class="pair"><div class="head"><b>瑞士轮 第 ${r} 轮</b><span><span class="res W">轮空</span>记 3 分，不算实际胜场，按虚拟对手计 Buchholz</span></div></div>` })
+  items.sort((x, y) => x.key[0] - y.key[0] || x.key[1] - y.key[1])
+  $('#drawer').innerHTML = `<button class="chip close" id="dclose">关闭 ✕</button><h2>${esc(p.id)} ${esc(p.name ?? '')}</h2><div class="muted">${esc(SCN[R.scenarioID]?.name ?? '')}</div>
+    <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('')}</div>${items.map((x) => x.html).join('') || '<div class="empty">没有对局</div>'}`
+  $('#drawer').classList.add('open')
+  $('#dclose').onclick = () => $('#drawer').classList.remove('open')
+  if (focusPair) document.getElementById(`pp-${focusPair}`)?.scrollIntoView({ block: 'center' })
+  else $('#drawer').scrollTop = 0
+}
+
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a.p, circle[data-p]')
+  if (link) { e.preventDefault(); openPlayer(link.dataset.p); return }
+  const match = e.target.closest('[data-pair]')
+  if (match) { const pair = IDX.pairs.get(match.dataset.pair); if (pair) openPlayer(pair.p, pair.id); return }
+  const single = e.target.closest('.m[data-p]')
+  if (single) openPlayer(single.dataset.p)
+})
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#drawer').classList.remove('open') })
+$('#find').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return
+  const q = e.target.value.trim().toLowerCase()
+  const p = R.players.find((x) => x.id.toLowerCase() === q) || R.players.find((x) => x.id.toLowerCase().includes(q) || (x.name ?? '').includes(q))
+  if (p) openPlayer(p.id)
+})
+
+function select(i) {
+  R = DATA[i]
+  IDX = index(R)
+  document.querySelectorAll('#tabs button').forEach((b, j) => b.classList.toggle('on', i === j))
+  $('#drawer').classList.remove('open')
+  render()
+}
+
+if (!DATA.length) {
+  $('#main').innerHTML = '<section><div class="empty">没有报告数据。用 <code>deno task report &lt;dir&gt; --out report.html</code> 生成。</div></section>'
+} else {
+  $('#tabs').innerHTML = DATA.map((r, i) => `<button data-i="${i}">${esc(SCN[r.scenarioID]?.name ?? r.scenarioID)}</button>`).join('')
+  $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) select(Number(b.dataset.i)) })
+  const hash = new URLSearchParams(location.hash.slice(1))
+  select(Math.max(0, DATA.findIndex((r) => r.scenarioID === hash.get('s'))))
+  if (hash.get('p')) openPlayer(hash.get('p'), hash.get('pair') || undefined)
+}
+</script>
+</body>
+</html>
