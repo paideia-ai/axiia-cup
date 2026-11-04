@@ -22,6 +22,12 @@ deno task lint
 `main`: it exchanges a GitHub OIDC assertion for a short-lived token at
 `/v1/auth/federated` and runs `deno task push`. No token is stored here.
 
+`v2/tournament` holds the operator scripts for the three-stage cup (海选,
+瑞士轮, 64 强): they lock a roster, submit each round's games through the
+federation batch API, derive pairings from the matches the server holds, and
+render a report. Its own flag is `v2_tournament_changed`; nothing deploys from
+it. See [`tournament/README.md`](tournament/README.md).
+
 Current PvP behavior is specified in
 [Single-match PvP (2026-09-17)](../docs/competition/2026-09-17-single-match-pvp.md).
 

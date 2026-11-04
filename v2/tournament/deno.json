@@ -1,0 +1,31 @@
+{
+  "fmt": {
+    "semiColons": false,
+    "singleQuote": true,
+    "lineWidth": 100,
+    "exclude": ["demo", "viz"]
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    },
+    "exclude": ["demo"]
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.13",
+    "@std/cli": "jsr:@std/cli@^1.0.20",
+    "tiktoken": "npm:tiktoken@1.0.22"
+  },
+  "tasks": {
+    "roster": "deno run --allow-read --allow-write --allow-env --allow-net bin/roster.ts",
+    "mock-roster": "deno run --allow-read --allow-write --allow-env bin/mock-roster.ts",
+    "next": "deno run --allow-read --allow-write --allow-env --allow-net bin/next.ts",
+    "report": "deno run --allow-read --allow-write --allow-env --allow-net bin/report.ts",
+    "simulate": "deno run --allow-read --allow-write --allow-env bin/simulate.ts",
+    "demo": "deno run --allow-read --allow-write --allow-env bin/demo.ts",
+    "check": "deno check bin/*.ts src/**/*.ts tests/*.ts",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-net tests/",
+    "fmt": "deno fmt --check .",
+    "lint": "deno lint"
+  }
+}
