@@ -358,14 +358,14 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   outline-offset: 3px;
 }
 
-:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card'], [data-tm='L.match-card']) {
+:is([data-tm='D.scenario-card'], [data-tm='L.match-card']) {
   display: block;
   border-radius: 10px;
 }
 
 /* History has sibling report/agent links inside its surface. Give the actual
    surface a class rather than assuming every card is wrapped in a link. */
-:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']) > div,
+[data-tm='D.scenario-card'] > div,
 .history-card {
   border: 1px solid #303030;
   border-radius: 10px;
@@ -376,7 +376,7 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
     background-color 150ms;
 }
 
-:is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']):hover > div,
+[data-tm='D.scenario-card']:hover > div,
 .history-card:hover {
   border-color: #505050;
   background: #1a1a1a;
@@ -460,7 +460,6 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   line-height: 1.8;
 }
 
-[data-tm='G.tournament-card'] > div > div,
 .history-card-content {
   padding: 20px 24px;
 }
@@ -469,59 +468,14 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   padding-bottom: 8px;
 }
 
-:is([data-tm='G.tournament-name'], [data-tm='L.match-id']) {
+[data-tm='L.match-id'] {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-:is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+[data-tm='L.match-meta'] {
   line-height: 1.8;
-}
-
-[data-tm='G.round-timeline'] {
-  margin-top: 12px;
-}
-
-[data-tm='G.round-chip'] {
-  padding: 4px 8px;
-}
-
-[data-tm='G.round-chip'] > span {
-  opacity: 1;
-}
-
-[data-tm='G.standings-table'] {
-  overflow: hidden;
-  border-radius: 10px;
-  box-shadow: none;
-}
-
-[data-tm='G.standings-table'] > div {
-  padding: 8px 24px;
-}
-
-[data-tm='G.standings-table'] :is(th, td) {
-  padding-block: 17px;
-  font-variant-numeric: tabular-nums;
-}
-
-[data-tm='G.standings-table'] th {
-  color: var(--foreground-subtle);
-  font-weight: 500;
-}
-
-[data-tm='G.standings-row']:hover {
-  background: #ffffff03;
-}
-
-[data-tm='G.standings-row'] td:first-child {
-  font-size: 18px;
-  font-weight: 500;
-}
-
-[data-tm='G.standings-buchholz'] > span {
-  color: var(--foreground-muted);
 }
 
 [data-tm='L.pair-group'] {
@@ -621,21 +575,16 @@ main .text-\(--accent\) {
     justify-content: flex-start;
   }
 
-  [data-tm='G.tournament-card'] > div > div,
   .history-card-content {
     flex-wrap: wrap;
     padding: 18px 16px;
   }
 
-  :is([data-tm='G.tournament-meta'], [data-tm='L.match-meta']) {
+  [data-tm='L.match-meta'] {
     display: inline-block;
     width: 100%;
     margin: 4px 0 0;
     overflow-wrap: anywhere;
-  }
-
-  [data-tm='G.standings-table'] > div {
-    padding: 12px;
   }
 
   [data-tm='FA.result-winner'] {
@@ -644,7 +593,7 @@ main .text-\(--accent\) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is([data-tm='D.scenario-card'], [data-tm='G.tournament-card']) > div,
+  [data-tm='D.scenario-card'] > div,
   .history-card {
     transition: none;
   }

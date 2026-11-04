@@ -213,7 +213,7 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
         createdAt: 1,
       })
     }
-    if (path === '/matches/9998' || path === '/versions/9998/ref') {
+    if (path === '/matches/9998') {
       return json({ error: 'not_found', message: '未找到' }, 404)
     }
     if (/^\/agents\/\d+\/draft$/.test(path)) {
@@ -244,26 +244,6 @@ async function fixtures(page: Page, options: FixtureOptions = {}) {
         contentType: 'text/event-stream',
         body: 'retry: 60000\ndata: {"unreadCount":1}\n\n',
       })
-    }
-    if (path === '/tournaments') {
-      return json({ tournaments: [{ id: 1, phase: 'qualifier', round: 1 }] })
-    }
-    if (path === '/tournaments/1/standings') {
-      return json({
-        entries: [{
-          playerID: 'navigation-test',
-          playerName: '导航测试',
-          rank: 1,
-          wins: 1,
-          losses: 0,
-          buchholz: 0,
-          winRate: 100,
-          submissionIDs: [1002],
-        }],
-      })
-    }
-    if (path === '/versions/1002/ref') {
-      return json({ versionID: 1002, agentID: 101 })
     }
     unexpected.push(`${request.method()} ${path}`)
     return json({ error: 'unexpected_fixture_request', message: path }, 500)
@@ -405,7 +385,7 @@ for (const width of [1440, 390]) {
   })
 }
 
-// Each of the nine former page-return placements is checked on a real touch
+// Each former page-return placement is checked on a real touch
 // viewport and desktop, including pages opened directly without app history.
 const pagesWithoutBackLinks = [
   { path: '/agents/101', ready: '[data-tm="EA.scenario-link"]' },
@@ -416,7 +396,6 @@ const pagesWithoutBackLinks = [
     ready: '[data-testid="npc-identity"] h1',
   },
   { path: '/settings/archived-agents', ready: 'h2' },
-  { path: '/versions/9998?tournament=1', ready: '[role="alert"]' },
   {
     path: `/admin/slots/${scenario.summary.id}`,
     ready: '[data-tm="ADM.slot-editor"]',
@@ -736,18 +715,6 @@ const cases: {
     path: '/notifications',
     marker: 'I.detail-link',
     destination: /\/matches\/9001$/,
-  },
-  {
-    name: 'tournament card',
-    path: '/tournaments',
-    marker: 'G.tournament-card',
-    destination: /\/tournaments\/1$/,
-  },
-  {
-    name: 'tournament submitted version',
-    path: '/tournaments/1',
-    selector: 'a[href="/versions/1002?tournament=1"]:visible',
-    destination: /\/agents\/101\?version=1002&tournament=1$/,
   },
   {
     name: 'header rewards',

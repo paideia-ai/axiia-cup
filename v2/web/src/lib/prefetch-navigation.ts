@@ -8,8 +8,6 @@ import {
   matchQuery,
   notificationsQuery,
   scenarioQuery,
-  standingsQuery,
-  tournamentsQuery,
   versionsQuery,
 } from './navigation-queries'
 
@@ -40,12 +38,10 @@ export function prefetchNavigation(path: string, authenticated: boolean) {
   } else if (path === '/matches') {
     void navigationCache.prefetchQuery(matchesQuery())
     void navigationCache.prefetchQuery(catalogQuery())
-  } else if (path === '/tournaments') {
-    void navigationCache.prefetchQuery(tournamentsQuery())
   } else if (path === '/notifications') {
     void navigationCache.prefetchQuery(notificationsQuery())
   } else {
-    const target = /^\/(agents|matches|tournaments)\/(\d+)(\/build)?$/.exec(
+    const target = /^\/(agents|matches)\/(\d+)(\/build)?$/.exec(
       path,
     )
     if (!target) return
@@ -58,10 +54,8 @@ export function prefetchNavigation(path: string, authenticated: boolean) {
         void navigationCache.prefetchQuery(agentQuery(id))
         void navigationCache.prefetchQuery(inventoryQuery())
       }
-    } else if (!target[3] && target[1] === 'matches') {
-      void navigationCache.prefetchQuery(matchQuery(id))
     } else if (!target[3]) {
-      void navigationCache.prefetchQuery(standingsQuery(id))
+      void navigationCache.prefetchQuery(matchQuery(id))
     }
   }
 }

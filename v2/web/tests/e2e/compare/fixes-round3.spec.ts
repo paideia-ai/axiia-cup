@@ -2,10 +2,7 @@
 // Given/When/Then one for one.
 //
 // Runs against a stack that carries the round-3 backend (public agent view,
-// landing projection, player-ranked standings, tournament notifications). The
-// tournament assertions need a seeded tournament, so they skip with a reason
-// rather than fail when the target has none — an empty leaderboard is not a
-// regression, it is an environment without a tournament.
+// landing projection).
 import { expect, test } from '@playwright/test'
 
 import { signup } from '../helpers'
@@ -206,82 +203,5 @@ test('#35 公开智能体视图（U10-C12）', async ({ page }) => {
       const response = await page.request.get(path, { headers: sameOrigin })
       expect(response.status(), `${path} 对非主人拒绝`).toBe(403)
     }
-  })
-})
-
-test('#64 排名一律按玩家（U11-C04）', async ({ page }) => {
-  let tournamentID = 0
-  let entries: {
-    playerName?: string
-    playerID?: string
-    submissionIDs?: number[]
-  }[] = []
-
-  await test.step('假如 一场锦标赛里有若干玩家、每人两侧各投一个版本', async () => {
-    await signup(page, 'rank')
-    const response = await page.request.get('/v1/tournaments', {
-      headers: sameOrigin,
-    })
-    expect(response.ok()).toBe(true)
-    const list = (await response.json()).tournaments ?? []
-    test.skip(list.length === 0, '目标环境没有锦标赛——需要先用 admin 播种')
-    tournamentID = list[0].id
-  })
-
-  await test.step('当 我打开该锦标赛的积分榜', async () => {
-    const response = await page.request.get(
-      `/v1/tournaments/${tournamentID}/standings`,
-      {
-        headers: sameOrigin,
-      },
-    )
-    expect(response.ok()).toBe(true)
-    entries = (await response.json()).entries ?? []
-    test.skip(entries.length === 0, '该锦标赛还没有积分数据')
-    await page.goto(`/tournaments/${tournamentID}`)
-  })
-
-  await test.step('那么 每一行的主体是玩家昵称而不是版本号', async () => {
-    for (const entry of entries) {
-      expect(entry.playerName, '每行都带玩家昵称').toBeTruthy()
-      expect(entry.submissionIDs?.length ?? 0).toBeGreaterThan(0)
-    }
-    // 榜单同时渲染移动端卡片与桌面表格（另一半由 CSS 藏起来），所以要限定在
-    // 当前视口真正显示的那张表里找，否则会选中隐藏的那份。
-    await expect(
-      page.locator('table').getByText(entries[0].playerName!).first(),
-    ).toBeVisible()
-  })
-
-  await test.step('并且 同一个玩家只占一行', () => {
-    const ids = entries.map((entry) => entry.playerID)
-    expect(new Set(ids).size, '玩家 id 不重复').toBe(ids.length)
-  })
-})
-
-test('#53④ 锦标赛通知（U09-C10）', async ({ page }) => {
-  await test.step('假如 一场锦标赛已经配对过一轮并已结赛', async () => {
-    await signup(page, 'notify')
-    const response = await page.request.get('/v1/tournaments', {
-      headers: sameOrigin,
-    })
-    const list = response.ok()
-      ? ((await response.json()).tournaments ?? [])
-      : []
-    test.skip(list.length === 0, '目标环境没有锦标赛')
-    const rounds = list.flatMap((t: { rounds?: unknown[] }) => t.rounds ?? [])
-    test.skip(rounds.length === 0, '锦标赛还没有配过轮')
-  })
-
-  await test.step('当 我查看参赛者的通知', async () => {
-    await page.goto('/notifications')
-    await expect(page.getByRole('heading', { name: '通知' })).toBeVisible()
-  })
-
-  await test.step('那么 其中有「锦标赛」类的通知', async () => {
-    // 这个新注册账号本身没参赛，所以只断言分组存在于产品词汇里——真正的
-    // 投递在 Swift 侧 TournamentAdminTests 与本地全栈脚本里已逐条验过。
-    const body = await page.locator('body').innerText()
-    expect(body.length).toBeGreaterThan(0)
   })
 })

@@ -332,23 +332,6 @@ const a5InviteeB = await oneVersionAgent(
   'a5-invitee-b',
 )
 
-const tournament = await admin.call<{ id: number }>(
-  'POST',
-  '/v1/admin/tournaments',
-  {
-    scenarioID: 'shangyang-court',
-    totalRounds: 1,
-    pairingMode: 'manual',
-  },
-)
-await admin.call(
-  'POST',
-  `/v1/admin/tournaments/${tournament.id}/participants`,
-  {
-    versionID: b3MainV2.id,
-  },
-)
-
 const completed = await b3.call<{ matchID: number }>(
   'POST',
   '/v1/matches/pvp',
@@ -377,7 +360,6 @@ const publicManifest = {
           siblingVersionId: b3SiblingV1.id,
           soloSideAgentId: b3Solo.agentID,
           soloSideVersionId: b3Solo.versions[0].id,
-          tournamentId: tournament.id,
           completedMatchId: completed.matchID,
           completedMatchReady: completedReady,
         },
@@ -439,7 +421,6 @@ console.log(JSON.stringify({
   accountsCreated: privateRoles.length,
   agentsCreated: 11,
   versionsCreated: 14,
-  tournamentId: tournament.id,
   completedMatchReady: completedReady,
   privateOutputWritten: true,
   publicOutputWritten: true,

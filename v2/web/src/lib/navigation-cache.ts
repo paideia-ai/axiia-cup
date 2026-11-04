@@ -66,7 +66,7 @@ export function invalidateNavigation(path: string) {
   const groups = path.startsWith('/agents')
     ? path.endsWith('/mutate')
       ? ['agent']
-      : ['agent', 'inventory', 'catalog', 'standings', 'ladder']
+      : ['agent', 'inventory', 'catalog', 'ladder']
     : /^\/(matches|challenges|rewards)/.test(path) ||
         (path.startsWith('/ladder/') && path.endsWith('/start'))
     ? [
@@ -74,8 +74,6 @@ export function invalidateNavigation(path: string) {
       'match',
       'inventory',
       'catalog',
-      'standings',
-      'tournaments',
       'ladder',
     ]
     : path.startsWith('/achievements')

@@ -42,13 +42,6 @@ independently check ownership through both `/v1/my/agents` and the rendered
 owner UI. It opens but does not submit the A5 opponent panel. It also opens and
 cancels the separate board-identity prompt; no Test Mode result is written.
 
-The B3 standings-entry clause runs as a distinct `test.fail` probe for
-`U10-C11b`: the current standings row has no `/agents/:id` link. Its login,
-fixture, and ownership checks run before the expected-failure annotation, so
-infrastructure breakage still fails normally. When the product entry is added,
-the exact `/agents/224` assertion becomes an unexpected pass and requires
-removing that annotation.
-
 The dedicated task enables its opt-in guard itself. Set `AXIIA_BASE_URL` and
 inject these secrets through the runtime environment before invoking it:
 
