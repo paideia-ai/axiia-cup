@@ -213,7 +213,7 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
   })
   await test.step('那么 版本已保存但不能开始首战也没有派发请求', async () => {
     await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
-    await expect(page.getByRole('button', { name: '开始首战' }))
+    await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
     expect(world.saves).toBe(1)
     expect(world.dispatches).toBe(0)
@@ -224,7 +224,7 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
   })
   await test.step('那么 显示实际消耗并允许出战', async () => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: '开始首战' }))
+    await expect(page.getByRole('button', { name: '出战' }))
       .toBeEnabled()
     expect(world.quotes).toBeGreaterThan(0)
   })
@@ -309,7 +309,7 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
     await expect(page.getByText('200 积分', { exact: true })).toBeVisible()
     await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
       .toBeVisible()
-    await expect(page.getByRole('button', { name: '开始首战' }))
+    await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
     expect(world.saves).toBe(1)
     expect(world.dispatches).toBe(0)
@@ -323,7 +323,7 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
     await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
       .toHaveCount(0)
-    await page.getByRole('button', { name: '开始首战' }).click()
+    await page.getByRole('button', { name: '出战' }).click()
     await expect(page).toHaveURL(/\/matches\/9001$/)
     expect(world.saves).toBe(2)
     expect(world.dispatches).toBe(1)
@@ -344,7 +344,7 @@ test('报价失败时先重试再允许出战', async ({ page }) => {
   })
   await test.step('那么 我看到重试提示且不能开始首战', async () => {
     await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
-    await expect(page.getByRole('button', { name: '开始首战' }))
+    await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
   })
   await test.step('当 我重新确认积分', async () => {
@@ -352,7 +352,7 @@ test('报价失败时先重试再允许出战', async ({ page }) => {
   })
   await test.step('那么 正确报价显示后才允许开始首战', async () => {
     await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: '开始首战' }))
+    await expect(page.getByRole('button', { name: '出战' }))
       .toBeEnabled()
   })
 })

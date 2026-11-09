@@ -126,7 +126,7 @@ export const TM_E: TmRegistry = {
     ],
     journeys: ['j3s5', 'j1s4'],
     note:
-      '普通保存＝存一个版本、不派发、返回 EA 主页；express 首战例外：「保存并开始首战」自动派发直进实况；method 标签只在请求体里',
+      '普通保存生成新版本并返回主页；express 保存后留在构建器，另点「出战」才发起对战。首战沿用普通版本标记与出战文案；method 标签只在请求体里。',
   },
   'E.autosave-status': {
     label: '草稿恢复与保存',

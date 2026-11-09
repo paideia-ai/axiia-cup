@@ -471,7 +471,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-a3', 'spec-change-57'],
     journeys: ['j1s3', 'j1s4'],
     note:
-      '沿用统一侧入口与 express 标记；商鞅场景按钮使用人物介绍的构建文案。新建先到智能体主页，已有智能体进构建器；保存后另点开始首战。多角色空侧仍先选人物。',
+      '沿用统一侧入口与 express 标记；商鞅场景按钮使用人物介绍的构建文案。新建先到智能体主页，已有智能体进构建器；保存后另点出战。多角色空侧仍先选人物。',
   },
   'X.escape-link': {
     label: '逃生链接',

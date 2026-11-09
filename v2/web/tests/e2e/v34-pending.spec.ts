@@ -310,7 +310,7 @@ test.describe('v3.4 P3/P5/P6 contracts realized on the live batch', () => {
       expect(saved.prompt).toBe(savedPrompt)
       await expect(page).toHaveURL(builderURL)
       await expect(page.getByTestId('first-battle-start')).toContainText(
-        `已保存版本 v${saved.ordinal}（#${saved.id}）`,
+        `出战 v${saved.ordinal}（#${saved.id}）`,
       )
       await expect(page.getByTestId('start-first-battle')).toBeDisabled()
       expect(pveBodies).toEqual([])
