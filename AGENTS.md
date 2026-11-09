@@ -2,6 +2,16 @@
 
 Instructions for coding agents working with code in this repository.
 
+## Original human prompt in pull requests
+
+Every PR description created or updated by an AI agent must include an
+`Original human prompt` section. Quote the original human request verbatim,
+preserving its language, and include any follow-up human instructions that
+materially changed the scope. For delegated work, retain the originating
+human request rather than substituting an agent-written subtask prompt.
+Redact secrets and private information that must not appear in the PR, and
+clearly mark any redactions or unavailable source text.
+
 ## What is here
 
 This repository holds the **v2** lanes of Axiia Cup — the frontend and the
