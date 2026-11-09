@@ -161,7 +161,7 @@ export const GuestCatalogAndDetail: Story = {
     await expect(canvas.getByText('适合新手', { exact: true })).toBeVisible()
     const card = within(canvas.getByTestId('scenario-shangyang-court'))
     const introduction = card.getByText(
-      '五轮朝堂对辩定国策：说动秦孝公只是明线，把真请求悄悄送过关、再看穿甘龙所图，才是全部胜负。',
+      scenarioModule('shangyang-court')!.intro!.source.overview.paragraphs[0],
       { exact: true },
     )
     await expect(introduction).toBeVisible()
@@ -249,13 +249,47 @@ export const PublicDifficultyLevels: Story = {
       expect(card.queryByText('适合新手', { exact: true }) !== null).toBe(
         novice,
       )
-      const hook = scenarioModule(id)?.education?.hook
-      expect(hook).toBeTruthy()
-      await expect(card.getByText(hook!, { exact: true })).toBeVisible()
+      const paragraphs = scenarioModule(id)!.intro!.source.overview.paragraphs
+      for (const paragraph of paragraphs) {
+        await expect(card.getByText(paragraph, { exact: true })).toBeVisible()
+      }
       await expect(
         card.getByText(publicScenario.summary.subject, { exact: true }),
       )
         .toBeVisible()
+    }
+    if (canvasElement.ownerDocument.defaultView!.innerWidth >= 768) {
+      for (
+        const [leftID, rightID] of [
+          ['shangyang-court', 'honnoji-decision'],
+          ['trolley-problem', 'fengyiting-real'],
+        ]
+      ) {
+        const left = canvas.getByTestId(`scenario-${leftID}`)
+        const right = canvas.getByTestId(`scenario-${rightID}`)
+        expect(
+          Math.abs(
+            left.getBoundingClientRect().bottom -
+              right.getBoundingClientRect().bottom,
+          ),
+        ).toBeLessThan(1)
+        for (
+          const selector of [
+            '[data-tm="D.card-title"]',
+            '[data-tm="D.card-subject"]',
+            '[data-tm="D.card-education"]',
+            '[data-tm="D.card-sides"]',
+            '[data-tm="D.card-stats-empty"]',
+          ]
+        ) {
+          expect(
+            Math.abs(
+              left.querySelector(selector)!.getBoundingClientRect().top -
+                right.querySelector(selector)!.getBoundingClientRect().top,
+            ),
+          ).toBeLessThan(1)
+        }
+      }
     }
     await userEvent.click(canvas.getByTestId('scenario-honnoji-decision'))
     await expect(await canvas.findByText('难度 中等', { exact: false }))
