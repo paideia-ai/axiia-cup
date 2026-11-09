@@ -1,5 +1,6 @@
 import { PageLoading } from '../components/page-loading'
 import { Clock } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
 import { catalog, config as configApi } from '../api/client'
@@ -79,6 +80,22 @@ export function ExpressPage() {
   const mySideLabel = mySide === 'a'
     ? scenario.summary.sideALabel
     : scenario.summary.sideBLabel
+  const buildAction = (
+    <SideEntryAction
+      scenarioID={data.scenarioID}
+      side={mySide}
+      role={mySideName}
+      target='build'
+      express
+      testID='express-build'
+      marker={tm('X.build-button')['data-tm']}
+      size='default'
+    >
+      {courtIntro
+        ? courtIntro.participants.sides[mySide].actionLabel
+        : '去构建'} →
+    </SideEntryAction>
+  )
 
   return (
     <div
@@ -110,6 +127,7 @@ export function ExpressPage() {
             intro={courtIntro}
             scenario={scenario}
             mySide={mySide}
+            buildAction={buildAction}
           />
         )
         : (
@@ -151,21 +169,11 @@ export function ExpressPage() {
           </Card>
         )}
 
-      <div className='flex flex-wrap items-center gap-4' {...tm('X.actions')}>
-        <SideEntryAction
-          scenarioID={data.scenarioID}
-          side={mySide}
-          role={mySideName}
-          target='build'
-          express
-          testID='express-build'
-          marker={tm('X.build-button')['data-tm']}
-          size='default'
-        >
-          {courtIntro
-            ? courtIntro.participants.sides[mySide].actionLabel
-            : '去构建'} →
-        </SideEntryAction>
+      <div
+        className='flex flex-wrap items-center gap-4'
+        {...(!courtIntro ? tm('X.actions') : {})}
+      >
+        {!courtIntro ? buildAction : null}
         <Link
           to='/scenarios'
           className='text-xs text-(--foreground-muted) transition hover:text-(--foreground)'
@@ -196,10 +204,11 @@ function CourtPortrait(
     : null
 }
 
-function CourtOverview({ intro, scenario, mySide }: {
+function CourtOverview({ intro, scenario, mySide, buildAction }: {
   intro: ScenarioIntroCopy['source']
   scenario: ScenarioDetail
   mySide: Side
+  buildAction: ReactNode
 }) {
   const scenarioID = scenario.summary.id
   const player = intro.participants.sides[mySide]
@@ -229,7 +238,10 @@ function CourtOverview({ intro, scenario, mySide }: {
             <h2 {...tm('X.role-name')}>{player.name}</h2>
             <p>{player.eyebrow}</p>
           </div>
-          <span className='express-court-debate'>朝堂辩论</span>
+          <div className='express-court-action' {...tm('X.actions')}>
+            <span className='express-court-debate'>朝堂辩论</span>
+            {buildAction}
+          </div>
           <div className='express-court-opponent'>
             <CourtPortrait scenarioID={scenarioID} name={opponent.name} />
             <p className='express-label'>你的对手</p>

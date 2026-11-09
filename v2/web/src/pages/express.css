@@ -57,7 +57,8 @@
 }
 .express-court-sides {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  grid-template-areas: 'player action opponent';
   align-items: center;
   padding-top: 24px;
   border-top: 1px solid #454545;
@@ -66,6 +67,24 @@
 .express-court-player,
 .express-court-opponent {
   position: relative;
+}
+.express-court-player {
+  grid-area: player;
+}
+.express-court-opponent {
+  grid-area: opponent;
+}
+.express-court-action {
+  grid-area: action;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px;
+}
+.express-court-action [data-testid='express-build'] {
+  min-height: 44px;
+  white-space: nowrap;
 }
 .express-court-player::before,
 .express-court-opponent::before {
@@ -186,7 +205,17 @@
     padding: 22px 16px;
   }
   .express-court-sides {
-    grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: 'player opponent' 'action action';
+    gap: 24px 16px;
+  }
+  .express-court-action {
+    gap: 10px;
+    padding: 0;
+  }
+  .express-court-action [data-testid='express-build'] {
+    width: 100%;
+    max-width: 232px;
   }
   .express-court-sides .express-portrait {
     width: 72px;
