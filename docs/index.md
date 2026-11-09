@@ -10,6 +10,7 @@ Documentation and design assets for the Axiia Cup project.
 | `competition/` | Competition design specifications and rules |
 | `game-research/` | Game research analysis and design principles |
 | `legacy/` | Historical/superseded design documents |
+| [`marketing/`](marketing/README.md) | Campaign artwork, downloadable posters, and production workflows |
 | `tech/` | Technical architecture and implementation docs |
 | `thoughts.md` | Running log of inspirations, ideas, and design notes |
 | `TODO.md` | Project task tracking |
@@ -27,6 +28,7 @@ graph TD
     docs --> competition
     docs --> game-research
     docs --> legacy
+    docs --> marketing
     docs --> tech
     docs --> thoughts["thoughts.md"]
     docs --> todo["TODO.md"]

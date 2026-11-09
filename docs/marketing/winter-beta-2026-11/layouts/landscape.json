@@ -1,0 +1,27 @@
+{
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "footer_region": [
+    0,
+    872,
+    1448,
+    1086
+  ],
+  "qr_box": [
+    1223,
+    876,
+    1428,
+    1081
+  ],
+  "qr_side": 205,
+  "qr_module_size_px": 5,
+  "copy": "11.10-16 参与Axiia Cup冬季内测 赢9999平台赠金&AI硬件",
+  "qr_source": "../assets/qr/invite-axiia-cup.png",
+  "qr_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+  "qr_error_correction": "M",
+  "qr_total_modules_including_quiet_zone": 41,
+  "qr_quiet_zone_modules_per_edge": 4,
+  "post_processing": "Paste only the real QR; all other pixels remain unchanged."
+}

@@ -55,7 +55,7 @@ export const TM_ENTRY: TmRegistry = {
   },
   'A.cta-enter': {
     label: '进入场景主按钮',
-    when: '已登录时代替 立即注册/登录 出现',
+    when: '已登录时代替 立即注册/浏览场景 出现',
     note: '规格无条文',
   },
   'A.cta-register': {
@@ -64,9 +64,9 @@ export const TM_ENTRY: TmRegistry = {
     journeys: ['j1s1', 'j1s2'],
     note: 'B1 主行动＝进入注册/登录；主色按钮',
   },
-  'A.cta-login': {
-    label: '已有账户登录按钮',
-    clauses: ['U08-C02'],
+  'A.cta-browse': {
+    label: '浏览场景按钮',
+    when: '未登录时显示，进入公开场景列表（/scenarios）',
     journeys: ['j1s1'],
   },
   'A.how-it-works': {
