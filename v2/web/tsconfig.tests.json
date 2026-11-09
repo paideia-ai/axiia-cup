@@ -8,6 +8,7 @@
     "tests",
     "playwright.config.ts",
     "playwright.rewards.config.ts",
+    "playwright.first-battle-preview.config.ts",
     "playwright.navigation.config.ts",
     "playwright.scroll.config.ts",
     "playwright.achievement-delivery.config.ts",

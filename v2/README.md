@@ -127,6 +127,24 @@ simulated in memory per browser session; battles and other writes are rejected.
 It binds port 5237 on all interfaces for WSL/Windows preview access and never
 contacts the backend. Stop it with Ctrl+C.
 
+For the complete first-battle journey, run `deno task preview:first-battle` in
+`v2/web` and open `http://localhost:5237/preview`. It uses the actual frontend
+and a separate local API simulation, starting signed out. Register with invite
+code `LOCAL-PREVIEW`, any test email and a password of at least eight characters;
+phone registration uses the fixed SMS code `123456` without sending a message.
+Then follow the court introduction, agent creation and naming, preset choices,
+draft editing, version save, dispatch, live transcript, report, reward claim and
+post-battle links. Match ownership, history, first-battle completion, points and
+reward claims share the same browser-session state. A reset control on `/preview`
+starts a fresh journey. The authored sample match finishes in about nine seconds;
+no provider, real points or live account is involved. Stop the other preview on
+port 5237 before starting this mode. Records disappear when the server stops.
+
+`deno task test:e2e:first-battle-preview` checks this server itself, without
+intercepting successful API calls. It covers desktop email registration, mobile
+phone registration, save/read-back, a refresh during live playback, reward
+idempotency, post-battle navigation and quote-error recovery.
+
 For the Fengyiting scene timeline, run `deno task preview:story-context` in
 `v2/web`. Open `http://localhost:6061/matches/502` for the delayed-report route,
 or `/matches/501` for the other meeting order. It runs the current script with
