@@ -144,6 +144,7 @@ port 5237 before starting this mode. Records disappear when the server stops.
 intercepting successful API calls. It covers desktop email registration, mobile
 phone registration, save/read-back, a refresh during live playback, reward
 idempotency, post-battle navigation and quote-error recovery.
+The existing CI command `deno task test:e2e:rewards` also runs this suite.
 
 For the Fengyiting scene timeline, run `deno task preview:story-context` in
 `v2/web`. Open `http://localhost:6061/matches/502` for the delayed-report route,
