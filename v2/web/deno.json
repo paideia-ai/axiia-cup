@@ -27,6 +27,8 @@
   "nodeModulesDir": "manual",
   "nodeModulesLinker": "hoisted",
   "tasks": {
+    "preview:first-battle": "deno task build && deno run --allow-read=build/client --allow-net=0.0.0.0:5237 e2e/preview-navigation.ts --first-battle",
+    "preview:express": "deno task build && deno run --allow-read=build/client --allow-net=0.0.0.0:6081 e2e/preview-navigation.ts --express",
     "preview:story-context": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client,../scenarios/scenarios/fengyiting-real/script.js --allow-net=0.0.0.0:6061 e2e/preview-history.ts --story-context",
     "preview:battle-strip": "deno task build && deno run --unstable-sloppy-imports --allow-read=build/client --allow-net=0.0.0.0:6056 e2e/preview-battle-strip.ts",
     "preview:live-judge": "deno task build && deno run --allow-read=build/client,src/testing --allow-net=0.0.0.0:6036 e2e/preview-judge-report.ts --live-sidebar",
@@ -60,7 +62,8 @@
     "test:e2e:scroll": "deno run -A npm:playwright test --config playwright.scroll.config.ts",
     "test:e2e:agent-naming": "deno run -A npm:playwright test --config playwright.agent-naming.config.ts",
     "test:e2e:navigation": "deno run -A npm:playwright test --config playwright.navigation.config.ts && deno task test:e2e:agent-naming",
-    "test:e2e:rewards": "deno run -A npm:playwright test --config playwright.rewards.config.ts",
+    "test:e2e:rewards": "deno run -A npm:playwright test --config playwright.rewards.config.ts && deno task test:e2e:first-battle-preview",
+    "test:e2e:first-battle-preview": "deno run -A npm:playwright test --config playwright.first-battle-preview.config.ts",
     "test:e2e:handoff": "AXIIA_HANDOFF_E2E=1 deno run -A npm:playwright test tests/e2e/b3-a5-testmode.real.spec.ts",
     "test:e2e:real": "bash e2e/run-playwright.sh",
     "seed-dev": "deno run -A e2e/seed-dev.ts",

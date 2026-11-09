@@ -40,10 +40,19 @@ async function expectSimplifiedDA(page: Page) {
   await expect(page.getByText('首战快速通道').first()).toBeVisible()
   await expect(page.locator('h1')).toBeVisible()
   await expect(page.getByText('你的角色')).toBeVisible()
-  // 2026-08-25 集成注：#142 起「一句规则」渲染 education.formatLabel（商鞅＝
-  // 「5 轮朝堂辩论」），不再是移植时的静态「N 轮对话」——断言随产品文案对齐。
-  await expect(page.getByText(/轮朝堂辩论后由裁判当场判定胜负/)).toBeVisible()
-  await expect(page.getByTestId('express-build')).toHaveText('去构建 →')
+  // 2026-11-09：商鞅首战采用朝堂关系图；其他场景保留单角色卡。
+  const court = page.getByTestId('express-court')
+  if (await court.count()) {
+    await expect(court.getByText('你的对手')).toBeVisible()
+    await expect(court.getByRole('img', { name: '商鞅头像' })).toBeVisible()
+    await expect(court.getByRole('img', { name: '甘龙头像' })).toBeVisible()
+    await expect(court.getByRole('img', { name: '秦孝公头像' })).toBeVisible()
+    await expect(page.getByText(/每人每轮一次发言，每次不超过三句/))
+      .toBeVisible()
+  } else {
+    await expect(page.getByText(/后由裁判当场判定胜负/)).toBeVisible()
+  }
+  await expect(page.getByTestId('express-build')).toContainText('去构建')
   await expect(page.getByText('先逛逛全部场景')).toBeVisible()
 }
 

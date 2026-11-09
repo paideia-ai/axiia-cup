@@ -176,7 +176,7 @@ export const SaveReloadAndExplicitStart: Story = {
     )
     await userEvent.type(input, saved.prompt)
     await userEvent.click(canvas.getByRole('button', { name: '保存版本' }))
-    expect(await canvas.findByText('已保存版本 v1（#9001）')).toBeVisible()
+    expect(await canvas.findByText('出战 v1（#9001）')).toBeVisible()
     await waitFor(() =>
       expect(canvas.getByRole('button', { name: '保存版本' })).toBeEnabled()
     )
@@ -188,7 +188,7 @@ export const SaveReloadAndExplicitStart: Story = {
     await userEvent.click(
       canvas.getByRole('button', { name: '重新打开构建器' }),
     )
-    await canvas.findByText('已保存版本 v1（#9001）')
+    await canvas.findByText('出战 v1（#9001）')
     await waitFor(() =>
       expect(canvas.getByTestId('start-first-battle')).toBeEnabled()
     )
@@ -196,7 +196,7 @@ export const SaveReloadAndExplicitStart: Story = {
       canvas.getByLabelText('策略提示词'),
       '尚未保存的追加内容',
     )
-    expect(canvas.getByText(/工作区有未保存修改/)).toBeVisible()
+    expect(canvas.getByText(/有未保存的修改/)).toBeVisible()
     const start = canvas.getByTestId('start-first-battle')
     await userEvent.dblClick(start)
     await waitFor(() => expect(posts).toHaveLength(1))
@@ -238,7 +238,7 @@ export const RejectedStartRetriesSavedVersion: Story = {
     const start = await canvas.findByTestId('start-first-battle')
     await waitFor(() => expect(start).toBeEnabled())
     await userEvent.click(start)
-    expect(await canvas.findByText(/版本已保存，可再次点击/)).toBeVisible()
+    expect(await canvas.findByText(/版本已保存，可重试出战/)).toBeVisible()
     await waitFor(() => expect(start).toBeEnabled())
     await userEvent.click(start)
     expect(await canvas.findByTestId('destination')).toHaveTextContent(
@@ -295,11 +295,11 @@ export const AmbiguousStartSurvivesReload: Story = {
     const start = await canvas.findByTestId('start-first-battle')
     await waitFor(() => expect(start).toBeEnabled())
     await userEvent.click(start)
-    await canvas.findByText(/首战请求结果尚未确认，请到/)
+    await canvas.findByText(/对战请求结果尚未确认，请到/)
     await userEvent.click(
       canvas.getByRole('button', { name: '重新打开构建器' }),
     )
-    await canvas.findByText(/不会自动重新派发/)
+    await canvas.findByText(/请先查看历史记录/)
     expect(canvas.queryByTestId('start-first-battle')).toBeNull()
     expect(canvas.getByRole('link', { name: '查看历史' })).toHaveAttribute(
       'href',
@@ -407,7 +407,7 @@ export const SameAgentNavigationReconcilesCompletedRequests: Story = {
     await waitFor(() => expect(releaseSave).not.toBeNull())
     await userEvent.click(canvas.getByRole('link', { name: '切换构建器位置' }))
     releaseSave?.()
-    await canvas.findByText('已保存版本 v2（#9002）')
+    await canvas.findByText('出战 v2（#9002）')
     await waitFor(() => expect(save).toBeEnabled())
     expect(canvas.queryByTestId('destination')).toBeNull()
     expect(saves).toBe(1)
@@ -418,7 +418,7 @@ export const SameAgentNavigationReconcilesCompletedRequests: Story = {
     await waitFor(() => expect(posts).toHaveLength(1))
     await userEvent.click(canvas.getByRole('link', { name: '切换构建器位置' }))
     releasePost?.()
-    await canvas.findByText(/版本已保存，可再次点击/)
+    await canvas.findByText(/版本已保存，可重试出战/)
     await waitFor(() => expect(start).toBeEnabled())
     expect(canvas.queryByTestId('destination')).toBeNull()
     expect(
@@ -429,7 +429,7 @@ export const SameAgentNavigationReconcilesCompletedRequests: Story = {
     await waitFor(() => expect(posts).toHaveLength(2))
     await userEvent.click(canvas.getByRole('link', { name: '切换构建器位置' }))
     releasePost?.()
-    expect(await canvas.findByRole('link', { name: '继续首战 #7003' }))
+    expect(await canvas.findByRole('link', { name: '查看对战 #7003' }))
       .toHaveAttribute('href', '/matches/7003?express=1')
     expect(canvas.queryByTestId('destination')).toBeNull()
     expect(saves).toBe(1)

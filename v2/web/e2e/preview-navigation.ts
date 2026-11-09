@@ -2,9 +2,15 @@ import {
   productMeetingAPI,
   productMeetingLanding,
 } from './product-meeting-preview.ts'
+import {
+  firstBattlePreviewAPI,
+  firstBattlePreviewCookie,
+  firstBattlePreviewLanding,
+} from './first-battle-preview.ts'
 import { extname, resolve, sep } from 'node:path'
 import {
   config,
+  expressScoring,
   finishedMatch,
   inventory,
   notificationsFixture,
@@ -20,13 +26,22 @@ import {
 } from '../src/testing/scenario-agent-fixtures.ts'
 
 const productMeeting = Deno.args.includes('--product-meeting')
+const firstBattlePreview = Deno.args.includes('--first-battle')
+const expressPreview = Deno.args.includes('--express')
 const agentCreation = Deno.args.includes('--agent-creation')
 const scenarioAgents = agentCreation || Deno.args.includes('--scenario-agents')
 const root = resolve('build/client')
-const html = (await Deno.readTextFile(`${root}/index.html`)).replace(
-  '</body>',
-  '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">本地交互预览 · 模拟数据 · 不影响真实账号</aside></body>',
-)
+const clientHTML = await Deno.readTextFile(`${root}/index.html`)
+const html = firstBattlePreview
+  ? clientHTML.replace(
+    /<body\b[^>]*>/,
+    (body) =>
+      `${body}<aside role="note" style="padding:8px 12px;border-bottom:1px solid #e04a2f;background:#171717;color:#fff;font:12px sans-serif">本地模拟 · 不消耗真实积分 · <a href="/preview" style="color:inherit;text-decoration:underline">体验说明 / 重来</a></aside>`,
+  )
+  : clientHTML.replace(
+    '</body>',
+    '<aside role="note" style="position:fixed;bottom:12px;left:12px;z-index:9999;padding:8px 12px;border:1px solid #e04a2f;border-radius:8px;background:#171717;color:#fff;font:12px sans-serif;pointer-events:none">本地交互预览 · 模拟数据 · 不影响真实账号</aside></body>',
+  )
 const mine = structuredClone(inventory)
 mine.scenarios[0].sides.b = []
 
@@ -34,6 +49,7 @@ const sessions = new Map<string, typeof agentPreviewInventory>()
 let nextAgentID = 2000
 
 async function api(request: Request, path: string): Promise<Response> {
+  if (firstBattlePreview) return firstBattlePreviewAPI(request, path)
   if (productMeeting) {
     const response = await productMeetingAPI(request, path)
     if (response) return response
@@ -57,7 +73,10 @@ async function api(request: Request, path: string): Promise<Response> {
       })
     if (path === '/my/agents') return respond(data)
     if (path === '/agents' && request.method === 'POST') {
-      const { scenarioID, side } = await request.json()
+      const { scenarioID, side } = await request.json() as {
+        scenarioID: string
+        side: string
+      }
       const scenario = data.scenarios.find((item) =>
         item.scenarioID === scenarioID
       )
@@ -182,10 +201,16 @@ async function api(request: Request, path: string): Promise<Response> {
       })
     case '/models':
       return json({ models: config.models })
+    case '/achievements':
+      return json({ achievements: [], eventCursor: 0 })
+    case '/achievements/events':
+      return json({ events: [], cursor: 0 })
     case '/scenarios':
       return json(scenarioList)
     case `/scenarios/${scenario.summary.id}`:
-      return json(scenario)
+      return json(
+        expressPreview ? { ...scenario, scoring: expressScoring } : scenario,
+      )
     case `/scenarios/${scenario.summary.id}/opponents`:
       return json({ opponents: [] })
     case '/my/agents':
@@ -242,8 +267,12 @@ const contentTypes: Record<string, string> = {
 
 Deno.serve(
   {
-    hostname: productMeeting ? '0.0.0.0' : '127.0.0.1',
-    port: productMeeting
+    hostname: productMeeting || expressPreview || firstBattlePreview
+      ? '0.0.0.0'
+      : '127.0.0.1',
+    port: expressPreview
+      ? 6081
+      : productMeeting || firstBattlePreview
       ? 5237
       : agentCreation
       ? 5188
@@ -253,6 +282,17 @@ Deno.serve(
   },
   async (request) => {
     const path = new URL(request.url).pathname
+    if (firstBattlePreview && path === '/preview/reset') {
+      return firstBattlePreviewAPI(request, path)
+    }
+    if (firstBattlePreview && path === '/preview') {
+      return new Response(firstBattlePreviewLanding, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Set-Cookie': firstBattlePreviewCookie(request),
+        },
+      })
+    }
     if (productMeeting && path === '/preview') {
       return new Response(productMeetingLanding, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -282,6 +322,9 @@ Deno.serve(
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-store',
+        ...(firstBattlePreview
+          ? { 'Set-Cookie': firstBattlePreviewCookie(request) }
+          : {}),
       },
     })
   },

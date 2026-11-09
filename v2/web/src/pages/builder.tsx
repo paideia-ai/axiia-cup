@@ -31,7 +31,7 @@ import type {
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
 import { OnboardingGlow } from '../components/onboarding-glow'
-import { BattleCostNotice } from '../components/rewards'
+import { BattleAvailabilityNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
@@ -411,7 +411,7 @@ export function BuilderPage() {
     } catch {
       setStartAttempt(null)
       setAttemptError(
-        '无法读取首战派发记录，请到「历史」核对对局记录；不会自动重试。',
+        '无法读取对战记录，请到「历史」查看。',
       )
     }
   }, [express, journalScope.identity])
@@ -691,7 +691,7 @@ export function BuilderPage() {
       if (live) {
         setCfg(null)
         setConfigurationError(
-          '首战配置加载失败，请重新加载后再开始；已保存版本不受影响。',
+          '对战信息加载失败，请重试。',
         )
       }
     }).finally(() => {
@@ -714,7 +714,7 @@ export function BuilderPage() {
       .catch(() => {
         if (!live) return
         setScenario(null)
-        if (express) setError('首战配置加载失败，请刷新后重试')
+        if (express) setError('对战信息加载失败，请刷新后重试')
       })
     return () => {
       live = false
@@ -921,7 +921,7 @@ export function BuilderPage() {
       // idempotency or a cross-tab exactly-once guarantee.
       writeFirstBattleAttempt(identity, attempt)
     } catch {
-      setAttemptError('无法保留首战派发记录，请检查浏览器存储；尚未派发对局。')
+      setAttemptError('无法保存对战记录，请刷新后重试。')
       startBusyRef.current = false
       setStarting(false)
       return
@@ -961,7 +961,7 @@ export function BuilderPage() {
           writeFirstBattleAttempt(identity, null)
         } catch {
           if (belongsToBuilder()) {
-            setAttemptError('无法更新首战派发记录，请到「历史」核对对局记录。')
+            setAttemptError('无法更新对战记录，请到「历史」查看。')
           }
         }
       }
@@ -970,9 +970,9 @@ export function BuilderPage() {
       setStartError(
         rejected
           ? `${
-            rejectCopy(cause, cfg, '首战派发被拒绝')
-          }；版本已保存，可再次点击「开始首战」。`
-          : '首战请求结果尚未确认，请到「历史」核对对局记录；不要重复派发。',
+            rejectCopy(cause, cfg, '发起对战失败')
+          }；版本已保存，可重试出战。`
+          : '对战请求结果尚未确认，请到「历史」查看。',
       )
     } finally {
       if (belongsToBuilder()) {
@@ -1074,9 +1074,7 @@ export function BuilderPage() {
       if (express) {
         setNote('')
         basePromptRef.current = snapshot.prompt
-        setLastEvent(
-          `版本 v${saved.ordinal} 已保存；点击「开始首战」才会派发对局`,
-        )
+        setLastEvent(`版本 ${versionTag(saved)} 已保存`)
         return
       }
       // Keso's low-complexity builder returns to the high-information home,
@@ -1497,23 +1495,20 @@ export function BuilderPage() {
       {express && latestVersion
         ? (
           <section
-            aria-label='开始首战'
+            aria-label='出战'
             className='space-y-3 rounded-xl border border-(--border-soft) p-4'
             data-testid='first-battle-start'
           >
             <p className='font-semibold'>
-              已保存版本 v{latestVersion.ordinal}（{versionIDLabel(
+              出战 {versionTag(latestVersion, versions)}（{versionIDLabel(
                 latestVersion.id,
               )}）
             </p>
-            <p className='text-sm text-(--foreground-subtle)'>
-              保存不会发起对局或消耗积分。点击「开始首战」后使用此版本和新手预设对手。
-            </p>
-            <BattleCostNotice quoteState={quoteState} />
+            <BattleAvailabilityNotice quoteState={quoteState} />
             {unsavedFirstBattleChanges
               ? (
                 <p role='status' className='text-sm text-(--warning)'>
-                  工作区有未保存修改；本次首战只使用上述已保存版本。需要使用修改后的策略时，请先保存。
+                  有未保存的修改，出战将使用已保存版本。
                 </p>
               )
               : null}
@@ -1525,13 +1520,13 @@ export function BuilderPage() {
                 <ButtonLink
                   to={`/matches/${startAttempt.matchID}?express=1`}
                 >
-                  继续首战 #{startAttempt.matchID}
+                  查看对战 #{startAttempt.matchID}
                 </ButtonLink>
               )
               : startAttempt?.status === 'pending' && !starting
               ? (
                 <p role='status'>
-                  首战请求结果尚未确认，请先核对对局记录，不会自动重新派发。
+                  对战请求结果尚未确认，请先查看历史记录。
                 </p>
               )
               : (
@@ -1544,7 +1539,7 @@ export function BuilderPage() {
                   disabled={saving || starting || !presetKey ||
                     !!attemptError || recovery != null || insufficientPoints}
                 >
-                  {starting ? '派发中…' : '开始首战'}
+                  {starting ? '出战中…' : '出战'}
                 </Button>
               )}
             {(!expressDependenciesReady || presetError) && !starting
@@ -1553,7 +1548,7 @@ export function BuilderPage() {
                   variant='secondary'
                   onClick={() => setConfigurationAttempt((value) => value + 1)}
                 >
-                  重新加载首战配置
+                  重新加载
                 </Button>
               )
               : null}

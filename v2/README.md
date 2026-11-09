@@ -91,6 +91,14 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+For the first-battle court introduction, run `deno task preview:express` and open
+`http://localhost:6081/express`. It serves the actual frontend build with local
+fixtures for the three portraits, configured player role, background and scoring.
+The existing express build link remains navigable; saving and dispatching are
+disabled. No live account or backend is contacted. The server listens on all
+interfaces for WSL/Windows access; if localhost forwarding is unavailable, use
+the WSL address with port 6081. Stop it with Ctrl+C.
+
 For the responsive match activity rail, run `deno task preview:battle-strip`
 and open `http://localhost:6056/preview`. It serves the production build with
 read-only local fixtures for active/recent matches, a long list and an empty
@@ -118,6 +126,25 @@ builder, and the first-battle report. Draft saves and entry selection are
 simulated in memory per browser session; battles and other writes are rejected.
 It binds port 5237 on all interfaces for WSL/Windows preview access and never
 contacts the backend. Stop it with Ctrl+C.
+
+For the complete first-battle journey, run `deno task preview:first-battle` in
+`v2/web` and open `http://localhost:5237/preview`. It uses the actual frontend
+and a separate local API simulation, starting signed out. Register with invite
+code `LOCAL-PREVIEW`, any test email and a password of at least eight characters;
+phone registration uses the fixed SMS code `123456` without sending a message.
+Then follow the court introduction, agent creation and naming, preset choices,
+draft editing, version save, dispatch, live transcript, report, reward claim and
+post-battle links. Match ownership, history, first-battle completion, points and
+reward claims share the same browser-session state. A reset control on `/preview`
+starts a fresh journey. The authored sample match finishes in about nine seconds;
+no provider, real points or live account is involved. Stop the other preview on
+port 5237 before starting this mode. Records disappear when the server stops.
+
+`deno task test:e2e:first-battle-preview` checks this server itself, without
+intercepting successful API calls. It covers desktop email registration, mobile
+phone registration, save/read-back, a refresh during live playback, reward
+idempotency, post-battle navigation and quote-error recovery.
+The existing CI command `deno task test:e2e:rewards` also runs this suite.
 
 For the Fengyiting scene timeline, run `deno task preview:story-context` in
 `v2/web`. Open `http://localhost:6061/matches/502` for the delayed-report route,

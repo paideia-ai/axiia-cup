@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 import { delay, http, HttpResponse } from 'msw'
 import { useState } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -7,7 +7,11 @@ import { MemoryRouter } from 'react-router-dom'
 import type { MatchRewardResponse, RewardsResponse } from '../api/types'
 import { RewardsProvider, useBattleQuote } from '../context/rewards'
 import { RewardsPage } from '../pages/rewards'
-import { BattleCostNotice, PointsIndicator, RewardClaimCard } from './rewards'
+import {
+  BattleAvailabilityNotice,
+  PointsIndicator,
+  RewardClaimCard,
+} from './rewards'
 import { Button } from './ui/button'
 
 const wallet: RewardsResponse = {
@@ -22,6 +26,16 @@ const wallet: RewardsResponse = {
   claimableRewards: [{ matchID: 42, points: 50, kind: 'pve' }],
 }
 
+function BattleAction() {
+  const quoteState = useBattleQuote('shangyang-court', 'a', 'pvp')
+  return (
+    <div>
+      <BattleAvailabilityNotice quoteState={quoteState} />
+      <Button disabled={quoteState.blocked}>发起对战</Button>
+    </div>
+  )
+}
+
 function Surface() {
   const [visit, setVisit] = useState(0)
   return (
@@ -29,7 +43,7 @@ function Surface() {
       <RewardsProvider>
         <div className='space-y-6'>
           <PointsIndicator />
-          <BattleCostNotice kind='pvp' />
+          <BattleAction />
           <RewardClaimCard key={visit} matchID={42} />
           <Button
             variant='secondary'
@@ -56,7 +70,7 @@ function RoleQuoteSurface() {
   return (
     <div>
       <p>当前角色：{side === 'a' ? '商鞅' : '甘龙'}</p>
-      <BattleCostNotice quoteState={quoteState} />
+      <BattleAvailabilityNotice quoteState={quoteState} />
       <Button disabled={quoteState.blocked}>发起对战</Button>
       <Button onClick={() => setSide(side === 'a' ? 'b' : 'a')}>
         切换角色
@@ -95,18 +109,18 @@ export const RoleVarietyQuote: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByText('200 积分')).toBeVisible()
-    await expect(canvas.getByText('试试其他角色，让下一场消耗更少。'))
-      .toBeVisible()
+    await expect(await canvas.findByText('积分不足')).toBeVisible()
     await expect(canvas.getByRole('button', { name: '发起对战' }))
       .toBeDisabled()
     await userEvent.click(canvas.getByRole('button', { name: '切换角色' }))
-    await expect(await canvas.findByText('100 积分')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+    )
+    await expect(canvas.queryByText('积分不足')).toBeNull()
     await userEvent.click(canvas.getByRole('button', { name: '切换角色' }))
     await expect(canvas.getByRole('button', { name: '发起对战' }))
       .toBeDisabled()
-    await expect(await canvas.findByText('200 积分')).toBeVisible()
+    await expect(await canvas.findByText('积分不足')).toBeVisible()
     await expect(canvas.getByRole('button', { name: '发起对战' }))
       .toBeDisabled()
   },
@@ -128,6 +142,13 @@ function handlers(
   let claimed = status === 'claimed'
   let first = true
   return [
+    http.get('/v1/rewards/quote', () =>
+      HttpResponse.json({
+        cost: 100,
+        perBattleCost: 100,
+        repeatRoleSurcharge: false,
+        battleCosts: [100],
+      })),
     http.get(
       '/v1/rewards',
       () =>
@@ -223,11 +244,9 @@ export const IneligibleAndInsufficient: Story = {
   parameters: { msw: handlers({ status: 'ineligible', balance: 50 }) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByText('100 积分', { selector: 'strong' }))
-      .toBeVisible()
-    await expect(
-      await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
-    ).toBeVisible()
+    await expect(await canvas.findByText('积分不足')).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '发起对战' }))
+      .toBeDisabled()
     await expect(canvas.queryByRole('button', { name: '领取奖励' })).toBeNull()
   },
 }
@@ -236,11 +255,11 @@ export const SinglePvpCostFitsBalance: Story = {
   parameters: { msw: handlers({ status: 'ineligible', balance: 150 }) },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    await expect(await canvas.findByText('100 积分', { selector: 'strong' }))
-      .toBeVisible()
-    await expect(canvas.getByText(/胜利后可领取 75% 返还/)).toBeVisible()
-    expect(canvas.queryByText('积分不足，可领取胜利奖励或等待每日积分。'))
-      .toBeNull()
+    await waitFor(() =>
+      expect(canvas.getByRole('button', { name: '发起对战' })).toBeEnabled()
+    )
+    await expect(canvas.queryByText('积分不足')).toBeNull()
+    await expect(canvas.queryByText(/本次对战消耗/)).toBeNull()
   },
 }
 
