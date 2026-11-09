@@ -117,7 +117,8 @@ export function VerdictCard({
           ? 'border-l-2 border-l-(--warning)'
           : undefined}
       >
-        <CardContent className='space-y-3 pt-5'>
+        {/* Judge output quotes the transcript: kept out of replay. */}
+        <CardContent className='ph-no-capture space-y-3 pt-5'>
           <div className='flex flex-wrap items-center gap-2'>
             {isTerminalVerdict(verdict) || visitOrder
               ? <RolePortrait labels={labels} speaker='judge' />

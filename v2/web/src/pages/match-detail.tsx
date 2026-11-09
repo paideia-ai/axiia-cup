@@ -24,7 +24,7 @@ import { PageLoading } from '../components/page-loading'
 import { matchQuery } from '../lib/navigation-queries'
 import { Check, Copy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 
 import { matches } from '../api/client'
@@ -78,6 +78,7 @@ import {
 } from '../lib/transcript'
 import { usePageQuery } from '../lib/use-page-query'
 import { useMatchView } from '../lib/use-match-view'
+import { track } from '../lib/analytics'
 import { isOsBeatVerdict, isTerminalVerdict } from '../lib/verdict'
 import { tm } from '../testmode/mark'
 
@@ -226,6 +227,22 @@ function MatchDetailContent(
   useEffect(() => {
     if (expressArrival && finished) void refreshAuth?.().catch(() => {})
   }, [expressArrival, finished, refreshAuth])
+
+  // Funnel end: the scored result is on screen (after any replay finishes).
+  const resultViewed = useRef<number | null>(null)
+  const summary = finished ? data.summary : null
+  useEffect(() => {
+    if (summary == null || resultViewed.current === summary.id) return
+    resultViewed.current = summary.id
+    track('match_result_viewed', {
+      match_id: summary.id,
+      scenario_id: summary.scenarioID,
+      match_kind: summary.kind,
+      ...(summary.initiatorIsMe == null
+        ? {}
+        : { initiated_by_me: summary.initiatorIsMe }),
+    })
+  }, [summary])
 
   // 回放（#24/A7）：纯前端重演。问询腿在回放里整段隐藏（终局剧透），所以
   // 它的行不进入步骤序列——各场景的问询都在对话之后，前缀行数不受影响，

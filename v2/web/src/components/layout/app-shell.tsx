@@ -142,13 +142,14 @@ export function AppShell({ children }: PropsWithChildren) {
                       )}
                   >
                     <UserRound className='h-4 w-4 shrink-0' />
-                    <span className='hidden max-w-24 truncate sm:inline md:hidden lg:inline'>
+                    <span className='ph-no-capture hidden max-w-24 truncate sm:inline md:hidden lg:inline'>
                       {account.displayName}
                     </span>
                   </NavLink>
                   <Button
                     {...tm('NAV.logout-button')}
                     data-testid='logout'
+                    data-track='logout'
                     size='sm'
                     variant='secondary'
                     onClick={() => {

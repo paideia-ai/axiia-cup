@@ -22,6 +22,7 @@ import { RolePortrait } from '../../components/role-portrait'
 import { speakerLabels } from '../../components/timeline/labels'
 import { useAuth } from '../../context/auth'
 import { agentEntryUrl, preferredAgent } from '../../lib/agent-entry'
+import { track } from '../../lib/analytics'
 import { catalogQuery, inventoryQuery } from '../../lib/navigation-queries'
 import { orderScenarios } from '../../lib/scenario-order'
 import { usePageQuery } from '../../lib/use-page-query'
@@ -231,6 +232,11 @@ function LadderScene(
     setError(null)
     try {
       const result = await ladder.start(pairing.id)
+      track('match_started', {
+        kind: 'ladder',
+        scenario_id: scene.id,
+        match_id: result.matchID,
+      })
       if (mounted.current) navigate(`/matches/${result.matchID}`)
     } catch (cause) {
       if (mounted.current) {

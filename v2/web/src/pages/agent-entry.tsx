@@ -4,6 +4,7 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import { builder, myAgents } from '../api/client'
 import type { Side } from '../api/types'
 import { preferredAgent } from '../lib/agent-entry'
+import { track } from '../lib/analytics'
 import { CreateAgentAction } from '../components/create-agent-action'
 import { Button, ButtonLink } from '../components/ui/button'
 import { useAuth } from '../context/auth'
@@ -57,7 +58,16 @@ function AgentEntry({ scenarioID, side, target, express }: {
     const existed = before?.scenarios.some((scenario) =>
       scenario.sides[side].some((agent) => agent.agentID === result.agentID)
     )
-    return { ...result, created: existed === false }
+    const created = existed === false
+    if (created) {
+      track('agent_created', {
+        scenario_id: scenarioID,
+        side,
+        agent_id: result.agentID,
+        source: 'entry',
+      })
+    }
+    return { ...result, created }
   }
   const request = useRef<ReturnType<typeof open> | null>(null)
   const { data, error, loading, reload } = useAsync(

@@ -79,7 +79,8 @@ export function TranscriptStage({
     (phaseBefore.get(seq) ?? []).map(renderPhase)
 
   return (
-    <div {...tm('FA.stage')} className='space-y-3'>
+    // ph-no-capture: transcripts never enter session replay or autocapture.
+    <div {...tm('FA.stage')} className='ph-no-capture space-y-3'>
       {!casesOnly && !hideStageTitle
         ? (
           <div className='space-y-1'>
@@ -129,7 +130,9 @@ export function TranscriptStage({
               : (
                 <div key={item.seq} className='space-y-2'>
                   {phaseRows(item.seq)}
-                  {item.verdictAnchor ? null : item.turn.kind === 'event'
+                  {item.verdictAnchor
+                    ? null
+                    : item.turn.kind === 'event'
                     ? (
                       <EventRow
                         turn={item.turn}

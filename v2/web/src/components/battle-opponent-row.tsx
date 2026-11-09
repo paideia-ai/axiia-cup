@@ -32,7 +32,7 @@ export function BattleOpponentRow(
       {...props}
     >
       <span className='min-w-0 flex-1'>
-        <span className='block text-[15px] leading-6 font-semibold text-(--foreground)'>
+        <span className='ph-no-capture block text-[15px] leading-6 font-semibold text-(--foreground)'>
           {label}
         </span>
         <span

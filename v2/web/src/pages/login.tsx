@@ -104,6 +104,7 @@ export function LoginPage() {
                       className='w-full'
                       disabled={isSubmitting}
                       type='submit'
+                      data-track='login-submit'
                       {...tm('B.submit-button')}
                     >
                       {isSubmitting ? '登录中…' : '登录'}
