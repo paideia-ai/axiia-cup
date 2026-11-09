@@ -15,10 +15,6 @@ ARG TM_BOARD_URL=
 ARG TM_BOARD_ANON_KEY=
 ENV VITE_TM_BOARD_URL=$TM_BOARD_URL
 ENV VITE_TM_BOARD_ANON_KEY=$TM_BOARD_ANON_KEY
-# PostHog 项目 key（phc_，按设计公开）。CI 从仓库变量 vars.POSTHOG_KEY 传入；
-# 为空时前端不加载任何分析代码、不发任何请求。见 v2/README.md「Product analytics」。
-ARG POSTHOG_KEY=
-ENV VITE_POSTHOG_KEY=$POSTHOG_KEY
 RUN deno task build
 
 FROM nginx:1.27-alpine

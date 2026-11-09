@@ -41,7 +41,7 @@ export function IdentityVersionCard({
     >
       <div className='min-w-0 space-y-1.5'>
         <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-          <h2 className='text-base font-semibold text-(--foreground)'>
+          <h2 className='ph-no-capture text-base font-semibold text-(--foreground)'>
             {title}
           </h2>
           {context && (

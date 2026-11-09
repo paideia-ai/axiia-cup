@@ -150,24 +150,25 @@ request is a relative `/v1/...`.
 
 ## Product analytics
 
-The SPA reports to PostHog (US cloud) only when the build carries a project key.
-Without `VITE_POSTHOG_KEY`, `posthog-js` is never loaded and no request is made,
-so local dev, tests, Storybook and the previews stay clean.
+The SPA reports to PostHog (US cloud, project 721626) from production builds
+served on a real host. The public project key and the proxy host are constants
+in `src/lib/analytics.ts`. Dev, unit and Storybook tests, and the previews of a
+production build on `localhost`/`127.0.0.1` never load `posthog-js` and make no
+request.
 
-- **On and off:** the GitHub repository variable `POSTHOG_KEY` (the public
-  `phc_…` project key). `build.yml` passes it to `Dockerfile.web` as the
-  `POSTHOG_KEY` build argument, which becomes `VITE_POSTHOG_KEY`. Set the
-  variable and push to `main` (or dispatch Build) to turn analytics on; delete
-  it and rebuild to turn it off. Locally, put `VITE_POSTHOG_KEY=phc_…` in
-  `v2/web/.env.local`.
+- **On and off:** `import.meta.env.PROD` plus a non-local hostname. Set
+  `VITE_ANALYTICS=on` to force it on (a local demo:
+  `VITE_ANALYTICS=on deno task dev --host 127.0.0.1`, since 127.0.0.1 is an
+  authorized URL in the project) or `VITE_ANALYTICS=off` to force it off.
 - **Proxy host:** the browser talks only to `https://e.axiia.ai`, our reverse
   proxy to PostHog US (`/static/*` → `us-assets.i.posthog.com`, everything else
   → `us.i.posthog.com`), because mainland users reach posthog.com slowly or not
-  at all. `VITE_POSTHOG_HOST` overrides it.
+  at all.
 - **What is tracked:** SPA pageviews on every route change, autocapture of
-  clicks (key buttons carry `data-track`), session replay, the account id via
-  `identify` with `display_name` and `role` (`admin`/`player`) as person
-  properties (never email or phone), and `reset` on logout.
+  clicks (key buttons carry `data-track`), heatmaps, rage and dead clicks,
+  session replay, the account id via `identify` with `display_name` and `role`
+  (`admin`/`player`) as person properties (never email or phone), and `reset` on
+  logout.
 - **Funnel events** (`src/lib/analytics.ts`):
 
   | Event                 | When                                   | Properties                                                                             |
@@ -182,12 +183,15 @@ so local dev, tests, Storybook and the previews stay clean.
 - **Privacy:** no prompt text, transcript or other user content leaves the
   browser. Replay masks every text node (`maskTextSelector: '*'`), every input,
   and text-bearing attributes (`aria-label`, `title`, `alt`, `placeholder`, …).
-  The prompt editor, version prompts, transcripts and judge output carry
-  `ph-no-capture`, which removes them from replay and autocapture. Autocapture
-  sends no element text (`mask_all_text`) and drops the same attributes. Console
-  logs, exceptions and network bodies are not recorded, whatever the project
-  settings say. New surfaces that render user content should add `ph-no-capture`
-  too.
+  Autocapture drops the same attributes and keeps element text only on
+  interactive chrome (links, buttons, labels, tabs, menu items), so click lists
+  read as `保存版本`; `scrubElementText` strips it from everything else and
+  fails closed. User content that renders inside chrome or anywhere replay
+  could show it carries `ph-no-capture`, which removes it from replay and from
+  autocapture: the prompt editor, version prompts, transcripts, judge output,
+  and agent and display names in links and buttons. Console logs, exceptions
+  and network bodies are not recorded, whatever the project settings say. New
+  surfaces that render user content need `ph-no-capture` too.
 
 ## Frontend source of truth
 

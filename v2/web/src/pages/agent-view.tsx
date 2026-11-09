@@ -741,18 +741,20 @@ function AgentView({ agentID }: { agentID: number }) {
                       }`}
                       {...tm('EA.sibling-pill')}
                     >
-                      {displayName(
-                        active ? sideName : currentRoleIdentity({
-                          scenarioID: data.draft.scenarioID,
-                          side: data.draft.side,
-                          role: sibling.role,
-                          fallback: data.draft.side === 'a'
-                            ? data.scenario.summary.sideAName
-                            : data.scenario.summary.sideBName,
-                        }).name,
-                        sibling.agentID,
-                        siblingName,
-                      )}
+                      <span className='ph-no-capture'>
+                        {displayName(
+                          active ? sideName : currentRoleIdentity({
+                            scenarioID: data.draft.scenarioID,
+                            side: data.draft.side,
+                            role: sibling.role,
+                            fallback: data.draft.side === 'a'
+                              ? data.scenario.summary.sideAName
+                              : data.scenario.summary.sideBName,
+                          }).name,
+                          sibling.agentID,
+                          siblingName,
+                        )}
+                      </span>
                     </Link>
                   )
                 })}

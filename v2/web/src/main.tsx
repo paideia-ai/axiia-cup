@@ -13,7 +13,8 @@ if (!rootElement) {
 }
 
 async function boot() {
-  // No-op unless the build carries VITE_POSTHOG_KEY; never blocks the render.
+  // Production builds on a real host only (see lib/analytics.ts); never blocks
+  // the render.
   void initAnalytics()
   if (import.meta.env.VITE_SORTIE_BROWSER_DEMO === 'true') {
     const { installSortieDemo } = await import('./testing/sortie-browser-demo')
