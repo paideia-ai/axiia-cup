@@ -148,6 +148,47 @@ to the same Swift server the beta uses; in development the vite proxy plays that
 role. Web code therefore builds no auth headers and no absolute API URLs — every
 request is a relative `/v1/...`.
 
+## Product analytics
+
+The SPA reports to PostHog (US cloud) only when the build carries a project key.
+Without `VITE_POSTHOG_KEY`, `posthog-js` is never loaded and no request is made,
+so local dev, tests, Storybook and the previews stay clean.
+
+- **On and off:** the GitHub repository variable `POSTHOG_KEY` (the public
+  `phc_…` project key). `build.yml` passes it to `Dockerfile.web` as the
+  `POSTHOG_KEY` build argument, which becomes `VITE_POSTHOG_KEY`. Set the
+  variable and push to `main` (or dispatch Build) to turn analytics on; delete
+  it and rebuild to turn it off. Locally, put `VITE_POSTHOG_KEY=phc_…` in
+  `v2/web/.env.local`.
+- **Proxy host:** the browser talks only to `https://e.axiia.ai`, our reverse
+  proxy to PostHog US (`/static/*` → `us-assets.i.posthog.com`, everything else
+  → `us.i.posthog.com`), because mainland users reach posthog.com slowly or not
+  at all. `VITE_POSTHOG_HOST` overrides it.
+- **What is tracked:** SPA pageviews on every route change, autocapture of
+  clicks (key buttons carry `data-track`), session replay, the account id via
+  `identify` with `display_name` and `role` (`admin`/`player`) as person
+  properties (never email or phone), and `reset` on logout.
+- **Funnel events** (`src/lib/analytics.ts`):
+
+  | Event                 | When                                   | Properties                                                                             |
+  | --------------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+  | `signed_up`           | an account is created (email or phone) | `method`                                                                               |
+  | `logged_in`           | an existing account signs in           | `method`                                                                               |
+  | `agent_created`       | a new agent exists                     | `scenario_id`, `side`, `agent_id`, `source`                                            |
+  | `prompt_saved`        | a strategy version is saved            | `scenario_id`, `agent_id`, `version_id`, `version_ordinal`, `prompt_length`, `express` |
+  | `match_started`       | a match is dispatched                  | `kind` (`first_battle`/`pve`/`pvp`/`challenge`/`ladder`), `scenario_id`, `match_id`    |
+  | `match_result_viewed` | a scored result is on screen           | `match_id`, `scenario_id`, `match_kind`, `initiated_by_me`                             |
+
+- **Privacy:** no prompt text, transcript or other user content leaves the
+  browser. Replay masks every text node (`maskTextSelector: '*'`), every input,
+  and text-bearing attributes (`aria-label`, `title`, `alt`, `placeholder`, …).
+  The prompt editor, version prompts, transcripts and judge output carry
+  `ph-no-capture`, which removes them from replay and autocapture. Autocapture
+  sends no element text (`mask_all_text`) and drops the same attributes. Console
+  logs, exceptions and network bodies are not recorded, whatever the project
+  settings say. New surfaces that render user content should add `ph-no-capture`
+  too.
+
 ## Frontend source of truth
 
 `v2/web` is the current source of truth for the v3.4 frontend deployed at

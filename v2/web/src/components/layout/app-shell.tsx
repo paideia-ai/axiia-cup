@@ -149,6 +149,7 @@ export function AppShell({ children }: PropsWithChildren) {
                   <Button
                     {...tm('NAV.logout-button')}
                     data-testid='logout'
+                    data-track='logout'
                     size='sm'
                     variant='secondary'
                     onClick={() => {

@@ -9,6 +9,7 @@ import {
 } from 'react'
 
 import { ApiError, auth } from '../api/client'
+import { identifyAccount, resetAnalytics, track } from '../lib/analytics'
 import { setNavigationIdentity } from '../lib/navigation-cache'
 import type {
   AccountDTO,
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const land = useCallback((me: MeResponse) => {
     setNavigationIdentity(`${me.account.id}:${me.elevated}`)
+    identifyAccount(me.account)
     setAccount(me.account)
     setElevated(me.elevated)
     setFirstBattleDone(me.firstBattleDone === true)
@@ -85,10 +87,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       account,
       elevated,
       firstBattleDone,
-      login: async (input) => land(await auth.login(input)),
+      login: async (input) => {
+        land(await auth.login(input))
+        track('logged_in', { method: 'email' })
+      },
       signup: async (input) => {
         const me = await auth.signup(input)
         land(me)
+        track('signed_up', { method: 'email' })
         return me
       },
       verifyPhone: async (input) => {
@@ -99,6 +105,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       bindPhone: async (input) => land(await auth.bindPhone(input)),
       logout: async () => {
         await auth.logout()
+        resetAnalytics()
         setNavigationIdentity(null)
         setAccount(null)
         setElevated(false)

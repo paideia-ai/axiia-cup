@@ -36,6 +36,7 @@ import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
 import { trackSoundMatch } from '../lib/match-sound'
+import { track } from '../lib/analytics'
 import { Accordion, AccordionItem } from '../components/ui/accordion'
 import { useScrollPending } from '../context/navigation-memory'
 import { Button, ButtonLink } from '../components/ui/button'
@@ -942,6 +943,11 @@ export function BuilderPage() {
         // The pre-POST pending record remains conservative if this write fails.
       }
       if (belongsToBuilder()) setStartAttempt(accepted)
+      track('match_started', {
+        kind: 'first_battle',
+        scenario_id: scenarioID,
+        match_id: response.matchID,
+      })
       trackSoundMatch(response.matchID)
       if (isCurrent()) {
         playSound('dispatch', String(response.matchID))
@@ -1040,6 +1046,15 @@ export function BuilderPage() {
         modelID: snapshot.modelID,
         ...(snapshot.note === '' ? {} : { note: snapshot.note }),
         ...(snapshot.options == null ? {} : { options: snapshot.options }),
+      })
+      track('prompt_saved', {
+        scenario_id: scenarioID,
+        agent_id: agentID,
+        version_id: saved.id,
+        ...(saved.ordinal == null ? {} : { version_ordinal: saved.ordinal }),
+        // Length in the counter's units; never the text itself.
+        prompt_length: promptLength(snapshot.prompt),
+        express,
       })
       // A hash/query navigation can retain this builder. Reconcile the known
       // immutable result for its identity without taking over the new route or
@@ -1329,7 +1344,8 @@ export function BuilderPage() {
             </Button>
           </div>
         </div>
-        <div className='block space-y-1.5 text-sm text-(--foreground-subtle)'>
+        {/* ph-no-capture: the prompt editor never enters replay or autocapture. */}
+        <div className='ph-no-capture block space-y-1.5 text-sm text-(--foreground-subtle)'>
           <Textarea
             data-spec='U19-C17 U19-C18'
             id='prompt-input'
@@ -1440,6 +1456,7 @@ export function BuilderPage() {
           />
           <Button
             data-testid='save-version'
+            data-track='save-prompt'
             data-spec='U19-C06 U19-C19 U19-C20'
             onPointerEnter={playButtonHover}
             className='h-11 sm:ml-auto md:h-10'
@@ -1518,6 +1535,7 @@ export function BuilderPage() {
               : (
                 <Button
                   data-testid='start-first-battle'
+                  data-track='start-first-battle'
                   data-spec='U19-C07 U19-C19 U19-C20'
                   onPointerEnter={playButtonHover}
                   onClick={() => void startFirstBattle()}

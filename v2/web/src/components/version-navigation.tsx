@@ -658,7 +658,7 @@ export function VersionNavigation({
                           最新版本
                         </p>
                       )}
-                      <p className='mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-(--foreground-subtle)'>
+                      <p className='ph-no-capture mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-(--foreground-subtle)'>
                         {version.prompt}
                       </p>
                     </Tooltip.Popup>

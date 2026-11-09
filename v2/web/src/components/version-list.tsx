@@ -301,7 +301,7 @@ export function VersionList({
                         if (node) promptNodes.current.set(version.id, node)
                         else promptNodes.current.delete(version.id)
                       }}
-                      className={`whitespace-pre-wrap wrap-anywhere text-[13px] leading-[1.65] text-[#dedede] ${
+                      className={`ph-no-capture whitespace-pre-wrap wrap-anywhere text-[13px] leading-[1.65] text-[#dedede] ${
                         isExpanded ? '' : 'line-clamp-2'
                       }`}
                       {...tm('E.version-prompt')}

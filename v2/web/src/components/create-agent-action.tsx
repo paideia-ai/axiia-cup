@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { agents, ApiError } from '../api/client'
 import type { Side } from '../api/types'
 import { agentEntryUrl } from '../lib/agent-entry'
+import { track } from '../lib/analytics'
 import { navigationCache, navigationEpoch } from '../lib/navigation-cache'
 import { agentQuery, inventoryQuery } from '../lib/navigation-queries'
 import { rejectCopy } from '../lib/reject-copy'
@@ -29,6 +30,12 @@ async function create(
     scenarioID,
     side,
     ...(roleKey ? { roleKey } : {}),
+  })
+  track('agent_created', {
+    scenario_id: scenarioID,
+    side,
+    agent_id: agentID,
+    source: 'create',
   })
   // Keep the source page stable until the destination can paint its real content.
   // A failed read must never turn a successful creation into another POST.
@@ -182,7 +189,12 @@ export function CreateAgentAction({
 
   return (
     <div className='contents'>
-      <span className='inline-flex' aria-busy={busy} data-tm={marker}>
+      <span
+        className='inline-flex'
+        aria-busy={busy}
+        data-tm={marker}
+        data-track='create-agent'
+      >
         {scenarioID === 'honnoji-decision' && roles.length === 2
           ? (
             <PortraitRoleChoice
@@ -240,6 +252,7 @@ export function CreateAgentAction({
               取消
             </Button>
             <Button
+              data-track='create-agent'
               disabled={busy || selectedRole == null}
               onClick={() => {
                 if (selectedRole) void submit(selectedRole)

@@ -1144,7 +1144,7 @@ function VersionCompare({
                         </p>
                         <pre
                           aria-label={`${versionTag(version, sorted)} 策略正文`}
-                          className='max-h-96 overflow-auto whitespace-pre-wrap wrap-anywhere rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-sm leading-7 text-(--foreground-subtle)'
+                          className='ph-no-capture max-h-96 overflow-auto whitespace-pre-wrap wrap-anywhere rounded-md border border-(--border-soft) bg-white/2 p-3 font-sans text-sm leading-7 text-(--foreground-subtle)'
                           {...tm('EA.diff-prompt')}
                         >
                           {changes.filter((change) => change.kind !== (index === 0 ? 'added' : 'removed')).map((change, part) =>
