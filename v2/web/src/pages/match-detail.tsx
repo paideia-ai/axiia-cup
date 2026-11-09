@@ -1153,7 +1153,7 @@ function MatchDetailContent(
                   <h2 className='text-sm font-semibold text-(--foreground)'>
                     隐藏目标
                   </h2>
-                  <div className='grid gap-3 md:grid-cols-2'>
+                  <div className='ph-no-capture grid gap-3 md:grid-cols-2'>
                     {(['a', 'b'] as const)
                       .filter((side) => breakdown.trueRequests?.[side] != null)
                       .map((side) => (
@@ -1197,7 +1197,7 @@ function MatchDetailContent(
                     )
                     : (
                       <Card {...tm('FA.scoring-card')}>
-                        <CardContent className='space-y-3 pt-5'>
+                        <CardContent className='ph-no-capture space-y-3 pt-5'>
                           {breakdown?.trueRequests
                             ? (
                               <LedgerLine label='真目标'>
@@ -1401,7 +1401,7 @@ function MatchDetailContent(
             {live && offstage.length > 0
               ? (
                 <Card {...tm('FA.offstage-card')}>
-                  <CardContent className='space-y-2 pt-5'>
+                  <CardContent className='ph-no-capture space-y-2 pt-5'>
                     <h2 className='text-sm font-semibold text-(--foreground)'>
                       幕后
                     </h2>
@@ -1480,7 +1480,7 @@ function MatchDetailContent(
         ? (
           <div
             ref={setMobileTrendTarget}
-            className='judge-mobile-trend'
+            className='ph-no-capture judge-mobile-trend'
             data-review-trend
           />
         )
@@ -1488,7 +1488,10 @@ function MatchDetailContent(
 
       {data.error
         ? (
-          <p {...tm('FA.match-error')} className='text-sm text-(--accent)'>
+          <p
+            {...tm('FA.match-error')}
+            className='ph-no-capture text-sm text-(--accent)'
+          >
             对战错误：{data.error}
           </p>
         )
@@ -1718,14 +1721,17 @@ function ParticipantCard({
           {sideLabel}
         </Badge>
         <span className='min-w-0 max-w-full wrap-anywhere text-sm text-(--foreground)'>
-          <span {...tm('FA.participant-name')} className='font-bold'>
+          <span
+            {...tm('FA.participant-name')}
+            className='ph-no-capture font-bold'
+          >
             {name}
           </span>
         </span>
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-2 text-xs text-(--foreground-subtle)'>
         {participant.agentID != null && (
-          <span>
+          <span className='ph-no-capture'>
             {participant.isMine
               ? '我的智能体'
               : participant.ownerDisplayName || '其他玩家'}

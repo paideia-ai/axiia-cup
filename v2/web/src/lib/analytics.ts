@@ -4,13 +4,17 @@
 // it on anywhere (the local demo); VITE_ANALYTICS=off turns it off.
 //
 // Privacy is a hard requirement: no prompt text, transcript or other user
-// content may leave the browser. Session replay masks every text node, every
-// input and text-bearing attributes. Autocapture keeps element text only on
-// interactive chrome (links, buttons, labels, tabs, menu items; see
-// scrubElementText) so click lists read as "保存版本" rather than bare
-// selectors; user content rendered inside chrome (agent and display names)
-// and every prompt or transcript surface carry NO_CAPTURE, which drops them
-// from replay and from autocapture text.
+// content may leave the browser. Session replay records the UI's own text
+// (headings, labels, buttons, scenario copy) so recordings are readable, and
+// blocks every element carrying NO_CAPTURE: prompts, versions and diffs,
+// transcripts, judge dialogue and verdicts, and people's and agents' names.
+// Inputs and text-bearing attributes stay masked everywhere. Autocapture
+// keeps element text only on interactive chrome (links, buttons, labels,
+// tabs, menu items; see scrubElementText) so click lists read as "保存版本"
+// rather than bare selectors; NO_CAPTURE drops user content from that text
+// too.
+//
+// Rendering new user content? Put NO_CAPTURE on its element.
 import type { CaptureResult, PostHog, PostHogConfig } from 'posthog-js'
 
 import type { AccountDTO, Side } from '../api/types'
@@ -43,7 +47,9 @@ function wantedHere() {
 }
 
 // Class that removes an element's subtree from session replay (rrweb
-// blockClass) and makes autocapture ignore clicks inside it.
+// blockClass: the recording keeps only an empty box of the same size) and
+// makes autocapture ignore clicks inside it. Replay text is otherwise
+// recorded, so every element showing user content must carry it.
 export const NO_CAPTURE = 'ph-no-capture'
 
 // Attributes that can carry user-authored text (agent names, prompt
@@ -270,7 +276,6 @@ export function analyticsConfig(apiHost: string): Partial<PostHogConfig> {
     session_recording: {
       blockClass: NO_CAPTURE,
       maskAllInputs: true,
-      maskTextSelector: '*',
       maskAttributeFn: maskAttribute,
       recordHeaders: false,
       recordBody: false,

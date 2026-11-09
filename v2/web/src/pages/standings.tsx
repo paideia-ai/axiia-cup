@@ -79,7 +79,7 @@ export function StandingsPage() {
                           #{entry.rank}
                         </span>
                         <span
-                          className='text-sm font-semibold text-(--foreground)'
+                          className='ph-no-capture text-sm font-semibold text-(--foreground)'
                           {...tm('G.standings-player')}
                         >
                           {entry.playerName}
@@ -141,7 +141,7 @@ export function StandingsPage() {
                       </td>
                       <td className='py-2'>
                         <span
-                          className='text-(--foreground)'
+                          className='ph-no-capture text-(--foreground)'
                           {...tm('G.standings-player')}
                         >
                           {entry.playerName}

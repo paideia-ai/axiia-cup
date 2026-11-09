@@ -155,7 +155,7 @@ function RegistrationCodeCard() {
           ? (
             <p
               {...tm('ADM.registration-code-notice')}
-              className='text-sm text-(--success)'
+              className='ph-no-capture text-sm text-(--success)'
             >
               {status}
             </p>
