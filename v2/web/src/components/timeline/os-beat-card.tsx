@@ -49,7 +49,7 @@ export function OsPendingCard({
   return (
     <div
       {...tm('FA.aside-pending')}
-      className='mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6'
+      className='ph-no-capture mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6'
     >
       <div className='portrait-os-header flex items-center gap-2 text-xs'>
         <RolePortrait
@@ -103,7 +103,7 @@ export function OsBeatCard({
         {...tm('FA.aside-card')}
         id={`beat-${verdict.key}`}
         className={cn(
-          'mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6',
+          'ph-no-capture mx-2 rounded-xl border border-dashed border-(--border) bg-[rgba(251,191,36,0.05)] px-4 py-3 sm:mx-6',
           highlight &&
             'border-solid border-(--accent) ring-2 ring-(--accent) bg-[rgba(224,74,47,0.06)]',
         )}

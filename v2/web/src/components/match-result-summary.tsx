@@ -77,7 +77,7 @@ export function MatchResultSummary({ match, sideA, sideB, onDetails }: {
       <div>
         <p className='match-summary-caption'>本局结果</p>
         <h2 {...tm('FA.result-winner')}>{outcome}</h2>
-        {decision ? <p>{decision}</p> : null}
+        {decision ? <p className='ph-no-capture'>{decision}</p> : null}
       </div>
       <div {...tm('FA.result-score')} className='match-summary-score'>
         <span>{sideA} / {sideB}</span>

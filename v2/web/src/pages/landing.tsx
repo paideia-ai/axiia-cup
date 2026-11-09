@@ -190,7 +190,7 @@ export function LandingPage() {
                     <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                       真实对局节选
                     </h2>
-                    <div className='mt-3 space-y-2 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-white/2 px-5 py-4'>
+                    <div className='ph-no-capture mt-3 space-y-2 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-white/2 px-5 py-4'>
                       {landing.excerpt.turns.map((turn, index) => (
                         <p
                           key={index}
@@ -253,7 +253,9 @@ export function LandingPage() {
                               <span className='mr-2 tabular-nums text-(--foreground-muted)'>
                                 {index + 1}
                               </span>
-                              {player.displayName}
+                              <span className='ph-no-capture'>
+                                {player.displayName}
+                              </span>
                             </span>
                             <span className='tabular-nums'>
                               {player.wins} 胜

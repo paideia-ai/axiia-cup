@@ -552,7 +552,7 @@ function AgentView({ agentID }: { agentID: number }) {
                     <h1
                       ref={headingRef}
                       tabIndex={-1}
-                      className='min-w-0 wrap-anywhere text-2xl font-black tracking-tight text-(--foreground) outline-none'
+                      className='ph-no-capture min-w-0 wrap-anywhere text-2xl font-black tracking-tight text-(--foreground) outline-none'
                       {...tm('EA.page-title')}
                     >
                       {displayName(sideName, agentID, currentName)}
@@ -877,11 +877,9 @@ function AgentView({ agentID }: { agentID: number }) {
                   }}
                 >
                   <p className='text-sm text-(--foreground-subtle)'>
-                    删除{displayName(
-                      sideName,
-                      agentID,
-                      currentName,
-                    )}？此智能体还没有保存的版本；草稿也会一并删除。
+                    删除<span className='ph-no-capture'>
+                      {displayName(sideName, agentID, currentName)}
+                    </span>？此智能体还没有保存的版本；草稿也会一并删除。
                   </p>
                   {deleteError
                     ? (
@@ -1133,7 +1131,7 @@ function VersionCompare({
                             {versionTag(version, sorted)}
                           </span>
                           {version.note?.trim() && (
-                            <span className='ml-2 break-words'>
+                            <span className='ph-no-capture ml-2 break-words'>
                               {version.note.trim()}
                             </span>
                           )}

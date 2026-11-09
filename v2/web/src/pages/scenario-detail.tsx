@@ -671,9 +671,10 @@ function SideCard({
               {...tm('DA.side-owned-note')}
             >
               你已有 {agents.length} 个{agentNoun}：{' '}
-              {agents.map((agent) => agent.name ?? `#${agent.agentID}`).join(
-                ' · ',
-              )}
+              <span className='ph-no-capture'>
+                {agents.map((agent) => agent.name ?? `#${agent.agentID}`)
+                  .join(' · ')}
+              </span>
             </p>
           )
           : null}

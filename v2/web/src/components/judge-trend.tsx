@@ -154,7 +154,7 @@ export function JudgeTrendChart({
   }
 
   return (
-    <div {...tm('FA.trend-chart')} className='space-y-2'>
+    <div {...tm('FA.trend-chart')} className='ph-no-capture space-y-2'>
       <div className='flex flex-wrap items-baseline gap-x-3 gap-y-1'>
         <p className='text-[11px] font-semibold tracking-[0.08em] text-(--foreground-muted)'>
           {title}

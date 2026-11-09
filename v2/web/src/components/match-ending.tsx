@@ -246,7 +246,7 @@ export function MatchEnding(
     // Retain verbatim output for historical unstructured verdicts.
   }
   return (
-    <div className='space-y-6' data-review-ending>
+    <div className='ph-no-capture space-y-6' data-review-ending>
       <VerdictCard
         verdict={reviewed}
         title={trolley ? '裁判裁决' : undefined}

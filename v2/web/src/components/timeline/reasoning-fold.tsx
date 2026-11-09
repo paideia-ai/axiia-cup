@@ -17,7 +17,7 @@ export function ReasoningFold({
   if (!text.trim()) return null
 
   return (
-    <div {...tm('FA.reasoning-fold')} className='mt-2'>
+    <div {...tm('FA.reasoning-fold')} className='ph-no-capture mt-2'>
       <button
         {...tm('FA.reasoning-toggle')}
         type='button'
