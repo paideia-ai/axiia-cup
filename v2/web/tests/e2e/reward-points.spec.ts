@@ -19,6 +19,7 @@ async function rewardWorld(page: Page, options: {
     saves: 0,
     dispatches: 0,
     quotes: 0,
+    quoteCosts: [] as number[],
     wallets: 0,
     walletUnavailable: options.failWallet === true,
   }
@@ -86,6 +87,7 @@ async function rewardWorld(page: Page, options: {
       const surcharge = options.surcharge &&
         url.searchParams.get('side') === 'a'
       const cost = surcharge ? 200 : 100
+      world.quoteCosts.push(cost)
       return json({
         cost,
         perBattleCost: 100,
@@ -212,7 +214,7 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 版本已保存但不能开始首战也没有派发请求', async () => {
-    await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
+    await expect(page.getByText('暂时无法开始对战，请重试。')).toBeVisible()
     await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
     expect(world.saves).toBe(1)
@@ -220,10 +222,15 @@ test('钱包暂时不可用时不跳过计费确认', async ({ page }) => {
   })
   await test.step('当 我重试并拿到钱包与角色报价', async () => {
     world.walletUnavailable = false
-    await page.getByRole('button', { name: '重新确认积分' }).click()
+    await page.getByRole('button', { name: '重试', exact: true }).click()
   })
-  await test.step('那么 显示实际消耗并允许出战', async () => {
-    await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
+  await test.step('那么 校验成功后允许出战，出战区不显示费用明细', async () => {
+    await expect(page.getByTestId('first-battle-start')).not.toContainText(
+      '本次对战消耗',
+    )
+    await expect(page.getByTestId('first-battle-start')).not.toContainText(
+      '查看积分与奖励',
+    )
     await expect(page.getByRole('button', { name: '出战' }))
       .toBeEnabled()
     expect(world.quotes).toBeGreaterThan(0)
@@ -305,10 +312,12 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
     await openExpressBuilder(page, 101)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 我看到本次 200 积分和换角色提示且开始首战不可用', async () => {
-    await expect(page.getByText('200 积分', { exact: true })).toBeVisible()
-    await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
-      .toBeVisible()
+  await test.step('那么 报价超过余额时提示积分不足，出战不可用且不展示费用明细', async () => {
+    await expect(page.getByText('积分不足', { exact: true })).toBeVisible()
+    expect(world.quoteCosts.at(-1)).toBe(200)
+    await expect(page.getByTestId('first-battle-start')).not.toContainText(
+      '本次对战消耗',
+    )
     await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
     expect(world.saves).toBe(1)
@@ -319,10 +328,10 @@ test('连续同角色报价不足时换角色再出战', async ({ page }) => {
     await openExpressBuilder(page, 102)
     await page.getByRole('button', { name: '保存版本' }).click()
   })
-  await test.step('那么 本次消耗变成 100 积分并能开始首战', async () => {
-    await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
-    await expect(page.getByText('试试其他角色，让下一场消耗更少。'))
-      .toHaveCount(0)
+  await test.step('那么 对侧报价低于余额时允许出战', async () => {
+    await expect(page.getByRole('button', { name: '出战' })).toBeEnabled()
+    expect(world.quoteCosts.at(-1)).toBe(100)
+    await expect(page.getByText('积分不足', { exact: true })).toHaveCount(0)
     await page.getByRole('button', { name: '出战' }).click()
     await expect(page).toHaveURL(/\/matches\/9001$/)
     expect(world.saves).toBe(2)
@@ -343,15 +352,14 @@ test('报价失败时先重试再允许出战', async ({ page }) => {
     await page.getByRole('button', { name: '保存版本' }).click()
   })
   await test.step('那么 我看到重试提示且不能开始首战', async () => {
-    await expect(page.getByText('暂时无法确认本次消耗，请重试。')).toBeVisible()
+    await expect(page.getByText('暂时无法开始对战，请重试。')).toBeVisible()
     await expect(page.getByRole('button', { name: '出战' }))
       .toBeDisabled()
   })
   await test.step('当 我重新确认积分', async () => {
-    await page.getByRole('button', { name: '重新确认积分' }).click()
+    await page.getByRole('button', { name: '重试', exact: true }).click()
   })
   await test.step('那么 正确报价显示后才允许开始首战', async () => {
-    await expect(page.getByText('100 积分', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: '出战' }))
       .toBeEnabled()
   })

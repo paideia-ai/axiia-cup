@@ -32,6 +32,7 @@ import type {
 } from '../api/types'
 import { gateMet, sideMet, sideProgressText } from '../lib/gate'
 import { BattleOpponentRow } from './battle-opponent-row'
+import { BattleAvailabilityNotice } from './rewards'
 import { CreateAgentAction } from './create-agent-action'
 import { useBattleQuote } from '../context/rewards'
 import { playSound, unlockAudio } from '../lib/sound'
@@ -700,38 +701,7 @@ export function OsPanel({
                   {error}
                 </p>
               )}
-              {quoteState.loading
-                ? (
-                  <p
-                    role='status'
-                    className='mb-3 text-xs text-(--foreground-subtle)'
-                  >
-                    正在确认对战资格…
-                  </p>
-                )
-                : quoteState.error
-                ? (
-                  <div
-                    className='mb-3 flex items-center justify-between gap-2 text-xs text-(--warning)'
-                    role='alert'
-                  >
-                    <span>暂时无法开始对战，请重试。</span>
-                    <Button
-                      variant='secondary'
-                      size='sm'
-                      onClick={quoteState.retry}
-                    >
-                      重试
-                    </Button>
-                  </div>
-                )
-                : insufficientPoints
-                ? (
-                  <p role='status' className='mb-3 text-xs text-(--warning)'>
-                    积分不足
-                  </p>
-                )
-                : null}
+              <BattleAvailabilityNotice quoteState={quoteState} />
               <div className='sr-only' role='status'>
                 {dispatching ? '正在创建对战，请稍候。' : ''}
               </div>

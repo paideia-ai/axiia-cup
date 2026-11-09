@@ -471,7 +471,7 @@ export const ExpressBalanceBoundary: Story = {
     await userEvent.click(save)
     const start = await canvas.findByRole('button', { name: '出战' })
     await expect(
-      await canvas.findByText('积分不足，可领取胜利奖励或等待每日积分。'),
+      await canvas.findByText('积分不足', { exact: true }),
     ).toBeVisible()
     await expect(start).toBeDisabled()
     start.click()
@@ -480,8 +480,7 @@ export const ExpressBalanceBoundary: Story = {
 
     expressFundsWorld.balance = 100
     refreshRewards()
-    await expect(await canvas.findByText(/余额 100/)).toBeVisible()
-    await expect(start).toBeEnabled()
+    await waitFor(() => expect(start).toBeEnabled())
     await userEvent.click(start)
     await expect(await canvas.findByText('首战已派发')).toBeVisible()
     await expect(expressFundsWorld.saves).toBe(1)

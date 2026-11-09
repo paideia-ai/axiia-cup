@@ -42,64 +42,32 @@ export function PointsIndicator() {
   )
 }
 
-export function BattleCostNotice(
-  { kind = 'pve', quoteState }: {
-    kind?: string
-    quoteState?: BattleQuoteState
-  },
+export function BattleAvailabilityNotice(
+  { quoteState }: { quoteState: BattleQuoteState },
 ) {
-  const state = useRewards()
-  const wallet = state?.wallet
-  if (quoteState?.loading) {
+  if (quoteState.loading) {
     return (
       <p role='status' className='mb-3 text-xs text-(--foreground-subtle)'>
-        正在确认本次积分…
+        正在确认对战资格…
       </p>
     )
   }
-  if (quoteState?.error) {
+  if (quoteState.error) {
     return (
-      <div className='mb-3 text-xs text-(--warning)'>
-        <p role='alert'>暂时无法确认本次消耗，请重试。</p>
+      <div
+        className='mb-3 flex items-center justify-between gap-2 text-xs text-(--warning)'
+        role='alert'
+      >
+        <span>暂时无法开始对战，请重试。</span>
         <Button variant='secondary' size='sm' onClick={quoteState.retry}>
-          重新确认积分
+          重试
         </Button>
       </div>
     )
   }
-  if (!wallet) return null
-  const pvp = kind === 'pvp'
-  const cost = quoteState?.quote?.cost ?? wallet.battleCost
-  return (
-    <div
-      className='mb-3 space-y-1 text-xs text-(--foreground-subtle)'
-      data-spec='U18-C24 U18-C28 U18-C29'
-    >
-      <p>
-        本次对战消耗 <strong>{cost} 积分</strong>
-        {' · '}
-        {state.error ? '余额待更新' : `余额 ${wallet.balance}`}
-        {kind === 'hotseat'
-          ? ' · 自打无胜利返还'
-          : ` · 胜利后可领取 ${
-            pvp ? wallet.pvpWinRefundPercent : wallet.pveWinRefundPercent
-          }% 返还`}
-      </p>
-      {quoteState?.quote?.repeatRoleSurcharge
-        ? <p>试试其他角色，让下一场消耗更少。</p>
-        : null}
-      {!state.error && wallet.balance < cost
-        ? (
-          <p className='text-(--warning)'>
-            积分不足，可领取胜利奖励或等待每日积分。
-          </p>
-        )
-        : null}
-      <Link className='underline underline-offset-2' to='/rewards'>
-        查看积分与奖励
-      </Link>
-    </div>
-  )
+  return quoteState.blocked
+    ? <p role='status' className='mb-3 text-xs text-(--warning)'>积分不足</p>
+    : null
 }
 
 // The caller keys this by account + match; no previous match's success can bleed

@@ -31,7 +31,7 @@ import type {
 } from '../api/types'
 import { InitModes } from '../components/builder-init'
 import { OnboardingGlow } from '../components/onboarding-glow'
-import { BattleCostNotice } from '../components/rewards'
+import { BattleAvailabilityNotice } from '../components/rewards'
 import { useBattleQuote } from '../context/rewards'
 import { playButtonHover, playSound, unlockAudio } from '../lib/sound'
 import { TypingFeedback } from '../components/typing-feedback'
@@ -1504,7 +1504,7 @@ export function BuilderPage() {
                 latestVersion.id,
               )}）
             </p>
-            <BattleCostNotice quoteState={quoteState} />
+            <BattleAvailabilityNotice quoteState={quoteState} />
             {unsavedFirstBattleChanges
               ? (
                 <p role='status' className='text-sm text-(--warning)'>
