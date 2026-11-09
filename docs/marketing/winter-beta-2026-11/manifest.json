@@ -1,0 +1,54 @@
+{
+  "campaign": "winter-beta-2026-11",
+  "copy": "11.10-16 参与Axiia Cup冬季内测 赢9999平台赠金&AI硬件",
+  "qr_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+  "qr_error_correction": "M",
+  "qr_png": "assets/qr/invite-axiia-cup.png",
+  "qr_svg": "assets/qr/invite-axiia-cup.svg",
+  "qr_version": 4,
+  "qr_total_modules_including_quiet_zone": 41,
+  "posters": [
+    {
+      "id": "01",
+      "name": "商鞅",
+      "base": "assets/base/01-shangyang.png",
+      "final": "assets/final/01-shangyang.png",
+      "layout": "layouts/portrait.json",
+      "prompt": "prompts/01-shangyang.txt",
+      "width": 887,
+      "height": 1774
+    },
+    {
+      "id": "02",
+      "name": "老实西进",
+      "base": "assets/base/02-westward.png",
+      "final": "assets/final/02-westward.png",
+      "layout": "layouts/portrait.json",
+      "prompt": "prompts/02-westward.txt",
+      "width": 887,
+      "height": 1774
+    },
+    {
+      "id": "05",
+      "name": "奉先你的是我的_横版",
+      "base": "assets/base/05-dongzhuo-lvbu.png",
+      "final": "assets/final/05-dongzhuo-lvbu.png",
+      "layout": "layouts/landscape.json",
+      "prompt": "prompts/05-dongzhuo-lvbu.txt",
+      "width": 1448,
+      "height": 1086
+    }
+  ],
+  "file_sha256": {
+    "assets/base/01-shangyang.png": "3f3c7436cc3bb58c7404c3d9f48bdef807c3e10c68e50a743bd123e2d597355a",
+    "assets/base/02-westward.png": "4ab5e7bfaa00405ec4ee045c3e7924d7e860a6712e23d50ad35d01a7fb9ea9ab",
+    "assets/base/05-dongzhuo-lvbu.png": "2b6ddf548a6ef2cfdf6a81fd9859221c78f1d2ef42b102635fb006cae4455ae9",
+    "assets/final/01-shangyang.png": "226c88746c6d5f16a62343979feffa590a26331a520bc28cd6880e1f5423b2f9",
+    "assets/final/02-westward.png": "769d29540ffbaacd89cb2d81e82874473c15d219a644265fecd3ebf93b330b05",
+    "assets/final/05-dongzhuo-lvbu.png": "40289896957cab454378c8b9361ad4ad64723bb9cee813508e92777f1c4bcfe6",
+    "assets/qr/invite-axiia-cup.png": "bf87670ae2a131a0981025f2583ecaea2cbcd6ac165667c81476964378a0e54c",
+    "assets/qr/invite-axiia-cup.svg": "c263c59b8c7e6b979931b2bfd1fecdb3a078365da8336079a7db2a008e9821eb",
+    "layouts/landscape.json": "32a079ba32905e542bf7dc5b053b1017bf785517b768f64328d541b5578eac40",
+    "layouts/portrait.json": "1f5f94dd643db1fbd2325007925e44b7995ac8ff275fe6a858909fc3b92a86e3"
+  }
+}
