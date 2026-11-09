@@ -67,7 +67,7 @@ export function NPCViewPage() {
               <h2 className='text-base font-semibold text-(--foreground)'>
                 提示词
               </h2>
-              <pre className='whitespace-pre-wrap wrap-anywhere font-sans text-sm leading-7 text-(--foreground)'>{npc.prompt || '此 NPC 未配置提示词。'}</pre>
+              <pre className='ph-no-capture whitespace-pre-wrap wrap-anywhere font-sans text-sm leading-7 text-(--foreground)'>{npc.prompt || '此 NPC 未配置提示词。'}</pre>
             </section>
           </>
         )}

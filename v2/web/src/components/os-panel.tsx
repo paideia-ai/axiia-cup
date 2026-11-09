@@ -650,7 +650,9 @@ export function OsPanel({
               >
                 <div className='min-w-0'>
                   <p className='flex flex-wrap items-baseline gap-x-2 text-[18px] leading-7 font-semibold'>
-                    {agentName || fieldedRoleName}
+                    {agentName
+                      ? <span className='ph-no-capture'>{agentName}</span>
+                      : fieldedRoleName}
                     {agentName && (
                       <span className='text-xs font-normal text-(--foreground-subtle)'>
                         {fieldedRoleName}

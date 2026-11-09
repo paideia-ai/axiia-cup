@@ -62,7 +62,11 @@ export function VersionPicker(
                       >
                         {versionTag(version, versions)}
                         {version.note?.trim()
-                          ? ` · ${version.note.trim()}`
+                          ? (
+                            <span className='ph-no-capture'>
+                              {` · ${version.note.trim()}`}
+                            </span>
+                          )
                           : ''}
                       </span>
                       {version.modelID && (

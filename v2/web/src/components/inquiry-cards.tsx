@@ -14,7 +14,7 @@ export function InquiryCards({ answers, labels, showReasoning = false }: {
   showReasoning?: boolean
 }) {
   return (
-    <div className='inquiry-columns grid gap-3 md:grid-cols-2'>
+    <div className='ph-no-capture inquiry-columns grid gap-3 md:grid-cols-2'>
       {answers.map((answer) => (
         <OutputBoundary
           key={answer.side}
