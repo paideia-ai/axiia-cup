@@ -103,7 +103,7 @@ export function LandingPage() {
         >
           <div className='max-w-4xl'>
             <Badge tone='success' className='mb-8' {...tm('A.season-badge')}>
-              第一赛季报名中
+              冬季内测进行中
             </Badge>
             <h1
               {...tm('A.tagline')}
