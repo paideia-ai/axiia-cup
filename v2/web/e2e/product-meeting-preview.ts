@@ -54,6 +54,7 @@ function previewVersions(count: number, agentID: number) {
 const sessions = new Map<string, {
   versions: Map<number, AgentVersionDTO[]>
   drafts: Map<number, Record<string, string>>
+  presetScenarioIDs: Set<string>
 }>()
 
 export async function productMeetingAPI(
@@ -84,6 +85,7 @@ export async function productMeetingAPI(
           prompt: previewVersions(count, id).at(-1)?.prompt ?? '',
         }]),
       ),
+      presetScenarioIDs: new Set(),
     })
   }
   const session = sessions.get(sessionID)!
@@ -105,6 +107,19 @@ export async function productMeetingAPI(
       elevated: false,
       firstBattleDone: false,
     })
+  }
+  if (path === '/account/preset-usage') {
+    if (request.method === 'GET') {
+      return json({ scenarioIDs: [...session.presetScenarioIDs] })
+    }
+    if (request.method === 'POST') {
+      const { scenarioID } = await request.json()
+      if (typeof scenarioID !== 'string' || !scenarioID.trim()) {
+        return json({ error: 'invalid_scenario' }, 400)
+      }
+      session.presetScenarioIDs.add(scenarioID)
+      return json({ scenarioIDs: [...session.presetScenarioIDs] })
+    }
   }
   if (path === '/my/agents') {
     return json({
