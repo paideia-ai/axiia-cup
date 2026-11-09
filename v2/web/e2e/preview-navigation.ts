@@ -201,6 +201,10 @@ async function api(request: Request, path: string): Promise<Response> {
       })
     case '/models':
       return json({ models: config.models })
+    case '/achievements':
+      return json({ achievements: [], eventCursor: 0 })
+    case '/achievements/events':
+      return json({ events: [], cursor: 0 })
     case '/scenarios':
       return json(scenarioList)
     case `/scenarios/${scenario.summary.id}`:
