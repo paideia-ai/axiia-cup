@@ -19,7 +19,7 @@ export function ScriptView({ source }: { source: string }) {
   return (
     <div
       {...tm('ADM.slot-script-view')}
-      className='overflow-x-auto rounded-lg border border-(--border-soft) bg-black/30'
+      className='ph-no-capture overflow-x-auto rounded-lg border border-(--border-soft) bg-black/30'
     >
       <pre className='min-w-max py-3 font-mono text-[12px] leading-[1.6]'>
         {lines.map((tokens, number) => (

@@ -1172,9 +1172,11 @@ export function BuilderPage() {
           {...tm('E.agent-name')}
         >
           {scenario ? scenario.summary.title : scenarioID} ·{' '}
-          {agentName != null && agentName !== ''
-            ? `${sideDisplayName}「${agentName}」`
-            : `${sideDisplayName} #${agentID}`}
+          <span className='ph-no-capture'>
+            {agentName != null && agentName !== ''
+              ? `${sideDisplayName}「${agentName}」`
+              : `${sideDisplayName} #${agentID}`}
+          </span>
         </p>
       </div>
 
@@ -1247,7 +1249,7 @@ export function BuilderPage() {
                   ? '本机留有一份超过 14 天的草稿，未自动恢复。'
                   : '服务器草稿已更新，本机副本未自动恢复。'}
               </p>
-              <p className='line-clamp-2 text-xs text-(--foreground-subtle)'>
+              <p className='ph-no-capture line-clamp-2 text-xs text-(--foreground-subtle)'>
                 本机副本：{recovery.journal.prompt || '（空白）'}
               </p>
             </div>

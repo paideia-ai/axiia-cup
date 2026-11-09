@@ -322,7 +322,7 @@ function NotificationRow({
               {notification.title
                 ? (
                   <span
-                    className='text-sm font-medium text-(--foreground)'
+                    className='ph-no-capture text-sm font-medium text-(--foreground)'
                     {...tm('I.notification-title')}
                   >
                     {notification.title}
@@ -333,7 +333,7 @@ function NotificationRow({
             {body
               ? (
                 <p
-                  className='mt-1 text-sm leading-relaxed text-(--foreground-subtle)'
+                  className='ph-no-capture mt-1 text-sm leading-relaxed text-(--foreground-subtle)'
                   {...tm('I.notification-body')}
                 >
                   {isAchievement ? `“${body}”` : body}

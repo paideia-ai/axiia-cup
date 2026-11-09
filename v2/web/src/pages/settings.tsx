@@ -168,7 +168,7 @@ export function SettingsPage() {
               : (
                 <span className='flex items-center gap-2'>
                   <span
-                    className='text-(--foreground)'
+                    className='ph-no-capture text-(--foreground)'
                     {...tm('K.nickname-value')}
                   >
                     {account.displayName}
@@ -207,11 +207,15 @@ export function SettingsPage() {
             : null}
           <div className='flex justify-between' {...tm('K.email-row')}>
             <span className='text-(--foreground-muted)'>邮箱</span>
-            <span className='text-(--foreground)'>{account.email ?? '—'}</span>
+            <span className='ph-no-capture text-(--foreground)'>
+              {account.email ?? '—'}
+            </span>
           </div>
           <div className='flex justify-between' {...tm('K.phone-row')}>
             <span className='text-(--foreground-muted)'>手机号</span>
-            <span className='text-(--foreground)'>{account.phone ?? '—'}</span>
+            <span className='ph-no-capture text-(--foreground)'>
+              {account.phone ?? '—'}
+            </span>
           </div>
           <div className='flex justify-between' {...tm('K.role-row')}>
             <span className='text-(--foreground-muted)'>角色</span>

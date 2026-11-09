@@ -63,7 +63,7 @@ export function AgentIdentityPage() {
             <header className='space-y-2'>
               <h1
                 {...tm('EA.public-title')}
-                className='wrap-anywhere text-2xl font-bold text-(--foreground)'
+                className='ph-no-capture wrap-anywhere text-2xl font-bold text-(--foreground)'
               >
                 {agent.name
                   ? `${roleName}「${agent.name}」`
@@ -71,7 +71,7 @@ export function AgentIdentityPage() {
               </h1>
               <p
                 {...tm('EA.public-owner-line')}
-                className='text-sm text-(--foreground-subtle)'
+                className='ph-no-capture text-sm text-(--foreground-subtle)'
               >
                 {agent.ownerName} · {agent.scenarioTitle}
               </p>
