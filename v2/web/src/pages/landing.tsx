@@ -1,11 +1,12 @@
 import { ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { landing as landingApi } from '../api/client'
 import { Badge } from '../components/ui/badge'
 import { ButtonLink } from '../components/ui/button'
 import { IcpRecord } from '../components/layout/icp-record'
 import { useAuth } from '../context/auth'
+import { authUrl } from '../lib/auth-url'
 import { useAsync } from '../lib/use-async'
 import { tm } from '../testmode/mark'
 
@@ -30,6 +31,9 @@ const steps = [
 ]
 
 export function LandingPage() {
+  const location = useLocation()
+  const loginUrl = authUrl('/login', location.search)
+  const registerUrl = authUrl('/register', location.search)
   const { isLoading, account } = useAuth()
   // 免鉴权取首页素材；失败就当没有（下面整段不渲染）。
   const { data: landing } = useAsync(
@@ -76,13 +80,13 @@ export function LandingPage() {
                 <>
                   <Link
                     {...tm('A.header-login-link')}
-                    to='/login'
+                    to={loginUrl}
                     className='text-sm text-(--foreground-subtle) hover:text-(--foreground)'
                   >
                     登录
                   </Link>
                   <ButtonLink
-                    to='/register'
+                    to={registerUrl}
                     size='sm'
                     {...tm('A.header-register-button')}
                   >
@@ -129,7 +133,7 @@ export function LandingPage() {
               ? (
                 <div className='mt-10 flex justify-center gap-4'>
                   <ButtonLink
-                    to='/register'
+                    to={registerUrl}
                     size='lg'
                     {...tm('A.cta-register')}
                   >
@@ -137,12 +141,12 @@ export function LandingPage() {
                     <ArrowRight className='ml-2 h-4 w-4' />
                   </ButtonLink>
                   <ButtonLink
-                    to='/login'
+                    to='/scenarios'
                     size='lg'
                     variant='secondary'
-                    {...tm('A.cta-login')}
+                    {...tm('A.cta-browse')}
                   >
-                    已有账户，登录
+                    浏览场景
                   </ButtonLink>
                 </div>
               )
@@ -190,7 +194,7 @@ export function LandingPage() {
                     <h2 className='text-sm font-semibold tracking-[0.14em] text-(--foreground-muted) uppercase'>
                       真实对局节选
                     </h2>
-                    <div className='mt-3 space-y-2 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-white/2 px-5 py-4'>
+                    <div className='ph-no-capture mt-3 space-y-2 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-white/2 px-5 py-4'>
                       {landing.excerpt.turns.map((turn, index) => (
                         <p
                           key={index}
@@ -253,7 +257,9 @@ export function LandingPage() {
                               <span className='mr-2 tabular-nums text-(--foreground-muted)'>
                                 {index + 1}
                               </span>
-                              {player.displayName}
+                              <span className='ph-no-capture'>
+                                {player.displayName}
+                              </span>
                             </span>
                             <span className='tabular-nums'>
                               {player.wins} 胜

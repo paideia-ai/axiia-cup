@@ -82,6 +82,8 @@ export interface ScenarioIntroJudge {
 // such as scoring labels outside `source` so the parity test can detect copy drift.
 export interface ScenarioIntroCopy {
   htmlID: string
+  // A short catalog synopsis; the detail page keeps the full source paragraphs.
+  catalogSummary?: string
   source: {
     category?: string
     title: string

@@ -54,7 +54,7 @@ export function ArchivedAgentsPage() {
       </div>
       {restored && (
         <p role='status' className='text-sm text-(--foreground-muted)'>
-          已恢复 {restored.name}。
+          已恢复 <span className='ph-no-capture'>{restored.name}</span>。
           <Link
             className='underline underline-offset-4'
             to={`/agents/${restored.id}`}
@@ -114,7 +114,7 @@ export function ArchivedAgentsPage() {
                       className='flex items-center justify-between gap-4 p-5'
                     >
                       <div className='min-w-0'>
-                        <h2 className='break-words text-sm font-semibold'>
+                        <h2 className='ph-no-capture break-words text-sm font-semibold'>
                           {name}
                         </h2>
                         <p className='mt-1 text-xs text-(--foreground-subtle)'>

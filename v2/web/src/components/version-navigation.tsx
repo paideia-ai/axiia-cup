@@ -643,7 +643,11 @@ export function VersionNavigation({
                         <span>
                           {tag}
                           {version.note?.trim()
-                            ? ` · ${version.note.trim()}`
+                            ? (
+                              <span className='ph-no-capture'>
+                                {` · ${version.note.trim()}`}
+                              </span>
+                            )
                             : ''}
                         </span>
                         {version.isEntry && (

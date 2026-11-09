@@ -77,14 +77,14 @@ export default meta
 // 已注册号码：发码答 registered=true → 不问昵称，按钮写「登录」，verify 的
 // displayName 必须是 null（服务端据此走登录而不是开号）。
 export const LoginKnownPhone: StoryObj = {
-  render: surface(LoginPage),
+  render: surface(LoginPage, '/login?invite=axiia_cup&next=%2Fmatches%2F42'),
   parameters: {
     msw: [
       anonymous,
-      http.post('/v1/auth/sms/code', () =>
-        HttpResponse.json({
-          registered: true,
-        })),
+      http.post('/v1/auth/sms/code', async ({ request }) => {
+        codeRequest = await request.json() as NonNullable<typeof codeRequest>
+        return HttpResponse.json({ registered: true })
+      }),
       http.post('/v1/auth/sms/verify', async ({ request }) => {
         verified = (await request.json()) as PhoneVerifyRequest
         return HttpResponse.json(me)
@@ -92,6 +92,7 @@ export const LoginKnownPhone: StoryObj = {
     ],
   },
   play: async ({ canvasElement }) => {
+    codeRequest = null
     verified = null
     const canvas = within(canvasElement)
     await userEvent.click(await canvas.findByRole('tab', { name: '手机号' }))
@@ -107,6 +108,9 @@ export const LoginKnownPhone: StoryObj = {
     await userEvent.type(phoneInput(canvas), PHONE)
     await expect(send).toBeEnabled()
     await userEvent.click(send)
+    await waitFor(() =>
+      expect(codeRequest).toEqual({ phone: PHONE, inviteCode: null })
+    )
 
     await expect(await canvas.findByLabelText('验证码')).toBeVisible()
     // 已注册 → 不问昵称。
@@ -123,6 +127,11 @@ export const LoginKnownPhone: StoryObj = {
         code: CODE,
         displayName: null,
       })
+    )
+    await waitFor(() =>
+      expect(canvas.getByTestId('current-route')).toHaveTextContent(
+        '/matches/42',
+      )
     )
   },
 }
@@ -181,7 +190,10 @@ export const RegisterNewPhone: StoryObj = {
 
 // 已有手机号即使首战尚未完成，也应回到来时的智能体构建页。
 export const RegisterKnownPhoneKeepsDeepLink: StoryObj = {
-  render: surface(RegisterPage, '/register?next=%2Fagents%2F12%2Fbuild'),
+  render: surface(
+    RegisterPage,
+    '/register?invite=axiia_cup&next=%2Fagents%2F12%2Fbuild',
+  ),
   parameters: {
     msw: [
       anonymous,

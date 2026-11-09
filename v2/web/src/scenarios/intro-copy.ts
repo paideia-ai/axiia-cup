@@ -6,6 +6,8 @@ import type { ScenarioIntroCopy } from './types'
 
 export const shangyangCourtIntro: ScenarioIntroCopy = {
   htmlID: 'shangyang',
+  catalogSummary:
+    '秦国积弱，秦孝公召商鞅与甘龙入朝辩论。是推行新法以求富强，还是暂缓改革以免生乱，由这场朝堂交锋决定。',
   source: {
     title: '商鞅变法 · 朝堂辩法',
     overview: {
@@ -60,6 +62,8 @@ export const shangyangCourtIntro: ScenarioIntroCopy = {
 
 export const honnojiDecisionIntro: ScenarioIntroCopy = {
   htmlID: 'honnoji',
+  catalogSummary:
+    '信长宿于本能寺，护卫稀少，光秀的大军已奉命西进。今夜，他必须决定继续行军，还是转向京都、突袭自己的主君。',
   source: {
     title: '本能寺之变 · 敌在何处',
     overview: {
@@ -148,6 +152,8 @@ export const honnojiDecisionIntro: ScenarioIntroCopy = {
 
 export const trolleyProblemIntro: ScenarioIntroCopy = {
   htmlID: 'trolley',
+  catalogSummary:
+    '事故已无法避免，只能在两种伤害之间选择。为了保护五人，是否可以主动让一人承担伤害？',
   source: {
     title: '电车难题 · 一人与五人',
     overview: {
@@ -212,6 +218,8 @@ export const trolleyProblemIntro: ScenarioIntroCopy = {
 
 export const fengyitingRealIntro: ScenarioIntroCopy = {
   htmlID: 'fengyiting',
+  catalogSummary:
+    '王允与貂蝉设下连环计，欲借吕布之手除掉董卓。凤仪亭私会被撞破，董卓掷戟，吕布挡落，三人当面对峙。',
   source: {
     title: '凤仪亭之夜',
     overview: {
@@ -287,6 +295,8 @@ export const fengyitingRealIntro: ScenarioIntroCopy = {
 
 export const legalHarborMurderJuryIntro: ScenarioIntroCopy = {
   htmlID: 'harbor',
+  catalogSummary:
+    '七号仓内，纪川被维修锤击中身亡，顾衡称争抢时意外误伤。摄像头只拍到他的出入，致命一击的经过仍有争议。',
   source: {
     title: '码头疑云 · 七号仓命案',
     overview: {

@@ -125,7 +125,10 @@ export function MyAgentsPage() {
 
       {location.state?.archivedAgentName && (
         <p role='status' className='text-sm text-(--foreground-muted)'>
-          已归档 {location.state.archivedAgentName}。
+          已归档{' '}
+          <span className='ph-no-capture'>
+            {location.state.archivedAgentName}
+          </span>。
           <Link
             className='underline underline-offset-4'
             to='/settings/archived-agents'
@@ -520,7 +523,7 @@ function AgentRow({ agent, role }: { agent: MyAgentDTO; role?: string }) {
     >
       <div className='min-w-0 flex-1'>
         <p
-          className='text-sm font-medium wrap-anywhere text-(--foreground)'
+          className='ph-no-capture text-sm font-medium wrap-anywhere text-(--foreground)'
           {...tm('MA.agent-name')}
         >
           {agent.name ?? `#${agent.agentID}`}

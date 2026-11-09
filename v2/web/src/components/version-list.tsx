@@ -287,7 +287,7 @@ export function VersionList({
                     {!detailsMissing?.(version.id) && version.note?.trim()
                       ? (
                         <p
-                          className='break-words text-xs text-(--foreground-subtle)'
+                          className='ph-no-capture break-words text-xs text-(--foreground-subtle)'
                           {...tm('E.version-note')}
                         >
                           备注：{version.note.trim()}

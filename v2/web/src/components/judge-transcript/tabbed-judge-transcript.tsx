@@ -37,7 +37,7 @@ export function TabbedJudgeTranscript({
   return (
     <section
       ref={root}
-      className='judge-transcript judge-trolley'
+      className='ph-no-capture judge-transcript judge-trolley'
       aria-label='电车难题对话与全局倾向'
     >
       <div className='judge-transcript-columns judge-transcript-aligned-grid'>

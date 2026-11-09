@@ -93,7 +93,7 @@ describe('product analytics', () => {
     expect(properties).toContain('"role":"admin"')
   })
 
-  it('goes through the proxy, masks replay and scrubs autocapture text', async () => {
+  it('goes through the proxy, blocks user content in replay and scrubs autocapture text', async () => {
     const { analyticsConfig, POSTHOG_HOST, POSTHOG_KEY, scrubElementText } =
       await import('./analytics')
     expect(POSTHOG_KEY).toMatch(/^phc_/)
@@ -110,10 +110,13 @@ describe('product analytics', () => {
     expect(config.session_recording).toMatchObject({
       blockClass: 'ph-no-capture',
       maskAllInputs: true,
-      maskTextSelector: '*',
       recordHeaders: false,
       recordBody: false,
     })
+    // UI text is recorded; NO_CAPTURE (blockClass) is what keeps user content
+    // out of replay.
+    expect(config.session_recording?.maskTextSelector).toBeUndefined()
+    expect(config.session_recording?.maskTextFn).toBeUndefined()
     expect(config.autocapture).toMatchObject({
       capture_copied_text: false,
       capture_value_css_selector_allowlist: [],

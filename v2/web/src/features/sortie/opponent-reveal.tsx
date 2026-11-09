@@ -63,7 +63,7 @@ export function OpponentReveal({
         <div className='sortie-duelist sortie-duelist-opponent'>
           <span className='sortie-duelist-caption'>匹配到的对手</span>
           <RolePortrait labels={labels} speaker={otherRole.roleKey} />
-          <strong>{name}</strong>
+          <strong className='ph-no-capture'>{name}</strong>
           <span>{otherRole.roleName}</span>
           <small>{rate(opponent)} · {gamesPlayed(opponent)} 场</small>
         </div>

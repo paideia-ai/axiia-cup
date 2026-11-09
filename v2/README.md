@@ -181,17 +181,20 @@ request.
   | `match_result_viewed` | a scored result is on screen           | `match_id`, `scenario_id`, `match_kind`, `initiated_by_me`                             |
 
 - **Privacy:** no prompt text, transcript or other user content leaves the
-  browser. Replay masks every text node (`maskTextSelector: '*'`), every input,
-  and text-bearing attributes (`aria-label`, `title`, `alt`, `placeholder`, …).
-  Autocapture drops the same attributes and keeps element text only on
-  interactive chrome (links, buttons, labels, tabs, menu items), so click lists
-  read as `保存版本`; `scrubElementText` strips it from everything else and
-  fails closed. User content that renders inside chrome or anywhere replay
-  could show it carries `ph-no-capture`, which removes it from replay and from
-  autocapture: the prompt editor, version prompts, transcripts, judge output,
-  and agent and display names in links and buttons. Console logs, exceptions
-  and network bodies are not recorded, whatever the project settings say. New
-  surfaces that render user content need `ph-no-capture` too.
+  browser. Replay records the UI's own text (headings, labels, buttons,
+  scenario copy) so recordings are readable, and removes every element that
+  carries `ph-no-capture` (rrweb `blockClass`; the recording keeps an empty box
+  of the same size): the prompt editor, prompt versions, notes and diffs,
+  transcripts, judge dialogue, verdicts and trends, and every agent or display
+  name. Every input stays masked, and so do text-bearing attributes
+  (`aria-label`, `title`, `alt`, `placeholder`, …). Autocapture drops the same
+  attributes and keeps element text only on interactive chrome (links, buttons,
+  labels, tabs, menu items), so click lists read as `保存版本`;
+  `scrubElementText` strips it from everything else and fails closed, and
+  `ph-no-capture` keeps names out of chrome text too. Console logs, exceptions
+  and network bodies are not recorded, whatever the project settings say.
+  **Rendering new user content? Put `ph-no-capture` on its element**: replay
+  records any text that lacks it.
 
 ## Frontend source of truth
 

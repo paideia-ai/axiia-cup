@@ -60,7 +60,7 @@ export const TM_DISCOVERY: TmRegistry = {
       '有 gateProgress 时按侧进度「PVP 解锁 1/1·0/1」/「PVP 已解锁」；老服务器回落静态 PvE/PvP 徽章',
   },
   'D.card-subject': {
-    label: '一句话介绍',
+    label: '场景介绍',
     clauses: ['U04-C01'],
   },
   'D.card-education': {
