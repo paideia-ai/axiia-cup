@@ -11,15 +11,14 @@ import type { MeResponse } from '../api/types'
 import { useAuth } from '../context/auth'
 import { tm } from '../testmode/mark'
 import { loginReturnPath, registrationReturnPath } from '../lib/login-return'
+import { authUrl, inviteFromSearch } from '../lib/auth-url'
 
 export function RegisterPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const returnPath = new URLSearchParams(location.search).has('next')
-    ? loginReturnPath(location.search)
-    : null
+  const invite = inviteFromSearch(location.search)
   const { signup } = useAuth()
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(() => invite)
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -83,7 +82,11 @@ export function RegisterPage() {
                   <TabsTrigger value='email'>邮箱</TabsTrigger>
                 </TabsList>
                 <TabsContent value='phone'>
-                  <PhoneAuthForm onDone={landPhone} withInvite />
+                  <PhoneAuthForm
+                    onDone={landPhone}
+                    withInvite
+                    initialInviteCode={invite}
+                  />
                 </TabsContent>
                 <TabsContent value='email'>
                   <form
@@ -168,9 +171,7 @@ export function RegisterPage() {
           <p className='text-center text-sm text-(--foreground-muted)'>
             已有账户？{' '}
             <Link
-              to={returnPath
-                ? `/login?${new URLSearchParams({ next: returnPath })}`
-                : '/login'}
+              to={authUrl('/login', location.search)}
               className='text-(--accent)'
               {...tm('C.login-link')}
             >

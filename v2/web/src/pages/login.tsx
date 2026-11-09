@@ -9,6 +9,7 @@ import { IcpRecord } from '../components/layout/icp-record'
 import { PhoneAuthForm } from '../components/auth/phone-form'
 import { useAuth } from '../context/auth'
 import { loginReturnPath } from '../lib/login-return'
+import { authUrl } from '../lib/auth-url'
 import { tm } from '../testmode/mark'
 
 export function LoginPage() {
@@ -117,9 +118,7 @@ export function LoginPage() {
           <p className='text-center text-sm text-(--foreground-muted)'>
             还没有账户？{' '}
             <Link
-              to={new URLSearchParams(location.search).has('next')
-                ? `/register?${new URLSearchParams({ next: returnPath })}`
-                : '/register'}
+              to={authUrl('/register', location.search)}
               className='text-(--accent)'
               {...tm('B.register-link')}
             >

@@ -14,13 +14,20 @@ type Props = {
   onDone: (me: MeResponse, wasRegistered: boolean) => void
   // 注册页要注册码与昵称；登录页只要号码与验证码。
   withInvite: boolean
+  initialInviteCode?: string
 }
 
-export function PhoneAuthForm({ onDone, withInvite }: Props) {
+export function PhoneAuthForm({
+  onDone,
+  withInvite,
+  initialInviteCode = '',
+}: Props) {
   const { verifyPhone } = useAuth()
   const cooldown = useCooldown()
   const [phone, setPhone] = useState('')
-  const [inviteCode, setInviteCode] = useState('')
+  const [inviteCode, setInviteCode] = useState(() =>
+    withInvite ? initialInviteCode : ''
+  )
   const [displayName, setDisplayName] = useState('')
   const [code, setCode] = useState('')
   const [sent, setSent] = useState(false)
