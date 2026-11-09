@@ -5,6 +5,7 @@ import config from './playwright.config'
 // itself, so an omitted route fails the same way it would in manual review.
 export default defineConfig({
   ...config,
+  testDir: './tests/preview',
   testMatch: 'first-battle-preview.spec.ts',
   timeout: 60_000,
   use: {

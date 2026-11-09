@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+// Kept outside tests/e2e: real-backend acceptance must not collect local-demo tests.
 import { deckFor } from '../../src/scenarios/decks'
 import type { MatchDetail } from '../../src/api/types'
 
