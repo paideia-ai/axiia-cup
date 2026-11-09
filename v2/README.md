@@ -91,6 +91,14 @@ backend. Agent lookup returns simulated IDs; saving, deleting, and dispatching
 battles are disabled. Stop it with Ctrl+C. On a remote development machine,
 forward port 5177 to your browser's machine first.
 
+For the first-battle court introduction, run `deno task preview:express` and open
+`http://localhost:6081/express`. It serves the actual frontend build with local
+fixtures for the three portraits, configured player role, background and scoring.
+The existing express build link remains navigable; saving and dispatching are
+disabled. No live account or backend is contacted. The server listens on all
+interfaces for WSL/Windows access; if localhost forwarding is unavailable, use
+the WSL address with port 6081. Stop it with Ctrl+C.
+
 For the responsive match activity rail, run `deno task preview:battle-strip`
 and open `http://localhost:6056/preview`. It serves the production build with
 read-only local fixtures for active/recent matches, a long list and an empty

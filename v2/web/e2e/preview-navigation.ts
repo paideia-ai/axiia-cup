@@ -5,6 +5,7 @@ import {
 import { extname, resolve, sep } from 'node:path'
 import {
   config,
+  expressScoring,
   finishedMatch,
   inventory,
   notificationsFixture,
@@ -20,6 +21,7 @@ import {
 } from '../src/testing/scenario-agent-fixtures.ts'
 
 const productMeeting = Deno.args.includes('--product-meeting')
+const expressPreview = Deno.args.includes('--express')
 const agentCreation = Deno.args.includes('--agent-creation')
 const scenarioAgents = agentCreation || Deno.args.includes('--scenario-agents')
 const root = resolve('build/client')
@@ -185,7 +187,9 @@ async function api(request: Request, path: string): Promise<Response> {
     case '/scenarios':
       return json(scenarioList)
     case `/scenarios/${scenario.summary.id}`:
-      return json(scenario)
+      return json(
+        expressPreview ? { ...scenario, scoring: expressScoring } : scenario,
+      )
     case `/scenarios/${scenario.summary.id}/opponents`:
       return json({ opponents: [] })
     case '/my/agents':
@@ -242,8 +246,10 @@ const contentTypes: Record<string, string> = {
 
 Deno.serve(
   {
-    hostname: productMeeting ? '0.0.0.0' : '127.0.0.1',
-    port: productMeeting
+    hostname: productMeeting || expressPreview ? '0.0.0.0' : '127.0.0.1',
+    port: expressPreview
+      ? 6081
+      : productMeeting
       ? 5237
       : agentCreation
       ? 5188

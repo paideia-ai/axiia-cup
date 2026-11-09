@@ -1,0 +1,211 @@
+.express-entry [data-testid='express-build'] {
+  background: #cc432b;
+}
+.express-entry [data-testid='express-build']:hover {
+  background: #c03b24;
+}
+.express-page {
+  width: 100%;
+  max-width: 760px;
+}
+.express-court {
+  padding: 24px 36px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.express-court h2 {
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+.express-court p {
+  color: var(--foreground-subtle);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.express-page .express-label {
+  margin-bottom: 5px;
+  color: var(--foreground-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.express-portrait {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+.express-court-judge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.express-court-judge .express-portrait {
+  width: 64px;
+  height: 64px;
+}
+.express-court-judge h2 {
+  font-size: 18px;
+}
+.express-court-judge .express-label {
+  margin-bottom: 1px;
+}
+.express-court-sides {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid #454545;
+  text-align: center;
+}
+.express-court-player,
+.express-court-opponent {
+  position: relative;
+}
+.express-court-player::before,
+.express-court-opponent::before {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  width: 1px;
+  height: 12px;
+  background: #454545;
+  content: '';
+}
+.express-court-sides .express-portrait {
+  margin: 0 auto 12px;
+}
+.express-court-player .express-label {
+  color: #f09579;
+}
+.express-court-sides h2 {
+  margin-bottom: 5px;
+}
+.express-court-debate {
+  color: var(--foreground-muted);
+  font-size: 11px;
+}
+.express-page .express-goal {
+  margin-top: 20px;
+}
+.express-goal > p {
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 550;
+  line-height: 1.7;
+}
+.express-page .express-debate-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--foreground-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.express-page .express-disclosures {
+  margin-top: 20px;
+}
+.express-disclosure {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.express-disclosure:first-child {
+  border-top: 1px solid var(--border-soft);
+}
+.express-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+  list-style: none;
+  color: var(--foreground-subtle);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.express-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.express-disclosure > summary:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 4px;
+}
+.express-disclosure-hint {
+  margin-left: auto;
+  color: var(--foreground-muted);
+  font-size: 11px;
+}
+.express-disclosure-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--foreground-muted);
+  font-size: 19px;
+  line-height: 1;
+}
+.express-disclosure-hint + .express-disclosure-icon {
+  margin-left: 0;
+}
+.express-disclosure-icon::after {
+  content: '+';
+}
+.express-disclosure[open] > summary .express-disclosure-icon::after {
+  content: '−';
+}
+.express-disclosure > p,
+.express-disclosure > dl {
+  margin-top: 16px;
+  color: var(--foreground-subtle);
+  font-size: 14px;
+  line-height: 1.9;
+}
+.express-score-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.express-score-list dd {
+  flex-shrink: 0;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.express-disclosure > .express-score-note {
+  color: var(--foreground-muted);
+  font-size: 12px;
+}
+@media (max-width: 639px) {
+  .express-court {
+    padding: 22px 16px;
+  }
+  .express-court-sides {
+    grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+  }
+  .express-court-sides .express-portrait {
+    width: 72px;
+    height: 72px;
+  }
+  .express-court-debate {
+    font-size: 10px;
+    line-height: 1.8;
+  }
+  .express-court-sides p:not(.express-label) {
+    font-size: 11px;
+  }
+  .express-goal > p {
+    font-size: 16px;
+  }
+  .express-disclosure-hint {
+    display: none;
+  }
+  .express-disclosure-hint + .express-disclosure-icon {
+    margin-left: auto;
+  }
+}

@@ -429,7 +429,7 @@ export const TM_AGENTS: TmRegistry = {
     note: '场景由新手预设三元组决定（缺席回落商鞅场景）',
   },
   'X.hook': {
-    label: '场景钩子',
+    label: '场景问题或简介',
     clauses: ['U03-C02'],
     journeys: ['j1s3'],
   },
@@ -439,7 +439,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-change-11', 'spec-change-57'],
     journeys: ['j1s3'],
     note:
-      'S4 简化版只保留己方这一张；执方由预设决定（#57 首战＝单侧 agent，执哪方可配置），无切侧控件',
+      '商鞅场景显示秦孝公、我方与对手的朝堂关系；此标记定位我方人物。其他场景保留单角色卡。执方由预设决定，无切侧控件。',
   },
   'X.role-name': {
     label: '我方角色名',
@@ -450,7 +450,8 @@ export const TM_AGENTS: TmRegistry = {
     label: '一句话目标',
     clauses: ['U03-C02'],
     journeys: ['j1s3'],
-    note: '来自场景模块 education.winConditions[我方]',
+    note:
+      '商鞅场景复用人物介绍的最重要目标，完整胜负规则可展开；其他场景来自 education.winConditions[我方]',
     when: '场景有教育模块时',
   },
   'X.rule-line': {
@@ -458,7 +459,7 @@ export const TM_AGENTS: TmRegistry = {
     clauses: ['U03-C02'],
     anchors: ['spec-change-11'],
     journeys: ['j1s3'],
-    note: '不展开四层教育，一行讲完「N 轮后裁判判定——写好提示词，AI 替你上场」',
+    note: '商鞅场景展示辩论轮数与每次发言限制；其他场景保留简短规则说明',
   },
   'X.actions': {
     label: '动作行',
@@ -470,7 +471,7 @@ export const TM_AGENTS: TmRegistry = {
     anchors: ['spec-a3', 'spec-change-57'],
     journeys: ['j1s3', 'j1s4'],
     note:
-      '懒 ensure 单侧 agent → /agents/:id/build?express=1（构建器里保存即自动开战，U03-C05）；首战场景可选多名人物（本能寺）且该侧为空时，就地弹出人物签，选中即创建',
+      '沿用统一侧入口与 express 标记；商鞅场景按钮使用人物介绍的构建文案。新建先到智能体主页，已有智能体进构建器；保存后另点开始首战。多角色空侧仍先选人物。',
   },
   'X.escape-link': {
     label: '逃生链接',

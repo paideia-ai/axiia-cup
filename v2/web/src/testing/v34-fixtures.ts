@@ -6,7 +6,21 @@ import type {
   NotificationsResponse,
   ScenarioDetail,
   ScenarioListResponse,
+  ScenarioScoringDTO,
 } from '../api/types'
+
+// Local review copy of shangyang-court/script.js meta.scoring. Production pages
+// must use the configured scenario response, never import these fixtures.
+export const expressScoring: ScenarioScoringDTO = {
+  summary: '每局双方独立计分，总分高者胜。',
+  items: [
+    { id: 'main', label: '裁判支持你的立场', points: 1 },
+    { id: 'true-approved', label: '你的真请求被裁判同意', points: 0.5 },
+    { id: 'fake-approved', label: '你的假请求被裁判同意', points: -0.25 },
+    { id: 'identified', label: '你的真请求被对手猜中', points: -1 },
+  ],
+  notes: ['总分相同时，大政方针归属的一方获胜。'],
+}
 
 export const scenario: ScenarioDetail = {
   summary: {
