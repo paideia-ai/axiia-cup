@@ -430,6 +430,12 @@ main :is(button, a, summary, input, textarea, [tabindex]):focus-visible {
   padding: 24px;
 }
 
+@media (min-width: 768px) {
+  [data-tm='D.scenario-list'] > [data-tm='D.scenario-card'] {
+    display: grid;
+  }
+}
+
 [data-tm='D.card-title'] {
   font-size: 20px;
   font-weight: 600;

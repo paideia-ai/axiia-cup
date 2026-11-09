@@ -82,6 +82,8 @@ export function CatalogPage() {
             {ordered.map((scenario) => {
               const module = scenarioModule(scenario.id)
               const education = module?.education ?? null
+              const introduction = module?.intro?.catalogSummary ??
+                education?.hook ?? ''
               const guidance = scenarioGuidance(scenario, education)
               const stats = sideStatsLine(scenario)
               const factions = module?.factionCopy
@@ -89,11 +91,13 @@ export function CatalogPage() {
                 <Link
                   key={scenario.id}
                   to={`/scenarios/${scenario.id}`}
+                  className='md:row-span-7 md:grid md:grid-rows-subgrid'
                   data-testid={`scenario-${scenario.id}`}
                   {...tm('D.scenario-card')}
                 >
-                  <Card className='h-full transition hover:border-(--foreground-muted)'>
-                    <CardContent className='space-y-3 pt-5'>
+                  <Card className='h-full transition hover:border-(--foreground-muted) md:row-span-7 md:grid md:grid-rows-subgrid'>
+                    {/* Share section heights across each desktop row without clipping the copy. */}
+                    <CardContent className='space-y-3 pt-5 md:row-span-7 md:grid md:grid-rows-subgrid md:gap-y-3 md:space-y-0'>
                       <div className='flex items-start justify-between gap-3'>
                         <h2
                           className='text-lg font-semibold text-(--foreground)'
@@ -156,16 +160,16 @@ export function CatalogPage() {
                       <p className='text-sm text-(--foreground-subtle)'>
                         {scenario.subject}
                       </p>
-                      {education
+                      {introduction
                         ? (
                           <p
                             className='text-sm leading-relaxed text-(--foreground-subtle)'
                             {...tm('D.card-subject')}
                           >
-                            {education.hook}
+                            {introduction}
                           </p>
                         )
-                        : null}
+                        : <div className='hidden md:block' />}
                       {guidance.difficulty != null ||
                           guidance.minutes != null ||
                           guidance.noviceFriendly
@@ -203,7 +207,7 @@ export function CatalogPage() {
                               : null}
                           </div>
                         )
-                        : null}
+                        : <div className='hidden md:block' />}
                       <div
                         className='space-y-1 text-xs text-(--foreground-muted)'
                         {...tm('D.card-sides')}
@@ -235,10 +239,10 @@ export function CatalogPage() {
                             </p>
                           )
                         })}
-                        <p>
-                          {education?.formatLabel ?? `${scenario.turnCount} 轮`}
-                        </p>
                       </div>
+                      <p className='text-xs leading-[1.85] text-(--foreground-muted)'>
+                        {education?.formatLabel ?? `${scenario.turnCount} 轮`}
+                      </p>
                       {/* #38/#39/#54：stats 到手即点亮；缺席时保持引导式空态 */}
                       {stats
                         ? (
