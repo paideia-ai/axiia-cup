@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "copy": "11.10-16 参与Axiia Cup冬季内测 赢9999平台赠金&AI硬件",
+  "qr_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+  "posters": [
+    {
+      "id": "01",
+      "final": "assets/final/01-shangyang.png",
+      "canvas": [
+        887,
+        1774
+      ],
+      "qr_box": [
+        711,
+        1608,
+        875,
+        1772
+      ],
+      "qr_side": 164,
+      "decoded_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+      "sha256": "226c88746c6d5f16a62343979feffa590a26331a520bc28cd6880e1f5423b2f9",
+      "checks": {
+        "pixel_reproduction": true,
+        "full_scan": true,
+        "width_474_scan": true,
+        "jpeg_quality_85_scan": true
+      }
+    },
+    {
+      "id": "02",
+      "final": "assets/final/02-westward.png",
+      "canvas": [
+        887,
+        1774
+      ],
+      "qr_box": [
+        711,
+        1608,
+        875,
+        1772
+      ],
+      "qr_side": 164,
+      "decoded_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+      "sha256": "769d29540ffbaacd89cb2d81e82874473c15d219a644265fecd3ebf93b330b05",
+      "checks": {
+        "pixel_reproduction": true,
+        "full_scan": true,
+        "width_474_scan": true,
+        "jpeg_quality_85_scan": true
+      }
+    },
+    {
+      "id": "05",
+      "final": "assets/final/05-dongzhuo-lvbu.png",
+      "canvas": [
+        1448,
+        1086
+      ],
+      "qr_box": [
+        1223,
+        876,
+        1428,
+        1081
+      ],
+      "qr_side": 205,
+      "decoded_url": "https://axiia-cup.isofucius.cn/?invite=axiia_cup",
+      "sha256": "40289896957cab454378c8b9361ad4ad64723bb9cee813508e92777f1c4bcfe6",
+      "checks": {
+        "pixel_reproduction": true,
+        "full_scan": true,
+        "width_474_scan": true,
+        "jpeg_quality_85_scan": true
+      }
+    }
+  ],
+  "local_links_checked": 45
+}
