@@ -155,6 +155,7 @@ export function RegisterPage() {
                       className='w-full'
                       disabled={isSubmitting}
                       type='submit'
+                      data-track='signup-submit'
                       {...tm('C.submit-button')}
                     >
                       {isSubmitting ? '注册中…' : '创建账户'}

@@ -171,7 +171,11 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
   )
 
   return (
-    <section ref={root} className='judge-transcript' aria-label='对话与裁判 OS'>
+    <section
+      ref={root}
+      className='ph-no-capture judge-transcript'
+      aria-label='对话与裁判 OS'
+    >
       {compact
         ? (chunks.length > 0 ? chunks : [null]).map((chunk, index) => (
           <div
@@ -205,9 +209,7 @@ export function JudgeDialogue(props: JudgeDialoguePresentation) {
               aria-label='裁判 OS 侧栏'
             >
               <div className='space-y-3'>{heading}{track}</div>
-              {chunks.filter((chunk) =>
-                chunk.step
-              ).map((chunk) => (
+              {chunks.filter((chunk) => chunk.step).map((chunk) => (
                 <div
                   className='judge-transcript-aligned-note'
                   data-os-after={chunk.end}

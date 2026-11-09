@@ -73,6 +73,7 @@ export function OpponentReveal({
         <button
           className='sortie-primary'
           type='button'
+          data-track='start-match-ladder'
           disabled={!ready || submitting || disabled}
           onClick={onStart}
         >

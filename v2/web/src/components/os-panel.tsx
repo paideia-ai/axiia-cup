@@ -36,6 +36,7 @@ import { CreateAgentAction } from './create-agent-action'
 import { useBattleQuote } from '../context/rewards'
 import { playSound, unlockAudio } from '../lib/sound'
 import { trackSoundMatch } from '../lib/match-sound'
+import { track } from '../lib/analytics'
 import { challengeRejectCopy, rejectCopy } from '../lib/reject-copy'
 import { messageOf } from '../lib/use-async'
 import { versionTag } from '../lib/version-label'
@@ -269,6 +270,11 @@ export function OsPanel({
         versionID: fieldedVersion.id,
         presetKey,
       })
+      track('match_started', {
+        kind: 'pve',
+        scenario_id: scenarioID,
+        match_id: response.matchID,
+      })
       if (!liveRef.current) return
       playSound('dispatch', String(response.matchID))
       trackSoundMatch(response.matchID)
@@ -299,6 +305,11 @@ export function OsPanel({
       const response = await matches.dispatchPVP({
         versionID: fieldedVersion.id,
         opponentAgentID,
+      })
+      track('match_started', {
+        kind: 'pvp',
+        scenario_id: scenarioID,
+        match_id: response.matchID,
       })
       if (!liveRef.current) return
       playSound('dispatch', String(response.matchID))
@@ -459,6 +470,13 @@ export function OsPanel({
         scenarioID,
         mine: { [side]: { versionID: fieldedVersion.id } },
         opponent,
+      })
+      track('match_started', {
+        kind: 'challenge',
+        scenario_id: scenarioID,
+        ...(response.matchIDs[0] == null
+          ? {}
+          : { match_id: response.matchIDs[0] }),
       })
       if (!liveRef.current) return
       playSound('dispatch', `challenge:${response.challengeID}`)
@@ -784,6 +802,7 @@ export function OsPanel({
                         pending={pendingOpponent === `pve:${preset.key}`}
                         onClick={() => void dispatchPVE(preset.key)}
                         data-testid='dispatch-match'
+                        data-track='start-match-pve'
                         data-spec='U19-C07 U19-C19 U19-C20'
                         {...tm('OS.pve-dispatch-button')}
                       />
@@ -844,6 +863,7 @@ export function OsPanel({
                         disabled={rowDisabled}
                         pending={pendingOpponent === `self:${opponent.agentID}`}
                         onClick={() => void dispatchHotseat(opponent.agentID)}
+                        data-track='start-match-pvp'
                         data-spec='U19-C07 U19-C19 U19-C20'
                         {...tm('OS.hotseat-dispatch-button')}
                       />
@@ -977,6 +997,7 @@ export function OsPanel({
                                             accountID: rival.accountID,
                                           })}
                                         data-spec='U19-C07 U19-C19 U19-C20'
+                                        data-track='start-challenge'
                                         {...tm('OS.challenge-button')}
                                       />
                                     </div>
@@ -1058,6 +1079,7 @@ export function OsPanel({
                                           pinnedVersionID: idRef.versionID,
                                         })}
                                       data-spec='U19-C07 U19-C19 U19-C20'
+                                      data-track='start-challenge'
                                       {...tm('OS.challenge-button')}
                                     />
                                   </div>

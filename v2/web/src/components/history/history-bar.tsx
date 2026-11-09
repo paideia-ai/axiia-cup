@@ -112,7 +112,7 @@ export function HistoryBar({ match: m, roles }: {
                     </span>
                   )}
                 </span>
-                <span className='hbr-owner'>{info}</span>
+                <span className='ph-no-capture hbr-owner'>{info}</span>
               </span>
             </>
           )

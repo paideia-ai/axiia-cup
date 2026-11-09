@@ -5,6 +5,7 @@ import type { MeResponse } from '../../api/types'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { useAuth } from '../../context/auth'
+import { track } from '../../lib/analytics'
 import { useCooldown } from '../../lib/cooldown'
 import { messageOf } from '../../lib/use-async'
 import { tm } from '../../testmode/mark'
@@ -65,14 +66,14 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
     setError(null)
     setIsBusy(true)
     try {
-      onDone(
-        await verifyPhone({
-          phone,
-          code,
-          displayName: needsName ? displayName : null,
-        }),
-        wasRegistered,
-      )
+      const me = await verifyPhone({
+        phone,
+        code,
+        displayName: needsName ? displayName : null,
+      })
+      // One verify either signs in or opens the account; sendPhoneCode said which.
+      track(wasRegistered ? 'logged_in' : 'signed_up', { method: 'phone' })
+      onDone(me, wasRegistered)
     } catch (cause) {
       setError(messageOf(cause, '验证失败'))
     } finally {
@@ -167,6 +168,7 @@ export function PhoneAuthForm({ onDone, withInvite }: Props) {
         className='w-full'
         disabled={isBusy || !sent || code.length < 6}
         type='submit'
+        data-track={needsName ? 'phone-signup-submit' : 'phone-login-submit'}
         {...tm('B.phone-submit-button')}
       >
         {isBusy ? '处理中…' : needsName ? '创建账户' : '登录'}
