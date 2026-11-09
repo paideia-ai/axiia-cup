@@ -8,6 +8,7 @@ export default defineConfig({
   testMatch: [
     'battle-strip-layout.spec.ts',
     'navigation-links.spec.ts',
+    'poster-invite.spec.ts',
     'direct-agent-creation.spec.ts',
     'scenario-portrait-layout.spec.ts',
   ],
