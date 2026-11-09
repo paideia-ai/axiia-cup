@@ -82,8 +82,8 @@ export function CatalogPage() {
             {ordered.map((scenario) => {
               const module = scenarioModule(scenario.id)
               const education = module?.education ?? null
-              const introduction = module?.intro?.source.overview.paragraphs
-                .join('') ?? education?.hook ?? ''
+              const introduction = module?.intro?.catalogSummary ??
+                education?.hook ?? ''
               const guidance = scenarioGuidance(scenario, education)
               const stats = sideStatsLine(scenario)
               const factions = module?.factionCopy
@@ -163,7 +163,7 @@ export function CatalogPage() {
                       {introduction
                         ? (
                           <p
-                            className='line-clamp-3 text-sm leading-relaxed text-(--foreground-subtle)'
+                            className='text-sm leading-relaxed text-(--foreground-subtle)'
                             {...tm('D.card-subject')}
                           >
                             {introduction}

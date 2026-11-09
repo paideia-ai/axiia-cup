@@ -161,9 +161,7 @@ export const GuestCatalogAndDetail: Story = {
     await expect(canvas.getByText('适合新手', { exact: true })).toBeVisible()
     const card = within(canvas.getByTestId('scenario-shangyang-court'))
     const introduction = card.getByText(
-      scenarioModule('shangyang-court')!.intro!.source.overview.paragraphs.join(
-        '',
-      ),
+      scenarioModule('shangyang-court')!.intro!.catalogSummary!,
       { exact: true },
     )
     await expect(introduction).toBeVisible()
@@ -252,13 +250,13 @@ export const PublicDifficultyLevels: Story = {
         novice,
       )
       const introduction = card.getByText(
-        scenarioModule(id)!.intro!.source.overview.paragraphs.join(''),
+        scenarioModule(id)!.intro!.catalogSummary!,
         { exact: true },
       )
       await expect(introduction).toBeVisible()
-      expect(getComputedStyle(introduction).webkitLineClamp).toBe('3')
-      expect(introduction.getBoundingClientRect().height).toBeLessThanOrEqual(
-        3 * parseFloat(getComputedStyle(introduction).lineHeight) + 1,
+      expect(getComputedStyle(introduction).webkitLineClamp).toBe('none')
+      expect(introduction.scrollHeight).toBeLessThanOrEqual(
+        introduction.clientHeight + 1,
       )
       await expect(
         card.getByText(publicScenario.summary.subject, { exact: true }),
