@@ -582,9 +582,16 @@ const cases: {
     options: { guest: true },
   },
   {
-    name: 'landing login',
+    name: 'landing public scenarios',
     path: '/',
-    marker: 'A.cta-login',
+    marker: 'A.cta-browse',
+    destination: /\/scenarios$/,
+    options: { guest: true },
+  },
+  {
+    name: 'header login',
+    path: '/',
+    marker: 'A.header-login-link',
     destination: /\/login$/,
     options: { guest: true },
   },

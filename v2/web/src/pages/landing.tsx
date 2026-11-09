@@ -137,12 +137,12 @@ export function LandingPage() {
                     <ArrowRight className='ml-2 h-4 w-4' />
                   </ButtonLink>
                   <ButtonLink
-                    to='/login'
+                    to='/scenarios'
                     size='lg'
                     variant='secondary'
-                    {...tm('A.cta-login')}
+                    {...tm('A.cta-browse')}
                   >
-                    已有账户，登录
+                    浏览场景
                   </ButtonLink>
                 </div>
               )
