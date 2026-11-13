@@ -1,3 +1,4 @@
+import { humanTestStepUrl } from './human-test-system'
 /* 测试模式的数据面：spec v4 条款索引 + 历史两轮旅程 + 当前固定版本交接旅程，加几个查询小工具。
    只在 overlay 分块里被引用（index.tsx 不 import 这里），关掉测试模式时零成本。 */
 import {
@@ -227,10 +228,14 @@ export function anchorUrl(anchor: string): string {
   return `${DASHBOARD}/v3-4-spec#${anchor}`
 }
 export function manualUrl(step: Step): string {
-  return `${DASHBOARD}${step.manualUrl}`
+  return step.id.startsWith('HV-')
+    ? humanTestStepUrl(step.id)
+    : `${DASHBOARD}${step.manualUrl}`
 }
 export function journeyUrl(j: Journey): string {
-  return `${DASHBOARD}${j.manual}#${j.manualAnchor ?? j.steps[0]?.id ?? ''}`
+  return j.round === 'handoff'
+    ? humanTestStepUrl(j.steps[0]?.id ?? '')
+    : `${DASHBOARD}${j.manual}#${j.manualAnchor ?? j.steps[0]?.id ?? ''}`
 }
 
 /** 条款 → 挂了它的标记（全站） */
