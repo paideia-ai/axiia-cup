@@ -50,32 +50,6 @@ function handlers(latency: number) {
       }
       if (path === '/v1/matches/9001') return json(finishedMatch)
       if (path === '/v1/notifications') return json(notificationsFixture)
-      if (path === '/v1/tournaments') {
-        return json({
-          tournaments: [{
-            id: 1,
-            scenarioID: scenario.summary.id,
-            status: 'finished',
-            currentRound: 3,
-            totalRounds: 3,
-          }],
-        })
-      }
-      if (path === '/v1/tournaments/1/standings') {
-        return json({
-          entries: [{
-            playerID: 'navigation-preview',
-            playerName: '演示玩家',
-            submissionIDs: [1002],
-            wins: 2,
-            losses: 1,
-            buchholz: 4,
-            matchesPlayed: 3,
-            winRate: 66.7,
-            rank: 1,
-          }],
-        })
-      }
       const agent = /^\/v1\/agents\/(101|102)\/(draft|versions)$/.exec(path)
       if (agent) {
         const side = agent[1] === '101' ? 'a' : 'b'

@@ -99,7 +99,6 @@ async function installWorld(page: Page, walletGate = Promise.resolve()) {
     if (path === '/v1/scenarios/shangyang-court') return json(scenario)
     if (path === '/v1/my/agents') return json({ scenarios: [] })
     if (path === '/v1/matches') return json({ matches: [] })
-    if (path === '/v1/tournaments') return json({ tournaments: [] })
     if (path === '/v1/notifications') {
       return json({ notifications: [], unreadCount: 3 })
     }
@@ -291,18 +290,13 @@ for (const width of [1280, 390]) {
       const initial = { wallets: world.wallets, bells: world.bells }
       const results: { from: string; to: string; gaps: string[] }[] = []
       let from = '/scenarios'
-      // All twelve directed transitions between the four tabs, plus secondary
-      // pages, public detail, and browser Back/Forward across the same boundary.
+      // All six directed transitions between the scenario, agent and history
+      // tabs, plus secondary pages, public detail, and browser Back/Forward
+      // across the same boundary.
       const paths = [
         '/my-agents',
-        '/tournaments',
         '/matches',
         '/my-agents',
-        '/matches',
-        '/tournaments',
-        '/my-agents',
-        '/scenarios',
-        '/tournaments',
         '/scenarios',
         '/matches',
         '/scenarios',

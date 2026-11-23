@@ -17,7 +17,6 @@ export function AgentIdentityPage() {
   const id = positiveID(agentId)
   const versionID = positiveID(params.get('version'))
   const matchID = positiveID(params.get('match'))
-  const tournamentID = positiveID(params.get('tournament'))
   const profile = usePageQuery({ ...agentQuery(id ?? 0), enabled: id != null })
   const view = profile.data?.requestedAgentID === id ? profile.data : null
   useMatchVersionFocus(view?.kind === 'public')
@@ -139,11 +138,7 @@ export function AgentIdentityPage() {
                     winCount={version.winCount}
                     lossCount={version.lossCount}
                     context={version.id === versionID
-                      ? (matchID
-                        ? '本场对局版本'
-                        : tournamentID
-                        ? '赛事提交版本'
-                        : '所选版本')
+                      ? (matchID ? '本场对局版本' : '所选版本')
                       : undefined}
                   />
                 ))}

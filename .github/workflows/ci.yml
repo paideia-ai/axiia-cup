@@ -13,6 +13,7 @@ jobs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
       v2_web_changed: ${{ steps.classify.outputs.v2_web_changed }}
       v2_scenarios_changed: ${{ steps.classify.outputs.v2_scenarios_changed }}
+      v2_tournament_changed: ${{ steps.classify.outputs.v2_tournament_changed }}
 
     steps:
       - name: Checkout
@@ -119,6 +120,34 @@ jobs:
       - name: Lint
         run: deno task lint
 
+  v2-tournament:
+    name: v2 tournament
+    runs-on: ubuntu-latest
+    needs: classify
+    if: needs.classify.outputs.v2_tournament_changed == 'true'
+    defaults:
+      run:
+        working-directory: v2/tournament
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.9.1"
+
+      - name: Format check
+        run: deno task fmt
+
+      - name: Lint
+        run: deno task lint
+
+      - name: Typecheck
+        run: deno task check
+
+      - name: Test
+        run: deno task test
+
   check:
     name: Check
     runs-on: ubuntu-latest
@@ -126,6 +155,7 @@ jobs:
       - classify
       - v2-web
       - v2-scenarios
+      - v2-tournament
     if: always()
 
     steps:
@@ -135,13 +165,15 @@ jobs:
           DOCS_ONLY: ${{ needs.classify.outputs.docs_only }}
           V2_WEB_CHANGED: ${{ needs.classify.outputs.v2_web_changed }}
           V2_SCENARIOS_CHANGED: ${{ needs.classify.outputs.v2_scenarios_changed }}
+          V2_TOURNAMENT_CHANGED: ${{ needs.classify.outputs.v2_tournament_changed }}
           V2_WEB_RESULT: ${{ needs.v2-web.result }}
           V2_SCENARIOS_RESULT: ${{ needs.v2-scenarios.result }}
+          V2_TOURNAMENT_RESULT: ${{ needs.v2-tournament.result }}
         run: |
           set -euo pipefail
 
-          echo "docs_only=$DOCS_ONLY v2_web_changed=$V2_WEB_CHANGED v2_scenarios_changed=$V2_SCENARIOS_CHANGED"
-          echo "v2-web=$V2_WEB_RESULT v2-scenarios=$V2_SCENARIOS_RESULT"
+          echo "docs_only=$DOCS_ONLY v2_web_changed=$V2_WEB_CHANGED v2_scenarios_changed=$V2_SCENARIOS_CHANGED v2_tournament_changed=$V2_TOURNAMENT_CHANGED"
+          echo "v2-web=$V2_WEB_RESULT v2-scenarios=$V2_SCENARIOS_RESULT v2-tournament=$V2_TOURNAMENT_RESULT"
 
           if [[ "$DOCS_ONLY" == "true" ]]; then
             echo "Docs-only change detected; heavy CI skipped."
@@ -160,11 +192,16 @@ jobs:
             failed=1
           fi
 
+          if [[ "$V2_TOURNAMENT_CHANGED" == "true" && "$V2_TOURNAMENT_RESULT" != "success" ]]; then
+            echo "v2 tournament job must pass."
+            failed=1
+          fi
+
           if [[ "$failed" != "0" ]]; then
             exit 1
           fi
 
-          if [[ "$V2_WEB_CHANGED" != "true" && "$V2_SCENARIOS_CHANGED" != "true" ]]; then
+          if [[ "$V2_WEB_CHANGED" != "true" && "$V2_SCENARIOS_CHANGED" != "true" && "$V2_TOURNAMENT_CHANGED" != "true" ]]; then
             echo "Change touches no build lane; nothing to verify."
             exit 0
           fi

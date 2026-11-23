@@ -597,48 +597,6 @@ export type MatchEventDTO =
 
 // ── EngagementDTOs ──────────────────────────────────────────────────────────
 
-export interface TournamentRoundDTO {
-  id: number
-  roundNumber: number
-  status: string
-  // 'qualifier' = 海选，'main' = 正赛。
-  phase: string
-}
-
-export interface TournamentSummary {
-  id: number
-  scenarioID: string
-  status: string
-  currentRound: number
-  totalRounds: number
-  // 最新一轮所属阶段；还没开轮时缺席。老服务器同样缺席，UI 直接不显示徽章。
-  phase?: string | null
-  // B4「含选择器与按轮时间线」：轮次时间线随列表下发。
-  rounds?: TournamentRoundDTO[]
-}
-
-export interface TournamentListResponse {
-  tournaments: TournamentSummary[]
-}
-
-// #64「排名一律按玩家（不按 agent、不按侧）」：一行＝一个人。玩家在一场赛事里
-// 通常两侧各投一个版本，`submissionIDs` 保留这些条目供下钻，但名次属于人。
-export interface StandingsEntryDTO {
-  playerID: string
-  playerName: string
-  submissionIDs: number[]
-  wins: number
-  losses: number
-  buchholz: number
-  matchesPlayed: number
-  winRate: number
-  rank: number
-}
-
-export interface StandingsResponse {
-  entries: StandingsEntryDTO[]
-}
-
 // `title`/`body` 是服务端渲染好的中文（G25）——客户端只展示、不再拼写；
 // 新契约必发，老服务器缺席 → 回落到本地 kind 文案。`link` 是 SPA 路径
 // （如 /matches/7），该 kind 无落点时缺席。
@@ -646,7 +604,6 @@ export interface NotificationDTO {
   id: number
   kind: string
   matchID?: number | null
-  tournamentID?: number | null
   read: boolean
   title?: string
   body?: string

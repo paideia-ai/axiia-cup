@@ -52,8 +52,6 @@ import type {
   Side,
   SignupRequest,
   SlotListResponse,
-  StandingsResponse,
-  TournamentListResponse,
   UpdateProfileRequest,
   UpdateSlotRequest,
   VersionDiffResponse,
@@ -412,10 +410,8 @@ export const rewards = {
 export const versions = {
   // #25/#62 按 id 约战的解析读：版本 id → {玩家/场景/侧/模型}；不存在 → 404
   // not_found；老服务器无此端点，同样按降级处理。
-  ref: (id: number, signal?: AbortSignal) =>
-    request<VersionRefResponse>('GET', `/versions/${id}/ref`, undefined, {
-      signal,
-    }),
+  ref: (id: number) =>
+    request<VersionRefResponse>('GET', `/versions/${id}/ref`),
 }
 
 export const achievements = {
@@ -442,14 +438,6 @@ export const notifications = {
   // 就地提示，不影响逐条已读。
   readAll: () => request<OKResponse>('POST', '/notifications/read-all'),
   clear: () => request<OKResponse>('DELETE', '/notifications'),
-}
-
-// ── Tournaments ─────────────────────────────────────────────────────────────
-
-export const tournaments = {
-  list: () => request<TournamentListResponse>('GET', '/tournaments'),
-  standings: (id: number) =>
-    request<StandingsResponse>('GET', `/tournaments/${id}/standings`),
 }
 
 // ── Admin ───────────────────────────────────────────────────────────────────

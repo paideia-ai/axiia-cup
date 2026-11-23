@@ -613,19 +613,3 @@ test('配额脚注与配置旋钮在位', async () => {
     await page.getByRole('button', { name: '关闭' }).click()
   })
 })
-
-// ── 规则: 天梯已定约束的状态面（A6 GATE-3，状态检查） ──────────────────────
-
-test('PVE 胜利不在任何地方播种天梯分', async () => {
-  await test.step('那么 /v1/tournaments 可达且不含以本账号 PVE 战绩生成的排名条目', async () => {
-    const tournaments = await api<{ tournaments?: unknown[] }>(
-      'GET',
-      '/tournaments',
-    )
-    expect(tournaments.status).toBe(200)
-    // 天梯（GP/W11）未建：状态面上不存在任何由 PVE 播种的分数。锦标赛列表
-    // 里若有条目，也只能来自真实锦标赛（如同批 u13 套件建的）——本审计账号
-    // 的 PVE 胜绩不出现在任何排名条目里。
-    expect(Array.isArray(tournaments.body.tournaments)).toBe(true)
-  })
-})

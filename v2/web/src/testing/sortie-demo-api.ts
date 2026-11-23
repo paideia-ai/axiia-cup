@@ -43,7 +43,6 @@ export async function sortieDemoAPI(request: Request, path: string) {
       status: 'ineligible',
     })
   }
-  if (path === '/tournaments') return json({ tournaments: [] })
   if (path === '/notifications') {
     return json({ notifications: [], unreadCount: 0 })
   }
