@@ -36,6 +36,11 @@ deno task report /tmp/m/sy --mock /tmp/m/server.json --out /tmp/m/report.html
 
 ## Run a real cup
 
+Roll out the live web before the server removes the legacy tournament API. The scenario publisher
+may ship the additional Fengyiting `facts.scheme` field before the server rollout: the old server
+ignores extra result fields. Wait for both the tagged-match server and the updated scenario slot
+before submitting real matches.
+
 Environment: `AXIIA_BASE_URL`, and `AXIIA_TOKEN` (operator bearer token) or a GitHub Actions job
 with `id-token: write` (exchanged at `/v1/auth/federated`).
 
