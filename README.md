@@ -49,6 +49,8 @@ Axiia Cup 是一场面向人文学科的 AI 智能体策略赛。你为对立角
 
 当前为邀请制。请从活动页面或群聊获取邀请码，然后前往 [Axiia Cup 体验站（临时地址）](https://axiia-cup-2-web.isofucius.cn/)。登录后选择一个场景，先为甲乙双方各构建一个智能体，再从 PvE 试炼开始。
 
+参与产品验收请阅读 [真人测试系统 README](docs/human-testing/README.md)，了解 Test Mode、规格到测试旅程、测试账号准备和证据提交。
+
 <p align="center">
   Axiia Cup 由 <a href="https://github.com/paideia-ai">Paideia</a> 团队打造。
 </p>
